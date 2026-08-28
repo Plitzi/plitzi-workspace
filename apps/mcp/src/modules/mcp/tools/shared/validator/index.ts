@@ -1,6 +1,12 @@
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
-import { batchDeclaredFolders, batchDeclaredPages, batchDeclaredVariants, batchDeclaredVars } from './batch';
+import {
+  batchDeclaredElements,
+  batchDeclaredFolders,
+  batchDeclaredPages,
+  batchDeclaredVariants,
+  batchDeclaredVars
+} from './batch';
 import { checkBindingSourceScope, checkBindingTarget, checkBindingTransformers } from './bindings';
 import { batchDeclaredConnectors, checkConnectorOp, checkProviderElement } from './connectors';
 import { checkObservedName, checkVarRefs, warnOnce } from './context';
@@ -66,6 +72,8 @@ const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeM
  *  the post-apply resource audit (auditResources) can run the same checks against the resulting draft. */
 export const buildValidationCtx = (space: Space, ops: Operation[], mode: ValidationMode = 'space'): ValidationCtx => {
   const registry = buildTypeRegistry(space.schema, space.catalog);
+  const batchElements = batchDeclaredElements(ops);
+
   return {
     mode,
     errors: [],
@@ -78,6 +86,8 @@ export const buildValidationCtx = (space: Space, ops: Operation[], mode: Validat
     typeProps: new Map(Object.entries(registry.types).map(([type, info]) => [type, new Set(Object.keys(info.props))])),
     typeMeta: buildTypeMeta(space.catalog),
     elementType: ref => (findElementByRef(space.schema, ref) ?? findPageByRef(space.schema, ref))?.definition.type,
+    elementExists: ref =>
+      batchElements.has(ref) || Boolean(findElementByRef(space.schema, ref) ?? findPageByRef(space.schema, ref)),
     schemaVars: new Set([
       ...space.schema.variables.map(v => v.name),
       ...routeParamNames(space.schema),

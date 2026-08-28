@@ -164,7 +164,50 @@ const checkElementFieldKey = (node: InteractionNodeInput, base: string, ctx: Val
   }
 };
 
+/**
+ * The step names another element to act on — and that element does not exist.
+ *
+ * This is the failure with NO symptom: the runtime resolves a callback as `callbacksAvailables[elementId][action]`,
+ * so a dangling target finds nothing and the step does nothing, while the flow, the render and the apply all
+ * report success. Nothing else in the pipeline catches it — the field-key check below needs the element's type to
+ * say anything, so an unresolvable ref used to make it return in silence.
+ *
+ * A `widget` batch is the whole world (plitzi_render seeds an empty space), so a target that is neither in it nor
+ * created by it is certainly wrong: a hard error. A space may carry legacy flows pointing at elements deleted long
+ * ago, and the post-apply audit re-checks the stored interactions of every element the batch touches — erroring
+ * there would block edits on debris the agent did not write, so in `space` mode this warns.
+ */
+const checkCallbackTarget = (node: InteractionNodeInput, base: string, ctx: ValidationCtx): void => {
+  const target = node.elementId;
+  if (target === undefined || target === '' || NULLISH_ELEMENT_IDS.has(target) || ctx.elementExists(target)) {
+    return;
+  }
+
+  const detail =
+    `Element callback "${node.action}" at ${base} targets elementId "${target}", which is not an element in ` +
+    'this widget';
+  if (ctx.mode === 'widget') {
+    ctx.errors.push({
+      path: `${base}.elementId`,
+      message: detail,
+      hint:
+        'The runtime looks the callback up on that element, so the step silently does nothing. Use the ref of an ' +
+        'element the batch authors, or omit elementId to act on the flow host.'
+    });
+
+    return;
+  }
+
+  warnOnce(
+    ctx,
+    `Element callback "${node.action}" at ${base} targets elementId "${target}", which is not an element in this ` +
+      'space — the step resolves to nothing and does nothing. Point it at a real element ref, or omit elementId to ' +
+      'act on the flow host.'
+  );
+};
+
 const checkElementCallback = (node: InteractionNodeInput, base: string, ctx: ValidationCtx, hostRef: string): void => {
+  checkCallbackTarget(node, base, ctx);
   const builtin = getElementCallback(node.action);
   if (!builtin) {
     if (getUtility(node.action)) {

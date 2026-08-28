@@ -1,6 +1,7 @@
 import { slugRouteParams } from '../../../helpers';
 
 import type { Operation } from '../../operations';
+import type { ElementInput } from '../../operations/schema/shared';
 
 // Batch pre-scans: names an op may legally reference even though they are not in the space yet, because an earlier
 // op in the SAME batch declares them. They prevent false "does not exist" errors/warnings on create-then-use flows.
@@ -88,4 +89,26 @@ export const batchDeclaredVariants = (ops: Operation[]): Map<string, Set<string>
   }
 
   return map;
+};
+
+// Every element ref the batch itself creates via upsertElement, walking the nested `children` because one op
+// authors a whole subtree. Repeats are already unrolled by expandOperations before validation runs, so the
+// numbered refs a repeatElement produces ("step-1", "step-2"…) are in here too. Lets an interaction step target
+// an element the same batch is creating without a false "does not exist".
+export const batchDeclaredElements = (ops: Operation[]): Set<string> => {
+  const refs = new Set<string>();
+  const walk = (input: ElementInput): void => {
+    refs.add(input.ref);
+    for (const child of input.children ?? []) {
+      walk(child);
+    }
+  };
+
+  for (const op of ops) {
+    if (op.type === 'upsertElement') {
+      walk(op.element);
+    }
+  }
+
+  return refs;
 };

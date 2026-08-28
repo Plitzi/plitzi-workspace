@@ -11,6 +11,7 @@ import { iconFontCss, RENDER_APP_URI } from '../apps';
 import { emptySpace } from '../helpers';
 import { proxifyResources } from '../proxy';
 import { expandOperations } from './shared/expandOperations';
+import { interactionReport } from './shared/interactionReport';
 import { defineTool } from './shared/tool';
 import { validateOperations } from './shared/validator';
 import { auditResources } from './shared/validator/audit';
@@ -77,6 +78,9 @@ export type RenderResponse =
       /** The batch this render was built from, EXPANDED (repeats already unrolled). The view keeps it so a later
        *  patch has something to merge into; it is never shown to the model. */
       operations: Operation[];
+      /** One line per interaction flow the widget actually stored — what got wired to what. Absent when the
+       *  widget has no flows, which is most of them. */
+      interactions?: string[];
       warnings?: string[];
     };
 
@@ -117,7 +121,8 @@ export const render = (input: RenderInput, options: RenderOptions = {}): RenderR
   }
 
   const audit = auditResources(space, ops);
-  const warnings = [...validation.warnings, ...audit.warnings];
+  const behaviour = interactionReport(space);
+  const warnings = [...validation.warnings, ...audit.warnings, ...behaviour.warnings];
   if (audit.errors.length > 0) {
     return { rendered: false, errors: audit.errors, warnings: noWarnings(warnings) };
   }
@@ -138,6 +143,7 @@ export const render = (input: RenderInput, options: RenderOptions = {}): RenderR
   return {
     rendered: true,
     operations: ops,
+    ...(behaviour.flows ? { interactions: behaviour.flows } : {}),
     rootRef: HOST_PAGE_REF,
     // Every flat entry except the host page is a real authored element.
     elementCount: Object.keys(space.schema.flat).length - 1,
@@ -234,6 +240,9 @@ const toRenderResult = (res: RenderResponse, renderId: string): CallToolResult =
     renderId,
     rootRef: res.rootRef,
     elementCount: res.elementCount,
+    // The wiring the widget actually stored. The model authored the operations, but only this says what survived
+    // them — which is the whole difference between "the flow is on the element I named" and a silent no-op.
+    ...(res.interactions ? { interactions: res.interactions } : {}),
     warnings: res.warnings
   };
 
@@ -311,8 +320,10 @@ export const renderTool = defineTool({
     'already know. Patch ONLY to modify that widget: a different subject or a different kind of widget is a fresh ' +
     'render, without patch — a patch is merged into the previous batch, so patching a new idea leaves you with ' +
     'both.\n' +
-    'Returns a compact summary including the renderId (the widget itself is shown to the user); on failure it ' +
-    'returns teachable errors (path + hint) — read them and retry.',
+    'Returns a compact summary including the renderId (the widget itself is shown to the user), plus — when the ' +
+    'widget has interaction flows — an `interactions` line per flow naming what got wired to what. That reports ' +
+    'the WIRING, not that a click was performed: say what you connected, never that you verified it at runtime. ' +
+    'On failure it returns teachable errors (path + hint) — read them and retry.',
   inputShape: renderShape,
   access: 'read',
   spaceless: true,

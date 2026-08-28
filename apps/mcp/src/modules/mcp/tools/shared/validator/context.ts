@@ -36,6 +36,9 @@ export interface ValidationCtx {
   typeProps: Map<string, Set<string>>; // observed prop keys per element type (I5)
   typeMeta: Map<string, TypeMeta>; // authoritative per-type metadata from the component catalog
   elementType: (ref: string) => string | undefined; // resolve an element ref/id to its schema type
+  /** Whether a ref names a real element/page — in the space OR created by this same batch. A step that
+   *  targets anything else resolves to nothing at runtime and silently does nothing. */
+  elementExists: (ref: string) => boolean;
   schemaVars: Set<string>; // valid {{name}}: space schema variables ∪ page route params ∪ batch-declared
   styleVars: Set<string>; // valid var(--name): design tokens across all categories
   style: Style; // to check that an applied variant is actually declared on its class

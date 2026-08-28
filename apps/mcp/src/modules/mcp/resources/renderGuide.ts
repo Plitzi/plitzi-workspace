@@ -425,10 +425,11 @@ connects that source to a descendant's field.
 ### React to events — an interaction flow
 \`upsertInteractionFlow\` attaches an ordered \`nodes\` list to an element; the FIRST node is a \`trigger\` (e.g.
 \`onClick\`), the rest run after it. Each following step is one of:
-- **\`globalCallback\`** (OMIT \`elementId\`) — a built-in app action: \`addNotification\` (\`params.content\`),
-  \`navigate\`, \`setState\` (\`key\`/\`type\`/\`value\`), \`login\`/\`logout\`…
-- **\`callback\`** (\`elementId\` = an element, defaults to the trigger's) — that ELEMENT's OWN callback: e.g. an
-  \`apiContainer\` re-fetches, a \`form\` submits. Each type's own callback action names are in plitzi://guide.
+- **\`callback\`** — a callback the ELEMENT provides. \`elementId\` is the element it acts on: **the flow's own
+  element by default, or another element's ref to act on that one**. Every element has \`setState\` and
+  \`toggleState\` (below); a type may add its own (an \`apiContainer\` re-fetches, a \`form\` submits).
+- **\`globalCallback\`** (OMIT \`elementId\`) — an app-level action, provided by a module and not by any element:
+  \`addNotification\` (\`params.content\`), \`navigate\`, \`setState\` (\`key\`/\`type\`/\`value\`), \`login\`/\`logout\`.
 
 \`\`\`json
 { "type": "upsertInteractionFlow", "pageRef": "render", "ref": "buy", "nodes": [
@@ -436,6 +437,55 @@ connects that source to a descendant's field.
     { "title": "Toast", "nodeType": "globalCallback", "action": "addNotification", "params": { "content": "Added to cart" } }
 ] }
 \`\`\`
+
+### Show, hide and toggle — \`setState\` / \`toggleState\`
+Every element registers two \`callback\` actions that change **the element \`elementId\` names**:
+- **\`setState\`** — \`category\` (\`"state"\` or \`"attribute"\`), \`key\`, \`value\`. With \`category:"state"\` the key
+  is **\`"visibility"\`** (a boolean: show/hide) or \`"styleSelectors.<selector>"\`. With \`category:"attribute"\` the
+  key is one of the element's own props (\`content\`, \`disabled\`, \`src\`…).
+- **\`toggleState\`** — the same write with **no \`value\`**: it stores the OPPOSITE of what is there. This is how
+  you show/hide on click. There is no separate "toggleVisibility" action — it is
+  \`toggleState\` + \`category:"state"\` + \`key:"visibility"\`.
+
+An element starts hidden with \`initialState: { "visibility": false }\` on the element itself. Anything not already
+\`true\` counts as false, so a panel that has never been set flips **open** on the first click.
+
+Expand/collapse is therefore **ONE step on ONE trigger** — never two \`setState\` branches under opposite \`when\`
+conditions, which read the state as it was when the flow STARTED and so are always one click behind:
+
+\`\`\`json
+{ "operations": [
+  { "type": "upsertElement", "pageRef": "render", "element": { "ref": "card", "type": "container", "children": [
+      { "ref": "card-head", "type": "button", "props": { "content": "Details" } },
+      { "ref": "card-body", "type": "container", "initialState": { "visibility": false }, "children": [
+          { "ref": "card-text", "type": "paragraph", "props": { "content": "The hidden detail." } } ] } ] } },
+  { "type": "upsertInteractionFlow", "pageRef": "render", "ref": "card-head", "nodes": [
+      { "title": "On click", "nodeType": "trigger", "action": "onClick" },
+      { "title": "Toggle body", "nodeType": "callback", "action": "toggleState", "elementId": "card-body",
+        "params": { "category": "state", "key": "visibility" } } ] }
+] }
+\`\`\`
+
+Two \`setState\`s share a name and are **not interchangeable**: the \`callback\` one (above) changes that element's
+own state/attribute; the \`globalCallback\` one (source \`state\`, params \`key\`/\`type\`/\`value\`) writes app state a
+binding can read. Use the element one unless something outside the element must react.
+
+### Several flows on one element
+Call \`upsertInteractionFlow\` again with the same \`ref\` and **omit \`flowId\`** — each call with no \`flowId\`
+creates a NEW flow, so one button can carry an \`onClick\` and an \`onMouseEnter\`, or two independent \`onClick\`
+flows. Passing an existing \`flowId\` REPLACES that flow instead. To change one step, use \`patchInteractionNode\`.
+
+### What comes back, and what does not
+A successful render lists the wiring it stored, one line per flow —
+\`"card-head onClick → toggleState card-body[visibility]"\`. Read it: it is what confirms the flow landed on the
+element you meant, with the step targeting the element you meant. A step naming an \`elementId\` that is not in the
+widget is an **error**, not a silent no-op.
+
+What it does NOT tell you is whether a click was later performed and the callback ran — that is runtime, and this
+tool authors the widget rather than driving it. So report what you wired, not that it was exercised.
+
+Events **bubble**: a clickable element inside another clickable element runs BOTH flows. Put the trigger on one of
+them; if both are needed, the render warns you and names the pair.
 
 ## When it fails
 The tool returns \`rendered: false\` with \`errors: [{ path, message, hint }]\`. Read the hint, fix that one op, and
