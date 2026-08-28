@@ -260,6 +260,27 @@ export const indexAddLayout = (schema: Schema, layout: Element): void => {
   index.detailCache.clear();
 };
 
+/** A layout shell and its `descendants` were deleted. */
+export const indexRemoveLayout = (schema: Schema, layout: Element, descendants: Element[]): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  index.layoutIds.delete(layout.id);
+  const at = index.layoutElements.findIndex(entry => entry.id === layout.id);
+  if (at >= 0) {
+    index.layoutElements.splice(at, 1);
+  }
+
+  index.pageOf.delete(layout.id);
+  for (const el of descendants) {
+    index.pageOf.delete(el.id);
+  }
+
+  index.detailCache.clear();
+};
+
 /** A page and its `descendants` (its non-page elements) were deleted. */
 export const indexRemovePage = (schema: Schema, page: Element, descendants: Element[]): void => {
   const index = cachedIndex(schema);

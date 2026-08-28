@@ -45,18 +45,13 @@ export const upsertPageOp = z
       .nullable()
       .optional()
       .describe(
-        'Ref of the shared layout shell this page renders inside (header/sidebar/footer). "" or null detaches the ' +
-          'page from its layout. Create a shell with upsertLayout; read plitzi://schema/{env}/layouts for the ones ' +
-          'that exist.'
+        'Ref of the layout shell this page renders inside; "" or null detaches it. See plitzi://schema/{env}/layouts.'
       ),
     layoutContainer: z
       .string()
       .nullable()
       .optional()
-      .describe(
-        'Ref of the container INSIDE that shell where a page body is rendered — the slot. Must be an element of ' +
-          'the layout named above. Without it the page body has nowhere to go and the shell renders alone.'
-      ),
+      .describe('Ref of the container INSIDE that shell where this page body goes — the slot. Must belong to it.'),
     enabled: z
       .boolean()
       .optional()

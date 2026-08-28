@@ -39,6 +39,22 @@ const createValidator = (schema: Schema) => {
   // Helper: get element safely
   const getElement = (id: string): Element | undefined => flat[id];
 
+  /**
+   * The LAYOUT shells: a `layoutContainer` nobody owns.
+   *
+   * One of these is a root exactly as a page is. Several pages are rendered *inside* it — they name it in their
+   * `layout` attribute rather than containing it — so it hangs off no page, its descendants are rooted on IT, and
+   * nothing in it is orphaned. The type alone is not the test: a layoutContainer WITH a parent is an ordinary
+   * element of whatever tree owns it.
+   */
+  const layoutRootIds = (): string[] =>
+    Object.values(flat)
+      .filter(element => element?.definition?.type === 'layoutContainer' && !element.definition.parentId)
+      .map(element => element.id);
+
+  /** Every root of the document: its pages, and its layout shells. Both anchor a tree; neither is inside one. */
+  const rootIds = (): string[] => [...pages, ...layoutRootIds()];
+
   // 1. Validate basic schema structure
   const validateStructure = () => {
     if (!(flat as Schema['flat'] | undefined) || typeof flat !== 'object') {
@@ -309,27 +325,27 @@ const createValidator = (schema: Schema) => {
     }
   };
 
-  // 6. Validate rootId consistency
+  // 6. Validate rootId consistency — for every root, pages and layout shells alike
   const validateRootConsistency = () => {
-    pages.forEach(pageId => {
-      const page = getElement(pageId);
-      if (!page) {
+    rootIds().forEach(rootId => {
+      const root = getElement(rootId);
+      if (!root) {
         return;
       }
 
-      // All descendants should have rootId = pageId
+      // All descendants should have rootId = the root they hang off
       const checkDescendants = (elementId: string) => {
         const element = getElement(elementId);
         if (!element?.definition) {
           return;
         }
 
-        if (element.definition.rootId !== pageId) {
+        if (element.definition.rootId !== rootId) {
           errors.push({
             code: 'ROOT_ID_MISMATCH',
-            message: `Element "${elementId}" has rootId "${element.definition.rootId}" but should be "${pageId}" (page's ID)`,
+            message: `Element "${elementId}" has rootId "${element.definition.rootId}" but should be "${rootId}" (its root's ID)`,
             elementId,
-            details: { expectedRootId: pageId, actualRootId: element.definition.rootId }
+            details: { expectedRootId: rootId, actualRootId: element.definition.rootId }
           });
         }
 
@@ -338,8 +354,8 @@ const createValidator = (schema: Schema) => {
         }
       };
 
-      if (page.definition.items) {
-        page.definition.items.forEach(childId => checkDescendants(childId));
+      if (root.definition.items) {
+        root.definition.items.forEach(childId => checkDescendants(childId));
       }
     });
   };
@@ -372,11 +388,11 @@ const createValidator = (schema: Schema) => {
     });
   };
 
-  // 8. Detect orphaned elements (elements not reachable from any page)
+  // 8. Detect orphaned elements (elements not reachable from any root)
   const validateOrphanedElements = (baseElementId?: string) => {
     const reachable = new Set<string>();
 
-    // Mark all elements reachable from pages
+    // Mark all elements reachable from the roots
     const markReachable = (elementId: string) => {
       if (reachable.has(elementId)) {
         return;
@@ -390,15 +406,15 @@ const createValidator = (schema: Schema) => {
     };
 
     /**
-     * A page also reaches the layout it is rendered inside, which is a ROOT of its own rather than a child.
+     * A root also reaches the layout it is rendered inside — which is another root, not a child of it.
      *
-     * Two attributes name it and only one is the way in: `layout` is the layoutContainer element itself — the
-     * shell holding the header, the sidebar, the footer — while `layoutContainer` is the container INSIDE that
-     * shell where this page's body is slotted. Walking from the slot reaches the page's own subtree and nothing
-     * else, so every element of every shared layout read as unreachable: the whole chrome of a space, reported as
-     * orphaned on every validation. Walking from `layout` reaches the shell and the slot with it.
+     * Two attributes name that shell and only one is the way in: `layout` is the layoutContainer element itself,
+     * while `layoutContainer` is the container INSIDE it where this page's body is slotted. Walking from the slot
+     * reaches the page's own subtree and nothing else, which is what made a space's whole chrome read as
+     * unreachable. Both are marked, because a document that names a slot in a shell it does not name is still
+     * describing something real.
      */
-    const markPageLayout = (elementId: string) => {
+    const markRoot = (elementId: string) => {
       markReachable(elementId);
       const attributes = getElement(elementId)?.attributes;
       if (attributes?.layout) {
@@ -411,22 +427,29 @@ const createValidator = (schema: Schema) => {
     };
 
     if (baseElementId) {
-      markPageLayout(baseElementId);
+      markRoot(baseElementId);
     } else {
-      pages.forEach(markPageLayout);
+      rootIds().forEach(markRoot);
     }
 
-    // Check for orphans
+    /**
+     * What is left is genuinely unreachable — and a ROOT is never that.
+     *
+     * A page nobody links to is still a page, and a layout shell no page uses yet is still a shell: both anchor
+     * their own tree, and neither is meant to be found from somewhere else. Reporting either as an orphan reports
+     * the space's own structure as a defect.
+     */
+    const roots = new Set(rootIds());
     Object.keys(flat).forEach(elementId => {
       const element = getElement(elementId);
       if (!element) {
         return;
       }
 
-      if (!reachable.has(elementId) && element.definition.type !== 'page') {
+      if (!reachable.has(elementId) && element.definition.type !== 'page' && !roots.has(elementId)) {
         warnings.push({
           code: 'ORPHANED_ELEMENT',
-          message: `Element "${elementId}" is not reachable from any page`,
+          message: `Element "${elementId}" is not reachable from any page or layout`,
           elementId
         });
       }

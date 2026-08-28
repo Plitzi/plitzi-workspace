@@ -137,6 +137,40 @@ describe('mcp-ai shared layouts', () => {
     expect(pages.find(page => page.ref === 'home')?.layout).toBeUndefined();
   });
 
+  it('refuses to delete a shell that pages still render inside, and names them', async () => {
+    const cap = capturing(await withLayout());
+    const res = await apply(
+      { operations: [{ type: 'deleteLayout', ref: 'main-layout' }] },
+      await withLayout(),
+      cap.persisters
+    );
+
+    expect(res.applied).toBe(false);
+    // Deleted anyway, those pages would render with no chrome and nothing in the document saying why.
+    expect(res.errors?.[0].message).toContain('home, pricing');
+  });
+
+  it('deletes a shell once nothing renders inside it', async () => {
+    const cap = capturing(await withLayout());
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertPage', ref: 'home', layout: null },
+          { type: 'upsertPage', ref: 'pricing', layout: null },
+          { type: 'deleteLayout', ref: 'main-layout' }
+        ]
+      },
+      await withLayout(),
+      cap.persisters
+    );
+
+    expect(res.applied, JSON.stringify(res.errors)).toBe(true);
+    const layouts = readResource(cap.saved(), 'main', 'plitzi://schema/main/layouts')?.data as AILayoutSummary[];
+    expect(layouts).toEqual([]);
+    // The chrome went with it, rather than being left behind with nothing to hang off.
+    expect(readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/main-layout')).toBeNull();
+  });
+
   it('refuses a page pointed at a shell that does not exist', async () => {
     const cap = capturing(buildSpace());
     const res = await apply(

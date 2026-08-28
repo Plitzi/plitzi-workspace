@@ -13,6 +13,7 @@ export * from './elements/deleteElement';
 export * from './elements/moveElement';
 export * from './pages/upsertPage';
 export * from './pages/upsertLayout';
+export * from './pages/deleteLayout';
 export * from './pages/deletePage';
 export * from './folders/upsertFolder';
 export * from './folders/deleteFolder';

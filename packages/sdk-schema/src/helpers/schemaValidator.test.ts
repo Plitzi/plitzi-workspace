@@ -324,6 +324,58 @@ describe('schemaValidator', () => {
     expect(result.warnings.filter(warning => warning.code === 'ORPHANED_ELEMENT')).toEqual([]);
   });
 
+  it('roots a layout shell on itself, and never calls it or its contents orphaned', () => {
+    const inLayout = (id: string, type: string, parentId?: string, items?: string[]): Element => {
+      const element = createElement(id, type, 'lonely-layout');
+
+      return { ...element, definition: { ...element.definition, ...(parentId ? { parentId } : {}), items } };
+    };
+
+    // A shell no page uses YET — authored, not yet attached. It is still a root: nothing is meant to reach it.
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        'page-1': createElement('page-1', 'page'),
+        'lonely-layout': inLayout('lonely-layout', 'layoutContainer', undefined, ['footer']),
+        footer: inLayout('footer', 'container', 'lonely-layout', [])
+      },
+      pages: ['page-1']
+    };
+    (schema.flat['page-1'] as Element).attributes = { default: true };
+
+    const result = validateSchema(schema);
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter(warning => warning.code === 'ORPHANED_ELEMENT')).toEqual([]);
+  });
+
+  it('holds a layout\u2019s descendants to the layout\u2019s own rootId', () => {
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        'page-1': createElement('page-1', 'page'),
+        'main-layout': {
+          ...createElement('main-layout', 'layoutContainer', 'main-layout'),
+          definition: {
+            ...createElement('main-layout', 'layoutContainer', 'main-layout').definition,
+            items: ['stray']
+          }
+        },
+        // Rooted on the page it is not in — the mismatch that used to go unreported, because nothing walked here.
+        stray: {
+          ...createElement('stray', 'container', 'page-1'),
+          definition: { ...createElement('stray', 'container', 'page-1').definition, parentId: 'main-layout' }
+        }
+      },
+      pages: ['page-1']
+    };
+    (schema.flat['page-1'] as Element).attributes = { default: true, layout: 'main-layout' };
+
+    const result = validateSchema(schema);
+
+    expect(result.errors.some(error => error.code === 'ROOT_ID_MISMATCH' && error.elementId === 'stray')).toBe(true);
+  });
+
   it('should detect invalid page references in pages array', () => {
     const schema: Schema = {
       ...EMPTY_SCHEMA.schema,

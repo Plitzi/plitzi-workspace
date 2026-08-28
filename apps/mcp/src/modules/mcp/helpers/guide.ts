@@ -632,6 +632,8 @@ vocabulary:
   an empty container to serve as the slot.
 - \`upsertPage { layout, layoutContainer }\` attaches a page to it; \`layout: null\` detaches. A \`layoutContainer\` that
   is not an element of that shell is refused — stored, it would render the page's body where nobody sees it.
+- \`deleteLayout\` removes a shell and everything in it, and is **refused while any page still renders inside it**
+  (the refusal names them). Destructive: what it deletes is on every page that uses it, so confirm first.
 
 **Where does this element belong?** If the user asks for something "on every page" — a nav item, a banner, a footer
 link, an upgrade prompt in the sidebar — it belongs in the LAYOUT, not in the page you happen to have open. Check

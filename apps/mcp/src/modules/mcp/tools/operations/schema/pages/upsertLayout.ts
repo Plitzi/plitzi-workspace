@@ -10,23 +10,16 @@ import type { Element } from '@plitzi/sdk-shared';
 export const upsertLayoutOp = z
   .object({
     type: z.literal('upsertLayout'),
-    ref: z
-      .string()
-      .describe(
-        'Layout id to update, or a new id you choose to create one. The id IS the name pages reference in their ' +
-          '`layout` — starts with a letter, then letters, numbers, hyphens and underscores, unique across the space.'
-      ),
-    label: z.string().optional().describe('Display name in the builder tree, e.g. "Main layout".'),
+    ref: z.string().describe('Layout id to update, or a new id to create one. Pages reference it by this name.'),
+    label: z.string().optional(),
     subType: z
       .enum(['div', 'header', 'footer', 'nav', 'main', 'section', 'article', 'aside', 'address', 'figure'])
       .optional()
-      .describe('The HTML tag the shell renders as. Defaults to div.')
   })
   .describe(
-    'Create a shared layout shell, or update it when ref already exists. A layout is the chrome several pages ' +
-      'render inside (header, sidebar, footer); it is a ROOT like a page, not part of any page. Put elements in it ' +
-      'with upsertElement using pageRef: "<this ref>", then attach pages to it with upsertPage { layout, ' +
-      'layoutContainer } — layoutContainer names the container INSIDE this shell where each page body goes.'
+    'Create/update a shared layout shell: the chrome (header, sidebar, footer) several pages render INSIDE. It is ' +
+      'a root like a page — fill it with upsertElement using pageRef: "<this ref>", then attach pages with ' +
+      'upsertPage { layout, layoutContainer }. See "Shared layouts" in plitzi://guide.'
   );
 
 export type UpsertLayout = z.infer<typeof upsertLayoutOp>;
