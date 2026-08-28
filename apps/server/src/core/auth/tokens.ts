@@ -23,13 +23,36 @@ export const SCOPES = {
   widget: 'widget',
   spaceRender: 'space:render',
   spaceAgent: 'space:agent',
+  /**
+   * A SERVER that renders this space as its own — self-hosting. Secret by construction, which is the whole reason it
+   * exists apart from `space:render`: see {@link SpaceScope}.
+   */
+  spaceHost: 'space:host',
   /** A sign-in that got the password right and still owes a second factor. Carries no authority of its own. */
   mfa: 'mfa'
 } as const;
 
 export type TokenScope = (typeof SCOPES)[keyof typeof SCOPES];
 
-export type SpaceScope = 'render' | 'agent';
+/**
+ * What a space credential IS, and the distinction the other two are defined against.
+ *
+ * `render` is **public**: it ships in the clear inside every published page, so anybody who views source has it. The
+ * only thing that keeps a copied one from working is that a browser is made to state where it is presenting from and
+ * that statement is checked — a control that exists solely because browsers enforce it, and that means nothing to a
+ * client which simply does not send the header.
+ *
+ * `host` is that same read access for a server, and it is **secret**: shown once when it is issued, never embedded in
+ * a page, held only by the deployment operator. Self-hosting needs a credential that survives having no Origin to
+ * check, and a public one cannot be it — a render key lifted from someone else's page would otherwise be enough to
+ * serve a byte-identical clone of their site from anywhere.
+ *
+ * `agent` writes, on behalf of the member who consented.
+ */
+export type SpaceScope = 'render' | 'agent' | 'host';
+
+/** The scopes that are safe to present with no `Origin` header, because they are not public to begin with. */
+export const OFF_BROWSER_SPACE_SCOPES: readonly SpaceScope[] = ['agent', 'host'];
 
 /** Why a credential was refused. A reason rather than a status, because each transport maps it onto its own. */
 export type AuthFailure =
@@ -158,7 +181,7 @@ export interface MfaChallengePayload extends BaseClaims {
 }
 
 export interface SpaceTokenPayload extends BaseClaims {
-  scope: typeof SCOPES.spaceRender | typeof SCOPES.spaceAgent;
+  scope: typeof SCOPES.spaceRender | typeof SCOPES.spaceAgent | typeof SCOPES.spaceHost;
   sub: string;
   /** Web origins the space may be embedded on. No registered claim covers this. */
   origins: string[];
@@ -184,12 +207,14 @@ export interface SpaceTokenOptions {
 
 const spaceScopeToClaim: Record<SpaceScope, TokenScope> = {
   render: SCOPES.spaceRender,
-  agent: SCOPES.spaceAgent
+  agent: SCOPES.spaceAgent,
+  host: SCOPES.spaceHost
 };
 
 const claimToSpaceScope: Partial<Record<string, SpaceScope>> = {
   [SCOPES.spaceRender]: 'render',
-  [SCOPES.spaceAgent]: 'agent'
+  [SCOPES.spaceAgent]: 'agent',
+  [SCOPES.spaceHost]: 'host'
 };
 
 // A credential minted before the registered-claims design. Recognised so it is reported as outdated (and therefore
@@ -326,6 +351,11 @@ export const createTokens = (config: TokenConfig) => {
      *
      * An `agent` grant is the opposite default and always carries a lifetime: it writes, and it is held by a
      * third-party host.
+     *
+     * A `host` grant follows `render`: it only reads, it is held by the space owner's own deployment, and an expiry
+     * there is the same scheduled outage — except the site goes quietly STALE rather than dark, because a
+     * self-hosted renderer keeps serving the last copy it fetched. Being secret, it is worth rotating; being
+     * revocable, it does not need a deadline to be withdrawn.
      */
     generateSpaceToken: (
       spaceId: number | string,
@@ -354,7 +384,9 @@ export const createTokens = (config: TokenConfig) => {
     verifySpaceToken: (
       token: string
     ): VerifyResult<SpaceTokenPayload & { spaceId: number; spaceScope: SpaceScope }> => {
-      const result = withSubject(verifyScoped<SpaceTokenPayload>(token, [SCOPES.spaceRender, SCOPES.spaceAgent]));
+      const result = withSubject(
+        verifyScoped<SpaceTokenPayload>(token, [SCOPES.spaceRender, SCOPES.spaceAgent, SCOPES.spaceHost])
+      );
       if (!result.ok) {
         return result;
       }

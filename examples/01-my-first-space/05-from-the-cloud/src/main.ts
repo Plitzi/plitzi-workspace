@@ -1,10 +1,18 @@
 import { consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 8080);
-const WEB_KEY = process.env.PLITZI_WEB_KEY ?? '';
+/**
+ * The space's HOST key — not the public one the published page embeds.
+ *
+ * They are different credentials on purpose. The public `render` key is readable by anyone who views source on the
+ * published site, and what keeps a copied one from working is that a browser is made to state the origin it is
+ * presenting from. A server has no such statement to make, so it gets a key whose protection is that it is secret:
+ * issued once, never committed, never shipped in a page, and revocable on its own without touching the live site.
+ */
+const HOST_KEY = process.env.PLITZI_HOST_KEY ?? '';
 
-if (!WEB_KEY) {
-  throw new Error('Set PLITZI_WEB_KEY to the space key from Credentials in the builder.');
+if (!HOST_KEY) {
+  throw new Error('Set PLITZI_HOST_KEY to the space’s self-hosting key from Credentials in the builder.');
 }
 
 /**
@@ -16,7 +24,7 @@ if (!WEB_KEY) {
  * here, under this deployment's own domain, auth, actions and logs.
  */
 const adapters = createCloudAdapters({
-  webKey: WEB_KEY,
+  webKey: HOST_KEY,
   // Left unset this is Plitzi's production server, which is where a self-hosted deployment reads from. Set
   // PLITZI_SERVER_URL only to point at a staging or local Plitzi (see the README on Node and the mkcert CA).
   ...(process.env.PLITZI_SERVER_URL ? { serverUrl: process.env.PLITZI_SERVER_URL } : {}),

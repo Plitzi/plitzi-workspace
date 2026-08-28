@@ -144,9 +144,11 @@ export type SSRPlugin = {
 };
 
 /** What a space token is worth. `render` is the public credential every published site embeds — it is readable
- *  by anyone who views the page, so it may only read. `agent` is the delegated grant an MCP connector receives
- *  after a member consents, and is the only bearer that may write without a session behind it. */
-export type SpaceScope = 'render' | 'agent';
+ *  by anyone who views the page, so it may only read, and only from the origins it declares. `host` is that same
+ *  read access for a SERVER that renders the space as its own (self-hosting): secret rather than published, since
+ *  a server has no browser origin for the allowlist to check. `agent` is the delegated grant an MCP connector
+ *  receives after a member consents, and is the only bearer that may write without a session behind it. */
+export type SpaceScope = 'render' | 'agent' | 'host';
 
 /** A resolved space token: which space, what the bearer may do, and (for `agent`) the member who consented.
  *  `canWrite` is computed by the consumer from its own authorization model — the MCP never derives it. */

@@ -38,8 +38,12 @@ export type CloudAdaptersConfig = {
   /** The GraphQL endpoint of the Plitzi server role. Defaults to production. */
   serverUrl?: string;
   /**
-   * The space's web key, which is what says WHICH space: the token is minted for one, so no space id travels here
-   * and none can be asked for by guessing a number.
+   * The space's **host** key, which is what says WHICH space: the token is minted for one, so no space id travels
+   * here and none can be asked for by guessing a number.
+   *
+   * This is NOT the public render key that a published page embeds. It is issued separately, shown once, and must
+   * stay secret — see {@link assertHostKey} for why the public one is refused here rather than being allowed to
+   * work.
    */
   webKey: string;
   /**
@@ -151,6 +155,59 @@ const byIdentifier = (segments: unknown[] | undefined): OfflineDataRaw['segments
     return { ...acum, [identifier]: segment as never };
   }, {});
 
+/**
+ * The `scope` claim, read without verifying anything.
+ *
+ * Verification is the server's and this cannot do it — there is no signing key here, and a key this deployment does
+ * not hold could not be checked anyway. Reading the claim is enough for what this is for: telling the operator, at
+ * startup, that they pasted the wrong one of their two keys.
+ */
+const scopeOf = (token: string): string | undefined => {
+  const payload = token.split('.')[1];
+  if (!payload) {
+    return undefined;
+  }
+
+  try {
+    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { scope?: unknown };
+
+    return typeof claims.scope === 'string' ? claims.scope : undefined;
+  } catch {
+    // Not a JWT this understands. The server will say so properly; guessing here would only pre-empt a better error.
+    return undefined;
+  }
+};
+
+/**
+ * Refuse the PUBLIC key here, where the mistake is cheap, rather than as a 401 an hour later.
+ *
+ * The two keys are not interchangeable and the difference is the whole security model. A `render` key is embedded in
+ * every published page, so anyone who views source has it; what keeps a copied one from working is that a browser is
+ * made to state the origin it is presenting from, and that statement is checked. A server has no such statement to
+ * make — which is exactly why a server must not be reading with the public key: if it could, a render key lifted
+ * from someone else's site would be enough to serve a byte-identical clone of it from here.
+ *
+ * So self-hosting has a credential of its own. It is secret, issued once, bound to no domain, and revocable on its
+ * own row without touching the published site's key.
+ */
+const assertHostKey = (webKey: string): void => {
+  const scope = scopeOf(webKey);
+  if (scope === undefined || scope === 'space:host') {
+    return;
+  }
+
+  if (scope === 'space:render') {
+    throw new Error(
+      'createCloudAdapters was given the space’s PUBLIC render key. That key is embedded in published pages and is ' +
+        'only honoured from the origins it declares, so a server cannot present it. Issue a host key instead ' +
+        '(Credentials → “Self-hosting” in the builder, or POST /spaces/{id}/tokens/host) and keep it secret — it is ' +
+        'not safe to commit or to ship in a page.'
+    );
+  }
+
+  throw new Error(`createCloudAdapters needs a space host key; this one is scoped "${scope}".`);
+};
+
 export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapters => {
   const {
     serverUrl = PLITZI_SERVER_URL,
@@ -163,6 +220,8 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
     deployment,
     fetchImpl = fetch
   } = config;
+
+  assertHostKey(webKey);
 
   /** `main` is the document somebody is editing right now. Nothing about it is worth remembering for a minute. */
   const isLive = (env: string) => env === 'main';

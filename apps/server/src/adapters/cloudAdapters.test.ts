@@ -240,3 +240,28 @@ describe('createCloudAdapters', () => {
     expect(second.spaces()).toBe(0);
   });
 });
+
+// The two keys a space has are not interchangeable, and pasting the published one here is the mistake worth catching
+// at startup: it is the one that, if it worked, would let a key lifted from anybody's page clone their site.
+describe('which key it accepts', () => {
+  const keyScoped = (scope: string) =>
+    `header.${Buffer.from(JSON.stringify({ sub: '1', scope })).toString('base64url')}.signature`;
+
+  it('refuses the public render key, naming the one to use instead', () => {
+    expect(() => adapters(cloud().fetchImpl, { webKey: keyScoped('space:render') })).toThrow(/PUBLIC render key/);
+  });
+
+  it('refuses any other scope', () => {
+    expect(() => adapters(cloud().fetchImpl, { webKey: keyScoped('space:agent') })).toThrow(/space host key/);
+  });
+
+  it('accepts a host key', () => {
+    expect(() => adapters(cloud().fetchImpl, { webKey: keyScoped('space:host') })).not.toThrow();
+  });
+
+  // Verification is the server's — this cannot check a signature and must not pretend to. Something it cannot read
+  // is passed through so the server answers properly, rather than being pre-empted by a worse guess here.
+  it('passes through anything it cannot read, leaving the verdict to the server', () => {
+    expect(() => adapters(cloud().fetchImpl, { webKey: 'not-a-jwt' })).not.toThrow();
+  });
+});
