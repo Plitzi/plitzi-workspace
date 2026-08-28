@@ -176,6 +176,28 @@ describe('resolving a space grant', () => {
 
     expect(result.ok).toBe(true);
   });
+
+  // A self-hosted deployment reading its own space over `createCloudAdapters` is the case: no browser, so no Origin,
+  // and the domain binding is what the credential is actually held to.
+  it('lets a caller with no Origin through on the domain binding alone', async () => {
+    const token = tokens.generateSpaceToken(42, ['https://acme.com']);
+    const identity = build({ findSpaceToken: () => Promise.resolve(stored()) }, { platformHosts: ['server.us.test'] });
+
+    const result = await identity.resolveGrant(carrier({ authorization: `Bearer ${token}` }, 'server.us.test'));
+
+    expect(result.ok).toBe(true);
+  });
+
+  it('still refuses a browser presenting from an origin the token does not declare', async () => {
+    const token = tokens.generateSpaceToken(42, ['https://acme.com']);
+    const identity = build({ findSpaceToken: () => Promise.resolve(stored()) }, { platformHosts: ['server.us.test'] });
+
+    const result = await identity.resolveGrant(
+      carrier({ authorization: `Bearer ${token}`, origin: 'https://evil.com' }, 'server.us.test')
+    );
+
+    expect(result).toEqual({ ok: false, reason: 'origin-not-allowed' });
+  });
 });
 
 describe('what an actor may do in a space', () => {

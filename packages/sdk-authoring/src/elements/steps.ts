@@ -78,3 +78,21 @@ export const updateElement = (
   ...(target === undefined ? {} : { on: target }),
   params
 });
+
+/**
+ * The same write as {@link updateElement}, storing the opposite of what is there — a panel that expands on one click
+ * and collapses on the next, from ONE step on ONE trigger.
+ *
+ * Use it over a state key ({@link toggleState}) when nothing outside this element needs to know whether the panel is
+ * open. Anything not already `true` counts as false, so a selector nobody has set yet flips ON first.
+ */
+export const toggleElement = (
+  params: { category: 'attribute' | 'state'; key: string; revertOnFinish?: boolean },
+  target?: string
+): StepSpec => ({
+  type: 'callback',
+  action: 'toggleState',
+  title: 'Toggle Element',
+  ...(target === undefined ? {} : { on: target }),
+  params
+});

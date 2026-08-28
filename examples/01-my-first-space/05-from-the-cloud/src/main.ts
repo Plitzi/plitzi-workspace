@@ -1,6 +1,6 @@
 import { consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
 
-const PORT = Number(process.env.PORT ?? 4005);
+const PORT = Number(process.env.PORT ?? 8080);
 const WEB_KEY = process.env.PLITZI_WEB_KEY ?? '';
 
 if (!WEB_KEY) {
@@ -16,9 +16,10 @@ if (!WEB_KEY) {
  * here, under this deployment's own domain, auth, actions and logs.
  */
 const adapters = createCloudAdapters({
-  // `serverUrl` is not passed: it defaults to Plitzi's production server, which is where a self-hosted deployment
-  // reads from. Set it only to point at a staging Plitzi.
   webKey: WEB_KEY,
+  // Left unset this is Plitzi's production server, which is where a self-hosted deployment reads from. Set
+  // PLITZI_SERVER_URL only to point at a staging or local Plitzi (see the README on Node and the mkcert CA).
+  ...(process.env.PLITZI_SERVER_URL ? { serverUrl: process.env.PLITZI_SERVER_URL } : {}),
   /**
    * Which version this server serves — the one decision to be deliberate about:
    *

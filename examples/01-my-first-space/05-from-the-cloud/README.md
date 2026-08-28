@@ -10,7 +10,7 @@ PLITZI_WEB_KEY=<the space key> yarn start
 The key comes from **Credentials** in the builder; it names the space, so no space id appears in the config and
 none can be reached by guessing a number.
 
-> **Pointing at a local Plitzi** (`serverUrl: 'https://server.plitzi.local'`): the dev stack serves TLS with a
+> **Pointing at a local Plitzi** (`PLITZI_SERVER_URL=https://server.plitzi.local`): the dev stack serves TLS with a
 > mkcert certificate, which browsers trust but Node's `fetch` does not. The `start` scripts already set
 > `NODE_OPTIONS=--use-system-ca` so Node reads the system trust store — plain `yarn start` works. That flag needs
 > Node 22+; on Node 20/21 set `NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` instead.

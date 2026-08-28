@@ -403,10 +403,13 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   for a boolean attribute, a number for a numeric one, otherwise a string), and **\`revertOnFinish\`**. Set
   \`revertOnFinish: true\` for a **temporary** change (a "loading…" label, disabling a button while it works): it is
   **undone automatically when the flow finishes**, so you do **NOT** add manual restore steps at the end. This element
-  \`setState\` has **no** \`type\` param (that belongs to the global one below). An element type may also register its
-  own extra callbacks.
+  \`setState\` has **no** \`type\` param (that belongs to the global one below). Beside it every element registers
+  **\`toggleState\`** — the same write with **no \`value\`**: it stores the OPPOSITE of what is there
+  (\`category\`, \`key\`, \`revertOnFinish\`). That is how expand/collapse is authored — **one step on one trigger**,
+  never two \`setState\` branches under complementary \`when\` conditions, which read the state as it was when the
+  flow STARTED and so are always one step behind. An element type may also register its own extra callbacks.
 - \`globalCallback\` — a callback provided by a **source module**, NOT by any element: \`addNotification\` (source
-  \`space\`), \`setState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`login\`/\`logout\`/
+  \`space\`), \`setState\`/\`toggleState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`login\`/\`logout\`/
   \`refreshDetails\` (\`auth\`), \`runServerAction\`/\`cancelServerAction\` (\`actions\`). Its \`elementId\` is the
   **source module id**, never the host element — a node that stored the host element's name here would resolve to
   nothing at runtime. **Omit \`elementId\`**: the MCP sets the correct source and fills the
@@ -415,10 +418,13 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   callback declares (exact spelling) — for \`addNotification\` the visible text goes in \`content\`; there is **no**
   \`title\`/\`message\`/\`type\` param, and any unknown key is dropped. See the full param schema for each callback under
   \`globalCallbacks\` in \`plitzi://interactions/{env}\`.
-- **Two \`setState\`s — do not mix them:** the **element** \`setState\` (nodeType \`callback\`, on an element,
-  category/key/value/revertOnFinish) changes THAT element's attribute/state and is what you want to change a button's
-  label or disabled flag. The **global** \`setState\` (nodeType \`globalCallback\`, source \`state\`, key/type/value)
-  writes \`runtime.state.<key>\`. They share a name but have different node types AND different params.
+- **Two \`setState\`s (and two \`toggleState\`s) — do not mix them:** the **element** \`setState\` (nodeType
+  \`callback\`, on an element, category/key/value/revertOnFinish) changes THAT element's attribute/state and is what
+  you want to change a button's label or disabled flag. The **global** \`setState\` (nodeType \`globalCallback\`,
+  source \`state\`, key/type/value) writes \`runtime.state.<key>\`. They share a name but have different node types
+  AND different params, and \`toggleState\` splits the same way: on an element (category/key/revertOnFinish) it flips
+  that element's own field; on source \`state\` (key) it flips \`runtime.state.<key>\`. Pick the element one when
+  nothing outside the element needs to know it is open; pick the state one when something else binds to it.
 - \`utility\` — a built-in utility action (no element/source module); nodeType \`utility\`. Use the **exact** param
   names: \`delayTime\` waits \`time\` milliseconds (**not** \`delay\`), \`twigTemplate\` (\`returnMode\`, \`template\`),
   \`webHook\` (\`url\`, \`method\`, …). See \`utilities\` in \`plitzi://interactions/{env}\`.

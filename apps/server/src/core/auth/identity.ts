@@ -210,8 +210,12 @@ export const createIdentity = ({
       return { ok: false, reason: 'origin-not-allowed' };
     }
 
+    // No `Origin` means no browser made this request, and the allowlist has nothing to check against: a header the
+    // caller writes cannot tell a self-hosted server reading its own space from anything else, so refusing here only
+    // ever blocked the honest callers. What is actually protecting the credential is the domain binding above, which
+    // ran already and is not waivable — the same reasoning by which a server render passes `skipOrigin`.
     if (!origin) {
-      return allowWithoutOrigin ? { ok: true, grant } : { ok: false, reason: 'origin-not-allowed' };
+      return { ok: true, grant };
     }
 
     if (!originAllowed(origin, origins)) {

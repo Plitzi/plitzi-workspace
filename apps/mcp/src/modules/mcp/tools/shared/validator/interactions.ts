@@ -22,9 +22,13 @@ import type { InteractionNodeInput } from '../../operations/schema/shared';
 // plugin/element-specific callback); a setState `key` that is not a real attribute of a DEFAULT (sdk-elements)
 // type is a hard ERROR, since we own the full attribute set of those types.
 
-// setState exists as BOTH a globalCallback (source `state`, params key/type/value → runtime.state.*) and an element
-// callback (params category/key/value/revertOnFinish → the element's own attribute/state). It is disambiguated by
-// node type, so it is never cross-warned as "wrong type".
+// setState and toggleState each exist as BOTH a globalCallback (source `state`, writing runtime.state.*) and an
+// element callback (category/key/... → the element's own attribute/state). Each is disambiguated by node type, so
+// neither is ever cross-warned as "wrong type".
+
+// The two element actions that name a field of the target element, and so can have that name checked against the
+// element's type. They differ only in whether a `value` is authored beside the key.
+const ELEMENT_FIELD_ACTIONS = new Set(['setState', 'toggleState']);
 
 const describeType = (type: BuiltinParamType): string => {
   switch (type) {
@@ -124,11 +128,11 @@ const checkGlobalCallback = (node: InteractionNodeInput, base: string, ctx: Vali
   }
 };
 
-// The element `setState` sets an attribute or state key of the TARGET element. We can validate the key against that
-// element's type: strict (ERROR) for a default (custom:false) type — we own its full attribute/selector set — and
-// lenient (WARNING) for a plugin/unknown type. `category="attribute"` → key ∈ the type's attributes;
+// The element `setState`/`toggleState` name an attribute or state key of the TARGET element. We can validate the key
+// against that element's type: strict (ERROR) for a default (custom:false) type — we own its full attribute/selector
+// set — and lenient (WARNING) for a plugin/unknown type. `category="attribute"` → key ∈ the type's attributes;
 // `category="state"` → key is `visibility` or `styleSelectors.<selector>`.
-const checkSetStateKey = (node: InteractionNodeInput, base: string, ctx: ValidationCtx, hostRef: string): void => {
+const checkElementFieldKey = (node: InteractionNodeInput, base: string, ctx: ValidationCtx, hostRef: string): void => {
   const key = node.params?.key;
   if (typeof key !== 'string' || key === '') {
     return;
@@ -152,7 +156,7 @@ const checkSetStateKey = (node: InteractionNodeInput, base: string, ctx: Validat
 
   const kind = state ? 'state' : 'attribute';
   const valid = [...validKeys].sort();
-  const detail = `Element setState at ${base} sets ${kind} "${key}" on type "${type}", which has no such ${kind} key`;
+  const detail = `Element ${node.action} at ${base} names ${kind} "${key}" on type "${type}", which has no such ${kind} key`;
   if (!meta.custom) {
     ctx.errors.push({ path: base, message: detail, hint: `Use one of: ${valid.join(', ')}`, validValues: valid });
   } else {
@@ -183,8 +187,8 @@ const checkElementCallback = (node: InteractionNodeInput, base: string, ctx: Val
     checkParams('Element callback', node.action, node.params, builtin.params, base, ctx);
   }
 
-  if (node.action === 'setState') {
-    checkSetStateKey(node, base, ctx, hostRef);
+  if (ELEMENT_FIELD_ACTIONS.has(node.action)) {
+    checkElementFieldKey(node, base, ctx, hostRef);
   }
 };
 

@@ -11,10 +11,10 @@ import type { BuiltinActionSpec } from './builder';
 // `elementId` is the element's own id (the flow host, or another element the step targets). The runtime resolves
 // it as `callbacksAvailables[elementId][action]`.
 //
-// `setState` is the confusing one: there is ALSO a global `setState` (source `state`) with a DIFFERENT param schema
-// (key/type/value, writes runtime.state.*). The two are told apart by node type — a `callback` setState is THIS
-// element schema; a `globalCallback` setState is the state-source schema. This element `setState` changes the
-// element's own attribute or state, and its `revertOnFinish` flag makes the change undo itself when the whole flow
+// `setState` and `toggleState` are the confusing ones: there are ALSO global `setState`/`toggleState` (source
+// `state`) with DIFFERENT param schemas (writing runtime.state.*). Each pair is told apart by node type — a
+// `callback` one is THIS element schema; a `globalCallback` one is the state-source schema. These change the
+// element's own attribute or state, and their `revertOnFinish` flag makes the change undo itself when the whole flow
 // finishes (a postCallback that runs in reverse) — the correct way to do a temporary change (a "loading…" label, a
 // disabled button) WITHOUT adding manual restore steps.
 
@@ -63,6 +63,47 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
           'When true, this change is UNDONE automatically when the whole flow finishes. Use it for a TEMPORARY ' +
           'change (a "loading…" label, disabling a button while it works) instead of adding manual restore steps at ' +
           'the end of the flow.',
+        default: false,
+        label: 'Revert changes after interaction'
+      }
+    }
+  },
+  /**
+   * Expand and collapse from ONE flow on ONE trigger — the same write as `setState`, except the value it stores is
+   * the opposite of the one already there.
+   *
+   * Written with `setState` this needed two steps whose `when` conditions had to be exact complements of each other,
+   * and those conditions read the state as it was when the flow STARTED: the pattern only worked because the second
+   * branch happened to see a value one step behind, and stopped working the moment anything else in the flow touched
+   * the same key. There is no ordering to get wrong here.
+   */
+  toggleState: {
+    title: 'Toggle Element (flip attribute / state)',
+    type: 'callback',
+    strictParams: true,
+    params: {
+      category: {
+        type: 'select',
+        description:
+          'What to flip on the element: "attribute" flips one of its props (e.g. disabled); "state" flips element ' +
+          'state ("visibility", or "styleSelectors.<selector>" for an expanded/collapsed look). REQUIRED.',
+        default: 'state',
+        options: ['attribute', 'state'],
+        required: true
+      },
+      key: {
+        type: 'text',
+        description:
+          'The field to flip. When category="attribute", an attribute/prop key of THIS element. When ' +
+          'category="state", "visibility" or "styleSelectors.<selector>". Anything not already true counts as ' +
+          'false, so a field that has never been set flips ON first. REQUIRED.',
+        required: true
+      },
+      revertOnFinish: {
+        type: 'boolean',
+        description:
+          'When true, the flip is UNDONE automatically when the whole flow finishes — a change that lasts only as ' +
+          'long as the flow does.',
         default: false,
         label: 'Revert changes after interaction'
       }

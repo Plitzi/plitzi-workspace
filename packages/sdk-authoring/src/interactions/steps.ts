@@ -40,6 +40,15 @@ const globalStep = (action: string, params: Record<string, unknown> = {}): StepS
 export const setState = (params: { key: string; type: 'boolean' | 'number' | 'text'; value: unknown }): StepSpec =>
   globalStep('setState', params);
 
+/**
+ * Flips `runtime.state.<key>` — expand and collapse, open and close, from ONE step on ONE trigger.
+ *
+ * The alternative is two `setState` steps under `when` conditions that have to be exact complements of each other,
+ * and those conditions read the state as it was when the flow STARTED, so the pattern only ever worked by being one
+ * step behind. Anything not already `true` counts as false, so a key nobody has set yet flips ON first.
+ */
+export const toggleState = (params: { key: string }): StepSpec => globalStep('toggleState', params);
+
 /** Empties `runtime.state` entirely. */
 export const clearState = (): StepSpec => globalStep('clearState');
 
