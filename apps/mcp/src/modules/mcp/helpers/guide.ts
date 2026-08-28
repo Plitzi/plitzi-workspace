@@ -61,6 +61,11 @@ A space is **two schemas you edit together in one atomic \`plitzi_apply\` batch*
 pages/elements) and the **style schema** (definitions = CSS classes, tokens, theme). To style an element: write a
 **definition** and attach it via the element's \`style.base\` in the same batch.
 
+**Big spaces:** a primer section may arrive as \`{elided:true, bytes, entries, read}\` instead of its contents —
+the space outgrew what one cold-start read can carry. \`read\` is the resource that serves that exact section whole
+(\`plitzi://definitions/{env}\`, \`plitzi://interactions/{env}\`, …). Read the ones your task needs; nothing is
+missing, it is one round-trip away.
+
 **Workflow:** (1) you already have this primer (guide + types + css + page/style summaries). (2) \`plitzi_search\`
 with \`include:"detail"\` to find elements — each hit carries its \`uri\`, \`stateVersion\` and full style, so no
 per-element read. (3) \`plitzi_apply\` with \`dryRun:true\` to preview. (4) \`plitzi_apply\` to persist, passing

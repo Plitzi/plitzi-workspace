@@ -90,7 +90,10 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
     // A flow node first, then a data source. A step's id used to carry a `node_` prefix that told the two apart;
     // now both are plain names, and what settles it is which one the flow actually holds.
     let paths: Promise<Exclude<Option, OptionGroup>[]> | Exclude<Option, OptionGroup>[] = [];
-    if (!(previewData[node.value] as Record<string, unknown> | undefined) && (dataSource[node.value] as SourceMeta | undefined)) {
+    if (
+      !(previewData[node.value] as Record<string, unknown> | undefined) &&
+      (dataSource[node.value] as SourceMeta | undefined)
+    ) {
       paths = new Promise(async resolve => {
         let { fields } = dataSource[node.value];
         if (typeof fields === 'function') {
