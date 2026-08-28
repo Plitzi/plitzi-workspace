@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty, fail, findPageByRef, resolveRef } from '../../../../helpers';
+import { empty, fail, findRootByRef, resolveRef } from '../../../../helpers';
 import { elementInput, position } from '../shared';
 import { collectInputRefs, createElement, guardNewRef, pageUri, writeInitialState } from '../write';
 
@@ -24,9 +24,13 @@ export const upsertElementOp = z
 export type UpsertElement = z.infer<typeof upsertElementOp>;
 
 export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResult => {
-  const page = findPageByRef(space.schema, op.pageRef);
+  const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
-    return fail('pageRef', `Page "${op.pageRef}" not found`, 'Read plitzi://schema/' + env + '/pages for valid refs');
+    return fail(
+      'pageRef',
+      `Page or layout "${op.pageRef}" not found`,
+      'Read plitzi://schema/' + env + '/pages for valid refs'
+    );
   }
 
   const existing = resolveRef(space.schema, page, op.element.ref);

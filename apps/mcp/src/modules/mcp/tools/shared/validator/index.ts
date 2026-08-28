@@ -19,6 +19,8 @@ import {
   findElementByRef,
   findFolderByRef,
   findPageByRef,
+  findRootByRef,
+  getLayoutElements,
   folderAncestorIds,
   getPageElements,
   pageFoldersOf,
@@ -146,12 +148,17 @@ export const validateOperations = (
         op.type === 'deleteInteraction') &&
       op.pageRef
     ) {
-      if (!findPageByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
-        const validRefs = getPageElements(space.schema).map(page => page.id);
+      // A layout shell is addressed here exactly as a page is — the header and the sidebar of a space live in one,
+      // and editing them is the same operation on a different root.
+      if (!findRootByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
+        const validRefs = [
+          ...getPageElements(space.schema).map(page => page.id),
+          ...getLayoutElements(space.schema).map(layout => layout.id)
+        ];
         ctx.errors.push({
           path: `${base}.pageRef`,
-          message: `Page "${op.pageRef}" does not exist`,
-          hint: 'Use an existing page ref, or create it with upsertPage earlier in the same batch',
+          message: `Page or layout "${op.pageRef}" does not exist`,
+          hint: 'Use an existing page or layout ref, or create the page with upsertPage earlier in the same batch',
           validValues: validRefs
         });
       }
@@ -165,7 +172,7 @@ export const validateOperations = (
         break;
       case 'patchElement': {
         checkRef(op.ref, `${base}.ref`, ctx);
-        const page = findPageByRef(space.schema, op.pageRef);
+        const page = findRootByRef(space.schema, op.pageRef);
         const target = page ? resolveRef(space.schema, page, op.ref) : undefined;
         if (op.props) {
           for (const [key, value] of Object.entries(op.props)) {

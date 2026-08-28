@@ -24,6 +24,8 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.upsertPage(space, env, op);
     case 'deletePage':
       return schema.deletePage(space, env, op);
+    case 'upsertLayout':
+      return schema.upsertLayout(space, env, op);
     case 'upsertFolder':
       return schema.upsertFolder(space, env, op);
     case 'deleteFolder':

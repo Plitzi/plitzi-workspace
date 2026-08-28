@@ -1,6 +1,6 @@
 import { elementIdConflict, isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
-import { fail, findPageByRef, indexAddElement, resolveRef } from '../../../helpers';
+import { fail, findRootByRef, indexAddElement, resolveRef } from '../../../helpers';
 
 import type { ElementInput, InitialStateInput } from './shared';
 import type { OpResult, Space } from '../../../helpers';
@@ -39,7 +39,7 @@ export const guardNewRef = (space: Space, ref: string, field: string): OpResult 
 
 // URI builders are the single source of truth in helpers/uris; re-exported here so the element-schema handlers
 // keep importing them from `../write` unchanged.
-export { folderUri, foldersUri, pageUri, pagesUri, schemaVarsUri, settingsUri } from '../../../helpers';
+export { folderUri, foldersUri, layoutsUri, pageUri, pagesUri, schemaVarsUri, settingsUri } from '../../../helpers';
 
 // Detach an element from its parent's item list. The child names its parent (definition.parentId), so this splices
 // the one owning list directly — O(items) — instead of scanning every element in the space (O(flat)), which turned
@@ -155,10 +155,14 @@ export const resolveElement = (
   pageRef: string,
   ref: string
 ): { el: Element } | { error: OpResult } => {
-  const page = findPageByRef(space.schema, pageRef);
+  const page = findRootByRef(space.schema, pageRef);
   if (!page) {
     return {
-      error: fail('pageRef', `Page "${pageRef}" not found`, `Read plitzi://schema/${env}/pages for valid refs`)
+      error: fail(
+        'pageRef',
+        `Page or layout "${pageRef}" not found`,
+        `Read plitzi://schema/${env}/pages for valid refs — a layout shell is named there too`
+      )
     };
   }
 

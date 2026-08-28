@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty, fail, findPageByRef, indexInvalidateDetails, resolveRef } from '../../../../helpers';
+import { empty, fail, findRootByRef, indexInvalidateDetails, resolveRef } from '../../../../helpers';
 import { position } from '../shared';
 import { pageUri, placeChild, removeFromParent } from '../write';
 
@@ -21,9 +21,9 @@ export const moveElementOp = z
 export type MoveElement = z.infer<typeof moveElementOp>;
 
 export const moveElement = (space: Space, env: Env, op: MoveElement): OpResult => {
-  const page = findPageByRef(space.schema, op.pageRef);
+  const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
-    return fail('pageRef', `Page "${op.pageRef}" not found`, 'Read the pages resource for valid refs');
+    return fail('pageRef', `Page or layout "${op.pageRef}" not found`, 'Read the pages resource for valid refs');
   }
 
   const el = resolveRef(space.schema, page, op.ref);

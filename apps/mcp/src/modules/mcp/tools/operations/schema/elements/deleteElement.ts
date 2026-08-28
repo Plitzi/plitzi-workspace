@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { descendantIds, empty, fail, findPageByRef, indexRemoveElements, resolveRef } from '../../../../helpers';
+import { descendantIds, empty, fail, findRootByRef, indexRemoveElements, resolveRef } from '../../../../helpers';
 import { pageUri, removeFromParent } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -18,9 +18,9 @@ export const deleteElementOp = z
 export type DeleteElement = z.infer<typeof deleteElementOp>;
 
 export const deleteElement = (space: Space, env: Env, op: DeleteElement): OpResult => {
-  const page = findPageByRef(space.schema, op.pageRef);
+  const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
-    return fail('pageRef', `Page "${op.pageRef}" not found`, 'Read the pages resource for valid refs');
+    return fail('pageRef', `Page or layout "${op.pageRef}" not found`, 'Read the pages resource for valid refs');
   }
 
   const el = resolveRef(space.schema, page, op.ref);

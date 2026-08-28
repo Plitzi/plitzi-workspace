@@ -602,6 +602,41 @@ credential and refuses any action the manifest does not declare. Writes exist **
 builder and renders empty when published. If the user has no SSR deployment, say so rather than leaving them to
 discover it — the alternative is a browser-side \`query\`, which cannot keep a secret.
 
+## Shared layouts — the chrome a page does NOT contain
+A page's tree is usually **not the whole page**. The header, the sidebar and the footer normally live in a **layout
+container**: a shell several pages are rendered inside, so the navigation is authored once instead of once per page.
+
+It is a **root of its own** — a \`layoutContainer\` element that no page owns and that is not in the page list — and
+a page points at it with two attributes:
+- \`layout\` — the shell's ref. This is the whole of "which chrome do I render inside".
+- \`layoutContainer\` — the **slot**: the ref of a container INSIDE that shell where this page's own body is placed.
+
+So a page with \`layout: "main-layout"\` renders \`main-layout\`'s whole tree, with its own elements dropped into the
+one container it named. Two pages naming the same shell share every element of it — **editing the shell changes
+every page that uses it**, which is the point and also the thing to say out loud before you touch one.
+
+**Reading them.**
+- \`plitzi://schema/{env}/layouts\` lists the shells: \`ref\`, \`label\`, \`usedBy\` (the pages), \`slots\`, \`elementCount\`.
+- Every page in \`plitzi://schema/{env}/pages\` carries \`layout\` and \`layoutSlot\` when it has them.
+- Read a shell exactly like a page: \`plitzi://schema/{env}/pages/{layoutRef}\` for its skeleton,
+  \`.../pages/{layoutRef}/styles\` for its classes. \`plitzi_search\` reports a layout's elements with the layout as
+  their \`pageRef\`.
+
+**Writing them.** Every element/binding/interaction op takes the shell's ref as its \`pageRef\` — there is no separate
+vocabulary:
+\`\`\`json
+{ "type": "upsertElement", "pageRef": "main-layout", "parentRef": "sidebar",
+  "element": { "ref": "upgrade-card", "type": "container", "children": [ … ] } }
+\`\`\`
+- \`upsertLayout\` creates a shell (\`ref\`, \`label\`, \`subType\`). Put the chrome in it with \`upsertElement\`, including
+  an empty container to serve as the slot.
+- \`upsertPage { layout, layoutContainer }\` attaches a page to it; \`layout: null\` detaches. A \`layoutContainer\` that
+  is not an element of that shell is refused — stored, it would render the page's body where nobody sees it.
+
+**Where does this element belong?** If the user asks for something "on every page" — a nav item, a banner, a footer
+link, an upgrade prompt in the sidebar — it belongs in the LAYOUT, not in the page you happen to have open. Check
+the page's \`layout\` first; if the element you are looking for is not in the page's own tree, it is in the shell.
+
 ## Pages & folders
 - **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a
   clean, stable route (e.g. \`"pricing"\` or \`"posts/:postId"\`). Omit it and the page ref is used as the slug,

@@ -5,11 +5,13 @@ import {
   descendantIds,
   elementById,
   flowsFromInteractions,
+  getLayoutElements,
   getPageElements,
   nameOf,
   orderedChildren,
   pageFoldersOf,
   pageRefOfElement,
+  pagesUsingLayout,
   slugRouteParams,
   spaceIndex,
   strOr
@@ -23,6 +25,7 @@ import type {
   AIFolder,
   AIGlobalStyle,
   AIInitialState,
+  AILayoutSummary,
   AIPageSkeleton,
   AIPageStyles,
   AIPageSummary,
@@ -67,8 +70,25 @@ export const pageSummariesToAI = (schema: Schema): AIPageSummary[] =>
     enabled: page.attributes.enabled !== false,
     // Stored as '' for a root-level page; surface that as no folder so the agent only ever sees a real folder id.
     folder: strOr(page.attributes.folder) || undefined,
+    // What the page does not contain but is rendered inside. Without this a page's own tree is the whole answer,
+    // and the header every visitor sees belongs to nothing anybody reading this listing can find.
+    layout: strOr(page.attributes.layout) || undefined,
+    layoutSlot: strOr(page.attributes.layoutContainer) || undefined,
     elementCount: descendantCount(schema, page.id)
   }));
+
+export const layoutSummariesToAI = (schema: Schema): AILayoutSummary[] =>
+  getLayoutElements(schema).map(layout => {
+    const pages = pagesUsingLayout(schema, layout.id);
+
+    return {
+      ref: layout.id,
+      label: nameOf(layout),
+      usedBy: pages.map(page => page.id),
+      slots: [...new Set(pages.map(page => strOr(page.attributes.layoutContainer)).filter(Boolean))] as string[],
+      elementCount: descendantCount(schema, layout.id)
+    };
+  });
 
 const folderToAI = (folder: PageFolder): AIFolder => ({
   ref: folder.id,

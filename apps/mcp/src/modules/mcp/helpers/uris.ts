@@ -16,6 +16,9 @@ export const primerUri = (env: Env): string => `plitzi://primer/${env}`;
 export const pagesUri = (env: Env): string => `plitzi://schema/${env}/pages`;
 export const pageUri = (env: Env, ref: string): string => `plitzi://schema/${env}/pages/${ref}`;
 export const pageStylesUri = (env: Env, ref: string): string => `${pageUri(env, ref)}/styles`;
+
+/** The shared layout shells. One of them is read as a page is — `pages/{ref}` resolves either root. */
+export const layoutsUri = (env: Env): string => `plitzi://schema/${env}/layouts`;
 export const elementUri = (env: Env, ref: string): string => `plitzi://schema/${env}/elements/${ref}`;
 export const schemaVarsUri = (env: Env): string => `plitzi://schema-variables/${env}`;
 export const settingsUri = (env: Env): string => `plitzi://settings/${env}`;

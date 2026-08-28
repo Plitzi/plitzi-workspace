@@ -95,6 +95,11 @@ export const registerResources = (
     ],
     ['Element types', 'plitzi://types', 'Observed element types with props, slots and subTypes'],
     ['Pages', `plitzi://schema/${env}/pages`, 'Page summaries (ref, label, elementCount) — no element trees'],
+    [
+      'Layouts',
+      `plitzi://schema/${env}/layouts`,
+      'Shared layout shells (header/sidebar/footer) and the pages rendered inside each — read one as a page'
+    ],
     ['Folders', `plitzi://folders/${env}`, 'Page folders (the sidebar tree): ref, name, slug, parentId'],
     ['Style definitions', `plitzi://definitions/${env}`, 'Style definition refs (names)'],
     ['Global styles', `plitzi://global-styles/${env}`, 'Element types that have a site-wide global style'],
@@ -157,7 +162,11 @@ export const registerResources = (
   }
 
   const templates: Array<[string, string, string]> = [
-    ['Page', `plitzi://schema/${env}/pages/{ref}`, 'One page as a skeleton tree (ref/type/label/children), no props'],
+    [
+      'Page',
+      `plitzi://schema/${env}/pages/{ref}`,
+      'One page (or LAYOUT shell) as a skeleton tree (ref/type/label/children), no props'
+    ],
     [
       'Page styles',
       `plitzi://schema/${env}/pages/{ref}/styles`,

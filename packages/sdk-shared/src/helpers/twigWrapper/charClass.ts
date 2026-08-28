@@ -73,30 +73,44 @@ export const isSimpleIdentifier = (s: string): boolean => {
   return true;
 };
 
-// Whether the whole string is a dotted path of identifier segments: `user.name`, `a.b.c` (every segment a
-// bare identifier, no leading/trailing/empty segments).
+/**
+ * Whether the whole string is a dotted path this file's fast path can resolve: `user.name`, `a.b.c`, `items.0.title`.
+ *
+ * A segment after the first may be a plain number — an array index is read as a literal key like any other, which is
+ * exactly what `resolveDottedPath` does. The FIRST segment may not: `1.5` is a number, and treating it as a path
+ * would resolve `context[1][5]` for a template that says one and a half.
+ */
 export const isDottedPath = (s: string): boolean => {
   const len = s.length;
-  if (len === 0) {
+  if (len === 0 || !isIdentStart(s.charCodeAt(0))) {
     return false;
   }
 
-  let segmentStart = true;
-  for (let i = 0; i < len; i++) {
+  let segmentStart = false;
+  let segmentIsIndex = false;
+  for (let i = 1; i < len; i++) {
     const c = s.charCodeAt(i);
     if (c === Char.Dot) {
       if (segmentStart) {
-        return false; // empty segment (leading dot or `..`)
+        return false; // empty segment (`..`)
       }
       segmentStart = true;
-    } else {
-      if (segmentStart && !isIdentStart(c)) {
+      segmentIsIndex = false;
+      continue;
+    }
+
+    if (segmentStart) {
+      segmentIsIndex = isDigit(c);
+      if (!segmentIsIndex && !isIdentStart(c)) {
         return false;
       }
-      if (!segmentStart && !isIdentPart(c)) {
-        return false;
-      }
+
       segmentStart = false;
+      continue;
+    }
+
+    if (segmentIsIndex ? !isDigit(c) : !isIdentPart(c)) {
+      return false;
     }
   }
 

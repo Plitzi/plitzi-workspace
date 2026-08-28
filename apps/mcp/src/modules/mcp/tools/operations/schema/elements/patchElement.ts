@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
 
-import { empty, fail, findPageByRef, invalidateIndex, resolveRef } from '../../../../helpers';
+import { empty, fail, findRootByRef, invalidateIndex, resolveRef } from '../../../../helpers';
 import { elementRuntime, initialStateInput, styleRefs } from '../shared';
 import { guardNewRef, pageUri, writeInitialState } from '../write';
 
@@ -44,9 +44,13 @@ export const patchElementOp = z
 export type PatchElement = z.infer<typeof patchElementOp>;
 
 export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult => {
-  const page = findPageByRef(space.schema, op.pageRef);
+  const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
-    return fail('pageRef', `Page "${op.pageRef}" not found`, 'Read plitzi://schema/' + env + '/pages for valid refs');
+    return fail(
+      'pageRef',
+      `Page or layout "${op.pageRef}" not found`,
+      'Read plitzi://schema/' + env + '/pages for valid refs'
+    );
   }
 
   const el = resolveRef(space.schema, page, op.ref);

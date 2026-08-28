@@ -10,6 +10,7 @@ import {
 import { guideQuickstart } from '../helpers/guide';
 import {
   foldersToAI,
+  layoutSummariesToAI,
   pageSummariesToAI,
   schemaVariablesToAI,
   settingsToAI
@@ -34,6 +35,9 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
     cssProperties,
     cssShorthands,
     pages: pageSummariesToAI(space.schema),
+    // The shells those pages render inside. In the cold-start bundle because a space's header and sidebar are in
+    // one, and an agent that has only seen the page list has not seen them at all.
+    layouts: layoutSummariesToAI(space.schema),
     folders: foldersToAI(space.schema),
     definitions: definitionRefs(space.style),
     styleVariables: styleVariablesToAI(space.style),

@@ -26,7 +26,9 @@ export const batchDeclaredVars = (ops: Operation[]): string[] => {
 export const batchDeclaredPages = (ops: Operation[]): Set<string> => {
   const refs = new Set<string>();
   for (const op of ops) {
-    if (op.type === 'upsertPage') {
+    // A layout shell is a root a later op addresses by `pageRef` exactly as it addresses a page, so a batch that
+    // creates the shell and fills it in one go must be allowed to name it before it exists.
+    if (op.type === 'upsertPage' || op.type === 'upsertLayout') {
       refs.add(op.ref);
     }
   }

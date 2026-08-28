@@ -286,6 +286,44 @@ describe('schemaValidator', () => {
     expect(result.warnings.some(e => e.code === 'ORPHANED_ELEMENT')).toBe(true);
   });
 
+  /**
+   * The shared-layout arrangement, which is where "reachable" stops meaning "somewhere under a page".
+   *
+   * `layout` names the shell — its own root, holding the header/sidebar/footer every page shows — and
+   * `layoutContainer` names the slot INSIDE that shell where the page's body is rendered. Walking only from the
+   * slot reaches the page's own subtree and nothing else, so a space's whole chrome read as orphaned.
+   */
+  it('reaches the layout shell a page is rendered inside, not just the slot it is rendered into', () => {
+    // The shell is a root of its own: nothing owns it, and its subtree is rooted on it rather than on a page.
+    const inLayout = (id: string, type: string, parentId?: string, items?: string[]): Element => {
+      const element = createElement(id, type, 'layout-main');
+
+      return { ...element, definition: { ...element.definition, ...(parentId ? { parentId } : {}), items } };
+    };
+
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        'page-1': createElement('page-1', 'page'),
+        'layout-main': inLayout('layout-main', 'layoutContainer', undefined, ['sidebar', 'body-slot']),
+        sidebar: inLayout('sidebar', 'container', 'layout-main', ['nav-link']),
+        'nav-link': inLayout('nav-link', 'link', 'sidebar', []),
+        'body-slot': inLayout('body-slot', 'container', 'layout-main', [])
+      },
+      pages: ['page-1']
+    };
+    (schema.flat['page-1'] as Element).attributes = {
+      default: true,
+      layout: 'layout-main',
+      layoutContainer: 'body-slot'
+    };
+
+    const result = validateSchema(schema);
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter(warning => warning.code === 'ORPHANED_ELEMENT')).toEqual([]);
+  });
+
   it('should detect invalid page references in pages array', () => {
     const schema: Schema = {
       ...EMPTY_SCHEMA.schema,

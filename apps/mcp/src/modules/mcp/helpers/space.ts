@@ -100,7 +100,17 @@ export interface SpaceIndex {
   pageIds: Set<string>;
   /** The page elements, in schema.flat insertion order (what getPageElements returns). */
   pageElements: Element[];
-  /** Any element id (page root or nested descendant) → the id of the page it belongs to. */
+  /**
+   * Ids of the LAYOUT roots — a `layoutContainer` nobody owns.
+   *
+   * A layout is the shell several pages are rendered inside (the header, the sidebar, the footer) and it is a root
+   * of its own: it is not in `schema.pages` and it hangs off no page, so every walk that started from the pages
+   * missed it and everything in it read as belonging to nothing.
+   */
+  layoutIds: Set<string>;
+  /** The layout root elements, in schema.flat insertion order. */
+  layoutElements: Element[];
+  /** Any element id → the id of the ROOT it belongs to: its page, or the layout shell it is part of. */
   pageOf: Map<string, string>;
   /** element id → its memoized detail/version, so a page-skeleton hash, a search hit and a follow-up element read
    *  all resolve the same element once. Populated lazily by `elementView`; dropped whole on `invalidateIndex`. */
@@ -128,10 +138,26 @@ const buildIndex = (schema: Schema): SpaceIndex => {
     }
   }
 
+  /**
+   * The layout shells: a `layoutContainer` with no parent.
+   *
+   * The type alone is not the test — a layoutContainer nested inside another element is an ordinary element of that
+   * tree. What makes one a root is that nothing owns it, which is also what makes a page reference it by name
+   * instead of containing it.
+   */
+  const layoutElements: Element[] = [];
+  for (const el of Object.values(flat)) {
+    if (el.definition.type === 'layoutContainer' && !el.definition.parentId) {
+      layoutElements.push(el);
+    }
+  }
+
+  const layoutIds = new Set<string>(layoutElements.map(el => el.id));
+
   const pageOf = new Map<string, string>();
-  for (const page of pageElements) {
-    pageOf.set(page.id, page.id);
-    const stack = [...(page.definition.items ?? [])];
+  for (const root of [...pageElements, ...layoutElements]) {
+    pageOf.set(root.id, root.id);
+    const stack = [...(root.definition.items ?? [])];
     while (stack.length > 0) {
       const id = stack.pop();
       if (id === undefined || pageOf.has(id)) {
@@ -143,14 +169,14 @@ const buildIndex = (schema: Schema): SpaceIndex => {
         continue;
       }
 
-      pageOf.set(id, page.id);
+      pageOf.set(id, root.id);
       for (const childId of el.definition.items ?? []) {
         stack.push(childId);
       }
     }
   }
 
-  return { pageIds, pageElements, pageOf, detailCache: new Map() };
+  return { pageIds, pageElements, layoutIds, layoutElements, pageOf, detailCache: new Map() };
 };
 
 const indexCache = new WeakMap<Schema, SpaceIndex>();
@@ -221,6 +247,19 @@ export const indexAddPage = (schema: Schema, page: Element): void => {
   index.detailCache.clear();
 };
 
+/** A new layout shell was created. */
+export const indexAddLayout = (schema: Schema, layout: Element): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  index.layoutIds.add(layout.id);
+  index.layoutElements.push(layout);
+  index.pageOf.set(layout.id, layout.id);
+  index.detailCache.clear();
+};
+
 /** A page and its `descendants` (its non-page elements) were deleted. */
 export const indexRemovePage = (schema: Schema, page: Element, descendants: Element[]): void => {
   const index = cachedIndex(schema);
@@ -266,6 +305,30 @@ export const findElementByRef = (schema: Schema, id: string): Element | undefine
 
   return el && !spaceIndex(schema).pageIds.has(el.id) ? el : undefined;
 };
+
+/** A layout SHELL by name — the root a page names in its `layout` attribute. */
+export const findLayoutByRef = (schema: Schema, id: string): Element | undefined => {
+  const el = schema.flat[id] as Element | undefined;
+
+  return el && spaceIndex(schema).layoutIds.has(el.id) ? el : undefined;
+};
+
+/**
+ * The root an element operation addresses — a page, or a layout shell.
+ *
+ * `pageRef` names either: the header of a space lives in a layout and is edited exactly like anything on a page, so
+ * every op that resolves an element resolves it from here. Reading them apart is only for the operations that are
+ * about pages as pages (routes, folders, the default page).
+ */
+export const findRootByRef = (schema: Schema, id: string): Element | undefined =>
+  findPageByRef(schema, id) ?? findLayoutByRef(schema, id);
+
+/** The layout shells of a space, in schema.flat insertion order. */
+export const getLayoutElements = (schema: Schema): Element[] => spaceIndex(schema).layoutElements;
+
+/** The pages rendered inside a given layout shell, by the `layout` attribute that names it. */
+export const pagesUsingLayout = (schema: Schema, layoutId: string): Element[] =>
+  spaceIndex(schema).pageElements.filter(page => page.attributes.layout === layoutId);
 
 // --- Page folders (the sidebar tree). A folder's ref IS its id. Pages reference a folder by that
 // id (attributes.folder), and nested folders via parentId. ---

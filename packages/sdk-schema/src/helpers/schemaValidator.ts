@@ -389,20 +389,31 @@ const createValidator = (schema: Schema) => {
       }
     };
 
-    if (!baseElementId) {
-      pages.forEach(pageId => {
-        markReachable(pageId);
-        const page = getElement(pageId);
-        if (page?.attributes?.layoutContainer) {
-          markReachable(page.attributes.layoutContainer as string);
-        }
-      });
-    } else if (baseElementId) {
-      markReachable(baseElementId);
-      const element = getElement(baseElementId);
-      if (element?.attributes?.layoutContainer) {
-        markReachable(element.attributes.layoutContainer as string);
+    /**
+     * A page also reaches the layout it is rendered inside, which is a ROOT of its own rather than a child.
+     *
+     * Two attributes name it and only one is the way in: `layout` is the layoutContainer element itself — the
+     * shell holding the header, the sidebar, the footer — while `layoutContainer` is the container INSIDE that
+     * shell where this page's body is slotted. Walking from the slot reaches the page's own subtree and nothing
+     * else, so every element of every shared layout read as unreachable: the whole chrome of a space, reported as
+     * orphaned on every validation. Walking from `layout` reaches the shell and the slot with it.
+     */
+    const markPageLayout = (elementId: string) => {
+      markReachable(elementId);
+      const attributes = getElement(elementId)?.attributes;
+      if (attributes?.layout) {
+        markReachable(attributes.layout as string);
       }
+
+      if (attributes?.layoutContainer) {
+        markReachable(attributes.layoutContainer as string);
+      }
+    };
+
+    if (baseElementId) {
+      markPageLayout(baseElementId);
+    } else {
+      pages.forEach(markPageLayout);
     }
 
     // Check for orphans
