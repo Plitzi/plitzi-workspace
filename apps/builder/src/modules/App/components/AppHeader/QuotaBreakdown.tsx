@@ -7,54 +7,77 @@ import useAccountUsage from '@pmodules/Space/hooks/useAccountUsage';
 import { format, refillsPeriodically } from '@pmodules/Space/hooks/useSpaceQuota';
 
 import type { Element } from '@plitzi/sdk-shared';
-import type { UsageSpace } from '@pmodules/Space/hooks/useAccountUsage';
 import type { QuotaLevel, QuotaReading } from '@pmodules/Space/hooks/useSpaceQuota';
+import type { ReactNode } from 'react';
 
-const BAR: Record<QuotaLevel, string> = {
+const MUTED = 'text-zinc-500 dark:text-zinc-400';
+
+const FILL: Record<QuotaLevel, string> = {
   ok: 'bg-indigo-500',
   near: 'bg-yellow-500',
   over: 'bg-red-500'
 };
 
-const Bar = ({ entry }: { entry: QuotaReading }) => (
+type DetailRow = { name: string; value: number };
+
+const Track = ({ percent, level = 'ok' }: { percent: number; level?: QuotaLevel }) => (
+  <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+    <div className={clsx('h-full rounded-full', FILL[level])} style={{ width: `${Math.min(percent, 100)}%` }} />
+  </div>
+);
+
+/** One allowance: what is spent, out of what, and how full that is. */
+const Allowance = ({ entry }: { entry: QuotaReading }) => (
   <div className="flex flex-col gap-1">
     <div className="flex items-baseline justify-between gap-3">
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">{entry.label}</span>
-      <span className="text-xs">
+      <span className={clsx('text-[11px]', MUTED)}>{entry.label}</span>
+      <span className="text-[11px]">
         <b className="text-zinc-800 dark:text-zinc-100">{format(entry.used)}</b>
-        <span className="text-zinc-500 dark:text-zinc-400">
-          {entry.unlimited ? ' · no limit' : ` / ${format(entry.quota)}`}
-        </span>
+        <span className={MUTED}>{entry.unlimited ? ' · no limit' : ` / ${format(entry.quota)}`}</span>
       </span>
     </div>
-    {!entry.unlimited && (
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-        <div
-          className={clsx('h-full rounded-full', BAR[entry.level])}
-          style={{ width: `${Math.min(entry.percent ?? 0, 100)}%` }}
-        />
+    {!entry.unlimited && <Track percent={entry.percent ?? 0} level={entry.level} />}
+  </div>
+);
+
+const Section = ({ title, children }: { title: string; children: ReactNode }) => (
+  <div className="flex flex-col gap-1.5">
+    <h5 className={clsx('text-[10px] font-bold tracking-wider uppercase', MUTED)}>{title}</h5>
+    {children}
+  </div>
+);
+
+/**
+ * One space: what it holds or spent, how much of the account that is, and the pages behind it.
+ *
+ * The bar is its share of the account TOTAL, not of the plan's ceiling — the question this answers is which of these
+ * is the big one, and on a plan with room to spare every bar drawn against a ceiling would be the same empty sliver.
+ *
+ * A single row of detail is dropped: a one-page space's breakdown is its own total written twice.
+ */
+const Space = ({ name, value, share, rows }: { name: string; value: number; share: number; rows: DetailRow[] }) => (
+  <div className="flex flex-col gap-1">
+    <div className="flex items-baseline justify-between gap-3 text-xs">
+      <span className="font-semibold text-zinc-800 dark:text-zinc-100">{name}</span>
+      <span className="font-semibold tabular-nums">{format(value)}</span>
+    </div>
+    <Track percent={share} />
+    {rows.length > 1 && (
+      <div className="flex flex-col gap-px pt-0.5 pl-3">
+        {rows.map(row => (
+          <div key={row.name} className={clsx('flex justify-between gap-3 text-[11px]', MUTED)}>
+            <span>{row.name}</span>
+            <span className="tabular-nums">{format(row.value)}</span>
+          </div>
+        ))}
       </div>
     )}
   </div>
 );
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="flex flex-col gap-2">
-    <h5 className="text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">{title}</h5>
-    {children}
-  </div>
-);
-
-const Row = ({ name, value, muted = false }: { name: string; value: string; muted?: boolean }) => (
-  <div className="flex items-baseline justify-between gap-3 text-xs">
-    <span className={muted ? 'text-zinc-500 dark:text-zinc-400' : 'text-zinc-800 dark:text-zinc-100'}>{name}</span>
-    <span className={clsx('tabular-nums', muted ? 'text-zinc-500 dark:text-zinc-400' : 'font-medium')}>{value}</span>
-  </div>
-);
-
 export type QuotaBreakdownProps = {
   readings: QuotaReading[];
-  /** The space being edited, so its row can be marked and shown at its LIVE size rather than its saved one. */
+  /** The space being edited, so it is answered from the store rather than from the figure the server last saved. */
   spaceId: number;
   liveElements: number;
 };
@@ -62,12 +85,12 @@ export type QuotaBreakdownProps = {
 /**
  * The number in the header, taken apart.
  *
- * The meter answers "how much room is left"; this answers the question that follows it — where the room went. Two
- * different breakdowns, because the two ceilings are spent by different things: elements sit in spaces, and page
- * views are spent by visitors on pages.
+ * The meter answers "how much room is left"; this answers what follows it — where the room went. Two breakdowns,
+ * because the two ceilings are spent by different things: elements sit in pages, and page views are spent by
+ * visitors on paths.
  *
- * The ceilings and the live element count come from the meter's own hook, so this panel opens with them already on
- * screen; only the per-space and per-page figures are fetched, and only when someone opens it.
+ * The space being edited is answered entirely from the store, so it is on screen before any request is made, and it
+ * is there even for someone whose account owns none of this. The rest of the account is what the request is for.
  */
 const QuotaBreakdown = ({ readings, spaceId, liveElements }: QuotaBreakdownProps) => {
   const { usage, error, loading } = useAccountUsage(true);
@@ -77,81 +100,81 @@ const QuotaBreakdown = ({ readings, spaceId, liveElements }: QuotaBreakdownProps
   // only while somebody is reading it, and the panel is mounted only then.
   const livePages = useMemo(() => elementsByRoot(flat as Record<string, Element>), [flat]);
 
-  // The server counted this space as it was last SAVED; the builder has been ahead of that since the first drag.
-  const elementsOf = (space: UsageSpace) => (space.id === spaceId ? liveElements : space.elements);
-  const pagesOf = (space: UsageSpace) => (space.id === spaceId ? livePages : space.elementsByPage);
-
-  const refills = refillsPeriodically(readings);
+  // This space is answered from the store above, so it is dropped here rather than listed twice.
+  const others = usage?.spaces.filter(space => space.id !== spaceId) ?? [];
+  // A list of zeroes is the longest way to say nothing.
+  const spent = usage?.spaces.filter(space => space.views > 0) ?? [];
 
   return (
-    <div className="flex flex-col gap-5 py-1 text-sm">
-      <Section title="This space and this account">
-        <div className="flex flex-col gap-3">
-          {readings.map(entry => (
-            <Bar key={entry.id} entry={entry} />
-          ))}
-        </div>
+    <div className="flex flex-col gap-4 py-1">
+      <div className="flex flex-col gap-2.5">
+        {readings.map(entry => (
+          <Allowance key={entry.id} entry={entry} />
+        ))}
+      </div>
+
+      <Section title="This space, by page">
+        <Space
+          name="Elements"
+          value={liveElements}
+          share={100}
+          rows={livePages.map(page => ({ name: page.page, value: page.elements }))}
+        />
       </Section>
 
-      {loading && <div className="text-xs text-zinc-500 dark:text-zinc-400">Reading the rest of the account…</div>}
+      {loading && <div className={clsx('text-[11px]', MUTED)}>Reading the rest of the account…</div>}
 
       {error && (
-        <div className="text-xs text-red-600 dark:text-red-400">
+        <div className="text-[11px] text-red-600 dark:text-red-400">
           The account breakdown could not be read ({error}). The figures above are unaffected — they come from the space
           you are editing.
         </div>
       )}
 
-      {usage && (
-        <>
-          <Section title="Elements by page">
-            <div className="flex flex-col gap-3">
-              {[...usage.spaces]
-                .sort((a, b) => elementsOf(b) - elementsOf(a))
-                .map(space => (
-                  <div key={space.id} className="flex flex-col gap-1">
-                    <Row
-                      name={space.id === spaceId ? `${space.name} · editing` : space.name}
-                      value={format(elementsOf(space))}
-                    />
-                    {pagesOf(space).map(page => (
-                      <div key={page.page} className="pl-3">
-                        <Row name={page.page} value={format(page.elements)} muted />
-                      </div>
-                    ))}
-                  </div>
-                ))}
-            </div>
-          </Section>
-
-          <Section title="Page views by space, this period">
-            <div className="flex flex-col gap-3">
-              {[...usage.spaces]
-                .sort((a, b) => b.views - a.views)
-                .map(space => (
-                  <div key={space.id} className="flex flex-col gap-1">
-                    <Row name={space.name} value={format(space.views)} />
-                    {space.pages.map(page => (
-                      <div key={page.path} className="pl-3">
-                        <Row name={page.path} value={format(page.views)} muted />
-                      </div>
-                    ))}
-                    {space.views > 0 && space.pages.length === 0 && (
-                      <div className="pl-3 text-xs text-zinc-500 dark:text-zinc-400">
-                        Nothing charged to a page — see the note below.
-                      </div>
-                    )}
-                  </div>
-                ))}
-            </div>
-          </Section>
-
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            Page rows count page renders. Data refreshes and server actions are charged to the space but are answered at
-            their own endpoints, so they belong to no page. Plan <b>{usage.planName}</b>
-            {refills ? `, resets ${new Date(usage.periodEndsAt).toLocaleDateString()}` : ''}.
+      {others.length > 0 && (
+        <Section title="Elements in your other spaces">
+          <div className="flex flex-col gap-2">
+            {[...others]
+              .sort((a, b) => b.elements - a.elements)
+              .map(space => (
+                <Space
+                  key={space.id}
+                  name={space.name}
+                  value={space.elements}
+                  share={space.elementsShare}
+                  rows={
+                    space.multiPage ? space.elementsByPage.map(page => ({ name: page.page, value: page.elements })) : []
+                  }
+                />
+              ))}
           </div>
-        </>
+        </Section>
+      )}
+
+      {spent.length > 0 && (
+        <Section title="Page views this period">
+          <div className="flex flex-col gap-2">
+            {[...spent]
+              .sort((a, b) => b.views - a.views)
+              .map(space => (
+                <Space
+                  key={space.id}
+                  name={space.name}
+                  value={space.views}
+                  share={space.viewsShare}
+                  rows={space.pages.map(page => ({ name: page.path, value: page.views }))}
+                />
+              ))}
+          </div>
+        </Section>
+      )}
+
+      {usage && (
+        <div className={clsx('text-[11px]', MUTED)}>
+          Page rows count page renders; data refreshes and server actions belong to the space, not to a page. Plan{' '}
+          <b>{usage.planName}</b>
+          {refillsPeriodically(readings) ? `, resets ${new Date(usage.periodEndsAt).toLocaleDateString()}` : ''}.
+        </div>
       )}
     </div>
   );

@@ -27,6 +27,11 @@ export interface UsageSpace {
   pagesTotal: number;
   pages: UsagePage[];
   elementsByPage: UsagePageElements[];
+  /** This space's share of the account total, as a percentage — what the bar beside it is drawn from. */
+  viewsShare: number;
+  elementsShare: number;
+  /** More than one page, so its per-page rows say something its total does not. */
+  multiPage: boolean;
 }
 
 export interface UsageKind {
