@@ -8,6 +8,8 @@ export type TInitQuery = {
     schema: SchemaRaw;
     style: Style;
     segments?: SegmentRaw[];
+    /** What the server decided about this render. Server-side facts the space cannot author away. */
+    render?: { overQuota: boolean };
   };
 };
 
@@ -91,6 +93,11 @@ const InitQuery = gql`
       style {
         variables
         cache
+      }
+      # The schema fetch is the one moment a client-side render hears from the server at all, so the decision it
+      # would have been handed in an SSR bootstrap travels here instead.
+      render {
+        overQuota
       }
     }
   }
