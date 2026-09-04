@@ -1,5 +1,6 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+import { themeBootScript } from '@plitzi/sdk-shared/theme';
 
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
@@ -209,6 +210,14 @@ export const prepareRender = async (
       reactDom: vendorJs,
       reactDomClient: vendorJs,
       reactCompilerRuntime: vendorJs,
+      /**
+       * The theme, applied before the first paint.
+       *
+       * Default rather than opt-in: every SSR document has this problem — the paint happens before the SDK exists,
+       * so a remembered theme cannot be honoured by anything the SDK does at mount — and a deployment that keeps the
+       * choice somewhere the server can read overrides it with the class it renders itself.
+       */
+      themeBoot: themeBootScript(),
       ...req.ctx.spaceDeployment?.templateProps,
       // Applied last on purpose: the page speaks for itself. A deployment's `templateProps` is a space-wide
       // default and stays in charge of pages that declare nothing, which is what makes this safe to turn on for

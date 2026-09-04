@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 
 import { useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 
+import { applyThemeClass, THEME_STORAGE_KEY } from './themeBoot';
 import themeStore, { resolveScheme, setAreaTheme, setMachineScheme, setThemeMode } from './themeStore';
 import { useCommonStoreSync } from '../store';
 
@@ -13,6 +14,17 @@ const THEMES: Theme[] = ['dark', 'light', 'system'];
 
 export type ThemeProviderProps = {
   defaultTheme?: Theme;
+  /**
+   * The theme the host already knows, when it knows one.
+   *
+   * A host that keeps the choice somewhere its server can read — a cookie, the account — renders the class itself
+   * and passes the value here, and nothing is read from storage at all. That is the one arrangement with no window
+   * of wrongness anywhere: the document arrives correct and the provider agrees with it from its first render.
+   *
+   * Left out, the choice is read from storage on mount, and the document should run {@link themeBootScript} so the
+   * paint before that mount is not the other theme.
+   */
+  theme?: Theme;
   storageKey?: string;
   storageType?: 'localStorage' | 'sessionStorage';
   children?: ReactNode;
@@ -69,7 +81,8 @@ const machineScheme = (): ColorScheme => (window.matchMedia(DARK_QUERY).matches 
  */
 const ThemeProvider = ({
   defaultTheme = 'dark',
-  storageKey = 'theme',
+  theme,
+  storageKey = THEME_STORAGE_KEY,
   storageType = 'localStorage',
   children
 }: ThemeProviderProps) => {
@@ -89,10 +102,12 @@ const ThemeProvider = ({
     themeStore.batch(() => {
       setMachineScheme(machineScheme());
       // `setThemeMode` clears the areas by design, so what was remembered for them is restored after it, never before.
-      setThemeMode(readStored(storageKey, storageType) ?? defaultTheme);
+      // A theme the host supplied wins over storage: it is the value the document was already rendered with, and
+      // reading a stale key over it would produce the very correction this exists to avoid.
+      setThemeMode(theme ?? readStored(storageKey, storageType) ?? defaultTheme);
       Object.entries(readStoredAreas(storageKey, storageType)).forEach(([area, mode]) => setAreaTheme(area, mode));
     });
-  }, [defaultTheme, storageKey, storageType]);
+  }, [defaultTheme, theme, storageKey, storageType]);
 
   /**
    * Published into the app store, where everything else about this render already lives.
@@ -135,9 +150,7 @@ const ThemeProvider = ({
       const storage = storageFor(storageType);
       storage?.setItem(storageKey, mode);
       storage?.setItem(`${storageKey}.areas`, JSON.stringify(areas));
-      const root = document.documentElement;
-      root.classList.toggle('dark', mode === 'dark');
-      root.classList.toggle('light', mode === 'light');
+      applyThemeClass(mode, document.documentElement);
     };
     apply();
 

@@ -136,6 +136,14 @@ export type SSRTemplateProps = {
   /** When true the client-side <script> block is omitted — useful for inspecting raw SSR HTML. */
   ssrOnly?: boolean;
   debugMode?: boolean;
+  /**
+   * The script that settles the theme before the document paints — `themeBootScript()` from this package.
+   *
+   * Passed in rather than written by the template, because it is `ThemeProvider`'s contract and not the template's:
+   * the storage key, the accepted values and the classes are defined once, next to the provider that honours them.
+   * A host with nothing to remember (or one that already renders the class itself, from a cookie) leaves it out.
+   */
+  themeBoot?: string;
 };
 
 export type SSRPlugin = {
