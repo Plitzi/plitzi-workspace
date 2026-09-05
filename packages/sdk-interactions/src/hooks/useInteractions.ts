@@ -5,7 +5,7 @@ import InteractionsContext from '../InteractionsContext';
 import type { ElementInteraction, InteractionCallback, Subscriptor } from '@plitzi/sdk-shared';
 
 export type UseInteractionsProps<TParams extends Record<string, unknown> = Record<string, unknown>> = {
-  /** The element's idRef: interactions are wired by ref only. Absent for an element that has none, which is then
+  /** The element's id — the one name it answers to, and the key interactions are wired by. Absent for a caller
    *  left unregistered rather than falling back to its opaque id. */
   id?: string;
   interactions?: Record<string, ElementInteraction>;

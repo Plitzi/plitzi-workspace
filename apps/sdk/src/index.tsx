@@ -84,10 +84,34 @@ const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
   };
 };
 
+/**
+ * A registered plugin is a COMPONENT, not a decorated one.
+ *
+ * `ComponentPluginFC` and not `ComponentPlugin`, because the metadata the latter carries — `type`, `assets`,
+ * `origin`, `content` — is stamped on by `App` when it reads these, from the very keys given here. Asking a
+ * caller for it made the parameter impossible to satisfy without a cast: everybody registering a component of
+ * their own has a React component and nothing else, which is also exactly what `<Sdk.Plugin component>` declares.
+ */
+export type RenderPlugins = Record<
+  string,
+  {
+    /**
+     * A plugin's props ARE the hosting element's attributes, which this package cannot know — so the parameter is
+     * left open. Narrowed to `ComponentPluginFC` with its default `unknown`, it refuses every component anybody
+     * actually writes: a component declaring `{ label?: string }` has nothing in common with the runtime-supplied
+     * props alone, and TypeScript reads that as a mistake rather than as the intended widening.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    component: ComponentPluginFC<any>;
+    props?: Record<string, unknown>;
+    clientOnly?: boolean;
+  }
+>;
+
 export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
-  plugins: Record<string, { component: ComponentPlugin; props?: Record<string, unknown>; clientOnly?: boolean }> = {},
+  plugins: RenderPlugins = {},
   debugMode = false,
   ssrMode = false
 ) {
@@ -146,14 +170,24 @@ export function render(
 
   const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
   if (!rootDOM) {
-    return;
+    return undefined;
   }
 
+  const root = ssrMode ? hydrateRoot(rootDOM, <Widget isHydrating />) : createRoot(rootDOM);
   if (!ssrMode) {
-    createRoot(rootDOM).render(<Widget />);
-  } else {
-    hydrateRoot(rootDOM, <Widget isHydrating />);
+    root.render(<Widget />);
   }
+
+  /**
+   * How to take it down again.
+   *
+   * Returned rather than kept private because a second `render()` into the same element creates a SECOND React
+   * root over the first — two trees on one node, both live, neither aware of the other. Anything that re-renders
+   * on its own needs to unmount first, and hot module replacement is the case that made this necessary: a dev
+   * server that swaps a module has to remount the tree, and without a handle its only option was to reload the
+   * whole page.
+   */
+  return { unmount: () => root.unmount() };
 }
 
 declare global {
@@ -180,6 +214,9 @@ export type PlitziSdkProps = {
   /** Shows the "Made in Plitzi" link over the rendered space; off for embeds that are not a Plitzi site of their
    *  own (an MCP widget rendered inside a chat, a component mounted in a host app). */
   branding?: boolean;
+  /** Set by the server that metered this render: the account behind this space is over its quota, so the page says
+   *  so. Never authored — a space cannot turn it off from its own settings. */
+  overQuota?: boolean;
   externalStyle?: string;
   sdkDevToolsStylePath?: string;
   /** Where this render reports SPA navigations and interactions, and with what key. Injected by a server that

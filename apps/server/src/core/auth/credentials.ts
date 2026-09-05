@@ -71,9 +71,14 @@ export const createCarriers = (sessionCookieName: (hostname: string) => string) 
 });
 
 /**
- * The origin the caller claims to be presenting from — the `Origin` header, falling back to the host it addressed.
- * Distinct from this server's own origin (see `requestOrigin` in the request parser): this one is the claim a
- * credential's domain binding is checked against.
+ * The origin the caller claims to be presenting from — the `Origin` header, and nothing else. Distinct from this
+ * server's own origin (see `requestOrigin` in the request parser): this one is the claim a credential's domain
+ * binding is checked against.
+ *
+ * Empty when the header is absent, which is a fact the caller downstream has to be able to see. This used to fall
+ * back to `carrier.hostname`, and that fallback could only ever deny: a hostname carries no scheme, so it matched no
+ * entry in any origins list, and every server-to-server caller — a self-hosted deployment reading its own space
+ * through `createCloudAdapters`, most of all — was refused with `origin-not-allowed` while the branch written to
+ * handle a missing Origin was unreachable.
  */
-export const presentedOrigin = (carrier: CredentialCarrier): string =>
-  headerValue(carrier.headers.origin) || carrier.hostname;
+export const presentedOrigin = (carrier: CredentialCarrier): string => headerValue(carrier.headers.origin);

@@ -294,19 +294,79 @@ class ExpressionParser extends Cursor {
     if (this.peek() === Char.LParen) {
       this.pos++;
       const args = this.parseArgList(Char.RParen);
-      return this.maybeTrailingFilters({ type: 'function', name, args });
+
+      return this.maybeTrailingFilters(this.parseAccessChain({ type: 'function', name, args }, null));
     }
 
-    const segments: string[] = [name];
-    while (this.peek() === Char.Dot) {
-      this.pos++;
-      const segment = this.scanName();
-      if (segment) {
-        segments.push(segment);
+    const segments = [name];
+
+    return this.maybeTrailingFilters(this.parseAccessChain({ type: 'path', segments }, segments));
+  }
+
+  /**
+   * The access chain after a base expression — `.name`, `.0` and `[expr]`, in any order and any number.
+   *
+   * A run of keys the parse already knows stays ONE `path` node: `items.0.title` and `items[0].title` are the same
+   * three segments, resolved by the evaluator's flat walk, and are also the shape everything that reads a template
+   * statically expects to find (the RSC projection collects `<source>.<path>` strings, and a numeric segment is
+   * what tells it to project every row rather than one).
+   *
+   * `segments` is that run and `base` is the node built from it — two views of one array, which is why extending
+   * either extends both. Passing `null` says there is no run to extend: a function's result has no path of its own.
+   * From the first bracket the parse cannot fold, the rest of the chain becomes `index` nodes over whatever came
+   * before, so `rows[page - 1].title` works without every access paying for the general case.
+   */
+  private parseAccessChain(base: Expression, segments: string[] | null): Expression {
+    let node = base;
+    let staticRun = segments;
+
+    for (;;) {
+      const ch = this.peek();
+      if (ch === Char.Dot) {
+        const start = this.pos;
+        this.pos++;
+        const key = this.scanName() || this.scanIndex();
+        if (!key) {
+          // Not a segment: `a.` at the end of an expression, or the `..` of a range. Give the character back.
+          this.pos = start;
+          break;
+        }
+
+        if (staticRun) {
+          staticRun.push(key);
+        } else {
+          node = { type: 'index', object: node, index: { type: 'literal', value: key } };
+        }
+
+        continue;
       }
+
+      if (ch !== Char.LBracket) {
+        break;
+      }
+
+      this.pos++;
+      const index = this.parseTernary();
+      this.skipWs();
+      if (this.peek() === Char.RBracket) {
+        this.pos++;
+      }
+
+      // A literal subscript is the same thing as a dotted key, so it joins the run rather than ending it.
+      if (staticRun && index.type === 'literal' && typeof index.value !== 'boolean') {
+        staticRun.push(String(index.value));
+        continue;
+      }
+
+      if (staticRun) {
+        node = { type: 'path', segments: staticRun };
+        staticRun = null;
+      }
+
+      node = { type: 'index', object: node, index };
     }
 
-    return this.maybeTrailingFilters({ type: 'path', segments });
+    return staticRun ? { type: 'path', segments: staticRun } : node;
   }
 
   // Wraps a subject expression in a FilterExpression when a `| filter` chain follows it.

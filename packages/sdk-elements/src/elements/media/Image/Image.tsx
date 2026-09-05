@@ -21,17 +21,21 @@ export type ImageProps = {
 
 const fallback = getFallbackSVGBase64();
 
-const Image = ({
-  ref,
-  className = '',
-  src = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
-  alt = '',
-  fetchPriority = 'auto',
-  loadMode
-}: ImageProps) => {
+const PLACEHOLDER = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg';
+
+const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'auto', loadMode }: ImageProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
+
+  /**
+   * An empty `src` is an absent one.
+   *
+   * A default parameter only answers `undefined`, and a bound `src` whose source has not resolved is `''` — the
+   * ordinary state of any image fed from an API. The browser treats `src=""` as "the current document", so it
+   * re-requests the whole page to put it in an image, and React warns about exactly that.
+   */
+  const src = srcProp || PLACEHOLDER;
 
   const handleError = useCallback((e: SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.onerror = null;

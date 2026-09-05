@@ -8,7 +8,7 @@ import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { useRenderSettings } from '@plitzi/sdk-shared/store';
+import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
 import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
 import type {
@@ -48,6 +48,7 @@ const NetworkContextProvider = ({
   offlineDataType = 'json'
 }: NetworkContextProviderProps) => {
   const { environment, debugMode } = useRenderSettings();
+  const setSdkStore = useSdkStoreSetter();
   const offlineDataAvailable = offlineMode && !!offlineData && !!offlineData.schema;
   const client = use(getApolloContext()).client;
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
@@ -183,6 +184,15 @@ const NetworkContextProvider = ({
           Space.plugins.filter(plugin => !(components.current[plugin.type] as undefined | ComponentPluginWithHOC))
         );
       }
+
+      /**
+       * The one thing this response says that the schema does not.
+       *
+       * A server-rendered page is handed the paywall decision in its bootstrap; a page that renders here was handed
+       * nothing, and this fetch is the only moment its server got to speak. Written from the answer every time, so a
+       * space that has been paid up since the last load stops saying it is over.
+       */
+      setSdkStore('render.overQuota', Space.render?.overQuota ?? false);
 
       setInternalData({
         schema: {

@@ -280,6 +280,9 @@
       "types": "./dist/helpers/twigWrapper/index.d.ts",
       "import": "./dist/helpers/twigWrapper/index.mjs"
     },
+    "./helpers/twigWrapper/AST": {
+      "types": "./dist/helpers/twigWrapper/AST.d.ts"
+    },
     "./helpers/twigWrapper/Evaluator": {
       "types": "./dist/helpers/twigWrapper/Evaluator/index.d.ts",
       "import": "./dist/helpers/twigWrapper/Evaluator/index.mjs"
@@ -335,6 +338,9 @@
     "./helpers/twigWrapper/Parser/index": {
       "types": "./dist/helpers/twigWrapper/Parser/index.d.ts",
       "import": "./dist/helpers/twigWrapper/Parser/index.mjs"
+    },
+    "./helpers/twigWrapper/Parser/types": {
+      "types": "./dist/helpers/twigWrapper/Parser/types.d.ts"
     },
     "./helpers/twigWrapper/TemplateCache": {
       "types": "./dist/helpers/twigWrapper/TemplateCache/index.d.ts",
@@ -492,6 +498,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.mjs"
@@ -587,6 +597,10 @@
     "./network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceRenameElementMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceRenameElementMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceRenameElementMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation.d.ts",
@@ -828,6 +842,10 @@
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery.mjs"
     },
+    "./network/graphql/builder/Queries/Space/SpaceQuotaQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceQuotaQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceQuotaQuery.mjs"
+    },
     "./network/graphql/builder/Queries/Space/SpaceResourcesQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceResourcesQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceResourcesQuery.mjs"
@@ -1051,6 +1069,10 @@
     "./theme/index": {
       "types": "./dist/theme/index.d.ts",
       "import": "./dist/theme/index.mjs"
+    },
+    "./theme/themeBoot": {
+      "types": "./dist/theme/themeBoot.d.ts",
+      "import": "./dist/theme/themeBoot.mjs"
     },
     "./theme/themeStore": {
       "types": "./dist/theme/themeStore.d.ts",

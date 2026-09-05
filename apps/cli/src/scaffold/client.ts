@@ -1,0 +1,207 @@
+import type { CreateAnswers, ProjectFiles } from './types';
+
+/**
+ * Client mode: the SDK renders in the browser and there is no server at all.
+ *
+ * Vite is what makes this the live loop — a save is a hot module replacement, so editing the space updates the
+ * page without reloading it. Nothing here is a build artefact of Plitzi's: the page is this project's, and the
+ * SDK is a dependency it imports.
+ */
+
+const indexHtml = ({ name }: CreateAnswers): string => `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${name}</title>
+  </head>
+  <body>
+    <div id="plitzi-root"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+`;
+
+const viteConfig = (): string => `import { createReadStream } from 'node:fs';
+import { createRequire } from 'node:module';
+
+import { defineConfig } from 'vite';
+
+import type { Plugin } from 'vite';
+
+const require = createRequire(import.meta.url);
+
+/**
+ * Serves the dev tools' stylesheet at the path the SDK asks for.
+ *
+ * They render into a shadow root, which cannot see this page's styles, so they fetch a stylesheet of their own —
+ * from \`/plitzi-sdk-devtools.css\`, an absolute path that exists on a server serving the SDK's assets and
+ * nowhere else. Importing the file instead does not work: Vite answers CSS with \`text/css\`, and neither a
+ * \`<link>\` built from a \`?url\` import nor a dynamic \`?raw\` one survives that.
+ *
+ * So the file is served from where it is installed. Development only — which is the only place the panel is
+ * authorised — and read from \`node_modules\` on each request, so it cannot go stale against the installed SDK.
+ */
+const devToolsStylesheet = (): Plugin => ({
+  name: 'plitzi-devtools-stylesheet',
+  apply: 'serve',
+  configureServer(server) {
+    server.middlewares.use('/plitzi-sdk-devtools.css', (_request, response) => {
+      response.setHeader('Content-Type', 'text/css');
+      createReadStream(require.resolve('@plitzi/plitzi-sdk/plitzi-sdk-devtools.css')).pipe(response);
+    });
+  }
+});
+
+/**
+ * Otherwise nothing Plitzi-specific: the SDK is an ordinary dependency, so this is a plain Vite app.
+ *
+ * The host is pinned because Vite binds \`localhost\` — which on most machines is IPv6 — while everything that
+ * waits for a dev server to come up asks for 127.0.0.1. The two resolve differently, so the visual suite sat
+ * there watching an address nothing was listening on until it gave up.
+ */
+export default defineConfig({
+  plugins: [devToolsStylesheet()],
+  server: { host: '127.0.0.1', port: 5173 }
+});
+`;
+
+const preflightCss = (): string => `/*
+ * The SDK ships no global CSS on purpose: dropping a space into an existing site must not restyle that site.
+ * The browser's own margins therefore survive unless the host page clears them, which is what this does.
+ */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+`;
+
+/**
+ * The project's own components, by the `renderType` the space names them with.
+ *
+ * Written into both entry points, because how a plugin is registered does not change with where the space lives.
+ */
+const PLUGINS = `/**
+ * The project's own components, by the \`renderType\` the space names them with.
+ *
+ * A \`custom\` element naming \`statCard\` renders this component, and the element's attributes arrive as its
+ * props — which is what makes a plugin bindable rather than static. There is no server here, so it is part of
+ * this project's bundle and Vite hot-replaces it like any other module. Add another by writing it under
+ * \`src/plugins\` and adding a line here; see \`src/plugins/README.md\`.
+ */
+const plugins = { statCard: { component: StatCard } };`;
+
+/** The two ways the space reaches the entry point, written once because both modes phrase them identically. */
+const localMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
+
+import { authorSpace } from '@plitzi/sdk-authoring';
+
+import StatCard from './plugins/StatCard';
+import { space } from './space';
+
+import './preflight.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+
+import type { SpaceSpec } from '@plitzi/sdk-authoring';
+
+${PLUGINS}
+
+/**
+ * The space, held in this project.
+ *
+ * \`src/space.ts\` is a declaration — a tree, some CSS, a palette — and \`authorSpace\` turns it into the two
+ * documents the SDK renders. Editing it is editing the site.
+ */
+const mount = (spec: SpaceSpec) =>
+  render(
+    'plitzi-root',
+    {
+      /**
+       * What makes this run with no backend: the SDK renders the documents it is handed instead of fetching a
+       * space, so there is no account, no key and no server in the picture.
+       */
+      offlineMode: true,
+      offlineData: authorSpace(spec),
+      /**
+       * Without this the SDK renders inside an IFRAME — its default, because a space dropped into an unknown page
+       * is safest isolated from it. This page is yours, so render straight into the DOM: one document, one
+       * stylesheet, no frame and no scroll trap.
+       */
+      renderMode: 'raw',
+      environment: 'main',
+      /**
+       * The page AUTHORISING the dev tools: the badge, and shift+alt+D for the panel — logs, the store, the
+       * elements, the variables. Development only, because a published site has no business offering them.
+       */
+      debugMode: import.meta.env.DEV
+    },
+    plugins
+  );
+
+let mounted = mount(space);
+
+/**
+ * Hot module replacement, for real rather than as a page reload.
+ *
+ * Without this Vite would still update the page when the space is saved — by reloading it, because nothing
+ * accepted the change. Unmounting and remounting keeps the reload out of it, which matters as soon as the page
+ * has state worth not losing: a form half filled in, a menu open, a scroll position.
+ */
+if (import.meta.hot) {
+  import.meta.hot.accept('./space', updated => {
+    // Cast because the dev server cannot know the shape of a module it is swapping; the name is this file's own.
+    const next = (updated as { space?: SpaceSpec } | undefined)?.space;
+    if (!next) {
+      return;
+    }
+
+    mounted?.unmount();
+    mounted = mount(next);
+  });
+}
+`;
+
+const cloudMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
+
+import StatCard from './plugins/StatCard';
+
+import './preflight.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+
+${PLUGINS}
+
+/**
+ * The space's public RENDER key.
+ *
+ * It ships in the page by design — anyone who views source can read it — and what keeps a copied one from working
+ * is that the browser states the origin it is presenting from, which the key is bound to. Add this project's
+ * domain to the space's allowed domains, or the space refuses to load.
+ */
+const WEB_KEY = import.meta.env.VITE_PLITZI_WEB_KEY ?? '';
+
+if (!WEB_KEY) {
+  throw new Error('Set VITE_PLITZI_WEB_KEY in .env — Credentials, in the builder.');
+}
+
+render(
+  'plitzi-root',
+  {
+    webKey: WEB_KEY,
+    environment: import.meta.env.VITE_PLITZI_ENVIRONMENT ?? 'main',
+    // The page is ours, so render into the document rather than into the SDK's default iframe.
+    renderMode: 'raw',
+    debugMode: true
+  },
+  plugins
+);
+`;
+
+export const clientFiles = (answers: CreateAnswers): ProjectFiles => ({
+  'index.html': indexHtml(answers),
+  'vite.config.ts': viteConfig(),
+  'src/preflight.css': preflightCss(),
+  'src/main.ts': answers.source === 'cloud' ? cloudMain() : localMain()
+});

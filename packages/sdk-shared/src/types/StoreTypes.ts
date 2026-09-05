@@ -90,6 +90,37 @@ export type RenderSettings = {
   renderMode?: RenderMode;
   environment?: Environment;
   isHydrating?: boolean;
+  /**
+   * Whether React has finished hydrating this render — false during the pass that has to match the server's markup,
+   * true from the commit after it. Only ever true on a render that was hydrating in the first place; a client-only
+   * render has no markup to match and never sets either flag.
+   *
+   * It exists because "this render came from SSR" and "the SSR markup has been reconciled" are different questions,
+   * and everything that must not run until the second one has happened had no way to ask it. Restoring persisted
+   * state is the case that forced it: what a browser kept from last time is, by definition, something the server
+   * could not know, so applying it during the hydrating pass is a guaranteed mismatch — and React answers a mismatch
+   * by throwing away the whole tree it happened in, not the one node.
+   */
+  hydrated?: boolean;
+  /**
+   * This space is over its plan's quota, as the SERVER decided when it metered the render.
+   *
+   * Not the visitor's business and not the page's either — it is a fact about the account behind the site, which is
+   * why it rides the render surface rather than the schema: nothing an author writes can set it, and nothing in the
+   * space's settings can turn it off. `branding` is forced on by the same state; this is what says WHY.
+   */
+  overQuota?: boolean;
+  /**
+   * Whether every element carries `data-plitzi-el="<its id>"`, which is what an end-to-end test addresses it by.
+   *
+   * On unless a deployment says otherwise, and that default is the point: a consumer's own suite has to work
+   * against their own build without configuring anything, and the ids are already in the page — the schema the
+   * browser hydrates from carries every one of them, so the attribute publishes nothing new.
+   *
+   * `authorSpace` returns the matching handles, so a spec names `handles.hero.cta` rather than a string somebody
+   * has to keep in step with the document by hand.
+   */
+  testAttributes?: boolean;
 };
 
 // `enabled` is the single answer to "is RSC live in this render": the schema asking for it is not enough, a server

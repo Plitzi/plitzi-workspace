@@ -30,9 +30,9 @@ describe('plitzi_render', () => {
 
     expect(result.rootRef).toBe('render');
     expect(result.elementCount).toBe(1);
-    // Elements are keyed by generated id; the agent's `ref` lives on as the element's idRef.
-    const element = Object.values(result.offlineData.schema.flat).find(entry => entry.idRef === 'hero-cta');
-    expect(element?.definition.type).toBe('button');
+    // The name the agent chose IS the element's id, so the flat key is exactly what it asked for.
+    const element = result.offlineData.schema.flat['hero-cta'];
+    expect(element.definition.type).toBe('button');
     // The style cache is compiled into the payload, so the offline SDK can paint with no backend.
     expect(result.offlineData.style.cache).toContain('background-color');
   });
@@ -129,8 +129,8 @@ describe('plitzi_render', () => {
 
     // Warnings are what the model reads back, so a legitimate drawing must produce none.
     expect(result.warnings).toBeUndefined();
-    const element = Object.values(result.offlineData.schema.flat).find(entry => entry.idRef === 'trend');
-    expect(element?.attributes.content).toContain('<svg');
+    const element = result.offlineData.schema.flat['trend'];
+    expect(element.attributes.content).toContain('<svg');
   });
 
   // The markup is injected with dangerouslySetInnerHTML into a view running inside the host's chat UI: inert
@@ -194,5 +194,109 @@ describe('style variables (design tokens) compile per theme', () => {
 
     expect(css).toContain('--ink: light-dark(#000, #fff);');
     expect(css).not.toContain('prefers-color-scheme');
+  });
+});
+
+// A toggle widget: a header whose click flips the visibility of a sibling panel that starts hidden. The shape the
+// guide teaches, and the one an agent gets wrong in the three ways checked below.
+const toggle = (targetRef: string): Operation[] =>
+  [
+    {
+      type: 'upsertElement',
+      pageRef: 'render',
+      element: {
+        ref: 'card',
+        type: 'container',
+        children: [
+          { ref: 'card-head', type: 'button', props: { content: 'Details' } },
+          { ref: 'card-body', type: 'container', initialState: { visibility: false }, props: {} }
+        ]
+      }
+    },
+    {
+      type: 'upsertInteractionFlow',
+      pageRef: 'render',
+      ref: 'card-head',
+      nodes: [
+        { title: 'On click', nodeType: 'trigger', action: 'onClick' },
+        {
+          title: 'Toggle',
+          nodeType: 'callback',
+          action: 'toggleState',
+          elementId: targetRef,
+          params: { category: 'state', key: 'visibility' }
+        }
+      ]
+    }
+  ] as Operation[];
+
+describe('plitzi_render interaction wiring', () => {
+  it('reports the wiring it stored, so the model can say what got connected to what', () => {
+    const result = render({ operations: toggle('card-body') });
+
+    expect(result.rendered).toBe(true);
+    if (!result.rendered) {
+      return;
+    }
+
+    expect(result.interactions).toEqual(['card-head onClick → toggleState card-body[visibility]']);
+  });
+
+  // The failure with no symptom: the runtime resolves a callback on the element its `elementId` names, so a
+  // dangling ref finds nothing and the step does nothing — while the widget renders perfectly.
+  it('fails the render when a step targets an element the widget does not contain', () => {
+    const result = render({ operations: toggle('card-detail') });
+
+    expect(result.rendered).toBe(false);
+    if (result.rendered) {
+      return;
+    }
+
+    const error = result.errors.find(e => e.message.includes('card-detail'));
+    expect(error).toBeDefined();
+    expect(error?.path).toContain('elementId');
+  });
+
+  it('says nothing about a widget with no flows', () => {
+    const result = render({ operations: widget });
+
+    expect(result.rendered).toBe(true);
+    if (!result.rendered) {
+      return;
+    }
+
+    expect(result.interactions).toBeUndefined();
+  });
+
+  // Both flows run on one click, which looks like a working widget until the outer one does something surprising.
+  it('warns when an element and its ancestor listen for the same event', () => {
+    const nested = [
+      ...toggle('card-body'),
+      {
+        type: 'upsertInteractionFlow',
+        pageRef: 'render',
+        ref: 'card',
+        nodes: [
+          { title: 'On click', nodeType: 'trigger', action: 'onClick' },
+          {
+            title: 'Toast',
+            nodeType: 'globalCallback',
+            action: 'addNotification',
+            params: { content: 'Card clicked' }
+          }
+        ]
+      }
+    ] as Operation[];
+
+    const result = render({ operations: nested });
+
+    expect(result.rendered).toBe(true);
+    if (!result.rendered) {
+      return;
+    }
+
+    expect(result.warnings?.some(w => w.includes('card-head') && w.includes('card') && w.includes('onClick'))).toBe(
+      true
+    );
   });
 });

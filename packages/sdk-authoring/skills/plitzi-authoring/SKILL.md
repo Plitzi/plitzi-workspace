@@ -56,7 +56,7 @@ container([hero, grid])         // an array is the children
 
 | Authoring field | What it does |
 | --- | --- |
-| `idRef` | the name the rest of the space calls this element by. **Name anything something else refers to** — derived refs are positional |
+| `id` | the ONE name this element answers to — its key in the document, a binding's source, a step's target. **Name anything something else refers to**: a derived `<type>-<n>` is positional |
 | `class` | a shared class: a name from the space's `classes`, or a `styles()` declaration. Exclusive with `css` |
 | `css` | rules of this element's own: one set, or one per breakpoint (`{ desktop, tablet, mobile }`) |
 | `variant` | a style variant of the element's own vocabulary |
@@ -120,11 +120,11 @@ paragraph({ visible: '!posts.hasPosts' })               // …and its inverse
 container({ bind: [{ to: 'content', source: 'x.y', transformers: [ … ] }] })   // full form
 ```
 
-**A source names the idRef you gave the element** — `'posts.title'`, `'postList.item.cover'` — and the prefix is
+**A source names the id you gave the element** — `'posts.title'`, `'postList.item.cover'` — and the prefix is
 filled in. Only half of a source name is yours: the other half is the kind of source the ELEMENT publishes, and it
 is not always the word you can see (a `form` publishes under `apiContainer`). The four globals — `variables`,
 `navigation`, `auth`, `state` — are named as themselves. A full name still works and is checked the same way: a
-prefix that does not match the element, or an idRef nothing answers to, is refused when the space is authored. It
+prefix that does not match the element, or a name nothing answers to, is refused when the space is authored. It
 is the quietest failure a space can carry.
 
 Server-resolved sections are an `apiContainer` with `runtime: 'server'` naming a connector or an action, and a
@@ -139,7 +139,7 @@ real inverse — a three-state condition (`Boolean(post) && !canEdit`) still bel
 
 ```ts
 button({
-  idRef: 'cta',
+  id: 'cta',
   content: 'Get a quote',
   flows: [[
     onClick(),
@@ -152,10 +152,14 @@ button({
 Use the step builders — they answer the three things that go wrong silently:
 
 - **Where a step runs.** A global callback registers under its source MODULE (`state`, `auth`, `actions`), an
-  element callback under an element's idRef, a utility under nothing. The builders fill it in; a trigger and an
+  element callback under an element's id, a utility under nothing. The builders fill it in; a trigger and an
   untargeted `updateElement` are filled with the element the flow was declared on.
 - **Which `setState`.** `setState(…)` writes `runtime.state.<key>`; `updateElement(…)` changes one element's own
-  attribute. Different params, different node kind.
+  attribute or state. Different params, different node kind. Each has a flip-it counterpart storing the opposite
+  of what is there, which is how expand/collapse is ONE step on ONE trigger: `toggleState({ key })` for app state,
+  and `toggleElement({ category: 'state', key: 'visibility' }, 'panel')` to show/hide an element (the second
+  argument is the element it acts on; omitted, it acts on the one the flow is declared on). Never two branches
+  under opposite `when` guards — those read the state as it was when the flow STARTED, so they run a click behind.
 - **What it takes.** Params are typed from the same declaration the builder's own panel is drawn from.
 
 `named(id, step)` is how a later step reads an earlier one — the flow scope is keyed by node id, so
@@ -185,10 +189,10 @@ matching only `failed` is how those two end up doing nothing.
 - a `class` or a `slot` naming a class the space does not declare (the error names the one you probably meant)
 - an element asking for a shared class AND rules of its own — an element has one base selector
 - one class name declared twice with rules that disagree
-- a binding source naming an idRef nothing answers to, or one whose prefix is not what that element publishes
-- an idRef that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
+- a binding source naming an element nothing answers to, or one whose prefix is not what that element publishes
+- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
 - a step target naming an element that is not there
-- two elements answering to one idRef, a broken flow chain, an orphan, a cycle
+- two elements answering to one name, a broken flow chain, an orphan, a cycle
 - a global callback on the wrong module — or on none — and a utility given one. A global callback registers under
   its SOURCE MODULE (`auth`, `state`, `actions`), and the pair is what the runtime resolves a step by, so naming
   either half wrong is a control that does nothing at all with no error anywhere. An action no built-in source
@@ -229,7 +233,7 @@ Everything a space is held to still applies, and two more things apply because a
 - **Everything it names, it carries.** A class declared in the space it was cut from does not travel; the element
   keeps the class name, finds no rules wherever it is dropped, and renders unstyled. Declare in `classes` (or with
   `styles()`) every rule the subtree names — `validateTemplate` warns about a name the manifest does not carry.
-- **A binding may not point outside the subtree.** A source names an element by idRef, so binding to a provider
+- **A binding may not point outside the subtree.** A source names an element by id, so binding to a provider
   that stayed behind is dead on arrival — refused. Bring the provider (the `apiContainer`, the `form`) into the
   template, or bind to one of the globals: `variables`, `navigation`, `auth`, `state`.
 
@@ -240,7 +244,7 @@ builder, or edited by hand — before you publish it.
 
 1. **Never hand-write `flat`, element ids, `styleSelectors`, `beforeNode`/`afterNode`/`flowId`.** They are derived.
    Writing them is how a space half-renders with nothing reporting why.
-2. **Name what is referred to.** `idRef` on any element a binding, a step or a pager addresses.
+2. **Name what is referred to.** `id` on any element a binding, a step or a pager addresses.
 3. **Read the error.** Every refusal above names the element, the class or the property at fault; it is a bug in
    the declaration, not a reason to work around the check.
 4. **Ids are stable.** They are hashes of the path that produced them, so re-authoring an unchanged space writes

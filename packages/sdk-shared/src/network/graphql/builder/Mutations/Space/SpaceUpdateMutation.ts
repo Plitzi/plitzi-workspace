@@ -7,7 +7,6 @@ const SpaceUpdateMutation = gql`
         settings
         flat {
           id
-          idRef
           definition {
             label
             type

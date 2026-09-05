@@ -38,18 +38,27 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
   });
 });
 
-describe('mcp-ai draft store (one-shot preview tokens)', () => {
+describe('mcp-ai draft store (preview tokens)', () => {
   it('returns the stashed draft exactly once, then nothing', () => {
     const store = createMemoryDraftStore();
     const data = { schema: buildSpace().schema, style: buildSpace().style };
-    void store.put('tok', data, 60000);
-    expect(store.take('tok')).toBe(data);
+    void store.put('tok', data, { ttlMs: 60000 });
+    expect(store.take('tok')).toMatchObject({ data, reusable: false });
     expect(store.take('tok')).toBeUndefined();
+  });
+
+  /** The capture path and the iterate path share one store; only the read differs. */
+  it('keeps a reusable draft for as long as its session lasts', () => {
+    const store = createMemoryDraftStore();
+    const data = { schema: buildSpace().schema, style: buildSpace().style };
+    void store.put('tok', data, { ttlMs: 60000, reusable: true });
+    expect(store.take('tok')).toMatchObject({ data, reusable: true });
+    expect(store.take('tok')).toMatchObject({ data, reusable: true });
   });
 
   it('drops an expired token', () => {
     const store = createMemoryDraftStore();
-    void store.put('tok', { schema: buildSpace().schema, style: buildSpace().style }, -1);
+    void store.put('tok', { schema: buildSpace().schema, style: buildSpace().style }, { ttlMs: -1 });
     expect(store.take('tok')).toBeUndefined();
   });
 });

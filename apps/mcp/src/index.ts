@@ -33,7 +33,9 @@ export {
   readMcpBody,
   buildAgentGuide,
   createHttpPreviewClient,
-  createHttpScreenshotClient
+  createHttpScreenshotClient,
+  createLocalScreenshotClient,
+  resolveLocalBrowser
 } from './modules/mcp';
 export {
   apply,

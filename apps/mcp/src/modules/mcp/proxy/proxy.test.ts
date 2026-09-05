@@ -157,10 +157,10 @@ describe('a rendered widget', () => {
     }
   ] as Operation[];
 
-  type Rendered = { schema: { flat: Record<string, { idRef?: string; attributes: Record<string, unknown> }> } };
+  type Rendered = { schema: { flat: Record<string, { id: string; attributes: Record<string, unknown> }> } };
 
   const attributeOf = (data: Rendered, ref: string, name: string) =>
-    Object.values(data.schema.flat).find(element => element.idRef === ref)?.attributes[name];
+    Object.values(data.schema.flat).find(element => element.id === ref)?.attributes[name];
 
   it('loads everything external through the endpoint the host CSP declares', () => {
     const result = render({ operations: widget }, { proxy });
@@ -257,7 +257,7 @@ describe('a rendered widget', () => {
     }
 
     const flat = result.offlineData.schema.flat;
-    const host = Object.values(flat).find(element => element.idRef === 'go');
+    const host = Object.values(flat).find(element => element.id === 'go');
     const steps = Object.values(host?.definition.interactions ?? {});
     const paramsOf = (title: string) => steps.find(step => step.title === title)?.params ?? {};
 

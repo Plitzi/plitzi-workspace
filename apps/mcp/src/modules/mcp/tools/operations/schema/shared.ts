@@ -115,10 +115,9 @@ export const elementShape = {
   ref: z
     .string()
     .describe(
-      'Semantic id you choose, or an existing element ref/id. On a new element it becomes the idRef everything ' +
-        'addresses it by: its data source is `<type>_<ref>`, and interactions target it by this ref. Letters, ' +
-        'digits, `-` and `_`, starting with a letter — a dot would break the `<type>_<idRef>.<field>` grammar. ' +
-        'Unique across the space.'
+      'The name of the element. On a new one it BECOMES its id — the one key everything addresses it by: its data ' +
+        'source is `<type>_<name>` and interactions target it by this. Letters, digits, `-` and `_`, starting ' +
+        'with a letter; no dots (they would split that source path). Unique across the space.'
     ),
   // Required on purpose. Defaulting it to `container` saves a little repetition, but an agent that simply FORGOT
   // the type then gets a silent box instead of a parse error — and a widget render has no component catalog, so
@@ -185,10 +184,7 @@ export const interactionNode = z.object({
   elementId: z
     .string()
     .optional()
-    .describe(
-      'Element whose callback this step invokes; defaults to this element. Its ref or raw id — a raw id is ' +
-        'normalised to the idRef the runtime looks callbacks up by, and a target without one is given it.'
-    ),
+    .describe('Element whose callback this step invokes, by name; defaults to this element'),
   preview: z.record(z.string(), z.unknown()).optional()
 });
 

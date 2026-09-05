@@ -42,7 +42,7 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
  * would open in the builder exactly as it reads here — this file is what dragging it together would save.
  *
  * `authorSpace` derives what nobody chooses: element ids, class names, parent and root links, the breakpoint maps.
- * What IS chosen is named — `idRef` on anything something else refers to, and `id` on any step whose result a
+ * What IS chosen is named — `id` on anything something else refers to, and `id` on any step whose result a
  * later one reads.
  */
 
@@ -129,13 +129,13 @@ const byline = (src: string): ElementSpec =>
  * the editor link is hidden from anyone who may not use it, and the account button carries the name of whoever is
  * signed in. Hiding the link is a courtesy — the action behind it refuses the same people either way.
  *
- * One per page, because an idRef names one element in the whole space and the bindings below follow the ref.
+ * One per page, because an id names one element in the whole space and the bindings below follow the ref.
  */
 const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
   const src = ref;
 
   return apiContainer({
-    idRef: ref,
+    id: ref,
     runtime: 'server',
     action: 'site-chrome',
     class: 'pageInner',
@@ -173,7 +173,7 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                    * Which icon shows is a rule in `theme.ts`, answered the same way the palette is.
                    */
                   themeToggle({
-                    idRef: `${ref}Theme`,
+                    id: `${ref}Theme`,
                     subType: 'switch', lightLabel: 'Light', darkLabel: 'Dark',
                     class: 'themeToggle'
                   }),
@@ -291,7 +291,7 @@ const note = (content: string): ElementSpec =>
 const home: PageSpec = {
   name: 'Latest posts',
   slug: '',
-  idRef: 'home',
+  id: 'home',
   seoTitle: 'Fieldnotes — wildlife, close up',
   seoDescription: 'A wildlife magazine, rendered by Plitzi: posts, sessions and who may publish.',
   class: 'page',
@@ -308,7 +308,7 @@ const home: PageSpec = {
            * action reads it as its input — which is the whole of wiring the two together.
            */
           apiContainer({
-            idRef: 'posts',
+            id: 'posts',
             runtime: 'server',
             action: 'list-posts',
               // What this element asks of the action, on top of the page's own route and query params.
@@ -375,7 +375,7 @@ const home: PageSpec = {
                        * `postList.item` is. One template, however many posts.
                        */
                       list({
-                        idRef: 'postList',
+                        id: 'postList',
                         source: 'controlled',
                         class: 'feed',
                         bind: { items: 'posts.records' },
@@ -387,7 +387,7 @@ const home: PageSpec = {
                        * asks for — which keeps the result shareable, indexable and back-button-proof.
                        */
                       pagination({
-                        idRef: 'postPager',
+                        id: 'postPager',
                         mode: 'pages', target: 'url', pageParam: 'page',
                         class: 'pager',
                         bind: { pageInfo: 'posts.pageInfo' }
@@ -409,7 +409,7 @@ const home: PageSpec = {
                        * action answers it — there is no second endpoint here, and no second task.
                        */
                       apiContainer({
-                        idRef: 'recent',
+                        id: 'recent',
                         runtime: 'server',
                         // `topic: ''` is not noise: a render trigger's input is the page's own query params plus
                         // whatever the element declares, so without saying so this provider would be filtered by
@@ -420,7 +420,7 @@ const home: PageSpec = {
                         children: [
                           panel('Topics', [
                             list({
-                              idRef: 'topicList',
+                              id: 'topicList',
                               source: 'controlled',
                               class: 'chipRow',
                               /**
@@ -456,7 +456,7 @@ const home: PageSpec = {
                           ]),
                           panel('From the archive', [
                             list({
-                              idRef: 'recentList',
+                              id: 'recentList',
                               source: 'controlled',
                               class: 'quietList',
                               bind: { items: 'recent.records' },
@@ -501,7 +501,7 @@ const home: PageSpec = {
 const post: PageSpec = {
   name: 'Post',
   slug: 'post/{{slug}}',
-  idRef: 'postPage',
+  id: 'postPage',
   class: 'page',
   /**
    * The one thing this page asks about the READER rather than about the post.
@@ -528,7 +528,7 @@ const post: PageSpec = {
         class: 'main',
         children: [
           apiContainer({
-            idRef: 'post',
+            id: 'post',
             runtime: 'server',
             action: 'get-post', singleRecord: true, subType: 'main',
             class: 'pageStack',
@@ -610,7 +610,7 @@ const post: PageSpec = {
                         ]
                       }),
                       button({
-                        idRef: 'sighting',
+                        id: 'sighting',
                         subType: 'button', content: 'I have seen one',
                         class: 'buttonQuiet',
                         /**
@@ -670,7 +670,7 @@ const post: PageSpec = {
                 children: [
                   text('Keep reading', { class: 'sectionLabel' }),
                   list({
-                    idRef: 'moreList',
+                    id: 'moreList',
                     source: 'controlled',
                     class: 'moreGrid',
                     bind: { items: 'post.more' },
@@ -754,7 +754,7 @@ const boundField = (
 const write: PageSpec = {
   name: 'Write',
   slug: 'write',
-  idRef: 'writePage',
+  id: 'writePage',
   accessLevel: 'authenticated',
   // A visitor with no session lands on the sign-in rather than on a 403, which is the whole of "you must be
   // logged in to post" — stated on the page, not written into a guard somewhere.
@@ -773,7 +773,7 @@ const write: PageSpec = {
                 children: [
                   heading({ subType: 'h1', content: 'New post', class: 'articleTitle' }),
                   form({
-                    idRef: 'postForm',
+                    id: 'postForm',
                     class: 'form',
                     // Without this the browser submits the form itself and the page navigates away; the flow runs.
                     managedByInteractions: true, method: 'post',
@@ -892,7 +892,7 @@ const write: PageSpec = {
 const edit: PageSpec = {
   name: 'Edit',
   slug: 'edit/{{slug}}',
-  idRef: 'editPage',
+  id: 'editPage',
   accessLevel: 'authenticated',
   unauthorizedRedirect: 'login',
   class: 'page',
@@ -902,7 +902,7 @@ const edit: PageSpec = {
         class: 'main',
         children: [
           apiContainer({
-            idRef: 'editPost',
+            id: 'editPost',
             runtime: 'server',
             action: 'get-post', singleRecord: true, subType: 'main',
             class: 'pageStack',
@@ -920,7 +920,7 @@ const edit: PageSpec = {
                       }),
                       bound('paragraph', 'editPost.record.title', 'articleStandfirst'),
                       form({
-                        idRef: 'editForm',
+                        id: 'editForm',
                         class: 'form',
                         managedByInteractions: true, method: 'post',
                         flows: [
@@ -1073,7 +1073,7 @@ const edit: PageSpec = {
 const signIn: PageSpec = {
   name: 'Sign in',
   slug: 'login',
-  idRef: 'signInPage',
+  id: 'signInPage',
   accessLevel: 'public',
   class: 'page',
   body: [
@@ -1092,7 +1092,7 @@ const signIn: PageSpec = {
                     'ada / password is on the masthead and may publish. grace / password reads — and is refused, politely, if she tries.'
                   ),
                   form({
-                    idRef: 'loginForm',
+                    id: 'loginForm',
                     class: 'form',
                     managedByInteractions: true, method: 'post',
                     flows: [
@@ -1129,7 +1129,7 @@ const signIn: PageSpec = {
 const account: PageSpec = {
   name: 'Account',
   slug: 'login',
-  idRef: 'accountPage',
+  id: 'accountPage',
   accessLevel: 'authenticated',
   class: 'page',
   body: [
@@ -1186,7 +1186,7 @@ const account: PageSpec = {
                     children: [
                       writeLink('chromeAccount'),
                       button({
-                        idRef: 'signOut',
+                        id: 'signOut',
                         subType: 'button', content: 'Sign out',
                         class: 'buttonQuiet',
                         flows: [[named('signOut', onClick()), authLogout()]]

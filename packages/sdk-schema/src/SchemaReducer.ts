@@ -1,8 +1,8 @@
 import { get, set, has } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
+import { remapCollidingIds, takenIds } from './helpers/elementId';
 import FlatMap from './helpers/FlatMap';
-import { remapClonedRefs, takenIdRefs } from './helpers/idRef';
 
 import type {
   Element,
@@ -45,6 +45,7 @@ export const SchemaActions = {
   SCHEMA_MOVE_ELEMENT: 'SCHEMA_MOVE_ELEMENT',
   SCHEMA_CLONE_ELEMENT: 'SCHEMA_CLONE_ELEMENT',
   SCHEMA_UPDATE_ELEMENT: 'SCHEMA_UPDATE_ELEMENT',
+  SCHEMA_RENAME_ELEMENT: 'SCHEMA_RENAME_ELEMENT',
   SCHEMA_UPDATE_ELEMENTS: 'SCHEMA_UPDATE_ELEMENTS',
   SCHEMA_ADD_TEMPLATE: 'SCHEMA_ADD_TEMPLATE',
   SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS'
@@ -91,6 +92,7 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
         initialItems: Record<string, Element>;
       }
     | { type: 'SCHEMA_UPDATE_ELEMENT'; element: Element }
+    | { type: 'SCHEMA_RENAME_ELEMENT'; elementId: string; id: string }
     | { type: 'SCHEMA_UPDATE_ELEMENTS'; elements: Element[] }
     | {
         type: 'SCHEMA_UPDATE_SETTINGS';
@@ -240,17 +242,18 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
-        // A template arrives from a document nobody here has seen, and the names it brought are not free: two
-        // elements sharing an idRef makes every binding onto it ambiguous, so `addElement` refuses the whole
-        // subtree — a drag that silently drops nothing, which is exactly what an authored template hits, since
-        // its refs are derived per type (`container-1`, `text-1`) in every space that ever authored one.
+        // A template arrives from a document nobody here has seen, and the names it brought may not be free: two
+        // elements answering to one name makes every binding onto it ambiguous, so `addElement` refuses the whole
+        // subtree — a drag that silently drops nothing, which is what an authored template hits whenever this
+        // space already holds a `hero` or a `cta`.
         //
-        // Renamed against THIS document before it lands, with every binding source and step target that pointed at
-        // an old name repointed with it. Copied first: the payload belongs to whoever dispatched the action.
+        // Only the colliding names are changed, and everything that pointed at one is repointed with it. Copied
+        // first: the payload belongs to whoever dispatched the action.
         const arriving = structuredClone({ [data.id]: data, ...initialItems });
-        const taken = takenIdRefs(draft.flat);
-        remapClonedRefs(arriving, candidate => taken.has(candidate));
-        const { [data.id]: element, ...items } = arriving;
+        const taken = takenIds(draft.flat);
+        const renamed = remapCollidingIds(arriving, candidate => taken.has(candidate));
+        const rootId = renamed[data.id] ?? data.id;
+        const { [rootId]: element, ...items } = arriving;
 
         FlatMap.addElement(draft.flat, element, to, dropPosition, items);
         appendVariables(draft, variables);
@@ -286,6 +289,16 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
 
       return produce(state, draft => {
         FlatMap.updateElement(draft.flat, element);
+      });
+    }
+
+    case SchemaActions.SCHEMA_RENAME_ELEMENT: {
+      const { elementId, id } = action;
+
+      return produce(state, draft => {
+        // The whole document, not just `flat`: a page renamed without its entry in `pages` is a page the space no
+        // longer lists.
+        FlatMap.renameElement(draft, elementId, id);
       });
     }
 

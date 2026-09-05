@@ -33,10 +33,31 @@ export interface AIPageSummary {
   enabled: boolean;
   /** The ref of the folder this page lives in (a PageFolder id), or undefined for a root-level page. */
   folder?: string;
+  /** The layout shell this page renders inside, if any — read it as a page: `pages/{layout}`. */
+  layout?: string;
+  /** The container INSIDE that shell where this page's own body is placed. */
+  layoutSlot?: string;
   elementCount: number;
 }
 
-/** A page folder in the sidebar tree. `ref` is the folder's id (there is no separate idRef); pages reference it
+/**
+ * A shared layout shell: the header/sidebar/footer several pages render inside.
+ *
+ * It is a root of its own — not in the page list, owned by nobody — and a page points at it by `layout`. Its
+ * elements are read and edited exactly like a page's: `pages/{ref}` for the skeleton, and `pageRef: "{ref}"` on
+ * any element/binding/interaction op.
+ */
+export interface AILayoutSummary {
+  ref: string;
+  label: string;
+  /** The pages rendered inside this shell. */
+  usedBy: string[];
+  /** Where each of those pages puts its own body — the container inside this shell. */
+  slots: string[];
+  elementCount: number;
+}
+
+/** A page folder in the sidebar tree. `ref` is the folder's id; pages reference it
  *  by that id via their `folder`, and nested folders via `parentId`. */
 export interface AIFolder {
   ref: string;

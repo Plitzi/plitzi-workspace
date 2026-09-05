@@ -24,6 +24,10 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.upsertPage(space, env, op);
     case 'deletePage':
       return schema.deletePage(space, env, op);
+    case 'upsertLayout':
+      return schema.upsertLayout(space, env, op);
+    case 'deleteLayout':
+      return schema.deleteLayout(space, env, op);
     case 'upsertFolder':
       return schema.upsertFolder(space, env, op);
     case 'deleteFolder':
@@ -150,7 +154,7 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
     }
 
     // NOTE: the per-request index/memo is NOT dropped here. It only goes stale when an op changes what the index
-    // keys on — element/page membership, an idRef, or a page's slug/name/default. Those handlers invalidate at the
+    // keys on — element/page membership, or a rename. Those handlers invalidate at the
     // exact mutation point (see createElement/ensureIdRef, delete*, upsertPage). A pure prop/style/interaction
     // patch leaves the index valid, so a large patch-only batch resolves every ref in O(1) with no rebuild.
 

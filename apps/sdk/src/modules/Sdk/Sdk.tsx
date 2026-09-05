@@ -45,7 +45,10 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
     'navigation.currentPageId',
     'runtime.sources.variables'
   ]);
-  const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
+  const { renderMode, previewMode, debugMode, environment, isHydrating, overQuota } = useRenderSettings();
+  // Pinned on rather than defaulted on: a space over its plan cannot take the badge off from its own settings, and
+  // a server-rendered page pins it the same way (see prepareRender).
+  const brandingShown = branding || overQuota;
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);
 
@@ -121,7 +124,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
         <RawMode
           renderMode={renderMode}
           style={css}
-          branding={branding}
+          branding={brandingShown}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
         />
@@ -130,7 +133,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
         <ShadowMode
           sdkStylePath={sdkStylePath}
           style={css}
-          branding={branding}
+          branding={brandingShown}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
           assets={assets}
@@ -139,7 +142,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
       {!['raw', 'widget', 'shadow'].includes(renderMode) && (
         <IframeMode
           style={css}
-          branding={branding}
+          branding={brandingShown}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
           assets={assets}

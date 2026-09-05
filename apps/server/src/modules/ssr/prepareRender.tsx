@@ -1,9 +1,11 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+import { themeBootScript } from '@plitzi/sdk-shared/theme';
 
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
+import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
 import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
@@ -118,11 +120,17 @@ export const prepareRender = async (
   const v = version ? `?v=${version}` : '';
   const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
 
-  const debugMode = resolveDebugMode(
-    config.debugMode ?? config.devMode,
-    // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
-    readCookie(req.headers.cookie, debugCookieName(req.headers.host))
-  );
+  // A `__pt` render exists to be looked at as a picture — a thumbnail, the agent's screenshot, the builder's
+  // preview pane. Nobody is at that keyboard to dismiss the dev-tools badge, and it would be baked into the
+  // capture, so debugging is off for it however the deployment and the cookie are set.
+  const isPreviewRender = Boolean(req.query[PREVIEW_TOKEN_PARAM]);
+  const debugMode =
+    !isPreviewRender &&
+    resolveDebugMode(
+      config.debugMode ?? config.devMode,
+      // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
+      readCookie(req.headers.cookie, debugCookieName(req.headers.host))
+    );
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
@@ -131,6 +139,9 @@ export const prepareRender = async (
   const { degrade, analytics } = req.ctx.meter ?? {};
   const clientAnalytics = analytics ? { ...analytics, firstViewCounted: true } : undefined;
   const branding = degrade ? true : undefined;
+  // The same state, said out loud. `branding` is forced on by it but is also on for every ordinary free space, so
+  // it cannot be what a notice reads — this is the fact that the ACCOUNT is over, and only the server can state it.
+  const overQuota = degrade ? true : undefined;
 
   const offlineDataStr = escapeJson(
     JSON.stringify({
@@ -141,7 +152,8 @@ export const prepareRender = async (
       server,
       sdkDevToolsStylePath,
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
-      ...(branding ? { branding } : {})
+      ...(branding ? { branding } : {}),
+      ...(overQuota ? { overQuota } : {})
     })
   );
 
@@ -185,7 +197,8 @@ export const prepareRender = async (
       environment: req.ctx.spaceDeployment?.environment ?? environment,
       debugMode,
       sdkDevToolsStylePath,
-      branding
+      branding,
+      overQuota
     },
     entries,
     templateParams: {
@@ -197,6 +210,14 @@ export const prepareRender = async (
       reactDom: vendorJs,
       reactDomClient: vendorJs,
       reactCompilerRuntime: vendorJs,
+      /**
+       * The theme, applied before the first paint.
+       *
+       * Default rather than opt-in: every SSR document has this problem — the paint happens before the SDK exists,
+       * so a remembered theme cannot be honoured by anything the SDK does at mount — and a deployment that keeps the
+       * choice somewhere the server can read overrides it with the class it renders itself.
+       */
+      themeBoot: themeBootScript(),
       ...req.ctx.spaceDeployment?.templateProps,
       // Applied last on purpose: the page speaks for itself. A deployment's `templateProps` is a space-wide
       // default and stays in charge of pages that declare nothing, which is what makes this safe to turn on for

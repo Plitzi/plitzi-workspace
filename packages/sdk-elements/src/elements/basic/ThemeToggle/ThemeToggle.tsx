@@ -74,7 +74,7 @@ const ThemeToggle = ({
 }: ThemeToggleProps) => {
   const { theme, setTheme, toggleTheme } = useTheme();
   const {
-    idRef,
+    id,
     definition: { styleSelectors }
   } = useElement();
   const {
@@ -131,8 +131,8 @@ const ThemeToggle = ({
       return;
     }
 
-    void interactionsManager.interactionTrigger(idRef, 'onThemeChange', { theme });
-  }, [theme, interactionsManager, idRef]);
+    void interactionsManager.interactionTrigger(id, 'onThemeChange', { theme });
+  }, [theme, interactionsManager, id]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({

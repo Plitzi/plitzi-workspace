@@ -25,6 +25,18 @@ export interface SpaceTokenAdapters {
   find: (spaceId: number, tokenId: number) => Promise<SpaceTokenRecord | undefined>;
   list: (spaceId: number) => Promise<SpaceTokenRecord[]>;
   save: (id: number, values: { token: string; origins?: string[]; expiresAt?: number | null }) => Promise<void>;
+  /**
+   * Store a NEW credential beside the space's public one. Only the secret scopes are ever created this way — the
+   * public row is created with the space and rotated in place thereafter — so a deployment that issues none may
+   * leave it out and `issueHost` refuses.
+   */
+  create?: (values: {
+    spaceId: number;
+    token: string;
+    scope: SpaceScope;
+    origins: string[];
+    expiresAt: number | null;
+  }) => Promise<SpaceTokenRecord>;
   remove: (id: number) => Promise<void>;
   /**
    * The domain list is two policies at once — where the credential may be presented, and who may frame the space — so
@@ -57,6 +69,15 @@ export type SpaceTokenSummary = Omit<SpaceTokenRecord, 'token' | 'origins'> & {
 };
 
 const ROTATION_WARNING = 'The previous token stopped working. Every site embedding it must be redeployed.';
+
+/**
+ * Said once, at the only moment it can be acted on. A host credential is the space's read access WITHOUT the origin
+ * check that makes the public one safe to publish, so what keeps it from being a way to clone the space is that it
+ * stays secret — and a caller who does not know it is never shown again will paste it into a page.
+ */
+const HOST_SECRET_WARNING =
+  'Store this now — it is not shown again. Unlike the public token it is NOT safe to embed in a page or commit to ' +
+  'a public repository: anyone holding it can serve this space from their own server. Revoke it if it leaks.';
 
 const DAY_SECONDS = 86400;
 
@@ -138,6 +159,56 @@ export const createSpaceTokenApi = ({ tokens, adapters }: { tokens: Tokens; adap
       const { token, origins } = await remint(record, context);
 
       return { ok: true, body: { token, domains: origins, warning: ROTATION_WARNING } };
+    },
+
+    /**
+     * Issue a **host** credential: the space's read access for a SERVER that renders it as its own.
+     *
+     * A separate credential rather than letting the public one do it, because the two are protected by different
+     * things and only one of them can be published. A `render` token is safe in a page precisely because it is held
+     * to the origins it declares — a check that only means anything when a browser is the one making the claim. A
+     * server has no origin to state, so admitting the public token without one would make a key lifted from anybody's
+     * published page enough to serve a byte-identical clone of their site. This one is admitted without an origin
+     * because possessing it is itself the proof, which is only true while it stays secret: it is returned once, never
+     * embedded, and revocable on its own row.
+     *
+     * `label` is what the owner will read in the list when deciding which one to revoke — the deployment it was
+     * issued to. It is stored where a render token keeps its domains, since a host credential is bound to none.
+     */
+    async issueHost(
+      context: SpaceTokenContext,
+      label: unknown,
+      { expiresAt = null }: { expiresAt?: number | null } = {}
+    ): Promise<
+      SpaceTokenOutcome<{ id: number; token: string; label: string; expiresAt: number | null; warning: string }>
+    > {
+      if (!adapters.create) {
+        return { ok: false, status: 501, body: { error: 'This deployment does not issue host tokens' } };
+      }
+
+      if (typeof label !== 'string' || label.trim() === '') {
+        return {
+          ok: false,
+          status: 400,
+          body: { error: 'label is required — name the deployment this credential is for, so it can be revoked' }
+        };
+      }
+
+      const name = label.trim();
+      const token = tokens.generateSpaceToken(context.spaceId, [name], 'host', { expiresAt });
+      const record = await adapters.create({
+        spaceId: context.spaceId,
+        token,
+        scope: 'host',
+        origins: [name],
+        expiresAt
+      });
+
+      return {
+        ok: true,
+        status: 201,
+        body: { id: record.id, token, label: name, expiresAt, warning: HOST_SECRET_WARNING }
+      };
     },
 
     async readDomains(context: SpaceTokenContext): Promise<SpaceTokenOutcome<{ domains: string[] }>> {
@@ -232,8 +303,9 @@ export const createSpaceTokenApi = ({ tokens, adapters }: { tokens: Tokens; adap
 
     /**
      * The space's credentials, so a leak can be seen and acted on. Never the secrets themselves: an `agent` grant
-     * writes, and listing it would turn permission to read into a way to obtain it. The public one is published by
-     * construction and has its own endpoint.
+     * writes and a `host` grant serves the space from somebody else's server, so listing either would turn
+     * permission to read into a way to obtain it. The public one is published by construction and has its own
+     * endpoint.
      */
     async list(context: SpaceTokenContext): Promise<SpaceTokenOutcome<{ tokens: SpaceTokenSummary[] }>> {
       const records = await adapters.list(context.spaceId);
@@ -245,7 +317,8 @@ export const createSpaceTokenApi = ({ tokens, adapters }: { tokens: Tokens; adap
             void token;
 
             // The same column means different things by scope: the domain list for the public credential, and a
-            // human label (which connector it was issued for) on an agent one.
+            // human label — which connector, which deployment — on an agent or host one, which are bound to no
+            // domain and need instead to be identifiable when one of them has to be revoked.
             return { ...rest, ...(rest.scope === 'render' ? { domains: origins } : { label: origins.join(',') }) };
           })
         }

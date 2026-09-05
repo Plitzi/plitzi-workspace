@@ -31,8 +31,8 @@ const ListControlledItem = ({
   // record→id bookkeeping, so the segment never collides across sibling lists.
   const segment = useId();
 
-  // An empty `source` means the list has no idRef and so publishes nothing bindable — the row then contributes no
-  // scope value rather than a `sources['']` key nothing could ever address.
+  // A row rendered outside a list carries no `source`, so it contributes no scope value rather than a `sources['']`
+  // key nothing could ever address.
   const storeContextValue = useMemo(
     () => (source ? { runtime: { sources: { [source]: { item: record, index: `${itemCount}` } } } } : emptyObject),
     [source, record, itemCount]

@@ -68,7 +68,7 @@ names is published to every visitor of that URL.
 | `list`, `source: 'controlled'`, `items` ← `apiContainer_cats.records` | renders its children once per record |
 | `image`, `src` ← `list_catList.item.url` | one row's template, bound to one field |
 
-A source is named after the element's `idRef` — `apiContainer_cats`, `list_catList` — which is why a binding
+A source is named after the element's `id` — `apiContainer_cats`, `list_catList` — which is why a binding
 survives an element being renamed or moved.
 
 It is the same `apiContainer` a connector-backed section uses: the attribute decides which producer resolves it,

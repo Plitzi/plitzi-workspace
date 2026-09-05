@@ -11,7 +11,9 @@ import { upsertFolderOp } from './folders/upsertFolder';
 import { deleteInteractionOp } from './interactions/deleteInteraction';
 import { patchInteractionNodeOp } from './interactions/patchInteractionNode';
 import { upsertInteractionFlowOp } from './interactions/upsertInteractionFlow';
+import { deleteLayoutOp } from './pages/deleteLayout';
 import { deletePageOp } from './pages/deletePage';
+import { upsertLayoutOp } from './pages/upsertLayout';
 import { upsertPageOp } from './pages/upsertPage';
 import { patchSettingsOp } from './settings/patchSettings';
 import { deleteVariableOp } from './variables/deleteVariable';
@@ -26,6 +28,8 @@ export const elementOps = {
   moveElement: moveElementOp,
   upsertPage: upsertPageOp,
   deletePage: deletePageOp,
+  upsertLayout: upsertLayoutOp,
+  deleteLayout: deleteLayoutOp,
   upsertFolder: upsertFolderOp,
   deleteFolder: deleteFolderOp,
   upsertVariable: upsertVariableOp,

@@ -1,3 +1,4 @@
+import type { SpaceHandles } from './handles';
 import type { CssProps, CssSpec, StyleDeclaration } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
@@ -36,7 +37,7 @@ export interface StepSpec {
   title?: string;
   params?: Record<string, unknown>;
   preview?: Record<string, unknown>;
-  /** The idRef the step is registered on. Utilities are resolved by action alone and take none. */
+  /** The id of the element the step is registered on. Utilities are resolved by action alone and take none. */
   on?: string;
   when?: ElementInteraction['when'];
   enabled?: boolean;
@@ -48,7 +49,7 @@ export interface BindingSpec {
   /**
    * Where the value comes from.
    *
-   * Normally `<idRef>.<field>` — the name YOU gave the element, and the source prefix is looked up from what that
+   * Normally `<id>.<field>` — the name YOU gave the element, and the source prefix is looked up from what that
    * element publishes. The four globals (`variables`, `navigation`, `auth`, `state`) are named as themselves, and
    * a source written in full (`apiContainer_posts.data`) is left alone but checked.
    */
@@ -83,14 +84,14 @@ export interface SpecMeta {
 export interface ElementSpec {
   type: string;
   /**
-   * The name the rest of the space calls this element by: a binding's source (`apiContainer_posts.records`), a
-   * step's `on`, an interaction target.
+   * The one name this element answers to, everywhere: its key in the document, a binding's source
+   * (`apiContainer_posts.records`), a step's `on`, an interaction target.
    *
    * Derived as `<type>-<n>` when left out, which is unique but POSITIONAL — adding an element above renumbers
    * every one below it, and each binding that named one then points at a different element without changing.
-   * Name the ones something else refers to.
+   * Name the ones something else refers to; a derived name is deliberately not accepted as a binding source.
    */
-  idRef?: string;
+  id?: string;
   attributes?: Record<string, unknown>;
   /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
   variant?: string;
@@ -141,10 +142,29 @@ export interface ElementSpec {
   meta?: SpecMeta;
 }
 
+/**
+ * A folder of pages, which is a ROUTING decision and not a filing one.
+ *
+ * A folder's slug prefixes the path of every page in it — a page called `getting-started` inside a folder called
+ * `docs` answers at `/docs/getting-started` — and folders nest, so the prefix is the chain of slugs from the root.
+ * The builder also draws them as the tree in its page list, but that is the smaller half: without folders a space
+ * authored in code cannot produce a nested URL at all.
+ */
+export interface PageFolderSpec {
+  /** The name a page refers to it by, and its id in the document. */
+  id: string;
+  /** What the builder's page tree shows. Defaults to the id. */
+  name?: string;
+  /** The path segment this folder contributes. Defaults to the id. */
+  slug?: string;
+  /** The folder this one sits inside, by id. */
+  parent?: string;
+}
+
 export interface PageSpec {
   name: string;
-  /** As {@link ElementSpec.idRef} — a page is an element, and its flows are targeted the same way. */
-  idRef?: string;
+  /** As {@link ElementSpec.id} — a page is an element, and its flows are targeted the same way. */
+  id?: string;
   /** Route, without a leading slash. Empty is the home page. */
   slug: string;
   isDefault?: boolean;
@@ -167,6 +187,13 @@ export interface PageSpec {
    * because naming the destination and asking to be redirected are one decision.
    */
   unauthorizedRedirect?: string;
+  /**
+   * The folder this page sits in, by the id declared in {@link SpaceSpec.pageFolders}.
+   *
+   * It changes where the page ANSWERS, not just where it is filed: the folder's slug (and its parents') prefixes
+   * the route. A page naming a folder the space does not declare is refused.
+   */
+  folder?: string;
   css?: CssSpec;
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
   class?: string | StyleDeclaration;
@@ -209,6 +236,8 @@ export interface SpaceSpec {
   rsc?: Schema['rsc'];
   mode?: Style['mode'];
   theme?: Style['theme'];
+  /** Route prefixes a page can sit under. See {@link PageFolderSpec}. */
+  pageFolders?: PageFolderSpec[];
   pages: PageSpec[];
 }
 
@@ -255,6 +284,13 @@ export interface AuthorSpaceOptions {
 export interface AuthoredSpace {
   schema: Schema;
   style: Style;
+  /**
+   * What an end-to-end suite addresses this space by — every page and element, under the id it was actually given.
+   *
+   * Returned rather than looked up from the document afterwards, because a spec that leaves an id out is given a
+   * derived one, and only the author knows what it minted. See `./handles`.
+   */
+  handles: SpaceHandles;
   /**
    * What the document validator had to say that was not fatal — a page with no default, a variable nothing reads.
    * Returned rather than printed: a seed may log them, a test may assert on them, and a build may treat them as

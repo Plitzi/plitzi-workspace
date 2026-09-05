@@ -25,7 +25,6 @@ const SegmentQuery = gql`
         }
         flat {
           id
-          idRef
           definition {
             label
             type

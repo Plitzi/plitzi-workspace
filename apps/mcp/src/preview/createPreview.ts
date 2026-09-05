@@ -30,8 +30,10 @@ const syntheticRequest = (pagePath: string): SSRRequest => ({
 });
 
 /** Build a preview of a page: apply any unsaved `operations` to a clone (never persisted), render the resulting
- *  draft to full HTML via the SSR pipeline, and stash the draft under a one-shot token so a browser can fetch
- *  the exact same render at `?__pt=<token>` (for screenshots). With no operations it previews persisted state.
+ *  draft to full HTML via the SSR pipeline, and stash the draft under a token so a browser can fetch the exact same
+ *  render at `?__pt=<token>`. With no operations it previews persisted state.
+ *
+ *  The token is one-shot unless `mode: 'session'` asks for one somebody can iterate against — see `mode`.
  *
  *  Renders through the host page server's own singletons, which is why it takes them as arguments rather than
  *  building any: this runs as a stage INSIDE an SSR server, not in the MCP process that calls it over HTTP. */
@@ -96,11 +98,21 @@ export const createPreview = async (
     ));
   }
 
+  const reusable = body.mode === 'session';
+  const ttlMs = reusable ? (config.preview?.sessionTtlMs ?? 900_000) : (config.preview?.ttlMs ?? 60_000);
+
   let token: string | undefined;
   if (config.draftStore) {
     token = randomUUID();
-    await config.draftStore.put(token, draftOffline, config.preview?.ttlMs ?? 60000);
+    await config.draftStore.put(token, draftOffline, { ttlMs, reusable });
   }
 
-  return { ok: true, token, pagePath, html: html ?? '', stateVersion: computeVersion(draftOffline) };
+  return {
+    ok: true,
+    token,
+    pagePath,
+    html: html ?? '',
+    stateVersion: computeVersion(draftOffline),
+    ...(token ? { expiresInMs: ttlMs } : {})
+  };
 };

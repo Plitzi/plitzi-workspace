@@ -14,7 +14,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
-import { useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
@@ -70,6 +70,7 @@ const SchemaContextProvider = ({
   >;
   useBuilderStoreSync('schema', schema);
   const getSchemaFlat = useBuilderStoreGetter('schema.flat');
+  const [[elementSelected, setSelectedElement]] = useBuilderStore(['elementSelected', 'setSelected']);
 
   const pageDefinitions = useValueMemo(
     pick(get(schema, 'flat', {} as Record<string, Element>), get(schema, 'pages', [])),
@@ -115,6 +116,22 @@ const SchemaContextProvider = ({
     (element: Element, fromSubscriptions = false) =>
       dispatchSchema({ type: SchemaActions.SCHEMA_UPDATE_ELEMENT, element, fromSubscriptions }),
     [dispatchSchema]
+  );
+
+  const schemaRenameElement = useCallback(
+    (elementId: string, id: string, fromSubscriptions = false) => {
+      dispatchSchema({ type: SchemaActions.SCHEMA_RENAME_ELEMENT, elementId, id, fromSubscriptions });
+      // The selection is held by name like everything else, so it has to move with the rename — otherwise the
+      // element tools point at a name the document no longer holds and the panel empties. Here rather than at the
+      // two places a person renames from, because a rename can also arrive from another collaborator on an
+      // element this session has selected.
+      if (elementSelected === elementId) {
+        // `force`: the dispatch above has not landed in the store yet, so the unforced path would look the new
+        // name up, find nothing, and clear the selection instead of moving it.
+        setSelectedElement(id, undefined, true);
+      }
+    },
+    [dispatchSchema, elementSelected, setSelectedElement]
   );
 
   const schemaUpdateElements = useCallback(
@@ -309,6 +326,11 @@ const SchemaContextProvider = ({
     );
     subscriptionManager.subscribe('SPACE_UPDATE_ELEMENT', ({ element }) => schemaUpdateElement(element, true));
     subscriptionManager.subscribe('SPACE_UPDATE_ELEMENTS', ({ elements }) => schemaUpdateElements(elements, true));
+    // Replayed rather than applied from a payload of elements: repointing a name is a pure pass over the document,
+    // and this connection holds the same document the writer did.
+    subscriptionManager.subscribe('SPACE_RENAME_ELEMENT', ({ elementId, id }) =>
+      schemaRenameElement(elementId, id, true)
+    );
     subscriptionManager.subscribe('SPACE_REMOVE_ELEMENT', ({ elementId }) => schemaRemoveElement(elementId, true));
     subscriptionManager.subscribe('SPACE_MOVE_ELEMENT', ({ from, to, elementId, dropPosition }) =>
       schemaMoveElement(from, to, elementId, dropPosition, true)
@@ -387,6 +409,7 @@ const SchemaContextProvider = ({
     schemaUpdateSettings,
     schemaAddElement,
     schemaUpdateElement,
+    schemaRenameElement,
     schemaUpdateElements,
     schemaRemoveElement,
     schemaMoveElement,
@@ -432,6 +455,7 @@ const SchemaContextProvider = ({
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
+      schemaRenameElement,
       schemaUpdateElements,
       schemaMoveElement,
       schemaCloneElement,
@@ -442,6 +466,7 @@ const SchemaContextProvider = ({
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
+      schemaRenameElement,
       schemaUpdateElements,
       schemaMoveElement,
       schemaCloneElement,
@@ -458,6 +483,7 @@ const SchemaContextProvider = ({
       schemaUpdate,
       schemaAddElement,
       schemaUpdateElement,
+      schemaRenameElement,
       schemaUpdateElements,
       schemaMoveElement,
       schemaCloneElement,
@@ -480,6 +506,7 @@ const SchemaContextProvider = ({
     schemaUpdate,
     schemaAddElement,
     schemaUpdateElement,
+    schemaRenameElement,
     schemaUpdateElements,
     schemaMoveElement,
     schemaCloneElement,

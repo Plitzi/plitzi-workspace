@@ -26,6 +26,8 @@ const documentOps = [
   elementOps.moveElement,
   elementOps.upsertPage,
   elementOps.deletePage,
+  elementOps.upsertLayout,
+  elementOps.deleteLayout,
   elementOps.upsertFolder,
   elementOps.deleteFolder,
   elementOps.upsertVariable,

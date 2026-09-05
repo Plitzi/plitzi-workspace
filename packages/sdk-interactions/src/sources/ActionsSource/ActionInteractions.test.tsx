@@ -45,7 +45,7 @@ vi.mock('@plitzi/sdk-shared/devTools/utils/PlitziConsole', () => ({ pConsole: { 
 
 type RunCallback = (
   params: Record<string, unknown>,
-  context?: { elementRef?: string }
+  context?: { hostElementId?: string }
 ) => Promise<Record<string, unknown>>;
 
 /** A param definition as this test reads it, across every branch of the union that describes one. */
@@ -161,7 +161,7 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r9', status: 'completed', output: { sent: true } })))
     );
 
-    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
+    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { hostElementId: 'button1' });
     // The step already returned; the report lands when the server answers, which is the whole point of onFlowEnd.
     await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -180,7 +180,7 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r1', status: 'completed', output: {} })))
     );
 
-    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
+    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { hostElementId: 'button1' });
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(info).toHaveBeenCalledTimes(1);
@@ -193,7 +193,7 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.resolve(jsonResponse(409, { error: 'already running', reason: 'duplicate' })))
     );
 
-    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { elementRef: 'button1' });
+    await mount().run({ actionId: 'send-email', input: '{}', mode: 'detached' }, { hostElementId: 'button1' });
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(interactionTrigger).toHaveBeenCalledWith(
@@ -249,7 +249,7 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.reject(new Error('Failed to fetch')))
     );
 
-    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'await' }, { elementRef: 'button1' });
+    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'await' }, { hostElementId: 'button1' });
 
     expect(result).toMatchObject({ status: 'failed', reason: 'failed', output: {} });
     expect(warning).toHaveBeenCalled();
@@ -311,7 +311,7 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.resolve(new Response(body, { status: 200, headers: { 'X-Plitzi-Run-Id': 'run-42' } })))
     );
 
-    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'stream' }, { elementRef: 'button1' });
+    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'stream' }, { hostElementId: 'button1' });
 
     expect(result).toMatchObject({ status: 'streaming', runId: 'run-42' });
   });
@@ -395,7 +395,7 @@ describe('ActionInteractions', () => {
       vi.fn(() => Promise.reject(new Error('Failed to fetch')))
     );
 
-    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'stream' }, { elementRef: 'button1' });
+    const result = await mount().run({ actionId: 'quote', input: '{}', mode: 'stream' }, { hostElementId: 'button1' });
 
     expect(result).toMatchObject({ status: 'failed', reason: 'failed' });
     expect(interactionTrigger).toHaveBeenCalledWith(

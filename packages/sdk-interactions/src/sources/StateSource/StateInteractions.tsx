@@ -15,6 +15,8 @@ export type StateInteractionsProps = {
 
 const StateInteractions = ({ children }: StateInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
+  // `unknown` covers both forms the store accepts here: a value for `setState`, and the updater `toggleState` needs
+  // to flip what is already there. The typed hook cannot express an arbitrary runtime path, hence the cast.
   const setState = useCommonStoreSetter() as (path: string, value: unknown) => void;
 
   const handleSetState = useCallback(
@@ -35,6 +37,21 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
     [setState]
   );
 
+  // Read and written in one pass through the store's updater form, so the value flipped is the one that is there at
+  // that instant. A read-then-write would take the value from the flow's own snapshot, which is what made the
+  // two-branch toggle depend on being one step behind.
+  const handleToggleState = useCallback(
+    (params: InteractionCallbackParamValues<{ key: string }>) => {
+      const { key } = params;
+      if (!key) {
+        return;
+      }
+
+      setState(`runtime.state.${key}`, (prev: unknown) => !(prev === true || prev === 'true'));
+    },
+    [setState]
+  );
+
   const handleClearState = useCallback(() => {
     setState('runtime.state', {});
   }, [setState]);
@@ -43,9 +60,10 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
     () =>
       toInteractionCallbacks(stateCallbacks, {
         setState: handleSetState,
+        toggleState: handleToggleState,
         clearState: handleClearState
       }),
-    [handleSetState, handleClearState]
+    [handleSetState, handleToggleState, handleClearState]
   );
 
   useInteractions({ id: 'state', callbacks: interactionCallbacks });

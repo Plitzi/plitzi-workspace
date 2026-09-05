@@ -17,22 +17,24 @@ const EDITING_MODEL = [
   'To style an element: write a definition AND attach it via the element’s style.base in the same batch.',
   'style.base is a LIST — an element can attach several classes (plus non-base slots); ALL of them apply together',
   '(they cascade), so when a style looks wrong inspect EVERY attached class + its global/id styles, not just one.',
-  'Refs accept a semantic idRef ([A-Za-z0-9_-] starting with a letter, unique, chosen by you) or the raw id; the',
-  'idRef is ALSO the runtime wiring key (a provider source is `<type>_<idRef>.<field>` — a dot is not allowed in the',
-  'idRef, an underscore is). CSS is kebab-case; style vars are var(--name), schema',
+  'Every element and page has ONE name, which IS its id: you choose it ([A-Za-z0-9_-] starting with a letter,',
+  'unique in the space), you address it by it, and the runtime wires by it (a provider source is',
+  '`<type>_<id>.<field>` — a dot is not allowed in a name, an underscore is). Nothing hands out opaque ids, so',
+  'never invent one: name the thing. CSS is kebab-case; style vars are var(--name), schema',
   'vars are {{name}}. Use patchElement/patchDefinition to change SOME props/CSS; the upsert variants replace them all.',
   'Reads are cheap by design — list to navigate, read one item for detail; never fetch a whole tree you do not need.'
 ].join('\n');
 
 const TOOLS = [
   '━━ MCP TOOLS ━━',
-  '• plitzi_search — find refs by label/type/attribute (include:"detail" also returns each hit’s style + versions).',
+  '• plitzi_search — find elements by label/type/attribute; a hit carries the NAME every op takes (include:"detail"',
+  '  also returns its style + versions).',
   '• plitzi_read — batch-read one or more resource URIs you already hold (from search or a write response).',
   '• plitzi_validate — check a batch of operations without executing; returns teachable errors and warnings.',
   '• plitzi_apply — persist a batch of operations. Pass dryRun to preview the full diff without writing, and',
   '  expectedResourceVersions to guard against concurrent edits (apply and search hand back the versions you need).',
   '• plitzi_preview / plitzi_screenshot — render an element/page already in the schema (HTML / image).',
-  'Discover → browse resources. Find a ref → plitzi_search. Fetch known URIs → plitzi_read. Do not confuse them.'
+  'Discover → browse resources. Find a name → plitzi_search. Fetch known URIs → plitzi_read. Do not confuse them.'
 ].join('\n');
 
 const RESOURCES = [
@@ -94,7 +96,7 @@ const INTERACTIONS = (): string =>
     'deleteInteraction is destructive — confirm with the user first.',
     'Pick the RIGHT node type for an action: the wrong type resolves against nothing and the step silently no-ops.',
     'Any param VALUE can be a data-binding token {{ source }} — e.g. addNotification content',
-    '"{{ list_<idRef>.item.name }}" shows the clicked row’s field; it resolves at runtime just like a prop binding.',
+    '"{{ list_<name>.item.name }}" shows the clicked row’s field; it resolves at runtime just like a prop binding.',
     '',
     'globalCallback (nodeType "globalCallback") — provided by a SOURCE MODULE, not the host element: OMIT elementId',
     'and the MCP pins the right source and fills the builder’s param defaults. Use ONLY each callback’s declared',

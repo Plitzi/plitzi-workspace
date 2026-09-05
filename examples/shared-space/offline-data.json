@@ -5,9 +5,8 @@
       "permanentUrl": "plitzi-example"
     },
     "flat": {
-      "bba177db5bde2fdc26480d89": {
-        "id": "bba177db5bde2fdc26480d89",
-        "idRef": "home",
+      "home": {
+        "id": "home",
         "attributes": {
           "slug": "",
           "default": true,
@@ -17,30 +16,29 @@
         "definition": {
           "label": "Page",
           "type": "page",
-          "rootId": "bba177db5bde2fdc26480d89",
+          "rootId": "home",
           "items": [
-            "204c944432e1c43bd95ace46",
-            "214c95d731e1c2a8da5acfd9",
-            "224c976a34e1c761d75acb20",
-            "234c98fd33e1c5ced85accb3",
-            "1c4c8df836e1ca87dd5ad492"
+            "container-1",
+            "container-2",
+            "container-3",
+            "container-4",
+            "container-5"
           ],
           "styleSelectors": {
             "base": "page"
           }
         }
       },
-      "204c944432e1c43bd95ace46": {
-        "id": "204c944432e1c43bd95ace46",
-        "idRef": "container-1",
+      "container-1": {
+        "id": "container-1",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "bba177db5bde2fdc26480d89",
+          "rootId": "home",
+          "parentId": "home",
           "items": [],
           "styleSelectors": {
             "base": "backdrop"
@@ -50,19 +48,18 @@
           }
         }
       },
-      "214c95d731e1c2a8da5acfd9": {
-        "id": "214c95d731e1c2a8da5acfd9",
-        "idRef": "container-2",
+      "container-2": {
+        "id": "container-2",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "bba177db5bde2fdc26480d89",
+          "rootId": "home",
+          "parentId": "home",
           "items": [
-            "13d19988cb5b6aef2a46d376"
+            "logo"
           ],
           "styleSelectors": {
             "base": "logoFrame"
@@ -72,9 +69,8 @@
           }
         }
       },
-      "13d19988cb5b6aef2a46d376": {
-        "id": "13d19988cb5b6aef2a46d376",
-        "idRef": "logo",
+      "logo": {
+        "id": "logo",
         "attributes": {
           "src": "https://cdn.plitzi.com/resources/img/favicon.svg",
           "alt": "",
@@ -84,8 +80,8 @@
         "definition": {
           "label": "Image",
           "type": "image",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "214c95d731e1c2a8da5acfd9",
+          "rootId": "home",
+          "parentId": "container-2",
           "items": [],
           "styleSelectors": {
             "base": "logo"
@@ -95,19 +91,18 @@
           }
         }
       },
-      "224c976a34e1c761d75acb20": {
-        "id": "224c976a34e1c761d75acb20",
-        "idRef": "container-3",
+      "container-3": {
+        "id": "container-3",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "bba177db5bde2fdc26480d89",
+          "rootId": "home",
+          "parentId": "home",
           "items": [
-            "0e0b067d9c32368e79208857"
+            "mainHeading"
           ],
           "styleSelectors": {
             "base": "headline"
@@ -117,9 +112,8 @@
           }
         }
       },
-      "0e0b067d9c32368e79208857": {
-        "id": "0e0b067d9c32368e79208857",
-        "idRef": "mainHeading",
+      "mainHeading": {
+        "id": "mainHeading",
         "attributes": {
           "content": "Welcome To Plitzi",
           "subType": "h1"
@@ -127,8 +121,8 @@
         "definition": {
           "label": "Heading",
           "type": "heading",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "224c976a34e1c761d75acb20",
+          "rootId": "home",
+          "parentId": "container-3",
           "items": [],
           "styleSelectors": {
             "base": "heading-36d5"
@@ -143,21 +137,20 @@
           }
         }
       },
-      "234c98fd33e1c5ced85accb3": {
-        "id": "234c98fd33e1c5ced85accb3",
-        "idRef": "container-4",
+      "container-4": {
+        "id": "container-4",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "bba177db5bde2fdc26480d89",
+          "rootId": "home",
+          "parentId": "home",
           "items": [
-            "68e2db52a1a917b9d3f85d2c",
-            "69e2dce5a0a91626d4f85ebf",
-            "66e2d82c9fa91493d5f86052"
+            "rsc-server",
+            "rsc-client",
+            "rsc-shared"
           ],
           "styleSelectors": {
             "base": "rscSection"
@@ -167,15 +160,14 @@
           }
         }
       },
-      "68e2db52a1a917b9d3f85d2c": {
-        "id": "68e2db52a1a917b9d3f85d2c",
-        "idRef": "rsc-server",
+      "rsc-server": {
+        "id": "rsc-server",
         "attributes": {},
         "definition": {
           "label": "serverInfo",
           "type": "serverInfo",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "234c98fd33e1c5ced85accb3",
+          "rootId": "home",
+          "parentId": "container-4",
           "items": [],
           "styleSelectors": {
             "base": "serverInfo-bbfd"
@@ -186,15 +178,14 @@
           "runtime": "server"
         }
       },
-      "69e2dce5a0a91626d4f85ebf": {
-        "id": "69e2dce5a0a91626d4f85ebf",
-        "idRef": "rsc-client",
+      "rsc-client": {
+        "id": "rsc-client",
         "attributes": {},
         "definition": {
           "label": "clientInfo",
           "type": "clientInfo",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "234c98fd33e1c5ced85accb3",
+          "rootId": "home",
+          "parentId": "container-4",
           "items": [],
           "styleSelectors": {
             "base": "clientInfo-bafd"
@@ -205,15 +196,14 @@
           "runtime": "client"
         }
       },
-      "66e2d82c9fa91493d5f86052": {
-        "id": "66e2d82c9fa91493d5f86052",
-        "idRef": "rsc-shared",
+      "rsc-shared": {
+        "id": "rsc-shared",
         "attributes": {},
         "definition": {
           "label": "sharedInfo",
           "type": "sharedInfo",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "234c98fd33e1c5ced85accb3",
+          "rootId": "home",
+          "parentId": "container-4",
           "items": [],
           "styleSelectors": {
             "base": "sharedInfo-b9fd"
@@ -224,22 +214,21 @@
           "runtime": "shared"
         }
       },
-      "1c4c8df836e1ca87dd5ad492": {
-        "id": "1c4c8df836e1ca87dd5ad492",
-        "idRef": "container-5",
+      "container-5": {
+        "id": "container-5",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "bba177db5bde2fdc26480d89",
+          "rootId": "home",
+          "parentId": "home",
           "items": [
-            "ecac579f727fe358fb1d9f15",
-            "ebac560c737fe4ebfa1d9d82",
-            "eeac5ac5747fe67ef91d9bef",
-            "edac5932757fe811f81d9a5c"
+            "link-1",
+            "link-2",
+            "link-3",
+            "link-4"
           ],
           "styleSelectors": {
             "base": "cards"
@@ -249,9 +238,8 @@
           }
         }
       },
-      "ecac579f727fe358fb1d9f15": {
-        "id": "ecac579f727fe358fb1d9f15",
-        "idRef": "link-1",
+      "link-1": {
+        "id": "link-1",
         "attributes": {
           "href": "#",
           "target": "self",
@@ -261,11 +249,11 @@
         "definition": {
           "label": "Link",
           "type": "link",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "1c4c8df836e1ca87dd5ad492",
+          "rootId": "home",
+          "parentId": "container-5",
           "items": [
-            "13d9f06069c91aff277c3e5a",
-            "14d9f1f368c9196c287c3fed"
+            "container-6",
+            "paragraph-1"
           ],
           "styleSelectors": {
             "base": "buttonLink"
@@ -275,20 +263,19 @@
           }
         }
       },
-      "13d9f06069c91aff277c3e5a": {
-        "id": "13d9f06069c91aff277c3e5a",
-        "idRef": "container-6",
+      "container-6": {
+        "id": "container-6",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "ecac579f727fe358fb1d9f15",
+          "rootId": "home",
+          "parentId": "link-1",
           "items": [
-            "ab874f971fe2d3c032a346cd",
-            "aa874e0420e2d55331a3453a"
+            "heading-1",
+            "fontAwesome-1"
           ],
           "styleSelectors": {
             "base": "titleContainer"
@@ -298,9 +285,8 @@
           }
         }
       },
-      "ab874f971fe2d3c032a346cd": {
-        "id": "ab874f971fe2d3c032a346cd",
-        "idRef": "heading-1",
+      "heading-1": {
+        "id": "heading-1",
         "attributes": {
           "content": "Docs",
           "subType": "h1"
@@ -308,8 +294,8 @@
         "definition": {
           "label": "Heading",
           "type": "heading",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "13d9f06069c91aff277c3e5a",
+          "rootId": "home",
+          "parentId": "container-6",
           "items": [],
           "styleSelectors": {
             "base": "heading-4411"
@@ -324,9 +310,8 @@
           }
         }
       },
-      "aa874e0420e2d55331a3453a": {
-        "id": "aa874e0420e2d55331a3453a",
-        "idRef": "fontAwesome-1",
+      "fontAwesome-1": {
+        "id": "fontAwesome-1",
         "attributes": {
           "icon": "fas fa-arrow-right",
           "size": "fa-2x",
@@ -335,8 +320,8 @@
         "definition": {
           "label": "Font Awesome",
           "type": "fontAwesome",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "13d9f06069c91aff277c3e5a",
+          "rootId": "home",
+          "parentId": "container-6",
           "items": [],
           "styleSelectors": {
             "base": "titleIcon"
@@ -346,17 +331,16 @@
           }
         }
       },
-      "14d9f1f368c9196c287c3fed": {
-        "id": "14d9f1f368c9196c287c3fed",
-        "idRef": "paragraph-1",
+      "paragraph-1": {
+        "id": "paragraph-1",
         "attributes": {
           "content": "Find in-depth information about Plitzi features and API."
         },
         "definition": {
           "label": "Paragraph",
           "type": "paragraph",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "ecac579f727fe358fb1d9f15",
+          "rootId": "home",
+          "parentId": "link-1",
           "items": [],
           "styleSelectors": {
             "base": "paragraph-c3f9"
@@ -366,9 +350,8 @@
           }
         }
       },
-      "ebac560c737fe4ebfa1d9d82": {
-        "id": "ebac560c737fe4ebfa1d9d82",
-        "idRef": "link-2",
+      "link-2": {
+        "id": "link-2",
         "attributes": {
           "href": "#",
           "target": "self",
@@ -378,11 +361,11 @@
         "definition": {
           "label": "Link",
           "type": "link",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "1c4c8df836e1ca87dd5ad492",
+          "rootId": "home",
+          "parentId": "container-5",
           "items": [
-            "b9021b8b640287f4aca43725",
-            "b80219f865028987aba43592"
+            "container-7",
+            "paragraph-2"
           ],
           "styleSelectors": {
             "base": "buttonLink"
@@ -392,20 +375,19 @@
           }
         }
       },
-      "b9021b8b640287f4aca43725": {
-        "id": "b9021b8b640287f4aca43725",
-        "idRef": "container-7",
+      "container-7": {
+        "id": "container-7",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "ebac560c737fe4ebfa1d9d82",
+          "rootId": "home",
+          "parentId": "link-2",
           "items": [
-            "62516514fb7e6263cba90b8a",
-            "635166a7fa7e60d0cca90d1d"
+            "heading-2",
+            "fontAwesome-2"
           ],
           "styleSelectors": {
             "base": "titleContainer"
@@ -415,9 +397,8 @@
           }
         }
       },
-      "62516514fb7e6263cba90b8a": {
-        "id": "62516514fb7e6263cba90b8a",
-        "idRef": "heading-2",
+      "heading-2": {
+        "id": "heading-2",
         "attributes": {
           "content": "Learn",
           "subType": "h1"
@@ -425,8 +406,8 @@
         "definition": {
           "label": "Heading",
           "type": "heading",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "b9021b8b640287f4aca43725",
+          "rootId": "home",
+          "parentId": "container-7",
           "items": [],
           "styleSelectors": {
             "base": "heading-9856"
@@ -441,9 +422,8 @@
           }
         }
       },
-      "635166a7fa7e60d0cca90d1d": {
-        "id": "635166a7fa7e60d0cca90d1d",
-        "idRef": "fontAwesome-2",
+      "fontAwesome-2": {
+        "id": "fontAwesome-2",
         "attributes": {
           "icon": "fas fa-arrow-right",
           "size": "fa-2x",
@@ -452,8 +432,8 @@
         "definition": {
           "label": "Font Awesome",
           "type": "fontAwesome",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "b9021b8b640287f4aca43725",
+          "rootId": "home",
+          "parentId": "container-7",
           "items": [],
           "styleSelectors": {
             "base": "titleIcon"
@@ -463,17 +443,16 @@
           }
         }
       },
-      "b80219f865028987aba43592": {
-        "id": "b80219f865028987aba43592",
-        "idRef": "paragraph-2",
+      "paragraph-2": {
+        "id": "paragraph-2",
         "attributes": {
           "content": "Learn about Plitzi in an interactive course with quizzes!"
         },
         "definition": {
           "label": "Paragraph",
           "type": "paragraph",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "ebac560c737fe4ebfa1d9d82",
+          "rootId": "home",
+          "parentId": "link-2",
           "items": [],
           "styleSelectors": {
             "base": "paragraph-a16f"
@@ -483,9 +462,8 @@
           }
         }
       },
-      "eeac5ac5747fe67ef91d9bef": {
-        "id": "eeac5ac5747fe67ef91d9bef",
-        "idRef": "link-3",
+      "link-3": {
+        "id": "link-3",
         "attributes": {
           "href": "#",
           "target": "self",
@@ -495,11 +473,11 @@
         "definition": {
           "label": "Link",
           "type": "link",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "1c4c8df836e1ca87dd5ad492",
+          "rootId": "home",
+          "parentId": "container-5",
           "items": [
-            "89d8e72abeda5cc930dead50",
-            "8ad8e8bdbdda5b3631deaee3"
+            "container-8",
+            "paragraph-3"
           ],
           "styleSelectors": {
             "base": "buttonLink"
@@ -509,20 +487,19 @@
           }
         }
       },
-      "89d8e72abeda5cc930dead50": {
-        "id": "89d8e72abeda5cc930dead50",
-        "idRef": "container-8",
+      "container-8": {
+        "id": "container-8",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "eeac5ac5747fe67ef91d9bef",
+          "rootId": "home",
+          "parentId": "link-3",
           "items": [
-            "84193c3d45a1cf864f0195e7",
-            "83193aaa46a1d1194e019454"
+            "heading-3",
+            "fontAwesome-3"
           ],
           "styleSelectors": {
             "base": "titleContainer"
@@ -532,9 +509,8 @@
           }
         }
       },
-      "84193c3d45a1cf864f0195e7": {
-        "id": "84193c3d45a1cf864f0195e7",
-        "idRef": "heading-3",
+      "heading-3": {
+        "id": "heading-3",
         "attributes": {
           "content": "Templates",
           "subType": "h1"
@@ -542,8 +518,8 @@
         "definition": {
           "label": "Heading",
           "type": "heading",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "89d8e72abeda5cc930dead50",
+          "rootId": "home",
+          "parentId": "container-8",
           "items": [],
           "styleSelectors": {
             "base": "heading-001c"
@@ -558,9 +534,8 @@
           }
         }
       },
-      "83193aaa46a1d1194e019454": {
-        "id": "83193aaa46a1d1194e019454",
-        "idRef": "fontAwesome-3",
+      "fontAwesome-3": {
+        "id": "fontAwesome-3",
         "attributes": {
           "icon": "fas fa-arrow-right",
           "size": "fa-2x",
@@ -569,8 +544,8 @@
         "definition": {
           "label": "Font Awesome",
           "type": "fontAwesome",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "89d8e72abeda5cc930dead50",
+          "rootId": "home",
+          "parentId": "container-8",
           "items": [],
           "styleSelectors": {
             "base": "titleIcon"
@@ -580,17 +555,16 @@
           }
         }
       },
-      "8ad8e8bdbdda5b3631deaee3": {
-        "id": "8ad8e8bdbdda5b3631deaee3",
-        "idRef": "paragraph-3",
+      "paragraph-3": {
+        "id": "paragraph-3",
         "attributes": {
           "content": "Explore the Plitzi playground"
         },
         "definition": {
           "label": "Paragraph",
           "type": "paragraph",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "eeac5ac5747fe67ef91d9bef",
+          "rootId": "home",
+          "parentId": "link-3",
           "items": [],
           "styleSelectors": {
             "base": "paragraph-19f7"
@@ -600,9 +574,8 @@
           }
         }
       },
-      "edac5932757fe811f81d9a5c": {
-        "id": "edac5932757fe811f81d9a5c",
-        "idRef": "link-4",
+      "link-4": {
+        "id": "link-4",
         "attributes": {
           "href": "#",
           "target": "self",
@@ -612,11 +585,11 @@
         "definition": {
           "label": "Link",
           "type": "link",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "1c4c8df836e1ca87dd5ad492",
+          "rootId": "home",
+          "parentId": "container-5",
           "items": [
-            "8e6245b53a9fe69e56a572bb",
-            "8d6244223b9fe83155a57128"
+            "container-9",
+            "paragraph-4"
           ],
           "styleSelectors": {
             "base": "buttonLink"
@@ -626,20 +599,19 @@
           }
         }
       },
-      "8e6245b53a9fe69e56a572bb": {
-        "id": "8e6245b53a9fe69e56a572bb",
-        "idRef": "container-9",
+      "container-9": {
+        "id": "container-9",
         "attributes": {
           "subType": "div"
         },
         "definition": {
           "label": "Container",
           "type": "container",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "edac5932757fe811f81d9a5c",
+          "rootId": "home",
+          "parentId": "link-4",
           "items": [
-            "92add6fa42e7df690f9e3b24",
-            "93add88d41e7ddd6109e3cb7"
+            "heading-4",
+            "fontAwesome-4"
           ],
           "styleSelectors": {
             "base": "titleContainer"
@@ -649,9 +621,8 @@
           }
         }
       },
-      "92add6fa42e7df690f9e3b24": {
-        "id": "92add6fa42e7df690f9e3b24",
-        "idRef": "heading-4",
+      "heading-4": {
+        "id": "heading-4",
         "attributes": {
           "content": "Deploy",
           "subType": "h1"
@@ -659,8 +630,8 @@
         "definition": {
           "label": "Heading",
           "type": "heading",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "8e6245b53a9fe69e56a572bb",
+          "rootId": "home",
+          "parentId": "container-9",
           "items": [],
           "styleSelectors": {
             "base": "heading-65d9"
@@ -675,9 +646,8 @@
           }
         }
       },
-      "93add88d41e7ddd6109e3cb7": {
-        "id": "93add88d41e7ddd6109e3cb7",
-        "idRef": "fontAwesome-4",
+      "fontAwesome-4": {
+        "id": "fontAwesome-4",
         "attributes": {
           "icon": "fas fa-arrow-right",
           "size": "fa-2x",
@@ -686,8 +656,8 @@
         "definition": {
           "label": "Font Awesome",
           "type": "fontAwesome",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "8e6245b53a9fe69e56a572bb",
+          "rootId": "home",
+          "parentId": "container-9",
           "items": [],
           "styleSelectors": {
             "base": "titleIcon"
@@ -697,17 +667,16 @@
           }
         }
       },
-      "8d6244223b9fe83155a57128": {
-        "id": "8d6244223b9fe83155a57128",
-        "idRef": "paragraph-4",
+      "paragraph-4": {
+        "id": "paragraph-4",
         "attributes": {
           "content": "Instantly deploy your Plitzi Space"
         },
         "definition": {
           "label": "Paragraph",
           "type": "paragraph",
-          "rootId": "bba177db5bde2fdc26480d89",
-          "parentId": "edac5932757fe811f81d9a5c",
+          "rootId": "home",
+          "parentId": "link-4",
           "items": [],
           "styleSelectors": {
             "base": "paragraph-96cf"
@@ -726,7 +695,7 @@
       "enabled": true
     },
     "pages": [
-      "bba177db5bde2fdc26480d89"
+      "home"
     ],
     "pageFolders": []
   },

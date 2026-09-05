@@ -8,7 +8,7 @@ import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder
  *
  * Three things go wrong when a step is written as a literal, and all three are silent. The `type` and the `on`
  * have to agree — a global callback registers under its SOURCE MODULE (`state`, `auth`, `actions`), an element
- * callback under an element's idRef, and a utility under nothing at all — so a step that names the wrong one
+ * callback under an element's id, and a utility under nothing at all — so a step that names the wrong one
  * resolves to no function and the flow simply stops doing anything. There are two different `setState`s, one
  * global and one per element, with different params. And an invented param name is dropped on the way in.
  *
@@ -39,6 +39,15 @@ const globalStep = (action: string, params: Record<string, unknown> = {}): StepS
 /** Writes `runtime.state.<key>`. NOT the element `setState`, which changes one element's own attribute. */
 export const setState = (params: { key: string; type: 'boolean' | 'number' | 'text'; value: unknown }): StepSpec =>
   globalStep('setState', params);
+
+/**
+ * Flips `runtime.state.<key>` — expand and collapse, open and close, from ONE step on ONE trigger.
+ *
+ * The alternative is two `setState` steps under `when` conditions that have to be exact complements of each other,
+ * and those conditions read the state as it was when the flow STARTED, so the pattern only ever worked by being one
+ * step behind. Anything not already `true` counts as false, so a key nobody has set yet flips ON first.
+ */
+export const toggleState = (params: { key: string }): StepSpec => globalStep('toggleState', params);
 
 /** Empties `runtime.state` entirely. */
 export const clearState = (): StepSpec => globalStep('clearState');

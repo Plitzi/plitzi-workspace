@@ -76,12 +76,10 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     const eventCallbacks = useMemo(() => ({ [`${id}_setState`]: setElementState }), [id, setElementState]);
     useEventBridge('element', eventCallbacks);
 
-    const idRef = element.idRef;
     const visible = parentVisible && isVisible(elementState.visibility);
     const elementData = useMemo<ElementContextValue>(
       () => ({
         id,
-        idRef,
         rootId,
         visible,
         attributes,
@@ -91,7 +89,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         elementState,
         setElementState
       }),
-      [attributes, definition, elementState, id, idRef, plitziElementLayout, rootId, style, setElementState, visible]
+      [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState, visible]
     );
 
     const content = useMemo(() => {

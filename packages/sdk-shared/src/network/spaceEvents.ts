@@ -124,6 +124,10 @@ export const spaceEventSchemas = {
     variables: z.array(schemaVariable).optional()
   }),
   SPACE_UPDATE_ELEMENT: z.object({ element }),
+  // A rename travels as the two names, not as the elements it moved: an id is what the whole document points at, so
+  // repointing it touches the parent's `items`, every binding source and every interaction target that named it —
+  // and re-running that pass on the receiver is both smaller on the wire and exactly what the writer did.
+  SPACE_RENAME_ELEMENT: z.object({ elementId: z.string(), id: z.string() }),
   SPACE_UPDATE_ELEMENTS: z.object({ elements }),
   SPACE_REMOVE_ELEMENT: z.object({ elementId: z.string() }),
   SPACE_MOVE_ELEMENT: z.object({ from: z.string(), to: z.string(), elementId: z.string(), dropPosition }),
@@ -172,6 +176,7 @@ export const spaceEventSchemas = {
     variables: z.array(schemaVariable).optional()
   }),
   SEGMENT_UPDATE_ELEMENT: z.object({ ...segmentScope, element }),
+  SEGMENT_RENAME_ELEMENT: z.object({ ...segmentScope, elementId: z.string(), id: z.string() }),
   SEGMENT_UPDATE_ELEMENTS: z.object({ ...segmentScope, elements }),
   SEGMENT_REMOVE_ELEMENT: z.object({ ...segmentScope, elementId: z.string() }),
   SEGMENT_MOVE_ELEMENT: z.object({

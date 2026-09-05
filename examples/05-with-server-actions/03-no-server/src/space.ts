@@ -72,7 +72,7 @@ const offlinePage: PageSpec = {
      * entirely, and it reports itself as an error rather than quietly showing mock data in production.
      */
     apiContainer({
-      idRef: 'cats',
+      id: 'cats',
       runtime: 'server',
       action: 'cat-gallery',
       subType: 'section',
@@ -80,7 +80,7 @@ const offlinePage: PageSpec = {
       class: 'catsProvider',
       children: [
         list({
-          idRef: 'catList',
+          id: 'catList',
           source: 'controlled',
           class: 'catsGrid',
           bind: { items: 'cats.records' },
@@ -97,7 +97,7 @@ const offlinePage: PageSpec = {
     }),
 
     button({
-      idRef: 'refreshButton',
+      id: 'refreshButton',
       subType: 'button',
       content: 'Fetch new cats',
       class: 'catsButton',

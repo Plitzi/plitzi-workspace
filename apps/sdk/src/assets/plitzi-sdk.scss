@@ -18,6 +18,21 @@
     margin: 0;
   }
 
+  /**
+   * What the `dark` class MEANS, declared where the class is written.
+   *
+   * `ThemeProvider` puts it on the document (and `themeBootScript` puts it there before the first paint), so the SDK
+   * owns it — and until this was here, owning it stopped at adding a class: the document went on being a light one,
+   * and every space had to declare `color-scheme` in its own custom CSS to make the browser agree. One of them
+   * forgetting is not a missing preference, it is white text nobody chose or black text on black.
+   *
+   * It is also what makes `light-dark()` work below, which is how the element defaults follow a theme without the
+   * SDK inventing a palette for somebody else's site.
+   */
+  .dark {
+    color-scheme: dark;
+  }
+
   *,
   ::before,
   ::after {
@@ -52,6 +67,45 @@
         outline: rgb(91, 107, 223) solid 2px;
         outline-offset: -2px;
       }
+    }
+  }
+
+  /**
+   * The line a site shows while it is over its plan's quota — the counterpart of the badge, sitting beside it.
+   *
+   * Fixed to the bottom LEFT so it never covers the badge, and above everything for the same reason the badge is:
+   * a page that renders its own chrome on top of it would hide the one thing its owner needs to see.
+   */
+  .plitzi-over-quota {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    left: 12px;
+    bottom: 12px;
+    position: fixed;
+    z-index: 999999;
+    border: 1px solid rgb(253, 224, 71);
+    border-radius: 4px;
+    background-color: rgb(254, 252, 232);
+    color: rgb(113, 63, 18);
+    line-height: 16px;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+    font-size: 12px;
+
+    .plitzi-over-quota__cta {
+      color: rgb(113, 63, 18);
+      font-weight: 700;
+      text-decoration: underline;
     }
   }
 

@@ -240,3 +240,97 @@ describe('createCloudAdapters', () => {
     expect(second.spaces()).toBe(0);
   });
 });
+
+// The two keys a space has are not interchangeable, and pasting the published one here is the mistake worth catching
+// at startup: it is the one that, if it worked, would let a key lifted from anybody's page clone their site.
+describe('which key it accepts', () => {
+  const keyScoped = (scope: string) =>
+    `header.${Buffer.from(JSON.stringify({ sub: '1', scope })).toString('base64url')}.signature`;
+
+  it('refuses the public render key, naming the one to use instead', () => {
+    expect(() => adapters(cloud().fetchImpl, { webKey: keyScoped('space:render') })).toThrow(/PUBLIC render key/);
+  });
+
+  it('refuses any other scope', () => {
+    expect(() => adapters(cloud().fetchImpl, { webKey: keyScoped('space:agent') })).toThrow(/space host key/);
+  });
+
+  it('accepts a host key', () => {
+    expect(() => adapters(cloud().fetchImpl, { webKey: keyScoped('space:host') })).not.toThrow();
+  });
+
+  // Verification is the server's — this cannot check a signature and must not pretend to. Something it cannot read
+  // is passed through so the server answers properly, rather than being pre-empted by a worse guess here.
+  it('passes through anything it cannot read, leaving the verdict to the server', () => {
+    expect(() => adapters(cloud().fetchImpl, { webKey: 'not-a-jwt' })).not.toThrow();
+  });
+});
+
+/**
+ * The wire shape is not the runtime shape, and the gap is silent.
+ *
+ * GraphQL answers `flat` as a LIST; every reader of a schema indexes it BY ID. An array is a perfectly good object,
+ * so nothing throws — it just answers `undefined` to every lookup, which surfaces as a 404 on every URL of a space
+ * that fetched and parsed correctly.
+ */
+describe('the shape it hands to the renderer', () => {
+  const onWire = {
+    schema: {
+      settings: {},
+      pages: ['home'],
+      pageFolders: [],
+      variables: [],
+      flat: [
+        { id: 'home', definition: { type: 'page', rootId: 'home' }, attributes: { slug: '' } },
+        { id: 'text-1', definition: { type: 'text', parentId: 'home', rootId: 'home' }, attributes: {} }
+      ]
+    },
+    style: { cache: '', variables: {} },
+    plugins: [],
+    segments: [
+      {
+        identifier: 'header',
+        schema: {
+          settings: {},
+          variables: [],
+          flat: [{ id: 'nav-1', definition: { type: 'container' }, attributes: {} }]
+        }
+      }
+    ]
+  };
+
+  const serving = (payload: unknown) =>
+    vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ data: { Space: payload } }) } as unknown as Response)
+    ) as unknown as typeof fetch;
+
+  it('keys the element list by id, so a page can be looked up at all', async () => {
+    const built = createCloudAdapters({ webKey: 'key', fetchImpl: serving(onWire) });
+    const data = await built.getOfflineData(1, 'main');
+
+    expect(data?.schema.flat).toMatchObject({ home: { id: 'home' }, 'text-1': { id: 'text-1' } });
+    expect(Array.isArray(data?.schema.flat)).toBe(false);
+  });
+
+  it('keys a segment’s own element list too, since it is read the same way', async () => {
+    const built = createCloudAdapters({ webKey: 'key', fetchImpl: serving(onWire) });
+    const data = await built.getOfflineData(1, 'main');
+
+    expect(data?.segments?.header.schema.flat).toMatchObject({ 'nav-1': { id: 'nav-1' } });
+  });
+
+  // A schema already keyed (a cache round-trip, a test double) must survive untouched rather than being re-indexed
+  // into a map of numeric keys.
+  it('leaves an already-keyed map alone', async () => {
+    const built = createCloudAdapters({ webKey: 'key', fetchImpl: serving(space) });
+    const data = await built.getOfflineData(1, 'main');
+
+    expect(data?.schema.flat).toEqual({});
+  });
+
+  it('answers nothing for a payload carrying no schema, so the last good copy keeps serving', async () => {
+    const built = createCloudAdapters({ webKey: 'key', fetchImpl: serving({ style: {}, plugins: [] }) });
+
+    await expect(built.getOfflineData(1, 'main')).resolves.toBeUndefined();
+  });
+});

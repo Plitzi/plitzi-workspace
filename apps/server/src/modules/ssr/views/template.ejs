@@ -18,6 +18,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="shortcut icon" href="https://cdn.plitzi.com/resources/img/favicon.svg" />
 
+    <%
+      /*
+        The visitor's theme, settled before anything is drawn.
+
+        Nothing else in this document can be: a page paints long before its JavaScript has mounted anything, and the
+        theme is a fact about the browser that no server request carries. Without this the first paint answers with
+        `prefers-color-scheme` and a visitor who chose light on a machine set to dark watches the dark page until the
+        SDK comes up and corrects it.
+
+        The source is `themeBootScript()` from @plitzi/sdk-shared, not written here: it has to agree with
+        ThemeProvider exactly — same storage key, same accepted values, same classes, same silence for `system` — and
+        a copy of those rules in another language is a copy that goes stale.
+      */
+    %>
+    <% if (locals.themeBoot) { %>
+    <script><%- locals.themeBoot %></script>
+    <% } %>
+
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://cdn.plitzi.com" />

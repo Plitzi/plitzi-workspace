@@ -28,38 +28,38 @@ const node = (over: Partial<ElementInteraction>): ElementInteraction => ({
 describe('getNodeWarnings', () => {
   it('accepts a clean utility with no target', () => {
     const n = node({ type: 'utility', action: 'delayTime', elementId: null });
-    expect(getNodeWarnings(n, findNodeDefinition(n, definitions), false)).toEqual([]);
+    expect(getNodeWarnings(n, findNodeDefinition(n, definitions))).toEqual([]);
   });
 
   it('flags a utility that carries a real (host) target as a warning (still runs)', () => {
     const n = node({ type: 'utility', action: 'delayTime', elementId: 'nice-work-btn' });
-    const warnings = getNodeWarnings(n, findNodeDefinition(n, definitions), false);
+    const warnings = getNodeWarnings(n, findNodeDefinition(n, definitions));
     expect(warnings.some(w => w.message.includes('utility runs on no element') && w.level === 'warning')).toBe(true);
     expect(worstLevel(warnings)).toBe('warning');
   });
 
   it('flags the stringified nullish target "undefined"', () => {
     const n = node({ type: 'utility', action: 'delayTime', elementId: 'undefined' });
-    const warnings = getNodeWarnings(n, findNodeDefinition(n, definitions), false);
+    const warnings = getNodeWarnings(n, findNodeDefinition(n, definitions));
     expect(warnings.some(w => w.message.includes('Invalid target'))).toBe(true);
   });
 
   it('flags an unrecognized action as danger (will not run)', () => {
     const n = node({ type: 'callback', action: 'bogusAction', elementId: 'nice-work-btn' });
-    const warnings = getNodeWarnings(n, findNodeDefinition(n, definitions), false);
+    const warnings = getNodeWarnings(n, findNodeDefinition(n, definitions));
     expect(warnings.some(w => w.message.includes('not recognized') && w.level === 'danger')).toBe(true);
     expect(worstLevel(warnings)).toBe('danger');
   });
 
   it('flags a step with no action selected as danger', () => {
     const n = node({ type: 'callback', action: '', elementId: '' });
-    const warnings = getNodeWarnings(n, undefined, false);
+    const warnings = getNodeWarnings(n, undefined);
     expect(warnings.some(w => w.message.includes('No action selected') && w.level === 'danger')).toBe(true);
   });
 
   it('does not flag a well-formed element callback', () => {
     const n = node({ type: 'callback', action: 'setState', elementId: 'nice-work-btn' });
-    expect(getNodeWarnings(n, findNodeDefinition(n, definitions), false)).toEqual([]);
+    expect(getNodeWarnings(n, findNodeDefinition(n, definitions))).toEqual([]);
   });
 });
 

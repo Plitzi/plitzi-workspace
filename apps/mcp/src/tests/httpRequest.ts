@@ -1,6 +1,6 @@
 import http from 'node:http';
 
-export type HttpProbeResult = { status: number; body: string };
+export type HttpProbeResult = { status: number; body: string; headers: http.IncomingHttpHeaders };
 
 /** Minimal HTTP client for the server-level tests. They drive a real listening server rather than calling a
  *  handler, because what is under test is the pipeline — which stage answers, and in what order. */
@@ -15,7 +15,7 @@ export const httpRequest = (
     const req = http.request({ host: '127.0.0.1', port, method, path, headers }, res => {
       let data = '';
       res.on('data', (chunk: Buffer) => (data += chunk.toString()));
-      res.on('end', () => resolve({ status: res.statusCode ?? 0, body: data }));
+      res.on('end', () => resolve({ status: res.statusCode ?? 0, body: data, headers: res.headers }));
     });
     req.on('error', reject);
     if (body) {

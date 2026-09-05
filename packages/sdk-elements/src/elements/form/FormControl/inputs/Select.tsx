@@ -54,13 +54,20 @@ const Select = ({
         return { value: option, label: option };
       }
 
-      if (typeof option === 'object' && (!option.value || !option.label)) {
-        option = option.value ?? option.label ?? '';
+      /**
+       * One half given and the other not: the given half is both.
+       *
+       * Tested for ABSENCE rather than falsiness. An option whose value is deliberately the empty string — "All",
+       * "Any", "No filter", the first entry of most selects that filter something — has a perfectly good value, and
+       * treating it as missing threw its label away and rendered a blank line at the top of the list.
+       */
+      if (option.value === undefined || option.label === undefined) {
+        const given = option.value ?? option.label ?? '';
 
-        return { value: option, label: option };
+        return { value: given, label: given };
       }
 
-      return { value: option.value ?? '', label: option.label ?? '' };
+      return { value: option.value, label: option.label };
     });
   }, [options]);
 

@@ -4,7 +4,7 @@ import { documentOperation } from './operations';
 import { defineTool } from './shared/tool';
 
 export const previewShape = {
-  pageRef: z.string().optional().describe('Page ref or id to preview; defaults to the space default page'),
+  pageRef: z.string().optional().describe('The page to preview, by name; defaults to the space default page'),
   operations: z
     .array(documentOperation)
     .max(100)

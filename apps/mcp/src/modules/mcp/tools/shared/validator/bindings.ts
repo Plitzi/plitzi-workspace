@@ -2,14 +2,14 @@ import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 
 import { warnOnce } from './context';
 import { getTransformer, suggestTransformer } from '../../../catalogs';
-import { descendantIds, elementRefOf, findElementByRef } from '../../../helpers';
+import { descendantIds, findElementByRef } from '../../../helpers';
 
 import type { ValidationCtx } from './context';
 import type { Space } from '../../../helpers';
 import type { BindingTransformer } from '@plitzi/sdk-shared';
 
 // Binding-specific validation: the two mistakes the agent makes most on data bindings.
-// 1. SCOPE — binding an element to a `<type>_<idRef>` source whose provider is NOT one of its ancestors. The
+// 1. SCOPE — binding an element to a `<type>_<id>` source whose provider is NOT one of its ancestors. The
 //    provider exposes its source to its DESCENDANTS only (it wraps its subtree in the source scope), so a
 //    cross-subtree binding NEVER resolves at runtime — the source simply is not in scope. This is a genuine
 //    malformation, so it is an ERROR (it blocks the save). Fired only when both elements resolve (a provider
@@ -18,9 +18,9 @@ import type { BindingTransformer } from '@plitzi/sdk-shared';
 // 2. TRANSFORMERS — an unknown transformer action (silently skipped by the runtime, e.g. `template` for
 //    `twigTemplate`), unknown params, a missing required param, or a select value outside its options.
 
-// The provider element a `<type>_<idRef>[.field...]` source resolves to, or undefined when the head is a module
+// The provider element a `<type>_<id>[.field...]` source resolves to, or undefined when the head is a module
 // source (no `<type>_` head) or the provider is not in the current space. An element source name splits on the
-// first `_` (element types are camelCase with no underscore), so underscores in the idRef are unambiguous.
+// first `_` (element types are camelCase with no underscore), so underscores in the name are unambiguous.
 const providerOfSource = (space: Space, source: string): { ref: string; id: string } | undefined => {
   const head = source.split('.')[0];
   const sep = head.indexOf('_');
@@ -28,14 +28,14 @@ const providerOfSource = (space: Space, source: string): { ref: string; id: stri
     return undefined;
   }
 
-  const idRef = head.slice(sep + 1);
-  const el = findElementByRef(space.schema, idRef);
-  // Confirm the head really is this element's source name (guards a type/idRef that happens to contain a '_').
-  if (!el || getSourceName(el.definition.type, el) !== head) {
+  const elementId = head.slice(sep + 1);
+  const el = findElementByRef(space.schema, elementId);
+  // Confirm the head really is this element's source name (guards a type/name that happens to contain a '_').
+  if (!el || getSourceName(el.definition.type, el.id) !== head) {
     return undefined;
   }
 
-  return { ref: elementRefOf(el), id: el.id };
+  return { ref: el.id, id: el.id };
 };
 
 // When the bound element's type declares its allowed binding targets (a plugin manifest's `bindingsAllowed`), warn

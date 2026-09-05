@@ -1,4 +1,5 @@
 import { domainAllowed } from './domains';
+import { OFF_BROWSER_SPACE_SCOPES } from './tokens';
 
 import type { CredentialCarrier } from './credentials';
 import type { AuthFailure, SpaceScope, Tokens } from './tokens';
@@ -210,8 +211,30 @@ export const createIdentity = ({
       return { ok: false, reason: 'origin-not-allowed' };
     }
 
+    /**
+     * No `Origin` means no browser made this request — and what that is worth depends entirely on whether the
+     * credential was a secret to begin with.
+     *
+     * A **public** one — `render`, which ships in the clear inside every published page — is held to the allowlist
+     * even so, and therefore refused here. The check only ever worked because a BROWSER is made to state where it is
+     * presenting from; a client that simply omits the header is not proving anything, it is declining to be asked. If
+     * that were enough, a render key lifted from someone's page would be enough to serve a byte-identical clone of
+     * their site from any server, and the domain binding above would not stop it: a self-hosted renderer addresses
+     * this platform's own host, which is allowed by construction.
+     *
+     * A **secret** one — `host` for a server that renders the space as its own, `agent` for a consented integration —
+     * has nothing to prove by an origin, because possessing it is the proof. That is what `space:host` is FOR: it is
+     * shown once, never embedded, and revocable on its own row, so self-hosting no longer has to be paid for by
+     * making the public key work off-browser.
+     */
     if (!origin) {
-      return allowWithoutOrigin ? { ok: true, grant } : { ok: false, reason: 'origin-not-allowed' };
+      if (OFF_BROWSER_SPACE_SCOPES.includes(scope) || allowWithoutOrigin) {
+        return { ok: true, grant };
+      }
+
+      log?.('Access Not Authorized - Origin', { spaceId, scope, reason: 'public token presented with no Origin' });
+
+      return { ok: false, reason: 'origin-not-allowed' };
     }
 
     if (!originAllowed(origin, origins)) {

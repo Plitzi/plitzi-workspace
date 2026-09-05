@@ -8,7 +8,6 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
-
 /**
  * Skips rewriting a declaration whose content is already on disk. Every build regenerates every `.d.ts`, unchanged
  * ones included, and replacing hundreds of files at once is what makes the editors holding them open fall over.
@@ -32,11 +31,32 @@ const importedPackages = new Set();
 type Options = {
   root?: string;
   pattern?: RegExp;
+  exclude?: RegExp;
 };
+
+/**
+ * Every source module is an entry, not just the `index` ones.
+ *
+ * `preserveModules` writes one file per module either way, so this changes no path — what it changes is the export
+ * list. A module rollup considers internal is re-exported only for the bindings its in-package importers happen to
+ * use, while `generate-exports.mjs` publishes it as a public subpath all the same and `vite-plugin-dts` writes the
+ * FULL declaration beside it. The result type-checks against exports the runtime file does not have, and the
+ * consumer finds out on import: "does not provide an export named ...".
+ */
+const SOURCE_MODULE = /\.(ts|tsx|js|mjs)$/;
+/** Matched against the path under `src`, so a whole test-only folder is excluded, not just suffixed file names. */
+const NOT_A_MODULE = new RegExp(
+  [
+    '(^|/)(__tests__|__mocks__|testUtils)(/|$)',
+    '\\.(test|spec|stories[^.]*|bench)\\.(ts|tsx|js|mjs)$',
+    '\\.d\\.ts$'
+  ].join('|')
+);
 
 export function getEntries(options: Options = {}) {
   const root = options.root ?? path.resolve(process.cwd(), 'src');
-  const pattern = options.pattern ?? /index\.(ts|tsx|js|mjs)$/;
+  const pattern = options.pattern ?? SOURCE_MODULE;
+  const exclude = options.exclude ?? NOT_A_MODULE;
 
   const entries: Record<string, string> = {};
 
@@ -49,11 +69,11 @@ export function getEntries(options: Options = {}) {
 
       if (stat.isDirectory()) {
         walk(fullPath);
-      } else if (pattern.test(file)) {
-        // nombre del entry basado en carpeta
-        const name = path.relative(root, fullPath).replace(pattern, '').replace(/\/$/, '') || 'index';
-
-        entries[name] = fullPath;
+      } else {
+        const relative = path.relative(root, fullPath).replace(/\\/g, '/');
+        if (pattern.test(file) && !exclude.test(relative)) {
+          entries[relative.replace(pattern, '') || 'index'] = fullPath;
+        }
       }
     }
   }

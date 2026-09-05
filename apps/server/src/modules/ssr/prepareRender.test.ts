@@ -54,7 +54,7 @@ const offlineData = (
     style: { cache: '', variables: [] }
   }) as unknown as OfflineDataRaw;
 
-const request = (path: string): SSRRequest =>
+const request = (path: string, query: Record<string, string> = {}): SSRRequest =>
   ({
     method: 'GET',
     path,
@@ -63,7 +63,7 @@ const request = (path: string): SSRRequest =>
     protocol: 'https',
     hostname: 'x.test',
     headers: {},
-    query: {},
+    query,
     ctx: { spaceDeployment: { spaceId: 42, environment: 'production', revision: 0 } }
   }) as unknown as SSRRequest;
 
@@ -76,11 +76,16 @@ type Options = {
   configRsc?: { enabled?: boolean };
   withAdapter?: boolean;
   homeRuntime?: 'server' | 'client';
+  /** What the deployment authorizes for debugging, and what the URL asks for. */
+  debugMode?: boolean;
+  query?: Record<string, string>;
+  /** What metering decided for this render. */
+  degrade?: boolean;
 };
 
 const render = async (
   path: string,
-  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime }: Options = {}
+  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime, debugMode, query, degrade }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
   const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime));
@@ -90,6 +95,7 @@ const render = async (
     assetVersion: '1',
     autoLoadSchemaPlugins: false,
     rsc: configRsc,
+    debugMode,
     adapters: {
       getOfflineData,
       getSpaceDeployment: () => Promise.resolve(undefined),
@@ -97,8 +103,13 @@ const render = async (
     }
   } as unknown as SSRPageServerConfig;
 
+  const req = request(path, query);
+  if (degrade !== undefined) {
+    (req.ctx as { meter?: { degrade: boolean } }).meter = { degrade };
+  }
+
   const { componentProps, templateParams } = await prepareRender(
-    request(path),
+    req,
     config,
     42,
     'production',
@@ -112,6 +123,7 @@ const render = async (
     getRscData,
     getOfflineData,
     templateParams,
+    componentProps,
     ssr: componentProps.server.ssr,
     timing: metrics.toServerTimingHeader()
   };
@@ -221,5 +233,47 @@ describe('prepareRender / the document the crawler reads', () => {
     const { templateParams } = await render('/nowhere');
 
     expect(templateParams.title).toBe('Plitzi App');
+  });
+});
+
+describe('prepareRender / debugging in a render nobody is watching', () => {
+  it('authorizes debugging on an ordinary render of a deployment that asked for it', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: true });
+
+    expect(componentProps.debugMode).toBe(true);
+    expect(templateParams.debugMode).toBe(true);
+  });
+
+  it('refuses it on a preview render, which exists to be captured as a picture', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: true, query: { __pt: 'tok' } });
+
+    expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(false);
+  });
+});
+
+/**
+ * What a render says when the account behind it is over quota.
+ *
+ * `branding` is forced on by the same state, but it is also on for every ordinary free space — so a notice that
+ * read it would appear on sites that are perfectly within their plan. The two facts travel separately for that
+ * reason, and only the server can state this one.
+ */
+describe('prepareRender / a degraded render', () => {
+  it('tells the client the account is over quota, and pins the badge on with it', async () => {
+    const { componentProps, templateParams } = await render('/', { degrade: true });
+
+    expect(componentProps.overQuota).toBe(true);
+    expect(componentProps.branding).toBe(true);
+    // The browser hydrates from the same fact, so the notice does not appear and then vanish.
+    expect(templateParams.offlineData).toContain('overQuota');
+  });
+
+  it('says nothing at all on a render that is within quota', async () => {
+    const { componentProps, templateParams } = await render('/', { degrade: false });
+
+    expect(componentProps.overQuota).toBeUndefined();
+    expect(componentProps.branding).toBeUndefined();
+    expect(templateParams.offlineData).not.toContain('overQuota');
   });
 });

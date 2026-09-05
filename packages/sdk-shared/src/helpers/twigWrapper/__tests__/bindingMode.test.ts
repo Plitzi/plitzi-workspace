@@ -33,7 +33,7 @@ describe('AST processTwig — asRaw', () => {
 });
 
 describe('AST processTwig — hyphenated source tokens', () => {
-  it('resolves a hyphenated <type>_<idRef> token', () => {
+  it('resolves a hyphenated <type>_<id> token', () => {
     expect(
       processTwig('X {{ apiContainer_products-api.data.name }} Y', {
         'apiContainer_products-api': { data: { name: 'hello' } }
@@ -42,7 +42,7 @@ describe('AST processTwig — hyphenated source tokens', () => {
   });
 
   it('resolves a hyphen in the first and in a later segment', () => {
-    expect(processTwig('{{ node_flow-1.my-field }}', { 'node_flow-1': { 'my-field': 'ok' } })).toBe('ok');
+    expect(processTwig('{{ list_flow-1.my-field }}', { 'list_flow-1': { 'my-field': 'ok' } })).toBe('ok');
   });
 });
 

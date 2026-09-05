@@ -64,6 +64,13 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     definition: { type, label, runtime }
   } = elementContext;
   const serverMarker = runtime === 'server' ? { 'data-rsc-id': id } : undefined;
+  /**
+   * What an end-to-end test finds this element by, and the reason it is not the debug params below: those exist for
+   * a person looking at the builder and are off in every published render, which is precisely the render a suite
+   * runs against. An id is not debug information — it is the element's name, the same one `authorSpace` handed the
+   * author — so it ships unless a deployment turns it off.
+   */
+  const testMarker = serviceContext.settings.testAttributes === false ? undefined : { 'data-plitzi-el': id };
   const params: DebugParams =
     !debugMode && (previewMode || !type || rootId !== baseElementId)
       ? {}
@@ -84,6 +91,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       otherProps,
       params,
       serverMarker,
+      testMarker,
       children
     });
   }
@@ -109,6 +117,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     otherProps,
     params,
     serverMarker,
+    testMarker,
     events,
     children
   });

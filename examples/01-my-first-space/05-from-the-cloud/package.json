@@ -5,8 +5,8 @@
   "description": "Server-render a space that lives in Plitzi, from a server that is not Plitzi's.",
   "type": "module",
   "scripts": {
-    "start": "node --import tsx src/main.ts",
-    "start:dev": "tsx watch src/main.ts",
+    "start": "node --use-system-ca --import tsx src/main.ts",
+    "start:dev": "NODE_OPTIONS=--use-system-ca tsx watch src/main.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

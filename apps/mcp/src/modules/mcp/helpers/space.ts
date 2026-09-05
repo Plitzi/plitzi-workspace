@@ -79,31 +79,6 @@ export const strOr = (value: unknown): string | undefined => (typeof value === '
 /** Display name of a page or element: its `name` attribute when set, otherwise its definition label. */
 export const nameOf = (el: Element): string => strOr(el.attributes.name) ?? el.definition.label;
 
-/** Stable, human-readable ref for a page: its idRef, then slug, then a slugified label. A page without an idRef is
- *  still addressable — unlike a data source, a page ref has meaningful fallbacks the agent can read off the tree. */
-export const pageRefOf = (el: Element): string => {
-  if (el.idRef) {
-    return el.idRef;
-  }
-
-  const slug = strOr(el.attributes.slug)?.trim();
-  if (slug) {
-    return slugify(slug);
-  }
-
-  if (el.attributes.default === true) {
-    return 'home';
-  }
-
-  return slugify(nameOf(el)) || el.id;
-};
-
-/** Stable ref for ADDRESSING a non-page element in the tree: its idRef when present, otherwise the opaque id so an
- *  element without one is still reachable — the agent needs to name it to give it an idRef in the first place.
- *  This is not the wiring key: the runtime wires interactions and data sources by idRef only, so an element
- *  addressed here by its id alone publishes no source and takes no interactions (see `getSourceName`). */
-export const elementRefOf = (el: Element): string => el.idRef ?? el.id;
-
 // --- Per-request index -------------------------------------------------------------------------------------------
 // The scanners below (isPageElement/find*/resolveRef/pageRefOfElement) are called a lot — per validated op, per
 // dispatched op, per search hit — and each used to re-scan schema.flat (some O(flat × pages)). This index resolves
@@ -125,11 +100,17 @@ export interface SpaceIndex {
   pageIds: Set<string>;
   /** The page elements, in schema.flat insertion order (what getPageElements returns). */
   pageElements: Element[];
-  /** page ref (idRef/slug/label) AND raw page id → the page element. First writer wins on a ref collision. */
-  pageByRef: Map<string, Element>;
-  /** non-page idRef AND raw id → the element. First writer wins on a ref collision. */
-  elementByRef: Map<string, Element>;
-  /** Any element id (page root or nested descendant) → the id of the page it belongs to. */
+  /**
+   * Ids of the LAYOUT roots — a `layoutContainer` nobody owns.
+   *
+   * A layout is the shell several pages are rendered inside (the header, the sidebar, the footer) and it is a root
+   * of its own: it is not in `schema.pages` and it hangs off no page, so every walk that started from the pages
+   * missed it and everything in it read as belonging to nothing.
+   */
+  layoutIds: Set<string>;
+  /** The layout root elements, in schema.flat insertion order. */
+  layoutElements: Element[];
+  /** Any element id → the id of the ROOT it belongs to: its page, or the layout shell it is part of. */
   pageOf: Map<string, string>;
   /** element id → its memoized detail/version, so a page-skeleton hash, a search hit and a follow-up element read
    *  all resolve the same element once. Populated lazily by `elementView`; dropped whole on `invalidateIndex`. */
@@ -148,36 +129,35 @@ const buildIndex = (schema: Schema): SpaceIndex => {
     }
   }
 
+  // No name→element map: an element answers to exactly one name and that name IS its `flat` key, so `schema.flat`
+  // already is the index a lookup by name needs. What is left here is what the document does NOT state directly.
   const pageElements: Element[] = [];
-  const pageByRef = new Map<string, Element>();
-  const elementByRef = new Map<string, Element>();
   for (const el of Object.values(flat)) {
     if (pageIds.has(el.id)) {
       pageElements.push(el);
-      const ref = pageRefOf(el);
-      if (!pageByRef.has(ref)) {
-        pageByRef.set(ref, el);
-      }
-
-      if (!pageByRef.has(el.id)) {
-        pageByRef.set(el.id, el);
-      }
-    } else {
-      const ref = elementRefOf(el);
-      if (!elementByRef.has(ref)) {
-        elementByRef.set(ref, el);
-      }
-
-      if (!elementByRef.has(el.id)) {
-        elementByRef.set(el.id, el);
-      }
     }
   }
 
+  /**
+   * The layout shells: a `layoutContainer` with no parent.
+   *
+   * The type alone is not the test — a layoutContainer nested inside another element is an ordinary element of that
+   * tree. What makes one a root is that nothing owns it, which is also what makes a page reference it by name
+   * instead of containing it.
+   */
+  const layoutElements: Element[] = [];
+  for (const el of Object.values(flat)) {
+    if (el.definition.type === 'layoutContainer' && !el.definition.parentId) {
+      layoutElements.push(el);
+    }
+  }
+
+  const layoutIds = new Set<string>(layoutElements.map(el => el.id));
+
   const pageOf = new Map<string, string>();
-  for (const page of pageElements) {
-    pageOf.set(page.id, page.id);
-    const stack = [...(page.definition.items ?? [])];
+  for (const root of [...pageElements, ...layoutElements]) {
+    pageOf.set(root.id, root.id);
+    const stack = [...(root.definition.items ?? [])];
     while (stack.length > 0) {
       const id = stack.pop();
       if (id === undefined || pageOf.has(id)) {
@@ -189,14 +169,14 @@ const buildIndex = (schema: Schema): SpaceIndex => {
         continue;
       }
 
-      pageOf.set(id, page.id);
+      pageOf.set(id, root.id);
       for (const childId of el.definition.items ?? []) {
         stack.push(childId);
       }
     }
   }
 
-  return { pageIds, pageElements, pageByRef, elementByRef, pageOf, detailCache: new Map() };
+  return { pageIds, pageElements, layoutIds, layoutElements, pageOf, detailCache: new Map() };
 };
 
 const indexCache = new WeakMap<Schema, SpaceIndex>();
@@ -220,12 +200,12 @@ export const invalidateIndex = (schema: Schema): void => {
 };
 
 // --- Incremental index maintenance -------------------------------------------------------------------------------
-// The mutation primitives call these so a single dispatch batch builds the index at most ONCE (on first ref lookup)
+// The mutation primitives call these so a single dispatch batch builds the index at most ONCE (on first lookup)
 // and then patches it per op in O(1), instead of invalidating and rebuilding O(flat) every op. Each no-ops when no
 // index is cached yet — the mutation is already in schema.flat, so a later first build reflects it. detailCache is
 // cleared on any structural change: it is only ever populated by reads (which never interleave with the dispatch
-// mutations), so clearing costs nothing there and keeps neighbor entries — a parent's childRefs, a moved element's
-// parentRef, a renamed page's descendant pageRefs — from silently going stale.
+// mutations), so clearing costs nothing there and keeps neighbor entries — a parent's children, a moved element's
+// parent — from silently going stale.
 
 const cachedIndex = (schema: Schema): SpaceIndex | undefined => indexCache.get(schema);
 
@@ -234,11 +214,6 @@ export const indexAddElement = (schema: Schema, el: Element, pageId: string): vo
   const index = cachedIndex(schema);
   if (!index) {
     return;
-  }
-
-  index.elementByRef.set(el.id, el);
-  if (el.idRef) {
-    index.elementByRef.set(el.idRef, el);
   }
 
   index.pageOf.set(el.id, pageId);
@@ -253,26 +228,7 @@ export const indexRemoveElements = (schema: Schema, els: Element[]): void => {
   }
 
   for (const el of els) {
-    index.elementByRef.delete(el.id);
-    if (el.idRef) {
-      index.elementByRef.delete(el.idRef);
-    }
-
     index.pageOf.delete(el.id);
-  }
-
-  index.detailCache.clear();
-};
-
-/** An existing element was just given an idRef (it had none), so it becomes addressable by that ref. */
-export const indexReRefElement = (schema: Schema, el: Element): void => {
-  const index = cachedIndex(schema);
-  if (!index) {
-    return;
-  }
-
-  if (el.idRef) {
-    index.elementByRef.set(el.idRef, el);
   }
 
   index.detailCache.clear();
@@ -287,9 +243,41 @@ export const indexAddPage = (schema: Schema, page: Element): void => {
 
   index.pageIds.add(page.id);
   index.pageElements.push(page);
-  index.pageByRef.set(page.id, page);
-  index.pageByRef.set(pageRefOf(page), page);
   index.pageOf.set(page.id, page.id);
+  index.detailCache.clear();
+};
+
+/** A new layout shell was created. */
+export const indexAddLayout = (schema: Schema, layout: Element): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  index.layoutIds.add(layout.id);
+  index.layoutElements.push(layout);
+  index.pageOf.set(layout.id, layout.id);
+  index.detailCache.clear();
+};
+
+/** A layout shell and its `descendants` were deleted. */
+export const indexRemoveLayout = (schema: Schema, layout: Element, descendants: Element[]): void => {
+  const index = cachedIndex(schema);
+  if (!index) {
+    return;
+  }
+
+  index.layoutIds.delete(layout.id);
+  const at = index.layoutElements.findIndex(entry => entry.id === layout.id);
+  if (at >= 0) {
+    index.layoutElements.splice(at, 1);
+  }
+
+  index.pageOf.delete(layout.id);
+  for (const el of descendants) {
+    index.pageOf.delete(el.id);
+  }
+
   index.detailCache.clear();
 };
 
@@ -306,40 +294,16 @@ export const indexRemovePage = (schema: Schema, page: Element, descendants: Elem
     index.pageElements.splice(at, 1);
   }
 
-  index.pageByRef.delete(page.id);
-  index.pageByRef.delete(pageRefOf(page));
   index.pageOf.delete(page.id);
   for (const el of descendants) {
-    index.elementByRef.delete(el.id);
-    if (el.idRef) {
-      index.elementByRef.delete(el.idRef);
-    }
-
     index.pageOf.delete(el.id);
   }
 
   index.detailCache.clear();
 };
 
-/** A page's slug/name/default changed; re-key its pageByRef entry if that changed its ref. `oldRef` is the ref
- *  computed BEFORE the attribute change. */
-export const indexReRefPage = (schema: Schema, page: Element, oldRef: string): void => {
-  const index = cachedIndex(schema);
-  if (!index) {
-    return;
-  }
-
-  const newRef = pageRefOf(page);
-  if (newRef !== oldRef) {
-    index.pageByRef.delete(oldRef);
-    index.pageByRef.set(newRef, page);
-    // Every descendant's projected pageRef changed with it, so their memoized detail is stale.
-    index.detailCache.clear();
-  }
-};
-
-/** A move reparented an element within its page: the ref/page maps are unchanged, but the moved element's
- *  parentRef and both parents' childRefs did change, so their memoized detail must be dropped. */
+/** A move reparented an element within its page: the page map is unchanged, but the moved element's parent and
+ *  both parents' children did change, so their memoized detail must be dropped. */
 export const indexInvalidateDetails = (schema: Schema): void => {
   cachedIndex(schema)?.detailCache.clear();
 };
@@ -349,15 +313,45 @@ export const isPageElement = (schema: Schema, el: Element): boolean =>
 
 export const getPageElements = (schema: Schema): Element[] => spaceIndex(schema).pageElements;
 
-/** Finds a page by its semantic ref (idRef/slug/…) or its raw id, so legacy schemas without an idRef still resolve. */
-export const findPageByRef = (schema: Schema, pageRef: string): Element | undefined =>
-  spaceIndex(schema).pageByRef.get(pageRef);
+/** A page by the one name it answers to, which is also its key in `flat`. */
+export const findPageByRef = (schema: Schema, pageId: string): Element | undefined => {
+  const el = schema.flat[pageId] as Element | undefined;
 
-/** Find any non-page element by its semantic ref (idRef) or raw id, across the whole space. */
-export const findElementByRef = (schema: Schema, ref: string): Element | undefined =>
-  spaceIndex(schema).elementByRef.get(ref);
+  return el && spaceIndex(schema).pageIds.has(el.id) ? el : undefined;
+};
 
-// --- Page folders (the sidebar tree). A folder has no idRef; its ref is its id. Pages reference a folder by that
+/** A non-page element by the one name it answers to, anywhere in the space. */
+export const findElementByRef = (schema: Schema, id: string): Element | undefined => {
+  const el = schema.flat[id] as Element | undefined;
+
+  return el && !spaceIndex(schema).pageIds.has(el.id) ? el : undefined;
+};
+
+/** A layout SHELL by name — the root a page names in its `layout` attribute. */
+export const findLayoutByRef = (schema: Schema, id: string): Element | undefined => {
+  const el = schema.flat[id] as Element | undefined;
+
+  return el && spaceIndex(schema).layoutIds.has(el.id) ? el : undefined;
+};
+
+/**
+ * The root an element operation addresses — a page, or a layout shell.
+ *
+ * `pageRef` names either: the header of a space lives in a layout and is edited exactly like anything on a page, so
+ * every op that resolves an element resolves it from here. Reading them apart is only for the operations that are
+ * about pages as pages (routes, folders, the default page).
+ */
+export const findRootByRef = (schema: Schema, id: string): Element | undefined =>
+  findPageByRef(schema, id) ?? findLayoutByRef(schema, id);
+
+/** The layout shells of a space, in schema.flat insertion order. */
+export const getLayoutElements = (schema: Schema): Element[] => spaceIndex(schema).layoutElements;
+
+/** The pages rendered inside a given layout shell, by the `layout` attribute that names it. */
+export const pagesUsingLayout = (schema: Schema, layoutId: string): Element[] =>
+  spaceIndex(schema).pageElements.filter(page => page.attributes.layout === layoutId);
+
+// --- Page folders (the sidebar tree). A folder's ref IS its id. Pages reference a folder by that
 // id (attributes.folder), and nested folders via parentId. ---
 
 // The Schema type declares pageFolders as always present, but a legacy/partial document may omit it — initialize
@@ -486,15 +480,15 @@ export const descendantIds = (schema: Schema, pageRootId: string): string[] => {
   return acc;
 };
 
-/** Resolve a ref to a concrete element within a page subtree (or the page root itself). Accepts either the
- *  semantic ref (idRef) or the raw element id, so schemas predating idRef keep working through their ids. */
+/** Resolve a name to a concrete element within a page subtree (or the page root itself). The name is the element's
+ *  key in `flat`; what this adds is the check that it really belongs to this page. */
 export const resolveRef = (schema: Schema, page: Element, ref: string): Element | undefined => {
-  if (elementRefOf(page) === ref || pageRefOf(page) === ref || page.id === ref) {
+  if (page.id === ref) {
     return page;
   }
 
   const index = spaceIndex(schema);
-  const el = index.elementByRef.get(ref);
+  const el = schema.flat[ref] as Element | undefined;
 
   return el && index.pageOf.get(el.id) === page.id ? el : undefined;
 };
@@ -507,12 +501,8 @@ export const orderedChildren = (schema: Schema, el: Element): Element[] => {
 };
 
 /** The page ref an element belongs to. 'unknown' when it has no page ancestor. */
-export const pageRefOfElement = (schema: Schema, el: Element): string => {
-  const pageId = spaceIndex(schema).pageOf.get(el.id);
-  const page = pageId ? schema.flat[pageId] : undefined;
-
-  return page ? pageRefOf(page) : 'unknown';
-};
+export const pageRefOfElement = (schema: Schema, el: Element): string =>
+  spaceIndex(schema).pageOf.get(el.id) ?? 'unknown';
 
 /** Total number of descendant elements under a subtree (excluding the root). */
 export const descendantCount = (schema: Schema, rootId: string): number => descendantIds(schema, rootId).length;
@@ -561,12 +551,3 @@ export class ReadOnlyGrantError extends Error {
     this.name = 'ReadOnlyGrantError';
   }
 }
-
-export const generateObjectId = (): string => {
-  const ts = Math.floor(Date.now() / 1000)
-    .toString(16)
-    .padStart(8, '0');
-  const rand = Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-
-  return `${ts}${rand}`;
-};

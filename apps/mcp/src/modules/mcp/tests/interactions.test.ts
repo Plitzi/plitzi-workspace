@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildSpace, capturing } from './helpers';
-import { elementRefOf } from '../helpers';
 import { readResource } from '../resources';
 import { apply, validate } from '../tools';
 
@@ -11,19 +10,13 @@ import type { AIElementDetail } from '../types';
 import type { ComponentCatalog } from '@plitzi/sdk-shared';
 
 describe('mcp-ai interactions', () => {
-  // Interactions are wired by idRef, so an element only takes a flow once it has one — the harness gives c1 an
-  // idRef, and the flow is addressed by that ref.
-  const interactiveSpace = (): Space => {
-    const space = buildSpace();
-    space.schema.flat.c1.idRef = 'box-1';
-
-    return space;
-  };
+  // Interactions are wired by the element's id, which is also how the flow is addressed here.
+  const interactiveSpace = (): Space => buildSpace();
 
   const flowOp: Operation = {
     type: 'upsertInteractionFlow',
     pageRef: 'home',
-    ref: 'box-1',
+    ref: 'c1',
     nodes: [
       { nodeType: 'trigger', action: 'onClick', title: 'Click' },
       { nodeType: 'globalCallback', action: 'login', title: 'Log in', params: { mode: 'token' } }
@@ -40,17 +33,17 @@ describe('mcp-ai interactions', () => {
     expect(flow?.flowId).toBe(flow?.nodes[0].id);
   });
 
-  it('mints an idRef for an element that has none so the flow can be wired', async () => {
+  it('wires a flow onto the element by the name it answers to', async () => {
     const cap = capturing(buildSpace());
     const res = await apply({ operations: [{ ...flowOp, ref: 'c1' }] }, cap.saved(), cap.persisters);
     expect(res.applied).toBe(true);
-    // c1 had no idRef; the flow forces one, and the trigger is registered under it.
-    const idRef = cap.saved().schema.flat.c1.idRef;
-    expect(idRef).toBeTruthy();
+    // The trigger is registered under the element's one name.
+    const elementName = cap.saved().schema.flat.c1.id;
+    expect(elementName).toBe('c1');
     const trigger = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
       n => n.type === 'trigger'
     );
-    expect(trigger?.elementId).toBe(idRef);
+    expect(trigger?.elementId).toBe(elementName);
   });
 
   it('patches one node and deletes a single step, re-linking the flow', async () => {
@@ -61,9 +54,7 @@ describe('mcp-ai interactions', () => {
 
     await apply(
       {
-        operations: [
-          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: callbackId, title: 'Renamed' }
-        ]
+        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: callbackId, title: 'Renamed' }]
       },
       cap.saved(),
       cap.persisters
@@ -72,7 +63,7 @@ describe('mcp-ai interactions', () => {
     expect(el.interactions?.[0].nodes[1].title).toBe('Renamed');
 
     await apply(
-      { operations: [{ type: 'deleteInteraction', pageRef: 'home', ref: 'box-1', nodeId: callbackId }] },
+      { operations: [{ type: 'deleteInteraction', pageRef: 'home', ref: 'c1', nodeId: callbackId }] },
       cap.saved(),
       cap.persisters
     );
@@ -80,20 +71,19 @@ describe('mcp-ai interactions', () => {
     expect(el.interactions?.[0].nodes.map(n => n.action)).toEqual(['onClick']);
   });
 
-  // The runtime registers an element's callbacks under `idRef ?? id` and looks them up by that same key, so a node
-  // pinned to a raw id would resolve to nothing once the element has an idRef — the flow would silently do nothing.
-  it('targets a node at the element ref, not its raw id, so the callback resolves at runtime', async () => {
+  // The runtime registers an element's callbacks under its name and looks them up by that same key — one key, so a
+  // node can only ever be pinned to the right one.
+  it('targets a node at the element name, which is the key the runtime registers callbacks under', async () => {
     const space = buildSpace();
-    space.schema.flat.c1.idRef = 'hero-box';
     const cap = capturing(space);
 
-    await apply({ operations: [{ ...flowOp, ref: 'hero-box' }] }, cap.saved(), cap.persisters);
+    await apply({ operations: [flowOp] }, cap.saved(), cap.persisters);
 
     const stored = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {});
     expect(stored).not.toHaveLength(0);
 
     const trigger = stored.find(node => node.type === 'trigger');
-    expect(trigger?.elementId).toBe(elementRefOf(cap.saved().schema.flat.c1));
+    expect(trigger?.elementId).toBe('c1');
   });
 
   /**
@@ -104,11 +94,9 @@ describe('mcp-ai interactions', () => {
    * nothing registered — the step was written onto a page that renders perfectly and did nothing when pressed.
    */
   it('targets a global callback at its source module, never at the host element', async () => {
-    const space = buildSpace();
-    space.schema.flat.c1.idRef = 'hero-box';
-    const cap = capturing(space);
+    const cap = capturing(buildSpace());
 
-    await apply({ operations: [{ ...flowOp, ref: 'hero-box' }] }, cap.saved(), cap.persisters);
+    await apply({ operations: [flowOp] }, cap.saved(), cap.persisters);
 
     const stored = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {});
     const callback = stored.find(node => node.action === 'login');
@@ -116,52 +104,21 @@ describe('mcp-ai interactions', () => {
     expect(callback?.elementId).toBe('auth');
   });
 
-  it('rewrites a node target given as a raw id onto the ref the runtime registers', async () => {
-    const space = buildSpace();
-    space.schema.flat.c1.idRef = 'hero-box';
-    const cap = capturing(space);
-
-    await apply(
-      {
-        operations: [
-          {
-            type: 'upsertInteractionFlow',
-            pageRef: 'home',
-            ref: 'hero-box',
-            nodes: [
-              { nodeType: 'trigger', action: 'onClick', title: 'Click' },
-              // An agent may address any element by its raw id; the stored node must still carry the ref.
-              { nodeType: 'callback', action: 'setVisibility', title: 'Hide', elementId: 'c1' }
-            ]
-          }
-        ]
-      },
-      cap.saved(),
-      cap.persisters
-    );
-
-    const callback = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
-      n => n.type === 'callback'
-    );
-    expect(callback?.elementId).toBe('hero-box');
-  });
-
-  it('mints an idRef for a target element that has none, so the callback can reach it', async () => {
+  it('targets a sibling element by its name, which is the key the runtime resolves it by', async () => {
     const space = interactiveSpace();
-    // A sibling with no idRef: targeting it forces one so the callback resolves at runtime.
     space.schema.flat.c2 = {
       id: 'c2',
       attributes: {},
       definition: {
-        rootId: 'page1',
-        parentId: 'page1',
+        rootId: 'home',
+        parentId: 'home',
         label: 'Bare',
         type: 'container',
         items: [],
         styleSelectors: { base: '' }
       }
     };
-    space.schema.flat.page1.definition.items = ['c1', 'c2'];
+    space.schema.flat.home.definition.items = ['c1', 'c2'];
     const cap = capturing(space);
 
     const res = await apply(
@@ -170,7 +127,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               { nodeType: 'callback', action: 'setVisibility', title: 'Hide', elementId: 'c2' }
@@ -183,12 +140,10 @@ describe('mcp-ai interactions', () => {
     );
 
     expect(res.applied).toBe(true);
-    const mintedRef = cap.saved().schema.flat.c2.idRef;
-    expect(mintedRef).toBeTruthy();
     const callback = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
       n => n.type === 'callback'
     );
-    expect(callback?.elementId).toBe(mintedRef);
+    expect(callback?.elementId).toBe('c2');
   });
 
   it('rejects a flow whose first node is not a trigger', () => {
@@ -225,7 +180,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               { nodeType: 'globalCallback', action: 'addNotification', title: 'Notify', params: { content: 'Saved!' } }
@@ -258,7 +213,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               {
@@ -291,7 +246,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               {
@@ -321,10 +276,10 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
-              { nodeType: 'globalCallback', action: 'addNotification', title: 'Notify', elementId: 'box-1' }
+              { nodeType: 'globalCallback', action: 'addNotification', title: 'Notify', elementId: 'c1' }
             ]
           }
         ]
@@ -363,7 +318,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               {
@@ -396,7 +351,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               {
@@ -426,7 +381,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               {
@@ -446,7 +401,7 @@ describe('mcp-ai interactions', () => {
     const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
       n => n.type === 'callback' && n.action === 'setState'
     );
-    expect(node?.elementId).toBe('box-1');
+    expect(node?.elementId).toBe('c1');
     expect(node?.params).toMatchObject({
       category: 'attribute',
       key: 'content',
@@ -459,7 +414,7 @@ describe('mcp-ai interactions', () => {
     const op: Operation = {
       type: 'upsertInteractionFlow',
       pageRef: 'home',
-      ref: 'box-1',
+      ref: 'c1',
       nodes: [
         { nodeType: 'trigger', action: 'onClick', title: 'Click' },
         {
@@ -493,7 +448,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               {
@@ -521,7 +476,7 @@ describe('mcp-ai interactions', () => {
     const op: Operation = {
       type: 'upsertInteractionFlow',
       pageRef: 'home',
-      ref: 'box-1',
+      ref: 'c1',
       nodes: [
         { nodeType: 'trigger', action: 'onClick', title: 'Click' },
         { nodeType: 'utility', action: 'delayTime', title: 'Wait', params: { delay: 2000 } }
@@ -549,11 +504,11 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               // The agent wrongly pins the utility to the host element; the tool must null it.
-              { nodeType: 'utility', action: 'delayTime', title: 'Wait', params: { time: 2000 }, elementId: 'box-1' }
+              { nodeType: 'utility', action: 'delayTime', title: 'Wait', params: { time: 2000 }, elementId: 'c1' }
             ]
           }
         ]
@@ -571,8 +526,8 @@ describe('mcp-ai interactions', () => {
   it('normalizes a stringified nullish elementId ("undefined") on a patched utility to null', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_u: {
-        id: 'node_u',
+      'delayTime-1': {
+        id: 'delayTime-1',
         title: 'Wait 2 seconds',
         type: 'utility',
         action: 'delayTime',
@@ -582,42 +537,42 @@ describe('mcp-ai interactions', () => {
         elementId: 'undefined',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_u',
+        flowId: 'delayTime-1',
         enabled: true
       }
     };
     const cap = capturing(space);
     await apply(
       {
-        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_u', title: 'Wait' }]
+        operations: [{ type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Wait' }]
       },
       cap.saved(),
       cap.persisters
     );
-    expect(cap.saved().schema.flat.c1.definition.interactions?.node_u.elementId).toBeNull();
+    expect(cap.saved().schema.flat.c1.definition.interactions?.['delayTime-1'].elementId).toBeNull();
   });
 
   it('warns when an existing utility node carries a real (host) elementId, on patch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_u: {
-        id: 'node_u',
+      'delayTime-1': {
+        id: 'delayTime-1',
         title: 'Wait',
         type: 'utility',
         action: 'delayTime',
         params: { time: 2000 },
         preview: {},
-        elementId: 'box-1',
+        elementId: 'c1',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_u',
+        flowId: 'delayTime-1',
         enabled: true
       }
     };
     const res = validate(
       {
         operations: [
-          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_u', title: 'Renamed' }
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }
         ]
       },
       space
@@ -628,8 +583,8 @@ describe('mcp-ai interactions', () => {
   it('warns on a literal string "undefined" elementId (stringified nullish, a builder artifact)', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_u: {
-        id: 'node_u',
+      'delayTime-1': {
+        id: 'delayTime-1',
         title: 'Wait',
         type: 'utility',
         action: 'delayTime',
@@ -638,14 +593,14 @@ describe('mcp-ai interactions', () => {
         elementId: 'undefined',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_u',
+        flowId: 'delayTime-1',
         enabled: true
       }
     };
     const res = validate(
       {
         operations: [
-          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_u', title: 'Renamed' }
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }
         ]
       },
       space
@@ -660,7 +615,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               { nodeType: 'callback', action: 'addNotification', title: 'Notify', params: { content: 'Hi' } }
@@ -685,7 +640,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'box-1',
+            ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               { nodeType: 'globalCallback', action: 'delayTime', title: 'Wait', params: { time: 100 } }
@@ -717,7 +672,7 @@ describe('mcp-ai interactions', () => {
   const setStateFlow = (params: Record<string, unknown>): Operation => ({
     type: 'upsertInteractionFlow',
     pageRef: 'home',
-    ref: 'box-1',
+    ref: 'c1',
     nodes: [
       { nodeType: 'trigger', action: 'onClick', title: 'Click' },
       { nodeType: 'callback', action: 'setState', title: 'Set', params }
@@ -784,7 +739,7 @@ describe('mcp-ai interactions', () => {
     const upsert: Operation = {
       type: 'upsertElement',
       pageRef: 'home',
-      parentRef: 'page1',
+      parentRef: 'home',
       position: 'inside',
       element: { ref: 'w-1', type: 'container', props: { bogus: 1 } }
     };
@@ -830,7 +785,7 @@ describe('mcp-ai interactions', () => {
   const notifyFlow = (params: Record<string, unknown>): Operation => ({
     type: 'upsertInteractionFlow',
     pageRef: 'home',
-    ref: 'box-1',
+    ref: 'c1',
     nodes: [
       { nodeType: 'trigger', action: 'onClick', title: 'Click' },
       { nodeType: 'globalCallback', action: 'addNotification', title: 'Notify', params: { content: 'Hi', ...params } }
@@ -866,7 +821,7 @@ describe('mcp-ai interactions', () => {
     const flow = (value: unknown): Operation => ({
       type: 'upsertInteractionFlow',
       pageRef: 'home',
-      ref: 'box-1',
+      ref: 'c1',
       nodes: [
         { nodeType: 'trigger', action: 'onClick', title: 'Click' },
         { nodeType: 'callback', action: 'setState', title: 'Set', params: { category: 'attribute', key: 'x', value } }
@@ -883,8 +838,8 @@ describe('mcp-ai interactions', () => {
   it('re-validates the whole merged node on patch, catching a malformed param the patch did not touch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_bad: {
-        id: 'node_bad',
+      'delayTime-bad': {
+        id: 'delayTime-bad',
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
@@ -893,14 +848,14 @@ describe('mcp-ai interactions', () => {
         elementId: 'space',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_bad',
+        flowId: 'delayTime-bad',
         enabled: true
       }
     };
     const res = validate(
       {
         operations: [
-          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_bad', title: 'Renamed' }
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-bad', title: 'Renamed' }
         ]
       },
       space
@@ -912,24 +867,24 @@ describe('mcp-ai interactions', () => {
   it('surfaces leftover unknown params (delay/time) on the merged node when patching one field', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_x: {
-        id: 'node_x',
+      'setState-1': {
+        id: 'setState-1',
         title: 'Set loading text',
         type: 'callback',
         action: 'setState',
         params: { key: 'content', value: 'probando...', category: 'attribute', delay: null, time: null },
         preview: {},
-        elementId: 'box-1',
+        elementId: 'c1',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_x',
+        flowId: 'setState-1',
         enabled: true
       }
     };
     const res = validate(
       {
         operations: [
-          { type: 'patchInteractionNode', pageRef: 'home', ref: 'box-1', nodeId: 'node_x', params: { value: 'nuevo' } }
+          { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'setState-1', params: { value: 'nuevo' } }
         ]
       },
       space
@@ -942,8 +897,8 @@ describe('mcp-ai interactions', () => {
   it('blocks the save when a valid patch lands on an already-malformed node, and persists nothing', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_bad: {
-        id: 'node_bad',
+      'delayTime-bad': {
+        id: 'delayTime-bad',
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
@@ -952,7 +907,7 @@ describe('mcp-ai interactions', () => {
         elementId: 'space',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_bad',
+        flowId: 'delayTime-bad',
         enabled: true
       }
     };
@@ -963,8 +918,8 @@ describe('mcp-ai interactions', () => {
           {
             type: 'patchInteractionNode',
             pageRef: 'home',
-            ref: 'box-1',
-            nodeId: 'node_bad',
+            ref: 'c1',
+            nodeId: 'delayTime-bad',
             params: { content: 'Nuevo contenido' }
           }
         ]
@@ -976,14 +931,14 @@ describe('mcp-ai interactions', () => {
     expect(res.persisted).toBe(false);
     expect(res.errors?.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
     // The correct new field was NOT written, because the node as a whole is still malformed.
-    expect(cap.saved().schema.flat.c1.definition.interactions?.node_bad.params.content).toBe('Hi');
+    expect(cap.saved().schema.flat.c1.definition.interactions?.['delayTime-bad'].params.content).toBe('Hi');
   });
 
   it('lets the save through once the same patch ALSO corrects the malformation', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
-      node_bad: {
-        id: 'node_bad',
+      'delayTime-bad': {
+        id: 'delayTime-bad',
         title: 'Notify',
         type: 'globalCallback',
         action: 'addNotification',
@@ -992,7 +947,7 @@ describe('mcp-ai interactions', () => {
         elementId: 'space',
         beforeNode: '',
         afterNode: '',
-        flowId: 'node_bad',
+        flowId: 'delayTime-bad',
         enabled: true
       }
     };
@@ -1003,8 +958,8 @@ describe('mcp-ai interactions', () => {
           {
             type: 'patchInteractionNode',
             pageRef: 'home',
-            ref: 'box-1',
-            nodeId: 'node_bad',
+            ref: 'c1',
+            nodeId: 'delayTime-bad',
             params: { content: 'Nuevo contenido', autoDismissTimeout: 3000 }
           }
         ]
@@ -1013,7 +968,7 @@ describe('mcp-ai interactions', () => {
       cap.persisters
     );
     expect(res.applied).toBe(true);
-    const stored = cap.saved().schema.flat.c1.definition.interactions?.node_bad;
+    const stored = cap.saved().schema.flat.c1.definition.interactions?.['delayTime-bad'];
     expect(stored?.params.autoDismissTimeout).toBe(3000);
     expect(stored?.params.content).toBe('Nuevo contenido');
   });
