@@ -3,8 +3,26 @@ import { pathToFileURL } from 'node:url';
 import type { PluginEntry, SSRPlugin } from '@plitzi/sdk-shared';
 import type { FC } from 'react';
 
-/** Module-level cache: absolute filePath → loaded React component. */
+/** Module-level cache: the bundle's stamped identity → loaded React component. */
 const componentCache = new Map<string, FC>();
+
+/**
+ * When the bundle behind an entry was built, taken from the URL the page is told to load.
+ *
+ * The manager stamps that URL for the browser's benefit — the assets are served `immutable`, so a rebuilt plugin
+ * needs a new URL to reach anyone — and the server needs exactly the same fact for exactly the same reason: Node's
+ * ESM registry caches a module by URL for the life of the process, and a rebuild lands back on the same path. Reading
+ * the stamp the manager already publishes keeps the two sides on one answer instead of inventing a second one.
+ *
+ * Without it a dev server renders the component it imported when it started while the browser loads the rebuilt one,
+ * and the two disagree about the markup — which React reports as a hydration mismatch and answers by throwing away
+ * the whole tree, taking the panels beside it with it.
+ */
+const stampOf = (entry: PluginEntry): string => {
+  const at = entry.js?.indexOf('?v=') ?? -1;
+
+  return at === -1 ? '' : (entry.js as string).slice(at + 3);
+};
 
 /** Bumped on invalidation and appended to the import URL. Node's ESM registry caches a module by URL for the
  *  life of the process — clearing the Map above is not enough, since a rebuilt plugin lands back on the same
@@ -14,8 +32,8 @@ const componentCache = new Map<string, FC>();
  *  is the price of reloading at all and why this is driven by explicit invalidation rather than per-request. */
 let generation = 0;
 
-const importUrl = (filePath: string): string =>
-  generation === 0 ? filePath : `${pathToFileURL(filePath).href}?g=${generation}`;
+const importUrl = (filePath: string, stamp: string): string =>
+  generation === 0 && !stamp ? filePath : `${pathToFileURL(filePath).href}?v=${stamp}&g=${generation}`;
 
 /**
  * Plugins that failed to import (e.g. browser-only code like `document`).
@@ -57,14 +75,15 @@ export const loadPluginComponents = async (
           return;
         }
 
-        let component = componentCache.get(filePath);
+        const cacheKey = importUrl(filePath, stampOf(e));
+        let component = componentCache.get(cacheKey);
         if (!component) {
           try {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const mod = await import(importUrl(filePath));
+            const mod = await import(cacheKey);
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             component = (mod.default ?? mod) as FC;
-            componentCache.set(filePath, component);
+            componentCache.set(cacheKey, component);
           } catch (err) {
             console.warn(
               `[SSR] Plugin "${e.keyName}" cannot be imported server-side, falling back to client rendering:`,

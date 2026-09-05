@@ -56,6 +56,35 @@ afterAll(() => {
 });
 
 describe('loadPluginComponents caching', () => {
+  /**
+   * A rebuilt bundle lands back on the same path, so the path alone cannot be the cache key.
+   *
+   * The manager stamps the URL the page loads whenever it rebuilds — that is what gets past the browser's
+   * `immutable` cache — and the server reads the same stamp. Without it a dev server renders the component it
+   * imported when it started while the browser loads the new one, and React answers the disagreement by throwing
+   * away the whole tree the plugin was in.
+   */
+  it('re-imports a bundle whose build stamp has changed', async () => {
+    const filePath = writePlugin('stamped.mjs', 'first');
+    const stamped = (marker: string): PluginEntry => ({
+      ...entry(filePath, 'stamped'),
+      js: `/sdk-plugins/stamped/index.js?v=${marker}`
+    });
+
+    const before = await loadPluginComponents([stamped('aaa')]);
+    writeFileSync(filePath, 'export default function Plugin() { return "second"; }\n');
+    const same = await loadPluginComponents([stamped('aaa')]);
+    const after = await loadPluginComponents([stamped('bbb')]);
+
+    const read = (loaded: Awaited<ReturnType<typeof loadPluginComponents>>) =>
+      (loaded.stamped.component as unknown as () => string)();
+
+    expect(read(before)).toBe('first');
+    // The same stamp is the same bundle: nothing re-reads a file that was not rebuilt.
+    expect(read(same)).toBe('first');
+    expect(read(after)).toBe('second');
+  });
+
   it('serves the same component on a second load without re-importing', async () => {
     const filePath = writePlugin('cached.mjs', 'v1');
 

@@ -31,12 +31,29 @@ const ASSET_LOADERS: Record<string, esbuild.Loader> = {
   '.woff2': 'dataurl'
 };
 
+/**
+ * Everything that went into the bundle, so a dev server can tell when any of it has moved on.
+ *
+ * The entry file is one file and a plugin is a directory: a component edited beside its `index.ts` leaves the entry's
+ * timestamp exactly where it was, and a watcher looking only at that never rebuilds. esbuild already knows the answer
+ * — this is its own list of inputs — so nothing has to be guessed from the file system.
+ *
+ * Dependencies are left out. They change when something is installed, which is not an edit anybody is waiting to see,
+ * and stat'ing a few thousand files on every cache miss to find that out is a real cost for no answer.
+ */
+const sourceInputs = (metafile: esbuild.Metafile | undefined): string[] =>
+  metafile
+    ? Object.keys(metafile.inputs)
+        .filter(input => !input.includes('node_modules'))
+        .map(input => path.resolve(input))
+    : [];
+
 export const compilePlugin = async (
   jsPath: string,
   outDir: string,
   devMode: boolean = false
-): Promise<{ hasCSS: boolean }> => {
-  await esbuild.build({
+): Promise<{ hasCSS: boolean; inputs: string[] }> => {
+  const result = await esbuild.build({
     entryPoints: [jsPath],
     bundle: true,
     format: 'esm',
@@ -47,7 +64,9 @@ export const compilePlugin = async (
     jsx: 'automatic',
     minify: !devMode,
     splitting: false,
-    logLevel: 'warning'
+    logLevel: 'warning',
+    // Only where something watches for a change: a deployment's plugins do not move under it.
+    metafile: devMode
   });
 
   const hasCSS = await fs
@@ -55,5 +74,5 @@ export const compilePlugin = async (
     .then(() => true)
     .catch(() => false);
 
-  return { hasCSS };
+  return { hasCSS, inputs: sourceInputs(result.metafile) };
 };
