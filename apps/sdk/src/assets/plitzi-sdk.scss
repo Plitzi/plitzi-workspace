@@ -18,6 +18,21 @@
     margin: 0;
   }
 
+  /**
+   * What the `dark` class MEANS, declared where the class is written.
+   *
+   * `ThemeProvider` puts it on the document (and `themeBootScript` puts it there before the first paint), so the SDK
+   * owns it — and until this was here, owning it stopped at adding a class: the document went on being a light one,
+   * and every space had to declare `color-scheme` in its own custom CSS to make the browser agree. One of them
+   * forgetting is not a missing preference, it is white text nobody chose or black text on black.
+   *
+   * It is also what makes `light-dark()` work below, which is how the element defaults follow a theme without the
+   * SDK inventing a palette for somebody else's site.
+   */
+  .dark {
+    color-scheme: dark;
+  }
+
   *,
   ::before,
   ::after {
