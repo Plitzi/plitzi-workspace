@@ -19,18 +19,43 @@
   }
 
   /**
-   * What the `dark` class MEANS, declared where the class is written.
+   * What the theme classes MEAN, declared where the classes are written.
    *
-   * `ThemeProvider` puts it on the document (and `themeBootScript` puts it there before the first paint), so the SDK
-   * owns it — and until this was here, owning it stopped at adding a class: the document went on being a light one,
-   * and every space had to declare `color-scheme` in its own custom CSS to make the browser agree. One of them
-   * forgetting is not a missing preference, it is white text nobody chose or black text on black.
+   * `ThemeProvider` puts them on the document (and `themeBootScript` puts them there before the first paint), so the
+   * SDK owns them — and until this was here, owning them stopped at adding a class: the document went on being a
+   * light one, and every space had to declare `color-scheme` in its own custom CSS to make the browser agree. One of
+   * them forgetting is not a missing preference, it is white text nobody chose or black text on black.
    *
    * It is also what makes `light-dark()` work below, which is how the element defaults follow a theme without the
    * SDK inventing a palette for somebody else's site.
    */
   .dark {
     color-scheme: dark;
+  }
+
+  /**
+   * `light` is declared for the same reason `dark` is, and it is what keeps the media query below honest: a subtree
+   * that says it is light — the builder canvas of a light space inside a machine set to dark — resets the scheme it
+   * inherited, wherever the class sits.
+   */
+  .light {
+    color-scheme: light;
+  }
+
+  /**
+   * And what NO class means, which is the half that was missing.
+   *
+   * `system` writes no class at all — the absence is the mechanism, so the stylesheet's media queries can answer. But
+   * only the classes above declared a scheme, so a visitor on `system` with a machine set to dark got a document
+   * still in `color-scheme: normal`: the space's own tokens flipped to dark through their media query while every
+   * `light-dark()` in here went on answering with its LIGHT value — `#333` text on the dark canvas that had just been
+   * painted underneath it. Guarded on `light` so an explicit choice still beats the machine, exactly as the token
+   * blocks a space writes are.
+   */
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      color-scheme: dark;
+    }
   }
 
   *,
