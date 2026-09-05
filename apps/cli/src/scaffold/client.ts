@@ -22,16 +22,46 @@ const indexHtml = ({ name }: CreateAnswers): string => `<!doctype html>
 </html>
 `;
 
-const viteConfig = (): string => `import { defineConfig } from 'vite';
+const viteConfig = (): string => `import { createReadStream } from 'node:fs';
+import { createRequire } from 'node:module';
+
+import { defineConfig } from 'vite';
+
+import type { Plugin } from 'vite';
+
+const require = createRequire(import.meta.url);
 
 /**
- * Nothing Plitzi-specific: the SDK is an ordinary dependency, so this is a plain Vite app.
+ * Serves the dev tools' stylesheet at the path the SDK asks for.
  *
- * The host is pinned because Vite binds \`localhost\` — which on this machine is IPv6 — while everything that
+ * They render into a shadow root, which cannot see this page's styles, so they fetch a stylesheet of their own —
+ * from \`/plitzi-sdk-devtools.css\`, an absolute path that exists on a server serving the SDK's assets and
+ * nowhere else. Importing the file instead does not work: Vite answers CSS with \`text/css\`, and neither a
+ * \`<link>\` built from a \`?url\` import nor a dynamic \`?raw\` one survives that.
+ *
+ * So the file is served from where it is installed. Development only — which is the only place the panel is
+ * authorised — and read from \`node_modules\` on each request, so it cannot go stale against the installed SDK.
+ */
+const devToolsStylesheet = (): Plugin => ({
+  name: 'plitzi-devtools-stylesheet',
+  apply: 'serve',
+  configureServer(server) {
+    server.middlewares.use('/plitzi-sdk-devtools.css', (_request, response) => {
+      response.setHeader('Content-Type', 'text/css');
+      createReadStream(require.resolve('@plitzi/plitzi-sdk/plitzi-sdk-devtools.css')).pipe(response);
+    });
+  }
+});
+
+/**
+ * Otherwise nothing Plitzi-specific: the SDK is an ordinary dependency, so this is a plain Vite app.
+ *
+ * The host is pinned because Vite binds \`localhost\` — which on most machines is IPv6 — while everything that
  * waits for a dev server to come up asks for 127.0.0.1. The two resolve differently, so the visual suite sat
  * there watching an address nothing was listening on until it gave up.
  */
 export default defineConfig({
+  plugins: [devToolsStylesheet()],
   server: { host: '127.0.0.1', port: 5173 }
 });
 `;
@@ -54,7 +84,7 @@ const localMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
-import { blankSpaceSpec } from './space';
+import { space } from './space';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
@@ -82,11 +112,14 @@ const mount = (spec: SpaceSpec) =>
      */
     renderMode: 'raw',
     environment: 'main',
-    /** The page AUTHORISING the dev tools: the badge, and shift+alt+D for the panel. A published site omits it. */
-    debugMode: true
+    /**
+     * The page AUTHORISING the dev tools: the badge, and shift+alt+D for the panel — logs, the store, the
+     * elements, the variables. Development only, because a published site has no business offering them.
+     */
+    debugMode: import.meta.env.DEV
   });
 
-let mounted = mount(blankSpaceSpec);
+let mounted = mount(space);
 
 /**
  * Hot module replacement, for real rather than as a page reload.
@@ -96,13 +129,15 @@ let mounted = mount(blankSpaceSpec);
  * has state worth not losing: a form half filled in, a menu open, a scroll position.
  */
 if (import.meta.hot) {
-  import.meta.hot.accept('./space', (updated?: { blankSpaceSpec: SpaceSpec }) => {
-    if (!updated) {
+  import.meta.hot.accept('./space', updated => {
+    // Cast because the dev server cannot know the shape of a module it is swapping; the name is this file's own.
+    const next = (updated as { space?: SpaceSpec } | undefined)?.space;
+    if (!next) {
       return;
     }
 
     mounted?.unmount();
-    mounted = mount(updated.blankSpaceSpec);
+    mounted = mount(next);
   });
 }
 `;

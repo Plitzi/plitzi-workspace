@@ -11,7 +11,7 @@ const localMain = (): string => `import { consoleLogger, createJsonAdapters, cre
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
-import { blankSpaceSpec } from './space';
+import { space } from './space';
 
 const PORT = Number(process.env.PORT ?? 8080);
 
@@ -21,7 +21,7 @@ const PORT = Number(process.env.PORT ?? 8080);
  * \`authorSpace\` turns the declaration in \`src/space.ts\` into the two documents a renderer wants. It runs at
  * boot, so saving that file and letting \`--watch\` restart it is the whole edit loop.
  */
-const offlineData = authorSpace(blankSpaceSpec);
+const offlineData = authorSpace(space);
 
 /**
  * Where the server gets a space from, and the only line that knows.

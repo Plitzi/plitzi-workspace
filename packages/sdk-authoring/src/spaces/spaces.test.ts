@@ -59,7 +59,9 @@ describe('the copy handed to a project', () => {
 
     expect(source).not.toMatch(/from '\.\./);
     expect(source).toContain('from \'@plitzi/sdk-authoring\'');
-    expect(source).toContain('export const blankSpaceSpec');
+    // Named for whoever receives it, not for the platform: the copy is somebody's own site, not Plitzi's blank one.
+    expect(source).toContain('export const space');
+    expect(source).not.toContain('blankSpaceSpec');
   });
 
   /** The whole file has to survive, not just its header — the rewrite is of imports, not of the declaration. */

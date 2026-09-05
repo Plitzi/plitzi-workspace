@@ -72,6 +72,25 @@ describe('the scaffold', () => {
     expect(files['src/main.ts']).toContain('mounted?.unmount()');
   });
 
+  /**
+   * The dev tools render into a shadow root, which cannot see the page's styles.
+   *
+   * The SDK's built-in default is an absolute `/plitzi-sdk-devtools.css`, which exists only on a server serving
+   * the SDK's own assets — so a browser-rendered project got the panel with no styling at all until it was handed
+   * a URL of its own.
+   */
+  it('gives the dev tools a stylesheet the browser project actually serves', () => {
+    const files = scaffold(answers({ mode: 'client' }));
+
+    // Served at the path the SDK's own default asks for, from where the SDK is installed — so it cannot go stale
+    // and nothing is copied into the project.
+    expect(files['vite.config.ts']).toContain('/plitzi-sdk-devtools.css');
+    expect(files['vite.config.ts']).toContain('require.resolve(\'@plitzi/plitzi-sdk/plitzi-sdk-devtools.css\')');
+    expect(files['vite.config.ts']).toContain('apply: \'serve\'');
+    // Without it the entry does not typecheck: CSS side-effect imports and `import.meta.env` are its declarations.
+    expect(files['tsconfig.json']).toContain('vite/client');
+  });
+
   it('carries the authoring skill for whatever agent opens the project', () => {
     expect(scaffold(answers())['.claude/skills/plitzi-authoring/SKILL.md']).toContain('---');
   });

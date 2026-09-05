@@ -4,15 +4,18 @@ import { styles } from '../../style';
 import type { ElementSpec, SpaceSpec } from '../../schema';
 
 /**
- * The space a new Plitzi space starts as.
+ * The space, declared.
  *
- * A declaration rather than an exported document, so it can be read and changed: this is what somebody sees first,
- * and the first thing they want is to make it theirs. Every id, selector name and back-reference below is derived
- * from what is written here, so authoring it twice writes byte-identical documents.
+ * This is the whole site: a tree, some CSS and a palette. Everything else — element ids, style selector names, the
+ * back-references between them — is derived from what is written here, so authoring it twice writes byte-identical
+ * documents and there is no generated file to keep in step.
  *
- * The four cards are one function called four times. That is not a saving of keystrokes — it is what makes the
- * page editable: change `card` and all four follow, which is the difference between a design and four copies of
- * one.
+ * It starts as the space Plitzi gives a new account, and it is yours: rename things, change the palette, delete
+ * the cards. The four cards are one function called four times, which is not a saving of keystrokes — change
+ * `card` and all four follow, and that is the difference between a design and four copies of one.
+ *
+ * Name anything a test, a binding or an agent should be able to point at (`id: 'hero-title'`). An element with no
+ * name gets a positional one, which moves the moment something is inserted above it.
  */
 
 /** The classes the page shares. Declared once, so re-theming a card re-themes every card. */
@@ -69,7 +72,7 @@ const card = (id: string, title: string, body: string, href = '#'): ElementSpec 
     ]
   });
 
-export const blankSpaceSpec: SpaceSpec = {
+export const space: SpaceSpec = {
   name: 'New space',
   permanentUrl: 'new-space',
   mode: 'desktop-first',

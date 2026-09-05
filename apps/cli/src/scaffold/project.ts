@@ -90,7 +90,11 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
         esModuleInterop: true,
         skipLibCheck: true,
         resolveJsonModule: true,
-        types: ['node'],
+        /**
+         * `vite/client` in the browser build, and it is not optional there: it is what declares a side-effect CSS
+         * import and `import.meta.env`, both of which the entry point uses.
+         */
+        types: mode === 'client' ? ['node', 'vite/client'] : ['node'],
         lib: ['ES2023', 'DOM', 'DOM.Iterable'],
         jsx: 'react-jsx'
       },

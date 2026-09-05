@@ -1,12 +1,19 @@
 import { authorSpace } from '../schema';
-import { blankSpaceSpec } from './blank/spec';
+import { space as blankSpaceSpec } from './blank/spec';
 // The declaration's own source, inlined at build time — the copy `plitzi create` writes into a project. Read as
 // text rather than through the filesystem because this package is bundled for the browser too.
 import specSource from './blank/spec.ts?raw';
 
 import type { AuthoredSpace } from '../schema';
 
-export { blankSpaceSpec } from './blank/spec';
+/**
+ * The declaration itself, under the name the platform knows it by.
+ *
+ * It is exported from its own file as `space`, because that file is copied verbatim into projects created with
+ * `plitzi create` — and there, `blankSpaceSpec` would be a puzzle: the developer is looking at their own site,
+ * not at Plitzi's blank one. Renamed here rather than rewritten on the way out, so the copy is the file.
+ */
+export { space as blankSpaceSpec } from './blank/spec';
 
 /**
  * The space a new space starts as — one page with a hero and four cards, not an empty document.

@@ -30,7 +30,7 @@ const authoredSpec = (): string => `import { expect, test } from '@playwright/te
 
 import { authorSpace, locate } from '@plitzi/sdk-authoring';
 
-import { blankSpaceSpec } from '../src/space';
+import { space } from '../src/space';
 
 /**
  * Everything this space NAMES is on screen.
@@ -39,7 +39,7 @@ import { blankSpaceSpec } from '../src/space';
  * bothered to write down is an element somebody meant to point at, and \`authorSpace\` reports which those were.
  * Rename one and this fails at author time with a suggestion, rather than at test time with an empty locator.
  */
-const { handles } = authorSpace(blankSpaceSpec);
+const { handles } = authorSpace(space);
 
 test('renders every element it names', async ({ page }) => {
   const errors: string[] = [];
