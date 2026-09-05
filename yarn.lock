@@ -3445,6 +3445,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/cli@workspace:apps/cli"
   dependencies:
+    "@plitzi/sdk-authoring": "workspace:*"
     "@types/node": "npm:^26.2.0"
     chalk: "npm:^5.6.2"
     commander: "npm:^14.0.2"

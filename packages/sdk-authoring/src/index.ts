@@ -41,6 +41,7 @@ import type { SchemaValidationOptions, SchemaValidationResult } from '@plitzi/sd
 export * from './elements';
 export * from './interactions';
 export * from './schema';
+export * from './spaces';
 export * from './style';
 export * from './transformers';
 

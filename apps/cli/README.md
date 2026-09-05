@@ -3,29 +3,46 @@
 The command line for Plitzi.
 
 ```bash
-npx @plitzi/cli init my-site
+npx @plitzi/cli create my-site
 ```
 
-## `init`
+## `create`
 
-Scaffolds a server that renders a space living in Plitzi. The space stays in the builder — edited, published and
-versioned there — and every request is served from the generated project, under its own domain, auth and logs.
+Scaffolds a project that renders a Plitzi space, installs it, and leaves it ready to start. Two decisions shape
+it and nothing else does:
+
+| | `--source local` | `--source cloud` |
+|---|---|---|
+| **`--mode server`** (default) | A page server of your own, rendering a space that lives in the project. No account. | A page server of your own, rendering the live space out of Plitzi. |
+| **`--mode client`** | Vite + the SDK in the browser. No server at all, no account. | The SDK fetches the space from Plitzi with the public render key. |
 
 ```bash
-plitzi init                                   # into the current directory, asking for the key
-plitzi init my-site --key host_…              # named, non-interactively
-plitzi init my-site --environment production  # serve a published version instead of what the builder is editing
-plitzi init . --force                         # write into a directory that is not empty
+plitzi create my-site                          # server + local: the default, and the one that needs nothing
+plitzi create my-site --mode client            # browser-rendered, Vite, hot module replacement
+plitzi create my-site --source cloud --key …   # read the live space out of Plitzi
+plitzi create . --force --no-install           # write into a directory that has work in it, install nothing
 ```
 
-It writes six files: `package.json`, `tsconfig.json`, `src/main.ts`, `.env`, `.gitignore` and a `README.md`. The
-first run is then `npm install && npm start`.
+The package manager comes from the one that invoked it, so `yarn dlx` and `pnpm dlx` get their own commands back
+rather than a second lockfile.
 
-**The key is secret and is treated as one.** `init` never mints a credential — the self-hosting key comes from
-Credentials in the builder — and it writes it to `.env`, with `.gitignore` written in the same breath. It is not
-the public `render` key a published page embeds: that one is protected by the origin a browser states, and a
-server states none.
+## What lands in the project
 
-The generated `src/main.ts` carries the reasoning it needs to be read, rather than assuming its owner will find
-the documentation: which credential is which, and what `PLITZI_ENVIRONMENT` and `PLITZI_REVISION` decide about
-which version of the space is served.
+- **The space, as yours.** A local project gets `src/space.ts` — a *copy* of the space Plitzi gives a new
+  account, declared as a tree, some CSS and a palette rather than exported as a document. It is the same
+  declaration the platform authors a new space from, so what you start with and what signing up gives you cannot
+  come apart — and unlike a document, you can read and change it.
+- **A live loop.** In client mode a save is a hot module replacement: the space module is swapped and the tree
+  remounted, so the page updates without reloading. In server mode `--watch` restarts the process and the next
+  request renders the change.
+- **A visual test.** `npm run visual` starts the project, opens the page and asserts that every element the space
+  *names* is visible — the strongest assertion available about a page nobody hand-wrote, and it needs no upkeep.
+- **The authoring skill**, in `.claude/skills/`, so an agent working in the project knows how a space is put
+  together before it touches one.
+
+## Credentials
+
+`create` never mints one. A cloud project's key comes from Credentials in the builder, is written to `.env`, and
+`.gitignore` is written in the same breath. Server and browser take **different** keys and the scaffold names
+them differently on purpose: a server gets the secret self-hosting key, a browser gets the public render key,
+whose protection is the origin it is presenting from.

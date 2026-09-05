@@ -386,7 +386,6 @@ describe('authorBinding', () => {
   });
 });
 
-
 describe('authorSpace / what it refuses', () => {
   it('expands the shorthands an author writes, so the style editor can read the result back', () => {
     const { schema, style } = authorSpace({

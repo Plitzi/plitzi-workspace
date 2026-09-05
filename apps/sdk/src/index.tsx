@@ -146,14 +146,24 @@ export function render(
 
   const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
   if (!rootDOM) {
-    return;
+    return undefined;
   }
 
+  const root = ssrMode ? hydrateRoot(rootDOM, <Widget isHydrating />) : createRoot(rootDOM);
   if (!ssrMode) {
-    createRoot(rootDOM).render(<Widget />);
-  } else {
-    hydrateRoot(rootDOM, <Widget isHydrating />);
+    root.render(<Widget />);
   }
+
+  /**
+   * How to take it down again.
+   *
+   * Returned rather than kept private because a second `render()` into the same element creates a SECOND React
+   * root over the first — two trees on one node, both live, neither aware of the other. Anything that re-renders
+   * on its own needs to unmount first, and hot module replacement is the case that made this necessary: a dev
+   * server that swaps a module has to remount the tree, and without a handle its only option was to reload the
+   * whole page.
+   */
+  return { unmount: () => root.unmount() };
 }
 
 declare global {
