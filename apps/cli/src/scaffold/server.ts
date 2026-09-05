@@ -7,7 +7,36 @@ import type { CreateAnswers, ProjectFiles } from './types';
  * is the whole shape of `@plitzi/sdk-server`, and the generated project shows it rather than describing it.
  */
 
-const localMain = (): string => `import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+/** Written into both entry points, because how a plugin is registered does not change with where the space lives. */
+const PLUGINS = `/**
+ * The project's own components, by the \`renderType\` the space names them with.
+ *
+ * \`action: 'compile'\` is what makes them SERVER-rendered. The server builds the entry with esbuild, keeps React
+ * external so the plugin runs on the one copy this page already has, serves the bundle to the browser AND imports
+ * it into the render — so the component's markup is in the HTML before any JavaScript arrives. Add another by
+ * writing it under \`src/plugins\` and adding a line here; see \`src/plugins/README.md\`.
+ */
+const plugins = {
+  statCard: {
+    js: path.resolve(import.meta.dirname, 'plugins/StatCard/index.ts'),
+    action: 'compile' as const,
+    version: '1.0.0'
+  }
+};
+
+/**
+ * Registering a plugin is not the same as turning it on.
+ *
+ * The map above says a plugin EXISTS and how to build it; the deployment says which ones this space renders with,
+ * because a server can host many spaces and not all of them want the same components built and shipped. Nothing
+ * hands the server that list on its own — leave it out and the page renders "Custom Component … Not Found" with
+ * no error anywhere, which is a long afternoon.
+ */
+const pluginNames = Object.keys(plugins);`;
+
+const localMain = (): string => `import path from 'node:path';
+
+import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
@@ -23,6 +52,8 @@ const PORT = Number(process.env.PORT ?? 8080);
  */
 const offlineData = authorSpace(space);
 
+${PLUGINS}
+
 /**
  * Where the server gets a space from, and the only line that knows.
  *
@@ -33,7 +64,11 @@ const offlineData = authorSpace(space);
 const server = createServer({
   port: PORT,
   devMode: process.env.NODE_ENV !== 'production',
-  adapters: createJsonAdapters({ offlineData }),
+  adapters: createJsonAdapters({
+    offlineData,
+    deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames }
+  }),
+  plugins,
   logger: consoleLogger
 });
 
@@ -41,9 +76,13 @@ server.listen(PORT, '127.0.0.1');
 console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
 `;
 
-const cloudMain = (): string => `import { consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
+const cloudMain = (): string => `import path from 'node:path';
+
+import { consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 8080);
+
+${PLUGINS}
 
 /**
  * The space's HOST key — not the public one a published page embeds.
@@ -77,8 +116,10 @@ const server = createServer({
     webKey: HOST_KEY,
     ...(process.env.PLITZI_SERVER_URL ? { serverUrl: process.env.PLITZI_SERVER_URL } : {}),
     environment: (process.env.PLITZI_ENVIRONMENT ?? 'main') as 'main' | 'production',
-    ...(process.env.PLITZI_REVISION ? { revision: Number(process.env.PLITZI_REVISION) } : {})
+    ...(process.env.PLITZI_REVISION ? { revision: Number(process.env.PLITZI_REVISION) } : {}),
+    deployment: { pluginNames }
   }),
+  plugins,
   logger: consoleLogger
 });
 

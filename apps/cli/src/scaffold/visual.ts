@@ -1,3 +1,5 @@
+import { runCommand } from './packageManager';
+
 import type { CreateAnswers, ProjectFiles } from './types';
 
 /**
@@ -8,7 +10,10 @@ import type { CreateAnswers, ProjectFiles } from './types';
  * rather than as an exception, and nobody writes the first test for a project that already looks fine.
  */
 
-const playwrightConfig = ({ mode }: CreateAnswers): string => `import { defineConfig } from '@playwright/test';
+const playwrightConfig = ({
+  mode,
+  packageManager
+}: CreateAnswers): string => `import { defineConfig } from '@playwright/test';
 
 const PORT = ${mode === 'server' ? '8080' : '5173'};
 
@@ -16,9 +21,10 @@ export default defineConfig({
   testDir: './visual',
   outputDir: './visual/.results',
   use: { baseURL: \`http://127.0.0.1:\${PORT}\` },
-  // Playwright starts the project itself, so \`npm run visual\` is one command from a cold checkout.
+  // Playwright starts the project itself, so \`${runCommand(packageManager, 'visual')}\` is one command from a
+  // cold checkout.
   webServer: {
-    command: 'npm start',
+    command: '${runCommand(packageManager, 'start')}',
     url: \`http://127.0.0.1:\${PORT}\`,
     reuseExistingServer: true,
     timeout: 120_000

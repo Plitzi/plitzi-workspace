@@ -23,3 +23,17 @@ export const digest = (value: string, length: number): string => {
 
   return out.slice(0, length);
 };
+
+/**
+ * A string as a slug: lowercase, `[a-z0-9-]`, no leading or trailing dash.
+ *
+ * Two different things need it and they must agree. A space's `permanentUrl` is a DNS label at the platform — a
+ * subdomain is built out of it — and it is also what element ids and style selectors are derived from, so a name
+ * that arrived from a folder ("My Site", "my_site") has to become one of these before it is written into a spec
+ * rather than after, when the documents already carry it.
+ */
+export const slugify = (value: string, fallback: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || fallback;

@@ -21,10 +21,19 @@ plitzi create my-site                          # server + local: the default, an
 plitzi create my-site --mode client            # browser-rendered, Vite, hot module replacement
 plitzi create my-site --source cloud --key …   # read the live space out of Plitzi
 plitzi create . --force --no-install           # write into a directory that has work in it, install nothing
+plitzi create my-site --package-manager yarn   # run it with npx, work in it with yarn
 ```
 
-The package manager comes from the one that invoked it, so `yarn dlx` and `pnpm dlx` get their own commands back
-rather than a second lockfile.
+## The package manager
+
+`--package-manager npm|yarn|pnpm` says which one the project is written for: what it installs with, and what
+every command in its README and its Playwright config names. Omitted, it is taken from the one that invoked the
+CLI — so `yarn dlx` and `pnpm dlx` get their own commands back — but that is a guess about the *invocation*, and
+running `npx` once to scaffold a project you then work in with Yarn is exactly the case it gets wrong.
+
+A Yarn project also gets a `.yarnrc.yml` pinning `nodeLinker: node-modules`. Yarn 4 installs Plug'n'Play by
+default and a server-mode project cannot start under it — `node --import tsx` dies resolving its own entry — so
+the linker is pinned to the layout npm and pnpm already give it.
 
 ## What lands in the project
 
@@ -35,8 +44,15 @@ rather than a second lockfile.
 - **A live loop.** In client mode a save is a hot module replacement: the space module is swapped and the tree
   remounted, so the page updates without reloading. In server mode `--watch` restarts the process and the next
   request renders the change.
-- **A visual test.** `npm run visual` starts the project, opens the page and asserts that every element the space
+- **A plugin of the project's own.** `src/plugins/StatCard` is a React component the space renders through a
+  `custom` element — the one thing about Plitzi a page of built-in elements cannot show. Its props ARE the
+  element's attributes, so a data source pointed at that element later reaches the component with no plumbing in
+  between. Server-rendered in server mode (`action: 'compile'`), part of the bundle in client mode.
+- **A visual test.** The `visual` script starts the project, opens the page and asserts that every element the space
   *names* is visible — the strongest assertion available about a page nobody hand-wrote, and it needs no upkeep.
+- **Prettier and ESLint**, configured rather than mentioned: type-checked rules, with Prettier owning layout and
+  `eslint-config-prettier` keeping the two from arguing on save. `lint` and `format` are scripts from the first
+  commit, which is the only moment a repository's style is cheap to decide.
 - **The authoring skill**, in `.claude/skills/`, so an agent working in the project knows how a space is put
   together before it touches one.
 

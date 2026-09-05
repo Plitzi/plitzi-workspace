@@ -79,17 +79,35 @@ body {
 }
 `;
 
+/**
+ * The project's own components, by the `renderType` the space names them with.
+ *
+ * Written into both entry points, because how a plugin is registered does not change with where the space lives.
+ */
+const PLUGINS = `/**
+ * The project's own components, by the \`renderType\` the space names them with.
+ *
+ * A \`custom\` element naming \`statCard\` renders this component, and the element's attributes arrive as its
+ * props — which is what makes a plugin bindable rather than static. There is no server here, so it is part of
+ * this project's bundle and Vite hot-replaces it like any other module. Add another by writing it under
+ * \`src/plugins\` and adding a line here; see \`src/plugins/README.md\`.
+ */
+const plugins = { statCard: { component: StatCard } };`;
+
 /** The two ways the space reaches the entry point, written once because both modes phrase them identically. */
 const localMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
+import StatCard from './plugins/StatCard';
 import { space } from './space';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
+
+${PLUGINS}
 
 /**
  * The space, held in this project.
@@ -98,26 +116,30 @@ import type { SpaceSpec } from '@plitzi/sdk-authoring';
  * documents the SDK renders. Editing it is editing the site.
  */
 const mount = (spec: SpaceSpec) =>
-  render('plitzi-root', {
-    /**
-     * What makes this run with no backend: the SDK renders the documents it is handed instead of fetching a
-     * space, so there is no account, no key and no server in the picture.
-     */
-    offlineMode: true,
-    offlineData: authorSpace(spec),
-    /**
-     * Without this the SDK renders inside an IFRAME — its default, because a space dropped into an unknown page
-     * is safest isolated from it. This page is yours, so render straight into the DOM: one document, one
-     * stylesheet, no frame and no scroll trap.
-     */
-    renderMode: 'raw',
-    environment: 'main',
-    /**
-     * The page AUTHORISING the dev tools: the badge, and shift+alt+D for the panel — logs, the store, the
-     * elements, the variables. Development only, because a published site has no business offering them.
-     */
-    debugMode: import.meta.env.DEV
-  });
+  render(
+    'plitzi-root',
+    {
+      /**
+       * What makes this run with no backend: the SDK renders the documents it is handed instead of fetching a
+       * space, so there is no account, no key and no server in the picture.
+       */
+      offlineMode: true,
+      offlineData: authorSpace(spec),
+      /**
+       * Without this the SDK renders inside an IFRAME — its default, because a space dropped into an unknown page
+       * is safest isolated from it. This page is yours, so render straight into the DOM: one document, one
+       * stylesheet, no frame and no scroll trap.
+       */
+      renderMode: 'raw',
+      environment: 'main',
+      /**
+       * The page AUTHORISING the dev tools: the badge, and shift+alt+D for the panel — logs, the store, the
+       * elements, the variables. Development only, because a published site has no business offering them.
+       */
+      debugMode: import.meta.env.DEV
+    },
+    plugins
+  );
 
 let mounted = mount(space);
 
@@ -144,8 +166,12 @@ if (import.meta.hot) {
 
 const cloudMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
+import StatCard from './plugins/StatCard';
+
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+
+${PLUGINS}
 
 /**
  * The space's public RENDER key.
@@ -160,13 +186,17 @@ if (!WEB_KEY) {
   throw new Error('Set VITE_PLITZI_WEB_KEY in .env — Credentials, in the builder.');
 }
 
-render('plitzi-root', {
-  webKey: WEB_KEY,
-  environment: import.meta.env.VITE_PLITZI_ENVIRONMENT ?? 'main',
-  // The page is ours, so render into the document rather than into the SDK's default iframe.
-  renderMode: 'raw',
-  debugMode: true
-});
+render(
+  'plitzi-root',
+  {
+    webKey: WEB_KEY,
+    environment: import.meta.env.VITE_PLITZI_ENVIRONMENT ?? 'main',
+    // The page is ours, so render into the document rather than into the SDK's default iframe.
+    renderMode: 'raw',
+    debugMode: true
+  },
+  plugins
+);
 `;
 
 export const clientFiles = (answers: CreateAnswers): ProjectFiles => ({

@@ -1,4 +1,5 @@
 import { GLOBAL_SOURCES } from './bindings';
+import { slugify } from './ids';
 import { authorSpace } from './space';
 import { validateSpace } from './validate';
 
@@ -31,13 +32,6 @@ import type { Element, Schema, Style, Template } from '@plitzi/sdk-shared';
 
 /** The artefact this module produces, re-exported so authoring a template needs one import. */
 export type { Template } from '@plitzi/sdk-shared';
-
-/** Ids are derived from a path that starts here, so a template's key is its `permanentUrl`. */
-const slugify = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'template';
 
 const dedupe = (errors: SchemaValidationError[]): SchemaValidationError[] => {
   const seen = new Set<string>();
@@ -252,7 +246,7 @@ export const authorTemplate = (spec: TemplateSpec, options: AuthorSpaceOptions =
   const { schema, style, warnings } = authorSpace(
     {
       name,
-      permanentUrl: spec.key ?? slugify(name),
+      permanentUrl: spec.key ?? slugify(name, 'template'),
       classes: spec.classes,
       elements: spec.elements,
       variables: spec.variables,

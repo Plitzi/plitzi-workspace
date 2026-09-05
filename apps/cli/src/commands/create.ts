@@ -5,9 +5,9 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
-import { scaffold } from '../scaffold';
+import { PACKAGE_MANAGERS, detectPackageManager, installCommand, runCommand, scaffold } from '../scaffold';
 
-import type { CreateAnswers } from '../scaffold';
+import type { CreateAnswers, PackageManager } from '../scaffold';
 
 /**
  * A project that renders a Plitzi space, ready to run.
@@ -22,27 +22,10 @@ export interface CreateOptions {
   source?: string;
   key?: string;
   environment?: string;
+  packageManager?: string;
   install?: boolean;
   force?: boolean;
 }
-
-/**
- * Which package manager to speak, taken from the one that invoked this.
- *
- * `npm_config_user_agent` is set by every one of them, so `npx`, `yarn dlx` and `pnpm dlx` each get their own
- * commands back — printing `npm install` to somebody who runs yarn is how a scaffold produces a second lockfile.
- */
-const packageManager = (): 'npm' | 'yarn' | 'pnpm' => {
-  const agent = process.env.npm_config_user_agent ?? '';
-  if (agent.startsWith('yarn')) {
-    return 'yarn';
-  }
-
-  return agent.startsWith('pnpm') ? 'pnpm' : 'npm';
-};
-
-const runCommand = (manager: string, args: string[]): string =>
-  `${manager}${args.length > 0 ? ` ${args.join(' ')}` : ''}`;
 
 /** A directory that does not exist yet is as empty as one can be, which is the answer this question wants. */
 const isEmpty = async (target: string): Promise<boolean> => {
@@ -56,7 +39,7 @@ const isEmpty = async (target: string): Promise<boolean> => {
 const oneOf = <T extends string>(value: string | undefined, allowed: readonly T[], fallback: T): T =>
   allowed.includes(value as T) ? (value as T) : fallback;
 
-const install = (manager: string, cwd: string): Promise<boolean> =>
+const install = (manager: PackageManager, cwd: string): Promise<boolean> =>
   new Promise(resolve => {
     const child = spawn(manager, ['install'], { cwd, stdio: 'inherit', shell: process.platform === 'win32' });
     child.on('error', () => resolve(false));
@@ -87,6 +70,16 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   const mode = oneOf(options.mode, ['server', 'client'] as const, 'server');
   const source = oneOf(options.source, ['local', 'cloud'] as const, 'local');
 
+  /**
+   * Asked for first, detected second.
+   *
+   * The invoking agent is a good guess and a bad rule: reaching for `npx` to run a scaffold once and then working
+   * in the project with Yarn is an ordinary thing to do, and the guess writes a README, a Playwright config, a
+   * `.gitignore` and an install into that project which all name the wrong one. `--package-manager` is how
+   * somebody says which one they will actually be using.
+   */
+  const packageManager: PackageManager = oneOf(options.packageManager, PACKAGE_MANAGERS, detectPackageManager());
+
   // A cloud project is nothing without its credential, so it is the one thing worth stopping to ask for.
   const key = source === 'cloud' ? (options.key ?? (await askForKey(mode))) : '';
   if (source === 'cloud' && !key) {
@@ -101,7 +94,8 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     mode,
     source,
     key,
-    environment: options.environment ?? 'main'
+    environment: options.environment ?? 'main',
+    packageManager
   };
 
   const files = scaffold(answers);
@@ -115,8 +109,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     })
   );
 
-  const manager = packageManager();
-  const installed = options.install !== false && (await install(manager, target));
+  const installed = options.install !== false && (await install(packageManager, target));
 
   /**
    * How to get there, in whichever form is shorter.
@@ -134,14 +127,14 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   );
   console.log('');
   if (!installed) {
-    console.log(`  ${where}${runCommand(manager, ['install'])}`);
+    console.log(`  ${where}${installCommand(packageManager)}`);
   }
 
-  console.log(`  ${where}${runCommand(manager, manager === 'npm' ? ['start'] : ['start'])}`);
+  console.log(`  ${where}${runCommand(packageManager, 'start')}`);
   console.log('');
   console.log(
     chalk.dim(
-      `.claude/skills carries Plitzi's authoring skill; \`${manager} run visual\` opens the page and checks it.`
+      `.claude/skills carries Plitzi's authoring skill; \`${runCommand(packageManager, 'visual')}\` opens the page and checks it.`
     )
   );
   if (source === 'cloud') {

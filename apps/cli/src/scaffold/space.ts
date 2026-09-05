@@ -14,12 +14,6 @@ import type { CreateAnswers, ProjectFiles } from './types';
  * signing up gives you cannot come apart.
  */
 
-/** The project names its space after the project. Everything else is the copy, verbatim. */
-const named = (source: string, name: string): string =>
-  source
-    .replace('name: \'New space\'', `name: '${name}'`)
-    .replace('permanentUrl: \'new-space\'', `permanentUrl: '${name}'`);
-
 /**
  * Writes the declaration out as documents.
  *
@@ -36,7 +30,7 @@ import { space } from './space';
 const { schema, style, warnings } = authorSpace(space);
 
 mkdirSync('space', { recursive: true });
-writeFileSync('space/offline-data.json', \`\${JSON.stringify({ schema, style }, null, 2)}\n\`);
+writeFileSync('space/offline-data.json', \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);
 
 for (const warning of warnings) {
   console.warn(\`[author] \${warning.message}\`);
@@ -45,5 +39,24 @@ for (const warning of warnings) {
 console.log('space/offline-data.json');
 `;
 
+/**
+ * The plugin the copy hosts, and the numbers it is authored with.
+ *
+ * Asked for here rather than defaulted on in the package: the platform authors a new space from the same
+ * declaration and hosts nobody's plugins, so the slot exists only where a project carries the component to fill
+ * it. The settings are what the component reads as props — a plain object here, a JSON string on the element,
+ * and the same names on both sides.
+ */
+const PLUGIN_HOST = {
+  id: 'stat-card',
+  renderType: 'statCard',
+  settings: { label: 'Requests today', value: 12480, unit: 'reqs', series: [8, 12, 9, 17, 14, 21, 19, 26] }
+};
+
 export const spaceFiles = ({ source, name }: CreateAnswers): ProjectFiles =>
-  source === 'cloud' ? {} : { 'src/space.ts': named(blankSpaceSource(), name), 'src/author.ts': authorScript() };
+  source === 'cloud'
+    ? {}
+    : {
+        'src/space.ts': blankSpaceSource({ name, plugin: PLUGIN_HOST }),
+        'src/author.ts': authorScript()
+      };

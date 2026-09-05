@@ -1,5 +1,7 @@
 import { createRequire } from 'node:module';
 
+import { installCommand, managerFiles, runCommand } from './packageManager';
+
 import type { CreateAnswers, ProjectFiles } from './types';
 
 /**
@@ -13,14 +15,39 @@ const require = createRequire(import.meta.url);
 
 const SDK_VERSION = `^${(require('@plitzi/sdk-authoring/package.json') as { version: string }).version}`;
 
+/**
+ * What every generated project builds and checks itself with.
+ *
+ * React's types are here rather than in the browser half because both modes carry a plugin now, and a plugin is a
+ * `.tsx` file wherever it renders. The lint stack is the same one Plitzi's own packages use — type-checked rules,
+ * with Prettier owning layout and `eslint-config-prettier` keeping ESLint out of that argument.
+ */
 const SHARED_DEV_DEPENDENCIES = {
+  '@eslint/js': '^10.0.1',
   '@playwright/test': '^1.56.1',
   '@types/node': '^26.2.0',
-  typescript: '^6.0.3'
+  '@types/react': '^19.2.18',
+  '@types/react-dom': '^19.2.4',
+  eslint: '^9.39.5',
+  'eslint-config-prettier': '^10.1.8',
+  'eslint-plugin-react-hooks': '^7.1.1',
+  globals: '^17.11.0',
+  prettier: '^3.9.6',
+  typescript: '^6.0.3',
+  'typescript-eslint': '^8.67.0'
 };
 
 const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> => ({
-  ...(mode === 'server' ? { '@plitzi/sdk-server': SDK_VERSION } : { '@plitzi/plitzi-sdk': SDK_VERSION }),
+  /**
+   * The SDK is a direct dependency in BOTH modes, and in server mode that is not redundant.
+   *
+   * A plugin is a browser component: it imports `RootElement` so the element's id, classes and authored CSS land
+   * on what it renders. A server-mode project therefore imports the SDK from `src/plugins`, even though what it
+   * runs is the page server — and importing a package you have not declared is a package that disappears the
+   * first time the one that pulled it in stops depending on it.
+   */
+  '@plitzi/plitzi-sdk': SDK_VERSION,
+  ...(mode === 'server' ? { '@plitzi/sdk-server': SDK_VERSION } : {}),
   // Authoring is what turns `src/space.ts` into documents, so a local project always needs it. A cloud one never
   // does: its space is a document Plitzi holds, and nothing here builds one.
   ...(source === 'local' ? { '@plitzi/sdk-authoring': SDK_VERSION } : {}),
@@ -29,14 +56,7 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
 });
 
 const devDependencies = ({ mode }: CreateAnswers): Record<string, string> =>
-  mode === 'server'
-    ? { ...SHARED_DEV_DEPENDENCIES, tsx: '^4.23.12' }
-    : {
-        ...SHARED_DEV_DEPENDENCIES,
-        '@types/react': '^19.2.18',
-        '@types/react-dom': '^19.2.4',
-        vite: '^8.2.1'
-      };
+  mode === 'server' ? { ...SHARED_DEV_DEPENDENCIES, tsx: '^4.23.12' } : { ...SHARED_DEV_DEPENDENCIES, vite: '^8.2.1' };
 
 /**
  * What `start` means, which is the whole difference between the two modes.
@@ -51,7 +71,13 @@ const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
   ...(mode === 'server'
     ? {
         start: 'node --import tsx src/main.ts',
-        'start:dev': 'node --import tsx --watch src/main.ts'
+        /**
+         * Watched by PATH, not wholesale.
+         *
+         * The server compiles the project's plugins into `.sdk-plugins/` and then IMPORTS what it built, so a
+         * bare `--watch` sees its own output land, restarts, compiles again, and never stops.
+         */
+        'start:dev': 'node --import tsx --watch-path=./src src/main.ts'
       }
     : {
         start: 'vite',
@@ -60,6 +86,8 @@ const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
       }),
   ...(source === 'local' ? { author: 'node --import tsx src/author.ts' } : {}),
   typecheck: 'tsc -p tsconfig.json --noEmit',
+  lint: 'eslint .',
+  format: 'prettier --write .',
   visual: 'playwright test'
 });
 
@@ -98,18 +126,30 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
         lib: ['ES2023', 'DOM', 'DOM.Iterable'],
         jsx: 'react-jsx'
       },
-      include: ['src', 'visual', ...(mode === 'client' ? ['vite.config.ts'] : [])]
+      include: ['src', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])]
     },
     null,
     2
   )}\n`;
 
-export const gitignore = (): string => 'node_modules\ndist\n.env\nvisual/.results\nvisual/screenshots\n';
+/**
+ * Yarn's four lines are Yarn's own recommendation, and they are not decoration: with the `node-modules` linker it
+ * writes `.yarn/install-state.gz` into the project, which is a cache and belongs in no repository.
+ */
+const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases\n!.yarn/versions\n';
 
-const startLine = (answers: CreateAnswers): string =>
-  answers.mode === 'server'
-    ? '`npm start` serves pages on http://127.0.0.1:8080. `npm run start:dev` restarts on save.'
-    : '`npm start` runs Vite on http://127.0.0.1:5173, with hot module replacement.';
+/** Where the page server writes the plugin bundles it builds. A build output, and rebuilt whenever it is missing. */
+const SERVER_IGNORES = '.sdk-plugins\n';
+
+export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
+  `node_modules\ndist\n.env\nvisual/.results\nvisual/screenshots\n${mode === 'server' ? SERVER_IGNORES : ''}${
+    packageManager === 'yarn' ? YARN_IGNORES : ''
+  }`;
+
+const startLine = ({ mode, packageManager }: CreateAnswers): string =>
+  mode === 'server'
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080. \`${runCommand(packageManager, 'start:dev')}\` restarts on save.`
+    : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
 
 const spaceSection = (answers: CreateAnswers): string => {
   if (answers.source === 'cloud') {
@@ -136,7 +176,7 @@ from what is written there, so authoring it twice writes byte-identical document
 
 Nothing is fetched and nothing is signed in to: there is no account, no key and no network in the picture.
 
-\`npm run author\` writes the documents out as \`space/offline-data.json\`, for the moment you want the space
+\`${runCommand(answers.packageManager, 'author')}\` writes the documents out as \`space/offline-data.json\`, for the moment you want the space
 somewhere else — imported into Plitzi, handed to another server, or checked into a repository with no TypeScript
 in it. Nothing here reads that file; the declaration is the source.`;
 };
@@ -146,9 +186,9 @@ export const readme = (answers: CreateAnswers): string => `# ${answers.name}
 A Plitzi space, rendered ${answers.mode === 'server' ? 'by a server of your own (SSR + RSC)' : 'in the browser, with no server at all'}.
 
 \`\`\`bash
-npm install
-npm start
-npm run visual   # a browser opens the page and checks it rendered
+${installCommand(answers.packageManager)}
+${runCommand(answers.packageManager, 'start')}
+${runCommand(answers.packageManager, 'visual')}   # a browser opens the page and checks it rendered
 \`\`\`
 
 ${startLine(answers)}
@@ -189,9 +229,10 @@ VITE_PLITZI_ENVIRONMENT=${environment}
 `;
 
 export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
+  ...managerFiles(answers.packageManager),
   'package.json': packageJson(answers),
   'tsconfig.json': tsconfig(answers),
-  '.gitignore': gitignore(),
+  '.gitignore': gitignore(answers),
   'README.md': readme(answers),
   ...(answers.source === 'cloud' ? { '.env': envFile(answers) } : {})
 });

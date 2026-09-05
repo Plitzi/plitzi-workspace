@@ -1,6 +1,7 @@
-import { program } from 'commander';
+import { Option, program } from 'commander';
 
 import create from './commands/create';
+import { PACKAGE_MANAGERS } from './scaffold';
 
 /**
  * The command line for Plitzi.
@@ -20,6 +21,12 @@ program
   .option('-s, --source <source>', 'local (the space travels in the project) or cloud (read it from Plitzi)', 'local')
   .option('-k, --key <key>', 'Cloud only: the space key (asked for when omitted)')
   .option('-e, --environment <environment>', 'Which version to serve: main, or a published environment', 'main')
+  .addOption(
+    new Option(
+      '-p, --package-manager <manager>',
+      'The package manager the project is written for. Defaults to the one that invoked this.'
+    ).choices([...PACKAGE_MANAGERS])
+  )
   .option('--no-install', 'Write the files without installing dependencies')
   .option('-f, --force', 'Write into a directory that is not empty')
   .action(create);

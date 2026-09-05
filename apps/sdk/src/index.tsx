@@ -84,10 +84,34 @@ const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
   };
 };
 
+/**
+ * A registered plugin is a COMPONENT, not a decorated one.
+ *
+ * `ComponentPluginFC` and not `ComponentPlugin`, because the metadata the latter carries — `type`, `assets`,
+ * `origin`, `content` — is stamped on by `App` when it reads these, from the very keys given here. Asking a
+ * caller for it made the parameter impossible to satisfy without a cast: everybody registering a component of
+ * their own has a React component and nothing else, which is also exactly what `<Sdk.Plugin component>` declares.
+ */
+export type RenderPlugins = Record<
+  string,
+  {
+    /**
+     * A plugin's props ARE the hosting element's attributes, which this package cannot know — so the parameter is
+     * left open. Narrowed to `ComponentPluginFC` with its default `unknown`, it refuses every component anybody
+     * actually writes: a component declaring `{ label?: string }` has nothing in common with the runtime-supplied
+     * props alone, and TypeScript reads that as a mistake rather than as the intended widening.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    component: ComponentPluginFC<any>;
+    props?: Record<string, unknown>;
+    clientOnly?: boolean;
+  }
+>;
+
 export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
-  plugins: Record<string, { component: ComponentPlugin; props?: Record<string, unknown>; clientOnly?: boolean }> = {},
+  plugins: RenderPlugins = {},
   debugMode = false,
   ssrMode = false
 ) {
