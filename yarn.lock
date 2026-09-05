@@ -3441,6 +3441,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@plitzi/cli@workspace:apps/cli":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/cli@workspace:apps/cli"
+  dependencies:
+    "@types/node": "npm:^26.2.0"
+    chalk: "npm:^5.6.2"
+    commander: "npm:^14.0.2"
+    eslint: "npm:^9.39.5"
+    eslint-plugin-import: "npm:^2.32.0"
+    typescript: "npm:^6.0.3"
+    vite: "npm:^8.2.1"
+    vitest: "npm:^4.1.10"
+  bin:
+    plitzi: ./dist/index.js
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/e2e@workspace:e2e":
   version: 0.0.0-use.local
   resolution: "@plitzi/e2e@workspace:e2e"
@@ -7191,6 +7208,13 @@ __metadata:
     ansi-styles: "npm:^4.1.0"
     supports-color: "npm:^7.1.0"
   checksum: 10c0/4a3fef5cc34975c898ffe77141450f679721df9dde00f6c304353fa9c8b571929123b26a0e4617bde5018977eb655b31970c297b91b63ee83bb82aeb04666880
+  languageName: node
+  linkType: hard
+
+"chalk@npm:^5.6.2":
+  version: 5.6.2
+  resolution: "chalk@npm:5.6.2"
+  checksum: 10c0/99a4b0f0e7991796b1e7e3f52dceb9137cae2a9dfc8fc0784a550dc4c558e15ab32ed70b14b21b52beb2679b4892b41a0aa44249bcb996f01e125d58477c6976
   languageName: node
   linkType: hard
 

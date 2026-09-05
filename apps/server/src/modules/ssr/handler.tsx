@@ -1,6 +1,6 @@
 import { applySSRResult } from './applySSRResult';
 import { buildBody } from './buildBody';
-import { takeDraftOverride } from './preview';
+import { draftSessionCookie, takeDraftOverride } from './preview';
 import { streamBody } from './streamBody';
 import { buildHtmlCacheKey } from '../../helpers/cache';
 import { RequestMetrics } from '../../helpers/metrics';
@@ -52,8 +52,27 @@ export const renderSSR = async (
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
-  // A one-shot preview token renders unsaved draft edits (never persisted); such a render is never cached.
-  const offlineDataOverride = await takeDraftOverride(req, config);
+  // A preview token renders unsaved draft edits (never persisted); such a render is never cached.
+  const draft = await takeDraftOverride(req, config);
+  const offlineDataOverride = draft?.data;
+
+  if (draft) {
+    /**
+     * Unsaved work, told not to travel.
+     *
+     * `no-store` because every layer between here and the browser would otherwise be free to hand this render to
+     * somebody else, and `noindex` because a draft URL that reaches a crawler puts unpublished copy in a search
+     * result. Neither is a nicety: the whole point of a draft is that it is not the site yet.
+     */
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+
+    // Only a reusable draft is remembered: a one-shot token is spent by the render that is happening right now, and
+    // a cookie holding it would send every later request looking for something that is gone.
+    if (draft.reusable) {
+      res.setHeader('Set-Cookie', draftSessionCookie(req, draft.token, config.preview?.sessionTtlMs ?? 900_000));
+    }
+  }
 
   // Cache is disabled for the main environment (development) and for any draft-override render.
   const htmlCache = environment !== 'main' && !offlineDataOverride ? caches.html : undefined;

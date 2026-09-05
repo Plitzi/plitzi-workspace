@@ -1,3 +1,4 @@
+import type { SpaceHandles } from './handles';
 import type { CssProps, CssSpec, StyleDeclaration } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
@@ -255,6 +256,13 @@ export interface AuthorSpaceOptions {
 export interface AuthoredSpace {
   schema: Schema;
   style: Style;
+  /**
+   * What an end-to-end suite addresses this space by — every page and element, under the id it was actually given.
+   *
+   * Returned rather than looked up from the document afterwards, because a spec that leaves an id out is given a
+   * derived one, and only the author knows what it minted. See `./handles`.
+   */
+  handles: SpaceHandles;
   /**
    * What the document validator had to say that was not fatal — a page with no default, a variable nothing reads.
    * Returned rather than printed: a seed may log them, a test may assert on them, and a build may treat them as

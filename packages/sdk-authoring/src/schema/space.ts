@@ -5,11 +5,13 @@ import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import { BREAKPOINTS, className, css, sameRules, toResponsive } from '../style';
 import { GLOBAL_SOURCES, groupBindings, withVisibility } from './bindings';
 import { authorFlows } from './flows';
+import { buildHandles, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
 import { didYouMean } from './suggest';
 import { assertSpaceValid } from './validate';
 
 import type { SourceIndex } from './bindings';
+import type { ElementHandle, PageHandle } from './handles';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
@@ -64,6 +66,14 @@ class SpaceAuthor {
   private readonly authorNames = new Set<string>();
 
   private readonly pagePaths = new Set<string>();
+
+  /**
+   * What a test will address this space by, collected as the tree is written rather than walked again afterwards.
+   *
+   * Here and not in a second pass because this is the only place that knows an element's FINAL id: a spec may leave
+   * it out, and the derived `<type>-<n>` exists nowhere until it is minted below.
+   */
+  private readonly handles: Record<string, PageHandle> = {};
 
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
   private readonly classRules = new Map<string, ResponsiveStyle>();
@@ -140,7 +150,7 @@ class SpaceAuthor {
       sourceTypes: this.options.sourceTypes
     });
 
-    return { schema, style, warnings: [...this.stepWarnings, ...warnings] };
+    return { schema, style, handles: buildHandles(this.handles), warnings: [...this.stepWarnings, ...warnings] };
   }
 
   /**
@@ -460,6 +470,17 @@ class SpaceAuthor {
     // `custom` is the one drop position that inserts without a parent, which is what a page is.
     this.insert(element, '', 'custom');
 
+    this.handles[id] = {
+      id,
+      type: 'page',
+      pageId: id,
+      selector: selectorFor(id),
+      named: page.id !== undefined,
+      slug: page.slug,
+      path: pathForSlug(page.slug),
+      elements: {}
+    };
+
     page.body.forEach((child, childIndex) => this.addElement(child, `${path}/${childIndex}`, id, id));
 
     return id;
@@ -474,6 +495,22 @@ class SpaceAuthor {
         return [slot, name];
       })
     );
+  }
+
+  /**
+   * Files an element under the page it renders on.
+   *
+   * `rootId` is that page for everything a page contains — a layout container included, since it is a root the page
+   * names rather than a page of its own. An element whose root is not a page it wrote is dropped rather than filed
+   * somewhere plausible: a handle that resolves to the wrong page is worse than one that is absent, which the
+   * lookup reports by name.
+   */
+  private recordHandle(handle: ElementHandle): void {
+    // `hasOwn` rather than a falsy check: an index signature types every read as a hit, so this is the only way to
+    // ask whether a root that is not one of this space's pages has an entry at all.
+    if (Object.hasOwn(this.handles, handle.pageId)) {
+      this.handles[handle.pageId].elements[handle.id] = handle;
+    }
   }
 
   private addElement(spec: ElementSpec, path: string, rootId: string, parentId: string): string {
@@ -514,6 +551,8 @@ class SpaceAuthor {
     };
 
     this.insert(element, parentId, 'inside');
+
+    this.recordHandle({ id, type: spec.type, pageId: rootId, selector: selectorFor(id), named: spec.id !== undefined });
 
     spec.children?.forEach((child, index) => this.addElement(child, `${path}/${index}`, rootId, id));
 

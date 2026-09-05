@@ -14,7 +14,8 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
   environment: 'main',
   isHydrating: false,
   hydrated: false,
-  overQuota: false
+  overQuota: false,
+  testAttributes: true
 };
 
 /** Reads `render` from the nearest store, filled in. Returns every key defined, so call sites destructure without
@@ -23,15 +24,17 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
  *  A nested scope that seeds `render` SHADOWS the whole slice — reads do not fall through key by key, whichever way
  *  they are written — so a subtree that overrides one flag must restate the rest ({@link useRenderOverride}). */
 const useRenderSettings = (): Required<RenderSettings> => {
-  const [[previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota]] = useCommonStore([
-    'render.previewMode',
-    'render.debugMode',
-    'render.renderMode',
-    'render.environment',
-    'render.isHydrating',
-    'render.hydrated',
-    'render.overQuota'
-  ]);
+  const [[previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, testAttributes]] =
+    useCommonStore([
+      'render.previewMode',
+      'render.debugMode',
+      'render.renderMode',
+      'render.environment',
+      'render.isHydrating',
+      'render.hydrated',
+      'render.overQuota',
+      'render.testAttributes'
+    ]);
 
   return useMemo(
     () => ({
@@ -41,9 +44,10 @@ const useRenderSettings = (): Required<RenderSettings> => {
       environment: environment ?? DEFAULT_RENDER_SETTINGS.environment,
       isHydrating: isHydrating ?? DEFAULT_RENDER_SETTINGS.isHydrating,
       hydrated: hydrated ?? DEFAULT_RENDER_SETTINGS.hydrated,
-      overQuota: overQuota ?? DEFAULT_RENDER_SETTINGS.overQuota
+      overQuota: overQuota ?? DEFAULT_RENDER_SETTINGS.overQuota,
+      testAttributes: testAttributes ?? DEFAULT_RENDER_SETTINGS.testAttributes
     }),
-    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota]
+    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, testAttributes]
   );
 };
 

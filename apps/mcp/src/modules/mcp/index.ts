@@ -3,10 +3,12 @@ export { readResource, resourceVersion, registerResources, buildTypeRegistry, cs
 export { apply, validate, search, read, validateOperations, operation, tools } from './tools';
 export { computeVersion, buildAgentGuide } from './helpers';
 export { createHttpPreviewClient } from './previewClient';
+export { createLocalScreenshotClient, resolveLocalBrowser } from './localScreenshotClient';
 export { createHttpScreenshotClient } from './screenshotClient';
 
 export type { McpRequestOptions } from './handler';
 export type { HttpPreviewClientConfig } from './previewClient';
+export type { LocalScreenshotClientConfig } from './localScreenshotClient';
 export type { HttpScreenshotClientConfig } from './screenshotClient';
 export type { McpServerContext } from './server';
 export type {

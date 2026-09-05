@@ -988,9 +988,37 @@ export type OAuthConfig = {
  *  in-memory default (fine for a single replica); a multi-replica deployment injects a shared (e.g. Redis)
  *  implementation so a preview URL resolves on whichever replica the browser lands on. `take` consumes the
  *  token so a preview URL is not replayable. */
+/**
+ * How long a stashed draft lives, and whether looking at it uses it up.
+ *
+ * `reusable: false` is the capture path: one token, one render, gone — a URL that leaks buys nobody a second look.
+ * `reusable: true` is somebody ITERATING: they reload, they open devtools, they navigate to the next page and back,
+ * and a token consumed by the first of those turns the whole loop into "mint another one". Same store, same secret,
+ * same expiry; the only difference is whether the read deletes it.
+ */
+export type DraftPutOptions = {
+  ttlMs: number;
+  reusable?: boolean;
+};
+
+/** A stashed draft, and whether the read that resolved it left it there. */
+export type DraftEntry = {
+  data: OfflineDataRaw;
+  reusable: boolean;
+};
+
 export type DraftStore = {
-  put: (token: string, data: OfflineDataRaw, ttlMs: number) => void | Promise<void>;
-  take: (token: string) => (OfflineDataRaw | undefined) | Promise<OfflineDataRaw | undefined>;
+  put: (token: string, data: OfflineDataRaw, options: DraftPutOptions) => void | Promise<void>;
+  /**
+   * Resolves a draft, consuming it unless it was stored as reusable.
+   *
+   * It answers WHICH it was, rather than leaving the caller to infer it from a second read: the render that resolved
+   * a session is the one that has to remember it for the rest of the visit, and "did this token survive" is a fact
+   * the store holds and nobody else does.
+   */
+  take: (token: string) => (DraftEntry | undefined) | Promise<DraftEntry | undefined>;
+  /** Ends a reusable draft before its TTL — what "stop previewing" does. A token that is not there is not an error. */
+  drop: (token: string) => void | Promise<void>;
 };
 
 /** Draft-preview config for the MCP visual-preview tools. When enabled, an internal endpoint at `path`
@@ -1002,6 +1030,14 @@ export type SSRPreviewConfig = {
   path?: string;
   /** Shared secret required in the `x-preview-secret` header; requests without it are rejected. */
   secret?: string;
-  /** Token time-to-live in milliseconds. Default 60000. */
+  /** One-shot token time-to-live in milliseconds. Default 60000. */
   ttlMs?: number;
+  /**
+   * How long a REUSABLE draft session lives, in milliseconds. Default 900000 (fifteen minutes).
+   *
+   * Longer than a one-shot token because it is measured against a person's attention rather than an HTTP round trip,
+   * and short anyway: a draft is unsaved work that only its author should be looking at, and every minute it stays
+   * resolvable is a minute a copied URL keeps working.
+   */
+  sessionTtlMs?: number;
 };

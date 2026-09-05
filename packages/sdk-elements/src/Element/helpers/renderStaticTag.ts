@@ -4,8 +4,8 @@ import type { DebugParams } from '../RootElement';
 import type { ReactNode, CSSProperties, RefObject, JSX, ReactElement } from 'react';
 
 // Single source of truth for the rendered tag: fixes the spread order (own props → debug params → native events →
-// server marker) shared by the interactive and non-interactive branches. Kept as a plain render function (not a
-// component) so it does not add its own boundary to the React DevTools tree on every element.
+// server marker → test marker) shared by the interactive and non-interactive branches. Kept as a plain render
+// function (not a component) so it does not add its own boundary to the React DevTools tree on every element.
 
 export type StaticTagProps = {
   tag?: keyof JSX.IntrinsicElements;
@@ -15,6 +15,8 @@ export type StaticTagProps = {
   otherProps: Record<string, unknown>;
   params?: DebugParams;
   serverMarker?: { 'data-rsc-id': string };
+  /** What an end-to-end test addresses this element by. Last in the spread: nothing may shadow it. */
+  testMarker?: { 'data-plitzi-el': string };
   events?: Record<string, unknown>;
   children?: ReactNode;
 };
@@ -27,6 +29,7 @@ const renderStaticTag = ({
   otherProps,
   params,
   serverMarker,
+  testMarker,
   events,
   children
 }: StaticTagProps): ReactElement =>
@@ -39,7 +42,8 @@ const renderStaticTag = ({
       ...otherProps,
       ...params,
       ...events,
-      ...serverMarker
+      ...serverMarker,
+      ...testMarker
     },
     children
   );

@@ -110,6 +110,17 @@ export type RenderSettings = {
    * space's settings can turn it off. `branding` is forced on by the same state; this is what says WHY.
    */
   overQuota?: boolean;
+  /**
+   * Whether every element carries `data-plitzi-el="<its id>"`, which is what an end-to-end test addresses it by.
+   *
+   * On unless a deployment says otherwise, and that default is the point: a consumer's own suite has to work
+   * against their own build without configuring anything, and the ids are already in the page — the schema the
+   * browser hydrates from carries every one of them, so the attribute publishes nothing new.
+   *
+   * `authorSpace` returns the matching handles, so a spec names `handles.hero.cta` rather than a string somebody
+   * has to keep in step with the document by hand.
+   */
+  testAttributes?: boolean;
 };
 
 // `enabled` is the single answer to "is RSC live in this render": the schema asking for it is not enough, a server

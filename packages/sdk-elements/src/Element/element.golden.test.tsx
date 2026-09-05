@@ -35,10 +35,10 @@ const element: Element = {
   definition: { rootId: 'root', label: 'My Text', type: 'text', styleSelectors: { base: 'el1-base' } }
 };
 
-const renderTree = (children: ReactNode) =>
+const renderTree = (children: ReactNode, settings?: Partial<PlitziServiceContextValue['settings']>) =>
   render(
     <StoreProvider value={{ schema: { flat: { el1: element } }, runtime: { sources: {} } }}>
-      <PlitziServiceContext value={serviceValue}>
+      <PlitziServiceContext value={{ ...serviceValue, settings: { ...serviceValue.settings, ...settings } }}>
         <ComponentContext value={{ components: { current: {} } } as unknown as ComponentContextValue}>
           {children}
         </ComponentContext>
@@ -51,6 +51,27 @@ describe('Element pipeline (golden)', () => {
     const { container } = renderTree(<Text internalProps={{ id: 'el1', rootId: 'root' }} />);
 
     expect(container.innerHTML).toMatchSnapshot();
+  });
+
+  /**
+   * The handle an end-to-end suite addresses this element by.
+   *
+   * Asserted separately from the golden snapshot because it is a CONTRACT, not an incidental detail of the markup:
+   * a spec written against `handles.hero.cta` resolves to this attribute and nothing else, so losing it breaks
+   * every suite downstream while the snapshot merely records that the markup changed.
+   */
+  it('carries the element id as a test handle', () => {
+    const { container } = renderTree(<Text internalProps={{ id: 'el1', rootId: 'root' }} />);
+
+    expect(container.querySelector('[data-plitzi-el="el1"]')).not.toBeNull();
+  });
+
+  it('leaves the handle off when the deployment turns test attributes off', () => {
+    const { container } = renderTree(<Text internalProps={{ id: 'el1', rootId: 'root' }} />, {
+      testAttributes: false
+    });
+
+    expect(container.querySelector('[data-plitzi-el]')).toBeNull();
   });
 
   it('resolves the content attribute into the rendered text', () => {
