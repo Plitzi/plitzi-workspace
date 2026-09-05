@@ -142,6 +142,25 @@ export interface ElementSpec {
   meta?: SpecMeta;
 }
 
+/**
+ * A folder of pages, which is a ROUTING decision and not a filing one.
+ *
+ * A folder's slug prefixes the path of every page in it — a page called `getting-started` inside a folder called
+ * `docs` answers at `/docs/getting-started` — and folders nest, so the prefix is the chain of slugs from the root.
+ * The builder also draws them as the tree in its page list, but that is the smaller half: without folders a space
+ * authored in code cannot produce a nested URL at all.
+ */
+export interface PageFolderSpec {
+  /** The name a page refers to it by, and its id in the document. */
+  id: string;
+  /** What the builder's page tree shows. Defaults to the id. */
+  name?: string;
+  /** The path segment this folder contributes. Defaults to the id. */
+  slug?: string;
+  /** The folder this one sits inside, by id. */
+  parent?: string;
+}
+
 export interface PageSpec {
   name: string;
   /** As {@link ElementSpec.id} — a page is an element, and its flows are targeted the same way. */
@@ -168,6 +187,13 @@ export interface PageSpec {
    * because naming the destination and asking to be redirected are one decision.
    */
   unauthorizedRedirect?: string;
+  /**
+   * The folder this page sits in, by the id declared in {@link SpaceSpec.pageFolders}.
+   *
+   * It changes where the page ANSWERS, not just where it is filed: the folder's slug (and its parents') prefixes
+   * the route. A page naming a folder the space does not declare is refused.
+   */
+  folder?: string;
   css?: CssSpec;
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
   class?: string | StyleDeclaration;
@@ -210,6 +236,8 @@ export interface SpaceSpec {
   rsc?: Schema['rsc'];
   mode?: Style['mode'];
   theme?: Style['theme'];
+  /** Route prefixes a page can sit under. See {@link PageFolderSpec}. */
+  pageFolders?: PageFolderSpec[];
   pages: PageSpec[];
 }
 

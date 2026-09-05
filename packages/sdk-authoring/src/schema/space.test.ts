@@ -663,3 +663,65 @@ describe('authorSpace / flows', () => {
     expect(nodes.map(node => node.elementId)).toEqual(['cta', 'state', null, 'cta']);
   });
 });
+
+/**
+ * Folders are a routing decision, so what is asserted is the ROUTE — a page inside one answers under its slug, and
+ * `handles.path` is what a test would navigate to. Filing pages in the builder's tree is the smaller half.
+ */
+describe('page folders', () => {
+  const withFolders = (pages: SpaceSpec['pages'], pageFolders: SpaceSpec['pageFolders']): SpaceSpec => ({
+    name: 'Foldered',
+    permanentUrl: 'foldered',
+    pageFolders,
+    pages
+  });
+
+  it('prefixes a page route with its folder, through every parent', () => {
+    const { schema, handles } = authorSpace(
+      withFolders(
+        [
+          { name: 'Home', slug: '', isDefault: true, body: [text('home')] },
+          { id: 'guide', name: 'Guide', slug: 'getting-started', folder: 'docs', body: [text('guide')] },
+          { id: 'ref', name: 'Reference', slug: 'elements', folder: 'api', body: [text('ref')] }
+        ],
+        [
+          { id: 'docs', name: 'Docs', slug: 'docs' },
+          { id: 'api', name: 'API', slug: 'reference', parent: 'docs' }
+        ]
+      )
+    );
+
+    expect(handles.page('guide').path).toBe('/docs/getting-started');
+    expect(handles.page('ref').path).toBe('/docs/reference/elements');
+    expect(handles.page('guide').id).toBe('guide');
+    expect(schema.flat.guide.attributes.folder).toBe('docs');
+    expect(schema.pageFolders).toEqual([
+      { id: 'docs', name: 'Docs', slug: 'docs' },
+      { id: 'api', name: 'API', slug: 'reference', parentId: 'docs' }
+    ]);
+  });
+
+  it('defaults a folder name and slug to its id', () => {
+    const { schema } = authorSpace(
+      withFolders([{ name: 'Home', slug: '', body: [text('home')] }], [{ id: 'docs' }])
+    );
+
+    expect(schema.pageFolders).toEqual([{ id: 'docs', name: 'docs', slug: 'docs' }]);
+  });
+
+  /** A page answering at the wrong URL is not something a document can report about itself later. */
+  it('refuses a page in a folder nothing declares', () => {
+    expect(() =>
+      authorSpace(
+        withFolders([{ name: 'Guide', slug: 'guide', folder: 'dcos', body: [text('x')] }], [{ id: 'docs' }])
+      )
+    ).toThrow(/does not declare.*did you mean "docs"/is);
+  });
+
+  it('refuses a folder inside a folder that is not there, and one inside itself', () => {
+    expect(() => authorSpace(withFolders([], [{ id: 'api', parent: 'docs' }]))).toThrow(/does not declare/);
+    expect(() =>
+      authorSpace(withFolders([], [{ id: 'a', parent: 'b' }, { id: 'b', parent: 'a' }]))
+    ).toThrow(/inside itself/);
+  });
+});

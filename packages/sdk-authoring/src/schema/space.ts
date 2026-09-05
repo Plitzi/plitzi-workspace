@@ -17,6 +17,7 @@ import type {
   AuthoredSpace,
   ElementSpec,
   ElementStyleSpec,
+  PageFolderSpec,
   PageSpec,
   SpaceSpec,
   StepSpec,
@@ -24,7 +25,7 @@ import type {
 } from './types';
 import type { CssSpec, ResponsiveStyle, StyleDeclaration, StyleRules } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
-import type { DropPosition, Element, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { DropPosition, Element, PageFolder, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
 
 /**
  * Authoring a space without the builder.
@@ -66,6 +67,8 @@ class SpaceAuthor {
   private readonly authorNames = new Set<string>();
 
   private readonly pagePaths = new Set<string>();
+  /** Each folder's route prefix, resolved through its parents. Filled before any page is written. */
+  private readonly folderPrefixes = new Map<string, string>();
 
   /**
    * What a test will address this space by, collected as the tree is written rather than walked again afterwards.
@@ -119,6 +122,7 @@ class SpaceAuthor {
       this.writeSelector(name, responsive);
     }
 
+    const pageFolders = this.buildPageFolders();
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
 
     const style: Style = {
@@ -138,7 +142,7 @@ class SpaceAuthor {
       settings: { ...this.spec.settings, customCss: this.spec.customCss ?? '' },
       ...(this.spec.rsc ? { rsc: this.spec.rsc } : {}),
       pages,
-      pageFolders: []
+      pageFolders
     };
 
     // The gate, and the same one anybody else's documents go through. An authored space that cannot pass it is a
@@ -430,6 +434,69 @@ class SpaceAuthor {
    * every id in their subtrees, and the second page's elements were refused one by one. Only the later page is
    * disambiguated, so no space that has no duplicate moves an id.
    */
+  /**
+   * The folders, and the route prefix each one contributes.
+   *
+   * Resolved once, before any page is written, for the reason every other declaration is: a page names a folder by
+   * id, and a name that answers to nothing has to be refused where it was written rather than becoming a page that
+   * quietly answers at the wrong URL. Nesting is walked with a seen-set — a folder declared as its own ancestor is
+   * a cycle, and the honest answer to it is a throw and not an infinite loop.
+   */
+  private buildPageFolders(): PageFolder[] {
+    const declared = this.spec.pageFolders ?? [];
+    const byId = new Map(declared.map(folder => [folder.id, folder]));
+
+    for (const folder of declared) {
+      if (folder.parent !== undefined && !byId.has(folder.parent)) {
+        throw new Error(
+          `Page folder "${folder.id}" sits in "${folder.parent}", which this space does not declare${didYouMean(folder.parent, [...byId.keys()])}`
+        );
+      }
+    }
+
+    for (const folder of declared) {
+      const seen = new Set<string>([folder.id]);
+      let parent = folder.parent;
+      while (parent !== undefined) {
+        if (seen.has(parent)) {
+          throw new Error(`Page folder "${folder.id}" is inside itself, through "${parent}"`);
+        }
+
+        seen.add(parent);
+        parent = byId.get(parent)?.parent;
+      }
+    }
+
+    for (const folder of declared) {
+      const segments: string[] = [];
+      let current: PageFolderSpec | undefined = folder;
+      while (current) {
+        segments.unshift(current.slug ?? current.id);
+        current = current.parent === undefined ? undefined : byId.get(current.parent);
+      }
+
+      this.folderPrefixes.set(folder.id, segments.filter(Boolean).join('/'));
+    }
+
+    return declared.map(folder => ({
+      id: folder.id,
+      name: folder.name ?? folder.id,
+      slug: folder.slug ?? folder.id,
+      ...(folder.parent === undefined ? {} : { parentId: folder.parent })
+    }));
+  }
+
+  /** Where a page ANSWERS: its folder's chain of slugs, then its own. What a test navigates to. */
+  private routeFor(page: PageSpec): string {
+    if (page.isDefault) {
+      return '/';
+    }
+
+    const prefix = page.folder === undefined ? '' : (this.folderPrefixes.get(page.folder) ?? '');
+
+    return pathForSlug([prefix, page.slug].filter(Boolean).join('/'));
+  }
+
   private pathFor(page: PageSpec, index: number): string {
     const base = `${this.spec.permanentUrl}/${page.slug || 'home'}`;
     const path = this.pagePaths.has(base) ? `${base}#${index}` : base;
@@ -441,6 +508,12 @@ class SpaceAuthor {
   private addPage(page: PageSpec, index: number): string {
     const path = this.pathFor(page, index);
     this.assertStepsKnown(page.flows, `Page "${page.name}"`);
+    if (page.folder !== undefined && !this.folderPrefixes.has(page.folder)) {
+      throw new Error(
+        `Page "${page.name}" is in folder "${page.folder}", which this space does not declare${didYouMean(page.folder, [...this.folderPrefixes.keys()])}`
+      );
+    }
+
     const id = page.id ?? this.nextId('page');
 
     const element: Element = {
@@ -449,6 +522,7 @@ class SpaceAuthor {
         slug: page.slug,
         default: page.isDefault ?? index === 0,
         name: page.name,
+        ...(page.folder === undefined ? {} : { folder: page.folder }),
         ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
         ...(page.unauthorizedRedirect
           ? { unauthorizedBehaviour: 'redirect', unauthorizedPageRedirect: page.unauthorizedRedirect }
@@ -477,7 +551,7 @@ class SpaceAuthor {
       selector: selectorFor(id),
       named: page.id !== undefined,
       slug: page.slug,
-      path: pathForSlug(page.slug),
+      path: this.routeFor(page),
       elements: {}
     };
 
