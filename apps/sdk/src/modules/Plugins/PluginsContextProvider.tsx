@@ -122,15 +122,6 @@ const PluginsContextProvider = ({
           rel: 'stylesheet'
         }
       },
-      'static-2': {
-        type: 'link',
-        id: 'static-2',
-        params: {
-          type: 'text/css',
-          href: 'https://fonts.googleapis.com/css?family=Rubik:400|Bitter:400|Changa One:400|Droid Sans:400|Droid Serif:400|Exo:400|Great Vibes:400|Inconsolata:400|Lato:400|Merriweather:400|Montserrat:400|Open Sans:400|Oswald:400|PT Sans:400|PT Serif:400|Ubuntu:400|Varela:400|Varela Round:400|Vollkorn:400&amp;text=RubikBterChang ODodSsfExGVIclLMwpPTU',
-          rel: 'stylesheet'
-        }
-      },
       ...extraAssets,
       ...pluginCustomStyleAssets,
       ...pluginStyleAssets,

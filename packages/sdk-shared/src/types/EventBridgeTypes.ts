@@ -39,6 +39,9 @@ export type EventBridgeEvent =
   | 'styleAddVariable'
   | 'styleUpdateVariable'
   | 'styleRemoveVariable'
+  | 'styleAddFont'
+  | 'styleUpdateFont'
+  | 'styleRemoveFont'
   | 'styleAddTemplate'
   | 'styleUpdateSettings'
   // Builder Events

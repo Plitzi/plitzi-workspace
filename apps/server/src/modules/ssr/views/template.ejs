@@ -36,9 +36,49 @@
     <script><%- locals.themeBoot %></script>
     <% } %>
 
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://cdn.plitzi.com" />
+    <%
+      /*
+        Two origins the document reaches for whatever the space declares: the icon font below, and the favicon.
+        Named here so the space's own fonts can skip whichever of them it would otherwise ask for twice.
+      */
+      const staticOrigins = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cdn.plitzi.com'];
+    %>
+    <% for (const origin of staticOrigins) { %>
+    <link rel="preconnect" href="<%= origin %>" crossorigin />
+    <% } %>
+
+    <%
+      /*
+        The space's web fonts, in the document rather than fetched by the SDK once it mounts.
+
+        A page paints long before its JavaScript exists. A face asked for at hydration arrives after the text it
+        was meant for has already been drawn in a fallback, and the visitor watches it reflow — which is exactly
+        what happened while the only thing that requested a family was the SDK's client-side asset rail.
+
+        The value is `fontsToHead(style.fonts, ...)` from @plitzi/sdk-shared: one place decides what a manifest
+        means, because SSR, the client, the builder canvas and the static export must all decide it the same way.
+      */
+    %>
+    <% if (locals.fonts) { %>
+    <% for (const origin of locals.fonts.preconnect.filter(item => !staticOrigins.includes(item.href))) { %>
+    <link rel="preconnect" href="<%= origin.href %>" <%- origin.crossorigin ? 'crossorigin' : '' %> />
+    <% } %>
+    <% for (const link of locals.fonts.links) { %>
+    <link
+      rel="<%= link.rel %>"
+      href="<%= link.href %>"
+      <%- link.as ? `as="${link.as}"` : '' %>
+      <%- link.type ? `type="${link.type}"` : '' %>
+      <%- link.crossorigin ? 'crossorigin' : '' %>
+    />
+    <% } %>
+    <% if (locals.fonts.faces) { %>
+    <%
+      /* Marked so the SDK can tell the document already carries them and does not declare a second copy. */
+    %>
+    <style data-plitzi-fonts><%- locals.fonts.faces %></style>
+    <% } %>
+    <% } %>
 
     <% if (!locals.ssrOnly) { %>
     <link rel="modulepreload" href="<%= locals.react || '' %>" crossorigin />

@@ -865,6 +865,18 @@
       "types": "./dist/helpers/processSelectorVariables.d.ts",
       "import": "./dist/helpers/processSelectorVariables.mjs"
     },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.mjs"
+    },
+    "./hooks/index": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.mjs"
+    },
+    "./hooks/useSpaceFonts": {
+      "types": "./dist/hooks/useSpaceFonts.d.ts",
+      "import": "./dist/hooks/useSpaceFonts.mjs"
+    },
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"

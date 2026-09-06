@@ -263,6 +263,7 @@ export const processPaste = async (
       platform: { desktop: {}, tablet: {}, mobile: {} },
       variables: {},
       theme: { default: 'system', schemes: ['light', 'dark'] },
+      fonts: [],
       cache: ''
     },
     variables: []

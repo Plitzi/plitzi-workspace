@@ -1,13 +1,16 @@
 import { memo, useCallback, use } from 'react';
 
+import { primaryFamily } from '@plitzi/sdk-shared/style';
+
 import TypographyAlign from './TypographyAlign';
 import TypographyBreaking from './TypographyBreaking';
 import TypographyClamp from './TypographyClamp';
-import { defaultFonts, weights } from './TypographyConstants';
+import { weights } from './TypographyConstants';
 import TypographyFont from './TypographyFont';
 import TypographyStyle from './TypographyStyle';
 import TypographyTextShadow from './TypographyTextShadow';
 import TypographyTransform from './TypographyTransform';
+import useSpaceFonts from '../../../../hooks/useSpaceFonts';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
@@ -59,11 +62,11 @@ const keyValueLetter = ['letter-spacing', 'word-spacing', 'text-indent'] as Styl
 export type TypographyProps = {
   replaceTokens?: boolean;
   isCollapsed?: boolean;
-  fonts?: { name: string; weights: string[] }[];
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollapse }: TypographyProps) => {
+const Typography = ({ replaceTokens = false, isCollapsed = true, onCollapse }: TypographyProps) => {
+  const fonts = useSpaceFonts();
   const { setValue } = use(StyleInspectorContext);
   const {
     'font-family': fontFamily,
@@ -94,7 +97,12 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollap
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('typography', isCollapsed), [onCollapse]);
 
-  const fontSelected = [...(fonts ?? []), ...defaultFonts].find(font => font.name === fontFamily);
+  /** What the family in the declaration actually is, so the weight select can offer only the weights it has. A
+   *  family the space does not declare selects nothing, and every weight below reads as unavailable — which is
+   *  true: nothing is loading it. */
+  const fontSelected = fonts.find(
+    font => font.family === primaryFamily(typeof fontFamily === 'string' ? fontFamily : '')
+  );
 
   const handleChange = useCallback(
     (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
@@ -113,7 +121,7 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollap
       onCollapse={handleCollapse}
     >
       <TypographyAlign partialValue={textAlign} onChange={handleChange('text-align')} />
-      <TypographyFont partialValue={fontFamily} fonts={fonts} onChange={handleChange('font-family')} />
+      <TypographyFont partialValue={fontFamily} onChange={handleChange('font-family')} />
       <CategorySection label="">
         <CategoryOption
           keys={['font-weight']}
@@ -123,7 +131,7 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, fonts, onCollap
           type="select"
         >
           {Object.keys(weights).map(weight => (
-            <option key={weight} value={weight} disabled={!fontSelected || !fontSelected.weights.includes(weight)}>
+            <option key={weight} value={weight} disabled={!fontSelected?.weights.includes(Number(weight))}>
               {weights[Number(weight)]}
             </option>
           ))}

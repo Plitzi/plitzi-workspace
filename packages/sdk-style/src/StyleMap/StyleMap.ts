@@ -8,6 +8,7 @@ import updateSelector from './methods/updateSelector';
 
 import type {
   DisplayMode,
+  SpaceFont,
   Style,
   StyleCategory,
   StyleItem,
@@ -22,20 +23,23 @@ import type {
 export type StyleMapProps = {
   platform: Style['platform'];
   variables?: Style['variables'];
+  fonts?: Style['fonts'];
 };
 
 class StyleMap {
   platform: Style['platform'];
   variables: Style['variables'];
+  fonts: SpaceFont[];
 
   constructor(props: StyleMapProps) {
-    const { platform, variables } = props;
+    const { platform, variables, fonts } = props;
     if (!(platform as typeof platform | undefined)) {
       throw new Error('Platform Required');
     }
 
     this.platform = platform;
     this.variables = variables ?? {};
+    this.fonts = fonts ?? [];
   }
 
   static getInstance = (props: StyleMapProps) => new this(props);
@@ -268,6 +272,75 @@ class StyleMap {
     category: StyleVariableCategory,
     name: string
   ) => this.getInstance(style).removeVariable(category, name);
+
+  // Fonts
+
+  /** A family is the key: it is what `font-family` names, so a space cannot hold two of the same. */
+  addFont = (font: SpaceFont) => {
+    if (this.fonts.some(item => item.family === font.family)) {
+      return false;
+    }
+
+    this.fonts.push(font);
+
+    return true;
+  };
+
+  /**
+   * The write-back is what makes this work on a document that predates the manifest: there was no array to mutate,
+   * so the instance made one, and without this line the font would be added to something nobody holds.
+   */
+  static addFont = (style: Pick<Style, 'platform' | 'variables' | 'fonts'>, font: SpaceFont) => {
+    const instance = this.getInstance(style);
+    const added = instance.addFont(font);
+    style.fonts = instance.fonts;
+
+    return added;
+  };
+
+  updateFont = (family: string, font: SpaceFont) => {
+    const index = this.fonts.findIndex(item => item.family === family);
+    if (index === -1) {
+      return false;
+    }
+
+    // A rename is a family that already belongs to something else — refused here rather than silently making a
+    // duplicate the picker would show twice.
+    if (font.family !== family && this.fonts.some(item => item.family === font.family)) {
+      return false;
+    }
+
+    this.fonts[index] = font;
+
+    return true;
+  };
+
+  static updateFont = (style: Pick<Style, 'platform' | 'variables' | 'fonts'>, family: string, font: SpaceFont) => {
+    const instance = this.getInstance(style);
+    const updated = instance.updateFont(family, font);
+    style.fonts = instance.fonts;
+
+    return updated;
+  };
+
+  removeFont = (family: string) => {
+    const index = this.fonts.findIndex(item => item.family === family);
+    if (index === -1) {
+      return false;
+    }
+
+    this.fonts.splice(index, 1);
+
+    return true;
+  };
+
+  static removeFont = (style: Pick<Style, 'platform' | 'variables' | 'fonts'>, family: string) => {
+    const instance = this.getInstance(style);
+    const removed = instance.removeFont(family);
+    style.fonts = instance.fonts;
+
+    return removed;
+  };
 }
 
 export default StyleMap;

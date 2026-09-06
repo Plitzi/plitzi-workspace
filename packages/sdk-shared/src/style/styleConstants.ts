@@ -8,6 +8,7 @@ export const EMPTY_STYLE_SCHEMA: Style = {
     schemes: ['light', 'dark']
   },
   variables: {},
+  fonts: [],
   cache: ''
 };
 

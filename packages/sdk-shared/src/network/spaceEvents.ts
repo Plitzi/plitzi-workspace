@@ -8,6 +8,7 @@ import type {
   PageFolder,
   SchemaRaw,
   SchemaVariable,
+  SpaceFont,
   Style,
   StyleCategory,
   StyleItem,
@@ -50,6 +51,11 @@ const schemaVariable = z.custom<SchemaVariable>(value => isRecord(value) && type
 });
 
 const styleAttributes = z.custom<StyleItem['attributes']>(isRecord, { message: 'expected a style attributes object' });
+
+const spaceFont = z.custom<SpaceFont>(
+  value => isRecord(value) && typeof value.family === 'string' && typeof value.source === 'string',
+  { message: 'expected a font with a family and a source' }
+);
 
 const styleVariableValue = z.custom<StyleVariableValue>(
   value => typeof value === 'string' || typeof value === 'number' || isRecord(value),
@@ -166,6 +172,10 @@ export const spaceEventSchemas = {
   STYLE_UPDATE_VARIABLE: stylePayload,
   STYLE_REMOVE_VARIABLE: z.object({ category: variableCategory, name: z.string() }),
   STYLE_UPDATE_SETTINGS: z.object({ path: z.string(), value: z.string() }),
+  // A font is addressed by its family: it is what `font-family` names, so two of them would be one anyway.
+  STYLE_ADD_FONT: z.object({ font: spaceFont }),
+  STYLE_UPDATE_FONT: z.object({ family: z.string(), font: spaceFont }),
+  STYLE_REMOVE_FONT: z.object({ family: z.string() }),
 
   SEGMENT_ADD_ELEMENT: z.object({
     ...segmentScope,

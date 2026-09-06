@@ -11,6 +11,7 @@ import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
+import { fontLinkAssets, fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
@@ -19,10 +20,11 @@ import IframeMode from './renderModes/IframeMode';
 import RawMode from './renderModes/RawMode';
 import ShadowMode from './renderModes/ShadowMode';
 import SdkPlugin from './SdkPlugin';
+import FontFaces from '../Fonts/FontFaces';
 // eslint-disable-next-line
 // @ts-ignore
 
-import type { Server } from '@plitzi/sdk-shared';
+import type { Server, SpaceFont } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
   externalStyle?: string;
@@ -30,27 +32,49 @@ export type SdkProps = {
    *  own — an MCP widget inside a chat, a component mounted in a host app. */
   branding?: boolean;
   sdkStylePath?: string;
+  /** Where this deployment serves the font files a space uploaded. See `fontUrlResolver`. */
+  fontsBaseUrl?: string;
   server?: Server;
 };
 
-const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
+/** Module-level, so a space that declares no font of its own keeps one reference across every render. */
+const NO_FONTS: SpaceFont[] = [];
+
+const Sdk = ({
+  externalStyle = '',
+  branding = true,
+  sdkStylePath = './plitzi-sdk.css',
+  fontsBaseUrl,
+  server
+}: SdkProps) => {
   const { resolvedTheme } = useTheme();
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const [[schemaSettings, styleCache, segments, currentPageId, variables = emptyObject]] = useSdkStore([
-    'schema.settings',
-    'style.cache',
-    'segments',
-    'navigation.currentPageId',
-    'runtime.sources.variables'
-  ]);
+  const [[schemaSettings, styleCache, segments, currentPageId, variables = emptyObject, fonts = NO_FONTS]] =
+    useSdkStore([
+      'schema.settings',
+      'style.cache',
+      'segments',
+      'navigation.currentPageId',
+      'runtime.sources.variables',
+      'style.fonts'
+    ]);
   const { renderMode, previewMode, debugMode, environment, isHydrating, overQuota } = useRenderSettings();
   // Pinned on rather than defaulted on: a space over its plan cannot take the badge off from its own settings, and
   // a server-rendered page pins it the same way (see prepareRender).
   const brandingShown = branding || overQuota;
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);
+
+  /**
+   * What the space's declared families cost the document, resolved once for all three surfaces.
+   *
+   * The style cache names families; nothing in it asks for one. Until this existed the only request for a face
+   * came from a hard-coded list on the client asset rail, which meant a published page — rendered raw, where the
+   * rail is not applied at all — showed every space in its fallback.
+   */
+  const fontHead = useMemo(() => fontsToHead(fonts, fontUrlResolver(fontsBaseUrl)), [fonts, fontsBaseUrl]);
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
@@ -60,6 +84,9 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
 
     return `@layer plitzi-sdk-runtime{${cssParsed}}`;
   }, [segments, variables, styleCache, schemaSettings.customCss, externalStyle]);
+
+  // The canvas renders into an iframe, whose head only the rail can reach.
+  const iframeAssets = useMemo(() => ({ ...assets, ...fontLinkAssets(fontHead) }), [assets, fontHead]);
 
   const getWindow = useCallback(() => {
     if (iframeRef.current) {
@@ -120,6 +147,10 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
 
   return (
     <>
+      {/* Not for the iframe: its page is a document of its own, and its head is fed through the asset rail.
+          Every other mode paints into THIS document, shadow included — a `@font-face` inside a shadow root is
+          ignored, so the faces belong in the head whatever the markup's scope is. */}
+      {renderMode !== 'iframe' && <FontFaces head={fontHead} />}
       {(renderMode === 'raw' || renderMode === 'widget') && (
         <RawMode
           renderMode={renderMode}
@@ -141,11 +172,11 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
       )}
       {!['raw', 'widget', 'shadow'].includes(renderMode) && (
         <IframeMode
-          style={css}
+          style={fontHead.faces ? `${fontHead.faces}\n${css}` : css}
           branding={brandingShown}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
-          assets={assets}
+          assets={iframeAssets}
           ref={iframeRef}
         />
       )}

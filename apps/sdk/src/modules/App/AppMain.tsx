@@ -46,6 +46,8 @@ export type AppMainProps = {
   instanceId?: string;
   renderMode?: RenderMode;
   sdkStylePath?: string;
+  /** Where this deployment serves the font files a space uploaded. See `fontUrlResolver`. */
+  fontsBaseUrl?: string;
   sdkDevToolsStylePath?: string;
   previewMode?: boolean;
   debugMode?: boolean;
@@ -75,6 +77,7 @@ const AppMain = ({
   instanceId,
   renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
   sdkStylePath = './plitzi-sdk.css',
+  fontsBaseUrl,
   sdkDevToolsStylePath,
   previewMode = true,
   debugMode = false,
@@ -161,7 +164,12 @@ const AppMain = ({
                           renderMode="shadow"
                           innerClassName={clsx({ flex: renderMode === 'iframe' })}
                         >
-                          <Sdk sdkStylePath={styleUrl ? styleUrl : sdkStylePath} server={server} {...sdkProps} />
+                          <Sdk
+                            sdkStylePath={styleUrl ? styleUrl : sdkStylePath}
+                            fontsBaseUrl={fontsBaseUrl}
+                            server={server}
+                            {...sdkProps}
+                          />
                         </DevToolsContainer>
                       </InteractionsSourcesProvider>
                     </GlobalSources>

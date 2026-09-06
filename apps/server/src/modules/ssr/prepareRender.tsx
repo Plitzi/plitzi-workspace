@@ -1,5 +1,6 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeBootScript } from '@plitzi/sdk-shared/theme';
 
 import { loadPluginComponents } from './loadPluginComponents';
@@ -218,6 +219,14 @@ export const prepareRender = async (
        * choice somewhere the server can read overrides it with the class it renders itself.
        */
       themeBoot: themeBootScript(),
+      /**
+       * The space's own families, requested by the document itself.
+       *
+       * Ahead of the deployment's `templateProps` because a deployment cannot know them: they are a fact about the
+       * space's style document, and a page whose text is laid out in a face the browser has not been asked for is
+       * a page that renders in a fallback and then reflows.
+       */
+      fonts: fontsToHead(offlineData?.style.fonts ?? [], fontUrlResolver(config.fonts?.baseUrl)),
       ...req.ctx.spaceDeployment?.templateProps,
       // Applied last on purpose: the page speaks for itself. A deployment's `templateProps` is a space-wide
       // default and stays in charge of pages that declare nothing, which is what makes this safe to turn on for

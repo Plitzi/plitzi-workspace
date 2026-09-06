@@ -4,7 +4,7 @@ import { StyleVariableCategory } from '@plitzi/sdk-shared/types';
 
 import StyleMap from './StyleMap';
 
-import type { Style, StyleAttributes, StyleState, StyleValue } from '@plitzi/sdk-shared';
+import type { SpaceFont, Style, StyleAttributes, StyleState, StyleValue } from '@plitzi/sdk-shared';
 
 const createBaseStyle = (): Pick<Style, 'platform' | 'variables'> => ({
   platform: { desktop: {}, tablet: {}, mobile: {} },
@@ -853,5 +853,65 @@ describe('StyleMap', () => {
       StyleMap.updateSelector(style, 'desktop', 'btnEdgeCase', undefined, {}, paramsState);
       expect(item.attributes.base.states).toBeUndefined();
     });
+  });
+});
+
+describe('StyleMap fonts', () => {
+  const lato: SpaceFont = {
+    source: 'google',
+    family: 'Lato',
+    fallback: 'sans-serif',
+    weights: [400],
+    styles: ['normal']
+  };
+
+  let fontStyle: Pick<Style, 'platform' | 'variables' | 'fonts'>;
+
+  beforeEach(() => {
+    fontStyle = { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {}, fonts: [] };
+  });
+
+  it('declares a family the space did not have', () => {
+    expect(StyleMap.addFont(fontStyle, lato)).toBe(true);
+    expect(fontStyle.fonts).toEqual([lato]);
+  });
+
+  it('refuses a second entry for one family, which `font-family` could not tell apart anyway', () => {
+    StyleMap.addFont(fontStyle, lato);
+    expect(StyleMap.addFont(fontStyle, { ...lato, weights: [700] })).toBe(false);
+    expect(fontStyle.fonts).toHaveLength(1);
+  });
+
+  it('writes the manifest onto a document that predates it', () => {
+    const old = { platform: { desktop: {}, tablet: {}, mobile: {} }, variables: {} } as Pick<
+      Style,
+      'platform' | 'variables' | 'fonts'
+    >;
+    expect(StyleMap.addFont(old, lato)).toBe(true);
+    expect(old.fonts).toEqual([lato]);
+  });
+
+  it('replaces what a family declares, weights included', () => {
+    StyleMap.addFont(fontStyle, lato);
+    expect(StyleMap.updateFont(fontStyle, 'Lato', { ...lato, weights: [400, 700] })).toBe(true);
+    expect(fontStyle.fonts?.[0].weights).toEqual([400, 700]);
+  });
+
+  it('refuses a rename onto a family that is already declared', () => {
+    StyleMap.addFont(fontStyle, lato);
+    StyleMap.addFont(fontStyle, { ...lato, family: 'Rubik' });
+    expect(StyleMap.updateFont(fontStyle, 'Rubik', { ...lato, family: 'Lato' })).toBe(false);
+    expect(fontStyle.fonts).toHaveLength(2);
+  });
+
+  it('answers false for a family nobody declared', () => {
+    expect(StyleMap.updateFont(fontStyle, 'Nope', lato)).toBe(false);
+    expect(StyleMap.removeFont(fontStyle, 'Nope')).toBe(false);
+  });
+
+  it('drops a family', () => {
+    StyleMap.addFont(fontStyle, lato);
+    expect(StyleMap.removeFont(fontStyle, 'Lato')).toBe(true);
+    expect(fontStyle.fonts).toEqual([]);
   });
 });

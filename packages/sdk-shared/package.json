@@ -410,6 +410,10 @@
       "types": "./dist/hooks/index.d.ts",
       "import": "./dist/hooks/index.mjs"
     },
+    "./hooks/useFontHead": {
+      "types": "./dist/hooks/useFontHead.d.ts",
+      "import": "./dist/hooks/useFontHead.mjs"
+    },
     "./hooks/useNetwork": {
       "types": "./dist/hooks/useNetwork.d.ts",
       "import": "./dist/hooks/useNetwork.mjs"
@@ -742,6 +746,18 @@
       "types": "./dist/network/graphql/builder/Mutations/Style/StyleUpdateSettingsMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Style/StyleUpdateSettingsMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Style/fonts/StyleAddFontMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleAddFontMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleAddFontMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/fonts/StyleRemoveFontMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleRemoveFontMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleRemoveFontMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/fonts/StyleUpdateFontMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleUpdateFontMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleUpdateFontMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation.mjs"
@@ -1049,6 +1065,22 @@
     "./style": {
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
+    },
+    "./style/fontAssets": {
+      "types": "./dist/style/fontAssets.d.ts",
+      "import": "./dist/style/fontAssets.mjs"
+    },
+    "./style/fontValidation": {
+      "types": "./dist/style/fontValidation.d.ts",
+      "import": "./dist/style/fontValidation.mjs"
+    },
+    "./style/fonts": {
+      "types": "./dist/style/fonts.d.ts",
+      "import": "./dist/style/fonts.mjs"
+    },
+    "./style/fontsFromCss": {
+      "types": "./dist/style/fontsFromCss.d.ts",
+      "import": "./dist/style/fontsFromCss.mjs"
     },
     "./style/index": {
       "types": "./dist/style/index.d.ts",

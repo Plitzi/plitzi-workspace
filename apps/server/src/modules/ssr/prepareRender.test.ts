@@ -4,7 +4,15 @@ import { prepareRender } from './prepareRender';
 import { RequestMetrics } from '../../helpers/metrics';
 
 import type { PluginManager } from '../../plugins/manager';
-import type { Element, OfflineDataRaw, SchemaRsc, SSRPageServerConfig, SSRRequest } from '@plitzi/sdk-shared';
+import type {
+  Element,
+  OfflineDataRaw,
+  SchemaRsc,
+  SpaceFont,
+  SSRFontsConfig,
+  SSRPageServerConfig,
+  SSRRequest
+} from '@plitzi/sdk-shared';
 
 const element = (id: string, items: string[] = [], runtime?: 'server' | 'client'): Element => ({
   id,
@@ -25,7 +33,8 @@ const page = (id: string, slug: string, items: string[], seo: Record<string, unk
  */
 const offlineData = (
   rsc: SchemaRsc | undefined = { enabled: true },
-  homeRuntime: 'server' | 'client' = 'client'
+  homeRuntime: 'server' | 'client' = 'client',
+  fonts: SpaceFont[] = []
 ): OfflineDataRaw =>
   ({
     schema: {
@@ -51,7 +60,7 @@ const offlineData = (
       rsc
     },
     plugins: [],
-    style: { cache: '', variables: [] }
+    style: { cache: '', variables: [], fonts }
   }) as unknown as OfflineDataRaw;
 
 const request = (path: string, query: Record<string, string> = {}): SSRRequest =>
@@ -81,14 +90,27 @@ type Options = {
   query?: Record<string, string>;
   /** What metering decided for this render. */
   degrade?: boolean;
+  /** What the space declares, and where this deployment serves uploaded files from. */
+  fonts?: SpaceFont[];
+  fontsConfig?: SSRFontsConfig;
 };
 
 const render = async (
   path: string,
-  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime, debugMode, query, degrade }: Options = {}
+  {
+    rsc = { enabled: true },
+    configRsc,
+    withAdapter = true,
+    homeRuntime,
+    debugMode,
+    query,
+    degrade,
+    fonts,
+    fontsConfig
+  }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
-  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime));
+  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime, fonts));
   const metrics = new RequestMetrics();
   const config = {
     environment: 'production',
@@ -96,6 +118,7 @@ const render = async (
     autoLoadSchemaPlugins: false,
     rsc: configRsc,
     debugMode,
+    fonts: fontsConfig,
     adapters: {
       getOfflineData,
       getSpaceDeployment: () => Promise.resolve(undefined),
@@ -275,5 +298,43 @@ describe('prepareRender / a degraded render', () => {
     expect(componentProps.overQuota).toBeUndefined();
     expect(componentProps.branding).toBeUndefined();
     expect(templateParams.offlineData).not.toContain('overQuota');
+  });
+});
+
+describe('prepareRender / the fonts the document asks for', () => {
+  const lato: SpaceFont = {
+    source: 'google',
+    family: 'Lato',
+    fallback: 'sans-serif',
+    weights: [400, 700],
+    styles: ['normal']
+  };
+
+  it('asks for nothing when the space declares no family of its own', async () => {
+    const { templateParams } = await render('/');
+    expect(templateParams.fonts).toEqual({ preconnect: [], links: [], faces: '', origins: [] });
+  });
+
+  it('puts the space\'s google families in the document, which is the only place they load in time', async () => {
+    const { templateParams } = await render('/', { fonts: [lato] });
+    expect(templateParams.fonts?.links).toEqual([
+      { href: 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap', rel: 'stylesheet' }
+    ]);
+  });
+
+  it('resolves an uploaded face against this deployment, not against the one that stored it', async () => {
+    const hosted: SpaceFont = {
+      source: 'hosted',
+      family: 'Acme',
+      fallback: 'sans-serif',
+      weights: [400],
+      styles: ['normal'],
+      files: [{ weight: 400, style: 'normal', format: 'woff2', path: 'acme.woff2' }]
+    };
+    const cloud = await render('/', { fonts: [hosted], fontsConfig: { baseUrl: 'https://cdn.example.com/f' } });
+    expect(cloud.templateParams.fonts?.faces).toContain('url("https://cdn.example.com/f/acme.woff2")');
+
+    const selfHosted = await render('/', { fonts: [hosted] });
+    expect(selfHosted.templateParams.fonts?.faces).toContain('url("/fonts/acme.woff2")');
   });
 });

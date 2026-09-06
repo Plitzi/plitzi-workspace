@@ -66,6 +66,9 @@ import SpaceUpdateSettingsMutation from './Space/SpaceUpdateSettingsMutation';
 import SpaceAddVariableMutation from './Space/variables/SpaceAddVariableMutation';
 import SpaceRemoveVariableMutation from './Space/variables/SpaceRemoveVariableMutation';
 import SpaceUpdateVariableMutation from './Space/variables/SpaceUpdateVariableMutation';
+import StyleAddFontMutation from './Style/fonts/StyleAddFontMutation';
+import StyleRemoveFontMutation from './Style/fonts/StyleRemoveFontMutation';
+import StyleUpdateFontMutation from './Style/fonts/StyleUpdateFontMutation';
 import StyleAddSelectorMutation from './Style/selectors/StyleAddSelectorMutation';
 import StyleRemoveSelectorMutation from './Style/selectors/StyleRemoveSelectorMutation';
 import StyleRemoveSelectorsMutation from './Style/selectors/StyleRemoveSelectorsMutation';
@@ -162,6 +165,9 @@ export type BuilderMutationsMap = {
   StyleAddSelectorVariable: unknown;
   StyleUpdateSelectorVariable: unknown;
   StyleRemoveSelectorVariable: unknown;
+  StyleAddFont: unknown;
+  StyleUpdateFont: unknown;
+  StyleRemoveFont: unknown;
   StyleAddVariable: unknown;
   StyleUpdateVariable: unknown;
   StyleRemoveVariable: unknown;
@@ -247,6 +253,9 @@ const BuilderMutations = {
   StyleAddSelectorVariable: StyleAddSelectorVariableMutation,
   StyleUpdateSelectorVariable: StyleUpdateSelectorVariableMutation,
   StyleRemoveSelectorVariable: StyleRemoveSelectorVariableMutation,
+  StyleAddFont: StyleAddFontMutation,
+  StyleUpdateFont: StyleUpdateFontMutation,
+  StyleRemoveFont: StyleRemoveFontMutation,
   StyleAddVariable: StyleAddVariableMutation,
   StyleUpdateVariable: StyleUpdateVariableMutation,
   StyleRemoveVariable: StyleRemoveVariableMutation,

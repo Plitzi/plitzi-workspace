@@ -12,7 +12,7 @@ import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
-import type { Style } from './StyleTypes';
+import type { FontHead, Style } from './StyleTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
 
@@ -144,6 +144,26 @@ export type SSRTemplateProps = {
    * A host with nothing to remember (or one that already renders the class itself, from a cookie) leaves it out.
    */
   themeBoot?: string;
+  /**
+   * The document's web fonts: `fontsToHead(style.fonts, ...)` from this package.
+   *
+   * In the template rather than left to the SDK because a page paints before its JavaScript exists. A face
+   * requested at hydration arrives after the text it is for has already been drawn in a fallback, which is a
+   * reflow the visitor watches happen.
+   */
+  fonts?: FontHead;
+};
+
+/**
+ * How a store-relative font path becomes a URL a browser can fetch.
+ *
+ * A space's manifest stores paths, never absolute URLs: the same space is rendered by Plitzi's cloud from a CDN,
+ * by a self-hosted server from its own disk, and by a static export from wherever it was published to. Baking one
+ * of those origins into the document would send every other deployment asking Plitzi for its customer's fonts.
+ */
+export type SSRFontsConfig = {
+  /** Prefix joined to each path, e.g. `/fonts` or `https://cdn.example.com/fonts`. Default: `/fonts`. */
+  baseUrl?: string;
 };
 
 export type SSRPlugin = {
@@ -758,6 +778,8 @@ export type SSRServerConfig = {
   pluginsTtlMs?: number;
   /** Auto-download and cache plugins declared in the schema's offlineData.plugins list. Default: true. */
   autoLoadSchemaPlugins?: boolean;
+  /** Where this deployment serves the font files a space uploaded — see {@link SSRFontsConfig}. */
+  fonts?: SSRFontsConfig;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
   ssrOnly?: boolean;
   /** Stream HTML to the client as React renders, reducing TTFB. Default: false. */

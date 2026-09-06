@@ -8,17 +8,17 @@ import { containerTabsTheme } from '@plitzi/plitzi-ui/ContainerTabs';
 import { contentEditableTheme } from '@plitzi/plitzi-ui/ContentEditable';
 import { headingTheme } from '@plitzi/plitzi-ui/Heading';
 import { get } from '@plitzi/plitzi-ui/helpers';
-import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { inputTheme } from '@plitzi/plitzi-ui/Input';
 import { markdownTheme } from '@plitzi/plitzi-ui/Markdown';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
-import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, Fragment } from 'react';
+import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, useState, Fragment } from 'react';
 import { BrowserRouter, StaticRouter } from 'react-router-dom';
 
 import { initClient } from '@modules/App/AppHelper';
 import AppMain from '@modules/App/AppMain';
+import { readDebugPreference, writeDebugPreference } from '@modules/App/debugPreference';
 import useDebugShortcut from '@modules/App/useDebugShortcut';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
@@ -124,8 +124,9 @@ const App = ({
    * reads the same name back).
    *
    * A cookie can therefore turn debugging OFF, never ON: it is client-owned, and a published site whose visitors
-   * could set it would hand any of them the panel, the element ids and the store. The shortcut below is only one of
-   * the ways to write it.
+   * could set it would hand any of them the panel, the element ids and the store. The shortcut below is the only
+   * thing that writes it — a render that is not authorized to debug must not leave a preference behind, or a
+   * screenshot of a page would hide the tools on every other page of that host (see `debugPreference`).
    *
    * The name carries the port, because a cookie's scope does not — see `debugCookieName`.
    */
@@ -133,7 +134,7 @@ const App = ({
     () => debugCookieName(typeof window === 'undefined' ? undefined : window.location.host),
     []
   );
-  const [debugPreference, setDebugPreference] = useStorage(debugCookie, debugModeProp, 'cookie');
+  const [debugPreference, setDebugPreference] = useState(() => readDebugPreference(debugCookie));
   const debugMode = debugModeProp && debugPreference;
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
   const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
@@ -145,7 +146,11 @@ const App = ({
     );
   }, []);
 
-  const handleToggleDebug = useCallback(() => setDebugPreference(state => !state), [setDebugPreference]);
+  const handleToggleDebug = useCallback(() => {
+    const shown = !debugPreference;
+    writeDebugPreference(debugCookie, shown);
+    setDebugPreference(shown);
+  }, [debugCookie, debugPreference]);
   useDebugShortcut({ authorized: debugModeProp, onToggle: handleToggleDebug });
 
   /**

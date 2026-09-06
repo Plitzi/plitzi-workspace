@@ -52,6 +52,7 @@ export const emptySpace = (): Space => ({
     platform: { desktop: {}, tablet: {}, mobile: {} },
     theme: { default: 'system', schemes: ['light', 'dark'] },
     variables: {},
+    fonts: [],
     cache: ''
   },
   connectors: [],

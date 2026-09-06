@@ -46,6 +46,17 @@ const CONTENT_HEIGHT = (): number => {
   return Math.max(document.documentElement.scrollHeight, ...scrollers.map(element => element.scrollHeight));
 };
 
+/**
+ * Wait for the web fonts before shooting.
+ *
+ * `networkidle0` says the requests are done; it does not say the faces are USABLE, and a page captured in between
+ * is a picture of the fallback — different metrics, different line breaks, a thumbnail that does not look like the
+ * space it is of. The race is only ever lost by a hair, so a short ceiling is enough: a font that has not arrived
+ * by then was not going to make the shot anyway, and a picture in a fallback beats no picture at all.
+ */
+const FONTS_READY = (): Promise<unknown> =>
+  Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))]);
+
 /** Guard against a runaway page turning one screenshot into a hundred-megabyte PNG. */
 const MAX_HEIGHT = 8000;
 
@@ -118,6 +129,7 @@ export const createLocalScreenshotClient = async ({
           const page = await browser.newPage();
           await setViewport(page, viewport);
           await page.goto(url.toString(), { waitUntil: 'networkidle0' });
+          await page.evaluate(FONTS_READY);
 
           if (fullPage) {
             const height = Math.min(await page.evaluate(CONTENT_HEIGHT), MAX_HEIGHT);

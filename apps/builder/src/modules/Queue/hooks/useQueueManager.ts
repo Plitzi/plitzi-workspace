@@ -247,6 +247,24 @@ const useQueueManager = ({
           return mutate('StyleRemoveVariable', { category, name });
         }
 
+        case StyleActions.STYLE_ADD_FONT: {
+          const { font } = item.action;
+
+          return mutate('StyleAddFont', { font });
+        }
+
+        case StyleActions.STYLE_UPDATE_FONT: {
+          const { family, font } = item.action;
+
+          return mutate('StyleUpdateFont', { family, font });
+        }
+
+        case StyleActions.STYLE_REMOVE_FONT: {
+          const { family } = item.action;
+
+          return mutate('StyleRemoveFont', { family });
+        }
+
         case StyleActions.STYLE_UPDATE: {
           const { style } = item.action;
 

@@ -102,6 +102,7 @@ const InitQuery = gql`
         platform
         variables
         mode
+        fonts
         cache
       }
     }
