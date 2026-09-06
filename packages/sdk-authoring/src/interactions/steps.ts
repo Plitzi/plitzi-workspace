@@ -115,7 +115,23 @@ const utilityStep = (action: string, params: Record<string, unknown> = {}): Step
 /** Milliseconds. The param is `time` — not `delay`, `duration` or `ms`, any of which waits zero. */
 export const delay = (time: number): StepSpec => utilityStep('delayTime', { time });
 
-export const webHook = (params: { url: string; method?: string; body?: string }): StepSpec =>
-  utilityStep('webHook', params);
+/**
+ * Calls a URL and puts the answer in the flow scope as `{{ <id>.response.status }}` and `{{ <id>.response.data }}`.
+ *
+ * `body` takes an object for the reason {@link runServerAction}'s `input` does, and this is the surface where it
+ * bites hardest: a sign-up posts a PASSWORD, and the first person whose password contains a quotation mark turns
+ * an authored line of JSON text into something that will not parse. As an object each value is its own string and
+ * the runtime serialises it.
+ *
+ * `credentials` matters whenever the URL is not this page's own origin — an auth UI on its own sub-domain calling
+ * the API is exactly that — because the default drops the cookies the answer is trying to set.
+ */
+export const webHook = (params: {
+  url: string;
+  method?: 'get' | 'post' | 'put' | 'delete' | 'patch' | 'head';
+  body?: string | Record<string, unknown>;
+  authorizationToken?: string;
+  credentials?: 'include' | 'omit' | 'same-origin';
+}): StepSpec => utilityStep('webHook', params);
 
 export const twigTemplate = (params: { template: string }): StepSpec => utilityStep('twigTemplate', params);
