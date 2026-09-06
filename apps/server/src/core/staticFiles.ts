@@ -21,10 +21,11 @@ const serveFile = (req: SSRRequest, res: SSRResponseHelpers, filePath: string, s
     return true;
   }
 
+  // The Buffer as read, not a string: a woff2 or a png has bytes that are not valid UTF-8, and decoding then
+  // re-encoding them replaces every one of those with U+FFFD — a file that arrives the right length and broken.
   const content = fs.readFileSync(filePath);
   res.setHeader('Content-Type', getMimeType(filePath));
-  res.setHeader('Content-Length', content.byteLength.toString());
-  res.send(content.toString('utf-8'));
+  res.send(content);
   return true;
 };
 

@@ -9,6 +9,9 @@ export const getEnvironmentServer = (server?: Partial<Server>): Server => {
     basePath: '',
     host: 'https://plitzi.com',
     serverUrl: 'https://server.plitzi.com',
+    // Empty on purpose: the page that mounts the builder passes what its deployment actually serves, and the
+    // canvas falls back to the SSR host's own /fonts when nobody says otherwise.
+    fontsBaseUrl: '',
     websocketServer: 'wss://server.plitzi.com',
     subscriptionServer: 'wss://server.plitzi.com/subscriptions',
     // Others

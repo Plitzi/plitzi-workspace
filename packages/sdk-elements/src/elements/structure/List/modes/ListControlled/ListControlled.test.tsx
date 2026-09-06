@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 
@@ -17,12 +17,10 @@ vi.mock('../../../../../Element/RootElement', () => ({
   default: ({ children }: { children?: ReactNode }) => children
 }));
 
-// A list publishes its rows under `list_<idRef>` — the exact key a binding targets. `idRef` is swapped per test to
-// cover the element that has none, which must publish nothing at all rather than fall back to its opaque id.
-let elementIdRef: string | undefined = 'my-list';
-
+// A list publishes its rows under `list_<id>` — the exact key a binding targets, built from the one name the list
+// answers to.
 vi.mock('../../../../../Element/hooks/useElement', () => ({
-  default: () => ({ id: 'list1', idRef: elementIdRef, definition: { label: 'List' } })
+  default: () => ({ id: 'my-list', definition: { label: 'List' } })
 }));
 
 vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ default: () => undefined }));
@@ -66,10 +64,6 @@ const renderList = (items: Item[]) =>
   );
 
 describe('ListControlled', () => {
-  beforeEach(() => {
-    elementIdRef = 'my-list';
-  });
-
   it('renders the template once per record, each with its own context data', () => {
     const { getByTestId } = renderList([
       { id: 'a', name: 'Alpha' },
@@ -82,18 +76,6 @@ describe('ListControlled', () => {
     expect(getByTestId('row-c').textContent).toBe('Gamma');
     expect(captured.a.item.name).toBe('Alpha');
     expect(captured.b.item.name).toBe('Beta');
-  });
-
-  it('publishes no row source when the list has no idRef, instead of falling back to its opaque id', () => {
-    elementIdRef = undefined;
-    const { getAllByTestId } = renderList([
-      { id: 'a', name: 'Alpha' },
-      { id: 'b', name: 'Beta' }
-    ]);
-
-    // Rows still render, but nothing can bind to them: no `list_list1` key ever exists, which is what lets an idRef
-    // be assigned later without invalidating a binding written against it.
-    expect(getAllByTestId('row-?')).toHaveLength(2);
   });
 
   it('isolates element state between rows even though every row shares the same element id', () => {

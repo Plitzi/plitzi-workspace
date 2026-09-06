@@ -274,6 +274,10 @@
       "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionHeader.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionHeader.mjs"
     },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionNote": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionNote.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/LogInteractionNote.mjs"
+    },
     "./components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index": {
       "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogInteraction/index.mjs"

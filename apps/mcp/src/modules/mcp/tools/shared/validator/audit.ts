@@ -3,7 +3,7 @@ import { checkSlotCss } from './css';
 import { checkVariantApplication } from './elements';
 import { buildValidationCtx } from './index';
 import { checkInteractionNode } from './interactions';
-import { elementRefOf, findElementByRef } from '../../../helpers';
+import { findElementByRef } from '../../../helpers';
 import { definitionToAI, globalStyleToAI, idStyleToAI } from '../../operations/style/translator';
 
 import type { ValidationCtx } from './context';
@@ -63,7 +63,7 @@ const toNode = (id: string, node: ElementInteraction): InteractionNodeInput => (
 });
 
 const auditElement = (space: Space, sub: ValidationCtx, el: Element): void => {
-  const hostRef = elementRefOf(el);
+  const hostRef = el.id;
   const base = `element "${hostRef}"`;
 
   for (const [category, list] of Object.entries(el.definition.bindings ?? {})) {
@@ -162,7 +162,7 @@ export const auditResources = (space: Space, ops: Operation[]): ValidationResult
     }
 
     seenElements.add(el.id);
-    harvest(ctx, result, `element "${elementRefOf(el)}"`, sub => auditElement(space, sub, el));
+    harvest(ctx, result, `element "${el.id}"`, sub => auditElement(space, sub, el));
   }
 
   for (const ref of touched.definitions) {

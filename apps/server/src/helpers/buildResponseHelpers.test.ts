@@ -80,3 +80,33 @@ describe('sending a response', () => {
     expect(headers['content-length']).toBe(String(Buffer.byteLength(state.body as Buffer)));
   });
 });
+
+describe('sending bytes', () => {
+  /** Bytes that are not valid UTF-8 — the woff2 signature and a few of the ones a round trip destroys. */
+  const binary = Buffer.from([0x77, 0x4f, 0x46, 0x32, 0x00, 0xff, 0xfe, 0x80, 0x81]);
+
+  it('sends a Buffer through untouched, which is the only way a font arrives whole', () => {
+    const { raw, state } = rawResponse();
+
+    buildResponseHelpers(raw, 'gzip').send(binary);
+
+    expect(Buffer.isBuffer(state.body)).toBe(true);
+    expect(state.body).toEqual(binary);
+  });
+
+  it('never compresses one: what a Buffer holds is compressed already', () => {
+    const { raw, headers } = rawResponse();
+
+    buildResponseHelpers(raw, 'gzip').send(Buffer.alloc(8192, 0xff));
+
+    expect(headers['content-encoding']).toBeUndefined();
+  });
+
+  it('reports the byte length, not the character count', () => {
+    const { raw, headers } = rawResponse();
+
+    buildResponseHelpers(raw).send(binary);
+
+    expect(headers['content-length']).toBe(String(binary.byteLength));
+  });
+});

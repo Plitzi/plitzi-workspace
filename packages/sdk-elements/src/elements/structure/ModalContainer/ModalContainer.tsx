@@ -34,12 +34,11 @@ const ModalContainer = ({
 }: ModalContainerProps) => {
   const {
     id,
-    idRef,
     definition: { styleSelectors, label = 'Modal' },
     elementState,
     setElementState
   } = useElement();
-  const sourceName = getSourceName(declaration.sourceType, { idRef });
+  const sourceName = getSourceName(declaration.sourceType, id);
   const {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
@@ -69,20 +68,20 @@ const ModalContainer = ({
   );
 
   const handleClickClose = useCallback(() => {
-    void interactionsManager.interactionTrigger(idRef, 'onModalClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, idRef]);
+  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
 
   const handleClickBackground = useCallback(() => {
     if (!autoHideAfterClick) {
       return;
     }
 
-    void interactionsManager.interactionTrigger(idRef, 'onModalClose', { metadata: internalMetadata });
+    void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
     setInternalMetadata({});
     setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, idRef]);
+  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
@@ -121,9 +120,9 @@ const ModalContainer = ({
 
   useEffect(() => {
     if (elementState.visibility !== false) {
-      void interactionsManager.interactionTrigger(idRef, 'onModalOpen', { metadata: internalMetadata });
+      void interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
     }
-  }, [idRef, interactionsManager, internalMetadata, elementState.visibility]);
+  }, [id, interactionsManager, internalMetadata, elementState.visibility]);
 
   const sourceFields = useCallback(
     () =>

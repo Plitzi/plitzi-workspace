@@ -206,7 +206,7 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
 
 ### Ciclo de vida en runtime (`ApiContainer.tsx`)
 
-1. **Identidad** — `useElement()` da `id`, `idRef`, `runtime`. El nombre de fuente es `apiContainer_<idRef>`;
+1. **Identidad** — `useElement()` da `id`, `id`, `runtime`. El nombre de fuente es `apiContainer_<id>`;
    todo lo que bindean los hijos cuelga de ahí.
 2. **Obtención del dato**
    - **Server**: `useRscData()` lee su propia porción del store, `rsc.data.<elementId>` (payload del SSR o de un
@@ -229,7 +229,7 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
    }
    ```
 
-   Se monta con un `StoreProvider` (`{ runtime: { sources: { apiContainer_<idRef>: slice } } }`) y
+   Se monta con un `StoreProvider` (`{ runtime: { sources: { apiContainer_<id>: slice } } }`) y
    `useRegisterSource` publica los `SourceField`s para el autocomplete de bindings. `isEmpty`/`hasError`/`isLoading`
    existen para autorar estados vacíos con bindings normales — sin slot mechanism.
 4. **Paginación** — `useProviderPagination` maneja los modos `url`/`append`/`none` (ver sección 6).
@@ -328,8 +328,8 @@ HTML y el cliente solo hace *hydrate*.
    - Filtro: campo `id`, operador `eq`, valor `{{routeParams.id}}`. El Settings autocompleta el token porque lo
      extrae del slug (`Settings.tsx:116-121`).
    - Paginación: `none`.
-3. Binds dentro de la página: título `{{apiContainer_<idRef>.record.values.title}}`, imagen
-   `record.values.cover.url`, y el cuerpo en un **RichText** con `content` = `{{apiContainer_<idRef>.record.values.body}}`
+3. Binds dentro de la página: título `{{apiContainer_<id>.record.values.title}}`, imagen
+   `record.values.cover.url`, y el cuerpo en un **RichText** con `content` = `{{apiContainer_<id>.record.values.body}}`
    y el `format` que devuelva el CMS.
 
 ### 7.2 Qué ocurre al cargar (el preload)
@@ -369,7 +369,7 @@ la resolución y el slice nuevo se **fusiona** en `rsc.data`.
 
 - **Post inexistente**: `singleRecord` sin registro → `isEmpty: true`, pero la respuesta es **HTTP 200** (el flag
   `notFoundStatus` aún no está implementado en el resolver). El autor puede bindear la visibilidad
-  de un bloque "no encontrado" a `{{apiContainer_<idRef>.isEmpty}}`.
+  de un bloque "no encontrado" a `{{apiContainer_<id>.isEmpty}}`.
 - **Filtro sin resolver**: si `{{routeParams.id}}` no resuelve, `resolveFilters` marca `unresolved` y se devuelve una
   ventana vacía — mejor que devolver la colección entera.
 - **Render sin servidor** (embed client-only, builder, widget MCP): no hay `server.ssr.rscPath`, así que `rsc.enabled`
@@ -415,8 +415,8 @@ Panel lateral **Connectors** (aparece en `AppContainer.tsx` cuando el popup acti
    **endpoint** de lectura (solo aparece si el conector declara más de uno; por defecto `list`), `resource`
    (`posts`), `limit`, **Pagination = URL (indexable)**.
 3. Dentro, un **List** (source `controlled`) con una card por registro: heading bind
-   `{{apiContainer_<idRef>.records.item.title}}`, imagen a `cover.url`, etc.
-4. Añadir **Pagination** bind `{{apiContainer_<idRef>.pageInfo}}`, mode `pages`, target `url`. Al clicar navega a
+   `{{apiContainer_<id>.records.item.title}}`, imagen a `cover.url`, etc.
+4. Añadir **Pagination** bind `{{apiContainer_<id>.pageInfo}}`, mode `pages`, target `url`. Al clicar navega a
    `?page=N`; el servidor resuelve esa ventana (SSR, indexable, botón atrás correcto).
 
 ### 4. Página detalle

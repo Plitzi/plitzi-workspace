@@ -4,7 +4,6 @@ const SpaceRemoveElementMutation = gql`
   mutation SpaceRemoveElement($environment: String!, $elementId: String!) {
     SpaceRemoveElement(environment: $environment, elementId: $elementId) {
       id
-      idRef
       definition {
         label
         type

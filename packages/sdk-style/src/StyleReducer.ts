@@ -11,6 +11,7 @@ import type {
   StyleCategory,
   StyleItem,
   StyleState,
+  SpaceFont,
   StyleVariableCategory,
   StyleVariableValue,
   TagType
@@ -28,6 +29,9 @@ export const StyleActions = {
   STYLE_ADD_VARIABLE: 'STYLE_ADD_VARIABLE',
   STYLE_UPDATE_VARIABLE: 'STYLE_UPDATE_VARIABLE',
   STYLE_REMOVE_VARIABLE: 'STYLE_REMOVE_VARIABLE',
+  STYLE_ADD_FONT: 'STYLE_ADD_FONT',
+  STYLE_UPDATE_FONT: 'STYLE_UPDATE_FONT',
+  STYLE_REMOVE_FONT: 'STYLE_REMOVE_FONT',
   STYLE_ADD_TEMPLATE: 'STYLE_ADD_TEMPLATE',
   STYLE_UPDATE_SETTINGS: 'STYLE_UPDATE_SETTINGS'
 } as const;
@@ -79,6 +83,9 @@ export type StyleReducerActions = StyleReducerActionsBase &
         value: StyleVariableValue;
       }
     | { type: 'STYLE_REMOVE_VARIABLE'; category: StyleVariableCategory; name: string }
+    | { type: 'STYLE_ADD_FONT'; font: SpaceFont }
+    | { type: 'STYLE_UPDATE_FONT'; family: string; font: SpaceFont }
+    | { type: 'STYLE_REMOVE_FONT'; family: string }
     | { type: 'STYLE_ADD_TEMPLATE'; platform: Style['platform'] }
     | { type: 'STYLE_UPDATE_SETTINGS'; path: string; value: string }
   );
@@ -196,6 +203,35 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
         if (StyleMap.removeVariable(draft, category, name)) {
           set(draft, 'cache', generateCache(draft));
         }
+      });
+    }
+
+    // Fonts
+    //
+    // No `generateCache` in any of the three: the manifest says where a family comes FROM, and the compiled
+    // stylesheet only ever names it. Nothing in the cache changes when a font is declared or dropped.
+
+    case StyleActions.STYLE_ADD_FONT: {
+      const { font } = action;
+
+      return produce(state, draft => {
+        StyleMap.addFont(draft, font);
+      });
+    }
+
+    case StyleActions.STYLE_UPDATE_FONT: {
+      const { family, font } = action;
+
+      return produce(state, draft => {
+        StyleMap.updateFont(draft, family, font);
+      });
+    }
+
+    case StyleActions.STYLE_REMOVE_FONT: {
+      const { family } = action;
+
+      return produce(state, draft => {
+        StyleMap.removeFont(draft, family);
       });
     }
 

@@ -176,6 +176,81 @@ describe('resolving a space grant', () => {
 
     expect(result.ok).toBe(true);
   });
+
+  // The public credential is held to its allowlist even when nobody claims an origin. The check only ever worked
+  // because a BROWSER is made to state where it presents from — omitting the header is declining to be asked, not
+  // passing. Without this, a render key lifted from a published page is enough to clone that site from any server:
+  // the domain binding above does not stop it, since a self-hosted renderer addresses the platform's own host.
+  it('refuses a PUBLIC render token presented with no Origin at all', async () => {
+    const token = tokens.generateSpaceToken(42, ['https://acme.com']);
+    const identity = build({ findSpaceToken: () => Promise.resolve(stored()) }, { platformHosts: ['server.us.test'] });
+
+    const result = await identity.resolveGrant(carrier({ authorization: `Bearer ${token}` }, 'server.us.test'));
+
+    expect(result).toEqual({ ok: false, reason: 'origin-not-allowed' });
+  });
+
+  // …and the deployment that genuinely has no browser gets its own credential rather than a hole in that one. A
+  // `host` token is secret: possessing it IS the proof an origin was standing in for.
+  it('admits a SECRET host token with no Origin — what self-hosting uses', async () => {
+    const token = tokens.generateSpaceToken(42, ['my-deployment'], 'host');
+    const identity = build(
+      { findSpaceToken: () => Promise.resolve(stored({ scope: 'host' })) },
+      { platformHosts: ['server.us.test'] }
+    );
+
+    const result = await identity.resolveGrant(carrier({ authorization: `Bearer ${token}` }, 'server.us.test'));
+
+    expect(result.ok && result.grant.scope).toBe('host');
+  });
+
+  // A host grant is a server's, so it reaches no browser domain and the embed binding does not apply to it — the
+  // same exemption an agent grant has, and the reason it can be presented from anywhere its holder runs.
+  it('does not hold a host token to the domains a render token is bound by', async () => {
+    const token = tokens.generateSpaceToken(42, ['my-deployment'], 'host');
+    const identity = build({ findSpaceToken: () => Promise.resolve(stored({ scope: 'host' })) });
+
+    const result = await identity.resolveGrantFromToken(token, '', { host: 'anywhere.example' });
+
+    expect(result.ok).toBe(true);
+  });
+
+  // The stored scope still has to agree, so a host row cannot be reached with a render signature or the other way
+  // round — narrowing a row takes effect without re-issuing anything.
+  it('refuses a render token whose row was changed to host', async () => {
+    const token = tokens.generateSpaceToken(42, ['https://acme.com']);
+    const identity = build({ findSpaceToken: () => Promise.resolve(stored({ scope: 'host' })) });
+
+    expect(await identity.resolveGrantFromToken(token, '', { skipOrigin: true })).toEqual({
+      ok: false,
+      reason: 'scope-mismatch'
+    });
+  });
+
+  it('still refuses a browser presenting from an origin the token does not declare', async () => {
+    const token = tokens.generateSpaceToken(42, ['https://acme.com']);
+    const identity = build({ findSpaceToken: () => Promise.resolve(stored()) }, { platformHosts: ['server.us.test'] });
+
+    const result = await identity.resolveGrant(
+      carrier({ authorization: `Bearer ${token}`, origin: 'https://evil.com' }, 'server.us.test')
+    );
+
+    expect(result).toEqual({ ok: false, reason: 'origin-not-allowed' });
+  });
+
+  // The escape hatch stays reachable for a deployment that deliberately wants it — which it was NOT before, because
+  // the hostname fallback meant `origin` was never empty and this branch could not be reached at all.
+  it('honours allowWithoutOrigin for deployments that opt in', async () => {
+    const token = tokens.generateSpaceToken(42, ['https://acme.com']);
+    const identity = build(
+      { findSpaceToken: () => Promise.resolve(stored()) },
+      { platformHosts: ['server.us.test'], allowWithoutOrigin: true }
+    );
+
+    const result = await identity.resolveGrant(carrier({ authorization: `Bearer ${token}` }, 'server.us.test'));
+
+    expect(result.ok).toBe(true);
+  });
 });
 
 describe('what an actor may do in a space', () => {

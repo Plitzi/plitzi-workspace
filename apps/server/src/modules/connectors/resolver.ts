@@ -129,5 +129,5 @@ export const createConnectorResolver =
       return slice;
     }
 
-    return projectSlice(slice, collectBoundPaths(flat, element.id, getSourceName(element.definition.type, element)));
+    return projectSlice(slice, collectBoundPaths(flat, element.id, getSourceName(element.definition.type, element.id)));
   };

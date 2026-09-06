@@ -26,6 +26,8 @@ const documentOps = [
   elementOps.moveElement,
   elementOps.upsertPage,
   elementOps.deletePage,
+  elementOps.upsertLayout,
+  elementOps.deleteLayout,
   elementOps.upsertFolder,
   elementOps.deleteFolder,
   elementOps.upsertVariable,
@@ -48,7 +50,9 @@ const documentOps = [
   styleOps.patchIdStyle,
   styleOps.deleteIdStyle,
   styleOps.upsertStyleVariable,
-  styleOps.deleteStyleVariable
+  styleOps.deleteStyleVariable,
+  styleOps.upsertFont,
+  styleOps.deleteFont
 ] as const;
 
 export const documentOperation = z.discriminatedUnion('type', documentOps);

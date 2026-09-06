@@ -16,14 +16,45 @@ import type {
  * step. What this adds is the part that can only be known here: the keys and values are THIS element's attributes
  * and style selectors, so the pickers are filled from the element in hand.
  */
+
+/** Which fields the `key` picker offers, which is the one thing both actions ask the element itself. */
+const keyOptions =
+  (attributes: Element['attributes'], definition: Element['definition']) => (nodeParams: Record<string, unknown>) => {
+    const { category } = nodeParams;
+    if (category === 'attribute') {
+      return Object.keys(attributes).map(attribute => ({ value: attribute, label: attribute }));
+    }
+
+    if (category === 'state') {
+      return [
+        { value: 'visibility', label: 'Visibility' },
+        ...Object.keys(definition.styleSelectors).map(styleSelector => ({
+          value: `styleSelectors.${styleSelector}`,
+          label: `Selector - ${styleSelector}`
+        }))
+      ];
+    }
+
+    return [];
+  };
+
 const getInteractions = (
   attributes: Element['attributes'],
   definition: Element['definition'],
   callback: InteractionCallback['callback'],
-  postCallback: InteractionPostCallback
+  postCallback: InteractionPostCallback,
+  toggleCallback: InteractionCallback['callback']
 ): Record<string, InteractionCallback> => {
   const declared = BUILTIN_ELEMENT_CALLBACKS.setState;
   const params = toBuilderParams(declared.params);
+  const declaredToggle = BUILTIN_ELEMENT_CALLBACKS.toggleState;
+  const toggleParams = toBuilderParams(declaredToggle.params);
+  const key = {
+    type: 'select',
+    options: keyOptions(attributes, definition),
+    when: (nodeParams: Record<string, unknown>) =>
+      nodeParams.category === 'attribute' || nodeParams.category === 'state'
+  };
 
   return {
     // Assembled by the same adapter every other declared action goes through. What is overridden is what only
@@ -33,37 +64,15 @@ const getInteractions = (
       postCallback,
       params: {
         ...params,
-        key: {
-          ...params.key,
-          type: 'select',
-          options: nodeParams => {
-            const { category } = nodeParams;
-            if (category === 'attribute') {
-              return Object.keys(attributes).map(attribute => ({ value: attribute, label: attribute }));
-            }
-
-            if (category === 'state') {
-              return [
-                { value: 'visibility', label: 'Visibility' },
-                ...Object.keys(definition.styleSelectors).map(styleSelector => ({
-                  value: `styleSelectors.${styleSelector}`,
-                  label: `Selector - ${styleSelector}`
-                }))
-              ];
-            }
-
-            return [];
-          },
-          when: nodeParams => nodeParams.category === 'attribute' || nodeParams.category === 'state'
-        } as InteractionCallbackParam,
+        key: { ...params.key, ...key } as InteractionCallbackParam,
         value: {
           ...params.value,
           // A boolean attribute is picked rather than typed: the stored value has to be a real boolean, and a text
           // box is how it ends up being the string "true".
           type: nodeParams => (typeof attributes[nodeParams.key as string] === 'boolean' ? 'select' : 'text'),
           options: nodeParams => {
-            const { key } = nodeParams;
-            if (typeof attributes[key as string] === 'boolean') {
+            const { key: paramKey } = nodeParams;
+            if (typeof attributes[paramKey as string] === 'boolean') {
               return [
                 { value: 'true', label: 'True' },
                 { value: 'false', label: 'False' }
@@ -74,6 +83,13 @@ const getInteractions = (
           }
         }
       }
+    }),
+    // The same write with no `value` to author: what it stores is the opposite of what is there, which is what makes
+    // expand-and-collapse one step on one trigger instead of two branches under complementary conditions.
+    toggleState: toInteractionCallback('toggleState', declaredToggle, toggleCallback, {
+      title: `Toggle ${definition.label}`,
+      postCallback,
+      params: { ...toggleParams, key: { ...toggleParams.key, ...key } as InteractionCallbackParam }
     })
   };
 };

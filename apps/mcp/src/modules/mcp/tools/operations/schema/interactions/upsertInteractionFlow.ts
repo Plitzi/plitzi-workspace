@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { empty, materializeFlow } from '../../../../helpers';
 import { interactionNode } from '../shared';
-import { ensureIdRef, pageUri, resolveElement, resolveTargetRef } from '../write';
+import { pageUri, resolveElement, resolveTargetRef } from '../write';
 
 import type { OpResult, Space } from '../../../../helpers';
 import type { Env } from '../../../../types';
@@ -11,8 +11,8 @@ import type { ElementInteraction } from '@plitzi/sdk-shared';
 export const upsertInteractionFlowOp = z
   .object({
     type: z.literal('upsertInteractionFlow'),
-    pageRef: z.string().describe('Page ref or id'),
-    ref: z.string().describe('Element ref or id'),
+    pageRef: z.string().describe('The page, by name'),
+    ref: z.string().describe('The element, by name'),
     flowId: z.string().optional().describe('Existing flow to replace (the trigger node id). Omit to create a new flow'),
     nodes: z
       .array(interactionNode)
@@ -34,15 +34,14 @@ export const upsertInteractionFlow = (space: Space, env: Env, op: UpsertInteract
     return found.error;
   }
 
-  // The runtime keys triggers/callbacks by idRef, so the host element needs one. Rather than fail and make the
-  // agent assign it first, mint a free ref for an element that has none and carry on.
-  const ownerRef = ensureIdRef(space, found.el);
+  // The runtime keys triggers/callbacks by the element's id, which every element has — nothing to assign.
+  const ownerRef = found.el.id;
 
   // When replacing a known flow, pin the trigger id to it so the recomputed flowId matches and the old nodes are
   // swapped out cleanly (rather than leaving a duplicate flow behind).
   const pinned = op.flowId && !op.nodes[0].id ? [{ ...op.nodes[0], id: op.flowId }, ...op.nodes.slice(1)] : op.nodes;
-  // A utility has no element (materializeFlow stores null), so never resolve/mint an idRef for one — that would
-  // spuriously give some element an idRef just because a delayTime step carried a stray elementId.
+  // A utility has no element (materializeFlow stores null), so never resolve a target for one — a delayTime step
+  // carrying a stray elementId means nothing.
   const nodes = pinned.map(node =>
     node.elementId === undefined || node.nodeType === 'utility'
       ? node

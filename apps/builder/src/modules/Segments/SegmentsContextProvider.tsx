@@ -216,6 +216,12 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
     [dispatchSegments]
   );
 
+  const segmentRenameElement = useCallback(
+    (segmentId: string, elementId: string, id: string, fromSubscriptions = false) =>
+      dispatchSegments({ type: SegmentsActions.SEGMENTS_RENAME_ELEMENT, segmentId, elementId, id, fromSubscriptions }),
+    [dispatchSegments]
+  );
+
   const segmentUpdateElements = useCallback(
     (segmentId: string, elements: Element[], fromSubscriptions = false) =>
       dispatchSegments({ type: SegmentsActions.SEGMENTS_UPDATE_ELEMENTS, segmentId, elements, fromSubscriptions }),
@@ -547,6 +553,9 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
     subscriptionManager.subscribe('SEGMENT_UPDATE_ELEMENTS', ({ contextId, elements }) =>
       segmentUpdateElements(contextId, elements, true)
     );
+    subscriptionManager.subscribe('SEGMENT_RENAME_ELEMENT', ({ contextId, elementId, id }) =>
+      segmentRenameElement(contextId, elementId, id, true)
+    );
     subscriptionManager.subscribe('SEGMENT_REMOVE_ELEMENT', ({ contextId, elementId }) =>
       segmentRemoveElement(contextId, elementId, true)
     );
@@ -645,6 +654,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
         [
           'SEGMENT_ADD_ELEMENT',
           'SEGMENT_UPDATE_ELEMENT',
+          'SEGMENT_RENAME_ELEMENT',
           'SEGMENT_UPDATE_ELEMENTS',
           'SEGMENT_REMOVE_ELEMENT',
           'SEGMENT_MOVE_ELEMENT',
@@ -671,6 +681,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
     includeSubscriptions,
     segmentAddElement,
     segmentUpdateElement,
+    segmentRenameElement,
     segmentUpdateElements,
     segmentRemoveElement,
     segmentMoveElement,
@@ -715,6 +726,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       schemaUpdate: segmentsUpdate,
       schemaAddElement: segmentAddElement,
       schemaUpdateElement: segmentUpdateElement,
+      schemaRenameElement: segmentRenameElement,
       schemaUpdateElements: segmentUpdateElements,
       schemaRemoveElement: segmentRemoveElement,
       schemaMoveElement: segmentMoveElement,
@@ -740,6 +752,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       segmentsUpdate,
       segmentAddElement,
       segmentUpdateElement,
+      segmentRenameElement,
       segmentUpdateElements,
       segmentRemoveElement,
       segmentMoveElement,

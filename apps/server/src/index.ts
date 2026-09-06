@@ -17,6 +17,7 @@ export {
 } from './adapters/space';
 // Draft-preview primitives: the token param and the default store. The endpoint that MINTS a draft lives in
 // `@plitzi/sdk-mcp` — applying unsaved operations is the tool engine's job, not the renderer's.
+export { createLocalFontStore, hostedPathsOf } from './core/fontStore';
 export { createMemoryDraftStore, takeDraftOverride } from './modules/ssr/preview';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 export { resolveRscData } from './modules/rsc/resolveRscData';
@@ -60,5 +61,6 @@ export type {
   ConnectorResult,
   ProviderPagination
 } from './modules/connectors';
+export type { FontStore, StoredFont } from './core/fontStore';
 export type { ResolvedServices } from './core/createServer';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';

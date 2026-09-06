@@ -1,0 +1,10 @@
+{
+  "extends": "../../packages/sdk-shared/tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist",
+    "types": ["node"],
+    "lib": ["ES2023"]
+  },
+  "include": ["src", "package.json", "vite.config.ts"]
+}

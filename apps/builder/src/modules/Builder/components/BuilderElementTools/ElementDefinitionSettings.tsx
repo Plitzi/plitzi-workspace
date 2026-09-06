@@ -5,28 +5,30 @@ import Input from '@plitzi/plitzi-ui/Input';
 import KVInput from '@plitzi/plitzi-ui/KVInput';
 import { useCallback, useMemo, useState } from 'react';
 
+import { slugifyElementId } from '@plitzi/sdk-schema/helpers/elementId';
+
 import type { Element } from '@plitzi/sdk-shared';
-import type { FocusEvent } from 'react';
 
 export type ElementDefinitionSettingsProps = {
   definition: Element['definition'];
-  idRef?: string | null;
-  getIdRefConflict: (idRef: string) => string | null;
+  /** The one name this element answers to. Editing it renames the element across the whole document. */
+  id: string;
+  /** Why this id cannot be used here, or null when it is free. Given the slugified id, never the raw typing. */
+  getNameConflict: (id: string) => string | null;
   onUpdate?: (key: string, value: string | boolean | number | object, isDefinition?: boolean) => void;
-  onUpdateRef: (value: string) => void;
+  onRename: (id: string) => void;
 };
 
 const ElementDefinitionSettings = ({
   definition,
-  idRef,
-  getIdRefConflict,
+  id,
+  getNameConflict,
   onUpdate,
-  onUpdateRef
+  onRename
 }: ElementDefinitionSettingsProps) => {
   const [showStyleVariants, setShowStyleVariants] = useStorage('builder-state.elementTools.showStyleVariants', false);
-  const [showIdRef, setShowIdRef] = useStorage('builder-state.elementTools.showIdRef', false);
-  const currentIdRef = idRef ?? '';
-  const [idRefValue, setIdRefValue] = useState(currentIdRef);
+  const [showLabel, setShowLabel] = useStorage('builder-state.elementTools.showLabel', false);
+  const [name, setName] = useState(id);
   const { label, initialState, styleSelectors } = definition;
   const visibility = useMemo(() => get(initialState, 'visibility', true), [initialState]);
   const styleVariant = useMemo(() => get(initialState, 'styleVariant'), [initialState]);
@@ -45,26 +47,33 @@ const ElementDefinitionSettings = ({
 
   const handleClickStyleVariants = useCallback(() => setShowStyleVariants(state => !state), [setShowStyleVariants]);
 
-  const handleClickIdRef = useCallback(() => setShowIdRef(state => !state), [setShowIdRef]);
+  const handleClickLabel = useCallback(() => setShowLabel(state => !state), [setShowLabel]);
 
-  const idRefError = useMemo(
-    () => (!idRefValue || idRefValue === currentIdRef ? '' : (getIdRefConflict(idRefValue) ?? '')),
-    [idRefValue, currentIdRef, getIdRefConflict]
-  );
+  // What a person types is slugified into the id it will become, and it is that id which is checked and committed —
+  // so the field accepts prose ("Hero section") and the document still gets a key it can hold.
+  const nextId = useMemo(() => slugifyElementId(name), [name]);
 
-  const handleBlurIdRef = useCallback(
-    (e: FocusEvent<HTMLInputElement>) => {
-      const next = e.target.value;
-      if (idRefError || next === currentIdRef) {
-        setIdRefValue(currentIdRef);
+  const nameError = useMemo(() => {
+    if (!name || nextId === id) {
+      return '';
+    }
 
-        return;
-      }
+    if (!nextId) {
+      return 'A name has to start with a letter';
+    }
 
-      onUpdateRef(next);
-    },
-    [idRefError, currentIdRef, onUpdateRef]
-  );
+    return getNameConflict(nextId) ?? '';
+  }, [name, nextId, id, getNameConflict]);
+
+  const handleBlurName = useCallback(() => {
+    if (nameError || !nextId || nextId === id) {
+      setName(id);
+
+      return;
+    }
+
+    onRename(nextId);
+  }, [nameError, nextId, id, onRename]);
 
   const handleChangeLabel = useCallback((value: string) => onUpdate?.('label', value, true), [onUpdate]);
 
@@ -83,9 +92,18 @@ const ElementDefinitionSettings = ({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2">
-        <Input className="grow" placeholder="Name" size="xs" value={label} onChange={handleChangeLabel} />
-        <Button size="xs" intent={showIdRef ? 'secondary' : 'primary'} onClick={handleClickIdRef} title="Reference">
-          <Button.Icon icon="fa-solid fa-link" />
+        <Input
+          className="grow"
+          placeholder="hero"
+          size="xs"
+          value={name}
+          error={nameError}
+          title="The name this element answers to: what the tree shows, what a binding reads it by, and what an interaction targets. Renaming it repoints everything that names it."
+          onChange={setName}
+          onBlur={handleBlurName}
+        />
+        <Button size="xs" intent={showLabel ? 'secondary' : 'primary'} onClick={handleClickLabel} title="Label">
+          <Button.Icon icon="fa-solid fa-tag" />
         </Button>
         <Button
           size="xs"
@@ -99,16 +117,14 @@ const ElementDefinitionSettings = ({
           <Button.Icon icon={visibility ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'} />
         </Button>
       </div>
-      {showIdRef && (
+      {showLabel && (
         <Input
           size="xs"
-          label="Reference"
-          placeholder="products-api"
-          value={idRefValue}
-          error={idRefError}
-          title="The name this element publishes its data source under. Without one, nothing can bind to it."
-          onChange={setIdRefValue}
-          onBlur={handleBlurIdRef}
+          label="Label"
+          placeholder="Hero section"
+          value={label}
+          title="Free display text. Nothing wires by it — that is what the name above is for."
+          onChange={handleChangeLabel}
         />
       )}
       {showStyleVariants && (

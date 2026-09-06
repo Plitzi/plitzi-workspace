@@ -146,6 +146,9 @@ describe('MCP Apps (self-contained pages: they fetch nothing)', () => {
     expect(text).toContain('tailwindcss');
     // Every byte here is parsed before a widget paints, and the icon fonts are ~330 KB of base64 no widget needs
     // until it draws an icon — they travel with the render that does (apps/render/styles.ts).
-    expect(text).not.toContain('@font-face');
+    //
+    // The base64 rather than the `@font-face` keyword: the SDK's font resolver builds those blocks at runtime, so
+    // the twelve characters now appear in the bundle as a string literal and say nothing about what is inlined.
+    expect(text).not.toContain('data:font/');
   });
 });

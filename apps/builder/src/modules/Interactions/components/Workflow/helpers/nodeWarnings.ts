@@ -31,20 +31,8 @@ export const findNodeDefinition = (
       definition.action === node.action
   );
 
-/** The target element exists but has no idRef, so the runtime cannot wire it. */
-export const isTargetUnreferenced = (
-  node: Pick<ElementInteraction, 'elementId'>,
-  nodeDefinitions: InteractionCallback[] | undefined
-): boolean =>
-  Boolean(node.elementId) &&
-  Boolean(nodeDefinitions?.some(definition => definition.elementId === node.elementId && definition.unreferenced));
-
 /** Malformations of a stored node, checked against the definitions the editor renders from. */
-export const getNodeWarnings = (
-  node: NodeShape,
-  nodeDefinition: InteractionCallback | undefined,
-  targetUnreferenced: boolean
-): NodeWarning[] => {
+export const getNodeWarnings = (node: NodeShape, nodeDefinition: InteractionCallback | undefined): NodeWarning[] => {
   const warnings: NodeWarning[] = [];
   const { type, action, elementId } = node;
 
@@ -81,7 +69,7 @@ export const getNodeWarnings = (
   }
 
   // No matching definition: unknown action, wrong node type, or a target that no longer exists.
-  if (!nodeDefinition && !targetUnreferenced) {
+  if (!nodeDefinition) {
     warnings.push({
       level: 'danger',
       message: 'This action is not recognized, so it may have been removed or points at a missing element.'
@@ -107,11 +95,7 @@ export const summarizeFlow = (
   let count = 0;
   let hasDanger = false;
   for (const node of Object.values(nodes)) {
-    const warnings = getNodeWarnings(
-      node,
-      findNodeDefinition(node, nodeDefinitions),
-      isTargetUnreferenced(node, nodeDefinitions)
-    );
+    const warnings = getNodeWarnings(node, findNodeDefinition(node, nodeDefinitions));
     if (warnings.length > 0) {
       count += 1;
       if (warnings.some(warning => warning.level === 'danger')) {

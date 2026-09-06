@@ -12,9 +12,17 @@ const META_FILE = 'meta.json';
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const DEFAULT_CACHE_DIR = '.sdk-plugins';
 
-type Meta = { compiledAt: number; version?: string };
+type Meta = { compiledAt: number; version?: string; inputs?: string[] };
 
-type CacheEntry = { compiledAt: number; entry: PluginEntry };
+type CacheEntry = { compiledAt: number; entry: PluginEntry; inputs?: string[]; checkedAt?: number };
+
+/**
+ * How often a dev server re-asks whether a cached plugin is still current.
+ *
+ * The check is a handful of `stat`s and this runs on every render, so it is throttled rather than free — a second is
+ * far below what anybody notices between saving a file and reloading a page, and far above per-request.
+ */
+const STALE_CHECK_MS = 1_000;
 
 export class PluginManager {
   readonly urlPrefix = '/sdk-plugins';
@@ -94,14 +102,40 @@ export class PluginManager {
   }
 
   /**
-   * Whether the file on disk has moved on since the bundle was built. Dev mode only.
+   * Whether anything the bundle was built from has moved on since. Dev mode only.
    *
    * The cache is keyed on time and version, neither of which changes when somebody edits a component: a versioned
    * plugin never expires and an unversioned one lasts a week, so a change to the source showed up nowhere and the
    * server kept serving the bundle it built the first time. In production that is exactly right — a deployment's
    * plugins do not change under it — and while somebody is writing one it is a file that appears to do nothing.
+   *
+   * Every INPUT, not the entry file. A plugin is a directory and the entry is usually a barrel that re-exports it, so
+   * watching only `source.js` answers "nothing has changed" to every edit anybody actually makes — the file whose
+   * timestamp moves is the component next to it. The list comes from the build itself (see `compilePlugin`), so it is
+   * exactly what went in, including a file imported from another plugin's folder. A bundle built before this existed
+   * has no list, and falls back to the entry file rather than claiming to be fresh.
    */
-  private async isStale(compiledAt: number, source: PluginSource): Promise<boolean> {
+  /**
+   * The same question of the entry this process is holding, asked at most once a second.
+   *
+   * `checkedAt` is stamped on the cached entry rather than kept in a second map, so it cannot outlive what it is about.
+   */
+  private async isStaleInMemory(cached: CacheEntry, source: PluginSource): Promise<boolean> {
+    if (!this.devMode) {
+      return false;
+    }
+
+    const now = Date.now();
+    if (cached.checkedAt && now - cached.checkedAt < STALE_CHECK_MS) {
+      return false;
+    }
+
+    cached.checkedAt = now;
+
+    return this.isStale({ compiledAt: cached.compiledAt, inputs: cached.inputs }, source);
+  }
+
+  private async isStale(meta: Meta, source: PluginSource): Promise<boolean> {
     // A remote bundle and an inline component are not files this server compiles, so neither can be behind one.
     // Tested for a SCHEME rather than with `isWebUrl`, which also answers true to anything starting with `/` —
     // correct for the site-relative URLs it was written for, and wrong for every absolute path on this machine.
@@ -109,14 +143,19 @@ export class PluginManager {
       return false;
     }
 
+    const watched = meta.inputs?.length ? meta.inputs : [source.js];
     // A source that cannot be stat'd is not evidence of anything: the build below reports a missing file far
-    // better than a cache miss would.
-    const modifiedAt = await fs
-      .stat(source.js)
-      .then(stats => stats.mtimeMs)
-      .catch(() => 0);
+    // better than a cache miss would, and a file that has been DELETED is a change the build is about to report too.
+    const timestamps = await Promise.all(
+      watched.map(file =>
+        fs
+          .stat(file)
+          .then(stats => stats.mtimeMs)
+          .catch(() => 0)
+      )
+    );
 
-    return modifiedAt > compiledAt;
+    return timestamps.some(modifiedAt => modifiedAt > meta.compiledAt);
   }
 
   /**
@@ -209,18 +248,33 @@ export class PluginManager {
     if (cached && !this.isExpired(cached.compiledAt)) {
       const jsOk = await this.fileExists(path.join(this.pluginDir(key), 'index.js'));
       if (jsOk) {
-        return cached.entry;
+        /**
+         * The disk check below never runs while this process holds the entry in memory, and a versioned plugin never
+         * expires — so without this a dev server serves the bundle it built when it started, for as long as it runs.
+         * Nothing else brings it back either: the components are named by PATH rather than imported, so editing one
+         * does not even restart the watcher.
+         */
+        if (!(await this.isStaleInMemory(cached, source))) {
+          return cached.entry;
+        }
+
+        // Dropped rather than rebuilt here, so the rebuild goes through the in-flight map at the end of this method
+        // and two renders arriving together share one build instead of writing the same directory twice.
+        console.log(`[SSR] Plugin "${key}" source changed since it was built, rebuilding…`);
+        this.mem.delete(key);
+        await fs.rm(this.pluginDir(key), { recursive: true, force: true });
+      } else {
+        // File was deleted from disk — drop memory cache and rebuild
+        console.warn(`[SSR] Plugin "${key}" cache invalidated: output file missing, rebuilding…`);
+        this.mem.delete(key);
       }
-      // File was deleted from disk — drop memory cache and rebuild
-      console.warn(`[SSR] Plugin "${key}" cache invalidated: output file missing, rebuilding…`);
-      this.mem.delete(key);
     }
 
     const meta = await this.readMeta(key);
     if (meta) {
       const sourceVersion = source.version;
 
-      if (await this.isStale(meta.compiledAt, source)) {
+      if (await this.isStale(meta, source)) {
         console.log(`[SSR] Plugin "${key}" source changed since it was built, rebuilding…`);
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else if (sourceVersion && meta.version !== sourceVersion) {
@@ -242,7 +296,7 @@ export class PluginManager {
           }
 
           const entry = this.toEntry(key, true, cssUrl, source.props, meta.compiledAt);
-          this.mem.set(key, { compiledAt: meta.compiledAt, entry });
+          this.mem.set(key, { compiledAt: meta.compiledAt, entry, inputs: meta.inputs });
 
           return entry;
         }
@@ -275,9 +329,13 @@ export class PluginManager {
 
     try {
       let cssUrl: string | undefined;
+      // What the bundle was built from, for the dev-mode staleness check. Only a compiled plugin has any: a copied or
+      // downloaded file is its own input, and `isStale` falls back to it.
+      let buildInputs: string[] = [];
 
       if (action === 'compile') {
-        const { hasCSS } = await compilePlugin(jsPath, dir, this.devMode);
+        const { hasCSS, inputs } = await compilePlugin(jsPath, dir, this.devMode);
+        buildInputs = inputs;
         if (hasCSS) {
           cssUrl = `${this.urlPrefix}/${name}/index.css`;
         } else if (cssPath) {
@@ -325,7 +383,7 @@ export class PluginManager {
       }
 
       const compiledAt = Date.now();
-      await this.writeMeta(name, { compiledAt, version: source.version });
+      await this.writeMeta(name, { compiledAt, version: source.version, inputs: buildInputs });
 
       // Stamped after the build, so a rebuild changes the URL the page asks for and the `immutable` the assets are
       // served with becomes a promise this server can keep.
@@ -334,7 +392,7 @@ export class PluginManager {
       }
 
       const entry = this.toEntry(name, true, cssUrl, source.props, compiledAt);
-      this.mem.set(name, { compiledAt, entry });
+      this.mem.set(name, { compiledAt, entry, inputs: buildInputs });
       console.log(`[SSR] Plugin "${name}" ready → ${entry.js}`);
       return entry;
     } catch (err) {

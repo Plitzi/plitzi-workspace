@@ -12,7 +12,7 @@ import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
-import type { Style } from './StyleTypes';
+import type { FontHead, Style } from './StyleTypes';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
 
@@ -47,7 +47,11 @@ export type SSRResponseHelpers = {
    *  several, and collapsing them into one string would produce a single malformed cookie. */
   setHeader: (name: string, value: string | string[]) => void;
   setStatus: (code: number) => void;
-  send: (body: string) => void;
+  /**
+   * A `Buffer` is sent byte for byte and never compressed: it is how a binary reaches the wire — a font file, an
+   * image — and what it holds is usually compressed already. A string keeps the encoding negotiation.
+   */
+  send: (body: string | Buffer) => void;
   write: (chunk: string | Buffer) => void;
   end: () => void;
 };
@@ -136,6 +140,42 @@ export type SSRTemplateProps = {
   /** When true the client-side <script> block is omitted — useful for inspecting raw SSR HTML. */
   ssrOnly?: boolean;
   debugMode?: boolean;
+  /**
+   * The script that settles the theme before the document paints — `themeBootScript()` from this package.
+   *
+   * Passed in rather than written by the template, because it is `ThemeProvider`'s contract and not the template's:
+   * the storage key, the accepted values and the classes are defined once, next to the provider that honours them.
+   * A host with nothing to remember (or one that already renders the class itself, from a cookie) leaves it out.
+   */
+  themeBoot?: string;
+  /**
+   * The document's web fonts: `fontsToHead(style.fonts, ...)` from this package.
+   *
+   * In the template rather than left to the SDK because a page paints before its JavaScript exists. A face
+   * requested at hydration arrives after the text it is for has already been drawn in a fallback, which is a
+   * reflow the visitor watches happen.
+   */
+  fonts?: FontHead;
+};
+
+/**
+ * How a store-relative font path becomes a URL a browser can fetch.
+ *
+ * A space's manifest stores paths, never absolute URLs: the same space is rendered by Plitzi's cloud from a CDN,
+ * by a self-hosted server from its own disk, and by a static export from wherever it was published to. Baking one
+ * of those origins into the document would send every other deployment asking Plitzi for its customer's fonts.
+ */
+export type SSRFontsConfig = {
+  /** Prefix joined to each path, e.g. `/fonts` or `https://cdn.example.com/fonts`. Default: `/fonts`. */
+  baseUrl?: string;
+  /**
+   * A directory this server serves the uploaded files from, under `/fonts/*`.
+   *
+   * The self-hosting answer, and the reason `baseUrl` defaults to a path rather than an origin: with a directory
+   * here a deployment needs no object storage, no credentials and no network to serve its customers' fonts. A
+   * cloud deployment leaves it out and points `baseUrl` at its CDN instead.
+   */
+  dir?: string;
 };
 
 export type SSRPlugin = {
@@ -144,9 +184,11 @@ export type SSRPlugin = {
 };
 
 /** What a space token is worth. `render` is the public credential every published site embeds — it is readable
- *  by anyone who views the page, so it may only read. `agent` is the delegated grant an MCP connector receives
- *  after a member consents, and is the only bearer that may write without a session behind it. */
-export type SpaceScope = 'render' | 'agent';
+ *  by anyone who views the page, so it may only read, and only from the origins it declares. `host` is that same
+ *  read access for a SERVER that renders the space as its own (self-hosting): secret rather than published, since
+ *  a server has no browser origin for the allowlist to check. `agent` is the delegated grant an MCP connector
+ *  receives after a member consents, and is the only bearer that may write without a session behind it. */
+export type SpaceScope = 'render' | 'agent' | 'host';
 
 /** A resolved space token: which space, what the bearer may do, and (for `agent`) the member who consented.
  *  `canWrite` is computed by the consumer from its own authorization model — the MCP never derives it. */
@@ -748,6 +790,8 @@ export type SSRServerConfig = {
   pluginsTtlMs?: number;
   /** Auto-download and cache plugins declared in the schema's offlineData.plugins list. Default: true. */
   autoLoadSchemaPlugins?: boolean;
+  /** Where this deployment serves the font files a space uploaded — see {@link SSRFontsConfig}. */
+  fonts?: SSRFontsConfig;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
   ssrOnly?: boolean;
   /** Stream HTML to the client as React renders, reducing TTFB. Default: false. */
@@ -978,9 +1022,37 @@ export type OAuthConfig = {
  *  in-memory default (fine for a single replica); a multi-replica deployment injects a shared (e.g. Redis)
  *  implementation so a preview URL resolves on whichever replica the browser lands on. `take` consumes the
  *  token so a preview URL is not replayable. */
+/**
+ * How long a stashed draft lives, and whether looking at it uses it up.
+ *
+ * `reusable: false` is the capture path: one token, one render, gone — a URL that leaks buys nobody a second look.
+ * `reusable: true` is somebody ITERATING: they reload, they open devtools, they navigate to the next page and back,
+ * and a token consumed by the first of those turns the whole loop into "mint another one". Same store, same secret,
+ * same expiry; the only difference is whether the read deletes it.
+ */
+export type DraftPutOptions = {
+  ttlMs: number;
+  reusable?: boolean;
+};
+
+/** A stashed draft, and whether the read that resolved it left it there. */
+export type DraftEntry = {
+  data: OfflineDataRaw;
+  reusable: boolean;
+};
+
 export type DraftStore = {
-  put: (token: string, data: OfflineDataRaw, ttlMs: number) => void | Promise<void>;
-  take: (token: string) => (OfflineDataRaw | undefined) | Promise<OfflineDataRaw | undefined>;
+  put: (token: string, data: OfflineDataRaw, options: DraftPutOptions) => void | Promise<void>;
+  /**
+   * Resolves a draft, consuming it unless it was stored as reusable.
+   *
+   * It answers WHICH it was, rather than leaving the caller to infer it from a second read: the render that resolved
+   * a session is the one that has to remember it for the rest of the visit, and "did this token survive" is a fact
+   * the store holds and nobody else does.
+   */
+  take: (token: string) => (DraftEntry | undefined) | Promise<DraftEntry | undefined>;
+  /** Ends a reusable draft before its TTL — what "stop previewing" does. A token that is not there is not an error. */
+  drop: (token: string) => void | Promise<void>;
 };
 
 /** Draft-preview config for the MCP visual-preview tools. When enabled, an internal endpoint at `path`
@@ -992,6 +1064,14 @@ export type SSRPreviewConfig = {
   path?: string;
   /** Shared secret required in the `x-preview-secret` header; requests without it are rejected. */
   secret?: string;
-  /** Token time-to-live in milliseconds. Default 60000. */
+  /** One-shot token time-to-live in milliseconds. Default 60000. */
   ttlMs?: number;
+  /**
+   * How long a REUSABLE draft session lives, in milliseconds. Default 900000 (fifteen minutes).
+   *
+   * Longer than a one-shot token because it is measured against a person's attention rather than an HTTP round trip,
+   * and short anyway: a draft is unsaved work that only its author should be looking at, and every minute it stays
+   * resolvable is a minute a copied URL keeps working.
+   */
+  sessionTtlMs?: number;
 };

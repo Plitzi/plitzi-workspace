@@ -13,10 +13,10 @@ export type BodyHeaderProps = {
   endTime: number;
   duration?: string;
   elementId?: string;
-  elementRef?: string;
+  hostElementId?: string;
 };
 
-const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, elementRef }: BodyHeaderProps) => {
+const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, hostElementId }: BodyHeaderProps) => {
   const [flat] = useCommonStore('schema.flat');
   const element = useMemo(() => (elementId ? get(flat, elementId) : undefined), [elementId, flat]);
   const startTimeParsed = useMemo(() => formatDate(startTime, 'HH:mm:ss.SSS'), [startTime]);
@@ -80,11 +80,11 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, elem
             <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Trigger</span>
             <span className="truncate">{triggerName}</span>
           </div>
-          {elementRef && (
+          {hostElementId && (
             <div className="flex min-w-0 gap-1">
               {/* Tells identical triggers apart; for global callbacks `Element` below names only the source. */}
               <span className="shrink-0 text-zinc-400 dark:text-zinc-500">Fired on</span>
-              <span className="truncate font-mono">{elementRef}</span>
+              <span className="truncate font-mono">{hostElementId}</span>
             </div>
           )}
           <div className="flex min-w-0 gap-1">

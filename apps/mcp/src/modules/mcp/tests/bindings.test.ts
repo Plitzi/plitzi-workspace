@@ -11,50 +11,47 @@ import type { Style } from '@plitzi/sdk-shared';
 const scopeSpace = (): Space => ({
   schema: {
     flat: {
-      page1: {
-        id: 'page1',
+      home: {
+        id: 'home',
         attributes: { slug: '', name: 'Home', default: true },
         definition: {
-          rootId: 'page1',
+          rootId: 'home',
           label: 'Page',
           type: 'page',
-          items: ['api1', 'outsider'],
+          items: ['products', 'out-text'],
           styleSelectors: { base: 'p' }
         }
       },
-      api1: {
-        id: 'api1',
-        idRef: 'products',
+      products: {
+        id: 'products',
         attributes: {},
         definition: {
-          rootId: 'page1',
-          parentId: 'page1',
+          rootId: 'home',
+          parentId: 'home',
           label: 'Api',
           type: 'apiContainer',
-          items: ['inner'],
+          items: ['inner-text'],
           styleSelectors: { base: 'a' }
         }
       },
-      inner: {
-        id: 'inner',
-        idRef: 'inner-text',
+      'inner-text': {
+        id: 'inner-text',
         attributes: { content: '' },
         definition: {
-          rootId: 'page1',
-          parentId: 'api1',
+          rootId: 'home',
+          parentId: 'products',
           label: 'Inner',
           type: 'text',
           items: [],
           styleSelectors: { base: 't' }
         }
       },
-      outsider: {
-        id: 'outsider',
-        idRef: 'out-text',
+      'out-text': {
+        id: 'out-text',
         attributes: { content: '' },
         definition: {
-          rootId: 'page1',
-          parentId: 'page1',
+          rootId: 'home',
+          parentId: 'home',
           label: 'Out',
           type: 'text',
           items: [],
@@ -65,7 +62,7 @@ const scopeSpace = (): Space => ({
     definition: { name: 'T', permanentUrl: '' },
     variables: [],
     settings: { customCss: '' },
-    pages: ['page1'],
+    pages: ['home'],
     pageFolders: []
   },
   style: {

@@ -95,7 +95,7 @@ const useApi = ({
   enabled = true,
   credentials = 'same-origin'
 }: UseApiProps) => {
-  const [isLoading, setIsLoading] = useState(enabled);
+  const [isFetching, setIsFetching] = useState(enabled);
   const [data, setData] = useState<{ status: number; data: unknown }>();
 
   const handleFetch = useCallback(() => {
@@ -103,11 +103,11 @@ const useApi = ({
       return;
     }
 
-    setIsLoading(true);
+    setIsFetching(true);
     getApiRequest({ url, method, credentials, mock, customHeaders, params })
       .then(response => setData(response))
       .catch((e: unknown) => setData({ status: 500, data: (e as Error).message }))
-      .finally(() => setIsLoading(false));
+      .finally(() => setIsFetching(false));
   }, [enabled, url, method, credentials, mock, customHeaders, params]);
 
   useEffect(() => {
@@ -115,11 +115,21 @@ const useApi = ({
   }, [enabled, params, mock, url, handleFetch]);
 
   return {
-    isLoading,
+    /**
+     * Nothing has been answered yet, so there is nothing truthful to render.
+     *
+     * Distinct from `isFetching` on purpose: a REFETCH already has an answer on screen and it stays valid until
+     * the next one lands. Conflating the two makes every refresh unmount whatever the provider is feeding — the
+     * page collapses to nothing, the browser clamps the scroll to the top, and the content reappears a frame
+     * later. That reads as a flicker and a lost scroll position, which is not what "reload this list" means.
+     */
+    isLoading: isFetching && data === undefined,
+    /** A request is in flight, first or not. What a spinner binds to. */
+    isFetching,
     data,
     refetch: handleFetch,
-    isSuccess: !isLoading && data && data.status < 400,
-    isError: !isLoading && data && data.status >= 400
+    isSuccess: !isFetching && data && data.status < 400,
+    isError: !isFetching && data && data.status >= 400
   };
 };
 

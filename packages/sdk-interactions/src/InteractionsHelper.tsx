@@ -266,7 +266,7 @@ const storeLog = (
   startTime: number,
   nodes: Record<string, InteractionNode> = {},
   status: InteractionStatus,
-  elementRef?: string
+  hostElementId?: string
 ) => {
   const endTime = pConsole.getTime().valueOf();
   // The trigger itself only fails to run when it is skipped; a step failing further down the flow says nothing
@@ -276,10 +276,10 @@ const storeLog = (
   const message = (
     <span>
       Interaction triggered <b>{`${triggerNode.title} [${triggerNode.action}]`}</b>
-      {elementRef ? (
+      {hostElementId ? (
         <>
           {' on '}
-          <b>{elementRef}</b>
+          <b>{hostElementId}</b>
         </>
       ) : null}
     </span>
@@ -295,7 +295,7 @@ const storeLog = (
      * Without this, two entries reading `[onLoad]` were indistinguishable — same title, same action, and no way
      * to tell whether one element fired twice or two elements fired once.
      */
-    elementRef,
+    hostElementId,
     nodes: {
       ...nodes,
       [triggerNode.id]: {
@@ -331,14 +331,14 @@ const flowTrigger = async (
   callbacksAvailables = {},
   flowParams: Record<string, unknown> = {},
   globalParams = {},
-  /** The idRef of the element this fired on, carried through purely so the log can name it. */
-  elementRef?: string,
+  /** The id of the element this fired on, carried through purely so the log can name it. */
+  hostElementId?: string,
   postCallbacksTotal = []
 ) => {
   const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
   if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
-    storeLog(triggerNode, startTime, {}, 'skipped', elementRef);
+    storeLog(triggerNode, startTime, {}, 'skipped', hostElementId);
 
     return;
   }
@@ -351,9 +351,9 @@ const flowTrigger = async (
     globalParams,
     postCallbacksTotal,
     {},
-    { elementRef }
+    { hostElementId }
   );
-  storeLog(triggerNode, startTime, nodesProcessed, flowStatus(nodesProcessed), elementRef);
+  storeLog(triggerNode, startTime, nodesProcessed, flowStatus(nodesProcessed), hostElementId);
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

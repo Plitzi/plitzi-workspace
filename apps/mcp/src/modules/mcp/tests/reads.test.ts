@@ -10,6 +10,7 @@ import {
 } from '../resources';
 import { apply, read, search } from '../tools';
 
+import type { Space } from '../helpers';
 import type {
   AIDefinition,
   AIElementDetail,
@@ -182,12 +183,12 @@ describe('mcp-ai page skeleton route params', () => {
     const sk = readResource(
       (() => {
         const s = buildSpace();
-        (s.schema.flat.page1.attributes as Record<string, unknown>).slug = ':spaceId';
+        (s.schema.flat.home.attributes as Record<string, unknown>).slug = ':spaceId';
 
         return s;
       })(),
       'main',
-      'plitzi://schema/main/pages/spaceid'
+      'plitzi://schema/main/pages/home'
     )?.data as AIPageSkeleton;
     expect(sk.routeParams).toEqual(['spaceId']);
   });
@@ -347,6 +348,68 @@ describe('mcp-ai primer bootstrap (R4)', () => {
     expect(primer.pages[0].ref).toBe('home');
     expect(primer.definitions).toContain('box');
     expect(primer.pages[0]).not.toHaveProperty('tree');
+  });
+});
+
+describe('mcp-ai primer stays readable on a large space', () => {
+  // A space grows the primer's summaries with it — pages with pages, definitions with style classes, interactions
+  // with flows — and their sum does not converge. Past the budget the tail becomes pointers to the resources that
+  // already serve those sections whole, so the read that STARTS the work stays a read an agent can finish.
+  const bigSpace = (): Space => {
+    const space = buildSpace();
+    for (let i = 0; i < 3_000; i += 1) {
+      space.style.platform.desktop[`filler-${i}`] = {
+        name: `filler-${i}`,
+        type: 'class',
+        attributes: { base: { default: { display: 'flex' } } },
+        cache: ''
+      } as never;
+    }
+
+    return space;
+  };
+
+  it('keeps the sections an agent cannot start without, and elides the tail', () => {
+    const primer = readResource(bigSpace(), 'main', 'plitzi://primer/main')?.data as Record<string, unknown> & {
+      elided: { sections: string[] };
+    };
+
+    expect(primer.pages).toBeInstanceOf(Array);
+    expect(primer.types).toHaveProperty('types');
+    expect(primer.elided.sections).toContain('definitions');
+    expect(primer.definitions).toMatchObject({ elided: true, read: 'plitzi://definitions/main' });
+  });
+
+  it('bounds what one cold-start read costs', () => {
+    const inflated = JSON.stringify(readResource(bigSpace(), 'main', 'plitzi://primer/main')).length;
+    const modest = JSON.stringify(readResource(buildSpace(), 'main', 'plitzi://primer/main')).length;
+
+    // 3 000 extra style classes must not show up as 3 000 classes' worth of primer.
+    expect(inflated).toBeLessThan(modest + 2_000);
+  });
+
+  it('points every elided section at a resource that serves the same projection', () => {
+    const space = bigSpace();
+    const primer = readResource(space, 'main', 'plitzi://primer/main')?.data as Record<
+      string,
+      { elided?: true; bytes: number; read: string }
+    > & { elided: { sections: string[] } };
+
+    expect(primer.elided.sections.length).toBeGreaterThan(0);
+    for (const key of primer.elided.sections) {
+      const stub = primer[key];
+      const resolved = readResource(space, 'main', stub.read);
+      expect(resolved, `${stub.read} does not resolve`).not.toBeNull();
+      // Same bytes, so the pointer stands in for the section rather than for something adjacent to it.
+      expect(JSON.stringify(resolved?.data).length).toBe(stub.bytes);
+    }
+  });
+
+  it('leaves a modest space unelided', () => {
+    const primer = readResource(buildSpace(), 'main', 'plitzi://primer/main')?.data as Record<string, unknown>;
+
+    expect(primer).not.toHaveProperty('elided');
+    expect(primer.definitions).toContain('box');
   });
 });
 

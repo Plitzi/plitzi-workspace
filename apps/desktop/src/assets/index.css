@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+/**
+ * The window is the page. Without a height on the document the app's `h-full` chain has nothing to measure
+ * against, and the sidebar — which is meant to fill the window — collapses to its content.
+ */
+html,
+body,
+#plitzi-desktop {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}

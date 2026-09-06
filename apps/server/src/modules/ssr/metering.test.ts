@@ -18,7 +18,10 @@ import type {
 vi.mock('./buildBody', () => ({
   buildBody: () => Promise.resolve({ body: '<html>fresh</html>', result: {} })
 }));
-vi.mock('./preview', () => ({ takeDraftOverride: () => Promise.resolve(undefined) }));
+vi.mock('./preview', () => ({
+  takeDraftOverride: () => Promise.resolve(undefined),
+  draftSessionCookie: () => ''
+}));
 
 const meter = vi.fn<(event: { kind: MeteredKind; cached: boolean }) => Promise<SSRMeterDecision | undefined>>();
 

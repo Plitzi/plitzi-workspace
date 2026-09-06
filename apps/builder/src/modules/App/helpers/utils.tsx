@@ -6,6 +6,7 @@ import StyleAdvanceEditor from '@plitzi/sdk-style/StyleAdvanceEditor';
 import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Elements from '@pmodules/Elements';
+import Fonts from '@pmodules/Fonts';
 import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
 import StateManager from '@pmodules/StateManager/StateManager';
@@ -95,10 +96,26 @@ export const getPopups = ({
       }
     },
     {
+      id: 'fonts',
+      component: <Fonts />,
+      active: activeIds.includes('fonts'),
+      placementSettings: { left: { position: 5, minSize: 200 } },
+      settings: {
+        icon: 'fa-solid fa-font',
+        title: 'Fonts',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: true,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
       id: 'assets',
       component: <Resources />,
       active: activeIds.includes('assets'),
-      placementSettings: { left: { position: 5, minSize: 200 } },
+      placementSettings: { left: { position: 6, minSize: 200 } },
       settings: {
         icon: 'fa-solid fa-image',
         title: 'Resources',
@@ -114,7 +131,7 @@ export const getPopups = ({
       id: 'actions',
       component: undefined,
       active: activeIds.includes('actions'),
-      placementSettings: { left: { position: 6, multi: false } },
+      placementSettings: { left: { position: 7, multi: false } },
       settings: {
         icon: 'fa-solid fa-bolt',
         title: 'Server Actions',
@@ -130,7 +147,7 @@ export const getPopups = ({
       id: 'connectors',
       component: undefined,
       active: activeIds.includes('connectors'),
-      placementSettings: { left: { position: 6, multi: false } },
+      placementSettings: { left: { position: 7, multi: false } },
       settings: {
         icon: 'fas fa-plug',
         title: 'Connectors',
@@ -146,7 +163,7 @@ export const getPopups = ({
       id: 'credentials',
       component: undefined,
       active: activeIds.includes('credentials'),
-      placementSettings: { left: { position: 7, multi: false } },
+      placementSettings: { left: { position: 8, multi: false } },
       settings: {
         icon: 'fa-solid fa-key',
         title: 'Credentials',
@@ -162,7 +179,7 @@ export const getPopups = ({
       id: 'segments',
       component: <Segments />,
       active: activeIds.includes('segments'),
-      placementSettings: { left: { position: 8, minSize: 200 } },
+      placementSettings: { left: { position: 9, minSize: 200 } },
       settings: {
         icon: 'fa-solid fa-diamond',
         title: 'Segments',
@@ -178,7 +195,7 @@ export const getPopups = ({
       id: 'layerManager',
       component: <BuilderTree />,
       active: activeIds.includes('layerManager'),
-      placementSettings: { left: { position: 9, minSize: 200 } },
+      placementSettings: { left: { position: 10, minSize: 200 } },
       settings: {
         icon: 'fa-solid fa-layer-group',
         title: 'Layers',
@@ -195,7 +212,7 @@ export const getPopups = ({
       component: <StyleAdvanceEditor />,
       size: 'custom',
       active: activeIds.includes('advanceStyle'),
-      placementSettings: { left: { position: 10, minSize: 200 } },
+      placementSettings: { left: { position: 11, minSize: 200 } },
       settings: {
         icon: 'fa-solid fa-file-code text-base',
         title: 'Advance Style',
@@ -212,7 +229,7 @@ export const getPopups = ({
       size: 'custom',
       component: <StateManager />,
       active: activeIds.includes('stateManager'),
-      placementSettings: { left: { position: 11, minSize: 200 } },
+      placementSettings: { left: { position: 12, minSize: 200 } },
       settings: {
         icon: (
           <Sidebar.Icon className="p-2" title="State Manager">
@@ -232,7 +249,7 @@ export const getPopups = ({
       id: 'settings',
       component: undefined,
       active: activeIds.includes('settings'),
-      placementSettings: { left: { position: 12, multi: false } },
+      placementSettings: { left: { position: 13, multi: false } },
       settings: {
         icon: 'fas fa-cog',
         title: 'Settings',

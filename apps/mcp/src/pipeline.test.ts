@@ -157,4 +157,54 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
     expect(first.body).toContain('Drafted title');
     expect(second.body).not.toContain('Drafted title');
   });
+
+  /**
+   * The loop the one-shot token cannot support: look, change something, look again.
+   *
+   * Asserted end to end rather than on the store alone, because the halves live in different packages — this one
+   * mints and ends the session, `@plitzi/sdk-server` decides what a render does with the token — and a session that
+   * resolves in a unit test but not through a real request is worth nothing to whoever is iterating.
+   */
+  it('keeps a session draft resolvable until it is ended', async () => {
+    const minted = await httpRequest(
+      PORT,
+      'POST',
+      '/__preview',
+      { 'Content-Type': 'application/json', 'x-preview-secret': 'shh' },
+      JSON.stringify({
+        spaceId: 1,
+        mode: 'session',
+        operations: [{ type: 'patchSettings', settings: { title: 'Session title' } }]
+      })
+    );
+    const { token, pagePath, expiresInMs } = JSON.parse(minted.body) as {
+      token: string;
+      pagePath: string;
+      expiresInMs: number;
+    };
+
+    expect(expiresInMs).toBeGreaterThan(60_000);
+
+    const first = await httpRequest(PORT, 'GET', `${pagePath}?__pt=${token}`);
+    const reload = await httpRequest(PORT, 'GET', `${pagePath}?__pt=${token}`);
+
+    expect(first.body).toContain('Session title');
+    expect(reload.body).toContain('Session title');
+    // Unsaved work does not get to be cached by anything between here and the browser, nor indexed by anything else.
+    expect(reload.headers['cache-control']).toContain('no-store');
+    expect(reload.headers['x-robots-tag']).toContain('noindex');
+    expect(String(reload.headers['set-cookie'])).toContain('plitzi_draft=');
+
+    const ended = await httpRequest(
+      PORT,
+      'POST',
+      '/__preview/end',
+      { 'Content-Type': 'application/json', 'x-preview-secret': 'shh' },
+      JSON.stringify({ token })
+    );
+
+    expect(ended.status).toBe(200);
+    const after = await httpRequest(PORT, 'GET', `${pagePath}?__pt=${token}`);
+    expect(after.body).not.toContain('Session title');
+  });
 });

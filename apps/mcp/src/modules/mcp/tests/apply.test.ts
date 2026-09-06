@@ -174,19 +174,6 @@ describe('mcp-ai AI-facing contract', () => {
   });
 });
 
-describe('mcp-ai legacy id addressing', () => {
-  it('resolves a page and element by their raw ids even when an idRef is present', async () => {
-    const space = buildSpace();
-    space.schema.flat.c1.idRef = 'my-box';
-
-    const cap = capturing(space);
-    await apply({ operations: [{ type: 'deleteElement', pageRef: 'page1', ref: 'c1' }] }, space, cap.persisters);
-
-    const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
-    expect(page.tree).toHaveLength(0);
-  });
-});
-
 // repeatElement: one template + its rows, instead of N near-identical subtrees. It is sugar — the batch is rewritten
 // into the upsertElement it stands for BEFORE validation — so these tests pin the two things that makes it usable:
 // the refs a row gets (predictable, so a later op can address them) and what happens to a row missing a field.
@@ -208,7 +195,7 @@ describe('mcp-ai repeatElement (list from a template + rows)', () => {
     const res = await apply({ operations: [repeat] }, buildSpace(), cap.persisters);
 
     expect(res.applied).toBe(true);
-    const refs = Object.values(cap.saved().schema.flat).map(el => el.idRef);
+    const refs = Object.values(cap.saved().schema.flat).map(el => el.id);
     expect(refs).toContain('steps');
     expect(refs).toEqual(expect.arrayContaining(['step-1', 'label-1', 'step-2', 'label-2']));
     const contents = Object.values(cap.saved().schema.flat).map(el => el.attributes.content);
@@ -238,7 +225,7 @@ describe('mcp-ai repeatElement (list from a template + rows)', () => {
     );
 
     expect(res.applied).toBe(true);
-    const card = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'card-1');
+    const card = Object.values(cap.saved().schema.flat).find(el => el.id === 'card-1');
     expect(card?.attributes.count).toBe(3);
     expect(card?.attributes.url).toBe('{{apiUrl}}/x');
     expect(card?.attributes.label).toBe('Nº 3');
@@ -294,7 +281,7 @@ describe('mcp-ai repeatElement (list from a template + rows)', () => {
     );
 
     expect(res.applied).toBe(true);
-    const refs = Object.values(cap.saved().schema.flat).map(el => el.idRef);
+    const refs = Object.values(cap.saved().schema.flat).map(el => el.id);
     // Outer row first, sub-row second: blk-1-2 is the second block of the first day.
     expect(refs).toEqual(expect.arrayContaining(['day-1', 'blk-1-1', 'blk-1-2', 'day-2', 'blk-2-1']));
     expect(refs).not.toContain('blk-2-2');
@@ -370,7 +357,7 @@ describe('mcp-ai repeatElement edge cases', () => {
     );
 
     expect(res.applied).toBe(true);
-    const wrapper = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'list');
+    const wrapper = Object.values(cap.saved().schema.flat).find(el => el.id === 'list');
     expect(wrapper?.definition.parentId).toBe('c1');
     expect(wrapper?.definition.type).toBe('container');
     expect(wrapper?.definition.label).toBe('Steps');
@@ -405,8 +392,8 @@ describe('mcp-ai repeatElement edge cases', () => {
     );
 
     expect(res.applied).toBe(true);
-    const first = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'row-1');
-    const second = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'row-2');
+    const first = Object.values(cap.saved().schema.flat).find(el => el.id === 'row-1');
+    const second = Object.values(cap.saved().schema.flat).find(el => el.id === 'row-2');
     expect(first?.attributes.content).toBe('Ada');
     expect(first?.definition.styleSelectors.base).toBe('tone-warm');
     expect(second?.definition.styleSelectors.base).toBe('tone-cold');
@@ -423,7 +410,7 @@ describe('mcp-ai repeatElement edge cases', () => {
     );
 
     expect(res.applied).toBe(true);
-    const row2 = Object.values(cap.saved().schema.flat).find(el => el.idRef === 'row-2');
+    const row2 = Object.values(cap.saved().schema.flat).find(el => el.id === 'row-2');
     expect(row2?.attributes.content).toBe('patched');
   });
 

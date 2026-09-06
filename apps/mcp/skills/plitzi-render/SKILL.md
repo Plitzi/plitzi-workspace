@@ -4,7 +4,8 @@ description: >-
   Show answers as a rendered visual widget instead of plain text, using the Plitzi MCP's plitzi_render tool.
   Use whenever the reply is naturally visual or structured — a recipe, a comparison, pricing tiers, a profile,
   a menu, steps/checklist, a product card, a dashboard-like summary — or whenever the user asks to design,
-  build, show, or "make it look nice". Requires the Plitzi MCP server (the plitzi_render tool) to be connected.
+  build, show, or "make it look nice", including widgets that react to clicks (toggles, expanders, tabs).
+  Requires the Plitzi MCP server (the plitzi_render tool) to be connected.
 ---
 
 # Rendering answers as Plitzi widgets
@@ -119,7 +120,7 @@ Everything the widget needs travels in ONE call, as `operations`. Three ops carr
 }
 ```
 
-## The five things that decide whether it looks good
+## The six things that decide whether it looks good
 
 1. **Width is free, height is scarce.** The widget renders in a side panel. A plain container stacks its children
    vertically — that is the tall, half-empty default to avoid. Put peers (metrics, plans, options, image + text) in
@@ -128,16 +129,24 @@ Everything the widget needs travels in ONE call, as `operations`. Three ops carr
    order: heading over paragraph, forms, steps, prose.
 2. **The host may be in dark mode.** Never hardcode a light palette. Take colours from the host variables with a
    `light-dark()` fallback, and always set `color` wherever you set `background-color`.
-3. **Watch the SDK defaults.** Every container has `min-width`/`min-height: 50px` — set them to `0` for rails,
-   dividers, dots and any flex child that must shrink. Headings and paragraphs keep the browser's margins; zero
-   them and space with the parent's `gap`.
+3. **You are not styling from zero.** The SDK's per-type CSS imposes **no minimum size**: a rail, a divider, a dot
+   or a narrow cell is exactly as small as you make it, and no `"min-width": "0"` escape hatch is needed. The flip
+   side is that an element with no content and no size takes no space at all — give a spacer its own `height`.
+   What does land on your elements is the BROWSER's own defaults: `heading` and `paragraph` keep their UA margins
+   (zero them, space with the parent's `gap`), `list` a 40px `padding-left`, `button` its native chrome. Borders
+   start at `0 solid`, so `border-color` alone paints nothing — give `border-width` too.
 4. **Draw with inline SVG, on a budget.** A logo, a sparkline, a badge or a decorative shape goes in a `blockHtml`
    element whose `props.content` is an `<svg>` — keep a `viewBox` with `width`/`height` `100%` so the element's
    class sizes it, and `fill`/`stroke` `currentColor` so it follows the theme. A handful of paths, drawn once and
    reused. Never a `data:` URI, and never a full illustration or a photo-real scene: that costs more than the rest
    of the widget, so use an `https` image, a flat colour or a CSS gradient instead. Markup only — `<script>` and
    inline `on*` handlers are rejected.
-5. **Write CSS plainly.** Kebab-case properties, shorthands welcome (`padding: 8px 16px`, `border: 1px solid red`,
+5. **Only use image URLs you have seen work.** Everything the widget loads from outside is fetched for it by the
+   render server, so redirects, hotlink rules and missing CORS headers are already handled and there is nothing to
+   configure — but nothing can guess a URL. Write a direct file URL, never a page about the picture, a search
+   result, or a pattern assembled from memory: one that 404s leaves a grey box in the middle of a finished layout.
+   With no URL you trust, draw that block instead (a gradient, a flat colour, an inline `<svg>`).
+6. **Write CSS plainly.** Kebab-case properties, shorthands welcome (`padding: 8px 16px`, `border: 1px solid red`,
    `font: bold 16px/1.5 Arial`) — they are expanded and stored as longhands, so a breakpoint or state can override
    one property on its own.
 
@@ -162,13 +171,77 @@ storage, a conversation resumed elsewhere), send the whole batch again without `
 issues. The `path` names the operation, so fix that one and call again — you never lose the rest of the batch. An
 unknown prop comes back as a warning naming the right one, so probing is safe.
 
+## Making it interactive
+
+Widgets are not only static: `upsertInteractionFlow` attaches a flow to an element — a `trigger` node first
+(`onClick`), then the steps that run after it, in order.
+
+**To show and hide, use `toggleState`.** Every element registers `setState` and `toggleState` as `callback`
+actions, and `elementId` names the element they act on — the flow's own element by default, or another element's
+ref to act on that one. `toggleState` with `category: "state"` and `key: "visibility"` is the show/hide toggle;
+there is no separate `toggleVisibility` action. The element starts hidden with `initialState: { "visibility":
+false }` on the element itself.
+
+```json
+{
+  "operations": [
+    {
+      "type": "upsertElement",
+      "pageRef": "render",
+      "element": {
+        "ref": "card",
+        "type": "container",
+        "children": [
+          { "ref": "card-head", "type": "button", "props": { "content": "Details" } },
+          {
+            "ref": "card-body",
+            "type": "container",
+            "initialState": { "visibility": false },
+            "children": [
+              { "ref": "card-text", "type": "paragraph", "props": { "content": "The hidden detail." } }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "upsertInteractionFlow",
+      "pageRef": "render",
+      "ref": "card-head",
+      "nodes": [
+        { "title": "On click", "nodeType": "trigger", "action": "onClick" },
+        {
+          "title": "Toggle body",
+          "nodeType": "callback",
+          "action": "toggleState",
+          "elementId": "card-body",
+          "params": { "category": "state", "key": "visibility" }
+        }
+      ]
+    }
+  ]
+}
+```
+
+Expand/collapse is **one step on one trigger** — never two `setState` branches under opposite `when` conditions,
+which read the state as it was when the flow started and so are always one click behind. For several flows on one
+element (an `onClick` and an `onMouseEnter`, or two independent clicks), call `upsertInteractionFlow` again with
+the same `ref` and **omit `flowId`**; passing an existing `flowId` replaces that flow instead.
+
+Two things routinely go wrong. Events **bubble**, so a clickable element inside another clickable element runs
+BOTH flows — put the trigger on one of them (the render warns you and names the pair). And a `globalCallback`
+(`addNotification`, `navigate`, app-level `setState`) is provided by a module, not by an element, so **omit
+`elementId`** on those; a step with the wrong node type resolves against nothing and silently does nothing.
+
+For data-driven widgets, an `apiContainer` fetches at runtime and `upsertBinding` wires the result into elements —
+see "Data & interactivity" in `plitzi://render/guide`, which is also the full reference for everything above.
+
 ## After it renders
 
 The widget is shown to the user; you get a compact summary. Don't re-describe what they can already see — a short
 caption or a follow-up question is enough.
 
-## Going further
-
-Widgets can be data-driven and interactive, not only static: an `apiContainer` fetches at runtime, `upsertBinding`
-wires that data into elements, and `upsertInteractionFlow` makes them react to clicks. See the "Data &
-interactivity" section of `plitzi://render/guide`.
+When the widget has flows, the summary includes an `interactions` line per flow naming what got wired to what
+(`"card-head onClick → toggleState card-body[visibility]"`). Read it: it is what confirms the flow landed on the
+element you meant. But it reports the **wiring**, not a click that was performed — this tool authors the widget,
+it does not drive it. So tell the user what you connected; never claim you verified the behaviour at runtime.

@@ -40,8 +40,9 @@ const setup = () => {
   );
   const callback = result.current.setState.callback as SetStateCallback;
   const postCallback = result.current.setState.postCallback as InteractionPostCallback;
+  const toggle = result.current.toggleState.callback as SetStateCallback;
 
-  return { callback, postCallback, setElementState, getState: () => state };
+  return { callback, postCallback, toggle, setElementState, getState: () => state };
 };
 
 describe('useElementInteractions', () => {
@@ -76,6 +77,20 @@ describe('useElementInteractions', () => {
     expect(setElementState).not.toHaveBeenCalled();
   });
 
+  // A falsy value is a value. Guarding it the way a missing key is guarded made every step that hid an element or
+  // unset a flag a silent no-op, which is the half of a toggle that turns something off.
+  it.each([
+    ['a real false', false, false],
+    ['zero', 0, 0],
+    ['an empty string', '', '']
+  ])('writes %s rather than treating it as no value', (_label, value, expected) => {
+    const { callback, getState } = setup();
+
+    callback({ key: 'active', value });
+
+    expect(getState()).toEqual({ active: expected });
+  });
+
   it('tracks the previous state across successive calls', () => {
     const { callback } = setup();
 
@@ -99,6 +114,36 @@ describe('useElementInteractions', () => {
 
     postCallback({ revertOnFinish: false }, { prevState: { a: 1 } });
 
+    expect(setElementState).not.toHaveBeenCalled();
+  });
+
+  // Expand and collapse from the SAME step on the same trigger — the point of the action.
+  it('flips a field back and forth on repeated calls', () => {
+    const { toggle, getState } = setup();
+
+    toggle({ key: 'visibility' });
+    expect(getState()).toEqual({ visibility: true });
+
+    toggle({ key: 'visibility' });
+    expect(getState()).toEqual({ visibility: false });
+
+    toggle({ key: 'visibility' });
+    expect(getState()).toEqual({ visibility: true });
+  });
+
+  it('reads the word the builder writes as the boolean it means', () => {
+    const { callback, toggle, getState } = setup();
+
+    callback({ key: 'styleSelectors.open', value: 'true' });
+    toggle({ key: 'styleSelectors.open' });
+
+    expect(getState()).toEqual({ styleSelectors: { open: false } });
+  });
+
+  it('writes nothing when the toggle names no key', () => {
+    const { toggle, setElementState } = setup();
+
+    expect(toggle({}).nextState).toBeUndefined();
     expect(setElementState).not.toHaveBeenCalled();
   });
 });

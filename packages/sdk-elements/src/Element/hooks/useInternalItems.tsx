@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
+import { isValidElement, use, useMemo, useSyncExternalStore } from 'react';
 
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -42,16 +42,19 @@ const useInternalItems = ({
   const { plugins } = use(PluginsContext);
   const { items } = definition;
   const hasItems = plitziElementLayout || children || items?.length;
-  // Bump a deterministic version whenever the layout instance changes so layout items remount (resetting their
-  // internal state). Derived during render from the previous prop — idempotent on re-render and StrictMode-safe.
-  const prevLayoutRef = useRef(plitziElementLayout);
-  const layoutVersionRef = useRef(0);
-  if (prevLayoutRef.current !== plitziElementLayout) {
-    prevLayoutRef.current = plitziElementLayout;
-    layoutVersionRef.current += 1;
-  }
-
-  const layoutKeyIdentifier = layoutVersionRef.current;
+  /**
+   * Which layout instance these items belong to, so switching to a DIFFERENT layout remounts them (resetting
+   * their internal state) — in the builder, where an author edits a shell and then views it under a page.
+   *
+   * Derived from the layout's identity, not from the prop's object identity. It used to be a counter bumped
+   * whenever `plitziElementLayout !== previous`, and that object is rebuilt whenever the page's id or children
+   * change — which is every navigation AND every edit. So the shell was torn down and rebuilt continuously while
+   * someone worked on the page inside it, and two pages naming the same layout never kept it. `referenceId` (the
+   * page) is deliberately NOT part of this: it is what made a navigation count as a different layout.
+   */
+  const layoutKeyIdentifier = plitziElementLayout
+    ? `${plitziElementLayout.type}:${plitziElementLayout.rootId}:${plitziElementLayout.containerId}`
+    : '';
 
   // useSyncExternalStore with getServerSnapshot: React uses the server snapshot during
   // hydration (false → client elements excluded, matching server HTML), then transitions

@@ -4,7 +4,15 @@ import { prepareRender } from './prepareRender';
 import { RequestMetrics } from '../../helpers/metrics';
 
 import type { PluginManager } from '../../plugins/manager';
-import type { Element, OfflineDataRaw, SchemaRsc, SSRPageServerConfig, SSRRequest } from '@plitzi/sdk-shared';
+import type {
+  Element,
+  OfflineDataRaw,
+  SchemaRsc,
+  SpaceFont,
+  SSRFontsConfig,
+  SSRPageServerConfig,
+  SSRRequest
+} from '@plitzi/sdk-shared';
 
 const element = (id: string, items: string[] = [], runtime?: 'server' | 'client'): Element => ({
   id,
@@ -25,7 +33,8 @@ const page = (id: string, slug: string, items: string[], seo: Record<string, unk
  */
 const offlineData = (
   rsc: SchemaRsc | undefined = { enabled: true },
-  homeRuntime: 'server' | 'client' = 'client'
+  homeRuntime: 'server' | 'client' = 'client',
+  fonts: SpaceFont[] = []
 ): OfflineDataRaw =>
   ({
     schema: {
@@ -51,10 +60,10 @@ const offlineData = (
       rsc
     },
     plugins: [],
-    style: { cache: '', variables: [] }
+    style: { cache: '', variables: [], fonts }
   }) as unknown as OfflineDataRaw;
 
-const request = (path: string): SSRRequest =>
+const request = (path: string, query: Record<string, string> = {}, cookie?: string): SSRRequest =>
   ({
     method: 'GET',
     path,
@@ -62,8 +71,8 @@ const request = (path: string): SSRRequest =>
     url: path,
     protocol: 'https',
     hostname: 'x.test',
-    headers: {},
-    query: {},
+    headers: cookie ? { cookie } : {},
+    query,
     ctx: { spaceDeployment: { spaceId: 42, environment: 'production', revision: 0 } }
   }) as unknown as SSRRequest;
 
@@ -76,20 +85,43 @@ type Options = {
   configRsc?: { enabled?: boolean };
   withAdapter?: boolean;
   homeRuntime?: 'server' | 'client';
+  /** What the deployment authorizes for debugging, and what the URL asks for. */
+  debugMode?: boolean;
+  /** The visitor's own preference, which rides on the request. */
+  cookie?: string;
+  query?: Record<string, string>;
+  /** What metering decided for this render. */
+  degrade?: boolean;
+  /** What the space declares, and where this deployment serves uploaded files from. */
+  fonts?: SpaceFont[];
+  fontsConfig?: SSRFontsConfig;
 };
 
 const render = async (
   path: string,
-  { rsc = { enabled: true }, configRsc, withAdapter = true, homeRuntime }: Options = {}
+  {
+    rsc = { enabled: true },
+    configRsc,
+    withAdapter = true,
+    homeRuntime,
+    debugMode,
+    cookie,
+    query,
+    degrade,
+    fonts,
+    fontsConfig
+  }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
-  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime));
+  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime, fonts));
   const metrics = new RequestMetrics();
   const config = {
     environment: 'production',
     assetVersion: '1',
     autoLoadSchemaPlugins: false,
     rsc: configRsc,
+    debugMode,
+    fonts: fontsConfig,
     adapters: {
       getOfflineData,
       getSpaceDeployment: () => Promise.resolve(undefined),
@@ -97,8 +129,13 @@ const render = async (
     }
   } as unknown as SSRPageServerConfig;
 
+  const req = request(path, query, cookie);
+  if (degrade !== undefined) {
+    (req.ctx as { meter?: { degrade: boolean } }).meter = { degrade };
+  }
+
   const { componentProps, templateParams } = await prepareRender(
-    request(path),
+    req,
     config,
     42,
     'production',
@@ -112,6 +149,7 @@ const render = async (
     getRscData,
     getOfflineData,
     templateParams,
+    componentProps,
     ssr: componentProps.server.ssr,
     timing: metrics.toServerTimingHeader()
   };
@@ -221,5 +259,107 @@ describe('prepareRender / the document the crawler reads', () => {
     const { templateParams } = await render('/nowhere');
 
     expect(templateParams.title).toBe('Plitzi App');
+  });
+});
+
+describe('prepareRender / debugging in a render nobody is watching', () => {
+  it('authorizes debugging on an ordinary render of a deployment that asked for it', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: true });
+
+    expect(componentProps.debugMode).toBe(true);
+    expect(templateParams.debugMode).toBe(true);
+  });
+
+  it('refuses it on a preview render, which exists to be captured as a picture', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: true, query: { __pt: 'tok' } });
+
+    expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(false);
+  });
+
+  /**
+   * The two halves of the answer part ways here, and that is the point.
+   *
+   * A visitor who hid the panel gets a render without it — but the page still comes back saying debugging is
+   * allowed, because that argument is what arms the shortcut and the console hint on the client. Sending the
+   * product of the two instead left an SSR page with no way back at all: nothing on screen, a dead shortcut, and
+   * a year-long cookie nobody could guess was the cause.
+   */
+  it('keeps a visitor who hid the panel able to bring it back', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: true, cookie: 'plitzi_debug=false' });
+
+    expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(true);
+  });
+
+  it('tells a page that was never authorized nothing, cookie or no cookie', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: false, cookie: 'plitzi_debug=true' });
+
+    expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(false);
+  });
+});
+
+/**
+ * What a render says when the account behind it is over quota.
+ *
+ * `branding` is forced on by the same state, but it is also on for every ordinary free space — so a notice that
+ * read it would appear on sites that are perfectly within their plan. The two facts travel separately for that
+ * reason, and only the server can state this one.
+ */
+describe('prepareRender / a degraded render', () => {
+  it('tells the client the account is over quota, and pins the badge on with it', async () => {
+    const { componentProps, templateParams } = await render('/', { degrade: true });
+
+    expect(componentProps.overQuota).toBe(true);
+    expect(componentProps.branding).toBe(true);
+    // The browser hydrates from the same fact, so the notice does not appear and then vanish.
+    expect(templateParams.offlineData).toContain('overQuota');
+  });
+
+  it('says nothing at all on a render that is within quota', async () => {
+    const { componentProps, templateParams } = await render('/', { degrade: false });
+
+    expect(componentProps.overQuota).toBeUndefined();
+    expect(componentProps.branding).toBeUndefined();
+    expect(templateParams.offlineData).not.toContain('overQuota');
+  });
+});
+
+describe('prepareRender / the fonts the document asks for', () => {
+  const lato: SpaceFont = {
+    source: 'google',
+    family: 'Lato',
+    fallback: 'sans-serif',
+    weights: [400, 700],
+    styles: ['normal']
+  };
+
+  it('asks for nothing when the space declares no family of its own', async () => {
+    const { templateParams } = await render('/');
+    expect(templateParams.fonts).toEqual({ preconnect: [], links: [], faces: '', origins: [] });
+  });
+
+  it('puts the space\'s google families in the document, which is the only place they load in time', async () => {
+    const { templateParams } = await render('/', { fonts: [lato] });
+    expect(templateParams.fonts?.links).toEqual([
+      { href: 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap', rel: 'stylesheet' }
+    ]);
+  });
+
+  it('resolves an uploaded face against this deployment, not against the one that stored it', async () => {
+    const hosted: SpaceFont = {
+      source: 'hosted',
+      family: 'Acme',
+      fallback: 'sans-serif',
+      weights: [400],
+      styles: ['normal'],
+      files: [{ weight: 400, style: 'normal', format: 'woff2', path: 'acme.woff2' }]
+    };
+    const cloud = await render('/', { fonts: [hosted], fontsConfig: { baseUrl: 'https://cdn.example.com/f' } });
+    expect(cloud.templateParams.fonts?.faces).toContain('url("https://cdn.example.com/f/acme.woff2")');
+
+    const selfHosted = await render('/', { fonts: [hosted] });
+    expect(selfHosted.templateParams.fonts?.faces).toContain('url("/fonts/acme.woff2")');
   });
 });

@@ -40,7 +40,7 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
       type: 'apiContainer',
       description:
         'Fetches data from a backend HTTP API (its `query`/`method`/`credentials`) and exposes the response as a data ' +
-        'source ITS DESCENDANTS bind to (source `apiContainer_<idRef>.data`; only elements inside it can consume it). ' +
+        'source ITS DESCENDANTS bind to (source `apiContainer_<id>.data`; only elements inside it can consume it). ' +
         'This is how you get backend data into the frontend. Its `mockData` prop is builder-only sample data — the ' +
         'published runtime fetches the real `query`, so always set a real query for production.',
       items: [],

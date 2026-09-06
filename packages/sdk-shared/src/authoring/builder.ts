@@ -63,7 +63,7 @@ export interface BuiltinActionSpec {
   title: string;
   /**
    * What KIND of node this action produces, which is also how the runtime resolves it: a `globalCallback` is
-   * looked up under its source module, a `callback` under an element's idRef, a `utility` under nothing at all.
+   * looked up under its source module, a `callback` under an element's id, a `utility` under nothing at all.
    * A global callback is the common case and the default.
    */
   type?: InteractionCallbackType;
@@ -80,7 +80,7 @@ export interface BuiltinActionSpec {
  * The `source` is the registration id the runtime looks the callback up under — the value a node's `elementId`
  * must carry. A global callback registers under a fixed module id (`space`, `state`, `navigation`, `auth`,
  * `actions`) and NOT under the element hosting the flow: the runtime resolves one as
- * `callbacksAvailables[elementId][action]`, so a node that stored the host element's idRef would resolve to
+ * `callbacksAvailables[elementId][action]`, so a node that stored the host element's id would resolve to
  * nothing and the flow would silently do nothing.
  *
  * Here rather than with the catalog that gathers them (`@plitzi/sdk-authoring`) because a source declares its own

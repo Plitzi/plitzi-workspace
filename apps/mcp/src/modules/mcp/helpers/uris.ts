@@ -16,6 +16,9 @@ export const primerUri = (env: Env): string => `plitzi://primer/${env}`;
 export const pagesUri = (env: Env): string => `plitzi://schema/${env}/pages`;
 export const pageUri = (env: Env, ref: string): string => `plitzi://schema/${env}/pages/${ref}`;
 export const pageStylesUri = (env: Env, ref: string): string => `${pageUri(env, ref)}/styles`;
+
+/** The shared layout shells. One of them is read as a page is — `pages/{ref}` resolves either root. */
+export const layoutsUri = (env: Env): string => `plitzi://schema/${env}/layouts`;
 export const elementUri = (env: Env, ref: string): string => `plitzi://schema/${env}/elements/${ref}`;
 export const schemaVarsUri = (env: Env): string => `plitzi://schema-variables/${env}`;
 export const settingsUri = (env: Env): string => `plitzi://settings/${env}`;
@@ -45,6 +48,8 @@ export const globalsUri = (env: Env): string => `plitzi://global-styles/${env}`;
 export const globalUri = (env: Env, componentType: string): string => `plitzi://global-styles/${env}/${componentType}`;
 export const idsUri = (env: Env): string => `plitzi://id-styles/${env}`;
 export const idUri = (env: Env, targetId: string): string => `plitzi://id-styles/${env}/${targetId}`;
+export const fontsUri = (env: Env): string => `plitzi://fonts/${env}`;
+export const fontUri = (env: Env, family: string): string => `plitzi://fonts/${env}/${family}`;
 export const styleVarsUri = (env: Env): string => `plitzi://style-variables/${env}`;
 export const styleVarUri = (env: Env, category: string): string => `plitzi://style-variables/${env}/${category}`;
 

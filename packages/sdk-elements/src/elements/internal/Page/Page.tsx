@@ -36,7 +36,7 @@ const Page = ({
   layoutContainer = '',
   children
 }: PageProps) => {
-  const { id, idRef } = useElement();
+  const { id } = useElement();
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }
@@ -92,13 +92,13 @@ const Page = ({
         return;
       }
 
-      void interactionsManager.interactionTrigger(idRef, 'onPageLoad', { pageId: id, routeParams, queryParams });
+      void interactionsManager.interactionTrigger(id, 'onPageLoad', { pageId: id, routeParams, queryParams });
     });
 
     return () => {
       cancelled = true;
     };
-  }, [id, idRef, interactionsManager, queryParams, routeParams]);
+  }, [id, interactionsManager, queryParams, routeParams]);
 
   return (
     <RootElement
@@ -112,7 +112,10 @@ const Page = ({
           {!!seoPageDescription && <meta name="description" content={seoPageDescription} />}
         </Helmet>
       )}
-      {layout && <LayoutContainer internalProps={layoutInternalProps} />}
+      {/* Keyed by the LAYOUT, not by the page: two pages naming the same shell keep it mounted across a
+          navigation (the body swaps under it), while switching to a different shell remounts it rather than
+          re-pointing the same node at another element id. */}
+      {layout && <LayoutContainer key={layoutContainer || layout} internalProps={layoutInternalProps} />}
       {!layout && children}
     </RootElement>
   );

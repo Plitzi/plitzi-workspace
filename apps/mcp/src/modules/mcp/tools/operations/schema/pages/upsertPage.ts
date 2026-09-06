@@ -4,13 +4,12 @@ import {
   empty,
   fail,
   findFolderByRef,
+  findLayoutByRef,
   findPageByRef,
-  generateObjectId,
   indexAddPage,
-  indexReRefPage,
-  pageRefOf
+  resolveRef
 } from '../../../../helpers';
-import { guardNewRef, pageUri, pagesUri } from '../write';
+import { guardNewRef, layoutsUri, pageUri, pagesUri } from '../write';
 
 import type { Space } from '../../../../helpers';
 import type { OpResult } from '../../../../helpers';
@@ -23,8 +22,8 @@ export const upsertPageOp = z
     ref: z
       .string()
       .describe(
-        'Page id/slug to update, or a new id you choose to create one. On a new page it is stored as its idRef: ' +
-          'starts with a letter, then letters, numbers, hyphens and underscores ("pricing"), unique across the space.'
+        'Page id to update, or a new id you choose to create one. The id IS the page name — starts with a letter, ' +
+          'then letters, numbers, hyphens and underscores ("pricing"), unique across the space.'
       ),
     label: z.string().optional(),
     slug: z
@@ -41,6 +40,18 @@ export const upsertPageOp = z
       .optional()
       .describe('Ref of an existing folder to place this page in; "" or null moves it to the root. Unknown → error'),
     default: z.boolean().optional(),
+    layout: z
+      .string()
+      .nullable()
+      .optional()
+      .describe(
+        'Ref of the layout shell this page renders inside; "" or null detaches it. See plitzi://schema/{env}/layouts.'
+      ),
+    layoutContainer: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Ref of the container INSIDE that shell where this page body goes — the slot. Must belong to it.'),
     enabled: z
       .boolean()
       .optional()
@@ -79,41 +90,95 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
     }
   }
 
+  /**
+   * The two halves of "this page is rendered inside that shell", resolved together because they are one decision.
+   *
+   * `layout` names the shell — a root of its own — and `layoutContainer` names the slot INSIDE it. Naming a slot
+   * that belongs to some other tree is the failure worth catching here: it stores fine, and the page then renders
+   * its body into a container the shell never shows.
+   */
+  let layoutValue: string | undefined;
+  let slotValue: string | undefined;
+  if (op.layout !== undefined) {
+    if (op.layout === null || op.layout === '') {
+      layoutValue = '';
+    } else if (!findLayoutByRef(space.schema, op.layout)) {
+      return fail(
+        'layout',
+        `Layout "${op.layout}" not found`,
+        'Create it with upsertLayout, or read plitzi://schema/' + env + '/layouts'
+      );
+    } else {
+      layoutValue = op.layout;
+    }
+  }
+
+  if (op.layoutContainer !== undefined) {
+    if (op.layoutContainer === null || op.layoutContainer === '') {
+      slotValue = '';
+    } else {
+      const existingPage = findPageByRef(space.schema, op.ref);
+      const shellRef = layoutValue ?? (existingPage?.attributes.layout as string | undefined);
+      const shell = shellRef ? findLayoutByRef(space.schema, shellRef) : undefined;
+      if (!shell) {
+        return fail(
+          'layoutContainer',
+          'A slot needs a layout to be part of',
+          'Pass `layout` in the same op (or set it first) so the slot can be checked against that shell'
+        );
+      }
+
+      if (!resolveRef(space.schema, shell, op.layoutContainer)) {
+        return fail(
+          'layoutContainer',
+          `"${op.layoutContainer}" is not an element of layout "${shell.id}"`,
+          `Read plitzi://schema/${env}/pages/${shell.id} and name a container from that tree`
+        );
+      }
+
+      slotValue = op.layoutContainer;
+    }
+  }
+
   const existing = findPageByRef(space.schema, op.ref);
   if (existing) {
-    // slug/name/default feed pageRefOf, which the page ref index keys on; capture the ref BEFORE the change so the
-    // index can re-key itself if it moved.
-    const oldRef = pageRefOf(existing);
+    // A page is addressed by its id, which none of these attributes feeds — so an update touches no index key.
     existing.attributes = {
       ...existing.attributes,
       ...(slug !== undefined ? { slug } : {}),
       ...(op.label !== undefined ? { name: op.label } : {}),
       ...(op.default !== undefined ? { default: op.default } : {}),
       ...(op.enabled !== undefined ? { enabled: op.enabled } : {}),
-      ...(folderValue !== undefined ? { folder: folderValue } : {})
+      ...(folderValue !== undefined ? { folder: folderValue } : {}),
+      ...(layoutValue !== undefined ? { layout: layoutValue } : {}),
+      ...(slotValue !== undefined ? { layoutContainer: slotValue } : {})
     };
-    indexReRefPage(space.schema, existing, oldRef);
 
-    return { ...empty(), updated: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
+    return {
+      ...empty(),
+      updated: 1,
+      staleResources: [pageUri(env, op.ref), pagesUri(env), ...(layoutValue === undefined ? [] : [layoutsUri(env)])]
+    };
   }
 
-  // Creating: the ref becomes this page's idRef, so it must pass the same charset/uniqueness guard as any element.
+  // Creating: the name becomes this page's id, so it must pass the same charset/uniqueness guard as any element.
   const guard = guardNewRef(space, op.ref, 'ref');
   if (guard) {
     return guard;
   }
 
-  const id = generateObjectId();
+  const id = op.ref;
   const attributes: Element['attributes'] = {
     slug: slug ?? op.ref,
     name: op.label ?? op.ref,
     default: op.default ?? false,
     enabled: op.enabled ?? true,
-    folder: folderValue ?? ''
+    folder: folderValue ?? '',
+    layout: layoutValue ?? '',
+    layoutContainer: slotValue ?? ''
   };
   const page: Element = {
     id,
-    idRef: op.ref,
     attributes,
     definition: {
       rootId: id,
@@ -127,5 +192,9 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
   space.schema.pages.push(id);
   indexAddPage(space.schema, page);
 
-  return { ...empty(), created: 1, staleResources: [pageUri(env, op.ref), pagesUri(env)] };
+  return {
+    ...empty(),
+    created: 1,
+    staleResources: [pageUri(env, op.ref), pagesUri(env), ...(layoutValue ? [layoutsUri(env)] : [])]
+  };
 };

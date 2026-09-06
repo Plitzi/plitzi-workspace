@@ -4,7 +4,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { use, useMemo, useCallback, useRef } from 'react';
 
-import { idRefConflict } from '@plitzi/sdk-schema/helpers/idRef';
+import { elementIdConflict } from '@plitzi/sdk-schema/helpers/elementId';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
@@ -77,13 +77,13 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
     [setTempAttributes, setTempDefinition]
   );
 
-  const getIdRefConflict = useCallback(
-    (idRef: string) => idRefConflict(getSchemaFlat(), idRef, elementSelected),
+  const getNameConflict = useCallback(
+    (id: string) => elementIdConflict(getSchemaFlat(), id, elementSelected),
     [getSchemaFlat, elementSelected]
   );
 
-  const handleUpdateIdRef = useCallback(
-    (idRef: string) => builderHandler('schemaUpdateElement', { ...elementRef.current, idRef: idRef || undefined }),
+  const handleRename = useCallback(
+    (id: string) => builderHandler('schemaRenameElement', elementRef.current?.id, id),
     [builderHandler]
   );
 
@@ -149,10 +149,10 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
             <ElementDefinitionSettings
               key={elementSelected}
               definition={tempDefinition}
-              idRef={element.idRef}
-              getIdRefConflict={getIdRefConflict}
+              id={element.id}
+              getNameConflict={getNameConflict}
               onUpdate={handleChange}
-              onUpdateRef={handleUpdateIdRef}
+              onRename={handleRename}
             />
             <ElementSettings
               attributes={tempAttributes}
@@ -172,7 +172,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
           />
         )}
         {selected === 'interactions' && (
-          <Interactions idRef={element.idRef} interactions={interactions} onChange={handleChangeInteractions} />
+          <Interactions id={element.id} interactions={interactions} onChange={handleChangeInteractions} />
         )}
       </div>
     </div>

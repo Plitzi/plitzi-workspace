@@ -286,6 +286,96 @@ describe('schemaValidator', () => {
     expect(result.warnings.some(e => e.code === 'ORPHANED_ELEMENT')).toBe(true);
   });
 
+  /**
+   * The shared-layout arrangement, which is where "reachable" stops meaning "somewhere under a page".
+   *
+   * `layout` names the shell — its own root, holding the header/sidebar/footer every page shows — and
+   * `layoutContainer` names the slot INSIDE that shell where the page's body is rendered. Walking only from the
+   * slot reaches the page's own subtree and nothing else, so a space's whole chrome read as orphaned.
+   */
+  it('reaches the layout shell a page is rendered inside, not just the slot it is rendered into', () => {
+    // The shell is a root of its own: nothing owns it, and its subtree is rooted on it rather than on a page.
+    const inLayout = (id: string, type: string, parentId?: string, items?: string[]): Element => {
+      const element = createElement(id, type, 'layout-main');
+
+      return { ...element, definition: { ...element.definition, ...(parentId ? { parentId } : {}), items } };
+    };
+
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        'page-1': createElement('page-1', 'page'),
+        'layout-main': inLayout('layout-main', 'layoutContainer', undefined, ['sidebar', 'body-slot']),
+        sidebar: inLayout('sidebar', 'container', 'layout-main', ['nav-link']),
+        'nav-link': inLayout('nav-link', 'link', 'sidebar', []),
+        'body-slot': inLayout('body-slot', 'container', 'layout-main', [])
+      },
+      pages: ['page-1']
+    };
+    (schema.flat['page-1'] as Element).attributes = {
+      default: true,
+      layout: 'layout-main',
+      layoutContainer: 'body-slot'
+    };
+
+    const result = validateSchema(schema);
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter(warning => warning.code === 'ORPHANED_ELEMENT')).toEqual([]);
+  });
+
+  it('roots a layout shell on itself, and never calls it or its contents orphaned', () => {
+    const inLayout = (id: string, type: string, parentId?: string, items?: string[]): Element => {
+      const element = createElement(id, type, 'lonely-layout');
+
+      return { ...element, definition: { ...element.definition, ...(parentId ? { parentId } : {}), items } };
+    };
+
+    // A shell no page uses YET — authored, not yet attached. It is still a root: nothing is meant to reach it.
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        'page-1': createElement('page-1', 'page'),
+        'lonely-layout': inLayout('lonely-layout', 'layoutContainer', undefined, ['footer']),
+        footer: inLayout('footer', 'container', 'lonely-layout', [])
+      },
+      pages: ['page-1']
+    };
+    (schema.flat['page-1'] as Element).attributes = { default: true };
+
+    const result = validateSchema(schema);
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter(warning => warning.code === 'ORPHANED_ELEMENT')).toEqual([]);
+  });
+
+  it('holds a layout\u2019s descendants to the layout\u2019s own rootId', () => {
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        'page-1': createElement('page-1', 'page'),
+        'main-layout': {
+          ...createElement('main-layout', 'layoutContainer', 'main-layout'),
+          definition: {
+            ...createElement('main-layout', 'layoutContainer', 'main-layout').definition,
+            items: ['stray']
+          }
+        },
+        // Rooted on the page it is not in — the mismatch that used to go unreported, because nothing walked here.
+        stray: {
+          ...createElement('stray', 'container', 'page-1'),
+          definition: { ...createElement('stray', 'container', 'page-1').definition, parentId: 'main-layout' }
+        }
+      },
+      pages: ['page-1']
+    };
+    (schema.flat['page-1'] as Element).attributes = { default: true, layout: 'main-layout' };
+
+    const result = validateSchema(schema);
+
+    expect(result.errors.some(error => error.code === 'ROOT_ID_MISMATCH' && error.elementId === 'stray')).toBe(true);
+  });
+
   it('should detect invalid page references in pages array', () => {
     const schema: Schema = {
       ...EMPTY_SCHEMA.schema,
@@ -520,49 +610,114 @@ describe('schemaValidator', () => {
     expect(result.valid).toBe(true);
   });
 
-  // An idRef is the key an element publishes its data source under, so the space must agree on who owns one.
-  describe('idRef', () => {
-    const withIdRefs = (...idRefs: (string | undefined)[]): Schema => ({
+  // An element's id is the key it publishes its data source under and the name every binding and interaction
+  // wires by, so the charset it is held to is load-bearing rather than cosmetic.
+  describe('element id', () => {
+    const withIds = (...ids: string[]): Schema => ({
       ...EMPTY_SCHEMA.schema,
       pages: ['page-1'],
       flat: {
         'page-1': {
           ...createElement('page-1', 'page'),
-          definition: { ...createElement('page-1', 'page').definition, items: idRefs.map((_, i) => `el-${i}`) }
+          definition: { ...createElement('page-1', 'page').definition, items: ids }
         },
         ...Object.fromEntries(
-          idRefs.map((idRef, i) => [
-            `el-${i}`,
+          ids.map(id => [
+            id,
             {
-              ...createElement(`el-${i}`, 'apiContainer'),
-              idRef,
-              definition: { ...createElement(`el-${i}`, 'apiContainer').definition, parentId: 'page-1' }
+              ...createElement(id, 'apiContainer'),
+              definition: { ...createElement(id, 'apiContainer').definition, parentId: 'page-1' }
             }
           ])
         )
       }
     });
 
-    it('accepts elements with no idRef at all (it is optional)', () => {
-      expect(validateSchema(withIdRefs(undefined, undefined)).valid).toBe(true);
+    it('accepts distinct, well-formed names', () => {
+      expect(validateSchema(withIds('products-api', 'orders-api')).valid).toBe(true);
     });
 
-    it('accepts distinct, well-formed idRefs', () => {
-      expect(validateSchema(withIdRefs('products-api', 'orders-api')).valid).toBe(true);
-    });
-
-    it('rejects two elements sharing one idRef, naming both owners', () => {
-      const result = validateSchema(withIdRefs('products-api', 'products-api'));
+    it('rejects a name carrying the dot the source grammar and the flat paths both split on', () => {
+      const result = validateSchema(withIds('products.api'));
       expect(result.valid).toBe(false);
-      const error = result.errors.find(e => e.code === 'DUPLICATE_ID_REF');
-      expect(error?.message).toContain('products-api');
-      expect(error?.details).toEqual({ idRef: 'products-api', otherElementId: 'el-0' });
+      expect(result.errors.some(e => e.code === 'INVALID_ELEMENT_ID')).toBe(true);
     });
 
-    it('rejects an idRef carrying a dot separator the source grammar uses', () => {
-      const result = validateSchema(withIdRefs('products.api'));
-      expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.code === 'INVALID_ID_REF')).toBe(true);
+    it('rejects a name that does not start with a letter', () => {
+      expect(validateSchema(withIds('2products')).errors.some(e => e.code === 'INVALID_ELEMENT_ID')).toBe(true);
+    });
+  });
+
+  // A step id and a binding id are names too — read by a later step as `{{ <id>.field }}`, and used to address one
+  // rule of one element — so both are held to the same rules the element ids are.
+  describe('interaction and binding ids', () => {
+    const step = (overrides: Record<string, unknown>) =>
+      ({
+        id: 'onClick-1',
+        title: 'Click',
+        type: 'trigger',
+        action: 'onClick',
+        params: {},
+        preview: {},
+        elementId: null,
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'onClick-1',
+        enabled: true,
+        ...overrides
+      }) as never;
+
+    const withElement = (definition: Partial<Element['definition']>): Schema => ({
+      ...EMPTY_SCHEMA.schema,
+      pages: ['page-1'],
+      flat: {
+        'page-1': {
+          ...createElement('page-1', 'page'),
+          definition: { ...createElement('page-1', 'page').definition, items: ['btn'] }
+        },
+        btn: {
+          ...createElement('btn', 'button'),
+          definition: { ...createElement('btn', 'button').definition, parentId: 'page-1', ...definition }
+        }
+      }
+    });
+
+    it('rejects a step name carrying the dot a later step would read as a path separator', () => {
+      const result = validateSchema(
+        withElement({ interactions: { 'on.click': step({ id: 'on.click', flowId: 'on.click' }) } })
+      );
+      expect(result.errors.some(e => e.code === 'INVALID_INTERACTION_ID')).toBe(true);
+    });
+
+    it('rejects a step whose stored id disagrees with the key the flow holds it under', () => {
+      const result = validateSchema(
+        withElement({ interactions: { 'onClick-1': step({ id: 'somewhere-else', flowId: 'onClick-1' }) } })
+      );
+      expect(result.errors.some(e => e.code === 'INTERACTION_ID_MISMATCH')).toBe(true);
+    });
+
+    it('rejects two bindings of one element sharing a name', () => {
+      const result = validateSchema(
+        withElement({
+          bindings: {
+            attributes: [
+              { id: 'attributes-1', to: 'content', source: 'variables.a' },
+              { id: 'attributes-1', to: 'title', source: 'variables.b' }
+            ]
+          }
+        })
+      );
+      expect(result.errors.some(e => e.code === 'DUPLICATE_BINDING_ID')).toBe(true);
+    });
+
+    it('accepts distinct, well-formed step and binding names', () => {
+      const result = validateSchema(
+        withElement({
+          interactions: { 'onClick-1': step({}) },
+          bindings: { attributes: [{ id: 'attributes-1', to: 'content', source: 'variables.a' }] }
+        })
+      );
+      expect(result.valid).toBe(true);
     });
   });
 

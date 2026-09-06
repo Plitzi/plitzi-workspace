@@ -16,7 +16,7 @@ export type UseRegisterSourceProps = {
 // Registers a data source's metadata into the root `sources` slice. The write delegates up the scope chain to
 // the root (no seeding needed), keeping the builder's binding registry in one place.
 //
-// An empty `source` means the element has no idRef, so it publishes nothing a binding could target: the source is
+// An empty `source` means the caller has nothing to publish under, so nothing a binding could target: the source is
 // simply not registered, and it never appears in the binding picker.
 const useRegisterSource = ({ id = '', source, name, fields = [] }: UseRegisterSourceProps) => {
   const { useStoreSetter } = createStoreHook<Record<string, unknown>>();

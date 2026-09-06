@@ -44,12 +44,8 @@ export const sampleSpaceWith = (ref: string, props: Record<string, unknown>): Of
 };
 
 /**
- * The elements a spec addresses, by the NAME the space gives them.
- *
- * Not their ids: those are derived from the declaration that authors the space, so a hex string written down here
- * is a copy of a hash that changes whenever somebody adds an element above it — and it fails as "no such element"
- * long after the edit that moved it. `examples/shared-space/space.ts` gives these three an `idRef` for exactly this
- * reason, which is also the spelling the MCP takes (`pageRef`/`ref` are "ref or id").
+ * The elements a spec addresses, by the name the space gives them — which IS their id, so there is nothing to
+ * translate. `examples/shared-space/space.ts` names these three for exactly this reason.
  */
 export const SAMPLE_REFS = {
   page: 'home',
@@ -57,15 +53,14 @@ export const SAMPLE_REFS = {
   logo: 'logo'
 };
 
-/** The document id of a named element, for the places that can only be given one. */
+/** The document id of a named element. The name IS the id; this only checks the space really holds it, so a typo
+ *  fails here rather than as a silently empty selector three specs later. */
 export const sampleId = (ref: string, data: OfflineDataRaw = sampleSpace()): string => {
-  const found = Object.values(data.schema.flat).find(element => element.idRef === ref);
-
-  if (!found) {
+  if (!Object.hasOwn(data.schema.flat, ref)) {
     throw new Error(`No element named "${ref}" in the sample space`);
   }
 
-  return found.id;
+  return ref;
 };
 
 export { actionSpace, minimalSpace, plainSpace };

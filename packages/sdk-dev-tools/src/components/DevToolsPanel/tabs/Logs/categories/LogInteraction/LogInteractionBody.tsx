@@ -1,17 +1,17 @@
 import BodyContent from './BodyContent';
 import BodyHeader from './BodyHeader';
 
-import type { LogInteraction } from '@plitzi/sdk-shared';
+import type { InteractionFlowParams } from '@plitzi/sdk-shared';
 
 export type LogInteractionBodyProps = {
   className?: string;
-  node: LogInteraction['params']['node'];
-  nodes: LogInteraction['params']['nodes'];
+  node: InteractionFlowParams['node'];
+  nodes: InteractionFlowParams['nodes'];
   startTime: number;
   endTime: number;
   duration?: string;
   elementId?: string;
-  elementRef?: string;
+  hostElementId?: string;
 };
 
 const LogInteractionBody = ({
@@ -21,7 +21,7 @@ const LogInteractionBody = ({
   endTime,
   duration,
   elementId,
-  elementRef
+  hostElementId
 }: LogInteractionBodyProps) => {
   return (
     <div className="mx-2 my-1.5 flex flex-col gap-2 overflow-hidden rounded border border-zinc-200 text-xs dark:border-zinc-800">
@@ -32,7 +32,7 @@ const LogInteractionBody = ({
           endTime={endTime}
           duration={duration}
           elementId={elementId}
-          elementRef={elementRef}
+          hostElementId={hostElementId}
         />
       </div>
 

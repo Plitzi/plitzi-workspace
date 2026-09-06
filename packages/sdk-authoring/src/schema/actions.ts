@@ -219,7 +219,7 @@ export const defineAction = (spec: ActionSpec): ActionEntry => {
     document: {
       name: spec.name,
       ...(spec.description ? { description: spec.description } : {}),
-      nodes: authorFlow(spec.id, steps)
+      nodes: authorFlow(steps)
     }
   };
 };

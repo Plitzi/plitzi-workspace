@@ -37,11 +37,11 @@ describe('element factories', () => {
   });
 
   it('keeps attributes and authoring fields apart without either being nested', () => {
-    const spec = image({ src: '/fox.jpg', alt: 'A fox', class: 'cover', idRef: 'hero-image' });
+    const spec = image({ src: '/fox.jpg', alt: 'A fox', class: 'cover', id: 'hero-image' });
 
     expect(spec.attributes).toMatchObject({ src: '/fox.jpg', alt: 'A fox' });
     expect(spec.class).toBe('cover');
-    expect(spec.idRef).toBe('hero-image');
+    expect(spec.id).toBe('hero-image');
     expect(spec.attributes).not.toHaveProperty('class');
   });
 
@@ -127,8 +127,8 @@ describe('the types', () => {
   });
 
   it('leaves no attribute name colliding with an authoring field', () => {
-    // If this stops compiling, an element has just declared an attribute called `class`, `css`, `children`,
-    // `bind`, `flows`, `slots`, `variant`, `runtime`, `idRef` or `meta` — and a flat prop can no longer say which
+    // If this stops compiling, an element has just declared an attribute called `id`, `class`, `css`, `children`,
+    // `bind`, `flows`, `slots`, `variant`, `runtime`, `visible` or `meta` — and a flat prop can no longer say which
     // of the two it meant. `keyof` a union answers with the keys they SHARE, so the union of every key has to be
     // built by hand; the `label` assertion below is what proves this one is looking at anything at all.
     type EveryAttributeKey = {

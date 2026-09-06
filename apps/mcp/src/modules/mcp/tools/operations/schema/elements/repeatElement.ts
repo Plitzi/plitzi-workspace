@@ -51,7 +51,7 @@ const templateElement: z.ZodType<TemplateElement> = z.lazy(() =>
 export const repeatElementOp = z
   .object({
     type: z.literal('repeatElement'),
-    pageRef: z.string().describe('Page ref or id'),
+    pageRef: z.string().describe('The page, by name'),
     ref: z.string().describe('Ref of the WRAPPER element this creates; the rows become its children'),
     elementType: z.string().optional().describe('Type of the wrapper; defaults to container'),
     label: z.string().optional(),

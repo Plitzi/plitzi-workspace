@@ -41,7 +41,7 @@ export type ElementInteraction<
   action: string;
   params: InteractionCallbackParamValues<T>;
   preview: Record<string, unknown>;
-  // The element the step is registered on: an element idRef for a `callback`/`trigger`, the source module for a
+  // The element the step is registered on: an element id for a `callback`/`trigger`, the source module for a
   // `globalCallback` (e.g. `space`/`state`). A `utility` is resolved by its action alone (`utility[action]`) and is
   // registered on NO element, so its elementId is null.
   elementId: Element['id'] | null;
@@ -74,9 +74,16 @@ export type ElementDefinition = {
   loadStrategy?: ElementLoadStrategy;
 };
 
+/**
+ * An element, keyed by the one name it answers to.
+ *
+ * `id` is that name: the `flat` key, what `parentId`/`items`/`rootId` point at, the `<type>_<id>` a binding's source
+ * is built from, and the target an interaction wires to. It is chosen — typed by a person in the builder's tree,
+ * written by an agent, or minted as `<type>-<n>` — never an opaque generated handle, so the key an author writes
+ * down is the key the runtime resolves. `definition.label` stays free display text and wires nothing.
+ */
 export type Element<TAttributes extends Record<string, unknown> = Record<string, unknown>> = {
   id: string;
-  idRef?: string;
   attributes: TAttributes & { subType?: string };
   definition: ElementDefinition;
 };
@@ -159,6 +166,7 @@ export type SchemaContextValue = {
     fromSubscriptions?: boolean
   ) => void;
   schemaUpdateElement?: (element: Element, fromSubscriptions?: boolean) => void;
+  schemaRenameElement?: (elementId: Element['id'], id: Element['id'], fromSubscriptions?: boolean) => void;
   schemaUpdateElements?: (elements: Element[], fromSubscriptions?: boolean) => void;
   schemaMoveElement?: (
     from: string,

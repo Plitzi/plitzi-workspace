@@ -57,13 +57,13 @@ describe('when', () => {
   });
 
   it('reaches the authored node, where the runtime reads it', () => {
-    const nodes = authorFlow('p', [whenSucceeded('save', named('go', step('navigate')))]);
+    const nodes = authorFlow([whenSucceeded('save', named('go', step('navigate')))]);
 
     expect(nodes.go.when).toMatchObject({ rules: [{ field: 'save.status' }] });
   });
 
   /** A step with no condition carries no `when` at all, rather than an empty group that evaluates to nothing. */
   it('writes no condition when none was asked for', () => {
-    expect(authorFlow('p', [named('go', step('navigate'))]).go).not.toHaveProperty('when');
+    expect(authorFlow([named('go', step('navigate'))]).go).not.toHaveProperty('when');
   });
 });

@@ -5,6 +5,7 @@ import { use, useMemo, useCallback } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
+import FontPreviews from '@pmodules/Fonts/FontPreviews';
 
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
@@ -62,6 +63,9 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
 
   return (
     <div className="flex grow flex-col overflow-auto">
+      {/* The space's families, in the EDITOR's document — the canvas is an iframe, and nothing it loads reaches
+          the panels that have to draw a font's name in its own typeface. */}
+      <FontPreviews />
       <AppHeader />
       <BuilderProvider baseElementId={currentPageId} onHandler={builderHandler}>
         <PopupProvider

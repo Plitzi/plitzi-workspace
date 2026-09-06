@@ -8,7 +8,7 @@ import type { OpResult } from '../../../../helpers';
 import type { Env } from '../../../../types';
 
 export const deletePageOp = z
-  .object({ type: z.literal('deletePage'), ref: z.string().describe('Page ref or id') })
+  .object({ type: z.literal('deletePage'), ref: z.string().describe('The page, by name') })
   .describe('Delete a page and every element on it.');
 
 export type DeletePage = z.infer<typeof deletePageOp>;

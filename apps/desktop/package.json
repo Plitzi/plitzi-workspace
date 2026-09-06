@@ -1,0 +1,70 @@
+{
+  "name": "@plitzi/plitzi-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0",
+  "description": "The Plitzi desktop client: sign in, browse your spaces and open one, in a window of its own.",
+  "type": "module",
+  "main": "dist/electron/main.cjs",
+  "repository": {
+    "type": "https",
+    "url": "https://github.com/plitzi/plitzi-workspace.git"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.3.1",
+    "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/plitzi-ui": "^1.6.20",
+    "@plitzi/sdk-shared": "workspace:*",
+    "clsx": "^2.1.1",
+    "react-hook-form": "^7.85.0",
+    "react-router-dom": "^7.18.2"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^26.2.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^9.2.1",
+    "electron": "^40.1.1",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.39.5",
+    "eslint-plugin-import": "^2.32.0",
+    "jsdom": "^28.0.0",
+    "postcss": "^8.5.26",
+    "prettier": "^3.9.6",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  },
+  "scripts": {
+    "start": "concurrently -k -n vite,electron \"vite dev --mode development\" \"yarn electron:dev\"",
+    "electron:dev": "yarn build:electron:dev && electron dist/electron/main.cjs",
+    "build:electron:dev": "vite build --config vite.preload.config.ts --mode development && vite build --config vite.electron.config.ts --mode development",
+    "build:electron": "vite build --config vite.preload.config.ts && vite build --config vite.electron.config.ts",
+    "build:renderer": "vite build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "TIMING=1 eslint ./src ./electron",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "build:dev": "yarn build:renderer --mode development && yarn build:electron:dev",
+    "build:prod": "yarn build:renderer && yarn build:electron",
+    "package": "yarn build:prod && electron-builder --publish never"
+  },
+  "build": {
+    "appId": "com.plitzi.desktop",
+    "productName": "Plitzi",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**"
+    ]
+  }
+}

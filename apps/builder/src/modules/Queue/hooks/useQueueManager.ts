@@ -132,6 +132,12 @@ const useQueueManager = ({
           return mutate('SpaceUpdateElement', { element });
         }
 
+        case SchemaActions.SCHEMA_RENAME_ELEMENT: {
+          const { elementId, id } = item.action;
+
+          return mutate('SpaceRenameElement', { elementId, id });
+        }
+
         case SchemaActions.SCHEMA_UPDATE_ELEMENTS: {
           const { elements } = item.action;
 
@@ -241,6 +247,24 @@ const useQueueManager = ({
           return mutate('StyleRemoveVariable', { category, name });
         }
 
+        case StyleActions.STYLE_ADD_FONT: {
+          const { font } = item.action;
+
+          return mutate('StyleAddFont', { font });
+        }
+
+        case StyleActions.STYLE_UPDATE_FONT: {
+          const { family, font } = item.action;
+
+          return mutate('StyleUpdateFont', { family, font });
+        }
+
+        case StyleActions.STYLE_REMOVE_FONT: {
+          const { family } = item.action;
+
+          return mutate('StyleRemoveFont', { family });
+        }
+
         case StyleActions.STYLE_UPDATE: {
           const { style } = item.action;
 
@@ -299,6 +323,12 @@ const useQueueManager = ({
           const { element, segmentId } = item.action;
 
           return mutate('SegmentUpdateElement', { element, contextId: segmentId });
+        }
+
+        case SegmentsActions.SEGMENTS_RENAME_ELEMENT: {
+          const { elementId, id, segmentId } = item.action;
+
+          return mutate('SegmentRenameElement', { elementId, id, contextId: segmentId });
         }
 
         case SegmentsActions.SEGMENTS_UPDATE_ELEMENTS: {

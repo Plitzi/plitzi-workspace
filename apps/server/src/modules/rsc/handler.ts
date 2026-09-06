@@ -1,3 +1,4 @@
+import { readDraftToken } from '../../core/previewToken';
 import { buildRscCacheKey, DEFAULT_TTL_MS } from '../../helpers/cache';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 
@@ -111,10 +112,23 @@ export const handleRsc = async (
   const idsParam = ids?.join(',');
   const pageRequest = withPageLocation(req);
 
+  /**
+   * Whether this refresh belongs to somebody looking at a draft.
+   *
+   * The page render already refuses to meter or cache a draft, and before draft SESSIONS existed that was the whole
+   * story: a one-shot token was spent by the render, so no refresh could ever carry one. A reusable token can, and a
+   * page left open in a preview asks for data on its own — so without this, iterating on unsaved work would be
+   * billed as live traffic and would show up on the live view as visitors nobody has.
+   *
+   * The token is not resolved here: whether the draft is still in the store decides what the PAGE renders, and a
+   * refresh that arrives a second after it expired is still part of the same preview.
+   */
+  const previewing = readDraftToken(req) !== undefined;
+
   const ttlMs = config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc;
   const isAuthenticated = !!req.ctx.user;
   const cacheControl =
-    environment === 'main'
+    environment === 'main' || previewing
       ? 'no-store'
       : isAuthenticated
         ? `private, max-age=${Math.floor(ttlMs / 1000)}`
@@ -122,7 +136,7 @@ export const handleRsc = async (
 
   // main is the development environment — never cache it.
   const cacheKey =
-    environment !== 'main'
+    environment !== 'main' && !previewing
       ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam, req)
       : undefined;
   const cached = cacheKey ? cache?.get(cacheKey) : undefined;
@@ -131,7 +145,9 @@ export const handleRsc = async (
   // is metered like one, at whatever a deployment prices a data refresh against a whole page. Before the
   // cache lookup and on both branches, for the same reason page renders are: a response served from cache is
   // still a response served.
-  await meterRsc(req, config, spaceId, environment, revision, !!cached);
+  if (!previewing) {
+    await meterRsc(req, config, spaceId, environment, revision, !!cached);
+  }
 
   if (cached) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');

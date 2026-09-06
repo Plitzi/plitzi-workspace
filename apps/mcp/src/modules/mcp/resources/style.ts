@@ -3,6 +3,8 @@ import {
   afterPrefix,
   defUri,
   defsUri,
+  fontUri,
+  fontsUri,
   globalUri,
   globalsUri,
   idUri,
@@ -13,6 +15,7 @@ import {
 import {
   definitionRefs,
   definitionToAI,
+  fontsToAI,
   globalStyleToAI,
   globalStyleTypes,
   idStyleIds,
@@ -23,7 +26,8 @@ import {
 import type { Space } from '../helpers';
 import type { Env, ResourceEnvelope } from '../types';
 
-/** Style-schema reads: definitions, global (per-type) styles and design-token variables by category. Returns
+/** Style-schema reads: definitions, global (per-type) styles, design-token variables by category, and the fonts
+ *  the space declares. Returns
  *  undefined when the URI belongs to another domain, null when the shape is ours but the ref does not resolve. */
 export const readStyleResource = (
   space: Space,
@@ -61,6 +65,17 @@ export const readStyleResource = (
     const idStyle = idStyleToAI(space.style, targetId);
 
     return idStyle ? envelope(idStyle) : null;
+  }
+
+  if (uri === fontsUri(env)) {
+    return envelope(fontsToAI(space.style));
+  }
+
+  const family = afterPrefix(uri, fontUri(env, ''));
+  if (family !== undefined) {
+    const font = (space.style.fonts ?? []).find(item => item.family === decodeURIComponent(family));
+
+    return font ? envelope(font) : null;
   }
 
   if (uri === styleVarsUri(env)) {

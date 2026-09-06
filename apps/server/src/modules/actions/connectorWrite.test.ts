@@ -51,7 +51,7 @@ const buildRes = () => {
       sent.status = code;
     },
     send: body => {
-      sent.body = body;
+      sent.body = typeof body === 'string' ? body : body.toString('utf-8');
     },
     write: () => undefined,
     end: () => undefined

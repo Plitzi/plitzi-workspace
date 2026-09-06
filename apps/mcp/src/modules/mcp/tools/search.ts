@@ -2,12 +2,10 @@ import { z } from 'zod';
 
 import {
   computeVersion,
-  elementRefOf,
   elementUri,
   getPageElements,
   isPageElement,
   nameOf,
-  pageRefOf,
   pageRefOfElement,
   pageUri
 } from '../helpers';
@@ -93,7 +91,7 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
       continue;
     }
 
-    matched.push({ el, pageRef, ref: elementRefOf(el), matches });
+    matched.push({ el, pageRef, ref: el.id, matches });
   }
 
   const offset = input.offset ?? 0;
@@ -153,7 +151,7 @@ export const search = (input: SearchInput, space: Space, env: Env): SearchRespon
       continue;
     }
 
-    const ref = pageRefOf(page);
+    const ref = page.id;
     pages.push({
       ref,
       uri: pageUri(env, ref),

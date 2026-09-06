@@ -4,11 +4,42 @@ Everything before this served a space that lived in a file. This one serves a sp
 server that is not Plitzi's.
 
 ```bash
-PLITZI_WEB_KEY=<the space key> yarn start
+PLITZI_HOST_KEY=<the space's self-hosting key> yarn start
 ```
 
-The key comes from **Credentials** in the builder; it names the space, so no space id appears in the config and
+## The key is not the one in your published page
+
+A space has two credentials, and this needs the second one.
+
+| | `render` — the **public** key | `host` — the **self-hosting** key |
+|---|---|---|
+| Where it lives | embedded in every published page | your server's environment, and nowhere else |
+| Who can read it | anyone who views source | only you |
+| What protects it | the **origins it declares** — the browser states where it is presenting from, and Plitzi checks | **being secret** — possessing it is the proof |
+| Used by | the browser-rendered SDK | `createCloudAdapters` |
+
+The split is the whole point. An origin check works only because a *browser* is made to make the claim; a server
+has no such claim to make, so if the public key were accepted without one, a key lifted from anybody's published
+page would be enough to serve a byte-identical clone of their site. Passing the public key here fails at startup
+with a message saying so, rather than as a 401 later.
+
+Issue one from **Credentials → Self-hosting** in the builder, or:
+
+```bash
+curl -X POST https://api.plitzi.com/spaces/<id>/tokens/host \
+  -H 'content-type: application/json' -d '{"label":"prod-eu-1"}'
+```
+
+It is returned **once**. The `label` is what you will read in the credentials list when deciding which one to
+revoke, so name the deployment. Both the key and the label name the space, so no space id appears in the config and
 none can be reached by guessing a number.
+
+If it leaks, revoke that one row — the published site keeps working, because it is not that key.
+
+> **Pointing at a local Plitzi** (`PLITZI_SERVER_URL=https://server.plitzi.local`): the dev stack serves TLS with a
+> mkcert certificate, which browsers trust but Node's `fetch` does not. The `start` scripts already set
+> `NODE_OPTIONS=--use-system-ca` so Node reads the system trust store — plain `yarn start` works. That flag needs
+> Node 22+; on Node 20/21 set `NODE_EXTRA_CA_CERTS=$(mkcert -CAROOT)/rootCA.pem` instead.
 
 ## What this is for
 
@@ -20,9 +51,9 @@ server, on your domain, with your auth, your server actions and your logs.
 ## The version being served
 
 ```bash
-PLITZI_WEB_KEY=<key> yarn start                              # the live document
-PLITZI_ENVIRONMENT=production PLITZI_WEB_KEY=<key> yarn start # latest published, releases itself
-PLITZI_ENVIRONMENT=production PLITZI_REVISION=12 …            # exactly revision 12
+PLITZI_HOST_KEY=<key> yarn start                              # the live document
+PLITZI_ENVIRONMENT=production PLITZI_HOST_KEY=<key> yarn start # latest published, releases itself
+PLITZI_ENVIRONMENT=production PLITZI_REVISION=12 …             # exactly revision 12
 ```
 
 | Config | Serves | Asks Plitzi |

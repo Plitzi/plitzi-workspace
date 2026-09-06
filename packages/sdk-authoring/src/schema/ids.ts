@@ -1,5 +1,6 @@
 /**
- * Deterministic hex digest, in plain TypeScript.
+ * Deterministic hex digest, in plain TypeScript. What names a style selector — never an element, a page or a step:
+ * those answer to names a person reads.
  *
  * FNV-1a over the string, re-run with a different offset basis per 8-hex block. Not `node:crypto`: this module is
  * exported from the package root, and the builder bundles that root for the browser — one `node:` import here is a
@@ -24,8 +25,15 @@ export const digest = (value: string, length: number): string => {
 };
 
 /**
- * Mongo-shaped, so an authored document is indistinguishable from an exported one — but derived from the path that
- * produced it, so authoring the same space twice writes byte-identical documents and a seed can re-run without
- * churning what it wrote last time.
+ * A string as a slug: lowercase, `[a-z0-9-]`, no leading or trailing dash.
+ *
+ * Two different things need it and they must agree. A space's `permanentUrl` is a DNS label at the platform — a
+ * subdomain is built out of it — and it is also what element ids and style selectors are derived from, so a name
+ * that arrived from a folder ("My Site", "my_site") has to become one of these before it is written into a spec
+ * rather than after, when the documents already carry it.
  */
-export const authoringId = (path: string): string => digest(`plitzi:authoring:${path}`, 24);
+export const slugify = (value: string, fallback: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || fallback;

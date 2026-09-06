@@ -23,7 +23,6 @@ const seedSpace = (): { schema: Schema; style: Style } => {
   const space = emptySpace();
   space.schema.flat[PAGE_REF] = {
     id: PAGE_REF,
-    idRef: PAGE_REF,
     attributes: { slug: '', name: 'Home', default: true },
     definition: { rootId: PAGE_REF, label: 'Page', type: 'page', items: [], styleSelectors: { base: '' } }
   };
@@ -106,7 +105,7 @@ const imageOperations = (pageRef: string) => [
 ];
 
 const srcOf = (schema: Schema): unknown =>
-  Object.values(schema.flat).find(element => element.idRef === 'pic')?.attributes.src;
+  Object.values(schema.flat).find(element => element.id === 'pic')?.attributes.src;
 
 let defaults: Deployment;
 let widened: Deployment;

@@ -23,7 +23,6 @@ const InitQuery = gql`
         settings
         flat {
           id
-          idRef
           definition {
             label
             type
@@ -72,7 +71,6 @@ const InitQuery = gql`
           }
           flat {
             id
-            idRef
             definition {
               label
               type
@@ -104,6 +102,7 @@ const InitQuery = gql`
         platform
         variables
         mode
+        fonts
         cache
       }
     }

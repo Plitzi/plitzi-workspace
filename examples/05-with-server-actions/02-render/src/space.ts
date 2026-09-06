@@ -31,7 +31,7 @@ const catsPage: PageSpec = {
      * source: `records` is the list, and `count`, `isEmpty` and `hasError` come with it.
      */
     apiContainer({
-      idRef: 'cats',
+      id: 'cats',
       runtime: 'server',
       action: 'cat-gallery',
       subType: 'section',
@@ -63,7 +63,7 @@ const catsPage: PageSpec = {
          * records the provider published — so what repeats is decided by the data, not by the schema.
          */
         list({
-          idRef: 'catList',
+          id: 'catList',
           source: 'controlled',
           class: 'catsGrid',
           bind: { items: 'cats.records' },

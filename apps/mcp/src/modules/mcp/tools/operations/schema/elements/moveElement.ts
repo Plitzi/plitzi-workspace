@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { empty, fail, findPageByRef, indexInvalidateDetails, resolveRef } from '../../../../helpers';
+import { empty, fail, findRootByRef, indexInvalidateDetails, resolveRef } from '../../../../helpers';
 import { position } from '../shared';
 import { pageUri, placeChild, removeFromParent } from '../write';
 
@@ -11,9 +11,9 @@ import type { Env } from '../../../../types';
 export const moveElementOp = z
   .object({
     type: z.literal('moveElement'),
-    pageRef: z.string().describe('Page ref or id'),
-    ref: z.string().describe('Ref or id of the element to move'),
-    toParentRef: z.string().describe('Ref or id of the anchor the element moves relative to (see position)'),
+    pageRef: z.string().describe('The page, by name'),
+    ref: z.string().describe('The element to move, by name'),
+    toParentRef: z.string().describe('The anchor it moves relative to, by name (see position)'),
     position
   })
   .describe('Move an existing element to a new parent, or reorder it — its placement is set by position.');
@@ -21,9 +21,9 @@ export const moveElementOp = z
 export type MoveElement = z.infer<typeof moveElementOp>;
 
 export const moveElement = (space: Space, env: Env, op: MoveElement): OpResult => {
-  const page = findPageByRef(space.schema, op.pageRef);
+  const page = findRootByRef(space.schema, op.pageRef);
   if (!page) {
-    return fail('pageRef', `Page "${op.pageRef}" not found`, 'Read the pages resource for valid refs');
+    return fail('pageRef', `Page or layout "${op.pageRef}" not found`, 'Read the pages resource for valid refs');
   }
 
   const el = resolveRef(space.schema, page, op.ref);

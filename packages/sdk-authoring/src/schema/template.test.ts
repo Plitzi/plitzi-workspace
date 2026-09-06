@@ -206,10 +206,10 @@ describe('validateTemplate', () => {
 /**
  * The path a manifest actually travels, with nothing mocked but the drag itself.
  *
- * A template is fetched as JSON, cloned once when it is picked up (`useDragElement`), cloned again against the
- * space it is dropped into (`BuilderProvider`), and inserted by the schema reducer. Every id is regenerated twice
- * on the way and every idRef is re-minted, which is why authoring one and instantiating one are worth holding
- * together in a test: a manifest that is perfectly consistent with itself can still land as nothing at all.
+ * A template is fetched as JSON, carried as authored through the drag (`useDragElement`) and the drop
+ * (`BuilderProvider`), and inserted by the schema reducer — which is the one place that renames anything, and only
+ * the names the receiving space already holds. Worth holding authoring and instantiating together in a test: a
+ * manifest that is perfectly consistent with itself can still land as nothing at all.
  */
 describe('a template, dropped into a space', () => {
   const host = () =>
@@ -225,33 +225,35 @@ describe('a template, dropped into a space', () => {
     // `fetchManifest` — a manifest arrives as JSON and nothing else.
     const manifest = JSON.parse(JSON.stringify(template)) as Template;
 
-    // `useDragElement`: the base element travels beside its descendants rather than among them.
-    const picked = FlatMap.cloneElements(manifest.schema.flat, manifest.definition.baseElementId);
-    const baseElement = picked.item as Element;
-    const elements = Object.fromEntries(Object.entries(picked.acum).filter(([id]) => id !== baseElement.id));
-
-    // `BuilderProvider`: cloned again, this time rooted on the page it is being dropped into.
-    const dropped = FlatMap.cloneElements(
-      { [baseElement.id]: baseElement, ...elements },
-      baseElement.id,
-      '',
-      pageId,
-      true
+    // `useDragElement`: the base element travels beside its descendants rather than among them, as authored.
+    const baseElement = manifest.schema.flat[manifest.definition.baseElementId];
+    const elements = Object.fromEntries(
+      FlatMap.childTree(manifest.schema.flat, baseElement.id).map(id => [id, manifest.schema.flat[id]])
     );
-    const item = dropped.item as Element;
-    item.definition.rootId = pageId;
-    item.definition.parentId = pageId;
+
+    // `BuilderProvider`: re-rooted on the page it is being dropped into.
+    const item: Element = {
+      ...baseElement,
+      definition: { ...baseElement.definition, rootId: pageId, parentId: pageId }
+    };
+    const initialItems = Object.fromEntries(
+      Object.values(elements).map(el => [el.id, { ...el, definition: { ...el.definition, rootId: pageId } }])
+    );
 
     const schema = SchemaReducer(space, {
       type: 'SCHEMA_ADD_TEMPLATE',
       to: pageId,
       data: item,
       dropPosition: 'inside',
-      initialItems: dropped.acum,
+      initialItems,
       variables: manifest.schema.variables
     });
 
-    return { schema, pageId, itemId: item.id };
+    // The reducer renames whatever the space already answers to, so the id it landed under is the page's newest
+    // child rather than the one the manifest carried.
+    const items = schema.flat[pageId].definition.items ?? [];
+
+    return { schema, pageId, itemId: items[items.length - 1] };
   };
 
   it('lands as a subtree of the page, and leaves the space valid', () => {
@@ -266,14 +268,14 @@ describe('a template, dropped into a space', () => {
 
   /**
    * The names it brought are not free in the space it lands in. Both documents were authored, so both number their
-   * refs per type from one — and two elements sharing an idRef is refused element by element, which is a drag that
+   * refs per type from one — and two elements sharing a name is refused element by element, which is a drag that
    * appears to work and drops nothing.
    */
   it('is renamed against the space it lands in, rather than refused', () => {
     const { template } = authorTemplate(minimal());
     const { schema: space } = host();
     const { schema } = droppedInto(template, space);
-    const refs = Object.values(schema.flat).map(element => element.idRef);
+    const refs = Object.values(schema.flat).map(element => element.id);
 
     expect(new Set(refs).size).toBe(refs.length);
     expect(refs).toContain('container-1');

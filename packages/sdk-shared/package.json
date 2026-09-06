@@ -221,6 +221,10 @@
       "types": "./dist/devTools/index.d.ts",
       "import": "./dist/devTools/index.mjs"
     },
+    "./devTools/interactionLog": {
+      "types": "./dist/devTools/interactionLog.d.ts",
+      "import": "./dist/devTools/interactionLog.mjs"
+    },
     "./devTools/utils/PlitziConsole": {
       "types": "./dist/devTools/utils/PlitziConsole.d.ts",
       "import": "./dist/devTools/utils/PlitziConsole.mjs"
@@ -280,6 +284,9 @@
       "types": "./dist/helpers/twigWrapper/index.d.ts",
       "import": "./dist/helpers/twigWrapper/index.mjs"
     },
+    "./helpers/twigWrapper/AST": {
+      "types": "./dist/helpers/twigWrapper/AST.d.ts"
+    },
     "./helpers/twigWrapper/Evaluator": {
       "types": "./dist/helpers/twigWrapper/Evaluator/index.d.ts",
       "import": "./dist/helpers/twigWrapper/Evaluator/index.mjs"
@@ -335,6 +342,9 @@
     "./helpers/twigWrapper/Parser/index": {
       "types": "./dist/helpers/twigWrapper/Parser/index.d.ts",
       "import": "./dist/helpers/twigWrapper/Parser/index.mjs"
+    },
+    "./helpers/twigWrapper/Parser/types": {
+      "types": "./dist/helpers/twigWrapper/Parser/types.d.ts"
     },
     "./helpers/twigWrapper/TemplateCache": {
       "types": "./dist/helpers/twigWrapper/TemplateCache/index.d.ts",
@@ -403,6 +413,10 @@
     "./hooks/index": {
       "types": "./dist/hooks/index.d.ts",
       "import": "./dist/hooks/index.mjs"
+    },
+    "./hooks/useFontHead": {
+      "types": "./dist/hooks/useFontHead.d.ts",
+      "import": "./dist/hooks/useFontHead.mjs"
     },
     "./hooks/useNetwork": {
       "types": "./dist/hooks/useNetwork.d.ts",
@@ -491,6 +505,10 @@
     "./network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRemoveElementMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentRenameElementMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Segment/space/elements/SegmentUpdateElementMutation.d.ts",
@@ -587,6 +605,10 @@
     "./network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceRemovePluginMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceRenameElementMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceRenameElementMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceRenameElementMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceUpdateElementMutation.d.ts",
@@ -728,6 +750,18 @@
       "types": "./dist/network/graphql/builder/Mutations/Style/StyleUpdateSettingsMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Style/StyleUpdateSettingsMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Style/fonts/StyleAddFontMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleAddFontMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleAddFontMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/fonts/StyleRemoveFontMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleRemoveFontMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleRemoveFontMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Style/fonts/StyleUpdateFontMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleUpdateFontMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Style/fonts/StyleUpdateFontMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Style/selectorVariables/StyleAddSelectorVariableMutation.mjs"
@@ -827,6 +861,10 @@
     "./network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceQuotaQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceQuotaQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceQuotaQuery.mjs"
     },
     "./network/graphql/builder/Queries/Space/SpaceResourcesQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceResourcesQuery.d.ts",
@@ -1032,6 +1070,22 @@
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
     },
+    "./style/fontAssets": {
+      "types": "./dist/style/fontAssets.d.ts",
+      "import": "./dist/style/fontAssets.mjs"
+    },
+    "./style/fontValidation": {
+      "types": "./dist/style/fontValidation.d.ts",
+      "import": "./dist/style/fontValidation.mjs"
+    },
+    "./style/fonts": {
+      "types": "./dist/style/fonts.d.ts",
+      "import": "./dist/style/fonts.mjs"
+    },
+    "./style/fontsFromCss": {
+      "types": "./dist/style/fontsFromCss.d.ts",
+      "import": "./dist/style/fontsFromCss.mjs"
+    },
     "./style/index": {
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
@@ -1051,6 +1105,10 @@
     "./theme/index": {
       "types": "./dist/theme/index.d.ts",
       "import": "./dist/theme/index.mjs"
+    },
+    "./theme/themeBoot": {
+      "types": "./dist/theme/themeBoot.d.ts",
+      "import": "./dist/theme/themeBoot.mjs"
     },
     "./theme/themeStore": {
       "types": "./dist/theme/themeStore.d.ts",

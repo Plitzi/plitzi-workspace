@@ -266,6 +266,24 @@ describe('processSelectorAttributes', () => {
       expect(result).toEqual({ value: 'background-image:url(/img/logo.png);', variables: [] });
     });
 
+    /**
+     * The semicolon inside a value is part of the value.
+     *
+     * An inline SVG icon carries its media type as `image/svg+xml;charset=utf-8`, and dropping that one character
+     * yields a URI the browser cannot resolve. It broke on save rather than on read, so the seed on disk stayed
+     * correct and only the selector somebody had touched in the builder came back with no icon.
+     */
+    it('keeps the semicolons a data URI is made of', () => {
+      const uri = 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'%3E%3C/svg%3E")';
+      const result = processCssString('background-image', uri);
+      expect(result).toEqual({ value: `background-image:${uri};`, variables: [] });
+    });
+
+    it('still drops the declaration terminator', () => {
+      const result = processCssString('color', 'red;');
+      expect(result).toEqual({ value: 'color:red;', variables: [] });
+    });
+
     it('handles multiple spaces normalization', () => {
       const result = processCssString('margin', '10px   20px   30px');
       expect(result).toEqual({ value: 'margin:10px 20px 30px;', variables: [] });

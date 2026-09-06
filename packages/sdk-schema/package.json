@@ -18,9 +18,9 @@
       "types": "./dist/helpers/FlatMap.d.ts",
       "import": "./dist/helpers/FlatMap.mjs"
     },
-    "./helpers/idRef": {
-      "types": "./dist/helpers/idRef.d.ts",
-      "import": "./dist/helpers/idRef.mjs"
+    "./helpers/elementId": {
+      "types": "./dist/helpers/elementId.d.ts",
+      "import": "./dist/helpers/elementId.mjs"
     },
     "./helpers/schemaValidator": {
       "types": "./dist/helpers/schemaValidator.d.ts",

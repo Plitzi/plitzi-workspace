@@ -1,7 +1,7 @@
-// The name of an element's data source: `<type>_<idRef>`, the exact key a binding targets (`<source>.<field>`).
-// Empty when the element has no idRef — it then publishes no source at all. That is deliberate: keeping the opaque
-// id out of source names is what lets an idRef be assigned later without invalidating an existing binding.
-const getSourceName = (type: string, element: { idRef?: string }): string =>
-  element.idRef ? `${type}_${element.idRef}` : '';
+// The name of an element's data source: `<type>_<id>`, the exact key a binding targets (`<source>.<field>`).
+// Every element has an id and every id is a name a person chose, so a source name is readable and an element always
+// publishes one. The first `_` separates the two halves (element types are camelCase), so an id's own underscores
+// stay unambiguous.
+const getSourceName = (type: string, id: string): string => `${type}_${id}`;
 
 export default getSourceName;

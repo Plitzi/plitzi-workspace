@@ -1,0 +1,17 @@
+{
+  "extends": "../../packages/sdk-shared/tsconfig.node.json",
+  "references": [{ "path": "../../packages/sdk-shared" }],
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./dist/.types-node"
+  },
+  /**
+   * The two files that run outside the page, plus the one type they share with it.
+   *
+   * `vite.config.ts` is deliberately not here. It pulls `@vitejs/plugin-react`, whose published types do not
+   * check against this repository's Babel version — an error in somebody else's `.d.ts` that no edit in this app
+   * can fix, and one that would hide every real error underneath it.
+   */
+  "include": ["electron", "src/modules/desktop/bridge.ts"],
+  "exclude": ["dist", "release", "node_modules", "**/dist"]
+}

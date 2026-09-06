@@ -9,12 +9,11 @@ const SpaceAddPageMutation = gql`
     $environment: String!
     $name: String!
     $slug: String!
-    $idRef: String!
+    $id: String!
     $pageFolder: String
   ) {
-    SpaceAddPage(environment: $environment, name: $name, slug: $slug, idRef: $idRef, pageFolder: $pageFolder) {
+    SpaceAddPage(environment: $environment, name: $name, slug: $slug, id: $id, pageFolder: $pageFolder) {
       id
-      idRef
       definition
       attributes
     }

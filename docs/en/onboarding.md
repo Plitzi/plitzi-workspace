@@ -118,6 +118,9 @@ The builder needs two, and they answer different questions:
 
 - **`webKey`** is a *space token*. It names the space, and it is bound to the domains it declares. A public
   render token is read-only by construction — it is embedded in published sites, so it can be no stronger.
+  A **server** that renders a space as its own uses a different one: a `host` token, secret rather than published,
+  because the domain binding only means anything when a browser is the one claiming an origin. See
+  `examples/01-my-first-space/05-from-the-cloud`.
 - **`userKey`** is a *session*. It is the **actor**, and every write goes through
   `can(actor, space, permission)`. With only a `webKey`, the builder loads and can save nothing.
 

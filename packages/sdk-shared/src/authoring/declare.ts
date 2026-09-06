@@ -22,13 +22,13 @@ export interface ElementDeclarationData {
   /**
    * The kind of data source this element publishes, when it publishes one.
    *
-   * A source is named `<sourceType>_<idRef>`, and the two halves come from different places: the idRef is the
+   * A source is named `<sourceType>_<id>`, and the two halves come from different places: the id is the
    * author's, and this is the ELEMENT'S. They are not always the same word — a `form` publishes under
    * `apiContainer`, because what it offers descendants is a record like any other provider's — so an author who
    * assembles the name from the type they can see writes one that resolves to nothing.
    *
    * Declared here so there is one answer: the component reads it to register under, and the authoring surface
-   * reads it to resolve a binding that named the idRef alone.
+   * reads it to resolve a binding that named the element alone.
    */
   sourceType?: string;
   content?: {

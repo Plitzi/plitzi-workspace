@@ -14,7 +14,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import useCollaboratorElements from '@pmodules/Collaboration/hooks/useCollaboratorElements';
-import { getInitialItems } from '@pmodules/Elements/ElementHelper';
+import { getInitialItems, makeIdMinter } from '@pmodules/Elements/ElementHelper';
 
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
@@ -257,30 +257,26 @@ const BuilderProvider = ({
           return false;
         }
 
-        const dataCloned = FlatMap.cloneElements(
-          { [dataParsed.baseElement.id]: dataParsed.baseElement, ...dataParsed.elements },
-          dataParsed.baseElement.id,
-          '',
-          rootId,
-          true
+        // The payload is a throwaway copy of the template document, so nothing here has to be detached from an
+        // original — the names it brought are kept, and `SCHEMA_ADD_TEMPLATE` renames only the ones this space
+        // already holds. Re-cloning first would have renamed all of them and thrown the authored names away.
+        const baseElement = {
+          ...pick(dataParsed.baseElement, ['id', 'attributes', 'definition']),
+          definition: { ...dataParsed.baseElement.definition, rootId: baseElementId, parentId: toElementId }
+        };
+        const elements = Object.fromEntries(
+          Object.values(dataParsed.elements).map((el: Element) => [
+            el.id,
+            { ...el, definition: { ...el.definition, rootId: baseElementId } }
+          ])
         );
 
-        if (!dataCloned.item) {
-          return false;
-        }
-
-        set(dataParsed.baseElement, 'definition.rootId', baseElementId);
-        Object.values(dataParsed.elements).forEach((el: Element) => {
-          set(dataParsed.elements, `${el.id}.definition.rootId`, baseElementId);
-        });
-
-        set(dataParsed.baseElement, 'definition.parentId', toElementId);
         builderHandler(
           'schemaAddTemplate',
           toElementId,
-          pick(dataCloned.item, ['id', 'definition', 'attributes']),
+          baseElement,
           dropPosition,
-          dataCloned.acum,
+          elements,
           dataParsed.style,
           dataParsed.variables
         );
@@ -313,16 +309,25 @@ const BuilderProvider = ({
             builderHandler('schemaMoveElement', fromParentId, toElementId, dataParsed.id, dropPosition);
             setHovered(undefined);
           } else if ((typeArr[0] as string) === 'add') {
+            // The name is minted here, against the document being dropped into — not by whatever started the drag,
+            // which has no idea what this space already holds.
+            const mintId = makeIdMinter(getElement());
             const element = {
               ...pick(dataParsed.element, ['attributes', 'definition']),
-              id: dataParsed.id,
+              id: mintId(type),
               definition: { ...dataParsed.element.definition, rootId }
             };
 
             const initialItems = get(componentDefinitions.current, `${type}.initialItems`, undefined);
             let itemsToAdd: ReturnType<typeof getInitialItems> = { directItems: {}, items: {} };
             if (initialItems && initialItems.length > 0) {
-              itemsToAdd = getInitialItems(element.id, initialItems, componentDefinitions.current, baseElementId);
+              itemsToAdd = getInitialItems(
+                element.id,
+                initialItems,
+                componentDefinitions.current,
+                mintId,
+                baseElementId
+              );
               set(element, 'definition.items', Object.keys(itemsToAdd.directItems));
             }
 
@@ -334,7 +339,7 @@ const BuilderProvider = ({
               itemsToAdd.items,
               get(dataParsed, 'variables', [])
             );
-            setSelected(dataParsed.id, undefined, true);
+            setSelected(element.id, undefined, true);
           }
 
           return true;

@@ -1,23 +1,18 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { elementIdOf } from '@plitzi/sdk-authoring';
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
-import { offlineDataPath, readOfflineData } from '@plitzi/example-space';
+import { offlineDataPath } from '@plitzi/example-space';
 
 import type { SSRRscContext, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4004);
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-/** RSC data is keyed by the ELEMENT ID, which a space derives rather than a person choosing it — so the ids are
- *  looked up once, by the names the sample space gave those three elements. */
-const { schema } = readOfflineData();
-const ids = {
-  server: elementIdOf(schema, 'rsc-server'),
-  shared: elementIdOf(schema, 'rsc-shared')
-};
+/** RSC data is keyed by the ELEMENT ID — which is the name the space gave the element, so there is nothing to look
+ *  up: `rsc-server` here is the same `rsc-server` written in the declaration. */
+const ids = { server: 'rsc-server', shared: 'rsc-shared' };
 
 /** Server data, keyed by the schema element id that consumes it. The sample space carries three RSC elements —
  *  `rsc-server`, `rsc-client` and `rsc-shared` — and each reads its own slice through the SDK's `useRscData`.

@@ -71,6 +71,7 @@ export type Expression =
   | ObjectLiteralNode
   | RangeNode
   | PathNode
+  | IndexNode
   | FunctionNode
   | FilterExpression
   | ConcatNode
@@ -111,6 +112,18 @@ export type RangeNode = {
 export type PathNode = {
   readonly type: 'path';
   readonly segments: readonly string[];
+};
+
+/**
+ * Member access whose key is not known until the template runs: `items[i]`, `rows[page - 1]`, `record[field]`.
+ *
+ * A bracket holding a literal never reaches here — the parser folds `items[0]` and `record['title']` straight into
+ * a {@link PathNode}'s segments, so the common case stays one flat walk with nothing to evaluate per access.
+ */
+export type IndexNode = {
+  readonly type: 'index';
+  readonly object: Expression;
+  readonly index: Expression;
 };
 
 // Function call: `cycle(arr, index)`, `max(a, b)`

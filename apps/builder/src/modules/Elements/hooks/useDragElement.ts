@@ -1,13 +1,12 @@
-import { get, set, omit, pick } from '@plitzi/plitzi-ui/helpers';
+import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { generateID } from '@plitzi/sdk-shared/helpers/utils';
 
-import type { ComponentDefinition, Template } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Element, Template } from '@plitzi/sdk-shared';
 import type { DragEvent } from 'react';
 
 export type UseDragElementProps = {
@@ -59,7 +58,8 @@ const useDragElement = ({ attributes, type, variables, manifest }: UseDragElemen
         });
       }
 
-      e.dataTransfer.setData(`add##${type}`, JSON.stringify({ id: generateID(), element, variables }));
+      // No id: the document being dropped into mints the name, since only it knows what is already taken.
+      e.dataTransfer.setData(`add##${type}`, JSON.stringify({ element, variables }));
     },
     [attributes, componentDefinitions, type, variables]
   );
@@ -70,22 +70,22 @@ const useDragElement = ({ attributes, type, variables, manifest }: UseDragElemen
         return;
       }
 
-      const flat = get(manifest, 'schema.flat', {});
+      const flat = get(manifest, 'schema.flat', {}) as Record<string, Element>;
       const variables = get(manifest, 'schema.variables', []);
       const templateBaseElementId = get(manifest, 'definition.baseElementId', '');
-      const itemsToAdd = FlatMap.cloneElements(flat, templateBaseElementId);
-      if (!itemsToAdd.item) {
+      const baseElement = flat[templateBaseElementId] as Element | undefined;
+      if (!baseElement) {
         return;
       }
 
+      // Carried as authored, not re-cloned: a manifest is a throwaway copy already, and cloning would rename every
+      // element in it — `hero` arriving as `hero-2` in a space that has no `hero`. The document it lands in renames
+      // only what actually collides there.
+      const elements = Object.fromEntries(FlatMap.childTree(flat, templateBaseElementId).map(id => [id, flat[id]]));
+
       e.dataTransfer.setData(
         'add##plitzi-template',
-        JSON.stringify({
-          elements: omit(itemsToAdd.acum, [itemsToAdd.item.id]),
-          baseElement: itemsToAdd.item,
-          style: get(manifest, 'style', {}),
-          variables
-        })
+        JSON.stringify({ elements, baseElement, style: get(manifest, 'style', {}), variables })
       );
     },
     [manifest]

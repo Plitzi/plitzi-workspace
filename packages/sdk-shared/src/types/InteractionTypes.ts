@@ -75,8 +75,8 @@ export type InteractionCallbackPreviews = Record<string, InteractionCallbackPrev
  * returned, and `onFlowEnd` has to fire somewhere specific.
  */
 export type InteractionCallbackContext = {
-  /** idRef of the element this flow fired on. Absent for a flow with no host element. */
-  elementRef?: string;
+  /** Id of the element this flow fired on. Absent for a flow with no host element. */
+  hostElementId?: string;
 };
 
 export type InteractionCallback<T extends Record<string, unknown> = Record<string, unknown>> = {
@@ -85,9 +85,6 @@ export type InteractionCallback<T extends Record<string, unknown> = Record<strin
   title: string;
   type: InteractionCallbackType;
   enabled?: boolean;
-  // Set by the builder for an element with no idRef: its callbacks are never registered, so the entry is a flagged,
-  // inert hint in the picker rather than a wireable action (the runtime keys interactions by idRef only).
-  unreferenced?: boolean;
   params:
     | Record<keyof T, InteractionCallbackParam<T>>
     | ((params: InteractionCallbackParamValues<T>) => Record<keyof T, InteractionCallbackParam<T>>);
@@ -112,8 +109,7 @@ export type Subscriptor<T extends Record<string, unknown> = Record<string, unkno
 export type InteractionsContextValue<TManager = any> = {
   interactionsManager: TManager;
   useInteractions: <T extends Record<string, unknown> = Record<string, unknown>>(props: {
-    // The element's idRef, the key interactions wire by. Absent for an element without one, which is then left
-    // unregistered rather than falling back to its opaque id.
+    // The element's id — the key interactions wire by, and the same name the builder's tree shows.
     id?: string;
     interactions?: Record<string, ElementInteraction>;
     triggers?: Record<string, InteractionCallback<T>>;

@@ -97,7 +97,6 @@ const ApiContainer = ({
 }: ApiContainerProps) => {
   const {
     id,
-    idRef,
     visible,
     definition: { label = 'Api Container', runtime }
   } = useElement();
@@ -111,7 +110,7 @@ const ApiContainer = ({
     elementData,
     refresh
   } = useRscData<Record<string, unknown>>();
-  const sourceName = getSourceName(declaration.sourceType, { idRef });
+  const sourceName = getSourceName(declaration.sourceType, id);
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }
@@ -154,7 +153,8 @@ const ApiContainer = ({
   }, [serverMode, visible, previewMode, query, when, routeParams, queryParams, mockData]);
 
   const {
-    isLoading: isApiLoading,
+    isLoading: isApiInitialLoad,
+    isFetching: isApiFetching,
     data: apiData,
     refetch: apiRefetch,
     isSuccess,
@@ -218,7 +218,18 @@ const ApiContainer = ({
    * its children only when it can render them truthfully. `renderWhileLoading` is the opt-out, for a provider
    * whose children draw a skeleton from `isLoading`.
    */
-  const isLoading = serverMode ? rscPending : isApiLoading;
+  const isLoading = serverMode ? rscPending : isApiFetching;
+
+  /**
+   * Nothing to render with YET — as opposed to a refresh of something already on screen.
+   *
+   * Only this gates the children. A `performQuery` used to unmount them for the length of the request: the
+   * provider's subtree collapsed to zero height, the browser clamped the scroll to the top of the shortened
+   * page, and everything came back a frame later. `isLoading` stays "a request is in flight" because that is
+   * what a bound spinner means, and it is still what a route change reports for a server provider — there the
+   * payload really is for another page, and rendering children would draw the previous visitor's content.
+   */
+  const isInitialLoad = serverMode ? rscPending : isApiInitialLoad;
 
   const refetch = useCallback(async () => {
     if (!serverMode) {
@@ -243,18 +254,18 @@ const ApiContainer = ({
   });
 
   useEffect(() => {
-    if (isLoading || !idRef) {
+    if (isLoading || !id) {
       return undefined;
     }
 
     if (isSuccess) {
-      void interactionsManager.interactionTrigger(idRef, 'onApiSuccess', { url: query, method, ...data });
+      void interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: query, method, ...data });
     } else if (isError) {
-      void interactionsManager.interactionTrigger(idRef, 'onApiError', { url: query, method, ...data });
+      void interactionsManager.interactionTrigger(id, 'onApiError', { url: query, method, ...data });
     }
 
     return undefined;
-  }, [data, idRef, interactionsManager, isError, isLoading, isSuccess, method, query]);
+  }, [data, id, interactionsManager, isError, isLoading, isSuccess, method, query]);
   // The published slice, not the raw response: state travels with the data so an empty result, a failed provider
   // and an accumulated "load more" list are all readable through ordinary bindings, with no new slot mechanism.
   const publishedData = useMemo<Record<string, unknown>>(
@@ -373,7 +384,7 @@ const ApiContainer = ({
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}
     >
-      {(!isLoading || renderWhileLoading) && (
+      {(!isInitialLoad || renderWhileLoading) && (
         <StoreProvider inherit="live" name={`Api:${id}`} value={storeContext}>
           {children}
         </StoreProvider>

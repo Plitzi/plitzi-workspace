@@ -3,16 +3,24 @@ import clsx from 'clsx';
 import { useMemo } from 'react';
 
 import { getDurationMs } from '@plitzi/sdk-shared';
+import { isInteractionFlow } from '@plitzi/sdk-shared/devTools';
 
 import LogInteractionBody from './LogInteractionBody';
 import LogInteractionHeader from './LogInteractionHeader';
+import LogInteractionNote from './LogInteractionNote';
 import LogStatusIcon from '../../LogStatusIcon';
 
-import type { LogInteraction as TLogInteraction } from '@plitzi/sdk-shared';
+import type { InteractionFlowParams, LogInteraction as TLogInteraction } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 const iconCollapsed = <i className="fa-solid fa-angle-right text-[10px]" />;
 const iconExpanded = <i className="fa-solid fa-angle-down text-[10px]" />;
+
+export type LogInteractionFlowProps = {
+  message?: ReactNode;
+  params: InteractionFlowParams;
+  time?: string;
+};
 
 export type LogInteractionProps = {
   className?: string;
@@ -21,15 +29,29 @@ export type LogInteractionProps = {
   time?: string;
 };
 
-const LogInteraction = ({
+/**
+ * One finished flow, with every step it took.
+ *
+ * Split from `LogInteraction` so the hooks below run only for an entry that actually is one — a component that
+ * called them and then returned early for a note would break the rules of hooks the first time the two kinds of
+ * entry alternated in the list.
+ */
+const LogInteractionFlow = ({
   time,
   message,
-  params: { elementId, elementRef, status, node, nodes, startTime = 0, endTime = 0 }
-}: LogInteractionProps) => {
+  params: { elementId, hostElementId, status, node, nodes, startTime = 0, endTime = 0 }
+}: LogInteractionFlowProps) => {
   const duration = useMemo(() => `${getDurationMs(startTime, endTime)}ms`, [startTime, endTime]);
-  const nodesFailed = Object.values(nodes).filter(node => node.status === 'failed').length;
-  const nodesSkipped = Object.values(nodes).filter(node => node.status === 'skipped').length;
-  const nodesDisabled = Object.values(nodes).filter(node => node.status === 'disabled').length;
+  const counts = useMemo(() => {
+    const statuses = Object.values(nodes).map(({ status: nodeStatus }) => nodeStatus);
+
+    return {
+      failed: statuses.filter(nodeStatus => nodeStatus === 'failed').length,
+      skipped: statuses.filter(nodeStatus => nodeStatus === 'skipped').length,
+      disabled: statuses.filter(nodeStatus => nodeStatus === 'disabled').length
+    };
+  }, [nodes]);
+  const { failed: nodesFailed, skipped: nodesSkipped, disabled: nodesDisabled } = counts;
 
   return (
     <ContainerCollapsable
@@ -72,7 +94,7 @@ const LogInteraction = ({
       <ContainerCollapsable.Content>
         <LogInteractionBody
           elementId={elementId}
-          elementRef={elementRef}
+          hostElementId={hostElementId}
           node={node}
           nodes={nodes}
           startTime={startTime}
@@ -82,6 +104,14 @@ const LogInteraction = ({
       </ContainerCollapsable.Content>
     </ContainerCollapsable>
   );
+};
+
+const LogInteraction = ({ time, message, params }: LogInteractionProps) => {
+  if (!isInteractionFlow(params)) {
+    return <LogInteractionNote time={time} message={message} params={params} />;
+  }
+
+  return <LogInteractionFlow time={time} message={message} params={params} />;
 };
 
 export default LogInteraction;

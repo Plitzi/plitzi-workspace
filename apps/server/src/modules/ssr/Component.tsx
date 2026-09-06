@@ -15,6 +15,8 @@ export type ComponentProps = {
   /** Forced on when the metering adapter degrades this render; otherwise left to the SDK's own default so the
    *  markup here matches what the browser hydrates with. */
   branding?: boolean;
+  /** The same degraded render, as the reason: the account behind this space is over its quota. */
+  overQuota?: boolean;
 };
 
 const Component = ({
@@ -27,7 +29,8 @@ const Component = ({
   ssrResult,
   sdkDevToolsStylePath,
   debugMode = false,
-  branding
+  branding,
+  overQuota
 }: ComponentProps) => {
   // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
   // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
@@ -44,6 +47,7 @@ const Component = ({
       sdkDevToolsStylePath={sdkDevToolsStylePath}
       debugMode={debugMode}
       {...(branding === undefined ? {} : { branding })}
+      {...(overQuota === undefined ? {} : { overQuota })}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

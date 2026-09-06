@@ -1,6 +1,7 @@
 import { cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { describe, it, expect } from 'vitest';
 
+import { positionalElementId } from './elementId';
 import FlatMap from './FlatMap';
 import schema1 from '../tests/fixtures/json/schema1.json';
 import styleSchema1 from '../tests/fixtures/json/styleSchema1.json';
@@ -10,14 +11,14 @@ import type { DropPosition, Schema, Style } from '@plitzi/sdk-shared';
 
 describe('Testing FlatMap', () => {
   const flat = {
-    '62f70064f2882d5ee31dcf71': {
-      id: '62f70064f2882d5ee31dcf71',
+    home: {
+      id: 'home',
       definition: {
         label: 'Page',
         type: 'page',
         bindings: {},
         parentId: undefined,
-        rootId: '62f70064f2882d5ee31dcf71',
+        rootId: 'home',
         items: [],
         styleSelectors: {
           base: ''
@@ -29,14 +30,14 @@ describe('Testing FlatMap', () => {
         name: 'Home'
       }
     },
-    '62f70064f2882d5ee31dcf72': {
-      id: '62f70064f2882d5ee31dcf72',
+    about: {
+      id: 'about',
       definition: {
         label: 'Page',
         type: 'page',
         bindings: {},
         parentId: undefined,
-        rootId: '62f70064f2882d5ee31dcf72',
+        rootId: 'about',
         items: [],
         styleSelectors: {
           base: ''
@@ -50,7 +51,7 @@ describe('Testing FlatMap', () => {
     }
   };
   const element1 = {
-    id: '62f89157c38ce9ef02b7a5a6',
+    id: 'heading-1',
     attributes: {
       subType: 'h1',
       content: 'Heading 1'
@@ -67,7 +68,7 @@ describe('Testing FlatMap', () => {
     }
   };
   const element2 = {
-    id: '62f8c677a4dcde9ce010a397',
+    id: 'heading-2',
     attributes: {
       subType: 'h1',
       content: 'Heading 2'
@@ -84,7 +85,7 @@ describe('Testing FlatMap', () => {
     }
   };
   const element3 = {
-    id: '62cbd2570eedfd5fee5df93d',
+    id: 'button-1',
     attributes: {},
     definition: {
       label: 'Button',
@@ -101,17 +102,17 @@ describe('Testing FlatMap', () => {
   it('FlatMap Add Element', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
-    expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    expect(instance.addElement(element1, 'home', 'inside')).toBe(true);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
-          items: ['62f89157c38ce9ef02b7a5a6'],
+          rootId: 'home',
+          items: ['heading-1'],
           styleSelectors: {
             base: ''
           }
@@ -122,14 +123,14 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
-      '62f70064f2882d5ee31dcf72': {
-        id: '62f70064f2882d5ee31dcf72',
+      about: {
+        id: 'about',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf72',
+          rootId: 'about',
           items: [],
           styleSelectors: {
             base: ''
@@ -141,8 +142,8 @@ describe('Testing FlatMap', () => {
           name: 'Page 2'
         }
       },
-      '62f89157c38ce9ef02b7a5a6': {
-        id: '62f89157c38ce9ef02b7a5a6',
+      'heading-1': {
+        id: 'heading-1',
         attributes: {
           subType: 'h1',
           content: 'Heading 1'
@@ -151,8 +152,8 @@ describe('Testing FlatMap', () => {
           label: 'Heading',
           type: 'heading',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
@@ -160,17 +161,17 @@ describe('Testing FlatMap', () => {
       }
     });
 
-    expect(instance.addElement(element2, '62f89157c38ce9ef02b7a5a6', 'top')).toBe(true);
+    expect(instance.addElement(element2, 'heading-1', 'top')).toBe(true);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
-          items: ['62f8c677a4dcde9ce010a397', '62f89157c38ce9ef02b7a5a6'],
+          rootId: 'home',
+          items: ['heading-2', 'heading-1'],
           styleSelectors: {
             base: ''
           }
@@ -181,14 +182,14 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
-      '62f70064f2882d5ee31dcf72': {
-        id: '62f70064f2882d5ee31dcf72',
+      about: {
+        id: 'about',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf72',
+          rootId: 'about',
           items: [],
           styleSelectors: {
             base: ''
@@ -200,8 +201,8 @@ describe('Testing FlatMap', () => {
           name: 'Page 2'
         }
       },
-      '62f89157c38ce9ef02b7a5a6': {
-        id: '62f89157c38ce9ef02b7a5a6',
+      'heading-1': {
+        id: 'heading-1',
         attributes: {
           subType: 'h1',
           content: 'Heading 1'
@@ -210,15 +211,15 @@ describe('Testing FlatMap', () => {
           label: 'Heading',
           type: 'heading',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
         }
       },
-      '62f8c677a4dcde9ce010a397': {
-        id: '62f8c677a4dcde9ce010a397',
+      'heading-2': {
+        id: 'heading-2',
         attributes: {
           subType: 'h1',
           content: 'Heading 2'
@@ -227,8 +228,8 @@ describe('Testing FlatMap', () => {
           label: 'Heading',
           type: 'heading',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
@@ -236,18 +237,18 @@ describe('Testing FlatMap', () => {
       }
     });
 
-    expect(instance.addElement(element3, '62f89157c38ce9ef02b7a5a6', 'bottom')).toBe(true);
-    expect(instance.addElement(element3, '62f89157c38ce9ef02b7a5a6', 'bottom')).toBe(false);
+    expect(instance.addElement(element3, 'heading-1', 'bottom')).toBe(true);
+    expect(instance.addElement(element3, 'heading-1', 'bottom')).toBe(false);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
-          items: ['62f8c677a4dcde9ce010a397', '62f89157c38ce9ef02b7a5a6', '62cbd2570eedfd5fee5df93d'],
+          rootId: 'home',
+          items: ['heading-2', 'heading-1', 'button-1'],
           styleSelectors: {
             base: ''
           }
@@ -258,14 +259,14 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
-      '62f70064f2882d5ee31dcf72': {
-        id: '62f70064f2882d5ee31dcf72',
+      about: {
+        id: 'about',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf72',
+          rootId: 'about',
           items: [],
           styleSelectors: {
             base: ''
@@ -277,8 +278,8 @@ describe('Testing FlatMap', () => {
           name: 'Page 2'
         }
       },
-      '62f89157c38ce9ef02b7a5a6': {
-        id: '62f89157c38ce9ef02b7a5a6',
+      'heading-1': {
+        id: 'heading-1',
         attributes: {
           subType: 'h1',
           content: 'Heading 1'
@@ -287,15 +288,15 @@ describe('Testing FlatMap', () => {
           label: 'Heading',
           type: 'heading',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
         }
       },
-      '62f8c677a4dcde9ce010a397': {
-        id: '62f8c677a4dcde9ce010a397',
+      'heading-2': {
+        id: 'heading-2',
         attributes: {
           subType: 'h1',
           content: 'Heading 2'
@@ -304,22 +305,22 @@ describe('Testing FlatMap', () => {
           label: 'Heading',
           type: 'heading',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
         }
       },
-      '62cbd2570eedfd5fee5df93d': {
-        id: '62cbd2570eedfd5fee5df93d',
+      'button-1': {
+        id: 'button-1',
         attributes: {},
         definition: {
           label: 'Button',
           type: 'button',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
@@ -333,26 +334,26 @@ describe('Testing FlatMap', () => {
   it('FlatMap Add Element Wrong', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
-    expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'wrong' as DropPosition)).toBe(false);
+    expect(instance.addElement(element1, 'home', 'wrong' as DropPosition)).toBe(false);
     expect(instance.addElement(element1, 'wrongId', 'inside')).toBe(false);
     expect(instance.addElement(element1, 'wrongId', 'wrong' as DropPosition)).toBe(false);
-    expect(instance.addElement(element2, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
-    expect(instance.addElement(element3, '62f89157c38ce9ef02b7a5a6', 'wrong' as DropPosition)).toBe(false);
+    expect(instance.addElement(element2, 'home', 'inside')).toBe(true);
+    expect(instance.addElement(element3, 'heading-1', 'wrong' as DropPosition)).toBe(false);
   });
 
   it('FlatMap Remove Element', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
-    expect(instance.removeElement('62f89157c38ce9ef02b7a5a6')).toBe(false);
+    expect(instance.removeElement('heading-1')).toBe(false);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
           items: [],
           styleSelectors: {
             base: ''
@@ -364,14 +365,14 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
-      '62f70064f2882d5ee31dcf72': {
-        id: '62f70064f2882d5ee31dcf72',
+      about: {
+        id: 'about',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf72',
+          rootId: 'about',
           items: [],
           styleSelectors: {
             base: ''
@@ -385,17 +386,17 @@ describe('Testing FlatMap', () => {
       }
     });
 
-    instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'inside');
+    instance.addElement(element1, 'home', 'inside');
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
-          items: ['62f89157c38ce9ef02b7a5a6'],
+          rootId: 'home',
+          items: ['heading-1'],
           styleSelectors: {
             base: ''
           }
@@ -406,14 +407,14 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
-      '62f70064f2882d5ee31dcf72': {
-        id: '62f70064f2882d5ee31dcf72',
+      about: {
+        id: 'about',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf72',
+          rootId: 'about',
           items: [],
           styleSelectors: {
             base: ''
@@ -425,8 +426,8 @@ describe('Testing FlatMap', () => {
           name: 'Page 2'
         }
       },
-      '62f89157c38ce9ef02b7a5a6': {
-        id: '62f89157c38ce9ef02b7a5a6',
+      'heading-1': {
+        id: 'heading-1',
         attributes: {
           subType: 'h1',
           content: 'Heading 1'
@@ -435,8 +436,8 @@ describe('Testing FlatMap', () => {
           label: 'Heading',
           type: 'heading',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
@@ -444,16 +445,16 @@ describe('Testing FlatMap', () => {
       }
     });
 
-    expect(instance.removeElement('62f89157c38ce9ef02b7a5a6')).toBe(true);
+    expect(instance.removeElement('heading-1')).toBe(true);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
           items: [],
           styleSelectors: {
             base: ''
@@ -465,14 +466,14 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
-      '62f70064f2882d5ee31dcf72': {
-        id: '62f70064f2882d5ee31dcf72',
+      about: {
+        id: 'about',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf72',
+          rootId: 'about',
           items: [],
           styleSelectors: {
             base: ''
@@ -491,16 +492,16 @@ describe('Testing FlatMap', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
     // Should remove normal page
-    expect(instance.removeElement('62f70064f2882d5ee31dcf72', true)).toBe(true);
+    expect(instance.removeElement('about', true)).toBe(true);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
           items: [],
           styleSelectors: {
             base: ''
@@ -515,16 +516,16 @@ describe('Testing FlatMap', () => {
     });
 
     // Should not remove default page
-    expect(instance.removeElement('62f70064f2882d5ee31dcf71', true)).toBe(false);
+    expect(instance.removeElement('home', true)).toBe(false);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
           items: [],
           styleSelectors: {
             base: ''
@@ -543,26 +544,26 @@ describe('Testing FlatMap', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
     expect(instance.removeElement('wrongId')).toBe(false);
-    expect(instance.removeElement('62f70064f2882d5ee31dcf71')).toBe(false);
+    expect(instance.removeElement('home')).toBe(false);
   });
 
   it('FlatMap Update Element', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
-    expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    expect(instance.addElement(element1, 'home', 'inside')).toBe(true);
     expect(
       instance.updateElement({ ...element1, attributes: { ...element1.attributes, content: 'Hello World' } })
     ).toBe(true);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
-          items: ['62f89157c38ce9ef02b7a5a6'],
+          rootId: 'home',
+          items: ['heading-1'],
           styleSelectors: {
             base: ''
           }
@@ -573,14 +574,14 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
-      '62f70064f2882d5ee31dcf72': {
-        id: '62f70064f2882d5ee31dcf72',
+      about: {
+        id: 'about',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf72',
+          rootId: 'about',
           items: [],
           styleSelectors: {
             base: ''
@@ -592,8 +593,8 @@ describe('Testing FlatMap', () => {
           name: 'Page 2'
         }
       },
-      '62f89157c38ce9ef02b7a5a6': {
-        id: '62f89157c38ce9ef02b7a5a6',
+      'heading-1': {
+        id: 'heading-1',
         attributes: {
           subType: 'h1',
           content: 'Hello World'
@@ -602,8 +603,8 @@ describe('Testing FlatMap', () => {
           label: 'Heading',
           type: 'heading',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
@@ -612,21 +613,25 @@ describe('Testing FlatMap', () => {
     });
   });
 
-  it('FlatMap Update Element idRef', () => {
+  it('FlatMap Rename Element', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
-    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
-    expect(instance.updateElement({ ...element1, idRef: 'hero-2' })).toBe(true);
-    expect(instance.flat[element1.id].idRef).toBe('hero-2');
+    expect(instance.addElement({ ...element1, id: 'hero' }, 'home', 'inside')).toBe(true);
+    // The parent lists the renamed child in its items, so it moved too — which is exactly what a
+    // broadcast has to publish.
+    expect([...(instance.renameElement('hero', 'banner') as string[])].sort()).toStrictEqual(['banner', 'home']);
+    expect(instance.flat.hero).toBeUndefined();
+    expect(instance.flat.banner.id).toBe('banner');
+    expect(instance.flat.home.definition.items).toStrictEqual(['banner']);
   });
 
-  it('FlatMap Update Element idRef Repoints The Wiring', () => {
+  it('FlatMap Rename Element Repoints The Wiring', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
-    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    expect(instance.addElement({ ...element1, id: 'hero' }, 'home', 'inside')).toBe(true);
     // A sibling wired to the renamed element: a binding reading its source, and an interaction targeting it.
-    instance.flat['62f70064f2882d5ee31dcf72'].definition.bindings = {
+    instance.flat.about.definition.bindings = {
       attributes: [{ id: 'b1', source: 'heading_hero.content', to: 'content' }]
     };
-    instance.flat['62f70064f2882d5ee31dcf72'].definition.interactions = {
+    instance.flat.about.definition.interactions = {
       n1: {
         id: 'n1',
         title: 'Hide',
@@ -642,69 +647,82 @@ describe('Testing FlatMap', () => {
       }
     };
 
-    expect(instance.updateElement({ ...element1, idRef: 'hero-2' })).toBe(true);
+    expect([...(instance.renameElement('hero', 'banner') as string[])].sort()).toStrictEqual([
+      'about',
+      'banner',
+      'home'
+    ]);
 
-    const sibling = instance.flat['62f70064f2882d5ee31dcf72'].definition;
-    expect(sibling.bindings?.attributes?.[0].source).toBe('heading_hero-2.content');
-    expect(sibling.interactions?.n1.elementId).toBe('hero-2');
+    const sibling = instance.flat.about.definition;
+    expect(sibling.bindings?.attributes?.[0].source).toBe('heading_banner.content');
+    expect(sibling.interactions?.n1.elementId).toBe('banner');
   });
 
-  it('FlatMap Update Element idRef Taken', () => {
+  it('FlatMap Rename Element Taken', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
-    instance.flat['62f70064f2882d5ee31dcf72'].idRef = 'landing';
-    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
-    expect(instance.updateElement({ ...element1, idRef: 'landing' })).toBe(false);
-    expect(instance.flat[element1.id].idRef).toBe('hero');
+    expect(instance.addElement({ ...element1, id: 'hero' }, 'home', 'inside')).toBe(true);
+    expect(instance.renameElement('hero', 'about')).toBe(false);
+    expect(instance.flat.hero.id).toBe('hero');
   });
 
-  it('FlatMap Update Element idRef Malformed', () => {
+  it('FlatMap Rename Element Malformed', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
-    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
-    expect(instance.updateElement({ ...element1, idRef: 'hero.cta' })).toBe(false);
-    expect(instance.flat[element1.id].idRef).toBe('hero');
+    expect(instance.addElement({ ...element1, id: 'hero' }, 'home', 'inside')).toBe(true);
+    expect(instance.renameElement('hero', 'hero.cta')).toBe(false);
+    expect(instance.flat.hero.id).toBe('hero');
   });
 
-  it('FlatMap Add Element idRef Taken', () => {
+  it('FlatMap Rename Element Unknown', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
-    instance.flat['62f70064f2882d5ee31dcf72'].idRef = 'landing';
-    expect(instance.addElement({ ...element1, idRef: 'landing' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(false);
-    expect(instance.flat[element1.id]).toBeUndefined();
-    expect(instance.flat['62f70064f2882d5ee31dcf71'].definition.items).toStrictEqual([]);
+    expect(instance.renameElement('nobody', 'hero')).toBe(false);
   });
 
-  it('FlatMap Add Element idRef Repeated In The Incoming Set', () => {
+  it('FlatMap Add Element Id Taken', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
-    const child = { ...element1, id: '62f89157c38ce9ef02b7a5a7', idRef: 'hero' };
+    expect(instance.addElement({ ...element1, id: 'about' }, 'home', 'inside')).toBe(false);
+    expect(instance.flat.home.definition.items).toStrictEqual([]);
+  });
+
+  it('FlatMap Add Element Id Repeated In The Incoming Set', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    const child = { ...element1, id: 'hero' };
+    expect(instance.addElement({ ...element1, id: 'hero' }, 'home', 'inside', { [child.id]: child })).toBe(false);
+    expect(instance.flat.hero).toBeUndefined();
+  });
+
+  it('FlatMap Add Element Mints A Name When The Caller Gives None', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat), mintId: positionalElementId });
     expect(
-      instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside', { [child.id]: child })
-    ).toBe(false);
-    expect(instance.flat[child.id]).toBeUndefined();
-  });
-
-  it('FlatMap Update Element idRef Unchanged', () => {
-    const instance = new FlatMap({ flat: cloneDeep(flat) });
-    expect(instance.addElement({ ...element1, idRef: 'hero' }, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
-    expect(
-      instance.updateElement({ ...element1, idRef: 'hero', attributes: { ...element1.attributes, content: 'Hi' } })
+      instance.addElement({ attributes: element1.attributes, definition: element1.definition }, 'home', 'inside')
     ).toBe(true);
-    expect(instance.flat[element1.id].attributes.content).toBe('Hi');
+    expect(instance.flat['heading-1'].definition.type).toBe('heading');
+    expect(instance.flat.home.definition.items).toStrictEqual(['heading-1']);
+  });
+
+  it('FlatMap Update Element Keeps The Name Out Of An Update', () => {
+    const instance = new FlatMap({ flat: cloneDeep(flat) });
+    expect(instance.addElement({ ...element1, id: 'hero' }, 'home', 'inside')).toBe(true);
+    expect(
+      instance.updateElement({ ...element1, id: 'hero', attributes: { ...element1.attributes, content: 'Hi' } })
+    ).toBe(true);
+    expect(instance.flat.hero.attributes.content).toBe('Hi');
   });
 
   it('FlatMap Update Element Wrong', () => {
     const instance = new FlatMap({ flat: cloneDeep(flat) });
     expect(instance instanceof FlatMap).toBe(true);
-    expect(instance.addElement(element1, '62f70064f2882d5ee31dcf71', 'inside')).toBe(true);
+    expect(instance.addElement(element1, 'home', 'inside')).toBe(true);
     expect(instance.updateElement({ ...element1, id: 'i am wrong' })).toBe(false);
     expect(instance.flat).toStrictEqual({
-      '62f70064f2882d5ee31dcf71': {
-        id: '62f70064f2882d5ee31dcf71',
+      home: {
+        id: 'home',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf71',
-          items: ['62f89157c38ce9ef02b7a5a6'],
+          rootId: 'home',
+          items: ['heading-1'],
           styleSelectors: {
             base: ''
           }
@@ -715,14 +733,14 @@ describe('Testing FlatMap', () => {
           name: 'Home'
         }
       },
-      '62f70064f2882d5ee31dcf72': {
-        id: '62f70064f2882d5ee31dcf72',
+      about: {
+        id: 'about',
         definition: {
           label: 'Page',
           type: 'page',
           bindings: {},
           parentId: undefined,
-          rootId: '62f70064f2882d5ee31dcf72',
+          rootId: 'about',
           items: [],
           styleSelectors: {
             base: ''
@@ -734,8 +752,8 @@ describe('Testing FlatMap', () => {
           name: 'Page 2'
         }
       },
-      '62f89157c38ce9ef02b7a5a6': {
-        id: '62f89157c38ce9ef02b7a5a6',
+      'heading-1': {
+        id: 'heading-1',
         attributes: {
           subType: 'h1',
           content: 'Heading 1'
@@ -744,8 +762,8 @@ describe('Testing FlatMap', () => {
           label: 'Heading',
           type: 'heading',
           bindings: {},
-          rootId: '62f70064f2882d5ee31dcf71',
-          parentId: '62f70064f2882d5ee31dcf71',
+          rootId: 'home',
+          parentId: 'home',
           styleSelectors: {
             base: ''
           }
@@ -760,14 +778,11 @@ describe('Testing FlatMap', () => {
       flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
-    const { elements, elementsStyle, variables } = instance.flatAsTemplate(
-      styleSchema1 as Style,
-      '669b33d56e29e1297a6ccde1'
-    );
+    const { elements, elementsStyle, variables } = instance.flatAsTemplate(styleSchema1 as Style, 'wrapper');
     expect({ elements, elementsStyle, variables }).toStrictEqual({
       elements: {
         acum: {
-          id_0d3d1d: {
+          'title-2': {
             attributes: {
               content: 'Heading',
               subType: 'h1'
@@ -778,16 +793,16 @@ describe('Testing FlatMap', () => {
                 visibility: true
               },
               label: 'Nice Heading',
-              parentId: 'id_6ccde1',
-              rootId: 'id_6ccde1',
+              parentId: 'wrapper-2',
+              rootId: 'wrapper-2',
               styleSelectors: {
                 base: 'heading-rdGM'
               },
               type: 'heading'
             },
-            id: 'id_0d3d1d'
+            id: 'title-2'
           },
-          id_6ccde1: {
+          'wrapper-2': {
             attributes: {
               subType: 'div'
             },
@@ -797,18 +812,18 @@ describe('Testing FlatMap', () => {
               initialState: {
                 visibility: true
               },
-              items: ['id_e21bc6', 'id_0d3d1d'],
+              items: ['cta-2', 'title-2'],
               label: 'Container',
               parentId: null,
-              rootId: 'id_6ccde1',
+              rootId: 'wrapper-2',
               styleSelectors: {
                 base: ''
               },
               type: 'container'
             },
-            id: 'id_6ccde1'
+            id: 'wrapper-2'
           },
-          id_e21bc6: {
+          'cta-2': {
             attributes: {
               content: 'Button',
               contentPlacement: 'after',
@@ -821,14 +836,14 @@ describe('Testing FlatMap', () => {
                 visibility: true
               },
               interactions: {
-                node_669b33e1847b3149e1223886: {
+                'openModal-1': {
                   action: 'onClick',
-                  afterNode: 'node_669b33e73090472c339a0b52',
+                  afterNode: 'trackClick-1',
                   beforeNode: '',
-                  elementId: 'id_e21bc6',
+                  elementId: 'cta-2',
                   enabled: true,
-                  flowId: 'node_669b33e1847b3149e1223886',
-                  id: 'node_669b33e1847b3149e1223886',
+                  flowId: 'openModal-1',
+                  id: 'openModal-1',
                   params: {
                     propagateEvent: false
                   },
@@ -838,14 +853,14 @@ describe('Testing FlatMap', () => {
                   title: 'New Trigger',
                   type: 'trigger'
                 },
-                node_669b33e73090472c339a0b52: {
+                'trackClick-1': {
                   action: 'setState',
                   afterNode: '',
-                  beforeNode: 'node_669b33e1847b3149e1223886',
-                  elementId: 'id_0d3d1d',
+                  beforeNode: 'openModal-1',
+                  elementId: 'title-2',
                   enabled: true,
-                  flowId: 'node_669b33e1847b3149e1223886',
-                  id: 'node_669b33e73090472c339a0b52',
+                  flowId: 'openModal-1',
+                  id: 'trackClick-1',
                   params: {
                     category: 'attribute',
                     key: 'content',
@@ -859,14 +874,14 @@ describe('Testing FlatMap', () => {
               },
               items: [],
               label: 'Button',
-              parentId: 'id_6ccde1',
-              rootId: 'id_6ccde1',
+              parentId: 'wrapper-2',
+              rootId: 'wrapper-2',
               styleSelectors: {
                 base: 'button-rdGM'
               },
               type: 'button'
             },
-            id: 'id_e21bc6'
+            id: 'cta-2'
           }
         },
         item: {
@@ -879,16 +894,16 @@ describe('Testing FlatMap', () => {
             initialState: {
               visibility: true
             },
-            items: ['id_e21bc6', 'id_0d3d1d'],
+            items: ['cta-2', 'title-2'],
             label: 'Container',
             parentId: null,
-            rootId: 'id_6ccde1',
+            rootId: 'wrapper-2',
             styleSelectors: {
               base: ''
             },
             type: 'container'
           },
-          id: 'id_6ccde1'
+          id: 'wrapper-2'
         }
       },
       elementsStyle: {
@@ -989,15 +1004,12 @@ describe('Testing FlatMap', () => {
       flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
-    const { elements, elementsStyle, variables } = instance.flatAsTemplate(
-      styleSchema1 as Style,
-      '669b33dcf636e501810d3d1d'
-    );
+    const { elements, elementsStyle, variables } = instance.flatAsTemplate(styleSchema1 as Style, 'title');
     expect({ elements, elementsStyle, variables }).toStrictEqual({
       elements: {
         acum: {
-          id_0d3d1d: {
-            id: 'id_0d3d1d',
+          'title-2': {
+            id: 'title-2',
             attributes: {
               content: 'Heading',
               subType: 'h1'
@@ -1012,13 +1024,13 @@ describe('Testing FlatMap', () => {
               initialState: {
                 visibility: true
               },
-              rootId: 'id_0d3d1d',
+              rootId: 'title-2',
               parentId: null
             }
           }
         },
         item: {
-          id: 'id_0d3d1d',
+          id: 'title-2',
           attributes: {
             content: 'Heading',
             subType: 'h1'
@@ -1033,7 +1045,7 @@ describe('Testing FlatMap', () => {
             initialState: {
               visibility: true
             },
-            rootId: 'id_0d3d1d',
+            rootId: 'title-2',
             parentId: null
           }
         }
@@ -1123,7 +1135,7 @@ describe('Testing FlatMap', () => {
       flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
-    const { elementsStyle, variables } = instance.flatAsTemplate(styleSchema2 as Style, '669b33dcf636e501810d3d1d');
+    const { elementsStyle, variables } = instance.flatAsTemplate(styleSchema2 as Style, 'title');
     expect({ elementsStyle, variables }).toStrictEqual({
       elementsStyle: {
         cache: '',
@@ -1174,7 +1186,7 @@ describe('Testing FlatMap', () => {
       flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
-    const variables = instance.getElementVariables(styleSchema1 as Style, '669b33dcf636e501810d3d1d');
+    const variables = instance.getElementVariables(styleSchema1 as Style, 'title');
     expect(variables).toEqual([
       {
         name: 'fancyVariableColor',

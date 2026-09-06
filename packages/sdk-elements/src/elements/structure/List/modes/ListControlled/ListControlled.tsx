@@ -26,10 +26,9 @@ export type ListControlledProps<T = unknown> = {
 const ListControlled = ({ ref, className = '', children, items = [] }: ListControlledProps) => {
   const {
     id,
-    idRef,
     definition: { label }
   } = useElement();
-  const sourceName = getSourceName(declaration.sourceType, { idRef });
+  const sourceName = getSourceName(declaration.sourceType, id);
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();

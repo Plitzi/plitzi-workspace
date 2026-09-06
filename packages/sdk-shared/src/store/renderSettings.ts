@@ -12,7 +12,10 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
   debugMode: false,
   renderMode: 'raw',
   environment: 'main',
-  isHydrating: false
+  isHydrating: false,
+  hydrated: false,
+  overQuota: false,
+  testAttributes: true
 };
 
 /** Reads `render` from the nearest store, filled in. Returns every key defined, so call sites destructure without
@@ -21,13 +24,17 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
  *  A nested scope that seeds `render` SHADOWS the whole slice — reads do not fall through key by key, whichever way
  *  they are written — so a subtree that overrides one flag must restate the rest ({@link useRenderOverride}). */
 const useRenderSettings = (): Required<RenderSettings> => {
-  const [[previewMode, debugMode, renderMode, environment, isHydrating]] = useCommonStore([
-    'render.previewMode',
-    'render.debugMode',
-    'render.renderMode',
-    'render.environment',
-    'render.isHydrating'
-  ]);
+  const [[previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, testAttributes]] =
+    useCommonStore([
+      'render.previewMode',
+      'render.debugMode',
+      'render.renderMode',
+      'render.environment',
+      'render.isHydrating',
+      'render.hydrated',
+      'render.overQuota',
+      'render.testAttributes'
+    ]);
 
   return useMemo(
     () => ({
@@ -35,9 +42,12 @@ const useRenderSettings = (): Required<RenderSettings> => {
       debugMode: debugMode ?? DEFAULT_RENDER_SETTINGS.debugMode,
       renderMode: renderMode ?? DEFAULT_RENDER_SETTINGS.renderMode,
       environment: environment ?? DEFAULT_RENDER_SETTINGS.environment,
-      isHydrating: isHydrating ?? DEFAULT_RENDER_SETTINGS.isHydrating
+      isHydrating: isHydrating ?? DEFAULT_RENDER_SETTINGS.isHydrating,
+      hydrated: hydrated ?? DEFAULT_RENDER_SETTINGS.hydrated,
+      overQuota: overQuota ?? DEFAULT_RENDER_SETTINGS.overQuota,
+      testAttributes: testAttributes ?? DEFAULT_RENDER_SETTINGS.testAttributes
     }),
-    [previewMode, debugMode, renderMode, environment, isHydrating]
+    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, testAttributes]
   );
 };
 

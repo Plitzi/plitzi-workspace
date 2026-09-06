@@ -2,8 +2,6 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 
 import type { FC } from 'react';
 
-export const isTestMode = () => typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
-
 export function getDisplayName<T = unknown>(WrappedComponent?: FC<T>) {
   if (!WrappedComponent) {
     return 'Component';
@@ -16,31 +14,6 @@ const emptyObject = {};
 Object.freeze(emptyObject);
 
 export { emptyObject };
-
-const mongoObjectId = () => {
-  const timestamp = ((new Date().getTime() / 1000) | 0).toString(16);
-
-  return (
-    timestamp +
-    'xxxxxxxxxxxxxxxx'
-      .replace(/[x]/g, function () {
-        return ((Math.random() * 16) | 0).toString(16);
-      })
-      .toLowerCase()
-  );
-};
-
-export const generateID = (prevId: string = '') => {
-  if (!isTestMode()) {
-    return mongoObjectId();
-  }
-
-  if (!prevId) {
-    return 'id_000000';
-  }
-
-  return `id_${prevId.substring(prevId.length - 6)}`;
-};
 
 export const getPathsFromObeject = (
   object?: { [key: string]: unknown },

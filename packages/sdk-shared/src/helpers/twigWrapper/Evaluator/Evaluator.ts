@@ -299,6 +299,8 @@ class Evaluator {
         return this.evalRange(expr.start, expr.end);
       case 'path':
         return this.resolvePath(expr.segments);
+      case 'index':
+        return this.resolveIndex(expr.object, expr.index);
       case 'function':
         return this.evalFunction(expr.name, expr.args);
       case 'filter':
@@ -375,6 +377,27 @@ class Evaluator {
     }
 
     return current;
+  }
+
+  /**
+   * One member access whose key is only known now: `items[i]`, `record[field]`.
+   *
+   * The key is coerced to a string because that is what reading a member does anyway — `array['0']` and `array[0]`
+   * are the same element — so a numeric index and a computed field name take one path rather than two.
+   */
+  private resolveIndex(objectExpr: Expression, indexExpr: Expression): unknown {
+    const target = this.evalExpression(objectExpr);
+    if (target === null || target === undefined) {
+      return undefined;
+    }
+
+    const key = this.evalExpression(indexExpr);
+    if (key === null || key === undefined) {
+      return undefined;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    return (target as Record<string, unknown>)[String(key)];
   }
 
   private evalRange(startExpr: Expression, endExpr: Expression): number[] {

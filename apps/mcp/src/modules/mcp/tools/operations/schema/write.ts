@@ -1,15 +1,6 @@
-import { isValidIdRef, makeIdRef } from '@plitzi/sdk-schema/helpers/idRef';
+import { elementIdConflict, isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
-import {
-  fail,
-  findElementByRef,
-  findPageByRef,
-  generateObjectId,
-  indexAddElement,
-  indexReRefElement,
-  resolveRef,
-  spaceIndex
-} from '../../../helpers';
+import { fail, findRootByRef, indexAddElement, resolveRef } from '../../../helpers';
 
 import type { ElementInput, InitialStateInput } from './shared';
 import type { OpResult, Space } from '../../../helpers';
@@ -20,46 +11,35 @@ import type { Element, ElementDefinition } from '@plitzi/sdk-shared';
 // operations (create/place/detach) the upsert/move handlers reuse.
 
 export const ID_REF_HINT =
-  'Start with a letter, then letters, numbers, hyphens and underscores (e.g. "hero-cta" or "food_item"). The ref ' +
-  'becomes the element idRef, which the runtime embeds in source names like `apiContainer_<idRef>.field` and in ' +
-  'interaction targets — a dot would split those paths (an underscore is fine: the FIRST `_` separates the type from ' +
-  'the idRef, and element types carry none, so extra underscores are unambiguous).';
+  'Start with a letter, then letters, numbers, hyphens and underscores (e.g. "hero-cta" or "food_item"). The name ' +
+  'IS the element id, which the runtime embeds in source names like `apiContainer_<id>.field` and in interaction ' +
+  'targets — a dot would split those paths (an underscore is fine: the FIRST `_` separates the type from the id, ' +
+  'and element types carry none, so extra underscores are unambiguous).';
 
 const TAKEN_HINT =
-  'An idRef must be unique across the space — pick a different ref, or address the existing element by this ref.';
+  'A name must be unique across the space — pick a different one, or address the existing element by this name.';
 
-/** Every ref in an element input tree (the element plus its nested children) — each becomes a new element's idRef. */
+/** Every name in an element input tree (the element plus its nested children) — each becomes an element's id. */
 export const collectInputRefs = (input: ElementInput): string[] => [
   input.ref,
   ...(input.children ?? []).flatMap(collectInputRefs)
 ];
 
-/** Validate a ref that is about to become an element's idRef: the charset, then whether anything already answers
- *  to it. The charset rule is sdk-schema's `isValidIdRef` — never a regex restated here, so the MCP cannot drift
- *  from what the builder and the schema validator enforce.
- *
- *  Uniqueness is checked with the ref lookups rather than `FlatMap.idRefConflict`, and deliberately so: these are
- *  a superset of it. FlatMap asks whether another element holds this idRef; the MCP must also refuse a ref that
- *  shadows a raw id or a page slug, because its handlers resolve refs through those too — calling both would just
- *  run the same rule twice. Null when the ref is usable.
- *
- *  Enforced here, at every point a ref BECOMES an idRef — addressing an existing element by its raw id is not
- *  charset-checked, which is why the validator cannot simply tighten its own REF_RE for every ref it sees. */
+/** Validate a name that is about to become an element's id: the charset, then whether anything already answers to
+ *  it. Both rules are sdk-schema's `elementIdConflict` — never restated here, so the MCP cannot drift from what
+ *  the builder and the schema validator enforce. Null when the name is usable. */
 export const guardNewRef = (space: Space, ref: string, field: string): OpResult | null => {
-  if (!isValidIdRef(ref)) {
-    return fail(field, `"${ref}" is not a valid idRef`, ID_REF_HINT);
+  const conflict = elementIdConflict(space.schema.flat, ref);
+  if (!conflict) {
+    return null;
   }
 
-  if (findElementByRef(space.schema, ref) || findPageByRef(space.schema, ref)) {
-    return fail(field, `"${ref}" is already used by another element in this space`, TAKEN_HINT);
-  }
-
-  return null;
+  return isValidElementId(ref) ? fail(field, conflict, TAKEN_HINT) : fail(field, conflict, ID_REF_HINT);
 };
 
 // URI builders are the single source of truth in helpers/uris; re-exported here so the element-schema handlers
 // keep importing them from `../write` unchanged.
-export { folderUri, foldersUri, pageUri, pagesUri, schemaVarsUri, settingsUri } from '../../../helpers';
+export { folderUri, foldersUri, layoutsUri, pageUri, pagesUri, schemaVarsUri, settingsUri } from '../../../helpers';
 
 // Detach an element from its parent's item list. The child names its parent (definition.parentId), so this splices
 // the one owning list directly — O(items) — instead of scanning every element in the space (O(flat)), which turned
@@ -116,19 +96,18 @@ export const createElement = (
   parent: Element,
   index: number | undefined
 ): void => {
-  const id = generateObjectId();
   const { subType, ...props } = { subType: input.subType, ...input.props };
   const styleSelectors: Record<string, string> = { base: (input.style?.base ?? []).join(' ') };
   for (const [slot, classes] of Object.entries(input.style?.slots ?? {})) {
     styleSelectors[slot] = classes.join(' ');
   }
 
+  // The name the agent chose IS the element's id: the key it addresses the element by here, the `flat` key, AND
+  // the key the runtime wires with (a provider registers its source as `<type>_<id>`), so a binding written
+  // against this name resolves to this element at runtime with no translation at all.
+  const id = input.ref;
   const el: Element = {
     id,
-    // The agent's chosen ref IS the element's idRef: the key it addresses the element by here AND the key the
-    // runtime wires with (a provider registers its source as `<type>_<idRef>`), so a binding written against this
-    // ref resolves to this element at runtime with no id translation.
-    idRef: input.ref,
     attributes: subType === undefined ? props : { subType, ...props },
     definition: {
       rootId: page.id,
@@ -144,8 +123,8 @@ export const createElement = (
   };
   space.schema.flat[id] = el;
   placeChild(parent, id, index);
-  // Keep the ref index in step with the new element (elementByRef + pageOf) in O(1), rather than dropping it and
-  // paying a full rebuild on the next lookup — so a batch creating hundreds of elements stays linear.
+  // Keep the page index in step with the new element in O(1), rather than dropping it and paying a full rebuild on
+  // the next lookup — so a batch creating hundreds of elements stays linear.
   indexAddElement(space.schema, el, page.id);
 
   if (input.initialState) {
@@ -157,37 +136,14 @@ export const createElement = (
   }
 };
 
-/** The idRef an element is wired by, minting one when it has none. Interactions are keyed by idRef, so an element
- *  that is about to host or be targeted by a flow must have one — rather than make the agent assign it with a
- *  separate patchElement, the MCP gives it a free `<type>-<n>` ref (unique across the space) and proceeds. An
- *  element that already has an idRef keeps it. Mutates the element in place and returns the ref. */
-export const ensureIdRef = (space: Space, el: Element): string => {
-  if (el.idRef) {
-    return el.idRef;
-  }
-
-  // The ref index already answers "is this ref taken?" in O(1) via its element and page ref maps, so mint against
-  // it instead of rebuilding the full taken-idRef set (O(flat)) on every call. makeIdRef only proposes `<type>-<n>`
-  // candidates, so the broader index membership is equivalent for them — and never collides with a raw element id.
-  const index = spaceIndex(space.schema);
-  el.idRef = makeIdRef(
-    el.definition.type,
-    candidate => index.elementByRef.has(candidate) || index.pageByRef.has(candidate)
-  );
-  // The element is now addressable by a new idRef; add that key to the index in place.
-  indexReRefElement(space.schema, el);
-
-  return el.idRef;
-};
-
-/** The key an interaction node must store to reach a target element. Every ref field also accepts a raw id, so a
- *  target given as an id is resolved to the element's idRef — the key the runtime registers callbacks under. A
- *  target that has no idRef is given one (see `ensureIdRef`), since it must be reachable to be wired to. A target
- *  that resolves to no element is left as written — it is already a ref, or a key only a plugin knows. */
+/** The key an interaction node must store to reach a target element — which is simply that element's name, since
+ *  the name it is addressed by and the key the runtime registers callbacks under are now the same thing. A target
+ *  that resolves to no element is left as written: it is a source module (`space`, `state`) or a key only a plugin
+ *  knows. */
 export const resolveTargetRef = (space: Space, elementId: string): string => {
-  const el = (space.schema.flat[elementId] as Element | undefined) ?? findElementByRef(space.schema, elementId);
+  const el = space.schema.flat[elementId] as Element | undefined;
 
-  return el ? ensureIdRef(space, el) : elementId;
+  return el ? el.id : elementId;
 };
 
 /** Resolve a non-page element within a page for the element-scoped ops (bindings, interactions). Returns the
@@ -199,17 +155,21 @@ export const resolveElement = (
   pageRef: string,
   ref: string
 ): { el: Element } | { error: OpResult } => {
-  const page = findPageByRef(space.schema, pageRef);
+  const page = findRootByRef(space.schema, pageRef);
   if (!page) {
     return {
-      error: fail('pageRef', `Page "${pageRef}" not found`, `Read plitzi://schema/${env}/pages for valid refs`)
+      error: fail(
+        'pageRef',
+        `Page or layout "${pageRef}" not found`,
+        `Read plitzi://schema/${env}/pages for valid refs — a layout shell is named there too`
+      )
     };
   }
 
   const el = resolveRef(space.schema, page, ref);
   if (!el || el.id === page.id) {
     return {
-      error: fail('ref', `Element "${ref}" not found in page "${pageRef}"`, 'Use an existing element ref or id')
+      error: fail('ref', `Element "${ref}" not found in page "${pageRef}"`, 'Name an element this page holds')
     };
   }
 

@@ -5,16 +5,19 @@ import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import { BREAKPOINTS, className, css, sameRules, toResponsive } from '../style';
 import { GLOBAL_SOURCES, groupBindings, withVisibility } from './bindings';
 import { authorFlows } from './flows';
-import { authoringId, digest } from './ids';
+import { buildHandles, pathForSlug, selectorFor } from './handles';
+import { digest } from './ids';
 import { didYouMean } from './suggest';
 import { assertSpaceValid } from './validate';
 
 import type { SourceIndex } from './bindings';
+import type { ElementHandle, PageHandle } from './handles';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
   ElementSpec,
   ElementStyleSpec,
+  PageFolderSpec,
   PageSpec,
   SpaceSpec,
   StepSpec,
@@ -22,17 +25,17 @@ import type {
 } from './types';
 import type { CssSpec, ResponsiveStyle, StyleDeclaration, StyleRules } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
-import type { DropPosition, Element, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { DropPosition, Element, PageFolder, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
 
 /**
  * Authoring a space without the builder.
  *
  * The parts a person actually decides — a tree, some CSS, what happens on click — are declared as specs, and every
- * id, selector name and back-reference is derived from them. Ids are hashes of the path that produced them, not
- * random, so authoring the same space twice writes byte-identical documents and a seed can re-run without churning
- * what it wrote last time.
+ * selector name and back-reference is derived from them. An element's id is either the name the author gave it or
+ * `<type>-<n>` counted per type, both deterministic — so authoring the same space twice writes byte-identical
+ * documents and a seed can re-run without churning what it wrote last time.
  *
- * Insertion goes through `FlatMap`, so a tree built here is held to exactly the same validity and idRef rules as
+ * Insertion goes through `FlatMap`, so a tree built here is held to exactly the same validity and naming rules as
  * one built by dragging elements around the builder, and the finished pair is put through the document validator
  * before it is handed back. This module is the only thing in the SDK that writes a schema document: every other
  * authoring fragment produces specs, and specs are inert until they reach here.
@@ -58,14 +61,27 @@ class SpaceAuthor {
 
   private readonly platform: Style['platform'] = { desktop: {}, tablet: {}, mobile: {} };
 
-  private readonly refCounters = new Map<string, number>();
+  private readonly idCounters = new Map<string, number>();
+
+  /** Every name the AUTHOR wrote, collected before the tree is built so a derived `<type>-<n>` never lands on one. */
+  private readonly authorNames = new Set<string>();
 
   private readonly pagePaths = new Set<string>();
+  /** Each folder's route prefix, resolved through its parents. Filled before any page is written. */
+  private readonly folderPrefixes = new Map<string, string>();
+
+  /**
+   * What a test will address this space by, collected as the tree is written rather than walked again afterwards.
+   *
+   * Here and not in a second pass because this is the only place that knows an element's FINAL id: a spec may leave
+   * it out, and the derived `<type>-<n>` exists nowhere until it is minted below.
+   */
+  private readonly handles: Record<string, PageHandle> = {};
 
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
   private readonly classRules = new Map<string, ResponsiveStyle>();
 
-  /** Every idRef in this space that publishes a data source, and the name it publishes it under. */
+  /** Every element in this space that publishes a data source, by id, and the name it publishes it under. */
   private readonly sources: SourceIndex = new Map();
 
   /** Steps this space names that the vocabulary could not vouch for. Handed back rather than thrown: a plugin is
@@ -92,13 +108,21 @@ class SpaceAuthor {
     this.spec.pages.forEach(page => this.collectDeclarations(page));
 
     // Same reason, for the other thing an element names by a name declared elsewhere: a binding may read a
-    // provider written further down the page than the element reading it.
-    this.spec.pages.forEach(page => page.body.forEach(child => this.collectSources(child)));
+    // provider written further down the page than the element reading it. The author's own names are collected in
+    // the same pass, so a derived `<type>-<n>` never claims a name written further down.
+    this.spec.pages.forEach(page => {
+      if (page.id) {
+        this.authorNames.add(page.id);
+      }
+
+      page.body.forEach(child => this.collectSources(child));
+    });
 
     for (const [name, responsive] of this.classRules) {
       this.writeSelector(name, responsive);
     }
 
+    const pageFolders = this.buildPageFolders();
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
 
     const style: Style = {
@@ -118,7 +142,7 @@ class SpaceAuthor {
       settings: { ...this.spec.settings, customCss: this.spec.customCss ?? '' },
       ...(this.spec.rsc ? { rsc: this.spec.rsc } : {}),
       pages,
-      pageFolders: []
+      pageFolders
     };
 
     // The gate, and the same one anybody else's documents go through. An authored space that cannot pass it is a
@@ -130,7 +154,7 @@ class SpaceAuthor {
       sourceTypes: this.options.sourceTypes
     });
 
-    return { schema, style, warnings: [...this.stepWarnings, ...warnings] };
+    return { schema, style, handles: buildHandles(this.handles), warnings: [...this.stepWarnings, ...warnings] };
   }
 
   /**
@@ -281,24 +305,29 @@ class SpaceAuthor {
   }
 
   /**
-   * Every element that publishes a data source, before anything binds to one.
+   * Every element that publishes a data source, before anything binds to one — and every name the author wrote.
    *
-   * Only elements with an idRef the AUTHOR wrote: a derived ref is positional, so a binding naming one would move
-   * the moment an element was added above it — which is why nothing is meant to refer to one.
+   * Only elements NAMED by the author publish: a derived name is positional, so a binding naming one would move the
+   * moment an element was added above it, which is why nothing is meant to refer to one. Naming the element is how
+   * an author says "this is a thing other parts of the space point at".
    */
   private collectSources(spec: ElementSpec): void {
+    if (spec.id) {
+      this.authorNames.add(spec.id);
+    }
+
     const sourceTypes = this.options.sourceTypes;
     const prefix = sourceTypes?.[spec.type];
-    if (prefix && spec.idRef) {
+    if (prefix && spec.id) {
       // The globals are registered for the whole space under bare names, so an element answering to one makes its
       // own source unreachable AND shadows the global for every binding in the space that meant the other one.
-      if (GLOBAL_SOURCES.includes(spec.idRef)) {
+      if (GLOBAL_SOURCES.includes(spec.id)) {
         throw new Error(
-          `Element "${spec.type}" answers to the idRef "${spec.idRef}", which is one of the global data sources (${GLOBAL_SOURCES.join(', ')}). Give it another name.`
+          `Element "${spec.type}" is named "${spec.id}", which is one of the global data sources (${GLOBAL_SOURCES.join(', ')}). Give it another name.`
         );
       }
 
-      this.sources.set(spec.idRef, prefix);
+      this.sources.set(spec.id, prefix);
     }
 
     spec.children?.forEach(child => this.collectSources(child));
@@ -323,9 +352,15 @@ class SpaceAuthor {
     );
   }
 
-  private nextRef(type: string): string {
-    const next = (this.refCounters.get(type) ?? 0) + 1;
-    this.refCounters.set(type, next);
+  /** `<type>-<n>` for an element nobody named. Positional and deterministic, so a re-run writes the same document;
+   *  it steps over anything the author named so a derived name can never take one. */
+  private nextId(type: string): string {
+    let next = (this.idCounters.get(type) ?? 0) + 1;
+    while (this.authorNames.has(`${type}-${next}`)) {
+      next += 1;
+    }
+
+    this.idCounters.set(type, next);
 
     return `${type}-${next}`;
   }
@@ -380,13 +415,13 @@ class SpaceAuthor {
    *
    * It answers `false` rather than throwing — a builder dropping an element somewhere it may not go is not an
    * exception — so an ignored return here is an element that never made it into the document while the page it
-   * belonged to authors perfectly well. The reason it is nearly always declined is an `idRef` two elements share,
+   * belonged to authors perfectly well. The reason it is nearly always declined is a name two elements share,
    * and a name written twice is worth hearing about at the line that wrote it.
    */
   private insert(element: Element, to: string, position: DropPosition): void {
     if (!this.flatMap.addElement(element, to, position)) {
       throw new Error(
-        `Could not author element "${element.idRef ?? element.id}" (${element.definition.type}): the schema refused it, which usually means another element already answers to that idRef`
+        `Could not author element "${element.id}" (${element.definition.type}): the schema refused it, which usually means another element already answers to that name`
       );
     }
   }
@@ -399,6 +434,69 @@ class SpaceAuthor {
    * every id in their subtrees, and the second page's elements were refused one by one. Only the later page is
    * disambiguated, so no space that has no duplicate moves an id.
    */
+  /**
+   * The folders, and the route prefix each one contributes.
+   *
+   * Resolved once, before any page is written, for the reason every other declaration is: a page names a folder by
+   * id, and a name that answers to nothing has to be refused where it was written rather than becoming a page that
+   * quietly answers at the wrong URL. Nesting is walked with a seen-set — a folder declared as its own ancestor is
+   * a cycle, and the honest answer to it is a throw and not an infinite loop.
+   */
+  private buildPageFolders(): PageFolder[] {
+    const declared = this.spec.pageFolders ?? [];
+    const byId = new Map(declared.map(folder => [folder.id, folder]));
+
+    for (const folder of declared) {
+      if (folder.parent !== undefined && !byId.has(folder.parent)) {
+        throw new Error(
+          `Page folder "${folder.id}" sits in "${folder.parent}", which this space does not declare${didYouMean(folder.parent, [...byId.keys()])}`
+        );
+      }
+    }
+
+    for (const folder of declared) {
+      const seen = new Set<string>([folder.id]);
+      let parent = folder.parent;
+      while (parent !== undefined) {
+        if (seen.has(parent)) {
+          throw new Error(`Page folder "${folder.id}" is inside itself, through "${parent}"`);
+        }
+
+        seen.add(parent);
+        parent = byId.get(parent)?.parent;
+      }
+    }
+
+    for (const folder of declared) {
+      const segments: string[] = [];
+      let current: PageFolderSpec | undefined = folder;
+      while (current) {
+        segments.unshift(current.slug ?? current.id);
+        current = current.parent === undefined ? undefined : byId.get(current.parent);
+      }
+
+      this.folderPrefixes.set(folder.id, segments.filter(Boolean).join('/'));
+    }
+
+    return declared.map(folder => ({
+      id: folder.id,
+      name: folder.name ?? folder.id,
+      slug: folder.slug ?? folder.id,
+      ...(folder.parent === undefined ? {} : { parentId: folder.parent })
+    }));
+  }
+
+  /** Where a page ANSWERS: its folder's chain of slugs, then its own. What a test navigates to. */
+  private routeFor(page: PageSpec): string {
+    if (page.isDefault) {
+      return '/';
+    }
+
+    const prefix = page.folder === undefined ? '' : (this.folderPrefixes.get(page.folder) ?? '');
+
+    return pathForSlug([prefix, page.slug].filter(Boolean).join('/'));
+  }
+
   private pathFor(page: PageSpec, index: number): string {
     const base = `${this.spec.permanentUrl}/${page.slug || 'home'}`;
     const path = this.pagePaths.has(base) ? `${base}#${index}` : base;
@@ -410,16 +508,21 @@ class SpaceAuthor {
   private addPage(page: PageSpec, index: number): string {
     const path = this.pathFor(page, index);
     this.assertStepsKnown(page.flows, `Page "${page.name}"`);
-    const id = authoringId(path);
-    const idRef = page.idRef ?? this.nextRef('page');
+    if (page.folder !== undefined && !this.folderPrefixes.has(page.folder)) {
+      throw new Error(
+        `Page "${page.name}" is in folder "${page.folder}", which this space does not declare${didYouMean(page.folder, [...this.folderPrefixes.keys()])}`
+      );
+    }
+
+    const id = page.id ?? this.nextId('page');
 
     const element: Element = {
       id,
-      idRef,
       attributes: {
         slug: page.slug,
         default: page.isDefault ?? index === 0,
         name: page.name,
+        ...(page.folder === undefined ? {} : { folder: page.folder }),
         ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
         ...(page.unauthorizedRedirect
           ? { unauthorizedBehaviour: 'redirect', unauthorizedPageRedirect: page.unauthorizedRedirect }
@@ -434,12 +537,23 @@ class SpaceAuthor {
         rootId: id,
         items: [],
         styleSelectors: { base: this.selectorFor(path, { type: 'page', css: page.css, class: page.class }) },
-        ...(page.flows ? { interactions: authorFlows(path, page.flows, idRef) } : {})
+        ...(page.flows ? { interactions: authorFlows(page.flows, id) } : {})
       }
     };
 
     // `custom` is the one drop position that inserts without a parent, which is what a page is.
     this.insert(element, '', 'custom');
+
+    this.handles[id] = {
+      id,
+      type: 'page',
+      pageId: id,
+      selector: selectorFor(id),
+      named: page.id !== undefined,
+      slug: page.slug,
+      path: this.routeFor(page),
+      elements: {}
+    };
 
     page.body.forEach((child, childIndex) => this.addElement(child, `${path}/${childIndex}`, id, id));
 
@@ -457,17 +571,31 @@ class SpaceAuthor {
     );
   }
 
+  /**
+   * Files an element under the page it renders on.
+   *
+   * `rootId` is that page for everything a page contains — a layout container included, since it is a root the page
+   * names rather than a page of its own. An element whose root is not a page it wrote is dropped rather than filed
+   * somewhere plausible: a handle that resolves to the wrong page is worse than one that is absent, which the
+   * lookup reports by name.
+   */
+  private recordHandle(handle: ElementHandle): void {
+    // `hasOwn` rather than a falsy check: an index signature types every read as a hit, so this is the only way to
+    // ask whether a root that is not one of this space's pages has an entry at all.
+    if (Object.hasOwn(this.handles, handle.pageId)) {
+      this.handles[handle.pageId].elements[handle.id] = handle;
+    }
+  }
+
   private addElement(spec: ElementSpec, path: string, rootId: string, parentId: string): string {
-    const id = authoringId(path);
-    const idRef = spec.idRef ?? this.nextRef(spec.type);
-    const where = `Element "${spec.type}" (${idRef}) at ${path}`;
+    const id = spec.id ?? this.nextId(spec.type);
+    const where = `Element "${spec.type}" (${id}) at ${path}`;
     this.assertStepsKnown(spec.flows, where);
     const bindings = withVisibility(spec);
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
 
     const element: Element = {
       id,
-      idRef,
       attributes: spec.attributes ?? {},
       definition: {
         label: spec.meta?.label ?? spec.type,
@@ -492,33 +620,19 @@ class SpaceAuthor {
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
         ...(bindings ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
-        ...(spec.flows ? { interactions: authorFlows(path, spec.flows, idRef) } : {})
+        ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})
       }
     };
 
     this.insert(element, parentId, 'inside');
+
+    this.recordHandle({ id, type: spec.type, pageId: rootId, selector: selectorFor(id), named: spec.id !== undefined });
 
     spec.children?.forEach((child, index) => this.addElement(child, `${path}/${index}`, rootId, id));
 
     return id;
   }
 }
-
-/**
- * The document id of the element authored under a name.
- *
- * Ids are derived, which is what keeps a declaration readable — and some of them are still an external contract:
- * RSC data is keyed by element id, so a server feeding a `runtime: 'server'` element has to know which id that
- * is. It looks it up by the `idRef` the space gave the element, which is the one thing an author wrote down.
- */
-export const elementIdOf = (schema: Schema, idRef: string): string => {
-  const element = Object.values(schema.flat).find(candidate => candidate.idRef === idRef);
-  if (!element) {
-    throw new Error(`No element in this space answers to the idRef "${idRef}"`);
-  }
-
-  return element.id;
-};
 
 /**
  * Build a space's two documents from a declaration. Throws if the result would not be a valid space.

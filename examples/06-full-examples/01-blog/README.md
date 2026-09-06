@@ -62,7 +62,7 @@ Each section of a page is an `apiContainer` with `runtime: 'server'` naming an *
 
 ```ts
 apiContainer({
-  idRef: 'posts',
+  id: 'posts',
   runtime: 'server',
   action: 'list-posts',
   input: { perPage: 4, featured: true },

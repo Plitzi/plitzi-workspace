@@ -15,6 +15,7 @@ import DisplayModeButtons from './DisplayModeButtons';
 import HistoryButtons from './HistoryButtons';
 import PageHeader from './PageHeader';
 import PreviewModeButtons from './PreviewModeButtons';
+import QuotaMeter from './QuotaMeter';
 import ZoomButtons from './ZoomButtons';
 import DeployForm from '../../models/DeployForm';
 import PublishForm from '../../models/PublishForm';
@@ -150,6 +151,7 @@ const AppHeader = () => {
           })}
         </div>
         <PreviewModeButtons />
+        <QuotaMeter />
         <button
           className={clsx(
             'flex h-7 w-7 cursor-pointer items-center justify-center rounded text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'

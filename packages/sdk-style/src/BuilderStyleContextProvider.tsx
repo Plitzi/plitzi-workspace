@@ -21,6 +21,7 @@ import type {
   SpaceEventMap,
   BuilderNetworkContextValue,
   DisplayMode,
+  SpaceFont,
   Style,
   StyleItem,
   StyleVariableCategory,
@@ -215,6 +216,24 @@ const BuilderStyleContextProvider = ({
     [dispatchStyle]
   );
 
+  const styleAddFont = useCallback(
+    (font: SpaceFont, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_ADD_FONT, font, fromSubscriptions }),
+    [dispatchStyle]
+  );
+
+  const styleUpdateFont = useCallback(
+    (family: string, font: SpaceFont, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_UPDATE_FONT, family, font, fromSubscriptions }),
+    [dispatchStyle]
+  );
+
+  const styleRemoveFont = useCallback(
+    (family: string, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_REMOVE_FONT, family, fromSubscriptions }),
+    [dispatchStyle]
+  );
+
   const styleAddTemplate = useCallback(
     (platform: Style['platform'], fromSubscriptions = false) =>
       dispatchStyle({ type: StyleActions.STYLE_ADD_TEMPLATE, platform, fromSubscriptions }),
@@ -274,6 +293,11 @@ const BuilderStyleContextProvider = ({
       styleRemoveVariable(category, name, true)
     );
 
+    // Fonts
+    subscriptionManager.subscribe('STYLE_ADD_FONT', ({ font }) => styleAddFont(font, true));
+    subscriptionManager.subscribe('STYLE_UPDATE_FONT', ({ family, font }) => styleUpdateFont(family, font, true));
+    subscriptionManager.subscribe('STYLE_REMOVE_FONT', ({ family }) => styleRemoveFont(family, true));
+
     // Others
     subscriptionManager.subscribe('STYLE_UPDATE_SETTINGS', ({ path, value }) => styleUpdateSettings(path, value, true));
 
@@ -291,6 +315,9 @@ const BuilderStyleContextProvider = ({
           'STYLE_ADD_VARIABLE',
           'STYLE_UPDATE_VARIABLE',
           'STYLE_REMOVE_VARIABLE',
+          'STYLE_ADD_FONT',
+          'STYLE_UPDATE_FONT',
+          'STYLE_REMOVE_FONT',
           'STYLE_UPDATE_SETTINGS'
         ],
         true
@@ -309,6 +336,9 @@ const BuilderStyleContextProvider = ({
     styleAddVariable,
     styleUpdateVariable,
     styleRemoveVariable,
+    styleAddFont,
+    styleUpdateFont,
+    styleRemoveFont,
     styleUpdateSettings
   ]);
 
@@ -325,6 +355,9 @@ const BuilderStyleContextProvider = ({
       styleAddVariable,
       styleUpdateVariable,
       styleRemoveVariable,
+      styleAddFont,
+      styleUpdateFont,
+      styleRemoveFont,
       styleAddTemplate,
       styleUpdateSettings
     }),
@@ -340,6 +373,9 @@ const BuilderStyleContextProvider = ({
       styleAddVariable,
       styleUpdateVariable,
       styleRemoveVariable,
+      styleAddFont,
+      styleUpdateFont,
+      styleRemoveFont,
       styleAddTemplate,
       styleUpdateSettings
     ]

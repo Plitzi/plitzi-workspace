@@ -14,12 +14,14 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import { fontLinkAssets, fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
 import CollaboratorArea from '@pmodules/Collaboration/components/CollaboratorArea';
+import { fontsBaseUrl } from '@pmodules/Fonts/fontsBaseUrl';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 
@@ -30,7 +32,10 @@ import BuilderAreaTracking from './BuilderAreaTracking';
 // @ts-ignore
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 
-import type { ComponentPluginWithHOC, DisplayMode } from '@plitzi/sdk-shared';
+import type { ComponentPluginWithHOC, DisplayMode, SpaceFont } from '@plitzi/sdk-shared';
+
+/** Module-level, so a space that declares no font of its own keeps one reference across every render. */
+const NO_FONTS: SpaceFont[] = [];
 
 export type BuilderAreaProps = {
   className?: string;
@@ -56,10 +61,12 @@ const BuilderArea = ({
   debugMode = false
 }: BuilderAreaProps) => {
   const [cache] = useBuilderStore('style.cache');
+  const [fonts = NO_FONTS] = useBuilderStore('style.fonts');
   // @todo: variables should be only related to styles
   const [variables] = useBuilderStore('runtime.sources.variables');
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
+  const { server } = use(NetworkContext);
   const {
     multiPagesMode,
     mode,
@@ -69,12 +76,23 @@ const BuilderArea = ({
   // The scheme the SPACE is painted in — see the `canvas` area in `themeStore`. Not the editor's own.
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
   const { displayBorderComponents, zoom } = use(AppContext);
+  /**
+   * The families the space declares, resolved for the canvas the same way the published page resolves them.
+   *
+   * The canvas is a document of its own, so nothing the editor's own page loads reaches it. It used to be fed a
+   * fixed list of eighteen Google families at one weight, which is why a design looked right here and shipped in a
+   * fallback — and why a bold in the canvas was the browser's synthetic one.
+   */
+  const fontHead = useMemo(() => fontsToHead(fonts, fontUrlResolver(fontsBaseUrl(server))), [fonts, server]);
+  const assetsWithFonts = useMemo(() => ({ ...assets, ...fontLinkAssets(fontHead) }), [assets, fontHead]);
+
   const css = useMemo(() => {
     const cssVariables = schemaVariablesToCss(variables as Record<string, string>);
     const cacheParsed = processCssTokens(cache, variables as Record<string, string>);
 
-    return `:root{${cssVariables}}\n${styleFrame}\n@layer plitzi-builder-runtime{${cacheParsed}\n${customCss}\n${externalStyle}}`;
-  }, [customCss, cache, externalStyle, variables]);
+    // The faces stay outside the layer: they declare what a family IS, and nothing in the cascade competes with them.
+    return `${fontHead.faces}\n:root{${cssVariables}}\n${styleFrame}\n@layer plitzi-builder-runtime{${cacheParsed}\n${customCss}\n${externalStyle}}`;
+  }, [customCss, cache, externalStyle, variables, fontHead.faces]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);
@@ -170,7 +188,7 @@ const BuilderArea = ({
             id={`i-builder-${baseElementId}`}
             // zoom={zoom}
             css={css}
-            assets={assets}
+            assets={assetsWithFonts}
             className="absolute h-full w-full origin-top-left"
             style={{ colorScheme: resolvedTheme }}
           >
@@ -187,7 +205,12 @@ const BuilderArea = ({
                   <SpaceContainer>
                     <PlitziServiceProvider value={plitziContextValue}>
                       <HelmetProvider>
-                        <Plugin key={baseElementId} internalProps={baseElementValueMemo} />
+                        {/* No key on the base element: a key here remounts the whole canvas on every page
+                            switch, and the layout shell is rendered inside the page — so two pages naming the
+                            same `layoutContainer` rebuilt it anyway. `Plugin` is resolved per base element, so
+                            switching to a root of a different KIND still changes the component type and remounts;
+                            page to page keeps the shell and swaps only the body. */}
+                        <Plugin internalProps={baseElementValueMemo} />
                       </HelmetProvider>
                     </PlitziServiceProvider>
                   </SpaceContainer>

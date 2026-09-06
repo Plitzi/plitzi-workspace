@@ -18,7 +18,6 @@ const SegmentCloneElementMutation = gql`
       contextId: $contextId
     ) {
       id
-      idRef
       definition {
         label
         type

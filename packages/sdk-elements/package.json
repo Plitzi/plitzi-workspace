@@ -302,6 +302,10 @@
       "types": "./dist/elements/basic/Dropdown/DropdownPopup/DropdownPopup.d.ts",
       "import": "./dist/elements/basic/Dropdown/DropdownPopup/DropdownPopup.mjs"
     },
+    "./elements/basic/Dropdown/DropdownPopup/Settings": {
+      "types": "./dist/elements/basic/Dropdown/DropdownPopup/Settings.d.ts",
+      "import": "./dist/elements/basic/Dropdown/DropdownPopup/Settings.mjs"
+    },
     "./elements/basic/Dropdown/DropdownPopup/declaration": {
       "types": "./dist/elements/basic/Dropdown/DropdownPopup/declaration.d.ts",
       "import": "./dist/elements/basic/Dropdown/DropdownPopup/declaration.mjs"

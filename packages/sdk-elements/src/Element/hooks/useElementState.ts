@@ -13,6 +13,11 @@ import type { CommonState, Element } from '@plitzi/sdk-shared';
 // root that owns `runtime.elements` — keeping the state uniformly observable in devtools at floor cost. It is
 // ephemeral: excluded from persist (only `runtime.state` is saved) and history; replica slices (list rows) are
 // cleared on unmount, while a plain element's slice lives as long as its page (torn down with the store).
+//
+// Keyed by the element's id, which is the name a person can change — so RENAMING AN ELEMENT RESETS ITS STATE. The
+// id is also the React key and the `data-rsc-id` that correlates the SSR and client renders, so a rename remounts
+// the element anyway; moving the slice with it would only preserve what a remount already threw away. Accepted
+// rather than worked around: it happens in the builder, to an element its author is editing right then.
 
 const emptyState: Record<string, unknown> = {};
 

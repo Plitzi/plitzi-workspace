@@ -6,7 +6,7 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import clsx from 'clsx';
 import { useCallback, useMemo, use } from 'react';
 
-import { WARNING_ICON, getNodeWarnings, isTargetUnreferenced, worstLevel } from '../helpers/nodeWarnings';
+import { WARNING_ICON, getNodeWarnings, worstLevel } from '../helpers/nodeWarnings';
 import WorkflowContext from '../WorkflowContext';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -52,10 +52,9 @@ const NodeHeader = ({
   onClickRemove
 }: NodeHeaderProps) => {
   const { moveNode } = use(WorkflowContext);
-  const targetUnreferenced = isTargetUnreferenced({ elementId }, nodeDefinitions);
   const warnings = useMemo(
-    () => getNodeWarnings({ type, action, elementId }, nodeDefinition, targetUnreferenced),
-    [type, action, elementId, nodeDefinition, targetUnreferenced]
+    () => getNodeWarnings({ type, action, elementId }, nodeDefinition),
+    [type, action, elementId, nodeDefinition]
   );
   const warningLevel = worstLevel(warnings);
 
@@ -145,7 +144,7 @@ const NodeHeader = ({
       .filter(node => node.type !== 'trigger')
       .reduce<(Option & { type: string; options: Option[] })[]>((acum, nodeDef) => {
         const { title, elementId, action, type } = nodeDef;
-        const label = nodeDef.unreferenced ? `${title} (no Reference)` : title;
+        const label = title;
         // A utility definition has no elementId; encode it as an empty segment, never the text "undefined".
         const value = `${elementId ?? ''}_${action}`;
         const group = acum.find(node => node.type === nodeDef.type);
@@ -155,10 +154,7 @@ const NodeHeader = ({
           return acum;
         }
 
-        return [
-          ...acum,
-          { type, label: type, options: [{ value, label, type, elementId, disabled: nodeDef.unreferenced ?? false }] }
-        ];
+        return [...acum, { type, label: type, options: [{ value, label, type, elementId }] }];
       }, []);
   }, [nodeDefinitions, type]);
 
@@ -220,13 +216,7 @@ const NodeHeader = ({
             </div>
           )}
           {isOpened && <Input size="xs" className="w-full" value={title} onChange={handleChangeTitle} />}
-          {targetUnreferenced && (
-            <i
-              className="fa-solid fa-link-slash ml-2 text-orange-400"
-              title="This element has no Reference, so the runtime cannot wire this step — give it one in Settings"
-            />
-          )}
-          {!targetUnreferenced && warningLevel && (
+          {warningLevel && (
             <i className={clsx(WARNING_ICON[warningLevel], 'ml-2')} title={warnings.map(w => w.message).join('\n')} />
           )}
           {(canUp || canDown) && (

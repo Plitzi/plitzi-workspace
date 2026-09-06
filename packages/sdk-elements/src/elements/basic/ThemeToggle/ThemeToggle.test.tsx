@@ -47,7 +47,6 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', async () => {
 vi.mock('../../../Element/hooks/useElement', () => ({
   default: () => ({
     id: 'toggle',
-    idRef: 'toggle',
     definition: { label: 'Theme Toggle', styleSelectors: { base: '', icon: '', option: '' } }
   })
 }));

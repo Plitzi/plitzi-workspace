@@ -21,10 +21,11 @@ type ParamView = {
 };
 
 const build = () => {
-  const setState = getInteractions(attributes, definition, vi.fn(), vi.fn()).setState;
+  const { setState, toggleState } = getInteractions(attributes, definition, vi.fn(), vi.fn(), vi.fn());
   const params = setState.params as Record<string, ParamView>;
+  const toggleParams = toggleState.params as Record<string, ParamView>;
 
-  return { setState, params };
+  return { setState, params, toggleState, toggleParams };
 };
 
 describe('getInteractions', () => {
@@ -69,5 +70,25 @@ describe('getInteractions', () => {
     const { params } = build();
 
     expect(params.value.options({ key: 'active' }).map(o => o.value)).toEqual(['true', 'false']);
+  });
+
+  it('builds a toggleState callback action titled after the element label', () => {
+    const { toggleState } = build();
+
+    expect(toggleState.action).toBe('toggleState');
+    expect(toggleState.type).toBe('callback');
+    expect(toggleState.title).toBe('Toggle My Button');
+  });
+
+  // The flip has nothing to author but WHERE, so a `value` param would only be a box with no correct answer.
+  it('asks the toggle for a target and no value', () => {
+    const { toggleParams } = build();
+
+    expect(Object.keys(toggleParams)).toEqual(['category', 'key', 'revertOnFinish']);
+    expect(toggleParams.key.options({ category: 'state' }).map(o => o.value)).toEqual([
+      'visibility',
+      'styleSelectors.base',
+      'styleSelectors.header'
+    ]);
   });
 });

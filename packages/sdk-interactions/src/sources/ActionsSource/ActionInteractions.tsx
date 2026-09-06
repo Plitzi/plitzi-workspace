@@ -185,17 +185,17 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
    */
   const reportFlow = useCallback(
     (
-      elementRef: string | undefined,
+      hostElementId: string | undefined,
       event: 'onFlowEnd' | 'onFlowError' | 'onFlowProgress',
       params: Record<string, unknown>
     ) => {
-      if (!elementRef) {
+      if (!hostElementId) {
         return;
       }
 
       void (
         interactionsManager as { interactionTrigger: (id: string, name: string, params: object) => unknown }
-      ).interactionTrigger(elementRef, event, params);
+      ).interactionTrigger(hostElementId, event, params);
     },
     [interactionsManager]
   );
@@ -291,7 +291,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
                 ...(payload.reason ? { reason: payload.reason } : {}),
                 ...(payload.error ? { error: payload.error } : {})
               });
-              reportFlow(context?.elementRef, 'onFlowError', {
+              reportFlow(context?.hostElementId, 'onFlowError', {
                 actionId,
                 runId: payload.runId ?? '',
                 error: payload.error ?? '',
@@ -314,7 +314,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
               </span>,
               { actionId, mode, runId: payload.runId, status: payload.status, output: payload.output }
             );
-            reportFlow(context?.elementRef, 'onFlowEnd', {
+            reportFlow(context?.hostElementId, 'onFlowEnd', {
               actionId,
               runId: payload.runId ?? '',
               status: payload.status ?? 'completed',
@@ -330,7 +330,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
               </span>,
               { actionId, mode, error: error instanceof Error ? error.message : String(error) }
             );
-            reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+            reportFlow(context?.hostElementId, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
           });
 
         return { accepted: true, status: 'accepted', runId: '', output: {} };
@@ -365,7 +365,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             </span>,
             { actionId, mode, error: error instanceof Error ? error.message : String(error) }
           );
-          reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+          reportFlow(context?.hostElementId, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
 
           return unreachable;
         }
@@ -379,7 +379,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             ...(payload.reason ? { reason: payload.reason } : {}),
             ...(payload.error ? { error: payload.error } : {})
           });
-          reportFlow(context?.elementRef, 'onFlowError', {
+          reportFlow(context?.hostElementId, 'onFlowError', {
             actionId,
             runId: payload.runId ?? '',
             error: payload.error ?? '',
@@ -405,7 +405,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         void readStream(response.body, frame => {
           if (frame.event === 'data') {
             recordActionProgress(record, frame.data.chunk ?? frame.data);
-            reportFlow(context?.elementRef, 'onFlowProgress', { actionId, runId, ...frame.data });
+            reportFlow(context?.hostElementId, 'onFlowProgress', { actionId, runId, ...frame.data });
 
             return;
           }
@@ -416,7 +416,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
               ...(typeof frame.data.reason === 'string' ? { reason: frame.data.reason } : {}),
               ...(typeof frame.data.error === 'string' ? { error: frame.data.error } : {})
             });
-            reportFlow(context?.elementRef, 'onFlowError', { actionId, runId, ...frame.data });
+            reportFlow(context?.hostElementId, 'onFlowError', { actionId, runId, ...frame.data });
 
             return;
           }
@@ -426,7 +426,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
               status: frame.data.status === 'completed' ? 'completed' : 'failed',
               ...(frame.data.output ? { output: frame.data.output as Record<string, unknown> } : {})
             });
-            reportFlow(context?.elementRef, 'onFlowEnd', { actionId, runId, ...frame.data });
+            reportFlow(context?.hostElementId, 'onFlowEnd', { actionId, runId, ...frame.data });
           }
         }).catch((error: unknown) => {
           /**
@@ -448,7 +448,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             </span>,
             { actionId, mode, runId, error: message }
           );
-          reportFlow(context?.elementRef, 'onFlowError', { actionId, runId, error: message, reason: 'failed' });
+          reportFlow(context?.hostElementId, 'onFlowError', { actionId, runId, error: message, reason: 'failed' });
         });
 
         return { accepted: true, status: 'streaming', runId, output: {} };
@@ -474,7 +474,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           </span>,
           { actionId, error: error instanceof Error ? error.message : String(error) }
         );
-        reportFlow(context?.elementRef, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
+        reportFlow(context?.hostElementId, 'onFlowError', { actionId, runId: '', error: '', reason: 'failed' });
 
         return unreachable;
       }

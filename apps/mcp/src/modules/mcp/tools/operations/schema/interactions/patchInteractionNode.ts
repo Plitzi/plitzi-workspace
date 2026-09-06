@@ -12,8 +12,8 @@ const { title, action, params, enabled, when, elementId, preview } = interaction
 export const patchInteractionNodeOp = z
   .object({
     type: z.literal('patchInteractionNode'),
-    pageRef: z.string().describe('Page ref or id'),
-    ref: z.string().describe('Element ref or id'),
+    pageRef: z.string().describe('The page, by name'),
+    ref: z.string().describe('The element, by name'),
     nodeId: z.string().describe('Id of the interaction node to update'),
     title: title.optional(),
     action: action.optional(),

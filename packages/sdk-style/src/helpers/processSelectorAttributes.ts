@@ -75,7 +75,10 @@ const processCssFunction = (
 
 const processLayer = (result: CssResult, attribute: string, value: string, nested = false, skipAttribute = false) => {
   const myResult: CssResult = { variables: {}, value: '' };
-  const subValues = value.replaceAll(';', '').match(/[a-z-]+\((?:[^()]+|\([^()]*\))*\)|[^\s]+/gi);
+  // The terminator only, not every semicolon in the value. A `data:` URI carries its media type as
+  // `image/svg+xml;charset=utf-8`, and stripping that one turned a working icon into a URI no browser resolves —
+  // silently, and only once the selector was next saved, so the JSON on disk stayed right and the builder broke it.
+  const subValues = value.replace(/\s*;\s*$/, '').match(/[a-z-]+\((?:[^()]+|\([^()]*\))*\)|[^\s]+/gi);
   if (!nested && subValues && subValues.length > 1) {
     subValues.forEach(subValue => {
       const partialResult = processLayer(result, attribute, subValue, true, skipAttribute);

@@ -1,9 +1,12 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
+import { themeBootScript } from '@plitzi/sdk-shared/theme';
 
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
+import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
 import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
@@ -118,8 +121,24 @@ export const prepareRender = async (
   const v = version ? `?v=${version}` : '';
   const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
 
-  const debugMode = resolveDebugMode(
-    config.debugMode ?? config.devMode,
+  // A `__pt` render exists to be looked at as a picture — a thumbnail, the agent's screenshot, the builder's
+  // preview pane. Nobody is at that keyboard to dismiss the dev-tools badge, and it would be baked into the
+  // capture, so debugging is off for it however the deployment and the cookie are set.
+  const isPreviewRender = Boolean(req.query[PREVIEW_TOKEN_PARAM]);
+  /**
+   * Two facts, and they have to leave this server separately.
+   *
+   * `debugAuthorized` is the deployment's decision and is what the client bootstrap is handed, because on the
+   * client that argument is what arms the shortcut and the "currently hidden" console hint. Collapsing the
+   * cookie into it — which is what this used to send — made hiding the panel on an SSR page permanent: the page
+   * came back authorizing nothing, so the shortcut was dead and nothing on screen or in the console said why.
+   *
+   * `debugRendered` is what this particular render draws, preference included. The client derives the same
+   * product from the same cookie on its first pass, so the markup it hydrates matches.
+   */
+  const debugAuthorized = !isPreviewRender && Boolean(config.debugMode ?? config.devMode);
+  const debugRendered = resolveDebugMode(
+    debugAuthorized,
     // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
     readCookie(req.headers.cookie, debugCookieName(req.headers.host))
   );
@@ -131,6 +150,9 @@ export const prepareRender = async (
   const { degrade, analytics } = req.ctx.meter ?? {};
   const clientAnalytics = analytics ? { ...analytics, firstViewCounted: true } : undefined;
   const branding = degrade ? true : undefined;
+  // The same state, said out loud. `branding` is forced on by it but is also on for every ordinary free space, so
+  // it cannot be what a notice reads — this is the fact that the ACCOUNT is over, and only the server can state it.
+  const overQuota = degrade ? true : undefined;
 
   const offlineDataStr = escapeJson(
     JSON.stringify({
@@ -141,7 +163,8 @@ export const prepareRender = async (
       server,
       sdkDevToolsStylePath,
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
-      ...(branding ? { branding } : {})
+      ...(branding ? { branding } : {}),
+      ...(overQuota ? { overQuota } : {})
     })
   );
 
@@ -183,9 +206,10 @@ export const prepareRender = async (
       offlineData,
       server,
       environment: req.ctx.spaceDeployment?.environment ?? environment,
-      debugMode,
+      debugMode: debugRendered,
       sdkDevToolsStylePath,
-      branding
+      branding,
+      overQuota
     },
     entries,
     templateParams: {
@@ -197,13 +221,30 @@ export const prepareRender = async (
       reactDom: vendorJs,
       reactDomClient: vendorJs,
       reactCompilerRuntime: vendorJs,
+      /**
+       * The theme, applied before the first paint.
+       *
+       * Default rather than opt-in: every SSR document has this problem — the paint happens before the SDK exists,
+       * so a remembered theme cannot be honoured by anything the SDK does at mount — and a deployment that keeps the
+       * choice somewhere the server can read overrides it with the class it renders itself.
+       */
+      themeBoot: themeBootScript(),
+      /**
+       * The space's own families, requested by the document itself.
+       *
+       * Ahead of the deployment's `templateProps` because a deployment cannot know them: they are a fact about the
+       * space's style document, and a page whose text is laid out in a face the browser has not been asked for is
+       * a page that renders in a fallback and then reflows.
+       */
+      fonts: fontsToHead(offlineData?.style.fonts ?? [], fontUrlResolver(config.fonts?.baseUrl)),
       ...req.ctx.spaceDeployment?.templateProps,
       // Applied last on purpose: the page speaks for itself. A deployment's `templateProps` is a space-wide
       // default and stays in charge of pages that declare nothing, which is what makes this safe to turn on for
       // deployments that already set a title of their own.
       ...pageSeo,
       plugins: templatePlugins,
-      debugMode,
+      // The authorization, not what was drawn: see `debugAuthorized` above.
+      debugMode: debugAuthorized,
       ssrOnly: config.ssrOnly === true,
       offlineData: offlineDataStr
     }

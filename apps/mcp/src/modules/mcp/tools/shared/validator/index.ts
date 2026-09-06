@@ -1,4 +1,12 @@
-import { batchDeclaredFolders, batchDeclaredPages, batchDeclaredVariants, batchDeclaredVars } from './batch';
+import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+
+import {
+  batchDeclaredElements,
+  batchDeclaredFolders,
+  batchDeclaredPages,
+  batchDeclaredVariants,
+  batchDeclaredVars
+} from './batch';
 import { checkBindingSourceScope, checkBindingTarget, checkBindingTransformers } from './bindings';
 import { batchDeclaredConnectors, checkConnectorOp, checkProviderElement } from './connectors';
 import { checkObservedName, checkVarRefs, warnOnce } from './context';
@@ -11,10 +19,11 @@ import {
   findElementByRef,
   findFolderByRef,
   findPageByRef,
+  findRootByRef,
+  getLayoutElements,
   folderAncestorIds,
   getPageElements,
   pageFoldersOf,
-  pageRefOf,
   resolveRef,
   routeParamNames
 } from '../../../helpers';
@@ -65,6 +74,8 @@ const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeM
  *  the post-apply resource audit (auditResources) can run the same checks against the resulting draft. */
 export const buildValidationCtx = (space: Space, ops: Operation[], mode: ValidationMode = 'space'): ValidationCtx => {
   const registry = buildTypeRegistry(space.schema, space.catalog);
+  const batchElements = batchDeclaredElements(ops);
+
   return {
     mode,
     errors: [],
@@ -77,6 +88,8 @@ export const buildValidationCtx = (space: Space, ops: Operation[], mode: Validat
     typeProps: new Map(Object.entries(registry.types).map(([type, info]) => [type, new Set(Object.keys(info.props))])),
     typeMeta: buildTypeMeta(space.catalog),
     elementType: ref => (findElementByRef(space.schema, ref) ?? findPageByRef(space.schema, ref))?.definition.type,
+    elementExists: ref =>
+      batchElements.has(ref) || Boolean(findElementByRef(space.schema, ref) ?? findPageByRef(space.schema, ref)),
     schemaVars: new Set([
       ...space.schema.variables.map(v => v.name),
       ...routeParamNames(space.schema),
@@ -135,12 +148,17 @@ export const validateOperations = (
         op.type === 'deleteInteraction') &&
       op.pageRef
     ) {
-      if (!findPageByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
-        const validRefs = getPageElements(space.schema).map(pageRefOf);
+      // A layout shell is addressed here exactly as a page is — the header and the sidebar of a space live in one,
+      // and editing them is the same operation on a different root.
+      if (!findRootByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
+        const validRefs = [
+          ...getPageElements(space.schema).map(page => page.id),
+          ...getLayoutElements(space.schema).map(layout => layout.id)
+        ];
         ctx.errors.push({
           path: `${base}.pageRef`,
-          message: `Page "${op.pageRef}" does not exist`,
-          hint: 'Use an existing page ref, or create it with upsertPage earlier in the same batch',
+          message: `Page or layout "${op.pageRef}" does not exist`,
+          hint: 'Use an existing page or layout ref, or create the page with upsertPage earlier in the same batch',
           validValues: validRefs
         });
       }
@@ -154,7 +172,7 @@ export const validateOperations = (
         break;
       case 'patchElement': {
         checkRef(op.ref, `${base}.ref`, ctx);
-        const page = findPageByRef(space.schema, op.pageRef);
+        const page = findRootByRef(space.schema, op.pageRef);
         const target = page ? resolveRef(space.schema, page, op.ref) : undefined;
         if (op.props) {
           for (const [key, value] of Object.entries(op.props)) {
@@ -350,6 +368,35 @@ export const validateOperations = (
             path: `${base}.nodes[0].nodeType`,
             message: 'The first node of a flow must be a trigger',
             hint: 'Put the trigger first; the callbacks/utilities that run after it follow in order'
+          });
+        }
+
+        // A flow is stored as a MAP keyed by step id, so two steps named the same do not both land — the second
+        // replaces the first, and the flow that runs is shorter than the one that was written.
+        {
+          const named = new Set<string>();
+          op.nodes.forEach((node, n) => {
+            if (!node.id) {
+              return;
+            }
+
+            if (!isValidElementId(node.id)) {
+              ctx.errors.push({
+                path: `${base}.nodes[${n}].id`,
+                message: `"${node.id}" is not a valid step name`,
+                hint: 'Letters, numbers, hyphens and underscores, starting with a letter. A later step reads this one as {{ <id>.field }}, so a dot would split that path'
+              });
+            }
+
+            if (named.has(node.id)) {
+              ctx.errors.push({
+                path: `${base}.nodes[${n}].id`,
+                message: `Two steps of this flow are called "${node.id}"`,
+                hint: 'A flow is keyed by step id, so the second would replace the first. Name them apart'
+              });
+            }
+
+            named.add(node.id);
           });
         }
 

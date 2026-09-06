@@ -1,7 +1,8 @@
 @mixin styles {
   .plitzi-component__link {
     display: inline-block;
-    color: #333;
+    // The same floor as the page it sits in, and for the same reason — see `_page.scss`.
+    color: light-dark(#333, oklch(0.92 0.004 286.32));
     text-decoration: none;
     cursor: pointer;
 

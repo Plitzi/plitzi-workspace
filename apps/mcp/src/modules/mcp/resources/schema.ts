@@ -3,10 +3,11 @@ import {
   dataSourcesUri,
   elementUri,
   findElementByRef,
-  findPageByRef,
+  findRootByRef,
   folderUri,
   foldersUri,
   interactionsUri,
+  layoutsUri,
   pageUri,
   pagesUri,
   schemaVarsUri,
@@ -18,6 +19,7 @@ import {
   elementView,
   folderRefToAI,
   foldersToAI,
+  layoutSummariesToAI,
   pageSkeletonToAI,
   pageStylesToAI,
   pageSummariesToAI,
@@ -39,6 +41,10 @@ export const readSchemaResource = (
     return envelope(pageSummariesToAI(space.schema));
   }
 
+  if (uri === layoutsUri(env)) {
+    return envelope(layoutSummariesToAI(space.schema));
+  }
+
   if (uri === foldersUri(env)) {
     return envelope(foldersToAI(space.schema));
   }
@@ -52,14 +58,16 @@ export const readSchemaResource = (
 
   const pageItem = afterPrefix(uri, pageUri(env, ''));
   if (pageItem !== undefined) {
+    // `findRootByRef`, so `pages/{ref}` reads a LAYOUT shell as readily as a page: it is the same skeleton of the
+    // same kind of tree, and an agent that just read `layout: "main"` off a page has one obvious thing to do next.
     if (pageItem.endsWith('/styles')) {
       const ref = pageItem.slice(0, -'/styles'.length);
-      const page = findPageByRef(space.schema, ref);
+      const page = findRootByRef(space.schema, ref);
 
       return page ? envelope(pageStylesToAI(space.schema, space.style, page)) : null;
     }
 
-    const page = findPageByRef(space.schema, pageItem);
+    const page = findRootByRef(space.schema, pageItem);
 
     return page ? envelope(pageSkeletonToAI(space.schema, page, space.style)) : null;
   }

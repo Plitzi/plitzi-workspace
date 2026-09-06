@@ -31,6 +31,7 @@ export const SegmentsActions = {
   SEGMENTS_MOVE_ELEMENT: 'SEGMENTS_MOVE_ELEMENT',
   SEGMENTS_CLONE_ELEMENT: 'SEGMENTS_CLONE_ELEMENT',
   SEGMENTS_UPDATE_ELEMENT: 'SEGMENTS_UPDATE_ELEMENT',
+  SEGMENTS_RENAME_ELEMENT: 'SEGMENTS_RENAME_ELEMENT',
   SEGMENTS_UPDATE_ELEMENTS: 'SEGMENTS_UPDATE_ELEMENTS',
   SEGMENTS_SPACE_ADD_VARIABLE: 'SEGMENTS_SPACE_ADD_VARIABLE',
   SEGMENTS_SPACE_UPDATE_VARIABLE: 'SEGMENTS_SPACE_UPDATE_VARIABLE',
@@ -77,6 +78,7 @@ export type SegmentsReducerActions =
       dropPosition: DropPosition;
     } & SegmentsReducerActionsBase)
   | ({ type: 'SEGMENTS_UPDATE_ELEMENT'; element: Element } & SegmentsReducerActionsBase)
+  | ({ type: 'SEGMENTS_RENAME_ELEMENT'; elementId: string; id: string } & SegmentsReducerActionsBase)
   | ({ type: 'SEGMENTS_UPDATE_ELEMENTS'; elements: Element[] } & SegmentsReducerActionsBase)
   | ({
       type: 'SEGMENTS_SPACE_ADD_VARIABLE' | 'SEGMENTS_SPACE_UPDATE_VARIABLE';
@@ -224,6 +226,15 @@ const SegmentsReducer = (state: Record<string, Segment>, action: SegmentsReducer
 
       return produce(state, draft => {
         set(draft, `${identifier}.schema.flat[${element.id}]`, element);
+      });
+    }
+
+    case SegmentsActions.SEGMENTS_RENAME_ELEMENT: {
+      const { elementId, id } = action;
+
+      return produce(state, draft => {
+        // A segment holds no pages of its own, so the rename is scoped to its flat.
+        FlatMap.renameElement({ flat: get(draft, `${identifier}.schema.flat`), pages: [] }, elementId, id);
       });
     }
 

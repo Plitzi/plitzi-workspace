@@ -8,7 +8,6 @@ const SpaceUpdatePageMutation = gql`
   mutation SpaceUpdatePageMutation($environment: String!, $page: Json!) {
     SpaceUpdatePage(environment: $environment, page: $page) {
       id
-      idRef
       definition
       attributes
     }

@@ -100,7 +100,7 @@ every element:
 
 | Field | What it does |
 | --- | --- |
-| `idRef` | the name the rest of the space calls this element by. Derived positionally when left out |
+| `id` | the ONE name this element answers to — its key in the document, a binding's source, a step's target. Derived positionally (`<type>-<n>`) when left out |
 | `class` | a shared class: a name from `classes`, or a `styles()` declaration. Exclusive with `css` |
 | `css` | rules of this element's own — one set, or one per breakpoint |
 | `variant` | a style variant of the element's own vocabulary |
@@ -113,8 +113,10 @@ every element:
 | `meta` | what the builder shows — `meta.label` names the element in its tree |
 
 Nothing collides: no element in the catalogue has an attribute called `class`, `css`, `bind` or any of the others,
-and a test fails the build if one ever declares one. The single name that overlaps — `label`, which a link and a
-form control both carry — belongs to the **attribute**, because that is the one an author means.
+and a test fails the build if one ever declares one. Two names would otherwise overlap. `label` — which a link and
+a form control both carry — belongs to the **attribute**, because that is the one an author means; the tree name is
+`meta.label`. And `id`: `nodeHtml` spreads the DOM attributes, so its `id` is excluded from what it can be authored
+with — the element's own name has to win, since it is what a binding reads it by.
 
 Two shorthands, for the two things a page is mostly made of:
 
@@ -237,7 +239,7 @@ condition is not an attribute, and pushing one into the list turned every bindin
 It is one field with a `!` rather than a `visible`/`hidden` pair because **`hidden` is a real HTML attribute** —
 and in this surface an attribute keeps a name it shares with anything else.
 
-A source names **the idRef you gave the element**, and the prefix is filled in:
+A source names **the id you gave the element**, and the prefix is filled in:
 
 ```ts
 bind: { content: 'posts.title' }        // → apiContainer_posts.title
@@ -251,8 +253,8 @@ is a record like any other provider's. Assembled by hand from the type you wrote
 source nothing registers.
 
 Written in full it still works, and is now checked against the same table: a prefix that does not match the
-element it names is refused, and so is an idRef nothing answers to. **Name anything something else refers to** —
-derived idRefs are positional, so adding an element above renumbers every one below it and each binding that named
+element it names is refused, and so is a name nothing answers to. **Name anything something else refers to** —
+derived names are positional, so adding an element above renumbers every one below it and each binding that named
 one then points somewhere else without changing.
 
 That is the quietest failure a space can carry — the binding resolves to nothing, the element renders its
@@ -286,7 +288,7 @@ A flow is a list of steps, and each step is a function:
 
 ```ts
 button({
-  idRef: 'cta',
+  id: 'cta',
   content: 'Get a quote',
   flows: [[
     onClick(),
@@ -299,7 +301,7 @@ button({
 Three things go wrong when a step is written as a literal, and the builders answer all three:
 
 - **Where it runs.** A global callback registers under its source MODULE (`state`, `auth`, `actions`), an element
-  callback under an element's idRef, and a utility under nothing at all. A step naming the wrong one resolves to
+  callback under an element's id, and a utility under nothing at all. A step naming the wrong one resolves to
   no function and the flow silently stops. The builders fill it in; a trigger and an untargeted element callback
   are filled with the element the flow was declared on.
 - **Which `setState`.** There are two: the global one writes `runtime.state.<key>`, and `updateElement` changes
@@ -324,10 +326,10 @@ inert specs. That is what keeps every guarantee about the finished document in o
 - a `class` or a `slot` naming a class the space does not declare (with the name you probably meant)
 - an element asking for a shared class AND rules of its own — an element has one base selector
 - one class name declared twice with rules that disagree
-- a binding source naming an idRef nothing answers to, or one whose prefix is not what that element publishes
-- an idRef that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
+- a binding source naming an element nothing answers to, or one whose prefix is not what that element publishes
+- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
 - a step target naming an element that is not there
-- two elements answering to one idRef
+- two elements answering to one name
 - a flow whose chain points at a node that is not there
 - everything `validateSchema` already checked: orphans, cycles, broken parent/root links, pages
 

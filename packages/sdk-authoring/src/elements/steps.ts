@@ -6,7 +6,7 @@ import type { StepSpec } from '../schema';
  * How a flow starts, and how an element changes itself.
  *
  * These are the two halves of a flow that belong to elements rather than to a source module: a trigger fires on
- * the element it is declared on, and an element callback runs against an element by idRef. Neither takes a source
+ * the element it is declared on, and an element callback runs against an element by id. Neither takes a source
  * module, and giving one is how a flow ends up wired to nothing.
  *
  * A trigger's `on` is left out on purpose: `authorSpace` fills it with the element the flow was declared on, which
@@ -75,6 +75,24 @@ export const updateElement = (
   type: 'callback',
   action: 'setState',
   title: 'Update Element',
+  ...(target === undefined ? {} : { on: target }),
+  params
+});
+
+/**
+ * The same write as {@link updateElement}, storing the opposite of what is there — a panel that expands on one click
+ * and collapses on the next, from ONE step on ONE trigger.
+ *
+ * Use it over a state key ({@link toggleState}) when nothing outside this element needs to know whether the panel is
+ * open. Anything not already `true` counts as false, so a selector nobody has set yet flips ON first.
+ */
+export const toggleElement = (
+  params: { category: 'attribute' | 'state'; key: string; revertOnFinish?: boolean },
+  target?: string
+): StepSpec => ({
+  type: 'callback',
+  action: 'toggleState',
+  title: 'Toggle Element',
   ...(target === undefined ? {} : { on: target }),
   params
 });

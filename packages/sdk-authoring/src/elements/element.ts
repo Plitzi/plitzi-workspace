@@ -25,10 +25,10 @@ import type {
 
 export interface AuthoringProps {
   /**
-   * The name the rest of the space calls this element by — a binding's source, a step's target. Derived when left
-   * out, positionally, so name the ones something else refers to.
+   * The one name this element answers to — its key in the document, a binding's source, a step's target. Derived
+   * when left out, positionally, so name the ones something else refers to.
    */
-  idRef?: string;
+  id?: string;
   /** A shared class: a name from the space's `classes`, or a `styles()` declaration. Exclusive with {@link AuthoringProps.css}. */
   class?: string | StyleDeclaration;
   /** Rules of this element's own: one set, or one per breakpoint. Shorthands are expanded when the space is written. */
@@ -74,7 +74,7 @@ const buildSpec = (
   // The authoring fields, named once. Everything left over is an attribute — including `label`, which is why it
   // is not in this list.
   const {
-    idRef,
+    id,
     class: shared,
     css,
     variant,
@@ -90,7 +90,7 @@ const buildSpec = (
 
   return {
     type,
-    ...(idRef === undefined ? {} : { idRef }),
+    ...(id === undefined ? {} : { id }),
     ...(shared === undefined ? {} : { class: shared }),
     ...(css === undefined ? {} : { css }),
     ...(variant === undefined ? {} : { variant }),

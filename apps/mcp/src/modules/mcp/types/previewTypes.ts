@@ -19,11 +19,20 @@ export type PreviewRequestBody = {
    * which costs time but never correctness.
    */
   includeHtml?: boolean;
+  /**
+   * What the token minted for this preview is FOR.
+   *
+   * `once` — the default — is the capture path: the browser opens the URL, the render happens, the token is spent.
+   * `session` is somebody iterating: the URL keeps working until it expires, the draft follows them from page to
+   * page, and their refreshes are neither billed nor cached. Ask for a session only when a person is going to look
+   * at it, and end it with `DELETE` when they stop.
+   */
+  mode?: 'once' | 'session';
 };
 
 export type PreviewResult =
   // `html` is empty when the request asked for `includeHtml: false` — the token and the path are what it wanted.
-  | { ok: true; token?: string; pagePath: string; html: string; stateVersion: string }
+  | { ok: true; token?: string; pagePath: string; html: string; stateVersion: string; expiresInMs?: number }
   | { ok: false; error: string; message: string; errors?: ValidationError[] };
 
 /** How the MCP tools reach the renderer. The consumer injects an implementation (an HTTP client to the SSR

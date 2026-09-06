@@ -85,7 +85,7 @@ class InteractionsManager {
       }
     };
 
-  // `id` is the element's idRef — the only key an interaction is wired by. An element without one is not
+  // `id` is the element's id — the one name it answers to, and the only key an interaction is wired by. A caller
   // registered at all: its callbacks would be unreachable (nothing can name them) and its triggers would fire
   // against a key no flow can target, so the opaque id is never used as a substitute.
   subscribe<TParams extends Record<string, unknown> = Record<string, unknown>>(
@@ -210,7 +210,7 @@ class InteractionsManager {
     return rootManager?.getCallbacksAvailablesInternal() ?? {};
   }
 
-  // `subscriptorId` is the firing element's idRef. Absent for an element without one — it was never subscribed, so
+  // `subscriptorId` is the firing element's id. Absent for a caller that passed none — it was never subscribed, so
   // there is nothing to fire and no key to fire against (the opaque id is deliberately not a fallback).
   interactionTrigger(subscriptorId: string | undefined, eventName: string, params: Record<string, unknown> = {}) {
     if (!subscriptorId) {

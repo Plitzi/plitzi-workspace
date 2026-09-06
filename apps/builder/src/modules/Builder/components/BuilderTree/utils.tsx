@@ -17,9 +17,13 @@ export const recursiveMap = (
   }
 
   const {
-    definition: { items, label, type }
+    definition: { items, type }
   } = element;
 
+  // The tree shows the id, because the id IS the name: it is what a binding reads this element by and what an
+  // interaction targets, so the tree and the wiring cannot say different things. `definition.label` is free
+  // display text, edited in the element panel and wired to nothing.
+  const label = element.id;
   const icon = get(componentDefinitions, `${type}.market.icon`, '');
   if (!items) {
     return { id, label, icon, parentId };

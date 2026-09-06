@@ -45,6 +45,21 @@ export class Cursor {
     return this.src.slice(start, this.pos);
   }
 
+  /**
+   * Scans a path segment that is a plain array index (`0`, `12`), returning '' when not on one.
+   *
+   * Digits only, deliberately: `scanNumber` would read `0.title` as the number `0.` and leave the cursor past the
+   * dot that separates it from the next segment. A key is a key here — `items.0.title` is three of them.
+   */
+  protected scanIndex(): string {
+    const start = this.pos;
+    while (!this.eof() && isDigit(this.src.charCodeAt(this.pos))) {
+      this.pos++;
+    }
+
+    return this.src.slice(start, this.pos);
+  }
+
   // Reads a quoted string literal's contents (cursor sits on the opening quote) and consumes the closing quote.
   // Processes standard escape sequences: \n, \t, \r, \\, \', \".
   protected scanStringLiteral(): string {

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { use, useEffect, useMemo } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 
 import { AnalyticsReporter } from '@modules/Analytics';
 import NavigationProvider from '@modules/Navigation/NavigationProvider';
@@ -50,6 +50,8 @@ export type AppMainProps = {
   previewMode?: boolean;
   debugMode?: boolean;
   branding?: boolean;
+  /** Set by the server that metered this render: the account behind this space is over its quota. */
+  overQuota?: boolean;
   analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
@@ -76,6 +78,7 @@ const AppMain = ({
   sdkDevToolsStylePath,
   previewMode = true,
   debugMode = false,
+  overQuota = false,
   analytics,
   onInitEventBridge,
   onInitStateManager,
@@ -83,11 +86,32 @@ const AppMain = ({
 }: AppMainProps) => {
   const store = use(StoreContext) as StoreApi<SdkState> | undefined;
 
+  /**
+   * Whether React is done reconciling the server's markup. False for exactly one pass, then true for ever.
+   *
+   * `isHydrating` says this render CAME from SSR; it never changes, and everything that must wait for the hydration
+   * to be over was reading it as though it did. Anything whose value the server could not have produced — state a
+   * browser kept from last visit, above all — has to hold off until this flips, because a mismatch costs the whole
+   * subtree it happened in rather than the one node (see `runtimeStatePersist`).
+   *
+   * A passive effect, not a layout one: layout effects run inside the commit that is still hydrating.
+   */
+  const [hydrated, setHydrated] = useState(!isHydrating);
+  useEffect(() => setHydrated(true), []);
+
   // The surface this render happens on, published once for the whole tree. Every provider below used to take these as
   // props — five flags threaded through nine components — and they are read from the store instead.
   useSdkStoreSync(
-    ['render.previewMode', 'render.debugMode', 'render.renderMode', 'render.environment', 'render.isHydrating'],
-    [previewMode, debugMode, renderMode, environment, isHydrating]
+    [
+      'render.previewMode',
+      'render.debugMode',
+      'render.renderMode',
+      'render.environment',
+      'render.isHydrating',
+      'render.hydrated',
+      'render.overQuota'
+    ],
+    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota]
   );
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view

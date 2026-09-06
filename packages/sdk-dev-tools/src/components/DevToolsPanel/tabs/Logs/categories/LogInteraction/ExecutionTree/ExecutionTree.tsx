@@ -6,9 +6,9 @@ import { getDurationMs } from '@plitzi/sdk-shared';
 
 import ExecutionTreeNode from './ExecutionTreeNode';
 
-import type { LogInteraction } from '@plitzi/sdk-shared';
+import type { InteractionFlowParams } from '@plitzi/sdk-shared';
 
-type Nodes = LogInteraction['params']['nodes'];
+type Nodes = InteractionFlowParams['nodes'];
 
 export type ExecutionTreeProps = {
   className?: string;

@@ -5,12 +5,12 @@ import { useCallback, useMemo, useState } from 'react';
 import ExecutionTree from './ExecutionTree';
 import InteractionNode from './InteractionNode';
 
-import type { LogInteraction } from '@plitzi/sdk-shared';
+import type { InteractionFlowParams } from '@plitzi/sdk-shared';
 
 export type BodyContentProps = {
   className?: string;
-  node: LogInteraction['params']['node'];
-  nodes: LogInteraction['params']['nodes'];
+  node: InteractionFlowParams['node'];
+  nodes: InteractionFlowParams['nodes'];
 };
 
 const BodyContent = ({ className, node, nodes }: BodyContentProps) => {

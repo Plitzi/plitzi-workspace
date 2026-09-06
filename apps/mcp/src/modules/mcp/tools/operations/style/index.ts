@@ -17,4 +17,6 @@ export * from './idStyles/upsertIdStyle';
 export * from './idStyles/patchIdStyle';
 export * from './idStyles/deleteIdStyle';
 export * from './variables/upsertStyleVariable';
+export * from './fonts/upsertFont';
+export * from './fonts/deleteFont';
 export * from './variables/deleteStyleVariable';

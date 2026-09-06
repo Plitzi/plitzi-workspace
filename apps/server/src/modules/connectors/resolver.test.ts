@@ -15,9 +15,8 @@ const manifest: ConnectorManifest = {
   operators: { eq: 'filters[{{field}}][$eq]={{value}}' }
 };
 
-const element = (attributes: Record<string, unknown>, idRef?: string, items: string[] = []): Element => ({
-  id: 'provider1',
-  idRef,
+const element = (attributes: Record<string, unknown>, id = 'provider1', items: string[] = []): Element => ({
+  id,
   attributes,
   definition: { type: 'apiContainer', label: 'Provider', rootId: 'root', items, styleSelectors: { base: '' } }
 });
@@ -61,7 +60,7 @@ const boundContext = (attributes: Record<string, unknown>, boundSource: string):
 
   return {
     element: provider,
-    flat: { provider1: provider, text1: text },
+    flat: { posts: provider, text1: text },
     routeParams: {},
     queryParams: {},
     // A real RSC resolve always carries the deployment it is rendering: the resolver reads the manifest as of it.

@@ -4,15 +4,14 @@ import {
   descendantCount,
   descendantIds,
   elementById,
-  elementRefOf,
   flowsFromInteractions,
+  getLayoutElements,
   getPageElements,
-  isPageElement,
   nameOf,
   orderedChildren,
   pageFoldersOf,
-  pageRefOf,
   pageRefOfElement,
+  pagesUsingLayout,
   slugRouteParams,
   spaceIndex,
   strOr
@@ -26,6 +25,7 @@ import type {
   AIFolder,
   AIGlobalStyle,
   AIInitialState,
+  AILayoutSummary,
   AIPageSkeleton,
   AIPageStyles,
   AIPageSummary,
@@ -62,7 +62,7 @@ const slotClasses = (selectors: Record<string, string>): Record<string, string[]
 
 export const pageSummariesToAI = (schema: Schema): AIPageSummary[] =>
   getPageElements(schema).map(page => ({
-    ref: pageRefOf(page),
+    ref: page.id,
     label: nameOf(page),
     slug: strOr(page.attributes.slug) ?? '',
     default: page.attributes.default === true,
@@ -70,8 +70,25 @@ export const pageSummariesToAI = (schema: Schema): AIPageSummary[] =>
     enabled: page.attributes.enabled !== false,
     // Stored as '' for a root-level page; surface that as no folder so the agent only ever sees a real folder id.
     folder: strOr(page.attributes.folder) || undefined,
+    // What the page does not contain but is rendered inside. Without this a page's own tree is the whole answer,
+    // and the header every visitor sees belongs to nothing anybody reading this listing can find.
+    layout: strOr(page.attributes.layout) || undefined,
+    layoutSlot: strOr(page.attributes.layoutContainer) || undefined,
     elementCount: descendantCount(schema, page.id)
   }));
+
+export const layoutSummariesToAI = (schema: Schema): AILayoutSummary[] =>
+  getLayoutElements(schema).map(layout => {
+    const pages = pagesUsingLayout(schema, layout.id);
+
+    return {
+      ref: layout.id,
+      label: nameOf(layout),
+      usedBy: pages.map(page => page.id),
+      slots: [...new Set(pages.map(page => strOr(page.attributes.layoutContainer)).filter(Boolean))] as string[],
+      elementCount: descendantCount(schema, layout.id)
+    };
+  });
 
 const folderToAI = (folder: PageFolder): AIFolder => ({
   ref: folder.id,
@@ -115,7 +132,7 @@ const skeletonNode = (schema: Schema, el: Element, style?: Style): AISkeletonNod
   const slots = slotClasses(el.definition.styleSelectors);
 
   return {
-    ref: elementRefOf(el),
+    ref: el.id,
     type: el.definition.type,
     label: el.definition.label,
     subType: strOr(el.attributes.subType),
@@ -131,7 +148,7 @@ export const pageSkeletonToAI = (schema: Schema, pageEl: Element, style?: Style)
   const slug = strOr(pageEl.attributes.slug) ?? '';
 
   return {
-    ref: pageRefOf(pageEl),
+    ref: pageEl.id,
     label: nameOf(pageEl),
     slug,
     default: pageEl.attributes.default === true,
@@ -189,7 +206,7 @@ export const pageStylesToAI = (schema: Schema, style: Style, pageEl: Element): A
     }
   }
 
-  return { ref: pageRefOf(pageEl), definitions, globalStyles };
+  return { ref: pageEl.id, definitions, globalStyles };
 };
 
 // --- Detail (on demand): one element with its props and style. ---
@@ -297,15 +314,15 @@ export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): A
   const slots = slotClasses(el.definition.styleSelectors);
 
   const detail: AIElementDetail = {
-    ref: elementRefOf(el),
+    ref: el.id,
     type: el.definition.type,
     subType: strOr(el.attributes.subType),
     label: el.definition.label,
     pageRef: pageRefOfElement(schema, el),
-    parentRef: parent ? (isPageElement(schema, parent) ? pageRefOf(parent) : elementRefOf(parent)) : undefined,
+    parentRef: parent?.id,
     props: propsOf(el),
     style: { base, slots },
-    childRefs: children.length > 0 ? children.map(elementRefOf) : undefined
+    childRefs: children.length > 0 ? children.map(child => child.id) : undefined
   };
 
   // Only when it is set: an absent runtime IS 'shared', and reporting that on every element would bury the one

@@ -1,4 +1,5 @@
 import { GLOBAL_SOURCES } from './bindings';
+import { slugify } from './ids';
 import { authorSpace } from './space';
 import { validateSpace } from './validate';
 
@@ -31,13 +32,6 @@ import type { Element, Schema, Style, Template } from '@plitzi/sdk-shared';
 
 /** The artefact this module produces, re-exported so authoring a template needs one import. */
 export type { Template } from '@plitzi/sdk-shared';
-
-/** Ids are derived from a path that starts here, so a template's key is its `permanentUrl`. */
-const slugify = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'template';
 
 const dedupe = (errors: SchemaValidationError[]): SchemaValidationError[] => {
   const seen = new Set<string>();
@@ -145,7 +139,7 @@ const validateSelectors = (schema: Schema, style: Style): SchemaValidationError[
 /**
  * A binding onto something the template leaves behind.
  *
- * A source names an element by idRef, and a template is a fragment: bind to a provider that stayed in the space
+ * A source names an element by id, and a template is a fragment: bind to a provider that stayed in the space
  * the template was cut from and the binding is dead the moment it is published — the element renders its
  * placeholder, and nothing anywhere reports a missing name. It is the failure a template author cannot see, and
  * the one that survives every other check, since the document is internally consistent about a name that is
@@ -153,7 +147,7 @@ const validateSelectors = (schema: Schema, style: Style): SchemaValidationError[
  */
 const validateBindingScope = (schema: Schema): SchemaValidationError[] => {
   const errors: SchemaValidationError[] = [];
-  const refs = new Set(Object.values(schema.flat).flatMap(element => (element.idRef ? [element.idRef] : [])));
+  const refs = new Set(Object.keys(schema.flat));
 
   Object.values(schema.flat).forEach(element => {
     Object.entries(element.definition.bindings ?? {}).forEach(([category, bindings]) => {
@@ -174,7 +168,7 @@ const validateBindingScope = (schema: Schema): SchemaValidationError[] => {
           code: 'TEMPLATE_BINDING_OUT_OF_SCOPE',
           message: `Element "${element.id}" binds ${category}.${binding.to} to "${binding.source}", but "${ref}" is not part of this template. The element publishing it stays behind, so the binding resolves to nothing wherever the template is dropped — bring the provider into the template, or bind to one of the globals (${GLOBAL_SOURCES.join(', ')}).`,
           elementId: element.id,
-          details: { source: binding.source, idRef: ref }
+          details: { source: binding.source, elementId: ref }
         });
       });
     });
@@ -252,7 +246,7 @@ export const authorTemplate = (spec: TemplateSpec, options: AuthorSpaceOptions =
   const { schema, style, warnings } = authorSpace(
     {
       name,
-      permanentUrl: spec.key ?? slugify(name),
+      permanentUrl: spec.key ?? slugify(name, 'template'),
       classes: spec.classes,
       elements: spec.elements,
       variables: spec.variables,
