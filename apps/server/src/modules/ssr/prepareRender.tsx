@@ -125,13 +125,23 @@ export const prepareRender = async (
   // preview pane. Nobody is at that keyboard to dismiss the dev-tools badge, and it would be baked into the
   // capture, so debugging is off for it however the deployment and the cookie are set.
   const isPreviewRender = Boolean(req.query[PREVIEW_TOKEN_PARAM]);
-  const debugMode =
-    !isPreviewRender &&
-    resolveDebugMode(
-      config.debugMode ?? config.devMode,
-      // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
-      readCookie(req.headers.cookie, debugCookieName(req.headers.host))
-    );
+  /**
+   * Two facts, and they have to leave this server separately.
+   *
+   * `debugAuthorized` is the deployment's decision and is what the client bootstrap is handed, because on the
+   * client that argument is what arms the shortcut and the "currently hidden" console hint. Collapsing the
+   * cookie into it — which is what this used to send — made hiding the panel on an SSR page permanent: the page
+   * came back authorizing nothing, so the shortcut was dead and nothing on screen or in the console said why.
+   *
+   * `debugRendered` is what this particular render draws, preference included. The client derives the same
+   * product from the same cookie on its first pass, so the markup it hydrates matches.
+   */
+  const debugAuthorized = !isPreviewRender && Boolean(config.debugMode ?? config.devMode);
+  const debugRendered = resolveDebugMode(
+    debugAuthorized,
+    // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
+    readCookie(req.headers.cookie, debugCookieName(req.headers.host))
+  );
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
@@ -196,7 +206,7 @@ export const prepareRender = async (
       offlineData,
       server,
       environment: req.ctx.spaceDeployment?.environment ?? environment,
-      debugMode,
+      debugMode: debugRendered,
       sdkDevToolsStylePath,
       branding,
       overQuota
@@ -233,7 +243,8 @@ export const prepareRender = async (
       // deployments that already set a title of their own.
       ...pageSeo,
       plugins: templatePlugins,
-      debugMode,
+      // The authorization, not what was drawn: see `debugAuthorized` above.
+      debugMode: debugAuthorized,
       ssrOnly: config.ssrOnly === true,
       offlineData: offlineDataStr
     }

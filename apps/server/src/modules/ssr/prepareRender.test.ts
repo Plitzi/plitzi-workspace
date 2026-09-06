@@ -63,7 +63,7 @@ const offlineData = (
     style: { cache: '', variables: [], fonts }
   }) as unknown as OfflineDataRaw;
 
-const request = (path: string, query: Record<string, string> = {}): SSRRequest =>
+const request = (path: string, query: Record<string, string> = {}, cookie?: string): SSRRequest =>
   ({
     method: 'GET',
     path,
@@ -71,7 +71,7 @@ const request = (path: string, query: Record<string, string> = {}): SSRRequest =
     url: path,
     protocol: 'https',
     hostname: 'x.test',
-    headers: {},
+    headers: cookie ? { cookie } : {},
     query,
     ctx: { spaceDeployment: { spaceId: 42, environment: 'production', revision: 0 } }
   }) as unknown as SSRRequest;
@@ -87,6 +87,8 @@ type Options = {
   homeRuntime?: 'server' | 'client';
   /** What the deployment authorizes for debugging, and what the URL asks for. */
   debugMode?: boolean;
+  /** The visitor's own preference, which rides on the request. */
+  cookie?: string;
   query?: Record<string, string>;
   /** What metering decided for this render. */
   degrade?: boolean;
@@ -103,6 +105,7 @@ const render = async (
     withAdapter = true,
     homeRuntime,
     debugMode,
+    cookie,
     query,
     degrade,
     fonts,
@@ -126,7 +129,7 @@ const render = async (
     }
   } as unknown as SSRPageServerConfig;
 
-  const req = request(path, query);
+  const req = request(path, query, cookie);
   if (degrade !== undefined) {
     (req.ctx as { meter?: { degrade: boolean } }).meter = { degrade };
   }
@@ -269,6 +272,28 @@ describe('prepareRender / debugging in a render nobody is watching', () => {
 
   it('refuses it on a preview render, which exists to be captured as a picture', async () => {
     const { componentProps, templateParams } = await render('/', { debugMode: true, query: { __pt: 'tok' } });
+
+    expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(false);
+  });
+
+  /**
+   * The two halves of the answer part ways here, and that is the point.
+   *
+   * A visitor who hid the panel gets a render without it — but the page still comes back saying debugging is
+   * allowed, because that argument is what arms the shortcut and the console hint on the client. Sending the
+   * product of the two instead left an SSR page with no way back at all: nothing on screen, a dead shortcut, and
+   * a year-long cookie nobody could guess was the cause.
+   */
+  it('keeps a visitor who hid the panel able to bring it back', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: true, cookie: 'plitzi_debug=false' });
+
+    expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(true);
+  });
+
+  it('tells a page that was never authorized nothing, cookie or no cookie', async () => {
+    const { componentProps, templateParams } = await render('/', { debugMode: false, cookie: 'plitzi_debug=true' });
 
     expect(componentProps.debugMode).toBe(false);
     expect(templateParams.debugMode).toBe(false);
