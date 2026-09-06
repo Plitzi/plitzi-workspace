@@ -23,6 +23,15 @@ export const fontAssetsStage: Stage = ctx => {
   ctx.res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
   const strippedReq: SSRRequest = { ...ctx.req, path: ctx.req.path.slice(FONTS_PREFIX.length) || '/' };
+  if (serveStatic(strippedReq, ctx.res, dir)) {
+    return true;
+  }
 
-  return serveStatic(strippedReq, ctx.res, dir);
+  // Answered here rather than left to fall through: past this prefix the request is for a FILE, and letting it
+  // reach the page router means a `@font-face` src that a manifest still points at is served a redirect, and then
+  // a whole HTML document, where the browser expected a font.
+  ctx.res.setStatus(404);
+  ctx.res.send('Not found');
+
+  return true;
 };

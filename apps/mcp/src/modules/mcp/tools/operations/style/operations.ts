@@ -2,6 +2,8 @@ import { deleteDefinitionOp } from './definitions/deleteDefinition';
 import { patchDefinitionOp } from './definitions/patchDefinition';
 import { upsertDefinitionOp } from './definitions/upsertDefinition';
 import { upsertDefinitionsOp } from './definitions/upsertDefinitions';
+import { deleteFontOp } from './fonts/deleteFont';
+import { upsertFontOp } from './fonts/upsertFont';
 import { deleteGlobalStyleOp } from './globalStyles/deleteGlobalStyle';
 import { patchGlobalStyleOp } from './globalStyles/patchGlobalStyle';
 import { upsertGlobalStyleOp } from './globalStyles/upsertGlobalStyle';
@@ -24,5 +26,7 @@ export const styleOps = {
   patchIdStyle: patchIdStyleOp,
   deleteIdStyle: deleteIdStyleOp,
   upsertStyleVariable: upsertStyleVariableOp,
-  deleteStyleVariable: deleteStyleVariableOp
+  deleteStyleVariable: deleteStyleVariableOp,
+  upsertFont: upsertFontOp,
+  deleteFont: deleteFontOp
 };

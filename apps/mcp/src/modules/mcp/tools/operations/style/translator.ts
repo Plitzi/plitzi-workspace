@@ -1,5 +1,7 @@
+import { familiesInCss, SYSTEM_FONTS } from '@plitzi/sdk-shared/style';
+
 import type { AIDefinition, AIDefinitionSlot, AIGlobalStyle, AIIdStyle, AIStyleVariable } from '../../../types';
-import type { DisplayMode, Style, StyleBlock, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, SpaceFont, Style, StyleBlock, StyleItem } from '@plitzi/sdk-shared';
 
 // Read projections of the STYLE schema: definition names, one definition's CSS, and design tokens.
 
@@ -184,4 +186,22 @@ export const styleVariablesToAI = (style: Style): Record<string, AIStyleVariable
   }
 
   return data;
+};
+
+/**
+ * What the space loads, and what it asks for without loading.
+ *
+ * The second half is the point. A `font-family` names a family and nothing else in Plitzi fetches one, so a rule
+ * naming a family that is not declared renders in a fallback and says nothing about it — the single failure this
+ * whole manifest exists to make visible. Reported beside the declarations so an agent reading the resource sees
+ * the gap without having to compare two lists itself.
+ */
+export const fontsToAI = (style: Style): { declared: SpaceFont[]; namedButNotDeclared: string[] } => {
+  const declared = style.fonts ?? [];
+  const known = new Set([...declared, ...SYSTEM_FONTS].map(font => font.family.toLowerCase()));
+
+  return {
+    declared,
+    namedButNotDeclared: familiesInCss(style.cache).filter(family => !known.has(family.toLowerCase()))
+  };
 };

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { createStore } from '@plitzi/nexus';
 
 import { runtimeStatePersist } from './runtimeStatePersist';
@@ -22,7 +24,7 @@ const settings = (keepState: boolean, stateStorage?: 'localStorage' | 'sessionSt
   ({ settings: { keepState, stateStorage } }) as unknown as Schema;
 
 const build = (seed: Partial<CommonState>) =>
-  createStore<CommonState>(seed as CommonState, {
+  createStore<CommonState>(seed, {
     middlewares: [runtimeStatePersist<CommonState>(42)],
     deferHydrate: true
   });

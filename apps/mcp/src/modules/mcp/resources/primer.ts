@@ -18,6 +18,7 @@ import {
   primerUri,
   schemaVarsUri,
   settingsUri,
+  fontsUri,
   styleVarsUri,
   typesUri
 } from '../helpers';
@@ -29,7 +30,7 @@ import {
   schemaVariablesToAI,
   settingsToAI
 } from '../tools/operations/schema/translator';
-import { definitionRefs, styleVariablesToAI } from '../tools/operations/style/translator';
+import { definitionRefs, fontsToAI, styleVariablesToAI } from '../tools/operations/style/translator';
 
 import type { Space } from '../helpers';
 import type { Env, ResourceEnvelope } from '../types';
@@ -133,6 +134,10 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
       { key: 'types', value: buildTypeRegistry(space.schema, space.catalog), read: typesUri },
       { key: 'schemaVariables', value: schemaVariablesToAI(space.schema, false), read: schemaVarsUri(env) },
       { key: 'styleVariables', value: styleVariablesToAI(space.style), read: styleVarsUri(env) },
+      // A handful of entries, and the one section that reports a MISTAKE: a family named by the CSS that nothing
+      // declares renders in a fallback silently, and an agent about to write typography should know before it adds
+      // another one.
+      { key: 'fonts', value: fontsToAI(space.style), read: fontsUri(env) },
       { key: 'settings', value: settingsToAI(space.schema), read: settingsUri(env) },
       { key: 'definitions', value: definitionRefs(space.style), read: defsUri(env) },
       // The three catalogs an agent consults once it has something specific to wire, rather than to orient itself.

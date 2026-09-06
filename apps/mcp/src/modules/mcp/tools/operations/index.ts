@@ -50,7 +50,9 @@ const documentOps = [
   styleOps.patchIdStyle,
   styleOps.deleteIdStyle,
   styleOps.upsertStyleVariable,
-  styleOps.deleteStyleVariable
+  styleOps.deleteStyleVariable,
+  styleOps.upsertFont,
+  styleOps.deleteFont
 ] as const;
 
 export const documentOperation = z.discriminatedUnion('type', documentOps);

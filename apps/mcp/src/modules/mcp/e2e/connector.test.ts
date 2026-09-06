@@ -33,7 +33,14 @@ const widgetOperations = [
 // that is what a new WRITE DOMAIN is worth. It is deliberately not headroom — the same ops cost 13k before their
 // subschemas were registered, and the failing test is what caught that. Raise it only for a domain, never to make
 // a duplicated shape fit.
-const TOOLS_BUDGET_BYTES = 176_000;
+//
+// Raised again from 176k for the font manifest: `upsertFont` and `deleteFont` are a domain of their own — a key on
+// the style document, a resource family, and a vocabulary nothing else speaks — and they cost 6.3k. That figure is
+// already the trimmed one: `display`, `preload`, `subsets` and per-face unicode ranges were left out of the agent's
+// schema because they are panel tuning, not decisions an agent makes, and each field is carried four times over.
+// Nothing here is shared enough to earn a registry id (see schemaIds.ts: an id on a schema used once costs more
+// than the copy it replaces).
+const TOOLS_BUDGET_BYTES = 182_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

@@ -2,9 +2,10 @@ import { ContainerTabs } from '@plitzi/plitzi-ui';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import { use, useCallback, useMemo } from 'react';
+import { use, useCallback, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { familiesInCss, primaryFamily } from '@plitzi/sdk-shared/style';
 
@@ -31,6 +32,8 @@ const Fonts = () => {
   const { showDialog } = useModal();
   const { addToast } = useToast();
   const { builderHandler } = use(BuilderContext);
+  const { server, userKey, webId, environment } = use(NetworkContext);
+  const [mirroring, setMirroring] = useState<string>();
   const [[fonts = NO_FONTS, cache = '']] = useBuilderStore(['style.fonts', 'style.cache']);
 
   /**
@@ -71,6 +74,49 @@ const Fonts = () => {
     [builderHandler]
   );
 
+  /**
+   * Copy a Google family into this deployment's own store and declare what came back.
+   *
+   * The write goes through the same mutation every other font edit uses rather than the endpoint rewriting the
+   * space: that is what puts it in the save queue, on the live channel and in the undo history.
+   */
+  const handleMirror = useCallback(
+    async (family: string) => {
+      setMirroring(family);
+
+      try {
+        const response = await fetch(`${server.apiServer}/spaces/${webId}/fonts/mirror`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'plitzi-access-token': userKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ family, environment })
+        });
+
+        const body = (await response.json()) as SpaceFont & { error?: string; hint?: string };
+        if (!response.ok) {
+          addToast(<span>{[body.error, body.hint].filter(Boolean).join(' ')}</span>, {
+            appeareance: 'error',
+            autoDismiss: true,
+            placement: 'top-right'
+          });
+
+          return;
+        }
+
+        builderHandler('styleUpdateFont', family, body);
+        addToast(
+          <span>
+            <b>{family}</b> is now served from here
+          </span>,
+          { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
+        );
+      } finally {
+        setMirroring(undefined);
+      }
+    },
+    [addToast, builderHandler, environment, server.apiServer, userKey, webId]
+  );
+
   const handleRemove = useCallback(
     async (family: string) => {
       const used = uses[family] ?? 0;
@@ -109,7 +155,15 @@ const Fonts = () => {
           </span>
         )}
         {fonts.map(font => (
-          <FontRow key={font.family} font={font} uses={uses[font.family] ?? 0} onRemove={handleRemove} />
+          <FontRow
+            key={font.family}
+            font={font}
+            uses={uses[font.family] ?? 0}
+            canMirror
+            mirroring={mirroring === font.family}
+            onRemove={handleRemove}
+            onMirror={handleMirror}
+          />
         ))}
       </Flex>
       <ContainerTabs className="min-h-0 grow basis-0 gap-4" size="xs">

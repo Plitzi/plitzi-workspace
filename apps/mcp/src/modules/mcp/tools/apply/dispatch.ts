@@ -74,6 +74,10 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return style.upsertStyleVariable(space, env, op);
     case 'deleteStyleVariable':
       return style.deleteStyleVariable(space, env, op);
+    case 'upsertFont':
+      return style.upsertFont(space, env, op);
+    case 'deleteFont':
+      return style.deleteFont(space, env, op);
     case 'upsertConnector':
       return connectors.upsertConnector(space, env, op);
     case 'patchConnector':

@@ -10,7 +10,11 @@ export type FontRowProps = {
   font: SpaceFont;
   /** How many rules name this family. Removing one that is in use leaves those rules on their fallback. */
   uses: number;
+  /** Whether this deployment has anywhere to copy a Google family INTO. */
+  canMirror?: boolean;
+  mirroring?: boolean;
   onRemove?: (family: string) => void;
+  onMirror?: (family: string) => void;
 };
 
 const SOURCE_LABEL: Record<SpaceFont['source'], string> = {
@@ -20,7 +24,7 @@ const SOURCE_LABEL: Record<SpaceFont['source'], string> = {
   hosted: 'Uploaded'
 };
 
-const FontRow = ({ font, uses, onRemove }: FontRowProps) => {
+const FontRow = ({ font, uses, canMirror = false, mirroring = false, onRemove, onMirror }: FontRowProps) => {
   return (
     <Flex direction="column" gap={1} className="border-grayviolet-200 rounded border p-2">
       <Flex justify="between" alignItems="center" gap={2}>
@@ -30,6 +34,17 @@ const FontRow = ({ font, uses, onRemove }: FontRowProps) => {
         </span>
         <Flex alignItems="center" gap={1}>
           <Badge size="xs">{SOURCE_LABEL[font.source]}</Badge>
+          {font.source === 'google' && canMirror && (
+            <Button
+              size="xs"
+              intent="secondary"
+              loading={mirroring}
+              title="Copy the files here, so visitors stop fetching them from Google"
+              onClick={() => onMirror?.(font.family)}
+            >
+              <Button.Icon icon="fa-solid fa-download" />
+            </Button>
+          )}
           {font.source !== 'system' && (
             <Button
               size="xs"

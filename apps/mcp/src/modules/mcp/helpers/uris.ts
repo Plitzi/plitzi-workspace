@@ -48,6 +48,8 @@ export const globalsUri = (env: Env): string => `plitzi://global-styles/${env}`;
 export const globalUri = (env: Env, componentType: string): string => `plitzi://global-styles/${env}/${componentType}`;
 export const idsUri = (env: Env): string => `plitzi://id-styles/${env}`;
 export const idUri = (env: Env, targetId: string): string => `plitzi://id-styles/${env}/${targetId}`;
+export const fontsUri = (env: Env): string => `plitzi://fonts/${env}`;
+export const fontUri = (env: Env, family: string): string => `plitzi://fonts/${env}/${family}`;
 export const styleVarsUri = (env: Env): string => `plitzi://style-variables/${env}`;
 export const styleVarUri = (env: Env, category: string): string => `plitzi://style-variables/${env}/${category}`;
 
