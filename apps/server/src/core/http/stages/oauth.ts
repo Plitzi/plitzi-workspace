@@ -1,7 +1,5 @@
-import { readRawBody } from '@plitzi/sdk-server/kernel';
-
-import { handleAuthorizeStart, handleAuthorizeSubmit } from '../modules/oauth/authorize';
-import { bearerOf, sendChallenge } from '../modules/oauth/challenge';
+import { handleAuthorizeStart, handleAuthorizeSubmit } from '../../oauth/authorize';
+import { bearerOf, sendChallenge } from '../../oauth/challenge';
 import {
   authorizationServerMetadata,
   AUTHORIZATION_SERVER_PATH,
@@ -9,15 +7,17 @@ import {
   protectedResourceMetadata,
   PROTECTED_RESOURCE_PATH,
   REGISTER_PATH,
+  REVOKE_PATH,
   TOKEN_PATH
-} from '../modules/oauth/metadata';
-import { getAccess } from '../modules/oauth/records';
-import { handleRegister } from '../modules/oauth/register';
-import { sendErrorJson, sendJson } from '../modules/oauth/respond';
-import { handleToken } from '../modules/oauth/token';
+} from '../../oauth/metadata';
+import { getAccess } from '../../oauth/records';
+import { handleRegister } from '../../oauth/register';
+import { sendErrorJson, sendJson } from '../../oauth/respond';
+import { handleRevoke, handleToken } from '../../oauth/token';
+import { readRawBody } from '../../requestParser';
 
-import type { OAuthParams } from '../modules/oauth/params';
-import type { BaseContext, Stage } from '@plitzi/sdk-server/kernel';
+import type { OAuthParams } from '../../oauth/params';
+import type { BaseContext, Stage } from '../types';
 import type { OAuthConfig, SSRRequest } from '@plitzi/sdk-shared';
 
 // RFC 9728 allows the resource's path to be appended to the well-known path, so a client may ask for either
@@ -30,6 +30,7 @@ const isOAuthPath = (path: string): boolean =>
   matchesWellKnown(path, AUTHORIZATION_SERVER_PATH) ||
   path === REGISTER_PATH ||
   path === AUTHORIZE_PATH ||
+  path === REVOKE_PATH ||
   path === TOKEN_PATH;
 
 // Query first, body second: a field posted by the form wins over one the client left in the URL.
@@ -99,6 +100,12 @@ export const createOAuthStage =
 
     if (path === AUTHORIZE_PATH && method === 'POST') {
       await handleAuthorizeSubmit(oauth, res, formParams(ctx.req, await readRawBody(ctx.raw)));
+
+      return true;
+    }
+
+    if (path === REVOKE_PATH && method === 'POST') {
+      await handleRevoke(oauth, res, formParams(ctx.req, await readRawBody(ctx.raw)));
 
       return true;
     }

@@ -1,7 +1,7 @@
 import { scopesOf } from './metadata';
 import { field, optionalField } from './params';
 import { randomId, verifyChallenge } from './pkce';
-import { dropCode, dropRefresh, getCode, getRefresh, putAccess, putRefresh } from './records';
+import { dropAccess, dropCode, dropRefresh, getCode, getRefresh, putAccess, putRefresh } from './records';
 import { sendErrorJson, sendJson } from './respond';
 
 import type { OAuthParams } from './params';
@@ -28,11 +28,20 @@ const sendTokens = async (
   grant: RefreshRecord
 ): Promise<void> => {
   const ttl = refreshTtlOf(config);
-  // What the client gets is a handle to the grant, not the credential behind it: the consumer's own token is
-  // usually good against more of the platform than this endpoint, and it stays on this side of the boundary.
-  // Recording it is also what lets the resource side recognise the bearer at all and challenge everything else.
-  // The TTL is never zero — a store cannot hold an entry for no time, and a bearer at its expiry must be refused.
-  const bearer = randomId();
+  /**
+   * What the client actually receives, and the two answers are a real policy choice.
+   *
+   * By default it is a HANDLE to the grant, not the credential behind it: what `issueToken` minted is usually good
+   * against more of the platform than this endpoint, so it stays on this side of the boundary and the resource
+   * side swaps it back. That is right for a connector holding a space token.
+   *
+   * `directTokens` gives the client the credential itself, for the case where the credential is exactly what the
+   * client should hold — a native app granted the person's own SESSION. There the handle buys nothing and costs:
+   * a second thing to revoke, and a store read on every request to an API that already knows how to read a
+   * session. Either way an access record is written, because it is also what lets the resource side recognise a
+   * bearer this server issued.
+   */
+  const bearer = config.directTokens ? credential : randomId();
   await putAccess(
     config.adapters.store,
     bearer,
@@ -129,6 +138,31 @@ const exchangeRefresh = async (config: OAuthConfig, res: SSRResponseHelpers, par
   }
 
   await sendTokens(config, res, issued.token, issued.expiresInSeconds, record);
+};
+
+/**
+ * POST /revoke — RFC 7009. Ends a grant, which is what signing out of a native client has to do.
+ *
+ * Without it, signing out ends the SESSION and leaves the refresh token that can mint another one: the app has
+ * deleted its copy, but a leaked one stays good until its TTL. The endpoint answers 200 whatever happens, as the
+ * RFC requires — a client cannot be told whether a token it presented was real, and a sign-out that reports a
+ * failure is one people ignore.
+ */
+export const handleRevoke = async (
+  config: OAuthConfig,
+  res: SSRResponseHelpers,
+  params: OAuthParams
+): Promise<void> => {
+  const token = optionalField(params, 'token');
+  if (token) {
+    // Dropped as both kinds rather than reading a `token_type_hint` the client may have got wrong: the two live
+    // under different keys, so removing the one it is not costs a delete that matches nothing.
+    await dropRefresh(config.adapters.store, token);
+    await dropAccess(config.adapters.store, token);
+  }
+
+  res.setStatus(200);
+  res.end();
 };
 
 /** POST /token. Public clients only, so there is no client authentication to check — PKCE is what proves the

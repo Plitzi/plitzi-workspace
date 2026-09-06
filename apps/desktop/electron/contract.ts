@@ -14,3 +14,17 @@ export const APP_ORIGIN = `${APP_SCHEME}://home`;
 export const STORE_CHANNEL = 'plitzi:session-store';
 
 export type StoreRequest = { action: 'read' } | { action: 'write'; value: string } | { action: 'clear' };
+
+/**
+ * Signing in, which happens in the person's browser and therefore in the MAIN process.
+ *
+ * The renderer cannot do it: the flow needs a loopback HTTP server to catch the answer and a way to open the
+ * system browser, and neither is something a sandboxed page has — which is the point. The window asks, waits,
+ * and is handed a session it never saw the credentials for.
+ */
+export const SIGN_IN_CHANNEL = 'plitzi:sign-in';
+
+export type SignInRequest =
+  | { action: 'start'; apiUrl: string }
+  | { action: 'renew'; apiUrl: string; clientId: string; refreshToken: string }
+  | { action: 'revoke'; apiUrl: string; clientId: string; refreshToken: string };

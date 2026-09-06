@@ -4,10 +4,11 @@ import path from 'node:path';
 import { app, BrowserWindow, ipcMain, Menu, protocol, safeStorage, session, shell } from 'electron';
 
 import { contentSecurityPolicy } from './contentSecurityPolicy';
-import { APP_ORIGIN, APP_SCHEME, STORE_CHANNEL } from './contract';
+import { APP_ORIGIN, APP_SCHEME, SIGN_IN_CHANNEL, STORE_CHANNEL } from './contract';
 import { createSecretStore } from './secretStore';
+import { renewThroughToken, revokeGrant, signInThroughBrowser } from './signIn';
 
-import type { StoreRequest } from './contract';
+import type { SignInRequest, StoreRequest } from './contract';
 
 /**
  * Where this file was written to, which is what every path below is relative to.
@@ -189,6 +190,32 @@ void app.whenReady().then(async () => {
       case 'clear':
         return store.clear();
     }
+  });
+
+  /**
+   * Signing in, which happens in the person's own browser.
+   *
+   * Here and not in the window because the flow needs a loopback listener and the system browser — and because a
+   * window that cannot run it is a window a password never reaches. What comes back is a session; the app stores
+   * it the same way it stores any other, in the keyring above.
+   *
+   * The registration travels back with it: a native client registers per flow (the redirect carries a port the OS
+   * picked this time), so renewing later needs the client the session was granted to.
+   */
+  ipcMain.handle(SIGN_IN_CHANNEL, async (_event, request: SignInRequest) => {
+    if (request.action === 'revoke') {
+      await revokeGrant(request.apiUrl, request.clientId, request.refreshToken);
+
+      return { ok: true };
+    }
+
+    if (request.action === 'renew') {
+      const renewed = await renewThroughToken(request.apiUrl, request.clientId, request.refreshToken);
+
+      return renewed.ok ? { ...renewed, clientId: request.clientId } : renewed;
+    }
+
+    return signInThroughBrowser(request.apiUrl);
   });
 
   buildMenu();

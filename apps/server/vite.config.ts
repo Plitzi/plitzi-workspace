@@ -79,6 +79,10 @@ export default defineConfig(({ mode }) => {
           // ESM re-exports load eagerly, so a sibling server importing from it would load React with them.
           kernel: path.resolve(root, 'src/kernel.ts'),
           auth: path.resolve(root, 'src/auth.ts'),
+          // OAuth 2.1 authorization. Its own entry because it is mounted more than once with different adapters —
+          // the MCP connector grants a space token, a native client grants a session — and a server that mounts
+          // neither should not carry the protocol to find that out.
+          oauth: path.resolve(root, 'src/oauth.ts'),
           // The account store, implemented. Its own entry because it is the only thing in the package that reaches
           // for a database driver: a deployment bringing its own store never loads `mysql2` to find that out.
           mysql: path.resolve(root, 'src/mysql.ts'),

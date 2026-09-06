@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
 import LayoutEmpty from './intents/LayoutEmpty';
-import LayoutLogin from './intents/LayoutLogin';
 import LayoutMain from './intents/LayoutMain';
 import useLayout from './useLayout';
 
@@ -26,10 +25,6 @@ const Layout = ({ children, ...props }: LayoutComponentProps) => {
   const { layoutProps } = useLayout();
   const { intent = 'main', title, ...rest } = { ...props, ...layoutProps };
   useWindowTitle(title);
-
-  if (intent === 'login') {
-    return <LayoutLogin {...rest}>{children}</LayoutLogin>;
-  }
 
   if (intent === 'empty') {
     return <LayoutEmpty {...rest}>{children}</LayoutEmpty>;

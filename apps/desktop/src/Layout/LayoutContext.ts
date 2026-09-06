@@ -2,7 +2,7 @@ import { createContext } from 'react';
 
 import type { ReactNode } from 'react';
 
-export type LayoutIntent = 'main' | 'login' | 'empty';
+export type LayoutIntent = 'main' | 'empty';
 
 /** What a page asks the shell around it to be. Set on mount, cleared on unmount. */
 export type LayoutProps = {

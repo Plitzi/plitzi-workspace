@@ -16,27 +16,12 @@ describe('the desktop API client', () => {
     expect((init.headers as Record<string, string>).authorization).toBe('Bearer tok');
   });
 
-  it('echoes a CSRF token in the header the server publishes', async () => {
-    const fetcher = vi.fn().mockResolvedValue(jsonResponse(200, {}));
-    await clientWith(fetcher as unknown as typeof fetch).request({
-      path: '/auth/login',
-      method: 'POST',
-      body: { username: 'a' },
-      csrfToken: 'csrf'
-    });
-
-    const [, init] = fetcher.mock.calls[0] as [string, RequestInit];
-    expect((init.headers as Record<string, string>)['x-csrf-token']).toBe('csrf');
-  });
-
   it('sends no credentials at all when it has none', async () => {
     const fetcher = vi.fn().mockResolvedValue(jsonResponse(200, {}));
-    await clientWith(fetcher as unknown as typeof fetch).request({ path: '/auth/csrf' });
+    await clientWith(fetcher as unknown as typeof fetch).request({ path: '/auth/session' });
 
     const [, init] = fetcher.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers.authorization).toBeUndefined();
-    expect(headers['x-csrf-token']).toBeUndefined();
+    expect((init.headers as Record<string, string>).authorization).toBeUndefined();
   });
 
   it('builds the query string from what it was given, dropping what it was not', async () => {

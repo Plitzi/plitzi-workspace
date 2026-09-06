@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createAuthApi } from './authApi';
 import AuthContext from './AuthContext';
+import AppContext from '../../AppContext';
 import { isRenewable, isUsable, parseSession, serializeSession, toSession } from './session/session';
 import useDesktop from '../desktop/useDesktop';
 
-import type { SignupBody } from './authApi';
-import type { AuthContextValue, LoginResult } from './AuthContext';
+import type { AuthContextValue, SignInResult } from './AuthContext';
 import type { StoredSession } from './session/session';
 import type { ApiClient } from '@pmodules/network';
 import type { ReactNode } from 'react';
@@ -18,6 +18,7 @@ export type AuthProviderProps = {
 
 const AuthProvider = ({ children, api }: AuthProviderProps) => {
   const desktop = useDesktop();
+  const { apiServer } = use(AppContext);
   const auth = useMemo(() => createAuthApi(api), [api]);
   const [session, setSession] = useState<StoredSession | undefined>(undefined);
   const [ready, setReady] = useState(false);
@@ -50,18 +51,30 @@ const AuthProvider = ({ children, api }: AuthProviderProps) => {
   const renew = useCallback(
     async (from: StoredSession): Promise<StoredSession | undefined> => {
       renewal.current ??= (async () => {
-        const result = await auth.refresh(from.refreshToken as string);
+        /**
+         * Renewed at the grant's own token endpoint, not at `/auth/refresh`.
+         *
+         * What this app holds is a refresh token the AUTHORIZATION server issued, paired with the registration it
+         * was granted to — the platform's own refresh token never reaches the window. Sending one to the other's
+         * endpoint is refused, which would read as a session that expired early.
+         */
+        const granted = await desktop.renewSession(apiServer, from.clientId ?? '', from.refreshToken ?? '');
         // A refusal ends the session; anything else (an unreachable server, a 500) leaves it alone to be retried,
         // because signing somebody out for a flaky network is the worst answer available.
-        if (!result.ok) {
-          if (result.status === 401 || result.status === 403) {
+        if (!granted.ok) {
+          if (granted.reason === 'refused') {
             await store(undefined);
           }
 
           return undefined;
         }
 
-        const next = toSession(result.data);
+        const identified = await auth.session(granted.accessToken);
+        if (!identified.ok) {
+          return undefined;
+        }
+
+        const next = toSession(granted, identified.data.details);
         await store(next);
 
         return next;
@@ -73,7 +86,7 @@ const AuthProvider = ({ children, api }: AuthProviderProps) => {
         renewal.current = undefined;
       }
     },
-    [auth, store]
+    [apiServer, auth, desktop, store]
   );
 
   const getAccessToken = useCallback(async (): Promise<string | undefined> => {
@@ -126,21 +139,28 @@ const AuthProvider = ({ children, api }: AuthProviderProps) => {
     };
   }, [desktop, renew, store]);
 
-  const login = useCallback(
-    async (username: string, password: string): Promise<LoginResult> => {
-      const result = await auth.login(username, password);
-      if (!result.ok) {
-        return { ok: false, reason: result.reason, error: result.error };
-      }
+  /**
+   * Signing in, which happens in the person's browser.
+   *
+   * The window asks the main process to run the flow and is handed a session it never saw the credentials for.
+   * Who that session belongs to is a second call, because the grant answers with a token and nothing else — the
+   * authorization server knows the person by an id, and what this window shows is a name.
+   */
+  const signIn = useCallback(async (): Promise<SignInResult> => {
+    const granted = await desktop.signIn(apiServer);
+    if (!granted.ok) {
+      return { ok: false, reason: granted.reason, error: granted.error };
+    }
 
-      await store(toSession(result.data));
+    const identified = await auth.session(granted.accessToken);
+    if (!identified.ok) {
+      return { ok: false, reason: 'refused', error: 'Signed in, but this account could not be read.' };
+    }
 
-      return { ok: true };
-    },
-    [auth, store]
-  );
+    await store(toSession(granted, identified.data.details));
 
-  const signup = useCallback((body: SignupBody) => auth.signup(body), [auth]);
+    return { ok: true };
+  }, [apiServer, auth, desktop, store]);
 
   const logout = useCallback(async () => {
     const held = current.current;
@@ -148,9 +168,14 @@ const AuthProvider = ({ children, api }: AuthProviderProps) => {
     // After the local session is gone, never before: a server that cannot be reached must not leave this window
     // signed in with a session the person has already asked to end.
     if (held) {
-      await auth.logout(held.accessToken, held.refreshToken);
+      await auth.logout(held.accessToken);
+      // The grant as well as the session: the refresh token is the authorization server's and can mint another
+      // session, so clearing the window without it leaves a live credential behind.
+      if (held.clientId && held.refreshToken) {
+        await desktop.revokeSession(apiServer, held.clientId, held.refreshToken);
+      }
     }
-  }, [auth, store]);
+  }, [apiServer, auth, desktop, store]);
 
   const can = useCallback(
     (permission: string) => session?.user.permissions?.includes(permission) ?? false,
@@ -163,13 +188,12 @@ const AuthProvider = ({ children, api }: AuthProviderProps) => {
       isAuthenticated: session !== undefined,
       user: session?.user,
       getAccessToken,
-      login,
-      signup,
+      signIn,
       logout,
       can,
       auth
     }),
-    [ready, session, getAccessToken, login, signup, logout, can, auth]
+    [ready, session, getAccessToken, signIn, logout, can, auth]
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

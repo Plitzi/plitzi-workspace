@@ -20,6 +20,11 @@
       "import": "./dist/auth.js",
       "default": "./dist/auth.js"
     },
+    "./oauth": {
+      "types": "./dist/oauth.d.ts",
+      "import": "./dist/oauth.js",
+      "default": "./dist/oauth.js"
+    },
     "./kernel": {
       "types": "./dist/kernel.d.ts",
       "import": "./dist/kernel.js",

@@ -10,7 +10,6 @@ export type ApiRequest = {
   query?: Record<string, string | number | undefined>;
   /** Skipped for the sign-in flows, which have no session to present yet. */
   token?: string;
-  csrfToken?: string;
   signal?: AbortSignal;
 };
 
@@ -21,8 +20,6 @@ export type ApiClientOptions = {
 
 /** What every `/auth` flow answers with, and what a failure carries. See `apps/server` `core/auth/routes.ts`. */
 export type AuthFailure = { reason?: string; error?: string };
-
-const CSRF_HEADER = 'x-csrf-token';
 
 const url = (baseUrl: string, path: string, query: ApiRequest['query']): string => {
   const target = new URL(path.startsWith('/') ? path : `/${path}`, baseUrl);
@@ -55,7 +52,6 @@ export const createApiClient = ({ baseUrl, fetcher = fetch }: ApiClientOptions) 
     body,
     query,
     token,
-    csrfToken,
     signal
   }: ApiRequest): Promise<ApiResult<T>> => {
     const headers: Record<string, string> = { accept: 'application/json' };
@@ -65,10 +61,6 @@ export const createApiClient = ({ baseUrl, fetcher = fetch }: ApiClientOptions) 
 
     if (token) {
       headers.authorization = `Bearer ${token}`;
-    }
-
-    if (csrfToken) {
-      headers[CSRF_HEADER] = csrfToken;
     }
 
     let response: Response;

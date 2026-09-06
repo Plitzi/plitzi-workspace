@@ -3,8 +3,9 @@ import { createServer as createHttpProbe } from 'node:http';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { createOAuthGuardStage } from '@plitzi/sdk-server/oauth';
+
 import { createServer } from '../../createServer';
-import { createOAuthGuardStage } from '../../stages/oauth';
 
 import type { BaseContext } from '@plitzi/sdk-server/kernel';
 import type {

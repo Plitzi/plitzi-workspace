@@ -144,6 +144,10 @@ export const dropRefresh = async (store: OAuthStore, token: string): Promise<voi
   await store.drop(keyOf('refresh', token));
 };
 
+export const dropAccess = async (store: OAuthStore, token: string): Promise<void> => {
+  await store.drop(keyOf('access', token));
+};
+
 export const putAccess = (store: OAuthStore, token: string, record: AccessRecord, ttlSeconds: number): Promise<void> =>
   writeJson(store, 'access', token, record, ttlSeconds);
 

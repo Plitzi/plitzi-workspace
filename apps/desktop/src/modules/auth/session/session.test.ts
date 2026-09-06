@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isRenewable, isUsable, parseSession, RENEW_WINDOW_SECONDS, serializeSession, toSession } from './session';
 
-import type { AuthSuccess, StoredSession } from './session';
+import type { StoredSession } from './session';
 
 const NOW = 1_800_000_000;
 
@@ -11,22 +11,26 @@ const session = (overrides: Partial<StoredSession> = {}): StoredSession => ({
   accessToken: 'access',
   expiresAt: NOW + 3600,
   refreshToken: 'refresh',
-  refreshExpiresAt: NOW + 86_400,
+  clientId: 'client-1',
   ...overrides
 });
 
 describe('a desktop session', () => {
-  it('is built from what the login flow answers', () => {
-    const body: AuthSuccess = {
-      success: true,
-      details: { id: 7, username: 'carlos', email: 'carlos@plitzi.com' },
-      access_token: 'access',
-      expire_at: NOW + 3600,
-      refresh_token: 'refresh',
-      refresh_expire_at: NOW + 86_400
-    };
+  /**
+   * The grant answers with a lifetime, not a moment: `expires_in` is seconds, and the store keeps an absolute
+   * time because a session read back from disk hours later has to know whether it is still alive.
+   */
+  it('is built from what the browser flow granted, plus who it belongs to', () => {
+    const granted = { clientId: 'client-1', accessToken: 'access', refreshToken: 'refresh', expiresIn: 3600 };
+    const user = { id: 7, username: 'carlos', email: 'carlos@plitzi.com' };
 
-    expect(toSession(body)).toEqual(session());
+    const built = toSession(granted, user);
+
+    expect(built.user).toEqual(user);
+    expect(built.accessToken).toBe('access');
+    expect(built.refreshToken).toBe('refresh');
+    expect(built.clientId).toBe('client-1');
+    expect(built.expiresAt).toBeGreaterThan(Math.floor(Date.now() / 1000) + 3500);
   });
 
   it('is usable while there is real time left on it', () => {
@@ -45,16 +49,20 @@ describe('a desktop session', () => {
     expect(isUsable(undefined, NOW)).toBe(false);
   });
 
-  it('can be renewed while the refresh token is alive', () => {
-    expect(isRenewable(session({ expiresAt: NOW - 10 }), NOW)).toBe(true);
+  it('can be renewed while it holds a refresh token and the registration it was granted to', () => {
+    expect(isRenewable(session({ expiresAt: NOW - 10 }))).toBe(true);
   });
 
-  it('cannot be renewed once the refresh token has expired too', () => {
-    expect(isRenewable(session({ refreshExpiresAt: NOW - 1 }), NOW)).toBe(false);
+  it('cannot be renewed when the flow issued no refresh token', () => {
+    expect(isRenewable(session({ refreshToken: undefined }))).toBe(false);
   });
 
-  it('cannot be renewed when the server issued no refresh token', () => {
-    expect(isRenewable(session({ refreshToken: undefined }), NOW)).toBe(false);
+  /**
+   * A native client registers per flow — the redirect declares a loopback port the OS picked at the time — so a
+   * refresh token with no registration beside it has nothing to present, and the only way back is the browser.
+   */
+  it('cannot be renewed without the registration, however good the refresh token is', () => {
+    expect(isRenewable(session({ clientId: undefined }))).toBe(false);
   });
 
   it('round-trips through the store', () => {

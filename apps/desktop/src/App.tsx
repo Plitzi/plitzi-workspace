@@ -7,8 +7,7 @@ import AppContext from './AppContext';
 import { getEnvironmentServer, resolveEnvironment } from './config/environments';
 import Layout, { LayoutProvider } from './Layout';
 import AuthProvider from './modules/auth/AuthProvider';
-import AuthRoutes from './modules/auth/AuthRoutes';
-import LoginPage from './modules/auth/pages/LoginPage';
+import SignInScreen from './modules/auth/SignInScreen';
 import useAuth from './modules/auth/useAuth';
 import { createApiClient } from './modules/network';
 import SiteNotFoundPage from './modules/site/pages/SiteNotFoundPage';
@@ -24,6 +23,10 @@ import type { ApiClient } from './modules/network';
  * `ready` is the whole reason this is a component of its own: the stored session is read asynchronously, and a
  * router that renders before the answer mounts the sign-in screen and then replaces it — which on a machine that
  * signs in every morning is a flash of the wrong screen on every launch.
+ *
+ * There is no `/auth/*` any more. Signing in, signing up, resetting a password and confirming an address all
+ * happen on the platform's own screen in the browser; this window has one button and the session it comes back
+ * with. The links in those emails open the browser, which is where they always belonged.
  */
 const AppRoutes = () => {
   const { ready, isAuthenticated } = useAuth();
@@ -35,9 +38,8 @@ const AppRoutes = () => {
   return (
     <Layout>
       <Routes>
-        {!isAuthenticated && <Route path="/" element={<LoginPage />} />}
+        {!isAuthenticated && <Route path="/" element={<SignInScreen />} />}
         {isAuthenticated && <Route path="/" element={<Navigate replace to="/spaces" />} />}
-        <Route path="/auth/*" element={<AuthRoutes />} />
         {isAuthenticated && <Route path="/spaces/*" element={<SpaceRoutes />} />}
         <Route path="/404" element={<SiteNotFoundPage />} />
         <Route path="*" element={<Navigate replace to={isAuthenticated ? '/404' : '/'} />} />

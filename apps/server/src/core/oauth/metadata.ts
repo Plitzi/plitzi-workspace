@@ -4,6 +4,7 @@ import type { OAuthConfig, SSRRequest } from '@plitzi/sdk-shared';
 
 export const AUTHORIZE_PATH = '/authorize';
 export const TOKEN_PATH = '/token';
+export const REVOKE_PATH = '/revoke';
 export const REGISTER_PATH = '/register';
 export const PROTECTED_RESOURCE_PATH = '/.well-known/oauth-protected-resource';
 export const AUTHORIZATION_SERVER_PATH = '/.well-known/oauth-authorization-server';
@@ -73,6 +74,7 @@ export const authorizationServerMetadata = (config: OAuthConfig, req: SSRRequest
     authorization_endpoint: `${issuer}${AUTHORIZE_PATH}`,
     token_endpoint: `${issuer}${TOKEN_PATH}`,
     registration_endpoint: `${issuer}${REGISTER_PATH}`,
+    revocation_endpoint: `${issuer}${REVOKE_PATH}`,
     response_types_supported: ['code'],
     grant_types_supported: grantTypes,
     code_challenge_methods_supported: ['S256'],

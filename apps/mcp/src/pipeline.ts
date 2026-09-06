@@ -1,7 +1,7 @@
 import { configStaticStage, healthStage } from '@plitzi/sdk-server/kernel';
+import { createOAuthGuardStage, createOAuthStage } from '@plitzi/sdk-server/oauth';
 
 import { createMcpOnlyStage, createMcpStage } from './stages/mcp';
-import { createOAuthGuardStage, createOAuthStage } from './stages/oauth';
 import { previewStage } from './stages/preview';
 import { createWidgetProxyStage } from './stages/proxy';
 

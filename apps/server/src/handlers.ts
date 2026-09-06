@@ -54,11 +54,13 @@
 
 export { createAuthRouteHandlers, mountAuthRoutes } from './core/handlers/authRouteHandlers';
 export { createSocialAuthRouteHandlers, mountSocialAuthRoutes } from './core/handlers/socialRouteHandlers';
+export { createOAuthRouteHandlers, mountOAuthRoutes, OAUTH_ROUTE_PATHS } from './core/handlers/oauthRouteHandlers';
 export { createAuthMiddleware } from './core/handlers/authMiddleware';
 export { createCsrfMiddleware } from './core/handlers/csrfMiddleware';
 
 export type { AuthRouteHandlersOptions } from './core/handlers/authRouteHandlers';
 export type { SocialRouteHandlersOptions } from './core/handlers/socialRouteHandlers';
+export type { OAuthResponse, OAuthRouteHandler, OAuthRouteHandlersOptions } from './core/handlers/oauthRouteHandlers';
 export type { AuthMiddlewareOptions } from './core/handlers/authMiddleware';
 export type { CsrfMiddlewareOptions } from './core/handlers/csrfMiddleware';
 export type {

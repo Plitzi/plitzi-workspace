@@ -1047,6 +1047,15 @@ export type OAuthConfig = {
    * to send somebody who has not signed in cannot start the flow at all.
    */
   signInUrl: string;
+  /**
+   * Hand the client the credential `issueToken` minted, instead of an opaque handle to it.
+   *
+   * Off by default, which is right whenever the credential is worth more than the connection — a space token
+   * reaches the platform, and a client that never holds one cannot leak one. Turn it ON when the credential IS
+   * what the client should hold: a native app granted the person's own session is holding exactly what a browser
+   * holds, and wrapping it costs a store read on every request and gives a second thing to revoke.
+   */
+  directTokens?: boolean;
 };
 
 /** A short-TTL, one-shot store for unsaved draft offline-data behind a preview token. The SDK ships an
