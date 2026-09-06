@@ -32,21 +32,13 @@ export type SdkProps = {
    *  own — an MCP widget inside a chat, a component mounted in a host app. */
   branding?: boolean;
   sdkStylePath?: string;
-  /** Where this deployment serves the font files a space uploaded. See `fontUrlResolver`. */
-  fontsBaseUrl?: string;
   server?: Server;
 };
 
 /** Module-level, so a space that declares no font of its own keeps one reference across every render. */
 const NO_FONTS: SpaceFont[] = [];
 
-const Sdk = ({
-  externalStyle = '',
-  branding = true,
-  sdkStylePath = './plitzi-sdk.css',
-  fontsBaseUrl,
-  server
-}: SdkProps) => {
+const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
   const { resolvedTheme } = useTheme();
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -74,7 +66,10 @@ const Sdk = ({
    * came from a hard-coded list on the client asset rail, which meant a published page — rendered raw, where the
    * rail is not applied at all — showed every space in its fallback.
    */
-  const fontHead = useMemo(() => fontsToHead(fonts, fontUrlResolver(fontsBaseUrl)), [fonts, fontsBaseUrl]);
+  const fontHead = useMemo(
+    () => fontsToHead(fonts, fontUrlResolver(server?.fontsBaseUrl)),
+    [fonts, server?.fontsBaseUrl]
+  );
 
   const css = useMemo(() => {
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);

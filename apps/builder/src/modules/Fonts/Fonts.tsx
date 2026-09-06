@@ -9,6 +9,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { familiesInCss, primaryFamily } from '@plitzi/sdk-shared/style';
 
 import AddGoogleFont from './components/AddGoogleFont';
+import AddHostedFont from './components/AddHostedFont';
 import AddRemoteFont from './components/AddRemoteFont';
 import AddSystemFont from './components/AddSystemFont';
 import FontRow from './components/FontRow';
@@ -18,7 +19,7 @@ import type { SpaceFont } from '@plitzi/sdk-shared';
 /** Module-level, so a space that declares nothing keeps one reference across every render. */
 const NO_FONTS: SpaceFont[] = [];
 
-const tabs = [{ label: 'Google' }, { label: 'External' }, { label: 'System' }];
+const tabs = [{ label: 'Google' }, { label: 'Upload' }, { label: 'External' }, { label: 'System' }];
 
 /**
  * What this space loads, and where each family comes from.
@@ -63,6 +64,11 @@ const Fonts = () => {
       builderHandler('styleAddFont', font);
     },
     [addToast, builderHandler, fonts]
+  );
+
+  const handleUpdate = useCallback(
+    (family: string, font: SpaceFont) => builderHandler('styleUpdateFont', family, font),
+    [builderHandler]
   );
 
   const handleRemove = useCallback(
@@ -110,6 +116,9 @@ const Fonts = () => {
         <ContainerTabs.Tabs items={tabs} />
         <ContainerTabs.TabContent className="min-h-0 grow basis-0">
           <AddGoogleFont declared={declared} onAdd={handleAdd} />
+        </ContainerTabs.TabContent>
+        <ContainerTabs.TabContent>
+          <AddHostedFont fonts={fonts} onAdd={handleAdd} onUpdate={handleUpdate} />
         </ContainerTabs.TabContent>
         <ContainerTabs.TabContent>
           <AddRemoteFont onAdd={handleAdd} />

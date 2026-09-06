@@ -1,6 +1,6 @@
 # RFC 0015 — Font management
 
-- **Status:** Phases 1 and 2 implemented; phases 3 and 4 outstanding
+- **Status:** Phases 1–3 implemented; phase 4 outstanding
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-09-06
 - **Scope:** `@plitzi/sdk-shared`, `@plitzi/sdk-style`, `apps/sdk`, `apps/builder`, `apps/server`
@@ -83,7 +83,7 @@ awaits `document.fonts.ready` before capturing.
 writes `--font-heading` / `--font-body` as style variables. The name is stored, the file never
 arrives.
 
-### 2.7 The self-host path cannot serve a font file — still open, phase 3
+### 2.7 The self-host path cannot serve a font file
 
 `serveStatic` (`apps/server/src/core/staticFiles.ts`) ends in
 `res.send(content.toString('utf-8'))`, and `SSRResponseHelpers.send` is typed `(body: string)`.
@@ -295,8 +295,11 @@ space renders from disk in development.
 `createServer({ fonts })` takes the store plus the resolver; a self-hoster who passes nothing
 gets the local store rooted in the public dir.
 
-**Prerequisite:** `SSRResponseHelpers.send` must accept `Buffer` and `serveStatic` must stop
-round-tripping through UTF-8 (§2.7). Small change, blocking for the local store.
+`send` takes a `Buffer` and sends it untouched — never compressed, since what a Buffer holds is compressed
+already — and `serveStatic` hands it the bytes it read rather than a UTF-8 round trip of them (§2.7).
+
+The store deliberately cannot READ: a local store's files are served off disk by the `/fonts/*` stage and a
+cloud store's by its CDN, so a method to pull bytes back through the abstraction would have had no caller.
 
 ### 6.4 Mirroring Google
 
@@ -307,12 +310,18 @@ fonts that work in an air-gapped self-host and in the screenshot browser.
 
 ### 6.5 CORS and CSP
 
-Font files are CORS-checked when loaded cross-origin: the CDN distribution must answer with
-`Access-Control-Allow-Origin`, and `<link rel="preload" as="font">` needs `crossorigin`. The MCP
-widget CSP (`settings.mcp`, which already enumerates font origins) must include every origin the
-manifest names — the space's own font origin **and** the third parties a `remote` entry points
-at — or widgets keep rendering fallbacks. Deriving that origin list from the manifest is the
-resolver's job too, so no origin has to be configured twice.
+Font files are CORS-checked when loaded cross-origin, so the `/fonts/*` stage answers
+`Access-Control-Allow-Origin: *` (as the other asset mounts do) and every font preload carries
+`crossorigin`. A deployment serving from a bucket has to set the same header on its CDN
+distribution; that is configuration, not code.
+
+For MCP widgets the answer turned out to be the proxy that already exists rather than a CSP list:
+`proxifyResources` now rewrites a `remote` font's stylesheet and file URLs to this server's
+`/__proxy`, which is declared. `google` entries are left alone and cannot be otherwise — the
+resolver builds one `css2` URL from the families at render time, and which files that stylesheet
+then names is Google's answer, not something stored anywhere we could rewrite.
+
+`FontHead.origins` is still produced for a host that wants the list.
 
 ### 6.6 Trusting a remote URL
 
@@ -396,7 +405,7 @@ weight list).
 |---|---|---|---|
 | 1 | `style.fonts` + `fontsToHead` + SSR/CSR/shadow/iframe/export wiring + migration + the §8.3 fixes | workspace, plitzi-sdk-server | **Done** |
 | 2 | Fonts panel, picker fed by the manifest, weights honoured, `parseSpaceFont`, the three GraphQL mutations, the catalog proxy (§6.1, pulled forward — the panel needs something to search) and the importer declaring what it imports (§8.5) | `apps/builder`, `sdk-style`, `sdk-shared`, plitzi-sdk-server | **Done** |
-| 3 | `FontStore` (local + S3), upload endpoint, binary `send` (§2.7), CORS/CSP | `apps/server`, plitzi-sdk-server | Outstanding |
+| 3 | `FontStore` (local + S3), upload endpoint and Upload tab, binary `send` (§2.7), `/fonts/*` serving stage, `fontsBaseUrl` on the endpoint set, manifest URLs through the widget proxy | `apps/server`, `apps/builder`, `apps/mcp`, plitzi-sdk-server | **Done** |
 | 4 | Google mirroring, MCP ops, fallback metrics | plitzi-sdk-server, workspace | Outstanding |
 
 Phase 1 alone closed the reported problem: what the builder shows is what the visitor gets. Phase 2 is what makes

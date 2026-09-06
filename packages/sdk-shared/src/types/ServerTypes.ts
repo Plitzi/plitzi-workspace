@@ -47,7 +47,11 @@ export type SSRResponseHelpers = {
    *  several, and collapsing them into one string would produce a single malformed cookie. */
   setHeader: (name: string, value: string | string[]) => void;
   setStatus: (code: number) => void;
-  send: (body: string) => void;
+  /**
+   * A `Buffer` is sent byte for byte and never compressed: it is how a binary reaches the wire — a font file, an
+   * image — and what it holds is usually compressed already. A string keeps the encoding negotiation.
+   */
+  send: (body: string | Buffer) => void;
   write: (chunk: string | Buffer) => void;
   end: () => void;
 };
@@ -164,6 +168,14 @@ export type SSRTemplateProps = {
 export type SSRFontsConfig = {
   /** Prefix joined to each path, e.g. `/fonts` or `https://cdn.example.com/fonts`. Default: `/fonts`. */
   baseUrl?: string;
+  /**
+   * A directory this server serves the uploaded files from, under `/fonts/*`.
+   *
+   * The self-hosting answer, and the reason `baseUrl` defaults to a path rather than an origin: with a directory
+   * here a deployment needs no object storage, no credentials and no network to serve its customers' fonts. A
+   * cloud deployment leaves it out and points `baseUrl` at its CDN instead.
+   */
+  dir?: string;
 };
 
 export type SSRPlugin = {

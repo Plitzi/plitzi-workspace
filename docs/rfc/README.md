@@ -31,7 +31,7 @@ lost, it simply stops being read as a plan.
 |---|---|---|---|
 | [0001](./0001-native-mobile-renderer.md) | Native mobile renderer (React Native) | Proposal | `plitzi-sdk` render packages |
 | [0002](./0002-ai-schema-comprehension-and-improvement.md) | AI schema comprehension and improvement | Proposal | `sdk-schema`, `sdk-elements`, MCP/AI toolset |
-| [0015](./0015-font-management.md) | Font management | Phases 1–2 implemented | `sdk-shared`, `sdk-style`, builder, `sdk-server`, `plitzi-sdk-server` |
+| [0015](./0015-font-management.md) | Font management | Phases 1–3 implemented | `sdk-shared`, `sdk-style`, builder, `sdk-server`, `plitzi-sdk-server` |
 
 ## Conventions
 

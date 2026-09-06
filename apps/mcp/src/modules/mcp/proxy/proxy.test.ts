@@ -2,12 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { grantUrl, readGrant } from './grant';
 import { isPrivateAddress, isPublicHost } from './guard';
-import { rewriteText } from './rewrite';
+import { proxifyResources, rewriteText } from './rewrite';
 import { connectionId } from './sign';
 import { render } from '../tools/render';
 
 import type { ResourceProxy } from './types';
 import type { Operation } from '../tools/operations';
+import type { Schema, SpaceFont, Style } from '@plitzi/sdk-shared';
 
 const proxy: ResourceProxy = {
   endpoint: 'https://mcp.example.com/__proxy',
@@ -305,5 +306,66 @@ describe('the endpoint guard', () => {
     expect(await isPublicHost('redis.default.svc.cluster.local')).toBe(false);
     expect(await isPublicHost('127.0.0.1')).toBe(false);
     expect(await isPublicHost('')).toBe(false);
+  });
+});
+
+describe('the font manifest a widget carries', () => {
+  const spaceWith = (fonts: SpaceFont[]) => ({
+    schema: { flat: {}, pages: [], pageFolders: [], variables: [], settings: { customCss: '' } } as unknown as Schema,
+    style: {
+      platform: { desktop: {}, tablet: {}, mobile: {} },
+      theme: { default: 'system', schemes: ['light', 'dark'] },
+      variables: {},
+      fonts,
+      cache: ''
+    } as Style
+  });
+
+  it('loads a remote stylesheet through the endpoint the host CSP declares', () => {
+    const space = spaceWith([
+      {
+        source: 'remote',
+        family: 'Founders',
+        fallback: 'serif',
+        weights: [400],
+        styles: ['normal'],
+        stylesheet: 'https://use.typekit.test/abc.css'
+      }
+    ]);
+
+    proxifyResources(space, proxy);
+
+    const font = space.style.fonts?.[0];
+    expect(font?.source === 'remote' && font.stylesheet).toContain(`${proxy.endpoint}?i=`);
+  });
+
+  it('does the same for the face files themselves', () => {
+    const space = spaceWith([
+      {
+        source: 'remote',
+        family: 'Founders',
+        fallback: 'serif',
+        weights: [400],
+        styles: ['normal'],
+        files: [{ weight: 400, style: 'normal', format: 'woff2', url: 'https://cdn.acme.test/f.woff2' }]
+      }
+    ]);
+
+    proxifyResources(space, proxy);
+
+    const font = space.style.fonts?.[0];
+    expect(font?.source === 'remote' && font.files?.[0].url).toContain(`${proxy.endpoint}?i=`);
+  });
+
+  it('leaves a Google family alone: the resolver builds that URL at render time, from the families alone', () => {
+    const space = spaceWith([
+      { source: 'google', family: 'Lato', fallback: 'sans-serif', weights: [400], styles: ['normal'] }
+    ]);
+
+    proxifyResources(space, proxy);
+
+    expect(space.style.fonts).toEqual([
+      { source: 'google', family: 'Lato', fallback: 'sans-serif', weights: [400], styles: ['normal'] }
+    ]);
   });
 });

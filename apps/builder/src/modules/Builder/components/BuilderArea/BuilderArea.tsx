@@ -21,6 +21,7 @@ import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
 import CollaboratorArea from '@pmodules/Collaboration/components/CollaboratorArea';
+import { fontsBaseUrl } from '@pmodules/Fonts/fontsBaseUrl';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 
@@ -82,10 +83,7 @@ const BuilderArea = ({
    * fixed list of eighteen Google families at one weight, which is why a design looked right here and shipped in a
    * fallback — and why a bold in the canvas was the browser's synthetic one.
    */
-  const fontHead = useMemo(
-    () => fontsToHead(fonts, fontUrlResolver(server.ssrServer ? `${server.ssrServer}/fonts` : undefined)),
-    [fonts, server.ssrServer]
-  );
+  const fontHead = useMemo(() => fontsToHead(fonts, fontUrlResolver(fontsBaseUrl(server))), [fonts, server]);
   const assetsWithFonts = useMemo(() => ({ ...assets, ...fontLinkAssets(fontHead) }), [assets, fontHead]);
 
   const css = useMemo(() => {

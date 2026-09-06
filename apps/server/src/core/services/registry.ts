@@ -2,6 +2,7 @@ import { actionStage } from './action';
 import { rscStage } from './rsc';
 import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
+import { fontAssetsStage } from '../http/stages/fontAssets';
 import { healthStage } from '../http/stages/health';
 import { middlewaresStage } from '../http/stages/middlewares';
 import { pluginAssetsStage } from '../http/stages/pluginAssets';
@@ -22,6 +23,7 @@ export const buildPagePipeline = (
     publicDirStage,
     wellKnownStage,
     pluginAssetsStage,
+    fontAssetsStage,
     ...authRoutesStages,
     configStaticStage,
     sdkAssetsStage

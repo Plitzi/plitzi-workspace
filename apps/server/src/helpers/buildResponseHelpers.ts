@@ -40,8 +40,16 @@ export const buildResponseHelpers = (
    */
   const transformable = (): boolean => !String(raw.getHeaders()['cache-control']).includes('no-transform');
 
-  const writeSend = (body: string) => {
-    const compressed = transformable() ? compressBody(body, encoding, compression) : body;
+  const writeSend = (body: string | Buffer) => {
+    /**
+     * A Buffer goes out untouched.
+     *
+     * It is the only way a binary reaches the wire — this response object had `send(body: string)` and every
+     * caller went through a UTF-8 round trip, which silently replaces every byte that is not valid UTF-8 and so
+     * corrupts any font, image or archive served through it. What a Buffer holds is also compressed already
+     * (woff2, png), so re-encoding it would cost CPU to make it bigger.
+     */
+    const compressed = typeof body === 'string' && transformable() ? compressBody(body, encoding, compression) : body;
     const isCompressed = compressed !== body;
     if (isCompressed) {
       raw.setHeader('Content-Encoding', encoding);

@@ -278,6 +278,29 @@ const rewriteStyle = (style: Style, proxy: ResourceProxy): void => {
   if (style.cache.includes('url(')) {
     style.cache = rewriteText(style.cache, proxy);
   }
+
+  /**
+   * The font manifest, whose URLs are not in the CSS: the resolver turns them into links and `@font-face` blocks
+   * at render time, so the widget fetches them itself and a host that enforces a strict CSP would block them.
+   *
+   * `google` entries are left alone and cannot be otherwise: the resolver builds one `css2` URL from the families
+   * at render time, and which files that stylesheet then names is Google's answer, not something written here.
+   * They are also the one external origin no host blocks. Uploaded faces are paths, resolved against whichever
+   * deployment renders them, so there is nothing to rewrite either.
+   */
+  for (const font of style.fonts ?? []) {
+    if (font.source !== 'remote') {
+      continue;
+    }
+
+    if (font.stylesheet) {
+      font.stylesheet = toProxy(font.stylesheet, proxy);
+    }
+
+    for (const file of font.files ?? []) {
+      file.url = toProxy(file.url, proxy);
+    }
+  }
 };
 
 /** Point everything an authored widget loads from outside — images, media, fonts, the data an apiContainer fetches

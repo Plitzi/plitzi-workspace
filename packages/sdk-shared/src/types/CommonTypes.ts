@@ -11,6 +11,15 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
   domain?: string;
   requestUrl?: string;
   serverUrl: string;
+  /**
+   * Where this deployment serves the font files a space uploaded — a CDN prefix in the cloud, a path on the page
+   * server when it keeps them itself.
+   *
+   * Configuration rather than something to derive: a manifest holds store-relative paths precisely so that the
+   * origin is the deployment's answer, and an editor guessing it from the SSR host would address the CDN's files
+   * on the wrong origin. Absent means `/fonts` on whatever origin is rendering.
+   */
+  fontsBaseUrl?: string;
   websocketServer: string;
   subscriptionServer: string;
   location?: Location;

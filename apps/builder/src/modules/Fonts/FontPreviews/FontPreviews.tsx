@@ -5,6 +5,8 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontsToHead, fontUrlResolver, googleTextSubsetUrl } from '@plitzi/sdk-shared/style';
 
+import { fontsBaseUrl } from '../fontsBaseUrl';
+
 import type { FontHead, SpaceFont } from '@plitzi/sdk-shared';
 
 /** Module-level, so a space that declares nothing keeps one reference across every render. */
@@ -32,7 +34,7 @@ const FontPreviews = () => {
   const head = useMemo<FontHead>(() => {
     const googleFamilies = fonts.filter(font => font.source === 'google').map(font => font.family);
     const rest = fonts.filter(font => font.source === 'remote' || font.source === 'hosted');
-    const resolved = fontsToHead(rest, fontUrlResolver(server.ssrServer ? `${server.ssrServer}/fonts` : undefined));
+    const resolved = fontsToHead(rest, fontUrlResolver(fontsBaseUrl(server)));
 
     if (googleFamilies.length === 0) {
       return resolved;
@@ -45,7 +47,7 @@ const FontPreviews = () => {
         { href: googleTextSubsetUrl(googleFamilies, googleFamilies.join('')), rel: 'stylesheet' as const }
       ]
     };
-  }, [fonts, server.ssrServer]);
+  }, [fonts, server]);
 
   useFontHead(head);
 
