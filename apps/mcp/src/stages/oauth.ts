@@ -65,7 +65,7 @@ export const createOAuthStage =
     }
 
     const { res } = ctx;
-    // The consent screen is a top-level navigation, never a cross-origin fetch; the machine endpoints are both.
+    // The grant screen is a top-level navigation, never a cross-origin fetch; the machine endpoints are both.
     if (path !== AUTHORIZE_PATH) {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', '*');
@@ -92,7 +92,7 @@ export const createOAuthStage =
     }
 
     if (path === AUTHORIZE_PATH && method === 'GET') {
-      await handleAuthorizeStart(oauth, res, ctx.req.query);
+      await handleAuthorizeStart(oauth, res, ctx.req.query, ctx.req);
 
       return true;
     }

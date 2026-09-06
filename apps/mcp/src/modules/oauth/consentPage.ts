@@ -16,8 +16,9 @@ const escapeHtml = (value: string): string =>
     }
   });
 
-// Deliberately one stylesheet and zero script tags: this page takes a password, so the less of it that can be
-// influenced from anywhere else, the better. It is also why the flow is plain form POSTs and not the SDK runtime.
+// Deliberately one stylesheet and zero script tags: this page decides what a connector may reach, so the less of
+// it that can be influenced from anywhere else, the better. It is also why the flow is plain form POSTs and not
+// the SDK runtime.
 const STYLES = `
   :root { color-scheme: light dark; --bg: #f6f7f9; --panel: #ffffff; --ink: #16181d; --muted: #6b7280;
     --line: #e2e5ea; --accent: #2563eb; --danger: #b91c1c; }
@@ -34,9 +35,6 @@ const STYLES = `
   img.logo { display: block; height: 32px; margin-bottom: 20px; }
   h1 { margin: 0 0 6px; font-size: 20px; font-weight: 600; }
   p.lede { margin: 0 0 24px; color: var(--muted); font-size: 14px; }
-  label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; }
-  input[type="text"], input[type="password"] { width: 100%; margin-bottom: 16px; padding: 10px 12px;
-    border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
   input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   ul.targets { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
   ul.targets label { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px;
@@ -50,6 +48,7 @@ const STYLES = `
   p.error { margin: 0 0 16px; padding: 10px 12px; border-radius: 8px; color: var(--danger);
     border: 1px solid currentColor; font-size: 14px; }
   p.note { margin: 10px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
+  p.note a { color: var(--accent); }
 `;
 
 const hiddenFields = (hidden: Record<string, string>): string =>
@@ -66,13 +65,6 @@ const guestButton = (guest: NonNullable<OAuthConsentView['guest']>): string => {
     guest.label
   )}</button>${note}`;
 };
-
-const credentialsFields = (view: OAuthConsentView): string => `<label for="username">Email or username</label>
-      <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none"
-        spellcheck="false" required autofocus>
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" required>
-      <button type="submit">Sign in</button>${view.guest ? guestButton(view.guest) : ''}`;
 
 const targetFields = (view: OAuthConsentView): string => {
   const options = view.targets
@@ -92,18 +84,31 @@ const targetFields = (view: OAuthConsentView): string => {
       <button type="submit">Allow access</button>`;
 };
 
-/** The built-in consent screen: a credentials step, then a step to pick what the client gets access to. Replace it
- *  wholesale via `oauth.renderConsent` — the field names read back here are the contract, not the markup. */
+/** What a visitor who has not signed in is offered: the guest connection, and a way to go and sign in. */
+const anonymousFields = (view: OAuthConsentView): string => {
+  const signIn = view.signInUrl
+    ? `\n      <p class="note"><a href="${escapeHtml(view.signInUrl)}">Sign in to connect a space instead</a></p>`
+    : '';
+
+  return `${view.guest ? guestButton(view.guest) : ''}${signIn}`;
+};
+
+/**
+ * The grant screen — the ONE page this server renders, and it never asks who anybody is.
+ *
+ * It used to be two steps, the first of which took a username and a password. That is gone: signing in happens on
+ * the deployment's own sign-in screen (`OAuthConfig.signInUrl`), and this page is reached either already signed in
+ * — pick what to connect — or as a visitor who may only take the guest connection.
+ */
 export const renderConsentPage = (view: OAuthConsentView): string => {
   const productName = view.branding.productName ?? 'Plitzi';
   const logo = view.branding.logoUrl
     ? `<img class="logo" src="${escapeHtml(view.branding.logoUrl)}" alt="${escapeHtml(productName)}">`
     : '';
   const error = view.error ? `<p class="error">${escapeHtml(view.error)}</p>` : '';
-  const lede =
-    view.step === 'credentials'
-      ? `Sign in to connect ${escapeHtml(productName)}.`
-      : `Signed in as ${escapeHtml(view.user?.label ?? '')}. Choose what to grant access to.`;
+  const lede = view.user
+    ? `Signed in as ${escapeHtml(view.user.label)}. Choose what to grant access to.`
+    : `Connect ${escapeHtml(productName)} without an account, or sign in first.`;
 
   return `<!doctype html>
 <html lang="en">
@@ -123,7 +128,7 @@ export const renderConsentPage = (view: OAuthConsentView): string => {
     ${error}
     <form method="post" action="${escapeHtml(view.action)}">
       ${hiddenFields(view.hidden)}
-      ${view.step === 'credentials' ? credentialsFields(view) : targetFields(view)}
+      ${view.user ? targetFields(view) : anonymousFields(view)}
     </form>
   </main>
 </body>

@@ -3,7 +3,7 @@ import { AUTHORIZE_PATH } from './metadata';
 import { field, optionalField } from './params';
 import { randomId } from './pkce';
 import { dropPending, getClient, getPending, putCode, putPending } from './records';
-import { redirectWithCode, redirectWithError, sendErrorPage, sendHtml } from './respond';
+import { redirectToSignIn, redirectWithCode, redirectWithError, sendErrorPage, sendHtml } from './respond';
 
 import type { OAuthParams } from './params';
 import type {
@@ -12,6 +12,7 @@ import type {
   OAuthGrantTarget,
   OAuthGuestConfig,
   OAuthUser,
+  SSRRequest,
   SSRResponseHelpers
 } from '@plitzi/sdk-shared';
 
@@ -65,10 +66,34 @@ const hiddenFieldsFor = (request: AuthorizationRequest, pendingId?: string): Rec
   return hidden;
 };
 
-const renderConsent = async (config: OAuthConfig, res: SSRResponseHelpers, view: OAuthConsentView): Promise<void> => {
-  const html = await (config.renderConsent ?? renderConsentPage)(view);
+const renderConsent = (res: SSRResponseHelpers, view: OAuthConsentView): void => {
+  sendHtml(res, 200, renderConsentPage(view));
+};
 
-  sendHtml(res, 200, html);
+/**
+ * This request, as the address to come back to after signing in.
+ *
+ * Rebuilt from the params rather than read off `req.url` because the two can differ — a proxy may rewrite the
+ * path — and what has to survive the round trip is the QUERY, which is the authorization request itself.
+ */
+const authorizeUrl = (config: OAuthConfig, req: SSRRequest, params: OAuthParams): string => {
+  const base = config.issuer ?? `https://${req.headers.host ?? ''}`;
+  const url = new URL(AUTHORIZE_PATH, base);
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'string') {
+      url.searchParams.set(key, value);
+    }
+  }
+
+  return url.toString();
+};
+
+/** The sign-in address with this request as the destination — what the grant screen's "sign in" link points at. */
+const signInWithReturn = (config: OAuthConfig, req: SSRRequest, params: OAuthParams): string => {
+  const url = new URL(config.signInUrl);
+  url.searchParams.set('redirect', authorizeUrl(config, req, params));
+
+  return url.toString();
 };
 
 /** Validates the parts of an authorization request that decide WHERE a failure may be reported. Until the client
@@ -165,105 +190,19 @@ const completeGrant = async (
   redirectWithCode(res, request.redirectUri, code, request.state);
 };
 
-/** GET /authorize — the entry point a host opens in the user's browser. */
-export const handleAuthorizeStart = async (
+/**
+ * Show a signed-in account what it may grant, and end the flow if there is nothing.
+ *
+ * `pendingId` is minted here because the screen it renders is the one that POSTs back, and the record is what
+ * proves — on that POST — that identity was established before anything was granted.
+ */
+const askForTarget = async (
   config: OAuthConfig,
   res: SSRResponseHelpers,
-  params: OAuthParams
+  request: AuthorizationRequest,
+  user: OAuthUser,
+  error?: string
 ): Promise<void> => {
-  const request = await resolveRequest(config, res, params);
-  if (!request) {
-    return;
-  }
-
-  await renderConsent(config, res, {
-    step: 'credentials',
-    action: AUTHORIZE_PATH,
-    hidden: hiddenFieldsFor(request),
-    targets: [],
-    guest: config.guest ? guestView(config.guest) : undefined,
-    branding: config.branding ?? {}
-  });
-};
-
-/** POST /authorize — both steps of the form land here: the credentials submit, and the grant submit that carries
- *  the `pending` id proving the credentials step already passed. */
-export const handleAuthorizeSubmit = async (
-  config: OAuthConfig,
-  res: SSRResponseHelpers,
-  params: OAuthParams
-): Promise<void> => {
-  const request = await resolveRequest(config, res, params);
-  if (!request) {
-    return;
-  }
-
-  const pendingId = optionalField(params, 'pending');
-  if (pendingId) {
-    const pending = await getPending(config.adapters.store, pendingId);
-    // A pending record that expired or belongs to another client is not resumable; the user starts over.
-    if (!pending || pending.clientId !== request.clientId) {
-      redirectWithError(
-        res,
-        request.redirectUri,
-        'access_denied',
-        'The sign-in expired. Try connecting again.',
-        request.state
-      );
-
-      return;
-    }
-
-    const targets = await config.adapters.grantTargets(pending.user);
-    const chosen = targets.find(target => target.value === field(params, 'target'));
-    if (!chosen) {
-      await renderConsent(config, res, {
-        step: 'target',
-        action: AUTHORIZE_PATH,
-        hidden: hiddenFieldsFor(request, pendingId),
-        targets,
-        user: pending.user,
-        error: 'Choose what to grant access to.',
-        branding: config.branding ?? {}
-      });
-
-      return;
-    }
-
-    await dropPending(config.adapters.store, pendingId);
-    await completeGrant(config, res, request, pending.user, chosen);
-
-    return;
-  }
-
-  // The guest button. There is no identity to establish and nothing to choose, so the configured target is granted
-  // straight away — one screen, no password, and the connection can only ever do what that target allows.
-  const { guest } = config;
-  if (guest && optionalField(params, 'guest')) {
-    await completeGrant(config, res, request, guest.user ?? DEFAULT_GUEST_USER, guest.target);
-
-    return;
-  }
-
-  const user = await config.adapters.authenticate({
-    username: field(params, 'username'),
-    password: field(params, 'password')
-  });
-
-  if (!user) {
-    await renderConsent(config, res, {
-      step: 'credentials',
-      action: AUTHORIZE_PATH,
-      hidden: hiddenFieldsFor(request),
-      targets: [],
-      guest: guest ? guestView(guest) : undefined,
-      error: 'Those credentials did not match an account.',
-      branding: config.branding ?? {}
-    });
-
-    return;
-  }
-
   const targets = await config.adapters.grantTargets(user);
   if (targets.length === 0) {
     redirectWithError(
@@ -277,8 +216,8 @@ export const handleAuthorizeSubmit = async (
     return;
   }
 
-  const nextPendingId = randomId();
-  await putPending(config.adapters.store, nextPendingId, {
+  const pendingId = randomId();
+  await putPending(config.adapters.store, pendingId, {
     clientId: request.clientId,
     redirectUri: request.redirectUri,
     challenge: request.challenge,
@@ -287,12 +226,125 @@ export const handleAuthorizeSubmit = async (
     user
   });
 
-  await renderConsent(config, res, {
-    step: 'target',
+  renderConsent(res, {
     action: AUTHORIZE_PATH,
-    hidden: hiddenFieldsFor(request, nextPendingId),
+    hidden: hiddenFieldsFor(request, pendingId),
     targets,
     user,
+    error,
     branding: config.branding ?? {}
   });
+};
+
+/**
+ * GET /authorize — the entry point a host opens in the user's browser.
+ *
+ * This server does not ask for a password. It reads whoever the browser already is and, from there:
+ *
+ * - **signed in** — straight to the grant screen, which is the only page this module still renders. Choosing what
+ *   to connect is authorization, and authorization is this server's job; who somebody is is not.
+ * - **not signed in, guest allowed** — the grant screen with nothing to grant and the guest button on it. It is
+ *   deliberately NOT a redirect: a guest has no session and never will, so bouncing them to sign in would take
+ *   the option away from the only people it exists for.
+ * - **not signed in, no guest** — off to `signInUrl`, carrying this whole request as where to come back to.
+ */
+export const handleAuthorizeStart = async (
+  config: OAuthConfig,
+  res: SSRResponseHelpers,
+  params: OAuthParams,
+  req: SSRRequest
+): Promise<void> => {
+  const request = await resolveRequest(config, res, params);
+  if (!request) {
+    return;
+  }
+
+  const user = await config.adapters.identify(req);
+  if (user) {
+    await askForTarget(config, res, request, user);
+
+    return;
+  }
+
+  if (config.guest) {
+    renderConsent(res, {
+      action: AUTHORIZE_PATH,
+      hidden: hiddenFieldsFor(request),
+      targets: [],
+      guest: guestView(config.guest),
+      signInUrl: signInWithReturn(config, req, params),
+      branding: config.branding ?? {}
+    });
+
+    return;
+  }
+
+  redirectToSignIn(res, config.signInUrl, authorizeUrl(config, req, params));
+};
+
+/**
+ * POST /authorize — the grant screen coming back, either with a chosen target or with the guest button.
+ *
+ * There is no credentials branch any more: nothing here reads a username or a password, and the only way to reach
+ * this with an identity is to carry a `pending` id that was minted after {@link OAuthAdapters.identify} succeeded.
+ */
+export const handleAuthorizeSubmit = async (
+  config: OAuthConfig,
+  res: SSRResponseHelpers,
+  params: OAuthParams
+): Promise<void> => {
+  const request = await resolveRequest(config, res, params);
+  if (!request) {
+    return;
+  }
+
+  // The guest button. Nobody proved anything, so there is nothing to choose: the configured target is granted and
+  // the connection can only ever do what that target allows.
+  const { guest } = config;
+  if (guest && optionalField(params, 'guest')) {
+    await completeGrant(config, res, request, guest.user ?? DEFAULT_GUEST_USER, guest.target);
+
+    return;
+  }
+
+  const pendingId = optionalField(params, 'pending');
+  if (!pendingId) {
+    redirectWithError(
+      res,
+      request.redirectUri,
+      'invalid_request',
+      'The grant was submitted without a session.',
+      request.state
+    );
+
+    return;
+  }
+
+  const pending = await getPending(config.adapters.store, pendingId);
+  // A pending record that expired or belongs to another client is not resumable; the user starts over.
+  if (!pending || pending.clientId !== request.clientId) {
+    redirectWithError(
+      res,
+      request.redirectUri,
+      'access_denied',
+      'The sign-in expired. Try connecting again.',
+      request.state
+    );
+
+    return;
+  }
+
+  const targets = await config.adapters.grantTargets(pending.user);
+  const chosen = targets.find(target => target.value === field(params, 'target'));
+  if (!chosen) {
+    // The record is dropped and a fresh one minted by askForTarget: a pending id is one attempt, so a screen
+    // re-shown for a missing choice never leaves the previous one redeemable.
+    await dropPending(config.adapters.store, pendingId);
+    await askForTarget(config, res, request, pending.user, 'Choose what to grant access to.');
+
+    return;
+  }
+
+  await dropPending(config.adapters.store, pendingId);
+  await completeGrant(config, res, request, pending.user, chosen);
 };

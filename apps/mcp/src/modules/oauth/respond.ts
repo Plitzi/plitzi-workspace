@@ -67,6 +67,23 @@ export const redirectWithError = (
   res.end();
 };
 
+/**
+ * Send the browser somewhere else entirely, carrying where to come back to.
+ *
+ * Used for the hand-off to the sign-in screen. The destination is passed as `redirect` — the same param the auth
+ * space reads — and it is the WHOLE authorization request, so resuming is an ordinary navigation and this server
+ * keeps no session of its own for a flow that is one page long.
+ */
+export const redirectToSignIn = (res: SSRResponseHelpers, signInUrl: string, returnTo: string): void => {
+  const url = new URL(signInUrl);
+  url.searchParams.set('redirect', returnTo);
+
+  res.setStatus(302);
+  res.setHeader('Location', url.toString());
+  res.setHeader('Cache-Control', 'no-store, no-transform');
+  res.end();
+};
+
 export const redirectWithCode = (res: SSRResponseHelpers, redirectUri: string, code: string, state?: string): void => {
   const url = new URL(redirectUri);
   url.searchParams.set('code', code);

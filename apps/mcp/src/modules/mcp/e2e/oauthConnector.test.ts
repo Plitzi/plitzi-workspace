@@ -24,7 +24,11 @@ import type { OAuthAdapters, OAuthStore, SSRAdapters, SSRServer } from '@plitzi/
 // moves when a test moves it (see `advance`), so the expiry case is deterministic and instant.
 const ACCESS_TTL_SECONDS = 300;
 
-const CREDENTIALS = { username: 'ada@example.com', password: 'secret' };
+/** The session a browser carries back from the sign-in screen. This server checks no password of its own. */
+const SESSION_COOKIE = 'session=ada';
+
+/** Where the deployment keeps its sign-in screen — in the real one, the authored auth space. */
+const SIGN_IN_URL = 'https://auth.example.com/';
 
 const SPACE_TARGET = '42';
 
@@ -93,10 +97,9 @@ const delegatingStore: OAuthStore = {
 // A distinct bearer per mint, so a refreshed connection is provably running on a new one rather than the token it
 // started with.
 const oauthAdapters: OAuthAdapters = {
-  authenticate: ({ username, password }) =>
-    Promise.resolve(
-      username === CREDENTIALS.username && password === CREDENTIALS.password ? { id: '7', label: username } : undefined
-    ),
+  // Identity arrives already established, the way a browser back from the sign-in screen carries it.
+  identify: req =>
+    Promise.resolve((req.headers.cookie ?? '').includes(SESSION_COOKIE) ? { id: '7', label: 'ada' } : undefined),
   grantTargets: () =>
     Promise.resolve([
       { value: SPACE_TARGET, label: 'Marketing site' },
@@ -183,6 +186,7 @@ beforeAll(async () => {
     {
       oauth: {
         adapters: oauthAdapters,
+        signInUrl: SIGN_IN_URL,
         guest: { target: { value: WIDGETS_ONLY_TARGET, label: 'Widgets only' } }
       }
     }
@@ -218,9 +222,8 @@ const postForm = (fields: Record<string, string>): Promise<Response> =>
 /** The browser the host would open: the consent screen, the sign-in, the choice of what to grant, and the code the
  *  redirect hands back. */
 const signIn = async (authorizationUrl: URL, target = SPACE_TARGET): Promise<string> => {
-  const consent = await fetch(authorizationUrl);
-  const grant = await postForm({ ...hiddenValues(await consent.text()), ...CREDENTIALS });
-  const chosen = await postForm({ ...hiddenValues(await grant.text()), target });
+  const consent = await fetch(authorizationUrl, { headers: { cookie: SESSION_COOKIE } });
+  const chosen = await postForm({ ...hiddenValues(await consent.text()), target });
   const redirect = new URL(chosen.headers.get('location') ?? '');
   const code = redirect.searchParams.get('code');
   if (!code) {

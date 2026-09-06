@@ -97,9 +97,22 @@ const delegatingStore: OAuthStore = {
 // be handed out without an identity.
 const GUEST_TARGET = { value: 'widgets-only', label: 'Widgets only', description: 'No access to any space.' };
 
+/**
+ * The session this server reads instead of asking for a password.
+ *
+ * A cookie, because that is what a browser coming back from the sign-in screen carries — the point of the change
+ * being tested is that identity arrives already established rather than being checked here.
+ */
+const SESSION_COOKIE = 'session=ada';
+
+/** Where this deployment keeps its sign-in screen — in the real one, the authored auth space. */
+const SIGN_IN_URL = 'https://auth.example.com/';
+
 const oauthAdapters = (): OAuthAdapters => ({
-  authenticate: ({ username, password }) =>
-    Promise.resolve(username === 'ada@example.com' && password === 'secret' ? { id: '7', label: username } : undefined),
+  identify: req =>
+    Promise.resolve(
+      (req.headers.cookie ?? '').includes('session=ada') ? { id: '7', label: 'ada@example.com' } : undefined
+    ),
   grantTargets: () =>
     Promise.resolve([
       { value: '42', label: 'Marketing site' },
@@ -132,7 +145,7 @@ beforeAll(async () => {
   BASE = `http://127.0.0.1:${port}`;
   server = createServer(
     { httpVersion: 1, adapters },
-    { oauth: { adapters: oauthAdapters(), guest: { target: GUEST_TARGET } } }
+    { oauth: { adapters: oauthAdapters(), signInUrl: SIGN_IN_URL, guest: { target: GUEST_TARGET } } }
   );
   server.listen(port, '127.0.0.1');
 });
@@ -187,13 +200,10 @@ const postForm = (fields: Record<string, string>): Promise<Response> =>
     redirect: 'manual'
   });
 
-/** Register → consent → grant, returning the code the host would receive. */
+/** Register → grant screen → grant, returning the code the host would receive. */
 const grantCode = async (clientId: string, challenge: string, target = '42'): Promise<URL> => {
-  const consent = await fetch(authorizeUrl(clientId, challenge));
-  const credentials = hiddenValues(await consent.text());
-
-  const grant = await postForm({ ...credentials, username: 'ada@example.com', password: 'secret' });
-  const chosen = hiddenValues(await grant.text());
+  const consent = await fetch(authorizeUrl(clientId, challenge), { headers: { cookie: SESSION_COOKIE } });
+  const chosen = hiddenValues(await consent.text());
 
   const done = await postForm({ ...chosen, target });
 
@@ -338,19 +348,17 @@ describe('MCP OAuth authorization', () => {
     expect(granted.access_token).not.toContain('token-42');
   });
 
-  it('re-shows the form on a wrong password instead of failing the flow', async () => {
+  it('asks a signed-in account what to grant, and never for a password', async () => {
     const clientId = await registerClient();
-    const consent = await fetch(authorizeUrl(clientId, challengeFor(verifier())));
-    const response = await postForm({
-      ...hiddenValues(await consent.text()),
-      username: 'ada@example.com',
-      password: 'wrong'
+    const consent = await fetch(authorizeUrl(clientId, challengeFor(verifier())), {
+      headers: { cookie: SESSION_COOKIE }
     });
-    const html = await response.text();
+    const html = await consent.text();
 
-    expect(response.status).toBe(200);
-    expect(html).toContain('did not match an account');
-    expect(html).toContain('name="password"');
+    expect(consent.status).toBe(200);
+    expect(html).toContain('Signed in as ada@example.com');
+    expect(html).toContain('name="target"');
+    expect(html).not.toContain('name="password"');
   });
 
   it('will not start a flow for a client it never registered', async () => {
@@ -493,7 +501,10 @@ describe('MCP OAuth without a guest connection', () => {
   beforeAll(async () => {
     const port = await freePort();
     strictBase = `http://127.0.0.1:${port}`;
-    strictServer = createServer({ httpVersion: 1, adapters }, { oauth: { adapters: oauthAdapters() } });
+    strictServer = createServer(
+      { httpVersion: 1, adapters },
+      { oauth: { adapters: oauthAdapters(), signInUrl: SIGN_IN_URL } }
+    );
     strictServer.listen(port, '127.0.0.1');
   });
 
@@ -503,36 +514,61 @@ describe('MCP OAuth without a guest connection', () => {
     store = memoryStore();
   });
 
-  it('offers no guest button, and refuses a request that submits one anyway', async () => {
+  const strictAuthorize = async (): Promise<{ clientId: string; params: URLSearchParams }> => {
     const response = await fetch(`${strictBase}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ client_name: 'Claude', redirect_uris: [REDIRECT_URI] })
     });
     const { client_id: clientId } = (await response.json()) as { client_id: string };
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: clientId,
-      redirect_uri: REDIRECT_URI,
-      code_challenge: challengeFor(verifier()),
-      code_challenge_method: 'S256'
-    });
-    const consent = await fetch(`${strictBase}/authorize?${params.toString()}`);
-    const html = await consent.text();
 
-    expect(html).not.toContain('name="guest"');
+    return {
+      clientId,
+      params: new URLSearchParams({
+        response_type: 'code',
+        client_id: clientId,
+        redirect_uri: REDIRECT_URI,
+        code_challenge: challengeFor(verifier()),
+        code_challenge_method: 'S256'
+      })
+    };
+  };
 
+  /**
+   * The change this whole module exists to make: this server never sees a password. With no guest connection to
+   * offer, a visitor it cannot identify has nothing to do here at all, so it hands them to the deployment's own
+   * sign-in screen and takes them back afterwards.
+   */
+  it('sends a visitor with no session to the sign-in screen, carrying the request back', async () => {
+    const { clientId, params } = await strictAuthorize();
+    const response = await fetch(`${strictBase}/authorize?${params.toString()}`, { redirect: 'manual' });
+    const location = new URL(response.headers.get('location') ?? '');
+
+    expect(response.status).toBe(302);
+    expect(`${location.origin}${location.pathname}`).toBe(SIGN_IN_URL);
+
+    // Not merely "a redirect with something on it": what it carries has to be the authorization request itself,
+    // or signing in lands somebody back on a flow that has lost its client and its PKCE challenge.
+    const back = new URL(location.searchParams.get('redirect') ?? '');
+    expect(back.pathname).toBe('/authorize');
+    expect(back.searchParams.get('client_id')).toBe(clientId);
+    expect(back.searchParams.get('code_challenge')).toBeTruthy();
+  });
+
+  it('refuses a guest grant submitted anyway, since none is on offer', async () => {
+    const { params } = await strictAuthorize();
     const forced = await fetch(`${strictBase}/authorize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ ...hiddenValues(html), guest: '1' }).toString(),
+      body: new URLSearchParams({ ...Object.fromEntries(params), guest: '1' }).toString(),
       redirect: 'manual'
     });
 
-    // Back to the sign-in form with an error, not a redirect carrying a code.
-    expect(forced.status).toBe(200);
-    expect(forced.headers.get('location')).toBeNull();
-    expect(await forced.text()).toContain('did not match an account');
+    // Refused back to the CLIENT as a protocol error, never with a code: a deployment that configured no guest
+    // connection has no target to grant, and inventing one is the whole thing this must not do.
+    expect(forced.status).toBe(302);
+    expect(new URL(forced.headers.get('location') ?? '').searchParams.get('code')).toBeNull();
+    expect(new URL(forced.headers.get('location') ?? '').searchParams.get('error')).toBeTruthy();
   });
 });
 
@@ -625,7 +661,7 @@ describe('MCP endpoint under OAuth', () => {
       ctx: {}
     } as unknown as SSRRequest;
 
-    const answered = await createOAuthGuardStage({ adapters: oauthAdapters() })({
+    const answered = await createOAuthGuardStage({ adapters: oauthAdapters(), signInUrl: SIGN_IN_URL })({
       req,
       res: unusedResponse,
       config: { adapters }
@@ -645,7 +681,7 @@ describe('MCP endpoint under OAuth', () => {
         config: { adapters }
       } as unknown as BaseContext;
 
-      expect(await createOAuthGuardStage({ adapters: oauth })(ctx)).toBe(true);
+      expect(await createOAuthGuardStage({ adapters: oauth, signInUrl: SIGN_IN_URL })(ctx)).toBe(true);
 
       return ctx.operation;
     };
@@ -688,7 +724,7 @@ describe('MCP endpoint under OAuth', () => {
       ctx: {}
     } as unknown as SSRRequest;
 
-    const answered = await createOAuthGuardStage({ adapters: oauthAdapters() })({
+    const answered = await createOAuthGuardStage({ adapters: oauthAdapters(), signInUrl: SIGN_IN_URL })({
       req,
       res: unusedResponse,
       config: { adapters }
