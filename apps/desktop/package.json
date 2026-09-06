@@ -5,7 +5,7 @@
   "license": "AGPL-3.0",
   "description": "The Plitzi desktop client: sign in, browse your spaces and open one, in a window of its own.",
   "type": "module",
-  "main": "dist/electron/main.js",
+  "main": "dist/electron/main.cjs",
   "repository": {
     "type": "https",
     "url": "https://github.com/plitzi/plitzi-workspace.git"
@@ -27,7 +27,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^26.2.0",
-    "@vitejs/plugin-react": "^4.0.1",
+    "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^9.2.1",
     "electron": "^40.1.1",
     "electron-builder": "^26.0.12",
@@ -45,14 +45,15 @@
   },
   "scripts": {
     "start": "concurrently -k -n vite,electron \"vite dev --mode development\" \"yarn electron:dev\"",
-    "electron:dev": "yarn build:electron --mode development && electron dist/electron/main.js",
+    "electron:dev": "yarn build:electron:dev && electron dist/electron/main.cjs",
+    "build:electron:dev": "vite build --config vite.preload.config.ts --mode development && vite build --config vite.electron.config.ts --mode development",
     "build:electron": "vite build --config vite.preload.config.ts && vite build --config vite.electron.config.ts",
     "build:renderer": "vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "TIMING=1 eslint ./src ./electron",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
-    "build:dev": "yarn build:renderer --mode development && yarn build:electron --mode development",
+    "build:dev": "yarn build:renderer --mode development && yarn build:electron:dev",
     "build:prod": "yarn build:renderer && yarn build:electron",
     "package": "yarn build:prod && electron-builder --publish never"
   },

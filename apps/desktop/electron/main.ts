@@ -1,15 +1,23 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { app, BrowserWindow, ipcMain, Menu, protocol, safeStorage, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, protocol, safeStorage, session, shell } from 'electron';
 
+import { contentSecurityPolicy } from './contentSecurityPolicy';
 import { APP_ORIGIN, APP_SCHEME, STORE_CHANNEL } from './contract';
 import { createSecretStore } from './secretStore';
 
 import type { StoreRequest } from './contract';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
+/**
+ * Where this file was written to, which is what every path below is relative to.
+ *
+ * `__dirname` and not `import.meta.url`: this is bundled as CommonJS (see `vite.electron.config.ts`), where the
+ * import-meta form does not exist. Declared because the package is `"type": "module"`, so TypeScript does not
+ * offer it by default.
+ */
+declare const __dirname: string;
+const dirname = __dirname;
 const isDev = !app.isPackaged;
 /** Where the renderer lives while developing: Vite serves it, so it reloads and keeps its state. */
 const devServerUrl = process.env.PLITZI_DESKTOP_DEV_SERVER ?? 'http://localhost:5180';
@@ -145,6 +153,17 @@ void app.whenReady().then(async () => {
     protocol.handle(APP_SCHEME, serveRenderer);
   }
 
+  // Set on the response rather than in a `<meta>` tag: the tag lives in the document the policy is meant to
+  // constrain, so anything that can write the document can drop it.
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [contentSecurityPolicy(isDev)]
+      }
+    });
+  });
+
   /**
    * The session, kept where the operating system keeps secrets.
    *
@@ -187,6 +206,3 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
-
-// A packaged app resolves its own files; nothing here should ever be asked for a URL outside the two it serves.
-export const rendererEntry = pathToFileURL(path.join(rendererDir, 'index.html')).href;

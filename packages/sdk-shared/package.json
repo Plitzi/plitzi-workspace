@@ -221,6 +221,10 @@
       "types": "./dist/devTools/index.d.ts",
       "import": "./dist/devTools/index.mjs"
     },
+    "./devTools/interactionLog": {
+      "types": "./dist/devTools/interactionLog.d.ts",
+      "import": "./dist/devTools/interactionLog.mjs"
+    },
     "./devTools/utils/PlitziConsole": {
       "types": "./dist/devTools/utils/PlitziConsole.d.ts",
       "import": "./dist/devTools/utils/PlitziConsole.mjs"

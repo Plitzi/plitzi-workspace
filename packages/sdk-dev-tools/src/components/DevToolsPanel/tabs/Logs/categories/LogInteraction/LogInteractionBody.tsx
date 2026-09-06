@@ -1,12 +1,12 @@
 import BodyContent from './BodyContent';
 import BodyHeader from './BodyHeader';
 
-import type { LogInteraction } from '@plitzi/sdk-shared';
+import type { InteractionFlowParams } from '@plitzi/sdk-shared';
 
 export type LogInteractionBodyProps = {
   className?: string;
-  node: LogInteraction['params']['node'];
-  nodes: LogInteraction['params']['nodes'];
+  node: InteractionFlowParams['node'];
+  nodes: InteractionFlowParams['nodes'];
   startTime: number;
   endTime: number;
   duration?: string;

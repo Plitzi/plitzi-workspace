@@ -55,6 +55,14 @@ export default defineConfig(({ mode }) => ({
     sourcemap: mode === 'development',
     target: 'chrome130'
   },
+  /**
+   * 6.1, not the 6.0.5 the rest of the workspace is on.
+   *
+   * On Vite 8, 6.0.5 still sets the deprecated `esbuild` option and Rolldown answers it with
+   * `Invalid input options … received "jsx"` once per environment — two warnings on every start, for a setting
+   * nothing here asked for. It also ran Babel over the SDK's built bundle and deoptimised on its size. The oxc
+   * fork that used to be the answer is deprecated: its changes landed in this package instead.
+   */
   plugins: [react()],
   test: {
     environment: 'jsdom',

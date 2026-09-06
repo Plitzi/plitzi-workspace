@@ -14,11 +14,16 @@ const baseUrl = new URL('.', import.meta.url);
 const resolve = (...segments: string[]) => path.resolve(baseUrl.pathname, ...segments);
 
 /**
- * The preload, as a classic script.
+ * The preload, as one self-contained CommonJS file.
  *
- * A sandboxed preload is not loaded as a module, so an ES build fails at load time — and that failure is a window
- * that renders perfectly with no bridge on it, which reads as "the app forgot my session" rather than as a build
- * that produced the wrong format. Hence `.cjs`, and hence its own config: one Rollup output emits one format.
+ * **Both halves of that matter.** A sandboxed preload — and this one is, see `webPreferences` in `main.ts` — is
+ * loaded as a classic script, so an ES build fails at load; and its `require` is a polyfill over four Electron
+ * modules and nothing else, so it cannot load a sibling file either. Hence its own build rather than a second
+ * entry alongside the main process: two entries in one build hoist what they share — `./contract`, here — into a
+ * third chunk that both then `require` by relative path, which this file is the one place that cannot.
+ *
+ * Either failure looks the same from the outside, and it does not look like a build: the window renders
+ * perfectly with no bridge on it, which reads as "the app forgot my session".
  *
  * This build runs first and owns clearing the directory; the main-process build then adds to it.
  */

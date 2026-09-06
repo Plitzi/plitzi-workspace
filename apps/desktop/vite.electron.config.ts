@@ -12,21 +12,28 @@ const resolve = (...segments: string[]) => path.resolve(baseUrl.pathname, ...seg
 export const external = ['electron', ...builtinModules, ...builtinModules.map(name => `node:${name}`)];
 
 /**
- * The main process.
+ * The main process, as CommonJS.
  *
- * Built apart from the renderer because almost nothing about the two is the same — a different platform, a
- * different module format, a different idea of what "external" means — and apart from the preload because a
- * sandboxed preload has to be a classic script, which is a second format one Rollup output cannot also emit.
+ * **The format is not a style choice.** Electron's own `electron` module is CommonJS, so an ES main process that
+ * writes `import { BrowserWindow } from 'electron'` dies at load with "does not provide an export named
+ * 'BrowserWindow'" — the window never opens, and the only place that says so is the terminal Electron was
+ * started from. `.cjs` and not `.js` because this package is `"type": "module"`, which would make a bare `.js`
+ * an ES module again.
+ *
+ * Built apart from the preload, and one entry per build is the whole point: the two share `./contract`, and a
+ * single build with both entries hoists that shared module into a third file each of them then `require`s by
+ * relative path. This process may do that; a sandboxed preload may not. See `vite.preload.config.ts`.
+ *
+ * The preload is written into the same directory by its own build, which runs first and owns clearing it.
  */
 export default defineConfig(({ mode }) => ({
   build: {
     outDir: resolve('dist/electron'),
-    // The preload is written into the same directory by its own build, which runs first.
     emptyOutDir: false,
     sourcemap: mode === 'development',
     minify: false,
     target: 'node22',
-    lib: { entry: resolve('electron/main.ts'), formats: ['es'], fileName: () => 'main.js' },
+    lib: { entry: resolve('electron/main.ts'), formats: ['cjs'], fileName: () => 'main.cjs' },
     rollupOptions: { external }
   }
 }));
