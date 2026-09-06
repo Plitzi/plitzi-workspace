@@ -6,7 +6,10 @@ import { useStoreById } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
+import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { isAbsoluteUrl } from '@plitzi/sdk-shared/navigation';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import refreshRsc from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
@@ -25,12 +28,32 @@ const PREFETCH_TIMEOUT_MS = 1500;
 
 const wait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
+/**
+ * The page somebody actually asked for, absolute, so an off-origin sign-in can send them back to it.
+ *
+ * `href` is there in a browser and usually on the server's own location object too; the pieces are composed only
+ * when it is not, because a redirect back to a URL missing its query string loses whatever the deep link carried.
+ */
+const currentUrl = (location: Location): string => {
+  if (location.href) {
+    return location.href;
+  }
+
+  const protocol = location.protocol || 'https:';
+
+  return `${protocol}//${location.host || location.hostname}${location.pathname}${location.search}`;
+};
+
 const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: NavigationProviderProps) => {
   const { server } = use(NetworkContext);
   // The root store, for the prefetch below: `refreshRsc` writes what it fetched where every element reads it.
   const store = useStoreById<CommonState>();
-  const { renderMode, previewMode } = useRenderSettings();
-  const [[pageFolders, pageDefinitions]] = useSdkStore(['schema.pageFolders', 'pageDefinitions']);
+  const { renderMode, previewMode, environment } = useRenderSettings();
+  const [[pageFolders, pageDefinitions, schemaVariables]] = useSdkStore([
+    'schema.pageFolders',
+    'pageDefinitions',
+    'schema.variables'
+  ]);
   // Written by reference during the SSR render and read back by the server to shape the response; undefined in the
   // browser, where the page has already been sent.
   const ssrResult = server.ssr?.renderResult;
@@ -174,6 +197,50 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   }
 
   if (action.type === 'redirect') {
+    /**
+     * Off this origin entirely — a space whose sign-in lives somewhere else, which is what one shared sign-in
+     * screen for a whole platform looks like from in here.
+     *
+     * It carries `redirect` so wherever it lands can send the visitor back to the page they actually asked for;
+     * without it a deep link into a members area becomes "you are now signed in, on the home page".
+     *
+     * `<Navigate>` cannot do this: it is a ROUTER instruction, so it treats an absolute URL as a path and lands
+     * on `/https:/auth.example.com`. A full-page assignment is the only thing that leaves this origin.
+     */
+    /**
+     * Resolved against the space's variables FIRST, because a page attribute is not.
+     *
+     * `unauthorizedPageRedirect` is stored raw — nothing interpolates page attributes the way it interpolates a
+     * step's params — so a space that writes `{{authUrl}}/` there redirected to the literal `/{{authUrl}}`. It is
+     * written as a variable rather than a host precisely because the sign-in screen is at a different address in
+     * every environment, which is the whole reason this field can name another origin at all.
+     */
+    /**
+     * Resolved from `schema.variables`, NOT from the published `runtime.sources.variables`.
+     *
+     * The provider that publishes those is a CHILD of this one, and on this branch children never render at all —
+     * deciding to redirect is deciding not to render the page. Reading the published map here therefore always saw
+     * an empty object, and the redirect went to the literal `{{authUrl}}/`.
+     */
+    const variables = resolveVariables(schemaVariables, { queryParams, routeParams, hostname, environment });
+    const resolved = action.path ? String(processTwig(action.path, { variables }, false, true)) : '';
+    if (resolved && isAbsoluteUrl(resolved)) {
+      const target = new URL(resolved);
+      if (!target.searchParams.has('redirect')) {
+        target.searchParams.set('redirect', currentUrl(location));
+      }
+
+      if (ssrResult) {
+        ssrResult.redirect = target.toString();
+
+        return null;
+      }
+
+      window.location.assign(target.toString());
+
+      return null;
+    }
+
     if (ssrResult) {
       ssrResult.redirect = action.path ?? '';
 

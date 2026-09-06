@@ -1,13 +1,13 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useCallback, use, useMemo } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
+import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
-import type { SchemaVariable, SourceField } from '@plitzi/sdk-shared';
+import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type GlobalSourcesProps = {
@@ -26,23 +26,12 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
     'navigation.hostname',
     'navigation.currentPageId'
   ]);
-  const variablesValue = useMemo<Record<string, unknown>>(() => {
-    if (!(variables as SchemaVariable[] | undefined)) {
-      return {};
-    }
-
-    return variables.reduce<Record<string, unknown>>((acum, variable) => {
-      const { name, value, subValues } = variable;
-      if (!Array.isArray(subValues) || subValues.length === 0) {
-        return { ...acum, [name]: value };
-      }
-
-      const whenData = { routeParams, queryParams, hostname, environment };
-      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
-
-      return { ...acum, [name]: subValue ? subValue.value : value };
-    }, {});
-  }, [environment, hostname, queryParams, routeParams, variables]);
+  // Shared with the router, which needs the same answer BEFORE this provider exists: a page that redirects an
+  // unauthenticated visitor off-site decides not to render, so nothing below here ever runs to publish them.
+  const variablesValue = useMemo<Record<string, unknown>>(
+    () => resolveVariables(variables, { routeParams, queryParams, hostname, environment }),
+    [environment, hostname, queryParams, routeParams, variables]
+  );
   const variablesFields = useCallback(
     () => getPathsFromObeject(variablesValue).map(path => ({ path, name: `variables.${path}` })),
     [variablesValue]

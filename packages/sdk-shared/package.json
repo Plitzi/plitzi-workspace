@@ -161,6 +161,10 @@
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
     },
+    "./dataSource/resolveVariables": {
+      "types": "./dist/dataSource/resolveVariables.d.ts",
+      "import": "./dist/dataSource/resolveVariables.mjs"
+    },
     "./dataSource/utility": {
       "types": "./dist/dataSource/utility/index.d.ts",
       "import": "./dist/dataSource/utility/index.mjs"
