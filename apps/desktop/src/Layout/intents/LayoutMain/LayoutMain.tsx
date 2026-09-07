@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-import LayoutSidebar from './LayoutSidebar';
+import DesktopShell from '@pcomponents/DesktopShell';
 
 import type { ReactNode } from 'react';
 
@@ -17,17 +17,17 @@ export type LayoutMainProps = {
  * a row it does not get — so the window is shaped the way a desktop application is, with one persistent rail and
  * the content filling the rest, rather than the way a website is.
  *
- * What the header used to hold is now where it belongs: which space is open is said by the sidebar highlighting it
- * and by the window's own title, and whether the list is current — which matters, because this app can be open on
- * a machine that is offline and a stale list looks exactly like an empty account — is said next to the list itself.
+ * The rail itself is not written here any more: it is a Plitzi space, authored in `DesktopShell` and rendered
+ * offline. What is left is the shape of the window, which is the one thing a space cannot describe — a space has
+ * no slot to put somebody else's screens in.
  *
  * `h-full` rather than `h-screen`: the window is the viewport here, and `h-screen` measures the screen — on a
- * window shorter than the display that is a page taller than what can be seen, with the sidebar's own footer
- * below the bottom edge.
+ * window shorter than the display that is a page taller than what can be seen, with the rail's own footer below
+ * the bottom edge.
  */
 const LayoutMain = ({ children, className, pageClassName }: LayoutMainProps) => (
   <div className={clsx('flex h-full grow overflow-hidden bg-zinc-50 dark:bg-zinc-950', className)}>
-    <LayoutSidebar />
+    <DesktopShell />
     <main className={clsx('flex min-h-0 min-w-0 grow basis-0 flex-col overflow-y-auto', pageClassName)}>
       {children}
     </main>

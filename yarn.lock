@@ -4137,6 +4137,7 @@ __metadata:
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.20"
+    "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.3.3"
     "@testing-library/react": "npm:^16.3.0"
