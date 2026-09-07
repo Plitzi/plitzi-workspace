@@ -6,12 +6,10 @@ import useAuth from '../auth/useAuth';
 
 import type { Space, SpaceRow } from './space';
 import type { SpacesContextValue, SpacesState } from './SpacesContext';
-import type { ApiClient } from '@pmodules/network';
 import type { ReactNode } from 'react';
 
 export type SpacesProviderProps = {
   children?: ReactNode;
-  api: ApiClient;
 };
 
 const EMPTY: SpacesState = { owned: [], guest: [], loading: true, error: undefined };
@@ -20,27 +18,35 @@ const EMPTY: SpacesState = { owned: [], guest: [], loading: true, error: undefin
 const reasonOf = (failure: { status: number; error?: string }): string =>
   failure.status === 0 ? 'offline' : (failure.error ?? 'Could not load your spaces');
 
-const SpacesProvider = ({ children, api }: SpacesProviderProps) => {
-  const { isAuthenticated, ready, getAccessToken } = useAuth();
+/**
+ * No `api` prop any more, and no token either.
+ *
+ * Both are the auth context's now: a caller holding a raw client and a raw token is a caller deciding what a 401
+ * means, and this one decided "show an error and keep the session" — so a session the server had stopped accepting
+ * left the window loading forever with no way back to the sign-in screen.
+ */
+const SpacesProvider = ({ children }: SpacesProviderProps) => {
+  const { isAuthenticated, ready, request } = useAuth();
   const [state, setState] = useState<SpacesState>(EMPTY);
   const [activeSpace, setActiveSpace] = useState<Space | undefined>(undefined);
 
   const load = useCallback(async () => {
-    const token = await getAccessToken();
-    if (!token) {
+    setState(previous => ({ ...previous, loading: true, error: undefined }));
+
+    // Both scopes at once: they are two reads of the same table and the sidebar shows them together, so serialising
+    // them would only make the list appear in two steps. Two 401s therefore arrive together, and share one renewal.
+    const [owned, guest] = await Promise.all([
+      request<SpaceRow[]>({ path: '/spaces', query: { scope: 'owned' } }),
+      request<SpaceRow[]>({ path: '/spaces', query: { scope: 'guest' } })
+    ]);
+
+    // The session ended while this ran — `request` has already forgotten it, and the effect below will clear the
+    // list when that lands. Reporting a failure as well would flash an error over the sign-in screen.
+    if (owned.status === 401 || guest.status === 401) {
       setState({ owned: [], guest: [], loading: false, error: undefined });
 
       return;
     }
-
-    setState(previous => ({ ...previous, loading: true, error: undefined }));
-
-    // Both scopes at once: they are two reads of the same table and the sidebar shows them together, so serialising
-    // them would only make the list appear in two steps.
-    const [owned, guest] = await Promise.all([
-      api.request<SpaceRow[]>({ path: '/spaces', query: { scope: 'owned' }, token }),
-      api.request<SpaceRow[]>({ path: '/spaces', query: { scope: 'guest' }, token })
-    ]);
 
     if (!owned.ok) {
       setState({ owned: [], guest: [], loading: false, error: reasonOf(owned) });
@@ -60,7 +66,7 @@ const SpacesProvider = ({ children, api }: SpacesProviderProps) => {
       loading: false,
       error: undefined
     });
-  }, [api, getAccessToken]);
+  }, [request]);
 
   useEffect(() => {
     if (!ready) {
@@ -93,16 +99,11 @@ const SpacesProvider = ({ children, api }: SpacesProviderProps) => {
    */
   const getWebKey = useCallback(
     async (spaceId: number): Promise<string | undefined> => {
-      const token = await getAccessToken();
-      if (!token) {
-        return undefined;
-      }
-
-      const result = await api.request<string>({ path: `/spaces/${spaceId}/token`, token });
+      const result = await request<string>({ path: `/spaces/${spaceId}/token` });
 
       return result.ok ? result.data : undefined;
     },
-    [api, getAccessToken]
+    [request]
   );
 
   const value = useMemo<SpacesContextValue>(

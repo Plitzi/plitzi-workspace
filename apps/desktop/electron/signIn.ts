@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 
-import { shell } from 'electron';
+import { net, shell } from 'electron';
 
 import type { AddressInfo } from 'node:net';
 
@@ -91,19 +91,51 @@ const awaitCode = (
     });
   });
 
-const post = async <T>(url: string, body: Record<string, string>): Promise<T | undefined> => {
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(body).toString()
-    });
+/** A call that either answered, or has something specific to say about why it did not. */
+type Answer<T> = { ok: true; data: T } | { ok: false; error: string };
 
-    return (await response.json()) as T;
+/**
+ * Why a request never reached anyone, in words somebody can act on.
+ *
+ * `fetch` reports every transport failure as the same "fetch failed"; the useful part is on `cause`. A certificate
+ * this machine will not verify and a server that is not running are the two that actually happen, and telling a
+ * person to check one when it is the other is worse than saying nothing.
+ */
+const unreachable = (url: string, error: unknown): string => {
+  const cause = (error as { cause?: { code?: string; message?: string } }).cause;
+  const detail = cause?.code ?? cause?.message ?? (error instanceof Error ? error.message : String(error));
+
+  return `Could not reach ${new URL(url).origin} (${detail}).`;
+};
+
+/**
+ * Every call this process makes, over ELECTRON's network stack rather than Node's.
+ *
+ * `net.fetch` is Chromium's, and the difference is the whole reason sign-in did not work against a development
+ * server: Node's `fetch` carries its own bundled certificate authorities and knows nothing about the machine's,
+ * so a locally-issued certificate is refused with `UNABLE_TO_VERIFY_LEAF_SIGNATURE` — while the window beside it,
+ * being Chromium, had been talking to the same host happily all along. It is the right stack in production too:
+ * it follows the system proxy and its PAC script, and a corporate CA installed on the machine simply works.
+ */
+const post = async <T>(url: string, body: string, contentType: string): Promise<Answer<T>> => {
+  let response: Response;
+  try {
+    response = await net.fetch(url, { method: 'POST', headers: { 'Content-Type': contentType }, body });
+  } catch (error) {
+    return { ok: false, error: unreachable(url, error) };
+  }
+
+  try {
+    return { ok: true, data: (await response.json()) as T };
   } catch {
-    return undefined;
+    // A gateway in front of the API answers in HTML, and reading that as JSON throws — which, uncaught, looks
+    // exactly like the server refusing the request.
+    return { ok: false, error: `${new URL(url).pathname} answered ${response.status}, and not with JSON.` };
   }
 };
+
+const form = <T>(url: string, body: Record<string, string>): Promise<Answer<T>> =>
+  post<T>(url, new URLSearchParams(body).toString(), 'application/x-www-form-urlencoded');
 
 /**
  * This application, registered with the authorization server.
@@ -112,19 +144,25 @@ const post = async <T>(url: string, body: Record<string, string>): Promise<T | u
  * declares, and it is a different port every time — chosen by the OS when the flow starts, because a fixed one is
  * a port that may already be taken.
  */
-const register = async (apiUrl: string, redirectUri: string): Promise<string | undefined> => {
-  try {
-    const response = await fetch(`${apiUrl}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_name: 'Plitzi Desktop', redirect_uris: [redirectUri] })
-    });
-    const registration = (await response.json()) as ClientRegistration;
+const register = async (apiUrl: string, redirectUri: string): Promise<Answer<string>> => {
+  const answer = await post<ClientRegistration & { error_description?: string; error?: string }>(
+    `${apiUrl}/register`,
+    JSON.stringify({ client_name: 'Plitzi Desktop', redirect_uris: [redirectUri] }),
+    'application/json'
+  );
 
-    return registration.client_id;
-  } catch {
-    return undefined;
+  if (!answer.ok) {
+    return answer;
   }
+
+  if (!answer.data.client_id) {
+    return {
+      ok: false,
+      error: answer.data.error_description ?? answer.data.error ?? 'The server refused to register this app.'
+    };
+  }
+
+  return { ok: true, data: answer.data.client_id };
 };
 
 export const signInThroughBrowser = async (apiUrl: string): Promise<SignInResult> => {
@@ -141,10 +179,15 @@ export const signInThroughBrowser = async (apiUrl: string): Promise<SignInResult
     });
 
   try {
-    const clientId = await register(apiUrl, redirectUri);
-    if (!clientId) {
-      return { ok: false, reason: 'refused', error: 'This server would not register the app.' };
+    const registered = await register(apiUrl, redirectUri);
+    // Reported as it came back rather than as one sentence for every cause: "this server would not register the
+    // app" was said just as readily when the server was never reached at all, which sends somebody looking at the
+    // wrong end of the problem.
+    if (!registered.ok) {
+      return { ok: false, reason: 'refused', error: registered.error };
     }
+
+    const clientId = registered.data;
 
     const authorize = new URL(`${apiUrl}/authorize`);
     authorize.search = new URLSearchParams({
@@ -166,7 +209,7 @@ export const signInThroughBrowser = async (apiUrl: string): Promise<SignInResult
       return { ok: false, reason: 'timeout' };
     }
 
-    const token = await post<TokenResponse>(`${apiUrl}/token`, {
+    const exchanged = await form<TokenResponse>(`${apiUrl}/token`, {
       grant_type: 'authorization_code',
       code: returned,
       redirect_uri: redirectUri,
@@ -174,8 +217,13 @@ export const signInThroughBrowser = async (apiUrl: string): Promise<SignInResult
       client_id: clientId
     });
 
-    if (!token?.access_token) {
-      return { ok: false, reason: 'refused', error: token?.error_description ?? token?.error };
+    if (!exchanged.ok) {
+      return { ok: false, reason: 'refused', error: exchanged.error };
+    }
+
+    const token = exchanged.data;
+    if (!token.access_token) {
+      return { ok: false, reason: 'refused', error: token.error_description ?? token.error };
     }
 
     return {
@@ -196,14 +244,24 @@ export const renewThroughToken = async (
   clientId: string,
   refreshToken: string
 ): Promise<SignInResult> => {
-  const token = await post<TokenResponse>(`${apiUrl}/token`, {
+  const renewed = await form<TokenResponse>(`${apiUrl}/token`, {
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
     client_id: clientId
   });
 
-  if (!token?.access_token) {
-    return { ok: false, reason: 'refused', error: token?.error_description ?? token?.error };
+  /**
+   * A server that could not be reached is NOT a refusal, and the difference decides whether somebody stays signed
+   * in: the renderer ends the session on `refused` and leaves it alone on anything else. A closed laptop lid must
+   * not sign anybody out.
+   */
+  if (!renewed.ok) {
+    return { ok: false, reason: 'cancelled', error: renewed.error };
+  }
+
+  const token = renewed.data;
+  if (!token.access_token) {
+    return { ok: false, reason: 'refused', error: token.error_description ?? token.error };
   }
 
   return {
@@ -226,7 +284,7 @@ export const renewThroughToken = async (
  * people learn to ignore.
  */
 export const revokeGrant = async (apiUrl: string, clientId: string, refreshToken: string): Promise<void> => {
-  await post(`${apiUrl}/revoke`, { token: refreshToken, token_type_hint: 'refresh_token', client_id: clientId });
+  await form(`${apiUrl}/revoke`, { token: refreshToken, token_type_hint: 'refresh_token', client_id: clientId });
 };
 
 export default signInThroughBrowser;

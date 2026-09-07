@@ -70,7 +70,7 @@ const App = ({ api }: AppProps) => {
   return (
     <AppContext value={app}>
       <AuthProvider api={client}>
-        <SpacesProvider api={client}>
+        <SpacesProvider>
           <LayoutProvider>
             <ToastProvider>
               <ModalProvider>

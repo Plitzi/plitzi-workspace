@@ -14,7 +14,7 @@ import useAuth from './useAuth';
  * It used to be six screens and four forms: sign in, sign up, forgot, reset, verify, resend.
  */
 const SignInScreen = () => {
-  const { signIn } = useAuth();
+  const { signIn, expired } = useAuth();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
@@ -33,6 +33,12 @@ const SignInScreen = () => {
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 p-8">
       <h1 className="text-2xl font-semibold">Plitzi</h1>
+      {/* Said before the instruction, because arriving here mid-task otherwise reads as the app losing its place. */}
+      {expired && (
+        <p className="max-w-sm text-center text-sm text-amber-600 dark:text-amber-400">
+          Your session ended, so this window signed itself out.
+        </p>
+      )}
       <p className="max-w-sm text-center text-sm text-zinc-500">
         Signing in happens in your browser, so this app never handles your password.
       </p>
