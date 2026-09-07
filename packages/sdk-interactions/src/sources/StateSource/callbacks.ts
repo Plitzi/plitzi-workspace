@@ -84,13 +84,56 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
         description: 'The state key/path holding the list, under `runtime.state.<key>`.',
         default: ''
       },
+      value: {
+        type: 'scalar',
+        description:
+          'The entry to drop, by value — every copy of it. Prefer this wherever the list can change under the ' +
+          'person: a position is only true until something before it moves.',
+        default: ''
+      },
       index: {
         type: 'text',
         description:
-          'Which entry to drop, by position. Inside a controlled list, `{{ <listSource>.index }}` is the row own ' +
-          'position. An index that resolves to nothing removes nothing, rather than emptying the list.',
+          'Which entry to drop, by position, when there is no value to go on. Inside a controlled list, ' +
+          '`{{ <listSource>.index }}` is the row own position. An index that resolves to nothing removes nothing.',
         default: ''
       }
+    }
+  },
+  /**
+   * The operation a checkbox needs: move an entry between two lists, and do nothing if it is not in the first.
+   *
+   * As an append beside a remove it was not idempotent — pressing the box twice ran the pair twice and the second
+   * run put the entry in both lists at once. One step that finds nothing to move is the whole of the fix.
+   */
+  moveState: {
+    source: 'state',
+    title: 'Move Between Lists',
+    strictParams: true,
+    params: {
+      from: { type: 'text', description: 'The list to take it out of, under `runtime.state.<key>`.', default: '' },
+      to: { type: 'text', description: 'The list to put it into. It is not added twice.', default: '' },
+      value: {
+        type: 'scalar',
+        description: 'The entry to move. Absent from `from` means nothing happens.',
+        default: ''
+      }
+    }
+  },
+  /**
+   * A checkbox, as one step: in the list if it was not, out of it if it was.
+   *
+   * The list is treated as a SET — the same value is never in it twice — which is what makes pressing the box twice
+   * safe. An append guarded by a check reads the list as it was when the flow started, so two presses in the same
+   * tick both found the value absent and added it twice.
+   */
+  toggleInState: {
+    source: 'state',
+    title: 'Toggle In List',
+    strictParams: true,
+    params: {
+      key: { type: 'text', description: 'The list to add to or drop from, under `runtime.state.<key>`.', default: '' },
+      value: { type: 'scalar', description: 'The entry the box stands for.', default: '' }
     }
   },
   clearState: {

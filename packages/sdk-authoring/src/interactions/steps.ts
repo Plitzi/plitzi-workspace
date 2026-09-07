@@ -58,14 +58,33 @@ export const toggleState = (params: { key: string }): StepSpec => globalStep('to
 export const appendState = (params: { key: string; value: unknown }): StepSpec => globalStep('appendState', params);
 
 /**
- * Drops one entry from the list at `runtime.state.<key>`, by position.
+ * Drops entries from the list at `runtime.state.<key>` — by VALUE, or by position when there is nothing else to go on.
  *
- * Inside a controlled `list`, the row's own position is `{{ <listSource>.index }}` — the source a list publishes is
- * named after its element id. An index that resolves to nothing removes nothing, which is what keeps a mis-authored
- * token from being a list that empties itself on the first click.
+ * Prefer the value wherever the list can change under the person: a position is only true until something before it
+ * moves, and a row's position is captured when the row renders — so pressing a row's button twice acted on whatever
+ * had shifted into that slot. Inside a controlled `list` the row's own value is `{{ <listSource>.item }}` and its
+ * position `{{ <listSource>.index }}`; either token resolving to nothing removes nothing.
  */
-export const removeState = (params: { key: string; index: string | number }): StepSpec =>
+export const removeState = (params: { key: string; value: unknown } | { key: string; index: string | number }): StepSpec =>
   globalStep('removeState', params);
+
+/**
+ * Moves one entry between two lists, and does nothing if it is not in the first.
+ *
+ * What a checkbox is: written as an append beside a remove it was not idempotent, and pressing the box twice put the
+ * entry in BOTH lists — the task listed as done and still sitting in the list above it.
+ */
+export const moveState = (params: { from: string; to: string; value: unknown }): StepSpec =>
+  globalStep('moveState', params);
+
+/**
+ * A checkbox, as one step: in the list at `runtime.state.<key>` if it was not, out of it if it was.
+ *
+ * The list is a SET, which is what makes pressing the box twice safe — an append guarded by a check reads the list
+ * as it was when the flow started, so two presses in the same tick both add.
+ */
+export const toggleInState = (params: { key: string; value: unknown }): StepSpec =>
+  globalStep('toggleInState', params);
 
 /** Empties `runtime.state` entirely. */
 export const clearState = (): StepSpec => globalStep('clearState');
