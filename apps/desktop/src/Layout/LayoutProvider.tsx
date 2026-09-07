@@ -18,13 +18,12 @@ export type LayoutProviderProps = { children?: ReactNode };
 const LayoutProvider = ({ children }: LayoutProviderProps) => {
   const [sidebarVisible, setSidebarVisible] = useStorage('plitzi-desktop.layout.sidebar', true);
   const [layoutProps, setLayoutProps] = useState<LayoutProps>({});
-  const [subHeader, setSubHeader] = useState<ReactNode>(undefined);
 
   const toggleSidebar = useCallback(() => setSidebarVisible(!sidebarVisible), [setSidebarVisible, sidebarVisible]);
 
   const value = useMemo<LayoutContextValue>(
-    () => ({ layoutProps, setLayoutProps, sidebarVisible, toggleSidebar, subHeader, setSubHeader }),
-    [layoutProps, sidebarVisible, toggleSidebar, subHeader]
+    () => ({ layoutProps, setLayoutProps, sidebarVisible, toggleSidebar }),
+    [layoutProps, sidebarVisible, toggleSidebar]
   );
 
   return <LayoutContext value={value}>{children}</LayoutContext>;

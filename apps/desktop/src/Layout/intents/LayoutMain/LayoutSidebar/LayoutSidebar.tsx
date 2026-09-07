@@ -84,6 +84,24 @@ const LayoutSidebar = () => {
           <SpaceLink key={space.id} space={space} collapsed={collapsed} />
         ))}
       </div>
+      {/*
+        Said beside the list rather than in a header, and only when there is something to say. It has to be said
+        somewhere: this window can be open on a machine that is offline, and a list that failed to refresh looks
+        exactly like an account with no spaces in it.
+      */}
+      {error !== undefined && (
+        <div
+          className={clsx('flex shrink-0 items-center gap-2 border-t border-zinc-800 px-3 py-2 text-xs', {
+            'text-amber-400': error === 'offline',
+            'text-red-400': error !== 'offline',
+            'justify-center px-2': collapsed
+          })}
+          title={error === 'offline' ? 'Offline — showing the list from last time' : error}
+        >
+          <i className="fa-solid fa-circle text-[6px]" />
+          {!collapsed && <span className="truncate">{error === 'offline' ? 'Offline' : error}</span>}
+        </div>
+      )}
       <SidebarFooter collapsed={collapsed} />
     </nav>
   );
