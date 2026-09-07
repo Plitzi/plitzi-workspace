@@ -105,6 +105,23 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   useRegisterSource({ id: 'global', source: 'state', name: 'State', fields: stateFields });
   useCommonStoreSync('runtime.sources.state', state);
 
+  /**
+   * --- host (whatever the application AROUND this space handed it)
+   *
+   * The counterpart of the `hostAction` step, and the half without which that step is a one-way shout: a shell
+   * cannot list the host's screens unless the host can give it the list. Written into the store by whoever mounts
+   * the SDK, published here beside every other source so a binding names it the same way.
+   *
+   * Empty for a space that IS the page — nobody is embedding it, so nobody has anything to hand it.
+   */
+  const [host] = useCommonStore('runtime.host');
+  const hostFields = useCallback(
+    () => getPathsFromObeject(host).map(path => ({ path, name: `host.${path}` })),
+    [host]
+  );
+  useRegisterSource({ id: 'global', source: 'host', name: 'Host', fields: hostFields });
+  useCommonStoreSync('runtime.sources.host', host);
+
   return children;
 };
 

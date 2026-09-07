@@ -110,6 +110,16 @@ export const toggleInState = (params: { key: string; value: unknown }): StepSpec
  */
 export const clearState = (params: { key?: string } = {}): StepSpec => globalStep('clearState', params);
 
+/**
+ * Asks the application AROUND this space to do something — open one of its screens, sign out, quit.
+ *
+ * The only step that reaches outside the space, and it exists so an application SHELL can be authored rather than
+ * written in the host's own code: a sidebar, a switcher, an account menu. `action` names a handler the host
+ * registered; one it did not register does nothing, the same as any other callback that resolves to nothing.
+ */
+export const hostAction = (params: { action: string; value?: unknown }): StepSpec =>
+  globalStep('hostAction', params);
+
 export const navigate = (params: { urlType: 'page' | 'internal' | 'external'; url: string }): StepSpec =>
   globalStep('navigate', params);
 

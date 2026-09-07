@@ -1,5 +1,6 @@
 import { actionsCallbacks } from '@plitzi/sdk-interactions/sources/ActionsSource/callbacks';
 import { authCallbacks } from '@plitzi/sdk-interactions/sources/AuthSource/callbacks';
+import { hostCallbacks } from '@plitzi/sdk-interactions/sources/HostSource/callbacks';
 import { navigationCallbacks } from '@plitzi/sdk-interactions/sources/NavigationSource/callbacks';
 import { stateCallbacks } from '@plitzi/sdk-interactions/sources/StateSource/callbacks';
 import { reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
@@ -30,6 +31,7 @@ import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder
 export const BUILTIN_GLOBAL_CALLBACKS: Record<string, BuiltinGlobalCallback> = {
   ...spaceCallbacks,
   ...stateCallbacks,
+  ...hostCallbacks,
   ...navigationCallbacks,
   ...authCallbacks,
   ...actionsCallbacks
