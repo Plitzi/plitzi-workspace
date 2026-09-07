@@ -107,6 +107,36 @@ describe('a list in state', () => {
     expect(wrote('runtime.state.tasks', undefined)).toEqual(['Ship the seed']);
   });
 
+  /**
+   * `unique` is for a list whose entries ARE their own identity: anything else referring to one refers to it by
+   * value, so a second copy is indistinguishable from the first — and a checkbox over such a list ticks both, which
+   * is exactly how this was found.
+   */
+  it('skips a value the list already holds when asked to', () => {
+    const { call, state } = mount({ 'runtime.state.tasks': ['Call the client'] });
+
+    call('appendState', { key: 'tasks', value: 'Call the client', unique: true });
+
+    expect(state('runtime.state.tasks')).toEqual(['Call the client']);
+  });
+
+  it('reads the word the builder writes as well as the boolean', () => {
+    const { call, state } = mount({ 'runtime.state.tasks': ['a'] });
+
+    call('appendState', { key: 'tasks', value: 'a', unique: 'true' });
+
+    expect(state('runtime.state.tasks')).toEqual(['a']);
+  });
+
+  // Off by default, because a list of things somebody typed may legitimately repeat.
+  it('allows a repeat when nobody asked for uniqueness', () => {
+    const { call, state } = mount({ 'runtime.state.tasks': ['a'] });
+
+    call('appendState', { key: 'tasks', value: 'a' });
+
+    expect(state('runtime.state.tasks')).toEqual(['a', 'a']);
+  });
+
   it('appends to the end of what is already there', () => {
     const { call, wrote } = mount();
 

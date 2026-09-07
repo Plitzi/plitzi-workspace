@@ -64,17 +64,28 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
    * otherwise both compute from the flow's own snapshot, and the second would put the first one back.
    */
   const handleAppendState = useCallback(
-    (params: InteractionCallbackParamValues<{ key: string; value: unknown }>) => {
-      const { key, value } = params;
+    (params: InteractionCallbackParamValues<{ key: string; value: unknown; unique?: boolean | string }>) => {
+      const { key, value, unique } = params;
       if (!key) {
         return;
       }
 
       // A key nobody has written yet appends to nothing rather than failing, so a list needs no priming step.
-      setState(`runtime.state.${key}`, (prev: unknown): unknown[] => [
-        ...(Array.isArray(prev) ? (prev as unknown[]) : []),
-        value
-      ]);
+      setState(`runtime.state.${key}`, (prev: unknown): unknown[] => {
+        const list = Array.isArray(prev) ? (prev as unknown[]) : [];
+
+        /**
+         * `unique` is for a list whose entries ARE their own identity — anything else referring to one refers to it
+         * by value, so a second copy is indistinguishable from the first. A checkbox over such a list ticks both.
+         * Off by default: a list of things somebody typed may legitimately repeat.
+         */
+        // The word as well as the boolean: the builder's picker writes `'true'`, the same way `setState` reads it.
+        if ((unique === true || unique === 'true') && list.includes(value)) {
+          return list;
+        }
+
+        return [...list, value];
+      });
     },
     [setState]
   );

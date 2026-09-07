@@ -55,7 +55,8 @@ export const toggleState = (params: { key: string }): StepSpec => globalStep('to
  * The operation that makes a list belong to whoever is USING a space rather than to whoever authored it: `setState`
  * stores a scalar at a path, so before this the only lists a space could hold were the ones written into it.
  */
-export const appendState = (params: { key: string; value: unknown }): StepSpec => globalStep('appendState', params);
+export const appendState = (params: { key: string; value: unknown; unique?: boolean }): StepSpec =>
+  globalStep('appendState', params);
 
 /**
  * Drops entries from the list at `runtime.state.<key>` — by VALUE, or by position when there is nothing else to go on.

@@ -71,6 +71,13 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
         type: 'scalar',
         description: 'What to add to the end of the list.',
         default: ''
+      },
+      unique: {
+        type: 'boolean',
+        description:
+          'Skip the append when the list already holds this value. For a list whose entries are their own ' +
+          'identity — anything referring to one refers to it by value, so a second copy is indistinguishable.',
+        default: false
       }
     }
   },
