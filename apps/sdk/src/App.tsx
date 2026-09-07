@@ -14,7 +14,7 @@ import Provider from '@plitzi/plitzi-ui/Provider';
 import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
 import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, useState, Fragment } from 'react';
-import { BrowserRouter, StaticRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter, StaticRouter } from 'react-router-dom';
 
 import { initClient } from '@modules/App/AppHelper';
 import AppMain from '@modules/App/AppMain';
@@ -61,6 +61,16 @@ export type AppProps = {
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
   renderMode?: RenderMode;
+  /**
+   * Whether this space owns the browser's address bar.
+   *
+   * `browser` is right for a space that IS the page — it is the site, so its pages are the window's URLs. `memory`
+   * is for a space EMBEDDED in an application that has a router of its own: the desktop app, a component mounted
+   * in a host. Without it the space's own navigation rewrites the host's location — the desktop window went from
+   * `#/spaces/view/day-plan` to `/tasks#/spaces` on the first link followed inside a space, and a reload then
+   * landed on the shell's index with the space gone.
+   */
+  routing?: 'browser' | 'memory';
   debugMode?: boolean;
   isHydrating?: boolean;
   previewMode?: boolean;
@@ -99,6 +109,7 @@ const App = ({
   server = undefined,
   // Extra
   renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
+  routing = 'browser',
   debugMode: debugModeProp = false,
   state,
   ...sdkProps
@@ -207,13 +218,20 @@ const App = ({
     routerParams.location = finalServer.requestUrl ?? '';
   }
 
-  const ReactRouter = renderMode === 'widget' ? Fragment : typeof window === 'undefined' ? StaticRouter : BrowserRouter;
+  const browserRouter = routing === 'memory' ? MemoryRouter : BrowserRouter;
+  const ReactRouter = renderMode === 'widget' ? Fragment : typeof window === 'undefined' ? StaticRouter : browserRouter;
   const reactRouterProps =
     renderMode === 'widget'
       ? {}
       : {
-          basename: get(finalServer, 'basePath', '/'),
-          location: typeof window === 'undefined' ? (finalServer.requestUrl ?? '') : undefined
+          // A memory router keeps no basename and reads no location: it starts at `/`, which for an embedded space
+          // is its home page, and every navigation after that stays inside this component.
+          ...(routing === 'memory' && typeof window !== 'undefined'
+            ? {}
+            : {
+                basename: get(finalServer, 'basePath', '/'),
+                location: typeof window === 'undefined' ? (finalServer.requestUrl ?? '') : undefined
+              })
         };
 
   return (

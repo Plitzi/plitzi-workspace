@@ -1,6 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useRef, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { useStoreById } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
@@ -57,7 +57,18 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   // Written by reference during the SSR render and read back by the server to shape the response; undefined in the
   // browser, where the page has already been sent.
   const ssrResult = server.ssr?.renderResult;
-  const { queryParams, hostname, location } = useNavigation({ server });
+  /**
+   * The ROUTER's location, not the window's — for the same reason `navigate` is the router's.
+   *
+   * They are the same thing while a space owns the address bar, and they stop being the same the moment it does
+   * not: a space embedded in an application with a router of its own routes in memory, so the window's address
+   * never moves and matching the page against it left every internal link doing nothing at all.
+   *
+   * Guarded like `useNavigate` below: a widget render has no router to ask.
+   */
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const routerLocation = renderMode !== 'widget' ? useLocation() : undefined;
+  const { queryParams, hostname, location } = useNavigation({ server, routerLocation });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
   const { authenticated } = use(AuthContext);

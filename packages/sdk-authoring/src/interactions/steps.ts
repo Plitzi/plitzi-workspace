@@ -49,6 +49,24 @@ export const setState = (params: { key: string; type: 'boolean' | 'number' | 'te
  */
 export const toggleState = (params: { key: string }): StepSpec => globalStep('toggleState', params);
 
+/**
+ * Adds to the list at `runtime.state.<key>`, creating it if it is not there.
+ *
+ * The operation that makes a list belong to whoever is USING a space rather than to whoever authored it: `setState`
+ * stores a scalar at a path, so before this the only lists a space could hold were the ones written into it.
+ */
+export const appendState = (params: { key: string; value: unknown }): StepSpec => globalStep('appendState', params);
+
+/**
+ * Drops one entry from the list at `runtime.state.<key>`, by position.
+ *
+ * Inside a controlled `list`, the row's own position is `{{ <listSource>.index }}` — the source a list publishes is
+ * named after its element id. An index that resolves to nothing removes nothing, which is what keeps a mis-authored
+ * token from being a list that empties itself on the first click.
+ */
+export const removeState = (params: { key: string; index: string | number }): StepSpec =>
+  globalStep('removeState', params);
+
 /** Empties `runtime.state` entirely. */
 export const clearState = (): StepSpec => globalStep('clearState');
 

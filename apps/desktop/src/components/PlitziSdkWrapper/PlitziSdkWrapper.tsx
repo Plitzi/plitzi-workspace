@@ -51,6 +51,14 @@ const PlitziSdkWrapper = ({
       server={server}
       previewMode={previewMode}
       renderMode={renderMode}
+      /**
+       * The space routes in MEMORY, because this window already has a router.
+       *
+       * A space's pages are its own, not this application's: with the browser router, following a link inside a
+       * space rewrote the window's location — `#/spaces/view/day-plan` became `/tasks#/spaces` — and a reload then
+       * opened the shell's index with the space gone. The address bar belongs to the shell here.
+       */
+      routing="memory"
       sdkDevToolsStylePath={devToolsStylePath}
       // The window's own build decides, and only the development one may: a packaged copy handed to a customer has
       // no business offering the element tree and the store of a space that is not theirs.

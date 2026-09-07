@@ -52,6 +52,50 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
     [setState]
   );
 
+  /**
+   * The two operations a LIST needs, which `setState` cannot express.
+   *
+   * `setState` stores a scalar at a path, so a space could hold a fixed set of flags and nothing else — a checklist
+   * whose items were written by whoever authored the space, with no way for the person using it to add one or take
+   * one away. Everything else was already here: the store's setter takes an updater, which is how `toggleState`
+   * reads and writes in one pass, and a controlled `list` renders whatever array it is bound to.
+   *
+   * Through the updater form for the same reason `toggleState` is: two rows removed in the same tick would
+   * otherwise both compute from the flow's own snapshot, and the second would put the first one back.
+   */
+  const handleAppendState = useCallback(
+    (params: InteractionCallbackParamValues<{ key: string; value: unknown }>) => {
+      const { key, value } = params;
+      if (!key) {
+        return;
+      }
+
+      // A key nobody has written yet appends to nothing rather than failing, so a list needs no priming step.
+      setState(`runtime.state.${key}`, (prev: unknown): unknown[] => [
+        ...(Array.isArray(prev) ? (prev as unknown[]) : []),
+        value
+      ]);
+    },
+    [setState]
+  );
+
+  const handleRemoveState = useCallback(
+    (params: InteractionCallbackParamValues<{ key: string; index: string | number }>) => {
+      const { key, index } = params;
+      // The index arrives interpolated from a row, so it is a string — and `''`, which `parseInt` reads as NaN, is
+      // exactly what a token that resolved to nothing looks like. Removing "position NaN" would empty the list.
+      const at = typeof index === 'number' ? index : parseInt(index, 10);
+      if (!key || Number.isNaN(at)) {
+        return;
+      }
+
+      setState(`runtime.state.${key}`, (prev: unknown): unknown[] =>
+        Array.isArray(prev) ? (prev as unknown[]).filter((_, position) => position !== at) : []
+      );
+    },
+    [setState]
+  );
+
   const handleClearState = useCallback(() => {
     setState('runtime.state', {});
   }, [setState]);
@@ -61,9 +105,11 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
       toInteractionCallbacks(stateCallbacks, {
         setState: handleSetState,
         toggleState: handleToggleState,
+        appendState: handleAppendState,
+        removeState: handleRemoveState,
         clearState: handleClearState
       }),
-    [handleSetState, handleToggleState, handleClearState]
+    [handleSetState, handleToggleState, handleAppendState, handleRemoveState, handleClearState]
   );
 
   useInteractions({ id: 'state', callbacks: interactionCallbacks });

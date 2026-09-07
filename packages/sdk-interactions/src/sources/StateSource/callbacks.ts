@@ -53,6 +53,46 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
       }
     }
   },
+  /**
+   * A list somebody using the space can add to, which `setState` cannot do: it stores a scalar at a path, so the
+   * only lists a space could hold were the ones written into it when it was authored.
+   */
+  appendState: {
+    source: 'state',
+    title: 'Append To State',
+    strictParams: true,
+    params: {
+      key: {
+        type: 'text',
+        description: 'The state key/path holding the list, under `runtime.state.<key>`. Created if it is not there.',
+        default: ''
+      },
+      value: {
+        type: 'scalar',
+        description: 'What to add to the end of the list.',
+        default: ''
+      }
+    }
+  },
+  removeState: {
+    source: 'state',
+    title: 'Remove From State',
+    strictParams: true,
+    params: {
+      key: {
+        type: 'text',
+        description: 'The state key/path holding the list, under `runtime.state.<key>`.',
+        default: ''
+      },
+      index: {
+        type: 'text',
+        description:
+          'Which entry to drop, by position. Inside a controlled list, `{{ <listSource>.index }}` is the row own ' +
+          'position. An index that resolves to nothing removes nothing, rather than emptying the list.',
+        default: ''
+      }
+    }
+  },
   clearState: {
     source: 'state',
     title: 'Clear State',

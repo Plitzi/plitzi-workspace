@@ -208,6 +208,14 @@ export type PlitziSdkProps = {
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
   renderMode?: RenderMode;
+  /**
+   * Whether this space owns the browser's address bar. `browser` (the default) is right when the space IS the page.
+   *
+   * `memory` is for a space EMBEDDED in an application that has a router of its own — the desktop app, a component
+   * mounted in a host: without it the space's own navigation rewrites the host's location, and a reload then opens
+   * the host's index with the space gone.
+   */
+  routing?: 'browser' | 'memory';
   debugMode?: boolean;
   isHydrating?: boolean;
   previewMode?: boolean;
