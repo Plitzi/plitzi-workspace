@@ -137,6 +137,23 @@ describe('a list in state', () => {
     expect(state('runtime.state.tasks')).toEqual(['a', 'a']);
   });
 
+  /**
+   * The answer for a list where two entries may legitimately read the same. Without an identity of its own, every
+   * reference to an entry is a reference to its VALUE — so a checkbox over the list ticks both copies, which is
+   * exactly how this was found: two tasks called the same thing, one tick, both struck through.
+   */
+  it('gives an entry an identity of its own when asked to', () => {
+    const { call, state } = mount({ 'runtime.state.tasks': [] });
+
+    call('appendState', { key: 'tasks', value: 'Call the client', withId: true });
+    call('appendState', { key: 'tasks', value: 'Call the client', withId: true });
+    const stored = state('runtime.state.tasks') as { id: string; value: string }[];
+
+    expect(stored.map(entry => entry.value)).toEqual(['Call the client', 'Call the client']);
+    expect(stored[0].id).not.toBe(stored[1].id);
+    expect(stored[0].id).toBeTruthy();
+  });
+
   it('appends to the end of what is already there', () => {
     const { call, wrote } = mount();
 
@@ -188,6 +205,31 @@ describe('a list in state', () => {
     call('removeState', { key: 'tasks', value: 'b' });
 
     expect(wrote('runtime.state.tasks', ['a', 'b', 'c', 'b'])).toEqual(['a', 'c']);
+  });
+
+  /**
+   * `by` names the field that carries the identity. Comparing records whole would never match anyway — two equal
+   * objects are not the same object — so without it a list of records could only be emptied by position.
+   */
+  it('removes a record by the field that identifies it', () => {
+    const { call, state } = mount({
+      'runtime.state.tasks': [
+        { id: 'a', value: 'Same words' },
+        { id: 'b', value: 'Same words' }
+      ]
+    });
+
+    call('removeState', { key: 'tasks', value: 'b', by: 'id' });
+
+    expect(state('runtime.state.tasks')).toEqual([{ id: 'a', value: 'Same words' }]);
+  });
+
+  it('leaves a list of records alone when told to compare them whole', () => {
+    const { call, state } = mount({ 'runtime.state.tasks': [{ id: 'a', value: 'x' }] });
+
+    call('removeState', { key: 'tasks', value: 'a' });
+
+    expect(state('runtime.state.tasks')).toEqual([{ id: 'a', value: 'x' }]);
   });
 
   it('prefers the value over a position when it is given both', () => {
@@ -327,5 +369,34 @@ describe('a checkbox over a list', () => {
     call('toggleInState', params);
 
     expect(setState).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * "Start again", for one list or for everything.
+ *
+ * The key form exists because a page that keeps notes beside a list would otherwise have to lose the notes to clear
+ * the list — and because a list whose stored entries no longer match what the space expects has to be recoverable
+ * from the page itself, not from a browser's developer tools.
+ */
+describe('clearing state', () => {
+  it('empties the named list and leaves everything else alone', () => {
+    const { call, state } = mount({
+      'runtime.state.tasks': [{ id: 'a', value: 'x' }],
+      'runtime.state.focus': 'Ship it'
+    });
+
+    call('clearState', { key: 'tasks' });
+
+    expect(state('runtime.state.tasks')).toEqual([]);
+    expect(state('runtime.state.focus')).toBe('Ship it');
+  });
+
+  it('empties everything when no key is named', () => {
+    const { call, state } = mount({ 'runtime.state.tasks': ['x'] });
+
+    call('clearState', {});
+
+    expect(state('runtime.state')).toEqual({});
   });
 });

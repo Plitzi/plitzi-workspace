@@ -78,6 +78,13 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
           'Skip the append when the list already holds this value. For a list whose entries are their own ' +
           'identity — anything referring to one refers to it by value, so a second copy is indistinguishable.',
         default: false
+      },
+      withId: {
+        type: 'boolean',
+        description:
+          'Store the entry as `{ id, value }` with an id of its own, so two entries that read the same are still ' +
+          'two entries. Anything reading one back names `.value`; anything referring to one names `.id`.',
+        default: false
       }
     }
   },
@@ -96,6 +103,13 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
         description:
           'The entry to drop, by value — every copy of it. Prefer this wherever the list can change under the ' +
           'person: a position is only true until something before it moves.',
+        default: ''
+      },
+      by: {
+        type: 'text',
+        description:
+          'The FIELD carrying the identity, for a list of records rather than of scalars — `id` for entries ' +
+          'appended with `withId`. Without it the whole entry is compared, which never matches a record.',
         default: ''
       },
       index: {
@@ -147,6 +161,14 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
     source: 'state',
     title: 'Clear State',
     strictParams: true,
-    params: {}
+    params: {
+      key: {
+        type: 'text',
+        description:
+          'The list to empty, under `runtime.state.<key>`. Left blank it empties EVERYTHING the space is keeping — ' +
+          'which on a page that holds notes beside a list means losing the notes to clear the list.',
+        default: ''
+      }
+    }
   }
 };

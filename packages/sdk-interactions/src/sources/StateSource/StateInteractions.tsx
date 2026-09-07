@@ -13,6 +13,19 @@ export type StateInteractionsProps = {
   children?: ReactNode;
 };
 
+/**
+ * An identity for an entry that has none of its own.
+ *
+ * `randomUUID` where the browser has it — every one that matters does, on a secure origin — and a counter with a
+ * random tail where it does not, which covers a plain-HTTP development host. It only has to be unique within one
+ * list in one browser, not across the world.
+ */
+let idSeq = 0;
+const nextId = (): string =>
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `e${++idSeq}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
 const StateInteractions = ({ children }: StateInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
   // `unknown` covers both forms the store accepts here: a value for `setState`, and the updater `toggleState` needs
@@ -63,9 +76,19 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
    * Through the updater form for the same reason `toggleState` is: two rows removed in the same tick would
    * otherwise both compute from the flow's own snapshot, and the second would put the first one back.
    */
+  /** True for the boolean and for the word, because the builder's picker writes the word. */
+  const isOn = (flag: unknown): boolean => flag === true || flag === 'true';
+
   const handleAppendState = useCallback(
-    (params: InteractionCallbackParamValues<{ key: string; value: unknown; unique?: boolean | string }>) => {
-      const { key, value, unique } = params;
+    (
+      params: InteractionCallbackParamValues<{
+        key: string;
+        value: unknown;
+        unique?: boolean | string;
+        withId?: boolean | string;
+      }>
+    ) => {
+      const { key, value, unique, withId } = params;
       if (!key) {
         return;
       }
@@ -75,12 +98,21 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
         const list = Array.isArray(prev) ? (prev as unknown[]) : [];
 
         /**
-         * `unique` is for a list whose entries ARE their own identity — anything else referring to one refers to it
-         * by value, so a second copy is indistinguishable from the first. A checkbox over such a list ticks both.
-         * Off by default: a list of things somebody typed may legitimately repeat.
+         * `withId` gives the entry an identity OF ITS OWN, and it is the answer whenever two entries may legitimately
+         * read the same. Without one, everything referring to an entry refers to it by value — so a second copy is
+         * indistinguishable from the first, and a checkbox over the list ticks both. The entry becomes
+         * `{ id, value }`, which is why anything reading it back names `.value`.
          */
-        // The word as well as the boolean: the builder's picker writes `'true'`, the same way `setState` reads it.
-        if ((unique === true || unique === 'true') && list.includes(value)) {
+        if (isOn(withId)) {
+          return [...list, { id: nextId(), value }];
+        }
+
+        /**
+         * `unique` is the other answer, for a list whose entries ARE their own identity — a set of names, a set of
+         * ids. Off by default: a list of things somebody typed may legitimately repeat, which is exactly why
+         * `withId` exists.
+         */
+        if (isOn(unique) && list.includes(value)) {
           return list;
         }
 
@@ -102,16 +134,34 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
    * duplicates, or one whose entries are not comparable.
    */
   const handleRemoveState = useCallback(
-    (params: InteractionCallbackParamValues<{ key: string; index?: string | number; value?: unknown }>) => {
-      const { key, index, value } = params;
+    (
+      params: InteractionCallbackParamValues<{
+        key: string;
+        index?: string | number;
+        value?: unknown;
+        by?: string;
+      }>
+    ) => {
+      const { key, index, value, by } = params;
       if (!key) {
         return;
       }
 
       if (value !== undefined && value !== '') {
-        setState(`runtime.state.${key}`, (prev: unknown): unknown[] =>
-          Array.isArray(prev) ? (prev as unknown[]).filter(entry => entry !== value) : []
-        );
+        setState(`runtime.state.${key}`, (prev: unknown): unknown[] => {
+          if (!Array.isArray(prev)) {
+            return [];
+          }
+
+          /**
+           * `by` names the FIELD that carries the identity, for a list of records rather than of scalars — two
+           * records that read the same are still two different entries, and comparing them whole would never match
+           * anyway, because equal objects are not the same object.
+           */
+          return (prev as unknown[]).filter(entry =>
+            by ? (entry as Record<string, unknown> | null)?.[by] !== value : entry !== value
+          );
+        });
 
         return;
       }
@@ -193,9 +243,21 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
     [setState]
   );
 
-  const handleClearState = useCallback(() => {
-    setState('runtime.state', {});
-  }, [setState]);
+  /**
+   * Empties one list, or the whole of `runtime.state` when no key is named.
+   *
+   * The key form is the "start again" a list needs. Without it the only way to empty one was to remove its entries
+   * one at a time, or to wipe every key the space holds — which on a page that keeps notes beside a list means
+   * losing the notes to clear the list.
+   */
+  const handleClearState = useCallback(
+    (params: InteractionCallbackParamValues<{ key?: string }>) => {
+      const { key } = params;
+
+      setState(key ? `runtime.state.${key}` : 'runtime.state', key ? [] : {});
+    },
+    [setState]
+  );
 
   const interactionCallbacks = useMemo(
     () =>

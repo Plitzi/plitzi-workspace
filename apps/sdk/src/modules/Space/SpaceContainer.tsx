@@ -15,7 +15,8 @@ const SpaceContainer = ({ children }: SpaceContainerProps) => {
   const { webId } = use(NetworkContext);
 
   return (
-    <ToastProvider containerId={`toast-container-${webId}`}>
+    // `plitzi-sdk-toasts` is what lifts them above the dev-tools panel — see the SDK stylesheet.
+    <ToastProvider containerId={`toast-container-${webId}`} classNameContainer="plitzi-sdk-toasts">
       <SpaceContainerInternal>{children}</SpaceContainerInternal>
     </ToastProvider>
   );

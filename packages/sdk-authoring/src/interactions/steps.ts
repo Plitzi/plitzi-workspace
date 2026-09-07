@@ -55,8 +55,20 @@ export const toggleState = (params: { key: string }): StepSpec => globalStep('to
  * The operation that makes a list belong to whoever is USING a space rather than to whoever authored it: `setState`
  * stores a scalar at a path, so before this the only lists a space could hold were the ones written into it.
  */
-export const appendState = (params: { key: string; value: unknown; unique?: boolean }): StepSpec =>
-  globalStep('appendState', params);
+export const appendState = (params: {
+  key: string;
+  value: unknown;
+  /** Skip the append when the list already holds this value — for a list whose entries ARE their own identity. */
+  unique?: boolean;
+  /**
+   * Store the entry as `{ id, value }`, with an id of its own.
+   *
+   * The answer whenever two entries may legitimately read the same: without one, everything referring to an entry
+   * refers to it by value, so a checkbox over the list ticks both copies. Read the text back as `.value` and refer
+   * to the entry as `.id`.
+   */
+  withId?: boolean;
+}): StepSpec => globalStep('appendState', params);
 
 /**
  * Drops entries from the list at `runtime.state.<key>` — by VALUE, or by position when there is nothing else to go on.
@@ -66,8 +78,11 @@ export const appendState = (params: { key: string; value: unknown; unique?: bool
  * had shifted into that slot. Inside a controlled `list` the row's own value is `{{ <listSource>.item }}` and its
  * position `{{ <listSource>.index }}`; either token resolving to nothing removes nothing.
  */
-export const removeState = (params: { key: string; value: unknown } | { key: string; index: string | number }): StepSpec =>
-  globalStep('removeState', params);
+export const removeState = (
+  params:
+    | { key: string; value: unknown; by?: string }
+    | { key: string; index: string | number }
+): StepSpec => globalStep('removeState', params);
 
 /**
  * Moves one entry between two lists, and does nothing if it is not in the first.
@@ -87,8 +102,13 @@ export const moveState = (params: { from: string; to: string; value: unknown }):
 export const toggleInState = (params: { key: string; value: unknown }): StepSpec =>
   globalStep('toggleInState', params);
 
-/** Empties `runtime.state` entirely. */
-export const clearState = (): StepSpec => globalStep('clearState');
+/**
+ * Empties the list at `runtime.state.<key>`, or the whole of `runtime.state` when no key is named.
+ *
+ * Name the key unless you mean everything: a page that keeps notes beside a list would otherwise have to lose the
+ * notes to clear the list.
+ */
+export const clearState = (params: { key?: string } = {}): StepSpec => globalStep('clearState', params);
 
 export const navigate = (params: { urlType: 'page' | 'internal' | 'external'; url: string }): StepSpec =>
   globalStep('navigate', params);

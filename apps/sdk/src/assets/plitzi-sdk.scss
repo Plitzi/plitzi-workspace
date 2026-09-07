@@ -188,5 +188,25 @@
     }
   }
 
+  /**
+   * Notifications sit above the dev-tools panel, which is `z-index: 1000000`.
+   *
+   * They are `position: fixed` — pinned to the window, which is right, because a notification is about the whole
+   * page and not about the part of it that happens to be scrolled into view. But the dev-tools panel docks over the
+   * window too, and docked VERTICALLY it takes the right-hand edge, which is exactly where a notification appears.
+   * They were not being suppressed; they were arriving underneath it.
+   *
+   * Above rather than beside: a notification is transient and a panel is not, so covering the panel for four
+   * seconds costs nothing, while being covered costs the message entirely.
+   *
+   * Its own VARIABLE rather than the property: the toast library injects its stylesheet at run time, unlayered, and
+   * an unlayered rule beats a layered one however specific the layered one is — so `z-index` here simply lost. The
+   * variable is declared on the container itself, which is the element that reads it, so it wins over the library's
+   * own declaration on `:root` by being the element's own rather than an inherited one.
+   */
+  .Toastify__toast-container.plitzi-sdk-toasts {
+    --toastify-z-index: 2000000;
+  }
+
   @include sdkComponents.styles;
 }
