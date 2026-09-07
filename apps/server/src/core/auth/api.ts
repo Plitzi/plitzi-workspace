@@ -746,7 +746,20 @@ export const createAuthApi = ({
         return limited;
       }
 
-      const account = await adapters.findByUsername?.(username);
+      /**
+       * The username, or the email — in that order.
+       *
+       * Every sign-in screen worth using offers both, because the one thing a person reliably remembers about an
+       * account is the address it was created with. Username first so an account whose name happens to be somebody
+       * else's address cannot shadow the owner of that address; the email lookup only runs when the first misses,
+       * so this costs a second query on a failed sign-in and nothing on a successful one.
+       *
+       * `findByEmail` is optional like everything else here: a deployment that supplies no email store keeps exactly
+       * the behaviour it had.
+       */
+      const account =
+        (await adapters.findByUsername?.(username)) ??
+        (username.includes('@') ? await adapters.findByEmail?.(username) : undefined);
       if (!account) {
         return refuse(401, 'Invalid credentials');
       }

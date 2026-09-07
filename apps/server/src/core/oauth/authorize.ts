@@ -88,10 +88,22 @@ const authorizeUrl = (config: OAuthConfig, req: SSRRequest, params: OAuthParams)
   return url.toString();
 };
 
-/** The sign-in address with this request as the destination — what the grant screen's "sign in" link points at. */
+/**
+ * The sign-in address with this request as the destination — what the grant screen's "sign in" link points at.
+ *
+ * `guest=1` rides along when this server would have taken somebody without an account, and it is the only thing
+ * that tells the sign-in screen so. That screen is shared by every client now, most of which require an account,
+ * so it cannot offer a way past itself by default — and without the hint, following the "sign in" link is a
+ * ONE-WAY door: the person who clicks it to see what signing in involves has no way back to the guest button
+ * except the browser's own history, on a page they arrived at from another application entirely.
+ */
 const signInWithReturn = (config: OAuthConfig, req: SSRRequest, params: OAuthParams): string => {
   const url = new URL(config.signInUrl);
   url.searchParams.set('redirect', authorizeUrl(config, req, params));
+
+  if (config.guest) {
+    url.searchParams.set('guest', '1');
+  }
 
   return url.toString();
 };

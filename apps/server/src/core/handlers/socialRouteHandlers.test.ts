@@ -202,6 +202,50 @@ describe('social auth route handlers', () => {
     expect(onError).toHaveBeenCalled();
   });
 
+  /**
+   * The shared sign-in screen ends every successful flow here, and the destination it forwards came off a link
+   * somebody followed — so what this asserts is that the route never navigates anywhere the deployment has not
+   * vetted. The stub answers what the real `sanitizeRedirect` does, which is the point: this route makes no
+   * judgement of its own, and there is exactly one implementation of that judgement.
+   */
+  it('sends a vetted destination on, and refuses one it was not given', async () => {
+    const sanitizeRedirect = vi.fn((target: unknown) =>
+      target === 'https://app.test/spaces' ? 'https://app.test/spaces' : 'https://app.test/'
+    );
+    const routes = createSocialAuthRouteHandlers({
+      social: socialStub({ sanitizeRedirect }),
+      cookies,
+      issueSession: () => Promise.resolve(session)
+    });
+
+    const allowed = response();
+    await run(routes, '/continue', request('/continue', { redirect: 'https://app.test/spaces' }), allowed.res);
+    expect(allowed.state.redirected).toBe('https://app.test/spaces');
+
+    const refused = response();
+    await run(routes, '/continue', request('/continue', { redirect: 'https://evil.test/copy' }), refused.res);
+    expect(refused.state.redirected).toBe('https://app.test/');
+  });
+
+  /**
+   * A template that could not fill its token in hands over an empty string, and a client may send nobody anywhere
+   * in particular — both are ordinary, and both have to land somewhere real rather than on a blank Location.
+   */
+  it('lands on the default when no destination was named at all', async () => {
+    const routes = createSocialAuthRouteHandlers({
+      social: socialStub({
+        sanitizeRedirect: (target: unknown) => (typeof target === 'string' && target ? target : 'https://app.test/')
+      }),
+      cookies,
+      issueSession: () => Promise.resolve(session)
+    });
+    const { res, state } = response();
+
+    await run(routes, '/continue', request('/continue'), res);
+
+    expect(state.redirected).toBe('https://app.test/');
+  });
+
   it('hangs every route on a router as a GET', () => {
     const get = vi.fn();
     mountSocialAuthRoutes(
@@ -211,6 +255,6 @@ describe('social auth route handlers', () => {
 
     const paths = get.mock.calls.map(call => String(call[0]));
 
-    expect(paths).toEqual(['/providers', '/:provider/login', '/:provider/callback']);
+    expect(paths).toEqual(['/providers', '/continue', '/:provider/login', '/:provider/callback']);
   });
 });

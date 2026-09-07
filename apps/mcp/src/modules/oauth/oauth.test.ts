@@ -762,6 +762,26 @@ describe('MCP endpoint under OAuth', () => {
     expect((await callMcp(granted.access_token)).status).toBe(200);
   });
 
+  /**
+   * The escape hatch on the shared sign-in screen only exists if that screen is told it may offer one, and this
+   * link is the only thing that tells it. Without the hint, following "sign in" from a guest-capable grant screen
+   * is a one-way door: the person who clicked it to see what an account involves lands on a page that requires one,
+   * on another origin, with nothing on it pointing back.
+   */
+  it('offers the sign-in link with the guest hint on it, so the way back out survives the trip', async () => {
+    const consent = await fetch(authorizeUrl(await registerClient(), challengeFor(verifier())));
+    const html = await consent.text();
+    const href = [...html.matchAll(/href="([^"]*)"/gu)]
+      .map(match => match[1])
+      .find(value => value.includes(SIGN_IN_URL));
+    const target = new URL((href ?? '').replace(/&amp;/gu, '&'));
+
+    expect(target.origin + target.pathname).toBe(SIGN_IN_URL);
+    expect(target.searchParams.get('guest')).toBe('1');
+    // And the request itself as the destination, so signing in finishes the grant rather than ending on a dashboard.
+    expect(target.searchParams.get('redirect')).toContain('/authorize?');
+  });
+
   it('leaves the CORS preflight answering, since a challenge on it tells a host nothing', async () => {
     const response = await fetch(BASE, { method: 'OPTIONS' });
 

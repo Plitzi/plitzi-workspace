@@ -81,6 +81,28 @@ export const createSocialAuthRouteHandlers = ({
       }
     },
     {
+      /**
+       * Where a sign-in screen sends somebody once they have a session.
+       *
+       * It exists because the screen cannot make this decision itself. The destination arrives as `?redirect=` on a
+       * link the visitor followed, so it is attacker-supplied — and a shared sign-in page that navigates to it
+       * unchecked is an open redirect on the one origin every person on the platform is trained to type a password
+       * into. The page is also a rendered space, with no way to ask whether an origin is ours.
+       *
+       * So the page ends its flow HERE and this hop decides, with the same `sanitizeRedirect` the social callback
+       * uses: a relative path or an allowed origin is honoured, anything else silently becomes the default. A
+       * missing or unresolved parameter lands on the default too, which is what makes it safe for a template to
+       * pass a token it could not fill in.
+       */
+      method: 'GET',
+      path: '/continue',
+      handle: (req, res) => {
+        res.redirect(social.sanitizeRedirect(req.query?.redirect));
+
+        return Promise.resolve();
+      }
+    },
+    {
       method: 'GET',
       path: '/:provider/login',
       handle: (req, res) => {

@@ -121,6 +121,39 @@ describe('signing in', () => {
     expect(outcome.ok && outcome.session?.refreshToken).toEqual(expect.any(String));
   });
 
+  /**
+   * What somebody reliably remembers about an account is the address they made it with, so a sign-in screen that says
+   * "email or username" has to mean it — and this is the half that makes it true.
+   */
+  it('signs in with the email as well as the username', async () => {
+    const findByEmail = vi.fn(() => Promise.resolve(ada));
+    const api = build({ findByUsername: () => Promise.resolve(undefined), findByEmail });
+
+    const outcome = await api.login({ username: 'ada@example.com', password: 'pw' });
+
+    expect(outcome.ok).toBe(true);
+    expect(findByEmail).toHaveBeenCalledWith('ada@example.com');
+  });
+
+  /**
+   * Username first, and the email lookup does not run at all when it matched — so an account NAMED after somebody
+   * else's address can never stand in front of the person who owns that address.
+   */
+  it('prefers the username, and does not look for an email that cannot be one', async () => {
+    const findByEmail = vi.fn(() => Promise.resolve(undefined));
+    const byUsername = build({ findByUsername: () => Promise.resolve(ada), findByEmail });
+
+    expect((await byUsername.login({ username: 'ada@example.com', password: 'pw' })).ok).toBe(true);
+    expect(findByEmail).not.toHaveBeenCalled();
+
+    await build({ findByUsername: () => Promise.resolve(undefined), findByEmail }).login({
+      username: 'ghost',
+      password: 'pw'
+    });
+
+    expect(findByEmail).not.toHaveBeenCalled();
+  });
+
   it('refuses a wrong password without saying which half was wrong', async () => {
     const api = build({ findByUsername: () => Promise.resolve(ada) });
 

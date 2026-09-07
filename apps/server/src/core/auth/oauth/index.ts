@@ -129,6 +129,15 @@ export const createSocialAuth = ({
     `${target}${target.includes('?') ? '&' : '?'}error=${encodeURIComponent(reason)}`;
 
   return {
+    /**
+     * Vet a caller-supplied landing page against this deployment's policy, for the flows that are not this one.
+     *
+     * Exposed because social sign-in is no longer the only thing that takes a `?redirect=` and then navigates to
+     * it: the shared sign-in screen does too, and the check has to be the SAME check. Two implementations of "is
+     * this target ours" is how one of them ends up accepting `//evil.com`.
+     */
+    sanitizeRedirect,
+
     /** Registered providers, so a front-end renders exactly the buttons that will work. */
     list: () =>
       [...registry.values()].map(provider => ({
