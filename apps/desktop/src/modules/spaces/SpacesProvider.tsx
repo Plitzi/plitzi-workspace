@@ -33,36 +33,37 @@ const SpacesProvider = ({ children }: SpacesProviderProps) => {
   const load = useCallback(async () => {
     setState(previous => ({ ...previous, loading: true, error: undefined }));
 
-    // Both scopes at once: they are two reads of the same table and the sidebar shows them together, so serialising
-    // them would only make the list appear in two steps. Two 401s therefore arrive together, and share one renewal.
-    const [owned, guest] = await Promise.all([
-      request<SpaceRow[]>({ path: '/spaces', query: { scope: 'owned' } }),
-      request<SpaceRow[]>({ path: '/spaces', query: { scope: 'guest' } })
-    ]);
+    /**
+     * ONE request for both lists.
+     *
+     * They used to be two, fired together — two reads of the same table, and two round trips over a network this
+     * app has no control over, on every refresh and every reconnect. The endpoint takes several scopes now and
+     * answers keyed by scope, so the sidebar's two sections cost one call.
+     */
+    const answer = await request<Partial<Record<'owned' | 'guest', SpaceRow[]>>>({
+      path: '/spaces',
+      query: { scope: 'owned,guest' }
+    });
 
     // The session ended while this ran — `request` has already forgotten it, and the effect below will clear the
     // list when that lands. Reporting a failure as well would flash an error over the sign-in screen.
-    if (owned.status === 401 || guest.status === 401) {
+    if (answer.status === 401) {
       setState({ owned: [], guest: [], loading: false, error: undefined });
 
       return;
     }
 
-    if (!owned.ok) {
-      setState({ owned: [], guest: [], loading: false, error: reasonOf(owned) });
-
-      return;
-    }
-
-    if (!guest.ok) {
-      setState({ owned: [], guest: [], loading: false, error: reasonOf(guest) });
+    if (!answer.ok) {
+      setState({ owned: [], guest: [], loading: false, error: reasonOf(answer) });
 
       return;
     }
 
     setState({
-      owned: owned.data.map(toSpace).sort(byName),
-      guest: guest.data.map(toSpace).sort(byName),
+      // Defensive on each key rather than trusting the shape: a proxy or an older deployment answering the array
+      // this endpoint used to give would otherwise throw inside `map` and take the whole sidebar with it.
+      owned: (answer.data.owned ?? []).map(toSpace).sort(byName),
+      guest: (answer.data.guest ?? []).map(toSpace).sort(byName),
       loading: false,
       error: undefined
     });

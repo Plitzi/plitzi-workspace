@@ -107,7 +107,9 @@ const DevToolsContainer = ({
   return (
     <div
       className={clsx(
-        'flex grow overflow-auto',
+        // `relative` so the collapsed badge anchors HERE rather than to the window: a host that gives the space one
+        // pane of its window — the desktop app, beside its sidebar — had the badge land on top of the host's chrome.
+        'relative flex grow overflow-auto',
         { 'flex-col': dockedAt === 'horizontal', 'h-screen': dockedAt === 'vertical' },
         className
       )}
