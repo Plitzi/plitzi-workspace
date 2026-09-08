@@ -118,7 +118,6 @@ export type InteractionsContextValue<TManager = any> = {
   }) => void;
 };
 
-
 /**
  * What an embedding application offers a space it renders.
  *

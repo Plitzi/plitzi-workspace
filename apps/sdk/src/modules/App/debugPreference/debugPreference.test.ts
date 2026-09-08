@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { readDebugPreference, writeDebugPreference } from './debugPreference';
@@ -33,7 +34,7 @@ describe('the dev-tools preference', () => {
     expect(readDebugPreference('plitzi_debug_4013')).toBe(false);
   });
 
-  it('reads nothing on the server, where showing them is the page\'s decision alone', () => {
+  it("reads nothing on the server, where showing them is the page's decision alone", () => {
     expect(readDebugPreference('plitzi_debug')).toBe(true);
   });
 });

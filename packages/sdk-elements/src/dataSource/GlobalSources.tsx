@@ -115,10 +115,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
    * Empty for a space that IS the page — nobody is embedding it, so nobody has anything to hand it.
    */
   const [host] = useCommonStore('runtime.host');
-  const hostFields = useCallback(
-    () => getPathsFromObeject(host).map(path => ({ path, name: `host.${path}` })),
-    [host]
-  );
+  const hostFields = useCallback(() => getPathsFromObeject(host).map(path => ({ path, name: `host.${path}` })), [host]);
   useRegisterSource({ id: 'global', source: 'host', name: 'Host', fields: hostFields });
   useCommonStoreSync('runtime.sources.host', host);
 

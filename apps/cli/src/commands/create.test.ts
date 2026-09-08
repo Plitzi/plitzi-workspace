@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -38,8 +39,8 @@ describe('the scaffold', () => {
   it('gives a local project the space as its own source', () => {
     const files = scaffold(answers());
 
-    expect(files['src/space.ts']).toContain('from \'@plitzi/sdk-authoring\'');
-    expect(files['src/space.ts']).toContain('name: \'demo\'');
+    expect(files['src/space.ts']).toContain("from '@plitzi/sdk-authoring'");
+    expect(files['src/space.ts']).toContain("name: 'demo'");
     // Relative imports would resolve to nothing outside the package the copy came from.
     expect(files['src/space.ts']).not.toMatch(/from '\.\./);
   });
@@ -69,7 +70,7 @@ describe('the scaffold', () => {
   it('accepts the space module for hot replacement in the browser', () => {
     const files = scaffold(answers({ mode: 'client' }));
 
-    expect(files['src/main.ts']).toContain('import.meta.hot.accept(\'./space\'');
+    expect(files['src/main.ts']).toContain("import.meta.hot.accept('./space'");
     expect(files['src/main.ts']).toContain('mounted?.unmount()');
   });
 
@@ -86,8 +87,8 @@ describe('the scaffold', () => {
     // Served at the path the SDK's own default asks for, from where the SDK is installed — so it cannot go stale
     // and nothing is copied into the project.
     expect(files['vite.config.ts']).toContain('/plitzi-sdk-devtools.css');
-    expect(files['vite.config.ts']).toContain('require.resolve(\'@plitzi/plitzi-sdk/plitzi-sdk-devtools.css\')');
-    expect(files['vite.config.ts']).toContain('apply: \'serve\'');
+    expect(files['vite.config.ts']).toContain("require.resolve('@plitzi/plitzi-sdk/plitzi-sdk-devtools.css')");
+    expect(files['vite.config.ts']).toContain("apply: 'serve'");
     // Without it the entry does not typecheck: CSS side-effect imports and `import.meta.env` are its declarations.
     expect(files['tsconfig.json']).toContain('vite/client');
   });
@@ -105,7 +106,7 @@ describe('the scaffold', () => {
     expect(files['README.md']).toContain('yarn visual');
     expect(files['README.md']).not.toContain('npm ');
     // Playwright starts the project itself, so this is the one place a wrong name fails rather than misleads.
-    expect(files['playwright.config.ts']).toContain('command: \'yarn start\'');
+    expect(files['playwright.config.ts']).toContain("command: 'yarn start'");
   });
 
   it('gives npm the `run` its scripts need, and pnpm the short form', () => {
@@ -127,8 +128,8 @@ describe('the scaffold', () => {
   it('names the space after the project, slugging what ids are derived from', () => {
     const source = scaffold(answers({ name: 'My Site' }))['src/space.ts'];
 
-    expect(source).toContain('name: \'My Site\'');
-    expect(source).toContain('permanentUrl: \'my-site\'');
+    expect(source).toContain("name: 'My Site'");
+    expect(source).toContain("permanentUrl: 'my-site'");
     expect(source).not.toContain('New space');
   });
 
@@ -139,14 +140,14 @@ describe('the scaffold', () => {
    * by a React component and a line of registration, and a project with no example of it leaves people assuming
    * the catalogue is the ceiling — so the scaffold ships one, hosted by the space and rendered on the page.
    */
-  it('carries a plugin of the project\'s own, hosted by the space', () => {
+  it("carries a plugin of the project's own, hosted by the space", () => {
     const files = scaffold(answers());
 
     expect(files['src/plugins/StatCard/StatCard.tsx']).toContain('export interface StatCardProps');
     expect(files['src/plugins/StatCard/index.ts']).toContain('export default StatCard');
     expect(files['src/plugins/README.md']).toContain('renderType');
     // The element that renders it, and the attributes that reach the component as props.
-    expect(files['src/space.ts']).toContain('renderType: \'statCard\'');
+    expect(files['src/space.ts']).toContain("renderType: 'statCard'");
     expect(files['src/space.ts']).toContain('"label":"Requests today"');
   });
 
@@ -158,10 +159,10 @@ describe('the scaffold', () => {
     const server = scaffold(answers())['src/main.ts'];
     const client = scaffold(answers({ mode: 'client' }))['src/main.ts'];
 
-    expect(server).toContain('action: \'compile\' as const');
+    expect(server).toContain("action: 'compile' as const");
     expect(server).toContain('plugins/StatCard/index.ts');
     expect(client).toContain('const plugins = { statCard: { component: StatCard } };');
-    expect(client).toContain('import StatCard from \'./plugins/StatCard\';');
+    expect(client).toContain("import StatCard from './plugins/StatCard';");
   });
 
   /**
@@ -201,7 +202,7 @@ describe('the scaffold', () => {
   it('pins the dev server to the address its own tests wait on', () => {
     const files = scaffold(answers({ mode: 'client' }));
 
-    expect(files['vite.config.ts']).toContain('host: \'127.0.0.1\'');
+    expect(files['vite.config.ts']).toContain("host: '127.0.0.1'");
     expect(files['playwright.config.ts']).toContain('127.0.0.1');
   });
 });

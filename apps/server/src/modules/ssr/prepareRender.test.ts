@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { describe, it, expect, vi } from 'vitest';
 
 import { prepareRender } from './prepareRender';
@@ -340,7 +341,7 @@ describe('prepareRender / the fonts the document asks for', () => {
     expect(templateParams.fonts).toEqual({ preconnect: [], links: [], faces: '', origins: [] });
   });
 
-  it('puts the space\'s google families in the document, which is the only place they load in time', async () => {
+  it("puts the space's google families in the document, which is the only place they load in time", async () => {
     const { templateParams } = await render('/', { fonts: [lato] });
     expect(templateParams.fonts?.links).toEqual([
       { href: 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap', rel: 'stylesheet' }

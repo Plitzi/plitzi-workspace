@@ -219,8 +219,8 @@ const BuilderProvider = ({
       type: string,
       data:
         | { elements: Record<string, Element>; baseElement?: Element; style: Style; variables: Schema['variables'] }
-        | { id: string; element: Element }
-        | { id: string; parentId: string; element: Element },
+        | { id?: string; element: Element }
+        | { id?: string; parentId: string; element: Element },
       dropPosition: DropPosition,
       toElementId: string,
       rootId?: string

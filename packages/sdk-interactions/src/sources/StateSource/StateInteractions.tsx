@@ -270,7 +270,15 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
         toggleInState: handleToggleInState,
         clearState: handleClearState
       }),
-    [handleSetState, handleToggleState, handleAppendState, handleRemoveState, handleMoveState, handleToggleInState, handleClearState]
+    [
+      handleSetState,
+      handleToggleState,
+      handleAppendState,
+      handleRemoveState,
+      handleMoveState,
+      handleToggleInState,
+      handleClearState
+    ]
   );
 
   useInteractions({ id: 'state', callbacks: interactionCallbacks });

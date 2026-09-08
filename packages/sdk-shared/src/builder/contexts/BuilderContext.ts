@@ -59,7 +59,7 @@ export type BuilderContextValue = {
     <T extends string>(
       type: `add##${Exclude<T, 'plitzi-template'>}`,
       data: {
-        id: string;
+        id?: string;
         element: Element;
       },
       dropPosition: DropPosition,

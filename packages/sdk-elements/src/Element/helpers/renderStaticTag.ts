@@ -8,7 +8,7 @@ import type { ReactNode, CSSProperties, RefObject, JSX, ReactElement } from 'rea
 // function (not a component) so it does not add its own boundary to the React DevTools tree on every element.
 
 export type StaticTagProps = {
-  tag?: keyof JSX.IntrinsicElements;
+  tag?: keyof JSX.IntrinsicElements | '';
   refProp?: RefObject<HTMLElement | null>;
   style?: CSSProperties;
   className: string;
@@ -32,8 +32,12 @@ const renderStaticTag = ({
   testMarker,
   events,
   children
-}: StaticTagProps): ReactElement =>
-  createElement(
+}: StaticTagProps): ReactElement => {
+  if (tag === '') {
+    return children as ReactElement;
+  }
+
+  return createElement(
     tag,
     {
       ref: refProp as RefObject<HTMLDivElement>,
@@ -47,5 +51,6 @@ const renderStaticTag = ({
     },
     children
   );
+};
 
 export default renderStaticTag;

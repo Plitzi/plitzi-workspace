@@ -28,7 +28,7 @@ type SettingsProps = {
   accessToken?: string;
   headers?: object;
   when?: RuleGroup;
-  subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+  subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure' | '';
   mockData?: string;
   credentials?: RequestCredentials;
   runtime?: ElementRuntime;
@@ -51,7 +51,7 @@ const Settings = ({
   accessToken = '',
   headers = emptyObject,
   when,
-  subType = 'div',
+  subType = '',
   mockData = '{}',
   credentials = 'same-origin',
   runtime = 'client',
@@ -88,6 +88,8 @@ const Settings = ({
   const handleChangeQuery = useCallback((value: string) => onUpdate?.('query', value), [onUpdate]);
 
   const handleChangeWhen = useCallback((whenQuery: RuleGroup) => onUpdate?.('when', whenQuery), [onUpdate]);
+
+  const handleChangeSubType = useCallback((value: string) => onUpdate?.('subType', value), [onUpdate]);
 
   const handleChangeMockData = useCallback((value: string) => onUpdate?.('mockData', value), [onUpdate]);
 
@@ -319,7 +321,8 @@ const Settings = ({
               showBranches
             />
           </div>
-          <Select value={subType} label="Container Tag" onChange={handleChange('subType')} size="xs">
+          <Select value={subType} label="Container Tag" onChange={handleChangeSubType} size="xs">
+            <option value="">None</option>
             <option value="div">Div</option>
             <option value="header">Header</option>
             <option value="footer">Footer</option>

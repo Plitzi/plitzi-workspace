@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { authorSpace, slugify } from '../schema';
 import { space as blankSpaceSpec } from './blank/spec';
 // The declaration's own source, inlined at build time — the copy `plitzi create` writes into a project. Read as
@@ -64,7 +65,7 @@ export const blankSpaceSource = (options: BlankSpaceSourceOptions = {}): string 
 };
 
 /** The one line in the declaration a `custom` element is hung off — the hero, so it lands under the title. */
-const PLUGIN_ANCHOR = 'children: [heading({ id: \'hero-title\', content: \'Welcome To Plitzi\', subType: \'h1\' })]';
+const PLUGIN_ANCHOR = "children: [heading({ id: 'hero-title', content: 'Welcome To Plitzi', subType: 'h1' })]";
 
 /**
  * The copy, with a slot for a component the receiver writes.
@@ -80,12 +81,12 @@ const PLUGIN_ANCHOR = 'children: [heading({ id: \'hero-title\', content: \'Welco
 const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOptions['plugin']>): string => {
   if (!source.includes(PLUGIN_ANCHOR)) {
     throw new Error(
-      'blankSpaceSource: cannot host a plugin — the hero\'s children are not where they were. ' +
+      "blankSpaceSource: cannot host a plugin — the hero's children are not where they were. " +
         'Update PLUGIN_ANCHOR in src/spaces/index.ts to match the declaration.'
     );
   }
 
-  const settings = JSON.stringify(plugin.settings).replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+  const settings = JSON.stringify(plugin.settings).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
   const element = `children: [
             heading({ id: 'hero-title', content: 'Welcome To Plitzi', subType: 'h1' }),
@@ -128,7 +129,7 @@ const replaceLiteral = (source: string, field: string, from: string, to: string)
  * `My Site` has to become `my-site` here — before the documents carry it, not after.
  */
 const renameSpace = (source: string, name: string): string => {
-  const renamed = replaceLiteral(source, 'name', blankSpaceSpec.name, name.replace(/'/g, '\\\''));
+  const renamed = replaceLiteral(source, 'name', blankSpaceSpec.name, name.replace(/'/g, "\\'"));
 
   return replaceLiteral(renamed, 'permanentUrl', blankSpaceSpec.permanentUrl, slugify(name, 'space'));
 };
@@ -182,10 +183,10 @@ export const toPortableSource = (source: string): string => {
     const match = RELATIVE_IMPORT.exec(statement);
     if (!match) {
       // An import of something else — `node:path`, a third-party package — travels with the copy untouched.
-      if (statement.includes('from \'..')) {
+      if (statement.includes("from '..")) {
         throw new Error(
           `toPortableSource: cannot rewrite "${statement}". Only named imports of this package's own modules ` +
-            'can be pointed at @plitzi/sdk-authoring; the blank space\'s declaration must use one.'
+            "can be pointed at @plitzi/sdk-authoring; the blank space's declaration must use one."
         );
       }
 
@@ -222,7 +223,7 @@ export const toPortableSource = (source: string): string => {
   if (/from '\.\.?[/']/.test(portable)) {
     throw new Error(
       'toPortableSource: the copy still refers to a path relative to this package. A file copied into somebody ' +
-        'else\'s project can only import from package names.'
+        "else's project can only import from package names."
     );
   }
 

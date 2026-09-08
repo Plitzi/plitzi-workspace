@@ -117,8 +117,8 @@ const BuilderTree = () => {
 
           try {
             const data = event.dataTransfer.getData(event.dataTransfer.types[0]);
-            const dataParsed = JSON.parse(data) as { element: Element; id: Element['id'] };
-            if (!(dataParsed as unknown) || !(dataParsed.element as Element | undefined) || !dataParsed.id) {
+            const dataParsed = JSON.parse(data) as { element: Element; id?: string };
+            if (!(dataParsed as unknown) || !(dataParsed.element as Element | undefined)) {
               console.warn('Invalid data parsed from drag event', dataParsed);
               return;
             }

@@ -79,9 +79,7 @@ export const appendState = (params: {
  * position `{{ <listSource>.index }}`; either token resolving to nothing removes nothing.
  */
 export const removeState = (
-  params:
-    | { key: string; value: unknown; by?: string }
-    | { key: string; index: string | number }
+  params: { key: string; value: unknown; by?: string } | { key: string; index: string | number }
 ): StepSpec => globalStep('removeState', params);
 
 /**
@@ -99,8 +97,7 @@ export const moveState = (params: { from: string; to: string; value: unknown }):
  * The list is a SET, which is what makes pressing the box twice safe — an append guarded by a check reads the list
  * as it was when the flow started, so two presses in the same tick both add.
  */
-export const toggleInState = (params: { key: string; value: unknown }): StepSpec =>
-  globalStep('toggleInState', params);
+export const toggleInState = (params: { key: string; value: unknown }): StepSpec => globalStep('toggleInState', params);
 
 /**
  * Empties the list at `runtime.state.<key>`, or the whole of `runtime.state` when no key is named.
@@ -117,8 +114,7 @@ export const clearState = (params: { key?: string } = {}): StepSpec => globalSte
  * written in the host's own code: a sidebar, a switcher, an account menu. `action` names a handler the host
  * registered; one it did not register does nothing, the same as any other callback that resolves to nothing.
  */
-export const hostAction = (params: { action: string; value?: unknown }): StepSpec =>
-  globalStep('hostAction', params);
+export const hostAction = (params: { action: string; value?: unknown }): StepSpec => globalStep('hostAction', params);
 
 export const navigate = (params: { urlType: 'page' | 'internal' | 'external'; url: string }): StepSpec =>
   globalStep('navigate', params);
