@@ -12,13 +12,13 @@ import {
   dataSourcesUri,
   defsUri,
   foldersUri,
+  fontsUri,
   interactionsUri,
   layoutsUri,
   pagesUri,
   primerUri,
   schemaVarsUri,
   settingsUri,
-  fontsUri,
   styleVarsUri,
   typesUri
 } from '../helpers';
@@ -61,6 +61,10 @@ interface Section {
   key: string;
   value: unknown;
   read: string;
+  /** What the SPACE grows, measured against the budget. The full `value` may also carry constant built-in
+   *  catalogs that no schema can grow — budgeting those would evict them on a space that did not cause them.
+   *  Defaults to `value` for sections that hold nothing but space-derived data. */
+  measured?: unknown;
 }
 
 const entryCount = (value: unknown): number | undefined => {
@@ -88,11 +92,12 @@ const fit = (sections: Section[], budget: number) => {
   const elided: string[] = [];
   let spent = 0;
 
-  for (const { key, value, read } of sections) {
+  for (const { key, value, measured, read } of sections) {
     const bytes = JSON.stringify(value).length;
-    if (spent + bytes <= budget) {
+    const budgeted = measured === undefined ? bytes : JSON.stringify(measured).length;
+    if (spent + budgeted <= budget) {
       bundle[key] = value;
-      spent += bytes;
+      spent += budgeted;
       continue;
     }
 
@@ -120,6 +125,9 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
     return undefined;
   }
 
+  const interactionCatalog = buildInteractionCatalog(space.schema);
+  const dataSourceCatalog = buildDataSourceCatalog(space.schema);
+
   const { bundle, elided } = fit(
     [
       // The map of the space: which pages exist, which shells they render inside, how they are filed. An agent
@@ -140,10 +148,23 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
       { key: 'fonts', value: fontsToAI(space.style), read: fontsUri(env) },
       { key: 'settings', value: settingsToAI(space.schema), read: settingsUri(env) },
       { key: 'definitions', value: definitionRefs(space.style), read: defsUri(env) },
-      // The three catalogs an agent consults once it has something specific to wire, rather than to orient itself.
-      // Last on purpose: they are the sections a large space grows most, and the ones it least needs up front.
-      { key: 'interactions', value: buildInteractionCatalog(space.schema), read: interactionsUri(env) },
-      { key: 'dataSources', value: buildDataSourceCatalog(space.schema), read: dataSourcesUri(env) },
+      // The two catalogs an agent consults once it has something specific to wire, rather than to orient itself.
+      // Last on purpose: they are the sections a space reads least up front. Both embed the constant built-in
+      // callbacks/transformers an agent needs to WRITE flows and bindings — vocabulary no schema can grow — so the
+      // budget measures only what the space observed in them, and a space with no flows cannot evict their own. The
+      // section value stays the full catalog: the pointer, when elided, still resolves to the same projection.
+      {
+        key: 'interactions',
+        value: interactionCatalog,
+        measured: { actions: interactionCatalog.actions, flowCount: interactionCatalog.flowCount },
+        read: interactionsUri(env)
+      },
+      {
+        key: 'dataSources',
+        value: dataSourceCatalog,
+        measured: { sources: dataSourceCatalog.sources, targets: dataSourceCatalog.targets },
+        read: dataSourcesUri(env)
+      },
       // Summaries only (endpoint/operator NAMES, no manifests): enough to know a space reads a CMS and to wire an
       // element to it, while a manifest stays one read away at plitzi://connectors/{env}/{ref}.
       { key: 'connectors', value: connectorSummaries(space).connectors, read: connectorsUri(env) }
