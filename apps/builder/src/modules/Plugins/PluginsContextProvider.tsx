@@ -237,24 +237,9 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
     [components.current]
   );
 
-  const baseAssets = useMemo<Record<string, Asset>>(
-    () => ({
-      'static-1': {
-        type: 'link',
-        id: 'static-1',
-        params: {
-          type: 'text/css',
-          href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css',
-          rel: 'stylesheet'
-        }
-      }
-    }),
-    []
-  );
-
   const assetsState = useMemo(
-    () => ({ ...baseAssets, ...pluginStyleAssets, ...pluginCustomStyleAssets, ...temporalCustomStyles }),
-    [baseAssets, pluginStyleAssets, pluginCustomStyleAssets, temporalCustomStyles]
+    () => ({ ...pluginStyleAssets, ...pluginCustomStyleAssets, ...temporalCustomStyles }),
+    [pluginStyleAssets, pluginCustomStyleAssets, temporalCustomStyles]
   );
 
   const pluginSettingsStyles = useMemo(() => {
@@ -278,7 +263,6 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
 
   const pluginsContextValue = useMemo(
     () => ({
-      baseAssets,
       assets: assetsState,
       plugins,
       dispatchPlugins,
@@ -293,7 +277,6 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
       pluginSettingsStyles
     }),
     [
-      baseAssets,
       assetsState,
       plugins,
       dispatchPlugins,
