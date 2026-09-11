@@ -4354,6 +4354,7 @@ __metadata:
     react-dom: "npm:^19.2.8"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.1"
+    vitest: "npm:^4.1.10"
   peerDependencies:
     react: ^19
     react-dom: ^19

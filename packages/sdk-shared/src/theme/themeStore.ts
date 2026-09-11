@@ -11,11 +11,23 @@ export const createThemeState = (): ThemeState => ({ mode: 'system', scheme: 'li
  * editor mounted into a portal — and by the odd module that has no component around it at all. A context could
  * serve neither, and every consumer that wanted the answer had to be under the one provider that held it.
  *
- * Module-level and singular on purpose: a browser tab paints one surface. What varies WITHIN it is `areas`, which
- * is a map rather than a second store for the same reason — two stores would need somebody to keep them in step,
- * and "keeping them in step" is the whole of what an area's rule is.
+ * What varies WITHIN a surface is `areas`, which is a map rather than a second store for the same reason — two
+ * stores would need somebody to keep them in step, and "keeping them in step" is the whole of what an area's rule
+ * is.
  */
-const themeStore = createStore<ThemeState>(createThemeState(), { id: 'theme' });
+export const createThemeStore = (id = 'theme') => createStore<ThemeState>(createThemeState(), { id });
+
+export type ThemeStoreInstance = ReturnType<typeof createThemeStore>;
+
+/**
+ * The surface's theme.
+ *
+ * A browser tab usually paints one surface, and this is it — what the dev-tools panel and anything else outside a
+ * provider tree reads. It stops being the only one when a page EMBEDS the SDK in an application that has a theme of
+ * its own (the desktop window, a space mounted in a host): there the embedded surface gets a store of its own from
+ * {@link createThemeStore} and this one keeps belonging to the application around it. See `ThemeProvider`'s `scope`.
+ */
+const themeStore = createThemeStore();
 
 export const resolveScheme = (mode: Theme, scheme: ColorScheme): ColorScheme => (mode === 'system' ? scheme : mode);
 
@@ -31,20 +43,20 @@ export const themeFor = (state: ThemeState, area?: string): Theme =>
  * the preview pane once would find it stuck there for good, deaf to the editor's toggle, which is the complaint
  * that a separate per-area setting always produces.
  */
-export const setThemeMode = (mode: Theme): void => {
-  themeStore.batch(() => {
-    themeStore.setState('mode', mode);
-    themeStore.setState('areas', {});
+export const setThemeMode = (mode: Theme, store: ThemeStoreInstance = themeStore): void => {
+  store.batch(() => {
+    store.setState('mode', mode);
+    store.setState('areas', {});
   });
 };
 
-export const setAreaTheme = (area: string, mode: Theme): void => {
-  themeStore.setState(`areas.${area}`, mode);
+export const setAreaTheme = (area: string, mode: Theme, store: ThemeStoreInstance = themeStore): void => {
+  store.setState(`areas.${area}`, mode);
 };
 
-/** What the machine is asking for. Written only by {@link ThemeProvider}, which is the one subscriber to it. */
-export const setMachineScheme = (scheme: ColorScheme): void => {
-  themeStore.setState('scheme', scheme);
+/** What the machine is asking for. Written only by `ThemeProvider`, which is the one subscriber to it. */
+export const setMachineScheme = (scheme: ColorScheme, store: ThemeStoreInstance = themeStore): void => {
+  store.setState('scheme', scheme);
 };
 
 export default themeStore;

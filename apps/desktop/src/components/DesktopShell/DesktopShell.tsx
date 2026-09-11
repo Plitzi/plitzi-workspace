@@ -105,6 +105,9 @@ const DesktopShell = () => {
       routing="memory"
       renderMode="raw"
       branding={false}
+      // The rail is the window's chrome: it follows the window's theme and never writes to it. See PlitziSdkWrapper.
+      themeScope="container"
+
       previewMode
       hostData={hostData}
       hostActions={hostActions}

@@ -1,7 +1,7 @@
 import { createRecorder } from '@plitzi/nexus';
 
 import { previewValue } from './preview';
-import tracingStore, { MAX_CAUSES, MAX_COMMITS } from './tracingStore';
+import tracingStore, { MAX_CAUSES, MAX_COMMITS, MAX_TREE_NODES } from './tracingStore';
 
 import type { CommitCause, CommitElementRender, CommitEntry, PropChange, TracingTree } from '../../types';
 import type { ProfilerOnRenderCallback } from 'react';
@@ -22,9 +22,13 @@ let commits: CommitEntry[] = [];
 // `CommitEntry`. Filled by `onRender`, drained on flush.
 const pendingByCommit = new Map<number, CommitEntry>();
 
-// Each element's real render-tree parent, registered by `withElement` from the enclosing ElementContext. Captures
+// Each INSTANCE's real render-tree parent, registered by `withElement` from the enclosing ElementContext. Captures
 // cross-schema nesting (a layout inside a page) that the schema `parentId` alone misses.
 const parentOf = new Map<string, string | undefined>();
+
+// Which element each instance is. Registered beside the parent link because React's Profiler hands `onRender` nothing
+// but the id it was given, and a list's hundred rows all answer to the same element id — see `CommitElementRender`.
+const elementOf = new Map<string, string>();
 
 // Last base duration React reported per element, accumulated across all commits. Together with `parentOf` this is the
 // full render tree the viewer needs to reconstruct any commit (including elements that didn't render in it). Mutated
@@ -66,7 +70,7 @@ const schedule = (() => {
 const buildTree = (): TracingTree => {
   const tree: TracingTree = {};
   for (const [id, baseDuration] of baseOf) {
-    tree[id] = { parentId: parentOf.get(id), baseDuration };
+    tree[id] = { parentId: parentOf.get(id), baseDuration, elementId: elementOf.get(id) ?? id };
   }
 
   return tree;
@@ -112,13 +116,24 @@ const flush = () => {
   }
 };
 
-// Called by `withElement` so the collector knows the real render-tree parent of each element.
-const linkParent = (id: string, parentId: string | undefined) => {
+// Called by `withElement` so the collector knows the real render-tree parent of each instance, and which element the
+// instance is — the only place both are known, since React hands `onRender` nothing but the Profiler's id.
+const linkParent = (id: string, parentId: string | undefined, elementId: string) => {
   if (!parentOf.has(id) || parentOf.get(id) !== parentId) {
     treeDirty = true;
   }
 
+  // Started over rather than grown forever — see `MAX_TREE_NODES`. The check is a size read, which is what keeps it
+  // affordable on a path that runs once per element per render.
+  if (parentOf.size >= MAX_TREE_NODES && !parentOf.has(id)) {
+    parentOf.clear();
+    elementOf.clear();
+    baseOf.clear();
+    treeDirty = true;
+  }
+
   parentOf.set(id, parentId);
+  elementOf.set(id, elementId);
 };
 
 // Drains every store write recorded since the previous commit into this commit's causes, deduped by path (net change:
@@ -162,6 +177,7 @@ const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDurat
   pendingPropsById.delete(id);
   const render: CommitElementRender = {
     id,
+    elementId: elementOf.get(id) ?? id,
     parentId: parentOf.get(id),
     phase,
     actualDuration,

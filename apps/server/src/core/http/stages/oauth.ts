@@ -99,7 +99,7 @@ export const createOAuthStage =
     }
 
     if (path === AUTHORIZE_PATH && method === 'POST') {
-      await handleAuthorizeSubmit(oauth, res, formParams(ctx.req, await readRawBody(ctx.raw)));
+      await handleAuthorizeSubmit(oauth, res, formParams(ctx.req, await readRawBody(ctx.raw)), ctx.req);
 
       return true;
     }

@@ -3,7 +3,6 @@ import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { buttonTheme } from '@plitzi/plitzi-ui/Button';
 import { containerCollapsableTheme } from '@plitzi/plitzi-ui/ContainerCollapsable';
 import { containerResizableTheme } from '@plitzi/plitzi-ui/ContainerResizable';
-import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import { containerTabsTheme } from '@plitzi/plitzi-ui/ContainerTabs';
 import { contentEditableTheme } from '@plitzi/plitzi-ui/ContentEditable';
 import { headingTheme } from '@plitzi/plitzi-ui/Heading';
@@ -19,6 +18,7 @@ import { BrowserRouter, MemoryRouter, StaticRouter } from 'react-router-dom';
 import { initClient } from '@modules/App/AppHelper';
 import AppMain from '@modules/App/AppMain';
 import { readDebugPreference, writeDebugPreference } from '@modules/App/debugPreference';
+import ThemedRoot from '@modules/App/ThemedRoot';
 import useDebugShortcut from '@modules/App/useDebugShortcut';
 import sdkComponents from '@modules/Element';
 import SdkPlugin from '@modules/Sdk/SdkPlugin';
@@ -38,6 +38,8 @@ import type { ApolloClient } from '@apollo/client/core';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type {
   AnalyticsConfig,
+  Theme,
+  ThemeScope,
   ComponentPlugin,
   ComponentPluginFC,
   Environment,
@@ -83,6 +85,17 @@ export type AppProps = {
   externalStyle?: string;
   /** Reporting channel for this render — see {@link AnalyticsConfig}. Absent means report nothing. */
   analytics?: AnalyticsConfig;
+  /**
+   * Whose theme this space follows and repaints.
+   *
+   * `document` — the default — is a space that IS the page. `container` is a space EMBEDDED in an application with
+   * a theme of its own (the desktop window, a component mounted in a host): it wears the class on its own root and
+   * keeps a theme store of its own, so toggling it never reaches the application around it, and two spaces in one
+   * document do not answer for each other.
+   */
+  themeScope?: ThemeScope;
+  /** The theme the host already settled — from the cookie a server read before it rendered the document. */
+  theme?: Theme;
   state?: Record<string, unknown>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
@@ -111,6 +124,8 @@ const App = ({
   renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
   routing = 'browser',
   debugMode: debugModeProp = false,
+  themeScope = 'document',
+  theme,
   state,
   ...sdkProps
 }: AppProps) => {
@@ -253,9 +268,12 @@ const App = ({
           : [])
       ]}
     >
-      <ThemeProvider defaultTheme="system">
+      <ThemeProvider defaultTheme="system" scope={themeScope} theme={theme}>
         <Provider components={components}>
-          <ContainerRoot className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}>
+          <ThemedRoot
+            scoped={themeScope === 'container'}
+            className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
+          >
             <HelmetProvider>
               <ReactRouter {...(reactRouterProps as { location: string })}>
                 <ApolloProvider client={client}>
@@ -272,7 +290,7 @@ const App = ({
                 </ApolloProvider>
               </ReactRouter>
             </HelmetProvider>
-          </ContainerRoot>
+          </ThemedRoot>
         </Provider>
       </ThemeProvider>
     </StoreProvider>

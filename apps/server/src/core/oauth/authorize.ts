@@ -108,6 +108,32 @@ const signInWithReturn = (config: OAuthConfig, req: SSRRequest, params: OAuthPar
   return url.toString();
 };
 
+/**
+ * The same address again, rebuilt from the request rather than from the query it arrived as.
+ *
+ * The grant screen is reached by a GET with the parameters in the URL and by a POST with them in hidden fields, and
+ * the "use another account" link has to work on both — so it is built from the parts the request is MADE of, which
+ * both paths already carry, instead of from whichever shape they came in.
+ */
+const authorizeUrlFor = (config: OAuthConfig, req: SSRRequest, request: AuthorizationRequest): string => {
+  const base = config.issuer ?? `https://${req.headers.host ?? ''}`;
+  const url = new URL(AUTHORIZE_PATH, base);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('client_id', request.clientId);
+  url.searchParams.set('redirect_uri', request.redirectUri);
+  url.searchParams.set('code_challenge', request.challenge);
+  url.searchParams.set('code_challenge_method', 'S256');
+  if (request.state !== undefined) {
+    url.searchParams.set('state', request.state);
+  }
+
+  if (request.scope !== undefined) {
+    url.searchParams.set('scope', request.scope);
+  }
+
+  return url.toString();
+};
+
 /** Validates the parts of an authorization request that decide WHERE a failure may be reported. Until the client
  *  and its redirect target check out, nothing may be sent back to the client. */
 const resolveRequest = async (
@@ -243,6 +269,8 @@ const askForTarget = async (
     hidden: hiddenFieldsFor(request, pendingId),
     targets,
     user,
+    // Offered only when the deployment can act on it — see `OAuthAdapters.signOut`.
+    canSwitchUser: config.adapters.signOut !== undefined,
     error,
     branding: config.branding ?? {}
   });
@@ -303,10 +331,32 @@ export const handleAuthorizeStart = async (
 export const handleAuthorizeSubmit = async (
   config: OAuthConfig,
   res: SSRResponseHelpers,
-  params: OAuthParams
+  params: OAuthParams,
+  req: SSRRequest
 ): Promise<void> => {
   const request = await resolveRequest(config, res, params);
   if (!request) {
+    return;
+  }
+
+  /**
+   * "Use another account": end the session and start this same request over.
+   *
+   * Before the pending record is read, because there is nothing to grant — the point is that whoever is signed in
+   * is not who should be. The request goes back out through `signInUrl` exactly as an unidentified visitor's would,
+   * so the sign-in screen brings them here again with the new session in place.
+   */
+  if (config.adapters.signOut && optionalField(params, 'switch')) {
+    const pendingId = optionalField(params, 'pending');
+    if (pendingId) {
+      // The identity it vouched for is the one being abandoned; leaving it redeemable would leave a grant open to
+      // whoever gets the browser next.
+      await dropPending(config.adapters.store, pendingId);
+    }
+
+    await config.adapters.signOut(req, res);
+    redirectToSignIn(res, config.signInUrl, authorizeUrlFor(config, req, request));
+
     return;
   }
 

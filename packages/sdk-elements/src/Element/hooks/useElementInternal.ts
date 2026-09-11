@@ -8,6 +8,7 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
+import { isVisible } from '../helpers/isVisible';
 import { omitKeys } from '../helpers/omitKeys';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
@@ -86,9 +87,17 @@ export type UseElementInternalProps = {
   children?: ReactNode;
   internalProps: InternalPropsSTG1;
   previewMode?: boolean;
+  /** Whether any ancestor is hiding this element — `withElement` has it before this element's own state is resolved. */
+  parentVisible?: boolean;
 };
 
-const useElementInternal = ({ element, children, internalProps, previewMode = false }: UseElementInternalProps) => {
+const useElementInternal = ({
+  element,
+  children,
+  internalProps,
+  previewMode = false,
+  parentVisible = true
+}: UseElementInternalProps) => {
   const { id } = internalProps;
   const { state, setElementState } = useElementState({ id, bindings: element.definition.bindings, previewMode });
   const [[routeParams, queryParams]] = useCommonStore(['navigation.routeParams', 'navigation.queryParams']);
@@ -119,7 +128,8 @@ const useElementInternal = ({ element, children, internalProps, previewMode = fa
       definition: internalPropsParsed.definition,
       plitziElementLayout: internalPropsParsed.plitziElementLayout,
       children,
-      previewMode
+      previewMode,
+      visible: parentVisible && isVisible(internalPropsParsed.elementState.visibility)
     })
   };
 };

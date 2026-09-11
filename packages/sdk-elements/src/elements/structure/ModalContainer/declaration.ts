@@ -21,6 +21,12 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
       description: 'A modal overlay container opened and closed through interactions; use for dialogs over the page.',
       items: [],
       bindings: {},
+      /**
+       * A modal nobody opens is the commonest hidden subtree on a page, and before this it was built, bound and
+       * subscribed on every render of the page it sat in. `lazy` rather than `visible` so what a visitor typed into
+       * one survives closing it — reopening a form that cleared itself is a worse bug than the cost this saves.
+       */
+      loadStrategy: 'lazy',
       styleSelectors: {
         base: '',
         backgroundContainer: '',

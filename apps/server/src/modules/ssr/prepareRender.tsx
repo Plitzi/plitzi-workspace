@@ -1,7 +1,7 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
-import { themeBootScript } from '@plitzi/sdk-shared/theme';
+import { themeFromCookies } from '@plitzi/sdk-shared/theme';
 
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
@@ -154,6 +154,22 @@ export const prepareRender = async (
   // it cannot be what a notice reads — this is the fact that the ACCOUNT is over, and only the server can state it.
   const overQuota = degrade ? true : undefined;
 
+  /**
+   * The visitor's theme, from the cookie the SDK writes it to.
+   *
+   * This is the whole reason it is a cookie and not web storage: read here, the class goes on `<html>` in the
+   * document the server sends, so the page arrives already painted in the right theme — no blocking script in the
+   * head, and no first paint in the other theme for the SDK to correct four hundred milliseconds later.
+   *
+   * It travels to the browser too. The class alone would settle what the page LOOKS like, but a space can bind to
+   * `{{ theme.resolved }}` or gate a rule on the scheme, and a client that started at `system` while the server
+   * rendered `dark` would hydrate different markup and throw away the tree.
+   *
+   * Absent — a first visit — is not a problem to solve: nothing is stamped, `system` is what the provider starts
+   * at, and the stylesheet's media queries answer, which is exactly right.
+   */
+  const theme = themeFromCookies(req.headers.cookie);
+
   const offlineDataStr = escapeJson(
     JSON.stringify({
       offlineData,
@@ -162,6 +178,7 @@ export const prepareRender = async (
       renderMode: 'raw',
       server,
       sdkDevToolsStylePath,
+      ...(theme ? { theme } : {}),
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
       ...(branding ? { branding } : {}),
       ...(overQuota ? { overQuota } : {})
@@ -209,7 +226,8 @@ export const prepareRender = async (
       debugMode: debugRendered,
       sdkDevToolsStylePath,
       branding,
-      overQuota
+      overQuota,
+      theme
     },
     entries,
     templateParams: {
@@ -222,13 +240,13 @@ export const prepareRender = async (
       reactDomClient: vendorJs,
       reactCompilerRuntime: vendorJs,
       /**
-       * The theme, applied before the first paint.
+       * The class this document wears, straight onto `<html>` — see `theme` above.
        *
-       * Default rather than opt-in: every SSR document has this problem — the paint happens before the SDK exists,
-       * so a remembered theme cannot be honoured by anything the SDK does at mount — and a deployment that keeps the
-       * choice somewhere the server can read overrides it with the class it renders itself.
+       * `system` and "never chose" both write nothing, and the silence is the mechanism: the stylesheet's
+       * `prefers-color-scheme` queries are guarded on the absence of these classes, so stamping one would freeze the
+       * page against the machine it is running on.
        */
-      themeBoot: themeBootScript(),
+      themeClass: theme && theme !== 'system' ? theme : undefined,
       /**
        * The space's own families, requested by the document itself.
        *

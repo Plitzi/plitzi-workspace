@@ -75,8 +75,8 @@ export type CommonState = {
    * it and `ThemeProvider` publishes it here. Write through `useTheme`/`setThemeMode`; writing this copy changes
    * the value nobody reads. Same contract `navigation` has below, for the same reason.
    *
-   * Ephemeral: excluded from history (a toggle is not an edit) and not persisted here — `ThemeProvider` remembers
-   * it under its own `storageKey`.
+   * Ephemeral: excluded from history (a toggle is not an edit) and not persisted here — `ThemeProvider` keeps it
+   * in a cookie, which is the one place a server can read it back from.
    */
   theme?: { mode: Theme; resolved: ColorScheme; areas: Record<string, Theme> };
 
@@ -267,7 +267,17 @@ export type PropChange = {
 };
 
 export type CommitElementRender = {
+  /**
+   * This INSTANCE, not this element.
+   *
+   * A controlled list renders the same element once per row, and the element's id is the same string every time. Keyed
+   * by that, a hundred rows collapsed into one node: the flamegraph drew a single row carrying the last instance's
+   * timing, and the ninety-nine renders that made the commit expensive were nowhere in it. This is the identity React
+   * itself uses — one key per mounted component — so the tree the panel draws is the tree that rendered.
+   */
   id: string;
+  /** Which element this instance is, for the label, the schema lookup and the outline on the page. */
+  elementId: string;
   parentId?: string;
   phase: RenderPhase;
   actualDuration: number;
@@ -296,16 +306,20 @@ export type CommitEntry = {
   causes: CommitCause[];
 };
 
-// Accumulated render-tree info for one element, gathered across ALL commits (not just the latest). `parentId` is its
-// real render-tree parent; `baseDuration` is the last value React reported (its no-memoization subtree estimate).
+// Accumulated render-tree info for one element INSTANCE, gathered across ALL commits (not just the latest).
+// `parentId` is its real render-tree parent's instance key; `baseDuration` is the last value React reported (its
+// no-memoization subtree estimate).
 export type TracingTreeNode = {
   parentId?: string;
   baseDuration: number;
+  /** Which element this instance is — see `CommitElementRender.id`. */
+  elementId: string;
 };
 
-// The whole known render tree, keyed by element id. Because it accumulates across commits, the viewer can rebuild the
-// FULL tree for any single commit — including elements that did NOT render in it — so rendered nodes nest under their
-// real (possibly non-rendered) ancestors and self time isn't misattributed, and untouched branches show as hatched.
+// The whole known render tree, keyed by INSTANCE (not by element: a list renders one instance per row). Because it
+// accumulates across commits, the viewer can rebuild the FULL tree for any single commit — including instances that
+// did NOT render in it — so rendered nodes nest under their real (possibly non-rendered) ancestors and self time
+// isn't misattributed, and untouched branches show as hatched.
 export type TracingTree = Record<string, TracingTreeNode>;
 
 /**

@@ -141,13 +141,13 @@ export type SSRTemplateProps = {
   ssrOnly?: boolean;
   debugMode?: boolean;
   /**
-   * The script that settles the theme before the document paints — `themeBootScript()` from this package.
+   * The theme class this document wears on `<html>` — `dark`, `light`, or nothing at all.
    *
-   * Passed in rather than written by the template, because it is `ThemeProvider`'s contract and not the template's:
-   * the storage key, the accepted values and the classes are defined once, next to the provider that honours them.
-   * A host with nothing to remember (or one that already renders the class itself, from a cookie) leaves it out.
+   * The theme is kept in a cookie, so the server that renders the document already knows it: the page arrives
+   * painted correctly, with no blocking script in the head and no first paint in the other theme. Empty is not a
+   * failure — it is `system`, and the stylesheet's `prefers-color-scheme` queries answer it.
    */
-  themeBoot?: string;
+  themeClass?: string;
   /**
    * The document's web fonts: `fontsToHead(style.fonts, ...)` from this package.
    *
@@ -948,6 +948,17 @@ export type OAuthAdapters = {
   identify: (req: SSRRequest) => Promise<OAuthUser | undefined>;
   /** What this user may grant access to. An empty list ends the flow with `access_denied`. */
   grantTargets: (user: OAuthUser) => Promise<OAuthGrantTarget[]>;
+  /**
+   * End whatever session {@link OAuthAdapters.identify} was reading, so the person can connect as somebody else.
+   *
+   * Optional, and its absence is what takes the offer off the grant screen: a deployment that cannot end a session
+   * from here should not show a button that pretends to. Clear the cookies on `res` and revoke at the source —
+   * forgetting the cookie alone leaves the credential working for anyone who already copied it.
+   *
+   * Whoever reaches that screen arrived from another application, so this is the only way out of the wrong account
+   * that does not mean abandoning the connection and starting over from the host.
+   */
+  signOut?: (req: SSRRequest, res: SSRResponseHelpers) => void | Promise<void>;
   /** Mint the bearer the client will send on every MCP request. Return undefined to deny the grant. */
   issueToken: (
     user: OAuthUser,
@@ -1005,6 +1016,16 @@ export type OAuthConsentView = {
   user?: OAuthUser;
   /** Where to send somebody who wants to sign in first. Shown when `user` is absent. */
   signInUrl?: string;
+  /**
+   * Whether to offer "use another account" — shown only when the deployment can act on it, which means it supplied
+   * {@link OAuthAdapters.signOut}.
+   *
+   * A submit BUTTON in the same form rather than a link, and that is not decoration. Ending a session is a state
+   * change, so it may not hang off a URL anything can navigate to: a `<img src>` on any page on the internet would
+   * then be able to sign a visitor out. Posting it here keeps it a same-origin form submission carrying the request
+   * back, exactly like granting does.
+   */
+  canSwitchUser?: boolean;
   /** A message to show the user. */
   error?: string;
   branding: OAuthBranding;
@@ -1023,6 +1044,7 @@ export type OAuthConsentView = {
  *  carries no space ({@link OAuthGrantTarget}) so the public surface stays one consent away. */
 export type OAuthConfig = {
   adapters: OAuthAdapters;
+
   /** The issuer/resource identifier published in the metadata documents. Defaults to the origin the request came
    *  in on, which is correct whenever the server owns its sub-domain; set it when a proxy rewrites the host. */
   issuer?: string;

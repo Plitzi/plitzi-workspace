@@ -66,6 +66,20 @@ const guestButton = (guest: NonNullable<OAuthConsentView['guest']>): string => {
   )}</button>${note}`;
 };
 
+/**
+ * The way out for somebody signed in as the wrong account.
+ *
+ * Under the grant button rather than beside the account name, because it is the escape hatch and not the action:
+ * almost everybody who reaches this screen is who they meant to be, and the ones who are not have no other route
+ * back — they arrived from another application, and the deployment's sign-out page is somewhere they cannot get to
+ * from here without abandoning the connection.
+ *
+ * `formnovalidate` for the same reason the guest button carries it: this submit is not the form's own answer.
+ */
+const switchUserButton = (): string =>
+  '\n      <button class="guest" type="submit" name="switch" value="1" formnovalidate>' +
+  'Use another account</button>';
+
 const targetFields = (view: OAuthConsentView): string => {
   const options = view.targets
     .map((target, index) => {
@@ -81,7 +95,7 @@ const targetFields = (view: OAuthConsentView): string => {
   return `<ul class="targets">
         ${options}
       </ul>
-      <button type="submit">Allow access</button>`;
+      <button type="submit">Allow access</button>${view.canSwitchUser ? switchUserButton() : ''}`;
 };
 
 /** What a visitor who has not signed in is offered: the guest connection, and a way to go and sign in. */

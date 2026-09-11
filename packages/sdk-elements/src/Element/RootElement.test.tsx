@@ -28,6 +28,7 @@ const fullContext = (overrides: Partial<ElementContextValue> = {}): ElementConte
   id: 'el1',
   rootId: 'root',
   visible: true,
+  traceId: 'el1',
   className: 'ctxClass',
   attributes: {},
   definition: { rootId: 'root', label: 'Lbl', type: 'text', styleSelectors: { base: 'baseCls' } },
@@ -64,7 +65,7 @@ describe('RootElement', () => {
 
   it('renders a plain tag with children under plitziJsxSkipHOC', () => {
     const { container, getByText } = renderRoot(
-      { id: 'el1', rootId: 'root', visible: true, plitziJsxSkipHOC: true },
+      { id: 'el1', rootId: 'root', visible: true, traceId: 'el1', plitziJsxSkipHOC: true },
       { tag: 'section', className: 'cls' }
     );
 

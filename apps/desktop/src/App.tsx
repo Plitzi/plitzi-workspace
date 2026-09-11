@@ -3,6 +3,8 @@ import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
 import { useMemo } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
+import { ThemeProvider } from '@plitzi/sdk-shared';
+
 import AppContext from './AppContext';
 import { getEnvironmentServer, resolveEnvironment } from './config/environments';
 import Layout, { LayoutProvider } from './Layout';
@@ -69,19 +71,29 @@ const App = ({ api }: AppProps) => {
    */
   return (
     <AppContext value={app}>
-      <AuthProvider api={client}>
-        <SpacesProvider>
-          <LayoutProvider>
-            <ToastProvider>
-              <ModalProvider>
-                <HashRouter>
-                  <AppRoutes />
-                </HashRouter>
-              </ModalProvider>
-            </ToastProvider>
-          </LayoutProvider>
-        </SpacesProvider>
-      </AuthProvider>
+      {/*
+       * The WINDOW's theme, which is not any space's.
+       *
+       * Every space this window renders is mounted with `themeScope="container"`, so none of them writes the
+       * document class the chrome is drawn against — this does, and it is the only thing that does. `system` by
+       * default because a desktop application that ignores the machine it was installed on looks broken next to
+       * every other window on the screen.
+       */}
+      <ThemeProvider defaultTheme="system" cookieName="plitzi-desktop-theme">
+        <AuthProvider api={client}>
+          <SpacesProvider>
+            <LayoutProvider>
+              <ToastProvider>
+                <ModalProvider>
+                  <HashRouter>
+                    <AppRoutes />
+                  </HashRouter>
+                </ModalProvider>
+              </ToastProvider>
+            </LayoutProvider>
+          </SpacesProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </AppContext>
   );
 };

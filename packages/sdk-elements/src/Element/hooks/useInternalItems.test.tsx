@@ -40,12 +40,13 @@ const el = (id: string, type: string, runtime?: Element['definition']['runtime']
   definition: { rootId: 'root', label: id, type, runtime, styleSelectors: { base: id } }
 });
 
-const def = (items?: string[]): Element['definition'] => ({
+const def = (items?: string[], loadStrategy?: Element['definition']['loadStrategy']): Element['definition'] => ({
   rootId: 'root',
   label: 'host',
   type: 'container',
   styleSelectors: { base: 'host' },
-  items
+  items,
+  loadStrategy
 });
 
 type Props = Parameters<typeof useInternalItems>[0];
@@ -220,5 +221,67 @@ describe('useInternalItems', () => {
 
     expect(container.querySelector('[data-plugin="text"]')).not.toBeNull();
     expect([...container.querySelectorAll('[data-child]')].map(n => n.getAttribute('data-child'))).toEqual(['1', '2']);
+  });
+});
+
+describe('useInternalItems loadStrategy', () => {
+  const flat = { schema: { flat: { a: el('a', 'text') } } };
+  const itemsIn = (container: HTMLElement) => container.querySelectorAll('[data-plugin]').length;
+
+  it('builds a hidden subtree under the default strategy', () => {
+    const { container } = renderItems(
+      { id: 'host', definition: def(['a']), children: undefined, previewMode: true, visible: false },
+      flat
+    );
+
+    expect(itemsIn(container)).toBe(1);
+  });
+
+  it('skips a hidden subtree under lazy until it is first shown', () => {
+    const { container, rerender } = renderItems(
+      { id: 'host', definition: def(['a'], 'lazy'), children: undefined, previewMode: true, visible: false },
+      flat
+    );
+
+    expect(itemsIn(container)).toBe(0);
+
+    rerender(
+      createElement(
+        StoreProvider,
+        { value: { ...flat, rsc: { enabled: false } } },
+        createElement(
+          ComponentContext,
+          { value: { components: { current: {} } } as unknown as ComponentContextValue },
+          createElement(Harness, {
+            id: 'host',
+            definition: def(['a'], 'lazy'),
+            children: undefined,
+            previewMode: true,
+            visible: true
+          })
+        )
+      )
+    );
+
+    expect(itemsIn(container)).toBe(1);
+  });
+
+  it('skips a hidden subtree under visible', () => {
+    const { container } = renderItems(
+      { id: 'host', definition: def(['a'], 'visible'), children: undefined, previewMode: true, visible: false },
+      flat
+    );
+
+    expect(itemsIn(container)).toBe(0);
+  });
+
+  /** The builder is not the runtime: an author has to be able to open and edit what is inside a hidden modal. */
+  it('ignores the strategy outside preview mode', () => {
+    const { container } = renderItems(
+      { id: 'host', definition: def(['a'], 'visible'), children: undefined, previewMode: false, visible: false },
+      flat
+    );
+
+    expect(itemsIn(container)).toBe(1);
   });
 });

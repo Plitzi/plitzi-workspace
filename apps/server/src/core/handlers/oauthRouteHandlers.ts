@@ -131,7 +131,7 @@ export const createOAuthRouteHandlers = ({
       method: 'POST',
       path: '/authorize',
       handle: guarded('POST', '/authorize', async (req, res) =>
-        handleAuthorizeSubmit(config, asHelpers(res), params(req))
+        handleAuthorizeSubmit(config, asHelpers(res), params(req), asRequest(req))
       )
     },
     {

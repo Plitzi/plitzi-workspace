@@ -51,6 +51,8 @@ import type {
   RenderMode,
   Server,
   RuntimeStateInstance,
+  Theme,
+  ThemeScope,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -247,6 +249,16 @@ export type PlitziSdkProps = {
    * quitting. A name the host does not register does nothing.
    */
   hostActions?: HostActions;
+  /**
+   * Whose theme this space follows and repaints. `document` (the default) is a space that IS the page.
+   *
+   * `container` is a space EMBEDDED in an application with a theme of its own: it wears the class on its own root
+   * and keeps a theme store of its own, so toggling it never reaches the application around it, and two spaces in
+   * one document do not answer for each other.
+   */
+  themeScope?: ThemeScope;
+  /** The theme the host already settled — from the cookie a server read before it rendered the document. */
+  theme?: Theme;
 };
 
 const PlitziSdk = ({

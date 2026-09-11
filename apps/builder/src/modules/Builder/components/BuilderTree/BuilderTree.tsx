@@ -1,7 +1,8 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Tree from '@plitzi/plitzi-ui/Tree';
-import { useCallback, use, useMemo } from 'react';
+import clsx from 'clsx';
+import { useCallback, use, useMemo, useState } from 'react';
 
 import { elementIdConflict, slugifyElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
@@ -12,6 +13,7 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import { processPaste } from '@pmodules/Builder/BuilderHelper';
 
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';
+import BuilderTreeSearch from './BuilderTreeSearch';
 import { recursiveMap } from './utils';
 
 import type { DropPosition, TreeChangeState } from '@plitzi/plitzi-ui/Tree';
@@ -39,6 +41,25 @@ const BuilderTree = () => {
   const [openedCache, setOpenedCache] = useStorage<Record<string, boolean>>(
     'builder-state.builderTree.openedCache',
     {}
+  );
+  const [query, setQuery] = useState('');
+
+  /**
+   * Opens the branches a match is buried under, and closes the search on the way.
+   *
+   * The same `openedCache` the tree already reads, so revealing a result and expanding a node by hand are the same
+   * act — an element eight levels down is selected AND visible, rather than selected somewhere the panel is not
+   * showing. Clearing the query is what puts the tree back on screen to show it.
+   */
+  const handleReveal = useCallback(
+    (ancestors: string[]) => {
+      if (ancestors.length > 0) {
+        setOpenedCache(state => ({ ...state, ...Object.fromEntries(ancestors.map(id => [id, true])) }));
+      }
+
+      setQuery('');
+    },
+    [setOpenedCache]
   );
 
   const isDragAllowed = useCallback(
@@ -211,21 +232,30 @@ const BuilderTree = () => {
 
   const itemControls = useMemo(() => <BuilderTreeNodeControls />, []);
 
+  const searching = query.trim() !== '';
+
   return (
-    <Tree
-      className="w-full py-2"
-      size="sm"
-      intent="secondary"
-      items={nodes}
-      itemsOpened={openedCache}
-      itemHovered={elementHovered}
-      itemSelected={elementSelected}
-      itemControls={itemControls}
-      onChange={handleChange}
-      isDragAllowed={isDragAllowed}
-      onCopy={handleCopy}
-      onPaste={handlePaste}
-    />
+    <div className="flex min-h-0 w-full grow basis-0 flex-col">
+      <BuilderTreeSearch query={query} baseElementId={baseElementId} onQueryChange={setQuery} onReveal={handleReveal} />
+      {/* Hidden rather than unmounted: the tree keeps its scroll position and its open branches, so clearing the
+          search puts the author back exactly where they were instead of at the top of a collapsed tree. */}
+      <div className={clsx('min-h-0 grow basis-0 overflow-y-auto', { hidden: searching })}>
+        <Tree
+          className="w-full py-2"
+          size="sm"
+          intent="secondary"
+          items={nodes}
+          itemsOpened={openedCache}
+          itemHovered={elementHovered}
+          itemSelected={elementSelected}
+          itemControls={itemControls}
+          onChange={handleChange}
+          isDragAllowed={isDragAllowed}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
+        />
+      </div>
+    </div>
   );
 };
 

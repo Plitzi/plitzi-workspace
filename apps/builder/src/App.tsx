@@ -374,7 +374,8 @@ const App = (props: AppProps) => {
           : [])
       ]}
     >
-      <ThemeProvider storageKey="builder-state.theme">
+      {/* Its own cookie: the builder and the space it edits share an origin, and the editor's theme is not the page's. */}
+      <ThemeProvider cookieName="builder-theme">
         <Provider components={components}>
           <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
             {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
