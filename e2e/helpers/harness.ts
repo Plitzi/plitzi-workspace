@@ -1,5 +1,6 @@
 import { target } from '../targets';
 
+import type { HarnessRenderOptions } from '../harness/src/Harness/types';
 import type { Page } from '@playwright/test';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
@@ -23,14 +24,21 @@ export const openHarness = async (page: Page): Promise<void> => {
   });
 };
 
-export const renderSpace = async (page: Page, offlineData: OfflineDataRaw): Promise<void> => {
-  await page.evaluate(async data => {
-    const harness = window.plitziHarness;
+export const renderSpace = async (
+  page: Page,
+  offlineData: OfflineDataRaw,
+  options: HarnessRenderOptions = {}
+): Promise<void> => {
+  await page.evaluate(
+    async ([data, renderOptions]) => {
+      const harness = window.plitziHarness;
 
-    if (!harness) {
-      throw new Error('the harness never registered — did the page finish loading?');
-    }
+      if (!harness) {
+        throw new Error('the harness never registered — did the page finish loading?');
+      }
 
-    await harness.render(data);
-  }, offlineData);
+      await harness.render(data, renderOptions);
+    },
+    [offlineData, options] as const
+  );
 };

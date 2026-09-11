@@ -53,8 +53,16 @@ export const categories: Category[] = [
     targets: ['harness'],
     subcategories: [
       { name: 'rendering', what: 'Every element type, the space stylesheet, schemas handed over at runtime' },
-      { name: 'viewports', what: 'The same space from a phone to a wide desktop' }
+      { name: 'viewports', what: 'The same space from a phone to a wide desktop' },
+      { name: 'theme', what: 'Light and dark as a page and as an embedded surface — the colours, not just the class' }
     ]
+  },
+  {
+    name: 'desktop',
+    app: '@plitzi/plitzi-desktop',
+    what: 'The desktop window, its renderer driven in a browser',
+    targets: ['desktop'],
+    subcategories: [{ name: 'theme', what: 'The window’s theme, and the spaces it embeds keeping out of it' }]
   },
   {
     name: 'server',

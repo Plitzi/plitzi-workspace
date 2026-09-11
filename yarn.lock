@@ -3757,6 +3757,7 @@ __metadata:
     "@plitzi/sdk-mcp": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-variables": "workspace:*"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.4"
     "@vitejs/plugin-react": "npm:^6.0.5"
@@ -4630,6 +4631,7 @@ __metadata:
     eslint: "npm:^9.39.5"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.1"
+    vitest: "npm:^4.1.10"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft

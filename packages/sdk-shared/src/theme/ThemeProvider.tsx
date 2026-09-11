@@ -99,13 +99,18 @@ const ThemeProvider = ({
    *
    * A theme the host supplied wins: it is the value the document was already rendered with, and reading the cookie
    * over it would produce the very correction this exists to avoid.
+   *
+   * An embedded surface reads no cookie at all, for the same reason it writes none: the one on this origin belongs
+   * to the page around it — or, on `localhost`, to whichever other app on another port wrote it last. Starting from
+   * it is how a space came up dark inside a desktop window that was light.
    */
   useIsomorphicLayoutEffect(() => {
+    const chosen = scoped ? undefined : readThemeCookie(cookieName);
     store.batch(() => {
       setMachineScheme(machineScheme(), store);
-      setThemeMode(theme ?? readThemeCookie(cookieName) ?? defaultTheme, store);
+      setThemeMode(theme ?? chosen ?? defaultTheme, store);
     });
-  }, [defaultTheme, theme, cookieName, store]);
+  }, [defaultTheme, theme, cookieName, scoped, store]);
 
   const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
   // A host application can mount this with no Plitzi store anywhere above it — the desktop window does, to own the

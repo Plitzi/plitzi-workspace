@@ -38,6 +38,26 @@ describe('ThemeProvider scope', () => {
     expect(document.documentElement.className).toBe('light');
   });
 
+  it('starts the page from the choice in its cookie', () => {
+    document.cookie = 'test-theme=dark;path=/';
+    mount('document', null);
+
+    expect(document.documentElement.className).toBe('dark');
+  });
+
+  /**
+   * The cookie on this origin is the page's, not the embedded space's — and in development the desktop shares
+   * `localhost` with every other app on another port. A space that started from their `theme=dark` came up dark
+   * inside a window that was light.
+   */
+  it('starts an embedded surface from its default, never from the page cookie', () => {
+    document.cookie = 'test-theme=dark;path=/';
+    let embedded: ReturnType<typeof useTheme> | undefined;
+    mount('container', <Reader onValue={value => (embedded = value)} />);
+
+    expect(embedded?.theme).toBe('light');
+  });
+
   /**
    * The desktop window: its chrome reads the document class, and the space it embeds must not be able to repaint it.
    */

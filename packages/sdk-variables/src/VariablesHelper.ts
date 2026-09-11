@@ -105,8 +105,15 @@ export const styleVariablesToCss = (
    * The operating system says one thing and the visitor may say another — a page with a light/dark switch on it —
    * so the media queries answer only while nothing has been chosen (`:not(.light)` / `:not(.dark)` on the root),
    * and the chosen class answers last. A space with no switch never sees a class and behaves exactly as before.
+   *
+   * The class rule is written TWICE, and the second half is not redundant: `:root.dark` matches the document
+   * element and nothing else, so a space rendered inside a host that themes it by putting the class on the SDK's
+   * own container — the desktop window, an embedded component — had a palette no switch could reach. `.dark` on
+   * its own matches wherever the class lands and sets the properties on that element, which every descendant then
+   * inherits. Both are kept because at the root they are the same declarations at different specificities, and the
+   * higher one is what keeps the media query above from out-ranking it.
    */
-  const scoped = (mode: 'light' | 'dark') => (name === ':root' ? `${name}.${mode}` : `.${mode} ${name}`);
+  const scoped = (mode: 'light' | 'dark') => (name === ':root' ? `${name}.${mode}, .${mode}` : `.${mode} ${name}`);
   const unless = (mode: 'light' | 'dark') =>
     name === ':root' ? `${name}:not(.${mode})` : `:root:not(.${mode}) ${name}`;
 

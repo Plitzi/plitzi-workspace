@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { app, BrowserWindow, ipcMain, Menu, protocol, safeStorage, session, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, nativeTheme, protocol, safeStorage, session, shell } from 'electron';
 
 import { contentSecurityPolicy } from './contentSecurityPolicy';
 import { APP_ORIGIN, APP_SCHEME, SIGN_IN_CHANNEL, STORE_CHANNEL } from './contract';
@@ -80,7 +80,10 @@ const createWindow = async (): Promise<void> => {
     minWidth: 900,
     minHeight: 640,
     autoHideMenuBar: !isDev,
-    backgroundColor: '#101013',
+    // The ground shown before the renderer paints, in the scheme it is about to paint in: a fixed dark one flashed on
+    // every light machine at launch. The window's theme defaults to `system`, which is exactly what this reads.
+    // zinc-950 / zinc-50, the `LayoutMain` background.
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#09090b' : '#fafafa',
     show: false,
     webPreferences: {
       preload: path.join(dirname, 'preload.cjs'),

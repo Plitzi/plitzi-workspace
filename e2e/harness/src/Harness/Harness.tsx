@@ -2,7 +2,7 @@ import { offlineData as sharedSpace } from '@plitzi/example-space/browser';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { HarnessState } from './types';
+import type { HarnessRenderOptions, HarnessState } from './types';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /** A page whose only job is to render whatever schema a test hands it.
@@ -12,14 +12,14 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
  *  protect — it renders the shared space by default and any other space on request, which is what makes a
  *  visual regression reproducible without a backend, an account or a fixture file. */
 const Harness = () => {
-  const [state, setState] = useState<HarnessState>({ nonce: 0, offlineData: sharedSpace });
+  const [state, setState] = useState<HarnessState>({ nonce: 0, offlineData: sharedSpace, options: {} });
   const settleRef = useRef<(() => void) | null>(null);
 
   const renderSpace = useCallback(
-    (offlineData: OfflineDataRaw) =>
+    (offlineData: OfflineDataRaw, options: HarnessRenderOptions = {}) =>
       new Promise<void>(resolve => {
         settleRef.current = resolve;
-        setState(current => ({ nonce: current.nonce + 1, offlineData }));
+        setState(current => ({ nonce: current.nonce + 1, offlineData, options }));
       }),
     []
   );
@@ -41,7 +41,14 @@ const Harness = () => {
 
   return (
     <div id="plitzi-harness" data-nonce={state.nonce}>
-      <PlitziSdk key={state.nonce} offlineMode offlineData={state.offlineData} environment="main" renderMode="raw" />
+      <PlitziSdk
+        key={state.nonce}
+        offlineMode
+        offlineData={state.offlineData}
+        environment="main"
+        renderMode="raw"
+        themeScope={state.options.themeScope}
+      />
     </div>
   );
 };

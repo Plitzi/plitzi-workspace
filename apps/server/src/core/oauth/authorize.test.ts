@@ -114,7 +114,7 @@ describe('the grant screen / posting "use another account"', () => {
     const { config, store } = setup(vi.fn());
     const { res, sent } = capture();
     // The pending record the grant screen minted, which the form carries back.
-    void store.put('oauth:pending:p1', JSON.stringify({ clientId: CLIENT.clientId, user: { id: '7', label: 'ada' } }));
+    store.put('oauth:pending:p1', JSON.stringify({ clientId: CLIENT.clientId, user: { id: '7', label: 'ada' } }));
     await handleAuthorizeSubmit(config, res, { ...params, switch: '1', pending: 'p1' }, request);
 
     return { config, store, sent };
