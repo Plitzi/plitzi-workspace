@@ -19,7 +19,6 @@ export type CustomProps = {
   renderType?: string;
   settings?: string;
   isPlugin?: boolean;
-  pluginScope?: string;
   assets?: string;
   scriptUrl?: string;
 };
@@ -30,7 +29,6 @@ const Custom = ({
   renderType = '',
   settings = '{}',
   isPlugin = false,
-  pluginScope = '',
   assets = '',
   scriptUrl = ''
 }: CustomProps) => {
@@ -93,8 +91,8 @@ const Custom = ({
     };
   }, [assetsParsed, registerCustomAssets, unregisterCustomAssets]);
 
-  if (isPlugin && scriptUrl && pluginScope && !settingsMalformed) {
-    return <PluginRemote url={scriptUrl} scope={pluginScope} internalProps={internalPropsMemo} autoRegister={false} />;
+  if (isPlugin && scriptUrl && !settingsMalformed) {
+    return <PluginRemote url={scriptUrl} internalProps={internalPropsMemo} autoRegister={false} />;
   }
 
   const Plugin = components.current[renderType] as ComponentPluginWithHOC | undefined;

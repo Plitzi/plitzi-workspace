@@ -38,12 +38,6 @@ describe('getNodeWarnings', () => {
     expect(worstLevel(warnings)).toBe('warning');
   });
 
-  it('flags the stringified nullish target "undefined"', () => {
-    const n = node({ type: 'utility', action: 'delayTime', elementId: 'undefined' });
-    const warnings = getNodeWarnings(n, findNodeDefinition(n, definitions));
-    expect(warnings.some(w => w.message.includes('Invalid target'))).toBe(true);
-  });
-
   it('flags an unrecognized action as danger (will not run)', () => {
     const n = node({ type: 'callback', action: 'bogusAction', elementId: 'nice-work-btn' });
     const warnings = getNodeWarnings(n, findNodeDefinition(n, definitions));

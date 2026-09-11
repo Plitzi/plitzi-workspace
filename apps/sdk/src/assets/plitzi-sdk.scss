@@ -21,8 +21,9 @@
   /**
    * What the theme classes MEAN, declared where the classes are written.
    *
-   * `ThemeProvider` puts them on the document (and `themeBootScript` puts them there before the first paint), so the
-   * SDK owns them — and until this was here, owning them stopped at adding a class: the document went on being a
+   * `ThemeProvider` puts them on the document — or on the SDK's own root when the space is embedded, and the server
+   * renders the same class from the theme cookie before the first paint — so the SDK owns them. Until this was here,
+   * owning them stopped at adding a class: the document went on being a
    * light one, and every space had to declare `color-scheme` in its own custom CSS to make the browser agree. One of
    * them forgetting is not a missing preference, it is white text nobody chose or black text on black.
    *

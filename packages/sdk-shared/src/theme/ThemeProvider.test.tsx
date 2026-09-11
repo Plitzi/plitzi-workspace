@@ -32,6 +32,21 @@ describe('ThemeProvider scope', () => {
     act(() => setThemeMode('system'));
   });
 
+  /** A surface that states no default follows the machine: nothing is stamped, so the media queries answer. */
+  it('leaves the choice to the machine when nothing was chosen and no default was given', () => {
+    let surface: ReturnType<typeof useTheme> | undefined;
+    render(
+      <StoreProvider value={{}}>
+        <ThemeProvider cookieName="test-theme">
+          <Reader onValue={value => (surface = value)} />
+        </ThemeProvider>
+      </StoreProvider>
+    );
+
+    expect(surface?.theme).toBe('system');
+    expect(document.documentElement.className).toBe('');
+  });
+
   it('stamps the document when the surface is the page', () => {
     mount('document', null);
 

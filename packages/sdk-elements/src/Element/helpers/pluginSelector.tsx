@@ -37,11 +37,9 @@ export const getRemoteSettings = ({
   }
 
   const pluginAssets = get(pluginDefinition, 'assets', []).filter(asset => asset.type === 'script');
-  const { scope } = pluginDefinition;
 
   return {
-    url: pluginAssets.find(asset => asset.isMain)?.params.src ?? get(pluginAssets, '0.params.src', ''),
-    scope
+    url: pluginAssets.find(asset => asset.isMain)?.params.src ?? get(pluginAssets, '0.params.src', '')
   };
 };
 
@@ -68,9 +66,7 @@ const pluginSelector = ({
 
   const remoteSettings = getRemoteSettings({ type, plugins });
   if (remoteSettings) {
-    return (
-      <PluginRemote key={key} url={remoteSettings.url} scope={remoteSettings.scope} internalProps={internalProps} />
-    );
+    return <PluginRemote key={key} url={remoteSettings.url} internalProps={internalProps} />;
   }
 
   return PluginNotFound;

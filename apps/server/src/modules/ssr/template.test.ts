@@ -80,9 +80,8 @@ describe('the SSR document / the theme', () => {
     expect(withTheme()).toContain('<html lang="en">');
   });
 
-  /** The blocking script this replaced: nothing in the head runs to settle the theme any more. */
+  /** The server already knew the theme, so nothing in the head runs to settle it before the first paint. */
   it('ships no script for a theme the server already knew', () => {
     expect(withTheme('dark')).not.toContain('classList.add');
-    expect(withTheme('dark')).not.toContain('themeBoot');
   });
 });

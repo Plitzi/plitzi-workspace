@@ -1,27 +1,4 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
-import * as React from 'react';
-import * as ReactJSX from 'react/jsx-runtime';
-import * as ReactDOM from 'react-dom';
-
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-
-import ComponentProvider from '../../Component/ComponentProvider';
-import RootElement from '../RootElement';
-
 import type { ComponentPlugin } from '@plitzi/sdk-shared';
-
-type PlitziModuleLegacy = {
-  default?: (
-    plitziModule: PlitziModuleLegacy,
-    args: { window: Window; document: Document; Navigator: Navigator; navigator: Window['navigator'] } | undefined,
-    externals: Record<string, object>
-  ) => Promise<{ default: ComponentPlugin } & ComponentPlugin>;
-  ComponentProvider: typeof ComponentProvider;
-  ComponentContext: typeof ComponentContext;
-  usePlitziServiceContext: typeof usePlitziServiceContext;
-  RootElement: typeof RootElement;
-};
 
 export type PlitziModule = {
   default: ComponentPlugin;
@@ -30,43 +7,22 @@ export type PlitziModule = {
   plugins?: Record<string, ComponentPlugin>;
 };
 
-export const generatePluginModule = async (url: string, asESM = true, pluginScope = '') => {
-  let Module: PlitziModule;
+/**
+ * A remote plugin, fetched and imported as an ES module.
+ *
+ * Always as a module, whatever the URL is called: nothing about an address says which format it serves, and every
+ * plugin the template builds is ESM. There is no second path for the webpack bundles that registered themselves on a
+ * `window` global — nothing produces those any more.
+ */
+export const generatePluginModule = async (url: string): Promise<PlitziModule | undefined> => {
   try {
-    if (asESM) {
-      const response = await fetch(url);
-      const moduleBlob = new Blob([await response.text()], { type: 'text/javascript' });
-      Module = (await import(
-        /* @vite-ignore */ /* webpackIgnore: true */ URL.createObjectURL(moduleBlob)
-      )) as PlitziModule;
-    } else {
-      const plitziModules: PlitziModuleLegacy = {
-        default: undefined, // we dont need default export, normally should be PlitziSdk
-        ComponentProvider,
-        ComponentContext,
-        usePlitziServiceContext,
-        RootElement
-      };
+    const response = await fetch(url);
+    const moduleBlob = new Blob([await response.text()], { type: 'text/javascript' });
 
-      const externals = {
-        __WEBPACK_EXTERNAL_MODULE_react__: React,
-        __WEBPACK_EXTERNAL_MODULE_react_dom__: ReactDOM,
-        __WEBPACK_EXTERNAL_MODULE_react_jsx_runtime__: ReactJSX,
-        __WEBPACK_EXTERNAL_MODULE__plitzi_plitzi_sdk__: plitziModules
-      };
-
-      const ModuleWrapper = get(window, `plitziPlugins.${pluginScope}`) as PlitziModuleLegacy['default'] | undefined;
-      if (!ModuleWrapper || typeof ModuleWrapper !== 'function') {
-        return undefined;
-      }
-
-      // Pass down SDK webpack context
-      Module = (await ModuleWrapper(plitziModules, undefined, externals)) as PlitziModule;
-    }
+    return (await import(/* @vite-ignore */ /* webpackIgnore: true */ URL.createObjectURL(moduleBlob))) as PlitziModule;
   } catch (e) {
     console.log(e);
+
     return undefined;
   }
-
-  return Module;
 };

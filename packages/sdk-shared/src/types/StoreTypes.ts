@@ -21,9 +21,6 @@ export type RuntimeSourceValues = {
   // Whatever the application EMBEDDING this space handed it, mirrored from `runtime.host`. Empty for a space that
   // is the page: nobody is embedding it, so nobody has anything to hand it.
   host?: Record<string, unknown>;
-  /** @deprecated Use the `state` source (mirrors `runtime.state`). Kept as an alias so existing `page.*` bindings keep
-   * working; it still carries the runtime state plus `currentPageId`. */
-  page?: Record<string, unknown>;
 };
 
 export type CommonState = {

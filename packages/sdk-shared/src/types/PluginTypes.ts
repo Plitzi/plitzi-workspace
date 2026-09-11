@@ -87,9 +87,7 @@ export type Plugin = {
   isMain?: boolean;
   manifest: PluginManifest;
   market: ComponentDefinition['market'];
-  module: string;
   resource: string;
-  scope: string;
   settings: Record<string, unknown>;
   subPlugins?: string[];
   type: string;

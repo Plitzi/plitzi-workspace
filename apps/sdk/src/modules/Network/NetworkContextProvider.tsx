@@ -221,7 +221,7 @@ const NetworkContextProvider = ({
   const initOfflineData = async () => {
     let plugins = {};
     if (offlineData?.plugins && offlineData.plugins.length > 0) {
-      // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, scope, module, settings, subPlugins
+      // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, settings, subPlugins
       plugins = await pluginParseDefinition(
         offlineData.plugins.filter(plugin => !(components.current[plugin.type] as undefined | ComponentPluginWithHOC))
       );

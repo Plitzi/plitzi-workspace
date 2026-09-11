@@ -13,7 +13,6 @@ const getComponentDefinition = (
   try {
     const { resource, settings, type } = pluginRaw;
     const {
-      runtime: { scope = '', module = '' },
       definition: {
         // eslint-disable-next-line quotes
         name = "Plitzi's Demo Plugin",
@@ -71,8 +70,6 @@ const getComponentDefinition = (
               return ['.css', '.js', '.mjs', '.cjs'].some(ext => src.endsWith(ext));
             })
             .map(manifestAsset => manifestAssetToAsset(resource, manifestAsset)),
-          scope,
-          module,
           subPlugins
         }
       };

@@ -1,8 +1,39 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildRscCacheKey } from './keys';
+import { buildHtmlCacheKey, buildRscCacheKey } from './keys';
 
-const req = (path: string, search = '', hostname = 'site.example.com') => ({ hostname, path, search });
+const req = (path: string, search = '', hostname = 'site.example.com', cookie?: string) => ({
+  hostname,
+  path,
+  search,
+  headers: { cookie }
+});
+
+/**
+ * The rendered document wears the visitor's theme — on `<html>` and in the props the SDK hydrates with — so two
+ * visitors with different choices must never be handed the same cached copy.
+ */
+describe('buildHtmlCacheKey', () => {
+  const html = (cookie?: string) =>
+    buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.example.com', cookie));
+
+  it('separates a visitor who chose dark from one who chose light', () => {
+    expect(html('theme=dark')).not.toBe(html('theme=light'));
+  });
+
+  it('separates a visitor with a choice from one with none', () => {
+    expect(html('theme=dark')).not.toBe(html());
+  });
+
+  it('is not split by cookies that do not change the document', () => {
+    expect(html('theme=dark; _ga=GA1.2.3; consent=yes')).toBe(html('_ga=other; theme=dark'));
+    expect(html('_ga=GA1.2.3')).toBe(html());
+  });
+
+  it('ignores a theme cookie holding something that is not a theme', () => {
+    expect(html('theme=purple')).toBe(html());
+  });
+});
 
 describe('buildRscCacheKey', () => {
   it('separates two routes of the same space, environment and revision', () => {

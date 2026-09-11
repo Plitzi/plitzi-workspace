@@ -72,7 +72,7 @@ const ThemeMirror = ({ state }: { state: ThemeState }) => {
  * that is still light.
  */
 const ThemeProvider = ({
-  defaultTheme = 'dark',
+  defaultTheme = 'system',
   theme,
   scope = 'document',
   cookieName = THEME_COOKIE_NAME,

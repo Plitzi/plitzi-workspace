@@ -1114,17 +1114,9 @@
       "types": "./dist/theme/index.d.ts",
       "import": "./dist/theme/index.mjs"
     },
-    "./theme/themeBoot": {
-      "types": "./dist/theme/themeBoot.d.ts",
-      "import": "./dist/theme/themeBoot.mjs"
-    },
     "./theme/themeCookie": {
       "types": "./dist/theme/themeCookie.d.ts",
       "import": "./dist/theme/themeCookie.mjs"
-    },
-    "./theme/themeStorage": {
-      "types": "./dist/theme/themeStorage.d.ts",
-      "import": "./dist/theme/themeStorage.mjs"
     },
     "./theme/themeStore": {
       "types": "./dist/theme/themeStore.d.ts",
