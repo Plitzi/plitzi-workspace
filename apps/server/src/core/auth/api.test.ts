@@ -180,13 +180,42 @@ describe('signing in', () => {
     expect(verifyPassword).not.toHaveBeenCalled();
   });
 
-  it('refuses an inactive account before looking at its password', async () => {
+  it('refuses an inactive account, and says so as an inactive one', async () => {
     const api = build({ findByUsername: () => Promise.resolve({ ...ada, active: false }) });
 
     expect(await api.login({ username: 'ada', password: 'pw' })).toMatchObject({
       ok: false,
-      body: { error: 'Account is not active' }
+      body: { error: 'Account is not active', reason: 'inactive' }
     });
+  });
+
+  /**
+   * An address that has never answered is not a wrong password, and the person holding it is the only one who can
+   * fix it. Saying which it was is the whole reason a sign-in screen can offer to send the mail again.
+   */
+  it('tells an unconfirmed address apart from a refused credential', async () => {
+    const api = build({ findByUsername: () => Promise.resolve({ ...ada, active: false, verified: false }) });
+
+    expect(await api.login({ username: 'ada', password: 'pw' })).toMatchObject({
+      ok: false,
+      status: 401,
+      body: { error: 'Account is not verified', reason: 'unverified' }
+    });
+  });
+
+  /**
+   * And it is said to the owner only. Before the password check, "that account is not verified" answered anybody who
+   * typed an address with a guess — which is a list of this deployment's accounts, handed out two requests at a time.
+   */
+  it('says nothing about an account to somebody who has not proved it is theirs', async () => {
+    const api = build({ findByUsername: () => Promise.resolve({ ...ada, active: false, verified: false }) });
+
+    expect(await api.login({ username: 'ada', password: 'nope' })).toMatchObject({
+      ok: false,
+      status: 401,
+      body: { error: 'Invalid credentials' }
+    });
+    expect((await api.login({ username: 'ada', password: 'nope' })).body).not.toHaveProperty('reason');
   });
 });
 

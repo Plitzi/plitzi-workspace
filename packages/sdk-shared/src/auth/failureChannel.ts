@@ -27,7 +27,16 @@ export const onAuthFailure = (listener: AuthFailureListener): (() => void) => {
   return () => listeners.delete(listener);
 };
 
-const REASONS: AuthFailureReason[] = ['missing', 'expired', 'revoked', 'inactive', 'malformed', 'outdated', 'network'];
+const REASONS: AuthFailureReason[] = [
+  'missing',
+  'expired',
+  'revoked',
+  'inactive',
+  'unverified',
+  'malformed',
+  'outdated',
+  'network'
+];
 
 /**
  * What an HTTP refusal means for the session. Stated once, because the provider and the network layers must not

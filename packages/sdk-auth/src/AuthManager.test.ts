@@ -50,7 +50,7 @@ describe('a space that names no provider', () => {
 
     expect(manager.getProvider()).toBeUndefined();
     expect(manager.can('spaceUpdate')).toBe(false);
-    await expect(manager.login({})).resolves.toBeUndefined();
+    await expect(manager.login({})).resolves.toEqual({ ok: false, reason: 'missing' });
     await expect(manager.refresh()).resolves.toBeUndefined();
     await expect(manager.revalidate()).resolves.toBe(false);
     await expect(manager.logout()).resolves.toBeUndefined();

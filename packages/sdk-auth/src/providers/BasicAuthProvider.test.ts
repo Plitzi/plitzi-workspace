@@ -52,10 +52,9 @@ describe('BasicAuthProvider grants', () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
     mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
 
-    const token = await provider.login({ username: 'ada', password: 'pw' });
+    const outcome = await provider.login({ username: 'ada', password: 'pw' });
 
-    expect(token?.accessToken).toBe('token');
-    expect(token?.refreshToken).toBe('refresh');
+    expect(outcome).toMatchObject({ ok: true, accessToken: 'token', refreshToken: 'refresh' });
     expect(provider.user).toMatchObject({ username: 'ada' });
     expect(provider.getState()).toBe('authenticated');
     // The grant carried the user, so nothing had to ask who signed in.
@@ -91,7 +90,21 @@ describe('BasicAuthProvider grants', () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
     mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Invalid credentials', reason: 'missing' }, 401));
 
-    expect(await provider.login({ username: 'ada', password: 'wrong' })).toBeUndefined();
+    expect(await provider.login({ username: 'ada', password: 'wrong' })).toEqual({ ok: false, reason: 'missing' });
+    expect(provider.getState()).toBe('guest');
+  });
+
+  /**
+   * The refusal a person can actually do something about, carried through by name.
+   *
+   * Every refusal used to arrive as `undefined`, so the screen had one sentence for all of them and it was "that
+   * email or password was not right" — said to somebody whose password was right and whose inbox has the link.
+   */
+  it('names an unconfirmed address rather than folding it in with a wrong password', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Account is not verified', reason: 'unverified' }, 401));
+
+    expect(await provider.login({ username: 'ada', password: 'pw' })).toEqual({ ok: false, reason: 'unverified' });
     expect(provider.getState()).toBe('guest');
   });
 });
@@ -392,9 +405,9 @@ describe('signing in with a token the page already holds', () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
     mockFetch.mockResolvedValueOnce(jsonResponse({ details: { id: 1, username: 'ada' } }));
 
-    const token = await provider.login({ mode: 'token', token: 'handed-over' });
+    const outcome = await provider.login({ mode: 'token', token: 'handed-over' });
 
-    expect(token?.accessToken).toBe('handed-over');
+    expect(outcome).toMatchObject({ ok: true, accessToken: 'handed-over' });
     expect(mockFetch).toHaveBeenCalledTimes(1);
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -408,14 +421,14 @@ describe('signing in with a token the page already holds', () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
     mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Token Invalid', reason: 'revoked' }, 401));
 
-    expect(await provider.login({ mode: 'token', token: 'stale' })).toBeUndefined();
+    expect(await provider.login({ mode: 'token', token: 'stale' })).toEqual({ ok: false, reason: 'revoked' });
     expect(provider.token).toBeUndefined();
   });
 
   it('refuses an empty token without asking anyone', async () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
 
-    expect(await provider.login({ mode: 'token', token: '   ' })).toBeUndefined();
+    expect(await provider.login({ mode: 'token', token: '   ' })).toMatchObject({ ok: false });
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
@@ -479,7 +492,7 @@ describe('a space that declared no endpoint', () => {
   it('does not sign in against the page it is rendered on', async () => {
     const provider = new BasicAuthProvider({ ...plitziApi, loginUrl: '' });
 
-    expect(await provider.login({ username: 'ada', password: 'pw' })).toBeUndefined();
+    expect(await provider.login({ username: 'ada', password: 'pw' })).toMatchObject({ ok: false });
     expect(mockFetch).not.toHaveBeenCalled();
   });
 

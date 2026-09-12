@@ -406,6 +406,17 @@ const LIFETIME = {
 
 const STATUSES: AccountStatus[] = ['active', 'inactive', 'blocked'];
 
+/**
+ * Why an account may not hold a session, when it may not.
+ *
+ * `active` answers whether it may sign in at all; `verified` answers whether its owner can do anything about that.
+ * A deployment where confirming an address is what makes an account active — Plitzi is one — refuses both through
+ * the same flag, so a screen told only `inactive` has to tell somebody whose address has simply never answered that
+ * their password was wrong. It was, in fact, right.
+ */
+const deniedReason = (account?: { verified: boolean }): AuthFailure =>
+  account && !account.verified ? 'unverified' : 'inactive';
+
 /** An account as it may be shown. Never the password hash, and never the credentials — not even to an admin. */
 const profileOf = (account: AccountRecord) => ({
   id: account.id,
@@ -764,16 +775,26 @@ export const createAuthApi = ({
         return refuse(401, 'Invalid credentials');
       }
 
-      if (!account.active) {
-        return refuse(401, 'Account is not active');
-      }
-
       // An account created through an identity provider carries no password. Never compare an empty hash: password
       // sign-in stays closed for it until its owner sets one through the reset flow.
       if (!account.passwordHash || !(await verifyPassword(password, account.passwordHash))) {
         record({ type: 'login.failed', userId: account.id, carrier, detail: { username } });
 
         return refuse(401, 'Invalid credentials');
+      }
+
+      /**
+       * Whether this account may hold a session — asked AFTER the password, and that order is the point.
+       *
+       * Anything said about an account before its password is checked is said to anybody who types an address. The
+       * other way round, "that address has not been confirmed" once cost nothing to establish: two attempts with a
+       * made-up password told a stranger which of a list of addresses have accounts here and which do not. It is
+       * only a refusal somebody has earned the right to understand once they have proved the account is theirs.
+       */
+      if (!account.active) {
+        const reason = deniedReason(account);
+
+        return refuse(401, authFailureMessage[reason], reason);
       }
 
       /**
@@ -827,7 +848,9 @@ export const createAuthApi = ({
       }
 
       if (!account.active) {
-        return refuse(401, 'Account is not active', 'inactive');
+        const reason = deniedReason(account);
+
+        return refuse(401, authFailureMessage[reason], reason);
       }
 
       const stored = mfa.recoveryCodes ?? [];
@@ -933,7 +956,9 @@ export const createAuthApi = ({
 
         const account = stored.userId === undefined ? undefined : await adapters.findById?.(stored.userId);
         if (!account?.active) {
-          return refuse(401, 'Account is not active', 'inactive');
+          const reason = deniedReason(account);
+
+          return refuse(401, authFailureMessage[reason], reason);
         }
 
         /**
@@ -1094,7 +1119,9 @@ export const createAuthApi = ({
       }
 
       if (!account.active) {
-        return { ...refuse(401, 'Account is not active', 'inactive'), endSession: true };
+        const reason = deniedReason(account);
+
+        return { ...refuse(401, authFailureMessage[reason], reason), endSession: true };
       }
 
       const cap = tokens.lifetimes.session;

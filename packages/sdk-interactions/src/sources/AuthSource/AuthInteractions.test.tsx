@@ -11,7 +11,7 @@ import type { InteractionsContextValue } from '../../InteractionsContext';
 import type { AuthContextValue, InteractionCallback } from '@plitzi/sdk-shared';
 
 const authValue = {
-  login: () => Promise.resolve(undefined),
+  login: () => Promise.resolve({ ok: false as const, reason: 'missing' as const }),
   refresh: () => Promise.resolve(undefined),
   logout: () => Promise.resolve(),
   can: () => false,

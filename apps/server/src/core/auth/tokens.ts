@@ -66,7 +66,12 @@ export type AuthFailure =
   | 'issuer-not-allowed'
   | 'origin-not-allowed'
   | 'domain-not-allowed'
-  | 'inactive';
+  | 'inactive'
+  /**
+   * The password was right and the address has never answered. Separate from `inactive` because it is the one
+   * refusal whose owner can clear it themselves, and a screen that cannot tell them apart has to guess.
+   */
+  | 'unverified';
 
 export const authFailureMessage: Record<AuthFailure, string> = {
   missing: 'Authentication required',
@@ -81,7 +86,8 @@ export const authFailureMessage: Record<AuthFailure, string> = {
   'issuer-not-allowed': 'Token was issued by another environment',
   'origin-not-allowed': 'Access Not Authorized',
   'domain-not-allowed': 'This token is not allowed on this domain',
-  inactive: 'Account is not active'
+  inactive: 'Account is not active',
+  unverified: 'Account is not verified'
 };
 
 const DAY = 86400;

@@ -53,7 +53,21 @@ export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
         when: params => params.mode === 'token'
       }
     },
-    preview: { errors: { username: '', password: '', token: '' }, accessToken: '', expiresAt: '', refreshToken: '' }
+    /**
+     * `ok` and `reason` are half of what a sign-in screen is for. A refusal resolves `{ ok: false, reason }` and
+     * nothing else — `unverified` for an address that has never answered, `inactive` for an account that may not be
+     * used, `network` for a backend that said nothing at all — so the page can write the sentence that is true
+     * instead of the one that covers every case and fits none.
+     */
+    preview: {
+      // A preview states the KEYS that land in scope; every value in one is a placeholder, `ok` included.
+      ok: '',
+      reason: '',
+      errors: { username: '', password: '', token: '' },
+      accessToken: '',
+      expiresAt: '',
+      refreshToken: ''
+    }
   },
   refreshDetails: {
     source: 'auth',
