@@ -44,24 +44,6 @@ const BuilderTree = () => {
   );
   const [query, setQuery] = useState('');
 
-  /**
-   * Opens the branches a match is buried under, and closes the search on the way.
-   *
-   * The same `openedCache` the tree already reads, so revealing a result and expanding a node by hand are the same
-   * act — an element eight levels down is selected AND visible, rather than selected somewhere the panel is not
-   * showing. Clearing the query is what puts the tree back on screen to show it.
-   */
-  const handleReveal = useCallback(
-    (ancestors: string[]) => {
-      if (ancestors.length > 0) {
-        setOpenedCache(state => ({ ...state, ...Object.fromEntries(ancestors.map(id => [id, true])) }));
-      }
-
-      setQuery('');
-    },
-    [setOpenedCache]
-  );
-
   const isDragAllowed = useCallback(
     (id: string, dropPosition: DropPosition, parentId?: string) => {
       const element = getElement(id, undefined);
@@ -236,7 +218,7 @@ const BuilderTree = () => {
 
   return (
     <div className="flex min-h-0 w-full grow basis-0 flex-col">
-      <BuilderTreeSearch query={query} baseElementId={baseElementId} onQueryChange={setQuery} onReveal={handleReveal} />
+      <BuilderTreeSearch query={query} baseElementId={baseElementId} onQueryChange={setQuery} />
       {/* Hidden rather than unmounted: the tree keeps its scroll position and its open branches, so clearing the
           search puts the author back exactly where they were instead of at the top of a collapsed tree. */}
       <div className={clsx('min-h-0 grow basis-0 overflow-y-auto', { hidden: searching })}>

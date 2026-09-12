@@ -23,6 +23,9 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
       description: 'A native <dialog> container shown or hidden through interactions (e.g. an onClick open/close).',
       items: [],
       bindings: {},
+      // Hidden until something opens it, like a modal — and for the same reason `lazy`, not `visible`: what a
+      // visitor typed into it has to survive closing it.
+      loadStrategy: 'lazy',
       styleSelectors: {
         base: '',
         backgroundContainer: '',

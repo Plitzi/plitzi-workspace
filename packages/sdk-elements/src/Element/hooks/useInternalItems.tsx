@@ -8,7 +8,7 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';
 import ServerStaticShell from '../ServerStaticShell';
 
-import type { Element, ElementLayout } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 const isServer = typeof window === 'undefined';
@@ -38,12 +38,23 @@ const useInternalItems = ({
   // `rsc.enabled`, not `schema.rsc.enabled`: the schema flag alone is also true on a client-only render, where there
   // is no server HTML to freeze a server element against and it would be dropped altogether.
   const [[flat, rscEnabled]] = useCommonStore(['schema.flat', 'rsc.enabled'], { mode: 'mount' });
-  const { components } = use(ComponentContext);
+  const { components, componentDefinitions } = use(ComponentContext);
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
   const { plugins } = use(PluginsContext);
-  const { items, loadStrategy = 'eager' } = definition;
+  const { items } = definition;
+  // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.
+  const declared = componentDefinitions.current[definition.type] as ComponentDefinition | undefined;
+  /**
+   * The instance's own strategy, else the one its TYPE declares, else `eager`.
+   *
+   * Per type because the right default depends on what the element is: a modal starts hidden and is worth
+   * deferring, while a container is on screen almost always and deferring it would only add a render cycle before
+   * the page appears. Read from the declaration at render rather than trusted to have been copied onto the instance,
+   * so a modal authored before its type declared one follows it too.
+   */
+  const loadStrategy = definition.loadStrategy ?? declared?.definition.loadStrategy ?? 'eager';
   const hasItems = plitziElementLayout || children || items?.length;
   /**
    * Whether this element has ever been shown, for `lazy`.

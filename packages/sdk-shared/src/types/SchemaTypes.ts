@@ -12,11 +12,13 @@ export type ElementRuntime = 'server' | 'client' | 'shared';
  * callback, a form's source, an interaction trigger — is registered by the element, so an element that stops
  * rendering is an element nothing can ever show again. The shell always renders; what these decide is its items.
  *
- * - `eager` (default): always mounted. What everything did before this existed, and what a hidden element still
- *   wants when its contents have to be in the server's HTML — a section a search engine should read, a panel a
- *   CSS-only accordion opens without the SDK's help.
- * - `lazy`: mounted the first time it is shown, and kept from then on. The one to reach for: a modal nobody opens
- *   costs nothing, and one that has been opened keeps what the visitor typed into it.
+ * - `eager` (default): always mounted. Right for an element that is on screen almost always — deferring it would only
+ *   add a render cycle between the page loading and the page appearing — and for a hidden element whose contents
+ *   have to be in the server's HTML: a section a search engine should read, a panel a CSS-only accordion opens
+ *   without the SDK's help.
+ * - `lazy`: mounted the first time it is shown, and kept from then on. The one for elements that start hidden by
+ *   nature, and those declare it themselves — a modal or a dialog nobody opens costs nothing, and one that has been
+ *   opened keeps what the visitor typed into it.
  * - `visible`: mounted only while shown. Pays the build cost on every reveal and drops the subtree's state on
  *   every hide — worth it for contents that are expensive to KEEP (a live map, a video, a polling source).
  */

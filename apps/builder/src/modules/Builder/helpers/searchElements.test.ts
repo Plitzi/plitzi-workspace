@@ -59,6 +59,14 @@ describe('searchElements', () => {
     expect(ranked).toEqual(['cta', 'cta-primary', 'main-cta', 'button1']);
   });
 
+  /** The directory shows a page by its name, so that is what an author types to get back to it. */
+  it('finds a page by its name', () => {
+    const [match] = searchElements(flat(element('p-3f9a', 'page', undefined, '', 'Checkout')), 'checkout');
+
+    expect(match.id).toBe('p-3f9a');
+    expect(match.score).toBe(40);
+  });
+
   it('matches on the type too, and ranks it last', () => {
     const ranked = searchElements(flat(element('hero', 'container'), element('wrap', 'container')), 'container');
 
@@ -89,14 +97,6 @@ describe('searchElements', () => {
     const many = flat(...Array.from({ length: 200 }, (_, index) => element(`btn${index}`, 'button')));
 
     expect(searchElements(many, 'btn', { limit: 10 })).toHaveLength(10);
-  });
-
-  /** Two people editing at once can briefly describe a cycle; walking it must not hang the panel. */
-  it('survives a parent chain that loops', () => {
-    const looped = flat(element('a', 'container', 'b'), element('b', 'container', 'a'));
-
-    expect(() => searchElements(looped, 'a')).not.toThrow();
-    expect(searchElements(looped, 'a')[0].ancestors).toEqual(['b']);
   });
 });
 

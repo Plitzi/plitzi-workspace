@@ -13,6 +13,8 @@ import useCollaboratorCursor from '@pmodules/Collaboration/hooks/useCollaborator
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import { processPaste } from '../../BuilderHelper';
+import BuilderSearchContext from '../BuilderSearch/BuilderSearchContext';
+import { isSearchShortcut } from '../BuilderSearch/helpers';
 
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
@@ -58,6 +60,7 @@ const BuilderAreaTracking = ({
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
   const { mutate } = use(NetworkContext);
   const { componentDefinitions } = use(ComponentContext);
+  const { openSearch } = use(BuilderSearchContext);
 
   const handleMouseLeave = useCallback(() => {
     if (elementHovered) {
@@ -146,6 +149,17 @@ const BuilderAreaTracking = ({
           break;
         }
 
+        case 'P':
+        case 'p': {
+          // A key pressed inside the canvas stays in its iframe and never reaches the document the search listens on.
+          if (isSearchShortcut(e) && iframeDOM?.contentWindow?.document.body.contains(e.target as HTMLDivElement)) {
+            e.preventDefault();
+            openSearch();
+          }
+
+          break;
+        }
+
         case 'Y':
         case 'y': {
           if (
@@ -197,6 +211,7 @@ const BuilderAreaTracking = ({
       baseElementIdOriginal,
       setSelected,
       builderSetBaseContext,
+      openSearch,
       canRedo,
       undoableRedo,
       canUndo,

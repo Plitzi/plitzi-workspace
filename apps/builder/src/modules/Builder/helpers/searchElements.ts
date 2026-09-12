@@ -1,13 +1,6 @@
-import type { Element } from '@plitzi/sdk-shared';
+import { chainOf } from './elementChain';
 
-/**
- * The flat schema, typed as it actually behaves.
- *
- * `Record<string, Element>` promises an element for every string there is, so the compiler calls the miss checks
- * below dead code — and a `parentId` naming an element the schema no longer has is exactly what this walk exists
- * to survive. Callers hand over the store's own map, which is assignable to this.
- */
-export type ElementLookup = Record<string, Element | undefined>;
+import type { ElementLookup } from './elementChain';
 
 export type ElementMatch = {
   id: string;
@@ -25,10 +18,11 @@ export type ElementMatch = {
  * Where the match landed, ranked so the obvious answer comes first.
  *
  * The id is worth more than anything else because the id IS the name — it is what a binding reads this element by
- * and what an interaction targets — so somebody searching almost always has one in mind. The type is worth least:
- * it matches dozens of elements at once and is really a filter wearing a search's clothes.
+ * and what an interaction targets — so somebody searching almost always has one in mind. A page's name ranks with
+ * the label: it is the text the directory shows for that page, so it is what an author remembers it by. The type is
+ * worth least: it matches dozens of elements at once and is really a filter wearing a search's clothes.
  */
-const scoreOf = (query: string, id: string, label: string, type: string): number => {
+const scoreOf = (query: string, id: string, texts: string[], type: string): number => {
   const lowerId = id.toLowerCase();
   if (lowerId === query) {
     return 100;
@@ -42,7 +36,7 @@ const scoreOf = (query: string, id: string, label: string, type: string): number
     return 60;
   }
 
-  if (label.toLowerCase().includes(query)) {
+  if (texts.some(text => text.toLowerCase().includes(query))) {
     return 40;
   }
 
@@ -53,32 +47,6 @@ const scoreOf = (query: string, id: string, label: string, type: string): number
   return 0;
 };
 
-/**
- * The chain from an element up to its root, outermost first.
- *
- * Walked through `parentId` rather than read off `rootId`, because the tree the panel opens is the chain of
- * PARENTS: revealing a match six levels down means opening all six, and `rootId` names only the far end of it. The
- * seen-set is not paranoia — a schema edited by two people at once can briefly describe a cycle, and without it
- * this loops forever inside a render.
- */
-const chainOf = (flat: ElementLookup, id: string): { rootId: string; ancestors: string[] } => {
-  const ancestors: string[] = [];
-  const seen = new Set<string>([id]);
-  let current = flat[id]?.definition.parentId;
-  while (current !== undefined && !seen.has(current)) {
-    const parent = flat[current];
-    if (!parent) {
-      break;
-    }
-
-    seen.add(current);
-    ancestors.unshift(current);
-    current = parent.definition.parentId;
-  }
-
-  return { rootId: ancestors[0] ?? id, ancestors };
-};
-
 export type SearchOptions = {
   /** Answers past this are noise: nobody scrolls a thousand hits, they type another letter. */
   limit?: number;
@@ -87,11 +55,12 @@ export type SearchOptions = {
 };
 
 /**
- * Every element in the SPACE whose id, label or type matches — not only the ones on the page being edited.
+ * Every element in the SPACE whose id, label, page name or type matches — not only the ones on the page being
+ * edited.
  *
- * Across every page on purpose: the tree can only ever show one page's elements, so an author with forty pages had
- * no way to answer "where is the element called `cta-primary`" except by opening pages until one of them had it.
- * Results carry the root they were found in, so the panel can say which page each one is on and take you there.
+ * Across every page and layout on purpose: the tree can only ever show one root's elements, so an author with forty
+ * pages had no way to answer "where is the element called `cta-primary`" except by opening pages until one of them
+ * had it. Results carry the root they were found in, so the panel can say where each one is and take you there.
  */
 export const searchElements = (
   flat: ElementLookup,
@@ -111,7 +80,9 @@ export const searchElements = (
 
     const { id } = element;
     const { label = '', type } = element.definition;
-    const score = scoreOf(needle, id, label, type);
+    const { name } = element.attributes;
+    const texts = typeof name === 'string' ? [label, name] : [label];
+    const score = scoreOf(needle, id, texts, type);
     if (score === 0) {
       continue;
     }

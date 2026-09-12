@@ -53,12 +53,16 @@ type Props = Parameters<typeof useInternalItems>[0];
 
 const Harness = (props: Props) => createElement('div', { 'data-testid': 'out' }, useInternalItems(props));
 
-/** `components` is what this browser can render — empty stands for a plugin that exists only on the server. */
+/**
+ * `components` is what this browser can render — empty stands for a plugin that exists only on the server.
+ * `definitions` is what each type declares, keyed by type.
+ */
 const renderItems = (
   props: Props,
   storeValue: Record<string, unknown>,
   rscEnabled = false,
-  components: Record<string, unknown> = {}
+  components: Record<string, unknown> = {},
+  definitions: Record<string, unknown> = {}
 ) =>
   render(
     createElement(
@@ -66,7 +70,12 @@ const renderItems = (
       { value: { ...storeValue, rsc: { enabled: rscEnabled } } },
       createElement(
         ComponentContext,
-        { value: { components: { current: components } } as unknown as ComponentContextValue },
+        {
+          value: {
+            components: { current: components },
+            componentDefinitions: { current: definitions }
+          } as unknown as ComponentContextValue
+        },
         createElement(Harness, props)
       )
     )
@@ -228,10 +237,39 @@ describe('useInternalItems loadStrategy', () => {
   const flat = { schema: { flat: { a: el('a', 'text') } } };
   const itemsIn = (container: HTMLElement) => container.querySelectorAll('[data-plugin]').length;
 
+  /**
+   * Eager by default: most elements are on screen almost always, and deferring them would only add a render cycle.
+   * The ones that start hidden by nature declare `lazy` themselves.
+   */
   it('builds a hidden subtree under the default strategy', () => {
     const { container } = renderItems(
       { id: 'host', definition: def(['a']), children: undefined, previewMode: true, visible: false },
       flat
+    );
+
+    expect(itemsIn(container)).toBe(1);
+  });
+
+  /** A modal authored before its type declared `lazy` must defer like one authored after. */
+  it('falls back to the strategy its type declares', () => {
+    const { container } = renderItems(
+      { id: 'host', definition: def(['a']), children: undefined, previewMode: true, visible: false },
+      flat,
+      false,
+      {},
+      { container: { definition: { loadStrategy: 'lazy' } } }
+    );
+
+    expect(itemsIn(container)).toBe(0);
+  });
+
+  it('lets the instance override the strategy its type declares', () => {
+    const { container } = renderItems(
+      { id: 'host', definition: def(['a'], 'eager'), children: undefined, previewMode: true, visible: false },
+      flat,
+      false,
+      {},
+      { container: { definition: { loadStrategy: 'lazy' } } }
     );
 
     expect(itemsIn(container)).toBe(1);
@@ -251,7 +289,12 @@ describe('useInternalItems loadStrategy', () => {
         { value: { ...flat, rsc: { enabled: false } } },
         createElement(
           ComponentContext,
-          { value: { components: { current: {} } } as unknown as ComponentContextValue },
+          {
+            value: {
+              components: { current: {} },
+              componentDefinitions: { current: {} }
+            } as unknown as ComponentContextValue
+          },
           createElement(Harness, {
             id: 'host',
             definition: def(['a'], 'lazy'),
