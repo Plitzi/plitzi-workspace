@@ -278,6 +278,77 @@ describe('recovering a password', () => {
   });
 });
 
+/**
+ * A sign-up that started somewhere has to end there, and the confirmation mail is the hop that opens a new page — so
+ * the destination the caller named travels to the mail, where the deployment that composes the link decides whether
+ * it is one of its own. The kernel carries it and judges nothing: it has no policy to judge by.
+ */
+describe('confirming an address', () => {
+  type Mail = { to: string; template: string; data: Record<string, string> };
+
+  const pending: AccountRecord = { ...ada, id: 2, email: 'pending@example.com', username: 'pending', verified: false };
+
+  const setup = () => {
+    const sendMail = vi.fn<(message: Mail) => Promise<void>>(() => Promise.resolve());
+    const api = build(
+      {
+        findByUsername: () => Promise.resolve(undefined),
+        findByEmail: (email: string) => Promise.resolve(email === pending.email ? pending : undefined),
+        createAccount: account =>
+          Promise.resolve({ ...ada, id: 3, username: account.username, email: account.email, verified: false }),
+        setValidationToken: () => Promise.resolve(),
+        findByValidationToken: () => Promise.resolve(undefined),
+        setVerified: () => Promise.resolve(),
+        sendMail
+      },
+      { hashPassword: (p: string) => Promise.resolve(`${p}-hashed`) }
+    );
+    const mailed = (): Mail | undefined => sendMail.mock.calls.at(-1)?.[0];
+
+    return { api, mailed };
+  };
+
+  it('hands the destination a sign-up named to the confirmation mail', async () => {
+    const { api, mailed } = setup();
+
+    const outcome = await api.signup({
+      username: 'grace',
+      email: 'grace@example.com',
+      password: 'correct horse battery',
+      redirect: 'https://app.example.com/analytics'
+    });
+
+    expect(outcome).toMatchObject({ ok: true, status: 201 });
+    expect(mailed()).toMatchObject({ template: 'validation', data: { redirect: 'https://app.example.com/analytics' } });
+  });
+
+  /** Nothing named is nothing carried — not an empty string a template would have to know to ignore. */
+  it('carries no destination when the sign-up named none', async () => {
+    const { api, mailed } = setup();
+
+    await api.signup({
+      username: 'hopper',
+      email: 'hopper@example.com',
+      password: 'correct horse battery',
+      redirect: ''
+    });
+
+    expect(mailed()?.data).not.toHaveProperty('redirect');
+  });
+
+  it('carries the destination into a link sent again', async () => {
+    const { api, mailed } = setup();
+
+    await api.resendVerification(pending.email, 'https://app.example.com/analytics');
+
+    expect(mailed()).toMatchObject({
+      to: pending.email,
+      template: 'validation',
+      data: { redirect: 'https://app.example.com/analytics' }
+    });
+  });
+});
+
 // JSON carries an all-digits password as a number. Refusing it as "credentials are required" is a lie about what
 // arrived, and the client that sent it has no way to tell what it did wrong.
 describe('credentials that do not arrive as strings', () => {

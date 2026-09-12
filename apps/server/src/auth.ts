@@ -37,6 +37,8 @@ export {
 export { createIdentity } from './core/auth/identity';
 export { generateToken, hashPassword, verifyPassword } from './core/auth/passwords';
 export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
+export { createRedirectPolicy } from './core/auth/redirects';
+export type { RedirectPolicyConfig } from './core/auth/redirects';
 export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
 export {
   appendCookies,

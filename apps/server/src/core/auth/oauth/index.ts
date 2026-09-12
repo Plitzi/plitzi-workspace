@@ -3,6 +3,7 @@ import { createGitHubProvider } from './providers/github';
 import { createGoogleProvider } from './providers/google';
 import { codeChallenge, consumeFlow, startFlow } from './state';
 import { OAuthFailure } from './types';
+import { createRedirectPolicy } from '../redirects';
 
 import type { OAuthFailureReason, OAuthProfile, OAuthProvider, OAuthProviderConfig } from './types';
 import type { AccountRecord } from '../api';
@@ -40,14 +41,6 @@ export interface SocialAuthAdapters {
    */
   linkAccount: (provider: string, profile: OAuthProfile) => Promise<AccountRecord>;
 }
-
-const originOf = (value: string): string | null => {
-  try {
-    return new URL(value).origin;
-  } catch {
-    return null;
-  }
-};
 
 export type StartedFlow = { redirectTo: string; stateCookie: string; ttl: number };
 
@@ -99,31 +92,11 @@ export const createSocialAuth = ({
   }
 
   // Where the browser is sent once the flow ends. The target is caller-supplied, so it is an open redirect unless
-  // it is checked: relative paths are safe by construction, absolute URLs must match an allowed origin. Anything
-  // else silently becomes the default.
-  const sanitizeRedirect = (target: unknown): string => {
-    const fallback = config.defaultRedirect;
-
-    if (typeof target !== 'string' || target === '') {
-      return fallback;
-    }
-
-    // Protocol-relative ('//evil.com') and backslash variants read as a path but navigate off-site.
-    if (target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/\\')) {
-      return target;
-    }
-
-    const origin = originOf(target);
-    if (!origin) {
-      return fallback;
-    }
-
-    const allowed = [fallback, ...(config.allowedRedirects ?? [])]
-      .map(originOf)
-      .filter((value): value is string => value !== null);
-
-    return allowed.includes(origin) ? target : fallback;
-  };
+  // it is checked — by the one policy every flow that takes a `?redirect=` shares.
+  const sanitizeRedirect = createRedirectPolicy({
+    defaultRedirect: config.defaultRedirect,
+    allowedRedirects: config.allowedRedirects
+  });
 
   const withError = (target: string, reason: OAuthFailureReason): string =>
     `${target}${target.includes('?') ? '&' : '?'}error=${encodeURIComponent(reason)}`;

@@ -383,6 +383,19 @@ const asText = (value: unknown): string => {
 
 const asString = (value: unknown): string => asText(value).trim();
 
+/**
+ * The destination a caller named, for a mail to carry — or nothing at all.
+ *
+ * Carried, not judged: the kernel has no redirect policy, and the link it ends up in is composed by the deployment,
+ * which vets it there (`createRedirectPolicy`). Absent rather than empty when there is none, so a mail template never
+ * has to know that `''` means "nowhere".
+ */
+const destinationOf = (value: unknown): { redirect?: string } => {
+  const redirect = asString(value);
+
+  return redirect ? { redirect } : {};
+};
+
 const now = (): number => Math.floor(Date.now() / 1000);
 
 const MINUTE = 60;
@@ -1221,7 +1234,11 @@ export const createAuthApi = ({
       if (!verifyOnSignup && capabilities.emailVerification && adapters.setValidationToken) {
         const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);
         await adapters.setValidationToken(account.id, validationToken);
-        await deliver({ to: email, template: 'validation', data: { username, validationToken } });
+        await deliver({
+          to: email,
+          template: 'validation',
+          data: { username, validationToken, ...destinationOf(fields.redirect) }
+        });
       }
 
       record({ type: 'signup', userId: account.id });
@@ -1307,7 +1324,7 @@ export const createAuthApi = ({
       return { ok: true, body: { message: 'Account validated successfully' } };
     },
 
-    resendVerification: async (email: string): Promise<AuthOutcome> => {
+    resendVerification: async (email: string, redirect?: string): Promise<AuthOutcome> => {
       if (!capabilities.emailVerification) {
         return NOT_OFFERED;
       }
@@ -1319,7 +1336,7 @@ export const createAuthApi = ({
         await deliver({
           to: account.email,
           template: 'validation',
-          data: { username: account.username, validationToken }
+          data: { username: account.username, validationToken, ...destinationOf(redirect) }
         });
       }
 
