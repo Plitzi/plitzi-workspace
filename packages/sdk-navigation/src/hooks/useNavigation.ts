@@ -60,7 +60,19 @@ const useNavigation = ({ server, routerLocation }: UseNavigationProps) => {
 
   const queryParams = useMemo<QueryParams>(() => ParamsFromURL(location.search), [location.search]);
   const hostname = useMemo(() => (location.hostname ? location.hostname : 'localhost'), [location.hostname]);
-  const navigationData = useMemo(() => ({ queryParams, hostname, location }), [queryParams, hostname, location]);
+  /**
+   * Where this page is served from, scheme and port included — the half `hostname` cannot answer.
+   *
+   * Published so a space can name its own address without a per-environment variable for it: a sign-in link that
+   * sends somebody back where they were is `{{navigation.origin}}/docs`, and that is correct on the SSR host, on
+   * the client-rendered dev app and on a custom domain without any of them being written down. `hostname` is what
+   * a `when` rule matches on and has no port, which is exactly why it cannot be this.
+   */
+  const origin = location.origin || '';
+  const navigationData = useMemo(
+    () => ({ queryParams, hostname, origin, location }),
+    [queryParams, hostname, origin, location]
+  );
 
   return navigationData;
 };

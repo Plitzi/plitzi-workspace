@@ -65,7 +65,17 @@ export const buildServerInfo = (req: SSRRequest, config: SSRServerConfig, ssr: S
     basePath: '/',
     requestUrl: req.url || '/',
     origin,
+    /**
+     * Complete enough to be the same object a browser hands the SDK, `origin` included.
+     *
+     * It used to carry the hostname and the path only, which reads as a location right up until something needs to
+     * name THIS page from the server: a sign-in link that sends somebody back where they were had nothing to build
+     * an absolute URL out of, so a space had to name its own address in a per-environment variable instead.
+     */
     location: {
+      origin,
+      protocol: `${req.protocol}:`,
+      host: req.hostname,
       hostname: req.hostname,
       pathname: req.path || '/',
       search: req.search

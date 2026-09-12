@@ -16,6 +16,8 @@ import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
+type TwigValues = Record<string, unknown>;
+
 export const getProps = (
   element: Element,
   internalProps: InternalPropsSTG1,
@@ -36,13 +38,22 @@ export const getProps = (
     ({ attributes, definition, style } = bindingData);
   }
 
-  // Variables and navigation params injection, for example twig interpolation
+  /**
+   * Variables and navigation params injection, for example twig interpolation.
+   *
+   * The flattened half is what it has always been: a route param is `{{ slug }}`, a variable is `{{ apiUrl }}`.
+   * `navigation` is published BESIDE it, under its own name, because the one thing an attribute could not say was
+   * where it is — `origin` has a port and `hostname` does not, so a link that sends somebody back to this page had
+   * to name each environment's address in a variable of its own. Spelled the way every other source is
+   * (`{{ navigation.origin }}`), so the vocabulary is the same one a binding's template already uses.
+   */
   const {
     queryParams = {},
     routeParams = {},
-    variables = {}
-  } = dataSource as Record<string, Record<string, Record<string, unknown>>>;
-  const data = { ...variables, ...routeParams, ...queryParams };
+    variables = {},
+    origin = ''
+  } = dataSource as { queryParams?: TwigValues; routeParams?: TwigValues; variables?: TwigValues; origin?: string };
+  const data = { ...variables, ...routeParams, ...queryParams, navigation: { routeParams, queryParams, origin } };
   if (Object.keys(data).length > 0) {
     const interpolated: Element['attributes'] = {};
     for (const key of Object.keys(attributes)) {
@@ -100,15 +111,19 @@ const useElementInternal = ({
 }: UseElementInternalProps) => {
   const { id } = internalProps;
   const { state, setElementState } = useElementState({ id, bindings: element.definition.bindings, previewMode });
-  const [[routeParams, queryParams]] = useCommonStore(['navigation.routeParams', 'navigation.queryParams']);
+  const [[routeParams, queryParams, origin]] = useCommonStore([
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.origin'
+  ]);
   const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
 
   const internalPropsParsed = useMemo(
     () => ({
-      ...getProps(element, internalProps, { ...dataSource, routeParams, queryParams }, state),
+      ...getProps(element, internalProps, { ...dataSource, routeParams, queryParams, origin }, state),
       setElementState
     }),
-    [element, internalProps, dataSource, routeParams, queryParams, state, setElementState]
+    [element, internalProps, dataSource, routeParams, queryParams, origin, state, setElementState]
   );
 
   return {

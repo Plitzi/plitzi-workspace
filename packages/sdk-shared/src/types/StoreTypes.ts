@@ -84,6 +84,9 @@ export type CommonState = {
     routeParams: RouteParams;
     queryParams: QueryParams;
     hostname: string;
+    /** Scheme, host AND port — what a link needs to name this page absolutely. `hostname` has no port, which is why
+     *  it answers `when` rules and cannot answer this. */
+    origin: string;
     currentPageId: string;
     navigate: (url: string, isExternal?: boolean) => void;
   };

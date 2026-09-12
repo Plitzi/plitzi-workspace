@@ -24,7 +24,7 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
   const { previewMode } = useRenderSettings();
   const { server } = use(NetworkContext);
   const { authenticated } = use(AuthContext);
-  const { queryParams, hostname, location } = useNavigation({ server });
+  const { queryParams, hostname, origin, location } = useNavigation({ server });
   const navigate = useNavigate();
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
@@ -81,6 +81,12 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
     return params;
   }, [urlSearchParams, urlTest?.queryParams]);
   const testedHostname = urlTest?.hostname || hostname;
+  /**
+   * Follows the tested hostname rather than the editor's own address: a link that names `{{navigation.origin}}` is
+   * being previewed AS the host the author typed, and answering with the builder's origin would show them a URL
+   * pointing back at the editor.
+   */
+  const testedOrigin = urlTest?.hostname ? `https://${urlTest.hostname}` : origin;
 
   const handleNavigate = useCallback(
     (url: string, isExternal: boolean = false) => {
@@ -122,10 +128,19 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
       'navigation.routeParams',
       'navigation.queryParams',
       'navigation.hostname',
+      'navigation.origin',
       'navigation.currentPageId',
       'navigation.navigate'
     ],
-    [testedSearchParams, testedRouteParams, testedQueryParams, testedHostname, currentPageId ?? '', handleNavigate],
+    [
+      testedSearchParams,
+      testedRouteParams,
+      testedQueryParams,
+      testedHostname,
+      testedOrigin,
+      currentPageId ?? '',
+      handleNavigate
+    ],
     { raw: true }
   );
 

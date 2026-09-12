@@ -68,7 +68,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
    */
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const routerLocation = renderMode !== 'widget' ? useLocation() : undefined;
-  const { queryParams, hostname, location } = useNavigation({ server, routerLocation });
+  const { queryParams, hostname, origin, location } = useNavigation({ server, routerLocation });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
   const { authenticated } = use(AuthContext);
@@ -180,10 +180,11 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       'navigation.routeParams',
       'navigation.queryParams',
       'navigation.hostname',
+      'navigation.origin',
       'navigation.currentPageId',
       'navigation.navigate'
     ],
-    [urlSearchParams, routeParams, queryParams, hostname, currentPageId, handleNavigate],
+    [urlSearchParams, routeParams, queryParams, hostname, origin, currentPageId, handleNavigate],
     { raw: true }
   );
 
