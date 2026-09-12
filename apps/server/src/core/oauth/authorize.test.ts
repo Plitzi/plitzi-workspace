@@ -49,11 +49,12 @@ const capture = () => {
   return { res, sent };
 };
 
-const setup = (signOut?: OAuthConfig['adapters']['signOut']) => {
+const setup = (signOut?: OAuthConfig['adapters']['signOut'], guest?: OAuthConfig['guest']) => {
   const store = backingStore();
   const config = {
     issuer: 'https://mcp.plitzi.test',
     signInUrl: 'https://auth.plitzi.test/login',
+    guest,
     adapters: {
       identify: () => Promise.resolve({ id: '7', label: 'ada@plitzi.test' }),
       grantTargets: () => Promise.resolve([{ value: 'space-1', label: 'Website' }]),
@@ -110,8 +111,8 @@ describe('the grant screen / connecting as another account', () => {
 });
 
 describe('the grant screen / posting "use another account"', () => {
-  const submit = async () => {
-    const { config, store } = setup(vi.fn());
+  const submit = async (guest?: OAuthConfig['guest']) => {
+    const { config, store } = setup(vi.fn(), guest);
     const { res, sent } = capture();
     // The pending record the grant screen minted, which the form carries back.
     store.put('oauth:pending:p1', JSON.stringify({ clientId: CLIENT.clientId, user: { id: '7', label: 'ada' } }));
@@ -142,6 +143,25 @@ describe('the grant screen / posting "use another account"', () => {
     const { store } = await submit();
 
     expect(store.rows.has('oauth:pending:p1')).toBe(false);
+  });
+
+  /**
+   * "Not this account" and "no account at all" are the same wish often enough that losing the second one here is the
+   * whole bug: the sign-in screen only offers a way past itself when the client says it takes guests, and this
+   * hand-off was the one that forgot to say so — leaving somebody who wanted the guest connection at a form they had
+   * just walked away from, with no way back but the browser's history.
+   */
+  it('tells the sign-in screen that this server takes guests', async () => {
+    const { sent } = await submit({ target: { value: 'widgets-only', label: 'Widgets only' } });
+
+    expect(new URL(sent.headers['Location']).searchParams.get('guest')).toBe('1');
+  });
+
+  /** And says nothing when it does not: the screen would be offering a way past itself that leads nowhere. */
+  it('says nothing about guests when the server takes none', async () => {
+    const { sent } = await submit();
+
+    expect(new URL(sent.headers['Location']).searchParams.get('guest')).toBeNull();
   });
 });
 
