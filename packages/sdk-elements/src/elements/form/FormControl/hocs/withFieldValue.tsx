@@ -6,7 +6,10 @@ import { createStoreHook } from '@plitzi/nexus/react';
 import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { validateField } from '../helpers/validateField';
+
 import type { FormContextValue } from '../../Form/Form';
+import type { FieldRules } from '../helpers/validateField';
 import type { ChangeEvent, FC, RefObject } from 'react';
 
 export type WithFieldValueProps<T> = {
@@ -16,12 +19,31 @@ export type WithFieldValueProps<T> = {
   subType:
     'hidden' | 'text' | 'number' | 'email' | 'password' | 'select' | 'checkbox' | 'textarea' | 'color' | 'switch';
   required: boolean;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  patternMessage?: string;
+  matches?: string;
+  matchesMessage?: string;
   previewError?: boolean;
 } & T;
 
 const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
   const WithFieldValueComponent = (props: WithFieldValueProps<T>) => {
-    const { ref, name = '', subType = 'text', defaultValue = '', required = true, previewError = false } = props;
+    const {
+      ref,
+      name = '',
+      subType = 'text',
+      defaultValue = '',
+      required = true,
+      minLength = 0,
+      maxLength = 0,
+      pattern = '',
+      patternMessage = '',
+      matches = '',
+      matchesMessage = '',
+      previewError = false
+    } = props;
     const {
       settings: { previewMode }
     } = usePlitziServiceContext();
@@ -31,7 +53,7 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
       return <WrappedComponent {...props} />;
     }
 
-    const { setFieldValue, setFieldError, errors, values } = form;
+    const { setFieldValue, setFieldError, registerValidator, unregisterValidator, errors, values } = form;
     const value = useMemo(() => get(values, name, defaultValue), [values, name, defaultValue]);
     const error = useMemo(() => {
       if (!previewMode && previewError) {
@@ -40,6 +62,25 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
 
       return errors[name];
     }, [previewMode, previewError, errors, name]);
+
+    const rules = useMemo<FieldRules>(
+      () => ({ required, minLength, maxLength, pattern, patternMessage, matches, matchesMessage }),
+      [required, minLength, maxLength, pattern, patternMessage, matches, matchesMessage]
+    );
+
+    /**
+     * Handed to the form rather than run here, because the form is what decides whether a submit goes ahead — and it
+     * has to ask every control at that moment, including the ones nobody has touched and so never blurred.
+     */
+    useEffect(() => {
+      if (!name) {
+        return undefined;
+      }
+
+      registerValidator(name, current => validateField(get(current, name, defaultValue), rules, current));
+
+      return () => unregisterValidator(name);
+    }, [name, defaultValue, rules, registerValidator, unregisterValidator]);
 
     useEffect(() => {
       if (defaultValue && value && name) {
@@ -58,13 +99,10 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
       [setFieldValue, name, subType]
     );
 
-    const handleValidate = useCallback(() => {
-      if (!value && required) {
-        setFieldError(name, 'This field is required');
-      } else if (error === 'This field is required') {
-        setFieldError(name, '');
-      }
-    }, [value, error, name, required, setFieldError]);
+    const handleValidate = useCallback(
+      () => setFieldError(name, validateField(value, rules, values)),
+      [value, rules, values, name, setFieldError]
+    );
 
     const WrappedComponentMemo = useMemo(
       () => (

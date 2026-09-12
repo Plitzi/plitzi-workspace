@@ -10,6 +10,8 @@ export type InputProps = {
   type?: string;
   autoComplete?: boolean;
   required?: boolean;
+  /** `0` for none. The one rule the browser enforces itself, and by the kindest means: it stops the typing. */
+  maxLength?: number;
   disabled?: boolean;
   readOnly?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -25,6 +27,7 @@ const Input = ({
   type = 'text',
   autoComplete = false,
   required = true,
+  maxLength = 0,
   disabled = false,
   readOnly = false,
   onChange,
@@ -52,6 +55,7 @@ const Input = ({
         placeholder={placeholder}
         value={value}
         required={required}
+        maxLength={maxLength > 0 ? maxLength : undefined}
         autoComplete={autoComplete ? 'on' : 'off'}
         disabled={disabled}
         readOnly={readOnly}

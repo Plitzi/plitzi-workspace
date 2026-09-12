@@ -33,6 +33,17 @@ export type FormControlProps = {
   disabled: boolean;
   options: { label: string; value: string }[];
   required: boolean;
+  /**
+   * The rules a value has to meet before the form submits, checked by the form at submit time and by the control when
+   * it loses focus. `0` and `''` mean no rule. See `validateField` for what each one says when it is broken.
+   */
+  minLength: number;
+  maxLength: number;
+  pattern: string;
+  patternMessage: string;
+  /** The `name` of another control in the same form this one has to repeat — a password confirmation, typically. */
+  matches: string;
+  matchesMessage: string;
   readOnly: boolean;
   value: string;
   error: string;
@@ -60,6 +71,7 @@ const FormControl = ({
   disabled = false,
   options = [],
   required = true,
+  maxLength = 0,
   readOnly = false,
   // HOC
   value = '', // HOC Managed
@@ -245,6 +257,7 @@ const FormControl = ({
           placeholder={placeholder}
           autoComplete={subType !== 'password' ? autoComplete : false}
           required={required}
+          maxLength={maxLength}
           disabled={disabled}
           readOnly={readOnly || !previewMode}
           onChange={handleChangeInteraction}
@@ -282,6 +295,7 @@ const FormControl = ({
           className={styleSelectors.input}
           placeholder={placeholder}
           required={required}
+          maxLength={maxLength}
           disabled={disabled}
           readOnly={readOnly}
           onChange={handleChangeInteraction}

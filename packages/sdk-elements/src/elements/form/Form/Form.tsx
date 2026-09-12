@@ -33,11 +33,16 @@ export type FormProps = {
 export type Field = { id: string; name: string };
 export type FieldValue = string | boolean | number;
 
+/** What a control says about the form's values as they stand: the sentence to show under it, or `''`. */
+export type FieldValidator = (values: Record<string, unknown>) => string;
+
 export type FormContextValue = {
   errors: Record<string, string>;
   values: Record<string, unknown>;
   registerField: (field: SourceField) => void;
   unregisterField: (name: string) => void;
+  registerValidator: (name: string, validate: FieldValidator) => void;
+  unregisterValidator: (name: string) => void;
   setFieldValue: (name: string, value: FieldValue | null) => void;
   setFieldError: (name: string, error: string) => void;
 };
@@ -53,6 +58,11 @@ const Form = ({
   values = emptyObject
 }: FormProps) => {
   const [fields, setFields] = useState<Record<string, SourceField>>({});
+  /**
+   * Kept in a ref and not in state: a validator is a function each control re-creates when its rules change, and
+   * nothing renders from the set — it is only ever read at the moment somebody submits.
+   */
+  const validators = useRef(new Map<string, FieldValidator>());
   const unmounting = useRef(false);
   const {
     id,
@@ -105,6 +115,14 @@ const Form = ({
     },
     [setElementState]
   );
+
+  const registerValidator = useCallback((name: string, validate: FieldValidator) => {
+    validators.current.set(name, validate);
+  }, []);
+
+  const unregisterValidator = useCallback((name: string) => {
+    validators.current.delete(name);
+  }, []);
 
   const setFieldValue = useCallback(
     (name: string, value: FieldValue | null = '') => {
@@ -164,11 +182,43 @@ const Form = ({
     [fields]
   );
 
+  /**
+   * Published twice, and both are needed.
+   *
+   * `form` is the controls' own channel: the nearest form, and the callbacks they register through. `sourceName` is what
+   * a BINDING reads — the builder lists this form's fields under it and authoring validates a binding against it — and
+   * nothing used to publish it, so every binding to a form's values resolved to nothing, silently: a checklist that
+   * ticks as a password is typed ticked nothing at all.
+   */
   const contextValue = useMemo(
     () => ({
-      runtime: { sources: { form: { errors, values, registerField, unregisterField, setFieldValue, setFieldError } } }
+      runtime: {
+        sources: {
+          form: {
+            errors,
+            values,
+            registerField,
+            unregisterField,
+            registerValidator,
+            unregisterValidator,
+            setFieldValue,
+            setFieldError
+          },
+          [sourceName]: { values, errors }
+        }
+      }
     }),
-    [errors, values, registerField, unregisterField, setFieldValue, setFieldError]
+    [
+      sourceName,
+      errors,
+      values,
+      registerField,
+      unregisterField,
+      registerValidator,
+      unregisterValidator,
+      setFieldValue,
+      setFieldError
+    ]
   );
   useRegisterSource({ id, source: sourceName, name: label ? label : `Form - ${id}`, fields: sourceFields });
 
@@ -195,7 +245,27 @@ const Form = ({
 
   const handleSubmit = useCallback(
     (e: SyntheticEvent<HTMLFormElement>) => {
-      setElementState(state => ({ ...state, errors: {} }));
+      const invalid = [...validators.current].reduce<Record<string, string>>((acum, [name, validate]) => {
+        const message = validate(values);
+
+        return message ? { ...acum, [name]: message } : acum;
+      }, {});
+
+      setElementState(state => ({ ...state, errors: invalid }));
+
+      /**
+       * Refused for every form, not only the managed ones.
+       *
+       * The browser only knows `required`; a length, a pattern or a confirmation that does not match is a rule it has
+       * never heard of, so a form left to submit natively would carry exactly the values these rules exist to stop.
+       */
+      if (Object.keys(invalid).length > 0) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        return;
+      }
+
       if (!managedByInteractions) {
         return;
       }
