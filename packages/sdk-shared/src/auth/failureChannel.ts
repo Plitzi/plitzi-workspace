@@ -42,17 +42,18 @@ const REASONS: AuthFailureReason[] = [
  * What an HTTP refusal means for the session. Stated once, because the provider and the network layers must not
  * disagree about which refusals are renewable.
  *
- * A backend that names the reason (Plitzi's API answers `reason` on every 401) is believed. One that says nothing
- * gets the benefit of the doubt — an unexplained 401 is treated as renewable, so a stale access token costs one
- * refused renewal instead of signing out a session that was still good. Nothing below 401 or above 499 is an answer
- * about the session at all: a 5xx means the backend failed, not that the caller is a stranger.
+ * Only a 401 is about the session. A backend that names the reason (Plitzi's API answers `reason` on every 401) is
+ * believed; one that says nothing gets the benefit of the doubt — an unexplained 401 is treated as renewable, so a
+ * stale access token costs one refused renewal instead of signing out a session that was still good.
+ *
+ * A 403 is never about the session, whatever it carries. It is "you may not do THIS": a permission the account does
+ * not hold, or a CSRF check that failed — and the kernel's CSRF refusal names reasons (`missing`, `expired`) that are
+ * spelled like session ones. It used to be read as `inactive`, so any screen that asked for something its visitor may
+ * not have signed that visitor out on the spot, with nothing on the page to say why. An account that really was
+ * deactivated is refused with a 401 naming `inactive`, which is still believed.
  */
 export const authFailureFromResponse = (status: number, body?: unknown): AuthFailureReason | undefined => {
-  if (status < 400 || status >= 500) {
-    return undefined;
-  }
-
-  if (status !== 401 && status !== 403) {
+  if (status !== 401) {
     return undefined;
   }
 
@@ -61,7 +62,7 @@ export const authFailureFromResponse = (status: number, body?: unknown): AuthFai
     return reason as AuthFailureReason;
   }
 
-  return status === 403 ? 'inactive' : 'expired';
+  return 'expired';
 };
 
 const registrableDomain = (host: string): string => /([^.]+\.[^.]+)$/.exec(host)?.[1] ?? host;
