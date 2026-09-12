@@ -10,6 +10,9 @@
     "strictNullChecks": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    // The package configs import this one as `vite.config.ts`: Vite's native config loader runs them through Node,
+    // which resolves no extensionless relative import.
+    "allowImportingTsExtensions": true,
     "types": ["node", "vite/client"]
   },
   "include": ["vite.config.ts"]

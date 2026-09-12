@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
+import { Fragment, isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -176,7 +176,9 @@ const useInternalItems = ({
     if (plitziElementLayout) {
       const { containerId, bodyChildren } = plitziElementLayout;
       if (containerId === id) {
-        itemsParsed.push(bodyChildren);
+        // Keyed so the page body keeps its identity when the container's own items change around it — by position it
+        // was remounted whole. `:` cannot open an element id, so no item key can collide with it.
+        itemsParsed.push(<Fragment key=":layout-body">{bodyChildren}</Fragment>);
       }
     }
 
@@ -184,7 +186,7 @@ const useInternalItems = ({
     if (Array.isArray(children)) {
       itemsParsed.push(...children.filter(isValidElement));
     } else if (isValidElement(children)) {
-      itemsParsed.push(children);
+      itemsParsed.push(<Fragment key=":children">{children}</Fragment>);
     }
 
     if (!items) {
