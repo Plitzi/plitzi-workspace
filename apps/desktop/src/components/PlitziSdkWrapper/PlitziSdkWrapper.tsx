@@ -51,6 +51,23 @@ const PlitziSdkWrapper = ({
       server={server}
       previewMode={previewMode}
       renderMode={renderMode}
+      /**
+       * The window's theme is the WINDOW's, not this space's.
+       *
+       * The chrome around it is drawn in Tailwind's `dark:` variants off the document class, and this window mounts
+       * the SDK twice — once for the rail, once for the space the visitor opened. Left on the document scope, a
+       * visitor toggling the theme inside their own space repainted the application holding it, and whichever of
+       * the two SDKs mounted last was answering for both.
+       */
+      themeScope="container"
+      /**
+       * The space routes in MEMORY, because this window already has a router.
+       *
+       * A space's pages are its own, not this application's: with the browser router, following a link inside a
+       * space rewrote the window's location — `#/spaces/view/day-plan` became `/tasks#/spaces` — and a reload then
+       * opened the shell's index with the space gone. The address bar belongs to the shell here.
+       */
+      routing="memory"
       sdkDevToolsStylePath={devToolsStylePath}
       // The window's own build decides, and only the development one may: a packaged copy handed to a customer has
       // no business offering the element tree and the store of a space that is not theirs.

@@ -14,7 +14,6 @@ const declaration = elementDeclaration<CustomAttributes>()({
       renderType: '',
       settings: '{}',
       isPlugin: false,
-      pluginScope: '',
       assets: '',
       scriptUrl: ''
     },

@@ -159,11 +159,9 @@ const NodeHeader = ({
   }, [nodeDefinitions, type]);
 
   const optionValue = useMemo<Exclude<Option, OptionGroup> | undefined>(() => {
-    // Normalize a stringified nullish target (legacy "undefined"/"null") to empty so the option still matches.
-    const targetKey = elementId && elementId !== 'undefined' && elementId !== 'null' ? elementId : '';
     if (type === 'trigger') {
       return (optionsMemo as Exclude<Option, OptionGroup>[]).find(
-        option => option.value === `${targetKey}_${action}` && (option.elementId ?? '') === targetKey
+        option => option.value === `${elementId}_${action}` && (option.elementId ?? '') === elementId
       );
     }
 
@@ -174,11 +172,11 @@ const NodeHeader = ({
 
     if (type === 'callback') {
       return (group.options as Exclude<Option, OptionGroup>[]).find(
-        option => option.value === `${targetKey}_${action}` && (option.elementId ?? '') === targetKey
+        option => option.value === `${elementId}_${action}` && (option.elementId ?? '') === elementId
       );
     }
 
-    return (group.options as Exclude<Option, OptionGroup>[]).find(option => option.value === `${targetKey}_${action}`);
+    return (group.options as Exclude<Option, OptionGroup>[]).find(option => option.value === `${elementId}_${action}`);
   }, [optionsMemo, elementId, action, type]);
 
   return (

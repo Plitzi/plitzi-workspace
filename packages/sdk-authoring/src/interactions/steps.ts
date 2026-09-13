@@ -49,8 +49,72 @@ export const setState = (params: { key: string; type: 'boolean' | 'number' | 'te
  */
 export const toggleState = (params: { key: string }): StepSpec => globalStep('toggleState', params);
 
-/** Empties `runtime.state` entirely. */
-export const clearState = (): StepSpec => globalStep('clearState');
+/**
+ * Adds to the list at `runtime.state.<key>`, creating it if it is not there.
+ *
+ * The operation that makes a list belong to whoever is USING a space rather than to whoever authored it: `setState`
+ * stores a scalar at a path, so before this the only lists a space could hold were the ones written into it.
+ */
+export const appendState = (params: {
+  key: string;
+  value: unknown;
+  /** Skip the append when the list already holds this value — for a list whose entries ARE their own identity. */
+  unique?: boolean;
+  /**
+   * Store the entry as `{ id, value }`, with an id of its own.
+   *
+   * The answer whenever two entries may legitimately read the same: without one, everything referring to an entry
+   * refers to it by value, so a checkbox over the list ticks both copies. Read the text back as `.value` and refer
+   * to the entry as `.id`.
+   */
+  withId?: boolean;
+}): StepSpec => globalStep('appendState', params);
+
+/**
+ * Drops entries from the list at `runtime.state.<key>` — by VALUE, or by position when there is nothing else to go on.
+ *
+ * Prefer the value wherever the list can change under the person: a position is only true until something before it
+ * moves, and a row's position is captured when the row renders — so pressing a row's button twice acted on whatever
+ * had shifted into that slot. Inside a controlled `list` the row's own value is `{{ <listSource>.item }}` and its
+ * position `{{ <listSource>.index }}`; either token resolving to nothing removes nothing.
+ */
+export const removeState = (
+  params: { key: string; value: unknown; by?: string } | { key: string; index: string | number }
+): StepSpec => globalStep('removeState', params);
+
+/**
+ * Moves one entry between two lists, and does nothing if it is not in the first.
+ *
+ * What a checkbox is: written as an append beside a remove it was not idempotent, and pressing the box twice put the
+ * entry in BOTH lists — the task listed as done and still sitting in the list above it.
+ */
+export const moveState = (params: { from: string; to: string; value: unknown }): StepSpec =>
+  globalStep('moveState', params);
+
+/**
+ * A checkbox, as one step: in the list at `runtime.state.<key>` if it was not, out of it if it was.
+ *
+ * The list is a SET, which is what makes pressing the box twice safe — an append guarded by a check reads the list
+ * as it was when the flow started, so two presses in the same tick both add.
+ */
+export const toggleInState = (params: { key: string; value: unknown }): StepSpec => globalStep('toggleInState', params);
+
+/**
+ * Empties the list at `runtime.state.<key>`, or the whole of `runtime.state` when no key is named.
+ *
+ * Name the key unless you mean everything: a page that keeps notes beside a list would otherwise have to lose the
+ * notes to clear the list.
+ */
+export const clearState = (params: { key?: string } = {}): StepSpec => globalStep('clearState', params);
+
+/**
+ * Asks the application AROUND this space to do something — open one of its screens, sign out, quit.
+ *
+ * The only step that reaches outside the space, and it exists so an application SHELL can be authored rather than
+ * written in the host's own code: a sidebar, a switcher, an account menu. `action` names a handler the host
+ * registered; one it did not register does nothing, the same as any other callback that resolves to nothing.
+ */
+export const hostAction = (params: { action: string; value?: unknown }): StepSpec => globalStep('hostAction', params);
 
 export const navigate = (params: { urlType: 'page' | 'internal' | 'external'; url: string }): StepSpec =>
   globalStep('navigate', params);
@@ -115,7 +179,23 @@ const utilityStep = (action: string, params: Record<string, unknown> = {}): Step
 /** Milliseconds. The param is `time` — not `delay`, `duration` or `ms`, any of which waits zero. */
 export const delay = (time: number): StepSpec => utilityStep('delayTime', { time });
 
-export const webHook = (params: { url: string; method?: string; body?: string }): StepSpec =>
-  utilityStep('webHook', params);
+/**
+ * Calls a URL and puts the answer in the flow scope as `{{ <id>.response.status }}` and `{{ <id>.response.data }}`.
+ *
+ * `body` takes an object for the reason {@link runServerAction}'s `input` does, and this is the surface where it
+ * bites hardest: a sign-up posts a PASSWORD, and the first person whose password contains a quotation mark turns
+ * an authored line of JSON text into something that will not parse. As an object each value is its own string and
+ * the runtime serialises it.
+ *
+ * `credentials` matters whenever the URL is not this page's own origin — an auth UI on its own sub-domain calling
+ * the API is exactly that — because the default drops the cookies the answer is trying to set.
+ */
+export const webHook = (params: {
+  url: string;
+  method?: 'get' | 'post' | 'put' | 'delete' | 'patch' | 'head';
+  body?: string | Record<string, unknown>;
+  authorizationToken?: string;
+  credentials?: 'include' | 'omit' | 'same-origin';
+}): StepSpec => utilityStep('webHook', params);
 
 export const twigTemplate = (params: { template: string }): StepSpec => utilityStep('twigTemplate', params);

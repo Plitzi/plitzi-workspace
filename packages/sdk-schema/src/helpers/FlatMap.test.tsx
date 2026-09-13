@@ -908,6 +908,7 @@ describe('Testing FlatMap', () => {
       },
       elementsStyle: {
         cache: '',
+        fonts: [],
         mode: 'desktop-first',
         platform: {
           desktop: {
@@ -1052,6 +1053,7 @@ describe('Testing FlatMap', () => {
       },
       elementsStyle: {
         cache: '',
+        fonts: [],
         mode: 'desktop-first',
         platform: {
           desktop: {
@@ -1139,6 +1141,7 @@ describe('Testing FlatMap', () => {
     expect({ elementsStyle, variables }).toStrictEqual({
       elementsStyle: {
         cache: '',
+        fonts: [],
         mode: 'desktop-first',
         platform: {
           desktop: {

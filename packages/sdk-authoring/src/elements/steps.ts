@@ -80,6 +80,41 @@ export const updateElement = (
 });
 
 /**
+ * Empties a form — every value and every error — by id.
+ *
+ * The step an "add another one" flow needs and nothing else provides: a control's box is driven by the form's own
+ * values, so writing the state key behind it leaves the text sitting there. Without this, pressing the button twice
+ * adds the same entry twice, which reads as the form having ignored the first press.
+ *
+ * A form callback, so it runs ON the form — `target` is the form's id, not the button's.
+ */
+export const resetForm = (target: string): StepSpec => ({
+  type: 'callback',
+  action: 'performReset',
+  title: 'Reset Form',
+  on: target,
+  params: {}
+});
+
+/**
+ * Asks an `apiContainer` to fetch again, by id.
+ *
+ * The step every flow that CHANGES what a list is showing needs: a container reads its query once, so a row deleted
+ * through a `webHook` is gone from the server and still on the screen — and the page then disagrees with itself until
+ * somebody reloads it. Pair it with the call that did the writing rather than with a notification: what tells the
+ * person it worked is the row leaving.
+ *
+ * An element callback, so `target` is the CONTAINER's id, not the button's.
+ */
+export const reloadApi = (target: string): StepSpec => ({
+  type: 'callback',
+  action: 'performQuery',
+  title: 'Reload',
+  on: target,
+  params: {}
+});
+
+/**
  * The same write as {@link updateElement}, storing the opposite of what is there — a panel that expands on one click
  * and collapses on the next, from ONE step on ONE trigger.
  *

@@ -3,7 +3,7 @@ import BasicAuthProvider from './providers/BasicAuthProvider';
 import type AuthProvider from './AuthProvider';
 import type { AuthBootstrap, AuthEventListener } from './AuthProvider';
 import type { AuthProviderSettings } from './types';
-import type { AuthFailureReason, AuthState, TokenResult } from '@plitzi/sdk-shared';
+import type { AuthFailureReason, AuthState, LoginResult, TokenResult } from '@plitzi/sdk-shared';
 
 export type AuthProviderFactory<U = Record<string, unknown>> = (settings: AuthProviderSettings) => AuthProvider<U>;
 
@@ -117,8 +117,9 @@ export class AuthManager<U = Record<string, unknown>> {
     return this.provider.init(bootstrap);
   }
 
-  login(...args: Parameters<AuthProvider<U>['login']>): Promise<TokenResult | undefined> {
-    return this.provider?.login(...args) ?? Promise.resolve(undefined);
+  /** With no provider there is nothing to sign in against, which is a refusal like any other — and has to say so. */
+  login(...args: Parameters<AuthProvider<U>['login']>): Promise<LoginResult> {
+    return this.provider?.login(...args) ?? Promise.resolve<LoginResult>({ ok: false, reason: 'missing' });
   }
 
   refresh(): Promise<TokenResult | undefined> {

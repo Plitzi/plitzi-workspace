@@ -10,6 +10,8 @@ export type TextareaProps = {
   placeholder?: string;
   value?: string;
   required?: boolean;
+  /** `0` for none. */
+  maxLength?: number;
   disabled?: boolean;
   readOnly?: boolean;
   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
@@ -23,6 +25,7 @@ const Textarea = ({
   placeholder = '',
   value = '',
   required = true,
+  maxLength = 0,
   disabled = false,
   readOnly = false,
   onChange,
@@ -46,6 +49,7 @@ const Textarea = ({
       value={value}
       readOnly={readOnly}
       required={required}
+      maxLength={maxLength > 0 ? maxLength : undefined}
       disabled={disabled}
       onChange={onChange}
       onBlur={handleBlur}

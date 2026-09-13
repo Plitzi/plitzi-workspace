@@ -14,7 +14,7 @@ import type { Context, CSSProperties, JSX, ReactNode, RefObject } from 'react';
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   ref?: RefObject<HTMLElement | null>;
   children?: ReactNode;
-  tag?: T;
+  tag?: T | '';
   className?: string;
   interactionTriggers?: Record<string, InteractionCallback>;
   interactionCallbacks?: Record<string, InteractionCallback>;

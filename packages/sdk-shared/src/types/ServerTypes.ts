@@ -141,13 +141,13 @@ export type SSRTemplateProps = {
   ssrOnly?: boolean;
   debugMode?: boolean;
   /**
-   * The script that settles the theme before the document paints — `themeBootScript()` from this package.
+   * The theme class this document wears on `<html>` — `dark`, `light`, or nothing at all.
    *
-   * Passed in rather than written by the template, because it is `ThemeProvider`'s contract and not the template's:
-   * the storage key, the accepted values and the classes are defined once, next to the provider that honours them.
-   * A host with nothing to remember (or one that already renders the class itself, from a cookie) leaves it out.
+   * The theme is kept in a cookie, so the server that renders the document already knows it: the page arrives
+   * painted correctly, with no blocking script in the head and no first paint in the other theme. Empty is not a
+   * failure — it is `system`, and the stylesheet's `prefers-color-scheme` queries answer it.
    */
-  themeBoot?: string;
+  themeClass?: string;
   /**
    * The document's web fonts: `fontsToHead(style.fonts, ...)` from this package.
    *
@@ -931,11 +931,34 @@ export type OAuthGrantTarget = {
  *  for them. The SDK owns the protocol (discovery, registration, PKCE, code exchange); the consumer owns identity
  *  and issues a token its own `adapters.getGrant` will accept back. */
 export type OAuthAdapters = {
-  /** Verify the credentials typed into the consent screen. Return undefined to re-show the form with an error —
-   *  never throw for a wrong password. */
-  authenticate: (credentials: { username: string; password: string }) => Promise<OAuthUser | undefined>;
+  /**
+   * Who the browser making this request already is, from whatever session it carries.
+   *
+   * This server has no sign-in of its own: it reads an existing session and sends anyone it cannot identify to
+   * {@link OAuthConfig.signInUrl}, which brings them back. That is what lets a deployment have ONE sign-in screen
+   * for every surface — and it is what makes SSO somebody else's problem, because whatever established the
+   * session is no longer this flow's business.
+   *
+   * It replaced a username/password form this server used to render and check itself. Two sign-ins against one
+   * account store is two places to add a provider, to rate-limit, and to get a password check subtly wrong.
+   *
+   * Return undefined for "nobody is signed in". Never throw for that — an unreadable session is the ordinary
+   * first visit.
+   */
+  identify: (req: SSRRequest) => Promise<OAuthUser | undefined>;
   /** What this user may grant access to. An empty list ends the flow with `access_denied`. */
   grantTargets: (user: OAuthUser) => Promise<OAuthGrantTarget[]>;
+  /**
+   * End whatever session {@link OAuthAdapters.identify} was reading, so the person can connect as somebody else.
+   *
+   * Optional, and its absence is what takes the offer off the grant screen: a deployment that cannot end a session
+   * from here should not show a button that pretends to. Clear the cookies on `res` and revoke at the source —
+   * forgetting the cookie alone leaves the credential working for anyone who already copied it.
+   *
+   * Whoever reaches that screen arrived from another application, so this is the only way out of the wrong account
+   * that does not mean abandoning the connection and starting over from the host.
+   */
+  signOut?: (req: SSRRequest, res: SSRResponseHelpers) => void | Promise<void>;
   /** Mint the bearer the client will send on every MCP request. Return undefined to deny the grant. */
   issueToken: (
     user: OAuthUser,
@@ -957,7 +980,7 @@ export type OAuthGuestConfig = {
   user?: OAuthUser;
 };
 
-/** What the built-in consent screen shows around the form. Ignored when `renderConsent` replaces the page. */
+/** What the grant screen shows around the form. */
 export type OAuthBranding = {
   /** Shown as the heading, e.g. 'Plitzi'. Defaults to 'Plitzi'. */
   productName?: string;
@@ -967,23 +990,43 @@ export type OAuthBranding = {
   css?: string;
 };
 
-/** Everything the consent screen needs to render itself, for a deployment that replaces the built-in page. Return
- *  a full HTML document; the SDK serves it as-is and reads the same form fields back. */
+/**
+ * Everything the GRANT screen needs to render itself.
+ *
+ * One screen, and deliberately only one: this server asks what to connect, never who somebody is. Signing in
+ * happens on {@link OAuthConfig.signInUrl}, wherever the deployment keeps it.
+ */
 export type OAuthConsentView = {
-  /** 'credentials' asks for username + password; 'target' asks which space to grant, after a successful login. */
-  step: 'credentials' | 'target';
   /** Where the form must POST to (the authorize endpoint). */
   action: string;
   /** Hidden fields the form MUST round-trip verbatim, or the flow cannot be resumed. */
   hidden: Record<string, string>;
-  /** Offered on the 'target' step only. */
+  /** What this account may grant. Empty for a visitor who has not signed in, who is offered `guest` instead. */
   targets: OAuthGrantTarget[];
-  /** Offered on the 'credentials' step when the deployment allows a guest connection. The form must submit a
-   *  `guest` field for it (any non-empty value), which is what tells the server to skip authentication. */
+  /**
+   * Offered when the deployment allows a guest connection. The form submits a `guest` field for it (any non-empty
+   * value), which is what tells the server to grant the guest target rather than a chosen one.
+   *
+   * It is the reason an unidentified visitor is shown this screen at all rather than being sent straight to
+   * sign-in: a guest has no session and never will, so a redirect they cannot come back from would take the
+   * option away entirely.
+   */
   guest?: { label: string; description?: string };
-  /** Who logged in, on the 'target' step. */
+  /** Who is signed in. Absent for a visitor taking the guest connection. */
   user?: OAuthUser;
-  /** A message to show the user, e.g. after a failed login. */
+  /** Where to send somebody who wants to sign in first. Shown when `user` is absent. */
+  signInUrl?: string;
+  /**
+   * Whether to offer "use another account" — shown only when the deployment can act on it, which means it supplied
+   * {@link OAuthAdapters.signOut}.
+   *
+   * A submit BUTTON in the same form rather than a link, and that is not decoration. Ending a session is a state
+   * change, so it may not hang off a URL anything can navigate to: a `<img src>` on any page on the internet would
+   * then be able to sign a visitor out. Posting it here keeps it a same-origin form submission carrying the request
+   * back, exactly like granting does.
+   */
+  canSwitchUser?: boolean;
+  /** A message to show the user. */
   error?: string;
   branding: OAuthBranding;
 };
@@ -1001,6 +1044,7 @@ export type OAuthConsentView = {
  *  carries no space ({@link OAuthGrantTarget}) so the public surface stays one consent away. */
 export type OAuthConfig = {
   adapters: OAuthAdapters;
+
   /** The issuer/resource identifier published in the metadata documents. Defaults to the origin the request came
    *  in on, which is correct whenever the server owns its sub-domain; set it when a proxy rewrites the host. */
   issuer?: string;
@@ -1014,8 +1058,26 @@ export type OAuthConfig = {
   /** Offer a connection that needs no account — see {@link OAuthGuestConfig}. Omit to require sign-in. */
   guest?: OAuthGuestConfig;
   branding?: OAuthBranding;
-  /** Replaces the built-in consent screen — return a full HTML document for the given step. */
-  renderConsent?: (view: OAuthConsentView) => string | Promise<string>;
+  /**
+   * The sign-in screen this server sends unidentified visitors to.
+   *
+   * The whole authorization request rides along as a `redirect` query param, so signing in is an ordinary
+   * navigation that lands back on the `/authorize` it left — this server keeps no session of its own for a flow
+   * that is one page long.
+   *
+   * Required, because {@link OAuthAdapters.identify} is: a server that does not check passwords and has nowhere
+   * to send somebody who has not signed in cannot start the flow at all.
+   */
+  signInUrl: string;
+  /**
+   * Hand the client the credential `issueToken` minted, instead of an opaque handle to it.
+   *
+   * Off by default, which is right whenever the credential is worth more than the connection — a space token
+   * reaches the platform, and a client that never holds one cannot leak one. Turn it ON when the credential IS
+   * what the client should hold: a native app granted the person's own session is holding exactly what a browser
+   * holds, and wrapping it costs a store read on every request and gives a second thing to revoke.
+   */
+  directTokens?: boolean;
 };
 
 /** A short-TTL, one-shot store for unsaved draft offline-data behind a preview token. The SDK ships an

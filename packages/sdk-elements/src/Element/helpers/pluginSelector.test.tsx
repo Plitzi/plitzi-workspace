@@ -47,21 +47,25 @@ describe('pluginSelector', () => {
     expect(result).toBeUndefined();
   });
 
-  it('routes an unknown-but-registered plugin definition to PluginRemote with its asset url and scope', () => {
+  it('routes an unknown-but-registered plugin definition to PluginRemote with its main script url', () => {
     const definition = {
-      scope: 'myScope',
       subPlugins: [],
-      assets: [{ id: 'a', type: 'script', isMain: true, params: { src: 'https://cdn/plugin.js' } }]
+      assets: [
+        { id: 'style', type: 'link', params: { href: 'https://cdn/plugin.css' } },
+        { id: 'a', type: 'script', params: { src: 'https://cdn/chunk.mjs' } },
+        { id: 'b', type: 'script', isMain: true, params: { src: 'https://cdn/plugin.mjs' } }
+      ]
     } as unknown as ComponentDefinition;
     const result = pluginSelector({
       type: 'myRemote',
       internalProps,
       components: {},
       plugins: { myRemote: definition }
-    }) as ReactElement<{ url: string; scope: string }>;
+    }) as ReactElement<Record<string, unknown>>;
 
     expect(result.type).toBe(PluginRemote);
-    expect(result.props.url).toBe('https://cdn/plugin.js');
-    expect(result.props.scope).toBe('myScope');
+    expect(result.props.url).toBe('https://cdn/plugin.mjs');
+    // The module is imported by its URL alone: there is no global scope left for a remote plugin to name.
+    expect(result.props).not.toHaveProperty('scope');
   });
 });

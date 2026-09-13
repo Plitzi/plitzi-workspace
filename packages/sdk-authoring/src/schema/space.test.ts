@@ -702,9 +702,7 @@ describe('page folders', () => {
   });
 
   it('defaults a folder name and slug to its id', () => {
-    const { schema } = authorSpace(
-      withFolders([{ name: 'Home', slug: '', body: [text('home')] }], [{ id: 'docs' }])
-    );
+    const { schema } = authorSpace(withFolders([{ name: 'Home', slug: '', body: [text('home')] }], [{ id: 'docs' }]));
 
     expect(schema.pageFolders).toEqual([{ id: 'docs', name: 'docs', slug: 'docs' }]);
   });
@@ -712,16 +710,22 @@ describe('page folders', () => {
   /** A page answering at the wrong URL is not something a document can report about itself later. */
   it('refuses a page in a folder nothing declares', () => {
     expect(() =>
-      authorSpace(
-        withFolders([{ name: 'Guide', slug: 'guide', folder: 'dcos', body: [text('x')] }], [{ id: 'docs' }])
-      )
+      authorSpace(withFolders([{ name: 'Guide', slug: 'guide', folder: 'dcos', body: [text('x')] }], [{ id: 'docs' }]))
     ).toThrow(/does not declare.*did you mean "docs"/is);
   });
 
   it('refuses a folder inside a folder that is not there, and one inside itself', () => {
     expect(() => authorSpace(withFolders([], [{ id: 'api', parent: 'docs' }]))).toThrow(/does not declare/);
     expect(() =>
-      authorSpace(withFolders([], [{ id: 'a', parent: 'b' }, { id: 'b', parent: 'a' }]))
+      authorSpace(
+        withFolders(
+          [],
+          [
+            { id: 'a', parent: 'b' },
+            { id: 'b', parent: 'a' }
+          ]
+        )
+      )
     ).toThrow(/inside itself/);
   });
 });

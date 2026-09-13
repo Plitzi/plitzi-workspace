@@ -46,7 +46,17 @@ const fallback: DesktopBridge = {
     webStorage()?.removeItem(SESSION_KEY);
 
     return Promise.resolve();
-  }
+  },
+  /**
+   * There is no browser to open and no port to listen on, so this stand-in cannot sign anybody in.
+   *
+   * It refuses rather than pretending: the flow needs a loopback listener and the system browser, both of which
+   * are the main process's. A test or a `vite dev` tab gets an honest "not here" instead of a hang.
+   */
+  signIn: () => Promise.resolve({ ok: false, reason: 'refused', error: 'Sign-in needs the desktop app.' } as const),
+  renewSession: () =>
+    Promise.resolve({ ok: false, reason: 'refused', error: 'Sign-in needs the desktop app.' } as const),
+  revokeSession: () => Promise.resolve()
 };
 
 const bridge = (): DesktopBridge | undefined => (typeof window === 'undefined' ? undefined : window.plitziDesktop);

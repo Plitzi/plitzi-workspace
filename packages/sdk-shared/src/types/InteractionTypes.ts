@@ -117,3 +117,14 @@ export type InteractionsContextValue<TManager = any> = {
     getAdditionalParams?: Subscriptor<T>['getAdditionalParams'];
   }) => void;
 };
+
+/**
+ * What an embedding application offers a space it renders.
+ *
+ * The one direction that did not exist: a space acts on its own state, its own router and its own session, and had
+ * no way to ask the application AROUND it for anything — so every application shell had to be written in the host's
+ * own code, which is the one part of a product that cannot then be authored or themed without a release.
+ *
+ * Keyed by the name a space's `hostAction` step calls. A name the host did not register does nothing.
+ */
+export type HostActions = Record<string, (params: Record<string, unknown>) => void>;

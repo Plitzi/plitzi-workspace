@@ -5,7 +5,7 @@ import SessionStore from './helpers/SessionStore';
 import { nowInSeconds, toSeconds, tokenExpiresAt } from './helpers/tokenClaims';
 
 import type { StoredSession } from './helpers/SessionStore';
-import type { AuthFailureReason, AuthResult, AuthState, Schema, TokenResult } from '@plitzi/sdk-shared';
+import type { AuthFailureReason, AuthResult, AuthState, LoginResult, Schema, TokenResult } from '@plitzi/sdk-shared';
 
 /** Why a state changed. Not control flow — it is what makes an auth trace readable, and every transition below
  *  names one, because "it went to guest" is not a diagnosis and "the hint cookie was gone" is. */
@@ -330,31 +330,49 @@ abstract class AuthProvider<U = Record<string, unknown>> {
 
   // Actions
 
-  async login(params: Record<string, unknown>): Promise<TokenResult | undefined> {
+  /**
+   * Resolves to WHY when it does not resolve to a session.
+   *
+   * It used to resolve to `undefined` for every refusal there is, which left the one screen that has to explain
+   * itself — a sign-in form — with a single sentence to cover a wrong password, an address that has never been
+   * confirmed, a blocked account and a backend that could not be reached. Three quarters of the time it was telling
+   * somebody to check credentials that were perfectly correct.
+   */
+  async login(params: Record<string, unknown>): Promise<LoginResult> {
     this.setState('authenticating', 'authenticating');
     const result = await this.requestLogin(params);
     if (!result.ok) {
       this.endSession(result.reason);
 
-      return undefined;
+      return { ok: false, reason: result.reason };
     }
 
     this.adopt(result);
-    await this.handOffToServer();
 
     // The hand-off can end the session outright — the server refused the credential — and there is then nothing
     // left to fill in and nobody to ask about.
-    if (this.state === 'guest') {
-      return undefined;
+    const refused = await this.handOffToServer();
+    if (refused) {
+      return { ok: false, reason: refused };
     }
 
     if (!this.session.user && this.capabilities.identity) {
       await this.loadIdentity();
     }
 
+    // Identity can end it too — a grant the backend honours for an account it will not present.
+    if (this.state !== 'authenticated') {
+      return { ok: false, reason: 'inactive' };
+    }
+
     this.emit({ type: 'login', token: this.session.token });
 
-    return this.session.token;
+    /**
+     * A session with no access token is still a session: a backend that keeps the credential in a cookie answers
+     * with a user and nothing to hold. `ok` is what says the sign-in worked — the token is what a flow reads when
+     * there happens to be one.
+     */
+    return { ok: true, ...(this.session.token ?? { accessToken: '', expiresAt: null, refreshToken: null }) };
   }
 
   /**
@@ -365,30 +383,35 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    * Handing the credential over closes that gap: the server verifies it with the provider and establishes its own
    * session, cookie and all, so the next server-rendered page already knows. Providers whose grants came from that
    * same server return undefined here and nothing happens.
+   *
+   * Answers with the reason when it ended the session, so the caller can say which refusal this was rather than
+   * inferring one from the state it is left in.
    */
-  private async handOffToServer(): Promise<void> {
+  private async handOffToServer(): Promise<AuthFailureReason | undefined> {
     const exchanged = await this.requestExchange();
     if (!exchanged) {
-      return;
+      return undefined;
     }
 
     if (exchanged.ok) {
       // The server's own session supersedes: it is the one its cookies and its renderer will honour.
       this.adopt(exchanged);
 
-      return;
+      return undefined;
     }
 
     // Nothing was learned — try again on the next revalidation rather than throwing away a good sign-in.
     if (exchanged.reason === 'network') {
       this.offline = true;
 
-      return;
+      return undefined;
     }
 
     // The server will not accept this credential. Whatever the identity provider thinks, a session the backend
     // refuses cannot load a page or call an API, so it ends here instead of failing on every later request.
     this.endSession(exchanged.reason);
+
+    return exchanged.reason;
   }
 
   async refresh(): Promise<TokenResult | undefined> {

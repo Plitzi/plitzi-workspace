@@ -14,7 +14,6 @@ type SettingsProps = {
   settings?: string;
   assets?: string;
   scriptUrl?: string;
-  pluginScope?: string;
   isPlugin?: boolean;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
@@ -25,7 +24,6 @@ const Settings = ({
   isPlugin = false,
   assets = '',
   scriptUrl = '',
-  pluginScope = '',
   onUpdate
 }: SettingsProps) => {
   const { resolvedTheme } = useTheme();
@@ -103,7 +101,6 @@ const Settings = ({
       <Checkbox checked={isPlugin} onChange={handleChangeIsPlugin} label="Is Plugin" size="xs" />
       {isPlugin && (
         <>
-          <Input value={pluginScope} label="Plugin Scope" onChange={handleChange('pluginScope')} size="xs" />
           <Input value={scriptUrl} label="Plugin Script Url" onChange={handleChange('scriptUrl')} size="xs" />
           <TextArea value={assets} label="Plugin Assets (Styles)" onChange={handleChange('assets')} size="xs" />
         </>

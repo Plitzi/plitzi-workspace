@@ -12,7 +12,8 @@ export type ListControlledItemProps<T = unknown> = {
   children: ReactNode;
   className?: string;
   isTemplate: boolean;
-  itemCount: number;
+  /** The row's own position, from zero — what `index` publishes, and what indexes back into the bound array. */
+  index: number;
   record: T;
   source: string;
 };
@@ -21,7 +22,7 @@ const ListControlledItem = ({
   children,
   className = '',
   isTemplate = false,
-  itemCount = 0,
+  index = 0,
   record,
   source = ''
 }: ListControlledItemProps) => {
@@ -33,9 +34,17 @@ const ListControlledItem = ({
 
   // A row rendered outside a list carries no `source`, so it contributes no scope value rather than a `sources['']`
   // key nothing could ever address.
+  /**
+   * The row's POSITION, from zero — not the human count.
+   *
+   * It used to publish `i + 1`, the number the builder's template label shows, and the two are not the same thing:
+   * anything using `index` to reach back into the array it came from — removing this row, reading the entry beside
+   * it — was off by one, silently, and acted on its neighbour. The label is a separate expression now, because a
+   * person counting rows starts at one and an array does not.
+   */
   const storeContextValue = useMemo(
-    () => (source ? { runtime: { sources: { [source]: { item: record, index: `${itemCount}` } } } } : emptyObject),
-    [source, record, itemCount]
+    () => (source ? { runtime: { sources: { [source]: { item: record, index: `${index}` } } } } : emptyObject),
+    [source, record, index]
   );
 
   const scopedRow = (
@@ -49,7 +58,7 @@ const ListControlledItem = ({
   if (isTemplate) {
     return (
       <div className={clsx('plitzi-component__controlled-list-item', className)}>
-        <div className="controlled-list-item__counter">{`List Item - ${itemCount}`}</div>
+        <div className="controlled-list-item__counter">{`List Item - ${index + 1}`}</div>
         {scopedRow}
       </div>
     );

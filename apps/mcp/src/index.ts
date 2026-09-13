@@ -7,7 +7,7 @@
 export { createServer } from './createServer';
 export { buildMCPPipeline, mcpExtensions } from './pipeline';
 export { createMcpOnlyStage, createMcpStage } from './stages/mcp';
-export { createOAuthGuardStage, createOAuthStage } from './stages/oauth';
+export { createOAuthGuardStage, createOAuthStage } from '@plitzi/sdk-server/oauth';
 export { previewStage } from './stages/preview';
 export { createWidgetProxyStage } from './stages/proxy';
 export { createPreview } from './preview/createPreview';

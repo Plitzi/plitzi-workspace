@@ -1,6 +1,14 @@
 import PlitziSdk from '@plitzi/plitzi-sdk';
 
-import type { OfflineDataRaw, Environment, RenderMode, Server, SSRPlugin, SSRRenderResult } from '@plitzi/sdk-shared';
+import type {
+  OfflineDataRaw,
+  Environment,
+  RenderMode,
+  Server,
+  SSRPlugin,
+  SSRRenderResult,
+  Theme
+} from '@plitzi/sdk-shared';
 
 export type ComponentProps = {
   server: Partial<Server>;
@@ -17,6 +25,8 @@ export type ComponentProps = {
   branding?: boolean;
   /** The same degraded render, as the reason: the account behind this space is over its quota. */
   overQuota?: boolean;
+  /** The theme this document was rendered with, from the visitor's cookie. See `prepareRender`. */
+  theme?: Theme;
 };
 
 const Component = ({
@@ -30,7 +40,8 @@ const Component = ({
   sdkDevToolsStylePath,
   debugMode = false,
   branding,
-  overQuota
+  overQuota,
+  theme
 }: ComponentProps) => {
   // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
   // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
@@ -48,6 +59,7 @@ const Component = ({
       debugMode={debugMode}
       {...(branding === undefined ? {} : { branding })}
       {...(overQuota === undefined ? {} : { overQuota })}
+      {...(theme === undefined ? {} : { theme })}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

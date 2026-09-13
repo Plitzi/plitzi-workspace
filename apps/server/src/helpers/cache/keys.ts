@@ -1,11 +1,23 @@
+import { themeFromCookies } from '@plitzi/sdk-shared/theme';
+
+/**
+ * The key a rendered document is cached under.
+ *
+ * The visitor's theme is part of it because it is part of the DOCUMENT: `prepareRender` reads the `theme` cookie and
+ * writes it onto `<html>` and into the props the SDK hydrates with. Keyed without it, the first visitor's choice was
+ * served to everybody behind them — a dark page for a visitor who chose light, then corrected on hydration.
+ *
+ * Read from the request here rather than handed in, so a call site cannot key the page without it. Only the theme
+ * cookie is read: keying the whole header would split the cache on every analytics cookie a visitor carries.
+ */
 export const buildHtmlCacheKey = (
   accessToken: string | undefined = 'anonymous',
   spaceId: number | string | null,
   environment: string,
   revision: number,
-  req: { hostname: string; path: string; search: string }
+  req: { hostname: string; path: string; search: string; headers: { cookie?: string } }
 ): string =>
-  `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${req.hostname}\0${req.path}\0${req.search}`;
+  `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${themeFromCookies(req.headers.cookie) ?? ''}\0${req.hostname}\0${req.path}\0${req.search}`;
 
 export const buildOfflineDataCacheKey = (spaceId: number, environment: string, revision: number): string =>
   `${spaceId}|${environment}|${revision}`;

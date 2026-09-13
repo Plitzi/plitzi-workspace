@@ -113,15 +113,6 @@ const PluginsContextProvider = ({
     }
 
     return {
-      'static-1': {
-        type: 'link',
-        id: 'static-1',
-        params: {
-          type: 'text/css',
-          href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css',
-          rel: 'stylesheet'
-        }
-      },
       ...extraAssets,
       ...pluginCustomStyleAssets,
       ...pluginStyleAssets,

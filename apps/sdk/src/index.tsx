@@ -46,10 +46,13 @@ import type {
   InteractionCallbackParamValues,
   Environment,
   EventBridgeContextValue,
+  HostActions,
   OfflineDataRaw,
   RenderMode,
   Server,
   RuntimeStateInstance,
+  Theme,
+  ThemeScope,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -208,6 +211,14 @@ export type PlitziSdkProps = {
   offlineData?: OfflineDataRaw;
   offlineDataType?: 'json' | 'yaml';
   renderMode?: RenderMode;
+  /**
+   * Whether this space owns the browser's address bar. `browser` (the default) is right when the space IS the page.
+   *
+   * `memory` is for a space EMBEDDED in an application that has a router of its own — the desktop app, a component
+   * mounted in a host: without it the space's own navigation rewrites the host's location, and a reload then opens
+   * the host's index with the space gone.
+   */
+  routing?: 'browser' | 'memory';
   debugMode?: boolean;
   isHydrating?: boolean;
   previewMode?: boolean;
@@ -223,6 +234,31 @@ export type PlitziSdkProps = {
    *  renders the page; derived from `server` + `webKey` for a client-side render; absent means report nothing. */
   analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
+  /**
+   * What the application EMBEDDING this space hands it, published as the `host` data source.
+   *
+   * The half that makes an application SHELL authorable: a sidebar cannot list the host's screens unless the host
+   * can give it the list. Kept current while the space is on screen — unlike `state`, which the space owns from
+   * the moment it mounts.
+   */
+  hostData?: Record<string, unknown>;
+  /**
+   * What that application is willing to be asked to do, reached from a flow with the `hostAction` step.
+   *
+   * The only way out of a space and into its host: opening one of the host's screens, signing out of its keyring,
+   * quitting. A name the host does not register does nothing.
+   */
+  hostActions?: HostActions;
+  /**
+   * Whose theme this space follows and repaints. `document` (the default) is a space that IS the page.
+   *
+   * `container` is a space EMBEDDED in an application with a theme of its own: it wears the class on its own root
+   * and keeps a theme store of its own, so toggling it never reaches the application around it, and two spaces in
+   * one document do not answer for each other.
+   */
+  themeScope?: ThemeScope;
+  /** The theme the host already settled — from the cookie a server read before it rendered the document. */
+  theme?: Theme;
 };
 
 const PlitziSdk = ({

@@ -21,6 +21,7 @@ import devtoolsCssUrl from '../../assets/plitzi-sdk-devtools.scss?url';
 import styleUrl from '../../assets/plitzi-sdk.scss?url';
 
 import type { StoreApi } from '@plitzi/nexus';
+import type { HostActions } from '@plitzi/sdk-shared';
 import type {
   AnalyticsConfig,
   Environment,
@@ -54,6 +55,10 @@ export type AppMainProps = {
   overQuota?: boolean;
   analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
+  /** What the embedding application hands this space — see `PlitziSdkProps`. */
+  hostData?: Record<string, unknown>;
+  /** What it is willing to be asked to do — see `PlitziSdkProps`. */
+  hostActions?: HostActions;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };
@@ -81,6 +86,8 @@ const AppMain = ({
   overQuota = false,
   analytics,
   onInitEventBridge,
+  hostData,
+  hostActions,
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
@@ -113,6 +120,15 @@ const AppMain = ({
     ],
     [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota]
   );
+
+  /**
+   * What the application around this space handed it, kept CURRENT rather than captured once.
+   *
+   * Unlike the initial `state` prop — which the space owns from then on — this is the host's, and it changes while
+   * the space is on screen: a list that just refreshed, a different screen now open. Syncing it is what makes a
+   * shell authored as a space possible at all.
+   */
+  useSdkStoreSync(['runtime.host'], [hostData]);
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view
   // binds every read/write to `runtime.state`, so call sites concatenate nothing and the updater form type-checks.
@@ -153,7 +169,7 @@ const AppMain = ({
                   <NavigationProvider currentPageId={currentPageId}>
                     <AnalyticsReporter analytics={analytics} />
                     <GlobalSources>
-                      <InteractionsSourcesProvider>
+                      <InteractionsSourcesProvider hostActions={hostActions}>
                         <DevToolsContainer
                           enabled={debugMode}
                           instanceId={instanceId}

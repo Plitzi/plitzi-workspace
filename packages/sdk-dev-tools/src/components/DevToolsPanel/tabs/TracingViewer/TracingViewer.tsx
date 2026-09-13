@@ -80,8 +80,21 @@ const TracingViewer = () => {
     [selectedCommit, isSsrCommit, tree, flat]
   );
 
-  const active = useMemo(() => model?.nodes.find(node => node.id === selectedElementId), [model, selectedElementId]);
-  useHighlightElement(active?.id);
+  /**
+   * The picked node, by instance first and by element second.
+   *
+   * Two views select in different currencies: the flamegraph and the ranked list pick one INSTANCE (a single row of
+   * a list), while hotspots picks an ELEMENT — it aggregates every instance of one. Falling back to the element lets
+   * a pick in hotspots survive a switch to the flamegraph, landing on the first instance of it in this commit.
+   */
+  const active = useMemo(
+    () =>
+      model?.nodes.find(node => node.id === selectedElementId) ??
+      model?.nodes.find(node => node.elementId === selectedElementId),
+    [model, selectedElementId]
+  );
+  // The outline goes on the page's DOM, which is keyed by the ELEMENT id — every instance of a list row at once.
+  useHighlightElement(active?.elementId ?? selectedElementId);
 
   const origin = useMemo(
     () => (selectedCommit ? commitOrigin(selectedCommit, hydrated, selectedCommit.commitId === firstRealId) : 'update'),

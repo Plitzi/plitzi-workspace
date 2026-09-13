@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { isValidElement, use, useMemo, useSyncExternalStore } from 'react';
+import { Fragment, isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -8,10 +8,17 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';
 import ServerStaticShell from '../ServerStaticShell';
 
-import type { Element, ElementLayout } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 const isServer = typeof window === 'undefined';
+
+/**
+ * Keys for what joins the items' list without being an item. By position, the page body was remounted whenever the
+ * container gained or lost an item; and since an element id always opens with a letter, these never meet an item's key.
+ */
+const LAYOUT_BODY_KEY = '#layout-body';
+const CHILDREN_KEY = '#children';
 
 const storeSubscriber = () => () => {};
 // Typed `boolean` rather than left to infer `true`/`false`: what these mean is "hydrating or not", and a literal
@@ -24,24 +31,61 @@ const useInternalItems = ({
   definition,
   plitziElementLayout,
   children,
-  previewMode
+  previewMode,
+  visible = true
 }: {
   id: string;
   definition: Element['definition'];
   plitziElementLayout?: ElementLayout;
   children: ReactNode | ReactNode[];
   previewMode?: boolean;
+  /** This element's resolved visibility — its own `visibility` state AND every ancestor's. */
+  visible?: boolean;
 }) => {
   // `rsc.enabled`, not `schema.rsc.enabled`: the schema flag alone is also true on a client-only render, where there
   // is no server HTML to freeze a server element against and it would be dropped altogether.
   const [[flat, rscEnabled]] = useCommonStore(['schema.flat', 'rsc.enabled'], { mode: 'mount' });
-  const { components } = use(ComponentContext);
+  const { components, componentDefinitions } = use(ComponentContext);
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
   const { plugins } = use(PluginsContext);
   const { items } = definition;
+  // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.
+  const declared = componentDefinitions.current[definition.type] as ComponentDefinition | undefined;
+  /**
+   * The instance's own strategy, else the one its TYPE declares, else `eager`.
+   *
+   * Per type because the right default depends on what the element is: a modal starts hidden and is worth
+   * deferring, while a container is on screen almost always and deferring it would only add a render cycle before
+   * the page appears. Read from the declaration at render rather than trusted to have been copied onto the instance,
+   * so a modal authored before its type declared one follows it too.
+   */
+  const loadStrategy = definition.loadStrategy ?? declared?.definition.loadStrategy ?? 'eager';
   const hasItems = plitziElementLayout || children || items?.length;
+  /**
+   * Whether this element has ever been shown, for `lazy`.
+   *
+   * A ref written during the render rather than state, because it must be true on the very render that reveals the
+   * element — state would need a commit first, so the reveal would draw an empty modal and fill it a frame later.
+   * The write is idempotent (it only ever goes false → true), so a double render under StrictMode reaches the same
+   * answer, and it never has to schedule anything: the render that flips it is already happening, driven by the
+   * `visibility` change that flipped it.
+   */
+  const revealed = useRef(false);
+  if (visible) {
+    revealed.current = true;
+  }
+
+  /**
+   * Only `previewMode` — the builder must keep every subtree mounted no matter what.
+   *
+   * An author hides a modal and then has to be able to open, select and edit what is inside it; a tree whose items
+   * the canvas refuses to build is a tree with nothing to drop an element into. The strategy is a RUNTIME
+   * optimisation, and the builder is not the runtime.
+   */
+  const mountItems =
+    !previewMode || loadStrategy === 'eager' || visible || (loadStrategy === 'lazy' && revealed.current);
   /**
    * Which layout instance these items belong to, so switching to a DIFFERENT layout remounts them (resetting
    * their internal state) — in the builder, where an author edits a shell and then views it under a page.
@@ -62,7 +106,7 @@ const useInternalItems = ({
   const mounted = useSyncExternalStore(storeSubscriber, snapshot, serverSnapshot);
 
   return useMemo<ReactNode | undefined>(() => {
-    if (!hasItems) {
+    if (!hasItems || !mountItems) {
       return undefined;
     }
 
@@ -135,19 +179,14 @@ const useInternalItems = ({
         return item;
       });
 
-    // Process Layout
-    if (plitziElementLayout) {
-      const { containerId, bodyChildren } = plitziElementLayout;
-      if (containerId === id) {
-        itemsParsed.push(bodyChildren);
-      }
+    if (plitziElementLayout?.containerId === id) {
+      itemsParsed.push(<Fragment key={LAYOUT_BODY_KEY}>{plitziElementLayout.bodyChildren}</Fragment>);
     }
 
-    // Process Children
     if (Array.isArray(children)) {
       itemsParsed.push(...children.filter(isValidElement));
     } else if (isValidElement(children)) {
-      itemsParsed.push(children);
+      itemsParsed.push(<Fragment key={CHILDREN_KEY}>{children}</Fragment>);
     }
 
     if (!items) {
@@ -157,6 +196,7 @@ const useInternalItems = ({
     return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
   }, [
     hasItems,
+    mountItems,
     items,
     plitziElementLayout,
     children,

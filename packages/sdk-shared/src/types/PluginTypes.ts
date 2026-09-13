@@ -87,16 +87,13 @@ export type Plugin = {
   isMain?: boolean;
   manifest: PluginManifest;
   market: ComponentDefinition['market'];
-  module: string;
   resource: string;
-  scope: string;
   settings: Record<string, unknown>;
   subPlugins?: string[];
   type: string;
 };
 
 export type PluginsContextValue = {
-  baseAssets?: Record<string, Asset>;
   assets: Record<string, Asset>;
   plugins: Record<string, ComponentDefinition>;
   dispatchPlugins?: unknown;

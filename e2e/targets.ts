@@ -77,6 +77,16 @@ export const targets: Target[] = [
     warmUp: true
   },
   {
+    id: 'desktop',
+    workspace: '@plitzi/plitzi-desktop',
+    /** The renderer's Vite server alone. The package's own `start` also opens an Electron window, which a browser
+     *  suite has no use for. 5180 because that is the origin the platform already lists in PLATFORM_ORIGINS. */
+    command: 'yarn workspace @plitzi/plitzi-desktop vite dev --mode development',
+    origin: 'http://localhost:5180',
+    what: 'The desktop window’s renderer — its chrome and the offline rail, in a plain browser',
+    warmUp: true
+  },
+  {
     id: 'server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:server',

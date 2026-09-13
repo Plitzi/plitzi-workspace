@@ -1,8 +1,5 @@
 import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
 
-// Legacy data stored "undefined"/"null" as text for a missing target; treat as absent.
-const NULLISH_ELEMENT_IDS = new Set(['undefined', 'null', '']);
-
 type NodeShape = Pick<ElementInteraction, 'type' | 'action' | 'elementId'>;
 
 /** `danger`: the step will not run. `warning`: it runs but is misconfigured. */
@@ -50,21 +47,7 @@ export const getNodeWarnings = (node: NodeShape, nodeDefinition: InteractionCall
     return warnings;
   }
 
-  if (elementId === 'undefined' || elementId === 'null') {
-    warnings.push(
-      type === 'utility'
-        ? {
-            level: 'warning',
-            message: 'Invalid target stored as the text "undefined"; it is ignored for a utility but should be cleared.'
-          }
-        : {
-            level: 'danger',
-            message: 'Invalid target stored as the text "undefined", so this step resolves to nothing. Re-select it.'
-          }
-    );
-  }
-
-  if (type === 'utility' && elementId && !NULLISH_ELEMENT_IDS.has(elementId)) {
+  if (type === 'utility' && elementId) {
     warnings.push({ level: 'warning', message: 'A utility runs on no element, so it should have no target element.' });
   }
 

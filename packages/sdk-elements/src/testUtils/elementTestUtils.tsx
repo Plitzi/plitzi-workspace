@@ -6,6 +6,7 @@ const elementEntry = (id: string, overrides: Partial<ElementContextValue> = {}):
   id,
   rootId: 'root',
   visible: true,
+  traceId: id,
   attributes: {},
   definition: { rootId: 'root', label: id, type: '', styleSelectors: { base: '' } },
   elementState: {},

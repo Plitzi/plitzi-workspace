@@ -39,7 +39,11 @@ const renderTree = (children: ReactNode, settings?: Partial<PlitziServiceContext
   render(
     <StoreProvider value={{ schema: { flat: { el1: element } }, runtime: { sources: {} } }}>
       <PlitziServiceContext value={{ ...serviceValue, settings: { ...serviceValue.settings, ...settings } }}>
-        <ComponentContext value={{ components: { current: {} } } as unknown as ComponentContextValue}>
+        <ComponentContext
+          value={
+            { components: { current: {} }, componentDefinitions: { current: {} } } as unknown as ComponentContextValue
+          }
+        >
           {children}
         </ComponentContext>
       </PlitziServiceContext>

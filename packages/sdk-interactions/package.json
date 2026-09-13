@@ -74,6 +74,22 @@
       "types": "./dist/sources/AuthSource/index.d.ts",
       "import": "./dist/sources/AuthSource/index.mjs"
     },
+    "./sources/HostSource": {
+      "types": "./dist/sources/HostSource/index.d.ts",
+      "import": "./dist/sources/HostSource/index.mjs"
+    },
+    "./sources/HostSource/HostInteractions": {
+      "types": "./dist/sources/HostSource/HostInteractions.d.ts",
+      "import": "./dist/sources/HostSource/HostInteractions.mjs"
+    },
+    "./sources/HostSource/callbacks": {
+      "types": "./dist/sources/HostSource/callbacks.d.ts",
+      "import": "./dist/sources/HostSource/callbacks.mjs"
+    },
+    "./sources/HostSource/index": {
+      "types": "./dist/sources/HostSource/index.d.ts",
+      "import": "./dist/sources/HostSource/index.mjs"
+    },
     "./sources/NavigationSource": {
       "types": "./dist/sources/NavigationSource/index.d.ts",
       "import": "./dist/sources/NavigationSource/index.mjs"

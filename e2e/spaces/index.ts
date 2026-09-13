@@ -3,12 +3,14 @@ import { readOfflineData } from '@plitzi/example-space';
 import { actionSpace } from './actions';
 import { minimalSpace } from './minimal';
 import { plainSpace } from './plain';
+import { themedSpace } from './themed';
 
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export * from './actions';
 export * from './minimal';
 export * from './plain';
+export * from './themed';
 
 /** The spaces the suite renders.
  *
@@ -21,6 +23,7 @@ export * from './plain';
  *  | `authSpace()` | Four pages, guest and member, with bindings onto the session |
  *  | `sampleSpace()` | The one the examples ship. A parity check — what a reader following the docs sees |
  *  | `actionSpace()` | Two `runtime: 'server'` providers — one fed by an action, one naming a producer this deployment does not have |
+ *  | `themedSpace()` | A page painted only from a light/dark palette, and a theme toggle — for asserting the colours a theme puts in force |
  *
  *  Only `sampleSpace()` carries **custom plugins** (its three RSC elements), and only a deployment that provides
  *  their components can render it whole. Anywhere else it draws "Component … Not Found" where they should be, so
@@ -63,4 +66,4 @@ export const sampleId = (ref: string, data: OfflineDataRaw = sampleSpace()): str
   return ref;
 };
 
-export { actionSpace, minimalSpace, plainSpace };
+export { actionSpace, minimalSpace, plainSpace, themedSpace };

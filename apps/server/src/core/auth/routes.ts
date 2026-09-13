@@ -205,7 +205,7 @@ const FLOWS: Flow[] = [
     path: '/resend-verification-email',
     requirement: 'public',
     csrf: 'signIn',
-    run: (api, _cookies, req) => api.resendVerification(field(req, 'email'))
+    run: (api, _cookies, req) => api.resendVerification(field(req, 'email'), field(req, 'redirect'))
   },
 
   /* The account, managed by the person it belongs to. Every one of these needs a live session and acts on the

@@ -18,6 +18,8 @@ export interface AuthedRequest extends CredentialCarrier {
   params?: Record<string, string | undefined>;
   /** Read by the CSRF check, which asks nothing of a safe method. Absent is treated as `GET`. */
   method?: string;
+  /** `http` or `https`, when the host router knows. The OAuth flows publish an issuer built from it. */
+  protocol?: string;
   /** The parsed body, when there is one. The flows read fields off it; how it got parsed is the host's business. */
   body?: unknown;
   /** The account this request proved, once the auth middleware has run. */

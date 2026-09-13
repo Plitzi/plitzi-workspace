@@ -1,7 +1,8 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import Tree from '@plitzi/plitzi-ui/Tree';
-import { useCallback, use, useMemo } from 'react';
+import clsx from 'clsx';
+import { useCallback, use, useMemo, useState } from 'react';
 
 import { elementIdConflict, slugifyElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
@@ -12,6 +13,7 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import { processPaste } from '@pmodules/Builder/BuilderHelper';
 
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';
+import BuilderTreeSearch from './BuilderTreeSearch';
 import { recursiveMap } from './utils';
 
 import type { DropPosition, TreeChangeState } from '@plitzi/plitzi-ui/Tree';
@@ -40,6 +42,7 @@ const BuilderTree = () => {
     'builder-state.builderTree.openedCache',
     {}
   );
+  const [query, setQuery] = useState('');
 
   const isDragAllowed = useCallback(
     (id: string, dropPosition: DropPosition, parentId?: string) => {
@@ -117,8 +120,8 @@ const BuilderTree = () => {
 
           try {
             const data = event.dataTransfer.getData(event.dataTransfer.types[0]);
-            const dataParsed = JSON.parse(data) as { element: Element; id: Element['id'] };
-            if (!(dataParsed as unknown) || !(dataParsed.element as Element | undefined) || !dataParsed.id) {
+            const dataParsed = JSON.parse(data) as { element: Element; id?: string };
+            if (!(dataParsed as unknown) || !(dataParsed.element as Element | undefined)) {
               console.warn('Invalid data parsed from drag event', dataParsed);
               return;
             }
@@ -211,21 +214,30 @@ const BuilderTree = () => {
 
   const itemControls = useMemo(() => <BuilderTreeNodeControls />, []);
 
+  const searching = query.trim() !== '';
+
   return (
-    <Tree
-      className="w-full py-2"
-      size="sm"
-      intent="secondary"
-      items={nodes}
-      itemsOpened={openedCache}
-      itemHovered={elementHovered}
-      itemSelected={elementSelected}
-      itemControls={itemControls}
-      onChange={handleChange}
-      isDragAllowed={isDragAllowed}
-      onCopy={handleCopy}
-      onPaste={handlePaste}
-    />
+    <div className="flex min-h-0 w-full grow basis-0 flex-col">
+      <BuilderTreeSearch query={query} baseElementId={baseElementId} onQueryChange={setQuery} />
+      {/* Hidden rather than unmounted: the tree keeps its scroll position and its open branches, so clearing the
+          search puts the author back exactly where they were instead of at the top of a collapsed tree. */}
+      <div className={clsx('min-h-0 grow basis-0 overflow-y-auto', { hidden: searching })}>
+        <Tree
+          className="w-full py-2"
+          size="sm"
+          intent="secondary"
+          items={nodes}
+          itemsOpened={openedCache}
+          itemHovered={elementHovered}
+          itemSelected={elementSelected}
+          itemControls={itemControls}
+          onChange={handleChange}
+          isDragAllowed={isDragAllowed}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
+        />
+      </div>
+    </div>
   );
 };
 

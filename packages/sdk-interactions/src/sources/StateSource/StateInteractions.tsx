@@ -13,6 +13,19 @@ export type StateInteractionsProps = {
   children?: ReactNode;
 };
 
+/**
+ * An identity for an entry that has none of its own.
+ *
+ * `randomUUID` where the browser has it — every one that matters does, on a secure origin — and a counter with a
+ * random tail where it does not, which covers a plain-HTTP development host. It only has to be unique within one
+ * list in one browser, not across the world.
+ */
+let idSeq = 0;
+const nextId = (): string =>
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `e${++idSeq}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
 const StateInteractions = ({ children }: StateInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
   // `unknown` covers both forms the store accepts here: a value for `setState`, and the updater `toggleState` needs
@@ -52,18 +65,220 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
     [setState]
   );
 
-  const handleClearState = useCallback(() => {
-    setState('runtime.state', {});
-  }, [setState]);
+  /**
+   * The two operations a LIST needs, which `setState` cannot express.
+   *
+   * `setState` stores a scalar at a path, so a space could hold a fixed set of flags and nothing else — a checklist
+   * whose items were written by whoever authored the space, with no way for the person using it to add one or take
+   * one away. Everything else was already here: the store's setter takes an updater, which is how `toggleState`
+   * reads and writes in one pass, and a controlled `list` renders whatever array it is bound to.
+   *
+   * Through the updater form for the same reason `toggleState` is: two rows removed in the same tick would
+   * otherwise both compute from the flow's own snapshot, and the second would put the first one back.
+   */
+  /** True for the boolean and for the word, because the builder's picker writes the word. */
+  const isOn = (flag: unknown): boolean => flag === true || flag === 'true';
+
+  const handleAppendState = useCallback(
+    (
+      params: InteractionCallbackParamValues<{
+        key: string;
+        value: unknown;
+        unique?: boolean | string;
+        withId?: boolean | string;
+      }>
+    ) => {
+      const { key, value, unique, withId } = params;
+      if (!key) {
+        return;
+      }
+
+      // A key nobody has written yet appends to nothing rather than failing, so a list needs no priming step.
+      setState(`runtime.state.${key}`, (prev: unknown): unknown[] => {
+        const list = Array.isArray(prev) ? (prev as unknown[]) : [];
+
+        /**
+         * `withId` gives the entry an identity OF ITS OWN, and it is the answer whenever two entries may legitimately
+         * read the same. Without one, everything referring to an entry refers to it by value — so a second copy is
+         * indistinguishable from the first, and a checkbox over the list ticks both. The entry becomes
+         * `{ id, value }`, which is why anything reading it back names `.value`.
+         */
+        if (isOn(withId)) {
+          return [...list, { id: nextId(), value }];
+        }
+
+        /**
+         * `unique` is the other answer, for a list whose entries ARE their own identity — a set of names, a set of
+         * ids. Off by default: a list of things somebody typed may legitimately repeat, which is exactly why
+         * `withId` exists.
+         */
+        if (isOn(unique) && list.includes(value)) {
+          return list;
+        }
+
+        return [...list, value];
+      });
+    },
+    [setState]
+  );
+
+  /**
+   * Drops one entry, by VALUE or by position.
+   *
+   * By value wherever the list can change under the person: a position is only true for as long as nothing before
+   * it moves, and a row's position is captured when the row renders. Pressing a row's button twice — which is what
+   * anybody does to a control that seems not to have answered — then acted on whatever had shifted into that slot:
+   * a double-click on the first row removed the first row AND the one that took its place.
+   *
+   * Position is still there because it is the honest answer when there is nothing else to go on: a list of
+   * duplicates, or one whose entries are not comparable.
+   */
+  const handleRemoveState = useCallback(
+    (
+      params: InteractionCallbackParamValues<{
+        key: string;
+        index?: string | number;
+        value?: unknown;
+        by?: string;
+      }>
+    ) => {
+      const { key, index, value, by } = params;
+      if (!key) {
+        return;
+      }
+
+      if (value !== undefined && value !== '') {
+        setState(`runtime.state.${key}`, (prev: unknown): unknown[] => {
+          if (!Array.isArray(prev)) {
+            return [];
+          }
+
+          /**
+           * `by` names the FIELD that carries the identity, for a list of records rather than of scalars — two
+           * records that read the same are still two different entries, and comparing them whole would never match
+           * anyway, because equal objects are not the same object.
+           */
+          return (prev as unknown[]).filter(entry =>
+            by ? (entry as Record<string, unknown> | null)?.[by] !== value : entry !== value
+          );
+        });
+
+        return;
+      }
+
+      // The index arrives interpolated from a row, so it is a string — and `''`, which `parseInt` reads as NaN, is
+      // exactly what a token that resolved to nothing looks like. Removing "position NaN" would empty the list.
+      const at = typeof index === 'number' ? index : parseInt(index ?? '', 10);
+      if (Number.isNaN(at)) {
+        return;
+      }
+
+      setState(`runtime.state.${key}`, (prev: unknown): unknown[] =>
+        Array.isArray(prev) ? (prev as unknown[]).filter((_, position) => position !== at) : []
+      );
+    },
+    [setState]
+  );
+
+  /**
+   * Moves one entry from one list to another, and does nothing at all if it is not in the first.
+   *
+   * The operation a checkbox needs, and the reason it is ONE step rather than an append beside a remove: written as
+   * two, pressing the box twice ran the pair twice, and the second run appended an entry the first had already
+   * moved — the same task in both lists, or twice in the second. Here the second press finds nothing to move.
+   *
+   * The flag is read inside the first updater and used after it, which is sound because the store applies an
+   * updater synchronously — the same property `toggleState` depends on to flip a value where it is read.
+   */
+  const handleMoveState = useCallback(
+    (params: InteractionCallbackParamValues<{ from: string; to: string; value: unknown }>) => {
+      const { from, to, value } = params;
+      if (!from || !to || value === undefined || value === '') {
+        return;
+      }
+
+      // `let` read back after the updater ran, which is sound because the store applies one synchronously — the
+      // same property `toggleState` depends on. Typed loosely so the narrowing does not read it as always false.
+      const outcome: { moved: boolean } = { moved: false };
+      setState(`runtime.state.${from}`, (prev: unknown): unknown[] => {
+        const list = Array.isArray(prev) ? (prev as unknown[]) : [];
+        outcome.moved = list.includes(value);
+
+        return outcome.moved ? list.filter(entry => entry !== value) : list;
+      });
+
+      if (!outcome.moved) {
+        return;
+      }
+
+      setState(`runtime.state.${to}`, (prev: unknown): unknown[] => {
+        const list = Array.isArray(prev) ? (prev as unknown[]) : [];
+
+        return list.includes(value) ? list : [...list, value];
+      });
+    },
+    [setState]
+  );
+
+  /**
+   * The checkbox, as one step: in the list if it was not, out of it if it was.
+   *
+   * A SET rather than a list — the same value is never in it twice — which is what makes it safe to press twice.
+   * The alternative, an append guarded by a check, reads the list as it was when the flow started, so two presses
+   * in the same tick both found it absent and added it twice.
+   */
+  const handleToggleInState = useCallback(
+    (params: InteractionCallbackParamValues<{ key: string; value: unknown }>) => {
+      const { key, value } = params;
+      if (!key || value === undefined || value === '') {
+        return;
+      }
+
+      setState(`runtime.state.${key}`, (prev: unknown): unknown[] => {
+        const list = Array.isArray(prev) ? (prev as unknown[]) : [];
+
+        return list.includes(value) ? list.filter(entry => entry !== value) : [...list, value];
+      });
+    },
+    [setState]
+  );
+
+  /**
+   * Empties one list, or the whole of `runtime.state` when no key is named.
+   *
+   * The key form is the "start again" a list needs. Without it the only way to empty one was to remove its entries
+   * one at a time, or to wipe every key the space holds — which on a page that keeps notes beside a list means
+   * losing the notes to clear the list.
+   */
+  const handleClearState = useCallback(
+    (params: InteractionCallbackParamValues<{ key?: string }>) => {
+      const { key } = params;
+
+      setState(key ? `runtime.state.${key}` : 'runtime.state', key ? [] : {});
+    },
+    [setState]
+  );
 
   const interactionCallbacks = useMemo(
     () =>
       toInteractionCallbacks(stateCallbacks, {
         setState: handleSetState,
         toggleState: handleToggleState,
+        appendState: handleAppendState,
+        removeState: handleRemoveState,
+        moveState: handleMoveState,
+        toggleInState: handleToggleInState,
         clearState: handleClearState
       }),
-    [handleSetState, handleToggleState, handleClearState]
+    [
+      handleSetState,
+      handleToggleState,
+      handleAppendState,
+      handleRemoveState,
+      handleMoveState,
+      handleToggleInState,
+      handleClearState
+    ]
   );
 
   useInteractions({ id: 'state', callbacks: interactionCallbacks });

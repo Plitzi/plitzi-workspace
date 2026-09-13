@@ -7,22 +7,19 @@ export type DesktopUser = {
   permissions?: string[];
 };
 
-/** The body `POST /auth/login`, `/auth/refresh` and `/auth/exchange` all answer with. */
-export type AuthSuccess = {
-  success: true;
-  details: DesktopUser;
-  access_token: string;
-  expire_at: number;
-  refresh_token?: string;
-  refresh_expire_at?: number;
-};
-
 export type StoredSession = {
   user: DesktopUser;
   accessToken: string;
   expiresAt: number;
   refreshToken?: string;
-  refreshExpiresAt?: number;
+  /**
+   * The registration this session was granted to.
+   *
+   * Stored because a native client registers PER FLOW — the redirect it declares carries a loopback port the OS
+   * picked at the time — so there is no fixed client id to renew with later. Without it a session can only be
+   * replaced by signing in again.
+   */
+  clientId?: string;
 };
 
 export const nowInSeconds = (): number => Math.floor(Date.now() / 1000);
@@ -36,20 +33,29 @@ export const nowInSeconds = (): number => Math.floor(Date.now() / 1000);
  */
 export const RENEW_WINDOW_SECONDS = 60;
 
-export const toSession = (body: AuthSuccess): StoredSession => ({
-  user: body.details,
-  accessToken: body.access_token,
-  expiresAt: body.expire_at,
-  refreshToken: body.refresh_token,
-  refreshExpiresAt: body.refresh_expire_at
+/** What a granted session becomes, once the person it belongs to has been looked up. */
+export const toSession = (
+  granted: { clientId: string; accessToken: string; refreshToken?: string; expiresIn?: number },
+  user: DesktopUser
+): StoredSession => ({
+  user,
+  accessToken: granted.accessToken,
+  expiresAt: nowInSeconds() + (granted.expiresIn ?? 0),
+  refreshToken: granted.refreshToken,
+  clientId: granted.clientId
 });
 
 export const isUsable = (session: StoredSession | undefined, at = nowInSeconds()): boolean =>
   session !== undefined && session.expiresAt - RENEW_WINDOW_SECONDS > at;
 
-/** Whether there is still a way back to a live session without asking for the password again. */
-export const isRenewable = (session: StoredSession | undefined, at = nowInSeconds()): boolean =>
-  session?.refreshToken !== undefined && (session.refreshExpiresAt ?? 0) > at;
+/**
+ * Whether there is still a way back to a live session without opening the browser again.
+ *
+ * There is no expiry to check: the grant's refresh token has a lifetime this app is never told, so the only
+ * authority on whether it still works is the server. Having one is the question; a refusal ends the session.
+ */
+export const isRenewable = (session: StoredSession | undefined): boolean =>
+  session?.refreshToken !== undefined && session.clientId !== undefined;
 
 /**
  * A session read back from disk, or nothing.

@@ -8,6 +8,7 @@ import { use, useState, useCallback, useMemo, memo } from 'react';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import BuilderSearchButton from '@pmodules/Builder/components/BuilderSearch/components/BuilderSearchButton';
 import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';
 
 import BorderButton from './BorderButton';
@@ -132,6 +133,7 @@ const AppHeader = () => {
           <i className="fa-solid fa-chevron-down" />
         </div>
         <PageHeader />
+        <BuilderSearchButton />
         <HistoryButtons />
         <BorderButton />
       </div>

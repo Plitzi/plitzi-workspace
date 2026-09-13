@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en"<% if (locals.themeClass) { %> class="<%= locals.themeClass %>"<% } %>>
   <head>
     <meta charset="utf-8" />
     <title><%= locals.title || '' %></title>
@@ -20,21 +20,17 @@
 
     <%
       /*
-        The visitor's theme, settled before anything is drawn.
+        The visitor's theme is on <html> above, and there is nothing to run here for it.
 
-        Nothing else in this document can be: a page paints long before its JavaScript has mounted anything, and the
-        theme is a fact about the browser that no server request carries. Without this the first paint answers with
-        `prefers-color-scheme` and a visitor who chose light on a machine set to dark watches the dark page until the
-        SDK comes up and corrects it.
+        A page paints long before its JavaScript has mounted anything, so the theme cannot be settled by anything the
+        SDK does at mount — a visitor who chose light on a machine set to dark would watch the dark page for about
+        four hundred milliseconds. This document used to ship a blocking script in the head to beat that paint.
 
-        The source is `themeBootScript()` from @plitzi/sdk-shared, not written here: it has to agree with
-        ThemeProvider exactly — same storage key, same accepted values, same classes, same silence for `system` — and
-        a copy of those rules in another language is a copy that goes stale.
+        It no longer has to. The choice is in a COOKIE, which is the one place a browser keeps a preference that the
+        SERVER can read too: `prepareRender` takes it off the request and hands the class down as `themeClass`.
+        Nothing blocks, nothing is measured, and the markup is right the first time.
       */
     %>
-    <% if (locals.themeBoot) { %>
-    <script><%- locals.themeBoot %></script>
-    <% } %>
 
     <%
       /*

@@ -643,7 +643,9 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
     "build:dev-watch": "vite build --mode development --watch --minify false",
-    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "type": "module",
   "sideEffects": false,
@@ -652,7 +654,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "typescript": "^6.0.3",
-    "vite": "^8.2.1"
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "react": "^19",

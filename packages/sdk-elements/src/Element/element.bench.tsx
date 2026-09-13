@@ -28,7 +28,8 @@ const serviceValue = {
 } as unknown as PlitziServiceContextValue;
 
 const components = {
-  components: { current: { container: Container, text: Text } }
+  components: { current: { container: Container, text: Text } },
+  componentDefinitions: { current: {} }
 } as unknown as ComponentContextValue;
 
 const textEl = (id: string): Element => ({

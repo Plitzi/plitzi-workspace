@@ -48,7 +48,17 @@ const DevToolsIndicator = ({ className, onOpen }: DevToolsIndicatorProps) => {
   }, [errors, warnings, onOpen]);
 
   return (
-    <div className={clsx('fixed bottom-3 left-3 z-[1000000]', className)}>
+    /*
+     * `absolute`, against the dev-tools container — NOT `fixed` against the window.
+     *
+     * The two are the same thing while the space fills the window, and stop being the same the moment it does not: in
+     * the desktop app the space is one pane beside a sidebar, and a badge pinned to the window's bottom-left sat on
+     * top of that sidebar, over whatever was there. The docked panel has always positioned itself inside this
+     * container; this is the half that had not.
+     *
+     * It still does not scroll away: the container is the viewport-sized box and the space scrolls in a child of it.
+     */
+    <div className={clsx('absolute bottom-3 left-3 z-[1000000]', className)}>
       <button
         className={clsx(
           'flex cursor-pointer items-center gap-2 rounded border border-zinc-200 bg-white px-2 py-1.5 text-[12px]/[16px]',

@@ -1,11 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-import { STORE_CHANNEL } from './contract';
+import { SIGN_IN_CHANNEL, STORE_CHANNEL } from './contract';
 
-import type { StoreRequest } from './contract';
+import type { SignInRequest, StoreRequest } from './contract';
 import type { DesktopBridge } from '../src/modules/desktop/bridge';
 
 const invoke = <T>(request: StoreRequest): Promise<T> => ipcRenderer.invoke(STORE_CHANNEL, request) as Promise<T>;
+
+const signIn = <T>(request: SignInRequest): Promise<T> => ipcRenderer.invoke(SIGN_IN_CHANNEL, request) as Promise<T>;
 
 /** The writes answer with nothing; `void` is not a type an argument may be, so the result is simply dropped. */
 const send = async (request: StoreRequest): Promise<void> => {
@@ -23,6 +25,11 @@ const bridge: DesktopBridge = {
   platform: process.platform,
   version: process.env.PLITZI_DESKTOP_VERSION ?? '0.0.0',
   readSession: () => invoke<string | undefined>({ action: 'read' }),
+  signIn: apiUrl => signIn({ action: 'start', apiUrl }),
+  renewSession: (apiUrl, clientId, refreshToken) => signIn({ action: 'renew', apiUrl, clientId, refreshToken }),
+  revokeSession: async (apiUrl, clientId, refreshToken) => {
+    await signIn({ action: 'revoke', apiUrl, clientId, refreshToken });
+  },
   writeSession: value => send({ action: 'write', value }),
   clearSession: () => send({ action: 'clear' })
 };

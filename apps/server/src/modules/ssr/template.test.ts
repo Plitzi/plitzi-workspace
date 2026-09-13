@@ -66,3 +66,22 @@ describe('the SSR document / fonts', () => {
     expect(html.match(/rel="preconnect" href="https:\/\/fonts\.gstatic\.com"/g)).toHaveLength(1);
   });
 });
+
+describe('the SSR document / the theme', () => {
+  const withTheme = (themeClass?: string) =>
+    compileTemplate()({ html: '<div />', offlineData: '{}', ssrOnly: true, themeClass });
+
+  it('wears the class on the document itself, before anything is drawn', () => {
+    expect(withTheme('dark')).toContain('<html lang="en" class="dark">');
+  });
+
+  /** No class is `system`: the stylesheet's `prefers-color-scheme` queries are guarded on the absence of one. */
+  it('writes no attribute at all when there is no class', () => {
+    expect(withTheme()).toContain('<html lang="en">');
+  });
+
+  /** The server already knew the theme, so nothing in the head runs to settle it before the first paint. */
+  it('ships no script for a theme the server already knew', () => {
+    expect(withTheme('dark')).not.toContain('classList.add');
+  });
+});

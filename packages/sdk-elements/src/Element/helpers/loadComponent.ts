@@ -19,26 +19,22 @@ const remoteModuleCache = new Map<string, RemoteCacheEntry>();
 
 const loadComponent = (
   url: string,
-  pluginScope: string,
   registerCallback: ComponentContextValue['register'],
   autoRegister = true,
   plitziJsxSkipHOC = false
 ) => {
   return async () => {
-    const cacheKey = `${url}::${pluginScope}`;
-
     // Only cache in-flight promises (dedupe concurrent loads)
-    if (!remoteModuleCache.get(cacheKey)) {
-      const isESM = url.endsWith('.mjs') || url.includes('.esm.') || url.includes('.module.');
-      const promise = generatePluginModule(url, isESM, pluginScope).finally(() => {
+    if (!remoteModuleCache.get(url)) {
+      const promise = generatePluginModule(url).finally(() => {
         // Once resolved/rejected, free memory
-        remoteModuleCache.delete(cacheKey);
+        remoteModuleCache.delete(url);
       });
 
-      remoteModuleCache.set(cacheKey, { promise, timestamp: Date.now() });
+      remoteModuleCache.set(url, { promise, timestamp: Date.now() });
     }
 
-    const entry = remoteModuleCache.get(cacheKey);
+    const entry = remoteModuleCache.get(url);
     const Module = await entry?.promise;
     if (!Module) {
       return { default: NotFound as ComponentPluginWithHOC };

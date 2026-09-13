@@ -16,6 +16,8 @@ import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import useCollaboratorElements from '@pmodules/Collaboration/hooks/useCollaboratorElements';
 import { getInitialItems, makeIdMinter } from '@pmodules/Elements/ElementHelper';
 
+import { isInRoot } from './helpers/elementChain';
+
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
   BuilderContextValue,
@@ -180,12 +182,14 @@ const BuilderProvider = ({
           return state;
         }
 
-        setSelected(undefined);
+        if (!isInRoot(getElement(), getElementSelected(), element.id)) {
+          setSelected(undefined);
+        }
 
         return { baseElementId: id };
       });
     },
-    [getElement, onBaseElementChange, setBaseContext, baseElementIdProp, setHovered, setSelected]
+    [getElement, getElementSelected, onBaseElementChange, setBaseContext, baseElementIdProp, setHovered, setSelected]
   );
 
   const isDragAllowed = (
@@ -219,8 +223,8 @@ const BuilderProvider = ({
       type: string,
       data:
         | { elements: Record<string, Element>; baseElement?: Element; style: Style; variables: Schema['variables'] }
-        | { id: string; element: Element }
-        | { id: string; parentId: string; element: Element },
+        | { id?: string; element: Element }
+        | { id?: string; parentId: string; element: Element },
       dropPosition: DropPosition,
       toElementId: string,
       rootId?: string
@@ -459,7 +463,13 @@ const BuilderProvider = ({
   useEffect(() => {
     if (baseElementId) {
       setHovered(undefined);
-      setSelected(undefined);
+      // A selection inside the root being opened is where the author was going, not a leftover from where they were:
+      // the element search selects in the same tick it asks for the page, and this effect only runs after the route
+      // has changed. Clearing it unconditionally dropped every cross-page result on arrival.
+      if (!isInRoot(getElement(), getElementSelected(), baseElementId)) {
+        setSelected(undefined);
+      }
+
       if (baseContext.baseElementId !== baseElementId && mode !== 'normal') {
         builderSetBaseContext(baseElementId);
       }

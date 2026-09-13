@@ -24,6 +24,25 @@ type PageAttributes = {
   default: boolean;
 };
 
+/**
+ * Does this name another origin, rather than somewhere in this space?
+ *
+ * Deliberately narrow: `//host` and a bare `host.com` are NOT absolute here. The first is protocol-relative and
+ * reads as a path to anybody skimming, and the second is indistinguishable from a page slug — treating either as
+ * external would turn a typo into an off-site redirect.
+ */
+export const isAbsoluteUrl = (url: string): boolean => /^https?:\/\//i.test(url);
+
+/**
+ * Is this a destination outside this space — either already absolute, or a token that will resolve to one?
+ *
+ * The token half matters because the address of an off-site sign-in differs per environment, so a space writes it
+ * as `{{authUrl}}/` and not as a host. Page ATTRIBUTES are never interpolated (only a step's params are), so the
+ * token is still there when the route table is built — and running it through the page resolver turned
+ * `{{authUrl}}/` into `/{{authUrl}}`, a path inside this space, before anything had a chance to resolve it.
+ */
+const isOffSite = (url: string): boolean => isAbsoluteUrl(url) || url.includes('{{');
+
 const parsePath = (path: string) => path.replace(/{{([a-zA-Z0-9-_:*/]+)}}/i, ':$1').replaceAll(/[/]+/gim, '/');
 
 const recursiveFolderSlug = (pageFolders: Record<string, PageFolder | undefined>, pageFolderId: string): string => {
@@ -130,21 +149,26 @@ const getPaths = (
       const {
         attributes: { accessLevel, enabled = true, unauthorizedBehaviour }
       } = pages[pageId];
-      let {
-        attributes: { unauthorizedPageRedirect }
-      } = pages[pageId];
+      // Typed here rather than asserted at every use: an element's attributes are an open bag, and this one is
+      // either a page id or a URL — a string in both cases.
+      let unauthorizedPageRedirect = pages[pageId].attributes.unauthorizedPageRedirect as string | undefined;
 
       if (!enabled && previewMode) {
         return acum;
       }
 
+      /**
+       * A page id, resolved to its path — unless it points off-site, which is left exactly as written.
+       *
+       * A space does not have to keep its sign-in inside itself. Pointing this at another origin is how a space
+       * says "whoever is not signed in belongs over there", which is what one shared sign-in screen for a whole
+       * platform requires — and, later, what an identity provider requires. Run through `getPageFullPath`, such a
+       * URL comes back as `/https:/auth.example.com`, a path inside this space that does not exist.
+       */
       if (unauthorizedPageRedirect) {
-        unauthorizedPageRedirect = getPageFullPath(
-          pages,
-          pageFolders,
-          (unauthorizedPageRedirect as string).replace('/', ''),
-          true
-        );
+        unauthorizedPageRedirect = isOffSite(unauthorizedPageRedirect)
+          ? unauthorizedPageRedirect
+          : getPageFullPath(pages, pageFolders, unauthorizedPageRedirect.replace('/', ''), true);
       }
 
       const subPaths = getPageFullPath(pages, pageFolders, pageId);

@@ -4,6 +4,24 @@ import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
 // RSC
 export type ElementRuntime = 'server' | 'client' | 'shared';
+
+/**
+ * When an element's CONTENTS are mounted, relative to its own `visibility`.
+ *
+ * About the subtree, never about the element itself: whatever a hidden element registers — a modal's `openModal`
+ * callback, a form's source, an interaction trigger — is registered by the element, so an element that stops
+ * rendering is an element nothing can ever show again. The shell always renders; what these decide is its items.
+ *
+ * - `eager` (default): always mounted. Right for an element that is on screen almost always — deferring it would only
+ *   add a render cycle between the page loading and the page appearing — and for a hidden element whose contents
+ *   have to be in the server's HTML: a section a search engine should read, a panel a CSS-only accordion opens
+ *   without the SDK's help.
+ * - `lazy`: mounted the first time it is shown, and kept from then on. The one for elements that start hidden by
+ *   nature, and those declare it themselves — a modal or a dialog nobody opens costs nothing, and one that has been
+ *   opened keeps what the visitor typed into it.
+ * - `visible`: mounted only while shown. Pays the build cost on every reveal and drops the subtree's state on
+ *   every hide — worth it for contents that are expensive to KEEP (a live map, a video, a polling source).
+ */
 export type ElementLoadStrategy = 'eager' | 'lazy' | 'visible';
 
 export type SchemaRsc = {
@@ -70,7 +88,7 @@ export type ElementDefinition = {
   };
   /** Where this element is rendered. 'server' = SSR only, 'client' = browser only, 'shared' = both (default). */
   runtime?: ElementRuntime;
-  /** Controls when the element is loaded/rendered. */
+  /** When this element's items are mounted, relative to its `visibility`. See {@link ElementLoadStrategy}. */
   loadStrategy?: ElementLoadStrategy;
 };
 

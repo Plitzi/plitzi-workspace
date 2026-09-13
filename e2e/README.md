@@ -49,7 +49,8 @@ It is a setup project rather than a `globalSetup` for one reason: only the setup
 
 | Category | App | Sub-categories | Runs against |
 |---|---|---|---|
-| `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` | harness |
+| `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports`, `theme` | harness |
+| `desktop` | `@plitzi/plitzi-desktop` | `theme` | the renderer's Vite server on 5180 |
 | `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions` | e2e server + auth server + action server |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
 | `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (gated) |

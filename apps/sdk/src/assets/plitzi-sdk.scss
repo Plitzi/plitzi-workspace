@@ -21,8 +21,9 @@
   /**
    * What the theme classes MEAN, declared where the classes are written.
    *
-   * `ThemeProvider` puts them on the document (and `themeBootScript` puts them there before the first paint), so the
-   * SDK owns them — and until this was here, owning them stopped at adding a class: the document went on being a
+   * `ThemeProvider` puts them on the document — or on the SDK's own root when the space is embedded, and the server
+   * renders the same class from the theme cookie before the first paint — so the SDK owns them. Until this was here,
+   * owning them stopped at adding a class: the document went on being a
    * light one, and every space had to declare `color-scheme` in its own custom CSS to make the browser agree. One of
    * them forgetting is not a missing preference, it is white text nobody chose or black text on black.
    *
@@ -186,6 +187,26 @@
       // transform: scale(0.95);
       box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
     }
+  }
+
+  /**
+   * Notifications sit above the dev-tools panel, which is `z-index: 1000000`.
+   *
+   * They are `position: fixed` — pinned to the window, which is right, because a notification is about the whole
+   * page and not about the part of it that happens to be scrolled into view. But the dev-tools panel docks over the
+   * window too, and docked VERTICALLY it takes the right-hand edge, which is exactly where a notification appears.
+   * They were not being suppressed; they were arriving underneath it.
+   *
+   * Above rather than beside: a notification is transient and a panel is not, so covering the panel for four
+   * seconds costs nothing, while being covered costs the message entirely.
+   *
+   * Its own VARIABLE rather than the property: the toast library injects its stylesheet at run time, unlayered, and
+   * an unlayered rule beats a layered one however specific the layered one is — so `z-index` here simply lost. The
+   * variable is declared on the container itself, which is the element that reads it, so it wins over the library's
+   * own declaration on `:root` by being the element's own rather than an inherited one.
+   */
+  .Toastify__toast-container.plitzi-sdk-toasts {
+    --toastify-z-index: 2000000;
   }
 
   @include sdkComponents.styles;

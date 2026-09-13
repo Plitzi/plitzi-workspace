@@ -6,6 +6,16 @@ import ElementsListItem from './ElementsListItem';
 
 import type { Element } from '@plitzi/sdk-shared';
 
+/**
+ * How many rows this list will put in the DOM at once.
+ *
+ * A space is thousands of elements — the analytics screen alone is a few hundred — and every row here is a component
+ * with a click handler and a visibility icon. Rendering all of them made opening this tab on a dense page a freeze,
+ * and nobody was ever going to scroll past the first screenful anyway: the filter above is how you reach the rest,
+ * and the count below says how many it is hiding.
+ */
+const MAX_ROWS = 200;
+
 export type ElementsListProps = {
   elements?: Element[];
   elementSelected?: string;
@@ -15,10 +25,12 @@ export type ElementsListProps = {
 const ElementsList = ({ elements, elementSelected, onSelect }: ElementsListProps) => {
   const [filter, setFilter] = useState('');
 
-  const elementsSorted = useMemo(
+  const elementsFiltered = useMemo(
     () => (elements ?? []).filter(element => element.definition.label.toLowerCase().includes(filter.toLowerCase())),
     [elements, filter]
   );
+  const elementsShown = useMemo(() => elementsFiltered.slice(0, MAX_ROWS), [elementsFiltered]);
+  const hidden = elementsFiltered.length - elementsShown.length;
 
   const handleChangeFilter = useCallback((filterValue: string) => setFilter(filterValue), []);
 
@@ -28,19 +40,23 @@ const ElementsList = ({ elements, elementSelected, onSelect }: ElementsListProps
         <Input value={filter} onChange={handleChangeFilter} placeholder="Search elements..." size="sm" />
       </div>
       <div className="flex flex-col overflow-y-auto text-xs text-zinc-700 dark:text-zinc-300">
-        {elementsSorted.length === 0 ? (
+        {elementsShown.length === 0 && (
           <div className="p-4 text-center text-zinc-400 dark:text-zinc-600">No elements</div>
-        ) : (
-          elementsSorted.map((element, i) => (
-            <ElementsListItem
-              key={i}
-              name={element.definition.label}
-              isSelected={elementSelected === element.id}
-              isVisible={get(element, 'definition.initialState.visibility', true)}
-              id={element.id}
-              onSelect={onSelect}
-            />
-          ))
+        )}
+        {elementsShown.map(element => (
+          <ElementsListItem
+            key={element.id}
+            name={element.definition.label}
+            isSelected={elementSelected === element.id}
+            isVisible={get(element, 'definition.initialState.visibility', true)}
+            id={element.id}
+            onSelect={onSelect}
+          />
+        ))}
+        {hidden > 0 && (
+          <div className="p-3 text-center text-[11px] text-zinc-400 dark:text-zinc-600">
+            {hidden} more — narrow the search to reach them
+          </div>
         )}
       </div>
     </div>

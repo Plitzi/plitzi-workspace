@@ -383,6 +383,19 @@ const asText = (value: unknown): string => {
 
 const asString = (value: unknown): string => asText(value).trim();
 
+/**
+ * The destination a caller named, for a mail to carry — or nothing at all.
+ *
+ * Carried, not judged: the kernel has no redirect policy, and the link it ends up in is composed by the deployment,
+ * which vets it there (`createRedirectPolicy`). Absent rather than empty when there is none, so a mail template never
+ * has to know that `''` means "nowhere".
+ */
+const destinationOf = (value: unknown): { redirect?: string } => {
+  const redirect = asString(value);
+
+  return redirect ? { redirect } : {};
+};
+
 const now = (): number => Math.floor(Date.now() / 1000);
 
 const MINUTE = 60;
@@ -405,6 +418,17 @@ const LIFETIME = {
 };
 
 const STATUSES: AccountStatus[] = ['active', 'inactive', 'blocked'];
+
+/**
+ * Why an account may not hold a session, when it may not.
+ *
+ * `active` answers whether it may sign in at all; `verified` answers whether its owner can do anything about that.
+ * A deployment where confirming an address is what makes an account active — Plitzi is one — refuses both through
+ * the same flag, so a screen told only `inactive` has to tell somebody whose address has simply never answered that
+ * their password was wrong. It was, in fact, right.
+ */
+const deniedReason = (account?: { verified: boolean }): AuthFailure =>
+  account && !account.verified ? 'unverified' : 'inactive';
 
 /** An account as it may be shown. Never the password hash, and never the credentials — not even to an admin. */
 const profileOf = (account: AccountRecord) => ({
@@ -746,13 +770,22 @@ export const createAuthApi = ({
         return limited;
       }
 
-      const account = await adapters.findByUsername?.(username);
+      /**
+       * The username, or the email — in that order.
+       *
+       * Every sign-in screen worth using offers both, because the one thing a person reliably remembers about an
+       * account is the address it was created with. Username first so an account whose name happens to be somebody
+       * else's address cannot shadow the owner of that address; the email lookup only runs when the first misses,
+       * so this costs a second query on a failed sign-in and nothing on a successful one.
+       *
+       * `findByEmail` is optional like everything else here: a deployment that supplies no email store keeps exactly
+       * the behaviour it had.
+       */
+      const account =
+        (await adapters.findByUsername?.(username)) ??
+        (username.includes('@') ? await adapters.findByEmail?.(username) : undefined);
       if (!account) {
         return refuse(401, 'Invalid credentials');
-      }
-
-      if (!account.active) {
-        return refuse(401, 'Account is not active');
       }
 
       // An account created through an identity provider carries no password. Never compare an empty hash: password
@@ -761,6 +794,20 @@ export const createAuthApi = ({
         record({ type: 'login.failed', userId: account.id, carrier, detail: { username } });
 
         return refuse(401, 'Invalid credentials');
+      }
+
+      /**
+       * Whether this account may hold a session — asked AFTER the password, and that order is the point.
+       *
+       * Anything said about an account before its password is checked is said to anybody who types an address. The
+       * other way round, "that address has not been confirmed" once cost nothing to establish: two attempts with a
+       * made-up password told a stranger which of a list of addresses have accounts here and which do not. It is
+       * only a refusal somebody has earned the right to understand once they have proved the account is theirs.
+       */
+      if (!account.active) {
+        const reason = deniedReason(account);
+
+        return refuse(401, authFailureMessage[reason], reason);
       }
 
       /**
@@ -814,7 +861,9 @@ export const createAuthApi = ({
       }
 
       if (!account.active) {
-        return refuse(401, 'Account is not active', 'inactive');
+        const reason = deniedReason(account);
+
+        return refuse(401, authFailureMessage[reason], reason);
       }
 
       const stored = mfa.recoveryCodes ?? [];
@@ -920,7 +969,9 @@ export const createAuthApi = ({
 
         const account = stored.userId === undefined ? undefined : await adapters.findById?.(stored.userId);
         if (!account?.active) {
-          return refuse(401, 'Account is not active', 'inactive');
+          const reason = deniedReason(account);
+
+          return refuse(401, authFailureMessage[reason], reason);
         }
 
         /**
@@ -1081,7 +1132,9 @@ export const createAuthApi = ({
       }
 
       if (!account.active) {
-        return { ...refuse(401, 'Account is not active', 'inactive'), endSession: true };
+        const reason = deniedReason(account);
+
+        return { ...refuse(401, authFailureMessage[reason], reason), endSession: true };
       }
 
       const cap = tokens.lifetimes.session;
@@ -1181,7 +1234,11 @@ export const createAuthApi = ({
       if (!verifyOnSignup && capabilities.emailVerification && adapters.setValidationToken) {
         const validationToken = mintLink(generateToken(), LIFETIME.confirmLink);
         await adapters.setValidationToken(account.id, validationToken);
-        await deliver({ to: email, template: 'validation', data: { username, validationToken } });
+        await deliver({
+          to: email,
+          template: 'validation',
+          data: { username, validationToken, ...destinationOf(fields.redirect) }
+        });
       }
 
       record({ type: 'signup', userId: account.id });
@@ -1267,7 +1324,7 @@ export const createAuthApi = ({
       return { ok: true, body: { message: 'Account validated successfully' } };
     },
 
-    resendVerification: async (email: string): Promise<AuthOutcome> => {
+    resendVerification: async (email: string, redirect?: string): Promise<AuthOutcome> => {
       if (!capabilities.emailVerification) {
         return NOT_OFFERED;
       }
@@ -1279,7 +1336,7 @@ export const createAuthApi = ({
         await deliver({
           to: account.email,
           template: 'validation',
-          data: { username: account.username, validationToken }
+          data: { username: account.username, validationToken, ...destinationOf(redirect) }
         });
       }
 

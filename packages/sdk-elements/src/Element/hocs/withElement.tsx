@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import { Profiler, use, useMemo, useRef } from 'react';
+import { Profiler, use, useId, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -43,9 +43,26 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     // of its own, but its descendants still have to see that an ancestor hid them.
     const parentElement = use(ElementContext) as ElementContextValue | undefined;
     const parentVisible = parentElement?.visible ?? true;
+    /**
+     * This instance's tracing identity — see `ElementContextValue.traceId`.
+     *
+     * `useId` and not the element id, because a controlled list renders the same element once per row and the panel
+     * has to tell those rows apart. Read unconditionally: `debugMode` is a runtime toggle, and a hook whose call
+     * depended on it would change the hook order of every element on the page the moment somebody pressed it.
+     */
+    const instanceId = useId();
+    const traceId = `${id}${instanceId}`;
+    /**
+     * A skipHOC element passes its PARENT's trace id through rather than minting one.
+     *
+     * It renders no `Profiler` of its own, so a trace id here would name a node the collector never hears about, and
+     * everything below it would hang off a parent that is not in the tree — which the viewer reads as a root. Passing
+     * the parent through nests those descendants under the nearest ancestor that actually rendered.
+     */
+    const skipTraceId = parentElement?.traceId ?? traceId;
     const skipEntry = useMemo<ElementContextValue<'skipHOC'>>(
-      () => ({ id, rootId, visible: parentVisible, plitziJsxSkipHOC: true }),
-      [id, rootId, parentVisible]
+      () => ({ id, rootId, visible: parentVisible, traceId: skipTraceId, plitziJsxSkipHOC: true }),
+      [id, rootId, parentVisible, skipTraceId]
     );
 
     if (props.plitziJsxSkipHOC) {
@@ -69,7 +86,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       element,
       internalProps: props.internalProps,
       children: props.children,
-      previewMode
+      previewMode,
+      parentVisible
     });
 
     const { attributes, definition, style, plitziElementLayout, elementState, setElementState } = internalProps;
@@ -82,6 +100,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         id,
         rootId,
         visible,
+        traceId,
         attributes,
         definition,
         plitziElementLayout,
@@ -89,7 +108,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         elementState,
         setElementState
       }),
-      [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState, visible]
+      [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState, visible, traceId]
     );
 
     const content = useMemo(() => {
@@ -114,9 +133,10 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     const tree = <ElementContext value={elementData}>{content}</ElementContext>;
 
     if (debugMode) {
-      // Registers the real render-tree parent so the collector/flamegraph nest correctly across schemas. Whether the
-      // element rendered itself vs only a descendant did is derived later from self time, not flagged here.
-      tracingCollector.linkParent(id, parentElement?.id);
+      // Registers the real render-tree parent so the collector/flamegraph nest correctly across schemas, and which
+      // element this instance is — React hands `onRender` nothing but the Profiler's id. Whether the element rendered
+      // itself vs only a descendant did is derived later from self time, not flagged here.
+      tracingCollector.linkParent(traceId, parentElement?.traceId, id);
 
       // Snapshot the inputs that feed this element (its resolved data + the props handed to the wrapped component) and
       // diff against the previous render, so the panel can attribute "which prop changed" to each re-render.
@@ -131,11 +151,11 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
         ...props.extraProps,
         ...omitKeys(props, ['plitziJsxSkipHOC', 'internalProps', 'className', 'children', 'extraProps'])
       };
-      tracingCollector.recordProps(id, diffProps(prevInputsRef.current, inputs));
+      tracingCollector.recordProps(traceId, diffProps(prevInputsRef.current, inputs));
       prevInputsRef.current = inputs;
 
       return (
-        <Profiler id={id} onRender={tracingCollector.onRender}>
+        <Profiler id={traceId} onRender={tracingCollector.onRender}>
           {tree}
         </Profiler>
       );

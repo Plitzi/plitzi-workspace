@@ -13,7 +13,10 @@ export type DurationMetric = 'self' | 'total';
 type RenderState = 'rendered' | 'bubbled' | 'hatched';
 
 export type FlameNode = {
+  /** This INSTANCE — a list's rows are one node each. See `CommitElementRender.id`. */
   id: string;
+  /** Which element the instance is: the label, the schema lookup, and what gets outlined on the page. */
+  elementId: string;
   name: string;
   type: string;
   state: RenderState;
@@ -39,6 +42,7 @@ export type FlameModel = {
 };
 
 export type HotspotRow = {
+  /** The ELEMENT, not an instance: a list's hundred rows are one row here, with a hundred renders against it. */
   id: string;
   name: string;
   type: string;
@@ -215,25 +219,29 @@ const MIN_SIZE = 0.01;
 // additively, so a truly bubbled node's self time is exactly 0).
 const SELF_EPS = 1e-6;
 
-type CommitGraph = {
-  rendered: Map<string, CommitEntry['elements'][number]>;
-  children: Map<string, string[]>;
+/**
+ * The accumulated tree, indexed once.
+ *
+ * Separate from any single commit because none of it depends on one: the parent links, the sizes and the child lists
+ * are facts about the tree. Rebuilding them per commit is what made the hotspots view — which walks every commit it
+ * has — quadratic in the size of the page.
+ */
+export type TreeIndex = {
+  parent: Map<string, string | undefined>;
   base: Map<string, number>;
-  roots: string[];
-  selfOf: (id: string) => number;
+  children: Map<string, string[]>;
+  elementOf: Map<string, string>;
 };
 
-// Indexes the accumulated tree + one commit's renders. Self = `actual − Σ(nearest rendered descendants' actual)`,
-// which stays correct across non-rendered intermediates. Shared by the flame model and the hotspots aggregator.
-const buildCommitGraph = (commit: CommitEntry, tree: TracingTree): CommitGraph => {
+export const buildTreeIndex = (tree: TracingTree): TreeIndex => {
   const parent = new Map<string, string | undefined>();
   const base = new Map<string, number>();
+  const elementOf = new Map<string, string>();
   for (const id of Object.keys(tree)) {
     parent.set(id, tree[id].parentId);
     base.set(id, tree[id].baseDuration);
+    elementOf.set(id, tree[id].elementId);
   }
-
-  const rendered = new Map(commit.elements.map(entry => [entry.id, entry]));
 
   const children = new Map<string, string[]>();
   for (const [id, parentId] of parent) {
@@ -244,6 +252,49 @@ const buildCommitGraph = (commit: CommitEntry, tree: TracingTree): CommitGraph =
       } else {
         children.set(parentId, [id]);
       }
+    }
+  }
+
+  return { parent, base, children, elementOf };
+};
+
+type CommitGraph = {
+  rendered: Map<string, CommitEntry['elements'][number]>;
+  self: Map<string, number>;
+  roots: string[];
+};
+
+/**
+ * One commit's renders, against the indexed tree.
+ *
+ * Self = `actual − Σ(nearest rendered descendants' actual)`, which stays correct across non-rendered intermediates.
+ * Computed by walking UP from each rendered node to its nearest rendered ancestor and subtracting there — one pass
+ * over the renders, rather than a downward search of every node's subtree for each node. The downward version was
+ * quadratic in the page: on a dense page it was the panel hanging, not the panel drawing.
+ */
+const buildCommitGraph = (commit: CommitEntry, index: TreeIndex): CommitGraph => {
+  const { parent } = index;
+  const rendered = new Map(commit.elements.map(entry => [entry.id, entry]));
+
+  const self = new Map<string, number>();
+  for (const entry of commit.elements) {
+    self.set(entry.id, entry.actualDuration);
+  }
+
+  for (const entry of commit.elements) {
+    let ancestor = parent.get(entry.id);
+    while (ancestor !== undefined && !rendered.has(ancestor)) {
+      ancestor = parent.get(ancestor);
+    }
+
+    if (ancestor !== undefined) {
+      self.set(ancestor, (self.get(ancestor) ?? 0) - entry.actualDuration);
+    }
+  }
+
+  for (const [id, value] of self) {
+    if (value < 0) {
+      self.set(id, 0);
     }
   }
 
@@ -259,40 +310,7 @@ const buildCommitGraph = (commit: CommitEntry, tree: TracingTree): CommitGraph =
     roots.add(root);
   }
 
-  const nearestRenderedDescendants = (id: string): string[] => {
-    const result: string[] = [];
-    const stack = [...(children.get(id) ?? [])];
-    while (stack.length > 0) {
-      const childId = stack.pop();
-      if (childId === undefined) {
-        break;
-      }
-
-      if (rendered.has(childId)) {
-        result.push(childId);
-      } else {
-        stack.push(...(children.get(childId) ?? []));
-      }
-    }
-
-    return result;
-  };
-
-  const selfOf = (id: string): number => {
-    const entry = rendered.get(id);
-    if (!entry) {
-      return 0;
-    }
-
-    const childTotal = nearestRenderedDescendants(id).reduce(
-      (sum, childId) => sum + (rendered.get(childId)?.actualDuration ?? 0),
-      0
-    );
-
-    return Math.max(0, entry.actualDuration - childTotal);
-  };
-
-  return { rendered, children, base, roots: [...roots], selfOf };
+  return { rendered, self, roots: [...roots] };
 };
 
 // Builds the full render tree for a commit from the accumulated tree: rendered nodes nest under their real ancestors
@@ -301,9 +319,11 @@ const buildCommitGraph = (commit: CommitEntry, tree: TracingTree): CommitGraph =
 export const buildFlameModel = (
   commit: CommitEntry,
   tree: TracingTree,
-  flat: Record<string, Element> | undefined
+  flat: Record<string, Element> | undefined,
+  index: TreeIndex = buildTreeIndex(tree)
 ): FlameModel => {
-  const { rendered, children, base, roots, selfOf } = buildCommitGraph(commit, tree);
+  const { children, base, elementOf } = index;
+  const { rendered, self, roots } = buildCommitGraph(commit, index);
 
   const sizeOf = (id: string): number => {
     const b = base.get(id) ?? 0;
@@ -322,16 +342,42 @@ export const buildFlameModel = (
   let totalSelf = 0;
   let renders = 0;
 
-  const visit = (
-    id: string,
-    parentId: string | undefined,
-    x: number,
-    width: number,
-    depth: number,
-    ancestorRendered: boolean
-  ): void => {
+  type Frame = {
+    id: string;
+    parentId: string | undefined;
+    x: number;
+    width: number;
+    depth: number;
+    ancestorRendered: boolean;
+  };
+
+  /**
+   * Iterative, not recursive.
+   *
+   * A page deep enough to be worth profiling is a page deep enough to overflow the stack while profiling it: every
+   * element is a node here, and with one node per list ROW a long list nests as far as the schema does. An explicit
+   * stack costs nothing and cannot blow up.
+   */
+  const stack: Frame[] = [];
+  const rootSizes = roots.map(sizeOf);
+  const total = rootSizes.reduce((sum, value) => sum + value, 0) || 1;
+  let cursor = 0;
+  roots.forEach((id, position) => {
+    const width = (rootSizes[position] || MIN_SIZE) / total;
+    stack.push({ id, parentId: undefined, x: cursor, width, depth: 0, ancestorRendered: false });
+    cursor += width;
+  });
+  stack.reverse();
+
+  while (stack.length > 0) {
+    const frame = stack.pop();
+    if (frame === undefined) {
+      break;
+    }
+
+    const { id, parentId, x, width, depth, ancestorRendered } = frame;
     const entry = rendered.get(id);
-    const selfDuration = selfOf(id);
+    const selfDuration = self.get(id) ?? 0;
     const state: RenderState = entry ? (selfDuration > SELF_EPS ? 'rendered' : 'bubbled') : 'hatched';
     const trigger = state === 'rendered' && !ancestorRendered;
     if (state === 'rendered') {
@@ -344,12 +390,14 @@ export const buildFlameModel = (
     }
 
     maxDepth = Math.max(maxDepth, depth);
+    const elementId = elementOf.get(id) ?? entry?.elementId ?? id;
     nodes.push({
       id,
-      name: elementName(id, flat),
-      type: elementType(id, flat),
+      elementId,
+      name: elementName(elementId, flat),
+      type: elementType(elementId, flat),
       state,
-      visible: elementVisible(id, flat),
+      visible: elementVisible(elementId, flat),
       trigger,
       phase: entry?.phase,
       actualDuration: entry?.actualDuration ?? 0,
@@ -363,54 +411,69 @@ export const buildFlameModel = (
     });
 
     const kids = children.get(id) ?? [];
+    if (kids.length === 0) {
+      continue;
+    }
+
     const sizes = kids.map(sizeOf);
     const childrenSum = sizes.reduce((sum, value) => sum + value, 0);
     const span = Math.max(sizeOf(id), childrenSum) || 1;
-    let cursor = x;
-    kids.forEach((kid, index) => {
-      const childWidth = ((sizes[index] || MIN_SIZE) / span) * width;
-      visit(kid, id, cursor, childWidth, depth + 1, ancestorRendered || state === 'rendered');
-      cursor += childWidth;
+    let childCursor = x;
+    const pushed: Frame[] = [];
+    kids.forEach((kid, position) => {
+      const childWidth = ((sizes[position] || MIN_SIZE) / span) * width;
+      pushed.push({
+        id: kid,
+        parentId: id,
+        x: childCursor,
+        width: childWidth,
+        depth: depth + 1,
+        ancestorRendered: ancestorRendered || state === 'rendered'
+      });
+      childCursor += childWidth;
     });
-  };
-
-  const rootSizes = roots.map(sizeOf);
-  const total = rootSizes.reduce((sum, value) => sum + value, 0) || 1;
-  let cursor = 0;
-  roots.forEach((id, index) => {
-    const width = (rootSizes[index] || MIN_SIZE) / total;
-    visit(id, undefined, cursor, width, 0, false);
-    cursor += width;
-  });
+    // Reversed on the way in, so popping walks the children left to right — the order a flamegraph is read in.
+    for (let position = pushed.length - 1; position >= 0; position -= 1) {
+      stack.push(pushed[position]);
+    }
+  }
 
   return { nodes, maxDepth, totalSelf, renderedCount: renders, triggers };
 };
 
-// Aggregates self time per element across ALL commits — chatty/expensive elements a single commit can't reveal.
+/**
+ * Aggregates self time across ALL commits — chatty/expensive elements a single commit can't reveal.
+ *
+ * By ELEMENT and not by instance, which is the whole point of the view: a list's hundred rows are one element that
+ * rendered a hundred times, and a hundred rows of one render each would say nothing. The flamegraph is where the
+ * instances are told apart.
+ */
 export const buildHotspots = (
   commits: CommitEntry[],
   tree: TracingTree,
   flat: Record<string, Element> | undefined
 ): HotspotRow[] => {
+  const index = buildTreeIndex(tree);
   const acc = new Map<
     string,
     { renders: number; mounts: number; totalSelf: number; maxSelf: number; lastSelf: number }
   >();
   for (const commit of commits) {
-    const { selfOf } = buildCommitGraph(commit, tree);
+    const { self } = buildCommitGraph(commit, index);
     for (const entry of commit.elements) {
-      const self = selfOf(entry.id);
-      if (self <= SELF_EPS) {
+      const value = self.get(entry.id) ?? 0;
+      if (value <= SELF_EPS) {
         continue;
       }
 
-      const current = acc.get(entry.id) ?? { renders: 0, mounts: 0, totalSelf: 0, maxSelf: 0, lastSelf: 0 };
+      const elementId = index.elementOf.get(entry.id) ?? entry.elementId;
+      const current = acc.get(elementId) ?? { renders: 0, mounts: 0, totalSelf: 0, maxSelf: 0, lastSelf: 0 };
       current.renders += 1;
       current.mounts += entry.phase === 'mount' ? 1 : 0;
-      current.totalSelf += self;
-      current.maxSelf = Math.max(current.maxSelf, self);
-      current.lastSelf = self;
-      acc.set(entry.id, current);
+      current.totalSelf += value;
+      current.maxSelf = Math.max(current.maxSelf, value);
+      current.lastSelf = value;
+      acc.set(elementId, current);
     }
   }
 

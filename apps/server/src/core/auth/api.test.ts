@@ -121,6 +121,39 @@ describe('signing in', () => {
     expect(outcome.ok && outcome.session?.refreshToken).toEqual(expect.any(String));
   });
 
+  /**
+   * What somebody reliably remembers about an account is the address they made it with, so a sign-in screen that says
+   * "email or username" has to mean it — and this is the half that makes it true.
+   */
+  it('signs in with the email as well as the username', async () => {
+    const findByEmail = vi.fn(() => Promise.resolve(ada));
+    const api = build({ findByUsername: () => Promise.resolve(undefined), findByEmail });
+
+    const outcome = await api.login({ username: 'ada@example.com', password: 'pw' });
+
+    expect(outcome.ok).toBe(true);
+    expect(findByEmail).toHaveBeenCalledWith('ada@example.com');
+  });
+
+  /**
+   * Username first, and the email lookup does not run at all when it matched — so an account NAMED after somebody
+   * else's address can never stand in front of the person who owns that address.
+   */
+  it('prefers the username, and does not look for an email that cannot be one', async () => {
+    const findByEmail = vi.fn(() => Promise.resolve(undefined));
+    const byUsername = build({ findByUsername: () => Promise.resolve(ada), findByEmail });
+
+    expect((await byUsername.login({ username: 'ada@example.com', password: 'pw' })).ok).toBe(true);
+    expect(findByEmail).not.toHaveBeenCalled();
+
+    await build({ findByUsername: () => Promise.resolve(undefined), findByEmail }).login({
+      username: 'ghost',
+      password: 'pw'
+    });
+
+    expect(findByEmail).not.toHaveBeenCalled();
+  });
+
   it('refuses a wrong password without saying which half was wrong', async () => {
     const api = build({ findByUsername: () => Promise.resolve(ada) });
 
@@ -147,13 +180,42 @@ describe('signing in', () => {
     expect(verifyPassword).not.toHaveBeenCalled();
   });
 
-  it('refuses an inactive account before looking at its password', async () => {
+  it('refuses an inactive account, and says so as an inactive one', async () => {
     const api = build({ findByUsername: () => Promise.resolve({ ...ada, active: false }) });
 
     expect(await api.login({ username: 'ada', password: 'pw' })).toMatchObject({
       ok: false,
-      body: { error: 'Account is not active' }
+      body: { error: 'Account is not active', reason: 'inactive' }
     });
+  });
+
+  /**
+   * An address that has never answered is not a wrong password, and the person holding it is the only one who can
+   * fix it. Saying which it was is the whole reason a sign-in screen can offer to send the mail again.
+   */
+  it('tells an unconfirmed address apart from a refused credential', async () => {
+    const api = build({ findByUsername: () => Promise.resolve({ ...ada, active: false, verified: false }) });
+
+    expect(await api.login({ username: 'ada', password: 'pw' })).toMatchObject({
+      ok: false,
+      status: 401,
+      body: { error: 'Account is not verified', reason: 'unverified' }
+    });
+  });
+
+  /**
+   * And it is said to the owner only. Before the password check, "that account is not verified" answered anybody who
+   * typed an address with a guess — which is a list of this deployment's accounts, handed out two requests at a time.
+   */
+  it('says nothing about an account to somebody who has not proved it is theirs', async () => {
+    const api = build({ findByUsername: () => Promise.resolve({ ...ada, active: false, verified: false }) });
+
+    expect(await api.login({ username: 'ada', password: 'nope' })).toMatchObject({
+      ok: false,
+      status: 401,
+      body: { error: 'Invalid credentials' }
+    });
+    expect((await api.login({ username: 'ada', password: 'nope' })).body).not.toHaveProperty('reason');
   });
 });
 
@@ -213,6 +275,77 @@ describe('recovering a password', () => {
     // Whoever forced the reset, or stole the old password, must not keep a working session.
     expect(clearSession).toHaveBeenCalledWith({ userId: 1 });
     expect(outcome.ok && outcome.endSession).toBe(true);
+  });
+});
+
+/**
+ * A sign-up that started somewhere has to end there, and the confirmation mail is the hop that opens a new page — so
+ * the destination the caller named travels to the mail, where the deployment that composes the link decides whether
+ * it is one of its own. The kernel carries it and judges nothing: it has no policy to judge by.
+ */
+describe('confirming an address', () => {
+  type Mail = { to: string; template: string; data: Record<string, string> };
+
+  const pending: AccountRecord = { ...ada, id: 2, email: 'pending@example.com', username: 'pending', verified: false };
+
+  const setup = () => {
+    const sendMail = vi.fn<(message: Mail) => Promise<void>>(() => Promise.resolve());
+    const api = build(
+      {
+        findByUsername: () => Promise.resolve(undefined),
+        findByEmail: (email: string) => Promise.resolve(email === pending.email ? pending : undefined),
+        createAccount: account =>
+          Promise.resolve({ ...ada, id: 3, username: account.username, email: account.email, verified: false }),
+        setValidationToken: () => Promise.resolve(),
+        findByValidationToken: () => Promise.resolve(undefined),
+        setVerified: () => Promise.resolve(),
+        sendMail
+      },
+      { hashPassword: (p: string) => Promise.resolve(`${p}-hashed`) }
+    );
+    const mailed = (): Mail | undefined => sendMail.mock.calls.at(-1)?.[0];
+
+    return { api, mailed };
+  };
+
+  it('hands the destination a sign-up named to the confirmation mail', async () => {
+    const { api, mailed } = setup();
+
+    const outcome = await api.signup({
+      username: 'grace',
+      email: 'grace@example.com',
+      password: 'correct horse battery',
+      redirect: 'https://app.example.com/analytics'
+    });
+
+    expect(outcome).toMatchObject({ ok: true, status: 201 });
+    expect(mailed()).toMatchObject({ template: 'validation', data: { redirect: 'https://app.example.com/analytics' } });
+  });
+
+  /** Nothing named is nothing carried — not an empty string a template would have to know to ignore. */
+  it('carries no destination when the sign-up named none', async () => {
+    const { api, mailed } = setup();
+
+    await api.signup({
+      username: 'hopper',
+      email: 'hopper@example.com',
+      password: 'correct horse battery',
+      redirect: ''
+    });
+
+    expect(mailed()?.data).not.toHaveProperty('redirect');
+  });
+
+  it('carries the destination into a link sent again', async () => {
+    const { api, mailed } = setup();
+
+    await api.resendVerification(pending.email, 'https://app.example.com/analytics');
+
+    expect(mailed()).toMatchObject({
+      to: pending.email,
+      template: 'validation',
+      data: { redirect: 'https://app.example.com/analytics' }
+    });
   });
 });
 

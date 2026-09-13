@@ -33,20 +33,36 @@ afterEach(() => {
 const guestRender = { authenticated: false } as unknown as Server;
 const signedInRender = { authenticated: true, user: { details: { id: 1, username: 'ada' } } } as unknown as Server;
 
-const authOn = (server: Server | undefined, isHydrating: boolean) =>
-  renderHook(() => useAuth({ server, isHydrating, provider: 'basic', settings })).result.current;
-
-const loadingOn = (server: Server | undefined, isHydrating: boolean): boolean => authOn(server, isHydrating).loading;
-
-describe('what the server renders and what the browser hydrates', () => {
-  it('agree for a signed-out visitor', () => {
-    expect(loadingOn(guestRender, false)).toBe(false); // server
-    expect(loadingOn(guestRender, true)).toBe(false); // browser
+/**
+ * The provider's `init()` starts from an effect and resolves on a later tick. Its state update has to land inside
+ * `act` — once the test has returned it lands outside, and React warns about it on every hook rendered here.
+ */
+const settle = () =>
+  act(async () => {
+    await Promise.resolve();
   });
 
-  it('agree for a signed-in visitor', () => {
-    expect(loadingOn(signedInRender, false)).toBe(false);
-    expect(loadingOn(signedInRender, true)).toBe(false);
+/** What the first render answered — the one the server's HTML and the browser's hydration are compared on. */
+const authOn = async (server: Server | undefined, isHydrating: boolean) => {
+  const { result } = renderHook(() => useAuth({ server, isHydrating, provider: 'basic', settings }));
+  const firstRender = result.current;
+  await settle();
+
+  return firstRender;
+};
+
+const loadingOn = async (server: Server | undefined, isHydrating: boolean) =>
+  (await authOn(server, isHydrating)).loading;
+
+describe('what the server renders and what the browser hydrates', () => {
+  it('agree for a signed-out visitor', async () => {
+    expect(await loadingOn(guestRender, false)).toBe(false); // server
+    expect(await loadingOn(guestRender, true)).toBe(false); // browser
+  });
+
+  it('agree for a signed-in visitor', async () => {
+    expect(await loadingOn(signedInRender, false)).toBe(false);
+    expect(await loadingOn(signedInRender, true)).toBe(false);
   });
 });
 
@@ -60,11 +76,11 @@ describe('what the server renders and what the browser hydrates', () => {
  * worth waiting for.
  */
 describe('a page rendered in the browser alone', () => {
-  it('does not wait when there is nothing to confirm', () => {
-    expect(loadingOn(undefined, false)).toBe(false);
+  it('does not wait when there is nothing to confirm', async () => {
+    expect(await loadingOn(undefined, false)).toBe(false);
   });
 
-  it('waits while the one thing that could answer needs a request', () => {
+  it('waits while the one thing that could answer needs a request', async () => {
     // A hint cookie says this browser holds a session, but the credential itself is httpOnly — only `init()` can
     // turn that into an identity, and until it does, which page to show is genuinely unknown.
     document.cookie = 'plitzi_session_hint=9999999999.9999999999';
@@ -75,6 +91,7 @@ describe('a page rendered in the browser alone', () => {
     );
 
     expect(result.current.loading).toBe(true);
+    await settle();
     document.cookie = 'plitzi_session_hint=; Max-Age=0';
   });
 });
@@ -86,18 +103,18 @@ describe('a page rendered in the browser alone', () => {
  * and the browser then chose a different page than the HTML it was hydrating.
  */
 describe('who the page thinks is looking at it', () => {
-  it('takes the server’s answer before the browser has decided', () => {
-    expect(authOn(signedInRender, false).authenticated).toBe(true); // server
-    expect(authOn(signedInRender, true).authenticated).toBe(true); // browser, first render
+  it('takes the server’s answer before the browser has decided', async () => {
+    expect((await authOn(signedInRender, false)).authenticated).toBe(true); // server
+    expect((await authOn(signedInRender, true)).authenticated).toBe(true); // browser, first render
   });
 
-  it('does not invent one for a guest', () => {
-    expect(authOn(guestRender, false).authenticated).toBe(false);
-    expect(authOn(guestRender, true).authenticated).toBe(false);
+  it('does not invent one for a guest', async () => {
+    expect((await authOn(guestRender, false)).authenticated).toBe(false);
+    expect((await authOn(guestRender, true)).authenticated).toBe(false);
   });
 
-  it('says nobody when no server rendered the page', () => {
-    expect(authOn(undefined, false).authenticated).toBe(false);
+  it('says nobody when no server rendered the page', async () => {
+    expect((await authOn(undefined, false)).authenticated).toBe(false);
   });
 });
 
@@ -129,9 +146,7 @@ describe('a page the server already resolved the visitor for', () => {
     );
 
     // The decision runs in an effect, so let it settle before concluding that no request was made.
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(result.current.authenticated).toBe(true);
@@ -144,9 +159,7 @@ describe('a page the server already resolved the visitor for', () => {
       useAuth({ server: rendered, isHydrating: true, provider: 'basic', settings: basicSettings })
     );
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
 
     expect(result.current.manager.getProvider()?.token?.accessToken).toBe('from-ssr');
   });
@@ -180,14 +193,10 @@ describe('a page the server already resolved the visitor for', () => {
       { initialProps: { provider: '' } }
     );
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
 
     rerender({ provider: 'basic' });
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
 
     expect(seen).not.toContain(false);
   });
@@ -202,9 +211,7 @@ describe('a page the server already resolved the visitor for', () => {
       useAuth({ server: guestRender, isHydrating: true, provider: 'basic', settings: basicSettings })
     );
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
 
     expect(result.current.authenticated).toBe(false);
     // Nothing in storage and no hint cookie: no evidence, so no request either.
@@ -230,9 +237,7 @@ describe('a page the server already resolved the visitor for', () => {
       })
     );
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
 
     expect(result.current.authenticated).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
@@ -254,9 +259,7 @@ describe('a page the server already resolved the visitor for', () => {
       })
     );
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
 
     expect(fetchMock).toHaveBeenCalled();
     document.cookie = 'plitzi_session_hint=; Max-Age=0';

@@ -74,6 +74,12 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       disabled: false,
       options: [],
       required: true,
+      minLength: 0,
+      maxLength: 0,
+      pattern: '',
+      patternMessage: '',
+      matches: '',
+      matchesMessage: '',
       readOnly: false
     },
     definition: {

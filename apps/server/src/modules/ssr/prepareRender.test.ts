@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { describe, it, expect, vi } from 'vitest';
 
 import { prepareRender } from './prepareRender';
@@ -340,7 +341,7 @@ describe('prepareRender / the fonts the document asks for', () => {
     expect(templateParams.fonts).toEqual({ preconnect: [], links: [], faces: '', origins: [] });
   });
 
-  it('puts the space\'s google families in the document, which is the only place they load in time', async () => {
+  it("puts the space's google families in the document, which is the only place they load in time", async () => {
     const { templateParams } = await render('/', { fonts: [lato] });
     expect(templateParams.fonts?.links).toEqual([
       { href: 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap', rel: 'stylesheet' }
@@ -361,5 +362,45 @@ describe('prepareRender / the fonts the document asks for', () => {
 
     const selfHosted = await render('/', { fonts: [hosted] });
     expect(selfHosted.templateParams.fonts?.faces).toContain('url("/fonts/acme.woff2")');
+  });
+});
+
+describe('prepareRender / the theme the visitor already chose', () => {
+  it('paints the document class from the cookie, so no script has to run before the first paint', async () => {
+    const { templateParams, componentProps } = await render('/', { cookie: 'theme=dark' });
+
+    expect(templateParams.themeClass).toBe('dark');
+    expect(componentProps.theme).toBe('dark');
+  });
+
+  /**
+   * The class alone would settle what the page looks like. The value has to reach the browser as well: a space can
+   * bind to `{{ theme.resolved }}`, and a client starting at `system` against a document rendered `dark` hydrates
+   * different markup and throws away the tree it happens in.
+   */
+  it('hands the same value to the browser it rendered with', async () => {
+    const { templateParams } = await render('/', { cookie: 'theme=light' });
+
+    expect(templateParams.offlineData).toContain('"theme":"light"');
+  });
+
+  /**
+   * `system` and "never chose" both write nothing — the absence is what lets the media queries answer.
+   *
+   * They are still not the same thing to the SDK, which is why only the class is shared: `system` is a choice the
+   * visitor made and the provider is told about it, while a value nobody recognises is no choice at all.
+   */
+  it('writes no class for system, nor for a first visit', async () => {
+    const chosen = await render('/', { cookie: 'theme=system' });
+
+    expect(chosen.templateParams.themeClass).toBeUndefined();
+    expect(chosen.componentProps.theme).toBe('system');
+
+    for (const cookie of ['theme=sepia', 'theme=', undefined]) {
+      const { templateParams, componentProps } = await render('/', { cookie });
+
+      expect(templateParams.themeClass).toBeUndefined();
+      expect(componentProps.theme).toBeUndefined();
+    }
   });
 });

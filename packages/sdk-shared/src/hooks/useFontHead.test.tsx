@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { render } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 
@@ -42,7 +43,7 @@ describe('useFontHead', () => {
     expect(document.head.querySelector('style[data-plitzi-fonts]')?.textContent).toContain('@font-face');
   });
 
-  it('leaves the server\'s work alone: a hydrated page already carries every face it needs', () => {
+  it("leaves the server's work alone: a hydrated page already carries every face it needs", () => {
     document.head.innerHTML =
       '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400" />' +
       '<style data-plitzi-fonts>@font-face{font-family:"Acme";}</style>';

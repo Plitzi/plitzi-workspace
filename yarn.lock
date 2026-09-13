@@ -3757,6 +3757,7 @@ __metadata:
     "@plitzi/sdk-mcp": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@plitzi/sdk-variables": "workspace:*"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.4"
     "@vitejs/plugin-react": "npm:^6.0.5"
@@ -4137,6 +4138,7 @@ __metadata:
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.20"
+    "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.3.3"
     "@testing-library/react": "npm:^16.3.0"
@@ -4353,6 +4355,7 @@ __metadata:
     react-dom: "npm:^19.2.8"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.1"
+    vitest: "npm:^4.1.10"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4628,6 +4631,7 @@ __metadata:
     eslint: "npm:^9.39.5"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.1"
+    vitest: "npm:^4.1.10"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft

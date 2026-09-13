@@ -518,6 +518,10 @@
       "types": "./dist/elements/form/FormControl/declaration.d.ts",
       "import": "./dist/elements/form/FormControl/declaration.mjs"
     },
+    "./elements/form/FormControl/helpers/validateField": {
+      "types": "./dist/elements/form/FormControl/helpers/validateField.d.ts",
+      "import": "./dist/elements/form/FormControl/helpers/validateField.mjs"
+    },
     "./elements/form/FormControl/hocs/withFieldValue": {
       "types": "./dist/elements/form/FormControl/hocs/withFieldValue.d.ts",
       "import": "./dist/elements/form/FormControl/hocs/withFieldValue.mjs"

@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { describe, expect, it } from 'vitest';
 
 import { blankSpace, blankSpaceSource, blankSpaceSpec, toPortableSource } from './index';
@@ -97,7 +98,7 @@ describe('the copy handed to a project', () => {
     const source = blankSpaceSource();
 
     expect(source).not.toMatch(/from '\.\./);
-    expect(source).toContain('from \'@plitzi/sdk-authoring\'');
+    expect(source).toContain("from '@plitzi/sdk-authoring'");
     // Named for whoever receives it, not for the platform: the copy is somebody's own site, not Plitzi's blank one.
     expect(source).toContain('export const space');
     expect(source).not.toContain('blankSpaceSpec');
@@ -131,9 +132,9 @@ describe('the copy handed to a project', () => {
   it('renames the copy, and slugs the url it derives ids from', () => {
     const source = blankSpaceSource({ name: 'My Site' });
 
-    expect(source).toContain('name: \'My Site\'');
+    expect(source).toContain("name: 'My Site'");
     // A DNS label at the platform, and what every element id and selector is derived from.
-    expect(source).toContain('permanentUrl: \'my-site\'');
+    expect(source).toContain("permanentUrl: 'my-site'");
     expect(source).not.toContain(blankSpaceSpec.permanentUrl);
   });
 
@@ -150,8 +151,8 @@ describe('the copy handed to a project', () => {
     });
 
     expect(plain).not.toContain('custom(');
-    expect(hosted).toContain('renderType: \'statCard\'');
-    expect(hosted).toContain('id: \'stat-card\'');
+    expect(hosted).toContain("renderType: 'statCard'");
+    expect(hosted).toContain("id: 'stat-card'");
     // The settings attribute is a JSON string, so what the copy carries has to be a quoted, escaped one.
     expect(hosted).toContain('settings: \'{"label":"Elements"}\'');
     // Prepended as its own line, then folded into the package import by the rewrite below.
@@ -162,27 +163,27 @@ describe('the copy handed to a project', () => {
   /** Prettier wraps a long import across lines; a rewrite that only reads one-liners would drop the names. */
   it('rewrites an import however it is wrapped', () => {
     const rewritten = toPortableSource(
-      ['import {', '  container,', '  heading', '} from \'../../elements\';', '', 'const x = 1;', ''].join('\n')
+      ['import {', '  container,', '  heading', "} from '../../elements';", '', 'const x = 1;', ''].join('\n')
     );
 
     expect(rewritten).toBe(
-      ['import { container, heading } from \'@plitzi/sdk-authoring\';', '', 'const x = 1;', ''].join('\n')
+      ["import { container, heading } from '@plitzi/sdk-authoring';", '', 'const x = 1;', ''].join('\n')
     );
   });
 
   /** Anything it cannot point at the package is a broken copy, so it is refused rather than written. */
   it('refuses a relative import it cannot rewrite', () => {
-    expect(() => toPortableSource('import spec from \'../blank/spec\';\n\nconst x = 1;\n')).toThrow(/cannot rewrite/);
-    expect(() => toPortableSource('const x = 1;\n\nexport { y } from \'../y\';\n')).toThrow(/still refers/);
+    expect(() => toPortableSource("import spec from '../blank/spec';\n\nconst x = 1;\n")).toThrow(/cannot rewrite/);
+    expect(() => toPortableSource("const x = 1;\n\nexport { y } from '../y';\n")).toThrow(/still refers/);
   });
 
   it('merges every relative import into one, values and types apart', () => {
     const rewritten = toPortableSource(
       [
-        'import { b, a } from \'../../elements\';',
-        'import { c } from \'../../style\';',
+        "import { b, a } from '../../elements';",
+        "import { c } from '../../style';",
         '',
-        'import type { T } from \'../../schema\';',
+        "import type { T } from '../../schema';",
         '',
         'const x = 1;',
         ''
@@ -191,9 +192,9 @@ describe('the copy handed to a project', () => {
 
     expect(rewritten).toBe(
       [
-        'import { a, b, c } from \'@plitzi/sdk-authoring\';',
+        "import { a, b, c } from '@plitzi/sdk-authoring';",
         '',
-        'import type { T } from \'@plitzi/sdk-authoring\';',
+        "import type { T } from '@plitzi/sdk-authoring';",
         '',
         'const x = 1;',
         ''

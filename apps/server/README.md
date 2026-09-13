@@ -662,13 +662,13 @@ Enable RSC at the top level of your schema:
 | `'client'` | Skipped during SSR; rendered only in the browser after hydration. |
 | `'shared'` | Rendered on both server and client (default behaviour). |
 
-**`loadStrategy`** — controls when the browser requests the element's data (schema field; browser runtime behaviour is handled by the SDK):
+**`loadStrategy`** — controls when an element's items are mounted, relative to its `visibility` state. The element itself always renders (it is what registers the callbacks that show it again); only what is inside it is deferred. The builder canvas ignores it and keeps everything mounted.
 
 | Value | Behaviour |
 |---|---|
-| `'eager'` | Data fetched immediately on mount. |
-| `'lazy'` | Data fetched after the initial render completes. |
-| `'visible'` | Data fetched when the element enters the viewport. |
+| `'eager'` | Items always mounted, hidden or not (default behaviour). |
+| `'lazy'` | Items mounted the first time the element is shown, and kept from then on. `modalContainer` and `dialogContainer` declare it by default. |
+| `'visible'` | Items mounted only while the element is shown; their state is dropped on every hide. |
 
 ### `getRscData` adapter
 

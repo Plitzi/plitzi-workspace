@@ -24,6 +24,17 @@ export type FlamegraphProps = {
 // Float slack for the subtree-containment test (a child's span can land a hair outside its parent's after division).
 const EPS = 1e-6;
 
+/**
+ * The narrowest frame worth putting in the DOM, as a fraction of the zoomed viewport.
+ *
+ * Every frame is a real `<button>` with a title, a class list and a click handler, and a dense page has thousands of
+ * nodes — one per list ROW now that instances are told apart. Drawing all of them is what took the panel down, and
+ * almost none of them were legible: at 0.03% a frame is a third of a pixel on a 1000px panel, so what is culled here
+ * is what the browser was going to paint as nothing anyway. Zooming into a frame re-divides the viewport, so a frame
+ * culled at one zoom level is drawn at the next one in.
+ */
+const MIN_FRAME_FRACTION = 0.0003;
+
 // A shadow-DOM-native flamegraph: every frame is an absolutely-positioned DOM box sized by the layout fractions on each
 // `FlameNode`, so clicks, theming and Tailwind all work inside the shadow root (no library injecting styles into
 // `document.head`, no canvas). Clicking a frame zooms to it; its ancestors stay as full-width bars above to zoom back.
@@ -72,13 +83,21 @@ const Flamegraph = ({
   }, [focus, byId]);
 
   // The focused frame plus its subtree, selected by horizontal containment (children always nest within their parent).
-  const frames = useMemo(
+  const inFocus = useMemo(
     () =>
       model.nodes.filter(
         node => node.depth >= focusDepth && node.x >= focusX - EPS && node.x + node.width <= focusX + focusWidth + EPS
       ),
     [model, focusX, focusWidth, focusDepth]
   );
+
+  // The selected frame is kept whatever its width: it is the one the sidebar is describing, and a selection with no
+  // frame to point at reads as the panel having lost it.
+  const frames = useMemo(
+    () => inFocus.filter(node => node.width / focusWidth >= MIN_FRAME_FRACTION || node.id === active?.id),
+    [inFocus, focusWidth, active]
+  );
+  const culled = inFocus.length - frames.length;
 
   const maxDepth = useMemo(
     () => frames.reduce((max, node) => Math.max(max, node.depth), focusDepth),
@@ -102,6 +121,11 @@ const Flamegraph = ({
           </span>
         )}
         <span className="opacity-60">click a frame to zoom · click the focused frame to zoom out</span>
+        {culled > 0 && (
+          <span className="opacity-60" title="Frames too narrow to draw at this zoom level — zoom in to see them">
+            · {culled} too narrow to draw
+          </span>
+        )}
         <CommitCause commit={commit} model={model} active={active} onSelectElement={onSelectElement} />
         <SidebarToggle className="ml-auto" open={sidebarOpen} onToggle={onToggleSidebar} />
       </div>

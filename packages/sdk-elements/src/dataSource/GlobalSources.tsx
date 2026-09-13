@@ -1,13 +1,13 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useCallback, use, useMemo } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
+import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
-import type { SchemaVariable, SourceField } from '@plitzi/sdk-shared';
+import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type GlobalSourcesProps = {
@@ -19,30 +19,20 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   const { environment } = useRenderSettings();
 
   // --- variables ---
-  const [[variables, routeParams, queryParams, hostname, currentPageId]] = useCommonStore([
+  const [[variables, routeParams, queryParams, hostname, origin, currentPageId]] = useCommonStore([
     'schema.variables',
     'navigation.routeParams',
     'navigation.queryParams',
     'navigation.hostname',
+    'navigation.origin',
     'navigation.currentPageId'
   ]);
-  const variablesValue = useMemo<Record<string, unknown>>(() => {
-    if (!(variables as SchemaVariable[] | undefined)) {
-      return {};
-    }
-
-    return variables.reduce<Record<string, unknown>>((acum, variable) => {
-      const { name, value, subValues } = variable;
-      if (!Array.isArray(subValues) || subValues.length === 0) {
-        return { ...acum, [name]: value };
-      }
-
-      const whenData = { routeParams, queryParams, hostname, environment };
-      const subValue = subValues.find(subValue => QueryBuilderEvaluator(subValue.when, whenData));
-
-      return { ...acum, [name]: subValue ? subValue.value : value };
-    }, {});
-  }, [environment, hostname, queryParams, routeParams, variables]);
+  // Shared with the router, which needs the same answer BEFORE this provider exists: a page that redirects an
+  // unauthenticated visitor off-site decides not to render, so nothing below here ever runs to publish them.
+  const variablesValue = useMemo<Record<string, unknown>>(
+    () => resolveVariables(variables, { routeParams, queryParams, hostname, environment }),
+    [environment, hostname, queryParams, routeParams, variables]
+  );
   const variablesFields = useCallback(
     () => getPathsFromObeject(variablesValue).map(path => ({ path, name: `variables.${path}` })),
     [variablesValue]
@@ -57,21 +47,27 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
       Object.values(pageDefinitions).map(page => ({ value: page.id, label: get(page, 'attributes.name', page.id) })),
     [pageDefinitions]
   );
+  /**
+   * `origin` is here and `hostname` is not, and the split is deliberate: `hostname` is what a variable's `when` rule
+   * matches on, while `origin` is what a LINK needs — scheme and port included — to name this page absolutely.
+   * Without it the only way to write "send me back where I am" was a per-environment variable naming each host.
+   */
   const navigationValue = useMemo(
-    () => ({ routeParams, queryParams, currentPageId }),
-    [routeParams, queryParams, currentPageId]
+    () => ({ routeParams, queryParams, origin, currentPageId }),
+    [routeParams, queryParams, origin, currentPageId]
   );
   const navigationFields = useCallback(() => {
     const fields = getPathsFromObeject({ routeParams, queryParams }).map(path => ({
       path,
       name: `navigation.${path}`
     })) as SourceField[];
+    const originField = { path: 'origin', name: 'Origin' } as SourceField;
     const currentPageField =
       pages.length > 0
         ? ({ path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pages } as SourceField)
         : ({ path: 'currentPageId', name: 'Current Page' } as SourceField);
 
-    return [...fields, currentPageField];
+    return [...fields, originField, currentPageField];
   }, [routeParams, queryParams, pages]);
   useRegisterSource({ id: 'global', source: 'navigation', name: 'Navigation', fields: navigationFields });
   useCommonStoreSync('runtime.sources.navigation', navigationValue);
@@ -115,6 +111,20 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   );
   useRegisterSource({ id: 'global', source: 'state', name: 'State', fields: stateFields });
   useCommonStoreSync('runtime.sources.state', state);
+
+  /**
+   * --- host (whatever the application AROUND this space handed it)
+   *
+   * The counterpart of the `hostAction` step, and the half without which that step is a one-way shout: a shell
+   * cannot list the host's screens unless the host can give it the list. Written into the store by whoever mounts
+   * the SDK, published here beside every other source so a binding names it the same way.
+   *
+   * Empty for a space that IS the page — nobody is embedding it, so nobody has anything to hand it.
+   */
+  const [host] = useCommonStore('runtime.host');
+  const hostFields = useCallback(() => getPathsFromObeject(host).map(path => ({ path, name: `host.${path}` })), [host]);
+  useRegisterSource({ id: 'global', source: 'host', name: 'Host', fields: hostFields });
+  useCommonStoreSync('runtime.sources.host', host);
 
   return children;
 };

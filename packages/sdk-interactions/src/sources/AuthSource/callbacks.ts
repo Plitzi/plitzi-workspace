@@ -19,7 +19,16 @@ import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder
  * sign-in flow was told the credentials had nowhere to go. One declaration is what stops that from being possible.
  *
  * The previews matter as much as the params: they are the shape of what lands in the flow scope, so a step written
- * after a login can read `{{ login.access_token }}` because this says the key exists.
+ * after a login can read `{{ login.accessToken }}` because this says the key exists. That makes a preview which does
+ * not match what the callback RETURNS worse than no preview at all — and these did not: they promised
+ * `access_token`, `success` and a `details` object, while `AuthContext.login` has always answered with a
+ * {@link TokenResult}. Every sign-in flow written from this catalog therefore guarded on a key that is never there,
+ * and the shape of that failure is a login which succeeds — cookies and all — while the page insists the
+ * credentials were wrong and never goes anywhere.
+ *
+ * There is no user on a `TokenResult`, deliberately: who the session belongs to is loaded separately and arrives on
+ * the `auth` source, not out of this step. A flow that wants to greet somebody by name reads what they typed, or
+ * reads `auth.user` on a later render.
  */
 export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
   login: {
@@ -44,12 +53,20 @@ export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
         when: params => params.mode === 'token'
       }
     },
+    /**
+     * `ok` and `reason` are half of what a sign-in screen is for. A refusal resolves `{ ok: false, reason }` and
+     * nothing else — `unverified` for an address that has never answered, `inactive` for an account that may not be
+     * used, `network` for a backend that said nothing at all — so the page can write the sentence that is true
+     * instead of the one that covers every case and fits none.
+     */
     preview: {
+      // A preview states the KEYS that land in scope; every value in one is a placeholder, `ok` included.
+      ok: '',
+      reason: '',
       errors: { username: '', password: '', token: '' },
-      success: '',
-      access_token: '',
-      expires_at: '',
-      details: { id: '', username: '', email: '', verified: '', permissions: '' }
+      accessToken: '',
+      expiresAt: '',
+      refreshToken: ''
     }
   },
   refreshDetails: {
@@ -57,13 +74,7 @@ export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
     title: 'Auth Refresh Details',
     strictParams: true,
     params: {},
-    preview: {
-      errors: '',
-      success: '',
-      access_token: '',
-      expires_at: '',
-      details: { id: '', username: '', email: '', roles: '', permissions: '', verified: '' }
-    }
+    preview: { errors: '', accessToken: '', expiresAt: '', refreshToken: '' }
   },
   logout: {
     source: 'auth',

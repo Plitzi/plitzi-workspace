@@ -8,8 +8,12 @@ import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
  *
  * They are named as themselves rather than as `<type>_<id>`, which is what tells them apart from a source an
  * element publishes — and is why an element may not answer to one of these names.
+ *
+ * `host` is the odd one: it carries whatever the application EMBEDDING the space handed it, so it is empty for a
+ * space that IS the page. It is listed here because a space authored as an application SHELL binds to it, and a
+ * validator that refused the name would make that impossible to write.
  */
-export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state'];
+export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state', 'host'];
 
 /** What an element publishes: the source prefix its type registers under, by the id it was given. */
 export type SourceIndex = Map<string, string>;

@@ -40,7 +40,7 @@ export type ApiContainerProps = {
   when?: RuleGroup;
   headers?: Record<string, string>;
   mockData?: Record<string, unknown> | string;
-  subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
+  subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure' | '';
   credentials?: RequestCredentials;
   /** Identifier of the server-side connector that feeds this provider. Only meaningful with `runtime: 'server'`. */
   connector?: string;
@@ -88,7 +88,7 @@ const ApiContainer = ({
   when = emptyObject as RuleGroup,
   headers = emptyObject,
   mockData = '{}',
-  subType = 'div',
+  subType = '',
   credentials = 'same-origin',
   singleRecord = false,
   pagination = 'none',
@@ -98,7 +98,7 @@ const ApiContainer = ({
   const {
     id,
     visible,
-    definition: { label = 'Api Container', runtime }
+    definition: { label = 'Api Container', runtime, items }
   } = useElement();
   // A server-driven provider gets its data through the RSC payload: the request — and the credential behind it —
   // stays on the server, so neither the token nor the backend URL is ever part of what ships to the browser.
@@ -379,7 +379,7 @@ const ApiContainer = ({
   return (
     <RootElement
       ref={ref}
-      tag={subType}
+      tag={!previewMode && !items?.length ? 'div' : subType}
       className={clsx('plitzi-component__api-container', className)}
       interactionTriggers={interactionTriggers}
       interactionCallbacks={interactionCallbacks}

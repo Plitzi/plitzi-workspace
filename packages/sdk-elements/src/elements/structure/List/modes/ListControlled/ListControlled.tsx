@@ -76,7 +76,7 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
           return (
             <ListControlledItem
               key={i}
-              itemCount={i + 1}
+              index={i}
               isTemplate={i !== 0 && !previewMode}
               record={item}
               source={sourceName}

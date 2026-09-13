@@ -24,7 +24,7 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
       method: 'get',
       accessToken: '',
       mockData: '{}',
-      subType: 'div',
+      subType: '',
       credentials: 'same-origin',
       connector: '',
       resource: '',
