@@ -1,5 +1,20 @@
 # @plitzi/sdk-mcp
 
+## 0.34.1
+
+### Patch Changes
+
+- v0.34.1
+- Updated dependencies [cba7b8b]
+- Updated dependencies
+  - @plitzi/plitzi-sdk@0.34.1
+  - @plitzi/sdk-elements@0.34.1
+  - @plitzi/sdk-interactions@0.34.1
+  - @plitzi/sdk-schema@0.34.1
+  - @plitzi/sdk-server@0.34.1
+  - @plitzi/sdk-shared@0.34.1
+  - @plitzi/sdk-style@0.34.1
+
 ## 0.34.0
 
 ### Minor Changes

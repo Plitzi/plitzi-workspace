@@ -141,10 +141,14 @@ export const sampleSpace: SpaceSpec = {
         'flex-basis': '0%',
         'align-items': 'flex-start'
       },
+      // Tablet and mobile are separate ranges: without the flex rules a phone gets the desktop's back.
       mobile: {
         'flex-direction': 'column',
         'min-height': 'auto',
         'min-width': 'auto',
+        'flex-grow': '1',
+        'flex-shrink': '1',
+        'flex-basis': '0%',
         'align-items': 'stretch',
         gap: '24px'
       }

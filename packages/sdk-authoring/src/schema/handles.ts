@@ -35,8 +35,10 @@ export interface ElementHandle {
    * A menu that opens on a tap and a confirmation that appears after a submit are named so a flow can reach them,
    * and they are correctly NOT on a page somebody has only just opened. A suite asserting "everything named is
    * visible" skips these, or it forces the author to leave unnamed exactly what a flow needs to point at.
+   *
+   * Present only when true: almost nothing on a page is conditional, and the handles are serialized.
    */
-  conditional: boolean;
+  conditional?: true;
 }
 
 export interface PageHandle extends ElementHandle {

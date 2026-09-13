@@ -101,8 +101,8 @@ describe('schema/handles', () => {
   it('marks what is on screen only under a condition, and everything inside it', () => {
     expect(handles.element('drawer').conditional).toBe(true);
     expect(handles.element('drawer-link').conditional).toBe(true);
-    expect(handles.element('menu-title').conditional).toBe(false);
-    expect(handles.page('menu').conditional).toBe(false);
+    expect(handles.element('menu-title')).not.toHaveProperty('conditional');
+    expect(handles.page('menu')).not.toHaveProperty('conditional');
   });
 
   /** A page is reachable by either name: a spec knows its slug, a flow that targets it knows its id. */

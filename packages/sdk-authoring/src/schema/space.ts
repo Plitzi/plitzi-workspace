@@ -606,7 +606,6 @@ class SpaceAuthor {
       pageId: id,
       selector: selectorFor(id),
       named: page.id !== undefined,
-      conditional: false,
       slug: page.slug,
       path: this.routeFor(page),
       ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
@@ -698,7 +697,7 @@ class SpaceAuthor {
       pageId: rootId,
       selector: selectorFor(id),
       named: spec.id !== undefined,
-      conditional
+      ...(conditional ? { conditional: true } : {})
     });
 
     spec.children?.forEach((child, index) => this.addElement(child, `${path}/${index}`, rootId, id, conditional));
