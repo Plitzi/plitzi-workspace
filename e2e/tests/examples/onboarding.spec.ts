@@ -620,15 +620,20 @@ describeTarget('blog', subject => {
   /**
    * The dev tools can actually SEE the app's stores.
    *
-   * Worth a test of its own because the failure is silent and plausible. Nexus registers every store in a
-   * dev-only registry, and its dev/prod detection used to be defeated by its own guard in any browser bundle —
-   * so `isDev` was false everywhere, nothing registered, and the Store tab and the instance dropdown were
-   * permanently empty while Logs and History carried on working. Nothing errored. It just looked like a panel
-   * with two features nobody had finished.
+   * Worth a test of its own because the failure is silent and plausible, and it has happened twice. Nexus's
+   * dev/prod detection used to be defeated by its own guard in any browser bundle, so `isDev` was false everywhere
+   * and nothing registered. Then, with that fixed, registration was still gated on `isDev` — and the panel ships in
+   * the PRODUCTION bundle too, behind debug mode, which is what CI builds and serves. Either way the Store tab and
+   * the instance dropdown were permanently empty while Logs and History carried on working. Nothing errored. It
+   * just looked like a panel with two features nobody had finished.
+   *
+   * The panel's `DevStoreScopeContext` is what opts a production build into the registry (nexus 1.1.4).
    */
   test('the dev tools can enumerate the stores the page mounted', async ({ page }) => {
     await page.goto(subject.origin);
-    await expect(page.getByRole('heading', { name: 'The fox that learned the timetable', level: 1 })).toBeVisible();
+    // The lead story rather than its headline: specs run in parallel against one process, and "ada writes a post"
+    // puts a newer story in that slot whenever it happens to run first.
+    await expect(page.locator('a.hero')).toBeVisible();
 
     // The badge, not the "Made in Plitzi" branding link.
     await page.locator('button:has-text("Plitzi")').first().click();

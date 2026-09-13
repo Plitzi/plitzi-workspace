@@ -912,14 +912,14 @@
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
     "clsx": "^2.1.1",
-    "immer": "^11.1.17",
+    "immer": "^11.1.18",
     "prop-types": "^15.8.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.4"
   },
   "devDependencies": {
     "eslint": "^9.39.5",
     "typescript": "^6.0.3",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
   }
 }

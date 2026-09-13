@@ -39,7 +39,7 @@
     "@plitzi/sdk-style": "workspace:*",
     "ejs": "^6.0.1",
     "esbuild": "^0.28.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.4"
   },
   "peerDependencies": {
     "react": "^19",
@@ -48,20 +48,20 @@
   "devDependencies": {
     "@types/ejs": "^3.1.5",
     "@types/jsdom": "^30.0.0",
-    "@types/node": "^26.2.0",
-    "@types/react": "^19.2.18",
-    "@vitejs/plugin-react": "^6.0.5",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "jsdom": "^30.0.1",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "tsx": "^4.23.12",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3",
-    "vite": "^8.2.1",
-    "vite-plugin-dts": "^5.0.3",
-    "vitest": "^4.1.10"
+    "vite": "^8.3.0",
+    "vite-plugin-dts": "^5.1.0",
+    "vitest": "^5.0.0"
   },
   "scripts": {
     "start": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx dev/main.ts",

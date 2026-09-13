@@ -13,12 +13,12 @@
     "@plitzi/example-space": "workspace:*",
     "@plitzi/sdk-authoring": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
-    "tsx": "^4.23.12",
+    "@types/node": "^26.5.1",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3"
   }
 }

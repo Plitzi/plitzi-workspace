@@ -14,13 +14,13 @@
     "@plitzi/sdk-elements": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "leaflet": "^1.9.4",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.20",
-    "@types/node": "^26.2.0",
-    "tsx": "^4.23.12",
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^26.5.1",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3"
   }
 }

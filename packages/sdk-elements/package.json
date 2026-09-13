@@ -984,7 +984,7 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/nexus": "^1.1.0",
+    "@plitzi/nexus": "^1.1.4",
     "@plitzi/plitzi-ui": "^1.6.20",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
@@ -994,7 +994,7 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
-    "immer": "^11.1.17"
+    "immer": "^11.1.18"
   },
   "peerDependencies": {
     "react": "^19",
@@ -1002,9 +1002,9 @@
   },
   "devDependencies": {
     "eslint": "^9.39.5",
-    "react": "^19.2.8",
+    "react": "^19.3.0",
     "typescript": "^6.0.3",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
   }
 }
