@@ -15,11 +15,18 @@ import type { ScreenshotClient, ScreenshotImage, ScreenshotInput, ScreenshotResu
  * downloaded on install, and a deployment that never captures anything never loads a line of it.
  */
 
+type ColorScheme = NonNullable<ScreenshotInput['colorScheme']>;
+
 /** The narrow slice of a browser driver this uses. Both drivers satisfy it; neither is imported at build time. */
 type Page = {
-  goto: (url: string, options?: Record<string, unknown>) => Promise<unknown>;
+  /** `null` for a same-document navigation, which carries no status of its own. */
+  goto: (url: string, options?: Record<string, unknown>) => Promise<{ status: () => number } | null>;
   setViewportSize?: (size: { width: number; height: number }) => Promise<void>;
   setViewport?: (size: { width: number; height: number }) => Promise<void>;
+  /** Playwright's. */
+  emulateMedia?: (options: { colorScheme: ColorScheme }) => Promise<void>;
+  /** Puppeteer's. */
+  emulateMediaFeatures?: (features: { name: string; value: string }[]) => Promise<void>;
   evaluate: <T>(fn: () => T) => Promise<T>;
   screenshot: (options: Record<string, unknown>) => Promise<Buffer | Uint8Array>;
 };
@@ -87,6 +94,13 @@ const setViewport = async (page: Page, size: { width: number; height: number }):
   await (page.setViewportSize ? page.setViewportSize(size) : page.setViewport?.(size));
 };
 
+/** Before the navigation: a space on the `system` theme paints from `prefers-color-scheme` from its first frame. */
+const emulateColorScheme = async (page: Page, colorScheme: ColorScheme): Promise<void> => {
+  await (page.emulateMedia
+    ? page.emulateMedia({ colorScheme })
+    : page.emulateMediaFeatures?.([{ name: 'prefers-color-scheme', value: colorScheme }]));
+};
+
 /**
  * A `ScreenshotClient` backed by a browser on this machine, or `undefined` when there is none.
  *
@@ -104,7 +118,13 @@ export const createLocalScreenshotClient = async ({
   }
 
   return {
-    async capture({ pagePath, token, viewports, fullPage = true }: ScreenshotInput): Promise<ScreenshotResult> {
+    async capture({
+      pagePath,
+      token,
+      viewports,
+      fullPage = true,
+      colorScheme
+    }: ScreenshotInput): Promise<ScreenshotResult> {
       const url = new URL(pagePath, renderBaseUrl);
       if (token) {
         url.searchParams.set(PREVIEW_TOKEN_PARAM, token);
@@ -128,7 +148,16 @@ export const createLocalScreenshotClient = async ({
         for (const viewport of viewports) {
           const page = await browser.newPage();
           await setViewport(page, viewport);
-          await page.goto(url.toString(), { waitUntil: 'networkidle0' });
+          if (colorScheme) {
+            await emulateColorScheme(page, colorScheme);
+          }
+
+          const response = await page.goto(url.toString(), { waitUntil: 'networkidle0' });
+          // An error page paints like any other, and a picture of "Space not found" is not a picture of the space.
+          if (response && response.status() >= 400) {
+            return { ok: false, error: 'RENDER_FAILED', message: `The page answered ${response.status()}.` };
+          }
+
           await page.evaluate(FONTS_READY);
 
           if (fullPage) {

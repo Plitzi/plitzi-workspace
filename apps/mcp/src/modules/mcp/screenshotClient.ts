@@ -20,6 +20,26 @@ const composeUrl = (base: string, pagePath: string, token?: string): string => {
   return url.toString();
 };
 
+/**
+ * The service's answer when the PAGE failed rather than the browser: `502 { error: 'RENDER_FAILED', status }`.
+ *
+ * Told apart because the two call for different things. A browser that failed may do better in a minute; a page that
+ * answered 404 will answer it again, and a caller that keeps images must never keep a picture of one.
+ */
+const readRefusal = async (res: Response): Promise<{ status: number } | undefined> => {
+  if (res.status !== 502) {
+    return undefined;
+  }
+
+  try {
+    const body = (await res.json()) as { error?: unknown; status?: unknown };
+
+    return body.error === 'RENDER_FAILED' && typeof body.status === 'number' ? { status: body.status } : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 /** Default `ScreenshotClient`: composes the navigable preview URL (renderBaseUrl + pagePath + `?__pt=token`) and
  *  POSTs it to the browser service. Any network/HTTP failure surfaces as `ok:false` so the tool can fall back to
  *  the HTML preview instead of hard-failing. */
@@ -28,7 +48,7 @@ export const createHttpScreenshotClient = ({
   renderBaseUrl,
   fetchImpl = fetch
 }: HttpScreenshotClientConfig): ScreenshotClient => ({
-  async capture({ pagePath, token, viewports, fullPage }: ScreenshotInput): Promise<ScreenshotResult> {
+  async capture({ pagePath, token, viewports, fullPage, colorScheme }: ScreenshotInput): Promise<ScreenshotResult> {
     const url = composeUrl(renderBaseUrl, pagePath, token);
 
     let res: Response;
@@ -36,13 +56,18 @@ export const createHttpScreenshotClient = ({
       res = await fetchImpl(serviceUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url, viewports, fullPage })
+        body: JSON.stringify({ url, viewports, fullPage, colorScheme })
       });
     } catch (err) {
       return { ok: false, error: 'SCREENSHOT_UNREACHABLE', message: `Browser service unreachable: ${String(err)}` };
     }
 
     if (!res.ok) {
+      const refusal = await readRefusal(res);
+      if (refusal) {
+        return { ok: false, error: 'RENDER_FAILED', message: `The page answered ${refusal.status}.` };
+      }
+
       return { ok: false, error: 'SCREENSHOT_FAILED', message: `Browser service returned ${res.status}.` };
     }
 
