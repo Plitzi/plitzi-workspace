@@ -1,5 +1,67 @@
 # @plitzi/sdk-mcp
 
+## 0.34.0
+
+### Minor Changes
+
+- v0.34.0
+- 5aceda0: Draft previews you can iterate against, and a `DraftStore` contract that says so.
+
+  A preview token was one-shot: spent by the render that used it. That is right for a capture and wrong for a
+  person — reloading showed the saved space again, so "look at the change, adjust it, look again" meant minting a
+  new token for every look. `POST /__preview` now takes `mode: 'session'`, which mints a token that stays
+  resolvable until it expires (`preview.sessionTtlMs`, 15 minutes by default) or until `POST /__preview/end` ends
+  it. The token is remembered in an `HttpOnly` cookie on the first render, so the draft follows a navigation —
+  the page after a link carries no query parameter.
+
+  A draft render, either mode, is never cached, never metered and answers `Cache-Control: no-store` plus
+  `X-Robots-Tag: noindex`. Data refreshes (`/_rsc`) made from inside a session are excluded from metering and
+  caching too — without that, an open preview tab would be billed as live traffic.
+
+  **Breaking, for anyone who implements `DraftStore`** (a shared store for a multi-replica deployment). The
+  default in-memory store is unaffected; a custom one needs three changes:
+
+  ```ts
+  // before
+  put(token, data, ttlMs)
+  take(token): OfflineDataRaw | undefined
+
+  // after
+  put(token, data, { ttlMs, reusable })      // `reusable` is a session; absent is one-shot
+  take(token): { data, reusable } | undefined // consume unless reusable — and say which it was
+  drop(token)                                 // end a session before its TTL
+  ```
+
+  `take` reports which kind it resolved because the render that resolves a session is the one that has to remember
+  it for the rest of the visit, and only the store knows whether the token survived the read.
+
+- 5aceda0: Capture a page without standing up a browser service.
+
+  `createHttpScreenshotClient` talks to a dedicated browser pod, which is the right answer in a cluster and the
+  wrong one everywhere else: somebody self-hosting had to deploy a second service before they could look at
+  anything. `createLocalScreenshotClient` resolves a browser at run time from whatever the host already has —
+  Playwright, then Puppeteer — and returns `undefined` when it has neither, so a caller can decide once not to
+  offer the tool rather than fail on every call.
+
+  Nothing is added to this package's dependency tree and nothing is imported until the client is asked for. It
+  implements the same `ScreenshotClient` interface as the HTTP one, so the two are interchangeable at the call
+  site, and it grows the window to the SDK's inner scroller before it shoots — which is the difference between a
+  whole page and one viewport of it.
+
+### Patch Changes
+
+- Updated dependencies [5aceda0]
+- Updated dependencies
+- Updated dependencies [5aceda0]
+- Updated dependencies [9c3292c]
+  - @plitzi/sdk-shared@0.34.0
+  - @plitzi/sdk-elements@0.34.0
+  - @plitzi/plitzi-sdk@0.34.0
+  - @plitzi/sdk-interactions@0.34.0
+  - @plitzi/sdk-schema@0.34.0
+  - @plitzi/sdk-server@0.34.0
+  - @plitzi/sdk-style@0.34.0
+
 ## 0.33.2
 
 ### Patch Changes
