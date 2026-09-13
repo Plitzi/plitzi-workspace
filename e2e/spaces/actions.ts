@@ -34,17 +34,13 @@ export const ACTION_OUTPUT = { title: 'resolved by an action', who: 'everyone' }
 /** What the provider element publishes when its slice never arrived. The page binds it; a spec reads it back. */
 export const PROVIDER_ERROR = 'The data provider could not be reached';
 
-/** `idRef` sits on the ELEMENT, never inside its definition: it is what a source is named after
- *  (`apiContainer_feed`), and an element without one publishes no source at all — so a binding pointed at it
- *  silently resolves to nothing, which looks exactly like a provider that returned nothing. */
 const element = (
   id: string,
   type: string,
   attributes: Record<string, unknown>,
-  { idRef, ...extra }: Partial<Element['definition']> & { idRef?: string } = {}
+  extra: Partial<Element['definition']> = {}
 ): Element => ({
   id,
-  ...(idRef ? { idRef } : {}),
   attributes,
   definition: {
     label: type,
@@ -56,6 +52,10 @@ const element = (
     ...extra
   }
 });
+
+/** A provider publishes its source under `<type>_<id>`, so a binding names the element by its id. Spelled out
+ *  rather than derived: a name that stopped matching resolves to nothing, and that is what the specs must see. */
+const providerSource = (providerId: string, path: string) => `apiContainer_${providerId}.${path}`;
 
 const bound = (id: string, source: string, parentId: string, rootId = PAGE_ID): Element =>
   element(
@@ -88,7 +88,7 @@ const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementI
  * RESULT it can bind, whatever happened to the request.
  */
 const runFlow: Record<string, ElementInteraction> = {
-  trigger: node('trigger', { type: 'trigger', action: 'onClick', elementId: 'runButton', afterNode: 'run' }),
+  trigger: node('trigger', { type: 'trigger', action: 'onClick', elementId: ACTION_IDS.button, afterNode: 'run' }),
   run: node('run', {
     type: 'globalCallback',
     action: 'runServerAction',
@@ -130,17 +130,21 @@ export const actionSpace = (): OfflineDataRaw =>
           ACTION_IDS.provider,
           'apiContainer',
           { action: 'e2e-feed', subType: 'section' },
-          { idRef: 'feed', runtime: 'server', items: [ACTION_IDS.title, ACTION_IDS.who] }
+          { runtime: 'server', items: [ACTION_IDS.title, ACTION_IDS.who] }
         ),
-        [ACTION_IDS.title]: bound(ACTION_IDS.title, 'apiContainer_feed.title', ACTION_IDS.provider),
-        [ACTION_IDS.who]: bound(ACTION_IDS.who, 'apiContainer_feed.who', ACTION_IDS.provider),
+        [ACTION_IDS.title]: bound(ACTION_IDS.title, providerSource(ACTION_IDS.provider, 'title'), ACTION_IDS.provider),
+        [ACTION_IDS.who]: bound(ACTION_IDS.who, providerSource(ACTION_IDS.provider, 'who'), ACTION_IDS.provider),
         [ACTION_IDS.orphan]: element(
           ACTION_IDS.orphan,
           'apiContainer',
           { connector: 'not-configured-here', subType: 'section' },
-          { idRef: 'orphan', runtime: 'server', items: [ACTION_IDS.orphanText] }
+          { runtime: 'server', items: [ACTION_IDS.orphanText] }
         ),
-        [ACTION_IDS.orphanText]: bound(ACTION_IDS.orphanText, 'apiContainer_orphan.title', ACTION_IDS.orphan),
+        [ACTION_IDS.orphanText]: bound(
+          ACTION_IDS.orphanText,
+          providerSource(ACTION_IDS.orphan, 'title'),
+          ACTION_IDS.orphan
+        ),
         /** Fed by an action whose own outbound call cannot resolve — the server is up, the internet is not. */
         /**
          * A page of its own, so only the spec about it pays for it.
@@ -159,7 +163,6 @@ export const actionSpace = (): OfflineDataRaw =>
           'apiContainer',
           { action: 'e2e-slow', subType: 'section' },
           {
-            idRef: 'slow',
             rootId: SLOW_PAGE_ID,
             parentId: SLOW_PAGE_ID,
             runtime: 'server',
@@ -168,7 +171,7 @@ export const actionSpace = (): OfflineDataRaw =>
         ),
         [ACTION_IDS.slowText]: bound(
           ACTION_IDS.slowText,
-          'apiContainer_slow.errorMessage',
+          providerSource(ACTION_IDS.slow, 'errorMessage'),
           ACTION_IDS.slow,
           SLOW_PAGE_ID
         ),
@@ -176,18 +179,18 @@ export const actionSpace = (): OfflineDataRaw =>
           ACTION_IDS.offline,
           'apiContainer',
           { action: 'e2e-unreachable', subType: 'section' },
-          { idRef: 'offline', runtime: 'server', items: [ACTION_IDS.offlineText] }
+          { runtime: 'server', items: [ACTION_IDS.offlineText] }
         ),
         [ACTION_IDS.offlineText]: bound(
           ACTION_IDS.offlineText,
-          'apiContainer_offline.errorMessage',
+          providerSource(ACTION_IDS.offline, 'errorMessage'),
           ACTION_IDS.offline
         ),
         [ACTION_IDS.button]: element(
           ACTION_IDS.button,
           'button',
           { subType: 'button', content: 'Run it' },
-          { idRef: 'runButton', interactions: runFlow }
+          { interactions: runFlow }
         ),
         [ACTION_IDS.status]: bound(ACTION_IDS.status, 'state.runStatus', PAGE_ID)
       }

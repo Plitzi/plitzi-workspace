@@ -25,7 +25,7 @@ export const defaultMockSpace = (): OfflineDataRaw => plainSpace();
 /** Everything the builder needs to draw a space: what it is called, its elements, its stylesheet. */
 /** Apollo normalises what it stores, and it reports every field the query asked for but the response did not
  *  carry — as a console error, which the suite's guard then fails on. So the mock has to answer with the SHAPE
- *  the schema declares, not merely with data that happens to render: `idRef` and the `__typename`s included. */
+ *  the schema declares, not merely with data that happens to render: the `__typename`s included. */
 const asList = (value: unknown): Record<string, unknown>[] => {
   if (Array.isArray(value)) {
     return value as Record<string, unknown>[];
@@ -39,7 +39,6 @@ const asElement = (id: string, node: Record<string, unknown>) => {
 
   return {
     id,
-    idRef: (node.idRef as string | null) ?? null,
     attributes: node.attributes ?? {},
     definition: {
       label: definition.label ?? '',
@@ -94,6 +93,7 @@ const initQuery = (space: OfflineDataRaw) => {
           platform: style.platform ?? {},
           variables: style.variables ?? {},
           mode: style.mode ?? 'desktop-first',
+          fonts: style.fonts ?? [],
           cache: style.cache ?? '',
           __typename: 'Style'
         },
@@ -129,6 +129,39 @@ const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined>
   /** The step catalog, which is SERVED rather than compiled in — so a mocked backend serves an empty one. A
    *  builder with no tasks offers no server steps, which is exactly right for a run with no server behind it. */
   SpaceActionTasksQuery: () => ({ data: { SpaceActionTasks: [] } }),
+  /** The header's quota meter asks at boot. An unlimited plan, so nothing on the screen a spec looks at is a
+   *  warning about limits a run with no server behind it cannot have spent. */
+  SpaceQuotaQuery: () => {
+    const unlimited = {
+      views: 0,
+      viewsQuota: 0,
+      viewsUnlimited: true,
+      viewsPercent: null,
+      viewsRemaining: null,
+      elements: null,
+      elementsQuota: 0,
+      elementsUnlimited: true,
+      elementsPercent: null,
+      overLimit: false,
+      __typename: 'SpaceQuotaPlane'
+    };
+
+    return {
+      data: {
+        SpaceQuota: {
+          planName: 'E2E',
+          tier: 'e2e',
+          isFree: false,
+          periodStart: null,
+          periodEnd: null,
+          space: unlimited,
+          account: unlimited,
+          overLimit: false,
+          __typename: 'SpaceQuota'
+        }
+      }
+    };
+  },
   SpaceDeploymentsQuery: () => ({
     data: {
       SpaceDeployments: {

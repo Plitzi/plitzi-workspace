@@ -1,9 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
 import { generatePluginModule } from './elementUtils';
-import { nestedInject } from '../../Component/ComponentHelper';
-import NotFound from '../../elements/internal/NotFound/NotFound';
-import withElement from '../hocs/withElement';
 
 import type { PlitziModule } from './elementUtils';
 import type { ComponentContextValue, ComponentPlugin, ComponentPluginWithHOC } from '@plitzi/sdk-shared';
@@ -36,6 +33,19 @@ const loadComponent = (
 
     const entry = remoteModuleCache.get(url);
     const Module = await entry?.promise;
+    /**
+     * Every module the load hands back is imported here, not at the top.
+     *
+     * `withElement` reaches this file statically (withElement → useInternalItems → pluginSelector → PluginRemote), and
+     * each of these three imports `withElement` back. A static edge closes that cycle, and a bundler is then free to
+     * evaluate `NotFound`'s top-level `withElement(NotFound)` before `withElement` exists — which the minified SDK did,
+     * and failed to load at all. Nothing here is needed before a plugin has been fetched.
+     */
+    const [{ default: withElement }, { default: NotFound }, { nestedInject }] = await Promise.all([
+      import('../hocs/withElement'),
+      import('../../elements/internal/NotFound/NotFound'),
+      import('../../Component/ComponentHelper')
+    ]);
     if (!Module) {
       return { default: NotFound as ComponentPluginWithHOC };
     }

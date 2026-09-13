@@ -26,18 +26,14 @@ export const AUTH_REFS = {
   accountLogout: 'account-logout'
 };
 
-type Definition = Partial<Element['definition']> & { idRef?: string };
+type Definition = Partial<Element['definition']>;
 
-const el = (id: string, rootId: string, definition: Definition, attributes: Record<string, unknown> = {}): Element => {
-  const { idRef, ...rest } = definition;
-
-  return {
+const el = (id: string, rootId: string, definition: Definition, attributes: Record<string, unknown> = {}): Element =>
+  ({
     id,
-    ...(idRef ? { idRef } : {}),
     attributes,
-    definition: { rootId, parentId: rootId, styleSelectors: { base: '' }, ...rest }
-  } as Element;
-};
+    definition: { rootId, parentId: rootId, styleSelectors: { base: '' }, ...definition }
+  }) as Element;
 
 /** A step in an interaction flow. The flow is an ordered list expressed as a linked list of nodes. */
 const step = (
@@ -197,7 +193,7 @@ const memberHome: Record<string, Element> = {
   [AUTH_REFS.homeLogout]: el(
     AUTH_REFS.homeLogout,
     AUTH_PAGES.memberHome,
-    { label: 'Sign out', type: 'button', idRef: AUTH_REFS.homeLogout, interactions: logoutFlow(AUTH_REFS.homeLogout) },
+    { label: 'Sign out', type: 'button', interactions: logoutFlow(AUTH_REFS.homeLogout) },
     { subType: 'button', content: 'Sign out' }
   )
 };
@@ -230,7 +226,6 @@ const loginPage: Record<string, Element> = {
     {
       label: 'Login form',
       type: 'form',
-      idRef: AUTH_REFS.loginForm,
       items: ['login-username', 'login-password', 'login-submit'],
       interactions: loginFlow
     },
@@ -310,7 +305,6 @@ const accountPage: Record<string, Element> = {
     {
       label: 'Sign out',
       type: 'button',
-      idRef: AUTH_REFS.accountLogout,
       interactions: logoutFlow(AUTH_REFS.accountLogout)
     },
     { subType: 'button', content: 'Sign out' }
