@@ -1,5 +1,23 @@
 # @plitzi/cli
 
+## 0.35.1
+
+### Patch Changes
+
+- v0.35.1
+- Updated dependencies
+  - @plitzi/sdk-authoring@0.35.1
+
+## 0.35.0
+
+### Minor Changes
+
+- v0.35.0
+
+### Patch Changes
+
+- @plitzi/sdk-authoring@0.35.0
+
 ## 0.34.1
 
 ### Patch Changes

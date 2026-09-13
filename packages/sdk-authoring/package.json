@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-authoring",
-  "version": "0.35.0",
+  "version": "0.35.1",
   "license": "AGPL-3.0",
   "files": [
     "dist/index.js",
