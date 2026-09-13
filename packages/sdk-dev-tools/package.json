@@ -637,6 +637,10 @@
     "./useHydrated": {
       "types": "./dist/useHydrated.d.ts",
       "import": "./dist/useHydrated.mjs"
+    },
+    "./useRegisterRootStore": {
+      "types": "./dist/useRegisterRootStore.d.ts",
+      "import": "./dist/useRegisterRootStore.mjs"
     }
   },
   "scripts": {
@@ -651,7 +655,9 @@
   "type": "module",
   "sideEffects": false,
   "devDependencies": {
+    "@testing-library/react": "^16.3.3",
     "eslint": "^9.39.5",
+    "jsdom": "^30.0.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "^6.0.3",

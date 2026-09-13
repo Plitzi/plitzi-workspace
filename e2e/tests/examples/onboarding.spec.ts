@@ -627,7 +627,9 @@ describeTarget('blog', subject => {
    * the instance dropdown were permanently empty while Logs and History carried on working. Nothing errored. It
    * just looked like a panel with two features nobody had finished.
    *
-   * The panel's `DevStoreScopeContext` is what opts a production build into the registry (nexus 1.1.4).
+   * The panel's `DevStoreScopeContext` is what opts a production build into the registry (nexus 1.1.4) — for what
+   * it wraps. The root store sits above the panel, out of that context's reach, so the panel registers it itself;
+   * without that the dropdown listed every row and provider and no `root`, which is what the second assertion catches.
    */
   test('the dev tools can enumerate the stores the page mounted', async ({ page }) => {
     await page.goto(subject.origin);

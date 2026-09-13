@@ -10,6 +10,7 @@ import DevToolsOverlay from './components/DevToolsOverlay';
 import DevToolsContextProvider from './DevToolsContextProvider';
 import { useIsSelectedInstance } from './instanceRegistry';
 import useHydrated from './useHydrated';
+import useRegisterRootStore from './useRegisterRootStore';
 
 import type { LogType } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -72,6 +73,7 @@ const DevToolsContainer = ({
   const dockedAt = hydrated ? orientation : DEFAULT_ORIENTATION;
   // Only the selected instance renders the (single) panel; all enabled instances still register in the dropdown.
   const isSelected = useIsSelectedInstance(effectiveInstanceId, enabled);
+  useRegisterRootStore(enabled);
 
   const handleChangeOrientation = useCallback(
     (orientation: Orientation) => setOrientation(orientation),
