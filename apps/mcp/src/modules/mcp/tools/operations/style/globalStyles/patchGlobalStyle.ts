@@ -38,7 +38,6 @@ export const patchGlobalStyle = (space: Space, env: Env, op: PatchGlobalStyle): 
   }
 
   const { type, componentType, slots: slotsPatch, ...basePatch } = op;
-  void type;
   const { base, slots } = mergePatch(existing, basePatch, slotsPatch);
   writeStyleItem(space.style, componentType, base, slots, 'element', componentType);
 

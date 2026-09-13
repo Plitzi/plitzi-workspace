@@ -61,7 +61,6 @@ export type PatchSettings = z.infer<typeof patchSettingsOp>;
 
 export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResult => {
   const { type, ...patch } = op;
-  void type;
   // zod omits absent optional keys, so Object.entries yields only the fields the agent actually sent.
   const next = { ...space.schema.settings } as Schema['settings'] & Record<string, unknown>;
   for (const [key, value] of Object.entries(patch)) {

@@ -19,6 +19,7 @@
       "import": "./dist/actions/index.mjs"
     },
     "./actions/cron": {
+      "types": "./dist/actions/cron.d.ts",
       "import": "./dist/actions/cron.mjs"
     },
     "./actions/index": {
@@ -278,6 +279,7 @@
       "import": "./dist/helpers/security.mjs"
     },
     "./helpers/stripTypename": {
+      "types": "./dist/helpers/stripTypename.d.ts",
       "import": "./dist/helpers/stripTypename.mjs"
     },
     "./helpers/syntaxHighlight": {
@@ -1181,11 +1183,17 @@
     "./types/ResourceTypes": {
       "types": "./dist/types/ResourceTypes.d.ts"
     },
+    "./types/SchemaTypes": {
+      "types": "./dist/types/SchemaTypes.d.ts"
+    },
     "./types/SdkTypes": {
       "types": "./dist/types/SdkTypes.d.ts"
     },
     "./types/SegmentTypes": {
       "types": "./dist/types/SegmentTypes.d.ts"
+    },
+    "./types/ServerTypes": {
+      "types": "./dist/types/ServerTypes.d.ts"
     },
     "./types/SpaceTypes": {
       "types": "./dist/types/SpaceTypes.d.ts"
@@ -1237,7 +1245,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@plitzi/nexus": "^1.1.4",
-    "@plitzi/plitzi-ui": "^1.6.20",
+    "@plitzi/plitzi-ui": "^1.6.21",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "graphql-tag": "^2.12.7",

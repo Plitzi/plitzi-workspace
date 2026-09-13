@@ -45,6 +45,8 @@ export interface ElementDeclarationData {
  */
 export type AttributesOf<D> = D extends ElementAttributesBrand<infer A> ? A : Record<string, unknown>;
 
+type AuthorableProps<Props, Injected extends keyof Props> = Omit<Props, 'ref' | 'className' | 'children' | Injected>;
+
 /**
  * The authorable half of an element's props.
  *
@@ -55,10 +57,17 @@ export type AttributesOf<D> = D extends ElementAttributesBrand<infer A> ? A : Re
  *
  * Everything comes out optional: an attribute left out is the declaration's default, which is the whole point of a
  * declaration having them.
+ *
+ * A component with nothing authorable comes out `unknown`, not `{}`. A factory's props are these attributes
+ * intersected with the authoring fields, and `unknown` is what adds nothing to that intersection — while `{}` means
+ * "any value that is not null" everywhere else it could land.
  */
-export type AuthorableAttributes<Props, Injected extends keyof Props = never> = Partial<
-  Omit<Props, 'ref' | 'className' | 'children' | Injected>
->;
+export type AuthorableAttributes<Props, Injected extends keyof Props = never> = keyof AuthorableProps<
+  Props,
+  Injected
+> extends never
+  ? unknown
+  : Partial<AuthorableProps<Props, Injected>>;
 
 export const elementDeclaration =
   <A>() =>

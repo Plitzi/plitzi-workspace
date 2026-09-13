@@ -277,17 +277,16 @@ describe('what the compiler refuses', () => {
     // The real thing, not a copy of its type: what is asserted here is the API callers actually reach for.
     const { subscribe } = renderManager(client).result.current;
 
-    subscribe('SPACE_ADD_PAGE', ({ page }) => void page.id);
+    subscribe('SPACE_ADD_PAGE', ({ page }) => page.id);
     // @ts-expect-error no such event
     subscribe('SPACE_MADE_UP', () => undefined);
     // @ts-expect-error SPACE_ADD_PAGE carries `page`, not `pageId`
-    subscribe('SPACE_ADD_PAGE', ({ pageId }) => void pageId);
+    subscribe('SPACE_ADD_PAGE', (payload: { pageId: string }) => payload.pageId);
     // @ts-expect-error SPACE_REMOVE_PAGE carries a pageId, not an element
-    subscribe('SPACE_REMOVE_PAGE', ({ element: removed }) => void removed);
+    subscribe('SPACE_REMOVE_PAGE', (payload: { element: unknown }) => payload.element);
     subscribe('STYLE_REMOVE_SELECTORS', ({ selectors }) => {
       // @ts-expect-error `selectors` is a list of selectors, not one
-      const single: string = selectors;
-      void single;
+      return selectors satisfies string;
     });
 
     expect(true).toBe(true);

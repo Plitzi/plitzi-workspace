@@ -23,7 +23,6 @@ export type UpsertDefinition = z.infer<typeof upsertDefinitionOp>;
 
 export const upsertDefinition = (space: Space, env: Env, op: UpsertDefinition): OpResult => {
   const { type, ref, slots, ...base } = op;
-  void type;
   const guard = guardKind(space.style, ref, 'class');
   if (guard) {
     return guard;

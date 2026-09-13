@@ -1,6 +1,6 @@
 import { render, cleanup } from '@testing-library/react';
 import { createContext } from 'react';
-import { bench, vi, afterEach } from 'vitest';
+import { vi, afterEach, test } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -86,17 +86,19 @@ const nested80 = nestedSchema(80);
 
 afterEach(() => cleanup());
 
-bench('mount flat 200 text', () => {
-  render(renderTree(flat200));
-  cleanup();
-});
-
-bench('mount flat 500 text', () => {
-  render(renderTree(flat500));
-  cleanup();
-});
-
-bench('mount nested depth 80', () => {
-  render(renderTree(nested80));
-  cleanup();
+test('mounting an element tree', async ({ bench }) => {
+  await bench.compare(
+    bench('mount flat 200 text', () => {
+      render(renderTree(flat200));
+      cleanup();
+    }),
+    bench('mount flat 500 text', () => {
+      render(renderTree(flat500));
+      cleanup();
+    }),
+    bench('mount nested depth 80', () => {
+      render(renderTree(nested80));
+      cleanup();
+    })
+  );
 });

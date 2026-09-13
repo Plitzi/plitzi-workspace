@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest';
+import { test } from 'vitest';
 
 import {
   dataSourcesUri,
@@ -224,176 +224,172 @@ const expectedVersionsFor = (ops: Operation[]): Record<string, string> => {
 
 const expected1000 = expectedVersionsFor(patch1000);
 
-describe('reads — warm (memo hot within a request)', () => {
-  bench('page skeleton (100-node tree)', () => {
-    readResource(space, 'main', pageUriStr);
-  });
-
-  bench('element detail (deep element)', () => {
-    readResource(space, 'main', elementUriStr);
-  });
+test('reads — warm (memo hot within a request)', async ({ bench }) => {
+  await bench.compare(
+    bench('page skeleton (100-node tree)', () => {
+      readResource(space, 'main', pageUriStr);
+    }),
+    bench('element detail (deep element)', () => {
+      readResource(space, 'main', elementUriStr);
+    })
+  );
 });
 
-describe('reads — cold (fresh request: index + memo rebuilt)', () => {
-  bench('page skeleton (100-node tree)', () => {
-    invalidateIndex(space.schema);
-    readResource(space, 'main', pageUriStr);
-  });
-
-  bench('element detail (deep element)', () => {
-    invalidateIndex(space.schema);
-    readResource(space, 'main', elementUriStr);
-  });
-
-  bench('primer (cold-start bundle)', () => {
-    invalidateIndex(space.schema);
-    readResource(space, 'main', 'plitzi://primer/main');
-  });
-
-  bench('page styles (every class a page uses)', () => {
-    invalidateIndex(space.schema);
-    readResource(space, 'main', `${pageUriStr}/styles`);
-  });
+test('reads — cold (fresh request: index + memo rebuilt)', async ({ bench }) => {
+  await bench.compare(
+    bench('page skeleton (100-node tree)', () => {
+      invalidateIndex(space.schema);
+      readResource(space, 'main', pageUriStr);
+    }),
+    bench('element detail (deep element)', () => {
+      invalidateIndex(space.schema);
+      readResource(space, 'main', elementUriStr);
+    }),
+    bench('primer (cold-start bundle)', () => {
+      invalidateIndex(space.schema);
+      readResource(space, 'main', 'plitzi://primer/main');
+    }),
+    bench('page styles (every class a page uses)', () => {
+      invalidateIndex(space.schema);
+      readResource(space, 'main', `${pageUriStr}/styles`);
+    })
+  );
 });
 
-describe('ref scanners (O(1) via SpaceIndex)', () => {
-  bench('findPageByRef: last page', () => {
-    findPageByRef(space.schema, pageRefOf(LAST_PAGE));
-  });
-
-  bench('findElementByRef: deepest element', () => {
-    findElementByRef(space.schema, elementRefOf(LAST_PAGE, PER_PAGE));
-  });
-
-  bench('resolveRef: deep element within its page', () => {
-    const page = findPageByRef(space.schema, pageRefOf(LAST_PAGE));
-    if (page) {
-      resolveRef(space.schema, page, elementRefOf(LAST_PAGE, PER_PAGE));
-    }
-  });
+test('ref scanners (O(1) via SpaceIndex)', async ({ bench }) => {
+  await bench.compare(
+    bench('findPageByRef: last page', () => {
+      findPageByRef(space.schema, pageRefOf(LAST_PAGE));
+    }),
+    bench('findElementByRef: deepest element', () => {
+      findElementByRef(space.schema, elementRefOf(LAST_PAGE, PER_PAGE));
+    }),
+    bench('resolveRef: deep element within its page', () => {
+      const page = findPageByRef(space.schema, pageRefOf(LAST_PAGE));
+      if (page) {
+        resolveRef(space.schema, page, elementRefOf(LAST_PAGE, PER_PAGE));
+      }
+    })
+  );
 });
 
-describe('validation', () => {
-  bench('validateOperations: 250 patches', () => {
-    validateOperations(space, patch250);
-  });
-
-  bench('validateOperations: 1000 patches', () => {
-    validateOperations(space, patch1000);
-  });
-
-  bench('validateOperations: 250 creates', () => {
-    validateOperations(space, create250);
-  });
+test('validation', async ({ bench }) => {
+  await bench.compare(
+    bench('validateOperations: 250 patches', () => {
+      validateOperations(space, patch250);
+    }),
+    bench('validateOperations: 1000 patches', () => {
+      validateOperations(space, patch1000);
+    }),
+    bench('validateOperations: 250 creates', () => {
+      validateOperations(space, create250);
+    })
+  );
 });
 
-describe('apply — patch-only (no index invalidation)', () => {
-  bench('apply: 250 patches (dryRun)', async () => {
-    await apply({ dryRun: true, operations: patch250 }, space);
-  });
-
-  bench('apply: 1000 patches (dryRun)', async () => {
-    await apply({ dryRun: true, operations: patch1000 }, space);
-  });
+test('apply — patch-only (no index invalidation)', async ({ bench }) => {
+  await bench.compare(
+    bench('apply: 250 patches (dryRun)', async () => {
+      await apply({ dryRun: true, operations: patch250 }, space);
+    }),
+    bench('apply: 1000 patches (dryRun)', async () => {
+      await apply({ dryRun: true, operations: patch1000 }, space);
+    })
+  );
 });
 
-describe('apply — structural & guarded', () => {
-  bench('apply: 250 creates (incremental index, dryRun)', async () => {
-    await apply({ dryRun: true, operations: create250 }, space);
-  });
-
-  bench('apply: 1000 mixed patch/create (dryRun)', async () => {
-    await apply({ dryRun: true, operations: mixed1000 }, space);
-  });
-
-  bench('apply: 1000 patches + expectedResourceVersions (dryRun)', async () => {
-    await apply({ dryRun: true, operations: patch1000, expectedResourceVersions: expected1000 }, space);
-  });
+test('apply — structural & guarded', async ({ bench }) => {
+  await bench.compare(
+    bench('apply: 250 creates (incremental index, dryRun)', async () => {
+      await apply({ dryRun: true, operations: create250 }, space);
+    }),
+    bench('apply: 1000 mixed patch/create (dryRun)', async () => {
+      await apply({ dryRun: true, operations: mixed1000 }, space);
+    }),
+    bench('apply: 1000 patches + expectedResourceVersions (dryRun)', async () => {
+      await apply({ dryRun: true, operations: patch1000, expectedResourceVersions: expected1000 }, space);
+    })
+  );
 });
 
-describe('search', () => {
-  bench('common term (matches every element)', () => {
-    search({ query: 'box' }, space, 'main');
-  });
-
-  bench('common term with include:detail', () => {
-    search({ query: 'box', include: 'detail' }, space, 'main');
-  });
-
-  bench('deep pagination (offset 2000)', () => {
-    search({ query: 'box', offset: 2000 }, space, 'main');
-  });
-
-  bench('filter by type', () => {
-    search({ query: 'box', filters: { type: 'container' } }, space, 'main');
-  });
-
-  bench('filter by pageRef (one page)', () => {
-    search({ query: 'box', filters: { pageRef: pageRefOf(0) } }, space, 'main');
-  });
-
-  bench('no matches (full scan, empty result)', () => {
-    search({ query: 'zzz-no-such-token' }, space, 'main');
-  });
+test('search', async ({ bench }) => {
+  await bench.compare(
+    bench('common term (matches every element)', () => {
+      search({ query: 'box' }, space, 'main');
+    }),
+    bench('common term with include:detail', () => {
+      search({ query: 'box', include: 'detail' }, space, 'main');
+    }),
+    bench('deep pagination (offset 2000)', () => {
+      search({ query: 'box', offset: 2000 }, space, 'main');
+    }),
+    bench('filter by type', () => {
+      search({ query: 'box', filters: { type: 'container' } }, space, 'main');
+    }),
+    bench('filter by pageRef (one page)', () => {
+      search({ query: 'box', filters: { pageRef: pageRefOf(0) } }, space, 'main');
+    }),
+    bench('no matches (full scan, empty result)', () => {
+      search({ query: 'zzz-no-such-token' }, space, 'main');
+    })
+  );
 });
 
-describe('apply — deletes & moves (parentId splice, O(items) per op)', () => {
-  bench('apply: 250 deletes (dryRun)', async () => {
-    await apply({ dryRun: true, operations: delete250 }, space);
-  });
-
-  bench('apply: 250 moves (dryRun)', async () => {
-    await apply({ dryRun: true, operations: move250 }, space);
-  });
+test('apply — deletes & moves (parentId splice, O(items) per op)', async ({ bench }) => {
+  await bench.compare(
+    bench('apply: 250 deletes (dryRun)', async () => {
+      await apply({ dryRun: true, operations: delete250 }, space);
+    }),
+    bench('apply: 250 moves (dryRun)', async () => {
+      await apply({ dryRun: true, operations: move250 }, space);
+    })
+  );
 });
 
-describe('style ops & reads', () => {
-  bench('validateOperations: 1000 upsertDefinition', () => {
-    validateOperations(space, def1000);
-  });
-
-  bench('apply: 1000 upsertDefinition (dryRun)', async () => {
-    await apply({ dryRun: true, operations: def1000 }, space);
-  });
-
-  bench('read: definitions list', () => {
-    readResource(space, 'main', defsUri('main'));
-  });
-
-  bench('read: one definition', () => {
-    readResource(space, 'main', defUri('main', 'box-0'));
-  });
-
-  bench('read: global-styles list', () => {
-    readResource(space, 'main', globalsUri('main'));
-  });
-
-  bench('read: style-variables', () => {
-    readResource(space, 'main', styleVarsUri('main'));
-  });
+test('style ops & reads', async ({ bench }) => {
+  await bench.compare(
+    bench('validateOperations: 1000 upsertDefinition', () => {
+      validateOperations(space, def1000);
+    }),
+    bench('apply: 1000 upsertDefinition (dryRun)', async () => {
+      await apply({ dryRun: true, operations: def1000 }, space);
+    }),
+    bench('read: definitions list', () => {
+      readResource(space, 'main', defsUri('main'));
+    }),
+    bench('read: one definition', () => {
+      readResource(space, 'main', defUri('main', 'box-0'));
+    }),
+    bench('read: global-styles list', () => {
+      readResource(space, 'main', globalsUri('main'));
+    }),
+    bench('read: style-variables', () => {
+      readResource(space, 'main', styleVarsUri('main'));
+    })
+  );
 });
 
-describe('catalog reads (whole-space scans)', () => {
-  bench('types registry', () => {
-    invalidateIndex(space.schema);
-    readResource(space, 'main', typesUri);
-  });
-
-  bench('interactions catalog', () => {
-    invalidateIndex(space.schema);
-    readResource(space, 'main', interactionsUri('main'));
-  });
-
-  bench('data-sources catalog', () => {
-    invalidateIndex(space.schema);
-    readResource(space, 'main', dataSourcesUri('main'));
-  });
+test('catalog reads (whole-space scans)', async ({ bench }) => {
+  await bench.compare(
+    bench('types registry', () => {
+      invalidateIndex(space.schema);
+      readResource(space, 'main', typesUri);
+    }),
+    bench('interactions catalog', () => {
+      invalidateIndex(space.schema);
+      readResource(space, 'main', interactionsUri('main'));
+    }),
+    bench('data-sources catalog', () => {
+      invalidateIndex(space.schema);
+      readResource(space, 'main', dataSourcesUri('main'));
+    })
+  );
 });
 
-describe('validation — error path', () => {
-  bench('validateOperations: 250 invalid (unknown page/ref)', () => {
+test('validation — error path', async ({ bench }) => {
+  await bench('validateOperations: 250 invalid (unknown page/ref)', () => {
     validateOperations(space, invalid250);
-  });
+  }).run();
 });
 
 // --- Scaling fixture: 60 pages × 200 elements (~12000), 4× the primary scale. ---
@@ -412,54 +408,52 @@ const bigDelete250 = Array.from({ length: 250 }, (_, i): Operation => ({
   ref: `el-${i % 60}-${100 + Math.floor(i / 60)}`
 }));
 
-describe('scaling — 12k-element space', () => {
-  bench('validateOperations: 1000 patches', () => {
-    validateOperations(bigSpace, bigPatch1000);
-  });
-
-  bench('apply: 1000 patches (dryRun)', async () => {
-    await apply({ dryRun: true, operations: bigPatch1000 }, bigSpace);
-  });
-
-  bench('search: common term (matches all 12k)', () => {
-    search({ query: 'box' }, bigSpace, 'main');
-  });
-
-  bench('page skeleton read (cold)', () => {
-    invalidateIndex(bigSpace.schema);
-    readResource(bigSpace, 'main', pageUri('main', 'home-59'));
-  });
-
-  bench('apply: 250 deletes (dryRun)', async () => {
-    await apply({ dryRun: true, operations: bigDelete250 }, bigSpace);
-  });
-
-  bench('types registry (cold)', () => {
-    invalidateIndex(bigSpace.schema);
-    readResource(bigSpace, 'main', typesUri);
-  });
-
-  bench('interactions catalog (cold)', () => {
-    invalidateIndex(bigSpace.schema);
-    readResource(bigSpace, 'main', interactionsUri('main'));
-  });
+// A benchmark is a test since Vitest 5, so the test timeout applies to it: seven interleaved benches on a 12k-element
+// space take longer than the default allows.
+test('scaling — 12k-element space', { timeout: 300_000 }, async ({ bench }) => {
+  await bench.compare(
+    bench('validateOperations: 1000 patches', () => {
+      validateOperations(bigSpace, bigPatch1000);
+    }),
+    bench('apply: 1000 patches (dryRun)', async () => {
+      await apply({ dryRun: true, operations: bigPatch1000 }, bigSpace);
+    }),
+    bench('search: common term (matches all 12k)', () => {
+      search({ query: 'box' }, bigSpace, 'main');
+    }),
+    bench('page skeleton read (cold)', () => {
+      invalidateIndex(bigSpace.schema);
+      readResource(bigSpace, 'main', pageUri('main', 'home-59'));
+    }),
+    bench('apply: 250 deletes (dryRun)', async () => {
+      await apply({ dryRun: true, operations: bigDelete250 }, bigSpace);
+    }),
+    bench('types registry (cold)', () => {
+      invalidateIndex(bigSpace.schema);
+      readResource(bigSpace, 'main', typesUri);
+    }),
+    bench('interactions catalog (cold)', () => {
+      invalidateIndex(bigSpace.schema);
+      readResource(bigSpace, 'main', interactionsUri('main'));
+    })
+  );
 });
 
 // --- Single mega-page fixture: one page with 2000 elements, to stress a deep/wide single tree. ---
 const megaSpace = buildSpace(1, 2000, 100);
 
-describe('single mega-page (one page, 2000 elements)', () => {
-  bench('page skeleton read (cold)', () => {
-    invalidateIndex(megaSpace.schema);
-    readResource(megaSpace, 'main', pageUri('main', 'home-0'));
-  });
-
-  bench('page styles read (cold)', () => {
-    invalidateIndex(megaSpace.schema);
-    readResource(megaSpace, 'main', `${pageUri('main', 'home-0')}/styles`);
-  });
-
-  bench('search: common term (matches all 2000)', () => {
-    search({ query: 'box' }, megaSpace, 'main');
-  });
+test('single mega-page (one page, 2000 elements)', async ({ bench }) => {
+  await bench.compare(
+    bench('page skeleton read (cold)', () => {
+      invalidateIndex(megaSpace.schema);
+      readResource(megaSpace, 'main', pageUri('main', 'home-0'));
+    }),
+    bench('page styles read (cold)', () => {
+      invalidateIndex(megaSpace.schema);
+      readResource(megaSpace, 'main', `${pageUri('main', 'home-0')}/styles`);
+    }),
+    bench('search: common term (matches all 2000)', () => {
+      search({ query: 'box' }, megaSpace, 'main');
+    })
+  );
 });

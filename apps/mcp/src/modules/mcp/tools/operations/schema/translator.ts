@@ -42,7 +42,6 @@ const splitClasses = (value: string | undefined): string[] => (value ? value.spl
 
 const propsOf = (el: Element): Record<string, unknown> | undefined => {
   const { subType, ...rest } = el.attributes;
-  void subType;
 
   return Object.keys(rest).length > 0 ? rest : undefined;
 };

@@ -64,6 +64,8 @@ export default tsEslint.config({
     'react-hooks/preserve-manual-memoization': 'off', // @todo: review later
     'prettier/prettier': ['warn', { trailingComma: 'none' }],
     '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+    // Destructuring a key out so the rest carries everything else is how a field is dropped from an object here.
+    '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
     'import/order': [
       'error',
       {

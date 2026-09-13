@@ -228,7 +228,6 @@ export const validateOperations = (
       case 'upsertDefinition':
       case 'patchDefinition': {
         const { type, ref, slots, ...slot } = op;
-        void type;
         checkRef(ref, `${base}.ref`, ctx);
         checkSlotCss(slot, base, ctx);
         for (const [slotName, slotDef] of Object.entries(slots ?? {})) {
@@ -240,7 +239,6 @@ export const validateOperations = (
       case 'upsertGlobalStyle':
       case 'patchGlobalStyle': {
         const { type, componentType, slots, ...slot } = op;
-        void type;
         checkRef(componentType, `${base}.componentType`, ctx);
         checkSlotCss(slot, base, ctx);
         for (const [slotName, slotDef] of Object.entries(slots ?? {})) {

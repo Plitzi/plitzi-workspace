@@ -26,7 +26,6 @@ export type UpsertGlobalStyle = z.infer<typeof upsertGlobalStyleOp>;
 
 export const upsertGlobalStyle = (space: Space, env: Env, op: UpsertGlobalStyle): OpResult => {
   const { type, componentType, slots, ...base } = op;
-  void type;
   const guard = guardKind(space.style, componentType, 'element');
   if (guard) {
     return guard;

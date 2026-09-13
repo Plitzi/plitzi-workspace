@@ -83,8 +83,7 @@ const auditElement = (space: Space, sub: ValidationCtx, el: Element): void => {
 };
 
 const auditDefinitionCss = (sub: ValidationCtx, label: string, def: AIDefinition): void => {
-  const { ref: _ref, slots, ...slot } = def;
-  void _ref;
+  const { ref, slots, ...slot } = def;
   checkSlotCss(slot, label, sub);
   for (const [name, slotDef] of Object.entries(slots ?? {})) {
     checkSlotCss(slotDef, `${label}.slots.${name}`, sub);

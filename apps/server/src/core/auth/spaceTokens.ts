@@ -314,8 +314,6 @@ export const createSpaceTokenApi = ({ tokens, adapters }: { tokens: Tokens; adap
         ok: true,
         body: {
           tokens: records.map(({ token, origins, ...rest }) => {
-            void token;
-
             // The same column means different things by scope: the domain list for the public credential, and a
             // human label — which connector, which deployment — on an agent or host one, which are bound to no
             // domain and need instead to be identifiable when one of them has to be revoked.

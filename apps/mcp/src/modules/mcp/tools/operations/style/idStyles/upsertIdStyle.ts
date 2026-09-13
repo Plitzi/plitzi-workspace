@@ -27,7 +27,6 @@ export type UpsertIdStyle = z.infer<typeof upsertIdStyleOp>;
 
 export const upsertIdStyle = (space: Space, env: Env, op: UpsertIdStyle): OpResult => {
   const { type, targetId, slots, ...base } = op;
-  void type;
   const guard = guardKind(space.style, targetId, 'id');
   if (guard) {
     return guard;

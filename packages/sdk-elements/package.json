@@ -985,7 +985,7 @@
   "sideEffects": false,
   "dependencies": {
     "@plitzi/nexus": "^1.1.4",
-    "@plitzi/plitzi-ui": "^1.6.20",
+    "@plitzi/plitzi-ui": "^1.6.21",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

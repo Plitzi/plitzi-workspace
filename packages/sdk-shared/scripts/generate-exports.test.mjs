@@ -59,6 +59,17 @@ describe('generateExports', () => {
     expect(exports).not.toHaveProperty('./gone');
   });
 
+  it('keeps the types of a declaration file that also declares something it does not export', () => {
+    write('src/authoring/declare.ts');
+    write('dist/authoring/declare.mjs');
+    write('dist/authoring/declare.d.ts', 'type Helper = string;\nexport type Public = Helper;\nexport {};');
+
+    expect(generateExports(packageDir)['./authoring/declare']).toEqual({
+      types: './dist/authoring/declare.d.ts',
+      import: './dist/authoring/declare.mjs'
+    });
+  });
+
   it('skips bundler folders and modules with nothing to export', () => {
     write('src/empty.ts');
     write('dist/empty.mjs', 'export {};');

@@ -11,16 +11,17 @@ const SOURCE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mjs'];
 function hasMeaningfulExports(filePath) {
   const content = fs.readFileSync(filePath, 'utf-8');
 
-  // remove comments
+  // remove comments, then drop the bare `export {}` TypeScript appends to mark a file as a module — it writes one
+  // into any declaration file that also declares something it does not export, so it says nothing about whether the
+  // file exports anything, and treating it as a disqualifier stripped the `types` condition off such a file.
   const cleaned = content
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/.*$/gm, '')
+    .replace(/export\s*\{\s*\}\s*;?/g, '')
     .trim();
 
   // should contain something exportable
-  return (
-    cleaned.includes('export') && cleaned.length > 0 && !/export\s*\{\s*\}/.test(cleaned) // export vacío
-  );
+  return cleaned.includes('export');
 }
 
 /**
