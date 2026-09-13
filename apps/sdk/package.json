@@ -47,10 +47,7 @@
     "clsx": "^2.1.1",
     "graphql": "^17.0.2",
     "immer": "^11.1.18",
-    "react-router-dom": "^7.18.3",
-    "vite": "^8.3.0",
-    "vite-plugin-dts": "^5.1.0",
-    "vite-plugin-react": "^4.0.1"
+    "react-router-dom": "^7.18.3"
   },
   "peerDependencies": {
     "react": "^19",
@@ -77,6 +74,7 @@
     "@storybook/testing-library": "^0.2.2",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/ejs": "^3.1.5",
+    "@vitejs/plugin-react": "^6.1.1",
     "css-loader": "^7.1.5",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
@@ -101,6 +99,7 @@
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
     "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-dts": "^5.1.0",
     "vite-plugin-ejs": "^2.0.0",
     "vite-plugin-mkcert": "^2.1.0",
     "vitest": "^5.0.0"

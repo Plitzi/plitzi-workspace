@@ -39,27 +39,32 @@ import { authorSpace, locate } from '@plitzi/sdk-authoring';
 import { space } from '../src/space';
 
 /**
- * Everything this space NAMES is on screen.
+ * Everything this space NAMES is on screen, on every page it has.
  *
  * The strongest assertion available about a page you did not hand-write, and it costs no upkeep: an id an author
  * bothered to write down is an element somebody meant to point at, and \`authorSpace\` reports which those were.
  * Rename one and this fails at author time with a suggestion, rather than at test time with an empty locator.
+ *
+ * One test per page, so the second page you add is covered the moment it exists. Leave unnamed what is only on
+ * screen after an interaction — a menu, a confirmation — since nothing has opened it here.
  */
 const { handles } = authorSpace(space);
 
-test('renders every element it names', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+for (const pageHandle of Object.values(handles.pages)) {
+  test(\`\${pageHandle.path} renders every element it names\`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
 
-  await page.goto('/', { waitUntil: 'networkidle' });
-  const el = locate(page, handles);
+    await page.goto(pageHandle.path, { waitUntil: 'networkidle' });
+    const el = locate(page, handles);
 
-  for (const handle of Object.values(handles.page('').elements).filter(entry => entry.named)) {
-    await expect(el(handle.id), \`\${handle.type} "\${handle.id}"\`).toBeVisible();
-  }
+    for (const handle of Object.values(pageHandle.elements).filter(entry => entry.named)) {
+      await expect(el(handle.id), \`\${handle.type} "\${handle.id}"\`).toBeVisible();
+    }
 
-  expect(errors).toEqual([]);
-});
+    expect(errors).toEqual([]);
+  });
+}
 `;
 
 const documentSpec = (): string => `import { expect, test } from '@playwright/test';

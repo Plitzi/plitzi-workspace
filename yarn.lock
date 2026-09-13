@@ -4321,6 +4321,7 @@ __metadata:
     "@storybook/testing-library": "npm:^0.2.2"
     "@tailwindcss/postcss": "npm:^4.3.3"
     "@types/ejs": "npm:^3.1.5"
+    "@vitejs/plugin-react": "npm:^6.1.1"
     clsx: "npm:^2.1.1"
     css-loader: "npm:^7.1.5"
     eslint: "npm:^9.39.5"
@@ -4352,7 +4353,6 @@ __metadata:
     vite-plugin-dts: "npm:^5.1.0"
     vite-plugin-ejs: "npm:^2.0.0"
     vite-plugin-mkcert: "npm:^2.1.0"
-    vite-plugin-react: "npm:^4.0.1"
     vitest: "npm:^5.0.0"
   peerDependencies:
     react: ^19

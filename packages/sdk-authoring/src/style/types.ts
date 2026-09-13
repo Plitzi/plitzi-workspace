@@ -19,7 +19,11 @@ export type CssPatch = Record<string, StyleValue | null>;
 /** What reaches the document: expanded longhands, in the vocabulary the style editor understands. */
 export type StyleRules = StyleObject;
 
-/** Per-breakpoint CSS as an author writes it. Omitted breakpoints inherit, as they do in the builder. */
+/**
+ * Per-breakpoint CSS as an author writes it. Omitted breakpoints inherit `desktop`, as they do in the builder — and
+ * only `desktop`: `tablet` (48–64rem) and `mobile` (below 48rem) are disjoint ranges, so a `tablet` rule never
+ * reaches a phone unless `mobile` repeats it.
+ */
 export type ResponsiveCss = Partial<Record<DisplayMode, CssProps>>;
 
 /** Per-breakpoint CSS as it reaches the document. */

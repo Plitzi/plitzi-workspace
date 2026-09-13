@@ -194,6 +194,27 @@ describe('the scaffold', () => {
     expect(JSON.parse(files['.prettierrc'])).toMatchObject({ printWidth: 120, singleQuote: true });
   });
 
+  /**
+   * `@eslint/js` declares the `eslint` it was written for as a peer, and npm refuses a tree that disagrees — so a
+   * major apart is not a lint problem but a project whose very first `npm install` fails.
+   */
+  it('installs the eslint its own lint config is written for', () => {
+    const { devDependencies } = JSON.parse(scaffold(answers())['package.json']) as {
+      devDependencies: Record<string, string>;
+    };
+    const major = (range = ''): string => range.replace(/^\D*/, '').split('.')[0] ?? '';
+
+    expect(major(devDependencies.eslint)).toBe(major(devDependencies['@eslint/js']));
+  });
+
+  /** A space grows pages, and a test pinned to the home page stops covering it the moment it does. */
+  it('checks every page the space has, not only the home page', () => {
+    const spec = scaffold(answers())['visual/home.spec.ts'];
+
+    expect(spec).toContain('Object.values(handles.pages)');
+    expect(spec).toContain('page.goto(pageHandle.path');
+  });
+
   it('carries the authoring skill for whatever agent opens the project', () => {
     expect(scaffold(answers())['.claude/skills/plitzi-authoring/SKILL.md']).toContain('---');
   });

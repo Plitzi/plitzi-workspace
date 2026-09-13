@@ -28,7 +28,8 @@ const SHARED_DEV_DEPENDENCIES = {
   '@types/node': '^26.2.0',
   '@types/react': '^19.2.18',
   '@types/react-dom': '^19.2.4',
-  eslint: '^9.39.5',
+  // The major `@eslint/js` declares as its peer: one apart and npm refuses to install the project at all.
+  eslint: '^10.10.0',
   'eslint-config-prettier': '^10.1.8',
   'eslint-plugin-react-hooks': '^7.1.1',
   globals: '^17.11.0',

@@ -109,7 +109,24 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     })
   );
 
-  const installed = options.install !== false && (await install(packageManager, target));
+  const wantsInstall = options.install !== false;
+  const installed = wantsInstall && (await install(packageManager, target));
+
+  /**
+   * A failed install is a failed command, not a next step.
+   *
+   * The files are already written, so the summary below still prints — but printed on its own after a screen of
+   * resolver errors it reads as success, and a script that ran `create` carries on into a project with no
+   * `node_modules`.
+   */
+  if (wantsInstall && !installed) {
+    console.error(
+      chalk.red(
+        `\n\`${installCommand(packageManager)}\` failed. The project is written; the reason is in the output above.`
+      )
+    );
+    process.exitCode = 1;
+  }
 
   /**
    * How to get there, in whichever form is shorter.
