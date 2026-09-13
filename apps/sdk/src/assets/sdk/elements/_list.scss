@@ -26,6 +26,7 @@
     .controlled-list.controlled-list--empty {
       min-height: 50px;
       min-width: 50px;
+      margin: auto;
       padding: 12px 20px;
       display: flex;
       justify-content: center;
@@ -35,7 +36,6 @@
       background-color: rgba(#7290e7, 8%);
       color: #7290e7;
       font-weight: bold;
-      margin: auto;
     }
 
     .plitzi-component__controlled-list-item {

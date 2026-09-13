@@ -103,14 +103,13 @@
    * a page that renders its own chrome on top of it would hide the one thing its owner needs to see.
    */
   .plitzi-over-quota {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     padding: 6px 10px;
     left: 12px;
     bottom: 12px;
     position: fixed;
     z-index: 999999;
+    display: flex;
+    align-items: center;
     border: 1px solid rgb(253, 224, 71);
     border-radius: 4px;
     background-color: rgb(254, 252, 232);
@@ -127,6 +126,7 @@
       Arial,
       sans-serif;
     font-size: 12px;
+    gap: 8px;
 
     .plitzi-over-quota__cta {
       color: rgb(113, 63, 18);
