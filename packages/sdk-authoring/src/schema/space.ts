@@ -1,4 +1,5 @@
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
@@ -25,7 +26,7 @@ import type {
 } from './types';
 import type { CssSpec, ResponsiveStyle, StyleDeclaration, StyleRules } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
-import type { DropPosition, Element, PageFolder, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { DropPosition, Element, PageFolder, Schema, SpaceFont, Style, StyleItem } from '@plitzi/sdk-shared';
 
 /**
  * Authoring a space without the builder.
@@ -89,6 +90,9 @@ class SpaceAuthor {
    *  for exactly the spaces that need it most. */
   private readonly stepWarnings: SchemaValidationError[] = [];
 
+  /** Rules that render, and render differently from what they plainly mean — see `warnTabletOnly`. */
+  private readonly styleWarnings: SchemaValidationError[] = [];
+
   constructor(
     private readonly spec: SpaceSpec,
     private readonly options: AuthorSpaceOptions = {}
@@ -119,7 +123,7 @@ class SpaceAuthor {
     });
 
     for (const [name, responsive] of this.classRules) {
-      this.writeSelector(name, responsive);
+      this.writeSelector(name, responsive, `Class "${name}"`);
     }
 
     const pageFolders = this.buildPageFolders();
@@ -131,6 +135,7 @@ class SpaceAuthor {
       theme: this.spec.theme ?? EMPTY_STYLE_SCHEMA.theme,
       platform: this.platform,
       variables: this.spec.variables ?? {},
+      ...(this.spec.fonts ? { fonts: this.parseFonts(this.spec.fonts) } : {}),
       cache: ''
     };
     style.cache = generateCache(style);
@@ -154,7 +159,12 @@ class SpaceAuthor {
       sourceTypes: this.options.sourceTypes
     });
 
-    return { schema, style, handles: buildHandles(this.handles), warnings: [...this.stepWarnings, ...warnings] };
+    return {
+      schema,
+      style,
+      handles: buildHandles(this.handles),
+      warnings: [...this.stepWarnings, ...this.styleWarnings, ...warnings]
+    };
   }
 
   /**
@@ -365,7 +375,53 @@ class SpaceAuthor {
     return `${type}-${next}`;
   }
 
-  private writeSelector(name: string, responsive: ResponsiveStyle): void {
+  /**
+   * The fonts, through the parser every other way into a manifest uses.
+   *
+   * A face with no fallback, no weights or an unknown source is still a `<link>` the page server writes, and the
+   * page then renders in whatever the browser picks — so it is refused here, by index and family, with the
+   * parser's own reason.
+   */
+  private parseFonts(fonts: SpaceFont[]): SpaceFont[] {
+    return fonts.map((font, index) => {
+      try {
+        return parseSpaceFont(font);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+
+        throw new Error(`Font ${index} ("${font.family}") in space "${this.spec.permanentUrl}": ${reason}`, {
+          cause: error
+        });
+      }
+    });
+  }
+
+  /**
+   * A tablet rule a phone never sees.
+   *
+   * The breakpoints are RANGES, not a cascade: `tablet` is 48–64rem, `mobile` is below 48rem, and each inherits
+   * only from `desktop`. So a layout that collapses to a column at tablet and says nothing for mobile comes back as
+   * desktop columns on a phone — the narrowest screen gets the widest layout, and every check passes. A warning and
+   * not a refusal, because a rule meant for tablets alone is legal, just rarely what anybody meant.
+   */
+  private warnTabletOnly(responsive: ResponsiveStyle, where: string): void {
+    const tablet = responsive.tablet ?? {};
+    const mobile = responsive.mobile ?? {};
+    const skipped = Object.keys(tablet).filter(property => !Object.hasOwn(mobile, property));
+    if (skipped.length === 0) {
+      return;
+    }
+
+    this.styleWarnings.push({
+      code: 'tablet-rule-skips-mobile',
+      message: `${where} sets ${skipped.join(', ')} for tablet but not for mobile. Tablet (48–64rem) and mobile (below 48rem) are separate ranges and mobile inherits desktop, not tablet — so phones get the desktop value back. Repeat the rule under \`mobile\` if phones should keep it.`,
+      details: { properties: skipped }
+    });
+  }
+
+  private writeSelector(name: string, responsive: ResponsiveStyle, where: string): void {
+    this.warnTabletOnly(responsive, where);
+
     for (const breakpoint of BREAKPOINTS) {
       const rules = responsive[breakpoint];
       if (!rules || Object.keys(rules).length === 0) {
@@ -405,7 +461,7 @@ class SpaceAuthor {
     }
 
     const selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}`, 4)}`;
-    this.writeSelector(selector, toResponsive(spec.css));
+    this.writeSelector(selector, toResponsive(spec.css), `Element "${spec.type}" at ${path}`);
 
     return selector;
   }
@@ -550,8 +606,11 @@ class SpaceAuthor {
       pageId: id,
       selector: selectorFor(id),
       named: page.id !== undefined,
+      conditional: false,
       slug: page.slug,
       path: this.routeFor(page),
+      ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
+      params: [...page.slug.matchAll(/\{\{\s*([^\s}]+)\s*\}\}/g)].map(([, param]) => param),
       elements: {}
     };
 
@@ -587,8 +646,15 @@ class SpaceAuthor {
     }
   }
 
-  private addElement(spec: ElementSpec, path: string, rootId: string, parentId: string): string {
+  private addElement(
+    spec: ElementSpec,
+    path: string,
+    rootId: string,
+    parentId: string,
+    insideCondition = false
+  ): string {
     const id = spec.id ?? this.nextId(spec.type);
+    const conditional = insideCondition || spec.visible !== undefined;
     const where = `Element "${spec.type}" (${id}) at ${path}`;
     this.assertStepsKnown(spec.flows, where);
     const bindings = withVisibility(spec);
@@ -626,9 +692,16 @@ class SpaceAuthor {
 
     this.insert(element, parentId, 'inside');
 
-    this.recordHandle({ id, type: spec.type, pageId: rootId, selector: selectorFor(id), named: spec.id !== undefined });
+    this.recordHandle({
+      id,
+      type: spec.type,
+      pageId: rootId,
+      selector: selectorFor(id),
+      named: spec.id !== undefined,
+      conditional
+    });
 
-    spec.children?.forEach((child, index) => this.addElement(child, `${path}/${index}`, rootId, id));
+    spec.children?.forEach((child, index) => this.addElement(child, `${path}/${index}`, rootId, id, conditional));
 
     return id;
   }

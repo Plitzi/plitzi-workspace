@@ -8,6 +8,7 @@ import type {
   ElementRuntime,
   Schema,
   SchemaVariable,
+  SpaceFont,
   Style,
   StyleVariables,
   Template
@@ -236,6 +237,14 @@ export interface SpaceSpec {
   rsc?: Schema['rsc'];
   mode?: Style['mode'];
   theme?: Style['theme'];
+  /**
+   * The web fonts this space loads — Google, hosted or remote faces, or a system stack.
+   *
+   * A `font-family` naming a face nobody declares here renders in the fallback, and silently: the renderer loads
+   * exactly this list (the page server writes its `<link>`s and `@font-face` rules into the document) and nothing
+   * else ever fetches a face.
+   */
+  fonts?: SpaceFont[];
   /** Route prefixes a page can sit under. See {@link PageFolderSpec}. */
   pageFolders?: PageFolderSpec[];
   pages: PageSpec[];

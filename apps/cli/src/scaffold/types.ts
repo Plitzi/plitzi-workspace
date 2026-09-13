@@ -18,6 +18,13 @@ export interface CreateAnswers {
    * quotes at somebody, and into the one file Yarn needs to install the way the other two already do.
    */
   packageManager: PackageManager;
+  /**
+   * The version of that manager this machine runs, when it could be asked.
+   *
+   * Only one file depends on it: Yarn refuses a `.yarnrc.yml` naming a setting it does not know, so the release-age
+   * exemption is written only for a Yarn that has the age gate at all. Unknown means current.
+   */
+  managerVersion?: string;
 }
 
 /** Every file of the generated project, by the path it is written to. */

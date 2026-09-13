@@ -119,9 +119,42 @@ describe('the scaffold', () => {
    * fails to resolve its own entry. The linker is pinned so all three managers produce a project that runs.
    */
   it('pins Yarn to the layout the other two already give it', () => {
-    expect(scaffold(answers({ packageManager: 'yarn' }))['.yarnrc.yml']).toBe('nodeLinker: node-modules\n');
+    expect(scaffold(answers({ packageManager: 'yarn' }))['.yarnrc.yml']).toContain('nodeLinker: node-modules\n');
     expect(scaffold(answers({ packageManager: 'yarn' }))['.gitignore']).toContain('.yarn/*');
     expect(scaffold(answers({ packageManager: 'npm' }))['.yarnrc.yml']).toBeUndefined();
+  });
+
+  /**
+   * The first install succeeds on release day, under all three managers.
+   *
+   * Each was verified failing without these: pnpm stops on the esbuild build it skipped (ERR_PNPM_IGNORED_BUILDS),
+   * Yarn quarantines every `@plitzi/*` published in the last day (YN0016), and npm lists unreviewed install scripts
+   * it has announced it will start blocking.
+   */
+  it('lets the first install through under each manager, and exempts only what the CLI ships', () => {
+    const yarn = scaffold(answers({ packageManager: 'yarn' }));
+    const pnpm = scaffold(answers({ packageManager: 'pnpm' }));
+    const npm = JSON.parse(scaffold(answers({ packageManager: 'npm' }))['package.json']) as {
+      allowScripts?: Record<string, boolean>;
+    };
+
+    expect(yarn['.yarnrc.yml']).toContain('npmPreapprovedPackages:\n  - "@plitzi/*"');
+    expect(pnpm['pnpm-workspace.yaml']).toContain('allowBuilds:\n  esbuild: true');
+    expect(pnpm['pnpm-workspace.yaml']).toContain("minimumReleaseAgeExclude:\n  - '@plitzi/*'");
+    expect(npm.allowScripts).toEqual({ esbuild: true, fsevents: false });
+    expect(JSON.parse(pnpm['package.json'])).not.toHaveProperty('allowScripts');
+    expect(scaffold(answers({ packageManager: 'npm' }))['pnpm-workspace.yaml']).toBeUndefined();
+  });
+
+  /** Verified against Yarn 4.9.4, which refuses the whole `.yarnrc.yml` over a setting it does not know. */
+  it('writes the Yarn age-gate exemption only for a Yarn that has the gate', () => {
+    const rc = (managerVersion?: string): string =>
+      scaffold(answers({ packageManager: 'yarn', managerVersion }))['.yarnrc.yml'];
+
+    expect(rc('4.9.4')).toBe('nodeLinker: node-modules\n');
+    expect(rc('4.10.0')).toContain('npmPreapprovedPackages');
+    expect(rc('4.17.0')).toContain('npmPreapprovedPackages');
+    expect(rc(undefined)).toContain('npmPreapprovedPackages');
   });
 
   /** The space is named after the project, and the url it derives every id from has to stay a DNS label. */
@@ -213,6 +246,9 @@ describe('the scaffold', () => {
 
     expect(spec).toContain('Object.values(handles.pages)');
     expect(spec).toContain('page.goto(pageHandle.path');
+    // What a bare visit cannot show is not held against the page: a session, a route param, a condition.
+    expect(spec).toContain("pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0");
+    expect(spec).toContain('entry.named && !entry.conditional');
   });
 
   it('carries the authoring skill for whatever agent opens the project', () => {

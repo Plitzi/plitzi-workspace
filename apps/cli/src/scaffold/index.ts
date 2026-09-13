@@ -9,7 +9,13 @@ import { visualFiles } from './visual';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
-export { PACKAGE_MANAGERS, detectPackageManager, installCommand, runCommand } from './packageManager';
+export {
+  PACKAGE_MANAGERS,
+  detectManagerVersion,
+  detectPackageManager,
+  installCommand,
+  runCommand
+} from './packageManager';
 
 export type { CreateAnswers, PackageManager, ProjectFiles } from './types';
 

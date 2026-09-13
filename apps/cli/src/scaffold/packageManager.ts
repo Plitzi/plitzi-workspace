@@ -1,3 +1,5 @@
+import { spawnSync } from 'node:child_process';
+
 import type { PackageManager, ProjectFiles } from './types';
 
 /**
@@ -38,5 +40,75 @@ export const runCommand = (manager: PackageManager, script: string): string =>
  * pnpm already give it, so pinning it is what makes all three managers produce a project that runs, rather than
  * two that do and one that fails the moment somebody types `yarn start`.
  */
-export const managerFiles = (manager: PackageManager): ProjectFiles =>
-  manager === 'yarn' ? { '.yarnrc.yml': 'nodeLinker: node-modules\n' } : {};
+const YARN_LINKER = 'nodeLinker: node-modules\n';
+
+const YARN_AGE_GATE = `
+# Plitzi's packages are released together with the CLI that wrote this project, so on release day every one of them
+# is younger than Yarn's minimal age gate and the install stops on YN0016. The exemption covers that scope only.
+npmPreapprovedPackages:
+  - "@plitzi/*"
+`;
+
+/**
+ * Whether this Yarn has the age gate, and so knows the setting that exempts from it.
+ *
+ * Asked because the answer is not free to get wrong in either direction: without the setting a current Yarn
+ * quarantines every package released that day, and with it a Yarn older than 4.10 refuses the whole file
+ * ("Unrecognized or legacy configuration settings") before it installs anything. Yarn 1 does not read
+ * `.yarnrc.yml` at all. A version nobody could read is taken to be current.
+ */
+export const yarnHasAgeGate = (version?: string): boolean => {
+  const [major, minor] = (version ?? '').split('.').map(Number);
+  if (!Number.isInteger(major) || !Number.isInteger(minor)) {
+    return true;
+  }
+
+  return major === 1 || major > 4 || (major === 4 && minor >= 10);
+};
+
+/**
+ * The version of a manager as it will run in `cwd`, or `undefined` when it is not there to ask.
+ *
+ * Asked from where the project will live, not from wherever the CLI was started: a repository above it can pin its
+ * own Yarn (`yarnPath`, `packageManager`), and that one — not the one on the PATH — is what installs the project.
+ */
+export const detectManagerVersion = (manager: PackageManager, cwd: string): string | undefined => {
+  const result = spawnSync(manager, ['--version'], { cwd, encoding: 'utf-8', shell: process.platform === 'win32' });
+
+  return result.status === 0 ? result.stdout.trim() || undefined : undefined;
+};
+
+/**
+ * pnpm's settings file, which is also what it reads outside a workspace.
+ *
+ * pnpm runs no install script it was not told to, and it stops the install over one it skipped: esbuild's checks
+ * the native binary the page server compiles plugins with. The release-age exemption is Yarn's, for the same reason.
+ */
+const PNPM_WORKSPACE = `allowBuilds:
+  esbuild: true
+
+minimumReleaseAgeExclude:
+  - '@plitzi/*'
+`;
+
+export const managerFiles = (manager: PackageManager, version?: string): ProjectFiles => {
+  if (manager === 'yarn') {
+    return { '.yarnrc.yml': yarnHasAgeGate(version) ? `${YARN_LINKER}${YARN_AGE_GATE}` : YARN_LINKER };
+  }
+
+  if (manager === 'pnpm') {
+    return { 'pnpm-workspace.yaml': PNPM_WORKSPACE };
+  }
+
+  return {};
+};
+
+/**
+ * What npm reads from `package.json` itself: which dependencies may run install scripts.
+ *
+ * npm 11 lists every unreviewed one on each install and says a later release will block them. esbuild's script
+ * checks its native binary; fsevents is flagged only for the `binding.gyp` it ships beside a prebuilt binary, so
+ * refusing it changes nothing and says so. Other managers ignore the field.
+ */
+export const managerPackageFields = (manager: PackageManager): Record<string, unknown> =>
+  manager === 'npm' ? { allowScripts: { esbuild: true, fsevents: false } } : {};

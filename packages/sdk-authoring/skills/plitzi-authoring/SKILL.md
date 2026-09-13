@@ -94,7 +94,11 @@ property outside the vocabulary is an error naming the correct key (`paddingTop`
 - `column(gap, extra?)`, `row(gap, extra?)`, `grid(columns, gap, extra?)` for the three layouts every space repeats.
 - **Breakpoints are ranges, not a cascade.** `tablet` is 48–64rem and `mobile` is below 48rem, and each inherits
   only from `desktop` — a rule written for `tablet` never reaches a phone. A grid that collapses to one column at
-  tablet and should stay collapsed says so in `mobile` too.
+  tablet and should stay collapsed says so in `mobile` too. `authorSpace` warns (`tablet-rule-skips-mobile`) when it
+  does not.
+- **Fonts are declared, not assumed.** A `font-family` loads only if the space lists the face in `fonts`
+  (`{ source: 'google', family: 'Fraunces', fallback: 'Georgia, serif', weights: [400, 600], styles: ['normal'] }`);
+  the page server writes exactly that list into the document, and anything else renders in the fallback.
 - Per element TYPE defaults go in `elements: { heading: { base: …, variants: { … } } }`.
 
 **Share a rule as a class, never as a spread.** Writing a rule set once in a `const` and spreading it into each

@@ -45,12 +45,17 @@ import { space } from '../src/space';
  * bothered to write down is an element somebody meant to point at, and \`authorSpace\` reports which those were.
  * Rename one and this fails at author time with a suggestion, rather than at test time with an empty locator.
  *
- * One test per page, so the second page you add is covered the moment it exists. Leave unnamed what is only on
- * screen after an interaction — a menu, a confirmation — since nothing has opened it here.
+ * One test per page, so the second page you add is covered the moment it exists. What a bare visit cannot show is
+ * left to tests of its own: a page behind a session or with a route param (\`post/{{slug}}\`), and an element that is
+ * on screen only under a condition — a menu that opens on a tap, a confirmation after a submit.
  */
 const { handles } = authorSpace(space);
 
-for (const pageHandle of Object.values(handles.pages)) {
+const openable = Object.values(handles.pages).filter(
+  pageHandle => pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0
+);
+
+for (const pageHandle of openable) {
   test(\`\${pageHandle.path} renders every element it names\`, async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -58,7 +63,7 @@ for (const pageHandle of Object.values(handles.pages)) {
     await page.goto(pageHandle.path, { waitUntil: 'networkidle' });
     const el = locate(page, handles);
 
-    for (const handle of Object.values(pageHandle.elements).filter(entry => entry.named)) {
+    for (const handle of Object.values(pageHandle.elements).filter(entry => entry.named && !entry.conditional)) {
       await expect(el(handle.id), \`\${handle.type} "\${handle.id}"\`).toBeVisible();
     }
 

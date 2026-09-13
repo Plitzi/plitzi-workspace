@@ -5,7 +5,14 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
-import { PACKAGE_MANAGERS, detectPackageManager, installCommand, runCommand, scaffold } from '../scaffold';
+import {
+  PACKAGE_MANAGERS,
+  detectManagerVersion,
+  detectPackageManager,
+  installCommand,
+  runCommand,
+  scaffold
+} from '../scaffold';
 
 import type { CreateAnswers, PackageManager } from '../scaffold';
 
@@ -36,8 +43,39 @@ const isEmpty = async (target: string): Promise<boolean> => {
   }
 };
 
+const isDirectory = async (candidate: string): Promise<boolean> => {
+  try {
+    return (await fs.stat(candidate)).isDirectory();
+  } catch {
+    return false;
+  }
+};
+
+/** The closest directory that already exists: the project's own does not until its files are written. */
+const nearestExisting = async (target: string): Promise<string> => {
+  let dir = target;
+  while (!(await isDirectory(dir)) && path.dirname(dir) !== dir) {
+    dir = path.dirname(dir);
+  }
+
+  return dir;
+};
+
 const oneOf = <T extends string>(value: string | undefined, allowed: readonly T[], fallback: T): T =>
   allowed.includes(value as T) ? (value as T) : fallback;
+
+/**
+ * What a first install is most likely refused over, and what to do about it.
+ *
+ * The scaffold already exempts what it ships, but not the rest of the tree: a third-party dependency published in
+ * the last day is held back by the same age gates, and says so in a code that means nothing to somebody who has
+ * not touched the project yet.
+ */
+const INSTALL_HINTS: Record<PackageManager, string> = {
+  npm: 'A peer-dependency conflict (ERESOLVE) is a bug in this scaffold: please report it. `npm install --legacy-peer-deps` gets past it meanwhile.',
+  yarn: 'YN0016 ("quarantined") means a dependency was published less than a day ago. Wait, or add it to `npmPreapprovedPackages` in .yarnrc.yml.',
+  pnpm: 'A dependency published too recently is added to `minimumReleaseAgeExclude` in pnpm-workspace.yaml; a skipped build script is approved with `pnpm approve-builds`.'
+};
 
 const install = (manager: PackageManager, cwd: string): Promise<boolean> =>
   new Promise(resolve => {
@@ -95,7 +133,8 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     source,
     key,
     environment: options.environment ?? 'main',
-    packageManager
+    packageManager,
+    managerVersion: detectManagerVersion(packageManager, await nearestExisting(target))
   };
 
   const files = scaffold(answers);
@@ -125,6 +164,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
         `\n\`${installCommand(packageManager)}\` failed. The project is written; the reason is in the output above.`
       )
     );
+    console.error(chalk.dim(INSTALL_HINTS[packageManager]));
     process.exitCode = 1;
   }
 

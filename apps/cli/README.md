@@ -35,6 +35,18 @@ A Yarn project also gets a `.yarnrc.yml` pinning `nodeLinker: node-modules`. Yar
 default and a server-mode project cannot start under it — `node --import tsx` dies resolving its own entry — so
 the linker is pinned to the layout npm and pnpm already give it.
 
+Each project also carries what lets its **first install through on release day**, which is the day every
+`@plitzi/*` package it depends on is new:
+
+| Manager | File | Why |
+|---|---|---|
+| npm | `allowScripts` in `package.json` | npm 11 lists unreviewed install scripts and will start blocking them: esbuild's is approved, fsevents' (a prebuilt binary beside a `binding.gyp`) refused |
+| pnpm | `pnpm-workspace.yaml` | pnpm stops the install over a skipped build (`allowBuilds: esbuild`), and holds back packages under its minimum release age (`minimumReleaseAgeExclude: @plitzi/*`) |
+| Yarn | `.yarnrc.yml` | Yarn quarantines packages younger than a day (YN0016): `npmPreapprovedPackages: @plitzi/*` — written only for Yarn ≥ 4.10, since an older Yarn refuses a setting it does not know |
+
+The exemptions cover `@plitzi/*` only. A third-party dependency published in the last day is still held back, and
+when an install fails the CLI says which setting names it.
+
 ## What lands in the project
 
 - **The space, as yours.** A local project gets `src/space.ts` — a *copy* of the space Plitzi gives a new

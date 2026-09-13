@@ -28,7 +28,18 @@ const spec: SpaceSpec = {
         }
       ]
     },
-    { name: 'Pricing', slug: 'pricing', id: 'pricing', body: [{ type: 'heading', id: 'pricing-title' }] }
+    { name: 'Pricing', slug: 'pricing', id: 'pricing', body: [{ type: 'heading', id: 'pricing-title' }] },
+    {
+      name: 'Menu',
+      slug: 'menu',
+      id: 'menu',
+      body: [
+        { type: 'heading', id: 'menu-title' },
+        { type: 'container', id: 'drawer', visible: 'state.open', children: [{ type: 'text', id: 'drawer-link' }] }
+      ]
+    },
+    { name: 'Account', slug: 'account', id: 'account', accessLevel: 'authenticated', body: [] },
+    { name: 'Post', slug: 'post/{{slug}}', id: 'post', body: [] }
   ]
 };
 
@@ -73,6 +84,25 @@ describe('schema/handles', () => {
   it('gives a page the route a test navigates to', () => {
     expect(handles.page('').path).toBe('/');
     expect(handles.page('pricing').path).toBe('/pricing');
+  });
+
+  /**
+   * What a suite that only OPENS pages can hold a space to. A page behind a session, or one whose route needs a
+   * value, is not a URL a bare visit can load — so the handle says so rather than the suite finding out as a 403.
+   */
+  it('says which pages need a session or a route value before they can be opened', () => {
+    expect(handles.page('account').accessLevel).toBe('authenticated');
+    expect(handles.page('pricing').accessLevel).toBeUndefined();
+    expect(handles.page('post').params).toEqual(['slug']);
+    expect(handles.page('pricing').params).toEqual([]);
+  });
+
+  /** A drawer is named so its flow can reach it, and is rightly not on screen until that flow runs. */
+  it('marks what is on screen only under a condition, and everything inside it', () => {
+    expect(handles.element('drawer').conditional).toBe(true);
+    expect(handles.element('drawer-link').conditional).toBe(true);
+    expect(handles.element('menu-title').conditional).toBe(false);
+    expect(handles.page('menu').conditional).toBe(false);
   });
 
   /** A page is reachable by either name: a spec knows its slug, a flow that targets it knows its id. */

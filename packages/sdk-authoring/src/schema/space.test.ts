@@ -580,6 +580,60 @@ describe('authorSpace / what it refuses', () => {
   });
 });
 
+describe('authorSpace / breakpoints and fonts', () => {
+  /**
+   * Tablet and mobile are separate ranges and mobile inherits desktop, so a tablet rule with no mobile counterpart
+   * hands phones the desktop layout back — found on a real space as two columns on a 390px screen.
+   */
+  it('warns about a tablet rule a phone never sees, naming the properties', () => {
+    const { warnings } = authorSpace(
+      minimal({
+        classes: {
+          cards: {
+            desktop: { display: 'flex' },
+            tablet: { 'flex-direction': 'column', 'row-gap': '8px' },
+            mobile: { 'row-gap': '8px' }
+          }
+        }
+      })
+    );
+    const skipped = warnings.filter(warning => warning.code === 'tablet-rule-skips-mobile');
+
+    expect(skipped).toHaveLength(1);
+    expect(skipped[0].message).toContain('Class "cards" sets flex-direction for tablet but not for mobile');
+    expect(skipped[0].details).toEqual({ properties: ['flex-direction'] });
+  });
+
+  it('says nothing once mobile repeats what tablet set', () => {
+    const { warnings } = authorSpace(
+      minimal({
+        classes: { cards: { tablet: { 'flex-direction': 'column' }, mobile: { 'flex-direction': 'column' } } }
+      })
+    );
+
+    expect(warnings.filter(warning => warning.code === 'tablet-rule-skips-mobile')).toEqual([]);
+  });
+
+  /** The page server loads exactly the faces the style document lists, so declaring one is what makes it load. */
+  it('carries the fonts a space declares into the style the page server loads them from', () => {
+    const fonts: NonNullable<SpaceSpec['fonts']> = [
+      { source: 'google', family: 'Fraunces', fallback: 'Georgia, serif', weights: [400, 600], styles: ['normal'] }
+    ];
+
+    expect(authorSpace(minimal({ fonts })).style.fonts).toEqual(fonts);
+    expect(authorSpace(minimal()).style.fonts).toEqual([]);
+  });
+
+  /** A face with nothing to fall back on renders in whatever the browser picks, and nothing reports it. */
+  it('refuses a font the page server could not use, naming it', () => {
+    const fonts: NonNullable<SpaceSpec['fonts']> = [
+      { source: 'google', family: 'Fraunces', fallback: '', weights: [400], styles: ['normal'] }
+    ];
+
+    expect(() => authorSpace(minimal({ fonts }))).toThrow('Font 0 ("Fraunces")');
+  });
+});
+
 describe('validateSpace', () => {
   it('accepts what authorSpace produced', () => {
     const authored = authorSpace(minimal());

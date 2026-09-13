@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 
-import { installCommand, managerFiles, runCommand } from './packageManager';
+import { installCommand, managerFiles, managerPackageFields, runCommand } from './packageManager';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -101,7 +101,8 @@ export const packageJson = (answers: CreateAnswers): string =>
       type: 'module',
       scripts: scripts(answers),
       dependencies: dependencies(answers),
-      devDependencies: devDependencies(answers)
+      devDependencies: devDependencies(answers),
+      ...managerPackageFields(answers.packageManager)
     },
     null,
     2
@@ -230,7 +231,7 @@ VITE_PLITZI_ENVIRONMENT=${environment}
 `;
 
 export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
-  ...managerFiles(answers.packageManager),
+  ...managerFiles(answers.packageManager, answers.managerVersion),
   'package.json': packageJson(answers),
   'tsconfig.json': tsconfig(answers),
   '.gitignore': gitignore(answers),

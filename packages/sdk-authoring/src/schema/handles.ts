@@ -29,12 +29,24 @@ export interface ElementHandle {
    * derived ones are positional and change the moment a section is inserted above them.
    */
   named: boolean;
+  /**
+   * Whether this element is on screen only under a condition — a `visible` of its own or on anything above it.
+   *
+   * A menu that opens on a tap and a confirmation that appears after a submit are named so a flow can reach them,
+   * and they are correctly NOT on a page somebody has only just opened. A suite asserting "everything named is
+   * visible" skips these, or it forces the author to leave unnamed exactly what a flow needs to point at.
+   */
+  conditional: boolean;
 }
 
 export interface PageHandle extends ElementHandle {
   slug: string;
   /** The route a test navigates to, leading slash included — `/` for the home page. */
   path: string;
+  /** Who the page is for, as declared. An `authenticated` page answers a visitor with no session with a 403 or a redirect. */
+  accessLevel?: 'public' | 'authenticated';
+  /** The route params its slug declares (`post/{{slug}}` → `['slug']`). A path with any is not a URL until they are filled. */
+  params: string[];
   /** Everything on this page, by id. */
   elements: Record<string, ElementHandle>;
 }

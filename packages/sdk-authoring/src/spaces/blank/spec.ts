@@ -135,7 +135,9 @@ export const space: SpaceSpec = {
           'background-attachment': 'scroll',
           'background-clip': 'border-box'
         },
-        tablet: { 'justify-content': 'flex-start', padding: '60px' }
+        tablet: { 'justify-content': 'flex-start', padding: '60px' },
+        // Tablet and mobile are separate ranges: without this a phone gets the desktop's 100px back.
+        mobile: { 'justify-content': 'flex-start', padding: '40px 24px' }
       },
       body: [
         container({ id: 'backdrop', class: backdrop }),
@@ -166,6 +168,16 @@ export const space: SpaceSpec = {
               'flex-shrink': '1',
               'flex-basis': '0%',
               'align-items': 'flex-start'
+            },
+            mobile: {
+              'flex-direction': 'column',
+              'min-height': 'auto',
+              'min-width': 'auto',
+              'flex-grow': '1',
+              'flex-shrink': '1',
+              'flex-basis': '0%',
+              'align-items': 'flex-start',
+              gap: '24px'
             }
           },
           children: [
