@@ -49,10 +49,18 @@ describe('zodToJsonSchema', () => {
     expect(zodToJsonSchema(z.string().optional())).toMatchObject({ type: 'string' });
   });
 
-  it('converts a union to anyOf branches', () => {
-    const result = zodToJsonSchema(z.union([z.string(), z.number()])) as { anyOf: unknown[] };
+  // Zod folds a union of plain primitives into one `type` list; it is the same contract as `anyOf`, only shorter.
+  it('converts a union of primitives to a type list', () => {
+    expect(zodToJsonSchema(z.union([z.string(), z.number()]))).toEqual({ type: ['string', 'number'] });
+  });
 
-    expect(result.anyOf).toEqual([{ type: 'string' }, { type: 'number' }]);
+  it('converts a union with a structured branch to anyOf branches', () => {
+    const result = zodToJsonSchema(z.union([z.string(), z.object({ a: z.string() })])) as { anyOf: unknown[] };
+
+    expect(result.anyOf).toMatchObject([
+      { type: 'string' },
+      { type: 'object', properties: { a: { type: 'string' } }, required: ['a'] }
+    ]);
   });
 
   it('strips the $schema dialect marker so the provider payload stays minimal', () => {

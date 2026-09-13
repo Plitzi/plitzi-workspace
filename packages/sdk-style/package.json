@@ -835,6 +835,7 @@
       "import": "./dist/helpers/calculateInheriting.mjs"
     },
     "./helpers/formatCssFromSelector": {
+      "types": "./dist/helpers/formatCssFromSelector.d.ts",
       "import": "./dist/helpers/formatCssFromSelector.mjs"
     },
     "./helpers/generateStyleSelector": {
