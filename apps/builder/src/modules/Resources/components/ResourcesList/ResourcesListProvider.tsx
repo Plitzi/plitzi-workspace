@@ -28,6 +28,7 @@ const ResourcesListProvider = ({ children }: ResourcesListProviderProps) => {
   return <ResourcesListContext value={contextValue}>{children}</ResourcesListContext>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { ResourcesListContext };
 
 export default ResourcesListProvider;
