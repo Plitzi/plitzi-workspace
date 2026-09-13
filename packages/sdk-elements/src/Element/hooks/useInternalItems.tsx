@@ -13,6 +13,13 @@ import type { ReactNode } from 'react';
 
 const isServer = typeof window === 'undefined';
 
+/**
+ * Keys for what joins the items' list without being an item. By position, the page body was remounted whenever the
+ * container gained or lost an item; and since an element id always opens with a letter, these never meet an item's key.
+ */
+const LAYOUT_BODY_KEY = '#layout-body';
+const CHILDREN_KEY = '#children';
+
 const storeSubscriber = () => () => {};
 // Typed `boolean` rather than left to infer `true`/`false`: what these mean is "hydrating or not", and a literal
 // type turns every later reading of it into a condition the compiler believes it already knows the answer to.
@@ -172,21 +179,14 @@ const useInternalItems = ({
         return item;
       });
 
-    // Process Layout
-    if (plitziElementLayout) {
-      const { containerId, bodyChildren } = plitziElementLayout;
-      if (containerId === id) {
-        // Keyed so the page body keeps its identity when the container's own items change around it — by position it
-        // was remounted whole. `:` cannot open an element id, so no item key can collide with it.
-        itemsParsed.push(<Fragment key=":layout-body">{bodyChildren}</Fragment>);
-      }
+    if (plitziElementLayout?.containerId === id) {
+      itemsParsed.push(<Fragment key={LAYOUT_BODY_KEY}>{plitziElementLayout.bodyChildren}</Fragment>);
     }
 
-    // Process Children
     if (Array.isArray(children)) {
       itemsParsed.push(...children.filter(isValidElement));
     } else if (isValidElement(children)) {
-      itemsParsed.push(<Fragment key=":children">{children}</Fragment>);
+      itemsParsed.push(<Fragment key={CHILDREN_KEY}>{children}</Fragment>);
     }
 
     if (!items) {
