@@ -780,7 +780,9 @@ export type SSRServerConfig = {
   devMode?: boolean;
   /** Authorizes debugging on the pages this server renders. An SSR page loads the very same SDK, so this is the
    *  server-side face of the SDK's `debugMode` prop: the page decides, and the visitor's 'plitzi_debug' cookie can
-   *  only narrow it. Defaults to `devMode`, so a development server debugs without being told to. */
+   *  only narrow it. Left unset, `devMode` authorizes it — a development server debugs without being told to — and
+   *  so does a space whose settings switched `devTools` on. Set, it decides for every space: `false` is a refusal
+   *  no space can turn around. */
   debugMode?: boolean;
   cacheTtlMs?: number;
   loginPath?: string | false;

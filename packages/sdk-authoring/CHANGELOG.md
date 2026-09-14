@@ -1,5 +1,22 @@
 # @plitzi/sdk-authoring
 
+## 0.35.8
+
+### Patch Changes
+
+- A space can switch the dev tools on for its own published site.
+
+  - **`settings.devTools`** in the space schema, set from the builder's Settings panel ("Dev tools on the published SSR
+    site (*.plitzi.app)"). It applies to sites served with SSR — usually a space's `*.plitzi.app` address, or a custom
+    domain pointed at it. A page server that left `debugMode` unset now authorizes debugging for a space that asked for it, as it
+    already did in `devMode`. A server that sets `debugMode` still decides for every space, and `false` cannot be
+    turned around by a space. Preview renders stay undebuggable either way.
+  - The space is read from the schema the server loaded, never from the request, and the visitor's cookie can still
+    only hide the panel.
+  - **The HTML cache keys whether a visitor hid the dev tools.** A cached page on a published environment used to be
+    keyed on the theme alone, so on a page authorizing dev tools the first visitor's choice — panel or no panel — was
+    served to everybody after them.
+
 ## 0.35.7
 
 ### Patch Changes

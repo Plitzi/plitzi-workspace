@@ -1,4 +1,7 @@
+import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';
+
+import { readCookie } from '../readCookie';
 
 /**
  * The key a rendered document is cached under.
@@ -7,17 +10,26 @@ import { themeFromCookies } from '@plitzi/sdk-shared/theme';
  * writes it onto `<html>` and into the props the SDK hydrates with. Keyed without it, the first visitor's choice was
  * served to everybody behind them — a dark page for a visitor who chose light, then corrected on hydration.
  *
- * Read from the request here rather than handed in, so a call site cannot key the page without it. Only the theme
- * cookie is read: keying the whole header would split the cache on every analytics cookie a visitor carries.
+ * So is whether the visitor hid the dev tools, on a page that authorizes them: the render leaves the panel out for
+ * them and in for everybody else. It is the only value of that cookie that changes what is drawn, so it is the only
+ * one keyed — a space that switched dev tools on for its published site would otherwise hand the first visitor's
+ * choice to the rest.
+ *
+ * Read from the request here rather than handed in, so a call site cannot key the page without it. Only those two
+ * cookies are read: keying the whole header would split the cache on every analytics cookie a visitor carries.
  */
 export const buildHtmlCacheKey = (
   accessToken: string | undefined = 'anonymous',
   spaceId: number | string | null,
   environment: string,
   revision: number,
-  req: { hostname: string; path: string; search: string; headers: { cookie?: string } }
-): string =>
-  `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${themeFromCookies(req.headers.cookie) ?? ''}\0${req.hostname}\0${req.path}\0${req.search}`;
+  req: { hostname: string; path: string; search: string; headers: { cookie?: string; host?: string } }
+): string => {
+  const theme = themeFromCookies(req.headers.cookie) ?? '';
+  const debugHidden = readCookie(req.headers.cookie, debugCookieName(req.headers.host)) === 'false' ? 'debug-off' : '';
+
+  return `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${theme}\0${debugHidden}\0${req.hostname}\0${req.path}\0${req.search}`;
+};
 
 export const buildOfflineDataCacheKey = (spaceId: number, environment: string, revision: number): string =>
   `${spaceId}|${environment}|${revision}`;

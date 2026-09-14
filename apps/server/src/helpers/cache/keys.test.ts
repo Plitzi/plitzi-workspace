@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { buildHtmlCacheKey, buildRscCacheKey } from './keys';
 
-const req = (path: string, search = '', hostname = 'site.example.com', cookie?: string) => ({
+const req = (path: string, search = '', hostname = 'site.example.com', cookie?: string, host = hostname) => ({
   hostname,
   path,
   search,
-  headers: { cookie }
+  headers: { cookie, host }
 });
 
 /**
@@ -32,6 +32,22 @@ describe('buildHtmlCacheKey', () => {
 
   it('ignores a theme cookie holding something that is not a theme', () => {
     expect(html('theme=purple')).toBe(html());
+  });
+
+  /** On a page that authorizes dev tools, the visitor who hid them is rendered without the panel. */
+  it('separates a visitor who hid the dev tools from one who did not', () => {
+    expect(html('plitzi_debug=false')).not.toBe(html());
+  });
+
+  it('reads the dev tools cookie named for the port the page is served on', () => {
+    const onPort = (cookie: string) =>
+      buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.test', cookie, 'site.test:4013'));
+
+    expect(onPort('plitzi_debug_4013=false')).not.toBe(onPort('plitzi_debug=false'));
+  });
+
+  it('is not split by a dev tools cookie that does not hide anything', () => {
+    expect(html('plitzi_debug=true')).toBe(html());
   });
 });
 

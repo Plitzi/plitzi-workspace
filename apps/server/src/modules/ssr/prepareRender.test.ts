@@ -35,7 +35,8 @@ const page = (id: string, slug: string, items: string[], seo: Record<string, unk
 const offlineData = (
   rsc: SchemaRsc | undefined = { enabled: true },
   homeRuntime: 'server' | 'client' = 'client',
-  fonts: SpaceFont[] = []
+  fonts: SpaceFont[] = [],
+  devTools = false
 ): OfflineDataRaw =>
   ({
     schema: {
@@ -57,7 +58,7 @@ const offlineData = (
       pageFolders: [],
       definition: { name: 'test', permanentUrl: 'test' },
       variables: [],
-      settings: { customCss: '' },
+      settings: { customCss: '', ...(devTools ? { devTools } : {}) },
       rsc
     },
     plugins: [],
@@ -88,6 +89,8 @@ type Options = {
   homeRuntime?: 'server' | 'client';
   /** What the deployment authorizes for debugging, and what the URL asks for. */
   debugMode?: boolean;
+  /** What the space's own settings say about dev tools on its published site. */
+  devTools?: boolean;
   /** The visitor's own preference, which rides on the request. */
   cookie?: string;
   query?: Record<string, string>;
@@ -106,6 +109,7 @@ const render = async (
     withAdapter = true,
     homeRuntime,
     debugMode,
+    devTools,
     cookie,
     query,
     degrade,
@@ -114,7 +118,7 @@ const render = async (
   }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
-  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime, fonts));
+  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime, fonts, devTools));
   const metrics = new RequestMetrics();
   const config = {
     environment: 'production',
@@ -297,6 +301,33 @@ describe('prepareRender / debugging in a render nobody is watching', () => {
     const { componentProps, templateParams } = await render('/', { debugMode: false, cookie: 'plitzi_debug=true' });
 
     expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(false);
+  });
+
+  /** An owner inspecting their own published site, on a server that left the decision to the space. */
+  it('authorizes debugging for a space that switched dev tools on, when the server said nothing', async () => {
+    const { componentProps, templateParams } = await render('/', { devTools: true });
+
+    expect(componentProps.debugMode).toBe(true);
+    expect(templateParams.debugMode).toBe(true);
+  });
+
+  it('authorizes nothing for a space that did not ask, when the server said nothing', async () => {
+    const { componentProps, templateParams } = await render('/');
+
+    expect(componentProps.debugMode).toBe(false);
+    expect(templateParams.debugMode).toBe(false);
+  });
+
+  it('lets a server that refused debugging keep refusing, whatever the space asks for', async () => {
+    const { templateParams } = await render('/', { debugMode: false, devTools: true });
+
+    expect(templateParams.debugMode).toBe(false);
+  });
+
+  it('still refuses it on a preview render of a space that switched dev tools on', async () => {
+    const { templateParams } = await render('/', { devTools: true, query: { __pt: 'tok' } });
+
     expect(templateParams.debugMode).toBe(false);
   });
 });

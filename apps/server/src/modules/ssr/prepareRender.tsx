@@ -135,8 +135,13 @@ export const prepareRender = async (
    *
    * `debugRendered` is what this particular render draws, preference included. The client derives the same
    * product from the same cookie on its first pass, so the markup it hydrates matches.
+   *
+   * Who may authorize it: the server first, through `debugMode`. When it said nothing, a development server does, and
+   * so does the space itself (`settings.devTools`) — an owner inspecting their own published site. The space is read
+   * from what this server loaded, never from the request, so a visitor has no say in it.
    */
-  const debugAuthorized = !isPreviewRender && Boolean(config.debugMode ?? config.devMode);
+  const debugAuthorized =
+    !isPreviewRender && (config.debugMode ?? (config.devMode === true || schema?.settings.devTools === true));
   const debugRendered = resolveDebugMode(
     debugAuthorized,
     // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.

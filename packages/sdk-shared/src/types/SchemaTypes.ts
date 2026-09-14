@@ -162,6 +162,13 @@ export type Schema = {
     sessionGate?: 'optimistic' | 'strict';
     /** How old a confirmation may get before the SDK re-checks on the next focus. Defaults to 300. */
     sessionRevalidateSeconds?: number;
+    /**
+     * Lets the published site open the dev tools — elements, state, interactions — for anybody who visits it.
+     *
+     * The space's own answer, read by a page server that left the decision open: a server that sets `debugMode`
+     * decides for every space it renders, and an explicit `false` there cannot be turned around from here.
+     */
+    devTools?: boolean;
   };
   rsc?: SchemaRsc;
   pages: Element['id'][];

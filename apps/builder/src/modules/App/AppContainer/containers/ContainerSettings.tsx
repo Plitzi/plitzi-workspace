@@ -50,7 +50,8 @@ const ContainerSettings = () => {
     refreshExpirationTimePath = 'refresh_expire_at',
     sessionHintCookie = '',
     sessionGate = 'optimistic',
-    sessionRevalidateSeconds = 300
+    sessionRevalidateSeconds = 300,
+    devTools = false
   } = settings;
 
   const handleChangeKeepState = useCallback(
@@ -58,6 +59,14 @@ const ContainerSettings = () => {
       void eventBridge.emit('main', 'schemaUpdateSettings', '', 'stateStorage');
       setSettings(state => ({ ...state, keepState: e.target.checked }));
       void eventBridge.emit('main', 'schemaUpdateSettings', e.target.checked, 'keepState');
+    },
+    [eventBridge]
+  );
+
+  const handleChangeDevTools = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSettings(state => ({ ...state, devTools: e.target.checked }));
+      void eventBridge.emit('main', 'schemaUpdateSettings', e.target.checked, 'devTools');
     },
     [eventBridge]
   );
@@ -269,6 +278,22 @@ const ContainerSettings = () => {
               <option value="sessionStorage">Session Storage</option>
             </Select>
           )}
+        </div>
+        <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
+          <Heading as="h4">Debugging</Heading>
+          <Alert intent="warning" size="xs" solid={false}>
+            For sites served with SSR — usually your <code>*.plitzi.app</code> address, or a custom domain pointed at
+            it. Anyone who opens the site can then open the dev tools (Shift+F12) and read its elements, state and
+            interactions. Switch it off when you are done.
+          </Alert>
+          <Checkbox
+            size="sm"
+            name="devTools"
+            checked={devTools}
+            onChange={handleChangeDevTools}
+            type="checkbox"
+            label="Dev tools on the published SSR site (*.plitzi.app)"
+          />
         </div>
         {/* <div className="p-6 border-b border-gray-300 grow basis-0 flex flex-col gap-4">
         <Heading type="h4">Space Settings</Heading>
