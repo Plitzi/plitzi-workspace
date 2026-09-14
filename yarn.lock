@@ -4642,6 +4642,7 @@ __metadata:
     "@types/ejs": "npm:^3.1.5"
     "@types/jsonwebtoken": "npm:^9.0.10"
     "@types/node": "npm:^26.5.1"
+    "@types/nodemailer": "npm:^8.0.1"
     "@types/react": "npm:^19.3.0"
     "@vitejs/plugin-react": "npm:^6.1.1"
     "@vitest/coverage-v8": "npm:^5.0.0"
@@ -4651,6 +4652,7 @@ __metadata:
     eslint-plugin-import: "npm:^2.32.0"
     jsonwebtoken: "npm:^9.0.3"
     mysql2: "npm:^3.24.4"
+    nodemailer: "npm:^10.0.9"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -5951,6 +5953,15 @@ __metadata:
   dependencies:
     undici-types: "npm:~8.9.0"
   checksum: 10c0/40aa7aa4c099c8a08bf39b5bcb15eaf2cc073666c2191b1d9ac8243ce6b68b23ace904a044c521f6d310b70e94514b531be5f4fc184f141a7ce7f0679ebc7bb3
+  languageName: node
+  linkType: hard
+
+"@types/nodemailer@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "@types/nodemailer@npm:8.0.1"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/4370ac478a6811faaa64fcf769556515c72b78c66961cde22be75bb975ce8a964cfbe5e7c0988a99250f3250faa34357c73958b019b3c63dd138ea3784442032
   languageName: node
   linkType: hard
 
@@ -13786,6 +13797,13 @@ __metadata:
   version: 2.0.53
   resolution: "node-releases@npm:2.0.53"
   checksum: 10c0/db9fb29b21ec12e223ead8bd9406100ff14fce01678a9a4865e288098456b84869431421a739f216aa520b6f57d9425f6537662501ae8a2d9e1771bfa87751bc
+  languageName: node
+  linkType: hard
+
+"nodemailer@npm:^10.0.9":
+  version: 10.0.10
+  resolution: "nodemailer@npm:10.0.10"
+  checksum: 10c0/062bf0861e4986eca150b8d78b8289c55f33ad689e9596aa71b4abd4ab4358b9c4881cec8acca3251643814d84d26ca6b1082153f47d35d65639d4ce858cfd67
   languageName: node
   linkType: hard
 

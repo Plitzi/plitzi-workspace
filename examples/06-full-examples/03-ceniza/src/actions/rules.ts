@@ -23,6 +23,9 @@ export const MAX_PEOPLE = 8;
 
 export const MAX_DAYS_AHEAD = 90;
 
+/** The space's SMTP credential, which every `email.send` step names: the restaurant's mail goes out as the restaurant. */
+export const SMTP_CREDENTIAL = 'ceniza-smtp';
+
 /** `21:30` → `2130`: the part of a key, an output field and a state key that names one booking time. */
 export const slotId = (time: string): string => time.replace(':', '');
 

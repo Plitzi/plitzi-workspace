@@ -26,6 +26,10 @@
       "types": "./dist/actions/index.d.ts",
       "import": "./dist/actions/index.mjs"
     },
+    "./actions/smtp": {
+      "types": "./dist/actions/smtp.d.ts",
+      "import": "./dist/actions/smtp.mjs"
+    },
     "./actions/triggerParams": {
       "types": "./dist/actions/triggerParams.d.ts",
       "import": "./dist/actions/triggerParams.mjs"

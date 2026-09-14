@@ -1,4 +1,4 @@
-import { requestOrigin } from '@plitzi/sdk-server/kernel';
+import { requestOrigin } from '../requestParser';
 
 import type { OAuthConfig, SSRRequest } from '@plitzi/sdk-shared';
 

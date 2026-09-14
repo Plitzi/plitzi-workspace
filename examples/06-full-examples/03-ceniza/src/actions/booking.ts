@@ -2,7 +2,7 @@ import { defineAction } from '@plitzi/sdk-authoring';
 
 import { restaurant } from '../content';
 import { seatsKey } from './availability';
-import { checkEmail, literal, MAX_DAYS_AHEAD, SEATS_PER_SLOT, setUpDay, slotState } from './rules';
+import { checkEmail, literal, MAX_DAYS_AHEAD, SEATS_PER_SLOT, setUpDay, slotState, SMTP_CREDENTIAL } from './rules';
 
 import type { ActionStepSpec } from '@plitzi/sdk-authoring';
 
@@ -151,6 +151,7 @@ export const bookingAction = defineAction({
       id: 'confirmation',
       task: 'email.send',
       params: {
+        credential: SMTP_CREDENTIAL,
         to: '{{ input.email }}',
         subject: 'Tu mesa en Ceniza · {{ reference.value }}',
         text: confirmation,

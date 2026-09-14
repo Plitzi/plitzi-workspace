@@ -13,7 +13,7 @@ export type ActionCatalogDeps = {
  *
  * The editor asks the SERVER what steps exist instead of holding a hardcoded list, and that is the whole reason a
  * self-hoster's own task appears in their builder with no fork: registering it is publishing it. It also means a
- * deployment with no mail transport never offers `email.send` — the catalog is what that deployment actually has,
+ * deployment with no database driver never offers `db.query` — the catalog is what that deployment actually has,
  * not what the SDK could imagine.
  *
  * Session-gated by the pipeline: the catalog names a deployment's server-side capabilities, which is not something

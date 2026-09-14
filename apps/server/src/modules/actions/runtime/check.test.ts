@@ -107,10 +107,40 @@ describe('checkAction', () => {
 
   /** The catalog is SERVED: a step that works on one deployment is a broken promise on another. */
   it('names a task this deployment does not register, and says what it does', async () => {
-    const report = await checkAction(entry({ send: node('send', { action: 'email.send' }) }), deps());
+    const report = await checkAction(entry({ put: node('put', { action: 'storage.put' }) }), deps());
 
-    expect(messages(report.issues)).toContain('no task called "email.send"');
+    expect(messages(report.issues)).toContain('no task called "storage.put"');
     expect(report.issues[0].hint).toContain('http.request');
+  });
+
+  /** Without a credential there is nobody's server to send through: the first booking is where it would surface. */
+  it('refuses an email step that names no SMTP credential, and one that is not an SMTP server', async () => {
+    const unnamed = await checkAction(entry({ send: node('send', { action: 'email.send' }) }), deps());
+    const wrongKind = await checkAction(
+      entry({ send: node('send', { action: 'email.send', params: { credential: 'stripe' } }) }),
+      deps()
+    );
+
+    expect(messages(unnamed.issues)).toContain('names no SMTP server');
+    expect(messages(wrongKind.issues)).toContain('not a usable SMTP server');
+  });
+
+  it('accepts an email step whose credential is a usable SMTP server', async () => {
+    const smtp = {
+      host: 'smtp.example.test',
+      port: '587',
+      security: 'starttls',
+      username: 'ana',
+      password: 'secret',
+      fromEmail: 'hola@example.test',
+      fromName: 'Ceniza'
+    };
+    const report = await checkAction(
+      entry({ send: node('send', { action: 'email.send', params: { credential: 'smtp' } }) }),
+      deps({ lookups: { getAction: () => Promise.resolve(undefined), getCredential: () => Promise.resolve(smtp) } })
+    );
+
+    expect(report.issues).toEqual([]);
   });
 
   it('refuses a database engine this server drives no connection for', async () => {

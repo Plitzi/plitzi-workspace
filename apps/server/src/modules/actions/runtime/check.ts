@@ -1,4 +1,4 @@
-import { parseCron, triggerHasStaleVerify, triggerVerify } from '@plitzi/sdk-shared/actions';
+import { parseCron, readSmtpCredential, triggerHasStaleVerify, triggerVerify } from '@plitzi/sdk-shared/actions';
 import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { triggerParams } from './triggers';
@@ -175,6 +175,33 @@ export const checkAction = async (entry: ActionEntry, deps: ActionCheckDeps): Pr
     }
 
     const identifier = literal(params.credential);
+
+    // `email.send` has nothing to send through without one, and a credential that is not an SMTP server — a missing
+    // port, a sender that is not an address — fails at the first visitor's booking and nowhere earlier.
+    if (node.action === 'email.send') {
+      const path = `nodes.${node.id}.params.credential`;
+      if (!identifier) {
+        add('error', path, 'This step names no SMTP server to send through', 'Add an SMTP credential and pick it here');
+
+        return;
+      }
+
+      const credential = await checkCredential(node, identifier);
+      if (!credential) {
+        return;
+      }
+
+      readSmtpCredential(credential).problems.forEach(problem =>
+        add(
+          'error',
+          path,
+          `The credential "${identifier}" is not a usable SMTP server: ${problem.key} — ${problem.message}`
+        )
+      );
+
+      return;
+    }
+
     if (!identifier) {
       return;
     }

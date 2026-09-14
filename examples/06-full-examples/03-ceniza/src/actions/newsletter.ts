@@ -1,7 +1,7 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
 import { restaurant } from '../content';
-import { checkEmail } from './rules';
+import { checkEmail, SMTP_CREDENTIAL } from './rules';
 
 import type { ActionStepSpec } from '@plitzi/sdk-authoring';
 
@@ -63,7 +63,12 @@ export const newsletterAction = defineAction({
     {
       id: 'welcome',
       task: 'email.send',
-      params: { to: `{{ ${ADDRESS} }}`, subject: 'Bienvenido a la carta de temporada de Ceniza', text: welcome },
+      params: {
+        credential: SMTP_CREDENTIAL,
+        to: `{{ ${ADDRESS} }}`,
+        subject: 'Bienvenido a la carta de temporada de Ceniza',
+        text: welcome
+      },
       when: onlyIf('signup.value', 1)
     },
     {

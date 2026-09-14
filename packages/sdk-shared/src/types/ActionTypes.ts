@@ -332,11 +332,9 @@ export type ActionRunRecord = {
  * One message a flow asked to send.
  *
  * Plain text only. The body is whatever a flow rendered, and a flow renders what a visitor typed: HTML built from
- * that is markup a stranger wrote, sent from the deployment's own domain.
+ * that is markup a stranger wrote, sent from the space's own domain.
  */
 export type ActionEmailMessage = {
-  /** The space the run belongs to, so a deployment can cap and attribute what each one sends. */
-  spaceId: number;
   to: string;
   subject: string;
   text: string;
@@ -344,13 +342,21 @@ export type ActionEmailMessage = {
 };
 
 /**
- * Where the `email.send` task hands a message: the deployment's transport, and its policy.
+ * What a deployment decides about the mail its spaces' flows send through their own SMTP credentials.
  *
- * The sender, the sending domain, what happens to a bounce and how much one space may send are the deployment's, so
- * none of them is a parameter a flow can set. Throwing fails the step — a cap reached, a provider refusing — and
- * the run fails at it with that message.
+ * The server is still the one opening the connection, from the deployment's addresses — so how much one space may
+ * send, and whether a credential may point inside the deployment's own network, are the deployment's to say.
  */
-export type ActionEmailAdapter = { send: (message: ActionEmailMessage) => Promise<void> };
+export type ActionEmailConfig = {
+  /** Messages one space may send per UTC day, counted before each send. Default 200. */
+  dailyLimitPerSpace?: number;
+  /**
+   * Lets an SMTP credential name a host on a private network — `localhost`, `10.x`, `192.168.x`. Off by default:
+   * a hosted server refuses them, because a credential is typed by a customer and the connection starts inside the
+   * cluster. On for a development mail catcher, or a self-hosted server whose relay lives beside it.
+   */
+  allowPrivateHosts?: boolean;
+};
 
 /**
  * One thing a CHECK found about an action, before anybody runs it.

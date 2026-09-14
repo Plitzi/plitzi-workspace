@@ -2,7 +2,7 @@ import type { ActionDocument } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorManifestDraft } from './ConnectorTypes';
 
-export type SpaceCredentialProvider = 's3' | 'r2' | 'ssr' | 'custom';
+export type SpaceCredentialProvider = 's3' | 'r2' | 'ssr' | 'custom' | 'smtp';
 
 /**
  * A connector manifest as the builder sees it.

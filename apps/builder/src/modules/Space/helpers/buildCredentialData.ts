@@ -16,6 +16,12 @@ export const buildCredentialData = (values: z.infer<typeof spaceCredentialFormSc
     return JSON.parse(values.data) as Record<string, string>;
   }
 
+  if (values.provider === 'smtp') {
+    const { host, port, security, username, password, fromEmail, fromName } = values;
+
+    return { host, port, security, username, password, fromEmail, fromName };
+  }
+
   return values.fields;
 };
 

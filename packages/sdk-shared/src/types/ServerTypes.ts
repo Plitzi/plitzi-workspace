@@ -1,5 +1,5 @@
 import type {
-  ActionEmailAdapter,
+  ActionEmailConfig,
   ActionEntry,
   ActionLimits,
   ActionRejectReason,
@@ -535,11 +535,10 @@ export type SSRActionConfig = {
    */
   dbDrivers?: unknown[];
   /**
-   * How a flow's mail leaves this server. Omitted leaves the `email.send` task unregistered entirely.
-   *
-   * The sender, the sending domain and how much one space may send are the adapter's, never a flow's.
+   * The limits on `email.send`, which sends through the SMTP credential a step names. Omitted keeps the defaults: 200
+   * messages per space per day, and no SMTP host on a private network. See {@link ActionEmailConfig}.
    */
-  email?: ActionEmailAdapter;
+  email?: ActionEmailConfig;
   /**
    * Called once per run that STARTED — completed, failed or aborted — for a deployment that keeps a record.
    * Shaped as `ActionRunRecord` in `@plitzi/sdk-server/actions`.

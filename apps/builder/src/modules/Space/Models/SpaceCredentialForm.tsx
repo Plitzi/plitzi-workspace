@@ -5,8 +5,34 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import { readSmtpCredential } from '@plitzi/sdk-shared/actions';
+
 import type { SpaceCredentialProvider } from '@plitzi/sdk-shared';
+import type { SmtpSecurity } from '@plitzi/sdk-shared/actions';
 import type { MouseEvent } from 'react';
+
+type SmtpFields = {
+  host: string;
+  port: string;
+  security: SmtpSecurity;
+  username: string;
+  password: string;
+  fromEmail: string;
+  fromName: string;
+};
+
+/** What a new SMTP credential starts from: the submission port most providers expect, upgraded to TLS. */
+const SMTP_DEFAULTS: SmtpFields = {
+  host: '',
+  port: '587',
+  security: 'starttls',
+  username: '',
+  password: '',
+  fromEmail: '',
+  fromName: ''
+};
+
+const SMTP_FIELDS: (keyof SmtpFields)[] = ['host', 'port', 'security', 'username', 'password', 'fromEmail', 'fromName'];
 
 export const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
   z.object({
@@ -39,6 +65,25 @@ export const spaceCredentialFormSchema = z.discriminatedUnion('provider', [
         }
       }, 'Expected a JSON object, for example { "token": "…" }')
   }),
+  // The mail server a space's `email.send` steps go through. Judged by the same rule the task and the API apply, so a
+  // credential this form accepts is one a flow can actually send with.
+  z
+    .object({
+      provider: z.literal('smtp'),
+      name: z.string().min(2),
+      host: z.string(),
+      port: z.string(),
+      security: z.enum(['starttls', 'tls', 'none']),
+      username: z.string(),
+      password: z.string(),
+      fromEmail: z.string(),
+      fromName: z.string()
+    })
+    .superRefine((values, ctx) => {
+      readSmtpCredential(values).problems.forEach(problem =>
+        ctx.addIssue({ code: 'custom', path: [problem.key], message: problem.message })
+      );
+    }),
   z.object({
     provider: z.literal('ssr'),
     name: z.string().min(2),
@@ -86,6 +131,10 @@ const getDefaultValues = ({
 
   if (provider === 'custom') {
     return { name, provider, data: '{\n  "token": ""\n}' };
+  }
+
+  if (provider === 'smtp') {
+    return { name, provider, ...SMTP_DEFAULTS };
   }
 
   return { name, provider, accessKeyId, secretAccessKey };
@@ -137,6 +186,10 @@ const SpaceCredentialForm = ({
         form.formMethods.setValue('data', '{\n  "token": ""\n}');
       }
 
+      if (value === 'smtp') {
+        SMTP_FIELDS.forEach(key => form.formMethods.setValue(key, SMTP_DEFAULTS[key]));
+      }
+
       if (value === 'ssr') {
         form.formMethods.setValue('fields', { type: 'basic', user: '', pass: '' });
       }
@@ -153,6 +206,7 @@ const SpaceCredentialForm = ({
           <option value="r2">Cloudflare R2</option>
           <option value="ssr">Plitzi SSR</option>
           <option value="custom">CMS / Custom API</option>
+          <option value="smtp">SMTP (email)</option>
         </Form.Select>
         <Form.Conditional when="provider" is={['s3', 'r2']}>
           <Form.Input name="accessKeyId" label="Access Key ID" size="xs" />
@@ -160,6 +214,19 @@ const SpaceCredentialForm = ({
         </Form.Conditional>
         <Form.Conditional when="provider" is="custom">
           <Form.TextArea name="data" label="Credential Data (JSON)" size="xs" />
+        </Form.Conditional>
+        <Form.Conditional when="provider" is="smtp">
+          <Form.Input name="host" label="Host" placeholder="smtp.example.com" size="xs" />
+          <Form.Input name="port" label="Port" placeholder="587" size="xs" />
+          <Form.Select name="security" label="Security" size="xs">
+            <option value="starttls">STARTTLS (usually 587)</option>
+            <option value="tls">TLS (usually 465)</option>
+            <option value="none">None</option>
+          </Form.Select>
+          <Form.Input name="username" label="User" size="xs" />
+          <Form.Input name="password" label="Password" size="xs" type="password" />
+          <Form.Input name="fromEmail" label="Send as (email)" placeholder="hello@example.com" size="xs" />
+          <Form.Input name="fromName" label="Send as (name)" size="xs" />
         </Form.Conditional>
         <Form.Conditional when="provider" is="ssr">
           <Form.Select name="fields.type" label="Auth Type" size="xs">

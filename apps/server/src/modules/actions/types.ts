@@ -1,5 +1,6 @@
+import type { ActionEmailSender } from './runtime/email';
 import type {
-  ActionEmailAdapter,
+  ActionEmailConfig,
   ActionEntry,
   ActionLimits,
   ActionRejectRecord,
@@ -132,8 +133,8 @@ export type ActionTaskContext = {
   kv: ActionKvStore;
   /** The database engines this deployment registered, for the `db.query` task. */
   dbDrivers: ActionDbDriver[];
-  /** The transport this deployment gave the `email.send` task. Absent → that task is not offered at all. */
-  email?: ActionEmailAdapter;
+  /** How `email.send` reaches a space's SMTP server, under the deployment's limits. */
+  email: ActionEmailSender;
   /** Pushes a `data` frame to a streaming caller. A no-op when nobody negotiated a stream. */
   emit: (chunk: unknown) => void;
 };
@@ -183,8 +184,8 @@ export type ActionsConfig = {
   rateLimit?: { webhookPerMinute?: number };
   /** Database engines this deployment lets a flow reach. Empty → the `db.query` task is not offered at all. */
   dbDrivers?: ActionDbDriver[];
-  /** How a flow's mail leaves this server. Absent → the `email.send` task is not offered at all. */
-  email?: ActionEmailAdapter;
+  /** The limits on `email.send`: messages per space per day, and whether an SMTP host may be on a private network. */
+  email?: ActionEmailConfig;
   /**
    * Called once per run that started, for a deployment that keeps a record.
    *
@@ -219,7 +220,7 @@ export type ActionsConfig = {
 
 /** Re-exported so the module's own files import one place, and a deployment writing an `onRun` or an `onReject`
  *  sees the same shapes the module emits. */
-export type { ActionEmailAdapter, ActionEmailMessage, ActionRejectRecord, ActionRunRecord } from '@plitzi/sdk-shared';
+export type { ActionEmailConfig, ActionEmailMessage, ActionRejectRecord, ActionRunRecord } from '@plitzi/sdk-shared';
 
 export type ResolvedActionLimits = Required<ActionLimits>;
 

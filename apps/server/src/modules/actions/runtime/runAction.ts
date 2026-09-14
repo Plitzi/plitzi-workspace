@@ -1,6 +1,7 @@
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 import { hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import { createEmailSender } from './email';
 import { ActionRunError } from './errors';
 import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
@@ -286,6 +287,8 @@ export const createActionRunner = (
   baseFetch: typeof fetch = fetch
 ): ActionRunner => {
   const kv = createKvStore(config.kv ?? createMemoryKv());
+  // Over the server's own store rather than a space's: the counter that limits a flow is not a key the flow can reach.
+  const emailSender = createEmailSender({ ...config.email, kv });
 
   /** Never allowed to fail a run: a logging outage must not take an action down, the same rule metering follows. */
   const record = async (entry: ActionRunRecord) => {
@@ -369,7 +372,7 @@ export const createActionRunner = (
       fetch: runFetch,
       kv: scopedKv,
       dbDrivers: config.dbDrivers ?? [],
-      email: config.email,
+      email: emailSender,
       emit: chunk => request.emit?.(redact(chunk))
     });
 

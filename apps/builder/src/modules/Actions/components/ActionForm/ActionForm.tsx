@@ -146,6 +146,47 @@ const triggerParamsFor = (credentials: SpaceCredential[]): Record<string, Trigge
   }
 });
 
+const isCredentialParam = (param: unknown): param is { label?: string; credentialProvider: string } =>
+  typeof param === 'object' &&
+  param !== null &&
+  'credentialProvider' in param &&
+  typeof param.credentialProvider === 'string';
+
+/**
+ * A task param that names a credential, offered as this space's credentials of that kind.
+ *
+ * The task says which kind (`credentialProvider`); only the editor knows which ones the space holds. A text box would
+ * ask somebody to type an identifier they have to go and look up, and to get it wrong silently.
+ */
+const offerCredentials = (params: Record<string, unknown>, credentials: SpaceCredential[]): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(params).map(([key, param]) => {
+      if (!isCredentialParam(param)) {
+        return [key, param];
+      }
+
+      const matching = credentials.filter(credential => credential.provider === param.credentialProvider);
+      const label = param.label ?? 'Credential';
+
+      return [
+        key,
+        {
+          type: 'select',
+          canBind: false,
+          defaultValue: '',
+          label: matching.length > 0 ? label : `${label} — add one in Credentials first`,
+          options: [
+            { label: 'Select a credential…', value: '' },
+            ...matching.map(credential => ({
+              label: `${credential.name} (${credential.identifier})`,
+              value: credential.identifier
+            }))
+          ]
+        }
+      ];
+    })
+  );
+
 const asNodeDefinitions = (tasks: ActionTaskDescriptor[], credentials: SpaceCredential[]): InteractionCallback[] => {
   const triggerParams = triggerParamsFor(credentials);
 
@@ -161,7 +202,7 @@ const asNodeDefinitions = (tasks: ActionTaskDescriptor[], credentials: SpaceCred
       action: task.name,
       title: task.title,
       type: 'task' as const,
-      params: task.params as InteractionCallback['params'],
+      params: offerCredentials(task.params, credentials) as InteractionCallback['params'],
       preview: {}
     }))
   ];

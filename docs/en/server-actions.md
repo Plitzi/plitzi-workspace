@@ -469,7 +469,7 @@ adapter written out in full, in
 [`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger).
 
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
-supplies a shared one), the database drivers `db.query` may use, the transport `email.send` hands its mail to, the
+supplies a shared one), the database drivers `db.query` may use, the limits on what `email.send` may send, the
 per-run limits, and what a run costs.
 
 **Every store here is yours.** `sdk-server` opens a connection to nothing at all: it reads a space through an
@@ -521,28 +521,33 @@ Two things your adapter does owe:
 - **Throw when the store is unreachable.** Nothing above catches, deliberately: this is not a cache, and a miss
   here means the rate limit did not count and the idempotency key was not seen.
 
-### The email transport
+### Email
 
-`email.send` is shipped, and offered only to a deployment that says how mail leaves it:
-
-```ts
-const email: ActionEmailAdapter = {
-  send: async ({ spaceId, to, subject, text, replyTo }) => {
-    await provider.send({ from: 'bookings@example.com', to, subject, text, replyTo });
-  }
-};
-
-createServer({ action: { lookups, email } });
-```
+`email.send` is shipped and offered by every server, because the mail account is the **space's**, not the
+deployment's: a step names one of the space's credentials of provider `smtp`, and the message goes through that
+server as its `fromEmail`. The builder offers the space's SMTP credentials to pick from; a credential holds `host`,
+`port`, `security` (`starttls`, `tls` or `none`), `username`, `password`, `fromEmail` and `fromName`, and is judged by
+`readSmtpCredential` from `@plitzi/sdk-shared/actions` — the same rule the credential form, the check and the task
+apply.
 
 The task owns what is the same everywhere: exactly one recipient, a one-line subject, plain text only, sizes that
-fit a message. The adapter owns everything a provider account decides — the sender and its domain, what happens to
-a bounce, and how much one space may send (`spaceId` is there for that). None of it is a parameter, so no flow can
-choose who its mail appears to come from. Throw to fail the step: a cap reached or a provider refusing ends the run
-at `email.send` with that message.
+fit a message. Who the mail comes from is the credential's, never a parameter a flow renders. A step with no
+credential, or one naming a credential that is not a usable SMTP server, fails at `email.send` and says so — and the
+check reports it before anybody runs the flow.
 
-During development an adapter that writes the message to the log is the whole transport — the flow runs end to
-end, and nobody's inbox is involved.
+The server still opens the connection, from the deployment's addresses, so two things stay the deployment's:
+
+```ts
+createServer({ action: { lookups, email: { dailyLimitPerSpace: 200, allowPrivateHosts: false } } });
+```
+
+- **`dailyLimitPerSpace`** (default 200) — messages one space may send per UTC day, counted in `kv` before each
+  send and never given back. A public action can be made to send to any address a visitor types; the limit is what
+  stops a space relaying mail. Counted in the shared store, so a cluster needs a shared `kv` for it to hold.
+- **`allowPrivateHosts`** (default off) — whether a credential may name `localhost` or a host that resolves to a
+  private network. A credential is typed by a customer and the connection starts inside your network, so a hosted
+  server keeps it off. Turn it on for a development mail catcher such as [Mailpit](https://mailpit.axllent.org), or a
+  self-hosted relay beside the server.
 
 ### The database driver
 

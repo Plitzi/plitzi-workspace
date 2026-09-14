@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { ElementInteraction } from './SchemaTypes';
+import type { SpaceCredentialProvider } from './SpaceTypes';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
 // `task` is server-only: it runs inside a server action, never in the browser. It is not a `utility` — those are
@@ -41,6 +42,11 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
   canBind?: boolean;
   label?: string;
   when?: boolean | ((params: InteractionCallbackParamValues<T>) => boolean);
+  /**
+   * This param names one of the space's credentials, of this provider. Serializable on purpose: an editor offers the
+   * space's credentials of that kind to pick from, rather than a text box somebody has to type an identifier into.
+   */
+  credentialProvider?: SpaceCredentialProvider;
 } & (
   | { type: 'text'; defaultValue?: string | number }
   | { type: 'textarea'; defaultValue?: string | number }

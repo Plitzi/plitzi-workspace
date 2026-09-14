@@ -75,7 +75,7 @@ Needed to work on persistence, auth, the API, or anything that must survive a re
 because it owns the databases and mints the credentials the frontend needs.
 
 **1. Backend** — in [plitzi-sdk-server](https://github.com/plitzi/plitzi-sdk-server), follow its README: mkcert
-certificates, `/etc/hosts` entries, `yarn db:up`, then schema and seed data. Then:
+certificates, `/etc/hosts` entries, `yarn docker:up` (databases and Mailpit), then schema and seed data. Then:
 
 ```bash
 sudo yarn start          # gateway on :443, routing every role by sub-domain

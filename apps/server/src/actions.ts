@@ -62,7 +62,7 @@ export type { TaskRegistryOptions } from './modules/actions/tasks/registry';
 export type {
   ActionCredential,
   ActionDbDriver,
-  ActionEmailAdapter,
+  ActionEmailConfig,
   ActionEmailMessage,
   ActionKvAdapter,
   ActionKvStore,

@@ -76,11 +76,14 @@ A refusal is an answer, not an error: `{ ok: false, message }`, in the restauran
 ## Configured in `main.ts`
 
 ```ts
-createServer({ action: { lookups, email, onRun: createRunLogger(consoleLogger) } });
+createServer({ action: { lookups, email: { allowPrivateHosts: true }, onRun: createRunLogger(consoleLogger) } });
 ```
 
-- **`email`** is where the confirmation and the welcome go. Here it writes each message to the process log, so the
-  flows run end to end without anybody's inbox; a real deployment swaps this one object for its provider.
+- **The confirmation and the welcome** go through the space's own SMTP server, the credential `ceniza-smtp` their
+  `email.send` steps name (`lookups.getCredential`, in [`src/actions/index.ts`](./src/actions/index.ts)). Here it is a
+  Mailpit on this machine — start one with `docker run -p 1025:1025 -p 8025:8025 axllent/mailpit` and read the mail at
+  http://localhost:8025. Without it the booking still answers, and the run fails at `email.send` saying why.
+- **`email.allowPrivateHosts`** lets that credential name `127.0.0.1`. A hosted server leaves it off.
 - **`kv`** is left to its in-process default, which is right for one process. A cluster passes a shared store, or
   two replicas each count their own seats.
 
