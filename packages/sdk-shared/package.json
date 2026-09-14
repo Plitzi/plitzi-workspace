@@ -22,6 +22,10 @@
       "types": "./dist/actions/cron.d.ts",
       "import": "./dist/actions/cron.mjs"
     },
+    "./actions/failureHandler": {
+      "types": "./dist/actions/failureHandler.d.ts",
+      "import": "./dist/actions/failureHandler.mjs"
+    },
     "./actions/index": {
       "types": "./dist/actions/index.d.ts",
       "import": "./dist/actions/index.mjs"

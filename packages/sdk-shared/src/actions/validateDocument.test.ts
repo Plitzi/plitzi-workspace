@@ -37,6 +37,49 @@ describe('validateActionDocument', () => {
     expect(report.warnings).toEqual([]);
   });
 
+  describe('the undo a failed run jumps to', () => {
+    const step = (id: string, action: string, afterNode = '') => ({ id, type: 'task', action, params: {}, afterNode });
+    const flow = (...chain: [string, string][]) =>
+      document({
+        nodes: {
+          start: { ...callTrigger(), afterNode: chain[0][0] },
+          ...Object.fromEntries(chain.map(([id, action], index) => [id, step(id, action, chain[index + 1]?.[0])]))
+        }
+      });
+
+    it('accepts an answer, then On Failure, then the steps that give back what was done', () => {
+      const report = validateActionDocument(
+        flow(['take', 'kv.increment'], ['ret', 'flow.output'], ['undo', 'flow.onFailure'], ['giveBack', 'kv.increment'])
+      );
+
+      expect(report.errors).toEqual([]);
+      expect(report.warnings).toEqual([]);
+    });
+
+    it('refuses an answer after On Failure, and a second place for the undo to begin', () => {
+      const report = validateActionDocument(
+        flow(['take', 'kv.increment'], ['undo', 'flow.onFailure'], ['again', 'flow.onFailure'], ['ret', 'flow.output'])
+      );
+
+      expect(messages(report.errors)).toContain('answers a run that has already failed');
+      expect(messages(report.errors)).toContain('a second one');
+    });
+
+    it('says when there is nothing to undo, or nothing that undoes it', () => {
+      const first = validateActionDocument(flow(['undo', 'flow.onFailure'], ['giveBack', 'kv.increment']));
+      const last = validateActionDocument(flow(['take', 'kv.increment'], ['undo', 'flow.onFailure']));
+
+      expect(messages(first.warnings)).toContain('nothing can fail');
+      expect(messages(last.warnings)).toContain('undoes nothing');
+    });
+
+    it('keeps `failure` for the run to publish', () => {
+      const report = validateActionDocument(flow(['failure', 'kv.increment'], ['ret', 'flow.output']));
+
+      expect(messages(report.errors)).toContain('"failure" is what the run itself publishes');
+    });
+  });
+
   it('refuses anything that is not a document', () => {
     expect(validateActionDocument(undefined).valid).toBe(false);
     expect(validateActionDocument('nope').valid).toBe(false);

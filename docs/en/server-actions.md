@@ -110,6 +110,48 @@ Two things worth knowing:
 Everything the flow produced and did not name stays on the server. That is the mechanism that keeps an API's
 internal fields, draft rows and tokens out of the page.
 
+### When a step fails: giving back what was already done
+
+A failed step ends the run, and nothing a step before it did is undone on its own. A booking that took two seats
+and then could not send its confirmation leaves the seats taken, while the visitor is told it failed.
+
+An **On Failure** step (`flow.onFailure`) is where the undo begins. Put it after the output step, and after it the
+steps that give back what the flow did:
+
+```
+take seats → keep booking → send confirmation → output → On Failure → give seats back → forget booking
+```
+
+- **A run that reaches On Failure has succeeded** and ends there. Its steps never run.
+- **A run whose step fails jumps to it** and runs the steps after it, in order. The run still ends **failed**, with
+  the failure it had, and the undo is in the trace after it.
+- **Each undo step still asks its own `when`.** The failure may have come before the thing to undo was ever done —
+  a booking refused at validation took no seats — so name the step whose work it gives back:
+  `fits.value = yes`. What failed is in scope as `{{ failure.step }}` and `{{ failure.message }}`.
+- **It runs on a clock of its own** (5 seconds, or the run's own budget if that is shorter) and a request budget of its
+  own, because the run's may be exactly what ran out, and a caller closing the connection does not stop it. An undo
+  step that fails too is added to the failure, never put in its place.
+
+The same comes from code as `onFailure`:
+
+```ts
+defineAction({
+  // …
+  steps: [/* take seats, keep the booking, send the confirmation */],
+  onFailure: [
+    {
+      id: 'seatsBack',
+      task: 'kv.increment',
+      params: { key: 'seats:{{ input.date }}', amount: '-{{ input.people }}' },
+      when: { combinator: 'and', rules: [{ field: 'fits.value', operator: '=', value: 'yes' }] }
+    }
+  ]
+});
+```
+
+Undo what can be undone, and only that: a message that already left or a charge that went through is not taken
+back by a step after it. Put those last, so nothing that follows them can fail.
+
 ### Checking and testing it
 
 Three panels, answering three different questions:
@@ -189,13 +231,13 @@ The ones `sdk-server` ships:
 
 | Namespace | What it does |
 |---|---|
-| `flow` | `delay`, `fail`, and the `output` step above |
+| `flow` | `delay`, `fail`, the `output` step above, and `onFailure` — where a failed run's undo begins |
 | `transform` | `template` (twig), `json` |
 | `http` | `request` — an outbound call with a credential resolved server-side |
 | `connector` | `read`, `write` — the connectors this space already has |
 | `auth` | `currentUser`, `requireRole` |
 | `kv` | `get`, `set`, `increment`, `delete` — namespaced per space |
-| `email` | `send` — one plain-text message, offered only when the deployment configured a transport |
+| `email` | `send` — one plain-text message, through an SMTP server the space holds as a credential |
 | `stream` | `emit` — progress for a streaming caller |
 
 Plus whatever the deployment registered. On Plitzi's own: `ai.complete`, and `db.query` when a database driver is
@@ -204,7 +246,8 @@ available.
 ### What a step can see
 
 The run carries only the basics — `input`, `user`, `spaceId`, `environment`, `trigger`, `runId`, `now` — plus
-each previous step's result under its own id.
+each previous step's result under its own id. The steps after **On Failure** also see `failure`: the step that
+stopped the run and its message.
 
 `now` is the moment the run started, as an ISO string, and it is the same moment for every step: a check that asks
 the time and the write it guards cannot straddle midnight. It is UTC, so read it in the zone the question is about

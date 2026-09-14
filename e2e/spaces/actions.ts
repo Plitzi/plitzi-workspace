@@ -328,5 +328,81 @@ const mailDocument = (name: string, credential: string) => ({
 /** Sends one message through the space's own SMTP server. */
 export const MAIL_ACTION = { id: 'e2e-mail', document: mailDocument('Mail', MAIL_CREDENTIAL) };
 
+/** A counter per slot the two actions below share, as a booking's seats are. */
+const slotInput = '{"slot":{"type":"text","defaultValue":""}}';
+
+/**
+ * A seat taken, a confirmation that cannot leave, and the seat given back.
+ *
+ * The undo a failed run jumps to, through the tasks a real booking uses: the confirmation names no SMTP server, so the
+ * run fails after the seat is already taken, and what follows On Failure is the only thing that can return it.
+ */
+export const HELD_SEAT_ACTION = {
+  id: 'e2e-hold-seat',
+  document: {
+    name: 'Hold a seat',
+    nodes: {
+      start: node('start', {
+        type: 'trigger',
+        action: 'call',
+        params: { access: 'public', input: slotInput },
+        afterNode: 'take'
+      }),
+      take: node('take', {
+        action: 'kv.increment',
+        params: { key: 'seats:{{ input.slot }}', amount: '1' },
+        beforeNode: 'start',
+        afterNode: 'confirm'
+      }),
+      confirm: node('confirm', {
+        action: 'email.send',
+        params: { credential: '', to: 'guest@e2e.test', subject: 'Your seat', text: 'Held for you.' },
+        beforeNode: 'take',
+        afterNode: 'answer'
+      }),
+      answer: node('answer', {
+        action: 'flow.output',
+        params: { values: '{"held": true}' },
+        beforeNode: 'confirm',
+        afterNode: 'undo'
+      }),
+      undo: node('undo', { action: 'flow.onFailure', beforeNode: 'answer', afterNode: 'giveBack' }),
+      giveBack: node('giveBack', {
+        action: 'kv.increment',
+        params: { key: 'seats:{{ input.slot }}', amount: '-1' },
+        when: { combinator: 'and', rules: [{ field: 'take.value', operator: '!=', value: '' }] },
+        beforeNode: 'undo'
+      })
+    }
+  }
+};
+
+/** How many seats a slot has taken, read back by a separate run. */
+export const SEATS_ACTION = {
+  id: 'e2e-seats',
+  document: {
+    name: 'Seats',
+    nodes: {
+      start: node('start', {
+        type: 'trigger',
+        action: 'call',
+        params: { access: 'public', input: slotInput },
+        afterNode: 'count'
+      }),
+      count: node('count', {
+        action: 'kv.get',
+        params: { key: 'seats:{{ input.slot }}' },
+        beforeNode: 'start',
+        afterNode: 'answer'
+      }),
+      answer: node('answer', {
+        action: 'flow.output',
+        params: { values: '{"taken": "{{ count.value }}"}' },
+        beforeNode: 'count'
+      })
+    }
+  }
+};
+
 /** The same step naming no SMTP server at all — what a space that never configured one has. */
 export const UNCONFIGURED_MAIL_ACTION = { id: 'e2e-mail-unconfigured', document: mailDocument('Mail, no server', '') };

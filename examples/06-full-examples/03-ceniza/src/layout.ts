@@ -20,6 +20,7 @@ import {
   text,
   themeToggle,
   toggleState,
+  updateElement,
   when,
   whenFailed
 } from '@plitzi/sdk-authoring';
@@ -238,9 +239,12 @@ export const faqList = (key: string, items: Faq[], id?: string): ElementSpec =>
  *
  * The same three endings as the booking — accepted, refused with the server's sentence, not answered — and the
  * thank-you says what the server said, because "you were already on the list" is a different answer from "welcome".
- * `id` names the form and keys its state, and a page that shows the band passes its own.
+ * While it is sent the button is disabled and says so, so pressing it again sends nothing twice; `revertOnFinish` gives
+ * it back, so a refusal leaves a button to press again. `id` names the form and keys its state, and a page that shows
+ * the band passes its own.
  */
 export const newsletter = (id: string): ElementSpec => {
+  const submitId = `${id}-enviar`;
   const sentKey = `${id}Sent`;
   const messageKey = `${id}Message`;
   const errorKey = `${id}Error`;
@@ -281,6 +285,14 @@ export const newsletter = (id: string): ElementSpec => {
                   [
                     named(`${id}Submitted`, onSubmit()),
                     setState({ key: errorKey, type: 'text', value: '' }),
+                    updateElement(
+                      { category: 'attribute', key: 'disabled', value: true, revertOnFinish: true },
+                      submitId
+                    ),
+                    updateElement(
+                      { category: 'attribute', key: 'content', value: 'Apuntándote…', revertOnFinish: true },
+                      submitId
+                    ),
                     named(
                       runId,
                       runServerAction({
@@ -305,7 +317,7 @@ export const newsletter = (id: string): ElementSpec => {
                 ],
                 children: [
                   field({ name: 'email', label: 'Tu email', subType: 'email', placeholder: 'tu@email.com' }),
-                  button({ subType: 'submit', content: 'Suscribirme', class: 'buttonPrimary' })
+                  button({ id: submitId, subType: 'submit', content: 'Suscribirme', class: 'buttonPrimary' })
                 ]
               }),
               paragraph({

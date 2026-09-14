@@ -1,3 +1,5 @@
+import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
+
 import { authorFlow } from './flows';
 
 import type { StepSpec } from './types';
@@ -87,6 +89,14 @@ export interface ActionSpec {
   /** One way in, or several — a flow reachable both from a page and from a webhook answers each on its own terms. */
   trigger: ActionTriggerSpec | ActionTriggerSpec[];
   steps: ActionStepSpec[];
+  /**
+   * What a failed run gives back: steps that run only when one of `steps` fails, written after the answer behind a
+   * `flow.onFailure` step. A run that succeeds never reaches them.
+   *
+   * Give each a `when` naming the step whose work it undoes — the failure may have come before that step ever ran.
+   * What failed is in their scope as `{{ failure.step }}` and `{{ failure.message }}`, and the run still ends failed.
+   */
+  onFailure?: ActionStepSpec[];
   /**
    * What leaves the server, as the output step's template. Defaults to the last step's whole result.
    *
@@ -196,22 +206,37 @@ export const defineAction = (spec: ActionSpec): ActionEntry => {
 
   const triggerIds = triggers.map(trigger => trigger.id ?? (triggers.length === 1 ? 'start' : trigger.type));
   const last = spec.steps[spec.steps.length - 1];
-  assertUniqueIds([...triggerIds, ...spec.steps.map(step => step.id), 'answer'], spec.id);
+  const undo = spec.onFailure ?? [];
+  assertUniqueIds(
+    [
+      ...triggerIds,
+      ...spec.steps.map(step => step.id),
+      'answer',
+      ...(undo.length > 0 ? ['onFailure', ...undo.map(step => step.id)] : [])
+    ],
+    spec.id
+  );
+
+  const taskStep = (step: ActionStepSpec): StepSpec => ({
+    id: step.id,
+    type: 'task',
+    action: step.task,
+    params: {
+      ...(step.params ?? passthroughParams(triggers, spec.id, step.id)),
+      ...(step.credential ? { credential: step.credential } : {})
+    },
+    ...(step.when ? { when: step.when } : {}),
+    ...(step.enabled === undefined ? {} : { enabled: step.enabled })
+  });
 
   const steps: StepSpec[] = [
     ...triggers.map((trigger, index) => triggerStep(trigger, triggerIds[index])),
-    ...spec.steps.map(step => ({
-      id: step.id,
-      type: 'task' as const,
-      action: step.task,
-      params: {
-        ...(step.params ?? passthroughParams(triggers, spec.id, step.id)),
-        ...(step.credential ? { credential: step.credential } : {})
-      },
-      ...(step.when ? { when: step.when } : {}),
-      ...(step.enabled === undefined ? {} : { enabled: step.enabled })
-    })),
-    { id: 'answer', type: 'task', action: 'flow.output', params: { values: spec.output ?? `{{ ${last.id} }}` } }
+    ...spec.steps.map(taskStep),
+    { id: 'answer', type: 'task', action: 'flow.output', params: { values: spec.output ?? `{{ ${last.id} }}` } },
+    // After the answer, because a run that reaches the handler has succeeded and ends there.
+    ...(undo.length > 0
+      ? [{ id: 'onFailure', type: 'task' as const, action: FAILURE_HANDLER_TASK, params: {} }, ...undo.map(taskStep)]
+      : [])
   ];
 
   return {

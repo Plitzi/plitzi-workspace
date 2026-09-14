@@ -88,6 +88,123 @@ describe('runAction', () => {
     expect(result.trace).toHaveLength(1);
   });
 
+  describe('when a step fails after the flow already did something', () => {
+    /** Records what each step was asked to do, in order: the property under test is WHICH steps ran. */
+    const recorder = () => {
+      const labels: string[] = [];
+      const task: ActionTask<{ label: string }> = {
+        namespace: 'test',
+        action: 'record',
+        title: 'Record',
+        params: { label: { type: 'text', canBind: true, defaultValue: '', label: 'Label' } },
+        run: ({ label }) => {
+          labels.push(label);
+
+          return Promise.resolve({ recorded: label });
+        }
+      };
+
+      return { labels, task };
+    };
+
+    const record = (id: string, label: string, overrides: Partial<ElementInteraction> = {}) =>
+      node(id, { action: 'test.record', params: { label }, ...overrides });
+
+    /** take → (what happens next) → answer → On Failure → give back, only if the seats were taken. */
+    const bookingEntry = (afterTake: Record<string, ElementInteraction>, first = 'take') =>
+      buildEntry({
+        nodes: {
+          start: callTrigger({}, first),
+          take: record('take', 'take seats', { afterNode: Object.keys(afterTake)[0] ?? 'out' }),
+          ...afterTake,
+          out: node('out', { action: 'flow.output', params: { values: '{"ok": true}' }, afterNode: 'undo' }),
+          undo: node('undo', { action: 'flow.onFailure', afterNode: 'giveBack' }),
+          giveBack: record('giveBack', 'give back after {{ failure.step }}: {{ failure.message }}', {
+            when: { combinator: 'and', rules: [{ field: 'take.recorded', operator: '=', value: 'take seats' }] }
+          })
+        }
+      });
+
+    it('gives back what was taken, and still answers as failed', async () => {
+      const { labels, task } = recorder();
+      const { runAction } = createActionsModule({ lookups, tasks: [task] });
+      const entry = bookingEntry({
+        mail: node('mail', { action: 'flow.fail', params: { message: 'mail refused' }, afterNode: 'out' })
+      });
+
+      const result = await runAction(request(entry));
+
+      expect(result.status).toBe('failed');
+      expect(result.output).toEqual({});
+      expect(labels).toEqual(['take seats', 'give back after mail: mail refused']);
+      // A step that throws is recorded as the run's error, then the undo follows it.
+      expect(result.trace.map(step => step.node.id)).toEqual(['take', 'error', 'undo', 'giveBack']);
+    });
+
+    it('ends at On Failure when nothing failed', async () => {
+      const { labels, task } = recorder();
+      const { runAction } = createActionsModule({ lookups, tasks: [task] });
+
+      const result = await runAction(request(bookingEntry({})));
+
+      expect(result.status).toBe('completed');
+      expect(result.output).toEqual({ ok: true });
+      expect(labels).toEqual(['take seats']);
+    });
+
+    /** The failure came before anything was taken, so there is nothing to give back — and giving back is a write. */
+    it('asks each undo step its own when', async () => {
+      const { labels, task } = recorder();
+      const { runAction } = createActionsModule({ lookups, tasks: [task] });
+      const entry = bookingEntry(
+        { check: node('check', { action: 'flow.fail', params: { message: 'no such day' }, afterNode: 'take' }) },
+        'check'
+      );
+      entry.document.nodes.take.afterNode = 'out';
+
+      const result = await runAction(request(entry));
+
+      expect(result.status).toBe('failed');
+      expect(labels).toEqual([]);
+      expect(result.trace.find(step => step.node.id === 'giveBack')?.status).toBe('skipped');
+    });
+
+    it('keeps the failure it had when undoing fails too', async () => {
+      const { task } = recorder();
+      const onRun = vi.fn();
+      const { runAction } = createActionsModule({ lookups, tasks: [task], onRun });
+      const entry = bookingEntry({
+        mail: node('mail', { action: 'flow.fail', params: { message: 'mail refused' }, afterNode: 'out' })
+      });
+      entry.document.nodes.giveBack = node('giveBack', { action: 'flow.fail', params: { message: 'store down' } });
+
+      const result = await runAction(request(entry));
+
+      expect(result.status).toBe('failed');
+      const recorded = onRun.mock.calls[0][0] as ActionRunRecord;
+      expect(recorded.error).toContain('mail refused');
+      expect(recorded.error).toContain('store down');
+    });
+
+    /** A run that hit its deadline took its seats just the same, and its own clock is what ran out. */
+    it('gives back what a run that hit its deadline took', async () => {
+      const { labels, task } = recorder();
+      const stuck: ActionTask<Record<string, never>> = {
+        namespace: 'test',
+        action: 'stuck',
+        title: 'Never returns',
+        params: {},
+        run: () => new Promise(() => undefined)
+      };
+      const { runAction } = createActionsModule({ lookups, tasks: [task, stuck] });
+      const entry = bookingEntry({ hang: node('hang', { action: 'test.stuck', afterNode: 'out' }) });
+      entry.document.limits = { timeoutMs: 40 };
+
+      await expect(runAction(request(entry))).rejects.toMatchObject({ reason: 'timeout' });
+      expect(labels).toEqual(['take seats', 'give back after hang: Action exceeded its 40ms budget']);
+    });
+  });
+
   it('publishes the moment the run started as `now`', async () => {
     const { runAction } = createActionsModule({ lookups });
     const entry = buildEntry({

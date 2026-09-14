@@ -1,4 +1,5 @@
 import { isKnownTimeZone, parseCron } from './cron';
+import { FAILURE_HANDLER_TASK } from './failureHandler';
 import { triggerAccess, triggerHasStaleVerify, triggerVerify } from './triggerParams';
 
 import type { ActionTriggerParams } from '../types';
@@ -32,8 +33,11 @@ const FIELD_TYPES = ['text', 'number', 'boolean', 'date', 'json', 'file'];
 const ACCESS_MODES = ['public', 'session', 'role'];
 const TRIGGER_TYPES = ['call', 'webhook', 'schedule', 'render', 'custom'];
 const SIGNATURE_ALGORITHMS = ['sha256', 'sha1'];
-/** What the RUN publishes in the flow scope before any step does — see `runAction`. A step id may not shadow one. */
-const RESERVED_SCOPE_KEYS = new Set(['input', 'user', 'spaceId', 'environment', 'trigger', 'runId', 'now']);
+/**
+ * What the RUN publishes in the flow scope — see `runAction`. A step id may not shadow one. `failure` is published only
+ * to the steps after `flow.onFailure`, and is reserved everywhere so an undo step never reads a step's result instead.
+ */
+const RESERVED_SCOPE_KEYS = new Set(['input', 'user', 'spaceId', 'environment', 'trigger', 'runId', 'now', 'failure']);
 
 /** `<namespace>.<action>`, which is how the registry addresses a task. */
 const TASK_NAME = /^[a-z][a-zA-Z0-9]*\.[a-z][a-zA-Z0-9]*$/;
@@ -352,8 +356,10 @@ const validateNodes = (
    */
   const reachable = new Set<string>();
   const looping = new Set<string>();
+  const chains: string[][] = [];
   triggers.forEach(([key]) => {
     const walked = new Set<string>();
+    const chain: string[] = [];
     let current = key;
     while (current) {
       if (walked.has(current)) {
@@ -362,10 +368,13 @@ const validateNodes = (
       }
 
       walked.add(current);
+      chain.push(current);
       reachable.add(current);
       const node = nodes[current] as NodeShape | undefined;
       current = isFilledString(node?.afterNode) ? node.afterNode : '';
     }
+
+    chains.push(chain);
   });
   looping.forEach(key => {
     errors.push({
@@ -386,9 +395,12 @@ const validateNodes = (
 
   // The output step is the contract, so where it sits in the chain is part of it: the runner reads the last one
   // that ran, and a step after it is work whose result nobody will ever see.
+  const actionOf = (key: string): unknown => (nodes[key] as NodeShape | undefined)?.action;
   const outputs = entries.filter(([, node]) => isRecord(node) && node.action === 'flow.output');
   for (const [key, node] of outputs) {
-    if (isFilledString(node.afterNode) && Object.hasOwn(nodes, node.afterNode)) {
+    // What follows the handler is not work after the answer: it only ever runs for a run that has no answer to give.
+    const followedByUndo = isFilledString(node.afterNode) && actionOf(node.afterNode) === FAILURE_HANDLER_TASK;
+    if (isFilledString(node.afterNode) && Object.hasOwn(nodes, node.afterNode) && !followedByUndo) {
       warnings.push({
         path: `nodes.${key}.afterNode`,
         message: 'the output step is not the last one, so the steps after it run for nothing',
@@ -396,6 +408,62 @@ const validateNodes = (
       });
     }
   }
+
+  /**
+   * Where a chain's undo begins, and what may follow it.
+   *
+   * The runner stops a successful run at the first handler and jumps a failed one to it, so a second handler is a
+   * boundary nothing ever crosses, and an output step after one answers a run that has already failed. Reported once
+   * per step even when several ways in share the chain.
+   */
+  const reported = new Set<string>();
+  const report = (issues: ActionDocumentIssue[], issue: ActionDocumentIssue) => {
+    if (!reported.has(`${issue.path}|${issue.message}`)) {
+      reported.add(`${issue.path}|${issue.message}`);
+      issues.push(issue);
+    }
+  };
+  chains.forEach(chain => {
+    const handlerAt = chain.findIndex(key => actionOf(key) === FAILURE_HANDLER_TASK);
+    if (handlerAt === -1) {
+      return;
+    }
+
+    const handler = chain[handlerAt];
+    if (handlerAt === 1) {
+      report(warnings, {
+        path: `nodes.${handler}`,
+        message: 'nothing runs before this step, so nothing can fail and the steps after it never run',
+        hint: 'put On Failure after the steps whose work it undoes'
+      });
+    }
+
+    if (handlerAt === chain.length - 1) {
+      report(warnings, {
+        path: `nodes.${handler}`,
+        message: 'nothing follows this step, so a failed run undoes nothing',
+        hint: 'add the steps that give back what the flow already did'
+      });
+    }
+
+    chain.slice(handlerAt + 1).forEach(key => {
+      if (actionOf(key) === FAILURE_HANDLER_TASK) {
+        report(errors, {
+          path: `nodes.${key}`,
+          message: 'a flow has one place its undo begins, and this is a second one',
+          hint: 'keep one On Failure step and put every undo step after it'
+        });
+      }
+
+      if (actionOf(key) === 'flow.output') {
+        report(errors, {
+          path: `nodes.${key}`,
+          message: 'an output step after On Failure answers a run that has already failed',
+          hint: 'move flow.output before On Failure'
+        });
+      }
+    });
+  });
 
   // Not an error: an action that only does something — sends, writes, charges — legitimately answers nothing.
   if (outputs.length === 0 && isRecord(output) && Object.keys(output).length > 0) {

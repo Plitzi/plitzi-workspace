@@ -1,3 +1,4 @@
+import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 import { hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
@@ -31,6 +32,15 @@ const MAX_TWIG_RESOLUTION_PASSES = 5;
 /** How often a run asks the shared store whether it has been cancelled. Once a second is far finer than the
  *  boundaries a flow actually has, and it keeps a long run to sixty reads a minute. */
 const CANCEL_POLL_MS = 1_000;
+
+/**
+ * The most a failed run's undo may take, on a clock of its own.
+ *
+ * Its own because the run's clock may be exactly what ran out: a run that hit its deadline has seats to give back
+ * too. Short because the caller is still waiting for the failure, and giving back what a flow took is a handful of
+ * writes, not another run. Never longer than the run itself was allowed.
+ */
+const UNDO_TIMEOUT_MS = 5_000;
 
 /**
  * The run's deadline, as a promise that loses patience.
@@ -229,6 +239,30 @@ const errorNode = (action: string): ElementInteraction => ({
   enabled: true
 });
 
+/**
+ * Where a chain's undo begins, if it has one: the first `flow.onFailure` its steps reach.
+ *
+ * Per trigger, because each way in walks its own chain. Walked with a visited set: the validator refuses a chain that
+ * comes back on itself, but a stored document is still customer input, and a lookup must not be what spins.
+ */
+const failureHandlerOf = (
+  nodes: Record<string, ElementInteraction>,
+  trigger: ElementInteraction
+): ElementInteraction | undefined => {
+  const visited = new Set<string>();
+  let next = nodes[trigger.afterNode] as ElementInteraction | undefined;
+  while (next && !visited.has(next.id)) {
+    if (next.action === FAILURE_HANDLER_TASK) {
+      return next;
+    }
+
+    visited.add(next.id);
+    next = nodes[next.afterNode];
+  }
+
+  return undefined;
+};
+
 const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Record<string, unknown> =>
   Object.entries(task.params).reduce<Record<string, unknown>>(
     (acum, [key, param]) => {
@@ -326,55 +360,64 @@ export const createActionRunner = (
     const releaseOuter = onAbort(request.signal, () => controller.abort());
 
     const scopedKv = namespaceKv(kv, request.spaceId);
-    const runFetch = createRunFetch(baseFetch, controller.signal, limits, [...(request.lineage ?? []), entry.id]);
-    const buildContext = (scope: Record<string, unknown>): ActionTaskContext => ({
-      runId,
-      spaceId: request.spaceId,
-      environment: request.environment,
-      trigger: request.trigger,
-      user: request.user,
-      callerId: request.callerId,
-      signal: controller.signal,
-      scope,
-      /**
-       * The secret a STEP asked for, resolved inside that step and never in the flow scope.
-       *
-       * There is no allow-list to check it against, deliberately: an action is authored by someone who may edit
-       * every action in the space, so a list they can edit is not a boundary — it only ever told the redactor what
-       * to look for, and the redactor now learns from what was actually resolved. What IS a boundary is that a
-       * credential reaches only the params of the step that named it, which is `renderTaskParams`' whole job.
-       */
-      credential: async identifier => {
-        const credential = await config.lookups.getCredential?.(request.spaceId, identifier);
-        if (credential) {
-          redactor.add(credential);
-        }
+    const lineage = [...(request.lineage ?? []), entry.id];
+    /**
+     * What a step runs with, for one abort signal and one outbound budget.
+     *
+     * Two of them per run at most: the flow's, and — only when it failed — the undo's, which must still be able to
+     * reach the outside world after the flow's signal was aborted or its request budget spent.
+     */
+    const contextFor =
+      (signal: AbortSignal, runFetch: typeof fetch) =>
+      (scope: Record<string, unknown>): ActionTaskContext => ({
+        runId,
+        spaceId: request.spaceId,
+        environment: request.environment,
+        trigger: request.trigger,
+        user: request.user,
+        callerId: request.callerId,
+        signal,
+        scope,
+        /**
+         * The secret a STEP asked for, resolved inside that step and never in the flow scope.
+         *
+         * There is no allow-list to check it against, deliberately: an action is authored by someone who may edit
+         * every action in the space, so a list they can edit is not a boundary — it only ever told the redactor what
+         * to look for, and the redactor now learns from what was actually resolved. What IS a boundary is that a
+         * credential reaches only the params of the step that named it, which is `renderTaskParams`' whole job.
+         */
+        credential: async identifier => {
+          const credential = await config.lookups.getCredential?.(request.spaceId, identifier);
+          if (credential) {
+            redactor.add(credential);
+          }
 
-        return credential;
-      },
-      connector: async connectorId => {
-        const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId, request.at);
-        if (!manifest) {
-          return undefined;
-        }
+          return credential;
+        },
+        connector: async connectorId => {
+          const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId, request.at);
+          if (!manifest) {
+            return undefined;
+          }
 
-        // The connector's own credential: naming the connector is what reaches the secret it declares, exactly as
-        // the element-addressed write endpoint has always done.
-        const credential = manifest.credential
-          ? await config.lookups.getCredential?.(request.spaceId, manifest.credential)
-          : undefined;
-        if (credential) {
-          redactor.add(credential);
-        }
+          // The connector's own credential: naming the connector is what reaches the secret it declares, exactly as
+          // the element-addressed write endpoint has always done.
+          const credential = manifest.credential
+            ? await config.lookups.getCredential?.(request.spaceId, manifest.credential)
+            : undefined;
+          if (credential) {
+            redactor.add(credential);
+          }
 
-        return { manifest, credential };
-      },
-      fetch: runFetch,
-      kv: scopedKv,
-      dbDrivers: config.dbDrivers ?? [],
-      email: emailSender,
-      emit: chunk => request.emit?.(redact(chunk))
-    });
+          return { manifest, credential };
+        },
+        fetch: runFetch,
+        kv: scopedKv,
+        dbDrivers: config.dbDrivers ?? [],
+        email: emailSender,
+        emit: chunk => request.emit?.(redact(chunk))
+      });
+    const buildContext = contextFor(controller.signal, createRunFetch(baseFetch, controller.signal, limits, lineage));
 
     const trace: InteractionNode[] = [];
     const startedAt = Date.now();
@@ -415,11 +458,20 @@ export const createActionRunner = (
      * hits its deadline answers, releases its slot and closes its connection while whatever step ignored the abort
      * carries on in the background — which is the difference between a stuck STEP and a stuck server.
      */
+    const failureHandler = failureHandlerOf(document.nodes, triggerNode);
+    /** The step the flow was running when it stopped — what `{{ failure.step }}` names to the undo. */
+    let stepInFlight = '';
+
     const runFlow = async () => {
       let current = triggerNode;
       let executed = 0;
       let next = document.nodes[current.afterNode] as ElementInteraction | undefined;
       while (next) {
+        // A run that reaches its undo has succeeded: what follows is only ever for a run that did not.
+        if (next.action === FAILURE_HANDLER_TASK) {
+          break;
+        }
+
         if (controller.signal.aborted) {
           status = 'aborted';
           break;
@@ -440,6 +492,7 @@ export const createActionRunner = (
         }
 
         const startTime = Date.now();
+        stepInFlight = next.id;
         const outcome = await runNode(next, scope, registry, buildContext);
         trace.push({
           node: next,
@@ -458,6 +511,73 @@ export const createActionRunner = (
 
         current = next;
         next = document.nodes[current.afterNode];
+      }
+    };
+
+    /**
+     * Gives back what a run that did not finish already did: the steps after `flow.onFailure`.
+     *
+     * On a clock and an outbound budget of its own, because the run's may be exactly what ran out, and deliberately
+     * NOT tied to the caller's connection — somebody closing the tab is the last reason to leave seats taken. Each step
+     * still asks its own `when`: the failure may have come before the thing to undo was ever done. Nothing it does
+     * changes the run's status or its answer; an undo that fails too is added to the failure, never put in its place.
+     */
+    const undo = async (handler: ElementInteraction) => {
+      const undoController = new AbortController();
+      const undoDeadline = createDeadline(Math.min(limits.timeoutMs, UNDO_TIMEOUT_MS), undoController);
+      const buildUndoContext = contextFor(
+        undoController.signal,
+        createRunFetch(baseFetch, undoController.signal, limits, lineage)
+      );
+      scope.failure = { step: stepInFlight, message: failure ?? '', status };
+      trace.push({
+        node: handler,
+        status: 'success',
+        result: redact(scope.failure),
+        postCallbacks: [],
+        startTime: Date.now(),
+        endTime: Date.now()
+      });
+
+      const runUndo = async () => {
+        let executed = 0;
+        let next = document.nodes[handler.afterNode] as ElementInteraction | undefined;
+        while (next) {
+          executed += 1;
+          if (executed > limits.maxNodes) {
+            throw new ActionRunError('over_capacity', `Undoing the action exceeded its ${limits.maxNodes} step budget`);
+          }
+
+          const startTime = Date.now();
+          const outcome = await runNode(next, scope, registry, buildUndoContext);
+          trace.push({
+            node: next,
+            status: outcome.status,
+            result: redact(outcome.result),
+            postCallbacks: [],
+            startTime,
+            endTime: Date.now()
+          });
+          scope[next.id] = outcome.result;
+          next = document.nodes[next.afterNode];
+        }
+      };
+
+      try {
+        await Promise.race([runUndo(), undoDeadline.promise]);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        trace.push({
+          node: errorNode('undo'),
+          status: 'failed',
+          result: redact({ error: message }),
+          postCallbacks: [],
+          startTime: Date.now(),
+          endTime: Date.now()
+        });
+        failure = `${failure ?? 'Action failed'} — and undoing it failed too: ${message}`;
+      } finally {
+        undoDeadline.clear();
       }
     };
 
@@ -503,6 +623,12 @@ export const createActionRunner = (
     } finally {
       deadline.clear();
       releaseOuter();
+    }
+
+    // Before the record and before a fatal failure is rethrown: the history keeps what was given back, and a caller
+    // hearing "timeout" has not left anything the flow took behind it.
+    if (status !== 'completed' && failureHandler?.enabled) {
+      await undo(failureHandler);
     }
 
     // What the `flow.output` step named, and nothing else. No second contract to disagree with it: a key that step

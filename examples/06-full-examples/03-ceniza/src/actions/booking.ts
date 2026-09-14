@@ -80,7 +80,9 @@ const confirmation = [
  * both saw it free on the page; both add, only one total is within the room, and the other gives its seats straight
  * back. Nothing here reads a count and then writes it.
  *
- * The booking is kept before the confirmation is sent, so a mail that cannot leave never loses a table somebody has.
+ * The booking is kept before the confirmation is sent, and a confirmation that cannot leave undoes both: the seats go
+ * back and the booking is forgotten, so a visitor told it did not work — and given the phone number — holds no table
+ * they do not know about.
  */
 export const bookingAction = defineAction({
   id: BOOKING_ACTION,
@@ -162,5 +164,20 @@ export const bookingAction = defineAction({
     { id: 'reply', task: 'transform.template', params: { template: reply } },
     { id: 'result', task: 'transform.json', params: { value: '{{ reply.value }}' } }
   ],
-  output: '{{ result.value }}'
+  output: '{{ result.value }}',
+  // Only for a booking that took its seats: one refused before that, or given straight back, has nothing to return.
+  onFailure: [
+    {
+      id: 'seatsBack',
+      task: 'kv.increment',
+      params: { key: SEATS_KEY, amount: '-{{ input.personas }}' },
+      when: onlyIf('fits.value', 'yes')
+    },
+    {
+      id: 'forgotten',
+      task: 'kv.delete',
+      params: { key: 'reserva:{{ reference.value }}' },
+      when: onlyIf('fits.value', 'yes')
+    }
+  ]
 });

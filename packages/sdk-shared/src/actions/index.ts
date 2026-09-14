@@ -1,4 +1,5 @@
 export { cronMatches, isKnownTimeZone, parseCron, zonedClock } from './cron';
+export { FAILURE_HANDLER_TASK } from './failureHandler';
 export { triggerAccess, triggerCacheMs, triggerHasStaleVerify, triggerInput, triggerVerify } from './triggerParams';
 export { actionName, actionTriggers, isActionEnabled } from './triggers';
 export { validateActionDocument } from './validateDocument';

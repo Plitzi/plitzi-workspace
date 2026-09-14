@@ -28,6 +28,38 @@ describe('defineAction', () => {
     expect(new Set(Object.values(nodes).map(node => node.flowId))).toEqual(new Set(['start']));
   });
 
+  /** A run that reaches the handler has succeeded and ends there, so what it gives back is written after the answer. */
+  it('writes what a failed run gives back after the answer, behind On Failure', () => {
+    const entry = defineAction(
+      minimal({
+        onFailure: [
+          {
+            id: 'released',
+            task: 'example.release',
+            params: { city: '{{ input.city }}' },
+            when: { combinator: 'and', rules: [{ field: 'rate.value', operator: '!=', value: '' }] }
+          }
+        ]
+      })
+    );
+    const { nodes } = entry.document;
+
+    expect(Object.keys(nodes)).toEqual(['start', 'rate', 'answer', 'onFailure', 'released']);
+    expect([nodes.answer.afterNode, nodes.onFailure.action, nodes.onFailure.afterNode]).toEqual([
+      'onFailure',
+      'flow.onFailure',
+      'released'
+    ]);
+    expect(nodes.released.when).toBeDefined();
+    expect(validateActionDocument(entry.document).errors).toEqual([]);
+  });
+
+  it('refuses an undo step that takes the name of a step it undoes', () => {
+    expect(() => defineAction(minimal({ onFailure: [{ id: 'rate', task: 'example.release' }] }))).toThrow(
+      'names the step "rate" twice'
+    );
+  });
+
   /**
    * The duplication this removes, and the reason it is worth removing: the contract and the step that consumes it
    * are the same list of names written twice. A field added to one and not the other is invisible from both ends

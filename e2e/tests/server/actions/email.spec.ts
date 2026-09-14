@@ -1,6 +1,8 @@
+import { randomUUID } from 'node:crypto';
+
 import { describeTarget, expect, test } from '../../../fixtures';
 import { mailFor, uniqueRecipient } from '../../../helpers/mail';
-import { MAIL_ACTION, MAIL_FROM, UNCONFIGURED_MAIL_ACTION } from '../../../spaces';
+import { HELD_SEAT_ACTION, MAIL_ACTION, MAIL_FROM, SEATS_ACTION, UNCONFIGURED_MAIL_ACTION } from '../../../spaces';
 
 import type { APIRequestContext } from '@playwright/test';
 
@@ -9,7 +11,7 @@ import type { APIRequestContext } from '@playwright/test';
  * server is the suite's mail sink — a real one, so what is checked is the message a mail client actually built.
  */
 
-type RunAnswer = { status: string; trace?: unknown[] };
+type RunAnswer = { status: string; output: Record<string, unknown>; trace?: unknown[] };
 
 describeTarget('action-server', subject => {
   const run = async (request: APIRequestContext, actionId: string, input: Record<string, string>) => {
@@ -49,6 +51,19 @@ describeTarget('action-server', subject => {
     expect(answer.status).toBe('failed');
     expect(JSON.stringify(answer.trace)).toContain('names no SMTP credential');
     expect(await mailFor(to)).toEqual([]);
+  });
+
+  /** What On Failure is for: the seat a run already took goes back when its confirmation cannot leave. */
+  test('a run whose confirmation cannot leave gives back the seat it took', async ({ request }) => {
+    const slot = randomUUID();
+
+    const held = await run(request, HELD_SEAT_ACTION.id, { slot });
+    const seats = await run(request, SEATS_ACTION.id, { slot });
+
+    expect(held.status).toBe('failed');
+    expect(JSON.stringify(held.trace)).toContain('names no SMTP credential');
+    expect(seats.status).toBe('completed');
+    expect(seats.output, 'the seat stayed taken after the run failed').toEqual({ taken: '0' });
   });
 });
 

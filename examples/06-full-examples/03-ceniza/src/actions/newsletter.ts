@@ -32,6 +32,9 @@ const welcome = [
  * the two are told apart without a read that a second sign-up could race. Only the first keeps the address and sends
  * the welcome — somebody already on the list hears "you were already in", which is the answer they need, and nobody
  * gets the same welcome twice.
+ *
+ * A welcome that cannot leave takes the address back off the list, so trying again welcomes it instead of saying it
+ * was already in.
  */
 export const newsletterAction = defineAction({
   id: NEWSLETTER_ACTION,
@@ -84,5 +87,19 @@ export const newsletterAction = defineAction({
     },
     { id: 'result', task: 'transform.json', params: { value: '{{ reply.value }}' } }
   ],
-  output: '{{ result.value }}'
+  output: '{{ result.value }}',
+  onFailure: [
+    {
+      id: 'unlisted',
+      task: 'kv.delete',
+      params: { key: `newsletter:{{ ${ADDRESS}|md5 }}` },
+      when: onlyIf('signup.value', 1)
+    },
+    {
+      id: 'dropped',
+      task: 'kv.delete',
+      params: { key: `suscriptor:{{ ${ADDRESS}|md5 }}` },
+      when: onlyIf('signup.value', 1)
+    }
+  ]
 });

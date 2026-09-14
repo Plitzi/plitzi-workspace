@@ -50,6 +50,25 @@ const fail: ActionTask<{ message: string }> = {
 };
 
 /**
+ * Where a flow's undo begins — read by the runner, never run as a step.
+ *
+ * A run that reaches it has succeeded and ends there. A run whose step failed before it jumps here instead and runs
+ * the steps after it, each still asking its own `when` — the failure may have come before the thing to undo was ever
+ * done — and still ends as failed, with the failure it had. What failed is in their scope as `{{ failure.step }}` and
+ * `{{ failure.message }}`.
+ */
+const onFailure: ActionTask<Record<string, never>> = {
+  namespace: 'flow',
+  action: 'onFailure',
+  title: 'On Failure',
+  description: 'The steps after this one run only when a step before it fails, to undo what the flow already did',
+  params: {},
+  run: () => {
+    throw new Error('On Failure marks where a failed run’s undo begins; the runner never runs it as a step');
+  }
+};
+
+/**
  * Declares what the caller gets back — and IS the declaration.
  *
  * The flow scope is not the answer: it holds every node's raw result, including whatever a fetch happened to
@@ -103,5 +122,5 @@ const emit: ActionTask<{ chunk: string }> = {
   }
 };
 
-export const flowTasks = [delay, fail, output] as ActionTask<Record<string, unknown>>[];
+export const flowTasks = [delay, fail, output, onFailure] as ActionTask<Record<string, unknown>>[];
 export const streamTasks = [emit] as ActionTask<Record<string, unknown>>[];

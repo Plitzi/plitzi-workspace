@@ -891,4 +891,33 @@ describeTarget('ceniza', subject => {
 
     await expect(page.getByText('Rellena este campo.').first()).toBeVisible();
   });
+
+  /**
+   * A second press while the first is still with the server must send nothing: the button waits for the answer.
+   *
+   * The request is held until the button has been seen disabled, because that is the window a second press would
+   * otherwise fall into — a server that answers in 20ms leaves nothing for an assertion to catch.
+   */
+  test('the newsletter button waits for the server, and the welcome arrives', async ({ page }) => {
+    const email = uniqueRecipient('lucia');
+    let release = (): void => undefined;
+    const held = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    await page.goto(subject.origin);
+    await page.route('**/_action', async route => {
+      await held;
+      await route.continue();
+    });
+
+    const band = page.locator('form.newsletterForm').first();
+    await band.locator('input[name="email"]').fill(email);
+    await band.getByRole('button', { name: 'Suscribirme' }).click();
+
+    await expect(band.getByRole('button', { name: 'Apuntándote…' })).toBeDisabled();
+    release();
+
+    await expect(page.getByText('¡Gracias por apuntarte!').first()).toBeVisible();
+    expect(await mailFor(email)).toMatchObject([{ subject: 'Bienvenido a la carta de temporada de Ceniza' }]);
+  });
 });

@@ -4,9 +4,11 @@ import { MAIL_SINK } from '../helpers/mail';
 import {
   actionSpace,
   FEED_ACTION,
+  HELD_SEAT_ACTION,
   MAIL_ACTION,
   MAIL_CREDENTIAL,
   MAIL_FROM,
+  SEATS_ACTION,
   SLOW_ACTION,
   UNCONFIGURED_MAIL_ACTION,
   UNREACHABLE_ACTION
@@ -31,7 +33,15 @@ export const PORT = Number(process.env.PORT ?? 5202);
 
 const space = actionSpace();
 
-const actions = [FEED_ACTION, SLOW_ACTION, UNREACHABLE_ACTION, MAIL_ACTION, UNCONFIGURED_MAIL_ACTION] as ActionEntry[];
+const actions = [
+  FEED_ACTION,
+  SLOW_ACTION,
+  UNREACHABLE_ACTION,
+  MAIL_ACTION,
+  UNCONFIGURED_MAIL_ACTION,
+  HELD_SEAT_ACTION,
+  SEATS_ACTION
+] as ActionEntry[];
 
 /** The space's one credential: its SMTP server, which is the suite's mail sink (`server/mailSink.ts`). */
 const credentials: Record<string, Record<string, string>> = {
