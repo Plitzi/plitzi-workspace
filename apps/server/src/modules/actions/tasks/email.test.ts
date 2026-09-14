@@ -117,6 +117,22 @@ describe('email.send', () => {
     expect(JSON.stringify(result.trace)).not.toContain('secret-password');
   });
 
+  /** The host is a value of the credential, so a trace redacts it: the failure names the credential instead. */
+  it('says which SMTP credential could not send, in words the trace does not redact', async () => {
+    lookup.mockImplementationOnce(() => Promise.resolve([{ address: '10.0.0.5', family: 4 }]));
+
+    const result = await run(mailAction(message));
+    const failure = result.trace.find(step => step.node.id === 'error')?.result;
+
+    expect(result.status).toBe('failed');
+    expect(failure).toEqual({
+      error:
+        'Could not send through the SMTP credential "smtp-main": its SMTP host is on a private network, which this server does not connect to'
+    });
+    expect(JSON.stringify(result.trace)).not.toContain('«redacted»');
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
   it('is offered by every server, with nothing to configure', () => {
     expect(createActionsModule({ lookups }).registry.get('email.send')).toBeDefined();
   });

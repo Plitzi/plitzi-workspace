@@ -71,12 +71,19 @@ const send: ActionTask<SendParams> = {
       );
     }
 
-    await ctx.email.send(
-      ctx.spaceId,
-      reading.settings,
-      { to: recipient, subject: title, text, ...(answerTo === '' ? {} : { replyTo: answerTo }) },
-      ctx.signal
-    );
+    try {
+      await ctx.email.send(
+        ctx.spaceId,
+        reading.settings,
+        { to: recipient, subject: title, text, ...(answerTo === '' ? {} : { replyTo: answerTo }) },
+        ctx.signal
+      );
+    } catch (error) {
+      // Named by its identifier, which is not a value of the credential and so survives the trace's redaction: what
+      // the server or the policy said about it is only useful next to WHICH server it was.
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(`Could not send through the SMTP credential "${identifier}": ${reason}`, { cause: error });
+    }
 
     return { sent: true };
   }

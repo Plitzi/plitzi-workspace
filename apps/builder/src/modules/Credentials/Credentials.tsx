@@ -10,7 +10,12 @@ import SpaceCredentials from '@pmodules/Space/components/SpaceCredentials';
 import buildCredentialData from '@pmodules/Space/helpers/buildCredentialData';
 import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
 
-import type { BuilderMutationsMap, BuilderQueriesMap, SpaceCredentialProvider } from '@plitzi/sdk-shared';
+import type {
+  BuilderMutationsMap,
+  BuilderQueriesMap,
+  SpaceCredentialProvider,
+  SpaceCredential as TSpaceCredential
+} from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { spaceCredentialFormSchema } from '@pmodules/Space/Models/SpaceCredentialForm';
 import type { MouseEvent } from 'react';
@@ -31,10 +36,20 @@ const Credentials = () => {
   const { data = [], isLoading, mutate } = useGraphQL('SpaceCredentials', data => data?.SpaceCredentials.edges);
   const { showDialog } = useModal();
   const [provider, setProvider] = useState<SpaceCredentialProvider | undefined>(undefined);
+  /** The credential whose values are being replaced. Only its name, identifier and provider are known here. */
+  const [editing, setEditing] = useState<TSpaceCredential | undefined>(undefined);
 
   const handleCreate = useCallback(() => setProvider('custom'), []);
 
-  const handleCloseForm = useCallback(() => setProvider(undefined), []);
+  const handleEdit = useCallback(
+    (identifier: string) => setEditing(data.find(credential => credential.identifier === identifier)),
+    [data]
+  );
+
+  const handleCloseForm = useCallback(() => {
+    setProvider(undefined);
+    setEditing(undefined);
+  }, []);
 
   const handleSubmitForm = useCallback(
     async (_e: MouseEvent | undefined, values: z.infer<typeof spaceCredentialFormSchema>) => {
@@ -51,6 +66,28 @@ const Credentials = () => {
       setProvider(undefined);
     },
     [mutate, mutateNetwork]
+  );
+
+  const handleSubmitEdit = useCallback(
+    async (_e: MouseEvent | undefined, values: z.infer<typeof spaceCredentialFormSchema>) => {
+      if (!editing) {
+        return;
+      }
+
+      const response = await mutateNetwork('SpaceUpdateCredential', {
+        identifier: editing.identifier,
+        name: values.name,
+        provider: values.provider,
+        data: buildCredentialData(values)
+      });
+      if (!response.success) {
+        return;
+      }
+
+      await mutate();
+      setEditing(undefined);
+    },
+    [editing, mutate, mutateNetwork]
   );
 
   const handleRemove = useCallback(
@@ -86,7 +123,19 @@ const Credentials = () => {
             <SpaceCredentialForm provider={provider} onSubmit={handleSubmitForm} onClose={handleCloseForm} />
           </div>
         )}
-        {!isLoading && !provider && (
+        {!isLoading && editing && (
+          <div className="mx-auto w-full max-w-3xl p-4">
+            <SpaceCredentialForm
+              key={editing.identifier}
+              editing
+              name={editing.name}
+              provider={editing.provider}
+              onSubmit={handleSubmitEdit}
+              onClose={handleCloseForm}
+            />
+          </div>
+        )}
+        {!isLoading && !provider && !editing && (
           <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 p-4">
             <div className="flex w-full items-center justify-between">
               <Heading as="h5">Credentials</Heading>
@@ -103,7 +152,7 @@ const Credentials = () => {
                 No credentials yet. Add the CMS token your connector authenticates with.
               </div>
             )}
-            <SpaceCredentials credentials={data} onRemove={handleRemove} />
+            <SpaceCredentials credentials={data} onEdit={handleEdit} onRemove={handleRemove} />
           </div>
         )}
       </Card.Body>

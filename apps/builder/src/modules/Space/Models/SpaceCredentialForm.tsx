@@ -150,6 +150,11 @@ export type SpaceCredentialFormProps = {
   user?: string;
   pass?: string;
   token?: string;
+  /**
+   * Replaces the values of a credential that already exists. Its provider is fixed — a CDN, a deployment or a flow
+   * reads its keys as that provider's — and nothing it holds is shown: every value is typed again and all are replaced.
+   */
+  editing?: boolean;
   onClose?: (e?: MouseEvent) => void;
   onSubmit?: (e: MouseEvent | undefined, values: z.infer<typeof spaceCredentialFormSchema>) => void;
 };
@@ -163,6 +168,7 @@ const SpaceCredentialForm = ({
   user = '',
   pass = '',
   token = '',
+  editing = false,
   onSubmit,
   onClose
 }: SpaceCredentialFormProps) => {
@@ -201,13 +207,20 @@ const SpaceCredentialForm = ({
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body>
         <Form.Input name="name" label="Name" size="xs" />
-        <Form.Select name="provider" label="Provider" size="xs" onChange={handleChangeProvider}>
-          <option value="s3">AWS S3</option>
-          <option value="r2">Cloudflare R2</option>
-          <option value="ssr">Plitzi SSR</option>
-          <option value="custom">CMS / Custom API</option>
-          <option value="smtp">SMTP (email)</option>
-        </Form.Select>
+        {editing && (
+          <span className="text-xs text-gray-500 dark:text-zinc-400">
+            The values this credential holds are never shown. Enter them all again: saving replaces every one.
+          </span>
+        )}
+        {!editing && (
+          <Form.Select name="provider" label="Provider" size="xs" onChange={handleChangeProvider}>
+            <option value="s3">AWS S3</option>
+            <option value="r2">Cloudflare R2</option>
+            <option value="ssr">Plitzi SSR</option>
+            <option value="custom">CMS / Custom API</option>
+            <option value="smtp">SMTP (email)</option>
+          </Form.Select>
+        )}
         <Form.Conditional when="provider" is={['s3', 'r2']}>
           <Form.Input name="accessKeyId" label="Access Key ID" size="xs" />
           <Form.Input name="secretAccessKey" label="Secret Access Key" size="xs" />
@@ -249,7 +262,7 @@ const SpaceCredentialForm = ({
           Cancel
         </Button>
         <Button type="submit" size="sm">
-          Submit
+          {editing ? 'Save' : 'Submit'}
         </Button>
       </Form.Footer>
     </Form>

@@ -96,20 +96,22 @@ export const createEmailSender = ({
   now = () => new Date()
 }: EmailSenderOptions): ActionEmailSender => {
   const viaSmtp = async (smtp: SmtpSettings): Promise<ActionEmailTransport> => {
+    // The host is not in these messages: it is a value of the credential, so a run's trace redacts it, and a sentence
+    // about «redacted» tells nobody anything. The task says which credential the failure belongs to instead.
     let addresses: { address: string }[];
     try {
       addresses = await lookup(smtp.host);
     } catch {
-      throw new Error(`The SMTP host "${smtp.host}" does not resolve`);
+      throw new Error('its SMTP host does not resolve');
     }
 
     const [first] = addresses;
     if (addresses.length === 0) {
-      throw new Error(`The SMTP host "${smtp.host}" does not resolve`);
+      throw new Error('its SMTP host does not resolve');
     }
 
     if (!allowPrivateHosts && (isBlockedHost(smtp.host) || addresses.some(({ address }) => isBlockedHost(address)))) {
-      throw new Error(`The SMTP host "${smtp.host}" is on a private network, which this server does not connect to`);
+      throw new Error('its SMTP host is on a private network, which this server does not connect to');
     }
 
     return delivery =>

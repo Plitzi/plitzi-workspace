@@ -19,6 +19,7 @@ export type SpaceCredentialProps = {
   createdAt: number;
   updatedAt: number;
   onSelect?: (identifier: string) => void;
+  onEdit?: (identifier: string) => void;
   onRemove?: (identifier: string) => void;
 };
 
@@ -32,6 +33,7 @@ const SpaceCredential = ({
   usedIn = [],
   createdAt,
   onSelect,
+  onEdit,
   onRemove
 }: SpaceCredentialProps) => {
   const isSupported = useMemo(
@@ -51,6 +53,14 @@ const SpaceCredential = ({
       onSelect?.(identifier);
     },
     [identifier, isSupported, onSelect]
+  );
+
+  const handleClickEdit = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      onEdit?.(identifier);
+    },
+    [identifier, onEdit]
   );
 
   const handleClickRemove = useCallback(
@@ -104,6 +114,12 @@ const SpaceCredential = ({
             API / CMS
           </>
         )}
+        {provider === 'smtp' && (
+          <>
+            <Icon icon="fa-solid fa-envelope" />
+            SMTP (email)
+          </>
+        )}
         {inUse && (
           <span title={usedInLabel}>
             <Badge intent="info" solid={false} size="xs" icon="fa-solid fa-link">
@@ -121,7 +137,16 @@ const SpaceCredential = ({
       </div>
       <div className="text-xs text-gray-500 dark:text-zinc-400">Created {createdAtParsed}</div>
 
-      <div className="absolute right-2 bottom-2">
+      <div className="absolute right-2 bottom-2 flex">
+        {onEdit && (
+          <Icon
+            icon="fas fa-pen"
+            title="Replace its values"
+            size="lg"
+            className="hidden cursor-pointer rounded p-4 group-hover:flex hover:bg-gray-200 dark:hover:bg-zinc-700"
+            onClick={handleClickEdit}
+          />
+        )}
         {!inUse && (
           <Icon
             intent="danger"

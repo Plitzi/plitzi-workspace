@@ -7,6 +7,8 @@ export type SpaceCredentialsProps = {
   credentials?: TSpaceCredential[];
   selected?: string;
   onSelect?: (identifier: string) => void;
+  /** Offers replacing a credential's values. Left out, a row offers nothing but selecting and removing it. */
+  onEdit?: (identifier: string) => void;
   onRemove?: (identifier: string) => void;
 };
 
@@ -15,6 +17,7 @@ const SpaceCredentials = ({
   credentials,
   selected = '',
   onSelect,
+  onEdit,
   onRemove
 }: SpaceCredentialsProps) => {
   return (
@@ -33,6 +36,7 @@ const SpaceCredentials = ({
             createdAt={createdAt}
             updatedAt={updatedAt}
             onSelect={onSelect}
+            onEdit={onEdit}
             onRemove={onRemove}
           />
         ),
