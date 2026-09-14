@@ -1,5 +1,11 @@
 # @plitzi/sdk-authoring
 
+## 0.35.5
+
+### Patch Changes
+
+- v0.35.5
+
 ## 0.35.4
 
 ### Patch Changes
