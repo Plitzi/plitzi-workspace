@@ -419,6 +419,8 @@ const range = (slug: string, caption: string, floor: string, flag: string): Elem
 
 const monitor: ElementSpec = apiContainer({
   id: 'feed',
+  // A tag of its own, or `mapLayer` has nothing to position: a provider left at "None" renders its children alone.
+  subType: 'div',
   /**
    * Resolved on the server while the page is built, so the finished HTML already carries the last day of
    * earthquakes: no request from the browser, nothing to load after the paint, and the USGS never learns who is

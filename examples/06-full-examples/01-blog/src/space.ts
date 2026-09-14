@@ -136,6 +136,8 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
 
   return apiContainer({
     id: ref,
+    // A tag of its own, or `pageInner` has nothing to lay out: a provider left at "None" renders its children alone.
+    subType: 'div',
     runtime: 'server',
     action: 'site-chrome',
     class: 'pageInner',
@@ -309,6 +311,7 @@ const home: PageSpec = {
            */
           apiContainer({
             id: 'posts',
+            subType: 'div',
             runtime: 'server',
             action: 'list-posts',
               // What this element asks of the action, on top of the page's own route and query params.
@@ -410,6 +413,8 @@ const home: PageSpec = {
                        */
                       apiContainer({
                         id: 'recent',
+                        // `aside`: the sidebar is the one part of the page that is about the rest of it.
+                        subType: 'aside',
                         runtime: 'server',
                         // `topic: ''` is not noise: a render trigger's input is the page's own query params plus
                         // whatever the element declares, so without saying so this provider would be filtered by

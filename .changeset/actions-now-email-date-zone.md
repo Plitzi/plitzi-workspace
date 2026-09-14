@@ -20,6 +20,10 @@ A flow can ask what time it is where it matters, and send the mail that confirms
   `ActionEmailAdapter` — one `send({ spaceId, to, subject, text, replyTo })` — and only then is the task offered.
   The task checks what is the same everywhere (exactly one recipient, a one-line subject, plain text, sane sizes);
   the adapter owns the sender, the domain and any sending cap, so no flow can choose who its mail comes from.
+- **`authorSpace` warns about a provider dressed with a style it cannot wear (`provider-style-without-tag`).** An
+  `apiContainer` left without a `subType` renders its children and no element of its own, so a `class` or `css` on
+  it styles nothing and its id finds nothing. The blog's header, post list and sidebar and the seismic monitor's map
+  layer were all like that, and now carry a tag.
 - **`Rule` and `RuleGroup` are exported from `@plitzi/sdk-authoring`.** A step's `when` is one, so a project that
   exports an action or a flow with a condition — and emits declarations for it — failed to build with "cannot be
   named".

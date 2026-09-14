@@ -614,6 +614,30 @@ describe('authorSpace / breakpoints and fonts', () => {
     expect(warnings.filter(warning => warning.code === 'tablet-rule-skips-mobile')).toEqual([]);
   });
 
+  /**
+   * A provider left at "Container Tag: None" renders its children and no element of its own, so a style on it dresses
+   * nothing — found on real spaces as a counter card with no card and a sticky sidebar that did not stick.
+   */
+  it('warns about a provider with a style and no tag to wear it', () => {
+    const provider = (attributes: Record<string, unknown>, css?: ElementSpec['css']): ElementSpec => ({
+      type: 'apiContainer',
+      id: 'feed',
+      attributes,
+      ...(css ? { css } : {})
+    });
+    const warningsFor = (element: ElementSpec) =>
+      authorSpace(minimal({ pages: [{ name: 'Home', slug: '', body: [element] }] })).warnings.filter(
+        warning => warning.code === 'provider-style-without-tag'
+      );
+
+    const untagged = warningsFor(provider({}, { desktop: { position: 'absolute' } }));
+
+    expect(untagged).toHaveLength(1);
+    expect(untagged[0].message).toContain('Element "apiContainer" (feed)');
+    expect(warningsFor(provider({ subType: 'div' }, { desktop: { position: 'absolute' } }))).toEqual([]);
+    expect(warningsFor(provider({}))).toEqual([]);
+  });
+
   /** The page server loads exactly the faces the style document lists, so declaring one is what makes it load. */
   it('carries the fonts a space declares into the style the page server loads them from', () => {
     const fonts: NonNullable<SpaceSpec['fonts']> = [

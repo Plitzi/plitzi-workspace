@@ -419,6 +419,27 @@ class SpaceAuthor {
     });
   }
 
+  /**
+   * A provider dressed with a class it will never wear.
+   *
+   * An `apiContainer` whose `subType` is left empty — the builder's "Container Tag: None" — renders its children and
+   * no element of its own, so its class and css style nothing and its id finds nothing on the page. Found three times
+   * on real spaces: a counter card with no card, a sticky sidebar that did not stick, a map layer positioned nowhere.
+   * A warning and not a refusal, because a provider with no tag is legal and often right; one with styles is not.
+   */
+  private warnStyleWithoutTag(spec: ElementSpec, where: string): void {
+    const subType = spec.attributes?.subType;
+    if (spec.type !== 'apiContainer' || (typeof subType === 'string' && subType !== '') || (!spec.class && !spec.css)) {
+      return;
+    }
+
+    this.styleWarnings.push({
+      code: 'provider-style-without-tag',
+      message: `${where} has ${spec.class ? 'a class' : 'css'} but no \`subType\`, so it renders no element of its own and the style applies to nothing. Give it a tag — \`subType: 'div'\`, or \`section\`, \`aside\`… — or move the style onto a child.`,
+      details: { type: spec.type }
+    });
+  }
+
   private writeSelector(name: string, responsive: ResponsiveStyle, where: string): void {
     this.warnTabletOnly(responsive, where);
 
@@ -658,6 +679,7 @@ class SpaceAuthor {
     this.assertStepsKnown(spec.flows, where);
     const bindings = withVisibility(spec);
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
+    this.warnStyleWithoutTag(spec, where);
 
     const element: Element = {
       id,
