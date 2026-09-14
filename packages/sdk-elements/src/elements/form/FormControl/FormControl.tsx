@@ -25,7 +25,18 @@ import type { ChangeEvent, RefObject } from 'react';
 export type FormControlProps = {
   ref: RefObject<HTMLElement>;
   className: string;
-  subType: 'text' | 'number' | 'email' | 'password' | 'time' | 'checkbox' | 'switch' | 'select' | 'textarea' | 'hidden';
+  subType:
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'password'
+    | 'date'
+    | 'time'
+    | 'checkbox'
+    | 'switch'
+    | 'select'
+    | 'textarea'
+    | 'hidden';
   name: string;
   label: string;
   placeholder: string;
@@ -247,7 +258,7 @@ const FormControl = ({
           disabled={disabled}
         />
       )} */}
-      {['text', 'number', 'email', 'password', 'time'].includes(subType) && (
+      {['text', 'number', 'email', 'password', 'date', 'time'].includes(subType) && (
         <Input
           id={`${rootId}_${id}`}
           name={name}

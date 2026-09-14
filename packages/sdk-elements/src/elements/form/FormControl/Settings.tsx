@@ -10,6 +10,7 @@ type SettingsProps = {
   subType?:
     | 'text'
     | 'number'
+    | 'date'
     | 'time'
     | 'email'
     | 'password'
@@ -146,6 +147,7 @@ const Settings = ({
       <Select value={subType} onChange={handleChangeType} label="Input Type" size="xs">
         <option value="text">Text</option>
         <option value="number">Number</option>
+        <option value="date">Date</option>
         <option value="time">Time</option>
         <option value="email">Email</option>
         <option value="password">Password</option>

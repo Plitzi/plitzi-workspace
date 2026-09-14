@@ -21,6 +21,9 @@ export type RuntimeSourceValues = {
   // Whatever the application EMBEDDING this space handed it, mirrored from `runtime.host`. Empty for a space that
   // is the page: nobody is embedding it, so nobody has anything to hand it.
   host?: Record<string, unknown>;
+  // The space's theme, published by `GlobalSources` from the theme store. `resolved` is always a colour, `mode` is what
+  // was chosen, `system` included — so `{{ theme.resolved }}` is the one a URL or a `when` rule wants.
+  theme?: { mode: Theme; resolved: ColorScheme };
 };
 
 export type CommonState = {
@@ -64,8 +67,10 @@ export type CommonState = {
   render?: RenderSettings;
 
   /**
-   * The theme, mirrored from `themeStore` so it reads like everything else: `{{ theme.resolved }}` in a binding, a
-   * `when` rule that switches on it, and one line in the devtools store viewer that answers "which theme is this".
+   * The theme, mirrored from `themeStore` so the devtools store viewer answers "which theme is this" in one line.
+   *
+   * Bindings and `when` rules do NOT read this copy: like every other global they read `runtime.sources`, where
+   * `GlobalSources` publishes the `theme` source for the area the space paints in.
    *
    * A MIRROR and never the source. The theme has to be readable by things that are not under any provider — the
    * dev-tools panel in its shadow root, an editor in a portal — which no app store can serve, so `themeStore` owns

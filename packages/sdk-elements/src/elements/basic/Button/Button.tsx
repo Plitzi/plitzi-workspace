@@ -18,6 +18,15 @@ export type ButtonProps = {
   content?: string;
   subType?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
+  /**
+   * For a button that shows and hides something — a menu, an answer, a panel: `true` while that is open.
+   *
+   * Left out, the button claims to control nothing, which is not the same as `false` ("it controls something, and it
+   * is closed"). A screen reader announces the difference, so an ordinary button must not get a default here.
+   */
+  ariaExpanded?: boolean;
+  /** For a button that stays on or off — a filter, a mode: `true` while it is on. Left out, it is a plain button. */
+  ariaPressed?: boolean;
 };
 
 const Button = ({
@@ -27,7 +36,9 @@ const Button = ({
   contentPlacement = 'after',
   content = 'Button',
   subType = 'button',
-  disabled = false
+  disabled = false,
+  ariaExpanded,
+  ariaPressed
 }: ButtonProps) => {
   const {
     definition: { label }
@@ -47,6 +58,8 @@ const Button = ({
       })}
       disabled={disabled}
       aria-label={buttonName}
+      aria-expanded={ariaExpanded}
+      aria-pressed={ariaPressed}
     >
       {contentPlacement === 'before' && content}
       {children}

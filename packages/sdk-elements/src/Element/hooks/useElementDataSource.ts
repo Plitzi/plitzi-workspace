@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import type { ElementBinding } from '@plitzi/sdk-shared';
@@ -7,6 +8,29 @@ import type { ElementBinding } from '@plitzi/sdk-shared';
 export type UseElementDataSourceProps = {
   bindings?: Record<string, ElementBinding[]>;
   sources?: string[];
+};
+
+/**
+ * The sources one binding names: the head of its `source`, and every root its `twigTemplate` transformers read.
+ *
+ * The template half is what used to fail in silence. A binding on `list_spaces.item.id` whose template also said
+ * `{{ theme.resolved }}` or `{{ state.scope }}` got nothing for the second name, because only the `source` was
+ * subscribed — the URL it built carried an empty value, and nothing anywhere reported it.
+ */
+const namesOf = ({ source, transformers }: ElementBinding): string[] => {
+  const names: string[] = [];
+  if (source) {
+    const dotIndex = source.indexOf('.');
+    names.push(dotIndex > -1 ? source.substring(0, dotIndex) : source);
+  }
+
+  for (const { action, params } of transformers ?? []) {
+    if (action === 'twigTemplate' && params.template) {
+      names.push(...templateRootNames(params.template));
+    }
+  }
+
+  return names;
 };
 
 // Source VALUES live under `runtime.sources.*` (globals + scoped), combined by the store's deep-merge scope
@@ -20,10 +44,9 @@ const useElementDataSource = ({ bindings, sources: sourcesProp }: UseElementData
         continue;
       }
 
-      for (const { source } of bindingsGroup) {
-        if (source) {
-          const dotIndex = source.indexOf('.');
-          names.add(dotIndex > -1 ? source.substring(0, dotIndex) : source);
+      for (const binding of bindingsGroup) {
+        for (const name of namesOf(binding)) {
+          names.add(name);
         }
       }
     }
@@ -41,7 +64,12 @@ const useElementDataSource = ({ bindings, sources: sourcesProp }: UseElementData
   return useMemo(() => {
     const map: Record<string, unknown> = {};
     sourceNames.forEach((name, index) => {
-      map[name] = values[index];
+      // Left out rather than set to undefined. A template root is not always a source — `{{ source }}` is the bound
+      // value, `{{ apiUrl }}` a variable the evaluator lifts to the root — and an undefined key spread over the
+      // template's context would shadow both.
+      if (values[index] !== undefined) {
+        map[name] = values[index];
+      }
     });
 
     return map;

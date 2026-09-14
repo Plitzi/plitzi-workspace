@@ -1,9 +1,10 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { setThemeMode } from '@plitzi/sdk-shared/theme/themeStore';
 
 import GlobalSources from './GlobalSources';
 
@@ -21,11 +22,14 @@ const authValue = {
   user: { accessToken: 'token-abc', details: { username: 'ada', email: 'ada@example.test' } }
 } as unknown as AuthContextValue;
 
-const authSourceFor = (userProvider: string): Record<string, unknown> => {
+const publishedSource = (
+  path: 'runtime.sources.auth' | 'runtime.sources.theme',
+  userProvider = 'basic'
+): Record<string, unknown> => {
   let published: Record<string, unknown> = {};
   const Probe = () => {
-    const [auth = {}] = useCommonStore('runtime.sources.auth');
-    published = auth;
+    const [value = {}] = useCommonStore(path);
+    published = value;
 
     return null;
   };
@@ -42,6 +46,26 @@ const authSourceFor = (userProvider: string): Record<string, unknown> => {
 
   return published;
 };
+
+const authSourceFor = (userProvider: string): Record<string, unknown> =>
+  publishedSource('runtime.sources.auth', userProvider);
+
+describe('GlobalSources — the theme source', () => {
+  afterEach(() => {
+    setThemeMode('system');
+  });
+
+  it('publishes the chosen theme and the colour it resolves to', () => {
+    setThemeMode('dark');
+
+    expect(publishedSource('runtime.sources.theme')).toEqual({ mode: 'dark', resolved: 'dark' });
+  });
+
+  /** `system` is not a colour: a URL built from `mode` would carry a word the API has no picture for. */
+  it('resolves `system` to the scheme the machine reports', () => {
+    expect(publishedSource('runtime.sources.theme')).toEqual({ mode: 'system', resolved: 'light' });
+  });
+});
 
 describe('GlobalSources — the auth source', () => {
   it('publishes the signed-in identity on the built-in provider', () => {

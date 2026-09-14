@@ -244,7 +244,7 @@ A source names **the id you gave the element**, and the prefix is filled in:
 ```ts
 bind: { content: 'posts.title' }        // → apiContainer_posts.title
 bind: { src: 'postList.item.cover' }    // → list_postList.item.cover
-bind: { content: 'auth.username' }      // a global: variables, navigation, auth, state
+bind: { content: 'auth.username' }      // a global: variables, navigation, auth, state, host, theme
 ```
 
 Only half of a source name is yours. The other half is the kind of source the ELEMENT publishes, and it is not

@@ -400,6 +400,10 @@
       "types": "./dist/helpers/twigWrapper/processTwig/processTwig.d.ts",
       "import": "./dist/helpers/twigWrapper/processTwig/processTwig.mjs"
     },
+    "./helpers/twigWrapper/templateRoots": {
+      "types": "./dist/helpers/twigWrapper/templateRoots.d.ts",
+      "import": "./dist/helpers/twigWrapper/templateRoots.mjs"
+    },
     "./helpers/twigWrapper/tokens/hasValidToken": {
       "types": "./dist/helpers/twigWrapper/tokens/hasValidToken.d.ts",
       "import": "./dist/helpers/twigWrapper/tokens/hasValidToken.mjs"

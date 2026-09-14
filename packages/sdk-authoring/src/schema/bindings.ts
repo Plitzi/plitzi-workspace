@@ -12,8 +12,10 @@ import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
  * `host` is the odd one: it carries whatever the application EMBEDDING the space handed it, so it is empty for a
  * space that IS the page. It is listed here because a space authored as an application SHELL binds to it, and a
  * validator that refused the name would make that impossible to write.
+ *
+ * `theme` is `{ mode, resolved }` — `resolved` is always `light` or `dark`, which is what a URL or a rule wants.
  */
-export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state', 'host'];
+export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state', 'host', 'theme'];
 
 /** What an element publishes: the source prefix its type registers under, by the id it was given. */
 export type SourceIndex = Map<string, string>;

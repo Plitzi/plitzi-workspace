@@ -48,7 +48,7 @@ const Control = withFieldValue(FormControl);
  */
 const control = (
   props: Pick<FormControlProps, 'name' | 'label'> &
-    Partial<Omit<FormControlProps, 'subType'>> & { subType: 'text' | 'password' }
+    Partial<Omit<FormControlProps, 'subType'>> & { subType: 'text' | 'password' | 'date' }
 ) => ({
   ref: { current: document.createElement('div') },
   className: '',
@@ -223,6 +223,28 @@ describe('Form / the rules its controls declare', () => {
     fireEvent.blur(input('passwordConfirm'));
 
     expect(screen.getByText('The passwords do not match')).toBeTruthy();
+  });
+
+  /**
+   * The browser's own picker, and the one format it submits whatever the visitor's locale — which is the point of the
+   * subtype: a flow or a server action reading the value never parses "16/10" against "10/16".
+   */
+  it('asks for a date with the date picker and submits it as YYYY-MM-DD', () => {
+    render(
+      <Harness>
+        <ElementContext value={controlEntry('date')}>
+          <Control {...control({ name: 'date', subType: 'date', label: 'Date' })} />
+        </ElementContext>
+      </Harness>
+    );
+
+    expect(input('date').type).toBe('date');
+
+    fireEvent.change(input('date'), { target: { value: '2026-10-16' } });
+    fireEvent.submit(screen.getByText('Create'));
+
+    expect(submits()).toHaveLength(1);
+    expect(submits()[0][2]).toMatchObject({ values: { date: '2026-10-16' } });
   });
 
   it('clears what a control said once it is typed into again', () => {

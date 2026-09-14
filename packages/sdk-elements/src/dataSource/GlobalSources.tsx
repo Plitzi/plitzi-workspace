@@ -6,6 +6,7 @@ import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
+import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 
 import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -125,6 +126,22 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   const hostFields = useCallback(() => getPathsFromObeject(host).map(path => ({ path, name: `host.${path}` })), [host]);
   useRegisterSource({ id: 'global', source: 'host', name: 'Host', fields: hostFields });
   useCommonStoreSync('runtime.sources.host', host);
+
+  /**
+   * --- theme
+   *
+   * For the area the SPACE paints in, not the surface around it: in the builder that is the canvas, which an author
+   * switches without switching the editor, and on a published page there is no area and it is the page's own theme.
+   * `resolved` is the one anything building a URL or comparing a colour wants — `system` is not a colour.
+   */
+  const { theme, resolvedTheme } = useTheme(SPACE_THEME_AREA);
+  const themeValue = useMemo(() => ({ mode: theme, resolved: resolvedTheme }), [theme, resolvedTheme]);
+  const themeFields = useCallback(
+    () => getPathsFromObeject(themeValue).map(path => ({ path, name: `theme.${path}` })),
+    [themeValue]
+  );
+  useRegisterSource({ id: 'global', source: 'theme', name: 'Theme', fields: themeFields });
+  useCommonStoreSync('runtime.sources.theme', themeValue);
 
   return children;
 };

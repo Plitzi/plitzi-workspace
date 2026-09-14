@@ -27,4 +27,20 @@ describe('Button Tests', () => {
 
     expect(baseElement).toBeTruthy();
   });
+
+  it('says what it toggles only when told to', () => {
+    const { getAllByRole } = render(
+      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+        <Button content="Plain" />
+        <Button content="Menu" ariaExpanded={false} />
+        <Button content="Filter" ariaPressed />
+      </ElementContext>
+    );
+    const [plain, menu, filter] = getAllByRole('button');
+
+    expect(plain.hasAttribute('aria-expanded')).toBe(false);
+    expect(plain.hasAttribute('aria-pressed')).toBe(false);
+    expect(menu.getAttribute('aria-expanded')).toBe('false');
+    expect(filter.getAttribute('aria-pressed')).toBe('true');
+  });
 });
