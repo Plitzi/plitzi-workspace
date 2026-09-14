@@ -1,5 +1,46 @@
 # @plitzi/sdk-elements
 
+## 0.35.2
+
+### Minor Changes
+
+- 470aaf8: A booking form can ask for a date, and a toggle can say it is one.
+
+  - **`formControl` accepts `subType: 'date'`.** It renders the browser's own date picker and submits `YYYY-MM-DD`, so
+    a flow or a server action reads one format whatever the visitor's locale. Until now a date was a free text field
+    and every form that needed one parsed whatever somebody typed. Offered in the builder's Input Type list.
+  - **`button` accepts `ariaExpanded` and `ariaPressed`.** A button that opens a menu or an answer, or one that stays on
+    like a filter, can tell assistive technology so — statically, or bound to the state it flips
+    (`bind: { ariaExpanded: 'state.menuOpen' }`). Left out, neither attribute is rendered: an ordinary button does not
+    claim to control anything.
+
+- 470aaf8: The theme is a data source, and a binding reads every source its template names.
+
+  - **`theme` global source.** `GlobalSources` publishes `runtime.sources.theme` as `{ mode, resolved }` for the area
+    the space paints in. `resolved` is always `light` or `dark`, so `{{ theme.resolved }}` is what a URL or a `when`
+    rule wants — a dashboard asking the API for a thumbnail in the visitor's scheme, for one. The comments that promised
+    `{{ theme.resolved }}` through the app store's `theme` mirror were wrong: nothing a binding reads lives there.
+  - **A binding subscribes to the roots of its `twigTemplate`.** It used to get only the head of its `source`, so a
+    binding on `list_spaces.item.id` whose template also said `{{ theme.resolved }}` or `{{ state.scope }}` resolved the
+    second name to nothing, silently. The names are read off the parsed template (`templateRootNames`, exported from
+    `@plitzi/sdk-shared/helpers/twigWrapper`). A name that is not a source is left out of the map rather than set to
+    `undefined`, so `{{ source }}` and the variables lifted to the template's root are never shadowed.
+  - **Authoring.** `theme` joins `GLOBAL_SOURCES`: `bind: { src: 'theme.resolved' }` is accepted, and an element can no
+    longer be named `theme`.
+
+### Patch Changes
+
+- v0.35.2
+- Updated dependencies
+- Updated dependencies [470aaf8]
+  - @plitzi/sdk-auth@0.35.2
+  - @plitzi/sdk-dev-tools@0.35.2
+  - @plitzi/sdk-event-bridge@0.35.2
+  - @plitzi/sdk-interactions@0.35.2
+  - @plitzi/sdk-navigation@0.35.2
+  - @plitzi/sdk-schema@0.35.2
+  - @plitzi/sdk-shared@0.35.2
+
 ## 0.35.1
 
 ### Patch Changes

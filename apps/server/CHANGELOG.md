@@ -1,5 +1,16 @@
 # @plitzi/sdk-server
 
+## 0.35.2
+
+### Patch Changes
+
+- v0.35.2
+- Updated dependencies [470aaf8]
+- Updated dependencies
+- Updated dependencies [470aaf8]
+  - @plitzi/plitzi-sdk@0.35.2
+  - @plitzi/sdk-shared@0.35.2
+
 ## 0.35.1
 
 ### Patch Changes

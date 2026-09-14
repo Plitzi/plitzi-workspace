@@ -1,5 +1,37 @@
 # @plitzi/plitzi-sdk
 
+## 0.35.2
+
+### Minor Changes
+
+- 470aaf8: A booking form can ask for a date, and a toggle can say it is one.
+
+  - **`formControl` accepts `subType: 'date'`.** It renders the browser's own date picker and submits `YYYY-MM-DD`, so
+    a flow or a server action reads one format whatever the visitor's locale. Until now a date was a free text field
+    and every form that needed one parsed whatever somebody typed. Offered in the builder's Input Type list.
+  - **`button` accepts `ariaExpanded` and `ariaPressed`.** A button that opens a menu or an answer, or one that stays on
+    like a filter, can tell assistive technology so — statically, or bound to the state it flips
+    (`bind: { ariaExpanded: 'state.menuOpen' }`). Left out, neither attribute is rendered: an ordinary button does not
+    claim to control anything.
+
+### Patch Changes
+
+- v0.35.2
+- Updated dependencies [470aaf8]
+- Updated dependencies
+- Updated dependencies [470aaf8]
+  - @plitzi/sdk-elements@0.35.2
+  - @plitzi/sdk-auth@0.35.2
+  - @plitzi/sdk-dev-tools@0.35.2
+  - @plitzi/sdk-event-bridge@0.35.2
+  - @plitzi/sdk-interactions@0.35.2
+  - @plitzi/sdk-navigation@0.35.2
+  - @plitzi/sdk-plugins@0.35.2
+  - @plitzi/sdk-schema@0.35.2
+  - @plitzi/sdk-shared@0.35.2
+  - @plitzi/sdk-style@0.35.2
+  - @plitzi/sdk-variables@0.35.2
+
 ## 0.35.1
 
 ### Patch Changes
