@@ -81,6 +81,33 @@ describe('email sender', () => {
     expect(deliver).toHaveBeenCalledTimes(3);
   });
 
+  /** A deployment routing mail its own way owns that connection: nothing is resolved or judged on its behalf. */
+  it('hands the message to the deployment’s own transport, still counted against the space', async () => {
+    const transport = vi.fn(() => Promise.resolve());
+    const lookup = resolvesTo('10.0.0.5');
+    const { deliver, email } = sender({ transport, lookup, dailyLimitPerSpace: 1 });
+    const relay = { ...smtp, host: 'localhost' };
+
+    await email.send(3, relay, message, signal);
+    await expect(email.send(3, relay, message, signal)).rejects.toThrow('This space has sent its 1 emails for today');
+
+    expect(transport).toHaveBeenCalledTimes(1);
+    expect(transport).toHaveBeenCalledWith({ spaceId: 3, smtp: relay, message, signal });
+    expect(lookup).not.toHaveBeenCalled();
+    expect(deliver).not.toHaveBeenCalled();
+  });
+
+  it('spends nothing on a host it refused, because nothing was attempted', async () => {
+    const { email } = sender({ lookup: resolvesTo('10.0.0.5'), dailyLimitPerSpace: 1 });
+    const allowed = sender({ dailyLimitPerSpace: 1 });
+
+    await expect(email.send(3, smtp, message, signal)).rejects.toThrow('private network');
+    await expect(email.send(3, smtp, message, signal)).rejects.toThrow('private network');
+    await allowed.email.send(3, smtp, message, signal);
+
+    expect(allowed.deliver).toHaveBeenCalledTimes(1);
+  });
+
   it('spends the allowance even when the server fails, so an outage cannot be retried past the limit', async () => {
     const { email } = sender({ dailyLimitPerSpace: 1, deliver: vi.fn(() => Promise.reject(new Error('421 busy'))) });
 

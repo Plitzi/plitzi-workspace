@@ -8,6 +8,7 @@
     "start": "vite",
     "start:server": "node --import tsx server/main.ts",
     "start:actions": "node --import tsx server/actionServer.ts",
+    "start:mail": "node --import tsx server/mailSink.ts",
     "lint": "TIMING=1 eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start:auth": "node --import tsx server/authServer.ts"
@@ -24,10 +25,14 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
+    "@types/mailparser": "^3.4.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/smtp-server": "^3.5.13",
     "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9.39.5",
+    "mailparser": "^3.9.26",
+    "smtp-server": "^3.19.12",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",

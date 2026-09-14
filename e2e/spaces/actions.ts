@@ -290,3 +290,43 @@ export const SLOW_ACTION = {
     }
   }
 };
+
+/** The SMTP credential the action server holds for its space — pointed at the suite's mail sink. */
+export const MAIL_CREDENTIAL = 'e2e-smtp';
+
+/** Who that credential sends as: the sender is the space's server, never a parameter a flow renders. */
+export const MAIL_FROM = { name: 'E2E Actions', address: 'actions@e2e.test' };
+
+/** A visitor names the recipient and a name; the subject and the body are rendered from what they typed. */
+const mailDocument = (name: string, credential: string) => ({
+  name,
+  nodes: {
+    start: node('start', {
+      type: 'trigger',
+      action: 'call',
+      params: {
+        access: 'public',
+        input: '{"to":{"type":"text","defaultValue":""},"name":{"type":"text","defaultValue":""}}'
+      },
+      afterNode: 'send'
+    }),
+    send: node('send', {
+      action: 'email.send',
+      params: {
+        credential,
+        to: '{{ input.to }}',
+        subject: 'Hello {{ input.name }}',
+        text: 'Sent by a flow for {{ input.name }}.'
+      },
+      beforeNode: 'start',
+      afterNode: 'answer'
+    }),
+    answer: node('answer', { action: 'flow.output', params: { values: '{"sent": true}' }, beforeNode: 'send' })
+  }
+});
+
+/** Sends one message through the space's own SMTP server. */
+export const MAIL_ACTION = { id: 'e2e-mail', document: mailDocument('Mail', MAIL_CREDENTIAL) };
+
+/** The same step naming no SMTP server at all — what a space that never configured one has. */
+export const UNCONFIGURED_MAIL_ACTION = { id: 'e2e-mail-unconfigured', document: mailDocument('Mail, no server', '') };

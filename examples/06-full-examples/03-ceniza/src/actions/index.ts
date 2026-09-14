@@ -25,13 +25,13 @@ export const actions = [availabilityAction, bookingAction, newsletterAction, jou
  * The space's one credential: the SMTP server the confirmation and the welcome go through.
  *
  * A Mailpit on this machine (`docker run -p 1025:1025 -p 8025:8025 axllent/mailpit`), so the mail really is sent and
- * lands at http://localhost:8025 rather than in anybody's inbox. A real deployment keeps its credentials wherever it
- * keeps its secrets, and the actions do not change.
+ * lands at http://localhost:8025 rather than in anybody's inbox — or whatever listens on `CENIZA_SMTP_PORT`. A real
+ * deployment keeps its credentials wherever it keeps its secrets, and the actions do not change.
  */
 const credentials: Record<string, Record<string, string>> = {
   [SMTP_CREDENTIAL]: {
     host: '127.0.0.1',
-    port: '1025',
+    port: process.env.CENIZA_SMTP_PORT ?? '1025',
     security: 'none',
     username: '',
     password: '',

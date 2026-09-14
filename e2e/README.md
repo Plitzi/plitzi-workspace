@@ -51,7 +51,7 @@ It is a setup project rather than a `globalSetup` for one reason: only the setup
 |---|---|---|---|
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports`, `theme` | harness |
 | `desktop` | `@plitzi/plitzi-desktop` | `theme` | the renderer's Vite server on 5180 |
-| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions` | e2e server + auth server + action server |
+| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions` | e2e server + auth server + action server + mail sink |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
 | `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (gated) |
 | `cross` | — more than one | `parity`, `agent`, `auth` | harness + both servers |
@@ -98,7 +98,14 @@ demonstrate.
   <http://127.0.0.1:5202>: no connectors, no `getRscData` of its own, no plugins. Its own process precisely
   because what it is about is what it does NOT have — the one above supplies its own RSC adapter, which is the
   case where the server stops assembling one, so it can never show that a space with only actions still resolves
-  its server elements. `yarn workspace @plitzi/e2e start:actions`.
+  its server elements. Its space also holds an SMTP credential, so `email.send` is checked the whole way out.
+  `yarn workspace @plitzi/e2e start:actions`.
+
+- **`server/mailSink.ts`** — the SMTP server the suite's spaces send through: SMTP on `127.0.0.1:5204`, and what
+  it kept on <http://127.0.0.1:5203/messages?to=…>. A real server rather than a stubbed transport, so a spec reads the
+  message a mail client actually built; it keeps everything in memory and delivers nothing. 5204 and not 1025, so a
+  Mailpit left running for development never stands in for it. Specs read it with `mailFor(uniqueRecipient(…))`
+  from `helpers/mail.ts`. `yarn workspace @plitzi/e2e start:mail`.
 
 `spaces/` holds what they render: `sampleSpace()` is the one the examples ship (so these specs and a reader see
 the same thing), `minimalSpace()` is two elements and a stylesheet for when a spec is about one thing and thirty

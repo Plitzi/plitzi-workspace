@@ -108,6 +108,14 @@ export const targets: Target[] = [
     what: 'A page server wired for actions ALONE — no connectors, no RSC adapter of its own'
   },
   {
+    id: 'mail-sink',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:mail',
+    /** Readiness is this HTTP port; the SMTP side the spaces send to listens on `MAIL_SINK.smtpPort`, 5204. */
+    origin: 'http://127.0.0.1:5203',
+    what: 'The SMTP server the suite’s spaces send through — keeps every message, delivers none'
+  },
+  {
     id: 'no-build',
     workspace: '@plitzi/example-render-no-build',
     /** 5009 and not 5000: on macOS, port 5000 belongs to ControlCenter's AirPlay Receiver. Readiness here is an
@@ -224,7 +232,8 @@ export const targets: Target[] = [
   {
     id: 'ceniza',
     workspace: '@plitzi/example-ceniza',
-    command: 'PORT=5016 yarn workspace @plitzi/example-ceniza start',
+    // Its booking confirmation goes to the suite's mail sink rather than to a Mailpit the machine may not run.
+    command: 'PORT=5016 CENIZA_SMTP_PORT=5204 yarn workspace @plitzi/example-ceniza start',
     origin: 'http://127.0.0.1:5016',
     what: 'A whole restaurant website — live availability, bookings with a confirmation email, a journal, no server code'
   },

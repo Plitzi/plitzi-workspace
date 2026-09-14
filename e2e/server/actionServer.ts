@@ -1,6 +1,16 @@
 import { createServer } from '@plitzi/sdk-server';
 
-import { actionSpace, FEED_ACTION, SLOW_ACTION, UNREACHABLE_ACTION } from '../spaces';
+import { MAIL_SINK } from '../helpers/mail';
+import {
+  actionSpace,
+  FEED_ACTION,
+  MAIL_ACTION,
+  MAIL_CREDENTIAL,
+  MAIL_FROM,
+  SLOW_ACTION,
+  UNCONFIGURED_MAIL_ACTION,
+  UNREACHABLE_ACTION
+} from '../spaces';
 
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
@@ -21,11 +31,26 @@ export const PORT = Number(process.env.PORT ?? 5202);
 
 const space = actionSpace();
 
-const actions = [FEED_ACTION, SLOW_ACTION, UNREACHABLE_ACTION] as ActionEntry[];
+const actions = [FEED_ACTION, SLOW_ACTION, UNREACHABLE_ACTION, MAIL_ACTION, UNCONFIGURED_MAIL_ACTION] as ActionEntry[];
+
+/** The space's one credential: its SMTP server, which is the suite's mail sink (`server/mailSink.ts`). */
+const credentials: Record<string, Record<string, string>> = {
+  [MAIL_CREDENTIAL]: {
+    host: '127.0.0.1',
+    port: String(MAIL_SINK.smtpPort),
+    security: 'none',
+    username: '',
+    password: '',
+    fromEmail: MAIL_FROM.address,
+    fromName: MAIL_FROM.name
+  }
+};
 
 const lookups = {
   getAction: (_spaceId: number, actionId: string): Promise<ActionEntry | undefined> =>
-    Promise.resolve(actions.find(entry => entry.id === actionId))
+    Promise.resolve(actions.find(entry => entry.id === actionId)),
+  getCredential: (_spaceId: number, identifier: string): Promise<Record<string, string> | undefined> =>
+    Promise.resolve(credentials[identifier])
 };
 
 const server = createServer({
@@ -47,7 +72,8 @@ const server = createServer({
   rsc: { cacheTtlMs: 0, elementTimeoutMs: 800 },
   // Nothing raised here on purpose: the suite loads this page from every worker at once, and the defaults are
   // expected to carry that. They did not until renders stopped drawing on the per-space CALL budget.
-  action: { lookups }
+  // `allowPrivateHosts` because the space's SMTP server is the sink on 127.0.0.1; a hosted server leaves it off.
+  action: { lookups, email: { allowPrivateHosts: true } }
 });
 
 server.listen(PORT, '127.0.0.1');

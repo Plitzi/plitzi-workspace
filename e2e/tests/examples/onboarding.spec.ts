@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { describeTarget, expect, test } from '../../fixtures';
 import { paintTrace, resetPaint, watchPaint } from '../../helpers/flicker';
+import { mailFor, uniqueRecipient } from '../../helpers/mail';
 import { RSC_IDS } from '../../helpers/space';
 import { expectDevToolsAvailable, expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
@@ -850,7 +851,8 @@ describeTarget('ceniza', subject => {
     await expect(page.getByText('Sigue leyendo')).toBeHidden();
   });
 
-  test('a table is booked end to end: free times, the form, the reference', async ({ page, capture }) => {
+  test('a table is booked end to end: free times, the form, the reference, the email', async ({ page, capture }) => {
+    const email = uniqueRecipient('ana');
     await page.goto(`${subject.origin}/reservas`);
 
     await page.locator('input[name="fecha"]').fill(nextSaturday());
@@ -861,13 +863,23 @@ describeTarget('ceniza', subject => {
 
     const booking = page.locator('form.form').first();
     await booking.locator('input[name="nombre"]').fill('Ana Torres');
-    await booking.locator('input[name="email"]').fill('ana@example.test');
+    await booking.locator('input[name="email"]').fill(email);
     await booking.locator('input[name="telefono"]').fill('+34 600 111 222');
     await booking.getByRole('button', { name: 'Confirmar reserva' }).click();
 
     await expect(page.getByText('Reserva confirmada')).toBeVisible();
-    await expect(page.locator('.bookingReference')).toHaveText(/^CZ-[0-9A-F]{6}$/);
+    const reference = page.locator('.bookingReference');
+    await expect(reference).toHaveText(/^CZ-[0-9A-F]{6}$/);
     await capture('booked');
+
+    // The confirmation really left, as the restaurant, through the space's own SMTP server — the suite's mail sink.
+    expect(await mailFor(email)).toMatchObject([
+      {
+        from: { name: 'Ceniza', address: 'reservas@ceniza.example' },
+        replyTo: 'reservas@ceniza.example',
+        subject: `Tu mesa en Ceniza · ${await reference.innerText()}`
+      }
+    ]);
   });
 
   test('the form answers in the site language, not the browser one', async ({ page }) => {

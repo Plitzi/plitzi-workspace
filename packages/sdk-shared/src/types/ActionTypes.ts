@@ -1,5 +1,6 @@
 import type { Environment } from './CommonTypes';
 import type { ElementInteraction } from './SchemaTypes';
+import type { SmtpSettings } from '../actions/smtp';
 
 /**
  * What an action's inputs and outputs may be.
@@ -341,11 +342,33 @@ export type ActionEmailMessage = {
   replyTo?: string;
 };
 
+/** One message on its way out, as a deployment's own transport receives it. */
+export type ActionEmailDelivery = {
+  /** The space the run belongs to, for a transport that routes or attributes mail per space. */
+  spaceId: number;
+  /** The SMTP credential the step named, already judged by `readSmtpCredential`. */
+  smtp: SmtpSettings;
+  message: ActionEmailMessage;
+  /** Aborted when the run is. The run ends either way; a transport that ignores it may still let the message leave. */
+  signal: AbortSignal;
+};
+
+/**
+ * How a message leaves, when the deployment decides that rather than `sdk-server`.
+ *
+ * Without one the server opens an SMTP connection to the credential's host itself — resolved, judged against private
+ * networks, connected by address. A deployment that routes mail its own way — a relay pool, a provider's API, a capture
+ * in tests — supplies this and owns that connection, and with it the network rule. What stays the server's: the step's
+ * checks on the message, the credential being judged, and the daily limit counted before this is called. Throwing
+ * fails the step with that message.
+ */
+export type ActionEmailTransport = (delivery: ActionEmailDelivery) => Promise<void>;
+
 /**
  * What a deployment decides about the mail its spaces' flows send through their own SMTP credentials.
  *
- * The server is still the one opening the connection, from the deployment's addresses — so how much one space may
- * send, and whether a credential may point inside the deployment's own network, are the deployment's to say.
+ * The server is still the one sending, from the deployment's addresses — so how much one space may send, whether a
+ * credential may point inside the deployment's own network, and how a message leaves are the deployment's to say.
  */
 export type ActionEmailConfig = {
   /** Messages one space may send per UTC day, counted before each send. Default 200. */
@@ -353,9 +376,12 @@ export type ActionEmailConfig = {
   /**
    * Lets an SMTP credential name a host on a private network — `localhost`, `10.x`, `192.168.x`. Off by default:
    * a hosted server refuses them, because a credential is typed by a customer and the connection starts inside the
-   * cluster. On for a development mail catcher, or a self-hosted server whose relay lives beside it.
+   * cluster. On for a development mail catcher, or a self-hosted server whose relay lives beside it. Only consulted
+   * when the server opens the connection itself, which is when there is no `transport`.
    */
   allowPrivateHosts?: boolean;
+  /** Replaces the server's own SMTP connection. See {@link ActionEmailTransport}. */
+  transport?: ActionEmailTransport;
 };
 
 /**

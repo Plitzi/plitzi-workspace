@@ -548,6 +548,22 @@ createServer({ action: { lookups, email: { dailyLimitPerSpace: 200, allowPrivate
   private network. A credential is typed by a customer and the connection starts inside your network, so a hosted
   server keeps it off. Turn it on for a development mail catcher such as [Mailpit](https://mailpit.axllent.org), or a
   self-hosted relay beside the server.
+- **`transport`** (optional) — how a message leaves, when that is yours to decide. Without it the server opens an
+  SMTP connection to the credential's host itself. With it, your function receives `{ spaceId, smtp, message, signal }`
+  and owns the connection — a relay pool, a provider's API, a capture in tests — and with it the network rule, so
+  `allowPrivateHosts` is not consulted. The step's checks, the credential being judged and the daily limit stay the
+  server's; throwing fails the step with that message:
+
+  ```ts
+  const transport: ActionEmailTransport = async ({ smtp, message }) => {
+    await ses.send({ from: smtp.fromEmail, to: message.to, subject: message.subject, text: message.text });
+  };
+
+  createServer({ action: { lookups, email: { transport } } });
+  ```
+
+Where the SMTP credentials come from is the other half a self-hosted deployment owns: `lookups.getCredential` reads
+them from whatever store it keeps secrets in, so its spaces send through its own servers without Plitzi in the path.
 
 ### The database driver
 

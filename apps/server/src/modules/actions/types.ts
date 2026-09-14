@@ -220,7 +220,14 @@ export type ActionsConfig = {
 
 /** Re-exported so the module's own files import one place, and a deployment writing an `onRun` or an `onReject`
  *  sees the same shapes the module emits. */
-export type { ActionEmailConfig, ActionEmailMessage, ActionRejectRecord, ActionRunRecord } from '@plitzi/sdk-shared';
+export type {
+  ActionEmailConfig,
+  ActionEmailDelivery,
+  ActionEmailMessage,
+  ActionEmailTransport,
+  ActionRejectRecord,
+  ActionRunRecord
+} from '@plitzi/sdk-shared';
 
 export type ResolvedActionLimits = Required<ActionLimits>;
 

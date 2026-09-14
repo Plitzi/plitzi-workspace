@@ -535,8 +535,9 @@ export type SSRActionConfig = {
    */
   dbDrivers?: unknown[];
   /**
-   * The limits on `email.send`, which sends through the SMTP credential a step names. Omitted keeps the defaults: 200
-   * messages per space per day, and no SMTP host on a private network. See {@link ActionEmailConfig}.
+   * The limits on `email.send`, which sends through the SMTP credential a step names, and optionally how a message
+   * leaves. Omitted keeps the defaults: 200 messages per space per day, no SMTP host on a private network, and the
+   * server's own SMTP connection. See {@link ActionEmailConfig}.
    */
   email?: ActionEmailConfig;
   /**
