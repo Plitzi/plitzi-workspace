@@ -1,5 +1,27 @@
 # @plitzi/sdk-auth
 
+## 0.35.6
+
+### Patch Changes
+
+- A failed server action can give back what it already did.
+
+  - **`flow.onFailure` ("On Failure") marks where the undo begins.** A run that reaches it has succeeded and ends there.
+    A run whose step failed jumps to it and runs the steps after it, in order, each still asking its own `when` — the
+    failure may have come before the thing to undo was ever done — with `{{ failure.step }}` and `{{ failure.message }}`
+    in scope. The run still ends failed, with the failure it had; an undo step that fails too is added to it.
+  - **The undo runs on its own clock and budget:** 5 seconds (or the run's own timeout if shorter) and its own outbound
+    request budget, because the run's may be exactly what ran out, and a caller closing the connection does not stop it.
+    A run that hit its deadline is undone too.
+  - **`defineAction` writes it from `onFailure: [...]`**, after the answer. `validateActionDocument` refuses an output
+    step or a second handler after one, warns about a handler with nothing to undo or nothing that undoes, and reserves
+    `failure` as a step id. `FAILURE_HANDLER_TASK` is exported from `@plitzi/sdk-shared/actions`.
+
+- Updated dependencies
+  - @plitzi/sdk-navigation@0.35.6
+  - @plitzi/sdk-schema@0.35.6
+  - @plitzi/sdk-shared@0.35.6
+
 ## 0.35.5
 
 ### Patch Changes
