@@ -8,17 +8,29 @@ import type { ChangeEvent } from 'react';
 type SettingsProps = {
   method?: 'get' | 'post';
   managedByInteractions?: boolean;
+  noValidate?: boolean;
   actionUrl?: string;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ method = 'get', managedByInteractions = false, actionUrl = '', onUpdate }: SettingsProps) => {
+const Settings = ({
+  method = 'get',
+  managedByInteractions = false,
+  noValidate = false,
+  actionUrl = '',
+  onUpdate
+}: SettingsProps) => {
   const handleChangeActionUrl = useCallback((value: string) => onUpdate?.('actionUrl', value), [onUpdate]);
 
   const handleChangeMethod = useCallback((value: string) => onUpdate?.('method', value), [onUpdate]);
 
   const handleChangeManageByInteractions = useCallback(
     (e: ChangeEvent) => onUpdate?.('managedByInteractions', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
+
+  const handleChangeNoValidate = useCallback(
+    (e: ChangeEvent) => onUpdate?.('noValidate', (e.target as HTMLInputElement).checked),
     [onUpdate]
   );
 
@@ -33,6 +45,12 @@ const Settings = ({ method = 'get', managedByInteractions = false, actionUrl = '
         checked={managedByInteractions}
         onChange={handleChangeManageByInteractions}
         label="Managed By Interactions"
+        size="xs"
+      />
+      <Checkbox
+        checked={noValidate}
+        onChange={handleChangeNoValidate}
+        label="Skip Browser Validation (show only the field messages)"
         size="xs"
       />
     </div>

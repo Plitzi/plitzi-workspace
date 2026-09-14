@@ -4,11 +4,23 @@ import { get } from '@plitzi/plitzi-ui/helpers';
  * What a control asks of its value before the form around it may submit.
  *
  * Zero and the empty string mean "no rule", so a control authored before these existed validates exactly as it did.
+ * Every rule carries the sentence it says when broken, and an empty one falls back to English: the site's language is
+ * the author's to write, never the browser's to guess.
  */
 export type FieldRules = {
   required: boolean;
+  requiredMessage: string;
   minLength: number;
+  minLengthMessage: string;
   maxLength: number;
+  maxLengthMessage: string;
+  /**
+   * The control's `subType`. A type whose value has a shape of its own (see `FORMATS`) is checked against it here,
+   * because a form with `noValidate` leaves nobody else to ask for it.
+   */
+  type: string;
+  /** Said when the value does not have the shape its type asks for, whichever type that is. */
+  formatMessage: string;
   /** A regular expression the WHOLE value must match — anchored here, so an author never has to remember `^…$`. */
   pattern: string;
   patternMessage: string;
@@ -22,6 +34,23 @@ export const REQUIRED_MESSAGE = 'This field is required';
 const DEFAULT_PATTERN_MESSAGE = 'This is not in the expected format';
 
 const DEFAULT_MATCHES_MESSAGE = 'This does not match';
+
+/** The HTML standard's "valid email address", which is what a browser checks `type="email"` against. */
+const EMAIL =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+type Format = { matches: (text: string) => boolean; message: string };
+
+/**
+ * The types whose value has a shape of its own, by the definition a browser checks each against. Another one is an
+ * entry here and nothing else: `formatMessage` already speaks for all of them.
+ */
+const FORMATS = new Map<string, Format>([
+  ['email', { matches: text => EMAIL.test(text), message: 'Enter an email address' }]
+]);
+
+/** Whether a control of this type asks its value for a shape, and so whether a `formatMessage` can ever be said. */
+export const hasFormat = (type: string): boolean => FORMATS.has(type);
 
 const isBlank = (value: unknown): boolean => value === undefined || value === null || value === '' || value === false;
 
@@ -58,7 +87,7 @@ const matchesPattern = (text: string, pattern: string): boolean => {
  */
 export const validateField = (value: unknown, rules: FieldRules, values: Record<string, unknown>): string => {
   if (isBlank(value)) {
-    return rules.required ? REQUIRED_MESSAGE : '';
+    return rules.required ? rules.requiredMessage || REQUIRED_MESSAGE : '';
   }
 
   if (typeof value === 'boolean') {
@@ -68,11 +97,16 @@ export const validateField = (value: unknown, rules: FieldRules, values: Record<
   const text = asText(value);
   const length = Array.from(text).length;
   if (rules.minLength > 0 && length < rules.minLength) {
-    return `Use at least ${rules.minLength} characters`;
+    return rules.minLengthMessage || `Use at least ${rules.minLength} characters`;
   }
 
   if (rules.maxLength > 0 && length > rules.maxLength) {
-    return `Use at most ${rules.maxLength} characters`;
+    return rules.maxLengthMessage || `Use at most ${rules.maxLength} characters`;
+  }
+
+  const format = FORMATS.get(rules.type);
+  if (format && !format.matches(text)) {
+    return rules.formatMessage || format.message;
   }
 
   if (rules.pattern && !matchesPattern(text, rules.pattern)) {

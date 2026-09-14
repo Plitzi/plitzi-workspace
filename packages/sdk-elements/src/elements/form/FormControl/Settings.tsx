@@ -4,6 +4,8 @@ import Select from '@plitzi/plitzi-ui/Select';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
+import { hasFormat } from './helpers/validateField';
+
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -27,8 +29,12 @@ type SettingsProps = {
   defaultValue?: string;
   options?: string[];
   required?: boolean;
+  requiredMessage?: string;
   minLength?: number;
+  minLengthMessage?: string;
   maxLength?: number;
+  maxLengthMessage?: string;
+  formatMessage?: string;
   pattern?: string;
   patternMessage?: string;
   matches?: string;
@@ -55,8 +61,12 @@ const Settings = ({
   autoComplete = true,
   options,
   required = true,
+  requiredMessage = '',
   minLength = 0,
+  minLengthMessage = '',
   maxLength = 0,
+  maxLengthMessage = '',
+  formatMessage = '',
   pattern = '',
   patternMessage = '',
   matches = '',
@@ -95,9 +105,23 @@ const Settings = ({
     [onUpdate]
   );
 
+  const handleChangeRequiredMessage = useCallback((value: string) => onUpdate?.('requiredMessage', value), [onUpdate]);
+
   const handleChangeMinLength = useCallback((value: string) => onUpdate?.('minLength', toLength(value)), [onUpdate]);
 
+  const handleChangeMinLengthMessage = useCallback(
+    (value: string) => onUpdate?.('minLengthMessage', value),
+    [onUpdate]
+  );
+
   const handleChangeMaxLength = useCallback((value: string) => onUpdate?.('maxLength', toLength(value)), [onUpdate]);
+
+  const handleChangeMaxLengthMessage = useCallback(
+    (value: string) => onUpdate?.('maxLengthMessage', value),
+    [onUpdate]
+  );
+
+  const handleChangeFormatMessage = useCallback((value: string) => onUpdate?.('formatMessage', value), [onUpdate]);
 
   const handleChangePattern = useCallback((value: string) => onUpdate?.('pattern', value), [onUpdate]);
 
@@ -171,6 +195,9 @@ const Settings = ({
         <TextArea value={optionsString} label="Options" onChange={handleChangeOptions} size="xs" />
       )}
       <Checkbox checked={required} label="Required" onChange={handleChangeRequired} size="xs" />
+      {required && (
+        <Input value={requiredMessage} label="Required Message" onChange={handleChangeRequiredMessage} size="xs" />
+      )}
       {isTyped && (
         <Input
           value={minLength ? String(minLength) : ''}
@@ -179,6 +206,9 @@ const Settings = ({
           size="xs"
         />
       )}
+      {isTyped && minLength > 0 && (
+        <Input value={minLengthMessage} label="Min Length Message" onChange={handleChangeMinLengthMessage} size="xs" />
+      )}
       {isTyped && (
         <Input
           value={maxLength ? String(maxLength) : ''}
@@ -186,6 +216,12 @@ const Settings = ({
           onChange={handleChangeMaxLength}
           size="xs"
         />
+      )}
+      {isTyped && maxLength > 0 && (
+        <Input value={maxLengthMessage} label="Max Length Message" onChange={handleChangeMaxLengthMessage} size="xs" />
+      )}
+      {hasFormat(subType) && (
+        <Input value={formatMessage} label="Invalid Format Message" onChange={handleChangeFormatMessage} size="xs" />
       )}
       {isTyped && (
         <Input value={pattern} label="Pattern (regular expression)" onChange={handleChangePattern} size="xs" />

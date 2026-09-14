@@ -6,8 +6,13 @@ import type { FieldRules } from './validateField';
 
 const rules = (overrides: Partial<FieldRules> = {}): FieldRules => ({
   required: false,
+  requiredMessage: '',
   minLength: 0,
+  minLengthMessage: '',
   maxLength: 0,
+  maxLengthMessage: '',
+  type: 'text',
+  formatMessage: '',
   pattern: '',
   patternMessage: '',
   matches: '',
@@ -52,6 +57,42 @@ describe('validateField', () => {
 
     it('reads a number as the text it was typed as', () => {
       expect(validateField(12345, rules({ minLength: 6 }), {})).toBe('Use at least 6 characters');
+    });
+  });
+
+  describe('format', () => {
+    it('asks no shape of a type that has none of its own', () => {
+      expect(validateField('ana', rules({ type: 'text' }), {})).toBe('');
+    });
+  });
+
+  describe('email', () => {
+    it('refuses what is not an address, by the definition the browser uses', () => {
+      expect(validateField('ana', rules({ type: 'email' }), {})).toBe('Enter an email address');
+      expect(validateField('ana@', rules({ type: 'email' }), {})).toBe('Enter an email address');
+      expect(validateField('ana torres@example.com', rules({ type: 'email' }), {})).toBe('Enter an email address');
+      expect(validateField('ana.torres+mesa@example.com', rules({ type: 'email' }), {})).toBe('');
+    });
+
+    it('asks nothing of an optional address left blank', () => {
+      expect(validateField('', rules({ type: 'email' }), {})).toBe('');
+    });
+  });
+
+  describe('messages', () => {
+    it('says each broken rule in the words the author gave it', () => {
+      expect(validateField('', rules({ required: true, requiredMessage: 'Rellena este campo' }), {})).toBe(
+        'Rellena este campo'
+      );
+      expect(validateField('Al', rules({ minLength: 3, minLengthMessage: 'Al menos 3 caracteres' }), {})).toBe(
+        'Al menos 3 caracteres'
+      );
+      expect(validateField('Alba', rules({ maxLength: 3, maxLengthMessage: 'Como mucho 3 caracteres' }), {})).toBe(
+        'Como mucho 3 caracteres'
+      );
+      expect(validateField('ana', rules({ type: 'email', formatMessage: 'Escribe un email válido' }), {})).toBe(
+        'Escribe un email válido'
+      );
     });
   });
 

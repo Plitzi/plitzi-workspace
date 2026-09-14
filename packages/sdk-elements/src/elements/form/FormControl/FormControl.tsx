@@ -47,9 +47,17 @@ export type FormControlProps = {
   /**
    * The rules a value has to meet before the form submits, checked by the form at submit time and by the control when
    * it loses focus. `0` and `''` mean no rule. See `validateField` for what each one says when it is broken.
+   *
+   * Each `…Message` is the sentence shown under the control when that rule is broken, in the site's language; empty
+   * falls back to an English one. `formatMessage` speaks for the shape the control's own type asks of its value — an
+   * address, for an `email` — so it is one attribute however many types come to have a shape.
    */
+  requiredMessage: string;
   minLength: number;
+  minLengthMessage: string;
   maxLength: number;
+  maxLengthMessage: string;
+  formatMessage: string;
   pattern: string;
   patternMessage: string;
   /** The `name` of another control in the same form this one has to repeat — a password confirmation, typically. */

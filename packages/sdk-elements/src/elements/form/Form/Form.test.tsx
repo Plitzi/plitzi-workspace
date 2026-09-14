@@ -48,7 +48,7 @@ const Control = withFieldValue(FormControl);
  */
 const control = (
   props: Pick<FormControlProps, 'name' | 'label'> &
-    Partial<Omit<FormControlProps, 'subType'>> & { subType: 'text' | 'password' | 'date' }
+    Partial<Omit<FormControlProps, 'subType'>> & { subType: 'text' | 'password' | 'date' | 'email' }
 ) => ({
   ref: { current: document.createElement('div') },
   className: '',
@@ -57,8 +57,12 @@ const control = (
   disabled: false,
   options: [],
   required: true,
+  requiredMessage: '',
   minLength: 0,
+  minLengthMessage: '',
   maxLength: 0,
+  maxLengthMessage: '',
+  formatMessage: '',
   pattern: '',
   patternMessage: '',
   matches: '',
@@ -96,7 +100,15 @@ const CONFIRM_ENTRY = controlEntry('confirm');
  * A form the way `withElement` would hand it its props: its values and errors live in element state, and every change a
  * control makes goes back through `setElementState` and comes down again as props.
  */
-const Harness = ({ managed = true, children }: { managed?: boolean; children: ReactNode }) => {
+const Harness = ({
+  managed = true,
+  noValidate = false,
+  children
+}: {
+  managed?: boolean;
+  noValidate?: boolean;
+  children: ReactNode;
+}) => {
   const [state, setState] = useState<Record<string, unknown>>({});
 
   // Stable, as the real one is: the form's callbacks depend on it, and a setter that changed identity on every render
@@ -123,6 +135,7 @@ const Harness = ({ managed = true, children }: { managed?: boolean; children: Re
           method="post"
           actionUrl=""
           managedByInteractions={managed}
+          noValidate={noValidate}
           values={isRecord(state.values) ? state.values : {}}
           errors={asErrors(state.errors)}
         >
@@ -245,6 +258,42 @@ describe('Form / the rules its controls declare', () => {
 
     expect(submits()).toHaveLength(1);
     expect(submits()[0][2]).toMatchObject({ values: { date: '2026-10-16' } });
+  });
+
+  it('leaves the browser checks on unless the form is told otherwise', () => {
+    render(<Harness>{passwordControls}</Harness>);
+
+    expect(input('password').form?.noValidate).toBe(false);
+  });
+
+  /**
+   * The browser's checks would answer first, in a bubble and in the browser's language, for exactly the two rules it
+   * knows — so with them off, the form says everything under the control in the words the author gave it.
+   */
+  it('with noValidate, says every rule in the words of the author, the address included', () => {
+    render(
+      <Harness noValidate>
+        <ElementContext value={controlEntry('name')}>
+          <Control
+            {...control({ name: 'name', subType: 'text', label: 'Nombre', requiredMessage: 'Dinos tu nombre' })}
+          />
+        </ElementContext>
+        <ElementContext value={controlEntry('email')}>
+          <Control
+            {...control({ name: 'email', subType: 'email', label: 'Email', formatMessage: 'Revisa el email' })}
+          />
+        </ElementContext>
+      </Harness>
+    );
+
+    expect(input('email').form?.noValidate).toBe(true);
+
+    fireEvent.change(input('email'), { target: { value: 'ana@' } });
+    fireEvent.submit(screen.getByText('Create'));
+
+    expect(submits()).toEqual([]);
+    expect(screen.getByText('Dinos tu nombre')).toBeTruthy();
+    expect(screen.getByText('Revisa el email')).toBeTruthy();
   });
 
   it('clears what a control said once it is typed into again', () => {

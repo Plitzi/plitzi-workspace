@@ -26,6 +26,14 @@ export type FormProps = {
   method: 'get' | 'post';
   actionUrl: string;
   managedByInteractions: boolean;
+  /**
+   * Turns the browser's own checks off, leaving the controls' rules as the whole of the validation.
+   *
+   * Left on, the browser answers first for the two rules it knows (a blank required field, a malformed address) in a
+   * bubble no style reaches and in the BROWSER's language, while every other rule answers under the control. On, every
+   * rule answers under the control in the words its `…Message` gives — `validateField` asks for both of those itself.
+   */
+  noValidate: boolean;
   errors: Record<string, string>;
   values: Record<string, unknown>;
 };
@@ -54,6 +62,7 @@ const Form = ({
   method = 'get',
   actionUrl = '',
   managedByInteractions = false,
+  noValidate = false,
   errors = emptyObject,
   values = emptyObject
 }: FormProps) => {
@@ -256,8 +265,9 @@ const Form = ({
       /**
        * Refused for every form, not only the managed ones.
        *
-       * The browser only knows `required`; a length, a pattern or a confirmation that does not match is a rule it has
-       * never heard of, so a form left to submit natively would carry exactly the values these rules exist to stop.
+       * The browser only knows `required` and an address's format, and not even those under `noValidate`; a length, a
+       * pattern or a confirmation is a rule it has never heard of, so a form left to submit natively would carry
+       * exactly the values these rules exist to stop.
        */
       if (Object.keys(invalid).length > 0) {
         e.stopPropagation();
@@ -362,6 +372,7 @@ const Form = ({
     <RootElement
       tag="form"
       ref={ref}
+      noValidate={noValidate}
       method={method}
       className={clsx('plitzi-component__form', className)}
       interactionTriggers={interactionTriggers}

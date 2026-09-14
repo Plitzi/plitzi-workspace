@@ -17,6 +17,7 @@ const declaration = elementDeclaration<FormAttributes>()({
       method: 'get',
       actionUrl: '',
       managedByInteractions: false,
+      noValidate: false,
       errors: {},
       values: {}
     },

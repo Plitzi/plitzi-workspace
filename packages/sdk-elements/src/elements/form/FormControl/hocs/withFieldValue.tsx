@@ -30,8 +30,12 @@ export type WithFieldValueProps<T> = {
     | 'color'
     | 'switch';
   required: boolean;
+  requiredMessage?: string;
   minLength?: number;
+  minLengthMessage?: string;
   maxLength?: number;
+  maxLengthMessage?: string;
+  formatMessage?: string;
   pattern?: string;
   patternMessage?: string;
   matches?: string;
@@ -47,8 +51,12 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
       subType = 'text',
       defaultValue = '',
       required = true,
+      requiredMessage = '',
       minLength = 0,
+      minLengthMessage = '',
       maxLength = 0,
+      maxLengthMessage = '',
+      formatMessage = '',
       pattern = '',
       patternMessage = '',
       matches = '',
@@ -75,8 +83,34 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
     }, [previewMode, previewError, errors, name]);
 
     const rules = useMemo<FieldRules>(
-      () => ({ required, minLength, maxLength, pattern, patternMessage, matches, matchesMessage }),
-      [required, minLength, maxLength, pattern, patternMessage, matches, matchesMessage]
+      () => ({
+        required,
+        requiredMessage,
+        minLength,
+        minLengthMessage,
+        maxLength,
+        maxLengthMessage,
+        type: subType,
+        formatMessage,
+        pattern,
+        patternMessage,
+        matches,
+        matchesMessage
+      }),
+      [
+        required,
+        requiredMessage,
+        minLength,
+        minLengthMessage,
+        maxLength,
+        maxLengthMessage,
+        subType,
+        formatMessage,
+        pattern,
+        patternMessage,
+        matches,
+        matchesMessage
+      ]
     );
 
     /**
