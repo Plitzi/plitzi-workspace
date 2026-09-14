@@ -1,5 +1,22 @@
 # @plitzi/sdk-server
 
+## 0.35.7
+
+### Patch Changes
+
+- An SMTP failure says which credential it was, and a credential's values can be replaced from the builder.
+
+  - **`email.send` names the credential it could not send through:** `Could not send through the SMTP credential
+"ceniza-smtp": its SMTP host is on a private network…`. The host used to be in the sentence, and a run's trace
+    redacts every value of a credential it resolved, so the message read `The SMTP host "«redacted»"…`.
+  - **Credentials can be edited in the builder.** A pencil on each row opens the form with the name and the provider
+    fixed and nothing it holds shown: every value is entered again, and saving replaces all of them. SMTP credentials
+    are also labelled in the list.
+
+- Updated dependencies
+  - @plitzi/plitzi-sdk@0.35.7
+  - @plitzi/sdk-shared@0.35.7
+
 ## 0.35.6
 
 ### Patch Changes
