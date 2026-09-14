@@ -222,6 +222,13 @@ export const targets: Target[] = [
     what: 'A whole small blog — a front page, posts, sessions, and who may publish'
   },
   {
+    id: 'ceniza',
+    workspace: '@plitzi/example-ceniza',
+    command: 'PORT=5016 yarn workspace @plitzi/example-ceniza start',
+    origin: 'http://127.0.0.1:5016',
+    what: 'A whole restaurant website — live availability, bookings with a confirmation email, a journal, no server code'
+  },
+  {
     id: 'builder',
     workspace: '@plitzi/plitzi-builder',
     /** Plain HTTP on a port of its own, so the same command works on a laptop and on a CI runner that has no

@@ -88,6 +88,24 @@ describe('runAction', () => {
     expect(result.trace).toHaveLength(1);
   });
 
+  it('publishes the moment the run started as `now`', async () => {
+    const { runAction } = createActionsModule({ lookups });
+    const entry = buildEntry({
+      nodes: {
+        start: callTrigger(),
+        compute: node('compute', { action: 'flow.output', params: { values: '{"now": "{{ now }}"}' } })
+      }
+    });
+    const before = Date.now();
+
+    const result = await runAction(request(entry));
+    const now = String(result.output.now);
+
+    expect(now).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    expect(Date.parse(now)).toBeGreaterThanOrEqual(before);
+    expect(Date.parse(now)).toBeLessThanOrEqual(Date.now());
+  });
+
   /**
    * The stuck run this ceiling exists for.
    *

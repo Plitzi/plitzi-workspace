@@ -58,9 +58,12 @@ export { createKvStore } from './modules/actions/runtime/kvStore';
  */
 export { createRunLogger, createRejectLogger } from './modules/actions/runtime/runLogger';
 
+export type { TaskRegistryOptions } from './modules/actions/tasks/registry';
 export type {
   ActionCredential,
   ActionDbDriver,
+  ActionEmailAdapter,
+  ActionEmailMessage,
   ActionKvAdapter,
   ActionKvStore,
   ActionLookups,

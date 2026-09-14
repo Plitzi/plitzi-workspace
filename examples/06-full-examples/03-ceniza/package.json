@@ -1,0 +1,23 @@
+{
+  "name": "@plitzi/example-ceniza",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A restaurant's whole website: ten pages, live table availability, bookings with a confirmation email, a newsletter and a journal — every server action built from the tasks the server ships.",
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/sdk-authoring": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3"
+  }
+}

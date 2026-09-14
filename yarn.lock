@@ -3900,6 +3900,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@plitzi/example-ceniza@workspace:examples/06-full-examples/03-ceniza":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/example-ceniza@workspace:examples/06-full-examples/03-ceniza"
+  dependencies:
+    "@plitzi/sdk-authoring": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@types/node": "npm:^26.5.1"
+    react: "npm:^19.3.0"
+    react-dom: "npm:^19.3.0"
+    tsx: "npm:^4.23.13"
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/example-cloud-space@workspace:examples/01-my-first-space/05-from-the-cloud":
   version: 0.0.0-use.local
   resolution: "@plitzi/example-cloud-space@workspace:examples/01-my-first-space/05-from-the-cloud"

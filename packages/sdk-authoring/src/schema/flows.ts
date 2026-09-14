@@ -5,6 +5,12 @@ import type { Rule, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
 
 /**
+ * Public because a step's `when` is one: a project that exports a flow or an action — and so emits declarations for it
+ * — has to be able to name the type of the condition inside, or its build fails with "cannot be named".
+ */
+export type { Rule, RuleGroup };
+
+/**
  * Where a step runs, when it did not say.
  *
  * A trigger fires on the element the flow is declared on, and an element callback with no target changes that same

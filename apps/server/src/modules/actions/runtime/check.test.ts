@@ -28,7 +28,7 @@ const entry = (nodes: Record<string, ElementInteraction>): ActionEntry => ({
 
 const deps = (overrides: Partial<ActionCheckDeps> = {}): ActionCheckDeps => ({
   spaceId: 1,
-  registry: createTaskRegistry([], true),
+  registry: createTaskRegistry([], { db: true }),
   lookups: {
     getAction: () => Promise.resolve(undefined),
     getCredential: (_spaceId, identifier) =>

@@ -369,6 +369,7 @@ export const createActionRunner = (
       fetch: runFetch,
       kv: scopedKv,
       dbDrivers: config.dbDrivers ?? [],
+      email: config.email,
       emit: chunk => request.emit?.(redact(chunk))
     });
 
@@ -390,7 +391,13 @@ export const createActionRunner = (
       spaceId: request.spaceId,
       environment: request.environment,
       trigger: request.trigger,
-      runId
+      runId,
+      /**
+       * The moment the run started, as an ISO string — and the same moment for every step. A check that asks the
+       * time and the write it guards cannot straddle midnight, and a template reads it in the zone it cares about
+       * with `{{ now|date('Y-m-d', 'Europe/Madrid') }}`.
+       */
+      now: new Date(startedAt).toISOString()
     };
 
     let status: ActionRunResult['status'] = 'completed';

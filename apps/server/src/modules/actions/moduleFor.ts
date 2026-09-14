@@ -39,6 +39,7 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     rateLimit: config.action?.rateLimit,
     idempotency: config.action?.idempotency,
     dbDrivers: config.action?.dbDrivers as ActionsConfig['dbDrivers'],
+    email: config.action?.email,
     onRun: config.action?.onRun
   });
   modules.set(config, module);

@@ -42,7 +42,8 @@ const EXAMPLE_TARGETS = [
   'server-actions',
   'server-actions-render',
   'server-actions-no-server',
-  'blog'
+  'blog',
+  'ceniza'
 ];
 
 export const categories: Category[] = [

@@ -29,7 +29,10 @@ export type ActionsModule = ActionRunner & {
  * the same as having no single-flight at all. Nothing outside this folder needs to know how a run is assembled.
  */
 export const createActionsModule = (config: ActionsConfig): ActionsModule => {
-  const registry = createTaskRegistry(config.tasks, (config.dbDrivers?.length ?? 0) > 0);
+  const registry = createTaskRegistry(config.tasks, {
+    db: (config.dbDrivers?.length ?? 0) > 0,
+    email: config.email !== undefined
+  });
   const { runAction } = createActionRunner(config, registry, config.fetchImpl);
   /**
    * Single-flight over the store the deployment already gave the `kv` tasks — its own Redis, table or whatever it
@@ -67,9 +70,12 @@ export { handleActionCancel } from './transport/cancelHandler';
 export type { ActiveRun, RunGuards } from './runtime/guards';
 export type { ScheduleResult, ScheduleRunner, ScheduleTick } from './runtime/schedule';
 export type { ActionTaskDescriptor } from './taskCatalog';
+export type { TaskRegistryOptions } from './tasks/registry';
 export type {
   ActionCredential,
   ActionDbDriver,
+  ActionEmailAdapter,
+  ActionEmailMessage,
   ActionKvStore,
   ActionLookups,
   ActionRejectRecord,

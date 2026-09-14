@@ -195,6 +195,7 @@ The ones `sdk-server` ships:
 | `connector` | `read`, `write` — the connectors this space already has |
 | `auth` | `currentUser`, `requireRole` |
 | `kv` | `get`, `set`, `increment`, `delete` — namespaced per space |
+| `email` | `send` — one plain-text message, offered only when the deployment configured a transport |
 | `stream` | `emit` — progress for a streaming caller |
 
 Plus whatever the deployment registered. On Plitzi's own: `ai.complete`, and `db.query` when a database driver is
@@ -202,8 +203,13 @@ available.
 
 ### What a step can see
 
-The run carries only the basics — `input`, `user`, `spaceId`, `environment`, `trigger`, `runId` — plus each
-previous step's result under its own id. **Everything else a flow can reach is something a task chose to hand
+The run carries only the basics — `input`, `user`, `spaceId`, `environment`, `trigger`, `runId`, `now` — plus
+each previous step's result under its own id.
+
+`now` is the moment the run started, as an ISO string, and it is the same moment for every step: a check that asks
+the time and the write it guards cannot straddle midnight. It is UTC, so read it in the zone the question is about
+— `{{ now|date('Y-m-d H:i', 'Europe/Madrid') }}` is "what time is it at the restaurant", whatever zone the server
+runs in. A calendar date a visitor picked (`2026-10-22`) is midnight UTC, so it is read with `'UTC'`. **Everything else a flow can reach is something a task chose to hand
 back.**
 
 Credentials are deliberately not in there. A step that needs one **names it** (`http.request` has a `credential`
@@ -438,9 +444,8 @@ Four decisions that are open rather than forgotten, so nobody re-derives them fr
 - **A run costs a flat `server_action`.** A flow making twenty outbound calls is billed as one doing arithmetic.
   Metering per outbound request or per second of wall clock is the refinement, and it would change what the
   default limits should be.
-- **`email.send` and `storage.put` are not in the catalog.** A step whose only possible outcome is failure is
-  worse than no step: mail needs a transport, a sending domain and a bounce policy, and which bucket a flow may
-  write into is a product decision. A self-hosted deployment registers either of them today as its own task.
+- **`storage.put` is not in the catalog.** Which bucket a flow may write into is a product decision, not a
+  mechanical one. A self-hosted deployment registers it today as its own task.
 - **One live stream has one consumer.** A second caller attaching to a run already in flight is the nicer
   behaviour and a second lifecycle to get wrong; refusing the duplicate is honest and reversible.
 
@@ -464,7 +469,8 @@ adapter written out in full, in
 [`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger).
 
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
-supplies a shared one), the database drivers `db.query` may use, the per-run limits, and what a run costs.
+supplies a shared one), the database drivers `db.query` may use, the transport `email.send` hands its mail to, the
+per-run limits, and what a run costs.
 
 **Every store here is yours.** `sdk-server` opens a connection to nothing at all: it reads a space through an
 adapter, keeps runs wherever you tell it to, and reaches a database through a driver you register. What it ships
@@ -514,6 +520,29 @@ Two things your adapter does owe:
   rather than something the server composes.
 - **Throw when the store is unreachable.** Nothing above catches, deliberately: this is not a cache, and a miss
   here means the rate limit did not count and the idempotency key was not seen.
+
+### The email transport
+
+`email.send` is shipped, and offered only to a deployment that says how mail leaves it:
+
+```ts
+const email: ActionEmailAdapter = {
+  send: async ({ spaceId, to, subject, text, replyTo }) => {
+    await provider.send({ from: 'bookings@example.com', to, subject, text, replyTo });
+  }
+};
+
+createServer({ action: { lookups, email } });
+```
+
+The task owns what is the same everywhere: exactly one recipient, a one-line subject, plain text only, sizes that
+fit a message. The adapter owns everything a provider account decides — the sender and its domain, what happens to
+a bounce, and how much one space may send (`spaceId` is there for that). None of it is a parameter, so no flow can
+choose who its mail appears to come from. Throw to fail the step: a cap reached or a provider refusing ends the run
+at `email.send` with that message.
+
+During development an adapter that writes the message to the log is the whole transport — the flow runs end to
+end, and nobody's inbox is involved.
 
 ### The database driver
 

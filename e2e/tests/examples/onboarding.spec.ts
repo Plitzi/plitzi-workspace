@@ -814,3 +814,69 @@ describeTarget('blog', subject => {
     });
   });
 });
+
+describeTarget('ceniza', subject => {
+  /** A business website whose server work is all documents: what is checked is what its README promises — the
+   *  server-rendered journal and hours, one page for every article, and a booking made end to end through the
+   *  availability, the seats and the confirmation. */
+
+  /** A Saturday at least a week away, as the date picker submits it: open for lunch and dinner, never in the past. */
+  const nextSaturday = (): string => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() + 7 + ((6 - date.getUTCDay() + 7) % 7));
+
+    return date.toISOString().slice(0, 10);
+  };
+
+  test('the home page arrives with the journal and the opening hours already in it', async ({ request }) => {
+    const html = await (await request.get(subject.origin)).text();
+
+    // Both are `render` actions, resolved while the page was built.
+    expect(html).toContain('Por qué solo cocinamos con encina');
+    expect(html).toContain('13:30 – 16:00 · 20:00 – 23:30');
+  });
+
+  test('every article opens from one page, and a slug nobody wrote says so', async ({ page, capture }) => {
+    await page.goto(`${subject.origin}/diario/por-que-encina`);
+
+    await expect(page.getByRole('heading', { name: 'Por qué solo cocinamos con encina', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'De dónde viene la leña' })).toBeVisible();
+    await expect(page.getByText('Sigue leyendo')).toBeVisible();
+    await capture('article');
+
+    await page.goto(`${subject.origin}/diario/no-existe`);
+
+    await expect(page.getByRole('heading', { name: 'No encontramos ese artículo' })).toBeVisible();
+    await expect(page.getByText('Sigue leyendo')).toBeHidden();
+  });
+
+  test('a table is booked end to end: free times, the form, the reference', async ({ page, capture }) => {
+    await page.goto(`${subject.origin}/reservas`);
+
+    await page.locator('input[name="fecha"]').fill(nextSaturday());
+    const time = page.locator('.slotChip:visible').first();
+    await expect(time).toBeVisible();
+    await time.click();
+    await expect(time).toHaveAttribute('aria-pressed', 'true');
+
+    const booking = page.locator('form.form').first();
+    await booking.locator('input[name="nombre"]').fill('Ana Torres');
+    await booking.locator('input[name="email"]').fill('ana@example.test');
+    await booking.locator('input[name="telefono"]').fill('+34 600 111 222');
+    await booking.getByRole('button', { name: 'Confirmar reserva' }).click();
+
+    await expect(page.getByText('Reserva confirmada')).toBeVisible();
+    await expect(page.locator('.bookingReference')).toHaveText(/^CZ-[0-9A-F]{6}$/);
+    await capture('booked');
+  });
+
+  test('the form answers in the site language, not the browser one', async ({ page }) => {
+    await page.goto(`${subject.origin}/reservas`);
+
+    await page.locator('input[name="fecha"]').fill(nextSaturday());
+    await page.locator('.slotChip:visible').first().click();
+    await page.getByRole('button', { name: 'Confirmar reserva' }).click();
+
+    await expect(page.getByText('Rellena este campo.').first()).toBeVisible();
+  });
+});

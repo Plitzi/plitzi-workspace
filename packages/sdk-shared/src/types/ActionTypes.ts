@@ -329,6 +329,30 @@ export type ActionRunRecord = {
 };
 
 /**
+ * One message a flow asked to send.
+ *
+ * Plain text only. The body is whatever a flow rendered, and a flow renders what a visitor typed: HTML built from
+ * that is markup a stranger wrote, sent from the deployment's own domain.
+ */
+export type ActionEmailMessage = {
+  /** The space the run belongs to, so a deployment can cap and attribute what each one sends. */
+  spaceId: number;
+  to: string;
+  subject: string;
+  text: string;
+  replyTo?: string;
+};
+
+/**
+ * Where the `email.send` task hands a message: the deployment's transport, and its policy.
+ *
+ * The sender, the sending domain, what happens to a bounce and how much one space may send are the deployment's, so
+ * none of them is a parameter a flow can set. Throwing fails the step — a cap reached, a provider refusing — and
+ * the run fails at it with that message.
+ */
+export type ActionEmailAdapter = { send: (message: ActionEmailMessage) => Promise<void> };
+
+/**
  * One thing a CHECK found about an action, before anybody runs it.
  *
  * The complement to `validateActionDocument`, which reads the document alone and therefore cannot know whether

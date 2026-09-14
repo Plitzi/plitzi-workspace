@@ -33,7 +33,7 @@ const ACCESS_MODES = ['public', 'session', 'role'];
 const TRIGGER_TYPES = ['call', 'webhook', 'schedule', 'render', 'custom'];
 const SIGNATURE_ALGORITHMS = ['sha256', 'sha1'];
 /** What the RUN publishes in the flow scope before any step does — see `runAction`. A step id may not shadow one. */
-const RESERVED_SCOPE_KEYS = new Set(['input', 'user', 'spaceId', 'environment', 'trigger', 'runId']);
+const RESERVED_SCOPE_KEYS = new Set(['input', 'user', 'spaceId', 'environment', 'trigger', 'runId', 'now']);
 
 /** `<namespace>.<action>`, which is how the registry addresses a task. */
 const TASK_NAME = /^[a-z][a-zA-Z0-9]*\.[a-z][a-zA-Z0-9]*$/;

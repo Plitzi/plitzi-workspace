@@ -258,6 +258,27 @@ describe('AST processTwig — date filter', () => {
   it('returns empty string for an unparseable date', () => {
     expect(processTwig('{{ val | date("Y-m-d") }}', { val: 'not-a-date' })).toBe('');
   });
+
+  it('reads the parts in the time zone it is given', () => {
+    const instant = '2026-10-22T22:30:00Z';
+
+    expect(processTwig('{{ val | date("Y-m-d H:i", "Europe/Madrid") }}', { val: instant })).toBe('2026-10-23 00:30');
+    expect(processTwig('{{ val | date("Y-m-d H:i", "UTC") }}', { val: instant })).toBe('2026-10-22 22:30');
+  });
+
+  it('reads a bare calendar date as the day it names when asked in UTC', () => {
+    expect(processTwig('{{ val | date("l j n w N", "UTC") }}', { val: '2026-10-18' })).toBe('Sunday 18 10 0 7');
+  });
+
+  it('answers the weekday, the unpadded parts and Unix seconds', () => {
+    expect(processTwig('{{ val | date("w N G j n U", "UTC") }}', { val: '2026-03-05T07:04:09Z' })).toBe(
+      '4 4 7 5 3 1772694249'
+    );
+  });
+
+  it('formats nothing for a time zone that does not exist', () => {
+    expect(processTwig('{{ val | date("Y", "Mars/Olympus") }}', { val: '2026-03-15' })).toBe('');
+  });
 });
 
 describe('AST processTwig — encoding filters', () => {

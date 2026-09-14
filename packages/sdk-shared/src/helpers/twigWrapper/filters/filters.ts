@@ -159,6 +159,85 @@ export const wrapRaw = (value: unknown): RawMarker => ({ __raw: value, __marker:
 
 export const unwrapRaw = (value: unknown): unknown => (isRawMarker(value) ? value.__raw : value);
 
+// ── Date parts ───────────────────────────────────────────────────────────────
+type DateParts = {
+  year: number;
+  month: number;
+  day: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  weekday: number;
+};
+
+const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const zoneFormatters = new Map<string, Intl.DateTimeFormat | null>();
+
+/** One formatter per zone for the life of the process: building one is far dearer than using it. `null` = no such zone. */
+const zoneFormatter = (timeZone: string): Intl.DateTimeFormat | null => {
+  if (!zoneFormatters.has(timeZone)) {
+    try {
+      zoneFormatters.set(
+        timeZone,
+        new Intl.DateTimeFormat('en-US', {
+          timeZone,
+          hourCycle: 'h23',
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          weekday: 'short'
+        })
+      );
+    } catch {
+      zoneFormatters.set(timeZone, null);
+    }
+  }
+
+  return zoneFormatters.get(timeZone) ?? null;
+};
+
+/**
+ * The calendar and clock parts of an instant, read in `timeZone` — or, with none, in the zone the code runs in.
+ *
+ * The zone is what a SERVER flow needs: its process runs in whatever zone the host was given, and "is it already
+ * past 21:00 at the restaurant" is a question about the restaurant's clock. `undefined` for a zone that does not exist.
+ */
+const dateParts = (date: Date, timeZone: string): DateParts | undefined => {
+  if (!timeZone) {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      hours: date.getHours(),
+      minutes: date.getMinutes(),
+      seconds: date.getSeconds(),
+      weekday: date.getDay()
+    };
+  }
+
+  const formatter = zoneFormatter(timeZone);
+  if (!formatter) {
+    return undefined;
+  }
+
+  const parts = formatter.formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes): string => parts.find(entry => entry.type === type)?.value ?? '';
+
+  return {
+    year: Number(part('year')),
+    month: Number(part('month')),
+    day: Number(part('day')),
+    hours: Number(part('hour')),
+    minutes: Number(part('minute')),
+    seconds: Number(part('second')),
+    weekday: WEEKDAYS_SHORT.indexOf(part('weekday'))
+  };
+};
+
 export const filters: Record<string, TwigFilter> = {
   // ── Identity / HTML ──────────────────────────────────────────────────────────────
   // Outputs the value as-is, bypassing JSON serialization even in double braces.
@@ -664,8 +743,12 @@ export const filters: Record<string, TwigFilter> = {
   },
 
   // ── Date ──────────────────────────────────────────────────────────────────
-  // `| date(format)` — formats a date string/timestamp using Intl.DateTimeFormat.
-  // Supported format tokens: Y, m, d, H, i, s, l (day name), F (month name), M (short month).
+  // `| date(format, timeZone?)` — formats a date string/timestamp.
+  // Tokens: Y, m, d, j (day, unpadded), n (month, unpadded), H, G (hour, unpadded), i, s, w (weekday, 0 = Sunday),
+  // N (ISO weekday, 1 = Monday), U (Unix seconds), l (day name), F (month name), M (short month).
+  // The parts are read in `timeZone` when one is named, and in the zone the code runs in otherwise. A bare
+  // `YYYY-MM-DD` parses as midnight UTC, so a calendar date is read with `'UTC'` — in any other zone west of
+  // Greenwich it would be the day before. An unknown zone formats to `''`, like an unparseable date.
   date: (value, args) => {
     if (args.length === 0) {
       return value;
@@ -673,6 +756,11 @@ export const filters: Record<string, TwigFilter> = {
     const format = toStr(args[0]);
     const date = value instanceof Date ? value : new Date(String(value));
     if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const parts = dateParts(date, args.length > 1 ? toStr(args[1]) : '');
+    if (!parts) {
       return '';
     }
 
@@ -695,15 +783,21 @@ export const filters: Record<string, TwigFilter> = {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     const tokens: Record<string, string> = {
-      Y: String(date.getFullYear()),
-      m: pad(date.getMonth() + 1),
-      d: pad(date.getDate()),
-      H: pad(date.getHours()),
-      i: pad(date.getMinutes()),
-      s: pad(date.getSeconds()),
-      l: dayNames[date.getDay()],
-      F: monthNames[date.getMonth()],
-      M: monthShort[date.getMonth()]
+      Y: String(parts.year),
+      m: pad(parts.month),
+      n: String(parts.month),
+      d: pad(parts.day),
+      j: String(parts.day),
+      H: pad(parts.hours),
+      G: String(parts.hours),
+      i: pad(parts.minutes),
+      s: pad(parts.seconds),
+      w: String(parts.weekday),
+      N: String(parts.weekday === 0 ? 7 : parts.weekday),
+      U: String(Math.floor(date.getTime() / 1000)),
+      l: dayNames[parts.weekday],
+      F: monthNames[parts.month - 1],
+      M: monthShort[parts.month - 1]
     };
 
     // Single-pass substitution: replacing token letters sequentially with `String.replace` cross-contaminates

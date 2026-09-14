@@ -1,5 +1,6 @@
 import { builtinTasks } from './builtins';
 import { dbTasks } from './db';
+import { emailTasks } from './email';
 
 import type { ActionTask, ActionTaskRegistry, RegisteredTask } from '../types';
 
@@ -7,7 +8,15 @@ const NAME_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
 
 export const taskName = (task: Pick<ActionTask, 'namespace' | 'action'>): string => `${task.namespace}.${task.action}`;
 
-const reservedNamespaces = new Set([...builtinTasks, ...dbTasks].map(task => task.namespace));
+const reservedNamespaces = new Set([...builtinTasks, ...dbTasks, ...emailTasks].map(task => task.namespace));
+
+/** The shipped tasks that are only real when the deployment supplied what they run through. */
+export type TaskRegistryOptions = {
+  /** At least one database driver is registered, so `db.query` has an engine to run against. */
+  db?: boolean;
+  /** An email transport is configured, so `email.send` has somewhere to hand a message. */
+  email?: boolean;
+};
 
 /**
  * Builds the set of tasks this server can run.
@@ -16,12 +25,15 @@ const reservedNamespaces = new Set([...builtinTasks, ...dbTasks].map(task => tas
  * name is unreachable from any document, and one shadowing a built-in silently changes what every existing action
  * in that deployment does. Both are invisible until a run misbehaves in production.
  */
-export const createTaskRegistry = (custom: ActionTask<never>[] = [], hasDbDrivers = false): ActionTaskRegistry => {
+export const createTaskRegistry = (
+  custom: ActionTask<never>[] = [],
+  { db = false, email = false }: TaskRegistryOptions = {}
+): ActionTaskRegistry => {
   const tasks = new Map<string, RegisteredTask>();
 
-  // `db.query` is only real when this deployment registered an engine to run it against. Offering it otherwise
-  // would put a step in the editor whose only possible outcome is "this server has no driver".
-  const shipped = hasDbDrivers ? [...builtinTasks, ...dbTasks] : builtinTasks;
+  // `db.query` and `email.send` are only real when this deployment supplied a driver and a transport. Offering them
+  // otherwise would put a step in the editor whose only possible outcome is "this server cannot do that".
+  const shipped = [...builtinTasks, ...(db ? dbTasks : []), ...(email ? emailTasks : [])];
   shipped.forEach(task => tasks.set(taskName(task), { ...task, name: taskName(task) }));
 
   (custom as ActionTask<Record<string, unknown>>[]).forEach(task => {

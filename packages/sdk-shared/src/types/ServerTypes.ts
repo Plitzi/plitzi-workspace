@@ -1,4 +1,5 @@
 import type {
+  ActionEmailAdapter,
   ActionEntry,
   ActionLimits,
   ActionRejectReason,
@@ -533,6 +534,12 @@ export type SSRActionConfig = {
    * SPACE declared as a credential — never this deployment's own, which no credential a space holds can name.
    */
   dbDrivers?: unknown[];
+  /**
+   * How a flow's mail leaves this server. Omitted leaves the `email.send` task unregistered entirely.
+   *
+   * The sender, the sending domain and how much one space may send are the adapter's, never a flow's.
+   */
+  email?: ActionEmailAdapter;
   /**
    * Called once per run that STARTED — completed, failed or aborted — for a deployment that keeps a record.
    * Shaped as `ActionRunRecord` in `@plitzi/sdk-server/actions`.
