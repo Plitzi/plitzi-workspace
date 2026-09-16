@@ -597,8 +597,9 @@ describe('run records', () => {
       trigger: 'call',
       status: 'completed',
       spaceId: 1,
-      nodes: [{ action: 'flow.output', status: 'success' }]
+      steps: [{ action: 'flow.output', status: 'success', phase: 'flow' }]
     });
+    expect(record.startedAt).toEqual(expect.any(Number));
     expect(record.durationMs).toEqual(expect.any(Number));
   });
 
@@ -613,6 +614,9 @@ describe('run records', () => {
     const [record] = await recordsOf(failing);
 
     expect(record).toMatchObject({ status: 'failed', error: 'nope' });
+    expect(record.steps).toEqual([
+      expect.objectContaining({ id: 'boom', action: 'flow.fail', status: 'failed', phase: 'flow', error: 'nope' })
+    ]);
   });
 
   // A refusal is not a run. Recording one would bury the real entries under whatever a client retries.

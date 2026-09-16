@@ -321,11 +321,16 @@ export type ActionRunRecord = {
   environment: Environment;
   trigger: ActionTriggerType;
   status: ActionRunStatus;
+  /** When the run started, epoch ms. */
+  startedAt: number;
   durationMs: number;
   /** Who asked, when a session carried it. Absent for a webhook, a schedule or an anonymous visitor. */
   userId?: number;
-  /** One entry per step that ran, in order — enough to see where a flow stopped without keeping its data. */
-  nodes: { id: string; action: string; status: string }[];
+  /**
+   * Every step that ran, in order, as a debugger may see it — enough to see where a flow stopped, how long each step
+   * took and why one failed, without keeping anything a step was given or returned.
+   */
+  steps: ActionRunStep[];
   /** Present when the run ended badly. Already redacted of credential values. */
   error?: string;
 };
@@ -460,7 +465,7 @@ export type ActionCheckReport = {
  * ended, not what they held.
  */
 export type ActionEvent = {
-  id: number;
+  id: string;
   actionId: string;
   runId?: string | null;
   trigger: string;

@@ -26,7 +26,7 @@ export const createRunLogger =
         trigger: record.trigger,
         status: record.status,
         ...(record.userId === undefined ? {} : { userId: record.userId }),
-        steps: record.nodes.map(node => `${node.action}:${node.status}`),
+        steps: record.steps.map(step => `${step.action}:${step.status}`),
         durationMs: record.durationMs,
         // A run that ended any way other than `completed` is one somebody needs to see, which is what `ok` is for
         // on every other event in this stream — an aborted run is a failure from the caller's side too.

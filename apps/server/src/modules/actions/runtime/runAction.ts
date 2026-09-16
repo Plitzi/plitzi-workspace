@@ -711,9 +711,10 @@ export const createActionRunner = (
       environment: request.environment,
       trigger: request.trigger,
       status,
+      startedAt,
       durationMs: Date.now() - startedAt,
       ...(request.user ? { userId: request.user.id } : {}),
-      nodes: trace.map(step => ({ id: step.node.id, action: step.node.action, status: step.status })),
+      steps: [...steps],
       ...(failure === undefined ? {} : { error: redact(failure) })
     });
 

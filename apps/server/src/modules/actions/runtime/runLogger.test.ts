@@ -3,7 +3,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRunLogger } from './runLogger';
 import { renderLogEvent } from '../../../helpers/serverLog';
 
-import type { ActionRunRecord, ServerLogEvent } from '@plitzi/sdk-shared';
+import type { ActionRunRecord, ActionRunStep, ServerLogEvent } from '@plitzi/sdk-shared';
+
+const step = (id: string, action: string, status: ActionRunStep['status']): ActionRunStep => ({
+  id,
+  title: id,
+  action,
+  status,
+  phase: 'flow',
+  startTime: 1_700_000_000_000,
+  endTime: 1_700_000_000_006
+});
 
 const record = (overrides: Partial<ActionRunRecord> = {}): ActionRunRecord => ({
   runId: 'r1',
@@ -12,11 +22,9 @@ const record = (overrides: Partial<ActionRunRecord> = {}): ActionRunRecord => ({
   environment: 'production',
   trigger: 'call',
   status: 'completed',
+  startedAt: 1_700_000_000_000,
   durationMs: 12,
-  nodes: [
-    { id: 'rate', action: 'example.shippingRate', status: 'success' },
-    { id: 'answer', action: 'flow.output', status: 'success' }
-  ],
+  steps: [step('rate', 'example.shippingRate', 'success'), step('answer', 'flow.output', 'success')],
   ...overrides
 });
 
@@ -70,7 +78,7 @@ describe('createRunLogger', () => {
     const log = createRunLogger(logger);
 
     log(record());
-    log(record({ status: 'failed', error: 'boom', nodes: [{ id: 'rate', action: 'http.request', status: 'failed' }] }));
+    log(record({ status: 'failed', error: 'boom', steps: [step('rate', 'http.request', 'failed')] }));
 
     expect(renderLogEvent(events[0])).toBe('[Action] shipping-quote via call space=1 completed 12ms ok');
     expect(renderLogEvent(events[1])).toContain('[http.request:failed]');
