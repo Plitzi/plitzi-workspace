@@ -1,5 +1,28 @@
 # @plitzi/sdk-plugins
 
+## 0.35.9
+
+### Patch Changes
+
+- Debug a server action's whole flow from the dev-tools, not just its answer.
+
+  A run now reports an OUTLINE of what it did: every step in order, with its task, how it ended, how long it took, and
+  the redacted error of the one that broke the flow — the compensation steps `flow.onFailure` ran included. It carries
+  nothing a step was given or returned, so it goes to any page whose debugging the deployment authorized (`devMode`, or
+  a space that switched dev tools on for its published site) and to no other. The full trace, with each step's results,
+  still reaches only an authoring request or a development server.
+
+  Runs the SERVER started while rendering a page — the ones feeding `runtime: 'server'` elements — reach the dev-tools
+  too, seeded into the page and added to by every `/_rsc` refresh, under the same authorization: a page nobody
+  authorized is not told they happened. A response carrying them is never cached. A run that died on its deadline now
+  reports the step it was on rather than nothing at all.
+
+  The Actions tab was rebuilt around it: filters and search over the log, a run list that names the step that broke,
+  and a detail panel with the flow's timeline, its compensation shown apart, and what the run carried in and out.
+
+- Updated dependencies
+  - @plitzi/sdk-shared@0.35.9
+
 ## 0.35.8
 
 ### Patch Changes
