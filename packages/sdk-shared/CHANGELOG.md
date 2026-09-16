@@ -1,5 +1,19 @@
 # @plitzi/sdk-shared
 
+## 0.35.10
+
+### Patch Changes
+
+- **Breaking:** the space setting that lets a published site open the dev tools is now `settings.debugMode`, and
+  `settings.devTools` is gone.
+
+  It was always the same decision the SDK and the page server call `debugMode` — whether the dev-tools panel is
+  authorized — and having a third name for it invited confusing it with `devMode`, which is a different thing: it turns a
+  deployment into a development server (the unminified bundles, request timings, and the full action trace with every
+  step's results). A space can authorize debugging for its own site; it can never make its server a development one.
+
+  A space that stored `settings.devTools` needs it moved to `settings.debugMode`; nothing reads the old key.
+
 ## 0.35.9
 
 ### Patch Changes
