@@ -24,7 +24,7 @@ import type {
   RegisteredTask,
   ResolvedActionLimits
 } from '../types';
-import type { ElementInteraction, InteractionNode, InteractionNodeStatus } from '@plitzi/sdk-shared';
+import type { ActionRunStep, ElementInteraction, InteractionNode, InteractionNodeStatus } from '@plitzi/sdk-shared';
 import type { RuleValue } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 
 const MAX_TWIG_RESOLUTION_PASSES = 5;
@@ -263,6 +263,21 @@ const failureHandlerOf = (
   return undefined;
 };
 
+/** A step as a debugger may see it: what it was and how it ended, and nothing it was given or returned. */
+const stepOf = (
+  node: ElementInteraction,
+  { status, phase, startTime, endTime, error }: Omit<ActionRunStep, 'id' | 'title' | 'action'>
+): ActionRunStep => ({
+  id: node.id,
+  title: node.title || node.action,
+  action: node.action,
+  status,
+  phase,
+  startTime,
+  endTime,
+  ...(error === undefined ? {} : { error })
+});
+
 const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Record<string, unknown> =>
   Object.entries(task.params).reduce<Record<string, unknown>>(
     (acum, [key, param]) => {
@@ -420,6 +435,7 @@ export const createActionRunner = (
     const buildContext = contextFor(controller.signal, createRunFetch(baseFetch, controller.signal, limits, lineage));
 
     const trace: InteractionNode[] = [];
+    const steps: ActionRunStep[] = [];
     const startedAt = Date.now();
     let failure: string | undefined;
     /**
@@ -461,6 +477,60 @@ export const createActionRunner = (
     const failureHandler = failureHandlerOf(document.nodes, triggerNode);
     /** The step the flow was running when it stopped — what `{{ failure.step }}` names to the undo. */
     let stepInFlight = '';
+    let stepInFlightSince = 0;
+    /**
+     * Set once the run stopped awaiting its flow. A step that ignored the abort may still settle afterwards, and it
+     * must not land in the run's account after the undo that followed it — it is already recorded as where it stopped.
+     */
+    let flowSettled = false;
+
+    /**
+     * Runs one step and records it twice: whole in the trace, and in `steps` as a debugger may see it.
+     *
+     * A step that throws is recorded as failed before the error travels on. Where a flow broke is the first thing
+     * anybody debugging it asks, and the error the run records afterwards says only that it did.
+     */
+    const runStep = async (
+      node: ElementInteraction,
+      phase: ActionRunStep['phase'],
+      build: typeof buildContext
+    ): Promise<NodeOutcome> => {
+      const startTime = Date.now();
+      const late = () => phase === 'flow' && flowSettled;
+      try {
+        const outcome = await runNode(node, scope, registry, build);
+        if (late()) {
+          return outcome;
+        }
+
+        const endTime = Date.now();
+        trace.push({
+          node,
+          status: outcome.status,
+          result: redact(outcome.result),
+          postCallbacks: [],
+          startTime,
+          endTime
+        });
+        steps.push(stepOf(node, { status: outcome.status, phase, startTime, endTime }));
+        request.onNode?.(node.id, outcome.status);
+        scope[node.id] = outcome.result;
+
+        return outcome;
+      } catch (error) {
+        if (late()) {
+          throw error;
+        }
+
+        const endTime = Date.now();
+        const message = redact(error instanceof Error ? error.message : String(error));
+        trace.push({ node, status: 'failed', result: { error: message }, postCallbacks: [], startTime, endTime });
+        steps.push(stepOf(node, { status: 'failed', phase, startTime, endTime, error: message }));
+        request.onNode?.(node.id, 'failed');
+
+        throw error;
+      }
+    };
 
     const runFlow = async () => {
       let current = triggerNode;
@@ -491,20 +561,9 @@ export const createActionRunner = (
           throw new ActionRunError('over_capacity', `Action exceeded its ${limits.maxNodes} step budget`);
         }
 
-        const startTime = Date.now();
         stepInFlight = next.id;
-        const outcome = await runNode(next, scope, registry, buildContext);
-        trace.push({
-          node: next,
-          status: outcome.status,
-          result: redact(outcome.result),
-          postCallbacks: [],
-          startTime,
-          endTime: Date.now()
-        });
-
-        request.onNode?.(next.id, outcome.status);
-        scope[next.id] = outcome.result;
+        stepInFlightSince = Date.now();
+        const outcome = await runStep(next, 'flow', buildContext);
         if (next.action === 'flow.output' && outcome.status === 'success') {
           returned = outcome.result;
         }
@@ -530,14 +589,16 @@ export const createActionRunner = (
         createRunFetch(baseFetch, undoController.signal, limits, lineage)
       );
       scope.failure = { step: stepInFlight, message: failure ?? '', status };
+      const handlerTime = Date.now();
       trace.push({
         node: handler,
         status: 'success',
         result: redact(scope.failure),
         postCallbacks: [],
-        startTime: Date.now(),
-        endTime: Date.now()
+        startTime: handlerTime,
+        endTime: handlerTime
       });
+      steps.push(stepOf(handler, { status: 'success', phase: 'undo', startTime: handlerTime, endTime: handlerTime }));
 
       const runUndo = async () => {
         let executed = 0;
@@ -548,17 +609,7 @@ export const createActionRunner = (
             throw new ActionRunError('over_capacity', `Undoing the action exceeded its ${limits.maxNodes} step budget`);
           }
 
-          const startTime = Date.now();
-          const outcome = await runNode(next, scope, registry, buildUndoContext);
-          trace.push({
-            node: next,
-            status: outcome.status,
-            result: redact(outcome.result),
-            postCallbacks: [],
-            startTime,
-            endTime: Date.now()
-          });
-          scope[next.id] = outcome.result;
+          await runStep(next, 'undo', buildUndoContext);
           next = document.nodes[next.afterNode];
         }
       };
@@ -621,8 +672,24 @@ export const createActionRunner = (
         });
       }
     } finally {
+      flowSettled = true;
       deadline.clear();
       releaseOuter();
+    }
+
+    // A step still running when the run gave up — its deadline ran out while it worked — never settled, so it is where
+    // the run stopped. Recorded before the undo, which is what happened after it.
+    const stuck = document.nodes[stepInFlight] as ElementInteraction | undefined;
+    if (status !== 'completed' && stuck && !steps.some(step => step.phase === 'flow' && step.id === stepInFlight)) {
+      steps.push(
+        stepOf(stuck, {
+          status: 'failed',
+          phase: 'flow',
+          startTime: stepInFlightSince,
+          endTime: Date.now(),
+          ...(failure === undefined ? {} : { error: redact(failure) })
+        })
+      );
     }
 
     // Before the record and before a fatal failure is rethrown: the history keeps what was given back, and a caller
@@ -653,6 +720,8 @@ export const createActionRunner = (
     // Only now, with the record written: the caller hears a status code, and the space's history still has the
     // run that produced it.
     if (fatal) {
+      fatal.steps = [...steps];
+
       throw fatal;
     }
 
@@ -662,7 +731,7 @@ export const createActionRunner = (
      * A run that hit its deadline is no longer awaited, and whatever step ignored the abort may still push into
      * this array while the answer is being serialized. The caller gets what was true when it asked.
      */
-    return { runId, status, output: redact(output), trace: [...trace] };
+    return { runId, status, output: redact(output), trace: [...trace], steps: [...steps] };
   };
 
   return { runAction };

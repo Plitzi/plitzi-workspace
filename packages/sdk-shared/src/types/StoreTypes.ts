@@ -1,4 +1,4 @@
-import type { ActionField } from './ActionTypes';
+import type { ActionField, ActionRunStep } from './ActionTypes';
 import type { SubscriptionCollaborator, SubscriptionCollaboratorPointer } from './BuilderTypes';
 import type { Environment, RenderMode } from './CommonTypes';
 import type { Source } from './DataSourceTypes';
@@ -331,15 +331,16 @@ export type TracingTree = Record<string, TracingTreeNode>;
  * One server action this page started, as the dev-tools show it back.
  *
  * Recorded by the `runServerAction` step itself, so it covers what no network tab makes legible: which action was
- * named, in which mode, what the server answered, and — when the deployment is a dev one, which is the only time
- * the server sends it — the STEPS the flow ran on the other side. A `detached` run has no answer to await and a
- * `stream` returns before its frames arrive, so both are invisible without a record of their own.
+ * named, in which mode, what the server answered, and — when debugging this page is authorized — the STEPS the flow
+ * ran on the other side. A `detached` run has no answer to await and a `stream` returns before its frames arrive, so
+ * both are invisible without a record of their own; a `render` run is invisible by nature, since the server did it
+ * while building the page and no step here ever called it.
  */
 export type ActionRunEntry = {
   /** Local to this page: assigned when the run is SENT, which is before any server run id exists. */
   id: string;
   actionId: string;
-  mode: 'await' | 'detached' | 'stream';
+  mode: 'await' | 'detached' | 'stream' | 'render';
   /** The server's own id, once it answers. Absent for a run that never reached one. */
   runId?: string;
   status: 'running' | 'completed' | 'failed' | 'accepted' | 'streaming' | 'skipped' | 'aborted';
@@ -351,7 +352,16 @@ export type ActionRunEntry = {
   output?: Record<string, unknown>;
   /** Chunks a streaming run emitted, in order. */
   progress: unknown[];
-  /** The server-side steps, when the deployment sent them: authoring requests and dev servers only. */
+  /**
+   * What the flow DID, step by step — its order, each step's outcome, and the one that broke it.
+   *
+   * Sent to any page whose debugging is authorized, because it says nothing a step was given or returned: those
+   * are in the trace below.
+   */
+  steps?: ActionRunStep[];
+  /** The server element a `render` run fed. A page has several, and each is a different flow. */
+  elementId?: string;
+  /** The steps WITH what each one read and answered. Authoring requests and dev servers only. */
   trace?: Record<string, unknown>[];
   /**
    * Whether this run can still be stopped from the panel.

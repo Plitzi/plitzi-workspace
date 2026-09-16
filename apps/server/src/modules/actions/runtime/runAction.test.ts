@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createActionsModule } from '../index';
 
+import type { ActionRunError } from './errors';
 import type { ActionRunRecord, ActionRunRequest, ActionTask } from '../types';
 import type { ActionDocument, ActionEntry, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
 
@@ -137,8 +138,35 @@ describe('runAction', () => {
       expect(result.status).toBe('failed');
       expect(result.output).toEqual({});
       expect(labels).toEqual(['take seats', 'give back after mail: mail refused']);
-      // A step that throws is recorded as the run's error, then the undo follows it.
-      expect(result.trace.map(step => step.node.id)).toEqual(['take', 'error', 'undo', 'giveBack']);
+      // The step that threw is where the flow broke, so it is recorded as failed before the run's error node.
+      expect(result.trace.map(step => step.node.id)).toEqual(['take', 'mail', 'error', 'undo', 'giveBack']);
+    });
+
+    /**
+     * What a debugger is told about a flow it may not read: which steps ran, how each ended, and which one broke.
+     *
+     * Never what a step was given or returned — those can hold another visitor's data, and they stay in the trace,
+     * which only authoring and a development server ever receive.
+     */
+    it('outlines the run without what any step was given or returned', async () => {
+      const { task } = recorder();
+      const { runAction } = createActionsModule({ lookups, tasks: [task] });
+      const entry = bookingEntry({
+        mail: node('mail', { action: 'flow.fail', params: { message: 'mail refused' }, afterNode: 'out' })
+      });
+
+      const result = await runAction(request(entry));
+
+      expect(result.steps.map(step => [step.id, step.status, step.phase])).toEqual([
+        ['take', 'success', 'flow'],
+        ['mail', 'failed', 'flow'],
+        ['undo', 'success', 'undo'],
+        ['giveBack', 'success', 'undo']
+      ]);
+      expect(result.steps.find(step => step.id === 'mail')?.error).toContain('mail refused');
+      expect(result.steps.every(step => step.endTime >= step.startTime)).toBe(true);
+      // The label the recorder was handed is in the trace and in no step of the outline.
+      expect(JSON.stringify(result.steps)).not.toContain('take seats');
     });
 
     it('ends at On Failure when nothing failed', async () => {
@@ -202,6 +230,36 @@ describe('runAction', () => {
 
       await expect(runAction(request(entry))).rejects.toMatchObject({ reason: 'timeout' });
       expect(labels).toEqual(['take seats', 'give back after hang: Action exceeded its 40ms budget']);
+    });
+
+    /**
+     * A run that died has an outline too, and it is the one somebody most needs.
+     *
+     * The step that never returned settled nothing, so nothing would have recorded it — and a debugger would be shown
+     * a flow that stopped after the step before it, which is the wrong step to go and look at.
+     */
+    it('names the step that was still running as where a dead run stopped', async () => {
+      const { task } = recorder();
+      const stuck: ActionTask<Record<string, never>> = {
+        namespace: 'test',
+        action: 'stuck',
+        title: 'Never returns',
+        params: {},
+        run: () => new Promise(() => undefined)
+      };
+      const { runAction } = createActionsModule({ lookups, tasks: [task, stuck] });
+      const entry = bookingEntry({ hang: node('hang', { action: 'test.stuck', afterNode: 'out' }) });
+      entry.document.limits = { timeoutMs: 40 };
+
+      const error = (await runAction(request(entry)).catch((failure: unknown) => failure)) as ActionRunError;
+
+      expect(error.steps?.map(step => [step.id, step.status])).toEqual([
+        ['take', 'success'],
+        ['hang', 'failed'],
+        ['undo', 'success'],
+        ['giveBack', 'success']
+      ]);
+      expect(error.steps?.find(step => step.id === 'hang')?.error).toContain('40ms budget');
     });
   });
 

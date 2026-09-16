@@ -20,7 +20,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
-import { useSdkStore, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
+import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 
 import App from './App';
 import { getEnvironmentServer } from './config';
@@ -36,6 +36,7 @@ import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementCo
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {
+  ActionRunSummary,
   AnalyticsConfig,
   Element,
   Schema,
@@ -118,7 +119,13 @@ export function render(
   debugMode = false,
   ssrMode = false
 ) {
-  const renderParams = withDerivedAnalytics(params);
+  /**
+   * The runs the SERVER did while building this page, kept out of what the tree is rendered with.
+   *
+   * They are a record, not a prop: nothing on the page reads them, and they reach the dev-tools through the same
+   * log every client-side run goes into. A server sends them only to a page it authorized for debugging.
+   */
+  const { actionRuns, ...renderParams } = withDerivedAnalytics(params);
   /**
    * Two ways to authorize the dev tools, and the params win.
    *
@@ -128,6 +135,9 @@ export function render(
    * dropped it would be the same option meaning two different things depending on which door you came through.
    */
   const debugAuthorized = renderParams.debugMode ?? debugMode;
+  if (debugAuthorized && actionRuns?.length) {
+    recordRenderActionRuns(actionRuns);
+  }
 
   const Widget = ({ isHydrating = false }: { isHydrating?: boolean }) => {
     // A plugin the server did not render has no markup in the document being hydrated, so mounting it on the first
@@ -220,6 +230,8 @@ export type PlitziSdkProps = {
    */
   routing?: 'browser' | 'memory';
   debugMode?: boolean;
+  /** What the server ran to build this page, for the dev-tools. Only ever sent to a page allowed to debug them. */
+  actionRuns?: ActionRunSummary[];
   isHydrating?: boolean;
   previewMode?: boolean;
   /** Shows the "Made in Plitzi" link over the rendered space; off for embeds that are not a Plitzi site of their

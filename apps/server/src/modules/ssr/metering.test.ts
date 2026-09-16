@@ -16,7 +16,7 @@ import type {
 // The render pipeline is not what these tests are about: they are about WHEN the metering adapter is called
 // and what it is told, so everything past it is stubbed down to a body.
 vi.mock('./buildBody', () => ({
-  buildBody: () => Promise.resolve({ body: '<html>fresh</html>', result: {} })
+  buildBody: () => Promise.resolve({ body: '<html>fresh</html>', result: {}, cacheable: true })
 }));
 vi.mock('./preview', () => ({
   takeDraftOverride: () => Promise.resolve(undefined),

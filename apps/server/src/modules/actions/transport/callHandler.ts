@@ -1,6 +1,7 @@
 import { triggerAccess } from '@plitzi/sdk-shared/actions';
 
 import { openStream, wantsStream } from './stream';
+import { resolveDebugAuthorization } from '../../../helpers/debugAuthorization';
 import { onAbort } from '../../../helpers/onAbort';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
@@ -204,6 +205,31 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
   // status code, which a stream has already spent by the time it could say anything.
   const stream = wantsStream(req.headers.accept) ? openStream(raw, abortRun, run.runId) : undefined;
 
+  /**
+   * What a debugger may be told about this run, beside its answer.
+   *
+   * The OUTLINE — which steps ran, how each ended, where the flow broke — goes to a page whose debugging the
+   * deployment authorized: a dev server, or a space that switched dev tools on for its own site. Nothing else gets
+   * it, and it carries nothing a step was given or returned.
+   *
+   * The full TRACE, with every step's results, only to an authoring request or a development server: those results
+   * can hold another visitor's data, and sending them to an authoring request is what puts a SERVER run in the same
+   * Workflow debugger as a client one. Both are gated on the ACTION too — one behind a session tells an anonymous
+   * caller nothing about its flow.
+   *
+   * Answered once the run is over, for the answer and for the failure alike: a run that died on its deadline is
+   * exactly the one somebody is debugging.
+   */
+  const readsRun = mayReadTrace(entryPoint, req.ctx.user);
+  const fullTrace = readsRun && (authoring === true || config.devMode === true);
+  const showsOutline = async (): Promise<boolean> =>
+    readsRun &&
+    (fullTrace ||
+      (await resolveDebugAuthorization(
+        config,
+        async () => (await config.adapters.getOfflineData(spaceId, environment, revision))?.schema.settings
+      )));
+
   let outcome;
   try {
     const result: ActionRunResult = await module.runAction({
@@ -227,17 +253,29 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     });
 
     outcome = result;
+    const outline = await showsOutline();
+
     if (stream) {
-      stream.send({ event: 'done', data: { runId: result.runId, status: result.status, output: result.output } });
+      stream.send({
+        event: 'done',
+        data: {
+          runId: result.runId,
+          status: result.status,
+          output: result.output,
+          ...(outline ? { steps: result.steps } : {})
+        }
+      });
       stream.close();
 
       return;
     }
 
-    // The trace names steps, and its results are the author's own data; a visitor gets the answer alone. Sending
-    // it to an authoring request is what puts a SERVER run in the same Workflow debugger as a client one.
     const payload: Record<string, unknown> = { runId: result.runId, status: result.status, output: result.output };
-    if ((authoring === true || config.devMode === true) && mayReadTrace(entryPoint, req.ctx.user)) {
+    if (outline) {
+      payload.steps = result.steps;
+    }
+
+    if (fullTrace) {
       payload.trace = result.trace;
     }
 
@@ -251,16 +289,23 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       console.error('[Actions] run failed:', error);
     }
 
+    // A run that STARTED and then hit a ceiling took steps on the way there, and they are the only account of what it
+    // managed to do before it died. Carried by the error itself; a refusal that never became a run has none.
+    const steps = error instanceof ActionRunError && error.steps && (await showsOutline()) ? error.steps : undefined;
+
     if (stream) {
       // The status line is long gone by the time a stream fails, so the failure travels as a frame. Same reason
       // vocabulary either way, so a client reads one shape.
-      stream.send({ event: 'error', data: { runId: run.runId, error: message, reason } });
+      stream.send({
+        event: 'error',
+        data: { runId: run.runId, error: message, reason, ...(steps ? { steps } : {}) }
+      });
       stream.close();
 
       return;
     }
 
-    fail(res, reason, message, run.runId);
+    send(res, STATUS_BY_REASON[reason], { error: message, reason, ...(steps ? { steps } : {}) }, run.runId);
   } finally {
     releaseAbort();
     // With the answer, so a caller that named its own key and asks again gets what it already got rather than a

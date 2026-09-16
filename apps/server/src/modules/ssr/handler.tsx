@@ -128,7 +128,7 @@ export const renderSSR = async (
     return;
   }
 
-  const { body, result } = await buildBody(
+  const { body, result, cacheable } = await buildBody(
     req,
     config,
     spaceId as number,
@@ -150,7 +150,7 @@ export const renderSSR = async (
     return;
   }
 
-  if (htmlCache && cacheKey && body !== undefined) {
+  if (htmlCache && cacheKey && body !== undefined && cacheable) {
     htmlCache.set(cacheKey, body);
   }
 

@@ -203,9 +203,25 @@ Three triggers fire on the element that launched the run:
 
 **In the browser, the dev-tools panel has an `Actions` tab.** Every run this page starts is recorded there as it
 is SENT — which is the only evidence a `detached` or `stream` run leaves, since one is never awaited and the other
-returns before its frames arrive. It shows the action, the mode, the input, the answer or the refusal reason, the
-progress chunks, and — on a dev server, which is the only deployment that sends it — **the steps the flow ran on
-the server**. The same events also appear in the `Logs` tab under their own `actions` category.
+returns before its frames arrive. The runs the SERVER started to build the page are there too: an action feeding a
+`runtime: 'server'` element ran before the page existed in the browser, and it is listed as a `render` run naming
+the element it fed. Every `/_rsc` refresh adds the ones it caused. The same events also appear in the `Logs` tab
+under their own `actions` category.
+
+Each run opens on **what the flow did**: its steps in order, with the task each one ran, how it ended, how long it
+took, and the redacted error of the one that broke it — the steps `flow.onFailure` ran shown apart from the flow,
+because they undid it rather than continued it. That outline says nothing a step was given or answered, which is why
+any page whose debugging is authorized receives it: a deployment in `devMode`, or a space that switched dev tools on
+for its published site. **What each step read and answered** is a different matter — it can hold another visitor's
+data — and reaches only an authoring request or a development server; ask a step for its result on an ordinary page
+and the panel says where to look instead.
+
+**A page nobody authorized is told none of it** — not the steps, not the render runs, not even that a flow ran
+behind the section it is looking at. An action behind a session tells an anonymous caller nothing about its flow
+either way.
+
+A response carrying render runs is never cached — it is that request's own — so a page being debugged is rendered
+fresh while the panel is authorized.
 
 It also says **how many runs are in flight**, and offers **Cancel** on each of them. A long flow is otherwise
 something you can only wait out: the page has moved on, no element carries a cancel step yet, and the run id is on

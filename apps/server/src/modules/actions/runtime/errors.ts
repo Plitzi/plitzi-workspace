@@ -1,4 +1,4 @@
-import type { ActionErrorReason } from '@plitzi/sdk-shared';
+import type { ActionErrorReason, ActionRunStep } from '@plitzi/sdk-shared';
 
 /**
  * A run that stopped for a reason the caller is entitled to know, as opposed to one whose step threw.
@@ -8,6 +8,11 @@ import type { ActionErrorReason } from '@plitzi/sdk-shared';
  */
 export class ActionRunError extends Error {
   reason: ActionErrorReason;
+  /**
+   * The steps a run that STARTED took before it hit this — its deadline, a budget — set by the runner as it rethrows.
+   * A refusal before the run began has none. The same outline a completed run returns, and nothing more.
+   */
+  steps?: ActionRunStep[];
 
   constructor(reason: ActionErrorReason, message: string) {
     super(message);

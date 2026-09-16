@@ -1,4 +1,5 @@
 import type { Environment } from './CommonTypes';
+import type { InteractionNodeStatus } from './InteractionTypes';
 import type { ElementInteraction } from './SchemaTypes';
 import type { SmtpSettings } from '../actions/smtp';
 
@@ -326,6 +327,47 @@ export type ActionRunRecord = {
   /** One entry per step that ran, in order — enough to see where a flow stopped without keeping its data. */
   nodes: { id: string; action: string; status: string }[];
   /** Present when the run ended badly. Already redacted of credential values. */
+  error?: string;
+};
+
+/**
+ * One step of a server action run, as a debugger may show it to anybody allowed to debug the page.
+ *
+ * What ran, in what order, how it ended and how long it took — never what the step was given or what it returned.
+ * Those can hold another visitor's data or a flow's internals (an endpoint, a query), so they stay in the full trace,
+ * which only authoring requests and development servers receive.
+ */
+export type ActionRunStep = {
+  id: string;
+  title: string;
+  /** The task it ran, e.g. `kv.increment`. */
+  action: string;
+  status: InteractionNodeStatus;
+  /** `undo` for `flow.onFailure` and the steps after it: they ran because the flow before them failed. */
+  phase: 'flow' | 'undo';
+  startTime: number;
+  endTime: number;
+  /** Why it failed, redacted of every credential value the run resolved. */
+  error?: string;
+};
+
+/**
+ * A run a page RENDER started, reported to a page whose debugging is authorized.
+ *
+ * Nobody in the browser sent it — the server ran it while building the page, or while answering a refresh — so this is
+ * the only way it reaches a debugger. The same outline a call reports, and nothing more.
+ */
+export type ActionRunSummary = {
+  actionId: string;
+  runId: string;
+  trigger: 'render';
+  status: ActionRunStatus;
+  /** The server element it fed. */
+  elementId?: string;
+  startedAt: number;
+  endedAt: number;
+  steps: ActionRunStep[];
+  /** Why a run ended before its steps could say — a deadline, a refusal. Never a provider's own message. */
   error?: string;
 };
 

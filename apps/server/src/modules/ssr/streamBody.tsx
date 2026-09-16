@@ -63,8 +63,8 @@ export const streamBody = async (
 
   await new Promise<void>((resolve, reject) => {
     // Only accumulate chunks when caching is active — avoids holding the full
-    // React HTML in memory on uncached paths.
-    const chunks: Buffer[] | null = cacheKey && htmlCache ? [] : null;
+    // React HTML in memory on uncached paths. A render carrying this request's own runs is never cached.
+    const chunks: Buffer[] | null = cacheKey && htmlCache && prep.cacheable ? [] : null;
 
     const writable = new Writable({
       write(chunk: Buffer, _enc, cb) {

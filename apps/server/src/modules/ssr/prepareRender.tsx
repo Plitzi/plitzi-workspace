@@ -11,6 +11,7 @@ import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
+import { authorizesDebugging } from '../../helpers/debugAuthorization';
 import { escapeJson } from '../../helpers/escapeJson';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { readCookie } from '../../helpers/readCookie';
@@ -37,6 +38,8 @@ export type RenderPrep = {
   componentProps: ComponentProps;
   entries: PluginEntry[];
   templateParams: SSRTemplateProps & { offlineData: string };
+  /** False for a render that must not be served to anybody else from a cache: it carries this request's own runs. */
+  cacheable: boolean;
 };
 
 export const prepareRender = async (
@@ -140,13 +143,21 @@ export const prepareRender = async (
    * so does the space itself (`settings.devTools`) — an owner inspecting their own published site. The space is read
    * from what this server loaded, never from the request, so a visitor has no say in it.
    */
-  const debugAuthorized =
-    !isPreviewRender && (config.debugMode ?? (config.devMode === true || schema?.settings.devTools === true));
+  const debugAuthorized = !isPreviewRender && authorizesDebugging(config, schema?.settings);
   const debugRendered = resolveDebugMode(
     debugAuthorized,
     // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
     readCookie(req.headers.cookie, debugCookieName(req.headers.host))
   );
+
+  /**
+   * The runs this render's server elements started, handed to a page that may debug them — and to no other.
+   *
+   * Same authorization as the panel itself: a page nobody authorized is told nothing about the flows behind it, not
+   * even that they ran. A render carrying them is also one nobody else may be served from a cache: those runs are
+   * this request's.
+   */
+  const actionRuns = debugAuthorized && req.ctx.actionRuns?.length ? req.ctx.actionRuns : undefined;
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
@@ -186,7 +197,8 @@ export const prepareRender = async (
       ...(theme ? { theme } : {}),
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
       ...(branding ? { branding } : {}),
-      ...(overQuota ? { overQuota } : {})
+      ...(overQuota ? { overQuota } : {}),
+      ...(actionRuns ? { actionRuns } : {})
     })
   );
 
@@ -270,6 +282,7 @@ export const prepareRender = async (
       debugMode: debugAuthorized,
       ssrOnly: config.ssrOnly === true,
       offlineData: offlineDataStr
-    }
+    },
+    cacheable: actionRuns === undefined
   };
 };

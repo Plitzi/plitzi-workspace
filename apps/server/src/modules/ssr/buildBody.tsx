@@ -15,7 +15,8 @@ import type {
   SSRTemplateFn
 } from '@plitzi/sdk-shared';
 
-export type BuildBodyResult = { body?: string; result: SSRRenderResult };
+/** `cacheable` is false for a body that must not be served to anybody else: it carries this request's own runs. */
+export type BuildBodyResult = { body?: string; result: SSRRenderResult; cacheable: boolean };
 
 export const buildBody = async (
   req: SSRRequest,
@@ -48,12 +49,12 @@ export const buildBody = async (
   metrics?.record('react', Math.round(performance.now() - reactStart));
 
   if (result.redirect !== undefined) {
-    return { result };
+    return { result, cacheable: prep.cacheable };
   }
 
   const templateStart = metrics ? performance.now() : 0;
   const body = renderFn({ ...prep.templateParams, html });
   metrics?.record('template', Math.round(performance.now() - templateStart));
 
-  return { body, result };
+  return { body, result, cacheable: prep.cacheable };
 };

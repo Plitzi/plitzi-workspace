@@ -69,7 +69,7 @@ export const categories: Category[] = [
     name: 'server',
     app: '@plitzi/sdk-server',
     what: 'The page server: what it renders, and who it renders it for',
-    targets: ['server', 'auth-server', 'action-server', 'mail-sink'],
+    targets: ['server', 'auth-server', 'action-server', 'published-server', 'devtools-server', 'mail-sink'],
     subcategories: [
       { name: 'ssr', what: 'What arrives before a script runs, and what happens after' },
       { name: 'rsc', what: 'Per-element server data: the three runtimes, the slices, the partial refresh' },

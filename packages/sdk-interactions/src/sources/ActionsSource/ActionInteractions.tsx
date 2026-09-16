@@ -15,7 +15,12 @@ import {
 import { actionsCallbacks } from './callbacks';
 import InteractionsContext from '../../InteractionsContext';
 
-import type { ActionCallMode, InteractionCallback, InteractionCallbackContext } from '@plitzi/sdk-shared';
+import type {
+  ActionCallMode,
+  ActionRunStep,
+  InteractionCallback,
+  InteractionCallbackContext
+} from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type ActionInteractionsProps = {
@@ -36,9 +41,20 @@ type ActionResponse = {
   output?: Record<string, unknown>;
   error?: string;
   reason?: string;
-  /** The server-side steps. Only ever sent to an authoring request or by a dev server. */
+  /** What the flow did, step by step. Sent to any page whose debugging the deployment authorizes. */
+  steps?: ActionRunStep[];
+  /** The steps WITH what each read and answered. Only ever sent to an authoring request or by a dev server. */
   trace?: Record<string, unknown>[];
 };
+
+/**
+ * The outline as it arrives inside a stream frame, whose data is `unknown` by construction.
+ *
+ * The cast is the frame's own shape being asserted once, here: the panel only ever reads these fields back out,
+ * so a server sending something else costs a misdrawn row rather than anything worse.
+ */
+const stepsOf = (value: unknown): ActionRunStep[] | undefined =>
+  Array.isArray(value) ? (value as ActionRunStep[]) : undefined;
 
 type StreamFrame = { event: string; data: Record<string, unknown> };
 
@@ -289,7 +305,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
                 status: 'failed',
                 ...(payload.runId ? { runId: payload.runId } : {}),
                 ...(payload.reason ? { reason: payload.reason } : {}),
-                ...(payload.error ? { error: payload.error } : {})
+                ...(payload.error ? { error: payload.error } : {}),
+                ...(payload.steps ? { steps: payload.steps } : {})
               });
               reportFlow(context?.hostElementId, 'onFlowError', {
                 actionId,
@@ -305,6 +322,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
               status: payload.status === 'completed' ? 'completed' : 'accepted',
               ...(payload.runId ? { runId: payload.runId } : {}),
               ...(payload.output ? { output: payload.output } : {}),
+              ...(payload.steps ? { steps: payload.steps } : {}),
               ...(payload.trace ? { trace: payload.trace } : {})
             });
             pConsole.success(
@@ -377,7 +395,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             status: 'failed',
             ...(payload.runId ? { runId: payload.runId } : {}),
             ...(payload.reason ? { reason: payload.reason } : {}),
-            ...(payload.error ? { error: payload.error } : {})
+            ...(payload.error ? { error: payload.error } : {}),
+            ...(payload.steps ? { steps: payload.steps } : {})
           });
           reportFlow(context?.hostElementId, 'onFlowError', {
             actionId,
@@ -411,10 +430,12 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           }
 
           if (frame.event === 'error') {
+            const failedSteps = stepsOf(frame.data.steps);
             settle({
               status: 'failed',
               ...(typeof frame.data.reason === 'string' ? { reason: frame.data.reason } : {}),
-              ...(typeof frame.data.error === 'string' ? { error: frame.data.error } : {})
+              ...(typeof frame.data.error === 'string' ? { error: frame.data.error } : {}),
+              ...(failedSteps ? { steps: failedSteps } : {})
             });
             reportFlow(context?.hostElementId, 'onFlowError', { actionId, runId, ...frame.data });
 
@@ -422,9 +443,11 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           }
 
           if (frame.event === 'done') {
+            const doneSteps = stepsOf(frame.data.steps);
             settle({
               status: frame.data.status === 'completed' ? 'completed' : 'failed',
-              ...(frame.data.output ? { output: frame.data.output as Record<string, unknown> } : {})
+              ...(frame.data.output ? { output: frame.data.output as Record<string, unknown> } : {}),
+              ...(doneSteps ? { steps: doneSteps } : {})
             });
             reportFlow(context?.hostElementId, 'onFlowEnd', { actionId, runId, ...frame.data });
           }
@@ -486,7 +509,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           status: 'failed',
           ...(payload.runId ? { runId: payload.runId } : {}),
           ...(payload.reason ? { reason: payload.reason } : {}),
-          ...(payload.error ? { error: payload.error } : {})
+          ...(payload.error ? { error: payload.error } : {}),
+          ...(payload.steps ? { steps: payload.steps } : {})
         });
         // The reason is the server's own vocabulary — `duplicate`, `over_capacity`, `recursion` — and naming it is
         // what lets an author tell "my flow is wrong" from "I clicked twice".
@@ -519,6 +543,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         status: payload.status === 'completed' ? 'completed' : 'failed',
         ...(payload.runId ? { runId: payload.runId } : {}),
         ...(payload.output ? { output: payload.output } : {}),
+        ...(payload.steps ? { steps: payload.steps } : {}),
         ...(payload.trace ? { trace: payload.trace } : {})
       });
 

@@ -1,8 +1,10 @@
 import { authFailureFromResponse, reportAuthFailure } from '../../auth';
 import { getPaths, matchRoutePath } from '../../navigation';
 import { hasServerElements } from '../../schema/serverElements';
+// The recorder itself rather than the barrel, which also exports a React hook this module has no business loading.
+import { recordRenderActionRuns } from '../../store/actionRuns/actionRunsRecorder';
 
-import type { CommonState, Schema } from '../../types';
+import type { ActionRunSummary, CommonState, Schema } from '../../types';
 import type { PathOf, StoreApi } from '@plitzi/nexus';
 
 /** The page a URL addresses, matched the way the router matches it — so a prefetch asks about the right page. */
@@ -107,7 +109,17 @@ export const refreshRsc = async (
       return;
     }
 
-    const { serverData } = (await res.json()) as { serverData?: Record<string, unknown> };
+    const { serverData, actionRuns } = (await res.json()) as {
+      serverData?: Record<string, unknown>;
+      actionRuns?: ActionRunSummary[];
+    };
+
+    // What the server ran to answer this, for a page allowed to debug it — it only ever sends them to one. Recorded
+    // before the payload lands, so the dev-tools show the run beside the section it just changed.
+    if (actionRuns?.length) {
+      recordRenderActionRuns(actionRuns);
+    }
+
     store.batch(() => {
       if (ids?.length) {
         Object.entries(serverData ?? {}).forEach(([id, value]) => store.set(rscDataPath(id), value));

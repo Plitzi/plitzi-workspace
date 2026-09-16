@@ -108,6 +108,20 @@ export const targets: Target[] = [
     what: 'A page server wired for actions ALONE — no connectors, no RSC adapter of its own'
   },
   {
+    id: 'published-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:published',
+    origin: 'http://127.0.0.1:5205',
+    what: 'The action space as a PUBLISHED site: nobody authorized debugging, so nothing about its flows leaves it'
+  },
+  {
+    id: 'devtools-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:published-devtools',
+    origin: 'http://127.0.0.1:5206',
+    what: 'The same published site with the space’s own dev-tools setting on — the outline, and never a step’s data'
+  },
+  {
     id: 'mail-sink',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:mail',

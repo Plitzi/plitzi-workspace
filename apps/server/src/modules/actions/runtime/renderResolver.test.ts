@@ -76,18 +76,23 @@ const resolverFor = (action: ActionEntry | null = entry) => {
   return createActionResolver(lookups, createActionsModule({ lookups }));
 };
 
+// The render carries the revision it is being served at, and the resolver reads the action as of it — and leaves
+// what it ran on the same request, which is the only way a render run reaches a debugger.
+const buildReq = (): SSRRequest =>
+  ({ ctx: { spaceDeployment: { environment: 'production', revision: 4 } } }) as unknown as SSRRequest;
+
 const render = (
   resolver: RscElementResolver,
   attributes: Record<string, unknown>,
-  signal = new AbortController().signal
+  signal = new AbortController().signal,
+  req: SSRRequest = buildReq()
 ) =>
   resolver({
     element: element(attributes),
     flat: {},
     routeParams: { slug: 'hello-world' },
     queryParams: {},
-    // The render carries the revision it is being served at, and the resolver reads the action as of it.
-    req: { ctx: { spaceDeployment: { environment: 'production', revision: 4 } } } as unknown as SSRRequest,
+    req,
     spaceId: 1,
     environment: 'main',
     user: undefined,
@@ -222,6 +227,41 @@ describe('createActionResolver', () => {
 
     // `flow.delay` resolves the moment the run is aborted, and the runner reports the run it did not finish.
     await expect(pending).rejects.toThrow(/aborted/);
+  });
+
+  /**
+   * A render run has no caller to answer to: nobody in the browser started it, so the request is where it has to be
+   * left if a debugger is ever to hear about it. Which element it fed included — a page has several.
+   */
+  it('leaves the run it did on the request, named after the element it fed', async () => {
+    const req = buildReq();
+
+    await render(resolverFor(), { action: 'post-page' }, undefined, req);
+
+    expect(req.ctx.actionRuns).toMatchObject([
+      { actionId: 'post-page', trigger: 'render', status: 'completed', elementId: 'provider1' }
+    ]);
+    expect(req.ctx.actionRuns?.[0].steps.map(step => step.id)).toEqual(['load', 'out']);
+  });
+
+  /** The run somebody actually needs: an empty section on the page, and the step that emptied it in the request. */
+  it('leaves a failed run on the request too, with the step that broke it', async () => {
+    const failing: ActionEntry = {
+      ...entry,
+      document: {
+        ...entry.document,
+        nodes: {
+          ...entry.document.nodes,
+          load: { ...entry.document.nodes.load, action: 'flow.fail', params: { message: 'no route to host' } }
+        }
+      }
+    };
+    const req = buildReq();
+
+    await expect(render(resolverFor(failing), { action: 'post-page' }, undefined, req)).rejects.toThrow(/failed/);
+
+    expect(req.ctx.actionRuns?.[0]).toMatchObject({ status: 'failed', elementId: 'provider1' });
+    expect(req.ctx.actionRuns?.[0].steps.map(step => [step.id, step.status])).toEqual([['load', 'failed']]);
   });
 
   it('leaves an element that names no action alone', async () => {

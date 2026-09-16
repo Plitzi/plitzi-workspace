@@ -1,10 +1,18 @@
 import { readDraftToken } from '../../core/previewToken';
 import { buildRscCacheKey, DEFAULT_TTL_MS } from '../../helpers/cache';
+import { resolveDebugAuthorization } from '../../helpers/debugAuthorization';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 
 import type { TtlCache } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
-import type { Environment, SSRPageServerConfig, SSRRequest, SSRResponseHelpers, SSRRscData } from '@plitzi/sdk-shared';
+import type {
+  ActionRunSummary,
+  Environment,
+  SSRPageServerConfig,
+  SSRRequest,
+  SSRResponseHelpers,
+  SSRRscData
+} from '@plitzi/sdk-shared';
 
 /** Payload returned by the /_rsc endpoint. */
 type RscPayload = {
@@ -13,6 +21,8 @@ type RscPayload = {
   spaceId: number;
   environment: Environment;
   revision: number;
+  /** The runs this refresh started, for a page whose debugging is authorized. */
+  actionRuns?: ActionRunSummary[];
 } & SSRRscData;
 
 /** Bounds the reflected location: it only ever selects one of this space's own pages, but it is still input. */
@@ -158,6 +168,10 @@ export const handleRsc = async (
     return;
   }
 
+  // No page render alongside this one, so the loader has nothing to join — it is here so an adapter reads the same way
+  // on both paths, and so the debugging check below reads the space the adapter already fetched rather than again.
+  const loadOfflineData = createOfflineDataLoader(() => config.adapters.getOfflineData(spaceId, environment, revision));
+
   let rscData: SSRRscData;
   try {
     rscData = await config.adapters.getRscData({
@@ -167,9 +181,7 @@ export const handleRsc = async (
       revision,
       user: req.ctx.user,
       ids,
-      // No page render alongside this one, so the loader has nothing to join — it is here so an adapter reads the
-      // same way on both paths, and still never fetches the space twice within the one request.
-      loadOfflineData: createOfflineDataLoader(() => config.adapters.getOfflineData(spaceId, environment, revision))
+      loadOfflineData
     });
   } catch (err) {
     console.error('[RSC] getRscData error:', err);
@@ -179,17 +191,26 @@ export const handleRsc = async (
     return;
   }
 
+  // The runs this refresh started, for a page whose debugging this deployment authorized — a dev server, or a space
+  // that switched dev tools on for its own site. An answer carrying them is this request's alone, so it is never
+  // kept for the next visitor.
+  const debuggable =
+    Boolean(req.ctx.actionRuns?.length) &&
+    (await resolveDebugAuthorization(config, async () => (await loadOfflineData())?.schema.settings));
+  const actionRuns = debuggable ? req.ctx.actionRuns : undefined;
+
   const payload: RscPayload = {
     version: 1,
     transport: 'json',
     spaceId,
     environment,
     revision,
-    ...rscData
+    ...rscData,
+    ...(actionRuns ? { actionRuns } : {})
   };
 
   const payloadStr = JSON.stringify(payload);
-  if (cacheKey) {
+  if (cacheKey && !actionRuns?.length) {
     cache?.set(cacheKey, payloadStr);
   }
 

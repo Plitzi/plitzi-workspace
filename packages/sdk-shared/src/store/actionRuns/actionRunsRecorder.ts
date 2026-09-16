@@ -1,6 +1,6 @@
 import actionRunsStore, { MAX_PROGRESS_CHUNKS, MAX_RUNS } from './actionRunsStore';
 
-import type { ActionRunEntry } from '../../types';
+import type { ActionRunEntry, ActionRunSummary } from '../../types';
 
 let seq = 0;
 
@@ -56,6 +56,41 @@ export const recordActionRun = (entry: Omit<ActionRunEntry, 'id' | 'startedAt' |
   write([run, ...actionRunsStore.getState().runs].slice(0, MAX_RUNS));
 
   return id;
+};
+
+const renderEntry = (summary: ActionRunSummary): ActionRunEntry => ({
+  // The server's own id: a render run is already over when it arrives, so there is no local id to have assigned.
+  id: `render-${summary.runId}`,
+  actionId: summary.actionId,
+  mode: 'render',
+  runId: summary.runId,
+  status: summary.status,
+  steps: summary.steps,
+  progress: [],
+  startedAt: summary.startedAt,
+  endedAt: summary.endedAt,
+  ...(summary.error === undefined ? {} : { error: summary.error }),
+  ...(summary.elementId === undefined ? {} : { elementId: summary.elementId })
+});
+
+/**
+ * Records the runs the SERVER did while building this page, or while answering a refresh of part of it.
+ *
+ * Nobody here started them, so without this they are the one kind of run a page cannot see at all — an empty
+ * section and no way to learn why. Deduped by the server's own run id, because a section refreshing itself
+ * re-reports a run that was joined or reused rather than started again: the same run twice would leave a person
+ * comparing two entries that are one.
+ */
+export const recordRenderActionRuns = (summaries: ActionRunSummary[]): void => {
+  const { runs } = actionRunsStore.getState();
+  const known = new Set(runs.map(run => run.runId));
+  const added = summaries.filter(summary => !known.has(summary.runId)).map(renderEntry);
+  if (added.length === 0) {
+    return;
+  }
+
+  // Newest first, as everything else in the log: the server ran them in order, so the last one it did is the newest.
+  write([...added.reverse(), ...runs].slice(0, MAX_RUNS));
 };
 
 /** How it ended, or what it reported on the way. Unknown ids are ignored: a swept-out run is not an error. */

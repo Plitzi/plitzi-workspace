@@ -10,6 +10,25 @@ import { onAbort } from '../../../helpers/onAbort';
 import type { RscElementResolver } from '../../rsc/resolveRscData';
 import type { ActionsModule } from '../index';
 import type { ActionLookups } from '../types';
+import type { ActionRunSummary } from '@plitzi/sdk-shared';
+
+/** What one render run produced: the slice the element publishes, and the account a debugger may be shown. */
+type RenderRun = { output: unknown; summary: ActionRunSummary };
+
+/**
+ * A render run that resolved nothing, carrying what it did.
+ *
+ * The slice is withheld all the same — `resolveRscData` reads the rejection as the element's error state — but the
+ * steps travel with the error, so a page allowed to debug is still shown where the flow broke.
+ */
+class RenderRunFailure extends Error {
+  readonly summary: ActionRunSummary;
+
+  constructor(message: string, summary: ActionRunSummary, options?: ErrorOptions) {
+    super(message, options);
+    this.summary = summary;
+  }
+}
 
 type ActionElementAttributes = {
   /** Identifier of the action that feeds this element. */
@@ -72,7 +91,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
 
     const callerId = user ? `user:${user.id}` : 'render';
 
-    const startRun = async (): Promise<unknown> => {
+    const startRun = async (): Promise<RenderRun> => {
       /**
        * A key of its own per render, so two visitors are never each other's duplicate.
        *
@@ -99,6 +118,15 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
        * its own timeout — holding a slot and an outbound connection for a page that had already been answered.
        */
       const releaseRenderStop = onAbort(signal, () => run.controller.abort());
+      const startedAt = Date.now();
+      const summaryOf = (outcome: Pick<ActionRunSummary, 'status' | 'steps' | 'error'>): ActionRunSummary => ({
+        actionId: entry.id,
+        runId: run.runId,
+        trigger: 'render',
+        startedAt,
+        endedAt: Date.now(),
+        ...outcome
+      });
 
       try {
         const result = await module.runAction({
@@ -123,25 +151,45 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
          * of its error one, and the bindings meant for exactly this (`hasError`, `errorMessage`) never fire: the
          * page says "nothing here" when the truth is "this could not be fetched".
          */
+        const summary = summaryOf({ status: result.status, steps: result.steps });
         if (result.status !== 'completed') {
-          throw new Error(`Action "${actionId}" ended as ${result.status}`);
+          throw new RenderRunFailure(`Action "${actionId}" ended as ${result.status}`, summary);
         }
 
         // The output alone: a render slice is serialized into the page, so anything beyond what the output step
         // named would be published to every visitor of that URL.
-        return result.output;
+        return { output: result.output, summary };
       } catch (error) {
-        // A render must not fail because one slice did — `resolveRscData` isolates each element — but the reason
-        // belongs in the log, where whoever is debugging an empty section will look.
-        if (error instanceof ActionRunError) {
-          throw new Error(`Action "${actionId}" refused this render: ${error.reason}`, { cause: error });
+        if (error instanceof RenderRunFailure) {
+          throw error;
         }
 
-        throw error;
+        // A render must not fail because one slice did — `resolveRscData` isolates each element — but the reason
+        // belongs in the log, where whoever is debugging an empty section will look. A debugger is told the refusal
+        // in the server's own words and nothing a provider said.
+        if (error instanceof ActionRunError) {
+          const status = error.reason === 'aborted' ? 'aborted' : 'failed';
+          throw new RenderRunFailure(
+            `Action "${actionId}" refused this render: ${error.reason}`,
+            summaryOf({ status, steps: error.steps ?? [], error: error.message }),
+            { cause: error }
+          );
+        }
+
+        throw new RenderRunFailure(
+          error instanceof Error ? error.message : String(error),
+          summaryOf({ status: 'failed', steps: [], error: 'Action failed' }),
+          { cause: error }
+        );
       } finally {
         releaseRenderStop();
         await module.guards.end(run);
       }
+    };
+
+    // Every render that reads the run is told about it, a joined or reused one included: it is what fed this page.
+    const record = (summary: ActionRunSummary) => {
+      (req.ctx.actionRuns ??= []).push({ ...summary, elementId: element.id });
     };
 
     /**
@@ -151,6 +199,18 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
      * are a thousand identical flows and a thousand identical outbound requests, arriving at whatever the action
      * reads all in the same instant.
      */
-    return share.run(key, ttlMs, startRun);
+    try {
+      // The share holds whatever it is handed; this resolver is the only thing that ever hands it a `RenderRun`.
+      const { output, summary } = (await share.run(key, ttlMs, startRun)) as RenderRun;
+      record(summary);
+
+      return output;
+    } catch (error) {
+      if (error instanceof RenderRunFailure) {
+        record(error.summary);
+      }
+
+      throw error;
+    }
   };
 };

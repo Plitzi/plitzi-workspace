@@ -4,6 +4,7 @@ import { handleActionCall } from './callHandler';
 import { createActionsModule } from '../index';
 
 import type { ActionsModule } from '../index';
+import type { ActionTask } from '../types';
 import type {
   ActionDocument,
   ActionEntry,
@@ -200,6 +201,7 @@ describe('handleActionCall', () => {
     });
 
     expect(payload.trace).toHaveLength(1);
+    expect(payload.steps).toHaveLength(1);
   });
 
   /**
@@ -229,6 +231,69 @@ describe('handleActionCall', () => {
     expect(payload.reason).toBe('unauthenticated');
     expect(payload.trace).toBeUndefined();
     expect(payload.output).toBeUndefined();
+  });
+
+  /**
+   * The outline answers a different question from the trace: not what the flow read, only what it did.
+   *
+   * A space that switched dev tools on for its published site has asked for its own flows to be debuggable there,
+   * and this is what that buys — the steps, their order and where one broke. What each step was given and returned
+   * is not part of it, on that site or any other.
+   */
+  it('hands the step outline to a visitor of a space that switched dev tools on', async () => {
+    const config = buildConfig(entry(), {
+      adapters: { getOfflineData: () => Promise.resolve({ schema: { settings: { devTools: true } } }) }
+    });
+
+    const { payload } = await call(config, { actionId: 'quote', input: { amount: 1 } });
+
+    expect(payload.steps).toHaveLength(1);
+    expect(payload.trace).toBeUndefined();
+  });
+
+  /** Nobody authorized this page, so it is told nothing about the flow behind the answer. */
+  it('withholds the outline from a visitor of a space that never asked for dev tools', async () => {
+    const config = buildConfig(entry(), {
+      adapters: { getOfflineData: () => Promise.resolve({ schema: { settings: {} } }) }
+    });
+
+    const { payload } = await call(config, { actionId: 'quote', input: { amount: 1 } });
+
+    expect(payload.steps).toBeUndefined();
+    expect(payload.output).toEqual({ total: 1 });
+  });
+
+  /** A run that died on its deadline is the one somebody is most likely to be debugging, and the failure used to
+   *  carry nothing at all about how far it got. */
+  it('tells a debugger which step a dead run was on when it stopped', async () => {
+    const stuck: ActionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'stuck',
+      title: 'Never returns',
+      params: {},
+      run: () => new Promise(() => undefined)
+    };
+    const module = createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) }, tasks: [stuck] });
+    const hanging = entry({
+      limits: { timeoutMs: 40 },
+      nodes: {
+        start: callTrigger({}, 'hang'),
+        hang: node('hang', { action: 'test.stuck', afterNode: 'compute' }),
+        compute: node('compute', { action: 'flow.output', params: { values: '{"total": 1}' } })
+      }
+    });
+
+    const { sent, payload } = await call(
+      buildConfig(hanging, { devMode: true }),
+      { actionId: 'quote', input: { amount: 1 } },
+      { module }
+    );
+
+    expect(sent.status).toBe(504);
+    expect(payload.reason).toBe('timeout');
+    expect((payload.steps as { id: string; status: string }[]).map(step => [step.id, step.status])).toEqual([
+      ['hang', 'failed']
+    ]);
   });
 
   it('answers 404 for an action this space does not have', async () => {

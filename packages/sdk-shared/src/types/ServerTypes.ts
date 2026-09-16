@@ -3,6 +3,7 @@ import type {
   ActionEntry,
   ActionLimits,
   ActionRejectReason,
+  ActionRunSummary,
   ActionRejectRecord,
   ActionRunRecord,
   ActionRunStatus,
@@ -900,6 +901,11 @@ export type SSRContext = {
   /** What {@link SSRAdapters.meter} answered for this request, so the render reads the decision instead of
    *  asking for it a second time. */
   meter?: SSRMeterDecision;
+  /**
+   * The runs this request's server elements started, as the action resolver ran them. Read once the render or the
+   * refresh is done, and handed on only to a page whose debugging is authorized.
+   */
+  actionRuns?: ActionRunSummary[];
 };
 
 export type SSRServer = {

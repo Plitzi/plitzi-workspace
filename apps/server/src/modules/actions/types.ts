@@ -6,6 +6,7 @@ import type {
   ActionRejectRecord,
   ActionRunRecord,
   ActionRunStatus,
+  ActionRunStep,
   ActionTriggerType,
   ConnectorManifest,
   Environment,
@@ -264,4 +265,9 @@ export type ActionRunResult = {
   output: Record<string, unknown>;
   /** The same shape the dev-tools Interactions panel renders. Redacted before it leaves the process. */
   trace: InteractionNode[];
+  /**
+   * What the run did, step by step, without what any step was given or returned — the part a debugger may show to
+   * anybody allowed to debug the page. The trace above is for authoring and development servers alone.
+   */
+  steps: ActionRunStep[];
 };

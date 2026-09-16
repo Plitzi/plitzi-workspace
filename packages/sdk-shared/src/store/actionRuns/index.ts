@@ -7,6 +7,7 @@ export {
   clearActionRuns,
   recordActionProgress,
   recordActionRun,
+  recordRenderActionRuns,
   registerActionCanceller,
   releaseActionCanceller,
   updateActionRun
