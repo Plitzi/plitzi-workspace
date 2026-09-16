@@ -2,7 +2,7 @@ import { createStore } from '@plitzi/nexus';
 
 import type { StoreApi } from '@plitzi/nexus';
 
-/** How long an answer nobody is rendering is kept, so coming back to a tab within it still paints at once. */
+/** How long, by default, an answer nobody is rendering is kept, so coming back within it still paints at once. */
 export const GC_TIME = 5 * 60 * 1000;
 
 /** What a query is about, for the invalidations that pick queries by what they read rather than by key. */
@@ -39,6 +39,8 @@ type Runtime = {
   inFlight?: Promise<void>;
   /** Bumped by every invalidation, so an answer to a request sent before one is known to be outdated. */
   version: number;
+  /** How long the entry outlives its last reader; `0` forgets it the moment nobody renders it. */
+  gcTime: number;
   gcTimer?: ReturnType<typeof setTimeout>;
 };
 
@@ -88,6 +90,8 @@ export class QueryCache {
   /** Bumped by {@link reset}: an answer carrying an older epoch belongs to a session that has ended. */
   private epochValue = 0;
 
+  private unwatch: (() => void) | undefined;
+
   constructor(store: StoreApi<QueriesState> = createStore<QueriesState>({ entries: {} }, { id: 'queries' })) {
     this.store = store;
   }
@@ -108,9 +112,13 @@ export class QueryCache {
     return this.getEntry(key) !== undefined && this.store.getFreshness(queryPath(key)) !== undefined;
   }
 
-  /** Keeps `key` from being collected for as long as the returned function is not called. */
-  hold(key: string): () => void {
+  /**
+   * Keeps `key` from being collected for as long as the returned function is not called, and for `gcTime` after.
+   * The latest reader's `gcTime` is the one kept.
+   */
+  hold(key: string, gcTime = GC_TIME): () => void {
     const runtime = this.ensure(key);
+    runtime.gcTime = gcTime;
     runtime.holds++;
     this.cancelGc(runtime);
 
@@ -192,11 +200,28 @@ export class QueryCache {
     return Promise.all(pending).then(() => undefined);
   }
 
+  /**
+   * Expiring the path is the invalidation: {@link onExpired} does the rest, for this call and for anybody else who
+   * expires a query's path — the dev-tools' "Expire" included. A query that has never answered has no record to
+   * expire, so it is marked outdated here, which is what makes a request already out be asked again.
+   */
   private invalidateOne(runtime: Runtime): Promise<void> {
-    runtime.version++;
-    this.store.expire(queryPath(runtime.key));
+    if (this.store.expire(queryPath(runtime.key)).length === 0) {
+      runtime.version++;
+    }
 
     return this.fetchActive(runtime);
+  }
+
+  /** A query's path was expired: whatever is out now answers from before it, and whoever is looking asks again. */
+  private onExpired(path: string) {
+    const runtime = this.runtimes.get(path.slice('entries.'.length).split('.')[0]);
+    if (!runtime) {
+      return;
+    }
+
+    runtime.version++;
+    void this.fetchActive(runtime);
   }
 
   private fetchActive(runtime: Runtime): Promise<void> {
@@ -274,9 +299,16 @@ export class QueryCache {
     const id = queryId(key);
     let runtime = this.runtimes.get(id);
     if (!runtime) {
-      runtime = { key, observers: new Set(), holds: 0, version: 0 };
+      runtime = { key, observers: new Set(), holds: 0, version: 0, gcTime: GC_TIME };
       this.runtimes.set(id, runtime);
     }
+
+    // Listening starts with the first query, so a module that is only imported — a server render — arms nothing.
+    this.unwatch ??= this.store.watchFreshness('entries', event => {
+      if (event.type === 'expired') {
+        this.onExpired(event.path);
+      }
+    });
 
     return runtime;
   }
@@ -292,13 +324,21 @@ export class QueryCache {
     }
 
     this.cancelGc(runtime);
-    runtime.gcTimer = setTimeout(() => {
-      const id = queryId(runtime.key);
-      if (this.runtimes.get(id) === runtime && runtime.holds === 0 && runtime.observers.size === 0) {
-        this.runtimes.delete(id);
-        this.store.setState(queryPath(runtime.key), undefined, { unmount: true });
-      }
-    }, GC_TIME);
+    if (runtime.gcTime <= 0) {
+      this.collect(runtime);
+
+      return;
+    }
+
+    runtime.gcTimer = setTimeout(() => this.collect(runtime), runtime.gcTime);
+  }
+
+  private collect(runtime: Runtime) {
+    const id = queryId(runtime.key);
+    if (this.runtimes.get(id) === runtime && runtime.holds === 0 && runtime.observers.size === 0) {
+      this.runtimes.delete(id);
+      this.store.setState(queryPath(runtime.key), undefined, { unmount: true });
+    }
   }
 }
 

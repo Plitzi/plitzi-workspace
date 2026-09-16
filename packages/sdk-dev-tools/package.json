@@ -478,6 +478,34 @@
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/StoreViewer.mjs"
     },
+    "./components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/FreshnessPanel": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/FreshnessPanel.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/FreshnessPanel.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow/FreshnessRow": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow/FreshnessRow.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow/FreshnessRow.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/components/FreshnessRow/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/helpers": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/helpers.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/helpers.mjs"
+    },
+    "./components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues": {
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues.mjs"
@@ -725,6 +753,10 @@
     "./scope/useDevStores": {
       "types": "./dist/scope/useDevStores.d.ts",
       "import": "./dist/scope/useDevStores.mjs"
+    },
+    "./scope/useFreshnessRecords": {
+      "types": "./dist/scope/useFreshnessRecords.d.ts",
+      "import": "./dist/scope/useFreshnessRecords.mjs"
     },
     "./scope/useScope": {
       "types": "./dist/scope/useScope.d.ts",

@@ -174,6 +174,45 @@ describe('QueryCache', () => {
     expect(cache.store.isStale(queryPath('k'))).toBe(true);
   });
 
+  it('anybody expiring a query path makes the provider on screen ask again — the dev-tools button, say', async () => {
+    const cache = new QueryCache();
+    const fetcher = vi.fn().mockResolvedValueOnce('before').mockResolvedValueOnce('after');
+
+    cache.observe('k', { meta, fetcher, staleTime: 30_000 });
+    await flush();
+    cache.store.expire('entries');
+    await flush();
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(cache.getEntry('k')?.data).toBe('after');
+  });
+
+  it('does not poll: a TTL running out only matters to the next mount', async () => {
+    const cache = new QueryCache();
+    const fetcher = vi.fn(() => Promise.resolve('x'));
+
+    cache.observe('k', { meta, fetcher, staleTime: 1_000 });
+    await flush();
+    vi.advanceTimersByTime(5_000);
+    await flush();
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(cache.store.isStale(queryPath('k'))).toBe(true);
+  });
+
+  it('with no grace period, forgets an entry the moment nobody renders it', async () => {
+    const cache = new QueryCache();
+    const fetcher = vi.fn(() => Promise.resolve('x'));
+    const release = cache.hold('k', 0);
+    const stop = cache.observe('k', { meta, fetcher, staleTime: 0 });
+    await flush();
+
+    stop();
+    expect(cache.getEntry('k')?.data).toBe('x');
+    release();
+    expect(cache.getEntry('k')).toBeUndefined();
+  });
+
   it('keeps an answer it may not trust visible, but asks again on the next mount', async () => {
     const cache = new QueryCache();
     const fetcher = vi.fn(() => Promise.resolve({ status: 500 }));

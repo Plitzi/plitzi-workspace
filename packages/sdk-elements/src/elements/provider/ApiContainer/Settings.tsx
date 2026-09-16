@@ -42,7 +42,9 @@ type SettingsProps = {
   pagination?: 'none' | 'url' | 'append';
   pageParam?: string;
   renderWhileLoading?: boolean;
+  cache?: boolean;
   staleTime?: number | string;
+  gcTime?: number | string;
   onUpdate?: (key: string, value: string | boolean | number | object, isDefinition?: boolean) => void;
 };
 
@@ -66,7 +68,9 @@ const Settings = ({
   pagination = 'none',
   pageParam = 'page',
   renderWhileLoading = false,
+  cache = false,
   staleTime = 30,
+  gcTime = 300,
   onUpdate
 }: SettingsProps) => {
   const { resolvedTheme } = useTheme();
@@ -133,6 +137,11 @@ const Settings = ({
 
   const handleChangeRenderWhileLoading = useCallback(
     (e: ChangeEvent) => onUpdate?.('renderWhileLoading', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
+
+  const handleChangeCache = useCallback(
+    (e: ChangeEvent) => onUpdate?.('cache', (e.target as HTMLInputElement).checked),
     [onUpdate]
   );
 
@@ -300,14 +309,30 @@ const Settings = ({
             <option value="omit">Omit</option>
             <option value="same-origin">Same Origin</option>
           </Select>
-          <Input
-            value={String(staleTime)}
-            label="Cache (s)"
-            title="How long an answer is reused without asking again — here and by every provider requesting the same
-              thing. Past it, the answer stays on screen while a fresh one is fetched. 0 asks on every mount."
-            onChange={handleChange('staleTime')}
-            size="xs"
-          />
+          <Switch checked={cache} size="sm" label="Cache responses" onChange={handleChangeCache} />
+          {cache && (
+            <>
+              <Input
+                value={String(staleTime)}
+                label="Fresh for (s)"
+                title="How long an answer is reused without asking again — here and by every provider requesting the
+                  same thing. Past it, the answer stays on screen while a fresh one is fetched. 0 asks on every mount."
+                onChange={handleChange('staleTime')}
+                size="xs"
+              />
+              <Input
+                value={String(gcTime)}
+                label="Keep unused for (s)"
+                title="How long an answer nobody is showing is kept, so coming back to it within that time paints at once."
+                onChange={handleChange('gcTime')}
+                size="xs"
+              />
+              <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+                A server action that completes refreshes cached requests, in case it changed what they read. For an
+                action that only reads, turn off “Refresh cached requests” on its step.
+              </div>
+            </>
+          )}
           <Switch
             checked={renderWhileLoading}
             size="sm"

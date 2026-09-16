@@ -314,24 +314,31 @@ derived id — unique, and nothing you can write down.
 
 ### Cached requests
 
-An `apiContainer` that reads from the browser keeps its answer in memory for `staleTime` seconds (30 unless the
-element says otherwise; `0` asks on every mount), and every provider asking the same thing — same URL, method,
-credentials and headers — shares it. Moving between tabs or pages inside that window costs no request. Past it the
-answer is still drawn at once, and a fresh one is fetched behind it.
+An `apiContainer` that reads from the browser asks for its data every time it is shown, unless its author opts
+into the page's query cache with `cache: true`. Cached, an answer is kept for `staleTime` seconds (30 unless the
+element says otherwise; `0` asks on every mount) and shared by every cached provider asking the same thing — same
+URL, method, credentials and headers. Moving between sections or pages inside that window costs no request. Past it
+the answer is still drawn at once, and a fresh one is fetched behind it. An answer nobody is showing is kept for
+`gcTime` seconds (300 by default) before it is forgotten.
+
+```ts
+apiContainer({ id: 'orders', query: '/api/orders', cache: true, staleTime: 60 })
+```
 
 A cached answer stops counting as current before its time — it stays on screen until the new one lands — when:
 
 - the element's own `performQuery` runs — it always asks again;
 - a flow runs `invalidateQueries()`, or `invalidateQueries({ url: '/api/orders' })` for the requests whose URL starts
   with that. Providers on screen ask at once, the rest when they are next shown;
-- a write succeeds: a `webHook` sent with anything but `GET`/`HEAD` invalidates the requests to its own origin, and
-  a completed `runServerAction` or a `writeRecord` invalidates them all, since only the server knows what those
-  touched;
+- a write succeeds: a `webHook` sent with anything but `GET`/`HEAD` invalidates the requests to its own origin, a
+  `writeRecord` invalidates them all, and so does a completed `runServerAction` — only the server knows what an
+  action touched. For an action that only reads, give the step `invalidateQueries: false`;
 - the visitor signs in, signs out or changes account. This one does not wait: whatever was held for the previous
   visitor is dropped at once, and every provider on screen loads again.
 
 A refused request (`4xx`/`5xx`) is shown but never kept. Server-driven providers (`runtime: 'server'`) are not
-part of this: their data arrives with the page.
+part of this: their data arrives with the page. The dev-tools' Store tab lists what the cache holds under
+"Queries", with how long each answer has left and a button to expire it.
 
 ---
 

@@ -13,7 +13,7 @@ import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
-import useApi, { DEFAULT_STALE_TIME } from './hooks/useApi';
+import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
 import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
 import withElement from '../../../Element/hocs/withElement';
@@ -71,11 +71,17 @@ export type ApiContainerProps = {
   /** Renders children while the first client-side request is still in flight, so a loading state can be bound. */
   renderWhileLoading?: boolean;
   /**
-   * Seconds a browser request's answer is served without asking again — to this provider and to every other one
-   * asking the same thing. A stale answer is still shown while the new one is fetched; `0` asks on every mount. A
-   * text field in the builder, hence the string.
+   * Keep a browser request's answer in the page's query cache, shared with every provider asking the same thing.
+   * Off by default: an author opts in knowing the page may show an answer up to `staleTime` old.
+   */
+  cache?: boolean;
+  /**
+   * With `cache`: seconds an answer is served without asking again. A stale answer is still shown while the new one
+   * is fetched; `0` asks on every mount. A text field in the builder, hence the string.
    */
   staleTime?: number | string;
+  /** With `cache`: seconds an answer nobody renders is kept, so coming back within it paints at once. */
+  gcTime?: number | string;
 };
 
 type ProviderSlice = {
@@ -100,7 +106,9 @@ const ApiContainer = ({
   pagination = 'none',
   pageParam = 'page',
   renderWhileLoading = false,
-  staleTime = DEFAULT_STALE_TIME
+  cache = false,
+  staleTime = DEFAULT_STALE_TIME,
+  gcTime = DEFAULT_GC_TIME
 }: ApiContainerProps) => {
   const {
     id,
@@ -173,7 +181,9 @@ const ApiContainer = ({
     mock: !previewMode ? mockData : undefined,
     customHeaders,
     enabled: apiEnabled,
-    staleTime
+    cache,
+    staleTime,
+    gcTime
   });
 
   /**

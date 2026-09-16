@@ -91,6 +91,15 @@ describe('useQuery', () => {
     expect(result.current.data).toBe('bob');
   });
 
+  it('is inert without a key', () => {
+    const fetcher = vi.fn(() => Promise.resolve('x'));
+
+    const { result } = renderHook(() => useQuery({ key: undefined, meta: { url: '' }, fetcher, staleTime: 30_000 }));
+
+    expect(result.current).toMatchObject({ data: undefined, isLoading: false, isFetching: false });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it('refetch asks again for a fresh answer', async () => {
     const url = uniqueUrl();
     const fetcher = vi.fn().mockResolvedValueOnce('v1').mockResolvedValueOnce('v2');

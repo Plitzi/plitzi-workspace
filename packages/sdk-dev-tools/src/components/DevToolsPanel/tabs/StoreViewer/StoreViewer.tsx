@@ -8,6 +8,7 @@ import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
+import FreshnessPanel from './components/FreshnessPanel';
 import mapFunctionValues from './helpers/mapFunctionValues';
 import renderFunctionValue from './helpers/renderFunctionValue';
 import { useSelectedStore } from '../../../../scope/useScope';
@@ -69,6 +70,7 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
           </button>
         </div>
       )}
+      {!elementSelected && <FreshnessPanel store={selectedStore} />}
       <JsonView
         value={displayValue ?? emptyObject}
         style={resolvedTheme === 'dark' ? jsonViewStyle : undefined}

@@ -2,17 +2,20 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/react';
 
-import queryCache, { queryPath } from './queryCache';
+import queryCache, { GC_TIME, queryPath } from './queryCache';
 
 import type { QueriesState, QueryMeta } from './queryCache';
 
 export type UseQueryOptions<T> = {
-  key: string;
+  /** What identifies the answer. Without one the hook is inert: it reads, holds and asks for nothing. */
+  key: string | undefined;
   meta: QueryMeta;
   fetcher: () => Promise<T>;
   enabled?: boolean;
   /** How long an answer counts as current, in milliseconds. */
   staleTime: number;
+  /** How long an answer nobody renders is kept, in milliseconds. `0` forgets it on unmount. */
+  gcTime?: number;
   isCacheable?: (data: T) => boolean;
 };
 
@@ -33,11 +36,13 @@ const useQuery = <T>({
   fetcher,
   enabled = true,
   staleTime,
+  gcTime = GC_TIME,
   isCacheable
 }: UseQueryOptions<T>): UseQueryResult<T> => {
-  const [stored] = useQueriesStore(queryPath(key), { store: queryCache.store });
-  const entry = stored?.key === key ? stored : undefined;
-  const answered = entry !== undefined && queryCache.hasAnswer(key);
+  const active = key !== undefined;
+  const [stored] = useQueriesStore(queryPath(key ?? ''), { store: queryCache.store, enabled: active });
+  const entry = active && stored?.key === key ? stored : undefined;
+  const answered = entry !== undefined && queryCache.hasAnswer(entry.key);
 
   // The fetcher closes over whatever the caller rendered with; the cache only ever needs the latest one, and making
   // it a dependency would re-observe — and re-check freshness — on every render of a caller that inlines it.
@@ -48,11 +53,11 @@ const useQuery = <T>({
     isCacheableRef.current = isCacheable;
   }, [fetcher, isCacheable]);
 
-  useEffect(() => queryCache.hold(key), [key]);
+  useEffect(() => (key === undefined ? undefined : queryCache.hold(key, gcTime)), [key, gcTime]);
 
   const { url } = meta;
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || key === undefined) {
       return undefined;
     }
 
@@ -82,10 +87,10 @@ const useQuery = <T>({
   }
 
   const data = current ?? previous.current?.data;
-  const isFetching = (entry?.isFetching ?? false) || (enabled && !answered);
+  const isFetching = (entry?.isFetching ?? false) || (enabled && active && !answered);
 
   const refetch = useCallback(() => {
-    if (enabled) {
+    if (enabled && key !== undefined) {
       void queryCache.refetch(key);
     }
   }, [enabled, key]);

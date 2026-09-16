@@ -52,6 +52,15 @@ export const actionsCallbacks: Record<string, BuiltinGlobalCallback> = {
         default: '',
         // Only meaningful when the flow waits: a detached step never sees the refusal a repeated key produces.
         when: params => params.mode !== 'detached'
+      },
+      invalidateQueries: {
+        type: 'boolean',
+        description:
+          'When the run completes, tell the page’s cached browser requests their data may have changed, so the ones ' +
+          'on screen ask again. What an action writes is only known to the server, so this is on unless the action ' +
+          'only reads — turn it off for a search or a lookup called often.',
+        default: true,
+        label: 'Refresh cached requests'
       }
     },
     preview: { runId: '', status: '', output: {} }

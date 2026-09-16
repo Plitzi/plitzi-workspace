@@ -82,11 +82,11 @@ describe('useApi', () => {
   it('serves a provider mounted again from the cache, without asking', async () => {
     fetchMock.mockResolvedValue(answers({ tabs: 1 }));
 
-    const first = renderHook(() => useApi({ url: 'https://api.test/tabs' }));
+    const first = renderHook(() => useApi({ url: 'https://api.test/tabs', cache: true }));
     await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
     first.unmount();
 
-    const second = renderHook(() => useApi({ url: 'https://api.test/tabs' }));
+    const second = renderHook(() => useApi({ url: 'https://api.test/tabs', cache: true }));
 
     expect(second.result.current).toMatchObject({ isLoading: false, isFetching: false, isSuccess: true });
     expect(second.result.current.data).toEqual({ status: 200, data: { tabs: 1 } });
@@ -96,11 +96,11 @@ describe('useApi', () => {
   it('asks again on every mount with no cache time', async () => {
     fetchMock.mockResolvedValue(answers({ tabs: 1 }));
 
-    const first = renderHook(() => useApi({ url: 'https://api.test/tabs', staleTime: '0' }));
+    const first = renderHook(() => useApi({ url: 'https://api.test/tabs', cache: true, staleTime: '0' }));
     await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
     first.unmount();
 
-    const second = renderHook(() => useApi({ url: 'https://api.test/tabs', staleTime: '0' }));
+    const second = renderHook(() => useApi({ url: 'https://api.test/tabs', cache: true, staleTime: '0' }));
 
     expect(second.result.current).toMatchObject({ isLoading: false, isFetching: true });
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -110,12 +110,12 @@ describe('useApi', () => {
     fetchMock.mockResolvedValueOnce(answers({ user: 'alice' })).mockResolvedValueOnce(answers({ user: 'bob' }));
 
     const alice = renderHook(() =>
-      useApi({ url: 'https://api.test/me', customHeaders: { Authorization: 'Bearer alice' } })
+      useApi({ url: 'https://api.test/me', cache: true, customHeaders: { Authorization: 'Bearer alice' } })
     );
     await waitFor(() => expect(alice.result.current.isSuccess).toBe(true));
 
     const bob = renderHook(() =>
-      useApi({ url: 'https://api.test/me', customHeaders: { Authorization: 'Bearer bob' } })
+      useApi({ url: 'https://api.test/me', cache: true, customHeaders: { Authorization: 'Bearer bob' } })
     );
     await waitFor(() => expect(bob.result.current.data).toEqual({ status: 200, data: { user: 'bob' } }));
 
@@ -125,13 +125,36 @@ describe('useApi', () => {
   it('does not keep a refusal: the next mount asks again', async () => {
     fetchMock.mockResolvedValue({ status: 500, json: () => Promise.resolve({ error: 'down' }) });
 
-    const first = renderHook(() => useApi({ url: 'https://api.test/down' }));
+    const first = renderHook(() => useApi({ url: 'https://api.test/down', cache: true }));
     await waitFor(() => expect(first.result.current.isError).toBe(true));
     first.unmount();
 
-    renderHook(() => useApi({ url: 'https://api.test/down' }));
+    renderHook(() => useApi({ url: 'https://api.test/down', cache: true }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('without the cache, loads again on every mount and shares nothing', async () => {
+    fetchMock.mockResolvedValue(answers({ tabs: 1 }));
+
+    const first = renderHook(() => useApi({ url: 'https://api.test/plain' }));
+    const beside = renderHook(() => useApi({ url: 'https://api.test/plain' }));
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(beside.result.current.isSuccess).toBe(true));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    first.unmount();
+
+    const again = renderHook(() => useApi({ url: 'https://api.test/plain' }));
+
+    expect(again.result.current).toMatchObject({ isLoading: true });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+  });
+
+  it('asks nothing while its URL has not resolved', () => {
+    const { result } = renderHook(() => useApi({ url: '' }));
+
+    expect(result.current).toMatchObject({ isLoading: false, isFetching: false });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('answers from the mock without touching the network', () => {

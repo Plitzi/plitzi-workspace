@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
@@ -14,11 +14,21 @@ export type UseApiProps = {
   customHeaders?: Record<string, string>;
   enabled?: boolean;
   credentials?: RequestCredentials;
-  /** How long an answer is served without asking again, in seconds. `0` asks on every mount. */
+  /**
+   * Keep answers in the page's query cache and share them with every provider asking the same thing. Off, each
+   * provider asks for itself on every mount and forgets the answer when it unmounts — the behaviour a page gets
+   * unless its author opted in.
+   */
+  cache?: boolean;
+  /** With `cache`: how long an answer is served without asking again, in seconds. `0` asks on every mount. */
   staleTime?: number | string;
+  /** With `cache`: how long an answer nobody renders is kept, in seconds. */
+  gcTime?: number | string;
 };
 
 export const DEFAULT_STALE_TIME = 30;
+
+export const DEFAULT_GC_TIME = 300;
 
 const hasMock = (mock: UseApiProps['mock']): mock is Record<string, unknown> | string =>
   !!mock && mock !== '{}' && mock !== emptyObject;
@@ -78,10 +88,10 @@ const request = async (
 const isCacheable = (response: ApiResponse) => response.status < 400;
 
 /** Seconds as the builder stores them — a text field — into milliseconds; anything unreadable is the default. */
-const toMilliseconds = (seconds: number | string): number => {
+const toMilliseconds = (seconds: number | string, fallback: number): number => {
   const value = typeof seconds === 'number' ? seconds : Number(seconds);
 
-  return (Number.isFinite(value) && value >= 0 ? value : DEFAULT_STALE_TIME) * 1000;
+  return (Number.isFinite(value) && value >= 0 ? value : fallback) * 1000;
 };
 
 const useApi = ({
@@ -91,23 +101,32 @@ const useApi = ({
   customHeaders = emptyObject,
   enabled = true,
   credentials = 'same-origin',
-  staleTime = DEFAULT_STALE_TIME
+  cache = false,
+  staleTime = DEFAULT_STALE_TIME,
+  gcTime = DEFAULT_GC_TIME
 }: UseApiProps) => {
   const mocked = hasMock(mock);
+  const instance = useId();
   /**
    * Everything that changes the answer. The headers carry the visitor's token, so two visitors — or one before and
    * after signing in — never share an entry; sorted, so the order an author typed them in does not split one.
    */
-  const key = useMemo(
-    () =>
-      JSON.stringify([
-        method,
-        url,
-        credentials,
-        Object.entries(customHeaders).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-      ]),
-    [method, url, credentials, customHeaders]
-  );
+  const key = useMemo(() => {
+    // Nothing to ask: a mock answers for itself, and an empty URL is a binding that has not resolved yet.
+    if (mocked || !url) {
+      return undefined;
+    }
+
+    const request = JSON.stringify([
+      method,
+      url,
+      credentials,
+      Object.entries(customHeaders).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    ]);
+
+    // Uncached, the answer is this provider's alone: nobody else is served it, and it goes when the provider does.
+    return cache ? request : `${request}#${instance}`;
+  }, [mocked, url, method, credentials, customHeaders, cache, instance]);
   const fetcher = useCallback(
     () => request(url, method, credentials, customHeaders),
     [url, method, credentials, customHeaders]
@@ -116,8 +135,9 @@ const useApi = ({
     key,
     meta: { url },
     fetcher,
-    enabled: enabled && !mocked,
-    staleTime: toMilliseconds(staleTime),
+    enabled,
+    staleTime: cache ? toMilliseconds(staleTime, DEFAULT_STALE_TIME) : 0,
+    gcTime: cache ? toMilliseconds(gcTime, DEFAULT_GC_TIME) : 0,
     isCacheable
   });
   const mockData = useMemo(() => (mocked ? mockResponse(mock) : undefined), [mocked, mock]);

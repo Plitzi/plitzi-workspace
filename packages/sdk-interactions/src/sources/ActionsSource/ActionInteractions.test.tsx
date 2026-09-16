@@ -124,6 +124,18 @@ describe('ActionInteractions', () => {
     expect(invalidateQueries).toHaveBeenCalledWith();
   });
 
+  it('leaves the cached requests alone for an action its author said only reads', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r1', status: 'completed', output: {} })))
+    );
+
+    await mount().run({ actionId: 'search', input: '{}', mode: 'await', invalidateQueries: false });
+    await mount().run({ actionId: 'search', input: '{}', mode: 'await', invalidateQueries: 'false' });
+
+    expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+
   it('leaves the cached requests alone when the run did not happen', async () => {
     vi.stubGlobal(
       'fetch',

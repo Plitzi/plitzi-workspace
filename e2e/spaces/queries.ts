@@ -65,8 +65,14 @@ const clickRuns = (
   step: node(buttonId, 'step', { type: 'globalCallback', beforeNode: 'trigger', ...step })
 });
 
-/** @param staleTime The provider's cache time in seconds, as the builder stores it. */
-export const querySpace = (staleTime: number | string = 30): OfflineDataRaw =>
+export type QuerySpaceOptions = {
+  /** Whether the provider keeps its answers in the query cache. Off, as a provider is unless its author opts in. */
+  cache?: boolean;
+  /** Seconds an answer is fresh, as the builder stores them. */
+  staleTime?: number | string;
+};
+
+export const querySpace = ({ cache = false, staleTime = 30 }: QuerySpaceOptions = {}): OfflineDataRaw =>
   ({
     schema: {
       definition: { name: 'queries', permanentUrl: '' },
@@ -121,7 +127,7 @@ export const querySpace = (staleTime: number | string = 30): OfflineDataRaw =>
         [QUERY_IDS.provider]: element(
           QUERY_IDS.provider,
           'apiContainer',
-          { query: ORDERS_PATH, method: 'get', subType: 'section', staleTime },
+          { query: ORDERS_PATH, method: 'get', subType: 'section', cache, staleTime },
           { parentId: QUERY_IDS.panel, items: [QUERY_IDS.title] }
         ),
         [QUERY_IDS.title]: element(

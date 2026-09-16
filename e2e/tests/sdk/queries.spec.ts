@@ -31,7 +31,7 @@ describeTarget('harness', () => {
   test('a provider shown again inside its cache time answers without asking', async ({ page, step }) => {
     const orders = await answerOrders(page);
     await openHarness(page);
-    await renderSpace(page, querySpace());
+    await renderSpace(page, querySpace({ cache: true }));
 
     await step('a hidden provider asks nothing', async () => {
       await expect(page.locator(`.${QUERY_IDS.toggle}`)).toBeVisible();
@@ -66,7 +66,7 @@ describeTarget('harness', () => {
   }) => {
     const orders = await answerOrders(page);
     await openHarness(page);
-    await renderSpace(page, querySpace());
+    await renderSpace(page, querySpace({ cache: true }));
 
     await togglePanel(page);
     await expect(title(page)).toHaveText('Orders #1');
@@ -81,17 +81,22 @@ describeTarget('harness', () => {
     expect(orders.count()).toBe(2);
   });
 
-  test('a provider with no cache time asks every time it is shown', async ({ page }) => {
-    const orders = await answerOrders(page);
-    await openHarness(page);
-    await renderSpace(page, querySpace('0'));
+  for (const [name, options] of [
+    ['a provider that did not opt into the cache', {}],
+    ['a cached provider with no fresh time', { cache: true, staleTime: '0' }]
+  ] as const) {
+    test(`${name} asks every time it is shown`, async ({ page }) => {
+      const orders = await answerOrders(page);
+      await openHarness(page);
+      await renderSpace(page, querySpace(options));
 
-    await togglePanel(page);
-    await expect(title(page)).toHaveText('Orders #1');
-    await togglePanel(page);
-    await togglePanel(page);
+      await togglePanel(page);
+      await expect(title(page)).toHaveText('Orders #1');
+      await togglePanel(page);
+      await togglePanel(page);
 
-    await expect(title(page)).toHaveText('Orders #2');
-    expect(orders.count()).toBe(2);
-  });
+      await expect(title(page)).toHaveText('Orders #2');
+      expect(orders.count()).toBe(2);
+    });
+  }
 });

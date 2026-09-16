@@ -162,6 +162,8 @@ export const runServerAction = (params: {
   input?: string | Record<string, unknown>;
   mode?: 'await' | 'detached' | 'stream';
   idempotencyKey?: string;
+  /** Refresh the page's cached browser requests when the run completes. On by default; off for an action that only reads. */
+  invalidateQueries?: boolean;
 }): StepSpec => globalStep('runServerAction', { mode: 'await', input: {}, ...params });
 
 export const cancelServerAction = (params: { runId: string }): StepSpec => globalStep('cancelServerAction', params);
