@@ -25,6 +25,9 @@ const record = (overrides: Partial<ActionRunRecord> = {}): ActionRunRecord => ({
   startedAt: 1_700_000_000_000,
   durationMs: 12,
   steps: [step('rate', 'example.shippingRate', 'success'), step('answer', 'flow.output', 'success')],
+  input: { weight: 2 },
+  output: { price: 9 },
+  trace: [],
   ...overrides
 });
 
@@ -56,10 +59,40 @@ describe('createRunLogger', () => {
   it('carries no step results and no input', () => {
     const { events, logger } = capture();
 
-    createRunLogger(logger)(record());
+    createRunLogger(logger)(
+      record({
+        trace: [
+          {
+            node: {
+              id: 'rate',
+              title: 'rate',
+              type: 'task',
+              action: 'example.shippingRate',
+              params: {},
+              preview: {},
+              elementId: '',
+              beforeNode: '',
+              afterNode: '',
+              flowId: 'rate',
+              enabled: true
+            },
+            status: 'success',
+            result: { quoted: 'private-quote' },
+            postCallbacks: [],
+            startTime: 1,
+            endTime: 2
+          }
+        ]
+      })
+    );
 
-    expect(JSON.stringify(events[0])).not.toContain('result');
-    expect(JSON.stringify(events[0])).not.toContain('input');
+    const line = JSON.stringify(events[0]);
+    expect(line).not.toContain('result');
+    expect(line).not.toContain('input');
+    // The record carries the run's data now; none of it reaches a log line.
+    expect(line).not.toContain('private-quote');
+    expect(line).not.toContain('weight');
+    expect(line).not.toContain('price');
   });
 
   it('marks anything other than a completed run as not ok', () => {

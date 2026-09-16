@@ -571,7 +571,7 @@ describe('runAction', () => {
 
 describe('run records', () => {
   const recordsOf = async (entry: ReturnType<typeof buildEntry>, extra: Record<string, unknown> = {}) => {
-    const records: Record<string, unknown>[] = [];
+    const records: ActionRunRecord[] = [];
     const { runAction } = createActionsModule({
       lookups,
       onRun: record => {
@@ -601,6 +601,52 @@ describe('run records', () => {
     });
     expect(record.startedAt).toEqual(expect.any(Number));
     expect(record.durationMs).toEqual(expect.any(Number));
+  });
+
+  it('records what the run was given, answered and read', async () => {
+    const [record] = await recordsOf(buildEntry());
+
+    expect(record.input).toEqual({ amount: 42 });
+    expect(record.output).toMatchObject({ total: 42 });
+    expect(record.trace.map(entry => [entry.node.id, entry.status])).toEqual([['compute', 'success']]);
+  });
+
+  /**
+   * A step's result is redacted as it lands, against the credentials resolved SO FAR. A value an early step echoed and
+   * a later step resolved as a credential would slip through that — so the record is redacted again, whole.
+   */
+  it('redacts a credential out of the record, even one resolved after the step that echoed it', async () => {
+    const secret = 'sk-live-late-0123456789';
+    const echo: ActionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'echo',
+      title: 'Echo',
+      params: {},
+      // Echoes the value before anything in the run has resolved it as a credential — a provider answering with it.
+      run: () => Promise.resolve({ echoed: secret })
+    };
+    const resolve: ActionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'resolve',
+      title: 'Resolve',
+      params: {},
+      run: async (_params, ctx) => ({ has: Boolean(await ctx.credential('stripe')) })
+    };
+    const entry = buildEntry({
+      nodes: {
+        start: callTrigger({}, 'first'),
+        first: node('first', { action: 'test.echo', afterNode: 'second' }),
+        second: node('second', { action: 'test.resolve' })
+      }
+    });
+
+    const [record] = await recordsOf(entry, {
+      lookups: { ...lookups, getCredential: () => Promise.resolve({ apiKey: secret }) },
+      tasks: [echo, resolve]
+    });
+
+    expect(JSON.stringify(record)).not.toContain(secret);
+    expect(JSON.stringify(record.trace)).toContain('«redacted»');
   });
 
   it('records a failed run, and says where it stopped', async () => {

@@ -701,6 +701,12 @@ export const createActionRunner = (
     // What the `flow.output` step named, and nothing else. No second contract to disagree with it: a key that step
     // did not name never existed as far as the caller is concerned.
     const output = (returned ?? {}) as Record<string, unknown>;
+    /**
+     * Redacted again as a whole, and copied. A step's result was redacted when it landed, against the credentials
+     * known at that moment — a later step may have resolved one an earlier result echoed — and a step still running
+     * past the deadline may yet push into the live array.
+     */
+    const recordedTrace = redact([...trace]);
 
     // Recorded here rather than at each transport, so a run started by a webhook, a schedule or a deployment's own
     // trigger leaves the same trace as one started by a page.
@@ -715,6 +721,9 @@ export const createActionRunner = (
       durationMs: Date.now() - startedAt,
       ...(request.user ? { userId: request.user.id } : {}),
       steps: [...steps],
+      input: redact(request.input),
+      output: redact(output),
+      trace: recordedTrace,
       ...(failure === undefined ? {} : { error: redact(failure) })
     });
 

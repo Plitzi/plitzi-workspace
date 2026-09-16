@@ -1,5 +1,5 @@
 import type { Environment } from './CommonTypes';
-import type { InteractionNodeStatus } from './InteractionTypes';
+import type { InteractionNode, InteractionNodeStatus } from './InteractionTypes';
 import type { ElementInteraction } from './SchemaTypes';
 import type { SmtpSettings } from '../actions/smtp';
 
@@ -311,8 +311,10 @@ export type ActionRejectRecord = {
  * Emitted for every run that STARTED — completed, failed or aborted — and never for one refused before it began:
  * a 409 is not a run, and logging it would bury the real ones under retries.
  *
- * Deliberately not the trace: step results are the space's own data and can be large, so what travels here is the
- * shape of what happened. The trace goes to the author who asked for it, in the test-run panel.
+ * Two halves with different weight. `steps` is the shape of what happened, safe for any history. `input`, `output`
+ * and `trace` are the run's DATA — what it was given, what each step read and answered — redacted of every credential
+ * value the run resolved but otherwise the space's own and possibly personal: a deployment that keeps them keeps
+ * them apart, behind its strictest access, and a log line never carries them.
  */
 export type ActionRunRecord = {
   runId: string;
@@ -331,6 +333,12 @@ export type ActionRunRecord = {
    * took and why one failed, without keeping anything a step was given or returned.
    */
   steps: ActionRunStep[];
+  /** What the run was started with. Data — see above. */
+  input: Record<string, unknown>;
+  /** What `flow.output` answered; empty for a run that never got there. Data — see above. */
+  output: Record<string, unknown>;
+  /** Every step whole, with what it read and answered, in the order it ran. Data — see above. */
+  trace: InteractionNode[];
   /** Present when the run ended badly. Already redacted of credential values. */
   error?: string;
 };

@@ -537,8 +537,15 @@ is the mechanism around those seams and one thing that needs no store:
 
 | | What it is |
 |---|---|
-| `createRunLogger(logger)` | An `onRun` reporting each run on the log stream the server already uses. Without an `onRun` a deployment sees nothing: the request log says a call was answered, and a run started by a webhook or a schedule has no request to say anything about |
+| `createRunLogger(logger)` | An `onRun` reporting each run on the log stream the server already uses. Without an `onRun` a deployment sees nothing: the request log says a call was answered, and a run started by a webhook or a schedule has no request to say anything about. It logs the shape of the run only — never `input`, `output` or `trace` |
 | `createRejectLogger(logger)` | An `onReject` doing the same for the requests that never became runs. Its own hook because it answers a different question: runs are history, refusals are a fault report, and the one that matters most — a signature that does not verify — is otherwise indistinguishable from the sender never firing |
+
+An `onRun` record carries two halves of different weight. `steps` is the shape of what happened — every step, how
+it ended, how long it took, why one failed — and is safe for any history. `input`, `output` and `trace` are the run's
+**data**: what it was given, what every step read and answered. They are redacted of every credential value the run
+resolved, but are otherwise the space's own and possibly personal, so keep them apart from the history, behind your
+strictest access, with a retention of their own. Plitzi's deployment stores them encrypted in a separate collection
+that only workspace admins can read.
 
 `onReject` receives **every** refusal, including the polite ones (a provider retrying while the first delivery is
 still running). Which of them are worth keeping is yours to decide — Plitzi's own deployment writes the
