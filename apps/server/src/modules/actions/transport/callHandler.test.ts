@@ -242,7 +242,7 @@ describe('handleActionCall', () => {
    */
   it('hands the step outline to a visitor of a space that switched dev tools on', async () => {
     const config = buildConfig(entry(), {
-      adapters: { getOfflineData: () => Promise.resolve({ schema: { settings: { devTools: true } } }) }
+      adapters: { getOfflineData: () => Promise.resolve({ schema: { settings: { debugMode: true } } }) }
     });
 
     const { payload } = await call(config, { actionId: 'quote', input: { amount: 1 } });

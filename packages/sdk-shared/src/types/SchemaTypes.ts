@@ -165,10 +165,11 @@ export type Schema = {
     /**
      * Lets the published site open the dev tools — elements, state, interactions — for anybody who visits it.
      *
-     * The space's own answer, read by a page server that left the decision open: a server that sets `debugMode`
-     * decides for every space it renders, and an explicit `false` there cannot be turned around from here.
+     * The same `debugMode` the SDK and the page server take, answered by the space: read by a page server that left the
+     * decision open. A server that sets its own `debugMode` decides for every space it renders, and an explicit
+     * `false` there cannot be turned around from here. Never `devMode`, which makes a deployment a development server.
      */
-    devTools?: boolean;
+    debugMode?: boolean;
   };
   rsc?: SchemaRsc;
   pages: Element['id'][];

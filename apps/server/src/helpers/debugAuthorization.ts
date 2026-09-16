@@ -2,19 +2,19 @@ import type { Schema } from '@plitzi/sdk-shared';
 
 type DebugConfig = { debugMode?: boolean; devMode?: boolean };
 
-type DebugSettings = Pick<Schema['settings'], 'devTools'> | undefined;
+type DebugSettings = Pick<Schema['settings'], 'debugMode'> | undefined;
 
 /**
  * Whether a page — and what its flows did — may be debugged. One rule for the render and for every run it reports.
  *
  * The server decides first, through `debugMode`: set, it speaks for every space, and `false` is a refusal no space can
  * turn around. Left unset, a development server authorizes it, and so does a space whose own settings switched
- * `devTools` on. The settings are what this server loaded, never anything the request carries.
+ * `debugMode` on. The settings are what this server loaded, never anything the request carries.
  *
  * A page nobody authorized is told nothing: not the steps behind it, not even that a flow ran.
  */
 export const authorizesDebugging = (config: DebugConfig, settings: DebugSettings): boolean =>
-  config.debugMode ?? (config.devMode === true || settings?.devTools === true);
+  config.debugMode ?? (config.devMode === true || settings?.debugMode === true);
 
 /**
  * The same rule, for a request that has not loaded the space yet.

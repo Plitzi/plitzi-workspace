@@ -140,7 +140,7 @@ export const prepareRender = async (
    * product from the same cookie on its first pass, so the markup it hydrates matches.
    *
    * Who may authorize it: the server first, through `debugMode`. When it said nothing, a development server does, and
-   * so does the space itself (`settings.devTools`) — an owner inspecting their own published site. The space is read
+   * so does the space itself (`settings.debugMode`) — an owner inspecting their own published site. The space is read
    * from what this server loaded, never from the request, so a visitor has no say in it.
    */
   const debugAuthorized = !isPreviewRender && authorizesDebugging(config, schema?.settings);

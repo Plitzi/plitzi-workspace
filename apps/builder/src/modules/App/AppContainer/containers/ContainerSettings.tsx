@@ -51,7 +51,7 @@ const ContainerSettings = () => {
     sessionHintCookie = '',
     sessionGate = 'optimistic',
     sessionRevalidateSeconds = 300,
-    devTools = false
+    debugMode = false
   } = settings;
 
   const handleChangeKeepState = useCallback(
@@ -63,10 +63,10 @@ const ContainerSettings = () => {
     [eventBridge]
   );
 
-  const handleChangeDevTools = useCallback(
+  const handleChangeDebugMode = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      setSettings(state => ({ ...state, devTools: e.target.checked }));
-      void eventBridge.emit('main', 'schemaUpdateSettings', e.target.checked, 'devTools');
+      setSettings(state => ({ ...state, debugMode: e.target.checked }));
+      void eventBridge.emit('main', 'schemaUpdateSettings', e.target.checked, 'debugMode');
     },
     [eventBridge]
   );
@@ -288,9 +288,9 @@ const ContainerSettings = () => {
           </Alert>
           <Checkbox
             size="sm"
-            name="devTools"
-            checked={devTools}
-            onChange={handleChangeDevTools}
+            name="debugMode"
+            checked={debugMode}
+            onChange={handleChangeDebugMode}
             type="checkbox"
             label="Dev tools on the published SSR site (*.plitzi.app)"
           />

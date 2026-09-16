@@ -107,16 +107,16 @@ const runFlow: Record<string, ElementInteraction> = {
 };
 
 /**
- * @param devTools Whether the space switched the dev tools on for its own published site — the setting an owner
+ * @param debugMode Whether the space switched the dev tools on for its own published site — the setting an owner
  *   toggles in the builder. It is what authorizes a PUBLISHED page to be told what its flows did; a deployment in
  *   `devMode` authorizes that on its own, and a space that asked for neither is told nothing.
  */
-export const actionSpace = (devTools = false): OfflineDataRaw =>
+export const actionSpace = (debugMode = false): OfflineDataRaw =>
   ({
     schema: {
       definition: { name: 'actions', permanentUrl: '' },
       variables: [],
-      settings: { customCss: '', ...(devTools ? { devTools: true } : {}) },
+      settings: { customCss: '', ...(debugMode ? { debugMode: true } : {}) },
       rsc: { enabled: true },
       pages: [PAGE_ID, SLOW_PAGE_ID],
       pageFolders: {},
