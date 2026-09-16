@@ -984,7 +984,7 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/nexus": "^1.1.4",
+    "@plitzi/nexus": "^1.2.0",
     "@plitzi/plitzi-ui": "^1.6.21",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",

@@ -10,6 +10,7 @@ import DevToolsOverlay from './components/DevToolsOverlay';
 import DevToolsContextProvider from './DevToolsContextProvider';
 import { useIsSelectedInstance } from './instanceRegistry';
 import useHydrated from './useHydrated';
+import useRegisterQueriesStore from './useRegisterQueriesStore';
 import useRegisterRootStore from './useRegisterRootStore';
 
 import type { LogType } from '@plitzi/sdk-shared';
@@ -74,6 +75,7 @@ const DevToolsContainer = ({
   // Only the selected instance renders the (single) panel; all enabled instances still register in the dropdown.
   const isSelected = useIsSelectedInstance(effectiveInstanceId, enabled);
   useRegisterRootStore(enabled);
+  useRegisterQueriesStore(isSelected, effectiveInstanceId);
 
   const handleChangeOrientation = useCallback(
     (orientation: Orientation) => setOrientation(orientation),

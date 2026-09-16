@@ -3,6 +3,7 @@ import { readOfflineData } from '@plitzi/example-space';
 import { actionSpace } from './actions';
 import { minimalSpace } from './minimal';
 import { plainSpace } from './plain';
+import { querySpace } from './queries';
 import { themedSpace } from './themed';
 
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -10,6 +11,7 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 export * from './actions';
 export * from './minimal';
 export * from './plain';
+export * from './queries';
 export * from './themed';
 
 /** The spaces the suite renders.
@@ -23,6 +25,7 @@ export * from './themed';
  *  | `authSpace()` | Four pages, guest and member, with bindings onto the session |
  *  | `sampleSpace()` | The one the examples ship. A parity check — what a reader following the docs sees |
  *  | `actionSpace()` | Two `runtime: 'server'` providers — one fed by an action, one naming a producer this deployment does not have |
+ *  | `querySpace()` | A browser-side provider behind a panel that opens and closes, and a step that invalidates it — for counting the requests the query cache saves |
  *  | `themedSpace()` | A page painted only from a light/dark palette, and a theme toggle — for asserting the colours a theme puts in force |
  *
  *  Only `sampleSpace()` carries **custom plugins** (its three RSC elements), and only a deployment that provides
@@ -66,4 +69,4 @@ export const sampleId = (ref: string, data: OfflineDataRaw = sampleSpace()): str
   return ref;
 };
 
-export { actionSpace, minimalSpace, plainSpace, themedSpace };
+export { actionSpace, minimalSpace, plainSpace, querySpace, themedSpace };

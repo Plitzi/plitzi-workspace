@@ -956,6 +956,22 @@
       "types": "./dist/network/spaceEvents.d.ts",
       "import": "./dist/network/spaceEvents.mjs"
     },
+    "./queries": {
+      "types": "./dist/queries/index.d.ts",
+      "import": "./dist/queries/index.mjs"
+    },
+    "./queries/index": {
+      "types": "./dist/queries/index.d.ts",
+      "import": "./dist/queries/index.mjs"
+    },
+    "./queries/queryCache": {
+      "types": "./dist/queries/queryCache.d.ts",
+      "import": "./dist/queries/queryCache.mjs"
+    },
+    "./queries/useQuery": {
+      "types": "./dist/queries/useQuery.d.ts",
+      "import": "./dist/queries/useQuery.mjs"
+    },
     "./schema": {
       "types": "./dist/schema/index.d.ts",
       "import": "./dist/schema/index.mjs"
@@ -1256,7 +1272,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@plitzi/nexus": "^1.1.4",
+    "@plitzi/nexus": "^1.2.0",
     "@plitzi/plitzi-ui": "^1.6.21",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",

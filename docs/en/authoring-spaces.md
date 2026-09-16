@@ -312,6 +312,27 @@ Three things go wrong when a step is written as a literal, and the builders answ
 `{{quote.output.summary}}` resolves only when the step that produced it is called `quote`. Unnamed steps get a
 derived id — unique, and nothing you can write down.
 
+### Cached requests
+
+An `apiContainer` that reads from the browser keeps its answer in memory for `staleTime` seconds (30 unless the
+element says otherwise; `0` asks on every mount), and every provider asking the same thing — same URL, method,
+credentials and headers — shares it. Moving between tabs or pages inside that window costs no request. Past it the
+answer is still drawn at once, and a fresh one is fetched behind it.
+
+A cached answer stops counting as current before its time — it stays on screen until the new one lands — when:
+
+- the element's own `performQuery` runs — it always asks again;
+- a flow runs `invalidateQueries()`, or `invalidateQueries({ url: '/api/orders' })` for the requests whose URL starts
+  with that. Providers on screen ask at once, the rest when they are next shown;
+- a write succeeds: a `webHook` sent with anything but `GET`/`HEAD` invalidates the requests to its own origin, and
+  a completed `runServerAction` or a `writeRecord` invalidates them all, since only the server knows what those
+  touched;
+- the visitor signs in, signs out or changes account. This one does not wait: whatever was held for the previous
+  visitor is dropped at once, and every provider on screen loads again.
+
+A refused request (`4xx`/`5xx`) is shown but never kept. Server-driven providers (`runtime: 'server'`) are not
+part of this: their data arrives with the page.
+
 ---
 
 ## 7. What is refused

@@ -5,6 +5,7 @@ import ActionInteractions from './sources/ActionsSource/ActionInteractions';
 import AuthInteractions from './sources/AuthSource/AuthInteractions';
 import HostInteractions from './sources/HostSource/HostInteractions';
 import NavigationInteractions from './sources/NavigationSource/NavigationInteractions';
+import QueriesInteractions from './sources/QueriesSource/QueriesInteractions';
 import StateInteractions from './sources/StateSource/StateInteractions';
 
 import type { HostActions } from '@plitzi/sdk-shared';
@@ -30,9 +31,11 @@ const InteractionsSourcesProvider = ({ children, hostActions }: InteractionsSour
       <AuthInteractions authProvider={userProvider}>
         <StateInteractions>
           <ActionInteractions>
-            <NavigationInteractions previewMode={previewMode}>
-              <HostInteractions actions={hostActions}>{children}</HostInteractions>
-            </NavigationInteractions>
+            <QueriesInteractions>
+              <NavigationInteractions previewMode={previewMode}>
+                <HostInteractions actions={hostActions}>{children}</HostInteractions>
+              </NavigationInteractions>
+            </QueriesInteractions>
           </ActionInteractions>
         </StateInteractions>
       </AuthInteractions>

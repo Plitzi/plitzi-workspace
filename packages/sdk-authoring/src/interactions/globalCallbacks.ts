@@ -2,6 +2,7 @@ import { actionsCallbacks } from '@plitzi/sdk-interactions/sources/ActionsSource
 import { authCallbacks } from '@plitzi/sdk-interactions/sources/AuthSource/callbacks';
 import { hostCallbacks } from '@plitzi/sdk-interactions/sources/HostSource/callbacks';
 import { navigationCallbacks } from '@plitzi/sdk-interactions/sources/NavigationSource/callbacks';
+import { queriesCallbacks } from '@plitzi/sdk-interactions/sources/QueriesSource/callbacks';
 import { stateCallbacks } from '@plitzi/sdk-interactions/sources/StateSource/callbacks';
 import { reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
 import { spaceCallbacks } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
@@ -11,7 +12,7 @@ import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder
 /**
  * Every built-in `globalCallback`, gathered from the sources that implement them.
  *
- * A global callback registers under a fixed module id — `space`, `state`, `navigation`, `auth`, `actions` — and NOT
+ * A global callback registers under a fixed module id — `space`, `state`, `navigation`, `auth`, `actions`, `queries` — and NOT
  * under the element hosting the flow: the runtime resolves one as `callbacksAvailables[elementId][action]` (see
  * `InteractionsHelper`), so a node that stored the host element's id here would resolve to nothing and the flow
  * would silently do nothing. That is what `source` below is for.
@@ -34,7 +35,8 @@ export const BUILTIN_GLOBAL_CALLBACKS: Record<string, BuiltinGlobalCallback> = {
   ...hostCallbacks,
   ...navigationCallbacks,
   ...authCallbacks,
-  ...actionsCallbacks
+  ...actionsCallbacks,
+  ...queriesCallbacks
 };
 
 /** The built-in globalCallback for an action, or undefined when the action is not a known built-in (a plugin

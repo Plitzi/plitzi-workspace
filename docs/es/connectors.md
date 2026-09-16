@@ -234,7 +234,10 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
    existen para autorar estados vacíos con bindings normales — sin slot mechanism.
 4. **Paginación** — `useProviderPagination` maneja los modos `url`/`append`/`none` (ver sección 6).
 5. **Interacciones** — callbacks `performQuery`, `loadMore`, `goToPage`; en modo server también `writeRecord`
-   (parámetros `action` + `recordId`, hace `POST /_action`). Triggers `onApiSuccess` / `onApiError`.
+   (parámetros `action` + `recordId`, hace `POST /_action`; al terminar invalida las peticiones de navegador
+   cacheadas). Triggers `onApiSuccess` / `onApiError`. En modo cliente la respuesta vive en la caché de
+   `@plitzi/sdk-shared/queries` durante `staleTime` segundos (30 por defecto) y `performQuery` siempre vuelve a pedir
+   — ver "Cached requests" en `docs/en/authoring-spaces.md`.
 6. **Render** — `<RootElement tag={subType}>` envuelve un `<StoreProvider>` con los children.
 
 ### Cómo sabe que debe esperar el RSC

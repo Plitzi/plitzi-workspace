@@ -738,6 +738,10 @@
       "types": "./dist/useHydrated.d.ts",
       "import": "./dist/useHydrated.mjs"
     },
+    "./useRegisterQueriesStore": {
+      "types": "./dist/useRegisterQueriesStore.d.ts",
+      "import": "./dist/useRegisterQueriesStore.mjs"
+    },
     "./useRegisterRootStore": {
       "types": "./dist/useRegisterRootStore.d.ts",
       "import": "./dist/useRegisterRootStore.mjs"
@@ -769,7 +773,7 @@
     "react-dom": "^19"
   },
   "dependencies": {
-    "@plitzi/nexus": "^1.1.4",
+    "@plitzi/nexus": "^1.2.0",
     "@plitzi/plitzi-ui": "^1.6.21",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",

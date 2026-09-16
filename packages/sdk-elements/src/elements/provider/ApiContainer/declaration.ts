@@ -33,7 +33,8 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
       filters: [],
       pagination: 'none',
       pageParam: 'page',
-      renderWhileLoading: false
+      renderWhileLoading: false,
+      staleTime: 30
     },
     definition: {
       label: 'Api Container',
@@ -42,7 +43,9 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
         'Fetches data from a backend HTTP API (its `query`/`method`/`credentials`) and exposes the response as a data ' +
         'source ITS DESCENDANTS bind to (source `apiContainer_<id>.data`; only elements inside it can consume it). ' +
         'This is how you get backend data into the frontend. Its `mockData` prop is builder-only sample data — the ' +
-        'published runtime fetches the real `query`, so always set a real query for production.',
+        'published runtime fetches the real `query`, so always set a real query for production. A browser request is ' +
+        'cached for `staleTime` seconds (default 30) and shared with every provider asking the same thing; a flow ' +
+        'refreshes it with `performQuery` or the global `invalidateQueries` step.',
       items: [],
       bindings: {},
       styleSelectors: {

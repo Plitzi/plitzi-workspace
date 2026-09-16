@@ -3,6 +3,7 @@ import { useCallback, use, useMemo } from 'react';
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { toBuilderParams, toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { invalidateQueries } from '@plitzi/sdk-shared/queries';
 import {
   recordActionProgress,
   recordActionRun,
@@ -268,10 +269,19 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           );
         }
       });
-      /** Settles the record and gives up the handle: a run that has ended is not one anybody can stop. */
+      /**
+       * Settles the record and gives up the handle: a run that has ended is not one anybody can stop.
+       *
+       * Every mode ends here, which makes it the one place a finished run can tell the page's cached requests they
+       * may be answering from before it. What an action wrote is the server's to know, so all of them are told —
+       * and only for a run that completed: an accepted detached run has not written anything yet.
+       */
       const settle = (patch: Parameters<typeof updateActionRun>[1]) => {
         releaseActionCanceller(record);
         updateActionRun(record, { endedAt: Date.now(), cancellable: false, ...patch });
+        if (patch.status === 'completed') {
+          void invalidateQueries();
+        }
       };
 
       if (mode === 'detached') {

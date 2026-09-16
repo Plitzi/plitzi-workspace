@@ -8,6 +8,7 @@ import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
 import useAuth from './hooks/useAuth';
+import useSessionQueryReset from './hooks/useSessionQueryReset';
 
 import type { AuthProviderSettings } from './types';
 import type { AuthContextValue, Server } from '@plitzi/sdk-shared';
@@ -141,6 +142,8 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
 
     return userRef.current;
   }, [details, accessToken]);
+
+  useSessionQueryReset(authenticated ? String(user?.details?.id ?? '') : '');
 
   const valueMemo: AuthContextValue = useMemo(
     () => ({

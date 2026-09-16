@@ -7,12 +7,15 @@ vi.mock('@plitzi/sdk-shared/auth', () => ({
 }));
 
 const { default: useApi } = await import('./useApi');
+const { queryCache } = await import('@plitzi/sdk-shared/queries');
 
 const fetchMock = vi.fn();
 
-beforeEach(() => {
+beforeEach(async () => {
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
+  // One cache for the page, so one for the file: every test starts from a page nobody has asked anything on yet.
+  await queryCache.reset();
 });
 
 afterEach(() => {
@@ -74,6 +77,69 @@ describe('useApi', () => {
     act(() => result.current.refetch());
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.isError).toBe(false);
+  });
+
+  it('serves a provider mounted again from the cache, without asking', async () => {
+    fetchMock.mockResolvedValue(answers({ tabs: 1 }));
+
+    const first = renderHook(() => useApi({ url: 'https://api.test/tabs' }));
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    first.unmount();
+
+    const second = renderHook(() => useApi({ url: 'https://api.test/tabs' }));
+
+    expect(second.result.current).toMatchObject({ isLoading: false, isFetching: false, isSuccess: true });
+    expect(second.result.current.data).toEqual({ status: 200, data: { tabs: 1 } });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks again on every mount with no cache time', async () => {
+    fetchMock.mockResolvedValue(answers({ tabs: 1 }));
+
+    const first = renderHook(() => useApi({ url: 'https://api.test/tabs', staleTime: '0' }));
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    first.unmount();
+
+    const second = renderHook(() => useApi({ url: 'https://api.test/tabs', staleTime: '0' }));
+
+    expect(second.result.current).toMatchObject({ isLoading: false, isFetching: true });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('never serves one token the answer another one got', async () => {
+    fetchMock.mockResolvedValueOnce(answers({ user: 'alice' })).mockResolvedValueOnce(answers({ user: 'bob' }));
+
+    const alice = renderHook(() =>
+      useApi({ url: 'https://api.test/me', customHeaders: { Authorization: 'Bearer alice' } })
+    );
+    await waitFor(() => expect(alice.result.current.isSuccess).toBe(true));
+
+    const bob = renderHook(() =>
+      useApi({ url: 'https://api.test/me', customHeaders: { Authorization: 'Bearer bob' } })
+    );
+    await waitFor(() => expect(bob.result.current.data).toEqual({ status: 200, data: { user: 'bob' } }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not keep a refusal: the next mount asks again', async () => {
+    fetchMock.mockResolvedValue({ status: 500, json: () => Promise.resolve({ error: 'down' }) });
+
+    const first = renderHook(() => useApi({ url: 'https://api.test/down' }));
+    await waitFor(() => expect(first.result.current.isError).toBe(true));
+    first.unmount();
+
+    renderHook(() => useApi({ url: 'https://api.test/down' }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('answers from the mock without touching the network', () => {
+    const { result } = renderHook(() => useApi({ url: 'https://api.test/x', mock: '{"rows":[1]}' }));
+
+    expect(result.current).toMatchObject({ isLoading: false, isFetching: false, isSuccess: true });
+    expect(result.current.data).toEqual({ status: 200, data: { rows: [1] } });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('stays idle when disabled', () => {

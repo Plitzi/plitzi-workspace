@@ -106,6 +106,22 @@
       "types": "./dist/sources/NavigationSource/index.d.ts",
       "import": "./dist/sources/NavigationSource/index.mjs"
     },
+    "./sources/QueriesSource": {
+      "types": "./dist/sources/QueriesSource/index.d.ts",
+      "import": "./dist/sources/QueriesSource/index.mjs"
+    },
+    "./sources/QueriesSource/QueriesInteractions": {
+      "types": "./dist/sources/QueriesSource/QueriesInteractions.d.ts",
+      "import": "./dist/sources/QueriesSource/QueriesInteractions.mjs"
+    },
+    "./sources/QueriesSource/callbacks": {
+      "types": "./dist/sources/QueriesSource/callbacks.d.ts",
+      "import": "./dist/sources/QueriesSource/callbacks.mjs"
+    },
+    "./sources/QueriesSource/index": {
+      "types": "./dist/sources/QueriesSource/index.d.ts",
+      "import": "./dist/sources/QueriesSource/index.mjs"
+    },
     "./sources/StateSource": {
       "types": "./dist/sources/StateSource/index.d.ts",
       "import": "./dist/sources/StateSource/index.mjs"

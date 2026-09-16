@@ -50,6 +50,18 @@
       "types": "./dist/hooks/useAuth/useAuth.d.ts",
       "import": "./dist/hooks/useAuth/useAuth.mjs"
     },
+    "./hooks/useSessionQueryReset": {
+      "types": "./dist/hooks/useSessionQueryReset/index.d.ts",
+      "import": "./dist/hooks/useSessionQueryReset/index.mjs"
+    },
+    "./hooks/useSessionQueryReset/index": {
+      "types": "./dist/hooks/useSessionQueryReset/index.d.ts",
+      "import": "./dist/hooks/useSessionQueryReset/index.mjs"
+    },
+    "./hooks/useSessionQueryReset/useSessionQueryReset": {
+      "types": "./dist/hooks/useSessionQueryReset/useSessionQueryReset.d.ts",
+      "import": "./dist/hooks/useSessionQueryReset/useSessionQueryReset.mjs"
+    },
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"

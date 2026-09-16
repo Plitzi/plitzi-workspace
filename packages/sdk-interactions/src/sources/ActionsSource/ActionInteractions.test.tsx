@@ -43,6 +43,10 @@ const success = vi.hoisted(() => vi.fn());
 
 vi.mock('@plitzi/sdk-shared/devTools/utils/PlitziConsole', () => ({ pConsole: { warning, info, success } }));
 
+const invalidateQueries = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+
+vi.mock('@plitzi/sdk-shared/queries', () => ({ invalidateQueries }));
+
 type RunCallback = (
   params: Record<string, unknown>,
   context?: { hostElementId?: string }
@@ -106,6 +110,29 @@ describe('ActionInteractions', () => {
     info.mockClear();
     success.mockClear();
     interactionTrigger.mockClear();
+    invalidateQueries.mockClear();
+  });
+
+  it('tells the page’s cached requests a completed run may have changed what they read', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r1', status: 'completed', output: {} })))
+    );
+
+    await mount().run({ actionId: 'save', input: '{}', mode: 'await' });
+
+    expect(invalidateQueries).toHaveBeenCalledWith();
+  });
+
+  it('leaves the cached requests alone when the run did not happen', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(409, { error: 'already running', reason: 'duplicate' })))
+    );
+
+    await mount().run({ actionId: 'save', input: '{}', mode: 'await' });
+
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it('posts the action by name and answers its output', async () => {

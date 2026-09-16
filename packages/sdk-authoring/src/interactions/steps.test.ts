@@ -9,6 +9,7 @@ import {
   authRefreshDetails,
   cancelServerAction,
   clearState,
+  invalidateQueries,
   navigate,
   runServerAction,
   setState
@@ -33,7 +34,8 @@ const globalBuilders: Record<string, StepSpec> = {
   authLogout: authLogout(),
   authRefreshDetails: authRefreshDetails(),
   runServerAction: runServerAction({ actionId: 'a' }),
-  cancelServerAction: cancelServerAction({ runId: 'r' })
+  cancelServerAction: cancelServerAction({ runId: 'r' }),
+  invalidateQueries: invalidateQueries({ url: '/api/orders' })
 };
 
 describe('global callback step builders', () => {

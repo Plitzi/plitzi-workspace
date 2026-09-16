@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { invalidateQueries } from '@plitzi/sdk-shared/queries';
 
 /** Values a write callback receives from the interaction step, minus the keys the endpoint reads itself. */
 type WriteParams = Record<string, unknown> & { action?: unknown; recordId?: string };
@@ -49,6 +50,9 @@ const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone 
       }
 
       const payload = (await response.json()) as { record: unknown };
+      // Which backend the connector wrote to is the server's to know, so every browser request may now be answering
+      // from before the write.
+      void invalidateQueries();
       await onDone?.();
 
       return payload.record;

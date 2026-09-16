@@ -167,6 +167,13 @@ export const runServerAction = (params: {
 export const cancelServerAction = (params: { runId: string }): StepSpec => globalStep('cancelServerAction', params);
 
 /**
+ * Tells the page's cached browser requests the data behind them changed. `url` narrows it to the requests whose URL
+ * starts with it; without one, every cached request on the page is asked again.
+ */
+export const invalidateQueries = (params: { url?: string } = {}): StepSpec =>
+  globalStep('invalidateQueries', { url: '', ...params });
+
+/**
  * A utility runs on nothing: the runtime resolves it by action alone, so it carries no `on` at all — the one kind
  * of step where naming an element is the mistake.
  */

@@ -13,7 +13,7 @@ import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
-import useApi from './hooks/useApi';
+import useApi, { DEFAULT_STALE_TIME } from './hooks/useApi';
 import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
 import withElement from '../../../Element/hocs/withElement';
@@ -70,6 +70,12 @@ export type ApiContainerProps = {
   pageParam?: string;
   /** Renders children while the first client-side request is still in flight, so a loading state can be bound. */
   renderWhileLoading?: boolean;
+  /**
+   * Seconds a browser request's answer is served without asking again — to this provider and to every other one
+   * asking the same thing. A stale answer is still shown while the new one is fetched; `0` asks on every mount. A
+   * text field in the builder, hence the string.
+   */
+  staleTime?: number | string;
 };
 
 type ProviderSlice = {
@@ -93,7 +99,8 @@ const ApiContainer = ({
   singleRecord = false,
   pagination = 'none',
   pageParam = 'page',
-  renderWhileLoading = false
+  renderWhileLoading = false,
+  staleTime = DEFAULT_STALE_TIME
 }: ApiContainerProps) => {
   const {
     id,
@@ -165,7 +172,8 @@ const ApiContainer = ({
     credentials,
     mock: !previewMode ? mockData : undefined,
     customHeaders,
-    enabled: apiEnabled
+    enabled: apiEnabled,
+    staleTime
   });
 
   /**

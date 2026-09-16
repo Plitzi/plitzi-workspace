@@ -42,6 +42,7 @@ type SettingsProps = {
   pagination?: 'none' | 'url' | 'append';
   pageParam?: string;
   renderWhileLoading?: boolean;
+  staleTime?: number | string;
   onUpdate?: (key: string, value: string | boolean | number | object, isDefinition?: boolean) => void;
 };
 
@@ -65,6 +66,7 @@ const Settings = ({
   pagination = 'none',
   pageParam = 'page',
   renderWhileLoading = false,
+  staleTime = 30,
   onUpdate
 }: SettingsProps) => {
   const { resolvedTheme } = useTheme();
@@ -298,6 +300,14 @@ const Settings = ({
             <option value="omit">Omit</option>
             <option value="same-origin">Same Origin</option>
           </Select>
+          <Input
+            value={String(staleTime)}
+            label="Cache (s)"
+            title="How long an answer is reused without asking again — here and by every provider requesting the same
+              thing. Past it, the answer stays on screen while a fresh one is fetched. 0 asks on every mount."
+            onChange={handleChange('staleTime')}
+            size="xs"
+          />
           <Switch
             checked={renderWhileLoading}
             size="sm"

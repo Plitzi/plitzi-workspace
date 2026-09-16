@@ -1,4 +1,9 @@
+import { invalidateQueriesForWrite } from '@plitzi/sdk-shared/queries';
+
 import type { InteractionCallback } from '@plitzi/sdk-shared';
+
+/** The methods that only read: a webhook sent with any other one may have changed what the page's requests answer. */
+const READ_METHODS = new Set(['GET', 'HEAD']);
 
 const delayTime: InteractionCallback<{
   url: string;
@@ -84,6 +89,9 @@ const delayTime: InteractionCallback<{
       }
 
       response = { status: res.status, data };
+      if (res.ok && !READ_METHODS.has(method)) {
+        void invalidateQueriesForWrite(url);
+      }
     } catch (e) {
       console.error(e);
     } finally {
