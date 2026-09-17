@@ -213,6 +213,28 @@ describe('QueryCache', () => {
     expect(cache.getEntry('k')).toBeUndefined();
   });
 
+  it('drops the request out for a query it forgets, and keeps the one it is still holding', () => {
+    const cache = new QueryCache();
+    const signals: AbortSignal[] = [];
+    const fetcher = vi.fn((signal: AbortSignal) => {
+      signals.push(signal);
+
+      return new Promise<string>(() => undefined);
+    });
+
+    const stopKept = cache.observe('kept', { meta, fetcher, staleTime: 0 });
+    const release = cache.hold('dropped', 0);
+    const stopDropped = cache.observe('dropped', { meta, fetcher, staleTime: 0 });
+
+    stopDropped();
+    release();
+    expect(signals[1].aborted).toBe(true);
+
+    // Its grace period has not run out, so the answer is still worth having: whoever mounts next is served it.
+    stopKept();
+    expect(signals[0].aborted).toBe(false);
+  });
+
   it('answers a caller that is not a component from the cache while it is current', async () => {
     const cache = new QueryCache();
     const fetcher = vi.fn().mockResolvedValueOnce('first').mockResolvedValueOnce('second');

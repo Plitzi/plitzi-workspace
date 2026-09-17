@@ -1,6 +1,7 @@
 import { useCallback, useId, useMemo } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { requestKey, useQuery } from '@plitzi/sdk-shared/queries';
 
@@ -51,7 +52,8 @@ const request = async (
   url: string,
   method: NonNullable<UseApiProps['method']>,
   credentials: RequestCredentials,
-  customHeaders: Record<string, string>
+  customHeaders: Record<string, string>,
+  signal: AbortSignal
 ): Promise<ApiResponse> => {
   if (!url) {
     return { status: 400, data: 'URL is required' };
@@ -62,7 +64,7 @@ const request = async (
     headers.set('Content-Type', 'application/json');
   }
 
-  const init: RequestInit = { method, credentials, headers };
+  const init: RequestInit = { method, credentials, headers, signal };
   if (method !== 'get') {
     init.body = '{}';
   }
@@ -80,6 +82,12 @@ const request = async (
 
     return { status: res.status, data };
   } catch (e: unknown) {
+    // Nobody is waiting for this one any more — the cache dropped the query — so it is neither an answer to show
+    // nor a failure to report. Thrown rather than answered so it cannot be mistaken for either.
+    if (signal.aborted) {
+      throw e;
+    }
+
     console.error((e as Error).message);
 
     return { status: 500, data: (e as Error).message };
@@ -110,9 +118,18 @@ const useApi = ({
 }: UseApiProps) => {
   const mocked = hasMock(mock);
   const instance = useId();
+  /**
+   * There is no question to ask right now: the URL is empty, or it still carries a token.
+   *
+   * Attributes are interpolated with the tokens KEPT when nothing answers them, which is how a half-resolved URL
+   * reaches here at all. It is not a rare state: a navigation writes the new page's route params a commit before the
+   * outgoing page is replaced, so every provider whose URL names one of them renders once with the param gone —
+   * `/workspaces/{{workspaceId}}/members` — and asked for that, which is a request nobody wants and a 404 in the
+   * console of a page the visitor has already left.
+   */
+  const unasked = !mocked && (!url || hasValidToken(url));
   const key = useMemo(() => {
-    // Nothing to ask: a mock answers for itself, and an empty URL is a binding that has not resolved yet.
-    if (mocked || !url) {
+    if (mocked || unasked) {
       return undefined;
     }
 
@@ -120,9 +137,9 @@ const useApi = ({
 
     // Uncached, the answer is this provider's alone: nobody else is served it, and it goes when the provider does.
     return cache ? request : `${request}#${instance}`;
-  }, [mocked, url, method, credentials, customHeaders, cache, instance]);
+  }, [mocked, unasked, url, method, credentials, customHeaders, cache, instance]);
   const fetcher = useCallback(
-    () => request(url, method, credentials, customHeaders),
+    (signal: AbortSignal) => request(url, method, credentials, customHeaders, signal),
     [url, method, credentials, customHeaders]
   );
   const query = useQuery<ApiResponse>({
@@ -152,8 +169,16 @@ const useApi = ({
     isFetching,
     data,
     refetch: query.refetch,
-    isSuccess: !isFetching && !!data && data.status < 400,
-    isError: !isFetching && !!data && data.status >= 400
+    /**
+     * Whether THIS question has been answered — not whether an answer is on screen.
+     *
+     * The last answer is kept visible while the URL is unaskable, so nothing flickers; reporting it as this URL's
+     * success is a different claim and a wrong one. It fired `onApiSuccess` again on the way out of a page — the
+     * URL is one of the trigger's dependencies — and the flow behind it set the workspace id from a route param
+     * the page had already lost, which emptied it.
+     */
+    isSuccess: !unasked && !isFetching && !!data && data.status < 400,
+    isError: !unasked && !isFetching && !!data && data.status >= 400
   };
 };
 

@@ -157,6 +157,51 @@ describe('useApi', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('asks nothing while its URL still carries a token', () => {
+    // What a navigation leaves behind for one commit: the outgoing page renders against the route it is leaving,
+    // so the param this URL names is already gone and the attribute keeps the token. Asked for, it is a 404 on a
+    // page nobody is looking at any more.
+    const { result } = renderHook(() =>
+      useApi({ url: 'https://api.test/workspaces/{{workspaceId}}/members', cache: true })
+    );
+
+    expect(result.current).toMatchObject({ isLoading: false, isFetching: false });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the last answer on screen but reports no success for a URL it never asked', async () => {
+    // `onApiSuccess` fires on the URL as much as on the answer, so a provider claiming success for a URL it never
+    // sent runs the flow behind it again — on the way out of a page, against a route that is already gone.
+    fetchMock.mockResolvedValue(answers({ members: [1] }));
+
+    const { result, rerender } = renderHook(({ url }) => useApi({ url }), {
+      initialProps: { url: 'https://api.test/workspaces/7/members' }
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    rerender({ url: 'https://api.test/workspaces/{{workspaceId}}/members' });
+
+    expect(result.current.data).toEqual({ status: 200, data: { members: [1] } });
+    expect(result.current).toMatchObject({ isSuccess: false, isError: false, isLoading: false });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the request nobody is left to read', async () => {
+    const aborted = vi.fn();
+    fetchMock.mockImplementation((_url: string, init: RequestInit) => {
+      init.signal?.addEventListener('abort', aborted);
+
+      return new Promise(() => undefined);
+    });
+
+    const { unmount } = renderHook(() => useApi({ url: 'https://api.test/slow' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    unmount();
+
+    expect(aborted).toHaveBeenCalledTimes(1);
+  });
+
   it('answers from the mock without touching the network', () => {
     const { result } = renderHook(() => useApi({ url: 'https://api.test/x', mock: '{"rows":[1]}' }));
 

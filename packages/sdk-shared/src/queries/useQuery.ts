@@ -10,7 +10,7 @@ export type UseQueryOptions<T> = {
   /** What identifies the answer. Without one the hook is inert: it reads, holds and asks for nothing. */
   key: string | undefined;
   meta: QueryMeta;
-  fetcher: () => Promise<T>;
+  fetcher: (signal: AbortSignal) => Promise<T>;
   enabled?: boolean;
   /** How long an answer counts as current, in milliseconds. */
   staleTime: number;
@@ -66,7 +66,7 @@ const useQuery = <T>({
     return queryCache.observe<T>(key, {
       meta: { url, tags: tagsKey ? tagsKey.split('\u0000') : [] },
       staleTime,
-      fetcher: () => fetcherRef.current(),
+      fetcher: signal => fetcherRef.current(signal),
       isCacheable: data => isCacheableRef.current?.(data) ?? true
     });
   }, [enabled, key, url, tagsKey, staleTime]);

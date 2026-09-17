@@ -26,7 +26,8 @@ export type QueriesState = { entries: Partial<Record<string, QueryEntry>> };
 
 export type QueryObserverOptions<T> = {
   meta: QueryMeta;
-  fetcher: () => Promise<T>;
+  /** Given the signal of the request it is making, so an answer nobody can still read is not waited for. */
+  fetcher: (signal: AbortSignal) => Promise<T>;
   /** How long an answer counts as current, in milliseconds. `0` asks again on every mount. */
   staleTime: number;
   /** An answer this rejects is shown but never trusted: the next observer to mount asks again. */
@@ -44,6 +45,8 @@ type Runtime = {
   /** Mounted readers, enabled or not: a provider in a hidden tab still shows what it holds when the tab opens. */
   holds: number;
   inFlight?: Promise<void>;
+  /** Of the request out now, so {@link QueryCache.collect} can drop it along with everything else about the query. */
+  controller?: AbortController;
   /** Bumped by every invalidation, so an answer to a request sent before one is known to be outdated. */
   version: number;
   /** How long the entry outlives its last reader; `0` forgets it the moment nobody renders it. */
@@ -229,6 +232,9 @@ export class QueryCache {
     this.runtimes.forEach(runtime => {
       runtime.version++;
       runtime.inFlight = undefined;
+      // Asked on behalf of whoever was looking before, and the epoch already makes its answer land nowhere.
+      runtime.controller?.abort();
+      runtime.controller = undefined;
     });
     this.store.setState('entries', {});
 
@@ -296,6 +302,7 @@ export class QueryCache {
       }
 
       runtime.inFlight = undefined;
+      runtime.controller = undefined;
       const outdated = version !== runtime.version;
       if ('error' in outcome) {
         // Written with no life at all: what was held stays on screen, and the next observer asks again.
@@ -317,7 +324,9 @@ export class QueryCache {
       return outdated ? this.fetchActive(runtime) : Promise.resolve();
     };
 
-    runtime.inFlight = observer.fetcher().then(
+    const controller = new AbortController();
+    runtime.controller = controller;
+    runtime.inFlight = observer.fetcher(controller.signal).then(
       data => settle({ data }),
       (error: unknown) => settle({ error })
     );
@@ -377,6 +386,11 @@ export class QueryCache {
     const id = queryId(runtime.key);
     if (this.runtimes.get(id) === runtime && runtime.holds === 0 && runtime.observers.size === 0) {
       this.runtimes.delete(id);
+      // Nobody renders this and its answer is about to be forgotten, so whatever is still out can be dropped: a
+      // provider that asked for a list and was navigated away from leaves a request nothing will ever read. Only
+      // here, never on the last observer leaving: a query with a `gcTime` is kept precisely so coming back within
+      // it paints at once, and that is the answer in flight as much as the one already held.
+      runtime.controller?.abort();
       this.store.setState(queryPath(runtime.key), undefined, { unmount: true });
     }
   }
