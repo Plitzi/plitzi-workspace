@@ -2,13 +2,13 @@ import { render } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
-import type { ReactNode } from 'react';
-
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import { Page } from './Page';
 import ElementContext from '../../../Element/ElementContext';
 import { skipHocEntry } from '../../../testUtils/elementTestUtils';
+
+import type { ReactNode } from 'react';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

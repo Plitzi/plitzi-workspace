@@ -1,4 +1,5 @@
 import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import { styleWithoutTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 
 import { isCssProperty, isCustomProperty, suggestCssProperty } from '../style';
 
@@ -71,6 +72,16 @@ const validateStyle = (style: Style): SchemaValidationError[] => {
   return errors;
 };
 
+/** Style the page will never show: on an element that renders nothing of its own. Needs both documents. */
+const validateStyleTargets = (schema: Schema, style: Style): SchemaValidationError[] =>
+  Object.values(schema.flat).flatMap(element => {
+    const issue = styleWithoutTag(element, style);
+
+    return issue
+      ? [{ code: 'STYLE_WITHOUT_TAG', message: `Element "${element.id}" ${issue}`, elementId: element.id }]
+      : [];
+  });
+
 export const validateSpace = (
   { schema, style }: SpaceDocuments,
   options: SchemaValidationOptions = {}
@@ -78,7 +89,11 @@ export const validateSpace = (
   const schemaResult = validateSchema(schema, options);
   const errors = [...schemaResult.errors, ...validateStyle(style)];
 
-  return { valid: errors.length === 0, errors, warnings: schemaResult.warnings };
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings: [...schemaResult.warnings, ...validateStyleTargets(schema, style)]
+  };
 };
 
 /** The throwing flavour. Returns what was survivable so a caller can decide what to do about it. */

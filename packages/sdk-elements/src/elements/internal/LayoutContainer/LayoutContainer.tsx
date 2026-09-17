@@ -25,14 +25,17 @@ export type LayoutContainerProps = {
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
 };
 
+const LAYOUT_SELECTOR = '.plitzi-component__layout-container';
+const BODY_SELECTOR = '.plitzi-component--layout-body';
+
 /**
- * The slot of THIS layout. A layout nested inside another carries a slot of its own further down, and the outer one
- * must not cut its hole there.
+ * Where the page is: the slot no other slot sits inside.
+ *
+ * With shells nested, the outer shell's slot holds the inner shell — its header and tabs are chrome too — so the hole
+ * belongs on the innermost slot, whichever shell it is in.
  */
-const ownBody = (layout: HTMLElement): Element | null =>
-  [...layout.querySelectorAll('.plitzi-component--layout-body')].find(
-    body => body.parentElement?.closest('.plitzi-component__layout-container') === layout
-  ) ?? null;
+const pageBody = (layout: HTMLElement): Element | null =>
+  [...layout.querySelectorAll(BODY_SELECTOR)].find(body => !body.querySelector(BODY_SELECTOR)) ?? null;
 
 const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: LayoutContainerProps) => {
   const { plitziElementLayout } = useElement();
@@ -41,7 +44,14 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
   } = usePlitziServiceContext();
 
   const updateMask = useCallback((parent?: HTMLElement, child?: Element | null) => {
-    if (!parent || !child) {
+    if (!parent) {
+      return;
+    }
+
+    // No body, no hole: everything the shell shows is chrome.
+    if (!child) {
+      parent.style.removeProperty('--child-clip');
+
       return;
     }
 
@@ -69,26 +79,44 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
   }, []);
 
   useEffect(() => {
-    if (!plitziElementLayout || !ref?.current || previewMode) {
+    const layout = ref?.current;
+    // Only the outermost shell masks; see `pageBody`.
+    if (!plitziElementLayout || !layout || previewMode || layout.parentElement?.closest(LAYOUT_SELECTOR)) {
       return;
     }
 
-    const handleResize = throttle(() => {
-      const parent = ref.current;
-      updateMask(parent, ownBody(parent));
-    }, 150);
+    let observed: Element | null = null;
+    const handleChange = throttle(() => {
+      const body = pageBody(layout);
+      if (body !== observed) {
+        if (observed) {
+          resizeObserver.unobserve(observed);
+        }
 
-    const observer = new ResizeObserver(handleResize);
-    observer.observe(ref.current);
+        if (body) {
+          resizeObserver.observe(body);
+        }
 
-    const child = ownBody(ref.current);
-    if (child) {
-      observer.observe(child);
-    }
+        observed = body;
+      }
+
+      updateMask(layout, body);
+    }, 50);
+
+    // A size change is not the only thing that moves the hole: the body mounts after the shell, a nested shell's
+    // header grows when its data arrives, and a scrolling slot carries the page away without resizing anything.
+    const resizeObserver = new ResizeObserver(handleChange);
+    resizeObserver.observe(layout);
+    const mutationObserver = new MutationObserver(handleChange);
+    mutationObserver.observe(layout, { childList: true, subtree: true });
+    layout.addEventListener('scroll', handleChange, true);
+    handleChange();
 
     return () => {
-      handleResize.cancel();
-      observer.disconnect();
+      handleChange.cancel();
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+      layout.removeEventListener('scroll', handleChange, true);
     };
   }, [plitziElementLayout, previewMode, ref, updateMask]);
 

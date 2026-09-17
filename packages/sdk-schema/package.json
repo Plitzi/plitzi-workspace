@@ -26,6 +26,10 @@
       "types": "./dist/helpers/schemaValidator.d.ts",
       "import": "./dist/helpers/schemaValidator.mjs"
     },
+    "./helpers/styleWithoutTag": {
+      "types": "./dist/helpers/styleWithoutTag.d.ts",
+      "import": "./dist/helpers/styleWithoutTag.mjs"
+    },
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"

@@ -405,7 +405,9 @@ The widget runs the live SDK, so beyond static layout it can fetch data and resp
 ### Fetch data — a provider + a binding
 An \`apiContainer\` fetches at runtime and exposes the result as the source **\`apiContainer_<id>.data\`**, visible
 to its **DESCENDANTS only** — the bound element must live inside the container's subtree. \`upsertBinding\` then
-connects that source to a descendant's field.
+connects that source to a descendant's field. With no \`subType\` (its default) the provider renders **no element of
+its own** — its children lay out in its parent, and a class on it styles nothing; give it \`"subType": "div"\` when the
+provider itself is the box.
 
 \`\`\`json
 {

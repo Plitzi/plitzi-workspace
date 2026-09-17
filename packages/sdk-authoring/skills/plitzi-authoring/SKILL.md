@@ -137,6 +137,13 @@ is the quietest failure a space can carry.
 Server-resolved sections are an `apiContainer` with `runtime: 'server'` naming a connector or an action, and a
 space that has any needs `rsc: { enabled: true }`.
 
+**A provider has no box unless you give it a tag.** An `apiContainer` renders no element of its own while its
+`subType` is empty — the default, the builder's "Container Tag: None" — so its children sit directly in the parent's
+layout. That is usually what you want (the provider stays invisible to the layout), and it means a `class` or `css`
+on it styles nothing: the `gap` you wrote between its sections is simply not there. Put the layout on the parent, or
+give the provider a tag (`attributes: { subType: 'div' }`) when it should be the box. `validateSpace` — and so
+`authorSpace` and the MCP — warns with `STYLE_WITHOUT_TAG`.
+
 **Never ask the data for a field's opposite.** Both sides of one question are `visible: 'x'` and `visible: '!x'` —
 not an `x` and a `notX` beside it in the server's answer. The `!` is the `not` transformer, which reads a boolean
 that travelled as text (`"false"`, `"0"`) and treats an empty array as false; an empty object is true. Only for a

@@ -1,3 +1,5 @@
+import { styleWithoutTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
+
 import { checkBindingSourceScope, checkBindingTarget, checkBindingTransformers } from './bindings';
 import { checkSlotCss } from './css';
 import { checkVariantApplication } from './elements';
@@ -162,6 +164,13 @@ export const auditResources = (space: Space, ops: Operation[]): ValidationResult
 
     seenElements.add(el.id);
     harvest(ctx, result, `element "${el.id}"`, sub => auditElement(space, sub, el));
+
+    // Not a malformation, and not labelled as someone else's: styling a provider that renders no element is exactly
+    // what a batch does by accident, so it is said about the element as it now stands.
+    const tagless = styleWithoutTag(el, space.style);
+    if (tagless) {
+      result.warnings.push(`element "${el.id}" ${tagless}`);
+    }
   }
 
   for (const ref of touched.definitions) {

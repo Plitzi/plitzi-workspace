@@ -1,3 +1,4 @@
+import { ThemeContext as UiThemeContext } from '@plitzi/plitzi-ui/Provider';
 import { use, useContext, useLayoutEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -25,7 +26,8 @@ const hostStyle = { display: 'contents' } as const;
  *
  * The node stays where the panel always sat — the flex sibling of the space, which is how it docks and what the
  * collapsed badge positions itself against — so only the React tree moves, not the layout. What the panel reads from
- * the page's providers is carried over: the root store, the theme scope, and the two plugin registries.
+ * the page's providers is carried over: the root store, plitzi-ui's theme, the theme scope, and the two plugin
+ * registries.
  */
 const DevToolsRoot = ({ children }: DevToolsRootProps) => {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -35,6 +37,8 @@ const DevToolsRoot = ({ children }: DevToolsRootProps) => {
   const themeStore = use(ThemeScopeContext);
   const plugins = use(PluginsContext);
   const components = use(ComponentContext);
+  // plitzi-ui components read their class names from here; without it every one renders unstyled.
+  const uiTheme = use(UiThemeContext);
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -64,11 +68,13 @@ const DevToolsRoot = ({ children }: DevToolsRootProps) => {
   useLayoutEffect(() => {
     rootRef.current?.render(
       <StoreContext value={store}>
-        <ThemeScopeContext value={themeStore}>
-          <PluginsContext value={plugins}>
-            <ComponentContext value={components}>{children}</ComponentContext>
-          </PluginsContext>
-        </ThemeScopeContext>
+        <UiThemeContext value={uiTheme}>
+          <ThemeScopeContext value={themeStore}>
+            <PluginsContext value={plugins}>
+              <ComponentContext value={components}>{children}</ComponentContext>
+            </PluginsContext>
+          </ThemeScopeContext>
+        </UiThemeContext>
       </StoreContext>
     );
   });

@@ -237,3 +237,28 @@ describe('mcp-ai type-aware prop warnings (I5)', () => {
     expect(r.warnings.some(w => w.includes('has no observed prop'))).toBe(false);
   });
 });
+
+describe('mcp-ai style on a provider with no tag', () => {
+  const styled = (props: Record<string, unknown>): Operation[] => [
+    { type: 'upsertDefinition', ref: 'stack', desktop: { display: 'flex', 'row-gap': '32px' } },
+    {
+      type: 'upsertElement',
+      pageRef: 'home',
+      element: { ref: 'feed', type: 'apiContainer', props, style: { base: ['stack'] } }
+    }
+  ];
+
+  /** A provider with no tag renders its children and no element, so the gap written on it lands nowhere. */
+  it('warns that the style of an untagged apiContainer applies to nothing', () => {
+    const r = validate({ operations: styled({ query: 'https://api.example.com/x' }) }, buildSpace());
+
+    expect(r.valid).toBe(true);
+    expect(r.warnings.some(w => w.includes('element "feed"') && w.includes('no `subType`'))).toBe(true);
+  });
+
+  it('says nothing once the provider has a tag', () => {
+    const r = validate({ operations: styled({ query: 'https://api.example.com/x', subType: 'div' }) }, buildSpace());
+
+    expect(r.warnings.some(w => w.includes('no `subType`'))).toBe(false);
+  });
+});

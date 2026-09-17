@@ -57,14 +57,22 @@
       .plitzi-component__layout-container:not(.plitzi-component) {
         position: relative;
 
+        // Above the page's own stacking (sticky headers, dropdowns) and below the builder's overlays, which have to
+        // stay readable over the shell they point at.
         &::before {
           position: absolute;
-          z-index: 999999;
+          z-index: $overlayZIndex + 89000;
           background: rgba(0, 0, 0, 0.5);
           content: '';
           inset: 0;
           pointer-events: none;
           clip-path: var(--child-clip, polygon(0 0, 100% 0, 100% 100%, 0 100%));
+        }
+
+        // One mask per page: the outermost shell draws it, with its hole on the body the page is in. A shell nested
+        // inside it is chrome like any other, and a mask of its own would dim what the outer one already leaves out.
+        .plitzi-component__layout-container::before {
+          content: none;
         }
       }
     }

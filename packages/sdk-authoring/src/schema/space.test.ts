@@ -616,7 +616,8 @@ describe('authorSpace / breakpoints and fonts', () => {
 
   /**
    * A provider left at "Container Tag: None" renders its children and no element of its own, so a style on it dresses
-   * nothing — found on real spaces as a counter card with no card and a sticky sidebar that did not stick.
+   * nothing — found on real spaces as a counter card with no card, a sticky sidebar that did not stick, and analytics
+   * sections that lost the gap between them. The rule is the schema's, so builder exports and the MCP see it too.
    */
   it('warns about a provider with a style and no tag to wear it', () => {
     const provider = (attributes: Record<string, unknown>, css?: ElementSpec['css']): ElementSpec => ({
@@ -627,13 +628,13 @@ describe('authorSpace / breakpoints and fonts', () => {
     });
     const warningsFor = (element: ElementSpec) =>
       authorSpace(minimal({ pages: [{ name: 'Home', slug: '', body: [element] }] })).warnings.filter(
-        warning => warning.code === 'provider-style-without-tag'
+        warning => warning.code === 'STYLE_WITHOUT_TAG'
       );
 
     const untagged = warningsFor(provider({}, { desktop: { position: 'absolute' } }));
 
     expect(untagged).toHaveLength(1);
-    expect(untagged[0].message).toContain('Element "apiContainer" (feed)');
+    expect(untagged[0].elementId).toBe('feed');
     expect(warningsFor(provider({ subType: 'div' }, { desktop: { position: 'absolute' } }))).toEqual([]);
     expect(warningsFor(provider({}))).toEqual([]);
   });
