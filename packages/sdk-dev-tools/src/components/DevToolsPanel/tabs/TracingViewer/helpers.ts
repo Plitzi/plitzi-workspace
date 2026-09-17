@@ -241,7 +241,7 @@ export type TreeIndex = {
  * The tree holds every instance the timeline has seen, and a commit is drawn from it — so without this a commit after
  * a navigation drew the page that had left beside the one that arrived, and a closed modal kept its body.
  */
-export const isAlive = (index: TreeIndex, id: string, commitId: number): boolean => {
+const isAlive = (index: TreeIndex, id: string, commitId: number): boolean => {
   const span = index.lifetime.get(id);
 
   return !span || (span.mountedAt <= commitId && commitId < span.unmountedAt);

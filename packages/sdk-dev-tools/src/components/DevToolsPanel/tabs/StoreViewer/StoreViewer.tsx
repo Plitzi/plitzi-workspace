@@ -8,12 +8,14 @@ import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
-import FreshnessPanel from './components/FreshnessPanel';
-import describeQueryPath from './helpers/describeQueryPath';
 import mapFunctionValues from './helpers/mapFunctionValues';
+import renderFreshnessKey from './helpers/renderFreshnessKey';
 import renderFunctionValue from './helpers/renderFunctionValue';
-import { useInstanceStores, useSelectedStore } from '../../../../scope/useScope';
+import { useFreshnessByStore, useSecondsClock } from '../../../../freshness';
+import { useSelectedStore, useSelectedStoreEntry } from '../../../../scope/useScope';
 import useStoreState from '../../../../scope/useStoreState';
+
+import type { DevStoreEntry, PathFreshness } from '@plitzi/nexus';
 
 type StoreView = 'own' | 'merged';
 
@@ -38,12 +40,16 @@ export type StoreViewerProps = {
   elementSelected?: string;
 };
 
+const NO_RECORDS: Readonly<Record<string, PathFreshness>> = {};
+
+const NO_STORES: ReadonlyArray<DevStoreEntry> = [];
+
 const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
   const { resolvedTheme } = useTheme();
   const { getData } = use(DevToolsContext);
   // The store picked in the header's scope dropdown (defaults to the active instance's root); its live state is shown.
+  const selectedEntry = useSelectedStoreEntry();
   const selectedStore = useSelectedStore();
-  const instanceStores = useInstanceStores();
   // Own layer by default; the parent fall-through is merged in only when the user asks for it (scoped stores only).
   const [view, setView] = useStorage<StoreView>('plitzi-sdk.dev-tools.store.view', 'own');
   const storeState = useStoreState(elementSelected ? undefined : selectedStore, view === 'merged');
@@ -54,6 +60,20 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
   // With an element selected show its resolved data source; otherwise the store chosen in the header dropdown.
   const value = elementSelected ? getData?.(`getElementDataSource-${elementSelected}`) : storeState;
   const displayValue = useMemo(() => mapFunctionValues(value), [value]);
+
+  /**
+   * The freshness of the store being shown, marked on the tree itself — which of these paths is cached, and for how
+   * much longer. The Cache tab is where they are all listed, whichever store they are in; here it is only ever this
+   * store's OWN records, since what a scope inherits from its chain is recorded where it was written.
+   */
+  const shownStores = useMemo(() => (selectedEntry ? [selectedEntry] : NO_STORES), [selectedEntry]);
+  const records = useFreshnessByStore(shownStores)[0]?.records ?? NO_RECORDS;
+  const newest = useMemo(
+    () => Object.values(records).reduce((latest, record) => Math.max(latest, record.updatedAt), 0),
+    [records]
+  );
+  const now = useSecondsClock(Object.keys(records).length > 0, newest);
+  const renderKeyName = useMemo(() => renderFreshnessKey(records, now), [records, now]);
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -72,7 +92,6 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
           </button>
         </div>
       )}
-      {!elementSelected && <FreshnessPanel entries={instanceStores} describe={describeQueryPath} />}
       <JsonView
         value={displayValue ?? emptyObject}
         style={resolvedTheme === 'dark' ? jsonViewStyle : undefined}
@@ -83,6 +102,7 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
         displayDataTypes={false}
       >
         <JsonView.String render={renderFunctionValue} />
+        <JsonView.KeyName render={renderKeyName} />
       </JsonView>
     </div>
   );

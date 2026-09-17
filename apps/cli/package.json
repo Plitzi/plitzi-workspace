@@ -21,7 +21,7 @@
     "commander": "^15.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.20.3",
+    "@types/node": "^26.6.1",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "typescript": "^6.0.3",

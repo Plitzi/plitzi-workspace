@@ -4,6 +4,7 @@ import { use } from 'react';
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 
 import ActionsViewer from './tabs/ActionsViewer';
+import CacheViewer from './tabs/CacheViewer';
 import ElementsViewer from './tabs/ElementsViewer';
 import HistoryViewer from './tabs/HistoryViewer';
 import Logs from './tabs/Logs';
@@ -40,6 +41,7 @@ const DevToolsBody = ({
           <Logs items={logs} orientation={orientation} logTypeFilter={logTypeFilter} onClear={clearLogs} />
         )}
         {tabSelected === 'store' && <StoreViewer elementSelected={elementSelected} />}
+        {tabSelected === 'cache' && <CacheViewer />}
         {tabSelected === 'history' && <HistoryViewer />}
         {tabSelected === 'variables' && <VariablesViewer />}
         {tabSelected === 'elements' && (

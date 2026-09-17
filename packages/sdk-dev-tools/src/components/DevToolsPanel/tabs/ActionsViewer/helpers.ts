@@ -9,7 +9,7 @@ export type StatusTone = 'danger' | 'warning' | 'success' | 'info' | 'custom';
 /** Still happening: no end time, and the step that started it still holds the handle. */
 export const isLive = (run: ActionRunEntry): boolean => run.endedAt === undefined;
 
-export const hasFailed = (run: ActionRunEntry): boolean => run.status === 'failed' || run.status === 'aborted';
+const hasFailed = (run: ActionRunEntry): boolean => run.status === 'failed' || run.status === 'aborted';
 
 export const runDuration = (run: ActionRunEntry): number | undefined =>
   run.endedAt === undefined ? undefined : run.endedAt - run.startedAt;

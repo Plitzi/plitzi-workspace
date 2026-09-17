@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
+import PayloadView from '../../../../../PayloadView';
 import {
   failedStep,
   formatMs,
@@ -12,7 +13,6 @@ import {
   traceResultOf
 } from '../../helpers';
 import FlowTimeline from '../FlowTimeline';
-import PayloadView from '../PayloadView';
 
 import type { ActionRunEntry } from '@plitzi/sdk-shared';
 

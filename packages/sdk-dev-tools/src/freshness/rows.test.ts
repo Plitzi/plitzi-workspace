@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { createStore } from '@plitzi/nexus';
 
-import { formatDuration, toRows } from './helpers';
+import formatDuration from './formatDuration';
+import { toRows } from './rows';
 
-import type { FreshnessGroup } from '../../../../../../scope/useFreshnessByStore';
+import type { FreshnessGroup } from './useFreshnessByStore';
 import type { PathFreshness } from '@plitzi/nexus';
 
 const group = (uid: string, name: string, records: Record<string, PathFreshness>): FreshnessGroup => ({

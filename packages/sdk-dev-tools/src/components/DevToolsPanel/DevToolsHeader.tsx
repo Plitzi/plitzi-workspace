@@ -11,6 +11,8 @@ import type { ChangeEvent } from 'react';
 const TABS = [
   { id: 'logs', label: 'Logs', icon: 'fa-solid fa-terminal' },
   { id: 'store', label: 'Store', icon: 'fa-solid fa-database' },
+  // Beside the Store tab, not inside it: that one is the shape of ONE store, this is what the whole page is keeping.
+  { id: 'cache', label: 'Cache', icon: 'fa-solid fa-hourglass-half' },
   { id: 'history', label: 'History', icon: 'fa-solid fa-clock-rotate-left' },
   { id: 'elements', label: 'Elements', icon: 'fa-solid fa-layer-group' },
   { id: 'variables', label: 'Variables', icon: 'fa-solid fa-code' },

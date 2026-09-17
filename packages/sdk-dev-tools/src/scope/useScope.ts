@@ -44,13 +44,15 @@ export const useScopeSelector = (): ScopeSelector => {
 };
 
 // The store the Store tab currently shows, resolved from the same shared selection the header dropdown drives.
-export const useSelectedStore = (): DevStore | undefined => {
+export const useSelectedStoreEntry = (): DevStoreEntry | undefined => {
   const entries = useDevStores();
   const selectedUid = useSelectedStoreUid();
   const uid = useMemo(() => resolveSelectedUid(entries, selectedUid), [entries, selectedUid]);
 
-  return useMemo(() => entries.find(entry => entry.uid === uid)?.store, [entries, uid]);
+  return useMemo(() => entries.find(entry => entry.uid === uid), [entries, uid]);
 };
+
+export const useSelectedStore = (): DevStore | undefined => useSelectedStoreEntry()?.store;
 
 // Every store of the instance the panel is showing, whichever one the dropdown picked.
 export const useInstanceStores = (): ReadonlyArray<DevStoreEntry> => {

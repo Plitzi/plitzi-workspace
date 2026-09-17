@@ -328,6 +328,40 @@ describe('QueryCache', () => {
     expect(cache.store.isStale(queryPath('k'))).toBe(true);
   });
 
+  it('says who is keeping a query, and when it would be forgotten', async () => {
+    const cache = new QueryCache();
+    const fetcher = vi.fn(() => Promise.resolve('x'));
+    const stop = cache.observe('k', { meta, fetcher, staleTime: 30_000 });
+    await flush();
+
+    expect(cache.usage('k')).toEqual({ observers: 1, holds: 0, collectAt: undefined });
+
+    stop();
+
+    // The grace period is not a leak, and a panel can only say so if it can see it running.
+    expect(cache.usage('k')?.collectAt).toBe(Date.now() + GC_TIME);
+  });
+
+  it('forgets a query on request, but not one something still renders', async () => {
+    const cache = new QueryCache();
+    const fetcher = vi.fn((signal: AbortSignal) => {
+      signal.addEventListener('abort', () => undefined);
+
+      return Promise.resolve('x');
+    });
+    const stop = cache.observe('k', { meta, fetcher, staleTime: 30_000 });
+    await flush();
+
+    expect(cache.remove('k')).toBe(false);
+    expect(cache.getEntry('k')?.data).toBe('x');
+
+    stop();
+
+    expect(cache.remove('k')).toBe(true);
+    expect(cache.getEntry('k')).toBeUndefined();
+    expect(cache.usage('k')).toBeUndefined();
+  });
+
   it('drops an entry nobody renders once the grace period is over', async () => {
     const cache = new QueryCache();
     const fetcher = vi.fn(() => Promise.resolve('x'));

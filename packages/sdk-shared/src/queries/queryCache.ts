@@ -52,7 +52,15 @@ type Runtime = {
   /** How long the entry outlives its last reader; `0` forgets it the moment nobody renders it. */
   gcTime: number;
   gcTimer?: ReturnType<typeof setTimeout>;
+  /** When the grace period runs out, while one is running — what a panel shows as "forgotten in …". */
+  collectAt?: number;
 };
+
+/**
+ * What is keeping a query, for the devtools: a query nobody renders is not a leak, it is the grace period doing its
+ * job — but that is only obvious if the panel can say so, and offer to end it.
+ */
+export type QueryUsage = { observers: number; holds: number; collectAt?: number };
 
 /**
  * One path segment per key.
@@ -120,6 +128,33 @@ export class QueryCache {
   /** Whether `key` has been answered in this session — every answer is written with a TTL, even a distrusted one. */
   hasAnswer(key: string): boolean {
     return this.getEntry(key) !== undefined && this.store.getFreshness(queryPath(key)) !== undefined;
+  }
+
+  /** Who is keeping `key` alive, and when it would be forgotten if nobody else asked for it. */
+  usage(key: string): QueryUsage | undefined {
+    const runtime = this.runtimes.get(queryId(key));
+
+    return runtime && { observers: runtime.observers.size, holds: runtime.holds, collectAt: runtime.collectAt };
+  }
+
+  /**
+   * Forgets `key` now: the answer, the grace period and the request still out for it.
+   *
+   * The grace period is what keeps an answer around for somebody coming back, and there is no reason to wait it out
+   * when a reader knows they will not — a devtools panel clearing what a page stopped using, a flow dropping what a
+   * sign-out made meaningless. A query something still renders is left alone: dropping what is on screen leaves it
+   * with nothing and nothing to ask again, since the observer that would ask is already attached.
+   */
+  remove(key: string): boolean {
+    const runtime = this.runtimes.get(queryId(key));
+    if (!runtime || runtime.observers.size > 0 || runtime.holds > 0) {
+      return false;
+    }
+
+    this.cancelGc(runtime);
+    this.collect(runtime);
+
+    return true;
   }
 
   /**
@@ -394,6 +429,7 @@ export class QueryCache {
   private cancelGc(runtime: Runtime) {
     clearTimeout(runtime.gcTimer);
     runtime.gcTimer = undefined;
+    runtime.collectAt = undefined;
   }
 
   private scheduleGc(runtime: Runtime) {
@@ -408,6 +444,7 @@ export class QueryCache {
       return;
     }
 
+    runtime.collectAt = Date.now() + runtime.gcTime;
     runtime.gcTimer = setTimeout(() => this.collect(runtime), runtime.gcTime);
   }
 

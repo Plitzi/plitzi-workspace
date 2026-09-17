@@ -1,8 +1,13 @@
-import type { FreshnessGroup } from '../../../../../../scope/useFreshnessByStore';
+import formatDuration from './formatDuration';
+
+import type { FreshnessGroup } from './useFreshnessByStore';
 import type { PathFreshness } from '@plitzi/nexus';
 
+/** Whether anything is rendering what a path holds, and when it is let go of if nothing starts. */
+export type PathUsage = { inUse: boolean; collectAt?: number };
+
 /** What a path stands for, when the path itself is an opaque key — a query cache entry is a hash of its request. */
-export type PathDescription = { label: string; tags: string[] };
+export type PathDescription = { label: string; tags: string[]; usage?: PathUsage };
 
 export type DescribePath = (group: FreshnessGroup, path: string) => PathDescription | undefined;
 
@@ -21,20 +26,12 @@ export type FreshnessRowModel = {
   status: string;
   /** The TTL it was written with — not what is left of it, which is what `status` says. */
   ttl: string;
-};
-
-export const formatDuration = (ms: number): string => {
-  const seconds = Math.max(0, Math.round(ms / 1000));
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return `${minutes}m ${seconds % 60}s`;
-  }
-
-  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  /** What is left of the TTL, `1` down to `0` — a bar says "half gone" in a glance that a countdown does not. */
+  progress: number;
+  /** Whether anything renders this, where that is known: only what can be let go of can be offered to. */
+  inUse?: boolean;
+  /** `forgotten in 3m 58s`, while a grace period is running. */
+  kept?: string;
 };
 
 const toRow = (
@@ -64,7 +61,13 @@ const toRow = (
     isStale,
     age: `${formatDuration(now - updatedAt)} ago`,
     status,
-    ttl: Number.isFinite(ttl) ? formatDuration(ttl) : '∞'
+    ttl: Number.isFinite(ttl) ? formatDuration(ttl) : '∞',
+    inUse: description?.usage?.inUse,
+    kept: description?.usage?.collectAt
+      ? `forgotten in ${formatDuration(description.usage.collectAt - now)}`
+      : undefined,
+    // A record with no expiry never runs down, and one already stale has nothing left.
+    progress: isStale ? 0 : Math.min(1, Number.isFinite(ttl) ? (expiresAt - now) / ttl : 1)
   };
 };
 

@@ -15,7 +15,12 @@ export type PayloadViewProps = {
   value: unknown;
 };
 
-/** What a run was given, answered, or streamed — the same reader the Store tab uses, so it reads the same. */
+/**
+ * A value, read the way the panel reads values: the same JSON viewer everywhere, wearing the panel's theme.
+ *
+ * Shared rather than per tab because the viewer ships a light palette and nothing else — on a dark panel its keys
+ * come out near-black on near-black — and every tab that shows a payload had to remember to dress it.
+ */
 const PayloadView = ({ value }: PayloadViewProps) => {
   const { resolvedTheme } = useTheme();
 
