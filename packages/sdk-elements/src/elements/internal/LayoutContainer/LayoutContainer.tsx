@@ -25,6 +25,15 @@ export type LayoutContainerProps = {
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
 };
 
+/**
+ * The slot of THIS layout. A layout nested inside another carries a slot of its own further down, and the outer one
+ * must not cut its hole there.
+ */
+const ownBody = (layout: HTMLElement): Element | null =>
+  [...layout.querySelectorAll('.plitzi-component--layout-body')].find(
+    body => body.parentElement?.closest('.plitzi-component__layout-container') === layout
+  ) ?? null;
+
 const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: LayoutContainerProps) => {
   const { plitziElementLayout } = useElement();
   const {
@@ -36,12 +45,16 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
       return;
     }
 
-    const offset = 0;
+    // `clip-path` is drawn in the layout's own box, and both rects are the viewport's: a layout nested inside another
+    // sits away from the origin, and the canvas zoom scales both. Measured against the parent and unscaled, the hole
+    // lands on the body wherever the layout is.
+    const parentRect = parent.getBoundingClientRect();
     const childRect = child.getBoundingClientRect();
-    const top = childRect.top - offset;
-    const left = childRect.left - offset;
-    const right = left + childRect.width + offset * 2;
-    const bottom = top + childRect.height + offset * 2;
+    const scale = parent.offsetWidth > 0 ? parentRect.width / parent.offsetWidth : 1;
+    const top = (childRect.top - parentRect.top) / scale;
+    const left = (childRect.left - parentRect.left) / scale;
+    const right = left + childRect.width / scale;
+    const bottom = top + childRect.height / scale;
 
     const clip = `
       polygon(
@@ -62,14 +75,13 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
 
     const handleResize = throttle(() => {
       const parent = ref.current;
-      const child = parent.querySelector('.plitzi-component--layout-body');
-      updateMask(parent, child);
+      updateMask(parent, ownBody(parent));
     }, 150);
 
     const observer = new ResizeObserver(handleResize);
     observer.observe(ref.current);
 
-    const child = ref.current.querySelector('.plitzi-component--layout-body');
+    const child = ownBody(ref.current);
     if (child) {
       observer.observe(child);
     }
