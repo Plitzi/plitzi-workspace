@@ -87,6 +87,7 @@
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
+    "@plitzi/nexus": "^1.2.1",
     "@plitzi/plitzi-ui": "^1.6.21",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",

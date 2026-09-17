@@ -28,9 +28,9 @@ describe('toRows', () => {
     const rows = toRows(
       [
         group('1', 'Queries', {
-          'entries.b': { updatedAt: 0, expiresAt: 5_000 },
-          'entries.a': { updatedAt: 1_000, expiresAt: 31_000 },
-          forever: { updatedAt: 0, expiresAt: Infinity }
+          'entries.b': { updatedAt: 0, expiresAt: 5_000, ttl: 5_000 },
+          'entries.a': { updatedAt: 1_000, expiresAt: 31_000, ttl: 30_000 },
+          forever: { updatedAt: 0, expiresAt: Infinity, ttl: Infinity }
         })
       ],
       labelOf,
@@ -47,8 +47,8 @@ describe('toRows', () => {
   it('lists every store, each row naming the store it belongs to', () => {
     const rows = toRows(
       [
-        group('1', 'Queries', { 'entries.x': { updatedAt: 0, expiresAt: 60_000 } }),
-        group('2', 'root', { 'entries.x': { updatedAt: 0, expiresAt: 60_000 } })
+        group('1', 'Queries', { 'entries.x': { updatedAt: 0, expiresAt: 60_000, ttl: 60_000 } }),
+        group('2', 'root', { 'entries.x': { updatedAt: 0, expiresAt: 60_000, ttl: 60_000 } })
       ],
       labelOf,
       0
@@ -62,7 +62,11 @@ describe('toRows', () => {
 
   /** An answer that was never cacheable is written with no life; a clock read before the write called it current. */
   it('never reads a record as written after the clock', () => {
-    const [row] = toRows([group('1', 'Queries', { 'entries.x': { updatedAt: 5_000, expiresAt: 5_000 } })], labelOf, 0);
+    const [row] = toRows(
+      [group('1', 'Queries', { 'entries.x': { updatedAt: 5_000, expiresAt: 5_000, ttl: 30_000 } })],
+      labelOf,
+      0
+    );
 
     expect(row.age).toBe('0s ago');
     expect(row.status).toBe('stale');
@@ -70,7 +74,7 @@ describe('toRows', () => {
 
   it('shows what an opaque path stands for', () => {
     const [row] = toRows(
-      [group('1', 'Queries', { 'entries.x': { updatedAt: 0, expiresAt: 60_000 } })],
+      [group('1', 'Queries', { 'entries.x': { updatedAt: 0, expiresAt: 60_000, ttl: 60_000 } })],
       labelOf,
       0,
       () => ({ label: '/api/analytics', tags: ['an-api'] })

@@ -26,6 +26,15 @@ export const AUTH_REFS = {
   accountLogout: 'account-logout'
 };
 
+export const AUTH_PROBE = {
+  page: 'probe-page',
+  member: 'probe-member',
+  memberTitle: 'probe-member-title',
+  always: 'probe-always',
+  alwaysTitle: 'probe-always-title',
+  logout: 'probe-logout'
+};
+
 type Definition = Partial<Element['definition']>;
 
 const el = (id: string, rootId: string, definition: Definition, attributes: Record<string, unknown> = {}): Element =>
@@ -62,29 +71,33 @@ const step = (
  *  `onSubmit` with `values`, keyed by each control's `name` — which is why the controls are named `username` and
  *  `password`. `action` is the name the callback is REGISTERED under, and a name that resolves to nothing fails
  *  the step silently: the button appears to do nothing at all. */
-const loginFlow: Record<string, ElementInteraction> = {
-  'login-trigger': step(
-    'login-trigger',
-    'login-flow',
+const loginFlowFor = (formId: string): Record<string, ElementInteraction> => ({
+  [`${formId}-trigger`]: step(
+    `${formId}-trigger`,
+    `${formId}-flow`,
     'trigger',
     'onSubmit',
-    AUTH_REFS.loginForm,
+    formId,
     {},
     {
-      afterNode: 'login-call'
+      afterNode: `${formId}-call`
     }
   ),
-  'login-call': step(
-    'login-call',
-    'login-flow',
+  [`${formId}-call`]: step(
+    `${formId}-call`,
+    `${formId}-flow`,
     'globalCallback',
     'login',
     // A global callback names the module that registered it, not an element: auth's callbacks live on `auth`.
     'auth',
-    { mode: 'normal', username: '{{login-trigger.values.username}}', password: '{{login-trigger.values.password}}' },
-    { beforeNode: 'login-trigger' }
+    {
+      mode: 'normal',
+      username: `{{${formId}-trigger.values.username}}`,
+      password: `{{${formId}-trigger.values.password}}`
+    },
+    { beforeNode: `${formId}-trigger` }
   )
-};
+});
 
 const logoutFlow = (ref: string): Record<string, ElementInteraction> => ({
   [`${ref}-trigger`]: step(
@@ -227,7 +240,7 @@ const loginPage: Record<string, Element> = {
       label: 'Login form',
       type: 'form',
       items: ['login-username', 'login-password', 'login-submit'],
-      interactions: loginFlow
+      interactions: loginFlowFor(AUTH_REFS.loginForm)
     },
     // Without this the browser submits the form itself and the page navigates away; the interaction is what runs.
     { managedByInteractions: true, method: 'post' }
@@ -319,6 +332,69 @@ const CSS = `
 .plitzi-component__link{color:#5c3df5;text-decoration:underline;cursor:pointer;}
 `;
 
+/**
+ * A provider on each side of the door, for what the query cache does when the session changes.
+ *
+ * Forgetting the previous person's answers is the whole point of a reset, and asking again is right when somebody
+ * else is now looking — but only for what is still on screen and was already answered. `member` mounts BECAUSE of
+ * the sign-in, so it asks for itself and must not be asked a second time; `always` is on a page with no access level
+ * at all, so it survives the sign-out and is the one that used to answer 401 on the way out.
+ */
+
+/** Answered by the auth server itself (see `server/authServer.ts`), so nothing here ever 404s. */
+export const PROBE_PATH = '/__e2e/session';
+
+const probe = (id: string, titleId: string, rootId: string, name: string): Record<string, Element> => ({
+  [id]: el(
+    id,
+    rootId,
+    { label: 'Probe', type: 'apiContainer', items: [titleId], styleSelectors: { base: id } },
+    { query: `${PROBE_PATH}/${name}`, method: 'get', subType: 'section', cache: true, staleTime: 60 }
+  ),
+  [titleId]: el(
+    titleId,
+    rootId,
+    {
+      label: 'Probe title',
+      type: 'paragraph',
+      parentId: id,
+      styleSelectors: { base: titleId },
+      bindings: { attributes: [bind(`b-${id}`, `apiContainer_${id}.data.name`, 'content')] }
+    },
+    { content: '' }
+  )
+});
+
+/** `/always`, for everybody: the one page a sign-out leaves standing, along with the provider on it. */
+const probePage: Record<string, Element> = {
+  [AUTH_PROBE.page]: el(
+    AUTH_PROBE.page,
+    AUTH_PROBE.page,
+    { label: 'Always', type: 'page', parentId: undefined, items: [AUTH_PROBE.always, AUTH_PROBE.logout] },
+    { slug: 'always', default: false, name: 'Always' }
+  ),
+  ...probe(AUTH_PROBE.always, AUTH_PROBE.alwaysTitle, AUTH_PROBE.page, 'always'),
+  [AUTH_PROBE.logout]: el(
+    AUTH_PROBE.logout,
+    AUTH_PROBE.page,
+    { label: 'Sign out', type: 'button', interactions: logoutFlow(AUTH_PROBE.logout) },
+    { subType: 'button', content: 'Sign out here' }
+  )
+};
+
+/** The member home with a provider of its own — one that mounts the moment somebody signs in. */
+const memberHomeWithProbe: Record<string, Element> = {
+  ...memberHome,
+  [AUTH_PAGES.memberHome]: {
+    ...memberHome[AUTH_PAGES.memberHome],
+    definition: {
+      ...memberHome[AUTH_PAGES.memberHome].definition,
+      items: [...(memberHome[AUTH_PAGES.memberHome].definition.items ?? []), AUTH_PROBE.member]
+    }
+  },
+  ...probe(AUTH_PROBE.member, AUTH_PROBE.memberTitle, AUTH_PAGES.memberHome, 'member')
+};
+
 export type AuthSpaceOptions = {
   /** Must match the session cookie the server was configured with — it is the deployment's name for it. */
   sessionHintCookie?: string;
@@ -330,8 +406,8 @@ export const authSpace = ({ sessionHintCookie = 'e2e_session_hint' }: AuthSpaceO
       definition: { name: 'auth-flow', permanentUrl: '' },
       variables: [],
       pageFolders: {},
-      flat: { ...guestHome, ...memberHome, ...loginPage, ...accountPage },
-      pages: [AUTH_PAGES.guestHome, AUTH_PAGES.memberHome, AUTH_PAGES.login, AUTH_PAGES.account],
+      flat: { ...guestHome, ...memberHomeWithProbe, ...loginPage, ...accountPage, ...probePage },
+      pages: [AUTH_PAGES.guestHome, AUTH_PAGES.memberHome, AUTH_PAGES.login, AUTH_PAGES.account, AUTH_PROBE.page],
       /** What the browser half of auth needs. `basic` is the built-in provider — HTTP + JSON — and these are the
        *  endpoints it calls, same origin. `sessionHintCookie` is a readable cookie carrying only expiry
        *  timestamps, so a page can tell that nobody is signed in without asking the server at all. */

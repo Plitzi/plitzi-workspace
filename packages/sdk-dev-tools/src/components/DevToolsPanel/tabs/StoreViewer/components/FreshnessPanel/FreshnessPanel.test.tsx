@@ -60,6 +60,40 @@ describe('FreshnessPanel', () => {
     expect(screen.getByText('entries')).toBeTruthy();
   });
 
+  /**
+   * An uncached provider writes every answer with `ttl: 0` — held, never served. There is no time left to show and
+   * nothing to expire, and listing them filled the panel with the queries that have no cache at all.
+   */
+  it('leaves out what was written with no life at all', () => {
+    const entry = makeEntry('Queries');
+    entry.store.setState('uncached', [1], { ttl: 0 });
+    const { container, rerender } = render(<FreshnessPanel entries={[entry]} />);
+
+    expect(container.innerHTML).toBe('');
+
+    act(() => {
+      entry.store.setState('cached', [1], { ttl: 60_000 });
+    });
+    rerender(<FreshnessPanel entries={[entry]} />);
+
+    expect(screen.getByText('cached')).toBeTruthy();
+    expect(screen.queryByText('uncached')).toBeNull();
+    expect(screen.getByText('1')).toBeTruthy();
+  });
+
+  it('keeps a path somebody expired by hand, as stale', () => {
+    const entry = makeEntry('Queries');
+    entry.store.setState('orders', [1], { ttl: 60_000 });
+    render(<FreshnessPanel entries={[entry]} />);
+
+    act(() => {
+      entry.store.expire('orders');
+    });
+
+    expect(screen.getByText('orders')).toBeTruthy();
+    expect(screen.getByText('stale')).toBeTruthy();
+  });
+
   it('expires a path, or every path of every store, from its buttons', () => {
     const first = makeEntry('root');
     const second = makeEntry('Queries');

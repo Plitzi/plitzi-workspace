@@ -436,10 +436,6 @@
       "types": "./dist/hooks/useFontHead.d.ts",
       "import": "./dist/hooks/useFontHead.mjs"
     },
-    "./hooks/useIsomorphicLayoutEffect": {
-      "types": "./dist/hooks/useIsomorphicLayoutEffect.d.ts",
-      "import": "./dist/hooks/useIsomorphicLayoutEffect.mjs"
-    },
     "./hooks/useNetwork": {
       "types": "./dist/hooks/useNetwork.d.ts",
       "import": "./dist/hooks/useNetwork.mjs"

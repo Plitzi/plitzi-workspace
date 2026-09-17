@@ -19,7 +19,7 @@ export type FreshnessRowModel = {
   age: string;
   /** `18s left` while current, `stale` once it is not. */
   status: string;
-  /** The TTL it was written with, or what was left of it when an `expire` cut it short. */
+  /** The TTL it was written with — not what is left of it, which is what `status` says. */
   ttl: string;
 };
 
@@ -41,7 +41,7 @@ const toRow = (
   group: FreshnessGroup,
   storeLabel: string,
   path: string,
-  { updatedAt, expiresAt }: PathFreshness,
+  { updatedAt, expiresAt, ttl }: PathFreshness,
   now: number,
   description: PathDescription | undefined
 ): FreshnessRowModel => {
@@ -64,7 +64,7 @@ const toRow = (
     isStale,
     age: `${formatDuration(now - updatedAt)} ago`,
     status,
-    ttl: finite ? formatDuration(expiresAt - updatedAt) : '∞'
+    ttl: Number.isFinite(ttl) ? formatDuration(ttl) : '∞'
   };
 };
 

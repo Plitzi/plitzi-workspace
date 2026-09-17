@@ -4,7 +4,9 @@ import { actionSpace } from './actions';
 import { minimalSpace } from './minimal';
 import { plainSpace } from './plain';
 import { querySpace } from './queries';
+import { routeQuerySpace } from './routeQueries';
 import { themedSpace } from './themed';
+import { unaskedQuerySpace } from './unaskedQueries';
 
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
@@ -12,7 +14,9 @@ export * from './actions';
 export * from './minimal';
 export * from './plain';
 export * from './queries';
+export * from './routeQueries';
 export * from './themed';
+export * from './unaskedQueries';
 
 /** The spaces the suite renders.
  *
@@ -26,6 +30,8 @@ export * from './themed';
  *  | `sampleSpace()` | The one the examples ship. A parity check — what a reader following the docs sees |
  *  | `actionSpace()` | Two `runtime: 'server'` providers — one fed by an action, one naming a producer this deployment does not have |
  *  | `querySpace()` | A browser-side provider behind a panel that opens and closes, and a step that invalidates it — for counting the requests the query cache saves |
+ *  | `routeQuerySpace()` | A detail page inside a shell whose provider URL names a route param — for what a provider does on the way out |
+ *  | `unaskedQuerySpace()` | Two providers with nothing to ask — one whose URL keeps an unanswered token, one whose URL a button empties |
  *  | `themedSpace()` | A page painted only from a light/dark palette, and a theme toggle — for asserting the colours a theme puts in force |
  *
  *  Only `sampleSpace()` carries **custom plugins** (its three RSC elements), and only a deployment that provides
@@ -69,4 +75,4 @@ export const sampleId = (ref: string, data: OfflineDataRaw = sampleSpace()): str
   return ref;
 };
 
-export { actionSpace, minimalSpace, plainSpace, querySpace, themedSpace };
+export { actionSpace, minimalSpace, plainSpace, querySpace, routeQuerySpace, themedSpace, unaskedQuerySpace };

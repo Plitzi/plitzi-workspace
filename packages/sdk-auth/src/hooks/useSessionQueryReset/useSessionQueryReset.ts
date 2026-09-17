@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-import useIsomorphicLayoutEffect from '@plitzi/sdk-shared/hooks/useIsomorphicLayoutEffect';
+import { useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 import { queryCache } from '@plitzi/sdk-shared/queries';
 
 /**
