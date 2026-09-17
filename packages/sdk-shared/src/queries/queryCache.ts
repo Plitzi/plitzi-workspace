@@ -5,13 +5,18 @@ import type { StoreApi } from '@plitzi/nexus';
 /** How long, by default, an answer nobody is rendering is kept, so coming back within it still paints at once. */
 export const GC_TIME = 5 * 60 * 1000;
 
-/** What a query is about, for the invalidations that pick queries by what they read rather than by key. */
-export type QueryMeta = { url: string };
+/**
+ * What a query is about, for the invalidations that pick queries by what they read rather than by key: the URL it
+ * asks, and the names its author gave it — the way to invalidate a request whose URL is a template.
+ */
+export type QueryMeta = { url: string; tags?: readonly string[] };
 
 /** One query as the store holds it: what a hook renders from and what the dev-tools show. */
 export type QueryEntry = {
   key: string;
   url: string;
+  /** Every tag anybody asking this query gave it. */
+  tags: string[];
   data?: unknown;
   error?: unknown;
   isFetching: boolean;
@@ -33,6 +38,8 @@ type Observer = QueryObserverOptions<unknown>;
 /** What a query needs besides its state — who is looking at it, and the request already out. Nothing renders it. */
 type Runtime = {
   key: string;
+  /** Tags accumulate: two providers asking the same thing under different names are both reachable by either. */
+  tags: Set<string>;
   observers: Set<Observer>;
   /** Mounted readers, enabled or not: a provider in a hidden tab still shows what it holds when the tab opens. */
   holds: number;
@@ -153,6 +160,37 @@ export class QueryCache {
     };
   }
 
+  /**
+   * The answer for `key`, asking only when what is held is not current — for a caller that is not a component: a
+   * flow step reading a URL. Nobody holds the entry afterwards, so it is collected `gcTime` after this.
+   */
+  async fetchQuery<T>(key: string, options: QueryObserverOptions<T> & { gcTime?: number }): Promise<T | undefined> {
+    const runtime = this.ensure(key);
+    if (options.gcTime !== undefined) {
+      runtime.gcTime = options.gcTime;
+    }
+
+    if (this.hasAnswer(key) && !this.store.isStale(queryPath(key))) {
+      this.scheduleGc(runtime);
+
+      return this.getEntry(key)?.data as T | undefined;
+    }
+
+    const { isCacheable } = options;
+    await this.fetch(runtime, {
+      meta: options.meta,
+      staleTime: options.staleTime,
+      fetcher: options.fetcher,
+      // See `observe`: only ever called with what this fetcher resolved to.
+      isCacheable: isCacheable && (data => isCacheable(data as T))
+    });
+    const answer = this.getEntry(key)?.data;
+    this.scheduleGc(runtime);
+
+    // The data under this key is what a fetcher of this caller's type resolved to; the store cannot carry that type.
+    return answer as T | undefined;
+  }
+
   /** Asks again for `key` now, whatever the age of what is held — the explicit "reload this". */
   refetch(key: string): Promise<void> {
     const runtime = this.runtimes.get(queryId(key));
@@ -170,7 +208,7 @@ export class QueryCache {
     const pending: Promise<void>[] = [];
     this.runtimes.forEach(runtime => {
       const entry = this.getEntry(runtime.key);
-      if (!entry || (matches && !matches({ url: entry.url }))) {
+      if (!entry || (matches && !matches({ url: entry.url, tags: entry.tags }))) {
         return;
       }
 
@@ -239,13 +277,15 @@ export class QueryCache {
 
     const { key } = runtime;
     const { url } = observer.meta;
+    observer.meta.tags?.forEach(tag => runtime.tags.add(tag));
+    const tags = [...runtime.tags];
     const path = queryPath(key);
     const held = this.getEntry(key);
     // Below the entry when there is one: a write over it would drop the freshness record of the answer it holds.
     if (held) {
       this.store.setState(`${path}.isFetching`, true);
     } else {
-      this.store.setState(path, { key, url, isFetching: true });
+      this.store.setState(path, { key, url, tags, isFetching: true });
     }
 
     const epoch = this.epochValue;
@@ -262,14 +302,14 @@ export class QueryCache {
         const previous = this.getEntry(key);
         this.store.setState(
           path,
-          { key, url, data: previous?.data, error: outcome.error, isFetching: false },
+          { key, url, tags, data: previous?.data, error: outcome.error, isFetching: false },
           { ttl: 0 }
         );
       } else {
         const trusted = !outdated && (observer.isCacheable?.(outcome.data) ?? true);
         this.store.setState(
           path,
-          { key, url, data: outcome.data, isFetching: false },
+          { key, url, tags, data: outcome.data, isFetching: false },
           { ttl: trusted ? this.ttlOf(runtime, observer) : 0 }
         );
       }
@@ -299,7 +339,7 @@ export class QueryCache {
     const id = queryId(key);
     let runtime = this.runtimes.get(id);
     if (!runtime) {
-      runtime = { key, observers: new Set(), holds: 0, version: 0, gcTime: GC_TIME };
+      runtime = { key, tags: new Set(), observers: new Set(), holds: 0, version: 0, gcTime: GC_TIME };
       this.runtimes.set(id, runtime);
     }
 

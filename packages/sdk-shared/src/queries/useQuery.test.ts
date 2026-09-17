@@ -1,7 +1,15 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { invalidateQueries, invalidateQueriesForWrite, queryCache, useQuery } from '.';
+import {
+  invalidateAfterWrite,
+  invalidateQueries,
+  invalidateQueriesForWrite,
+  parseIds,
+  queryCache,
+  requestKey,
+  useQuery
+} from '.';
 
 let seq = 0;
 /** Every test on its own keys: the cache is the module's, shared by the whole file. */
@@ -113,9 +121,9 @@ describe('useQuery', () => {
 });
 
 describe('invalidation helpers', () => {
-  const mount = (url: string) => {
+  const mount = (url: string, tags: string[] = []) => {
     const fetcher = vi.fn(() => Promise.resolve(url));
-    renderHook(() => useQuery({ key: url, meta: { url }, fetcher, staleTime: 30_000 }));
+    renderHook(() => useQuery({ key: url, meta: { url, tags }, fetcher, staleTime: 30_000 }));
 
     return fetcher;
   };
@@ -142,9 +150,93 @@ describe('invalidation helpers', () => {
     await waitFor(() => expect(ordersFetcher).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(usersFetcher).toHaveBeenCalledTimes(1));
 
-    await act(() => invalidateQueries(`${new URL(orders).origin}/api/orders`));
+    await act(() => invalidateQueries({ url: `${new URL(orders).origin}/api/orders` }));
 
     expect(ordersFetcher).toHaveBeenCalledTimes(2);
     expect(usersFetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('the step invalidates by the elements that made the requests', async () => {
+    const orders = uniqueUrl('/orders');
+    const members = uniqueUrl('/members');
+    const ordersFetcher = mount(orders, ['ordersList']);
+    const membersFetcher = mount(members, ['membersList']);
+    await waitFor(() => expect(ordersFetcher).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(membersFetcher).toHaveBeenCalledTimes(1));
+
+    await act(() => invalidateQueries({ elements: parseIds(' ordersList , nobody ') }));
+
+    expect(ordersFetcher).toHaveBeenCalledTimes(2);
+    expect(membersFetcher).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('invalidateAfterWrite', () => {
+  const mountAll = async () => {
+    const one = uniqueUrl('/one');
+    const two = uniqueUrl('/two');
+    const fetchers = [one, two].map((url, index) => {
+      const fetcher = vi.fn(() => Promise.resolve(url));
+      renderHook(() => useQuery({ key: url, meta: { url, tags: [`el${index}`] }, fetcher, staleTime: 30_000 }));
+
+      return fetcher;
+    });
+    await waitFor(() => fetchers.forEach(fetcher => expect(fetcher).toHaveBeenCalledTimes(1)));
+
+    return { one, fetchers };
+  };
+
+  it('refreshes what the step asked for', async () => {
+    const { one, fetchers } = await mountAll();
+
+    await act(() => invalidateAfterWrite({ mode: 'none', fallback: 'all' }));
+    await act(() => invalidateAfterWrite({ mode: 'elements', fallback: 'all', elements: '' }));
+    expect(fetchers.map(fetcher => fetcher.mock.calls.length)).toEqual([1, 1]);
+
+    await act(() => invalidateAfterWrite({ mode: 'elements', fallback: 'all', elements: 'el1' }));
+    expect(fetchers.map(fetcher => fetcher.mock.calls.length)).toEqual([1, 2]);
+
+    await act(() => invalidateAfterWrite({ mode: 'origin', fallback: 'all', url: `${new URL(one).origin}/write` }));
+    expect(fetchers.map(fetcher => fetcher.mock.calls.length)).toEqual([2, 2]);
+  });
+
+  it('reads a mode it does not know as the caller’s default', async () => {
+    await mountAll();
+    const spy = vi.spyOn(queryCache, 'invalidate');
+
+    await act(() => invalidateAfterWrite({ mode: false, fallback: 'all' }));
+
+    expect(spy).toHaveBeenCalledWith();
+    spy.mockRestore();
+  });
+});
+
+describe('requestKey', () => {
+  it('is one key for one request, however its headers were written', () => {
+    const a = requestKey({
+      method: 'GET',
+      url: '/x',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', b: '2', Authorization: 'Bearer t' }
+    });
+    const b = requestKey({
+      method: 'get',
+      url: '/x',
+      credentials: 'include',
+      headers: { Authorization: 'Bearer t', b: '2' }
+    });
+
+    expect(a).toBe(b);
+    expect(
+      requestKey({ method: 'get', url: '/x', credentials: 'include', headers: { Authorization: 'Bearer u', b: '2' } })
+    ).not.toBe(b);
+  });
+});
+
+describe('parseIds', () => {
+  it('reads a list written as text or as an array', () => {
+    expect(parseIds('a, b,,c ')).toEqual(['a', 'b', 'c']);
+    expect(parseIds([' a', '', 3])).toEqual(['a']);
+    expect(parseIds(undefined)).toEqual([]);
   });
 });

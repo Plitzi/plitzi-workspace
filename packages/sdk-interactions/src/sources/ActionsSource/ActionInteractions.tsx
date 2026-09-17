@@ -3,7 +3,7 @@ import { useCallback, use, useMemo } from 'react';
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { toBuilderParams, toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
-import { invalidateQueries } from '@plitzi/sdk-shared/queries';
+import { invalidateAfterWrite } from '@plitzi/sdk-shared/queries';
 import {
   recordActionProgress,
   recordActionRun,
@@ -34,8 +34,9 @@ type RunParams = {
   input: string | Record<string, unknown>;
   mode: ActionCallMode;
   idempotencyKey: string;
-  /** Authored as a switch, so it may also arrive as the word. */
-  invalidateQueries?: boolean | string;
+  /** What a completed run refreshes — see `writeInvalidationParams`. */
+  invalidateQueries?: string;
+  invalidateElements?: string;
 };
 
 type ActionResponse = {
@@ -222,7 +223,6 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
   const handleRunAction = useCallback(
     async (params: RunParams, context?: InteractionCallbackContext) => {
       const { actionId, mode = 'await', idempotencyKey } = params;
-      const refreshesQueries = params.invalidateQueries !== false && params.invalidateQueries !== 'false';
       if (!endpoint) {
         // Said once, plainly: the step is not broken, this render simply has no server tier to run it on. A silent
         // no-op here is a button that does nothing for a reason nobody can see.
@@ -277,14 +277,18 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
        *
        * Every mode ends here, which makes it the one place a finished run can tell the page's cached requests they
        * may be answering from before it. What an action wrote is the server's to know, so all of them are told —
-       * only for a run that completed (an accepted detached run has not written anything yet), and never for a step
-       * whose author said the action only reads.
+       * only for a run that completed (an accepted detached run has not written anything yet), and only as much as
+       * the step asked: every request, the containers it names, or none for an action that only reads.
        */
       const settle = (patch: Parameters<typeof updateActionRun>[1]) => {
         releaseActionCanceller(record);
         updateActionRun(record, { endedAt: Date.now(), cancellable: false, ...patch });
-        if (patch.status === 'completed' && refreshesQueries) {
-          void invalidateQueries();
+        if (patch.status === 'completed') {
+          void invalidateAfterWrite({
+            mode: params.invalidateQueries,
+            fallback: 'all',
+            elements: params.invalidateElements
+          });
         }
       };
 

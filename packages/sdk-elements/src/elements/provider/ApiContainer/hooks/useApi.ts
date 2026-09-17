@@ -2,7 +2,7 @@ import { useCallback, useId, useMemo } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { useQuery } from '@plitzi/sdk-shared/queries';
+import { requestKey, useQuery } from '@plitzi/sdk-shared/queries';
 
 export type ApiResponse = { status: number; data: unknown };
 
@@ -24,6 +24,8 @@ export type UseApiProps = {
   staleTime?: number | string;
   /** With `cache`: how long an answer nobody renders is kept, in seconds. */
   gcTime?: number | string;
+  /** What an invalidation can name this request by — an api container gives its own id. */
+  tags?: readonly string[];
 };
 
 export const DEFAULT_STALE_TIME = 30;
@@ -103,26 +105,18 @@ const useApi = ({
   credentials = 'same-origin',
   cache = false,
   staleTime = DEFAULT_STALE_TIME,
-  gcTime = DEFAULT_GC_TIME
+  gcTime = DEFAULT_GC_TIME,
+  tags
 }: UseApiProps) => {
   const mocked = hasMock(mock);
   const instance = useId();
-  /**
-   * Everything that changes the answer. The headers carry the visitor's token, so two visitors — or one before and
-   * after signing in — never share an entry; sorted, so the order an author typed them in does not split one.
-   */
   const key = useMemo(() => {
     // Nothing to ask: a mock answers for itself, and an empty URL is a binding that has not resolved yet.
     if (mocked || !url) {
       return undefined;
     }
 
-    const request = JSON.stringify([
-      method,
-      url,
-      credentials,
-      Object.entries(customHeaders).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    ]);
+    const request = requestKey({ method, url, credentials, headers: customHeaders });
 
     // Uncached, the answer is this provider's alone: nobody else is served it, and it goes when the provider does.
     return cache ? request : `${request}#${instance}`;
@@ -133,7 +127,7 @@ const useApi = ({
   );
   const query = useQuery<ApiResponse>({
     key,
-    meta: { url },
+    meta: { url, tags },
     fetcher,
     enabled,
     staleTime: cache ? toMilliseconds(staleTime, DEFAULT_STALE_TIME) : 0,

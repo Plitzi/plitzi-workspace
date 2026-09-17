@@ -162,18 +162,25 @@ export const runServerAction = (params: {
   input?: string | Record<string, unknown>;
   mode?: 'await' | 'detached' | 'stream';
   idempotencyKey?: string;
-  /** Refresh the page's cached browser requests when the run completes. On by default; off for an action that only reads. */
-  invalidateQueries?: boolean;
+  /**
+   * What a completed run refreshes among the page's browser requests: `all` (the default — only the server knows
+   * what an action wrote), the containers named in `invalidateElements`, or `none` for an action that only reads.
+   */
+  invalidateQueries?: 'all' | 'elements' | 'none';
+  /** Api container ids, separated by commas — with `invalidateQueries: 'elements'`. */
+  invalidateElements?: string;
 }): StepSpec => globalStep('runServerAction', { mode: 'await', input: {}, ...params });
 
 export const cancelServerAction = (params: { runId: string }): StepSpec => globalStep('cancelServerAction', params);
 
 /**
- * Tells the page's cached browser requests the data behind them changed. `url` narrows it to the requests whose URL
- * starts with it; without one, every cached request on the page is asked again.
+ * Tells the page's browser requests the data behind them changed, so the api containers showing them ask again.
+ *
+ * `elements` names the containers by id — the way to reach one whose URL is a template — and `url` the requests
+ * whose URL starts with it; given both, a request must match both. With neither, every request on the page.
  */
-export const invalidateQueries = (params: { url?: string } = {}): StepSpec =>
-  globalStep('invalidateQueries', { url: '', ...params });
+export const invalidateQueries = (params: { elements?: string[]; url?: string } = {}): StepSpec =>
+  globalStep('invalidateQueries', { url: params.url ?? '', elements: (params.elements ?? []).join(', ') });
 
 /**
  * A utility runs on nothing: the runtime resolves it by action alone, so it carries no `on` at all — the one kind
@@ -205,6 +212,16 @@ export const webHook = (params: {
   body?: string | Record<string, unknown>;
   authorizationToken?: string;
   credentials?: 'include' | 'omit' | 'same-origin';
+  /** A read only: serve it from the page's query cache for `staleTime` seconds, shared with api containers. */
+  cache?: boolean;
+  staleTime?: number;
+  /**
+   * A write only: what to refresh once it succeeded — the requests to the same site (the default), all of them,
+   * the containers named in `invalidateElements`, or `none`.
+   */
+  invalidateQueries?: 'origin' | 'all' | 'elements' | 'none';
+  /** Api container ids, separated by commas — with `invalidateQueries: 'elements'`. */
+  invalidateElements?: string;
 }): StepSpec => utilityStep('webHook', params);
 
 export const twigTemplate = (params: { template: string }): StepSpec => utilityStep('twigTemplate', params);

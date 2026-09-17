@@ -25,12 +25,17 @@
   makes the providers on screen ask again.
 
   An answer stops counting as current before its time when the element's `performQuery` runs (it always asks
-  again), when a flow runs the new global `invalidateQueries` step (source `queries`, optional `url` prefix), and
-  after a write: a `webHook` sent with anything but `GET`/`HEAD` invalidates the requests to its own origin, a
-  `writeRecord` invalidates all of them, and so does a completed `runServerAction` unless the step's new
-  `invalidateQueries` param is turned off — for an action that only reads. Providers on screen ask again at once;
-  the rest when they are next shown. A sign-in, sign-out or change of account drops everything held. Server-driven
+  again), when a flow runs the new global `invalidateQueries` step (source `queries`: `elements`, api container ids
+  — a container's requests are tagged with its own id — and/or a `url` prefix), and after a write. Both write steps
+  gained `invalidateQueries` / `invalidateElements`: a `webHook` sent with anything but `GET`/`HEAD` refreshes the
+  requests to its own site by default, a completed `runServerAction` refreshes all of them by default, and either
+  can name containers instead or refresh nothing. A `writeRecord` refreshes all. Providers on screen ask again at
+  once; the rest when they are next shown. A sign-in, sign-out or change of account drops everything held. Server-driven
   providers and RSC are untouched.
+
+- **A `webHook` that reads can be cached** (`cache`, `staleTime`), in the same cache and under the same key as an api
+  container asking the same thing. Its declaration now lives beside it (`utility/webHookSpec`) and the authoring
+  catalog gathers it instead of keeping a copy. A `HEAD` is no longer sent with a body, which `fetch` refused.
 
 - The dev-tools' Store tab lists the paths a store holds with a TTL — how long ago each was written, what is left
   of it, and a button to expire one or all of them. The query cache appears there as "Queries".

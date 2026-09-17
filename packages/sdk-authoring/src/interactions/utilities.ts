@@ -1,3 +1,4 @@
+import { webHookSpec } from '@plitzi/sdk-interactions/utility/webHookSpec';
 import { reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
 
 import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring/builder';
@@ -41,28 +42,8 @@ export const BUILTIN_UTILITIES: Record<string, BuiltinUtility> = {
       }
     }
   },
-  webHook: {
-    title: 'Webhook',
-    type: 'utility',
-    strictParams: true,
-    params: {
-      url: { type: 'text', description: 'The URL to call.' },
-      method: {
-        type: 'select',
-        description: 'HTTP method.',
-        default: 'get',
-        options: ['get', 'post', 'put', 'delete', 'patch', 'head']
-      },
-      body: { type: 'textarea', description: 'Request body.' },
-      authorizationToken: { type: 'text', description: 'Value sent as the Authorization header.' },
-      credentials: {
-        type: 'select',
-        description: 'fetch credentials mode.',
-        default: 'same-origin',
-        options: ['include', 'omit', 'same-origin']
-      }
-    }
-  }
+  // Gathered from the step itself rather than mirrored: the copy that used to be here had no cache and no refresh.
+  webHook: webHookSpec
 };
 
 /** The built-in utility for an action, or undefined when the action is not a known built-in utility. */

@@ -56,18 +56,20 @@ const useQuery = <T>({
   useEffect(() => (key === undefined ? undefined : queryCache.hold(key, gcTime)), [key, gcTime]);
 
   const { url } = meta;
+  // Joined, so a caller building the list on every render does not re-observe for the same tags.
+  const tagsKey = meta.tags?.join('\u0000') ?? '';
   useEffect(() => {
     if (!enabled || key === undefined) {
       return undefined;
     }
 
     return queryCache.observe<T>(key, {
-      meta: { url },
+      meta: { url, tags: tagsKey ? tagsKey.split('\u0000') : [] },
       staleTime,
       fetcher: () => fetcherRef.current(),
       isCacheable: data => isCacheableRef.current?.(data) ?? true
     });
-  }, [enabled, key, url, staleTime]);
+  }, [enabled, key, url, tagsKey, staleTime]);
 
   // The store holds every query of the page, so it cannot carry each one's type; this key's data only ever comes
   // from this key's fetcher, whose `T` is the caller's.

@@ -122,6 +122,10 @@
       "types": "./dist/sources/QueriesSource/index.d.ts",
       "import": "./dist/sources/QueriesSource/index.mjs"
     },
+    "./sources/QueriesSource/writeParams": {
+      "types": "./dist/sources/QueriesSource/writeParams.d.ts",
+      "import": "./dist/sources/QueriesSource/writeParams.mjs"
+    },
     "./sources/StateSource": {
       "types": "./dist/sources/StateSource/index.d.ts",
       "import": "./dist/sources/StateSource/index.mjs"
@@ -161,6 +165,10 @@
     "./utility/webHook": {
       "types": "./dist/utility/webHook.d.ts",
       "import": "./dist/utility/webHook.mjs"
+    },
+    "./utility/webHookSpec": {
+      "types": "./dist/utility/webHookSpec.d.ts",
+      "import": "./dist/utility/webHookSpec.mjs"
     }
   },
   "scripts": {

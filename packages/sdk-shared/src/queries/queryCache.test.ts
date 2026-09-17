@@ -213,6 +213,45 @@ describe('QueryCache', () => {
     expect(cache.getEntry('k')).toBeUndefined();
   });
 
+  it('answers a caller that is not a component from the cache while it is current', async () => {
+    const cache = new QueryCache();
+    const fetcher = vi.fn().mockResolvedValueOnce('first').mockResolvedValueOnce('second');
+    const options = { meta, fetcher, staleTime: 1_000, gcTime: 60_000 };
+
+    expect(await cache.fetchQuery('k', options)).toBe('first');
+    expect(await cache.fetchQuery('k', options)).toBe('first');
+    vi.advanceTimersByTime(1_000);
+    expect(await cache.fetchQuery('k', options)).toBe('second');
+    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    vi.advanceTimersByTime(60_000);
+    expect(cache.getEntry('k')).toBeUndefined();
+  });
+
+  it('shares a request already out with a component asking the same thing', async () => {
+    const cache = new QueryCache();
+    const { fetcher, release } = deferredFetcher();
+    cache.observe('k', { meta, fetcher, staleTime: 30_000 });
+
+    const answer = cache.fetchQuery('k', { meta, fetcher, staleTime: 30_000 });
+    release('once');
+
+    expect(await answer).toBe('once');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps every tag anybody gave a query', async () => {
+    const cache = new QueryCache();
+    const fetcher = vi.fn(() => Promise.resolve('x'));
+
+    cache.observe('k', { meta: { ...meta, tags: ['list'] }, fetcher, staleTime: 0 });
+    await flush();
+    cache.observe('k', { meta: { ...meta, tags: ['detail'] }, fetcher, staleTime: 0 });
+    await flush();
+
+    expect(cache.getEntry('k')?.tags).toEqual(['list', 'detail']);
+  });
+
   it('keeps an answer it may not trust visible, but asks again on the next mount', async () => {
     const cache = new QueryCache();
     const fetcher = vi.fn(() => Promise.resolve({ status: 500 }));

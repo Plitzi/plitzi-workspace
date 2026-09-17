@@ -9,7 +9,10 @@ import InteractionsContext from '../../InteractionsContext';
 import type { InteractionsContextValue } from '../../InteractionsContext';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 
-vi.mock('@plitzi/sdk-shared/queries', () => ({ invalidateQueries: vi.fn(() => Promise.resolve()) }));
+vi.mock('@plitzi/sdk-shared/queries', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/queries')>()),
+  invalidateQueries: vi.fn(() => Promise.resolve())
+}));
 
 const mount = () => {
   let registered: { id?: string; callbacks: Record<string, InteractionCallback> } = { callbacks: {} };
@@ -37,14 +40,17 @@ describe('QueriesInteractions', () => {
     expect(callbacks.invalidateQueries).toMatchObject({ action: 'invalidateQueries', type: 'globalCallback' });
   });
 
-  it('invalidates by the URL prefix the step names, and everything without one', async () => {
+  it('invalidates the containers and the URL prefix the step names, and everything without either', async () => {
     const { callbacks } = mount();
     const run = callbacks.invalidateQueries.callback as (params: Record<string, unknown>) => Promise<void>;
 
+    await run({ elements: 'orders, members', url: '' });
+    expect(invalidateQueries).toHaveBeenLastCalledWith({ url: '', elements: ['orders', 'members'] });
+
     await run({ url: '/api/orders' });
-    expect(invalidateQueries).toHaveBeenLastCalledWith('/api/orders');
+    expect(invalidateQueries).toHaveBeenLastCalledWith({ url: '/api/orders', elements: [] });
 
     await run({});
-    expect(invalidateQueries).toHaveBeenLastCalledWith('');
+    expect(invalidateQueries).toHaveBeenLastCalledWith({ url: '', elements: [] });
   });
 });

@@ -14,11 +14,19 @@ export const queriesCallbacks: Record<string, BuiltinGlobalCallback> = {
     title: 'Invalidate Queries',
     strictParams: true,
     params: {
+      elements: {
+        type: 'text',
+        description:
+          'The api containers to refresh, by element id, separated by commas — the way to name a request whose URL ' +
+          'is a template. Leave both this and `url` empty to refresh every cached request on the page.',
+        default: '',
+        label: 'Containers (ids)'
+      },
       url: {
         type: 'text',
         description:
-          'Only the requests whose URL starts with this — `/api/orders` covers `/api/orders?page=2`. Empty ' +
-          'invalidates every cached request on the page.',
+          'Only the requests whose URL starts with this — `/api/orders` covers `/api/orders?page=2`. With ' +
+          '`elements` too, a request must match both.',
         default: '',
         label: 'URL prefix'
       }

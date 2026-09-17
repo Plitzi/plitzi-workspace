@@ -167,6 +167,8 @@ const ApiContainer = ({
     return false;
   }, [serverMode, visible, previewMode, query, when, routeParams, queryParams, mockData]);
 
+  // An api container is named by its id: a flow invalidating "these providers" names them the way it names anything.
+  const queryTags = useMemo(() => [id], [id]);
   const {
     isLoading: isApiInitialLoad,
     isFetching: isApiFetching,
@@ -183,7 +185,8 @@ const ApiContainer = ({
     enabled: apiEnabled,
     cache,
     staleTime,
-    gcTime
+    gcTime,
+    tags: queryTags
   });
 
   /**

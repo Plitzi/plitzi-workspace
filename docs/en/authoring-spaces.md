@@ -328,13 +328,30 @@ apiContainer({ id: 'orders', query: '/api/orders', cache: true, staleTime: 60 })
 A cached answer stops counting as current before its time — it stays on screen until the new one lands — when:
 
 - the element's own `performQuery` runs — it always asks again;
-- a flow runs `invalidateQueries()`, or `invalidateQueries({ url: '/api/orders' })` for the requests whose URL starts
-  with that. Providers on screen ask at once, the rest when they are next shown;
-- a write succeeds: a `webHook` sent with anything but `GET`/`HEAD` invalidates the requests to its own origin, a
-  `writeRecord` invalidates them all, and so does a completed `runServerAction` — only the server knows what an
-  action touched. For an action that only reads, give the step `invalidateQueries: false`;
+- a flow runs `invalidateQueries()`. `invalidateQueries({ elements: ['orders'] })` narrows it to the containers
+  with those ids — a container is named by its id, so a request whose URL is a template is still easy to reach —
+  and `invalidateQueries({ url: '/api/orders' })` to the requests whose URL starts with that. Providers on screen
+  ask at once, the rest when they are next shown;
+- a write succeeds. Both write steps say what they refresh with `invalidateQueries`: a `webHook` sent with anything
+  but `GET`/`HEAD` refreshes the requests to its own site by default (`'origin'`), a completed `runServerAction`
+  refreshes all of them by default (`'all'`, since only the server knows what an action touched), and either can
+  name containers instead (`'elements'` with `invalidateElements: 'orders, members'`) or nothing (`'none'`, for a
+  step that only reads). A `writeRecord` refreshes them all;
 - the visitor signs in, signs out or changes account. This one does not wait: whatever was held for the previous
   visitor is dropped at once, and every provider on screen loads again.
+
+A `webHook` that reads can use the same cache: `webHook({ url, cache: true, staleTime: 60 })` answers from it while
+the answer is fresh, and shares it with any container asking the same thing.
+
+```ts
+button({
+  flows: [[
+    onClick(),
+    webHook({ url: '/api/members', method: 'post', body: { email: '{{form.values.email}}' },
+      invalidateQueries: 'elements', invalidateElements: 'members' })
+  ]]
+})
+```
 
 A refused request (`4xx`/`5xx`) is shown but never kept. Server-driven providers (`runtime: 'server'`) are not
 part of this: their data arrives with the page. The dev-tools' Store tab lists what the cache holds under

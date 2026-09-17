@@ -43,9 +43,9 @@ const success = vi.hoisted(() => vi.fn());
 
 vi.mock('@plitzi/sdk-shared/devTools/utils/PlitziConsole', () => ({ pConsole: { warning, info, success } }));
 
-const invalidateQueries = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+const invalidateAfterWrite = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
-vi.mock('@plitzi/sdk-shared/queries', () => ({ invalidateQueries }));
+vi.mock('@plitzi/sdk-shared/queries', () => ({ invalidateAfterWrite }));
 
 type RunCallback = (
   params: Record<string, unknown>,
@@ -110,7 +110,7 @@ describe('ActionInteractions', () => {
     info.mockClear();
     success.mockClear();
     interactionTrigger.mockClear();
-    invalidateQueries.mockClear();
+    invalidateAfterWrite.mockClear();
   });
 
   it('tells the page’s cached requests a completed run may have changed what they read', async () => {
@@ -121,19 +121,24 @@ describe('ActionInteractions', () => {
 
     await mount().run({ actionId: 'save', input: '{}', mode: 'await' });
 
-    expect(invalidateQueries).toHaveBeenCalledWith();
+    expect(invalidateAfterWrite).toHaveBeenCalledWith({ mode: undefined, fallback: 'all', elements: undefined });
   });
 
-  it('leaves the cached requests alone for an action its author said only reads', async () => {
+  it('passes on what the step asked to refresh', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(() => Promise.resolve(jsonResponse(200, { runId: 'r1', status: 'completed', output: {} })))
     );
 
-    await mount().run({ actionId: 'search', input: '{}', mode: 'await', invalidateQueries: false });
-    await mount().run({ actionId: 'search', input: '{}', mode: 'await', invalidateQueries: 'false' });
+    await mount().run({
+      actionId: 'save',
+      input: '{}',
+      mode: 'await',
+      invalidateQueries: 'elements',
+      invalidateElements: 'members'
+    });
 
-    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(invalidateAfterWrite).toHaveBeenCalledWith({ mode: 'elements', fallback: 'all', elements: 'members' });
   });
 
   it('leaves the cached requests alone when the run did not happen', async () => {
@@ -144,7 +149,7 @@ describe('ActionInteractions', () => {
 
     await mount().run({ actionId: 'save', input: '{}', mode: 'await' });
 
-    expect(invalidateQueries).not.toHaveBeenCalled();
+    expect(invalidateAfterWrite).not.toHaveBeenCalled();
   });
 
   it('posts the action by name and answers its output', async () => {

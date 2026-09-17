@@ -35,7 +35,7 @@ const globalBuilders: Record<string, StepSpec> = {
   authRefreshDetails: authRefreshDetails(),
   runServerAction: runServerAction({ actionId: 'a' }),
   cancelServerAction: cancelServerAction({ runId: 'r' }),
-  invalidateQueries: invalidateQueries({ url: '/api/orders' })
+  invalidateQueries: invalidateQueries({ elements: ['orders', 'members'] })
 };
 
 describe('global callback step builders', () => {
@@ -79,5 +79,15 @@ describe('runServerAction input', () => {
   /** `await` is what puts the answer in the flow scope; without it a later `{{id.output.*}}` reads nothing. */
   it('awaits by default, so the next step has something to read', () => {
     expect(runServerAction({ actionId: 'publish' }).params).toMatchObject({ mode: 'await', input: {} });
+  });
+});
+
+describe('invalidateQueries', () => {
+  it('writes the containers as the text the editor shows', () => {
+    expect(invalidateQueries({ elements: ['orders', 'members'] }).params).toEqual({
+      url: '',
+      elements: 'orders, members'
+    });
+    expect(invalidateQueries().params).toEqual({ url: '', elements: '' });
   });
 });

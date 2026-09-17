@@ -1,7 +1,7 @@
 import { use, useCallback, useMemo } from 'react';
 
 import { toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
-import { invalidateQueries } from '@plitzi/sdk-shared/queries';
+import { invalidateQueries, parseIds } from '@plitzi/sdk-shared/queries';
 
 import { queriesCallbacks } from './callbacks';
 import InteractionsContext from '../../InteractionsContext';
@@ -18,7 +18,8 @@ const QueriesInteractions = ({ children }: QueriesInteractionsProps) => {
 
   // Awaited, so a step after this one reads what the providers on screen answered once asked again.
   const handleInvalidate = useCallback(
-    (params: InteractionCallbackParamValues<{ url?: string }>) => invalidateQueries(params.url ?? ''),
+    (params: InteractionCallbackParamValues<{ url?: string; elements?: string | string[] }>) =>
+      invalidateQueries({ url: params.url ?? '', elements: parseIds(params.elements) }),
     []
   );
 
