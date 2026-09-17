@@ -192,3 +192,38 @@ describe('buildTreeIndex', () => {
     expect(children.get('gone')).toBeUndefined();
   });
 });
+
+describe('buildFlameModel / instances that come and go', () => {
+  /**
+   * A navigation from one page to another under the same shell. The tree has seen both pages; each commit draws only
+   * the one that was there — the shell's untouched branches stay, the page that left does not.
+   */
+  const navigated = (): TracingTree => ({
+    shell: { baseDuration: 10, elementId: 'shell' },
+    nav: { parentId: 'shell', baseDuration: 1, elementId: 'nav' },
+    overview: { parentId: 'shell', baseDuration: 5, elementId: 'overview', mountedAt: 1, unmountedAt: 2 },
+    chart: { parentId: 'overview', baseDuration: 4, elementId: 'chart', mountedAt: 1, unmountedAt: 2 },
+    audience: { parentId: 'shell', baseDuration: 5, elementId: 'audience', mountedAt: 2 }
+  });
+
+  const at = (commitId: number, elements: CommitElementRender[]): CommitEntry => ({ ...commit(elements), commitId });
+
+  const idsIn = (entry: CommitEntry) =>
+    buildFlameModel(entry, navigated(), flat)
+      .nodes.map(node => node.id)
+      .sort();
+
+  it('draws the page that left only in the commits it was part of', () => {
+    expect(idsIn(at(1, [render('shell', 'shell', 10)]))).toEqual(['chart', 'nav', 'overview', 'shell']);
+    expect(idsIn(at(2, [render('shell', 'shell', 6), render('audience', 'audience', 5, 'shell')]))).toEqual([
+      'audience',
+      'nav',
+      'shell'
+    ]);
+  });
+
+  /** A body that has not mounted yet — a lazy modal nobody opened — is not drawn as a branch that did not render. */
+  it('leaves out what had not mounted yet', () => {
+    expect(idsIn(at(1, [render('shell', 'shell', 10)]))).not.toContain('audience');
+  });
+});

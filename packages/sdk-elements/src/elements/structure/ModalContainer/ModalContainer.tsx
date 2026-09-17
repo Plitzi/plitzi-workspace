@@ -5,16 +5,17 @@ import { useCallback, use, useEffect, useMemo, useState } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import declaration from './declaration';
+import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { SourceField, InteractionCallbackParamValues, InteractionCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallbackParamValues, InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ModalContainerProps = {
@@ -124,18 +125,7 @@ const ModalContainer = ({
     }
   }, [id, interactionsManager, internalMetadata, elementState.visibility]);
 
-  const sourceFields = useCallback(
-    () =>
-      getPathsFromObeject(internalMetadata).reduce<SourceField[]>((acum, path) => {
-        const name = path.split('.');
-        if (name.length > 1) {
-          return [...acum, { path, name: name.slice(name.length - 2).join(' ') }];
-        }
-
-        return [...acum, { path, name: name[name.length - 1] }];
-      }, []),
-    [internalMetadata]
-  );
+  const sourceFields = useCallback(() => pathFields(internalMetadata), [internalMetadata]);
 
   useRegisterSource({ id, source: sourceName, name: label ? label : `Modal - ${id}`, fields: sourceFields });
 

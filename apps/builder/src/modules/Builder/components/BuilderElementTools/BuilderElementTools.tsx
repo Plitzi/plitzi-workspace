@@ -17,7 +17,17 @@ import ElementDefinitionSettings from './ElementDefinitionSettings';
 import ElementSettings from './ElementSettings';
 import ToolsList from '../ToolsList';
 
-import type { Element } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Element } from '@plitzi/sdk-shared';
+
+/** `undefined` removes the key rather than storing it: an absent field is how an instance defers to its type. */
+const withKey = <T extends object>(state: T, key: string, value: unknown): T => {
+  const next = { ...state, [key]: value };
+  if (value === undefined) {
+    Reflect.deleteProperty(next, key);
+  }
+
+  return next;
+};
 
 export type BuilderElementToolsProps = {
   initialTab?: string;
@@ -44,6 +54,9 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
     [componentDefinitions, element?.definition.type]
   );
 
+  // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.
+  const declared = (componentDefinitions.current[definition.type] as ComponentDefinition | undefined)?.definition;
+
   const handleClickListItems = useCallback((item: string) => setSelected(item), [setSelected]);
 
   const [tempAttributes, setTempAttributes] = useStateDebounce(
@@ -67,11 +80,11 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   );
 
   const handleChange = useCallback(
-    (key: string, value: string | boolean | number | object, isDefinition = false) => {
+    (key: string, value: string | boolean | number | object | undefined, isDefinition = false) => {
       if (isDefinition) {
-        setTempDefinition((state: Element['definition']) => ({ ...state, [key]: value }));
+        setTempDefinition((state: Element['definition']) => withKey(state, key, value));
       } else {
-        setTempAttributes((state: Element['attributes']) => ({ ...state, [key]: value }));
+        setTempAttributes((state: Element['attributes']) => withKey(state, key, value));
       }
     },
     [setTempAttributes, setTempDefinition]
@@ -149,6 +162,8 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
             <ElementDefinitionSettings
               key={elementSelected}
               definition={tempDefinition}
+              canHoldItems={Array.isArray(declared?.items)}
+              declaredLoadStrategy={declared?.loadStrategy}
               id={element.id}
               getNameConflict={getNameConflict}
               onUpdate={handleChange}

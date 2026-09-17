@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
+import { findLayoutCycle } from '@plitzi/sdk-shared/schema/layoutChain';
+
 import { isValidElementId } from './elementId';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';
@@ -388,6 +390,25 @@ const createValidator = (schema: Schema) => {
     });
   };
 
+  // 7b. Shells that sit inside each other in a circle — a page using any of them could never finish rendering
+  const validateLayoutCycles = () => {
+    const reported = new Set<string>();
+    layoutRootIds().forEach(layoutId => {
+      const cycle = findLayoutCycle(getElement, layoutId);
+      if (cycle.length === 0 || reported.has(cycle[0])) {
+        return;
+      }
+
+      cycle.forEach(id => reported.add(id));
+      errors.push({
+        code: 'LAYOUT_CYCLE',
+        message: `Layouts sit inside each other in a circle: ${cycle.join(' → ')}`,
+        elementId: layoutId,
+        details: { cycle }
+      });
+    });
+  };
+
   // 8. Detect orphaned elements (elements not reachable from any root)
   const validateOrphanedElements = (baseElementId?: string) => {
     const reachable = new Set<string>();
@@ -414,11 +435,18 @@ const createValidator = (schema: Schema) => {
      * unreachable. Both are marked, because a document that names a slot in a shell it does not name is still
      * describing something real.
      */
+    const rootsMarked = new Set<string>();
     const markRoot = (elementId: string) => {
+      if (rootsMarked.has(elementId)) {
+        return;
+      }
+
+      rootsMarked.add(elementId);
       markReachable(elementId);
       const attributes = getElement(elementId)?.attributes;
+      // A shell is a root of its own and may sit in another shell, so it is marked the way the page was.
       if (attributes?.layout) {
-        markReachable(attributes.layout as string);
+        markRoot(attributes.layout as string);
       }
 
       if (attributes?.layoutContainer) {
@@ -706,6 +734,7 @@ const createValidator = (schema: Schema) => {
     validatePages();
     validateRootConsistency();
     validatePageFolders();
+    validateLayoutCycles();
     validateOrphanedElements(baseElementId);
     validateVariables();
     validateElementIds();

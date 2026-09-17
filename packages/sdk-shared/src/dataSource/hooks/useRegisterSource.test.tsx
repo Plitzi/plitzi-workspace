@@ -1,6 +1,6 @@
 import { renderHook, act, render } from '@testing-library/react';
 import { createElement, useContext } from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import { StoreContext, StoreProvider } from '@plitzi/nexus/react';
 
@@ -142,6 +142,28 @@ describe('useRegisterSource', () => {
     expect((sourcesMiddle[firstKey as string] as { meta: { source: string } }).meta.source).toBe('list_first');
     // Second sibling was cleaned up
     expect(sourcesMiddle[secondKey as string]).toBeUndefined();
+  });
+
+  it('stores lazy fields as a function, without computing them', () => {
+    const storeRef = { current: undefined as StoreApi<SourceState> | undefined };
+    const fields = vi.fn(() => [{ path: 'total', name: 'total' }]);
+
+    const { rerender } = renderHook(
+      ({ current }: { current: () => { path: string; name: string }[] }) => {
+        useStoreCapture(storeRef);
+        useRegisterSource({ id: 'api', source: 'api', name: 'Api', fields: current });
+      },
+      { wrapper: makeWrapper({}), initialProps: { current: fields } }
+    );
+    const next = vi.fn(() => [{ path: 'rows', name: 'rows' }]);
+    act(() => {
+      rerender({ current: next });
+    });
+
+    const [entry] = Object.values(getSources(storeRef.current)) as { meta: { fields: unknown } }[];
+    expect(entry.meta.fields).toBe(next);
+    expect(fields).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('does NOT throw when a single scope registers multiple sources', () => {

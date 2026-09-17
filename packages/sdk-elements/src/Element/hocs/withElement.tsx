@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
-import { Profiler, use, useId, useMemo, useRef } from 'react';
+import { Profiler, use, useEffect, useId, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -77,6 +77,18 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       settings: { previewMode, debugMode },
       root: { baseElementId }
     } = usePlitziServiceContext();
+    // The collector hears renders and never teardowns, so it is told when this instance leaves — or it keeps drawing a
+    // page that was navigated away from, and the body of a modal that closed.
+    useEffect(() => {
+      if (!debugMode) {
+        return undefined;
+      }
+
+      tracingCollector.markMounted(traceId);
+
+      return () => tracingCollector.markUnmounted(traceId);
+    }, [debugMode, traceId]);
+
     const [element] = useCommonStore(`schema.flat.${id}`);
     if (!(element as Element | undefined)) {
       throw new Error(`Element ${id} not found, Page ${baseElementId}`);

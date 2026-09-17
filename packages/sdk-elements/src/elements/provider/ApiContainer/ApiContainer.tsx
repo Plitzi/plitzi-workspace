@@ -7,7 +7,7 @@ import { useCallback, use, useEffect, useMemo } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
@@ -16,6 +16,7 @@ import declaration from './declaration';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
 import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
+import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import useRscData from '../../../Element/hooks/useRscData';
@@ -24,7 +25,7 @@ import RootElement from '../../../Element/RootElement';
 import type { ProviderPagination } from './hooks/useProviderPagination';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { SourceField, InteractionCallback } from '@plitzi/sdk-shared';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ApiContainerProps = {
@@ -304,18 +305,7 @@ const ApiContainer = ({
     [data, slice.records, slice.record, records, isLoading, isLoadingMore, singleRecord, hasError, serverMode, rscStale]
   );
 
-  const sourceFields = useCallback(
-    () =>
-      getPathsFromObeject(publishedData).reduce<SourceField[]>((acum, path) => {
-        const name = path.split('.');
-        if (name.length > 1) {
-          return [...acum, { path, name: name.slice(name.length - 2).join(' ') }];
-        }
-
-        return [...acum, { path, name: name[name.length - 1] }];
-      }, []),
-    [publishedData]
-  );
+  const sourceFields = useCallback(() => pathFields(publishedData), [publishedData]);
 
   useRegisterSource({ id, source: sourceName, name: label ? label : `API - ${id}`, fields: sourceFields });
 

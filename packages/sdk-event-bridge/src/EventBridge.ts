@@ -18,6 +18,22 @@ export type EventBridgeProps<T = unknown> = {
 
 type EventBridgeUpdateListener = (events: Record<EventBridgeEvent, unknown>) => void;
 
+/**
+ * Stops at the first key rather than listing them all.
+ *
+ * A module holds one event per element (`interaction`, `element`), and every element that unmounts removes its own —
+ * so `Object.keys(...).length` here made tearing down a page of N elements cost N × N.
+ */
+const hasOwnKeys = (value: object): boolean => {
+  for (const key in value) {
+    if (Object.hasOwn(value, key)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 class EventBridge<T = unknown> {
   debugMode: boolean = false;
   events: Partial<Record<EventBridgeModule, Partial<Record<EventBridgeEvent, Event<T>[]>>>>;
@@ -85,7 +101,7 @@ class EventBridge<T = unknown> {
       delete this.events[module][event];
     }
 
-    if (Object.keys(this.events[module]).length === 0) {
+    if (!hasOwnKeys(this.events[module])) {
       delete this.events[module];
     }
   }

@@ -116,3 +116,65 @@ describe('the collector under a dense page', () => {
     expect(commits().at(-1)?.timestamp).toBe(MAX_COMMITS + 20);
   });
 });
+
+describe('the collector over instances that come and go', () => {
+  /** A navigation: the previous page's instances leave, and the tree has to say when. */
+  it('records the commit each instance arrived in and the one that removed it', async () => {
+    tracingCollector.start();
+    render('page-a', undefined, 'page', 10);
+    render('chart', 'page-a', 'chart', 10);
+    await flush();
+    const first = commits().at(-1)?.commitId ?? 0;
+
+    render('page-b', undefined, 'page', 11);
+    tracingCollector.markUnmounted('chart');
+    tracingCollector.markUnmounted('page-a');
+    await flush();
+    const second = commits().at(-1)?.commitId ?? 0;
+
+    expect(tree().chart.mountedAt).toBe(first);
+    expect(tree().chart.unmountedAt).toBe(second);
+    expect(tree()['page-b'].mountedAt).toBe(second);
+    expect(tree()['page-b'].unmountedAt).toBeUndefined();
+  });
+
+  /** StrictMode rehearses every cleanup on a live component; the rehearsal must not read as a departure. */
+  it('forgets a departure the instance came back from', async () => {
+    tracingCollector.start();
+    render('modal-body', undefined, 'container', 20);
+    tracingCollector.markUnmounted('modal-body');
+    tracingCollector.markMounted('modal-body');
+    await flush();
+
+    expect(tree()['modal-body'].unmountedAt).toBeUndefined();
+  });
+
+  /** Once no commit still held drew an instance, it is gone from the tree rather than kept forever. */
+  it('drops an instance no retained commit contains', async () => {
+    tracingCollector.start();
+    render('gone', undefined, 'thing', 30);
+    await flush();
+    tracingCollector.markUnmounted('gone');
+    for (let commit = 31; commit <= 31 + MAX_COMMITS; commit += 1) {
+      render('stays', undefined, 'thing', commit);
+    }
+
+    await flush();
+
+    expect(tree().gone).toBeUndefined();
+    expect(tree().stays).toBeDefined();
+  });
+
+  it('clears what already left along with the commits, and keeps what is still there', async () => {
+    tracingCollector.start();
+    render('left', undefined, 'thing', 40);
+    render('here', undefined, 'thing', 40);
+    await flush();
+    tracingCollector.markUnmounted('left');
+
+    tracingCollector.clear();
+
+    expect(tree().left).toBeUndefined();
+    expect(tree().here.mountedAt).toBeUndefined();
+  });
+});

@@ -231,16 +231,35 @@ export type TreeIndex = {
   base: Map<string, number>;
   children: Map<string, string[]>;
   elementOf: Map<string, string>;
+  /** When each instance was on the page, for the ones whose presence is not the whole timeline. */
+  lifetime: Map<string, { mountedAt: number; unmountedAt: number }>;
+};
+
+/**
+ * Whether an instance was on the page in a commit.
+ *
+ * The tree holds every instance the timeline has seen, and a commit is drawn from it — so without this a commit after
+ * a navigation drew the page that had left beside the one that arrived, and a closed modal kept its body.
+ */
+export const isAlive = (index: TreeIndex, id: string, commitId: number): boolean => {
+  const span = index.lifetime.get(id);
+
+  return !span || (span.mountedAt <= commitId && commitId < span.unmountedAt);
 };
 
 export const buildTreeIndex = (tree: TracingTree): TreeIndex => {
   const parent = new Map<string, string | undefined>();
   const base = new Map<string, number>();
   const elementOf = new Map<string, string>();
+  const lifetime = new Map<string, { mountedAt: number; unmountedAt: number }>();
   for (const id of Object.keys(tree)) {
-    parent.set(id, tree[id].parentId);
-    base.set(id, tree[id].baseDuration);
-    elementOf.set(id, tree[id].elementId);
+    const { parentId, baseDuration, elementId, mountedAt, unmountedAt } = tree[id];
+    parent.set(id, parentId);
+    base.set(id, baseDuration);
+    elementOf.set(id, elementId);
+    if (mountedAt !== undefined || unmountedAt !== undefined) {
+      lifetime.set(id, { mountedAt: mountedAt ?? 0, unmountedAt: unmountedAt ?? Infinity });
+    }
   }
 
   const children = new Map<string, string[]>();
@@ -255,7 +274,7 @@ export const buildTreeIndex = (tree: TracingTree): TreeIndex => {
     }
   }
 
-  return { parent, base, children, elementOf };
+  return { parent, base, children, elementOf, lifetime };
 };
 
 type CommitGraph = {
@@ -410,7 +429,7 @@ export const buildFlameModel = (
       width
     });
 
-    const kids = children.get(id) ?? [];
+    const kids = (children.get(id) ?? []).filter(kid => rendered.has(kid) || isAlive(index, kid, commit.commitId));
     if (kids.length === 0) {
       continue;
     }

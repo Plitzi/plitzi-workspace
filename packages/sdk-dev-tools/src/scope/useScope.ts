@@ -1,12 +1,12 @@
 import { useCallback, useMemo } from 'react';
 
 import { selectInstance, useDevInstances } from '../instanceRegistry';
-import { buildScopeOptions, resolveSelectedUid } from './helpers';
+import { buildScopeOptions, instanceEntries, resolveSelectedUid } from './helpers';
 import { selectStore, useSelectedStoreUid } from './storeSelection';
 import useDevStores from './useDevStores';
 
 import type { ScopeOptionGroup } from './helpers';
-import type { DevStore } from '@plitzi/nexus';
+import type { DevStore, DevStoreEntry } from '@plitzi/nexus';
 
 export type ScopeSelector = {
   options: ScopeOptionGroup[];
@@ -50,4 +50,12 @@ export const useSelectedStore = (): DevStore | undefined => {
   const uid = useMemo(() => resolveSelectedUid(entries, selectedUid), [entries, selectedUid]);
 
   return useMemo(() => entries.find(entry => entry.uid === uid)?.store, [entries, uid]);
+};
+
+// Every store of the instance the panel is showing, whichever one the dropdown picked.
+export const useInstanceStores = (): ReadonlyArray<DevStoreEntry> => {
+  const entries = useDevStores();
+  const { selectedId } = useDevInstances();
+
+  return useMemo(() => instanceEntries(entries, selectedId, selectedId), [entries, selectedId]);
 };

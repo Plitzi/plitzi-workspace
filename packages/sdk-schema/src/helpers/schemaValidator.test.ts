@@ -1027,3 +1027,60 @@ describe('schemaValidator', () => {
     });
   });
 });
+
+describe('schemaValidator / nested layouts', () => {
+  const shell = (id: string, attributes: Record<string, unknown> = {}, items: string[] = []): Element => ({
+    ...createElement(id, 'layoutContainer', id),
+    attributes,
+    definition: { ...createElement(id, 'layoutContainer', id).definition, items }
+  });
+
+  const slot = (id: string, parentId: string): Element => ({
+    ...createElement(id, 'container', parentId),
+    definition: { ...createElement(id, 'container', parentId).definition, parentId }
+  });
+
+  const page = (layout: string, layoutContainer: string): Element => ({
+    ...createElement('page-1', 'page'),
+    attributes: { default: true, layout, layoutContainer }
+  });
+
+  it('accepts a shell that sits inside another shell', () => {
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        outer: shell('outer', {}, ['outer-body']),
+        'outer-body': slot('outer-body', 'outer'),
+        inner: shell('inner', { layout: 'outer', layoutContainer: 'outer-body' }, ['inner-body']),
+        'inner-body': slot('inner-body', 'inner'),
+        'page-1': page('inner', 'inner-body')
+      },
+      pages: ['page-1']
+    };
+
+    const result = validateSchema(schema, { baseElementId: 'page-1' });
+
+    expect(result.errors).toEqual([]);
+    // Validating one page still reaches the shell around its shell.
+    expect(result.warnings.filter(warning => warning.code === 'ORPHANED_ELEMENT')).toEqual([]);
+  });
+
+  it('rejects shells that sit inside each other in a circle', () => {
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        a: shell('a', { layout: 'b', layoutContainer: 'b-body' }, ['a-body']),
+        'a-body': slot('a-body', 'a'),
+        b: shell('b', { layout: 'a', layoutContainer: 'a-body' }, ['b-body']),
+        'b-body': slot('b-body', 'b'),
+        'page-1': page('a', 'a-body')
+      },
+      pages: ['page-1']
+    };
+
+    const cycles = validateSchema(schema).errors.filter(error => error.code === 'LAYOUT_CYCLE');
+
+    expect(cycles).toHaveLength(1);
+    expect(cycles[0].details).toEqual({ cycle: ['a', 'b', 'a'] });
+  });
+});

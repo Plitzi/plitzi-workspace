@@ -4,15 +4,20 @@ import { useCallback, useMemo } from 'react';
 
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
+import LayoutPicker from '../LayoutPicker';
+
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 
 type SettingsProps = {
+  id?: string;
+  layout?: string;
+  layoutContainer?: string;
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';
   folder?: string;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ subType = 'div', folder = '', onUpdate }: SettingsProps) => {
+const Settings = ({ id, layout = '', layoutContainer = '', subType = 'div', folder = '', onUpdate }: SettingsProps) => {
   const [pageFolders] = useCommonStore('schema.pageFolders');
 
   const handleChangeSubType = useCallback((value: string) => onUpdate?.('subType', value), [onUpdate]);
@@ -51,6 +56,11 @@ const Settings = ({ subType = 'div', folder = '', onUpdate }: SettingsProps) => 
         placeholder="None"
         onChange={handleChangeFolder}
       />
+      <LayoutPicker layout={layout} layoutContainer={layoutContainer} ownLayoutId={id} onUpdate={onUpdate} />
+      <span className="text-xs text-gray-500 dark:text-zinc-400">
+        A layout can sit inside another one: pages using this layout are shown inside it, and it inside the one picked
+        here — the outer shell stays mounted while moving between pages that share it.
+      </span>
     </div>
   );
 };

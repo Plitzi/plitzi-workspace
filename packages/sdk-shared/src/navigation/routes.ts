@@ -108,7 +108,9 @@ function getPageFullPath(
   }
 
   const pageFoldersObj = pageFolders.reduce((acum, pageFolder) => ({ ...acum, [pageFolder.id]: pageFolder }), {});
-  const path = [recursiveFolderSlug(pageFoldersObj, folderId), pageSlug ? pageSlug : pageId].filter(Boolean).join('/');
+  // An empty slug is the folder's own address, as it is the space's at the top level: `/analytics` is the page with no
+  // slug inside the `analytics` folder, the way `/` is the page with none outside any.
+  const path = [recursiveFolderSlug(pageFoldersObj, folderId), pageSlug].filter(Boolean).join('/');
   if (asString) {
     return `/${path}`;
   }

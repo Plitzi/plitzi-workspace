@@ -984,6 +984,10 @@
       "types": "./dist/schema/index.d.ts",
       "import": "./dist/schema/index.mjs"
     },
+    "./schema/layoutChain": {
+      "types": "./dist/schema/layoutChain.d.ts",
+      "import": "./dist/schema/layoutChain.mjs"
+    },
     "./schema/schemaConstants": {
       "types": "./dist/schema/schemaConstants.d.ts",
       "import": "./dist/schema/schemaConstants.mjs"

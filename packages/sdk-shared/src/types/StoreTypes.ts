@@ -319,6 +319,10 @@ export type TracingTreeNode = {
   baseDuration: number;
   /** Which element this instance is — see `CommitElementRender.id`. */
   elementId: string;
+  /** The first commit it rendered in; absent means it was already there when the timeline started. */
+  mountedAt?: number;
+  /** The commit that removed it, which it is no longer part of; absent while it is on the page. */
+  unmountedAt?: number;
 };
 
 // The whole known render tree, keyed by INSTANCE (not by element: a list renders one instance per row). Because it

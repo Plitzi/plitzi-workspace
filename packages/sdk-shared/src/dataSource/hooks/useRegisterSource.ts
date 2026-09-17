@@ -21,7 +21,11 @@ export type UseRegisterSourceProps = {
 const useRegisterSource = ({ id = '', source, name, fields = [] }: UseRegisterSourceProps) => {
   const { useStoreSetter } = createStoreHook<Record<string, unknown>>();
   // Loosely typed: the registry lives under dynamic `sources.<id>` paths the typed setter can't express.
-  const setStore = useStoreSetter() as (path: string, value: unknown, options?: { unmount?: boolean }) => void;
+  const setStore = useStoreSetter() as (
+    path: string,
+    value: unknown,
+    options?: { unmount?: boolean; raw?: boolean }
+  ) => void;
   const uniqueId = useMemo(() => `${id}_${makeId(8)}`, [id]);
 
   useEffect(() => {
@@ -42,7 +46,13 @@ const useRegisterSource = ({ id = '', source, name, fields = [] }: UseRegisterSo
       return;
     }
 
-    setStore(`sources.${uniqueId}.meta.fields`, fields);
+    /**
+     * `raw`, because `fields` may be a function — the lazy form, computed only when the binding picker opens.
+     *
+     * Written plainly, the store takes a function for an updater and runs it: every provider walked every path of its
+     * data on each answer, and the write of the result was itself a store change that re-rendered the page.
+     */
+    setStore(`sources.${uniqueId}.meta.fields`, fields, { raw: true });
   }, [fields, source, uniqueId, setStore]);
 };
 

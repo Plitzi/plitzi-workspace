@@ -126,3 +126,57 @@ describe('ElementDefinitionSettings', () => {
     expect(input.value).toBe('hero');
   });
 });
+
+describe('ElementDefinitionSettings / load strategy', () => {
+  beforeEach(() => localStorage.clear());
+
+  const container: Element['definition'] = { ...definition, type: 'modalContainer' };
+
+  const renderStrategy = async (props: { canHoldItems: boolean; definition?: Element['definition'] }) => {
+    const onUpdate = vi.fn();
+    const view = render(
+      <ElementDefinitionSettings
+        definition={props.definition ?? container}
+        canHoldItems={props.canHoldItems}
+        declaredLoadStrategy="lazy"
+        id="modal"
+        getNameConflict={getNameConflict}
+        onUpdate={onUpdate}
+        onRename={vi.fn()}
+      />
+    );
+    await flushStorageSync();
+
+    return { ...view, onUpdate, select: view.container.querySelector('select') };
+  };
+
+  it('is offered only for a type that holds children', async () => {
+    const { select } = await renderStrategy({ canHoldItems: false, definition });
+
+    expect(select).toBeNull();
+  });
+
+  it('is not offered for a page, which is never hidden the way a modal is', async () => {
+    const { select } = await renderStrategy({ canHoldItems: true, definition: { ...definition, type: 'page' } });
+
+    expect(select).toBeNull();
+  });
+
+  it('defaults to what the type declares, and says so', async () => {
+    const { select, getByText } = await renderStrategy({ canHoldItems: true });
+
+    expect(select?.value).toBe('');
+    expect(getByText('Default — Lazy')).toBeTruthy();
+  });
+
+  it('stores a chosen strategy, and removes it when set back to the default', async () => {
+    const { select, onUpdate } = await renderStrategy({ canHoldItems: true });
+    expect(select).not.toBeNull();
+
+    fireEvent.change(select ?? document.body, { target: { value: 'visible' } });
+    expect(onUpdate).toHaveBeenLastCalledWith('loadStrategy', 'visible', true);
+
+    fireEvent.change(select ?? document.body, { target: { value: '' } });
+    expect(onUpdate).toHaveBeenLastCalledWith('loadStrategy', undefined, true);
+  });
+});

@@ -546,25 +546,26 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: undefined,
         unauthorizedPageRedirect: undefined
       },
-      {
-        pageId: '67091af172e7bddf906e07d7',
-        path: '/no-published/67091af172e7bddf906e07d7',
-        enabled: false,
-        isRaw: false,
-        hasAccess: true,
-        accessLevel: undefined,
-        unauthorizedBehaviour: undefined,
-        unauthorizedPageRedirect: undefined
-      },
+      // Neither has a slug, so both answer at the folder itself.
       {
         pageId: '655606a327a07efc899aabb2',
-        path: '/no-published/655606a327a07efc899aabb2',
+        path: '/no-published',
         accessLevel: 'public',
         enabled: false,
         isRaw: false,
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '',
         hasAccess: true
+      },
+      {
+        pageId: '67091af172e7bddf906e07d7',
+        path: '/no-published',
+        enabled: false,
+        isRaw: false,
+        hasAccess: true,
+        accessLevel: undefined,
+        unauthorizedBehaviour: undefined,
+        unauthorizedPageRedirect: undefined
       },
       {
         pageId: '6500448795e141eac765c372',

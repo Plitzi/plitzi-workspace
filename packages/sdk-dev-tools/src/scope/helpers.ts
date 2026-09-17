@@ -45,6 +45,17 @@ export const rootKeysOf = (entries: ReadonlyArray<DevStoreEntry>): ReadonlySet<s
   return root ? new Set(Object.keys(root.store.getState())) : undefined;
 };
 
+// The stores an instance holds: its tagged providers, plus the untagged root when it is the active instance — the root
+// is created above the dev-tools container, so it cannot be tagged from below.
+export const instanceEntries = (
+  entries: ReadonlyArray<DevStoreEntry>,
+  instanceId: string | undefined,
+  activeInstanceId: string | undefined
+): DevStoreEntry[] =>
+  entries.filter(
+    entry => entry.scopeId === instanceId || (entry.scopeId === undefined && instanceId === activeInstanceId)
+  );
+
 // Group registry entries into `<optgroup>`-shaped groups, one per SDK instance. Nested providers carry their instance's
 // `scopeId`; the root store (created above the dev-tools container, so it can't be tagged from below) is untagged and
 // shown under the active instance.
@@ -57,9 +68,10 @@ export const buildScopeOptions = (
 
   return instanceIds.map(instanceId => ({
     label: instanceId,
-    options: entries
-      .filter(entry => entry.scopeId === instanceId || (entry.scopeId === undefined && instanceId === activeInstanceId))
-      .map(entry => ({ label: storeLabel(entry, rootKeys), value: entry.uid }))
+    options: instanceEntries(entries, instanceId, activeInstanceId).map(entry => ({
+      label: storeLabel(entry, rootKeys),
+      value: entry.uid
+    }))
   }));
 };
 

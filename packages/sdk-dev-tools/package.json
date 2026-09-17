@@ -18,6 +18,10 @@
       "types": "./dist/DevToolsContextProvider.d.ts",
       "import": "./dist/DevToolsContextProvider.mjs"
     },
+    "./DevToolsRoot": {
+      "types": "./dist/DevToolsRoot.d.ts",
+      "import": "./dist/DevToolsRoot.mjs"
+    },
     "./components/DevToolsIndicator": {
       "types": "./dist/components/DevToolsIndicator/index.d.ts",
       "import": "./dist/components/DevToolsIndicator/index.mjs"
@@ -506,6 +510,10 @@
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/components/FreshnessPanel/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/StoreViewer/helpers/describeQueryPath": {
+      "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/describeQueryPath.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/describeQueryPath.mjs"
+    },
     "./components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues": {
       "types": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/StoreViewer/helpers/mapFunctionValues.mjs"
@@ -754,9 +762,9 @@
       "types": "./dist/scope/useDevStores.d.ts",
       "import": "./dist/scope/useDevStores.mjs"
     },
-    "./scope/useFreshnessRecords": {
-      "types": "./dist/scope/useFreshnessRecords.d.ts",
-      "import": "./dist/scope/useFreshnessRecords.mjs"
+    "./scope/useFreshnessByStore": {
+      "types": "./dist/scope/useFreshnessByStore.d.ts",
+      "import": "./dist/scope/useFreshnessByStore.mjs"
     },
     "./scope/useScope": {
       "types": "./dist/scope/useScope.d.ts",

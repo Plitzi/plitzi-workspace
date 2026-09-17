@@ -36,6 +36,12 @@ const elementOf = new Map<string, string>();
 const baseOf = new Map<string, number>();
 let treeDirty = true;
 
+// The commit each instance first rendered in, and the one that took it away. An instance is part of a commit's tree
+// only between the two: without them the tree kept every instance ever mounted, so after a navigation the panel drew
+// the previous page beside the current one, and a modal closed under `visible` kept its whole body on screen.
+const mountedAt = new Map<string, number>();
+const unmountedAt = new Map<string, number>();
+
 // The recorder's seq up to which store writes have already been claimed as a commit's causes. Each new commit drains
 // everything recorded since, so it owns exactly the writes that happened since the previous commit — the "why did it
 // render" at the data level.
@@ -70,7 +76,13 @@ const schedule = (() => {
 const buildTree = (): TracingTree => {
   const tree: TracingTree = {};
   for (const [id, baseDuration] of baseOf) {
-    tree[id] = { parentId: parentOf.get(id), baseDuration, elementId: elementOf.get(id) ?? id };
+    tree[id] = {
+      parentId: parentOf.get(id),
+      baseDuration,
+      elementId: elementOf.get(id) ?? id,
+      mountedAt: mountedAt.get(id),
+      unmountedAt: unmountedAt.get(id)
+    };
   }
 
   return tree;
@@ -99,6 +111,24 @@ const setHydrated = () => {
   }
 };
 
+const forget = (id: string) => {
+  parentOf.delete(id);
+  elementOf.delete(id);
+  baseOf.delete(id);
+  mountedAt.delete(id);
+  unmountedAt.delete(id);
+  treeDirty = true;
+};
+
+// An instance that left before the oldest commit still held is in none of them, so nothing can ever draw it again.
+const pruneUnmounted = (oldestCommitId: number) => {
+  for (const [id, commitId] of unmountedAt) {
+    if (commitId <= oldestCommitId) {
+      forget(id);
+    }
+  }
+};
+
 const flush = () => {
   flushScheduled = false;
   if (pendingByCommit.size > 0) {
@@ -109,6 +139,8 @@ const flush = () => {
     if (commits.length > MAX_COMMITS) {
       commits = commits.slice(commits.length - MAX_COMMITS);
     }
+
+    pruneUnmounted(commits[0].commitId);
   }
 
   if (viewing) {
@@ -129,6 +161,8 @@ const linkParent = (id: string, parentId: string | undefined, elementId: string)
     parentOf.clear();
     elementOf.clear();
     baseOf.clear();
+    mountedAt.clear();
+    unmountedAt.clear();
     treeDirty = true;
   }
 
@@ -167,10 +201,7 @@ const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDurat
     tracingStore.setState('enabled', true);
   }
 
-  if (!baseOf.has(id)) {
-    treeDirty = true;
-  }
-
+  const isNew = !baseOf.has(id);
   baseOf.set(id, baseDuration);
 
   const changedProps = pendingPropsById.get(id);
@@ -202,6 +233,44 @@ const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration, baseDurat
     });
   }
 
+  if (isNew) {
+    mountedAt.set(id, pendingByCommit.get(commitTime)?.commitId ?? commitSeq);
+    treeDirty = true;
+  }
+
+  if (!flushScheduled) {
+    flushScheduled = true;
+    schedule(flush);
+  }
+};
+
+/**
+ * Called by `withElement` from an effect, once the instance is on the page.
+ *
+ * Only undoes a departure: StrictMode runs every effect's cleanup and then the effect again on a live component, and
+ * that rehearsal must not leave the instance marked as gone.
+ */
+const markMounted = (id: string) => {
+  if (unmountedAt.delete(id)) {
+    treeDirty = true;
+  }
+};
+
+/**
+ * Called by `withElement` from that effect's cleanup, when the instance leaves.
+ *
+ * Passive cleanups run after the commit that removed the instance has reported its renders — or just before the next
+ * one does — so the latest commit id is the commit it is no longer part of.
+ */
+const markUnmounted = (id: string) => {
+  if (!baseOf.has(id)) {
+    forget(id);
+
+    return;
+  }
+
+  unmountedAt.set(id, commitSeq);
+  treeDirty = true;
   if (!flushScheduled) {
     flushScheduled = true;
     schedule(flush);
@@ -238,12 +307,28 @@ const clear = () => {
   claimedSeq = recorder.lastSeq();
   pendingPropsById.clear();
   commitSeq = 0;
-  // The accumulated tree (parentOf/baseOf) is intentionally kept: clearing only the commits resets the timeline while
-  // preserving the known structure, so the next commit still nests correctly. Only re-publish the (unchanged) tree.
+  // The live part of the tree is kept, so the next commit still nests correctly; what already left goes with the
+  // commits that drew it. The numbering starts over, so every instance still here counts as present from the start.
+  for (const id of [...unmountedAt.keys()]) {
+    forget(id);
+  }
+
+  mountedAt.clear();
   treeDirty = true;
   writeSnapshot();
 };
 
-const tracingCollector = { onRender, linkParent, recordProps, recordStoreChange, setHydrated, start, stop, clear };
+const tracingCollector = {
+  onRender,
+  linkParent,
+  markMounted,
+  markUnmounted,
+  recordProps,
+  recordStoreChange,
+  setHydrated,
+  start,
+  stop,
+  clear
+};
 
 export default tracingCollector;

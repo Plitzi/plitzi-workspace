@@ -10,6 +10,8 @@ import { useCallback, useMemo } from 'react';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
+import LayoutPicker from '../LayoutPicker';
+
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { ChangeEvent } from 'react';
 
@@ -47,21 +49,6 @@ const Settings = ({
   onUpdate
 }: SettingsProps) => {
   const [[flat, pages, pageFolders]] = useCommonStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
-
-  const layouts = useMemo(
-    () => Object.values(flat).filter(element => get(element, 'definition.type', '') === 'layoutContainer'),
-    [flat]
-  );
-
-  const layoutContainers = useMemo(() => {
-    if (!layout) {
-      return [];
-    }
-
-    return Object.values(flat).filter(
-      element => get(element, 'definition.type', '') === 'container' && get(element, 'definition.rootId', '') === layout
-    );
-  }, [flat, layout]);
 
   const pagesParsed = useMemo(
     () =>
@@ -103,14 +90,6 @@ const Settings = ({
         const newSlug = value.replaceAll('//', '/');
         onUpdate?.('slug', newSlug);
       }
-    },
-    [onUpdate]
-  );
-
-  const handleChangeLayout = useCallback(
-    (value: string) => {
-      onUpdate?.('layout', value);
-      onUpdate?.('layoutContainer', '');
     },
     [onUpdate]
   );
@@ -181,28 +160,7 @@ const Settings = ({
         onChange={handleChangeFolder}
         size="xs"
       />
-      <Select value={layout} placeholder="None" label="Layout" onChange={handleChangeLayout} size="xs">
-        {layouts.map(({ id, definition: { label } }) => (
-          <option key={id} value={id}>
-            {label}
-          </option>
-        ))}
-      </Select>
-      {layout && (
-        <Select
-          value={layoutContainer}
-          placeholder="None"
-          label="Layout Container Body"
-          onChange={handleChange('layoutContainer')}
-          size="xs"
-        >
-          {layoutContainers.map(({ id, definition: { label } }) => (
-            <option key={id} value={id}>
-              {label}
-            </option>
-          ))}
-        </Select>
-      )}
+      <LayoutPicker layout={layout} layoutContainer={layoutContainer} onUpdate={onUpdate} />
       <Select
         value={accessLevel}
         label="Restrict Access"

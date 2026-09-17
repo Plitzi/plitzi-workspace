@@ -14,6 +14,12 @@ import type { ReactNode, RefObject } from 'react';
 
 export type LayoutContainerProps = {
   ref?: RefObject<HTMLElement>;
+  /**
+   * The layout this one is shown inside, and the container in it that takes this one — the same pair a page names.
+   * Read by the page that renders the chain (`useLayoutChain`), not here.
+   */
+  layout?: string;
+  layoutContainer?: string;
   className?: string;
   children?: ReactNode;
   subType?: 'div' | 'header' | 'footer' | 'nav' | 'main' | 'section' | 'article' | 'aside' | 'address' | 'figure';

@@ -1241,3 +1241,57 @@ describe('Testing FlatMap', () => {
     ]);
   });
 });
+
+describe('FlatMap.parentTree across nested layouts', () => {
+  const node = (
+    id: string,
+    type: string,
+    parentId: string | undefined,
+    rootId: string,
+    attributes: Record<string, unknown> = {}
+  ): Schema['flat'][string] => ({
+    id,
+    attributes,
+    definition: { label: id, type, parentId, rootId, items: [], styleSelectors: { base: '' } }
+  });
+
+  const flat: Schema['flat'] = {
+    shell: node('shell', 'layoutContainer', undefined, 'shell'),
+    'shell-body': node('shell-body', 'container', 'shell', 'shell'),
+    analytics: node('analytics', 'layoutContainer', undefined, 'analytics', {
+      layout: 'shell',
+      layoutContainer: 'shell-body'
+    }),
+    'analytics-api': node('analytics-api', 'apiContainer', 'analytics', 'analytics'),
+    'analytics-body': node('analytics-body', 'container', 'analytics-api', 'analytics'),
+    audience: node('audience', 'page', undefined, 'audience', {
+      layout: 'analytics',
+      layoutContainer: 'analytics-body'
+    }),
+    map: node('map', 'container', 'audience', 'audience')
+  };
+
+  /** A page's content binds to a provider its SHELL holds, so the shell — and the one around it — are its ancestors. */
+  it('walks from a page into its shell and on into the shell around that', () => {
+    expect(FlatMap.parentTree(flat, 'map')).toEqual([
+      'analytics-body',
+      'analytics-api',
+      'shell-body',
+      'shell',
+      'analytics',
+      'audience'
+    ]);
+  });
+
+  it('stops at shells that name each other', () => {
+    const cyclic: Schema['flat'] = {
+      ...flat,
+      shell: node('shell', 'layoutContainer', undefined, 'shell', {
+        layout: 'analytics',
+        layoutContainer: 'analytics-body'
+      })
+    };
+
+    expect(() => FlatMap.parentTree(cyclic, 'map')).not.toThrow();
+  });
+});

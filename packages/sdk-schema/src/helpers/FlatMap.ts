@@ -454,7 +454,12 @@ class FlatMap {
 
   // Extra Methods
 
-  parentTree = (elementId: Element['id']) => {
+  /**
+   * Everything an element is rendered inside, nearest first — its ancestors, and past a root the shell that root is
+   * shown in. A layout names its own shell the way a page does, so the walk continues through as many as are nested;
+   * `visited` keeps a document whose shells name each other from walking forever.
+   */
+  parentTree = (elementId: Element['id'], visited: Set<Element['id']> = new Set()) => {
     let element = this.flat[elementId] as Element | undefined;
     const ids: Element['id'][] = [];
     if (!element) {
@@ -463,11 +468,12 @@ class FlatMap {
 
     do {
       const type = get(element, 'definition.type');
-      if (type === 'page') {
+      if ((type === 'page' || type === 'layoutContainer') && !visited.has(element.id)) {
+        visited.add(element.id);
         const layout = get(element, 'attributes.layout');
         const layoutContainer = get(element, 'attributes.layoutContainer') as Element['id'];
         if (layout && layoutContainer) {
-          ids.push(layoutContainer, ...this.parentTree(layoutContainer));
+          ids.push(layoutContainer, ...this.parentTree(layoutContainer, visited));
         }
       }
 

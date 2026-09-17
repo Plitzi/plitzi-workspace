@@ -8,11 +8,13 @@ import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
+import useLayoutChain from '../../../Element/hooks/useLayoutChain';
 import RootElement from '../../../Element/RootElement';
 import LayoutContainer from '../LayoutContainer';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { LayoutLink } from '@plitzi/sdk-shared/schema/layoutChain';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
@@ -25,6 +27,38 @@ export type PageProps = {
   layoutContainer?: string;
   children?: ReactNode;
 };
+
+/**
+ * The page's body inside its shells, the outermost one at the top.
+ *
+ * Built from the OUTSIDE in, whatever depth each page has: the platform shell is the same element at the same position
+ * for a page that sits in it directly and for one that sits in the analytics shell inside it, so navigating between
+ * the two keeps it mounted and swaps only what is inside. Each shell is keyed by its slot, not by the page — two pages
+ * naming the same shell keep it across a navigation, and a different shell remounts rather than re-pointing the same
+ * node at another element id.
+ */
+const wrapInLayouts = (chain: LayoutLink[], pageId: string, children: ReactNode): ReactNode =>
+  chain.reduce<ReactNode>(
+    (body, { layout, slot }, depth) => (
+      <LayoutContainer
+        key={slot}
+        internalProps={{
+          id: layout,
+          // Everything in a shell belongs to the page it is rendered for, which is what a binding resolves against.
+          rootId: pageId,
+          plitziElementLayout: {
+            bodyChildren: body,
+            containerId: slot,
+            // The page for the innermost shell; the shell it holds for every one around it.
+            referenceId: depth === 0 ? pageId : chain[depth - 1].layout,
+            rootId: slot,
+            type: 'layout' as const
+          }
+        }}
+      />
+    ),
+    children
+  );
 
 const Page = ({
   ref,
@@ -44,20 +78,8 @@ const Page = ({
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const [[routeParams, queryParams]] = useSdkStore(['navigation.routeParams', 'navigation.queryParams']);
 
-  const layoutInternalProps = useMemo(
-    () => ({
-      id: layout,
-      rootId: id, // layout to pageId as a root in runtime
-      plitziElementLayout: {
-        bodyChildren: children,
-        containerId: layoutContainer || layout,
-        referenceId: id,
-        rootId: layoutContainer || layout,
-        type: 'layout' as const
-      }
-    }),
-    [layoutContainer, layout, id, children]
-  );
+  const layoutChain = useLayoutChain(layout, layoutContainer);
+  const body = useMemo(() => wrapInLayouts(layoutChain, id, children), [layoutChain, id, children]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
@@ -112,11 +134,7 @@ const Page = ({
           {!!seoPageDescription && <meta name="description" content={seoPageDescription} />}
         </Helmet>
       )}
-      {/* Keyed by the LAYOUT, not by the page: two pages naming the same shell keep it mounted across a
-          navigation (the body swaps under it), while switching to a different shell remounts it rather than
-          re-pointing the same node at another element id. */}
-      {layout && <LayoutContainer key={layoutContainer || layout} internalProps={layoutInternalProps} />}
-      {!layout && children}
+      {body}
     </RootElement>
   );
 };

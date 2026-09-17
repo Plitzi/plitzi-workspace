@@ -57,8 +57,24 @@ const toBuilderParam = (name: string, param: BuiltinParam): InteractionCallbackP
     ...(param.elementType === undefined ? {} : { elementType: param.elementType })
   }) as InteractionCallbackParam;
 
-export const toBuilderParams = (spec: ParamSpec): Record<string, InteractionCallbackParam> =>
-  Object.fromEntries(Object.entries(spec).map(([name, param]) => [name, toBuilderParam(name, param)]));
+const builderParamsCache = new WeakMap<ParamSpec, Readonly<Record<string, InteractionCallbackParam>>>();
+
+/**
+ * Converted once per declaration and shared.
+ *
+ * Declarations are module constants, and every element builds its own `setState` / `toggleState` from the same two
+ * on every mount — so converting here each time, a regex per param, was a measurable share of mounting a page.
+ * Callers spread what they change, which is why the shared object is read-only.
+ */
+export const toBuilderParams = (spec: ParamSpec): Readonly<Record<string, InteractionCallbackParam>> => {
+  let params = builderParamsCache.get(spec);
+  if (!params) {
+    params = Object.fromEntries(Object.entries(spec).map(([name, param]) => [name, toBuilderParam(name, param)]));
+    builderParamsCache.set(spec, params);
+  }
+
+  return params;
+};
 
 /** What a declared action carries, whichever kind of action it is. */
 export interface BuiltinActionSpec {

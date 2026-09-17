@@ -1,14 +1,20 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createStore } from '@plitzi/nexus';
 
 import FreshnessPanel from './FreshnessPanel';
 
-import type { DevStore } from '@plitzi/nexus';
+import type { DevStoreEntry } from '@plitzi/nexus';
 
-const makeStore = () => createStore<Record<string, unknown>>({}) as DevStore;
+let uid = 0;
+const makeEntry = (name: string): DevStoreEntry => ({
+  uid: String(++uid),
+  name,
+  scopeId: 'sdk',
+  store: createStore<Record<string, unknown>>({})
+});
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -20,16 +26,16 @@ afterEach(() => {
 });
 
 describe('FreshnessPanel', () => {
-  it('renders nothing for a store without TTLs', () => {
-    const { container } = render(<FreshnessPanel store={makeStore()} />);
+  it('renders nothing while no store holds a TTL', () => {
+    const { container } = render(<FreshnessPanel entries={[makeEntry('root'), makeEntry('Queries')]} />);
 
     expect(container.innerHTML).toBe('');
   });
 
   it('lists each path with a TTL and counts it down to stale', () => {
-    const store = makeStore();
-    store.setState('orders', [1], { ttl: 3_000 });
-    render(<FreshnessPanel store={store} />);
+    const entry = makeEntry('Queries');
+    entry.store.setState('orders', [1], { ttl: 3_000 });
+    render(<FreshnessPanel entries={[entry]} />);
 
     expect(screen.getByText('orders')).toBeTruthy();
     expect(screen.getByText('3s left')).toBeTruthy();
@@ -40,22 +46,39 @@ describe('FreshnessPanel', () => {
     expect(screen.getByText('stale')).toBeTruthy();
   });
 
-  it('expires a path, or all of them, from its buttons', () => {
-    const store = makeStore();
-    store.setState('orders', [1], { ttl: 60_000 });
-    store.setState('users', [1], { ttl: 60_000 });
+  /** The TTL lives in the query cache while the reader is looking at a provider's scope — it must show regardless. */
+  it('shows the TTLs of every store, whichever one they are in', () => {
+    const scope = makeEntry('Api:an-api');
+    const queries = makeEntry('Queries');
+    render(<FreshnessPanel entries={[scope, queries]} />);
+
+    act(() => {
+      queries.store.setState('entries', { x: 1 }, { ttl: 60_000 });
+    });
+
+    expect(screen.getByText('Queries')).toBeTruthy();
+    expect(screen.getByText('entries')).toBeTruthy();
+  });
+
+  it('expires a path, or every path of every store, from its buttons', () => {
+    const first = makeEntry('root');
+    const second = makeEntry('Queries');
+    first.store.setState('orders', [1], { ttl: 60_000 });
+    second.store.setState('users', [1], { ttl: 60_000 });
     const expired = vi.fn();
-    store.watchFreshness(event => {
+    first.store.watchFreshness(event => {
       expired(event.type, event.path);
     });
-    render(<FreshnessPanel store={store} />);
+    render(<FreshnessPanel entries={[first, second]} />);
 
-    fireEvent.click(screen.getAllByText('Expire')[0]);
+    const ordersRow = screen.getByText('orders').closest('li');
+    expect(ordersRow).not.toBeNull();
+    fireEvent.click(within(ordersRow ?? document.body).getByText('Expire'));
     expect(expired).toHaveBeenLastCalledWith('expired', 'orders');
-    expect(store.isStale('users')).toBe(false);
+    expect(second.store.isStale('users')).toBe(false);
 
     fireEvent.click(screen.getByText('Expire all'));
-    expect(store.isStale('users')).toBe(true);
+    expect(second.store.isStale('users')).toBe(true);
     expect(screen.getAllByText('stale')).toHaveLength(2);
   });
 });

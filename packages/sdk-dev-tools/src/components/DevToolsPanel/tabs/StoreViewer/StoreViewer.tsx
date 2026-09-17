@@ -9,9 +9,10 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import FreshnessPanel from './components/FreshnessPanel';
+import describeQueryPath from './helpers/describeQueryPath';
 import mapFunctionValues from './helpers/mapFunctionValues';
 import renderFunctionValue from './helpers/renderFunctionValue';
-import { useSelectedStore } from '../../../../scope/useScope';
+import { useInstanceStores, useSelectedStore } from '../../../../scope/useScope';
 import useStoreState from '../../../../scope/useStoreState';
 
 type StoreView = 'own' | 'merged';
@@ -42,6 +43,7 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
   const { getData } = use(DevToolsContext);
   // The store picked in the header's scope dropdown (defaults to the active instance's root); its live state is shown.
   const selectedStore = useSelectedStore();
+  const instanceStores = useInstanceStores();
   // Own layer by default; the parent fall-through is merged in only when the user asks for it (scoped stores only).
   const [view, setView] = useStorage<StoreView>('plitzi-sdk.dev-tools.store.view', 'own');
   const storeState = useStoreState(elementSelected ? undefined : selectedStore, view === 'merged');
@@ -70,7 +72,7 @@ const StoreViewer = ({ elementSelected }: StoreViewerProps) => {
           </button>
         </div>
       )}
-      {!elementSelected && <FreshnessPanel store={selectedStore} />}
+      {!elementSelected && <FreshnessPanel entries={instanceStores} describe={describeQueryPath} />}
       <JsonView
         value={displayValue ?? emptyObject}
         style={resolvedTheme === 'dark' ? jsonViewStyle : undefined}

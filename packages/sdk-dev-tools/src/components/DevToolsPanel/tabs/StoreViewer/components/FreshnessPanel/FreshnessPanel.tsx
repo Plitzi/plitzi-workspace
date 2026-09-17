@@ -2,28 +2,29 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import FreshnessRow from './components/FreshnessRow';
 import { toRows } from './helpers';
-import useFreshnessRecords from '../../../../../../scope/useFreshnessRecords';
+import { rootKeysOf, storeLabel } from '../../../../../../scope/helpers';
+import useFreshnessByStore from '../../../../../../scope/useFreshnessByStore';
 
-import type { DevStore } from '@plitzi/nexus';
+import type { DescribePath } from './helpers';
+import type { FreshnessGroup } from '../../../../../../scope/useFreshnessByStore';
+import type { DevStoreEntry } from '@plitzi/nexus';
 
 export type FreshnessPanelProps = {
-  store: DevStore | undefined;
+  /** Every store of the instance the panel is showing — not only the one picked in the header. */
+  entries: ReadonlyArray<DevStoreEntry>;
+  describe?: DescribePath;
 };
 
 /**
- * The paths of the selected store that were written with a TTL: how old each one is, how long it has left, and a
- * way to expire it — which is how a developer checks that whatever depends on it refreshes. Absent for a store that
- * holds none, so it costs nothing to look at the others.
+ * The paths written with a TTL, in any store of the instance: how old each one is, how long it has left, and a way to
+ * expire it — which is how a developer checks that whatever depends on it refreshes. Absent while no store holds one.
  */
-const FreshnessPanel = ({ store }: FreshnessPanelProps) => {
-  const records = useFreshnessRecords(store);
-  const count = Object.keys(records).length;
+const FreshnessPanel = ({ entries, describe }: FreshnessPanelProps) => {
+  const groups = useFreshnessByStore(entries);
+  const count = useMemo(() => groups.reduce((sum, group) => sum + Object.keys(group.records).length, 0), [groups]);
   const [now, setNow] = useState(() => Date.now());
 
-  // The clock the rows are read against moves when a record changes — a row written after the last tick would read
-  // as written in the future — and once a second, the finest step a countdown shows.
-  useEffect(() => store?.watchFreshness(() => setNow(Date.now())), [store]);
-
+  // A clock that moves once a second, the finest step a countdown shows; `toRows` never reads it as older than a write.
   useEffect(() => {
     if (count === 0) {
       return undefined;
@@ -34,17 +35,20 @@ const FreshnessPanel = ({ store }: FreshnessPanelProps) => {
     return () => clearInterval(timer);
   }, [count]);
 
-  const rows = useMemo(() => toRows(records, now), [records, now]);
+  const rootKeys = useMemo(() => rootKeysOf(entries), [entries]);
+  const labelOf = useCallback((group: FreshnessGroup) => storeLabel(group.entry, rootKeys), [rootKeys]);
+  const rows = useMemo(() => toRows(groups, labelOf, now, describe), [groups, labelOf, now, describe]);
 
   const handleExpire = useCallback(
-    (path: string) => {
-      store?.expire(path);
+    (uid: string, path: string) => {
+      groups.find(group => group.entry.uid === uid)?.entry.store.expire(path);
     },
-    [store]
+    [groups]
   );
+
   const handleExpireAll = useCallback(() => {
-    store?.expire();
-  }, [store]);
+    groups.forEach(group => group.entry.store.expire());
+  }, [groups]);
 
   if (count === 0) {
     return null;
@@ -55,6 +59,7 @@ const FreshnessPanel = ({ store }: FreshnessPanelProps) => {
       <div className="flex items-center gap-2 px-2 py-1">
         <span className="font-medium text-zinc-600 dark:text-zinc-300">TTL</span>
         <span className="text-zinc-400 tabular-nums dark:text-zinc-500">{count}</span>
+        <span className="text-zinc-400 dark:text-zinc-500">every store of this instance</span>
         <button
           className="ml-auto cursor-pointer rounded px-1.5 text-violet-600 hover:bg-violet-500/15 dark:text-violet-300"
           onClick={handleExpireAll}
@@ -65,7 +70,7 @@ const FreshnessPanel = ({ store }: FreshnessPanelProps) => {
       </div>
       <ul className="max-h-40 overflow-auto pb-1">
         {rows.map(row => (
-          <FreshnessRow key={row.path} row={row} onExpire={handleExpire} />
+          <FreshnessRow key={row.key} row={row} onExpire={handleExpire} />
         ))}
       </ul>
     </div>

@@ -8,6 +8,7 @@ import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import DevToolsOverlay from './components/DevToolsOverlay';
 import DevToolsContextProvider from './DevToolsContextProvider';
+import DevToolsRoot from './DevToolsRoot';
 import { useIsSelectedInstance } from './instanceRegistry';
 import useHydrated from './useHydrated';
 import useRegisterQueriesStore from './useRegisterQueriesStore';
@@ -123,40 +124,42 @@ const DevToolsContainer = ({
         <div className={clsx('grow basis-0 flex-col overflow-auto', innerClassName)}>{children}</div>
       </DevStoreScopeContext>
       {isSelected && hydrated && (
-        <DevToolsContextProvider>
-          {renderMode === 'default' && (
-            <DevToolsOverlay
-              className={clsx({ dark: resolvedTheme === 'dark' })}
-              collapsed={collapsed}
-              orientation={dockedAt}
-              tabSelected={tabSelected}
-              logTypeFilter={logTypeFilter}
-              onOpen={handleOpen}
-              onCollapse={handleCollapse}
-              onTabSelect={handleTabSelect}
-              onChangeOrientation={handleChangeOrientation}
-            />
-          )}
-          {renderMode === 'shadow' && (
-            <ContainerShadow>
-              {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
-              <ContainerShadow.Content>
-                <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
-                <DevToolsOverlay
-                  className={clsx({ dark: resolvedTheme === 'dark' })}
-                  collapsed={collapsed}
-                  orientation={dockedAt}
-                  tabSelected={tabSelected}
-                  logTypeFilter={logTypeFilter}
-                  onOpen={handleOpen}
-                  onCollapse={handleCollapse}
-                  onTabSelect={handleTabSelect}
-                  onChangeOrientation={handleChangeOrientation}
-                />
-              </ContainerShadow.Content>
-            </ContainerShadow>
-          )}
-        </DevToolsContextProvider>
+        <DevToolsRoot>
+          <DevToolsContextProvider>
+            {renderMode === 'default' && (
+              <DevToolsOverlay
+                className={clsx({ dark: resolvedTheme === 'dark' })}
+                collapsed={collapsed}
+                orientation={dockedAt}
+                tabSelected={tabSelected}
+                logTypeFilter={logTypeFilter}
+                onOpen={handleOpen}
+                onCollapse={handleCollapse}
+                onTabSelect={handleTabSelect}
+                onChangeOrientation={handleChangeOrientation}
+              />
+            )}
+            {renderMode === 'shadow' && (
+              <ContainerShadow>
+                {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
+                <ContainerShadow.Content>
+                  <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
+                  <DevToolsOverlay
+                    className={clsx({ dark: resolvedTheme === 'dark' })}
+                    collapsed={collapsed}
+                    orientation={dockedAt}
+                    tabSelected={tabSelected}
+                    logTypeFilter={logTypeFilter}
+                    onOpen={handleOpen}
+                    onCollapse={handleCollapse}
+                    onTabSelect={handleTabSelect}
+                    onChangeOrientation={handleChangeOrientation}
+                  />
+                </ContainerShadow.Content>
+              </ContainerShadow>
+            )}
+          </DevToolsContextProvider>
+        </DevToolsRoot>
       )}
     </div>
   );

@@ -126,6 +126,10 @@
       "types": "./dist/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/Element/hooks/useInternalItems.mjs"
     },
+    "./Element/hooks/useLayoutChain": {
+      "types": "./dist/Element/hooks/useLayoutChain.d.ts",
+      "import": "./dist/Element/hooks/useLayoutChain.mjs"
+    },
     "./Element/hooks/useRootElementInteractions": {
       "types": "./dist/Element/hooks/useRootElementInteractions.d.ts",
       "import": "./dist/Element/hooks/useRootElementInteractions.mjs"
@@ -153,6 +157,10 @@
     "./dataSource/index": {
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
+    },
+    "./dataSource/pathFields": {
+      "types": "./dist/dataSource/pathFields.d.ts",
+      "import": "./dist/dataSource/pathFields.mjs"
     },
     "./elements": {
       "types": "./dist/elements/index.d.ts",
@@ -573,6 +581,18 @@
     "./elements/internal/LayoutContainer/index": {
       "types": "./dist/elements/internal/LayoutContainer/index.d.ts",
       "import": "./dist/elements/internal/LayoutContainer/index.mjs"
+    },
+    "./elements/internal/LayoutPicker": {
+      "types": "./dist/elements/internal/LayoutPicker/index.d.ts",
+      "import": "./dist/elements/internal/LayoutPicker/index.mjs"
+    },
+    "./elements/internal/LayoutPicker/LayoutPicker": {
+      "types": "./dist/elements/internal/LayoutPicker/LayoutPicker.d.ts",
+      "import": "./dist/elements/internal/LayoutPicker/LayoutPicker.mjs"
+    },
+    "./elements/internal/LayoutPicker/index": {
+      "types": "./dist/elements/internal/LayoutPicker/index.d.ts",
+      "import": "./dist/elements/internal/LayoutPicker/index.mjs"
     },
     "./elements/internal/Loading": {
       "types": "./dist/elements/internal/Loading/index.d.ts",
