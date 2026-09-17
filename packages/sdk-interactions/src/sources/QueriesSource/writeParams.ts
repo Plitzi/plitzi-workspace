@@ -33,9 +33,10 @@ export const writeInvalidationParams = (
     when: applies
   },
   invalidateElements: {
-    type: 'text',
-    description: 'The api containers to refresh, by element id, separated by commas.',
-    default: '',
+    type: 'elementIds',
+    elementType: 'apiContainer',
+    description: 'The api containers to refresh, by element id.',
+    default: [],
     label: 'Containers (ids)',
     when: params => applies(params) && params.invalidateQueries === 'elements'
   }

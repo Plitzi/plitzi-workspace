@@ -8,6 +8,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import Workflow from './components/Workflow';
+import { toWorkflowElements } from './components/Workflow/helpers/elementOptions';
 
 import type { Element, InteractionCallback, Source } from '@plitzi/sdk-shared';
 
@@ -20,7 +21,7 @@ export type InteractionsProps = {
 };
 
 const Interactions = ({ className = '', id = '', interactions = emptyObject, onChange }: InteractionsProps) => {
-  const [sourcesRegistry] = useBuilderStore('sources');
+  const [[sourcesRegistry, flat]] = useBuilderStore(['sources', 'schema.flat']);
   const { interactionsManager } = use(InteractionsContext);
   const [reRender, setRerender] = useState(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,6 +77,8 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
     [sourcesRegistry]
   );
 
+  const elements = useMemo(() => toWorkflowElements(flat), [flat]);
+
   return (
     <div className={clsx('flex grow flex-col', className)}>
       <Workflow
@@ -83,6 +86,7 @@ const Interactions = ({ className = '', id = '', interactions = emptyObject, onC
         nodes={interactions}
         direction="vertical"
         dataSource={dataSource}
+        elements={elements}
         nodeDefinitions={nodeDefinitions}
         onChange={handleWorkflowChange}
       />

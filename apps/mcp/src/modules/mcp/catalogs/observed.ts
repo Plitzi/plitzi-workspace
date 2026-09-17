@@ -17,8 +17,10 @@ export interface BuiltinParamInfo {
   name: string;
   type: string;
   description: string;
-  default?: string | number | boolean;
+  default?: string | number | boolean | string[];
   options?: string[];
+  // For an `elementIds` param: the element type whose ids it takes (e.g. `apiContainer`).
+  elementType?: string;
   // True when the param is only shown/relevant under a condition (mirrors the source param's `when`).
   conditional?: boolean;
 }
@@ -96,6 +98,7 @@ const toParamInfo = (params: Record<string, BuiltinParam>): BuiltinParamInfo[] =
     description: spec.description,
     ...(spec.default !== undefined ? { default: spec.default } : {}),
     ...(spec.options ? { options: spec.options } : {}),
+    ...(spec.elementType ? { elementType: spec.elementType } : {}),
     ...(spec.when ? { conditional: true } : {})
   }));
 

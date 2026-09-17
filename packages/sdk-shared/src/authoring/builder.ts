@@ -32,7 +32,8 @@ const BUILDER_TYPES: Record<BuiltinParam['type'], InteractionParamType> = {
   // Neither has a control of its own: the editor writes numbers into a text box and coerces on the way out, and a
   // polymorphic value is a text box until the param above it says otherwise.
   number: 'text',
-  scalar: 'text'
+  scalar: 'text',
+  elementIds: 'elements'
 };
 
 /** `autoDismissTimeout` → "Auto Dismiss Timeout", `top-right` → "Top Right". */
@@ -52,7 +53,8 @@ const toBuilderParam = (name: string, param: BuiltinParam): InteractionCallbackP
       ? { options: param.options.map(value => ({ value, label: param.optionLabels?.[value] ?? humanize(value) })) }
       : {}),
     ...(param.when ? { when: param.when } : {}),
-    ...(param.canBind === undefined ? {} : { canBind: param.canBind })
+    ...(param.canBind === undefined ? {} : { canBind: param.canBind }),
+    ...(param.elementType === undefined ? {} : { elementType: param.elementType })
   }) as InteractionCallbackParam;
 
 export const toBuilderParams = (spec: ParamSpec): Record<string, InteractionCallbackParam> =>

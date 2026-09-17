@@ -8,7 +8,7 @@ import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
 import WorkflowContext from './WorkflowContext';
 
-import type { WorkflowContextValue } from './WorkflowContext';
+import type { WorkflowContextValue, WorkflowElement } from './WorkflowContext';
 import type { ElementInteraction, InteractionCallback, Source, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -17,6 +17,7 @@ export type WorkflowContextProviderProps = {
   nodes: Record<string, ElementInteraction>;
   direction: 'horizontal' | 'vertical';
   dataSource?: Record<string, Source['meta']>;
+  elements?: WorkflowElement[];
   nodeDefinitions?: InteractionCallback[];
   /** Default action for a new trigger, when the flow kind has an obvious one. */
   defaultTrigger?: string;
@@ -24,11 +25,14 @@ export type WorkflowContextProviderProps = {
   setFlowId: (flowId: string) => void;
 };
 
+const noElements: WorkflowElement[] = [];
+
 const WorkflowContextProvider = ({
   children,
   nodes,
   direction = 'horizontal',
   dataSource = {},
+  elements = noElements,
   nodeDefinitions,
   defaultTrigger,
   setFlowId,
@@ -281,6 +285,7 @@ const WorkflowContextProvider = ({
       previewData,
       dataSource,
       dataSourceContent,
+      elements,
       addNode,
       updateNode,
       removeNode,
@@ -296,6 +301,7 @@ const WorkflowContextProvider = ({
       previewData,
       dataSource,
       dataSourceContent,
+      elements,
       addNode,
       updateNode,
       removeNode,

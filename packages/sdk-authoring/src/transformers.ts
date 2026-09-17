@@ -183,7 +183,7 @@ export interface TransformerInfo {
     name: string;
     type: string;
     description: string;
-    default?: string | number | boolean;
+    default?: string | number | boolean | string[];
     options?: string[];
   }[];
 }

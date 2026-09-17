@@ -36,7 +36,7 @@ type RunParams = {
   idempotencyKey: string;
   /** What a completed run refreshes — see `writeInvalidationParams`. */
   invalidateQueries?: string;
-  invalidateElements?: string;
+  invalidateElements?: string[];
 };
 
 type ActionResponse = {

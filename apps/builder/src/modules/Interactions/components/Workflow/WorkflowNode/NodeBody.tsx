@@ -15,7 +15,7 @@ export type NodeBodyProps = {
 
 const NodeBody = ({ id = '', params, paramDefinitions, fields, onChange }: NodeBodyProps) => {
   const handleChange = useCallback(
-    (key: keyof ElementInteraction, value: string | number | boolean) =>
+    (key: keyof ElementInteraction, value: string | number | boolean | string[]) =>
       onChange?.({ params: { ...params, [key]: value } }),
     [params, onChange]
   );
@@ -64,6 +64,7 @@ const NodeBody = ({ id = '', params, paramDefinitions, fields, onChange }: NodeB
               value={get(params, param, paramDefinition.defaultValue)}
               type={paramDefinition.type}
               canBind={paramDefinition.canBind}
+              elementType={'elementType' in paramDefinition ? paramDefinition.elementType : undefined}
               onChange={handleChange}
               options={'options' in paramDefinition ? paramDefinition.options : undefined}
               params={params}

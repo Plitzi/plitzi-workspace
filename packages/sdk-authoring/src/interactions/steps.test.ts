@@ -83,11 +83,11 @@ describe('runServerAction input', () => {
 });
 
 describe('invalidateQueries', () => {
-  it('writes the containers as the text the editor shows', () => {
+  it('writes the containers as the list the editor picks', () => {
     expect(invalidateQueries({ elements: ['orders', 'members'] }).params).toEqual({
       url: '',
-      elements: 'orders, members'
+      elements: ['orders', 'members']
     });
-    expect(invalidateQueries().params).toEqual({ url: '', elements: '' });
+    expect(invalidateQueries().params).toEqual({ url: '', elements: [] });
   });
 });

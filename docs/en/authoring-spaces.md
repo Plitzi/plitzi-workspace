@@ -335,7 +335,7 @@ A cached answer stops counting as current before its time — it stays on screen
 - a write succeeds. Both write steps say what they refresh with `invalidateQueries`: a `webHook` sent with anything
   but `GET`/`HEAD` refreshes the requests to its own site by default (`'origin'`), a completed `runServerAction`
   refreshes all of them by default (`'all'`, since only the server knows what an action touched), and either can
-  name containers instead (`'elements'` with `invalidateElements: 'orders, members'`) or nothing (`'none'`, for a
+  name containers instead (`'elements'` with `invalidateElements: ['orders', 'members']`) or nothing (`'none'`, for a
   step that only reads). A `writeRecord` refreshes them all;
 - the visitor signs in, signs out or changes account. This one does not wait: whatever was held for the previous
   visitor is dropped at once, and every provider on screen loads again.
@@ -348,7 +348,7 @@ button({
   flows: [[
     onClick(),
     webHook({ url: '/api/members', method: 'post', body: { email: '{{form.values.email}}' },
-      invalidateQueries: 'elements', invalidateElements: 'members' })
+      invalidateQueries: 'elements', invalidateElements: ['members'] })
   ]]
 })
 ```

@@ -167,8 +167,8 @@ export const runServerAction = (params: {
    * what an action wrote), the containers named in `invalidateElements`, or `none` for an action that only reads.
    */
   invalidateQueries?: 'all' | 'elements' | 'none';
-  /** Api container ids, separated by commas — with `invalidateQueries: 'elements'`. */
-  invalidateElements?: string;
+  /** Api container ids — with `invalidateQueries: 'elements'`. */
+  invalidateElements?: string[];
 }): StepSpec => globalStep('runServerAction', { mode: 'await', input: {}, ...params });
 
 export const cancelServerAction = (params: { runId: string }): StepSpec => globalStep('cancelServerAction', params);
@@ -180,7 +180,7 @@ export const cancelServerAction = (params: { runId: string }): StepSpec => globa
  * whose URL starts with it; given both, a request must match both. With neither, every request on the page.
  */
 export const invalidateQueries = (params: { elements?: string[]; url?: string } = {}): StepSpec =>
-  globalStep('invalidateQueries', { url: params.url ?? '', elements: (params.elements ?? []).join(', ') });
+  globalStep('invalidateQueries', { url: '', elements: [], ...params });
 
 /**
  * A utility runs on nothing: the runtime resolves it by action alone, so it carries no `on` at all — the one kind
@@ -220,8 +220,8 @@ export const webHook = (params: {
    * the containers named in `invalidateElements`, or `none`.
    */
   invalidateQueries?: 'origin' | 'all' | 'elements' | 'none';
-  /** Api container ids, separated by commas — with `invalidateQueries: 'elements'`. */
-  invalidateElements?: string;
+  /** Api container ids — with `invalidateQueries: 'elements'`. */
+  invalidateElements?: string[];
 }): StepSpec => utilityStep('webHook', params);
 
 export const twigTemplate = (params: { template: string }): StepSpec => utilityStep('twigTemplate', params);

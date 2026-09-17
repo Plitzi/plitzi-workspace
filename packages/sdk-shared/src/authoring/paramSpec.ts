@@ -18,7 +18,8 @@ import type { InteractionParamType } from '../types';
 // `value`, whose data type follows the target attribute — booleans are stored as real booleans, numbers as numbers).
 // The others map to a single JS type — `text`/`textarea` → string, `boolean` → boolean, `number` → number, `select`
 // → one of `options`. This drives value-type validation (see `invalidParams`), not just the builder widget.
-export type BuiltinParamType = 'text' | 'textarea' | 'select' | 'boolean' | 'number' | 'scalar';
+// `elementIds` is a list of element ids — the editor offers the space's elements of `elementType` to pick from.
+export type BuiltinParamType = 'text' | 'textarea' | 'select' | 'boolean' | 'number' | 'scalar' | 'elementIds';
 
 export interface BuiltinParam {
   type: BuiltinParamType;
@@ -26,7 +27,7 @@ export interface BuiltinParam {
   description: string;
   // Value the builder pre-fills when the agent omits the param. Absent means the param has no default (the agent
   // must supply it when relevant).
-  default?: string | number | boolean;
+  default?: string | number | boolean | string[];
   // Allowed values for a `select` param.
   options?: string[];
   // Only fill the default / show the param when this predicate over the already-resolved params holds — mirrors the
@@ -56,6 +57,8 @@ export interface BuiltinParam {
   builderType?: InteractionParamType | ((params: Record<string, unknown>) => InteractionParamType);
   /** Whether the editor offers to bind this param to a data source. Bindable unless a param says otherwise. */
   canBind?: boolean;
+  /** For `elementIds`: the element type the editor offers (e.g. `apiContainer`); every element without one. */
+  elementType?: string;
 }
 
 export type ParamSpec = Record<string, BuiltinParam>;
@@ -133,6 +136,8 @@ const matchesType = (value: unknown, param: BuiltinParam): boolean => {
     case 'text':
     case 'textarea':
       return typeof value === 'string';
+    case 'elementIds':
+      return Array.isArray(value) && value.every(id => typeof id === 'string');
     default:
       return true;
   }

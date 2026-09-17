@@ -12,6 +12,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import ParamBinding from './ParamBinding';
+import ParamElements from './ParamElements';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -23,13 +24,15 @@ export type NodeBodyParamProps = {
   nodeId?: string;
   id: keyof ElementInteraction;
   label?: string;
-  value?: string | boolean | number;
+  value?: string | boolean | number | string[];
   type?: InteractionParamType | ((params: Record<string, unknown>) => InteractionParamType);
+  /** For an `elements` param: the element type offered. */
+  elementType?: string;
   options?: Option[] | ((params: Record<string, unknown>) => Option[]);
   canBind?: boolean;
   params?: Record<string, unknown>;
   fields: Record<string, { name: string; label: string; placeholder: string; group: string }>;
-  onChange?: (id: keyof ElementInteraction, value: string | boolean | number) => void;
+  onChange?: (id: keyof ElementInteraction, value: string | boolean | number | string[]) => void;
 };
 
 const NodeBodyParam = ({
@@ -40,6 +43,7 @@ const NodeBodyParam = ({
   value = '',
   type: typeProp = 'text',
   options: optionsProp,
+  elementType,
   canBind = true,
   params = emptyObject,
   fields,
@@ -130,6 +134,9 @@ const NodeBodyParam = ({
             options={internalOptions}
             allowCreateOptions
           />
+        )}
+        {!isBinding && type === 'elements' && (
+          <ParamElements id={id} label={finalLabel} value={value} elementType={elementType} onChange={onChange} />
         )}
         {!isBinding && type === 'boolean' && (
           <div className="flex w-full items-center">

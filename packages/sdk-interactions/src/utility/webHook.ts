@@ -14,7 +14,7 @@ type WebHookParams = {
   cache?: boolean | string;
   staleTime?: number | string;
   invalidateQueries?: string;
-  invalidateElements?: string;
+  invalidateElements?: string[];
 };
 
 type WebHookResponse = { status?: number; data?: string };

@@ -58,9 +58,9 @@ describe('webHook', () => {
       url: 'https://api.test/cart/items'
     });
 
-    await send({ method: 'delete', invalidateQueries: 'elements', invalidateElements: 'cart' });
+    await send({ method: 'delete', invalidateQueries: 'elements', invalidateElements: ['cart'] });
     expect(invalidateAfterWrite).toHaveBeenLastCalledWith(
-      expect.objectContaining({ mode: 'elements', elements: 'cart' })
+      expect.objectContaining({ mode: 'elements', elements: ['cart'] })
     );
   });
 

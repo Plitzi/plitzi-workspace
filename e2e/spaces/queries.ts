@@ -108,7 +108,7 @@ export const querySpace = ({ cache = false, staleTime = 30 }: QuerySpaceOptions 
               action: 'invalidateQueries',
               elementId: 'queries',
               // By the container's id: the way a flow names a request whose URL is a template.
-              params: { elements: QUERY_IDS.provider, url: '' }
+              params: { elements: [QUERY_IDS.provider], url: '' }
             })
           }
         ),

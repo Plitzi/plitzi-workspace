@@ -37,6 +37,12 @@
   container asking the same thing. Its declaration now lives beside it (`utility/webHookSpec`) and the authoring
   catalog gathers it instead of keeping a copy. A `HEAD` is no longer sent with a body, which `fetch` refused.
 
+- **Step params can pick several elements.** A new param type, `elementIds` (with an `elementType` filter), is drawn
+  in the flow editor as a picker: the matching elements of the space to add, and the picked ones as chips to remove —
+  an id no element answers to any more is kept and flagged. The value is a list of ids, so nobody types a
+  comma-separated list; `invalidateQueries.elements` and the write steps' `invalidateElements` use it, and the MCP
+  catalog says which element type each such param takes.
+
 - The dev-tools' Store tab lists the paths a store holds with a TTL — how long ago each was written, what is left
   of it, and a button to expire one or all of them. The query cache appears there as "Queries".
 

@@ -2,12 +2,17 @@ import { createContext } from 'react';
 
 import type { ElementInteraction, InteractionCallback, Source, SourceField } from '@plitzi/sdk-shared';
 
+/** An element of the space a step param can name, as the element picker lists it. */
+export type WorkflowElement = { id: string; type: string; label: string };
+
 export type WorkflowContextValue = {
   direction: 'horizontal' | 'vertical';
   nodeDefinitions?: InteractionCallback[];
   previewData: Record<string, ElementInteraction['preview']>;
   dataSource: Record<string, Source['meta']>;
   dataSourceContent: Record<string, SourceField[]>;
+  /** The space's elements, for a param that picks some of them. */
+  elements: WorkflowElement[];
   addNode: (nodeType: ElementInteraction['type'], siblingNodeId?: string, flowId?: string) => void;
   updateNode: (node: ElementInteraction) => void;
   removeNode: (nodeId: string) => void;

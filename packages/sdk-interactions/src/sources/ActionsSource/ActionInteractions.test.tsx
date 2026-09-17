@@ -135,10 +135,10 @@ describe('ActionInteractions', () => {
       input: '{}',
       mode: 'await',
       invalidateQueries: 'elements',
-      invalidateElements: 'members'
+      invalidateElements: ['members']
     });
 
-    expect(invalidateAfterWrite).toHaveBeenCalledWith({ mode: 'elements', fallback: 'all', elements: 'members' });
+    expect(invalidateAfterWrite).toHaveBeenCalledWith({ mode: 'elements', fallback: 'all', elements: ['members'] });
   });
 
   it('leaves the cached requests alone when the run did not happen', async () => {

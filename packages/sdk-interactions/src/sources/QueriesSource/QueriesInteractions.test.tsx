@@ -44,7 +44,7 @@ describe('QueriesInteractions', () => {
     const { callbacks } = mount();
     const run = callbacks.invalidateQueries.callback as (params: Record<string, unknown>) => Promise<void>;
 
-    await run({ elements: 'orders, members', url: '' });
+    await run({ elements: ['orders', 'members'], url: '' });
     expect(invalidateQueries).toHaveBeenLastCalledWith({ url: '', elements: ['orders', 'members'] });
 
     await run({ url: '/api/orders' });

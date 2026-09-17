@@ -34,7 +34,14 @@ export type InteractionNode = {
   whenParams?: Record<string, RuleValue>;
 };
 
-export type InteractionParamType = 'boolean' | 'select' | 'text' | 'textarea' | 'codemirror-text' | 'codemirror-json';
+export type InteractionParamType =
+  | 'boolean'
+  | 'select'
+  | 'text'
+  | 'textarea'
+  | 'codemirror-text'
+  | 'codemirror-json'
+  | 'elements';
 
 export type InteractionCallbackParamValues<T extends Record<string, unknown> = Record<string, unknown>> = T;
 
@@ -54,6 +61,15 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
   | { type: 'codemirror-json'; defaultValue?: string }
   | { type: 'boolean'; defaultValue?: boolean }
   | {
+      /**
+       * Several elements of the space, stored as their ids. The editor offers the elements of `elementType` to pick
+       * from — it is the one that knows the page — so a step never asks for ids typed by hand.
+       */
+      type: 'elements';
+      defaultValue?: string[];
+      elementType?: string;
+    }
+  | {
       type: 'select';
       defaultValue?: string;
       options:
@@ -62,7 +78,7 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
     }
   | {
       type: (params: InteractionCallbackParamValues<T>) => InteractionParamType;
-      defaultValue?: string | number | boolean;
+      defaultValue?: string | number | boolean | string[];
       options?:
         | { label: string; value: string }[]
         | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);

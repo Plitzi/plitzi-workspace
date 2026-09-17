@@ -15,11 +15,12 @@ export const queriesCallbacks: Record<string, BuiltinGlobalCallback> = {
     strictParams: true,
     params: {
       elements: {
-        type: 'text',
+        type: 'elementIds',
+        elementType: 'apiContainer',
         description:
-          'The api containers to refresh, by element id, separated by commas — the way to name a request whose URL ' +
-          'is a template. Leave both this and `url` empty to refresh every cached request on the page.',
-        default: '',
+          'The api containers to refresh, by element id — the way to name a request whose URL is a template. Leave ' +
+          'both this and `url` empty to refresh every cached request on the page.',
+        default: [],
         label: 'Containers (ids)'
       },
       url: {

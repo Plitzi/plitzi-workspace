@@ -9,6 +9,7 @@ import WorkflowFlow from './WorkflowFlow';
 import WorkflowHeader from './WorkflowHeader';
 
 import type { WarningLevel } from './helpers/nodeWarnings';
+import type { WorkflowElement } from './WorkflowContext';
 import type { ElementInteraction, InteractionCallback, Source } from '@plitzi/sdk-shared';
 
 export type WorkflowProps = {
@@ -22,6 +23,8 @@ export type WorkflowProps = {
   /** What a new TRIGGER starts as. A server action defaults to `call`; an element's flows have no obvious one. */
   defaultTrigger?: string;
   dataSource?: Record<string, Source['meta']>;
+  /** The space's elements, for a step param that picks some of them. */
+  elements?: WorkflowElement[];
   onChange?: (nodes: Record<string, ElementInteraction>) => void;
 };
 
@@ -32,6 +35,7 @@ const Workflow = ({
   nodeDefinitions,
   direction = 'vertical',
   dataSource = {},
+  elements,
   stepType = 'callback',
   defaultTrigger,
   onChange
@@ -116,6 +120,7 @@ const Workflow = ({
         direction={direction}
         nodeDefinitions={nodeDefinitions}
         dataSource={dataSource}
+        elements={elements}
         defaultTrigger={defaultTrigger}
         setFlowId={setFlowId}
         onChange={handleChange}
