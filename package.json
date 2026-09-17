@@ -57,8 +57,5 @@
     "e2e",
     "examples/shared-space",
     "examples/*/*"
-  ],
-  "resolutions": {
-    "@plitzi/nexus": "portal:../nexus"
-  }
+  ]
 }

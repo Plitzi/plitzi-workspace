@@ -4168,9 +4168,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/nexus@portal:../nexus::locator=%40plitzi%2Fplitzi-workspace%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@plitzi/nexus@portal:../nexus::locator=%40plitzi%2Fplitzi-workspace%40workspace%3A."
+"@plitzi/nexus@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@plitzi/nexus@npm:1.2.0"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
@@ -4182,8 +4182,9 @@ __metadata:
       optional: true
     vue:
       optional: true
+  checksum: 10c0/e1ce073a77513d53ecc2a78722054bba07a643b6a02664712bc4391205fd80f13902f01c43b5afd27cc8e7c4d540669819edd25436ef55a691d547ad080b181b
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@plitzi/plitzi-builder@workspace:apps/builder":
   version: 0.0.0-use.local
