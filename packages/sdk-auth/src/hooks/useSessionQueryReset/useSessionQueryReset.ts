@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
+import useIsomorphicLayoutEffect from '@plitzi/sdk-shared/hooks/useIsomorphicLayoutEffect';
 import { queryCache } from '@plitzi/sdk-shared/queries';
 
 /**
@@ -9,11 +10,16 @@ import { queryCache } from '@plitzi/sdk-shared/queries';
  * A request's cache key carries the token it was sent with, but a request authenticated by cookie carries nothing
  * that tells two visitors apart, and its answer would otherwise be served to whoever signs in next. A token renewal
  * is the same person, so `identity` is who they are, never the credential.
+ *
+ * In the LAYOUT phase, which is the whole of why it lands before anything below asks. A sign-in mounts the account
+ * area in the same commit that changes who is looking, and a provider asks from an ordinary effect — every one of
+ * those runs after every layout effect of the commit. From a passive effect here the account area had already sent
+ * its requests, so forgetting and asking again duplicated all of them and cancelled the two still in flight.
  */
 const useSessionQueryReset = (identity: string): void => {
   const previous = useRef(identity);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (previous.current === identity) {
       return;
     }

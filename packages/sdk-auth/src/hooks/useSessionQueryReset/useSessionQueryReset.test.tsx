@@ -1,4 +1,5 @@
-import { renderHook } from '@testing-library/react';
+import { render, renderHook } from '@testing-library/react';
+import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import useSessionQueryReset from './useSessionQueryReset';
@@ -45,5 +46,35 @@ describe('useSessionQueryReset', () => {
 
     rerender({ identity: '' });
     expect(reset).toHaveBeenLastCalledWith({ refetch: false });
+  });
+
+  it('forgets before anything below it asks', () => {
+    // A sign-in mounts the account area in the same commit that changes who is looking, and a provider asks from an
+    // ordinary effect. Forgetting after those ran duplicated every request the new page had just sent.
+    const order: string[] = [];
+    reset.mockImplementation(() => {
+      order.push('forgets');
+
+      return Promise.resolve();
+    });
+
+    const Provider = () => {
+      useEffect(() => {
+        order.push('asks');
+      }, []);
+
+      return null;
+    };
+
+    const Page = ({ identity }: { identity: string }) => {
+      useSessionQueryReset(identity);
+
+      return identity ? <Provider /> : null;
+    };
+
+    const { rerender } = render(<Page identity="" />);
+    rerender(<Page identity="7" />);
+
+    expect(order).toEqual(['forgets', 'asks']);
   });
 });
