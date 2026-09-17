@@ -19,7 +19,9 @@ const useSessionQueryReset = (identity: string): void => {
     }
 
     previous.current = identity;
-    void queryCache.reset();
+    // Asked again for whoever is looking now, unless that is nobody: a sign-out has no session to ask with, and
+    // every provider still on screen would answer 401.
+    void queryCache.reset({ refetch: identity !== '' });
   }, [identity]);
 };
 

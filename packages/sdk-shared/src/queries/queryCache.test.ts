@@ -312,6 +312,22 @@ describe('QueryCache', () => {
     stale();
   });
 
+  it('asks nothing again when the person it forgot was not replaced', async () => {
+    const cache = new QueryCache();
+    const fetcher = vi.fn(() => Promise.resolve('alice'));
+    cache.observe('k', { meta, fetcher, staleTime: 30_000 });
+    await flush();
+
+    await cache.reset({ refetch: false });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(cache.getEntry('k')?.data).toBeUndefined();
+    // Not "about to be asked": a reader left with no entry at all renders as loading for as long as it is mounted.
+    expect(cache.getEntry('k')?.isFetching).toBe(false);
+    expect(cache.hasAnswer('k')).toBe(true);
+    expect(cache.store.isStale(queryPath('k'))).toBe(true);
+  });
+
   it('drops an entry nobody renders once the grace period is over', async () => {
     const cache = new QueryCache();
     const fetcher = vi.fn(() => Promise.resolve('x'));

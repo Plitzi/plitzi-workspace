@@ -226,8 +226,13 @@ export class QueryCache {
    *
    * Invalidating would not do: a stale query still SHOWS what it holds until the new answer lands, and what it holds
    * belongs to the previous visitor. The epoch makes a request still in flight from before land nowhere.
+   *
+   * `refetch` is what becomes of the queries still on screen. As somebody else, they are asked again, so the page in
+   * front of the new person is theirs. As NOBODY it is a sign-out, and there is no one to ask on behalf of: asking
+   * anyway was one refusal per provider still mounted, each reported as a failed session, for a page already on its
+   * way to the guest view.
    */
-  reset(): Promise<void> {
+  reset({ refetch = true }: { refetch?: boolean } = {}): Promise<void> {
     this.epochValue++;
     this.runtimes.forEach(runtime => {
       runtime.version++;
@@ -238,10 +243,34 @@ export class QueryCache {
     });
     this.store.setState('entries', {});
 
+    if (!refetch) {
+      this.runtimes.forEach(runtime => this.markUnasked(runtime));
+
+      return Promise.resolve();
+    }
+
     const pending: Promise<void>[] = [];
     this.runtimes.forEach(runtime => pending.push(this.fetchActive(runtime)));
 
     return Promise.all(pending).then(() => undefined);
+  }
+
+  /**
+   * Holding nothing and asking for nothing — the state a query is left in when the answers are forgotten and nobody
+   * asks again.
+   *
+   * Without it the entry is simply gone, and a reader takes that for "about to be asked": it renders as loading for
+   * as long as it stays mounted, because the observer that would ask is already attached and nothing re-runs it.
+   * Written with no life at all, so the next mount asks.
+   */
+  private markUnasked(runtime: Runtime) {
+    const observer = runtime.observers.values().next();
+    if (observer.done) {
+      return;
+    }
+
+    const entry = { key: runtime.key, url: observer.value.meta.url, tags: [...runtime.tags], isFetching: false };
+    this.store.setState(queryPath(runtime.key), entry, { ttl: 0 });
   }
 
   /**

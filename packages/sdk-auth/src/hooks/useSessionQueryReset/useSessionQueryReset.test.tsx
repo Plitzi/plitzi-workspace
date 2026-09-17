@@ -32,4 +32,18 @@ describe('useSessionQueryReset', () => {
 
     expect(reset).toHaveBeenCalledTimes(3);
   });
+
+  it('asks again as the new person, and as nobody asks nothing', () => {
+    // A sign-out has no session to ask with: every provider still on screen answered 401, and each refusal is
+    // reported as a session that ended.
+    const { rerender } = renderHook(({ identity }) => useSessionQueryReset(identity), {
+      initialProps: { identity: '' }
+    });
+
+    rerender({ identity: '7' });
+    expect(reset).toHaveBeenLastCalledWith({ refetch: true });
+
+    rerender({ identity: '' });
+    expect(reset).toHaveBeenLastCalledWith({ refetch: false });
+  });
 });
