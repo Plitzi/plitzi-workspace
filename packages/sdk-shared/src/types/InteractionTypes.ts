@@ -35,13 +35,7 @@ export type InteractionNode = {
 };
 
 export type InteractionParamType =
-  | 'boolean'
-  | 'select'
-  | 'text'
-  | 'textarea'
-  | 'codemirror-text'
-  | 'codemirror-json'
-  | 'elements';
+  'boolean' | 'select' | 'text' | 'textarea' | 'codemirror-text' | 'codemirror-json' | 'elements';
 
 export type InteractionCallbackParamValues<T extends Record<string, unknown> = Record<string, unknown>> = T;
 

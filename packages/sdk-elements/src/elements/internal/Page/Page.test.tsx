@@ -8,8 +8,6 @@ import { Page } from './Page';
 import ElementContext from '../../../Element/ElementContext';
 import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 
-import type { ReactNode } from 'react';
-
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
@@ -26,17 +24,26 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
   })
 }));
 
-vi.mock('../LayoutContainer', () => ({
-  default: ({
-    internalProps
-  }: {
-    internalProps: { id: string; plitziElementLayout: { containerId: string; bodyChildren: ReactNode } };
-  }) => (
-    <div data-layout={internalProps.id} data-slot={internalProps.plitziElementLayout.containerId}>
-      {internalProps.plitziElementLayout.bodyChildren}
-    </div>
-  )
-}));
+vi.mock('../LayoutContainer', async () => {
+  const { useLayoutBody } =
+    await vi.importActual<typeof import('../../../Element/LayoutBody')>('../../../Element/LayoutBody');
+
+  return {
+    default: function LayoutContainerMock({
+      internalProps
+    }: {
+      internalProps: { id: string; plitziElementLayout: { containerId: string } };
+    }) {
+      const body = useLayoutBody(true);
+
+      return (
+        <div data-layout={internalProps.id} data-slot={internalProps.plitziElementLayout.containerId}>
+          {body}
+        </div>
+      );
+    }
+  };
+});
 
 const navigation = { routeParams: {}, queryParams: {} };
 

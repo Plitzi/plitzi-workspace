@@ -28,7 +28,7 @@
   "dependencies": {
     "@apollo/client": "^4.3.0",
     "@fortawesome/fontawesome-free": "^7.3.1",
-    "@plitzi/nexus": "^1.2.0",
+    "@plitzi/nexus": "^1.2.1",
     "@plitzi/plitzi-sdk": "workspace:*",
     "@plitzi/plitzi-ui": "^1.6.21",
     "@plitzi/sdk-auth": "workspace:*",
@@ -42,19 +42,19 @@
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
-    "@tanstack/react-virtual": "^3.14.12",
+    "@tanstack/react-virtual": "^3.14.13",
     "@xyflow/react": "^12.11.6",
     "apollo-upload-client": "^20.0.0",
     "clsx": "^2.1.1",
     "graphql": "^17.0.2",
-    "graphql-ws": "^6.2.1",
+    "graphql-ws": "^6.2.2",
     "immer": "^11.1.18",
     "jszip": "^3.10.2",
     "react-hook-form": "^7.88.0",
-    "react-router-dom": "^7.18.3",
+    "react-router-dom": "^7.18.4",
     "swr": "^2.5.1",
     "uuid": "^14.0.2",
-    "zod": "^4.6.4"
+    "zod": "^4.6.5"
   },
   "peerDependencies": {
     "react": "^19",
@@ -79,7 +79,7 @@
     "postcss": "^8.5.28",
     "postcss-loader": "^8.2.1",
     "postcss-scss": "^4.0.9",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.7",
     "prop-types": "^15.8.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -90,7 +90,7 @@
     "sass-loader": "^17.0.1",
     "stylelint": "^17.15.0",
     "stylelint-order": "^8.1.1",
-    "stylelint-scss": "^7.2.0",
+    "stylelint-scss": "^7.3.0",
     "terser": "^5.51.2",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
@@ -98,7 +98,7 @@
     "vite-plugin-ejs": "^2.0.0",
     "vite-plugin-mkcert": "^2.1.0",
     "vite-plugin-react": "^4.0.1",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "scripts": {
     "start": "vite dev --mode development",

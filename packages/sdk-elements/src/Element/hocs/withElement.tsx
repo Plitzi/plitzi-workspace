@@ -8,11 +8,13 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { diffProps, tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 
 import ElementContext from '../ElementContext';
+import ElementParentContext from '../ElementParentContext';
 import { isVisible } from '../helpers/isVisible';
 import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
 
 import type { ElementContextValue } from '../ElementContext';
+import type { ElementParentContextValue } from '../ElementParentContext';
 import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
 import type { FC, ReactNode } from 'react';
 
@@ -41,7 +43,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     // The enclosing element context is this element's real render-tree parent (nests across schemas/rootIds). Read
     // before the skipHOC branch so both branches keep the visibility chain going: a skipHOC element resolves no state
     // of its own, but its descendants still have to see that an ancestor hid them.
-    const parentElement = use(ElementContext) as ElementContextValue | undefined;
+    const parentElement = use(ElementParentContext);
     const parentVisible = parentElement?.visible ?? true;
     /**
      * This instance's tracing identity — see `ElementContextValue.traceId`.
@@ -65,11 +67,18 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       [id, rootId, parentVisible, skipTraceId]
     );
 
+    const skipParent = useMemo<ElementParentContextValue>(
+      () => ({ visible: parentVisible, traceId: skipTraceId }),
+      [parentVisible, skipTraceId]
+    );
+
     if (props.plitziJsxSkipHOC) {
       return (
-        <ElementContext value={skipEntry}>
-          <WrappedComponent {...props} />
-        </ElementContext>
+        <ElementParentContext value={skipParent}>
+          <ElementContext value={skipEntry}>
+            <WrappedComponent {...props} />
+          </ElementContext>
+        </ElementParentContext>
       );
     }
 
@@ -123,6 +132,8 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       [attributes, definition, elementState, id, plitziElementLayout, rootId, style, setElementState, visible, traceId]
     );
 
+    const parentData = useMemo<ElementParentContextValue>(() => ({ visible, traceId }), [visible, traceId]);
+
     const content = useMemo(() => {
       let wrappedProps = {
         ...internalProps.attributes,
@@ -142,7 +153,11 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
       );
     }, [internalProps.attributes, props, customProps, children]);
 
-    const tree = <ElementContext value={elementData}>{content}</ElementContext>;
+    const tree = (
+      <ElementParentContext value={parentData}>
+        <ElementContext value={elementData}>{content}</ElementContext>
+      </ElementParentContext>
+    );
 
     if (debugMode) {
       // Registers the real render-tree parent so the collector/flamegraph nest correctly across schemas, and which

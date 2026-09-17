@@ -31,7 +31,7 @@
     "@apollo/client": "^4.3.0",
     "@dr.pogodin/react-helmet": "^3.2.3",
     "@fortawesome/fontawesome-free": "^7.3.1",
-    "@plitzi/nexus": "^1.2.0",
+    "@plitzi/nexus": "^1.2.1",
     "@plitzi/plitzi-ui": "^1.6.21",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
@@ -47,7 +47,7 @@
     "clsx": "^2.1.1",
     "graphql": "^17.0.2",
     "immer": "^11.1.18",
-    "react-router-dom": "^7.18.3"
+    "react-router-dom": "^7.18.4"
   },
   "peerDependencies": {
     "react": "^19",
@@ -83,7 +83,7 @@
     "postcss": "^8.5.28",
     "postcss-loader": "^8.2.1",
     "postcss-scss": "^4.0.9",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.7",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-refresh": "^0.19.0",
@@ -94,7 +94,7 @@
     "storybook": "^10.6.0",
     "stylelint": "^17.15.0",
     "stylelint-order": "^8.1.1",
-    "stylelint-scss": "^7.2.0",
+    "stylelint-scss": "^7.3.0",
     "terser": "^5.51.2",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
@@ -102,7 +102,7 @@
     "vite-plugin-dts": "^5.1.0",
     "vite-plugin-ejs": "^2.0.0",
     "vite-plugin-mkcert": "^2.1.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "scripts": {
     "start": "vite dev --mode development",

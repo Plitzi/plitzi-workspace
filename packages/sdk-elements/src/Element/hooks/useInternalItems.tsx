@@ -6,6 +6,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';
+import { useLayoutBody } from '../LayoutBody';
 import ServerStaticShell from '../ServerStaticShell';
 
 import type { ComponentDefinition, Element, ElementLayout } from '@plitzi/sdk-shared';
@@ -104,6 +105,8 @@ const useInternalItems = ({
   // hydration (false → client elements excluded, matching server HTML), then transitions
   // to the client snapshot (true) synchronously before the browser paints — no flicker.
   const mounted = useSyncExternalStore(storeSubscriber, snapshot, serverSnapshot);
+  const isSlot = plitziElementLayout?.containerId === id;
+  const layoutBody = useLayoutBody(isSlot);
 
   return useMemo<ReactNode | undefined>(() => {
     if (!hasItems || !mountItems) {
@@ -179,8 +182,8 @@ const useInternalItems = ({
         return item;
       });
 
-    if (plitziElementLayout?.containerId === id) {
-      itemsParsed.push(<Fragment key={LAYOUT_BODY_KEY}>{plitziElementLayout.bodyChildren}</Fragment>);
+    if (isSlot) {
+      itemsParsed.push(<Fragment key={LAYOUT_BODY_KEY}>{layoutBody}</Fragment>);
     }
 
     if (Array.isArray(children)) {
@@ -194,6 +197,7 @@ const useInternalItems = ({
     }
 
     return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hasItems,
     mountItems,
@@ -207,7 +211,9 @@ const useInternalItems = ({
     layoutKeyIdentifier,
     components,
     plugins,
-    id
+    id, // due that this is memoised, we need to verify the id as well
+    isSlot,
+    layoutBody
   ]);
 };
 

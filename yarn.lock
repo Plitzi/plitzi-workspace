@@ -1690,7 +1690,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@changesets/cli@npm:^3.0.2":
+"@changesets/cli@npm:^3.0.3":
   version: 3.0.3
   resolution: "@changesets/cli@npm:3.0.3"
   dependencies:
@@ -3144,10 +3144,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:^1.8.0":
-  version: 1.8.0
-  resolution: "@noble/hashes@npm:1.8.0"
-  checksum: 10c0/06a0b52c81a6fa7f04d67762e08b2c476a00285858150caeaaff4037356dd5e119f45b2a530f638b77a5eeca013168ec1b655db41bae3236cb2e9d511484fc77
+"@noble/hashes@npm:^2.2.0":
+  version: 2.4.0
+  resolution: "@noble/hashes@npm:2.4.0"
+  checksum: 10c0/f5820a38c52886073a69722a030688ad188bbacb822d01554545371259961c2b916266c57c013c2ce5a0d78aec977142fc68fd2a79be4c97b0644fcee9bb35f6
   languageName: node
   linkType: hard
 
@@ -3672,14 +3672,14 @@ __metadata:
   resolution: "@plitzi/cli@workspace:apps/cli"
   dependencies:
     "@plitzi/sdk-authoring": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     chalk: "npm:^6.0.0"
     commander: "npm:^15.0.0"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   bin:
     plitzi: ./dist/index.js
   languageName: unknown
@@ -3702,10 +3702,10 @@ __metadata:
     "@types/smtp-server": "npm:^3.5.13"
     "@vitejs/plugin-react": "npm:^6.1.1"
     eslint: "npm:^9.39.5"
-    mailparser: "npm:^3.9.26"
+    mailparser: "npm:^3.9.28"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
-    smtp-server: "npm:^3.19.12"
+    smtp-server: "npm:^3.19.13"
     tailwindcss: "npm:^4.3.3"
     tsx: "npm:^4.23.13"
     typescript: "npm:^6.0.3"
@@ -3720,7 +3720,7 @@ __metadata:
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3734,7 +3734,7 @@ __metadata:
   dependencies:
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3747,7 +3747,7 @@ __metadata:
   resolution: "@plitzi/example-cloud-space@workspace:examples/01-my-first-space/05-from-the-cloud"
   dependencies:
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3762,7 +3762,7 @@ __metadata:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3822,7 +3822,7 @@ __metadata:
     "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@types/leaflet": "npm:^1.9.22"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     leaflet: "npm:^1.9.4"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
@@ -3838,7 +3838,7 @@ __metadata:
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     tsx: "npm:^4.23.13"
     typescript: "npm:^6.0.3"
   languageName: unknown
@@ -3870,7 +3870,7 @@ __metadata:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3885,7 +3885,7 @@ __metadata:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3900,10 +3900,10 @@ __metadata:
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     tsx: "npm:^4.23.13"
     typescript: "npm:^6.0.3"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   languageName: unknown
   linkType: soft
 
@@ -3914,7 +3914,7 @@ __metadata:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-mcp": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3928,7 +3928,7 @@ __metadata:
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3943,7 +3943,7 @@ __metadata:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3956,7 +3956,7 @@ __metadata:
   resolution: "@plitzi/example-template-authoring@workspace:examples/07-templates/01-authoring"
   dependencies:
     "@plitzi/sdk-authoring": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     tsx: "npm:^4.23.13"
     typescript: "npm:^6.0.3"
   languageName: unknown
@@ -3968,7 +3968,7 @@ __metadata:
   dependencies:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     mysql2: "npm:^3.24.4"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
@@ -3984,7 +3984,7 @@ __metadata:
     "@plitzi/example-space": "workspace:*"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
@@ -3992,9 +3992,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/nexus@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@plitzi/nexus@npm:1.2.0"
+"@plitzi/nexus@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "@plitzi/nexus@npm:1.2.1"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
@@ -4006,7 +4006,7 @@ __metadata:
       optional: true
     vue:
       optional: true
-  checksum: 10c0/e1ce073a77513d53ecc2a78722054bba07a643b6a02664712bc4391205fd80f13902f01c43b5afd27cc8e7c4d540669819edd25436ef55a691d547ad080b181b
+  checksum: 10c0/ffc1f31ce64bc6d29f467cd948c66793b0c1646330fea6a500daec995ab4c996d66603a6d9aeb8fd5eaffc0526f0c7cef2bb07788cd74fb96d43ed3a0963aee5
   languageName: node
   linkType: hard
 
@@ -4026,7 +4026,7 @@ __metadata:
     "@babel/preset-env": "npm:^8.0.5"
     "@babel/preset-react": "npm:^8.0.1"
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
-    "@plitzi/nexus": "npm:^1.2.0"
+    "@plitzi/nexus": "npm:^1.2.1"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.21"
     "@plitzi/sdk-auth": "workspace:*"
@@ -4041,7 +4041,7 @@ __metadata:
     "@plitzi/sdk-style": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.3.3"
-    "@tanstack/react-virtual": "npm:^3.14.12"
+    "@tanstack/react-virtual": "npm:^3.14.13"
     "@xyflow/react": "npm:^12.11.6"
     apollo-upload-client: "npm:^20.0.0"
     clsx: "npm:^2.1.1"
@@ -4050,26 +4050,26 @@ __metadata:
     eslint-plugin-import: "npm:^2.32.0"
     flow-bin: "npm:^0.331.0"
     graphql: "npm:^17.0.2"
-    graphql-ws: "npm:^6.2.1"
+    graphql-ws: "npm:^6.2.2"
     immer: "npm:^11.1.18"
     jszip: "npm:^3.10.2"
     postcss: "npm:^8.5.28"
     postcss-loader: "npm:^8.2.1"
     postcss-scss: "npm:^4.0.9"
-    prettier: "npm:^3.9.6"
+    prettier: "npm:^3.9.7"
     prop-types: "npm:^15.8.1"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     react-hook-form: "npm:^7.88.0"
     react-refresh: "npm:^0.19.0"
-    react-router-dom: "npm:^7.18.3"
+    react-router-dom: "npm:^7.18.4"
     react-test-renderer: "npm:^19.3.0"
     sass: "npm:^1.104.1"
     sass-embedded: "npm:^1.104.1"
     sass-loader: "npm:^17.0.1"
     stylelint: "npm:^17.15.0"
     stylelint-order: "npm:^8.1.1"
-    stylelint-scss: "npm:^7.2.0"
+    stylelint-scss: "npm:^7.3.0"
     swr: "npm:^2.5.1"
     terser: "npm:^5.51.2"
     typescript: "npm:^6.0.3"
@@ -4079,8 +4079,8 @@ __metadata:
     vite-plugin-ejs: "npm:^2.0.0"
     vite-plugin-mkcert: "npm:^2.1.0"
     vite-plugin-react: "npm:^4.0.1"
-    vitest: "npm:^5.0.0"
-    zod: "npm:^4.6.4"
+    vitest: "npm:^5.0.1"
+    zod: "npm:^4.6.5"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4098,25 +4098,25 @@ __metadata:
     "@plitzi/sdk-shared": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.3.3"
     "@testing-library/react": "npm:^16.3.3"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     "@vitejs/plugin-react": "npm:^6.1.1"
     clsx: "npm:^2.1.1"
     concurrently: "npm:^10.0.5"
-    electron: "npm:^44.3.0"
-    electron-builder: "npm:26.16.1"
+    electron: "npm:^44.4.1"
+    electron-builder: "npm:26.15.3"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
-    jsdom: "npm:^30.0.1"
+    jsdom: "npm:^30.1.0"
     postcss: "npm:^8.5.28"
-    prettier: "npm:^3.9.6"
+    prettier: "npm:^3.9.7"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     react-hook-form: "npm:^7.88.0"
-    react-router-dom: "npm:^7.18.3"
+    react-router-dom: "npm:^7.18.4"
     tailwindcss: "npm:^4.3.3"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4142,7 +4142,7 @@ __metadata:
     "@babel/preset-typescript": "npm:^8.0.1"
     "@dr.pogodin/react-helmet": "npm:^3.2.3"
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
-    "@plitzi/nexus": "npm:^1.2.0"
+    "@plitzi/nexus": "npm:^1.2.1"
     "@plitzi/plitzi-ui": "npm:^1.6.21"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -4175,11 +4175,11 @@ __metadata:
     postcss: "npm:^8.5.28"
     postcss-loader: "npm:^8.2.1"
     postcss-scss: "npm:^4.0.9"
-    prettier: "npm:^3.9.6"
+    prettier: "npm:^3.9.7"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     react-refresh: "npm:^0.19.0"
-    react-router-dom: "npm:^7.18.3"
+    react-router-dom: "npm:^7.18.4"
     react-test-renderer: "npm:^19.3.0"
     rollup-plugin-visualizer: "npm:^7.1.1"
     sass: "npm:^1.104.1"
@@ -4187,7 +4187,7 @@ __metadata:
     storybook: "npm:^10.6.0"
     stylelint: "npm:^17.15.0"
     stylelint-order: "npm:^8.1.1"
-    stylelint-scss: "npm:^7.2.0"
+    stylelint-scss: "npm:^7.3.0"
     terser: "npm:^5.51.2"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
@@ -4195,7 +4195,7 @@ __metadata:
     vite-plugin-dts: "npm:^5.1.0"
     vite-plugin-ejs: "npm:^2.0.0"
     vite-plugin-mkcert: "npm:^2.1.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4243,15 +4243,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/plitzi-workspace@workspace:."
   dependencies:
-    "@changesets/cli": "npm:^3.0.2"
+    "@changesets/cli": "npm:^3.0.3"
     "@playwright/test": "npm:^1.63.0"
     "@plitzi/plitzi-ui": "npm:^1.6.21"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.3.0"
     eslint: "npm:^9.39.5"
     prettier-plugin-tailwindcss: "npm:^0.8.1"
-    react-router: "npm:^8.3.1"
-    turbo: "npm:^2.10.12"
+    react-router: "npm:^8.4.0"
+    turbo: "npm:^2.10.13"
   languageName: unknown
   linkType: soft
 
@@ -4266,7 +4266,7 @@ __metadata:
     eslint: "npm:^9.39.5"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   languageName: unknown
   linkType: soft
 
@@ -4286,7 +4286,7 @@ __metadata:
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
     vite-plugin-dts: "npm:^5.1.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   peerDependencies:
     "@types/react": ^19
   peerDependenciesMeta:
@@ -4299,7 +4299,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
-    "@plitzi/nexus": "npm:^1.2.0"
+    "@plitzi/nexus": "npm:^1.2.1"
     "@plitzi/plitzi-ui": "npm:^1.6.21"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
@@ -4309,12 +4309,12 @@ __metadata:
     "@uiw/react-json-view": "npm:^2.0.0-alpha.43"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.5"
-    jsdom: "npm:^30.0.1"
+    jsdom: "npm:^30.1.0"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4325,7 +4325,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
-    "@plitzi/nexus": "npm:^1.2.0"
+    "@plitzi/nexus": "npm:^1.2.1"
     "@plitzi/plitzi-ui": "npm:^1.6.21"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -4340,7 +4340,7 @@ __metadata:
     react: "npm:^19.3.0"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4373,7 +4373,7 @@ __metadata:
     eslint: "npm:^9.39.5"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   languageName: unknown
   linkType: soft
 
@@ -4392,23 +4392,23 @@ __metadata:
     "@plitzi/sdk-style": "workspace:*"
     "@types/ejs": "npm:^3.1.5"
     "@types/jsdom": "npm:^30.0.0"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^22.20.3"
     "@types/react": "npm:^19.3.0"
     "@vitejs/plugin-react": "npm:^6.1.1"
-    "@vitest/coverage-v8": "npm:^5.0.0"
+    "@vitest/coverage-v8": "npm:^5.0.1"
     ejs: "npm:^6.0.1"
     esbuild: "npm:^0.28.2"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
-    jsdom: "npm:^30.0.1"
+    jsdom: "npm:^30.1.0"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
     vite-plugin-dts: "npm:^5.1.0"
-    vitest: "npm:^5.0.0"
-    zod: "npm:^4.6.4"
+    vitest: "npm:^5.0.1"
+    zod: "npm:^4.6.5"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4424,10 +4424,10 @@ __metadata:
     eslint: "npm:^9.39.5"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
-    react-router-dom: "npm:^7.18.3"
+    react-router-dom: "npm:^7.18.4"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4457,7 +4457,7 @@ __metadata:
     prop-types: "npm:^15.8.1"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   languageName: unknown
   linkType: soft
 
@@ -4469,25 +4469,25 @@ __metadata:
     "@plitzi/sdk-shared": "workspace:*"
     "@types/ejs": "npm:^3.1.5"
     "@types/jsonwebtoken": "npm:^9.0.10"
-    "@types/node": "npm:^26.5.1"
-    "@types/nodemailer": "npm:^8.0.1"
+    "@types/node": "npm:^22.20.3"
+    "@types/nodemailer": "npm:^8.0.2"
     "@types/react": "npm:^19.3.0"
     "@vitejs/plugin-react": "npm:^6.1.1"
-    "@vitest/coverage-v8": "npm:^5.0.0"
+    "@vitest/coverage-v8": "npm:^5.0.1"
     ejs: "npm:^6.0.1"
     esbuild: "npm:^0.28.2"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
     jsonwebtoken: "npm:^9.0.3"
     mysql2: "npm:^3.24.4"
-    nodemailer: "npm:^10.0.9"
+    nodemailer: "npm:^10.0.10"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tsx: "npm:^4.23.13"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
     vite-plugin-dts: "npm:^5.1.0"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
   peerDependencies:
     mysql2: ^3
     react: ^19
@@ -4510,41 +4510,41 @@ __metadata:
     "@babel/preset-env": "npm:^8.0.5"
     "@eslint/js": "npm:^10.0.1"
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
-    "@plitzi/nexus": "npm:^1.2.0"
+    "@plitzi/nexus": "npm:^1.2.1"
     "@plitzi/plitzi-ui": "npm:^1.6.21"
     "@tailwindcss/forms": "npm:^0.5.11"
-    "@testing-library/dom": "npm:^10.4.1"
+    "@testing-library/dom": "npm:^10.4.2"
     "@testing-library/react": "npm:^16.3.3"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:^14.6.7"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
     "@vitejs/plugin-react": "npm:^6.1.1"
-    "@vitest/coverage-v8": "npm:^5.0.0"
+    "@vitest/coverage-v8": "npm:^5.0.1"
     babel-minify: "npm:^0.5.2"
     date-fns: "npm:^4.4.0"
     date-fns-tz: "npm:^3.2.0"
     eslint: "npm:^9.39.5"
     eslint-config-airbnb: "npm:^19.0.4"
     eslint-config-prettier: "npm:^10.1.8"
-    eslint-config-turbo: "npm:^2.10.12"
+    eslint-config-turbo: "npm:^2.10.13"
     eslint-import-resolver-alias: "npm:^1.1.2"
     eslint-plugin-cypress: "npm:^7.0.2"
     eslint-plugin-flowtype: "npm:8.0.3"
     eslint-plugin-import: "npm:^2.32.0"
-    eslint-plugin-jsdoc: "npm:^64.3.10"
+    eslint-plugin-jsdoc: "npm:^64.5.2"
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
     eslint-plugin-prettier: "npm:^5.5.6"
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
-    eslint-plugin-react-refresh: "npm:^0.5.6"
+    eslint-plugin-react-refresh: "npm:^0.5.7"
     eslint-plugin-storybook: "npm:^10.6.0"
     globals: "npm:^17.12.0"
     graphql-tag: "npm:^2.12.7"
     immer: "npm:^11.1.18"
-    jsdom: "npm:^30.0.1"
+    jsdom: "npm:^30.1.0"
     postcss: "npm:^8.5.28"
-    prettier: "npm:^3.9.6"
+    prettier: "npm:^3.9.7"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
     tailwindcss: "npm:^4.3.3"
@@ -4554,9 +4554,9 @@ __metadata:
     vite: "npm:^8.3.0"
     vite-plugin-dts: "npm:^5.1.0"
     vite-plugin-react: "npm:^4.0.1"
-    vitest: "npm:^5.0.0"
+    vitest: "npm:^5.0.1"
     vitest-fetch-mock: "npm:^0.4.5"
-    zod: "npm:^4.6.4"
+    zod: "npm:^4.6.5"
   peerDependencies:
     react: ^19
     react-dom: ^19
@@ -4577,8 +4577,8 @@ __metadata:
     prop-types: "npm:^15.8.1"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
-    zod: "npm:^4.6.4"
+    vitest: "npm:^5.0.1"
+    zod: "npm:^4.6.5"
   languageName: unknown
   linkType: soft
 
@@ -4592,8 +4592,8 @@ __metadata:
     eslint: "npm:^9.39.5"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.0"
-    vitest: "npm:^5.0.0"
-    zod: "npm:^4.6.4"
+    vitest: "npm:^5.0.1"
+    zod: "npm:^4.6.5"
   languageName: unknown
   linkType: soft
 
@@ -5296,7 +5296,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-virtual@npm:^3.14.12":
+"@tanstack/react-virtual@npm:^3.14.13":
   version: 3.14.13
   resolution: "@tanstack/react-virtual@npm:3.14.13"
   dependencies:
@@ -5315,7 +5315,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:^10.4.1":
+"@testing-library/dom@npm:^10.4.1, @testing-library/dom@npm:^10.4.2":
   version: 10.4.2
   resolution: "@testing-library/dom@npm:10.4.2"
   dependencies:
@@ -5777,12 +5777,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^26.4.0, @types/node@npm:^26.5.1":
+"@types/node@npm:*, @types/node@npm:^26.4.0":
   version: 26.6.1
   resolution: "@types/node@npm:26.6.1"
   dependencies:
     undici-types: "npm:~8.9.0"
   checksum: 10c0/c90d3db40e7c9c92f0854ecdcaabd9c1923b7e2a43cf2c97cf147a5aba7e18a1c80034088edfb1bb2153ceffdd87be7ce0a256b80ec7cd92e619c564133ae5fe
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^22.20.3":
+  version: 22.20.3
+  resolution: "@types/node@npm:22.20.3"
+  dependencies:
+    undici-types: "npm:~6.21.0"
+  checksum: 10c0/27034f3f66d7044494f0be7b20b17eecbb1f6deab9e2ea8b004d79e896f4a90cde954da9a433a145e800f3db3e5c5c4761a65366434997c77102ba364dcbedd0
   languageName: node
   linkType: hard
 
@@ -5795,7 +5804,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/nodemailer@npm:*, @types/nodemailer@npm:^8.0.1":
+"@types/nodemailer@npm:*, @types/nodemailer@npm:^8.0.2":
   version: 8.0.2
   resolution: "@types/nodemailer@npm:8.0.2"
   dependencies:
@@ -6176,7 +6185,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/coverage-v8@npm:^5.0.0":
+"@vitest/coverage-v8@npm:^5.0.1":
   version: 5.0.1
   resolution: "@vitest/coverage-v8@npm:5.0.1"
   dependencies:
@@ -6771,9 +6780,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"app-builder-lib@npm:26.16.1":
-  version: 26.16.1
-  resolution: "app-builder-lib@npm:26.16.1"
+"app-builder-lib@npm:26.15.3":
+  version: 26.15.3
+  resolution: "app-builder-lib@npm:26.15.3"
   dependencies:
     "@electron/asar": "npm:3.4.1"
     "@electron/fuses": "npm:^1.8.0"
@@ -6783,13 +6792,13 @@ __metadata:
     "@electron/rebuild": "npm:^4.0.4"
     "@electron/universal": "npm:2.0.3"
     "@malept/flatpak-bundler": "npm:^0.4.0"
-    "@noble/hashes": "npm:^1.8.0"
+    "@noble/hashes": "npm:^2.2.0"
     "@peculiar/webcrypto": "npm:^1.7.1"
     "@types/fs-extra": "npm:9.0.13"
     ajv: "npm:^8.18.0"
     asn1js: "npm:^3.0.10"
     async-exit-hook: "npm:^2.0.1"
-    builder-util: "npm:26.16.0"
+    builder-util: "npm:26.15.3"
     builder-util-runtime: "npm:9.7.0"
     chromium-pickle-js: "npm:^0.2.0"
     ci-info: "npm:4.3.1"
@@ -6797,7 +6806,7 @@ __metadata:
     dotenv: "npm:^16.4.5"
     dotenv-expand: "npm:^11.0.6"
     ejs: "npm:^3.1.8"
-    electron-publish: "npm:26.16.0"
+    electron-publish: "npm:26.15.3"
     fs-extra: "npm:^10.1.0"
     hosted-git-info: "npm:^4.1.0"
     isbinaryfile: "npm:^5.0.0"
@@ -6817,9 +6826,9 @@ __metadata:
     unzipper: "npm:^0.12.3"
     which: "npm:^5.0.0"
   peerDependencies:
-    dmg-builder: 26.16.1
-    electron-builder-squirrel-windows: 26.16.1
-  checksum: 10c0/1670e3232d216809d2c3e7006daa359c9facd9b796f137f7d111d610c453711d2fdc5e3dd8532765baa80aa9534ddaffc9db540165167cb8cd3aa9fa0266f94d
+    dmg-builder: 26.15.3
+    electron-builder-squirrel-windows: 26.15.3
+  checksum: 10c0/c3421f45df7eb69ecbd66ade2ced54fd60f452ab527c917f0613d5ce3c43172e2de677db9d3bdc4e6087d22732baf6357c3247624059a1b5a9c434243a81ff14
   languageName: node
   linkType: hard
 
@@ -7574,9 +7583,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"builder-util@npm:26.16.0":
-  version: 26.16.0
-  resolution: "builder-util@npm:26.16.0"
+"builder-util@npm:26.15.3":
+  version: 26.15.3
+  resolution: "builder-util@npm:26.15.3"
   dependencies:
     "@types/debug": "npm:^4.1.6"
     builder-util-runtime: "npm:9.7.0"
@@ -7592,7 +7601,7 @@ __metadata:
     stat-mode: "npm:^1.0.0"
     temp-file: "npm:^3.4.0"
     tiny-async-pool: "npm:1.3.0"
-  checksum: 10c0/db2e0e6f7717accdf3acd67b51573065e358c44facb9d0b3f33868e541bf3e1441d876a7f9f422c5c216f3c44ea3ede0cd3fa6d3c87380170445d11ac37ee214
+  checksum: 10c0/e3ae624acca1b81793bfcfdeef81bbc15cc3acee67db2b00e6743138d658179f242b64a9d7111e717842ba0ca5df60620750a14ba5fdb0cee0ec58cdeeef13d4
   languageName: node
   linkType: hard
 
@@ -8695,15 +8704,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dmg-builder@npm:26.16.1":
-  version: 26.16.1
-  resolution: "dmg-builder@npm:26.16.1"
+"dmg-builder@npm:26.15.3":
+  version: 26.15.3
+  resolution: "dmg-builder@npm:26.15.3"
   dependencies:
-    app-builder-lib: "npm:26.16.1"
-    builder-util: "npm:26.16.0"
+    app-builder-lib: "npm:26.15.3"
+    builder-util: "npm:26.15.3"
     fs-extra: "npm:^10.1.0"
     js-yaml: "npm:^4.1.0"
-  checksum: 10c0/0dca6a06844867bd9237bd74dd88c3b47a7bc1e5f69edc4984667a1cd7dba2de3139894ab3002d4176c14f771fcbbeae5d26b8114926ffb6909707ae93210384
+  checksum: 10c0/6219e169d1a980c0f7301b2b76d204e2500ad87ad4acf7489f38b136932da042fd12c4f64d54ef1e00a751cb15766a25ee0a1f90f69b7ea60baf718e631c7133
   languageName: node
   linkType: hard
 
@@ -8906,16 +8915,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-builder@npm:26.16.1":
-  version: 26.16.1
-  resolution: "electron-builder@npm:26.16.1"
+"electron-builder@npm:26.15.3":
+  version: 26.15.3
+  resolution: "electron-builder@npm:26.15.3"
   dependencies:
-    app-builder-lib: "npm:26.16.1"
-    builder-util: "npm:26.16.0"
+    app-builder-lib: "npm:26.15.3"
+    builder-util: "npm:26.15.3"
     builder-util-runtime: "npm:9.7.0"
     chalk: "npm:^4.1.2"
     ci-info: "npm:^4.2.0"
-    dmg-builder: "npm:26.16.1"
+    dmg-builder: "npm:26.15.3"
     fs-extra: "npm:^10.1.0"
     lazy-val: "npm:^1.0.5"
     simple-update-notifier: "npm:2.0.0"
@@ -8923,24 +8932,24 @@ __metadata:
   bin:
     electron-builder: ./cli.js
     install-app-deps: ./install-app-deps.js
-  checksum: 10c0/926462dbd7b7ac8f4bbd9c10ed69519ee7fc1c7bb9cb3caa4d4c0e89fe8ac4a7d4aa51699819ee69598e09e287bee89fe3628e09653e9621884769fdf932ce90
+  checksum: 10c0/5d0d6c121ca6c59932a9e796413862476c716b2bdf0d2a504b36836bbb727717652fd1f3e1102b48ffa2f18c0c9a816e7724bf025dfaccdd5846d868d703a513
   languageName: node
   linkType: hard
 
-"electron-publish@npm:26.16.0":
-  version: 26.16.0
-  resolution: "electron-publish@npm:26.16.0"
+"electron-publish@npm:26.15.3":
+  version: 26.15.3
+  resolution: "electron-publish@npm:26.15.3"
   dependencies:
     "@types/fs-extra": "npm:^9.0.11"
     aws4: "npm:^1.13.2"
-    builder-util: "npm:26.16.0"
+    builder-util: "npm:26.15.3"
     builder-util-runtime: "npm:9.7.0"
     chalk: "npm:^4.1.2"
     form-data: "npm:^4.0.5"
     fs-extra: "npm:^10.1.0"
     lazy-val: "npm:^1.0.5"
     mime: "npm:^2.5.2"
-  checksum: 10c0/fd7f643b2a109257ed796012e363f65469cf8dee8305a1aa70058a323a1f39ba0e37f8f3f1092a5dc59001d10264f55a0d7e8ac211651a35d9d0c463fffc9257
+  checksum: 10c0/809629339769d6d45460af91de55546b1ae4e88a62d7cfe9b2b597b5aa31d190c1aea80f517f8248c08acee7e6f7327eb921b4dc9c9dd601bcde4feeedb7a87a
   languageName: node
   linkType: hard
 
@@ -8951,7 +8960,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:^44.3.0":
+"electron@npm:^44.4.1":
   version: 44.4.1
   resolution: "electron@npm:44.4.1"
   dependencies:
@@ -9456,7 +9465,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-turbo@npm:^2.10.12":
+"eslint-config-turbo@npm:^2.10.13":
   version: 2.10.13
   resolution: "eslint-config-turbo@npm:2.10.13"
   dependencies:
@@ -9558,7 +9567,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:^64.3.10":
+"eslint-plugin-jsdoc@npm:^64.5.2":
   version: 64.5.2
   resolution: "eslint-plugin-jsdoc@npm:64.5.2"
   dependencies:
@@ -9647,7 +9656,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-refresh@npm:^0.5.6":
+"eslint-plugin-react-refresh@npm:^0.5.7":
   version: 0.5.7
   resolution: "eslint-plugin-react-refresh@npm:0.5.7"
   peerDependencies:
@@ -10714,7 +10723,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-ws@npm:^6.2.1":
+"graphql-ws@npm:^6.2.2":
   version: 6.2.2
   resolution: "graphql-ws@npm:6.2.2"
   peerDependencies:
@@ -11792,7 +11801,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsdom@npm:^30.0.1":
+"jsdom@npm:^30.1.0":
   version: 30.1.0
   resolution: "jsdom@npm:30.1.0"
   dependencies:
@@ -12619,7 +12628,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mailparser@npm:^3.9.26":
+"mailparser@npm:^3.9.28":
   version: 3.9.28
   resolution: "mailparser@npm:3.9.28"
   dependencies:
@@ -13665,7 +13674,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:10.0.10, nodemailer@npm:^10.0.9":
+"nodemailer@npm:10.0.10, nodemailer@npm:^10.0.10":
   version: 10.0.10
   resolution: "nodemailer@npm:10.0.10"
   checksum: 10c0/062bf0861e4986eca150b8d78b8289c55f33ad689e9596aa71b4abd4ab4358b9c4881cec8acca3251643814d84d26ca6b1082153f47d35d65639d4ce858cfd67
@@ -14655,7 +14664,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:^3.9.6":
+"prettier@npm:^3.9.7":
   version: 3.9.7
   resolution: "prettier@npm:3.9.7"
   bin:
@@ -14983,7 +14992,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^7.18.3":
+"react-router-dom@npm:^7.18.4":
   version: 7.18.4
   resolution: "react-router-dom@npm:7.18.4"
   dependencies:
@@ -15011,7 +15020,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router@npm:^8.3.1":
+"react-router@npm:^8.4.0":
   version: 8.4.0
   resolution: "react-router@npm:8.4.0"
   dependencies:
@@ -16207,7 +16216,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"smtp-server@npm:^3.19.12":
+"smtp-server@npm:^3.19.13":
   version: 3.19.13
   resolution: "smtp-server@npm:3.19.13"
   dependencies:
@@ -16617,7 +16626,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-scss@npm:^7.2.0":
+"stylelint-scss@npm:^7.3.0":
   version: 7.3.0
   resolution: "stylelint-scss@npm:7.3.0"
   dependencies:
@@ -17143,7 +17152,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo@npm:^2.10.12":
+"turbo@npm:^2.10.13":
   version: 2.10.13
   resolution: "turbo@npm:2.10.13"
   dependencies:
@@ -17336,6 +17345,13 @@ __metadata:
   version: 8.10.2
   resolution: "undici-types@npm:8.10.2"
   checksum: 10c0/085cb27e72784bac40ef903cc662ab4207f6e6acc123d1fa607ca4817d794be3d6935b270f81c62f578942097f5412a0c26db1bec29df47080d139ad33690452
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
   languageName: node
   linkType: hard
 
@@ -17823,7 +17839,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vitest@npm:^5.0.0":
+"vitest@npm:^5.0.1":
   version: 5.0.1
   resolution: "vitest@npm:5.0.1"
   dependencies:
@@ -18394,7 +18410,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.25 || ^4.0, zod@npm:^3.25.0 || ^4.0.0, zod@npm:^4.6.4":
+"zod@npm:^3.25 || ^4.0, zod@npm:^3.25.0 || ^4.0.0, zod@npm:^4.6.5":
   version: 4.6.5
   resolution: "zod@npm:4.6.5"
   checksum: 10c0/32eb6c5e98becbe045675b2141c3611451c16ba567f9779231d79af41c4d651ca1c22f154aef7e6c6e77b929f23e43f1154ca05b82e119e922353725d6776af5

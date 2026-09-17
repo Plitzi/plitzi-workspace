@@ -63,7 +63,7 @@
     "ejs": "^6.0.1",
     "esbuild": "^0.28.2",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^10.0.9"
+    "nodemailer": "^10.0.10"
   },
   "peerDependencies": {
     "mysql2": "^3",
@@ -78,11 +78,11 @@
   "devDependencies": {
     "@types/ejs": "^3.1.5",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.5.1",
-    "@types/nodemailer": "^8.0.1",
+    "@types/node": "^22.20.3",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.0.1",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "mysql2": "^3.24.4",
@@ -92,7 +92,7 @@
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
     "vite-plugin-dts": "^5.1.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "scripts": {
     "prepack": "node scripts/copy-authoring-skill.mjs",

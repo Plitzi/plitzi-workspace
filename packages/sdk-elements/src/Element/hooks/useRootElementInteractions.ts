@@ -1,10 +1,10 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { use, useCallback, useEffect, useMemo, useRef } from 'react';
+import { use, useCallback, useContext, useEffect, useMemo } from 'react';
 
+import { StoreContext } from '@plitzi/nexus/react';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementInteractions from './useElementInteractions';
 import useInternalClassName from './useInternalClassName';
@@ -14,6 +14,8 @@ import type { ElementContextValue } from '../ElementContext';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { Context } from 'react';
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 export type UseRootElementInteractionsProps = {
   elementContext: ElementContextValue;
@@ -98,14 +100,21 @@ const useRootElementInteractions = ({
       }, {});
   }, [id, interactions, otherProps, previewMode, processEvent]);
 
-  // Interactions can reference any source by name at runtime, so when present (or in debug) we hand the rule engine the
-  // whole `runtime.sources` slice; otherwise the dataSource is unused, so we skip the subscription.
-  const needsDataSource = debugMode || !!(interactions && Object.keys(interactions).length);
-  const [runtimeSources = emptyObject] = useCommonStore('runtime.sources', { enabled: needsDataSource });
-  const dataSourceRef = useRef<Record<string, unknown>>({});
-  dataSourceRef.current = runtimeSources;
+  /**
+   * The sources, read when a flow runs — never subscribed.
+   *
+   * A flow can name any source, so it is handed the whole `runtime.sources` slice; but it only needs it at the moment
+   * it fires. Subscribed, every element with an interaction rendered again whenever any source anywhere changed —
+   * a route param, a provider answering, a row publishing — for a value nothing on screen reads.
+   */
+  const store = useContext(StoreContext);
+  const readSources = useCallback((): Record<string, unknown> => {
+    const sources: unknown = store?.getPath('runtime.sources');
 
-  const getAdditionalParams = useCallback(() => ({ dataSource: dataSourceRef.current }), [dataSourceRef]);
+    return isRecord(sources) ? sources : emptyObject;
+  }, [store]);
+
+  const getAdditionalParams = useCallback(() => ({ dataSource: readSources() }), [readSources]);
 
   const triggers = useMemo(() => ({ ...interactionBasicTriggers, ...interactionTriggers }), [interactionTriggers]);
   const basicCallbacks = useElementInteractions({ attributes, definition, setElementState });
@@ -130,12 +139,12 @@ const useRootElementInteractions = ({
       return;
     }
 
-    pConsole.addProviderMethod(`getElementDataSource-${id}`, () => dataSourceRef.current);
+    pConsole.addProviderMethod(`getElementDataSource-${id}`, readSources);
 
     return () => {
       pConsole.removeProviderMethod(`getElementDataSource-${id}`);
     };
-  }, [debugMode, dataSourceRef, id]);
+  }, [debugMode, readSources, id]);
 
   const classNameInternal = useInternalClassName({
     id,

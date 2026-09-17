@@ -6,7 +6,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 
 import withElement from './withElement';
-import ElementContext from '../ElementContext';
+import ElementParentContext from '../ElementParentContext';
 import useElement from '../hooks/useElement';
 
 import type { ElementContextValue } from '../ElementContext';
@@ -139,9 +139,7 @@ describe('the visibility chain', () => {
       createElement(
         StoreProvider,
         { value: { schema: { flat: { el1: element } } } },
-        <ElementContext value={{ id: 'parent', rootId: 'root', visible: parentVisible } as ElementContextValue}>
-          {ui}
-        </ElementContext>
+        <ElementParentContext value={{ visible: parentVisible, traceId: 'parent' }}>{ui}</ElementParentContext>
       )
     );
 

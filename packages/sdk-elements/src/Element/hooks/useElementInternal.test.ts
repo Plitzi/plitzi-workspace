@@ -78,9 +78,7 @@ describe('getProps (element resolution)', () => {
       plitziElementLayout: {
         rootId: 'layoutRoot',
         containerId: 'c1',
-        referenceId: 'r1',
-        type: 'layout',
-        bodyChildren: undefined
+        type: 'layout'
       }
     });
 

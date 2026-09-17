@@ -84,9 +84,7 @@ describe('useInternalClassName', () => {
       plitziElementLayout: {
         rootId: 'root',
         containerId: 'el1',
-        referenceId: 'ref',
-        type: 'layout',
-        bodyChildren: null
+        type: 'layout'
       }
     });
 

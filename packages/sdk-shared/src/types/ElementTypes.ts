@@ -1,13 +1,16 @@
 import type { Asset, PluginManifest, PluginSchema } from './PluginTypes';
 import type { Element } from './SchemaTypes';
-import type { ReactNode } from 'react';
 
 export type ElementLayoutType = 'layout' | 'segment' | 'element' | 'reference';
 
+/**
+ * Which shell an element is rendered inside, and which of its containers is the slot.
+ *
+ * Every element of the shell carries it, so it holds nothing that changes with the page: the body itself reaches the
+ * slot through `LayoutBody` in `@plitzi/sdk-elements`.
+ */
 export type ElementLayout = {
-  bodyChildren: ReactNode;
   containerId: string;
-  referenceId: string;
   rootId: string;
   type: ElementLayoutType;
 };

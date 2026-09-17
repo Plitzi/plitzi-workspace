@@ -91,6 +91,11 @@ export const getProps = (
   };
 };
 
+const TEMPLATE_SOURCES = ['variables'];
+
+const hasTemplate = (attributes: Record<string, unknown> | undefined): boolean =>
+  Object.values(attributes ?? {}).some(value => typeof value === 'string' && hasValidToken(value));
+
 export type UseElementInternalProps = {
   // The resolved element is read once by `withElement` and threaded in, so the element is subscribed to a single time
   // per instance instead of again here.
@@ -111,12 +116,24 @@ const useElementInternal = ({
 }: UseElementInternalProps) => {
   const { id } = internalProps;
   const { state, setElementState } = useElementState({ id, bindings: element.definition.bindings, previewMode });
-  const [[routeParams, queryParams, origin]] = useCommonStore([
-    'navigation.routeParams',
-    'navigation.queryParams',
-    'navigation.origin'
-  ]);
-  const dataSource = useElementDataSource({ bindings: element.definition.bindings, sources: ['variables'] });
+  /**
+   * Whether any attribute is a template — the only reader of the route, the query and the variables below.
+   *
+   * Subscribed for every element, those made the whole page render again on each navigation, templates or not: a
+   * route change writes new params and new variables, and every element on the page was listening.
+   */
+  const usesTemplates = useMemo(
+    () => hasTemplate(element.attributes) || hasTemplate(internalProps.attributes),
+    [element.attributes, internalProps.attributes]
+  );
+  const [[routeParams, queryParams, origin]] = useCommonStore(
+    ['navigation.routeParams', 'navigation.queryParams', 'navigation.origin'],
+    { enabled: usesTemplates }
+  );
+  const dataSource = useElementDataSource({
+    bindings: element.definition.bindings,
+    sources: usesTemplates ? TEMPLATE_SOURCES : undefined
+  });
 
   const internalPropsParsed = useMemo(
     () => ({

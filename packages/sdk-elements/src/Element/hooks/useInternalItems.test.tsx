@@ -6,8 +6,10 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import useInternalItems from './useInternalItems';
+import LayoutBody from '../LayoutBody';
 
 import type { ComponentContextValue, Element } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 vi.mock('@plitzi/sdk-shared', async importOriginal => {
   const actual = await importOriginal<typeof import('@plitzi/sdk-shared')>();
@@ -62,7 +64,8 @@ const renderItems = (
   storeValue: Record<string, unknown>,
   rscEnabled = false,
   components: Record<string, unknown> = {},
-  definitions: Record<string, unknown> = {}
+  definitions: Record<string, unknown> = {},
+  layoutBody?: ReactNode
 ) =>
   render(
     createElement(
@@ -76,7 +79,7 @@ const renderItems = (
             componentDefinitions: { current: definitions }
           } as unknown as ComponentContextValue
         },
-        createElement(Harness, props)
+        createElement(LayoutBody, { body: layoutBody, children: createElement(Harness, props) })
       )
     )
   );
@@ -181,21 +184,39 @@ describe('useInternalItems', () => {
       {
         id: 'X',
         definition: def(['a']),
-        plitziElementLayout: {
-          containerId: 'X',
-          rootId: 'root',
-          referenceId: 'r',
-          type: 'layout',
-          bodyChildren: createElement('span', { 'data-body': true })
-        },
+        plitziElementLayout: { containerId: 'X', rootId: 'root', type: 'layout' },
         children: undefined,
         previewMode: false
       },
-      { schema: { flat: { a: el('a', 'text') } } }
+      { schema: { flat: { a: el('a', 'text') } } },
+      false,
+      {},
+      {},
+      createElement('span', { 'data-body': true })
     );
 
     expect(container.querySelector('[data-plugin="text"]')).not.toBeNull();
     expect(container.querySelector('[data-body]')).not.toBeNull();
+  });
+
+  /** The body belongs to the slot alone; any other element of the shell renders its own items and nothing else. */
+  it('leaves the body out of an element that is not the slot', () => {
+    const { container } = renderItems(
+      {
+        id: 'sidebar',
+        definition: def(['a']),
+        plitziElementLayout: { containerId: 'X', rootId: 'root', type: 'layout' },
+        children: undefined,
+        previewMode: false
+      },
+      { schema: { flat: { a: el('a', 'text') } } },
+      false,
+      {},
+      {},
+      createElement('span', { 'data-body': true })
+    );
+
+    expect(container.querySelector('[data-body]')).toBeNull();
   });
 
   it('appends a valid children element alongside the items', () => {

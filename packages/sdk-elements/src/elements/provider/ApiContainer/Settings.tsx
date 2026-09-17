@@ -328,8 +328,8 @@ const Settings = ({
                 size="xs"
               />
               <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
-                A completed server action refreshes every cached request, in case it changed what they read. On its step,
-                “Refresh cached requests” can name only the containers it affects, or none for an action that only
+                A completed server action refreshes every cached request, in case it changed what they read. On its
+                step, “Refresh cached requests” can name only the containers it affects, or none for an action that only
                 reads. A webhook step can do the same.
               </div>
             </>

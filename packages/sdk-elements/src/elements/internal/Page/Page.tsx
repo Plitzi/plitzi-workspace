@@ -9,11 +9,12 @@ import { useSdkStore } from '@plitzi/sdk-shared/store';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import useLayoutChain from '../../../Element/hooks/useLayoutChain';
+import LayoutBody from '../../../Element/LayoutBody';
 import RootElement from '../../../Element/RootElement';
 import LayoutContainer from '../LayoutContainer';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { ElementLayout, InteractionCallback } from '@plitzi/sdk-shared';
 import type { LayoutLink } from '@plitzi/sdk-shared/schema/layoutChain';
 import type { ReactNode, RefObject } from 'react';
 
@@ -28,6 +29,12 @@ export type PageProps = {
   children?: ReactNode;
 };
 
+/** One shell of the chain, with what its elements carry: the same object for as long as the chain is the same. */
+type ChainLink = LayoutLink & { plitziElementLayout: ElementLayout };
+
+const toLinks = (chain: LayoutLink[]): ChainLink[] =>
+  chain.map(link => ({ ...link, plitziElementLayout: { containerId: link.slot, rootId: link.slot, type: 'layout' } }));
+
 /**
  * The page's body inside its shells, the outermost one at the top.
  *
@@ -36,26 +43,17 @@ export type PageProps = {
  * the two keeps it mounted and swaps only what is inside. Each shell is keyed by its slot, not by the page — two pages
  * naming the same shell keep it across a navigation, and a different shell remounts rather than re-pointing the same
  * node at another element id.
+ *
+ * The body reaches each slot through `LayoutBody`, never through the props every element of the shell receives: what
+ * those carry is the link, which does not change with the page, so a navigation renders the slot and not the shell.
  */
-const wrapInLayouts = (chain: LayoutLink[], pageId: string, children: ReactNode): ReactNode =>
-  chain.reduce<ReactNode>(
-    (body, { layout, slot }, depth) => (
-      <LayoutContainer
-        key={slot}
-        internalProps={{
-          id: layout,
-          // Everything in a shell belongs to the page it is rendered for, which is what a binding resolves against.
-          rootId: pageId,
-          plitziElementLayout: {
-            bodyChildren: body,
-            containerId: slot,
-            // The page for the innermost shell; the shell it holds for every one around it.
-            referenceId: depth === 0 ? pageId : chain[depth - 1].layout,
-            rootId: slot,
-            type: 'layout' as const
-          }
-        }}
-      />
+const wrapInLayouts = (links: ChainLink[], pageId: string, children: ReactNode): ReactNode =>
+  links.reduce<ReactNode>(
+    (body, { layout, slot, plitziElementLayout }) => (
+      <LayoutBody key={slot} body={body}>
+        {/* Everything in a shell belongs to the page it is rendered for, which is what a binding resolves against. */}
+        <LayoutContainer internalProps={{ id: layout, rootId: pageId, plitziElementLayout }} />
+      </LayoutBody>
     ),
     children
   );
@@ -79,7 +77,8 @@ const Page = ({
   const [[routeParams, queryParams]] = useSdkStore(['navigation.routeParams', 'navigation.queryParams']);
 
   const layoutChain = useLayoutChain(layout, layoutContainer);
-  const body = useMemo(() => wrapInLayouts(layoutChain, id, children), [layoutChain, id, children]);
+  const links = useMemo(() => toLinks(layoutChain), [layoutChain]);
+  const body = useMemo(() => wrapInLayouts(links, id, children), [links, id, children]);
 
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({

@@ -10,6 +10,7 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
+import LayoutBody from '../../../Element/LayoutBody';
 import PluginManager from '../../../Element/PluginManager';
 import RootElement from '../../../Element/RootElement';
 
@@ -146,14 +147,8 @@ const Reference = ({
   }, [loadReference, referenceId, referenceType]);
 
   const plitziElementLayoutMemo = useMemo(
-    () => ({
-      bodyChildren: children,
-      containerId: referenceContainer,
-      type: referenceType,
-      referenceId: id,
-      rootId: id
-    }),
-    [referenceContainer, children, referenceType, id]
+    () => ({ containerId: referenceContainer, type: referenceType, rootId: id }),
+    [referenceContainer, referenceType, id]
   );
 
   const internalPropsMemo = useMemo(
@@ -182,12 +177,14 @@ const Reference = ({
   if (previewMode && element && referenceType === 'element') {
     return (
       <StoreProvider name={`Reference:${id}`} value={referenceContextData}>
-        <PluginManager
-          key={`${id}_${referenceId}`}
-          type={elementType}
-          internalProps={internalPropsMemo}
-          plitziElementLayout={plitziElementLayoutMemo}
-        />
+        <LayoutBody body={children}>
+          <PluginManager
+            key={`${id}_${referenceId}`}
+            type={elementType}
+            internalProps={internalPropsMemo}
+            plitziElementLayout={plitziElementLayoutMemo}
+          />
+        </LayoutBody>
       </StoreProvider>
     );
   }
@@ -201,12 +198,14 @@ const Reference = ({
     >
       <StoreProvider name={`Reference:${id}`} value={referenceContextData}>
         {element && (
-          <PluginManager
-            key={`${id}_${referenceId}`}
-            type={elementType}
-            internalProps={internalPropsMemo}
-            plitziElementLayout={plitziElementLayoutMemo}
-          />
+          <LayoutBody body={children}>
+            <PluginManager
+              key={`${id}_${referenceId}`}
+              type={elementType}
+              internalProps={internalPropsMemo}
+              plitziElementLayout={plitziElementLayoutMemo}
+            />
+          </LayoutBody>
         )}
       </StoreProvider>
       {!previewMode && !element && <div className="reference__label">Element Reference {referenceType}</div>}

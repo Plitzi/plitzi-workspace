@@ -96,20 +96,25 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
     return { innerWidth: 1440, innerHeight: 900 } as Window;
   }, [iframeRef]);
 
+  /**
+   * The element being edited, which only means something outside preview: every element reads this context, so a
+   * value that followed the page re-rendered the whole tree — shell included — on every navigation. A published page
+   * reads the current page from `navigation.currentPageId` instead, where only its own readers subscribe.
+   */
+  const baseElementId = previewMode ? '' : currentPageId;
   const plitziContextValue = useMemo(
     () => ({
       settings: {
         isHydrating,
         previewMode,
         debugMode,
-        currentPageId,
         renderMode,
         environment,
         ...schemaSettings,
         theme: resolvedTheme
       },
       root: {
-        baseElementId: currentPageId
+        baseElementId
       },
       utils: {
         displayBorderComponents: false,
@@ -130,7 +135,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
       isHydrating,
       previewMode,
       debugMode,
-      currentPageId,
+      baseElementId,
       renderMode,
       environment,
       schemaSettings,

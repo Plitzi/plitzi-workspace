@@ -5,6 +5,7 @@ import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
 import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 
@@ -30,9 +31,12 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   ]);
   // Shared with the router, which needs the same answer BEFORE this provider exists: a page that redirects an
   // unauthenticated visitor off-site decides not to render, so nothing below here ever runs to publish them.
-  const variablesValue = useMemo<Record<string, unknown>>(
-    () => resolveVariables(variables, { routeParams, queryParams, hostname, environment }),
-    [environment, hostname, queryParams, routeParams, variables]
+  // Resolved again whenever a route param changes, which is most navigations; most variables do not depend on one.
+  const variablesValue = useStableValue(
+    useMemo<Record<string, unknown>>(
+      () => resolveVariables(variables, { routeParams, queryParams, hostname, environment }),
+      [environment, hostname, queryParams, routeParams, variables]
+    )
   );
   const variablesFields = useCallback(
     () => getPathsFromObeject(variablesValue).map(path => ({ path, name: `variables.${path}` })),

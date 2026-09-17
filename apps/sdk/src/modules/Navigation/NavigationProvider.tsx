@@ -9,6 +9,7 @@ import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation
 import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
 import { isAbsoluteUrl } from '@plitzi/sdk-shared/navigation';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import refreshRsc from '@plitzi/sdk-shared/server/rsc/refreshRsc';
@@ -73,7 +74,16 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   pageDefinitionsRef.current = pageDefinitions;
   const { authenticated } = use(AuthContext);
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const navigate = renderMode !== 'widget' ? useNavigate() : undefined;
+  const routerNavigate = renderMode !== 'widget' ? useNavigate() : undefined;
+  /**
+   * The router's `navigate`, reached through a ref: it is a new function whenever the location changes, and the one
+   * built on it below is published to the store, where every link on the page reads it. Depending on it made each
+   * navigation re-render every link for a function that does the same thing.
+   */
+  const navigateRef = useRef(routerNavigate);
+  useEffect(() => {
+    navigateRef.current = routerNavigate;
+  }, [routerNavigate]);
 
   const paths = useMemo(
     () => getPaths(pageDefinitions, pageFolders, authenticated, server.basePath, previewMode),
@@ -150,18 +160,18 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
        * renders its loading state until the answer lands.
        */
       if (!store.get('rsc.enabled')) {
-        void navigate?.(target);
+        void navigateRef.current?.(target);
 
         return;
       }
 
-      const go = () => navigate?.(target);
+      const go = () => navigateRef.current?.(target);
       void Promise.race([refreshRsc(store, undefined, undefined, target), wait(PREFETCH_TIMEOUT_MS)]).then(go, go);
     },
-    [navigate, resolveTarget, store]
+    [resolveTarget, store]
   );
 
-  const routeParams = useMemo<RouteParams>(() => {
+  const routeParamsValue = useMemo<RouteParams>(() => {
     const path = paths.find(path => path.pageId === currentPageId && !path.isRaw);
     if (!path) {
       return get(pathMatch, 'params', {});
@@ -172,6 +182,9 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       ...get(pathMatch, 'params', {})
     };
   }, [paths, pathMatch, currentPageId]);
+  // Rebuilt on every navigation; published as they come, every reader rendered again for params that had not changed.
+  const routeParams = useStableValue(routeParamsValue);
+  const stableQueryParams = useStableValue(queryParams);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   useSdkStoreSync(
@@ -184,7 +197,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       'navigation.currentPageId',
       'navigation.navigate'
     ],
-    [urlSearchParams, routeParams, queryParams, hostname, origin, currentPageId, handleNavigate],
+    [urlSearchParams, routeParams, stableQueryParams, hostname, origin, currentPageId, handleNavigate],
     { raw: true }
   );
 
