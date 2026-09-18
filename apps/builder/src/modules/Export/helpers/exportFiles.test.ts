@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 
-import { exportBlob, orderedPaths, singleFileOf } from './exportFiles';
+import { exportBlob, fileNavigationOf, orderedPaths, singleFileOf } from './exportFiles';
 
 import type { SpaceExport } from './exportFiles';
 
@@ -41,5 +41,13 @@ describe('orderedPaths', () => {
     expect(
       orderedPaths({ 'pages/b.ts': '', 'styles.ts': '', 'layouts/a.ts': '', 'index.ts': '', 'pages/a.ts': '' })
     ).toEqual(['index.ts', 'styles.ts', 'layouts/a.ts', 'pages/a.ts', 'pages/b.ts']);
+  });
+});
+
+describe('fileNavigationOf', () => {
+  it('offers a few files as tabs, many as a list, and one not at all', () => {
+    expect(fileNavigationOf(['site.ts'])).toBe('none');
+    expect(fileNavigationOf(['schema.json', 'style.json'])).toBe('tabs');
+    expect(fileNavigationOf(['index.ts', 'styles.ts', 'pages/a.ts', 'pages/b.ts'])).toBe('list');
   });
 });

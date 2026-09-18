@@ -44,14 +44,16 @@ const useSpaceExport = () => {
       const style = getStyle();
 
       if (format === 'json') {
-        const fileName = `${schema.definition.permanentUrl || 'space'}.json`;
-
+        // The two documents a space is, one file each: they are stored apart, edited apart and read apart.
         return {
           ok: true,
           spaceExport: {
             format,
-            fileName,
-            files: { [fileName]: `${JSON.stringify({ schema, style }, null, 2)}\n` },
+            fileName: `${schema.definition.permanentUrl || 'space'}-json.zip`,
+            files: {
+              'schema.json': `${JSON.stringify(schema, null, 2)}\n`,
+              'style.json': `${JSON.stringify(style, null, 2)}\n`
+            },
             corrections: [],
             differences: []
           }

@@ -34,7 +34,7 @@ export const elementAttributeNames = {
   ],
   blockHtml: ['content'],
   blockJsx: ['allowEmptyRender', 'content', 'contentCache', 'props'],
-  button: ['ariaExpanded', 'ariaPressed', 'content', 'contentPlacement', 'disabled', 'subType'],
+  button: ['ariaExpanded', 'ariaPressed', 'content', 'contentPlacement', 'disabled', 'subType', 'title'],
   container: ['subType'],
   custom: null,
   dialogContainer: [

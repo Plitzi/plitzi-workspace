@@ -6,6 +6,10 @@
 '@plitzi/sdk-mcp': patch
 ---
 
+- A `button` takes a `title`: shown as a tooltip, and its accessible name when it has no text of its own — an
+  icon-only button without one was announced as nothing. The builder's settings offer it as "Tooltip". The JSON export
+  is two files, `schema.json` and `style.json`, shown as tabs; each group of changes in the export folds away.
+
 - `BindingTransformer.params` is `Record<string, string | number | boolean>`: a param the builder draws as a checkbox
   (`styleVariant`'s `append`) is stored as the boolean it is and read as one, so the type now says so. The MCP compares
   such a param with its catalog options as text. A `container` may be an `li`, for the rows of a list. The export

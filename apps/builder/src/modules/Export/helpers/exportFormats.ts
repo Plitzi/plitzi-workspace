@@ -25,7 +25,7 @@ export const EXPORT_FORMATS: readonly ExportFormatOption[] = [
     value: 'json',
     label: 'JSON',
     icon: 'fa-solid fa-file-code',
-    description: 'The space’s two documents, schema and style, exactly as they are stored.'
+    description: 'The space’s two documents, schema and style, exactly as they are stored — a .zip of both.'
   }
 ];
 

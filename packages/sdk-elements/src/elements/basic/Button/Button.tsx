@@ -27,6 +27,11 @@ export type ButtonProps = {
   ariaExpanded?: boolean;
   /** For a button that stays on or off — a filter, a mode: `true` while it is on. Left out, it is a plain button. */
   ariaPressed?: boolean;
+  /**
+   * What the button does, in words — shown as a tooltip on hover, and the button's accessible name when it has no text
+   * of its own. An icon-only button without one is announced as nothing at all.
+   */
+  title?: string;
 };
 
 const Button = ({
@@ -38,7 +43,8 @@ const Button = ({
   subType = 'button',
   disabled = false,
   ariaExpanded,
-  ariaPressed
+  ariaPressed,
+  title
 }: ButtonProps) => {
   const {
     definition: { label }
@@ -46,7 +52,10 @@ const Button = ({
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
-  const buttonName = useMemo(() => (typeof content === 'string' ? content : label), [content, label]);
+  const buttonName = useMemo(
+    () => (typeof content === 'string' && content ? content : title || label),
+    [content, title, label]
+  );
 
   return (
     <RootElement
@@ -58,6 +67,7 @@ const Button = ({
       })}
       disabled={disabled}
       aria-label={buttonName}
+      title={title || undefined}
       aria-expanded={ariaExpanded}
       aria-pressed={ariaPressed}
     >

@@ -1,20 +1,22 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { useState } from 'react';
 
-import ExportChanges from './components/ExportChanges';
 import ExportFileItem from './components/ExportFileItem';
+import ExportFileTab from './components/ExportFileTab';
 import ExportViewTab from './components/ExportViewTab';
 import { FULL_HEIGHT_EDITOR } from '../../helpers/editor';
+import { fileNavigationOf } from '../../helpers/exportFiles';
+import ExportChanges from '../ExportChanges';
 
 import type { ExportView } from './components/ExportViewTab';
 import type { SpecCorrection } from '@plitzi/sdk-authoring';
 
 export type ExportViewerProps = {
-  /** Every file of the export, by path; one file shows alone, several beside a list to pick from. */
+  /** Every file of the export, by path: one shows alone, a few as tabs, many beside a list to pick from. */
   paths: string[];
   selectedPath?: string;
   content?: string;
-  /** What the export tidied on the way; a tab of its own when there is any. */
+  /** What the export tidied on the way; a view of its own when there is any. */
   corrections: SpecCorrection[];
   mode: 'js' | 'json';
   theme: 'light' | 'dark';
@@ -22,7 +24,7 @@ export type ExportViewerProps = {
   onSelectPath: (path: string) => void;
 };
 
-/** The export itself, read-only — the code, and beside it on a tab of its own, what was tidied to write it. */
+/** The export itself, read-only — the code, and on a view of its own, what was tidied to write it. */
 const ExportViewer = ({
   paths,
   selectedPath,
@@ -34,14 +36,32 @@ const ExportViewer = ({
   onSelectPath
 }: ExportViewerProps) => {
   const [view, setView] = useState<ExportView>('code');
-  const showChanges = view === 'changes' && corrections.length > 0;
+  const hasChanges = corrections.length > 0;
+  const showChanges = view === 'changes' && hasChanges;
+  const navigation = fileNavigationOf(paths);
 
   return (
     <div className="relative flex min-h-0 grow flex-col overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700/70">
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-200 px-2 dark:border-zinc-700/70">
-        <div role="tablist" className="flex items-center">
-          <ExportViewTab view="code" label="Code" icon="fa-solid fa-code" selected={!showChanges} onSelect={setView} />
-          {corrections.length > 0 && (
+      <div className="flex min-h-9 items-center justify-between gap-3 border-b border-zinc-200 px-2 dark:border-zinc-700/70">
+        <div role="tablist" className="flex min-w-0 items-center gap-1">
+          {!showChanges &&
+            navigation === 'tabs' &&
+            paths.map(path => (
+              <ExportFileTab key={path} path={path} selected={path === selectedPath} onSelect={onSelectPath} />
+            ))}
+          {!showChanges && navigation !== 'tabs' && selectedPath && (
+            <span className="truncate px-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">{selectedPath}</span>
+          )}
+        </div>
+        {hasChanges && (
+          <div role="tablist" className="flex shrink-0 items-center">
+            <ExportViewTab
+              view="code"
+              label="Code"
+              icon="fa-solid fa-code"
+              selected={!showChanges}
+              onSelect={setView}
+            />
             <ExportViewTab
               view="changes"
               label="Changes"
@@ -50,10 +70,7 @@ const ExportViewer = ({
               selected={showChanges}
               onSelect={setView}
             />
-          )}
-        </div>
-        {!showChanges && selectedPath && (
-          <span className="truncate px-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">{selectedPath}</span>
+          </div>
         )}
       </div>
       <div className="flex min-h-0 grow">
@@ -62,7 +79,7 @@ const ExportViewer = ({
             <ExportChanges corrections={corrections} />
           </div>
         )}
-        {!showChanges && paths.length > 1 && (
+        {!showChanges && navigation === 'list' && (
           <nav className="w-56 shrink-0 space-y-0.5 overflow-auto border-r border-zinc-200 p-2 dark:border-zinc-700/70">
             {paths.map(path => (
               <ExportFileItem key={path} path={path} selected={path === selectedPath} onSelect={onSelectPath} />

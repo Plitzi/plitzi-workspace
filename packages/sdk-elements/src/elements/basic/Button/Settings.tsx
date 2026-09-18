@@ -10,6 +10,7 @@ type SettingsProps = {
   contentPlacement?: 'before' | 'after' | 'elements';
   subType?: 'button' | 'reset' | 'submit';
   disabled?: boolean;
+  title?: string;
   onUpdate?: (key: string, value: string | number | boolean) => void;
 };
 
@@ -18,6 +19,7 @@ const Settings = ({
   contentPlacement = 'after',
   subType = 'button',
   disabled = false,
+  title = '',
   onUpdate
 }: SettingsProps) => {
   const handleChangeContent = useCallback((value: string) => onUpdate?.('content', value), [onUpdate]);
@@ -29,6 +31,8 @@ const Settings = ({
 
   const handleChangeSubType = useCallback((value: string) => onUpdate?.('subType', value), [onUpdate]);
 
+  const handleChangeTitle = useCallback((value: string) => onUpdate?.('title', value), [onUpdate]);
+
   const handleChangeDisabled = useCallback(
     (e: ChangeEvent) => onUpdate?.('disabled', (e.target as HTMLInputElement).checked),
     [onUpdate]
@@ -37,6 +41,13 @@ const Settings = ({
   return (
     <div className="flex h-full flex-col gap-4 py-2">
       <Input value={content} label="Content" onChange={handleChangeContent} size="xs" />
+      <Input
+        value={title}
+        label="Tooltip"
+        placeholder="What the button does, for an icon-only one"
+        onChange={handleChangeTitle}
+        size="xs"
+      />
       <Select value={contentPlacement} label="Mode" onChange={handleChangeContentPlacement} size="xs">
         <option value="before">Before Elements</option>
         <option value="after">After Elements</option>

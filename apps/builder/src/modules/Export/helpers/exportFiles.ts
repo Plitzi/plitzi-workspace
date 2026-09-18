@@ -69,3 +69,15 @@ const pathRank = (path: string): number => {
 /** The files in reading order: the space first, then what sits beside it, then each folder's files by name. */
 export const orderedPaths = (files: Record<string, string>): string[] =>
   Object.keys(files).sort((a, b) => pathRank(a) - pathRank(b) || a.localeCompare(b));
+
+/** How many files still read better as tabs than as a list beside the code — the schema and the style, say. */
+const MAX_FILE_TABS = 3;
+
+/** How an export's files are offered: as tabs when there are a few, as a list when there are many, not at all when one. */
+export const fileNavigationOf = (paths: string[]): 'none' | 'tabs' | 'list' => {
+  if (paths.length <= 1) {
+    return 'none';
+  }
+
+  return paths.length <= MAX_FILE_TABS ? 'tabs' : 'list';
+};
