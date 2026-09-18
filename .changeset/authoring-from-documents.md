@@ -2,7 +2,15 @@
 '@plitzi/sdk-authoring': minor
 '@plitzi/sdk-elements': patch
 '@plitzi/plitzi-builder': patch
+'@plitzi/sdk-shared': patch
+'@plitzi/sdk-mcp': patch
 ---
+
+- `BindingTransformer.params` is `Record<string, string | number | boolean>`: a param the builder draws as a checkbox
+  (`styleVariant`'s `append`) is stored as the boolean it is and read as one, so the type now says so. The MCP compares
+  such a param with its catalog options as text. A `container` may be an `li`, for the rows of a list. The export
+  keeps every element id with `keepIds`, and the header's Publish dialog opens wider.
+
 
 - **The builder exports the space on screen — on paid plans.** **Export** in the header opens a wide dialog: the
   format as tabs (TypeScript in one file, TypeScript with a file per page as a `.zip`, or JSON), generated as soon as

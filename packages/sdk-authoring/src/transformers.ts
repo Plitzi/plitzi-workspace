@@ -6,10 +6,10 @@ import type { BuiltinParam, ParamSpec } from '@plitzi/sdk-shared/authoring/param
 // (`utility[action]`), so an unknown action makes the runtime skip it and pass the value through UNCHANGED — the
 // exact silent failure this catalog guards against (e.g. inventing `template` instead of `twigTemplate`).
 //
-// Binding-transformer params are ALWAYS strings over the wire (BindingTransformer.params is Record<string,string>),
-// so a boolean/select param is modeled here as a `select` over the string tokens it accepts — this catalog only
-// validates param NAMES and select OPTIONS, never JS value types (unlike the interaction catalogs, whose params are
-// real scalars).
+// Binding-transformer params are mostly text, but a param the builder draws as a checkbox is stored as the boolean
+// it is (`styleVariant`'s `append`), and the transformer reads it as one. A flag is still modeled here as a `select`
+// over the tokens it accepts, compared as text — this catalog only validates param NAMES and select OPTIONS, never
+// JS value types (unlike the interaction catalogs, whose params are real scalars).
 
 export interface BuiltinTransformer {
   title: string;
@@ -20,7 +20,7 @@ export interface BuiltinTransformer {
   params: ParamSpec;
 }
 
-// A string flag param (checkbox in the builder) is stored as the string "true"/"false" in a binding transformer.
+// A flag param (a checkbox in the builder), offered as the tokens "true"/"false" and validated as text.
 const boolParam = (description: string, dflt: 'true' | 'false'): BuiltinParam => ({
   type: 'select',
   description,

@@ -76,6 +76,14 @@ export interface SpecFromSpaceOptions {
   permanentUrl?: string;
   /** Element types a plugin provides. Kept as they are, where any other type the SDK does not ship is reported. */
   pluginTypes?: readonly string[];
+  /**
+   * Keep every element's id, the positional ones nothing refers to included.
+   *
+   * Left out, an id like `container-19` that nothing names is dropped and derived again, which is right for a copy.
+   * For a space people keep working in it is not: the builder's tree shows the id as the element's name, and a test
+   * or a person may know an element by it.
+   */
+  keepIds?: boolean;
 }
 
 export interface SpecFromSpace {
@@ -804,7 +812,10 @@ class SpecReader {
     // Some documents store an element with no attributes as an empty ARRAY, which reads as an object with none.
     const stored = isRecord(element.attributes) ? element.attributes : {};
     const attributes = this.readAttributes(type, legacy ? legacy.attributes(stored) : stored);
-    const keepId = !new RegExp(`^${definition.type}-\\d+$`).test(element.id) || this.references.has(element.id);
+    const keepId =
+      this.options.keepIds === true ||
+      !new RegExp(`^${definition.type}-\\d+$`).test(element.id) ||
+      this.references.has(element.id);
 
     const { base: baseSelector, ...slotSelectors } = definition.styleSelectors;
     const baseStyle = this.baseStyle(baseSelector, 'css-and-states');

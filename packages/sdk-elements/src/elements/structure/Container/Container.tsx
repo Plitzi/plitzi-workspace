@@ -22,7 +22,9 @@ export type ContainerProps = {
     | 'figure'
     | 'dl'
     | 'dt'
-    | 'dd';
+    | 'dd'
+    // A row of a list, where the list's own items would bring a template they do not need.
+    | 'li';
   children?: ReactNode;
 };
 

@@ -5,7 +5,6 @@ import { useCallback } from 'react';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import ExportLocked from './components/ExportLocked';
-import ExportRepairs from './components/ExportRepairs';
 import ExportToolbar from './components/ExportToolbar';
 import ExportViewer from './components/ExportViewer';
 import { downloadBlob, exportBlob } from './helpers/exportFiles';
@@ -59,14 +58,12 @@ const ExportSpace = () => {
           {session.error}
         </Alert>
       )}
-      {!session.locked && spaceExport && spaceExport.corrections.length > 0 && (
-        <ExportRepairs corrections={spaceExport.corrections} />
-      )}
       {!session.locked && (
         <ExportViewer
           paths={session.paths}
           selectedPath={session.selectedPath}
           content={content}
+          corrections={spaceExport?.corrections ?? []}
           mode={session.format === 'json' ? 'json' : 'js'}
           theme={resolvedTheme}
           loading={session.loading}

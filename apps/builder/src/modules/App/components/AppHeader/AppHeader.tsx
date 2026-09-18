@@ -19,6 +19,7 @@ import PageHeader from './PageHeader';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
 import ZoomButtons from './ZoomButtons';
+import { FORM_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
 import DeployForm from '../../models/DeployForm';
 import PublishForm from '../../models/PublishForm';
 
@@ -81,7 +82,9 @@ const AppHeader = () => {
         <Modal.Body>
           <DeployForm onClose={onClose} onSubmit={onSubmit} />
         </Modal.Body>
-      )
+      ),
+      undefined,
+      FORM_MODAL
     );
 
     if (!response) {
@@ -116,8 +119,7 @@ const AppHeader = () => {
         <ExportSpace />
       </Modal.Body>,
       undefined,
-      // The code is the point of the dialog, so it gets the room: wide enough for a 120-column file, on any screen.
-      { className: { card: 'w-[min(1180px,94vw)] max-w-none' } }
+      WIDE_MODAL
     );
   }, [showModal]);
 

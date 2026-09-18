@@ -25,7 +25,7 @@ const namesOf = ({ source, transformers }: ElementBinding): string[] => {
   }
 
   for (const { action, params } of transformers ?? []) {
-    if (action === 'twigTemplate' && params.template) {
+    if (action === 'twigTemplate' && typeof params.template === 'string' && params.template) {
       names.push(...templateRootNames(params.template));
     }
   }

@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { defaultAttributes, defaultLabel } from '../elements';
 import * as factories from '../elements/elements';
 
@@ -28,9 +29,17 @@ export interface SpecSourceOptions {
 /** Source files by path, relative to wherever they are written. The space itself is `index.ts`. */
 export type SpecSourceFiles = Record<string, string>;
 
-/** Fields of an element spec that are not attributes. An attribute sharing one of these names cannot be written flat. */
-const AUTHORING_FIELDS = new Set([
+/**
+ * Every field of an element spec, in the order the emitter writes them.
+ *
+ * The emitter is only as current as this list: a field `ElementSpec` gains and this does not name is a field every
+ * export drops without a word. `specFields.test.ts` refuses to compile until it is listed here — and once it is, it is
+ * written like any other, so growing the authoring surface needs nothing more from the emitter than this line.
+ */
+export const ELEMENT_FIELDS = [
+  'type',
   'id',
+  'attributes',
   'class',
   'css',
   'states',
@@ -41,9 +50,34 @@ const AUTHORING_FIELDS = new Set([
   'flows',
   'runtime',
   'loadStrategy',
-  'children',
-  'meta'
-]);
+  'meta',
+  'children'
+] as const satisfies readonly (keyof ElementSpec)[];
+
+/** The same guarantee for the space itself, in the order its fields are written. */
+export const SPACE_FIELDS = [
+  'name',
+  'permanentUrl',
+  'mode',
+  'theme',
+  'variables',
+  'fonts',
+  'elements',
+  'classes',
+  'schemaVariables',
+  'settings',
+  'customCss',
+  'rsc',
+  'pageFolders',
+  'layouts',
+  'pages'
+] as const satisfies readonly (keyof SpaceSpec)[];
+
+/** The fields that are not attributes. An attribute sharing one of these names cannot be written flat. */
+const AUTHORING_FIELDS = new Set<string>(ELEMENT_FIELDS.filter(field => field !== 'type' && field !== 'attributes'));
+
+/** Written by the factory call itself rather than as a prop: the type is the factory, the rest have their own place. */
+const STRUCTURAL_FIELDS = new Set<string>(['type', 'id', 'attributes', 'meta', 'children']);
 
 const FACTORY_NAMES = new Set(Object.keys(factories));
 
@@ -74,7 +108,7 @@ const camel = (value: string): string => {
 const stringLiteral = (value: string): string =>
   value.includes('\n')
     ? `\`${value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')}\``
-    : `'${JSON.stringify(value).slice(1, -1).replace(/\\"/g, '"').replace(/'/g, '\\\'')}'`;
+    : `'${JSON.stringify(value).slice(1, -1).replace(/\\"/g, '"').replace(/'/g, "\\'")}'`;
 
 const keyLiteral = (key: string): string => (IDENTIFIER.test(key) ? key : stringLiteral(key));
 
@@ -199,15 +233,20 @@ class SourceWriter {
       this.root(page, 'PageSpec', main, `pages/${page.id ?? (page.slug || 'home')}`)
     );
 
-    const space = [
-      `name: ${literal(this.spec.name)}`,
-      `permanentUrl: ${literal(this.spec.permanentUrl)}`,
-      ...this.plainFields(['mode', 'theme', 'variables', 'fonts', 'elements']),
-      ...(Object.keys(unnamed).length > 0 ? [`classes: ${literal(unnamed)}`] : []),
-      ...this.plainFields(['schemaVariables', 'settings', 'customCss', 'rsc', 'pageFolders']),
-      ...(layouts.length > 0 ? [`layouts: [${layouts.join(', ')}]`] : []),
-      `pages: [${pages.join(', ')}]`
-    ];
+    const written: Partial<Record<keyof SpaceSpec, string>> = {
+      classes: Object.keys(unnamed).length > 0 ? literal(unnamed) : undefined,
+      layouts: layouts.length > 0 ? `[${layouts.join(', ')}]` : undefined,
+      pages: `[${pages.join(', ')}]`
+    };
+    const space = SPACE_FIELDS.flatMap(key => {
+      const value = Object.hasOwn(written, key)
+        ? written[key]
+        : this.spec[key] === undefined
+          ? undefined
+          : literal(this.spec[key]);
+
+      return value === undefined ? [] : [`${key}: ${value}`];
+    });
     const body = `export const ${this.options.exportName}: SpaceSpec = { ${space.join(', ')} };`;
 
     if (this.options.split) {
@@ -227,10 +266,6 @@ class SourceWriter {
     }
 
     return this.files;
-  }
-
-  private plainFields(keys: (keyof SpaceSpec)[]): string[] {
-    return keys.flatMap(key => (this.spec[key] === undefined ? [] : [`${key}: ${literal(this.spec[key])}`]));
   }
 
   /** The classes an element, a slot, a page or a layout names — the ones worth a variable. */
@@ -367,36 +402,27 @@ class SourceWriter {
   }
 
   private authoringFields(spec: ElementSpec, meta: { label: string } | undefined, imports: FileImports): string[] {
-    const fields: string[] = [];
-    if (spec.class !== undefined) {
-      fields.push(`class: ${this.classReference(spec.class, imports)}`);
-    }
-
-    for (const key of ['css', 'states', 'variant'] as const) {
-      if (spec[key] !== undefined) {
-        fields.push(`${key}: ${literal(spec[key])}`);
+    const fields = ELEMENT_FIELDS.flatMap(key => {
+      if (STRUCTURAL_FIELDS.has(key) || spec[key] === undefined) {
+        return [];
       }
-    }
 
-    if (spec.slots) {
-      fields.push(
-        `slots: { ${Object.entries(spec.slots)
-          .map(([slot, value]) => `${keyLiteral(slot)}: ${this.classReference(value, imports)}`)
-          .join(', ')} }`
-      );
-    }
-
-    for (const key of ['bind', 'visible', 'flows', 'runtime', 'loadStrategy'] as const) {
-      if (spec[key] !== undefined) {
-        fields.push(`${key}: ${literal(spec[key])}`);
+      if (key === 'class') {
+        return [`class: ${this.classReference(spec.class, imports)}`];
       }
-    }
 
-    if (meta) {
-      fields.push(`meta: ${literal(meta)}`);
-    }
+      if (key === 'slots') {
+        const slots = Object.entries(spec.slots ?? {}).map(
+          ([slot, value]) => `${keyLiteral(slot)}: ${this.classReference(value, imports)}`
+        );
 
-    return fields;
+        return [`slots: { ${slots.join(', ')} }`];
+      }
+
+      return [`${key}: ${literal(spec[key])}`];
+    });
+
+    return meta ? [...fields, `meta: ${literal(meta)}`] : fields;
   }
 
   private literalElement(

@@ -15,7 +15,8 @@ type SettingsProps = {
     | 'figure'
     | 'dl'
     | 'dt'
-    | 'dd';
+    | 'dd'
+    | 'li';
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
@@ -38,6 +39,7 @@ const Settings = ({ subType = 'div', onUpdate }: SettingsProps) => {
         <option value="dl">DL</option>
         <option value="dt">DT</option>
         <option value="dd">DD</option>
+        <option value="li">LI</option>
       </Select>
     </div>
   );

@@ -148,7 +148,8 @@ export const checkBindingTransformers = (
         });
       }
 
-      if (param.type === 'select' && param.options && key in params && !param.options.includes(params[key])) {
+      // A checkbox param is stored as the boolean it is; the catalog names its options as text, so compare as text.
+      if (param.type === 'select' && param.options && key in params && !param.options.includes(String(params[key]))) {
         ctx.errors.push({
           path: `${base}.params.${key}`,
           message: `Transformer "${transformer.action}" param "${key}" is "${params[key]}", not one of its options`,

@@ -37,7 +37,11 @@ export type BindingCategory = 'attributes' | 'style' | 'initialState';
 
 export type BindingTransformer = {
   action: string;
-  params: Record<string, string>;
+  /**
+   * Mostly text, and not only: a param the builder draws as a checkbox (`styleVariant`'s `append`) is stored as the
+   * boolean it is, and the transformer reads it as one — `if (!append)`. Writing `"false"` there would read as true.
+   */
+  params: Record<string, string | number | boolean>;
   enabled?: boolean;
 };
 

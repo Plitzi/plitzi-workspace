@@ -25,6 +25,34 @@ const REPAIR_LABELS: Record<string, string> = {
 
 export const repairLabel = (code: string): string => REPAIR_LABELS[code] ?? code;
 
+/** Removed, corrected or kept: what the reader DID, which is what the icon beside a kind of repair says. */
+export const repairIcon = (code: string): string => {
+  if (code.startsWith('fixed-') || code === 'folded-state-selector' || code === 'legacy-element-type') {
+    return 'fa-solid fa-wrench';
+  }
+
+  if (code === 'unwritable-css' || code === 'unknown-element-type') {
+    return 'fa-solid fa-box-archive';
+  }
+
+  return 'fa-solid fa-eraser';
+};
+
+/** A stretch of a message; `key` is its place in the message, which is fixed — a message is never reordered. */
+export type MessagePart = { key: string; text: string; code: boolean };
+
+/**
+ * A repair message, with the names in it — `"listItem-bOPK"`, `"_blank"` — set apart from the prose around them.
+ *
+ * The reader quotes every name it mentions, so the quotes are what mark them: the parts between them are what a person
+ * scans a list of repairs for, and reading them as code is what tells one from the sentence around it.
+ */
+export const messageParts = (message: string): MessagePart[] =>
+  message
+    .split(/"([^"]*)"/)
+    .map((text, index) => ({ key: String(index), text, code: index % 2 === 1 }))
+    .filter(part => part.text !== '');
+
 export type CorrectionGroup = {
   code: string;
   label: string;

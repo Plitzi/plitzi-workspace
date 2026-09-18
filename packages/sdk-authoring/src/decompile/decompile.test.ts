@@ -108,6 +108,12 @@ describe('specFromSpace', () => {
     expect(body[1].bind).toEqual({ content: 'posts.title' });
   });
 
+  it('keeps every id when asked, for a space people keep working in', () => {
+    const { spec } = specFromSpace(authorSpace(rich), { keepIds: true });
+
+    expect(spec.pages[0].body[1].id).toBe('heading-1');
+  });
+
   it('writes a selector one element uses into that element, and keeps a shared one as a class', () => {
     const { spec } = specFromSpace(authorSpace(rich));
 
