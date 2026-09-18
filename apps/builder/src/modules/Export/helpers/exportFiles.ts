@@ -81,3 +81,29 @@ export const fileNavigationOf = (paths: string[]): 'none' | 'tabs' | 'list' => {
 
   return paths.length <= MAX_FILE_TABS ? 'tabs' : 'list';
 };
+
+export type FileFolder = { name: string; paths: string[] };
+
+/**
+ * An export's files as a tree one folder deep — which is every shape an export has: the files beside the space, then a
+ * folder for the layouts and one for the pages. Files keep their full path; the folder is what they are shown under.
+ */
+export const fileTreeOf = (paths: string[]): { files: string[]; folders: FileFolder[] } => {
+  const files: string[] = [];
+  const folders = new Map<string, string[]>();
+  for (const path of paths) {
+    const slash = path.lastIndexOf('/');
+    if (slash === -1) {
+      files.push(path);
+      continue;
+    }
+
+    const folder = path.slice(0, slash);
+    folders.set(folder, [...(folders.get(folder) ?? []), path]);
+  }
+
+  return { files, folders: [...folders].map(([name, folderPaths]) => ({ name, paths: folderPaths })) };
+};
+
+/** The name a file is shown by inside its folder. */
+export const fileNameOf = (path: string): string => path.slice(path.lastIndexOf('/') + 1);

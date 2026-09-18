@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 
-import { exportBlob, fileNavigationOf, orderedPaths, singleFileOf } from './exportFiles';
+import { exportBlob, fileNameOf, fileNavigationOf, fileTreeOf, orderedPaths, singleFileOf } from './exportFiles';
 
 import type { SpaceExport } from './exportFiles';
 
@@ -49,5 +49,18 @@ describe('fileNavigationOf', () => {
     expect(fileNavigationOf(['site.ts'])).toBe('none');
     expect(fileNavigationOf(['schema.json', 'style.json'])).toBe('tabs');
     expect(fileNavigationOf(['index.ts', 'styles.ts', 'pages/a.ts', 'pages/b.ts'])).toBe('list');
+  });
+});
+
+describe('fileTreeOf', () => {
+  it('keeps the files beside the space first, and groups the rest by their folder', () => {
+    expect(fileTreeOf(['index.ts', 'styles.ts', 'layouts/shell.ts', 'pages/a.ts', 'pages/b.ts'])).toEqual({
+      files: ['index.ts', 'styles.ts'],
+      folders: [
+        { name: 'layouts', paths: ['layouts/shell.ts'] },
+        { name: 'pages', paths: ['pages/a.ts', 'pages/b.ts'] }
+      ]
+    });
+    expect(fileNameOf('pages/docs-actions.ts')).toBe('docs-actions.ts');
   });
 });

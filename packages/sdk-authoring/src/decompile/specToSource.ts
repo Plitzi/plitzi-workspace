@@ -104,6 +104,9 @@ const camel = (value: string): string => {
   return /^[0-9]/.test(joined) || !joined ? `c${joined}` : joined;
 };
 
+/** A name with a suffix it does not already end in — `docsPage`, never `analyticsPagePage`. */
+const withSuffix = (name: string, suffix: string): string => (name.endsWith(suffix) ? name : `${name}${suffix}`);
+
 /** A string as a literal: a template literal when it spans lines — a stylesheet, a head snippet — and quotes when not. */
 const stringLiteral = (value: string): string =>
   value.includes('\n')
@@ -333,7 +336,7 @@ class SourceWriter {
       return object;
     }
 
-    const variable = this.names.claim(`${camel(spec.id ?? path)}${type === 'PageSpec' ? 'Page' : 'Layout'}`);
+    const variable = this.names.claim(withSuffix(camel(spec.id ?? path), type === 'PageSpec' ? 'Page' : 'Layout'));
     imports.types.add(type);
     this.files[`${path}.ts`] =
       `${imports.render(this.packageName)}\n\nexport const ${variable}: ${type} = ${object};\n`;

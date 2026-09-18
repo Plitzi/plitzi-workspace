@@ -371,8 +371,20 @@ describe('specToSource', () => {
       'styles.ts'
     ]);
     expect(files['pages/home.ts']).toContain('import { card } from \'../styles\';');
+    expect(files['pages/home.ts']).toContain('export const homePage: PageSpec');
 
     expect(compareSpaces(documents, authorSpace(await load(files, 'richSplit')))).toEqual([]);
+  });
+
+  it('names a page whose id already says page without saying it twice', () => {
+    const spec: SpaceSpec = {
+      name: 'Named',
+      permanentUrl: 'named',
+      pages: [{ id: 'analytics-page', name: 'Analytics', slug: '', body: [] }]
+    };
+    const files = specToSource(specFromSpace(authorSpace(spec)).spec, { exportName: 'named', split: true });
+
+    expect(files['pages/analytics-page.ts']).toContain('export const analyticsPage: PageSpec');
   });
 
   it('leaves out what a factory puts back — the type defaults and the default label', () => {

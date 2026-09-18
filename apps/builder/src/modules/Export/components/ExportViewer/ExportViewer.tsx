@@ -1,8 +1,8 @@
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { useState } from 'react';
 
-import ExportFileItem from './components/ExportFileItem';
 import ExportFileTab from './components/ExportFileTab';
+import ExportFileTree from './components/ExportFileTree';
 import ExportViewTab from './components/ExportViewTab';
 import { FULL_HEIGHT_EDITOR } from '../../helpers/editor';
 import { fileNavigationOf } from '../../helpers/exportFiles';
@@ -80,11 +80,7 @@ const ExportViewer = ({
           </div>
         )}
         {!showChanges && navigation === 'list' && (
-          <nav className="w-56 shrink-0 space-y-0.5 overflow-auto border-r border-zinc-200 p-2 dark:border-zinc-700/70">
-            {paths.map(path => (
-              <ExportFileItem key={path} path={path} selected={path === selectedPath} onSelect={onSelectPath} />
-            ))}
-          </nav>
+          <ExportFileTree paths={paths} selectedPath={selectedPath} onSelect={onSelectPath} />
         )}
         {!showChanges && (
           <div className="min-h-0 min-w-0 grow">
