@@ -6,19 +6,53 @@ describe('styles()', () => {
   it('normalises the rules where they are written, not where they are used', () => {
     expect(styles('card', { padding: '24px' }).rules).toEqual({
       desktop: {
-        'padding-top': '24px',
-        'padding-right': '24px',
-        'padding-bottom': '24px',
-        'padding-left': '24px'
+        default: {
+          'padding-top': '24px',
+          'padding-right': '24px',
+          'padding-bottom': '24px',
+          'padding-left': '24px'
+        }
       }
     });
   });
 
   it('keeps a per-breakpoint declaration per breakpoint', () => {
     expect(styles('title', { desktop: { 'font-size': '48px' }, mobile: { 'font-size': '30px' } }).rules).toEqual({
-      desktop: { 'font-size': '48px' },
-      mobile: { 'font-size': '30px' }
+      desktop: { default: { 'font-size': '48px' } },
+      mobile: { default: { 'font-size': '30px' } }
     });
+  });
+
+  it('carries states and variants as parts of the same selector, per breakpoint', () => {
+    const card = styles('card', {
+      css: { color: 'black' },
+      states: { hover: { desktop: { color: 'blue' }, mobile: { color: 'navy' } } },
+      variants: {
+        active: { 'font-weight': '700' },
+        muted: { css: { opacity: '0.5' }, states: { hover: { opacity: '1' } } }
+      }
+    });
+
+    expect(card.rules).toEqual({
+      desktop: {
+        default: { color: 'black' },
+        states: { hover: { color: 'blue' } },
+        variants: {
+          active: { default: { 'font-weight': '700' } },
+          muted: { default: { opacity: '0.5' }, states: { hover: { opacity: '1' } } }
+        }
+      },
+      mobile: { default: {}, states: { hover: { color: 'navy' } } }
+    });
+  });
+
+  it('expands shorthands inside a state, and refuses a state the editor has no tab for', () => {
+    expect(styles('card', { states: { hover: { padding: '4px' } } }).rules.desktop?.states?.hover).toMatchObject({
+      'padding-top': '4px'
+    });
+    expect(() => styles('card', { states: { hovered: { color: 'red' } } as never })).toThrow(
+      /Unknown style state "hovered"/
+    );
   });
 
   // The refusal is the point of normalising early: a property outside the vocabulary is an error on the line that

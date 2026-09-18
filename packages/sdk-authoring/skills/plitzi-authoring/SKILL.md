@@ -99,7 +99,11 @@ property outside the vocabulary is an error naming the correct key (`paddingTop`
 - **Fonts are declared, not assumed.** A `font-family` loads only if the space lists the face in `fonts`
   (`{ source: 'google', family: 'Fraunces', fallback: 'Georgia, serif', weights: [400, 600], styles: ['normal'] }`);
   the page server writes exactly that list into the document, and anything else renders in the fallback.
-- Per element TYPE defaults go in `elements: { heading: { base: …, variants: { … } } }`.
+- Per element TYPE defaults go in `elements: { heading: { base: …, states: { … }, variants: { … }, slots: { … } } }`
+  — `slots` dresses the type's other selectors (a modal's `rootContainer`) for every element of the type.
+- **`:hover` is part of the selector, not a rule in `customCss`.** `styles('card', { css: { … }, states: { hover: { … } },
+  variants: { active: { … } } })`, and `states` beside an element's own `css`. Written in `customCss` it renders and
+  then cannot be read back or edited per breakpoint.
 
 **Share a rule as a class, never as a spread.** Writing a rule set once in a `const` and spreading it into each
 element's `css` shares the source and duplicates the document — one selector per element, so re-theming the card
@@ -115,8 +119,13 @@ Accepted anywhere a class name is — `class`, a `slot`, a page's `class` — an
 names it. One name declared twice with rules that disagree is refused. `classes` at the top of the space is the
 same mechanism for what describes the space rather than one section of it.
 
-An element has exactly ONE base selector, so a variant is its own class over a shared plain object
-(`styles('button-primary', { ...base, … })`), never two classes layered on top of each other.
+An element has exactly ONE base selector, so a look that never changes is its own class over a shared plain object
+(`styles('button-primary', { ...base, … })`), never two classes layered on top of each other. A class's `variants`
+are for what the page switches while it runs — a binding with the `styleVariant` transformer picks one.
+
+**Shells go in `layouts`.** A header or a sidebar every page shows is a layout the pages name —
+`layout: { id: 'app-shell', slot: 'main' }`, the slot being the element in the shell where the body goes — never a
+copy on each page. `visible: false` starts an element hidden for a flow to reveal.
 
 ## Data
 
@@ -253,6 +262,14 @@ Everything a space is held to still applies, and two more things apply because a
 
 `validateTemplate(template)` runs the same gate over a manifest you did not author here — one exported by the
 builder, or edited by hand — before you publish it.
+
+## From an exported JSON
+
+Never rewrite an exported space by hand. `specFromSpace({ schema, style })` reads it into the spec that authors it,
+repairing what an older builder left behind and listing each repair in `corrections`; `specToSource(spec,
+{ exportName })` writes that spec as factory calls; `compareSpaces(original, authorSpace(spec))` must list nothing but
+what `corrections` explains. The builder's **Export** (and `POST /utils/transform-to-authoring`) does all three. Edit
+the code it writes from then on, not the JSON.
 
 ## Rules
 

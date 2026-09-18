@@ -106,9 +106,10 @@ export const hiddenWhen = (source: string): BindingSpec => ({
  * list would have: a binding's id carries its position, and a space that moves to the field should not move its
  * ids.
  */
-export const withVisibility = (spec: { bind?: BindingsSpec; visible?: string }): BindingSpec[] | undefined => {
+export const withVisibility = (spec: { bind?: BindingsSpec; visible?: string | false }): BindingSpec[] | undefined => {
   const bound = spec.bind === undefined ? undefined : toBindingSpecs(spec.bind);
-  if (spec.visible === undefined) {
+  // `false` is a starting state rather than a condition: nothing to bind, only an element that begins hidden.
+  if (spec.visible === undefined || spec.visible === false) {
     return bound;
   }
 

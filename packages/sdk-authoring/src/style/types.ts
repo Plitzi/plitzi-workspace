@@ -1,4 +1,4 @@
-import type { DisplayMode, StyleObject, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleBlock, StyleObject, StyleState, StyleValue } from '@plitzi/sdk-shared';
 
 /**
  * The two shapes CSS has while a space is being authored.
@@ -38,6 +38,33 @@ export type ResponsiveStyle = Partial<Record<DisplayMode, StyleRules>>;
  */
 export type CssSpec = CssProps | ResponsiveCss;
 
+/** Rules for the states a selector reacts to — `hover`, `focus`, `active` — each one plain or per breakpoint. */
+export type StatesSpec = Partial<Record<StyleState, CssSpec>>;
+
+/** One variant of a selector: what it changes, and how it reacts on its own. A variant cannot carry variants. */
+export interface VariantSpec {
+  css?: CssSpec;
+  states?: StatesSpec;
+}
+
+/**
+ * Everything one selector can say, where plain CSS is not enough.
+ *
+ * `:hover` and the variants are not separate classes in Plitzi — they are parts of the SAME selector, which is what
+ * the style editor shows as tabs of one class. Writing them as a second class (`.card:hover` in `customCss`) renders,
+ * and then cannot be read back or overridden per breakpoint, so they are declared beside the rules they modify.
+ */
+export interface RuleSetSpec extends VariantSpec {
+  /** By name — what `data-variant` and an element's `variant` select. Plain CSS, or CSS with states of its own. */
+  variants?: Record<string, CssSpec | VariantSpec>;
+}
+
+/** A selector's rules in either shape: plain CSS, or CSS with its states and variants beside it. */
+export type StyleSpec = CssSpec | RuleSetSpec;
+
+/** A selector's whole block per breakpoint, as it reaches the document. */
+export type ResponsiveBlock = Partial<Record<DisplayMode, StyleBlock>>;
+
 /**
  * A named rule set — a class — as opposed to an anonymous one.
  *
@@ -48,6 +75,6 @@ export type CssSpec = CssProps | ResponsiveCss;
  */
 export interface StyleDeclaration {
   readonly name: string;
-  readonly rules: ResponsiveStyle;
+  readonly rules: ResponsiveBlock;
   toString(): string;
 }

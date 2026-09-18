@@ -38,6 +38,7 @@ import type { SchemaValidationOptions, SchemaValidationResult } from '@plitzi/sd
  * that bundles its four workspace dependencies in and declares none at all.
  */
 
+export * from './decompile';
 export * from './elements';
 export * from './interactions';
 export * from './schema';

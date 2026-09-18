@@ -128,11 +128,15 @@ describe('the types', () => {
 
   it('leaves no attribute name colliding with an authoring field', () => {
     // If this stops compiling, an element has just declared an attribute called `id`, `class`, `css`, `children`,
-    // `bind`, `flows`, `slots`, `variant`, `runtime`, `visible` or `meta` — and a flat prop can no longer say which
+    // `bind`, `flows`, `slots`, `variant`, `runtime`, `visible`, `states`, `loadStrategy` or `meta` — and a flat prop can no longer say which
     // of the two it meant. `keyof` a union answers with the keys they SHARE, so the union of every key has to be
     // built by hand; the `label` assertion below is what proves this one is looking at anything at all.
+    //
+    // An element that takes any attribute (`custom`, whose component's renderer reads its own) declares an index
+    // signature, which is not a name at all — and would widen the union to `string` and hide every real one.
+    type NamedKeys<T> = keyof { [Key in keyof T as string extends Key ? never : Key]: T[Key] };
     type EveryAttributeKey = {
-      [Name in keyof typeof elementDeclarations]: keyof AttributesOf<(typeof elementDeclarations)[Name]>;
+      [Name in keyof typeof elementDeclarations]: NamedKeys<AttributesOf<(typeof elementDeclarations)[Name]>>;
     }[keyof typeof elementDeclarations];
 
     expectTypeOf<Extract<EveryAttributeKey, 'label'>>().toEqualTypeOf<'label'>();

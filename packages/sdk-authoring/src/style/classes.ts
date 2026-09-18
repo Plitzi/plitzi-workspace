@@ -1,6 +1,6 @@
-import { toResponsive } from './css';
+import { toBlocks } from './css';
 
-import type { CssSpec, StyleDeclaration } from './types';
+import type { StyleDeclaration, StyleSpec } from './types';
 
 /**
  * A named class, declared where it is used.
@@ -21,9 +21,9 @@ import type { CssSpec, StyleDeclaration } from './types';
  * property is refused on this line. What a declaration MEANS — where it is collected from, what happens when one
  * name is declared twice — belongs to whoever assembles the document; this fragment only names rules.
  */
-export const styles = (name: string, rules: CssSpec): StyleDeclaration => ({
+export const styles = (name: string, rules: StyleSpec): StyleDeclaration => ({
   name,
-  rules: toResponsive(rules),
+  rules: toBlocks(rules),
   // A declaration IS a class name everywhere but the type system, and the places that want the string — a
   // hand-written selector, an error message — reach it through interpolation.
   toString: () => name

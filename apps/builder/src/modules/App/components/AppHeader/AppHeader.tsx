@@ -10,6 +10,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import BuilderSearchButton from '@pmodules/Builder/components/BuilderSearch/components/BuilderSearchButton';
 import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';
+import ExportSpace from '@pmodules/Export';
 
 import BorderButton from './BorderButton';
 import DisplayModeButtons from './DisplayModeButtons';
@@ -106,6 +107,20 @@ const AppHeader = () => {
     }
   }, [addToast, mutate, showModal]);
 
+  const handleClickExport = useCallback(async () => {
+    await showModal(
+      <Modal.Header>
+        <h4>Export space</h4>
+      </Modal.Header>,
+      <Modal.Body>
+        <ExportSpace />
+      </Modal.Body>,
+      undefined,
+      // The code is the point of the dialog, so it gets the room: wide enough for a 120-column file, on any screen.
+      { className: { card: 'w-[min(1180px,94vw)] max-w-none' } }
+    );
+  }, [showModal]);
+
   const origin = useMemo(() => {
     if (typeof window !== 'undefined') {
       return get(window, 'location.origin', 'https://plitzi.com');
@@ -171,6 +186,15 @@ const AppHeader = () => {
           />
         </button>
         <div className="flex gap-4">
+          <Button
+            id="header-export"
+            size="sm"
+            title="Export: a copy of this space as JSON, or as the code that authors it."
+            onClick={handleClickExport}
+            intent="secondary"
+          >
+            Export
+          </Button>
           <Button
             id="header-publish"
             size="sm"

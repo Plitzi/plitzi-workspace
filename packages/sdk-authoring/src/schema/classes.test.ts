@@ -57,7 +57,11 @@ describe('a space that names style declarations', () => {
   });
 
   it('produces the same document as declaring the class at the top of the space', () => {
-    const declared = authorSpace(spaceWith([{ type: 'container', class: 'card' }], { classes: { card: card.rules } }));
+    const declared = authorSpace(
+      spaceWith([{ type: 'container', class: 'card' }], {
+        classes: { card: { padding: '24px', 'border-radius': '12px' } }
+      })
+    );
     const colocated = authorSpace(spaceWith([{ type: 'container', class: card }]));
 
     expect(colocated.style).toEqual(declared.style);

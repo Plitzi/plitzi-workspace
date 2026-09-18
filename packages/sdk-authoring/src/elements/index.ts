@@ -10,6 +10,7 @@
  * fall behind.
  */
 
+export * from './attributeNames';
 export * from './catalog';
 export * from './element';
 export * from './elements';

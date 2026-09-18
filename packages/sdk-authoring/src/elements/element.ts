@@ -1,8 +1,8 @@
 import { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
 
 import type { BindingsSpec, ElementSpec, SpecMeta, StepSpec } from '../schema';
-import type { CssSpec, StyleDeclaration } from '../style';
-import type { ElementRuntime } from '@plitzi/sdk-shared';
+import type { CssSpec, StatesSpec, StyleDeclaration } from '../style';
+import type { ElementLoadStrategy, ElementRuntime } from '@plitzi/sdk-shared';
 import type {
   AttributesOf,
   ElementAttributesBrand,
@@ -33,18 +33,25 @@ export interface AuthoringProps {
   class?: string | StyleDeclaration;
   /** Rules of this element's own: one set, or one per breakpoint. Shorthands are expanded when the space is written. */
   css?: CssSpec;
+  /** How the element's own rules react — `hover`, `focus` — beside {@link AuthoringProps.css}. */
+  states?: StatesSpec;
   /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
   variant?: string;
   /** A class for one of the element's other selectors — a form control's `input`, `label`, `error`. */
   slots?: Record<string, string | StyleDeclaration>;
   /** `{ content: 'posts.title' }`, or the full form for state, transformers and conditions. */
   bind?: BindingsSpec;
-  /** Show this element only while the value at this source is true. `!source` shows it while the value is false. */
-  visible?: string;
+  /**
+   * Show this element only while the value at this source is true. `!source` shows it while the value is false, and
+   * `false` starts it hidden for a flow to reveal.
+   */
+  visible?: string | false;
   /** One flow per entry; steps are chained in the order written. */
   flows?: StepSpec[][];
   /** `server` resolves this element's data on the server rather than in the browser. */
   runtime?: ElementRuntime;
+  /** When the element's contents mount relative to its visibility. Left out, the element type decides. */
+  loadStrategy?: ElementLoadStrategy;
   children?: ElementSpec[];
   /** What the builder shows, not what the runtime reads. */
   meta?: SpecMeta;
@@ -77,12 +84,14 @@ const buildSpec = (
     id,
     class: shared,
     css,
+    states,
     variant,
     slots,
     bind,
     visible,
     flows,
     runtime,
+    loadStrategy,
     children,
     meta,
     ...attributes
@@ -93,12 +102,14 @@ const buildSpec = (
     ...(id === undefined ? {} : { id }),
     ...(shared === undefined ? {} : { class: shared }),
     ...(css === undefined ? {} : { css }),
+    ...(states === undefined ? {} : { states }),
     ...(variant === undefined ? {} : { variant }),
     ...(slots === undefined ? {} : { slots }),
     ...(bind === undefined ? {} : { bind }),
     ...(visible === undefined ? {} : { visible }),
     ...(flows === undefined ? {} : { flows }),
     ...(runtime === undefined ? {} : { runtime }),
+    ...(loadStrategy === undefined ? {} : { loadStrategy }),
     ...(children === undefined ? {} : { children }),
     // The element's own defaults, with the author's values on top. Attributes MERGE rather than replace: a
     // declaration's defaults are what the element needs to render at all — a heading's `subType`, a list's
@@ -145,6 +156,19 @@ export const defineElement =
 const declarationsByType = new Map<string, ElementDeclarationData>(
   Object.values(elementDeclarations).map(declaration => [declaration.type, declaration])
 );
+
+/**
+ * The attributes an element of this type starts with — what a factory merges under the author's own.
+ *
+ * An attribute equal to one of these says nothing a factory would not say for it, which is what lets a reader of a
+ * document leave it out, and what makes "absent" and "the default" the same answer when two documents are compared.
+ */
+export const defaultAttributes = (type: string): Record<string, unknown> => ({
+  ...declarationsByType.get(type)?.content?.attributes
+});
+
+/** The name a factory gives an element of this type in the builder's tree, unless the author gave it another. */
+export const defaultLabel = (type: string): string => declarationsByType.get(type)?.content?.definition?.label ?? type;
 
 type DeclarationByType = {
   [

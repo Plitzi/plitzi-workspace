@@ -1,9 +1,10 @@
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
-import { BREAKPOINTS, className, css, sameRules, toResponsive } from '../style';
+import { BREAKPOINTS, className, sameBlocks, toBlocks } from '../style';
 import { GLOBAL_SOURCES, groupBindings, withVisibility } from './bindings';
 import { authorFlows } from './flows';
 import { buildHandles, pathForSlug, selectorFor } from './handles';
@@ -18,13 +19,15 @@ import type {
   AuthoredSpace,
   ElementSpec,
   ElementStyleSpec,
+  LayoutRef,
+  LayoutSpec,
   PageFolderSpec,
   PageSpec,
   SpaceSpec,
   StepSpec,
   StepVocabulary
 } from './types';
-import type { CssSpec, ResponsiveStyle, StyleDeclaration, StyleRules } from '../style';
+import type { CssSpec, ResponsiveBlock, StatesSpec, StyleDeclaration } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type { DropPosition, Element, PageFolder, Schema, SpaceFont, Style, StyleItem } from '@plitzi/sdk-shared';
 
@@ -42,20 +45,17 @@ import type { DropPosition, Element, PageFolder, Schema, SpaceFont, Style, Style
  * authoring fragment produces specs, and specs are inert until they reach here.
  */
 
-const declarationsToCss = (rules: StyleRules): string =>
-  Object.entries(rules)
-    .map(([property, value]) => `${property}:${String(value)};`)
-    .join('');
+/** A selector's cache, written by the same function the style editor writes it with — states and variants included. */
+const withCache = (item: Omit<StyleItem, 'cache'>): StyleItem => {
+  const complete: StyleItem = { ...item, cache: '' };
+  complete.cache = processSelector(complete);
 
-const classCss = (selector: string, rules: StyleRules): string => `.${selector}{${declarationsToCss(rules)}}`;
-
-const elementCss = (type: string, base: StyleRules, variants: Record<string, StyleRules>): string => {
-  const variantCss = Object.entries(variants)
-    .map(([name, rules]) => `&[data-variant="${name}"],&.${type}--${name}{${declarationsToCss(rules)}}`)
-    .join('');
-
-  return `.plitzi__${type}{${declarationsToCss(base)}${variantCss}}`;
+  return complete;
 };
+
+/** The two attributes a page or a layout names its shell with. */
+const layoutAttributes = (layout: LayoutRef | undefined): Record<string, string> =>
+  layout ? { layout: layout.id, layoutContainer: layout.slot } : {};
 
 class SpaceAuthor {
   private readonly flatMap = new FlatMap({ flat: {}, variables: [] });
@@ -80,7 +80,7 @@ class SpaceAuthor {
   private readonly handles: Record<string, PageHandle> = {};
 
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
-  private readonly classRules = new Map<string, ResponsiveStyle>();
+  private readonly classRules = new Map<string, ResponsiveBlock>();
 
   /** Every element in this space that publishes a data source, by id, and the name it publishes it under. */
   private readonly sources: SourceIndex = new Map();
@@ -104,16 +104,23 @@ class SpaceAuthor {
     }
 
     for (const [name, rules] of Object.entries(this.spec.classes ?? {})) {
-      this.declareClass(name, rules, 'The space-wide `classes`');
+      this.declareClass(name, toBlocks(rules), 'The space-wide `classes`');
     }
+
+    const layouts = this.spec.layouts ?? [];
 
     // Before the tree is written, so the stylesheet is whole by the time anything names a class and a name that
     // means two different things is refused at the declaration rather than at whichever use happened to be second.
-    this.spec.pages.forEach(page => this.collectDeclarations(page));
+    layouts.forEach(layout => this.collectDeclarations(layout.class, layout.body, `Layout "${layout.id}"`));
+    this.spec.pages.forEach(page => this.collectDeclarations(page.class, page.body, `Page "${page.name}"`));
 
     // Same reason, for the other thing an element names by a name declared elsewhere: a binding may read a
     // provider written further down the page than the element reading it. The author's own names are collected in
     // the same pass, so a derived `<type>-<n>` never claims a name written further down.
+    layouts.forEach(layout => {
+      this.authorNames.add(layout.id);
+      layout.body.forEach(child => this.collectSources(child));
+    });
     this.spec.pages.forEach(page => {
       if (page.id) {
         this.authorNames.add(page.id);
@@ -127,7 +134,12 @@ class SpaceAuthor {
     }
 
     const pageFolders = this.buildPageFolders();
+    layouts.forEach(layout => this.addLayout(layout));
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
+    // After every root is written, because a slot is an element INSIDE a layout and a layout may be named by one
+    // declared further down.
+    layouts.forEach(layout => this.assertLayoutRef(layout.layout, `Layout "${layout.id}"`));
+    this.spec.pages.forEach(page => this.assertLayoutRef(page.layout, `Page "${page.name}"`));
 
     const style: Style = {
       ...EMPTY_STYLE_SCHEMA,
@@ -242,27 +254,29 @@ class SpaceAuthor {
   }
 
   private writeElementDefaults(type: string, spec: ElementStyleSpec): void {
-    const base = css(spec.base ?? {});
-    const variants = Object.fromEntries(Object.entries(spec.variants ?? {}).map(([name, rules]) => [name, css(rules)]));
+    const base = toBlocks({ css: spec.base ?? {}, states: spec.states, variants: spec.variants });
+    const slots = Object.entries(spec.slots ?? {}).map(([slot, rules]) => [slot, toBlocks(rules)] as const);
 
-    this.platform.desktop[type] = {
-      name: type,
-      type: 'element',
-      componentType: type,
-      attributes: {
-        base: {
-          default: base,
-          ...(spec.variants
-            ? {
-                variants: Object.fromEntries(
-                  Object.entries(variants).map(([name, rules]) => [name, { default: rules }])
-                )
-              }
-            : {})
-        }
-      },
-      cache: elementCss(type, base, variants)
-    };
+    for (const breakpoint of BREAKPOINTS) {
+      const slotBlocks = slots.flatMap(([slot, blocks]) => {
+        const block = blocks[breakpoint];
+
+        return block ? [[slot, block] as const] : [];
+      });
+
+      // Desktop always, as the builder does: an element type the space dresses has an entry even when its base is
+      // empty and only a slot says anything.
+      if (breakpoint !== 'desktop' && !base[breakpoint] && slotBlocks.length === 0) {
+        continue;
+      }
+
+      this.platform[breakpoint][type] = withCache({
+        name: type,
+        type: 'element',
+        componentType: type,
+        attributes: { base: base[breakpoint] ?? { default: {} }, ...Object.fromEntries(slotBlocks) }
+      });
+    }
   }
 
   /**
@@ -273,16 +287,15 @@ class SpaceAuthor {
    * that means one thing on one page and another somewhere else is a rule that silently depends on which file the
    * bundler reached first, which is the shape of bug this whole surface exists to make impossible.
    */
-  private declareClass(name: string, rules: CssSpec, where: string): void {
-    const responsive = toResponsive(rules);
+  private declareClass(name: string, blocks: ResponsiveBlock, where: string): void {
     const existing = this.classRules.get(name);
     if (!existing) {
-      this.classRules.set(name, responsive);
+      this.classRules.set(name, blocks);
 
       return;
     }
 
-    if (!sameRules(existing, responsive)) {
+    if (!sameBlocks(existing, blocks)) {
       throw new Error(
         `${where} declares the class "${name}" with different rules to a declaration already made for that name. A class is one rule set per space: rename one of them, or make them agree.`
       );
@@ -295,7 +308,11 @@ class SpaceAuthor {
    * A declaration is collected from where it is USED rather than from a list, which is the whole point of it — the
    * rules stay next to the element they dress — and it means one declared and never named writes nothing at all.
    */
-  private collectDeclarations(page: PageSpec): void {
+  private collectDeclarations(
+    rootClass: string | StyleDeclaration | undefined,
+    body: ElementSpec[],
+    rootWhere: string
+  ): void {
     const collect = (value: string | StyleDeclaration | undefined, where: string): void => {
       if (value && typeof value !== 'string') {
         this.declareClass(value.name, value.rules, where);
@@ -310,8 +327,8 @@ class SpaceAuthor {
       spec.children?.forEach(walk);
     };
 
-    collect(page.class, `Page "${page.name}"`);
-    page.body.forEach(walk);
+    collect(rootClass, rootWhere);
+    body.forEach(walk);
   }
 
   /**
@@ -404,9 +421,9 @@ class SpaceAuthor {
    * desktop columns on a phone — the narrowest screen gets the widest layout, and every check passes. A warning and
    * not a refusal, because a rule meant for tablets alone is legal, just rarely what anybody meant.
    */
-  private warnTabletOnly(responsive: ResponsiveStyle, where: string): void {
-    const tablet = responsive.tablet ?? {};
-    const mobile = responsive.mobile ?? {};
+  private warnTabletOnly(blocks: ResponsiveBlock, where: string): void {
+    const tablet = blocks.tablet?.default ?? {};
+    const mobile = blocks.mobile?.default ?? {};
     const skipped = Object.keys(tablet).filter(property => !Object.hasOwn(mobile, property));
     if (skipped.length === 0) {
       return;
@@ -419,23 +436,16 @@ class SpaceAuthor {
     });
   }
 
-  private writeSelector(name: string, responsive: ResponsiveStyle, where: string): void {
-    this.warnTabletOnly(responsive, where);
+  private writeSelector(name: string, blocks: ResponsiveBlock, where: string): void {
+    this.warnTabletOnly(blocks, where);
 
     for (const breakpoint of BREAKPOINTS) {
-      const rules = responsive[breakpoint];
-      if (!rules || Object.keys(rules).length === 0) {
+      const block = blocks[breakpoint];
+      if (!block) {
         continue;
       }
 
-      const item: StyleItem = {
-        name,
-        type: 'class',
-        attributes: { base: { default: rules } },
-        cache: classCss(name, rules)
-      };
-
-      this.platform[breakpoint][name] = item;
+      this.platform[breakpoint][name] = withCache({ name, type: 'class', attributes: { base: block } });
     }
   }
 
@@ -446,22 +456,31 @@ class SpaceAuthor {
    * its own is a question with no answer, and the old behaviour — keep the class, drop the rules — is the kind of
    * silence this whole surface exists to remove.
    */
-  private selectorFor(path: string, spec: { type: string; class?: string | StyleDeclaration; css?: CssSpec }): string {
+  private selectorFor(
+    path: string,
+    spec: { type: string; class?: string | StyleDeclaration; css?: CssSpec; states?: StatesSpec }
+  ): string {
     if (spec.class) {
       const name = className(spec.class);
       this.assertClass(name, `Element "${spec.type}" at ${path}`);
 
-      if (spec.css) {
+      if (spec.css || spec.states) {
         throw new Error(
-          `Element "${spec.type}" at ${path} declares both a shared class ("${name}") and css of its own. An element has one base selector: either write the rules into the class, or drop the class and keep the css.`
+          `Element "${spec.type}" at ${path} declares both a shared class ("${name}") and ${spec.css ? 'css' : 'states'} of its own. An element has one base selector: either write the rules into the class, or drop the class and keep the rules.`
         );
       }
 
       return name;
     }
 
-    const selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}`, 4)}`;
-    this.writeSelector(selector, toResponsive(spec.css), `Element "${spec.type}" at ${path}`);
+    // A class may carry any name — one read back from a builder document is `container-555c` — so the name derived
+    // for an element's own rules steps past a class that already answers to it rather than overwriting its rules.
+    let selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}`, 4)}`;
+    for (let attempt = 1; this.classRules.has(selector); attempt += 1) {
+      selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}#${attempt}`, 4)}`;
+    }
+
+    this.writeSelector(selector, toBlocks({ css: spec.css, states: spec.states }), `Element "${spec.type}" at ${path}`);
 
     return selector;
   }
@@ -579,10 +598,13 @@ class SpaceAuthor {
         default: page.isDefault ?? index === 0,
         name: page.name,
         ...(page.folder === undefined ? {} : { folder: page.folder }),
+        ...layoutAttributes(page.layout),
         ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
         ...(page.unauthorizedRedirect
           ? { unauthorizedBehaviour: 'redirect', unauthorizedPageRedirect: page.unauthorizedRedirect }
           : {}),
+        ...(page.keepState === undefined ? {} : { keepState: page.keepState }),
+        ...(page.stateStorage ? { stateStorage: page.stateStorage } : {}),
         seoEnabled: Boolean(page.seoTitle ?? page.seoDescription),
         ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
         ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {})
@@ -616,6 +638,76 @@ class SpaceAuthor {
     page.body.forEach((child, childIndex) => this.addElement(child, `${path}/${childIndex}`, id, id));
 
     return id;
+  }
+
+  /**
+   * A shell pages render inside: a root of its own, written like a page but listed as none.
+   *
+   * It is inserted with no parent, the way a page is, and its elements carry it as their `rootId` — which is what
+   * the validator and the builder read to tell a shell's elements from a page's. It is never in `schema.pages`:
+   * it has no route, and a visitor only ever reaches it through a page that names it.
+   */
+  private addLayout(layout: LayoutSpec): void {
+    const path = `${this.spec.permanentUrl}/layout:${layout.id}`;
+    const where = `Layout "${layout.id}"`;
+    this.assertStepsKnown(layout.flows, where);
+    if (layout.folder && !this.folderPrefixes.has(layout.folder)) {
+      throw new Error(
+        `${where} is filed in folder "${layout.folder}", which this space does not declare${didYouMean(layout.folder, [...this.folderPrefixes.keys()])}`
+      );
+    }
+
+    const bindings = withVisibility({ bind: layout.bind });
+    const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
+    const element: Element = {
+      id: layout.id,
+      attributes: {
+        // The one attribute the element declares a default for, merged the way a factory merges it.
+        subType: 'div',
+        ...layout.attributes,
+        ...(layout.folder ? { folder: layout.folder } : {}),
+        ...layoutAttributes(layout.layout)
+      },
+      definition: {
+        label: layout.label ?? 'Layout Container',
+        type: 'layoutContainer',
+        rootId: layout.id,
+        items: [],
+        styleSelectors: { base: this.selectorFor(path, { type: 'layoutContainer', ...layout }) },
+        initialState: { visibility: true },
+        ...(bindings ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
+        ...(layout.flows ? { interactions: authorFlows(layout.flows, layout.id) } : {})
+      }
+    };
+
+    this.insert(element, '', 'custom');
+    layout.body.forEach((child, index) => this.addElement(child, `${path}/${index}`, layout.id, layout.id));
+  }
+
+  /**
+   * A page's shell has to be a layout, and its slot an element inside THAT layout.
+   *
+   * Both are plain strings in the document and the runtime asks nothing of them: a slot that is not inside the
+   * shell renders the shell with the page nowhere in it, and every check below this one considers that valid.
+   */
+  private assertLayoutRef(layout: LayoutRef | undefined, where: string): void {
+    if (!layout) {
+      return;
+    }
+
+    const declared = (this.spec.layouts ?? []).map(candidate => candidate.id);
+    if (!declared.includes(layout.id)) {
+      throw new Error(
+        `${where} renders inside the layout "${layout.id}", which this space does not declare${didYouMean(layout.id, declared)}`
+      );
+    }
+
+    const slot = this.flatMap.flat[layout.slot] as Element | undefined;
+    if (!slot || slot.definition.rootId !== layout.id || slot.id === layout.id) {
+      throw new Error(
+        `${where} puts its body in "${layout.slot}", which is not an element inside the layout "${layout.id}". The slot is where the body goes, so it has to be part of the shell.`
+      );
+    }
   }
 
   private slotSelectors(spec: ElementSpec, path: string): Record<string, string> {
@@ -684,6 +776,7 @@ class SpaceAuthor {
           ...(spec.variant ? { styleVariant: { [spec.type]: { base: spec.variant } } } : {})
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
+        ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),
         ...(bindings ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
         ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})
       }

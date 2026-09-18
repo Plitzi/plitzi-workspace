@@ -1,10 +1,11 @@
 import type { SpaceHandles } from './handles';
-import type { CssProps, CssSpec, StyleDeclaration } from '../style';
+import type { CssSpec, StatesSpec, StyleDeclaration, StyleSpec, VariantSpec } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   BindingCategory,
   ElementBinding,
   ElementInteraction,
+  ElementLoadStrategy,
   ElementRuntime,
   Schema,
   SchemaVariable,
@@ -102,11 +103,17 @@ export interface ElementSpec {
    */
   css?: CssSpec;
   /**
+   * How this element's own selector reacts — `hover`, `focus`, `active` — beside {@link ElementSpec.css}. A state
+   * is part of the element's selector, not a second one, so it is refused alongside a shared `class` for the same
+   * reason `css` is: the rules belong in the class.
+   */
+  states?: StatesSpec;
+  /**
    * Reuse a selector authored elsewhere in the space instead of minting one. Two elements naming the same class
    * share one rule, which is the difference between a stylesheet and a pile of one-off declarations.
    *
-   * Exclusive with {@link ElementSpec.css}: an element has exactly one base selector, so declaring both is a
-   * question with no answer and is refused rather than silently resolved.
+   * Exclusive with {@link ElementSpec.css} and {@link ElementSpec.states}: an element has exactly one base selector,
+   * so declaring both is a question with no answer and is refused rather than silently resolved.
    *
    * Either a name from {@link SpaceSpec.classes}, or a {@link StyleDeclaration} from `styles()` that brings its own
    * rules along.
@@ -134,11 +141,16 @@ export interface ElementSpec {
    *
    * One field with a `!` rather than a `visible`/`hidden` pair, because `hidden` is a real HTML attribute — and in
    * this surface the attribute keeps a name it shares with anything else.
+   *
+   * `false` starts it hidden with no condition at all: a panel that a flow reveals (`toggleState`, `setState`)
+   * rather than one the data does.
    */
-  visible?: string;
+  visible?: string | false;
   /** One flow per entry. Steps are chained in order. */
   flows?: StepSpec[][];
   runtime?: ElementRuntime;
+  /** When this element's contents mount relative to its visibility. Left out, the element type decides. */
+  loadStrategy?: ElementLoadStrategy;
   children?: ElementSpec[];
   meta?: SpecMeta;
 }
@@ -195,6 +207,11 @@ export interface PageSpec {
    * the route. A page naming a folder the space does not declare is refused.
    */
   folder?: string;
+  /** The shared layout this page renders inside. See {@link LayoutRef}. */
+  layout?: LayoutRef;
+  /** Keep the page's element state across visits, in the storage named by {@link PageSpec.stateStorage}. */
+  keepState?: boolean;
+  stateStorage?: Schema['settings']['stateStorage'];
   css?: CssSpec;
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
   class?: string | StyleDeclaration;
@@ -202,10 +219,56 @@ export interface PageSpec {
   body: ElementSpec[];
 }
 
-/** Per element *type* defaults — what `.plitzi__heading` resolves to before any class applies. */
+/**
+ * Which layout a page — or another layout — renders inside, and where in it.
+ *
+ * Both halves, always: the layout is the shell (the header, the sidebar), and `slot` is the element inside that
+ * shell the page's body is rendered into. A layout named without a slot has nowhere to put the page, which is why
+ * they are one field rather than two.
+ */
+export interface LayoutRef {
+  /** The id of a layout declared in {@link SpaceSpec.layouts}. */
+  id: string;
+  /** The id of an element inside that layout, where the body goes. */
+  slot: string;
+}
+
+/**
+ * A shell several pages share — a root of its own, never inside a page and never one of them.
+ *
+ * It is written once and every page that names it renders inside it, so the header and the sidebar are the same
+ * nodes on every page rather than a copy per page that drifts. A layout may itself sit inside another one, and the
+ * page resolves the chain from the outside in.
+ */
+export interface LayoutSpec {
+  /** The name a page's {@link LayoutRef} uses. */
+  id: string;
+  /** What the builder's tree shows. */
+  label?: string;
+  /** The page folder the builder files it under. It does not route anything: a layout has no URL of its own. */
+  folder?: string;
+  /** The layout this one renders inside, for a shell within a shell. */
+  layout?: LayoutRef;
+  attributes?: Record<string, unknown>;
+  css?: CssSpec;
+  states?: StatesSpec;
+  class?: string | StyleDeclaration;
+  bind?: BindingsSpec;
+  flows?: StepSpec[][];
+  body: ElementSpec[];
+}
+
+/**
+ * Per element *type* defaults — what `.plitzi__heading` resolves to before any class applies.
+ *
+ * `slots` dresses the type's OTHER selectors — a modal's `rootContainer`, a form control's `input` — for every
+ * element of the type at once.
+ */
 export interface ElementStyleSpec {
-  base?: CssProps;
-  variants?: Record<string, CssProps>;
+  base?: CssSpec;
+  states?: StatesSpec;
+  variants?: Record<string, CssSpec | VariantSpec>;
+  slots?: Record<string, StyleSpec>;
 }
 
 export interface SpaceSpec {
@@ -219,7 +282,7 @@ export interface SpaceSpec {
    * A space-wide stylesheet, and the right place for the rules that describe the space rather than one section of
    * it. `styles()` is the same thing declared next to what it dresses; both end up here.
    */
-  classes?: Record<string, CssSpec>;
+  classes?: Record<string, StyleSpec>;
   elements?: Record<string, ElementStyleSpec>;
   schemaVariables?: SchemaVariable[];
   customCss?: string;
@@ -247,6 +310,8 @@ export interface SpaceSpec {
   fonts?: SpaceFont[];
   /** Route prefixes a page can sit under. See {@link PageFolderSpec}. */
   pageFolders?: PageFolderSpec[];
+  /** Shells pages render inside. See {@link LayoutSpec}. */
+  layouts?: LayoutSpec[];
   pages: PageSpec[];
 }
 
@@ -328,7 +393,7 @@ export interface TemplateSpec {
   key?: string;
   variables?: Partial<StyleVariables>;
   /** As {@link SpaceSpec.classes}. Every class the subtree names has to be declared here, or it does not travel. */
-  classes?: Record<string, CssSpec>;
+  classes?: Record<string, StyleSpec>;
   elements?: Record<string, ElementStyleSpec>;
   schemaVariables?: SchemaVariable[];
   mode?: Style['mode'];

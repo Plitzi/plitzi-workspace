@@ -1,8 +1,17 @@
 import { isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
 import { expandShorthand } from './shorthand';
 
-import type { CssProps, CssSpec, ResponsiveStyle, StyleRules } from './types';
-import type { DisplayMode } from '@plitzi/sdk-shared';
+import type {
+  CssProps,
+  CssSpec,
+  ResponsiveBlock,
+  ResponsiveStyle,
+  RuleSetSpec,
+  StatesSpec,
+  StyleRules,
+  StyleSpec
+} from './types';
+import type { DisplayMode, StyleBlock, StyleState, StyleStates, StyleVariants } from '@plitzi/sdk-shared';
 
 /**
  * The one door CSS goes through while authoring.
@@ -66,12 +75,105 @@ export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
   return { desktop: css(spec as Record<string, string | number>) };
 };
 
-const fingerprint = (responsive: ResponsiveStyle): string =>
-  JSON.stringify(
-    Object.entries(responsive)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([breakpoint, rules]) => [breakpoint, Object.entries(rules).sort(([a], [b]) => a.localeCompare(b))])
-  );
+/** The states a selector can react to — the closed list the style editor shows as tabs. */
+export const STYLE_STATES: readonly StyleState[] = ['hover', 'active', 'focus', 'disabled', 'checked', 'visited'];
 
-/** Whether two normalised rule sets say the same thing, whatever order they were written in. */
-export const sameRules = (a: ResponsiveStyle, b: ResponsiveStyle): boolean => fingerprint(a) === fingerprint(b);
+const STYLE_STATE_SET = new Set<string>(STYLE_STATES);
+
+const RULE_SET_KEYS = new Set(['css', 'states', 'variants']);
+
+/**
+ * Whether a style is the object form rather than plain CSS.
+ *
+ * Told apart by the keys, like the per-breakpoint shape: `css`, `states` and `variants` are not CSS properties, so
+ * an object naming only those is a rule set and anything else is CSS.
+ */
+export const isRuleSetSpec = (spec: StyleSpec): spec is RuleSetSpec => {
+  const keys = Object.keys(spec);
+
+  return keys.length > 0 && keys.every(key => RULE_SET_KEYS.has(key));
+};
+
+const toStates = (states: StatesSpec | undefined): Map<string, ResponsiveStyle> => {
+  const unknown = Object.keys(states ?? {}).filter(state => !STYLE_STATE_SET.has(state));
+  if (unknown.length > 0) {
+    throw new Error(
+      `Unknown style state ${unknown.map(state => `"${state}"`).join(', ')}. A selector reacts to ${STYLE_STATES.join(', ')}.`
+    );
+  }
+
+  return new Map(Object.entries(states ?? {}).map(([state, rules]) => [state, toResponsive(rules)]));
+};
+
+const statesAt = (states: Map<string, ResponsiveStyle>, breakpoint: DisplayMode): StyleStates | undefined => {
+  const entries = [...states].flatMap(([state, responsive]) => {
+    const rules = responsive[breakpoint];
+
+    return rules && Object.keys(rules).length > 0 ? [[state, rules] as const] : [];
+  });
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
+
+/**
+ * The same door as {@link css}, for everything one selector carries: its rules, its states and its variants.
+ *
+ * Every rule set in it goes through {@link css}, so a shorthand in a `hover` expands and a typo in a variant is
+ * refused on the line that wrote it. A breakpoint nothing speaks for is left out, which is what the builder writes.
+ */
+export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
+  if (!spec) {
+    return {};
+  }
+
+  const ruleSet: RuleSetSpec = isRuleSetSpec(spec) ? spec : { css: spec };
+  const base = toResponsive(ruleSet.css);
+  const states = toStates(ruleSet.states);
+  const variants = Object.entries(ruleSet.variants ?? {}).map(([name, variant]) => [name, toBlocks(variant)] as const);
+
+  const blocks: ResponsiveBlock = {};
+  for (const breakpoint of BREAKPOINTS) {
+    const rules = base[breakpoint] ?? {};
+    const stateRules = statesAt(states, breakpoint);
+    const variantRules: StyleVariants = Object.fromEntries(
+      variants.flatMap(([name, variantBlocks]) => {
+        const block = variantBlocks[breakpoint];
+
+        return block
+          ? [[name, { default: block.default ?? {}, ...(block.states ? { states: block.states } : {}) }]]
+          : [];
+      })
+    );
+
+    if (Object.keys(rules).length === 0 && !stateRules && Object.keys(variantRules).length === 0) {
+      continue;
+    }
+
+    const block: StyleBlock = {
+      default: rules,
+      ...(stateRules ? { states: stateRules } : {}),
+      ...(Object.keys(variantRules).length > 0 ? { variants: variantRules } : {})
+    };
+    blocks[breakpoint] = block;
+  }
+
+  return blocks;
+};
+
+const canonical = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(canonical);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, inner]) => [key, canonical(inner)]);
+  }
+
+  return value;
+};
+
+/** Whether two normalised selectors say the same thing, whatever order they were written in. */
+export const sameBlocks = (a: ResponsiveBlock, b: ResponsiveBlock): boolean =>
+  JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));

@@ -83,6 +83,29 @@ const { schema, style, warnings } = authorSpace(space);
 that would not render. Ids are hashes of the path that produced them, so authoring the same declaration twice
 writes byte-identical documents — a seed can re-run without churning what it wrote last time.
 
+### Layouts
+
+A layout is a shell several pages share — the header, the sidebar — written once, so they are the same nodes on every
+page rather than a copy per page that drifts. It is a root of its own, never inside a page and never one of them, and
+a page names it together with the element inside it where its body goes:
+
+```ts
+export const space: SpaceSpec = {
+  // …
+  layouts: [
+    {
+      id: 'app-shell',
+      body: [container({ id: 'sidebar', children: [ … ] }), container({ id: 'main' })]
+    }
+  ],
+  pages: [{ name: 'Home', slug: '', layout: { id: 'app-shell', slot: 'main' }, body: [ … ] }]
+};
+```
+
+The slot is checked to be inside the layout: a slot anywhere else renders the shell with the page nowhere in it, and
+nothing downstream would say so. A layout may sit inside another one (`layout` on the layout itself), and the page
+resolves the chain from the outside in. `folder` files a layout under a page folder in the builder; it routes nothing.
+
 ---
 
 ## 3. Elements
@@ -201,6 +224,28 @@ whichever module the bundler reached first.
 `classes` at the top of a space is the same mechanism with the rules gathered in one place, and stays the right
 home for what describes the space rather than one section of it. Both end up in the same stylesheet.
 
+### States and variants
+
+A `:hover` and a variant are not classes of their own in Plitzi: they are parts of the **same** selector, which is
+what the style editor shows as tabs of one class. Written as a second rule in `customCss` they render, and then
+cannot be read back or overridden per breakpoint — so they are declared beside the rules they modify:
+
+```ts
+const card = styles('card', {
+  css: { padding: '24px', 'background-color': 'var(--surface)' },
+  states: { hover: { 'background-color': 'var(--surface-hover)' } },
+  variants: { active: { 'border-color': 'var(--accent)' }, muted: { css: { opacity: '0.6' }, states: { hover: { opacity: '1' } } } }
+});
+
+container({ css: { color: 'var(--muted)' }, states: { hover: { color: 'var(--foreground)' } } });
+```
+
+`states` takes the states the editor has tabs for — `hover`, `active`, `focus`, `disabled`, `checked`, `visited` — and
+each one, like `css`, may be written per breakpoint. An element's own `states` sit beside its own `css`, and are
+refused next to a shared `class` for the same reason `css` is. An element type's defaults (`elements`) take the same
+`states` and `variants`, and `slots` for the type's other selectors — a modal's `rootContainer`, a form control's
+`input` — so every element of the type is dressed at once.
+
 ---
 
 ## 5. Data
@@ -271,6 +316,9 @@ produced the data rather than in the page that hides it.
 container({ visible: 'post.found', children: [ … ] }),
 container({ visible: '!post.found', children: [text('No such post.')] })
 ```
+
+`visible: false` is the third answer: the element starts hidden with nothing bound, for a flow to reveal
+(`toggleState`, `setState`) — a panel, a confirmation, a second step.
 
 The `!` is the `not` transformer, which is available to any binding (`transformers: [{ action: 'not', params: {} }]`).
 It reads a boolean that travelled as TEXT — `"false"` and `"0"`, which JavaScript calls true — and treats an empty
@@ -463,7 +511,42 @@ from a live schema and cuts a subtree out of it (`FlatMap.flatAsTemplate`), whic
 of a space's rules and variables belong to this subtree — from the one here, where the answer is simply everything
 the declaration carries. Both produce the same artefact, and `validateTemplate` reads either.
 
-## 10. Where to look
+## 10. From a document back to code
+
+A space that already exists — exported from the builder, or checked in as JSON — can be read back into the spec that
+authors it:
+
+```ts
+import { authorSpace, compareSpaces, specFromSpace, specToSource } from '@plitzi/sdk-authoring';
+
+const { spec, corrections } = specFromSpace({ schema, style });
+const files = specToSource(spec, { exportName: 'mySite', split: true }); // { 'index.ts': …, 'pages/home.ts': … }
+const differences = compareSpaces({ schema, style }, authorSpace(spec)); // [] when nothing observable changed
+```
+
+`specToSource` writes what a person would: one factory call per element, the attributes its type already defaults to
+left out, stored longhands written back as `padding: 10px 20px`, and each class something names as a `styles()`
+declaration held in a variable. A selector only one element uses becomes that element's own `css`; one that is shared,
+or spelled out anywhere in the document (a `customCss` rule, a template), stays a class under its own name. An id
+nothing refers to is left out and derived again; one that anything names is kept. The output is valid but unformatted
+— run it through your formatter.
+
+What an older builder left behind is **repaired, and every repair is reported** in `corrections`: element types that
+no longer exist, a hover stored as a class of its own, fields and attributes nothing reads (the attributes an element
+takes are `elementAttributeNames`, generated from its types), a link `target` spelled with its underscore, a binding
+to a source nothing publishes, a flow with a step that runs nothing, a global callback on the wrong module. A CSS
+property the style editor cannot hold is kept in `customCss` under the same selector, so the page still renders it.
+
+`compareSpaces` is the proof. Author the spec again and every observable difference is listed — the tree, the
+attributes, the rules that apply to each element whatever its selector is called, bindings, flows, pages, layouts,
+settings — and each one should be a repair `corrections` named.
+
+In the builder, **Export** does all three for the space on screen: a JSON copy (`{ schema, style }`), or the
+TypeScript — one file to copy into an editor, or a `.zip` with a file per page and layout — with the repairs listed
+beside it. It is served by `POST /utils/transform-to-authoring` on the server role, which takes `{ schema, style }`
+and answers `{ exportName, files, corrections, differences }`.
+
+## 11. Where to look
 
 | Example | What it shows |
 | --- | --- |
@@ -472,4 +555,4 @@ the declaration carries. Both produce the same artefact, and `validateTemplate` 
 | [`examples/05-with-server-actions/01-actions`](../../examples/05-with-server-actions/01-actions) | a form that runs a server action and shows the answer |
 | [`examples/06-full-examples/01-blog`](../../examples/06-full-examples/01-blog) | six pages, a custom element, bindings throughout |
 | [`examples/07-templates/01-authoring`](../../examples/07-templates/01-authoring) | a template authored and written out, in a project with one dependency |
-| `plitzi-sdk-server/prisma/mongo/seeds/spaces` | five demo spaces, seeded on every deployment |
+| `plitzi-sdk-server/prisma/mongo/seeds/spaces` | the demo spaces, seeded on every deployment — `website1` and `comingSoon` read back from JSON with `specFromSpace` |

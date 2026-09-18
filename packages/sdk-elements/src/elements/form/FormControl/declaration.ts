@@ -8,7 +8,11 @@ import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare'
 export type FormControlAttributes = AuthorableAttributes<
   FormControlProps,
   'value' | 'error' | 'handleChange' | 'handleValidate'
-> & { defaultValue?: string };
+> & {
+  defaultValue?: string;
+  /** Read by `withFieldValue`, not by the component: shows the control in its error state while editing. */
+  previewError?: boolean;
+};
 
 const defaultInputStyle = {
   width: '100%',

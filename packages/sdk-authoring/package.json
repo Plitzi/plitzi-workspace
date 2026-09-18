@@ -31,6 +31,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build:dev": "vite build --mode development",
+    "generate:attribute-names": "node scripts/generate-attribute-names.ts",
     "build:prod": "vite build"
   },
   "peerDependencies": {
