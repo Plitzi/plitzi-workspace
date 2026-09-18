@@ -4249,6 +4249,7 @@ __metadata:
     "@plitzi/sdk-shared": "workspace:*"
     "@types/react": "npm:^19.3.0"
     eslint: "npm:^9.39.5"
+    prettier: "npm:^3.9.8"
     prettier-plugin-tailwindcss: "npm:^0.8.1"
     react-router: "npm:^8.4.0"
     turbo: "npm:^2.10.13"

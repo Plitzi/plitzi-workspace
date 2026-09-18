@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/cli",
-  "version": "0.36.1",
+  "version": "0.36.2",
   "license": "AGPL-3.0",
   "description": "Command line for Plitzi: scaffold a server that renders a space you own.",
   "files": [
