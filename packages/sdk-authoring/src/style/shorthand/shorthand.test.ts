@@ -4,6 +4,22 @@ import { isCssProperty } from '../properties';
 import { cssShorthands, expandShorthand, expandShorthandPatch, shorthandLonghands } from './index';
 
 describe('expandShorthand', () => {
+  describe('declaration order', () => {
+    it('lets a longhand written after its shorthand override it', () => {
+      expect(expandShorthand({ padding: '8px', 'padding-left': '0' })).toMatchObject({
+        'padding-top': '8px',
+        'padding-left': '0'
+      });
+    });
+
+    it('lets a shorthand written after its longhands override them, as a stylesheet does', () => {
+      expect(expandShorthand({ 'overflow-x': 'hidden', 'overflow-y': 'hidden', overflow: 'scroll' })).toEqual({
+        'overflow-x': 'scroll',
+        'overflow-y': 'scroll'
+      });
+    });
+  });
+
   describe('overflow', () => {
     it('expands single value to both axes', () => {
       const result = expandShorthand({ overflow: 'hidden' });

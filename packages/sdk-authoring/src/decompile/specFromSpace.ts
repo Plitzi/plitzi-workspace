@@ -1,6 +1,8 @@
 import { defaultAttributes, elementAttributeNames, elementSourceTypes } from '../elements';
 import { BUILTIN_GLOBAL_CALLBACKS } from '../interactions';
 import { authorFlows, GLOBAL_SOURCES } from '../schema';
+import { css } from '../style';
+import { foldCustomCss } from './customCss';
 import { categoryOf, definitionOf, isRecord } from './documents';
 import { readSelector, unwritableCss } from './styles';
 
@@ -26,6 +28,9 @@ import type {
   Style,
   StyleBlock
 } from '@plitzi/sdk-shared';
+
+/** The class names a selector joins with a space — one for most, several where the builder stacked them. */
+const classesOf = (selector: string): string[] => selector.split(/\s+/).filter(Boolean);
 
 /**
  * A space document, read back into the declaration that would author it.
@@ -53,6 +58,7 @@ export type SpecCorrectionCode =
   | 'folded-state-selector'
   | 'dropped-selector'
   | 'unwritable-css'
+  | 'folded-custom-css'
   | 'unknown-style-state'
   | 'broken-binding'
   | 'fixed-binding-source'
@@ -306,6 +312,9 @@ class SpecReader {
     }
 
     this.indexStyle(style);
+    // An older export may carry no stylesheet at all.
+    const written: unknown = schema.settings.customCss;
+    const ownCss = this.foldCustomCss(typeof written === 'string' ? written : '');
     const pageFolders = this.readFolders();
     const roots = this.collectRoots();
     this.countSelectorUses(roots);
@@ -317,8 +326,10 @@ class SpecReader {
     this.reportUnreachable();
 
     const classes = this.classesSpec(style.mode);
-    const { customCss: ownCss = '', ...stored } = schema.settings;
-    const settings = this.readSettings(stored);
+    // `customCss` is read above — what is left of it once the rules a class can hold have moved into their classes.
+    const settings = this.readSettings(
+      Object.fromEntries(Object.entries(schema.settings).filter(([key]) => key !== 'customCss'))
+    );
     const customCss = [ownCss, ...this.keptCss].filter(Boolean).join('\n\n');
 
     const spec: SpaceSpec = {
@@ -427,11 +438,46 @@ class SpecReader {
     }
   }
 
+  /**
+   * Moves the `customCss` rules a class can hold into the class, and answers the stylesheet that is left.
+   *
+   * Merged over what the class already says, because that is the cascade it replaces: `customCss` comes after the
+   * style's own rules, so where both set a property the custom one is what rendered. Expanded first, so a `padding`
+   * written there wins over the longhands the class stores rather than losing to them.
+   */
+  private foldCustomCss(stylesheet: string): string {
+    const { folded, remaining } = foldCustomCss(stylesheet, name => this.classBlocks.has(name));
+    for (const { targets, rules } of folded) {
+      const expanded = css(rules);
+      for (const { className, state } of targets) {
+        const blocks = this.classBlocks.get(className) ?? {};
+        const block: StyleBlock = blocks.desktop ?? { default: {} };
+        if (state) {
+          block.states = { ...block.states, [state]: { ...block.states?.[state], ...expanded } };
+        } else {
+          block.default = { ...block.default, ...expanded };
+        }
+
+        blocks.desktop = block;
+        this.classBlocks.set(className, blocks);
+      }
+
+      const selectors = targets.map(({ className, state }) => `.${className}${state ? `:${state}` : ''}`);
+      this.correct(
+        'folded-custom-css',
+        `The customCss rule for ${selectors.map(selector => `"${selector}"`).join(', ')} is now part of its class.`,
+        targets[0]?.className
+      );
+    }
+
+    return remaining;
+  }
+
   private countSelectorUses(roots: { pages: Element[]; layouts: Element[] }): void {
     const visit = (element: Element): void => {
       for (const selector of Object.values(element.definition.styleSelectors)) {
-        if (selector) {
-          this.selectorUses.set(selector, (this.selectorUses.get(selector) ?? 0) + 1);
+        for (const name of selector ? classesOf(selector) : []) {
+          this.selectorUses.set(name, (this.selectorUses.get(name) ?? 0) + 1);
         }
       }
 
@@ -488,9 +534,16 @@ class SpecReader {
   private baseStyle(
     selector: string | undefined,
     inline: 'css' | 'css-and-states'
-  ): { class?: string; css?: CssSpec; states?: StatesSpec } {
+  ): { class?: string | string[]; css?: CssSpec; states?: StatesSpec } {
     if (!selector) {
       return {};
+    }
+
+    const names = classesOf(selector);
+    if (names.length > 1) {
+      const kept = this.keepClassList(names);
+
+      return kept ? { class: kept } : {};
     }
 
     // A selector with no entry holds no rules — authoring names one for every element, styled or not — so it
@@ -517,6 +570,37 @@ class SpecReader {
     this.readReporting(selector, blocks);
 
     return { ...(read.css ? { css: read.css } : {}), ...(read.states ? { states: read.states } : {}) };
+  }
+
+  /**
+   * The classes of a selector that names several, every one kept as a class.
+   *
+   * None of them can become rules of the element's own: an element has one base selector, and these are shared by
+   * definition. One the style document does not declare holds no rules, so it is left out — and said, because a
+   * name somebody wrote on an element is not a name that goes missing quietly.
+   */
+  private keepClassList(names: string[]): string | string[] | undefined {
+    const kept = names.filter(name => {
+      if (this.classBlocks.has(name)) {
+        this.keptClasses.add(name);
+
+        return true;
+      }
+
+      this.correct(
+        'dropped-selector',
+        `The class "${name}" in "${names.join(' ')}" is not declared by the style document, so it is left out.`,
+        name
+      );
+
+      return false;
+    });
+
+    if (kept.length === 0) {
+      return undefined;
+    }
+
+    return kept.length === 1 ? kept[0] : kept;
   }
 
   /** Every class the space keeps, in the order the style document lists them — including ones nothing names. */
@@ -742,7 +826,7 @@ class SpecReader {
     };
   }
 
-  private pageStyle(selector: string | undefined): { class?: string; css?: CssSpec } {
+  private pageStyle(selector: string | undefined): { class?: string | string[]; css?: CssSpec } {
     const style = this.baseStyle(selector, 'css');
 
     return { ...(style.class ? { class: style.class } : {}), ...(style.css ? { css: style.css } : {}) };
@@ -822,11 +906,15 @@ class SpecReader {
     const style = legacy?.css && !baseStyle.class && !baseStyle.css ? { ...baseStyle, css: legacy.css } : baseStyle;
     const slots = Object.fromEntries(
       Object.entries(slotSelectors).flatMap(([slot, selector]) => {
-        if (!selector) {
-          return [];
+        const names = selector ? classesOf(selector) : [];
+        if (names.length > 1) {
+          const kept = this.keepClassList(names);
+
+          return kept ? [[slot, kept]] : [];
         }
 
-        if (!this.classBlocks.has(selector)) {
+        // A lone selector with no entry holds no rules — the same answer `baseStyle` gives.
+        if (!selector || !this.classBlocks.has(selector)) {
           return [];
         }
 

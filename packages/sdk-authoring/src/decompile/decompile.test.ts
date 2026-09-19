@@ -33,7 +33,7 @@ const rich: SpaceSpec = {
   },
   classes: { unused: { color: 'red' } },
   settings: { keepState: true, stateStorage: 'localStorage' },
-  customCss: '.card:focus-within { outline: 1px solid; }',
+  customCss: '.card .title { outline: 1px solid; }',
   pageFolders: [{ id: 'docs', name: 'Docs' }],
   layouts: [
     {
@@ -403,5 +403,163 @@ describe('specToSource', () => {
     const files = specToSource(specFromSpace(authorSpace(spec)).spec, { exportName: 'plugin' });
 
     expect(files['index.ts']).toContain('element(\'typed\', { strings: [\'a\'] })');
+  });
+  it('writes an element that wears several classes as the list of their declarations', async () => {
+    const base = styles('panel', { padding: '12px' });
+    const modifier = styles('panel-wide', { width: '100%' });
+    const spec: SpaceSpec = {
+      name: 'Stacked',
+      permanentUrl: 'stacked',
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [container({ id: 'box', class: [base, modifier] })] }]
+    };
+    const documents = authorSpace(spec);
+    const read = specFromSpace(documents).spec;
+    const files = specToSource(read, { exportName: 'stacked', packageName });
+
+    expect(files['index.ts']).toContain('class: [panel, panelWide]');
+    expect(compareSpaces(documents, authorSpace(await load(files, 'stacked')))).toEqual([]);
+  });
+  it('keeps which of two stacked classes wins, whatever order the tree names them in', async () => {
+    // The fill is listed first on the element but declared last, so the stylesheet lets it win.
+    const spec: SpaceSpec = {
+      name: 'Ordered',
+      permanentUrl: 'ordered',
+      classes: { danger: { color: 'red' }, fill: { color: 'blue' } },
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          body: [container({ id: 'bar', class: ['fill', 'danger'] }), container({ id: 'solo', class: 'fill' })]
+        }
+      ]
+    };
+    const documents = authorSpace(spec);
+    const read = specFromSpace(documents).spec;
+
+    for (const split of [false, true]) {
+      const exportName = split ? 'orderedSplit' : 'ordered';
+      const files = specToSource(read, { exportName, packageName, split });
+
+      expect(compareSpaces(documents, authorSpace(await load(files, exportName)))).toEqual([]);
+    }
+  });
+});
+
+describe('specFromSpace / customCss', () => {
+  it('folds a rule a class can hold into the class, and leaves everything else as written', () => {
+    const documents = authorSpace({
+      name: 'Folded',
+      permanentUrl: 'folded',
+      classes: { card: { padding: '8px' }, other: { color: 'red' } },
+      customCss:
+        '/* the hover */\n.card:hover, .other:focus-visible { color: blue; }\n\n.card { padding: 4px; font-variant-numeric: tabular-nums; }\n\n.card .icon { transform: rotate(1deg); }\n\n@media (prefers-reduced-motion: reduce) { .card { transition: none; } }\n',
+      pages: [
+        { id: 'home', name: 'Home', slug: '', body: [container({ class: 'card' }), container({ class: 'other' })] }
+      ]
+    });
+    const { spec, corrections } = specFromSpace(documents);
+
+    expect(corrections.filter(correction => correction.code === 'folded-custom-css')).toHaveLength(2);
+    expect(spec.classes?.card).toMatchObject({
+      css: { padding: '4px', 'font-variant-numeric': 'tabular-nums' },
+      states: { hover: { color: 'blue' } }
+    });
+    expect(spec.classes?.other).toMatchObject({ states: { 'focus-visible': { color: 'blue' } } });
+    expect(spec.customCss).toBe(
+      '.card .icon { transform: rotate(1deg); }\n\n@media (prefers-reduced-motion: reduce) { .card { transition: none; } }\n'
+    );
+  });
+});
+
+describe('several classes on one selector', () => {
+  const panel = styles('panel', { padding: '12px' });
+  const wide = styles('panel-wide', { width: '100%' });
+  const spec: SpaceSpec = {
+    name: 'Stacked',
+    permanentUrl: 'stacked',
+    pages: [
+      {
+        id: 'home',
+        name: 'Home',
+        slug: '',
+        body: [container({ id: 'box', class: [panel, wide] }), container({ id: 'plain', class: panel })]
+      }
+    ]
+  };
+
+  it('writes them into the one selector, in the order they were listed', () => {
+    const { schema } = authorSpace(spec);
+
+    expect(schema.flat.box.definition.styleSelectors.base).toBe('panel panel-wide');
+  });
+
+  it('reads them back as a list of classes, never as rules of the element', () => {
+    const { spec: read, corrections } = specFromSpace(authorSpace(spec));
+    const box = read.pages[0].body[0];
+
+    expect(box.class).toEqual(['panel', 'panel-wide']);
+    expect(read.classes).toMatchObject({ panel: { padding: '12px' }, 'panel-wide': { width: '100%' } });
+    expect(corrections.filter(correction => correction.code === 'dropped-selector')).toEqual([]);
+  });
+
+  it('says so when one of them is not declared, and keeps the rest', () => {
+    const documents = authorSpace(spec);
+    documents.schema.flat.box.definition.styleSelectors.base = 'panel panel-gone';
+    const { spec: read, corrections } = specFromSpace(documents);
+
+    expect(read.pages[0].body[0].class).toBe('panel');
+    expect(corrections).toContainEqual(expect.objectContaining({ code: 'dropped-selector', at: 'panel-gone' }));
+  });
+
+  it('counts a class lost from the list as a difference', () => {
+    const documents = authorSpace(spec);
+    const stripped = authorSpace(spec);
+    stripped.schema.flat.box.definition.styleSelectors.base = 'panel';
+
+    expect(compareSpaces(documents, stripped)).toContainEqual(
+      expect.objectContaining({ at: expect.stringContaining('box') as string })
+    );
+  });
+});
+
+describe('the order of stacked classes', () => {
+  const danger = styles('danger', { color: 'red' });
+  const fill = styles('fill', { color: 'blue' });
+  const body = [container({ id: 'bar', class: [fill, danger] })];
+
+  it('follows `classes` first, so a declaration listed there takes its place in the stylesheet', () => {
+    const { style } = authorSpace({
+      name: 'Listed',
+      permanentUrl: 'listed',
+      classes: { danger, fill },
+      pages: [{ id: 'home', name: 'Home', slug: '', body }]
+    });
+
+    expect(Object.keys(style.platform.desktop).filter(name => name === 'danger' || name === 'fill')).toEqual([
+      'danger',
+      'fill'
+    ]);
+  });
+
+  it('refuses a declaration listed under a name that is not its own', () => {
+    expect(() =>
+      authorSpace({
+        name: 'Wrong',
+        permanentUrl: 'wrong',
+        classes: { other: fill },
+        pages: [{ id: 'home', name: 'Home', slug: '', body }]
+      })
+    ).toThrow(/lists the declaration "fill" under the name "other"/);
+  });
+
+  it('is a difference when it changes', () => {
+    const page = { id: 'home', name: 'Home', slug: '', body };
+    const before = authorSpace({ name: 'Order', permanentUrl: 'order', classes: { danger, fill }, pages: [page] });
+    const after = authorSpace({ name: 'Order', permanentUrl: 'order', classes: { fill, danger }, pages: [page] });
+
+    expect(compareSpaces(before, after)).toContainEqual(
+      expect.objectContaining({ message: expect.stringContaining('stylesheet order of base') as string })
+    );
   });
 });

@@ -1,3 +1,5 @@
+import { STYLE_STATES as SHARED_STYLE_STATES } from '@plitzi/sdk-shared/style/styleStates';
+
 import { isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
 import { expandShorthand } from './shorthand';
 
@@ -75,8 +77,8 @@ export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
   return { desktop: css(spec as Record<string, string | number>) };
 };
 
-/** The states a selector can react to — the closed list the style editor shows as tabs. */
-export const STYLE_STATES: readonly StyleState[] = ['hover', 'active', 'focus', 'disabled', 'checked', 'visited'];
+/** The states a selector can react to — the closed list the style editor offers, read from where it is declared. */
+export const STYLE_STATES: readonly StyleState[] = SHARED_STYLE_STATES;
 
 const STYLE_STATE_SET = new Set<string>(STYLE_STATES);
 

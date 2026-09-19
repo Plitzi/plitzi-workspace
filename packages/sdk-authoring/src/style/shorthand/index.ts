@@ -84,18 +84,22 @@ const expandOne = (key: string, raw: string | number, out: CssProps): boolean =>
   return true;
 };
 
-/** Expand supported CSS shorthands to their longhand keys. Explicit longhands in the same map win over any
- *  expansion (so `{ padding: 8, padding-left: 0 }` keeps padding-left: 0). Unrecognized keys pass through. */
+/**
+ * Expand supported CSS shorthands to their longhand keys, in declaration order: the later declaration wins, as it
+ * does in a stylesheet. `{ padding: 8, 'padding-left': 0 }` keeps `padding-left: 0`, and
+ * `{ 'overflow-x': 'hidden', overflow: 'scroll' }` scrolls both ways — a document the builder saved with a shorthand
+ * written after its longhands rendered the shorthand, and reading it back any other way changes the page.
+ * Unrecognized keys pass through.
+ */
 export const expandShorthand = (css: CssProps): CssProps => {
-  const expanded: CssProps = {};
-  const direct: CssProps = {};
+  const out: CssProps = {};
   for (const [key, value] of Object.entries(css)) {
-    if (!expandOne(key, value, expanded)) {
-      direct[key] = value;
+    if (!expandOne(key, value, out)) {
+      out[key] = value;
     }
   }
 
-  return { ...expanded, ...direct };
+  return out;
 };
 
 // --- Patch expansion ----------------------------------------------------------------------------------
@@ -155,17 +159,11 @@ export const shorthandLonghands = (key: string): string[] | undefined => {
 /** Patch flavour of {@link expandShorthand}: a `null` value removes every longhand the key controls, so
  *  `{ padding: null }` clears all four sides rather than a `padding` key that was never stored. */
 export const expandShorthandPatch = (css: CssPatch): CssPatch => {
-  const expanded: CssPatch = {};
-  const direct: CssPatch = {};
+  const out: CssPatch = {};
   for (const [key, value] of Object.entries(css)) {
     if (value === null) {
-      const longhands = shorthandLonghands(key);
-      if (longhands) {
-        for (const longhand of longhands) {
-          expanded[longhand] = null;
-        }
-      } else {
-        direct[key] = null;
+      for (const longhand of shorthandLonghands(key) ?? [key]) {
+        out[longhand] = null;
       }
 
       continue;
@@ -173,11 +171,11 @@ export const expandShorthandPatch = (css: CssPatch): CssPatch => {
 
     const props: CssProps = {};
     if (expandOne(key, value, props)) {
-      Object.assign(expanded, props);
+      Object.assign(out, props);
     } else {
-      direct[key] = value;
+      out[key] = value;
     }
   }
 
-  return { ...expanded, ...direct };
+  return out;
 };

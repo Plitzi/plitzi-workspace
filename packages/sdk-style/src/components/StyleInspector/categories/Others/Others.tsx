@@ -3,6 +3,7 @@ import { memo, use, useCallback } from 'react';
 import OthersForm from './OthersForm';
 import OthersInteraction from './OthersInteraction';
 import OthersOutline from './OthersOutline';
+import OthersScrollbar from './OthersScrollbar';
 import OthersSvg from './OthersSvg';
 import OthersTable from './OthersTable';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
@@ -23,6 +24,8 @@ const dotKeys = [
   'accent-color',
   'caret-color',
   'color-scheme',
+  'scrollbar-width',
+  'scrollbar-color',
   'outline-width',
   'outline-style',
   'outline-color',
@@ -44,6 +47,8 @@ const advancedKeys = [
   'accent-color',
   'caret-color',
   'color-scheme',
+  'scrollbar-width',
+  'scrollbar-color',
   'border-collapse',
   'border-spacing',
   'table-layout',
@@ -71,6 +76,8 @@ const Others = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Other
     'accent-color': accentColor,
     'caret-color': caretColor,
     'color-scheme': colorScheme,
+    'scrollbar-width': scrollbarWidth,
+    'scrollbar-color': scrollbarColor,
     'outline-width': outlineWidth,
     'outline-style': outlineStyle,
     'outline-color': outlineColor,
@@ -117,6 +124,7 @@ const Others = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Other
         onChange={handleChange}
       />
       <CategoryAdvanced>
+        <OthersScrollbar scrollbarWidth={scrollbarWidth} scrollbarColor={scrollbarColor} onChange={handleChange} />
         <OthersForm
           accentColor={accentColor}
           caretColor={caretColor}

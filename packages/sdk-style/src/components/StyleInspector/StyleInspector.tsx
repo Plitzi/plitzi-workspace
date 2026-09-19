@@ -10,6 +10,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 
 import Selector from '../Selector';
+import { STYLE_STATE_OPTIONS } from './helpers';
 import Inspector from './Inspector';
 
 import type { SelectorValue } from '../Selector';
@@ -298,14 +299,7 @@ const StyleInspector = ({
                 <Select2
                   className="grow basis-0"
                   value={styleState}
-                  options={[
-                    { label: 'Hover', value: 'hover' },
-                    { label: 'Focus', value: 'focus' },
-                    { label: 'Active', value: 'active' },
-                    { label: 'Disabled', value: 'disabled' },
-                    { label: 'checked', value: 'Checked' },
-                    { label: 'visited', value: 'Visited' }
-                  ]}
+                  options={STYLE_STATE_OPTIONS}
                   placeholder="State"
                   size="xs"
                   clearable

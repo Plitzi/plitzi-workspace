@@ -1,3 +1,5 @@
+import { STYLE_STATES } from '@plitzi/sdk-shared/style/styleStates';
+
 import { envelope, jsonContents } from './envelope';
 import { elementCatalog } from '../catalogs';
 
@@ -215,7 +217,7 @@ and \`patchDefinition\` still changes only some CSS of one class.
   smaller screens — \`{ "desktop": { "font-size": "36px" }, "mobile": { "font-size": "24px" } }\`.
 - **Interactive states:** nest under \`states\` keyed by pseudo-class, each with its own breakpoint block —
   \`{ "desktop": { "background-color": "#3b82f6" }, "states": { "hover": { "desktop": { "background-color": "#2563eb" } } } }\`
-  (\`hover\`, \`active\`, \`focus\`).
+  (${STYLE_STATES.map(state => `\`${state}\``).join(', ')}).
 
 ## Fit the panel — go wide, stay short
 

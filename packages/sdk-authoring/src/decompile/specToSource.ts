@@ -1,9 +1,10 @@
 /* eslint-disable quotes */
 import { defaultAttributes, defaultLabel } from '../elements';
 import * as factories from '../elements/elements';
+import { isStyleDeclaration } from '../style';
 
 import type { ElementSpec, LayoutSpec, PageSpec, SpaceSpec } from '../schema';
-import type { StyleSpec } from '../style';
+import type { StyleDeclaration, StyleSpec } from '../style';
 
 /**
  * A {@link SpaceSpec}, written out as the TypeScript a person would have written.
@@ -222,7 +223,6 @@ class SourceWriter {
       this.classVariables.set(name, this.names.claim(camel(name)));
     }
 
-    const unnamed = Object.fromEntries(Object.entries(this.spec.classes ?? {}).filter(([name]) => !named.has(name)));
     const main = new FileImports();
     main.types.add('SpaceSpec');
 
@@ -236,8 +236,9 @@ class SourceWriter {
       this.root(page, 'PageSpec', main, `pages/${page.id ?? (page.slug || 'home')}`)
     );
 
+    const classes = this.classesField(named, main);
     const written: Partial<Record<keyof SpaceSpec, string>> = {
-      classes: Object.keys(unnamed).length > 0 ? literal(unnamed) : undefined,
+      classes,
       layouts: layouts.length > 0 ? `[${layouts.join(', ')}]` : undefined,
       pages: `[${pages.join(', ')}]`
     };
@@ -275,8 +276,10 @@ class SourceWriter {
   private namedClasses(): Set<string> {
     const named = new Set<string>();
     const add = (value: unknown): void => {
-      if (typeof value === 'string') {
-        named.add(value);
+      for (const name of Array.isArray(value) ? value : [value]) {
+        if (typeof name === 'string') {
+          named.add(name);
+        }
       }
     };
 
@@ -294,14 +297,77 @@ class SourceWriter {
     return new Set(Object.keys(this.spec.classes ?? {}).filter(name => named.has(name)));
   }
 
+  /**
+   * The space's `classes`: the ones nothing names, and — in the order the stylesheet lists them — every class that is
+   * worn beside another on one element.
+   *
+   * Where two classes meet on an element and set the same property, the one later in the stylesheet wins. Authoring
+   * writes `classes` first and the `styles()` declarations after, in the order the tree names them, which is not the
+   * order they were read in; listing the stacked ones here, by their variable, keeps the winner the same.
+   */
+  private classesField(named: Set<string>, imports: FileImports): string | undefined {
+    const stacked = this.stackedClasses();
+    const entries = Object.entries(this.spec.classes ?? {}).flatMap(([name, value]) => {
+      if (named.has(name)) {
+        return stacked.has(name) ? [`${keyLiteral(name)}: ${this.classReference(name, imports, './styles')}`] : [];
+      }
+
+      return [`${keyLiteral(name)}: ${literal(this.rulesOf(name, value))}`];
+    });
+
+    return entries.length > 0 ? `{ ${entries.join(', ')} }` : undefined;
+  }
+
+  /** Every class that shares a selector with another — `class: ['panel-card', 'quota-panel']`. */
+  private stackedClasses(): Set<string> {
+    const stacked = new Set<string>();
+    const add = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(name => {
+          if (typeof name === 'string') {
+            stacked.add(name);
+          }
+        });
+      }
+    };
+
+    const walk = (element: ElementSpec): void => {
+      add(element.class);
+      Object.values(element.slots ?? {}).forEach(add);
+      element.children?.forEach(walk);
+    };
+
+    for (const root of [...(this.spec.layouts ?? []), ...this.spec.pages]) {
+      add(root.class);
+      root.body.forEach(walk);
+    }
+
+    return stacked;
+  }
+
+  /** A class's rules as `specFromSpace` wrote them — always a rule set, never a declaration it would have to name. */
+  private rulesOf(name: string, value: StyleSpec | StyleDeclaration | undefined): StyleSpec {
+    if (value && isStyleDeclaration(value)) {
+      throw new Error(
+        `The class "${name}" is a styles() declaration. specToSource writes the spec specFromSpace reads, whose classes are rule sets.`
+      );
+    }
+
+    return value ?? {};
+  }
+
   private classDeclaration(name: string, imports: FileImports): string {
-    const rules: StyleSpec = this.spec.classes?.[name] ?? {};
+    const rules = this.rulesOf(name, this.spec.classes?.[name]);
     imports.values.add('styles');
 
     return `const ${this.classVariables.get(name) ?? camel(name)} = styles(${literal(name)}, ${literal(rules)});`;
   }
 
-  private classReference(value: unknown, imports: FileImports): string {
+  private classReference(value: unknown, imports: FileImports, stylesPath = '../styles'): string {
+    if (Array.isArray(value)) {
+      return `[${value.map(name => this.classReference(name, imports, stylesPath)).join(', ')}]`;
+    }
+
     if (typeof value !== 'string') {
       return literal(value);
     }
@@ -311,9 +377,10 @@ class SourceWriter {
       return literal(value);
     }
 
-    // Split, every class is named from a page or a layout file, one folder below the shared `styles.ts`.
+    // Split, a class is named from a page or a layout file one folder below the shared `styles.ts`, or from the
+    // space's own `index.ts` beside it.
     if (this.options.split) {
-      imports.local('../styles', variable);
+      imports.local(stylesPath, variable);
     }
 
     return variable;

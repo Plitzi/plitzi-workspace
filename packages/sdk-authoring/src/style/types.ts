@@ -78,3 +78,14 @@ export interface StyleDeclaration {
   readonly rules: ResponsiveBlock;
   toString(): string;
 }
+
+/** A class by name, or a `styles()` declaration that brings its rules along. */
+export type ClassRef = string | StyleDeclaration;
+
+/**
+ * The classes a selector wears: one, or several.
+ *
+ * Several is what the builder writes when an element carries a shared base and a modifier — `panel-card quota-panel`
+ * — and the SDK applies all of them, in the order the stylesheet declares them rather than the order listed here.
+ */
+export type ClassList = ClassRef | readonly ClassRef[];

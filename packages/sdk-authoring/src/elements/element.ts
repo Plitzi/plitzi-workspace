@@ -1,7 +1,7 @@
 import { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
 
 import type { BindingsSpec, ElementSpec, SpecMeta, StepSpec } from '../schema';
-import type { CssSpec, StatesSpec, StyleDeclaration } from '../style';
+import type { ClassList, CssSpec, StatesSpec } from '../style';
 import type { ElementLoadStrategy, ElementRuntime } from '@plitzi/sdk-shared';
 import type {
   AttributesOf,
@@ -29,8 +29,11 @@ export interface AuthoringProps {
    * when left out, positionally, so name the ones something else refers to.
    */
   id?: string;
-  /** A shared class: a name from the space's `classes`, or a `styles()` declaration. Exclusive with {@link AuthoringProps.css}. */
-  class?: string | StyleDeclaration;
+  /**
+   * A shared class — a name from the space's `classes`, or a `styles()` declaration — or a list of them. Exclusive
+   * with {@link AuthoringProps.css}.
+   */
+  class?: ClassList;
   /** Rules of this element's own: one set, or one per breakpoint. Shorthands are expanded when the space is written. */
   css?: CssSpec;
   /** How the element's own rules react — `hover`, `focus` — beside {@link AuthoringProps.css}. */
@@ -38,7 +41,7 @@ export interface AuthoringProps {
   /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
   variant?: string;
   /** A class for one of the element's other selectors — a form control's `input`, `label`, `error`. */
-  slots?: Record<string, string | StyleDeclaration>;
+  slots?: Record<string, ClassList>;
   /** `{ content: 'posts.title' }`, or the full form for state, transformers and conditions. */
   bind?: BindingsSpec;
   /**

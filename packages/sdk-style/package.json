@@ -526,6 +526,10 @@
       "types": "./dist/components/StyleInspector/categories/Others/OthersOutline.d.ts",
       "import": "./dist/components/StyleInspector/categories/Others/OthersOutline.mjs"
     },
+    "./components/StyleInspector/categories/Others/OthersScrollbar": {
+      "types": "./dist/components/StyleInspector/categories/Others/OthersScrollbar.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/OthersScrollbar.mjs"
+    },
     "./components/StyleInspector/categories/Others/OthersSvg": {
       "types": "./dist/components/StyleInspector/categories/Others/OthersSvg.d.ts",
       "import": "./dist/components/StyleInspector/categories/Others/OthersSvg.mjs"
@@ -653,6 +657,10 @@
     "./components/StyleInspector/categories/Typography/TypographyConstants": {
       "types": "./dist/components/StyleInspector/categories/Typography/TypographyConstants.d.ts",
       "import": "./dist/components/StyleInspector/categories/Typography/TypographyConstants.mjs"
+    },
+    "./components/StyleInspector/categories/Typography/TypographyFigures": {
+      "types": "./dist/components/StyleInspector/categories/Typography/TypographyFigures.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Typography/TypographyFigures.mjs"
     },
     "./components/StyleInspector/categories/Typography/TypographyFont": {
       "types": "./dist/components/StyleInspector/categories/Typography/TypographyFont.d.ts",
@@ -785,6 +793,10 @@
     "./components/StyleInspector/components/InspectorLabel/index": {
       "types": "./dist/components/StyleInspector/components/InspectorLabel/index.d.ts",
       "import": "./dist/components/StyleInspector/components/InspectorLabel/index.mjs"
+    },
+    "./components/StyleInspector/helpers": {
+      "types": "./dist/components/StyleInspector/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/helpers.mjs"
     },
     "./components/StyleInspector/hooks/useInspectorValues": {
       "types": "./dist/components/StyleInspector/hooks/useInspectorValues.d.ts",

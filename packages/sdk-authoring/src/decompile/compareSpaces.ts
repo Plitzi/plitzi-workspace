@@ -98,9 +98,46 @@ const blockOf = (block: StyleBlock | undefined): unknown =>
  *
  * A selector the style does not define resolves to no rules at all, which is exactly what the element renders with.
  */
+const hasRules = (block: StyleBlock): boolean =>
+  [block.default, block.states, block.variants].some(part => Object.keys(part ?? {}).length > 0);
+
+/**
+ * The classes of a selector that wears several, in the order the stylesheet lists them, per breakpoint.
+ *
+ * Where two of them set the same property the later one wins, so the same classes in another order are another
+ * page. A selector with one class has no order to keep, and a class with no rules at a breakpoint has no place in
+ * it there — the builder stores an empty block for a class it created, authoring writes none.
+ */
+const stylesheetOrder = (style: Style, selector: string | undefined): unknown => {
+  const names = (selector ?? '').split(/\s+/).filter(Boolean);
+  if (names.length < 2) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    BREAKPOINTS.map(breakpoint => {
+      const listed = Object.keys(style.platform[breakpoint]).filter(name =>
+        hasRules(style.platform[breakpoint][name].attributes.base)
+      );
+
+      return [
+        breakpoint,
+        names.filter(name => listed.includes(name)).sort((x, y) => listed.indexOf(x) - listed.indexOf(y))
+      ];
+    })
+  );
+};
+
 const classRules = (style: Style, name: string | undefined): unknown => {
   if (!name) {
     return {};
+  }
+
+  // Several classes are compared one by one and by name, so a class that went missing is a difference rather than
+  // two lookups of a name no single class answers to, which agree on nothing at all.
+  const names = name.split(/\s+/).filter(Boolean);
+  if (names.length > 1) {
+    return Object.fromEntries(names.map(part => [part, classRules(style, part)]));
   }
 
   return Object.fromEntries(
@@ -305,7 +342,9 @@ class SpaceComparer {
 
     const named = (documents: SpaceDocuments): Set<string> =>
       new Set(
-        Object.values(documents.schema.flat).flatMap(element => Object.values(element.definition.styleSelectors))
+        Object.values(documents.schema.flat).flatMap(element =>
+          Object.values(element.definition.styleSelectors).flatMap(selector => selector.split(/\s+/))
+        )
       );
     const unnamed = (documents: SpaceDocuments): string[] => {
       const used = named(documents);
@@ -382,6 +421,12 @@ class SpaceComparer {
         `rules of ${slot}`,
         classRules(this.expected.style, a.definition.styleSelectors[slot]),
         classRules(this.actual.style, b.definition.styleSelectors[slot])
+      );
+      this.check(
+        at,
+        `stylesheet order of ${slot}`,
+        stylesheetOrder(this.expected.style, a.definition.styleSelectors[slot]),
+        stylesheetOrder(this.actual.style, b.definition.styleSelectors[slot])
       );
     }
 

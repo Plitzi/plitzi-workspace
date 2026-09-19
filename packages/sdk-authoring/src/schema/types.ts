@@ -1,5 +1,5 @@
 import type { SpaceHandles } from './handles';
-import type { CssSpec, StatesSpec, StyleDeclaration, StyleSpec, VariantSpec } from '../style';
+import type { ClassList, CssSpec, StatesSpec, StyleDeclaration, StyleSpec, VariantSpec } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   BindingCategory,
@@ -115,20 +115,20 @@ export interface ElementSpec {
    * Exclusive with {@link ElementSpec.css} and {@link ElementSpec.states}: an element has exactly one base selector,
    * so declaring both is a question with no answer and is refused rather than silently resolved.
    *
-   * Either a name from {@link SpaceSpec.classes}, or a {@link StyleDeclaration} from `styles()` that brings its own
-   * rules along.
+   * Either a name from {@link SpaceSpec.classes}, or a `styles()` declaration that brings its own rules along — or a
+   * list of them, for an element that wears a shared base and a modifier (`[panelCard, quotaPanel]`).
    */
-  class?: string | StyleDeclaration;
+  class?: ClassList;
   /**
    * A class for one of the element's OTHER style selectors, by selector name — a form control's `input`, `label`
    * and `error`.
    *
    * `css` and `class` above are its `base`, and an element made of parts cannot be dressed through that one alone:
    * a rule meant for the input lands on the wrapper instead, and the input keeps the browser's own look. The value
-   * names a class from {@link SpaceSpec.classes} — or carries one, as a {@link StyleDeclaration} — so one rule
-   * serves every control that wants it.
+   * names a class from {@link SpaceSpec.classes} — or carries one, as a `styles()` declaration — or lists several, so
+   * one rule serves every control that wants it.
    */
-  slots?: Record<string, string | StyleDeclaration>;
+  slots?: Record<string, ClassList>;
   bind?: BindingsSpec;
   /**
    * Show this element only while the value at this source is true. `!source` shows it while the value is false.
@@ -214,7 +214,7 @@ export interface PageSpec {
   stateStorage?: Schema['settings']['stateStorage'];
   css?: CssSpec;
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
-  class?: string | StyleDeclaration;
+  class?: ClassList;
   flows?: StepSpec[][];
   body: ElementSpec[];
 }
@@ -252,7 +252,7 @@ export interface LayoutSpec {
   attributes?: Record<string, unknown>;
   css?: CssSpec;
   states?: StatesSpec;
-  class?: string | StyleDeclaration;
+  class?: ClassList;
   bind?: BindingsSpec;
   flows?: StepSpec[][];
   body: ElementSpec[];
@@ -281,8 +281,13 @@ export interface SpaceSpec {
    *
    * A space-wide stylesheet, and the right place for the rules that describe the space rather than one section of
    * it. `styles()` is the same thing declared next to what it dresses; both end up here.
+   *
+   * In ORDER: the stylesheet lists these first, in the order written, and then the `styles()` declarations the tree
+   * names that are not here. Order decides which of two classes wins where one element wears both and they set the
+   * same property — `class: [shareFill, fillDanger]` — so a declaration can be named here too, by its variable, to
+   * put it in its place: `{ 'an-share-fill': shareFill, 'an-fill-danger': fillDanger }`.
    */
-  classes?: Record<string, StyleSpec>;
+  classes?: Record<string, StyleSpec | StyleDeclaration>;
   elements?: Record<string, ElementStyleSpec>;
   schemaVariables?: SchemaVariable[];
   customCss?: string;
@@ -393,7 +398,7 @@ export interface TemplateSpec {
   key?: string;
   variables?: Partial<StyleVariables>;
   /** As {@link SpaceSpec.classes}. Every class the subtree names has to be declared here, or it does not travel. */
-  classes?: Record<string, StyleSpec>;
+  classes?: Record<string, StyleSpec | StyleDeclaration>;
   elements?: Record<string, ElementStyleSpec>;
   schemaVariables?: SchemaVariable[];
   mode?: Style['mode'];

@@ -1,10 +1,11 @@
 import type { ColorScheme, Theme } from './ThemeTypes';
 import type styleConstants from '../style/styleConstants';
+import type { STYLE_STATES } from '../style/styleStates';
 
 export type TagType = 'class' | 'element' | 'id';
 export type DisplayMode = 'desktop' | 'tablet' | 'mobile';
 export type StyleMode = 'mobile-first' | 'desktop-first';
-export type StyleState = 'hover' | 'active' | 'focus' | 'disabled' | 'checked' | 'visited';
+export type StyleState = (typeof STYLE_STATES)[number];
 export type StyleValue = number | string;
 
 // ======== Themes/Variables ========

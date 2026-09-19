@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { STYLE_STATES } from '../style/styleStates';
 import { StyleVariableCategory } from '../types/StyleTypes';
 
 import type {
@@ -70,7 +71,7 @@ const styleCategory = z.custom<StyleCategory>(value => typeof value === 'string'
   message: 'expected a style category'
 });
 const tagType = z.enum(['class', 'element', 'id']);
-const styleState = z.enum(['hover', 'active', 'focus', 'disabled', 'checked', 'visited']);
+const styleState = z.enum(STYLE_STATES);
 const variableCategory = z.enum(StyleVariableCategory);
 
 const selectorParams = z.object({

@@ -1,6 +1,6 @@
 import { toBlocks } from './css';
 
-import type { StyleDeclaration, StyleSpec } from './types';
+import type { ClassList, ClassRef, StyleDeclaration, StyleSpec } from './types';
 
 /**
  * A named class, declared where it is used.
@@ -29,5 +29,22 @@ export const styles = (name: string, rules: StyleSpec): StyleDeclaration => ({
   toString: () => name
 });
 
+/**
+ * A `styles()` declaration, told apart from a plain rule set by what only a declaration carries.
+ *
+ * No CSS property is called `rules`, so a rule set can never be mistaken for one.
+ */
+export const isStyleDeclaration = (value: StyleSpec | StyleDeclaration): value is StyleDeclaration =>
+  'rules' in value && 'name' in value && typeof value.name === 'string';
+
 /** The class name a value names, however it was written. */
-export const className = (value: string | StyleDeclaration): string => (typeof value === 'string' ? value : value.name);
+export const className = (value: ClassRef): string => (typeof value === 'string' ? value : value.name);
+
+// `Array.isArray` does not narrow a readonly array, so the list is told apart here once.
+const isClassArray = (value: ClassList): value is readonly ClassRef[] => Array.isArray(value);
+
+/** The classes a list holds, one or several, as they were written. */
+export const classRefs = (value: ClassList): readonly ClassRef[] => (isClassArray(value) ? value : [value]);
+
+/** Every class a list names, as the names a selector joins with a space. */
+export const classNames = (value: ClassList): string[] => classRefs(value).map(className);

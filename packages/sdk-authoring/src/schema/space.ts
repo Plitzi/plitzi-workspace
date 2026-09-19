@@ -4,7 +4,7 @@ import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
-import { BREAKPOINTS, className, sameBlocks, toBlocks } from '../style';
+import { BREAKPOINTS, classNames, classRefs, isStyleDeclaration, sameBlocks, toBlocks } from '../style';
 import { GLOBAL_SOURCES, groupBindings, withVisibility } from './bindings';
 import { authorFlows } from './flows';
 import { buildHandles, pathForSlug, selectorFor } from './handles';
@@ -27,7 +27,7 @@ import type {
   StepSpec,
   StepVocabulary
 } from './types';
-import type { CssSpec, ResponsiveBlock, StatesSpec, StyleDeclaration } from '../style';
+import type { ClassList, CssSpec, ResponsiveBlock, StatesSpec } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type { DropPosition, Element, PageFolder, Schema, SpaceFont, Style, StyleItem } from '@plitzi/sdk-shared';
 
@@ -103,8 +103,19 @@ class SpaceAuthor {
       this.writeElementDefaults(type, elementSpec);
     }
 
-    for (const [name, rules] of Object.entries(this.spec.classes ?? {})) {
-      this.declareClass(name, toBlocks(rules), 'The space-wide `classes`');
+    for (const [name, value] of Object.entries(this.spec.classes ?? {})) {
+      if (!isStyleDeclaration(value)) {
+        this.declareClass(name, toBlocks(value), 'The space-wide `classes`');
+        continue;
+      }
+
+      if (value.name !== name) {
+        throw new Error(
+          `The space-wide \`classes\` lists the declaration "${value.name}" under the name "${name}". A declaration is listed under its own name.`
+        );
+      }
+
+      this.declareClass(name, value.rules, 'The space-wide `classes`');
     }
 
     const layouts = this.spec.layouts ?? [];
@@ -308,14 +319,12 @@ class SpaceAuthor {
    * A declaration is collected from where it is USED rather than from a list, which is the whole point of it — the
    * rules stay next to the element they dress — and it means one declared and never named writes nothing at all.
    */
-  private collectDeclarations(
-    rootClass: string | StyleDeclaration | undefined,
-    body: ElementSpec[],
-    rootWhere: string
-  ): void {
-    const collect = (value: string | StyleDeclaration | undefined, where: string): void => {
-      if (value && typeof value !== 'string') {
-        this.declareClass(value.name, value.rules, where);
+  private collectDeclarations(rootClass: ClassList | undefined, body: ElementSpec[], rootWhere: string): void {
+    const collect = (value: ClassList | undefined, where: string): void => {
+      for (const ref of value ? classRefs(value) : []) {
+        if (typeof ref !== 'string') {
+          this.declareClass(ref.name, ref.rules, where);
+        }
       }
     };
 
@@ -458,19 +467,19 @@ class SpaceAuthor {
    */
   private selectorFor(
     path: string,
-    spec: { type: string; class?: string | StyleDeclaration; css?: CssSpec; states?: StatesSpec }
+    spec: { type: string; class?: ClassList; css?: CssSpec; states?: StatesSpec }
   ): string {
     if (spec.class) {
-      const name = className(spec.class);
-      this.assertClass(name, `Element "${spec.type}" at ${path}`);
+      const names = classNames(spec.class);
+      names.forEach(name => this.assertClass(name, `Element "${spec.type}" at ${path}`));
 
       if (spec.css || spec.states) {
         throw new Error(
-          `Element "${spec.type}" at ${path} declares both a shared class ("${name}") and ${spec.css ? 'css' : 'states'} of its own. An element has one base selector: either write the rules into the class, or drop the class and keep the rules.`
+          `Element "${spec.type}" at ${path} declares both a shared class ("${names.join(' ')}") and ${spec.css ? 'css' : 'states'} of its own. An element has one base selector: either write the rules into the class, or drop the class and keep the rules.`
         );
       }
 
-      return name;
+      return names.join(' ');
     }
 
     // A class may carry any name — one read back from a builder document is `container-555c` — so the name derived
@@ -713,10 +722,10 @@ class SpaceAuthor {
   private slotSelectors(spec: ElementSpec, path: string): Record<string, string> {
     return Object.fromEntries(
       Object.entries(spec.slots ?? {}).map(([slot, value]) => {
-        const name = className(value);
-        this.assertClass(name, `Slot "${slot}" of element "${spec.type}" at ${path}`);
+        const names = classNames(value);
+        names.forEach(name => this.assertClass(name, `Slot "${slot}" of element "${spec.type}" at ${path}`));
 
-        return [slot, name];
+        return [slot, names.join(' ')];
       })
     );
   }

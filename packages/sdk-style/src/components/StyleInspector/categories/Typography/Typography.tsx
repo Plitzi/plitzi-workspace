@@ -6,6 +6,7 @@ import TypographyAlign from './TypographyAlign';
 import TypographyBreaking from './TypographyBreaking';
 import TypographyClamp from './TypographyClamp';
 import { weights } from './TypographyConstants';
+import TypographyFigures from './TypographyFigures';
 import TypographyFont from './TypographyFont';
 import TypographyStyle from './TypographyStyle';
 import TypographyTextShadow from './TypographyTextShadow';
@@ -44,7 +45,10 @@ const dotKeys = [
   'hyphens',
   'vertical-align',
   'text-overflow',
-  'line-clamp'
+  'line-clamp',
+  'font-variant-numeric',
+  'font-feature-settings',
+  '-webkit-text-fill-color'
 ] as StyleCategory[];
 
 const advancedKeys = [
@@ -54,7 +58,10 @@ const advancedKeys = [
   'overflow-wrap',
   'hyphens',
   'vertical-align',
-  'text-shadow'
+  'text-shadow',
+  'font-variant-numeric',
+  'font-feature-settings',
+  '-webkit-text-fill-color'
 ] as StyleCategory[];
 
 const keyValueLetter = ['letter-spacing', 'word-spacing', 'text-indent'] as StyleCategory[];
@@ -92,7 +99,10 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, onCollapse }: T
     color,
     'letter-spacing': letterSpacing,
     'word-spacing': wordSpacing,
-    direction
+    direction,
+    'font-variant-numeric': fontVariantNumeric,
+    'font-feature-settings': fontFeatureSettings,
+    '-webkit-text-fill-color': textFillColor
   } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('typography', isCollapsed), [onCollapse]);
@@ -212,6 +222,12 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, onCollapse }: T
       </CategorySection>
       <CategoryAdvanced>
         <TypographyTextShadow value={textShadow} onChange={handleChange('text-shadow')} />
+        <TypographyFigures
+          fontVariantNumeric={fontVariantNumeric}
+          fontFeatureSettings={fontFeatureSettings}
+          textFillColor={textFillColor}
+          onChange={handleChange}
+        />
       </CategoryAdvanced>
     </CategoryContainer>
   );

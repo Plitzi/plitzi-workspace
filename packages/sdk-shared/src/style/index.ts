@@ -5,5 +5,6 @@ export * from './fontValidation';
 export * from './fonts';
 export * from './fontsFromCss';
 export * from './styleConstants';
+export * from './styleStates';
 
 export { styleConstants };
