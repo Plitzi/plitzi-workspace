@@ -29,14 +29,19 @@ const AncestorRuleChip = ({ condition, active = false, unused = false, onSelect,
           !unused && !active
       })}
     >
-      <button type="button" className="flex min-w-0 items-center gap-1 px-1.5 py-1" title={title} onClick={handleSelect}>
+      <button
+        type="button"
+        className="flex min-w-0 items-center gap-1 px-1.5 py-1"
+        title={title}
+        onClick={handleSelect}
+      >
         {unused && <i className="fas fa-triangle-exclamation" />}
         <span className="truncate">.{condition.ancestor}</span>
         <span className="opacity-70">· {condition.label}</span>
       </button>
       <button
         type="button"
-        className="border-l border-inherit px-1.5 py-1 hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400"
+        className="cursor-pointer border-l border-inherit px-1.5 py-1 hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400"
         title="Remove this rule"
         aria-label={`Remove the ${condition.label} rule under .${condition.ancestor}`}
         onClick={handleRemove}
