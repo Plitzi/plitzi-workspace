@@ -64,3 +64,49 @@ export const overriddenProperties = (
 
   return result;
 };
+
+const SIDES = ['top', 'right', 'bottom', 'left'];
+
+/**
+ * A list of properties as a person reads it: the four sides of one box property as that property, so a lost padding
+ * reads `padding` rather than four lines of it. What is left of a side set that is not whole stays as written.
+ */
+export const summarizeProperties = (properties: string[]): string[] => {
+  const remaining = new Set(properties);
+  const summary: string[] = [];
+  for (const property of properties) {
+    if (!remaining.has(property)) {
+      continue;
+    }
+
+    const side = /^(.*?)-(top|right|bottom|left)(-[a-z]+)?$/.exec(property);
+    // `at` rather than an index: the suffix group is undefined when it took no part, which only `at` says.
+    const suffix = side?.at(3) ?? '';
+    const sides = side ? SIDES.map(name => `${side[1]}-${name}${suffix}`) : [];
+    if (side && sides.every(name => remaining.has(name))) {
+      sides.forEach(name => remaining.delete(name));
+      summary.push(`${side[1]}${suffix}`);
+      continue;
+    }
+
+    remaining.delete(property);
+    summary.push(property);
+  }
+
+  return summary;
+};
+
+/** What the class being edited loses to the classes after it, as one line — or nothing, when it loses nothing. */
+export const overrideNote = (
+  name: string | undefined,
+  overridden: Record<string, Overridden[]>
+): string | undefined => {
+  const lost = name ? overridden[name] : undefined;
+  if (!lost) {
+    return undefined;
+  }
+
+  return lost
+    .map(({ by, properties }) => `${summarizeProperties(properties).join(', ')} overridden by ${by}`)
+    .join(' · ');
+};

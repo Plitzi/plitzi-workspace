@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { inStylesheetOrder, overriddenProperties } from './SelectorHelper';
+import { inStylesheetOrder, overriddenProperties, summarizeProperties } from './SelectorHelper';
 
 import type { StyleBlock, StyleItem } from '@plitzi/sdk-shared';
 
@@ -42,5 +42,32 @@ describe('overriddenProperties', () => {
 
   it('ignores a class the stylesheet does not hold', () => {
     expect(overriddenProperties(['missing', 'fill'], selectors)).toEqual({});
+  });
+});
+
+describe('summarizeProperties', () => {
+  it('reads the four sides of a box property as that property', () => {
+    expect(summarizeProperties(['padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'color'])).toEqual([
+      'padding',
+      'color'
+    ]);
+  });
+
+  it('keeps the side and its suffix together, and a partial set as written', () => {
+    expect(
+      summarizeProperties(['border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width'])
+    ).toEqual(['border-width']);
+    expect(summarizeProperties(['margin-top', 'margin-bottom'])).toEqual(['margin-top', 'margin-bottom']);
+  });
+
+  it('keeps a state’s sides apart from the base ones', () => {
+    expect(
+      summarizeProperties([
+        'hover: padding-top',
+        'hover: padding-right',
+        'hover: padding-bottom',
+        'hover: padding-left'
+      ])
+    ).toEqual(['hover: padding']);
   });
 });

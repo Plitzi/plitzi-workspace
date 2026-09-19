@@ -5,7 +5,7 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
-import { inStylesheetOrder, overriddenProperties, selectorFormatter } from './SelectorHelper';
+import { inStylesheetOrder, overrideNote, overriddenProperties, selectorFormatter } from './SelectorHelper';
 import SelectorItem from './SelectorItem';
 import SelectorSuggestions from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
@@ -14,6 +14,9 @@ import type { StyleItem } from '@plitzi/sdk-shared';
 import type { ChangeEvent, CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 
 export type SelectorValue = Pick<StyleItem, 'name' | 'type'>;
+
+const STACKING_RULE =
+  'Classes apply left to right, in the order the stylesheet lists them: where two set the same property, the one further right wins.';
 
 export type SelectorProps = {
   className?: string;
@@ -71,6 +74,10 @@ const Selector = ({
         selectors ?? {}
       ),
     [orderedTags, selectors]
+  );
+  const note = useMemo(
+    () => overrideNote(selectorProp?.name.replace(/:.*/, ''), overridden),
+    [selectorProp, overridden]
   );
   const selectorsAvailables = useMemo<StyleItem[]>(
     () => Object.values(omit(selectors ?? {}, value.split(' '))),
@@ -252,80 +259,82 @@ const Selector = ({
   const contentStyle = useMemo<CSSProperties>(() => ({ width: triggerRect?.width }), [triggerRect]);
 
   return (
-    <ContainerFloating ref={triggerRef} className="w-full" open={open}>
-      <ContainerFloating.Trigger className="w-full">
-        <div
-          className={clsx(
-            'bg-grayviolet-200 relative flex flex-wrap gap-1 rounded-sm p-1 dark:bg-zinc-800',
-            className,
-            {
-              'pointer-events-none cursor-not-allowed bg-gray-100 dark:bg-zinc-900': disabled,
-              'cursor-pointer': !disabled
-            }
-          )}
-          onClick={handleClick}
-          onKeyDown={handleKeyDown}
-        >
-          <Button
-            intent="secondary"
-            size="custom"
-            onClick={handleClickStyleManager}
-            className="h-7 w-7 rounded-sm bg-white dark:bg-zinc-700 dark:text-zinc-200"
-            title="Style Manager"
+    <div className="flex w-full min-w-0 flex-col gap-1">
+      <ContainerFloating ref={triggerRef} className="w-full" open={open}>
+        <ContainerFloating.Trigger className="w-full">
+          <div
+            className={clsx(
+              'bg-grayviolet-200 relative flex flex-wrap gap-1 rounded-sm p-1 dark:bg-zinc-800',
+              className,
+              {
+                'pointer-events-none cursor-not-allowed bg-gray-100 dark:bg-zinc-900': disabled,
+                'cursor-pointer': !disabled
+              }
+            )}
+            onClick={handleClick}
+            onKeyDown={handleKeyDown}
           >
-            <Button.Icon icon="fas fa-swatchbook" />
-          </Button>
-          {tagComponent && (
-            <SelectorItem
-              selector={tagComponent.name}
-              type={tagComponent.type}
-              editable={false}
-              active={tagComponent.name === selectorProp?.name.replace(/:.*/, '')}
-              onClick={handleClickSelector}
-            />
-          )}
-          {orderedTags.map(({ position, ...tag }) => (
-            <SelectorItem
-              key={`${position}_${tag.name}`}
-              selector={tag.name}
-              type={tag.type}
-              editable={tag.type !== 'element'}
-              active={tag.name === selectorProp?.name.replace(/:.*/, '')}
-              overriddenBy={overridden[tag.name]}
-              onAction={handleClickAction(position)}
-              onClick={handleClickSelector}
-              onChange={handleChangeItem(position)}
-            />
-          ))}
-          {orderedTags.length > 1 && (
-            <span
-              className="flex h-7 items-center px-1 text-xs text-gray-500 dark:text-zinc-400"
-              title="Classes apply left to right, in the order the stylesheet lists them: where two set the same property, the one further right wins."
+            <Button
+              intent="secondary"
+              size="custom"
+              onClick={handleClickStyleManager}
+              className="h-7 w-7 rounded-sm bg-white dark:bg-zinc-700 dark:text-zinc-200"
+              title="Style Manager"
             >
-              <i className="fas fa-circle-info" />
-            </span>
-          )}
-          <input
-            ref={inputRef}
-            className="flex min-h-0 w-0 border-none bg-transparent px-1 py-0 text-xs text-inherit outline-hidden focus:min-w-[50px] focus:grow focus:ring-transparent"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck="false"
-            value={inputValue}
-            onChange={handleChangeInput}
+              <Button.Icon icon="fas fa-swatchbook" />
+            </Button>
+            {tagComponent && (
+              <SelectorItem
+                selector={tagComponent.name}
+                type={tagComponent.type}
+                editable={false}
+                active={tagComponent.name === selectorProp?.name.replace(/:.*/, '')}
+                onClick={handleClickSelector}
+              />
+            )}
+            {orderedTags.map(({ position, ...tag }) => (
+              <SelectorItem
+                key={`${position}_${tag.name}`}
+                selector={tag.name}
+                type={tag.type}
+                editable={tag.type !== 'element'}
+                active={tag.name === selectorProp?.name.replace(/:.*/, '')}
+                onAction={handleClickAction(position)}
+                onClick={handleClickSelector}
+                onChange={handleChangeItem(position)}
+              />
+            ))}
+            <input
+              ref={inputRef}
+              className="flex min-h-0 w-0 border-none bg-transparent px-1 py-0 text-xs text-inherit outline-hidden focus:min-w-[50px] focus:grow focus:ring-transparent"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              value={inputValue}
+              onChange={handleChangeInput}
+            />
+          </div>
+        </ContainerFloating.Trigger>
+        <ContainerFloating.Content style={contentStyle}>
+          <SelectorSuggestions
+            selector={inputValue}
+            selectors={selectorsAvailables}
+            onSelect={handleSuggestionsSelect}
+            onCreate={handleSuggestionsCreate}
           />
+        </ContainerFloating.Content>
+      </ContainerFloating>
+      {orderedTags.length > 1 && (
+        <div
+          className="flex min-w-0 items-center gap-1.5 px-1 text-[11px] text-gray-500 dark:text-zinc-400"
+          title={note ?? STACKING_RULE}
+        >
+          <i className="fas fa-circle-info shrink-0" title={STACKING_RULE} />
+          <span className="truncate">{note ?? 'Left to right: the class further right wins where they overlap'}</span>
         </div>
-      </ContainerFloating.Trigger>
-      <ContainerFloating.Content style={contentStyle}>
-        <SelectorSuggestions
-          selector={inputValue}
-          selectors={selectorsAvailables}
-          onSelect={handleSuggestionsSelect}
-          onCreate={handleSuggestionsCreate}
-        />
-      </ContainerFloating.Content>
-    </ContainerFloating>
+      )}
+    </div>
   );
 };
 

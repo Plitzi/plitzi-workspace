@@ -6,7 +6,6 @@ import { selectorFormatter } from '../SelectorHelper';
 import ItemOptions from './ItemOptions';
 
 import type { SelectorValue } from '../Selector';
-import type { Overridden } from '../SelectorHelper';
 import type { TagType } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
@@ -17,8 +16,6 @@ export type SelectorItemProps = {
   editable?: boolean;
   active?: boolean;
   readOnly?: boolean;
-  /** What classes further right set again, so this one loses those rules wherever both apply. */
-  overriddenBy?: Overridden[];
   onClick?: (selector: SelectorValue) => void;
   onChange?: (selector: SelectorValue) => void;
   onAction?: (action: 'duplicate' | 'remove' | 'delete', data?: SelectorValue) => void;
@@ -31,7 +28,6 @@ const SelectorItem = ({
   editable = true,
   active = false,
   readOnly = false,
-  overriddenBy,
   onClick,
   onChange,
   onAction
@@ -81,12 +77,6 @@ const SelectorItem = ({
         )}
         {!editable && selector}
       </div>
-      {overriddenBy && (
-        <i
-          className="fas fa-layer-group text-[10px] opacity-80"
-          title={`Overridden where both apply:\n${overriddenBy.map(({ by, properties }) => `${properties.join(', ')} — by ${by}`).join('\n')}`}
-        />
-      )}
       {editable && type !== 'element' && <ItemOptions selector={selector} type={type} onAction={onAction} />}
     </div>
   );
