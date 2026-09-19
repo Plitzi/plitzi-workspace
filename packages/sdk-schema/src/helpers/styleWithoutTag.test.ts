@@ -32,4 +32,9 @@ describe('styleWithoutTag', () => {
     expect(styleWithoutTag(provider({}, 'empty'), style)).toBeUndefined();
     expect(styleWithoutTag(provider({}, ''), style)).toBeUndefined();
   });
+
+  it('finds the rules in any class of a stacked selector, not only the first', () => {
+    expect(styleWithoutTag(provider({}, 'empty stack'), style)).toBeDefined();
+    expect(styleWithoutTag(provider({}, 'empty  empty'), style)).toBeUndefined();
+  });
 });

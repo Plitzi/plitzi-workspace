@@ -85,6 +85,30 @@ describe('authorTemplate', () => {
 describe('validateTemplate', () => {
   const authored = (overrides: Partial<TemplateSpec> = {}): Template => authorTemplate(minimal(overrides)).template;
 
+  it('warns about the one class of a stacked selector the template does not carry, and only that one', () => {
+    const template = authored();
+    const base = template.schema.flat[template.definition.baseElementId];
+    base.definition.styleSelectors.base = `${base.definition.styleSelectors.base} ghost`;
+    const warned = validateTemplate(template)
+      .warnings.filter(warning => warning.code === 'TEMPLATE_SELECTOR_NOT_CARRIED')
+      .map(warning => warning.message);
+
+    expect(warned).toHaveLength(1);
+    expect(warned[0]).toContain('names the class "ghost"');
+  });
+
+  it('carries a template whose root wears several classes', () => {
+    const { template, warnings } = authorTemplate(
+      minimal({
+        classes: { card: { padding: '24px' }, raised: { 'box-shadow': '0 1px 2px black' } },
+        root: container([text('$19')], { class: ['card', 'raised'] })
+      })
+    );
+
+    expect(template.schema.flat[template.definition.baseElementId].definition.styleSelectors.base).toBe('card raised');
+    expect(warnings).toEqual([]);
+  });
+
   it('refuses a base element that is not in the schema', () => {
     const template = authored();
     const result = validateTemplate({ ...template, definition: { ...template.definition, baseElementId: 'nope' } });

@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 
 import processSelector, { processSelectors } from './processSelector';
 
+import type { StyleBlock } from '@plitzi/sdk-shared';
+
 describe('processSelector', () => {
   it('functionality', () => {
     const result = processSelector({
@@ -783,5 +785,51 @@ describe('processSelector', () => {
 }`
       ]);
     });
+  });
+});
+
+describe('processSelector / the order states are written in', () => {
+  const cacheOf = (states: NonNullable<StyleBlock['states']>): string =>
+    processSelector({
+      name: 'btn',
+      type: 'class',
+      attributes: { base: { default: { color: 'black' }, states } },
+      cache: ''
+    });
+
+  it('writes them in the order they win in, not the order they were added in', () => {
+    const cache = cacheOf({
+      disabled: { color: 'gray' },
+      active: { color: 'red' },
+      hover: { color: 'blue' },
+      'focus-visible': { color: 'green' },
+      visited: { color: 'purple' }
+    });
+
+    expect(cache).toBe(
+      '.btn{color:black;&:visited{color:purple;}&:hover{color:blue;}&:focus-visible{color:green;}&:active{color:red;}&:disabled{color:gray;}}'
+    );
+  });
+
+  it('puts a press after a hover, so pressing a hovered button shows the press', () => {
+    const cache = cacheOf({ active: { color: 'red' }, hover: { color: 'blue' } });
+
+    expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf('&:active'));
+  });
+
+  it('orders the states of a variant the same way', () => {
+    const cache = processSelector({
+      name: 'btn',
+      type: 'class',
+      attributes: {
+        base: {
+          default: {},
+          variants: { primary: { default: {}, states: { active: { color: 'red' }, hover: { color: 'blue' } } } }
+        }
+      },
+      cache: ''
+    });
+
+    expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf('&:active'));
   });
 });

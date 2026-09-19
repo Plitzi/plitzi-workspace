@@ -1,3 +1,5 @@
+import { inCascadeOrder } from '@plitzi/sdk-shared/style/styleStates';
+
 import processSelectorAttributes from './processSelectorAttributes';
 import processSelectorName from './processSelectorName';
 import processSelectorVariables from './processSelectorVariables';
@@ -66,7 +68,7 @@ const attributesToString = (
         .replaceAll(':', ': ');
 
   const stateBlocks: string[] = states
-    ? Object.entries(states).map(([state, values]) =>
+    ? inCascadeOrder(states).map(([state, values]) =>
         getSelector(`&:${state}`, values, undefined, undefined, inline, tab + TAB_SIZE)
       )
     : [];

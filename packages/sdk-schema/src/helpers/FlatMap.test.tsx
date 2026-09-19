@@ -1,6 +1,8 @@
 import { cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { describe, it, expect } from 'vitest';
 
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+
 import { positionalElementId } from './elementId';
 import FlatMap from './FlatMap';
 import schema1 from '../tests/fixtures/json/schema1.json';
@@ -1293,5 +1295,43 @@ describe('FlatMap.parentTree across nested layouts', () => {
     };
 
     expect(() => FlatMap.parentTree(cyclic, 'map')).not.toThrow();
+  });
+
+  it('flatAsTemplate carries every class of a stacked selector', () => {
+    const element = (id: string, parentId: string, type: string, base: string, items: string[] = []) => ({
+      id,
+      attributes: {},
+      definition: { rootId: 'home', parentId, label: type, type, items, styleSelectors: { base } }
+    });
+    const instance = new FlatMap({
+      flat: {
+        home: {
+          id: 'home',
+          attributes: {},
+          definition: { rootId: 'home', label: 'Page', type: 'page', items: ['card'], styleSelectors: { base: '' } }
+        },
+        card: element('card', 'home', 'container', 'panel wide', ['title']),
+        title: element('title', 'card', 'text', 'label accent')
+      },
+      variables: []
+    });
+    const item = (name: string) => ({
+      name,
+      type: 'class' as const,
+      cache: '',
+      attributes: { base: { default: { color: 'red' } } }
+    });
+    const style: Style = {
+      ...EMPTY_STYLE_SCHEMA,
+      platform: {
+        desktop: Object.fromEntries(['panel', 'wide', 'label', 'accent', 'unused'].map(name => [name, item(name)])),
+        tablet: {},
+        mobile: {}
+      }
+    };
+
+    const { elementsStyle } = instance.flatAsTemplate(style, 'card');
+
+    expect(Object.keys(elementsStyle.platform.desktop).sort()).toEqual(['accent', 'label', 'panel', 'wide']);
   });
 });
