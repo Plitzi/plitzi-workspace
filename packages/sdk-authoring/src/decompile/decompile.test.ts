@@ -13,7 +13,7 @@ import { compareSpaces } from './compareSpaces';
 import { specFromSpace } from './specFromSpace';
 import { specToSource } from './specToSource';
 
-import type { SpaceDocuments, SpaceSpec } from '../schema';
+import type { ElementSpec, PageSpec, SpaceDocuments, SpaceSpec } from '../schema';
 import type { StyleItem } from '@plitzi/sdk-shared';
 
 const card = styles('card', {
@@ -444,6 +444,21 @@ describe('specToSource', () => {
       expect(compareSpaces(documents, authorSpace(await load(files, exportName)))).toEqual([]);
     }
   });
+  it('lists the stacked classes in the space by their variable, imported from the shared styles when split', () => {
+    const spec: SpaceSpec = {
+      name: 'Listed',
+      permanentUrl: 'listed',
+      classes: { danger: { color: 'red' }, fill: { color: 'blue' } },
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [container({ id: 'bar', class: ['fill', 'danger'] })] }]
+    };
+    const read = specFromSpace(authorSpace(spec)).spec;
+    const single = specToSource(read, { exportName: 'listed', packageName });
+    const split = specToSource(read, { exportName: 'listedSplit', packageName, split: true });
+
+    expect(single['index.ts']).toMatch(/classes: \{ danger: danger, fill: fill \}/);
+    expect(split['index.ts']).toContain('import { danger, fill } from \'./styles\';');
+    expect(split['pages/home.ts']).toContain('class: [fill, danger]');
+  });
 });
 
 describe('specFromSpace / customCss', () => {
@@ -561,5 +576,125 @@ describe('the order of stacked classes', () => {
     expect(compareSpaces(before, after)).toContainEqual(
       expect.objectContaining({ message: expect.stringContaining('stylesheet order of base') as string })
     );
+  });
+});
+
+describe('specFromSpace / what the builder writes that authoring would not', () => {
+  const panel = styles('panel', { padding: '12px' });
+  const wide = styles('wide', { width: '100%' });
+  const page = (body: ElementSpec[], extra: Partial<PageSpec> = {}): SpaceSpec => ({
+    name: 'Builder',
+    permanentUrl: 'builder',
+    pages: [{ id: 'home', name: 'Home', slug: '', body, ...extra }]
+  });
+  const emptyClass = (name: string): StyleItem => ({
+    name,
+    type: 'class',
+    attributes: { base: { default: {} } },
+    cache: ''
+  });
+  const roundTrips = (documents: SpaceDocuments): void => {
+    expect(compareSpaces(documents, authorSpace(specFromSpace(documents).spec))).toEqual([]);
+  };
+
+  it('keeps a class worn alone once as a class when it is stacked somewhere else too', () => {
+    // Counted as the whole selector, "panel" alone looked used once and was written into the element as css — and
+    // the stacked element lost it.
+    const documents = authorSpace(
+      page([container({ id: 'stacked', class: [panel, wide] }), container({ id: 'alone', class: panel })])
+    );
+    const { spec } = specFromSpace(documents);
+
+    expect(spec.pages[0].body[1].class).toBe('panel');
+    expect(spec.pages[0].body[1].css).toBeUndefined();
+    expect(spec.classes).toHaveProperty('panel');
+    roundTrips(documents);
+  });
+
+  it('leaves out a stacked selector whose classes are all gone, saying so for each', () => {
+    const documents = authorSpace(page([container({ id: 'box', class: panel })]));
+    documents.schema.flat.box.definition.styleSelectors.base = 'gone-a gone-b';
+    const { spec, corrections } = specFromSpace(documents);
+
+    expect(spec.pages[0].body[0].class).toBeUndefined();
+    expect(corrections.filter(correction => correction.code === 'dropped-selector').map(({ at }) => at)).toEqual([
+      'gone-a',
+      'gone-b'
+    ]);
+  });
+
+  it('reads several classes on a slot back as a list', () => {
+    const documents = authorSpace(page([{ type: 'formControl', id: 'field', slots: { input: [panel, wide] } }]));
+    const { spec } = specFromSpace(documents);
+
+    expect(spec.pages[0].body[0].slots).toEqual({ input: ['panel', 'wide'] });
+    roundTrips(documents);
+  });
+
+  it('reads several classes on a page back as a list', () => {
+    const documents = authorSpace(page([], { class: [panel, wide] }));
+
+    expect(specFromSpace(documents).spec.pages[0].class).toEqual(['panel', 'wide']);
+    roundTrips(documents);
+  });
+
+  it('keeps a stacked class that holds no rules at all', () => {
+    // The builder stores an empty block for a class it created; authoring writes none, and neither is a difference.
+    const documents = authorSpace(page([container({ id: 'box', class: panel })]));
+    documents.style.platform.desktop.marker = emptyClass('marker');
+    documents.schema.flat.box.definition.styleSelectors.base = 'panel marker';
+    const { spec } = specFromSpace(documents);
+
+    expect(spec.pages[0].body[0].class).toEqual(['panel', 'marker']);
+    expect(spec.classes?.marker).toEqual({});
+    roundTrips(documents);
+  });
+
+  it('reads a shorthand stored after its longhands as the one that renders', () => {
+    const documents = authorSpace(page([container({ id: 'box', css: { color: 'red' } })]));
+    const selector = documents.schema.flat.box.definition.styleSelectors.base;
+    documents.style.platform.desktop[selector].attributes.base.default = {
+      'overflow-x': 'hidden',
+      'overflow-y': 'hidden',
+      overflow: 'scroll'
+    };
+    const authored = authorSpace(specFromSpace(documents).spec);
+    const readBack = authored.schema.flat.box.definition.styleSelectors.base;
+
+    expect(authored.style.platform.desktop[readBack].attributes.base.default).toEqual({
+      'overflow-x': 'scroll',
+      'overflow-y': 'scroll'
+    });
+    expect(compareSpaces(documents, authored)).toEqual([]);
+  });
+});
+
+describe('compareSpaces / stacked classes', () => {
+  const panel = styles('panel', { padding: '12px' });
+  const wide = styles('wide', { width: '100%' });
+  const spec: SpaceSpec = {
+    name: 'Compared',
+    permanentUrl: 'compared',
+    pages: [{ id: 'home', name: 'Home', slug: '', body: [container({ id: 'box', class: [panel, wide] })] }]
+  };
+
+  it('compares each class of a list by name, so one renamed is a difference', () => {
+    const renamed = authorSpace(spec);
+    renamed.style.platform.desktop.broad = { ...renamed.style.platform.desktop.wide, name: 'broad' };
+    renamed.schema.flat.box.definition.styleSelectors.base = 'panel broad';
+
+    expect(compareSpaces(authorSpace(spec), renamed)).toContainEqual(
+      expect.objectContaining({ message: expect.stringContaining('rules of base') as string })
+    );
+  });
+
+  it('does not count a class that has no rules at a breakpoint in the order', () => {
+    const withEmpty = authorSpace(spec);
+    withEmpty.style.platform.desktop = {
+      marker: { name: 'marker', type: 'class', attributes: { base: { default: {} } }, cache: '' },
+      ...withEmpty.style.platform.desktop
+    };
+
+    expect(compareSpaces(authorSpace(spec), withEmpty)).toEqual([]);
   });
 });

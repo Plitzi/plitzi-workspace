@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { className, styles } from './index';
+import { classNames, className, classRefs, isStyleDeclaration, styles } from './index';
 
 describe('styles()', () => {
   it('normalises the rules where they are written, not where they are used', () => {
@@ -70,5 +70,29 @@ describe('className()', () => {
   it('answers a plain name with itself and a declaration with its name', () => {
     expect(className('card')).toBe('card');
     expect(className(styles('card', { color: 'red' }))).toBe('card');
+  });
+});
+
+describe('class lists', () => {
+  const card = styles('card', { padding: '8px' });
+
+  it('reads one class or several as the names a selector joins', () => {
+    expect(classNames('card')).toEqual(['card']);
+    expect(classNames(card)).toEqual(['card']);
+    expect(classNames([card, 'wide', styles('flat', { 'box-shadow': 'none' })])).toEqual(['card', 'wide', 'flat']);
+  });
+
+  it('keeps the declarations of a list as they were written, so their rules can be collected', () => {
+    expect(classRefs([card, 'wide'])).toEqual([card, 'wide']);
+    expect(classRefs(card)).toEqual([card]);
+  });
+});
+
+describe('isStyleDeclaration()', () => {
+  it('tells a declaration from the rule sets a class map also holds', () => {
+    expect(isStyleDeclaration(styles('card', { color: 'red' }))).toBe(true);
+    expect(isStyleDeclaration({ color: 'red' })).toBe(false);
+    expect(isStyleDeclaration({ css: { color: 'red' }, states: { hover: { color: 'blue' } } })).toBe(false);
+    expect(isStyleDeclaration({ desktop: { color: 'red' }, mobile: { color: 'blue' } })).toBe(false);
   });
 });

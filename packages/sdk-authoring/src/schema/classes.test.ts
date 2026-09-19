@@ -146,3 +146,82 @@ describe('a space that names style declarations', () => {
     ).toThrow(/"crad".*did you mean "card"/);
   });
 });
+
+describe('an element that wears several classes', () => {
+  const panel = styles('panel', { padding: '12px' });
+  const wide = styles('wide', { width: '100%' });
+  const selectorOf = (spec: SpaceSpec, id: string, slot = 'base'): string | undefined =>
+    authorSpace(spec).schema.flat[id].definition.styleSelectors[slot];
+
+  it('joins them into its one selector, in the order written, from declarations and names alike', () => {
+    const spec = spaceWith([{ type: 'container', id: 'box', class: [panel, 'accent', wide] }], {
+      classes: { accent: { color: 'red' } }
+    });
+
+    expect(selectorOf(spec, 'box')).toBe('panel accent wide');
+    expect(Object.keys(classesOf(spec))).toEqual(expect.arrayContaining(['panel', 'accent', 'wide']));
+  });
+
+  it('refuses a list naming a class the space does not declare, by that name', () => {
+    expect(() => authorSpace(spaceWith([{ type: 'container', class: [panel, 'missing'] }]))).toThrow(
+      /names the class "missing"/
+    );
+  });
+
+  it('refuses a list and rules of its own, naming every class in it', () => {
+    expect(() => authorSpace(spaceWith([{ type: 'container', class: [panel, wide], css: { color: 'red' } }]))).toThrow(
+      /declares both a shared class \("panel wide"\) and css of its own/
+    );
+  });
+
+  it('dresses a slot with several classes too', () => {
+    const spec = spaceWith([{ type: 'formControl', id: 'field', slots: { input: [panel, wide] } }]);
+
+    expect(selectorOf(spec, 'field', 'input')).toBe('panel wide');
+  });
+
+  it('dresses a page with several classes too', () => {
+    const { schema } = authorSpace({
+      name: 'Paged',
+      permanentUrl: 'paged',
+      pages: [{ id: 'home', name: 'Home', slug: '', class: [panel, wide], body: [] }]
+    });
+
+    expect(schema.flat.home.definition.styleSelectors.base).toBe('panel wide');
+  });
+});
+
+describe('the order of `classes`', () => {
+  const first = styles('first', { color: 'red' });
+  const second = styles('second', { color: 'blue' });
+  const body = [{ type: 'container', class: [second, first] }];
+  const orderOf = (spec: SpaceSpec): string[] =>
+    Object.keys(classesOf(spec)).filter(name => name === 'first' || name === 'second');
+
+  it('writes the tree’s declarations in the order the tree names them when `classes` says nothing', () => {
+    expect(orderOf(spaceWith(body))).toEqual(['second', 'first']);
+  });
+
+  it('writes a declaration listed in `classes` where it is listed, ahead of the tree', () => {
+    expect(orderOf(spaceWith(body, { classes: { first, second } }))).toEqual(['first', 'second']);
+  });
+
+  it('interleaves a declaration with plain rule sets in the one order written', () => {
+    const spec = spaceWith([{ type: 'container', class: ['plain', first] }], {
+      classes: { first, plain: { margin: '0' } }
+    });
+
+    expect(Object.keys(classesOf(spec)).filter(name => name === 'first' || name === 'plain')).toEqual([
+      'first',
+      'plain'
+    ]);
+  });
+
+  it('refuses a listed declaration that disagrees with the one the tree names', () => {
+    const other = styles('first', { color: 'green' });
+
+    expect(() => authorSpace(spaceWith([{ type: 'container', class: other }], { classes: { first } }))).toThrow(
+      /declares the class "first" with different rules/
+    );
+  });
+});

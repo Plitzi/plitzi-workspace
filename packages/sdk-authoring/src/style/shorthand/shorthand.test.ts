@@ -12,6 +12,24 @@ describe('expandShorthand', () => {
       });
     });
 
+    it('lets a border written after one of its sides override that side', () => {
+      expect(expandShorthand({ 'border-top-color': 'red', border: '1px solid blue' })).toMatchObject({
+        'border-top-color': 'blue',
+        'border-left-color': 'blue'
+      });
+    });
+
+    it('clears or sets by the same order in a patch: the later key decides', () => {
+      expect(expandShorthandPatch({ 'padding-left': '4px', padding: null })).toMatchObject({
+        'padding-left': null,
+        'padding-top': null
+      });
+      expect(expandShorthandPatch({ padding: null, 'padding-left': '4px' })).toMatchObject({
+        'padding-left': '4px',
+        'padding-top': null
+      });
+    });
+
     it('lets a shorthand written after its longhands override them, as a stylesheet does', () => {
       expect(expandShorthand({ 'overflow-x': 'hidden', 'overflow-y': 'hidden', overflow: 'scroll' })).toEqual({
         'overflow-x': 'scroll',
