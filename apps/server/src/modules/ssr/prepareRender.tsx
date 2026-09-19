@@ -232,7 +232,7 @@ export const prepareRender = async (
   // "was this plugin in the HTML" — it accounts for the ones served from a CDN and for the ones whose import
   // failed, without either of them having to declare it.
   const templatePlugins = templateEntries?.map(entry => ({ ...entry, ssr: entry.keyName in pluginComponents }));
-  const vendorJs = (config.devMode ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
+  const vendorJs = (debugAuthorized ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
 
   return {
     componentProps: {
