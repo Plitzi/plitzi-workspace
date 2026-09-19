@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -352,8 +353,8 @@ describe('specToSource', () => {
     const files = specToSource(spec, { exportName: 'rich', packageName });
 
     expect(Object.keys(files)).toEqual(['index.ts']);
-    expect(files['index.ts']).toContain('const card = styles(\'card\'');
-    expect(files['index.ts']).toContain('heading(\'Hello\', { variant: \'title\', bind: { content: \'posts.title\' } })');
+    expect(files['index.ts']).toContain("const card = styles('card'");
+    expect(files['index.ts']).toContain("heading('Hello', { variant: 'title', bind: { content: 'posts.title' } })");
 
     expect(compareSpaces(documents, authorSpace(await load(files, 'rich')))).toEqual([]);
   });
@@ -370,7 +371,7 @@ describe('specToSource', () => {
       'pages/home.ts',
       'styles.ts'
     ]);
-    expect(files['pages/home.ts']).toContain('import { card } from \'../styles\';');
+    expect(files['pages/home.ts']).toContain("import { card } from '../styles';");
     expect(files['pages/home.ts']).toContain('export const homePage: PageSpec');
 
     expect(compareSpaces(documents, authorSpace(await load(files, 'richSplit')))).toEqual([]);
@@ -391,7 +392,7 @@ describe('specToSource', () => {
     const files = specToSource(specFromSpace(authorSpace(blankSpaceSpec)).spec, { exportName: 'blank' });
 
     expect(files['index.ts']).not.toContain('meta:');
-    expect(files['index.ts']).not.toContain('subType: \'div\'');
+    expect(files['index.ts']).not.toContain("subType: 'div'");
   });
 
   it('names elements it does not ship through element()', () => {
@@ -402,7 +403,7 @@ describe('specToSource', () => {
     };
     const files = specToSource(specFromSpace(authorSpace(spec)).spec, { exportName: 'plugin' });
 
-    expect(files['index.ts']).toContain('element(\'typed\', { strings: [\'a\'] })');
+    expect(files['index.ts']).toContain("element('typed', { strings: ['a'] })");
   });
   it('writes an element that wears several classes as the list of their declarations', async () => {
     const base = styles('panel', { padding: '12px' });
@@ -456,7 +457,7 @@ describe('specToSource', () => {
     const split = specToSource(read, { exportName: 'listedSplit', packageName, split: true });
 
     expect(single['index.ts']).toMatch(/classes: \{ danger: danger, fill: fill \}/);
-    expect(split['index.ts']).toContain('import { danger, fill } from \'./styles\';');
+    expect(split['index.ts']).toContain("import { danger, fill } from './styles';");
     expect(split['pages/home.ts']).toContain('class: [fill, danger]');
   });
 });

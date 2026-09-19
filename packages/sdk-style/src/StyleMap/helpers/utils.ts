@@ -72,8 +72,7 @@ const removeKey = (styleItem: StyleItem, path: string, key: string, blockPath: s
   const next = omit(current, [key]);
   // Under an ancestor, a variant left with only an empty `default` holds nothing: the builder keeps an empty variant
   // of the class itself on purpose, as a name to pick, but an ancestor's variant is named by the ancestor
-  const holdsNothing =
-    path.includes('.ancestors.') && Object.values(next).every(inner => isEmptyObject(inner));
+  const holdsNothing = path.includes('.ancestors.') && Object.values(next).every(inner => isEmptyObject(inner));
   if ((Object.keys(next).length && !holdsNothing) || path === blockPath) {
     set(styleItem, path, next);
 

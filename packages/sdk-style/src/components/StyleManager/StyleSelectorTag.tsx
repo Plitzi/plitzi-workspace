@@ -83,7 +83,12 @@ const StyleSelectorTag = ({
             })}
             title={ancestorsTitle}
           >
-            <i className={clsx('fas', { 'fa-sitemap': !unusedAncestorsCount, 'fa-triangle-exclamation': !!unusedAncestorsCount })} />
+            <i
+              className={clsx('fas', {
+                'fa-sitemap': !unusedAncestorsCount,
+                'fa-triangle-exclamation': !!unusedAncestorsCount
+              })}
+            />
             {ancestorsCount}
           </div>
         )}

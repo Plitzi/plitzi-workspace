@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -32,7 +33,9 @@ const space: SpaceSpec = {
       id: 'home',
       name: 'Home',
       slug: '',
-      body: [container({ class: sidebar, children: [container({ class: card, children: [text('→', { class: icon })] })] })]
+      body: [
+        container({ class: sidebar, children: [container({ class: card, children: [text('→', { class: icon })] })] })
+      ]
     }
   ]
 };
@@ -48,7 +51,12 @@ const legacy = (customCss: string, iconRules: SpaceSpec['classes'] = {}): SpaceS
       id: 'home',
       name: 'Home',
       slug: '',
-      body: [container({ class: 'sidebar', children: [container({ class: 'card', children: [text('→', { class: 'icon' })] })] })]
+      body: [
+        container({
+          class: 'sidebar',
+          children: [container({ class: 'card', children: [text('→', { class: 'icon' })] })]
+        })
+      ]
     }
   ]
 });
@@ -87,7 +95,12 @@ describe('specFromSpace / ancestor conditions', () => {
           id: 'home',
           name: 'Home',
           slug: '',
-          body: [container({ class: sidebar, children: [container({ class: card, children: [text('→', { class: moved })] })] })]
+          body: [
+            container({
+              class: sidebar,
+              children: [container({ class: card, children: [text('→', { class: moved })] })]
+            })
+          ]
         }
       ]
     };
@@ -103,7 +116,7 @@ describe('specFromSpace / folding ancestor rules out of customCss', () => {
         legacy(
           '.card .icon { font-size: 12px; }\n\n' +
             '.card:hover .icon { transform: translateX(3px); }\n\n' +
-            '.sidebar[data-variant=\'collapsed\'] .icon { display: none; }\n\n' +
+            ".sidebar[data-variant='collapsed'] .icon { display: none; }\n\n" +
             '.sidebar[data-variant="collapsed"]:hover .icon { display: block; }\n'
         )
       )
@@ -140,7 +153,9 @@ describe('specFromSpace / folding ancestor rules out of customCss', () => {
 
   it('leaves a rule the class own state would now outweigh', () => {
     const rule = '.card:hover .icon { color: red; }\n';
-    const { spec } = specFromSpace(authorSpace(legacy(rule, { icon: { css: { color: 'black' }, states: { focus: { color: 'blue' } } } })));
+    const { spec } = specFromSpace(
+      authorSpace(legacy(rule, { icon: { css: { color: 'black' }, states: { focus: { color: 'blue' } } } }))
+    );
 
     expect(spec.customCss).toBe(rule);
   });

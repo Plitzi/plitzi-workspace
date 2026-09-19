@@ -52,7 +52,10 @@ describe('ancestorConditions', () => {
   it('lists every condition, inside first and the states in cascade order', () => {
     expect(
       ancestorConditions({
-        card: { default: { color: 'blue' }, states: { active: { color: 'red' }, hover: { color: 'green' }, focus: {} } },
+        card: {
+          default: { color: 'blue' },
+          states: { active: { color: 'red' }, hover: { color: 'green' }, focus: {} }
+        },
         sidebar: { variants: { collapsed: { default: {}, states: { hover: { display: 'block' } } } } }
       })
     ).toEqual([

@@ -284,14 +284,13 @@ const StyleInspector = ({
       }
 
       // The rules that hold inside the ancestor always are cleared with an empty set: no value would purge it all
-      builderHandler(
-        'styleUpdateSelector',
-        displayMode,
-        selector.name,
-        undefined,
-        state || variant ? undefined : {},
-        { styleSelector, styleAncestor: ancestor, styleState: state, styleVariant: variant, componentType: selector.componentType }
-      );
+      builderHandler('styleUpdateSelector', displayMode, selector.name, undefined, state || variant ? undefined : {}, {
+        styleSelector,
+        styleAncestor: ancestor,
+        styleState: state,
+        styleVariant: variant,
+        componentType: selector.componentType
+      });
     },
     [builderHandler, displayMode, selector, styleAncestor, styleSelector, styleState, styleVariant]
   );

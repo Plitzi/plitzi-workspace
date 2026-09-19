@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { css, STYLE_STATES } from '../style';
 
 import type { CssProps } from '../style';
@@ -45,7 +46,7 @@ type Segment = { kind: 'rule'; selector: string; body: string; text: string } | 
 
 const STATE_SET = new Set<string>(STYLE_STATES);
 
-const QUOTES = new Set(['"', '\'']);
+const QUOTES = new Set(['"', "'"]);
 
 const isStyleState = (state: string): state is StyleState => STATE_SET.has(state);
 
