@@ -70,7 +70,11 @@ const removeKey = (styleItem: StyleItem, path: string, key: string, blockPath: s
   }
 
   const next = omit(current, [key]);
-  if (Object.keys(next).length || path === blockPath) {
+  // Under an ancestor, a variant left with only an empty `default` holds nothing: the builder keeps an empty variant
+  // of the class itself on purpose, as a name to pick, but an ancestor's variant is named by the ancestor
+  const holdsNothing =
+    path.includes('.ancestors.') && Object.values(next).every(inner => isEmptyObject(inner));
+  if ((Object.keys(next).length && !holdsNothing) || path === blockPath) {
     set(styleItem, path, next);
 
     return;
@@ -98,6 +102,13 @@ const writeStyle = (
   // Set Value
   if (value !== undefined) {
     if (isStyleObject(value as StyleObject) && isEmptyObject(value)) {
+      // Clearing the rules that hold inside an ancestor at all times leaves nothing behind, not an empty block
+      if (styleAncestor && !hasStateOrVariant) {
+        removeKey(styleItem, blockPath, 'default', `attributes.${styleSelector}`);
+
+        return;
+      }
+
       // dont recreate state/variant if they dont already exists
       if (mode === 'update' && hasStateOrVariant && !get(styleItem, parentPath)) {
         return;
@@ -127,6 +138,13 @@ const writeStyle = (
   if (path) {
     const current = get(styleItem, targetPath, {});
     set(styleItem, targetPath, omit(current, [path]));
+
+    return;
+  }
+
+  // Delete one state of a variant, and the variant with it once nothing is left in it
+  if (styleVariant && styleState) {
+    removeKey(styleItem, `${blockPath}.variants.${styleVariant}.states`, styleState, `attributes.${styleSelector}`);
 
     return;
   }

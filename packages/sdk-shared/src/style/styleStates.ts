@@ -49,7 +49,7 @@ const STYLE_STATE_CASCADE: Record<(typeof STYLE_STATES)[number], number> = {
   disabled: 7
 };
 
-const isKnownState = (state: string): state is (typeof STYLE_STATES)[number] =>
+export const isKnownState = (state: string): state is (typeof STYLE_STATES)[number] =>
   Object.hasOwn(STYLE_STATE_CASCADE, state);
 
 const cascadeRank = (state: string): number => (isKnownState(state) ? STYLE_STATE_CASCADE[state] : STYLE_STATES.length);

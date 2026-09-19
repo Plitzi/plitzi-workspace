@@ -14,6 +14,9 @@ export type StyleSelectorTagProps = {
   active?: boolean;
   checked?: boolean;
   elementsCount?: number;
+  /** Ancestors this selector has rules under, and how many of them no element it dresses sits inside. */
+  ancestorsCount?: number;
+  unusedAncestorsCount?: number;
   type?: TagType;
   onSelect?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -26,6 +29,8 @@ const StyleSelectorTag = ({
   active = false,
   checked = false,
   elementsCount = 0,
+  ancestorsCount = 0,
+  unusedAncestorsCount = 0,
   type = 'class',
   onSelect,
   onDelete,
@@ -47,6 +52,10 @@ const StyleSelectorTag = ({
 
   const handleStopPropagation = useCallback((e: MouseEvent) => e.stopPropagation(), []);
 
+  const ancestorsTitle = unusedAncestorsCount
+    ? `Rules under ${ancestorsCount} ancestor classes, ${unusedAncestorsCount} of them around no element it dresses`
+    : `Rules under ${ancestorsCount} ancestor classes`;
+
   return (
     <div
       className={clsx(
@@ -65,7 +74,19 @@ const StyleSelectorTag = ({
         </div>
         <SelectorItem editable={false} selector={label} type={type} active readOnly />
       </div>
-      <div className="flex">
+      <div className="flex items-center">
+        {ancestorsCount > 0 && (
+          <div
+            className={clsx('mr-1 flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs', {
+              'bg-amber-500/15 text-amber-700 dark:text-amber-300': unusedAncestorsCount > 0,
+              'bg-gray-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300': unusedAncestorsCount === 0
+            })}
+            title={ancestorsTitle}
+          >
+            <i className={clsx('fas', { 'fa-sitemap': !unusedAncestorsCount, 'fa-triangle-exclamation': !!unusedAncestorsCount })} />
+            {ancestorsCount}
+          </div>
+        )}
         <div className={clsx('mr-1', { flex: active, 'hidden group-hover:flex': !active })}>
           <Button intent="danger" size="xs" onClick={handleClickDelete}>
             <Button.Icon icon="fas fa-trash" />

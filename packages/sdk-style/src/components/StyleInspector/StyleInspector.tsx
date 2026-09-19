@@ -10,9 +10,18 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { useBuilderStore, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 
 import Selector from '../Selector';
-import { ancestorClasses, ancestorOptions, STYLE_STATE_OPTIONS } from './helpers';
+import AncestorRules from './components/AncestorRules';
+import {
+  ancestorClasses,
+  ancestorConditions,
+  ancestorOptions,
+  ancestorRemovals,
+  STYLE_STATE_OPTIONS,
+  unusedAncestors
+} from './helpers';
 import Inspector from './Inspector';
 
+import type { AncestorCondition } from './helpers';
 import type { SelectorValue } from '../Selector';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { DisplayMode, Element, StyleItem, TagType } from '@plitzi/sdk-shared';
@@ -62,7 +71,7 @@ const StyleInspector = ({
   const [styleAncestor, setStyleAncestor] = useState<string | undefined>(undefined);
   useBuilderStoreSync('styleState', styleState, { enabled: mode === 'element' });
   useBuilderStoreSync('styleAncestor', styleAncestor, { enabled: mode === 'element' });
-  const [flat] = useBuilderStore('schema.flat');
+  const [[flat, platform]] = useBuilderStore(['schema.flat', 'style.platform']);
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectorsFiltered = useMemo(
@@ -77,10 +86,23 @@ const StyleInspector = ({
     [selectors, value]
   );
   const configuredAncestors = selector?.attributes[styleSelector]?.ancestors;
-  const ancestors = useMemo(
-    () => ancestorOptions(mode === 'element' ? ancestorClasses(flat, element) : [], configuredAncestors),
-    [configuredAncestors, element, flat, mode]
+  // In the Style Manager there is no element to look around, so any class of the space can be the ancestor
+  const ancestorCandidates = useMemo(
+    () =>
+      mode === 'element'
+        ? ancestorClasses(flat, element)
+        : Object.values(selectors ?? {})
+            .filter(item => item.type === 'class' && item.name !== value)
+            .map(item => item.name)
+            .sort((a, b) => a.localeCompare(b)),
+    [element, flat, mode, selectors, value]
   );
+  const ancestors = useMemo(
+    () => ancestorOptions(ancestorCandidates, configuredAncestors),
+    [ancestorCandidates, configuredAncestors]
+  );
+  const conditions = useMemo(() => ancestorConditions(configuredAncestors), [configuredAncestors]);
+  const unused = useMemo(() => (selector ? unusedAncestors(flat, selector) : new Set<string>()), [flat, selector]);
   const ancestorPlaceholder = useMemo(() => {
     const count = Object.keys(configuredAncestors ?? {}).length;
 
@@ -243,6 +265,57 @@ const StyleInspector = ({
     [builderHandler, displayMode, selector, styleAncestor, styleSelector]
   );
 
+  const handleSelectCondition = useCallback((condition: AncestorCondition) => {
+    setStyleAncestor(condition.ancestor);
+    setStyleVariant(condition.variant);
+    setStyleState(condition.state);
+  }, []);
+
+  const handleRemoveCondition = useCallback(
+    (condition: AncestorCondition) => {
+      if (!selector) {
+        return;
+      }
+
+      const { ancestor, state, variant } = condition;
+      if (ancestor === styleAncestor && state === styleState && variant === styleVariant) {
+        setStyleState(undefined);
+        setStyleVariant(undefined);
+      }
+
+      // The rules that hold inside the ancestor always are cleared with an empty set: no value would purge it all
+      builderHandler(
+        'styleUpdateSelector',
+        displayMode,
+        selector.name,
+        undefined,
+        state || variant ? undefined : {},
+        { styleSelector, styleAncestor: ancestor, styleState: state, styleVariant: variant, componentType: selector.componentType }
+      );
+    },
+    [builderHandler, displayMode, selector, styleAncestor, styleSelector, styleState, styleVariant]
+  );
+
+  const handleRemoveUnused = useCallback(() => {
+    if (!selector) {
+      return;
+    }
+
+    if (styleAncestor && unused.has(styleAncestor)) {
+      setStyleAncestor(undefined);
+      setStyleState(undefined);
+      setStyleVariant(undefined);
+    }
+
+    for (const removal of ancestorRemovals(platform, selector.name, unused)) {
+      builderHandler('styleUpdateSelector', removal.displayMode, selector.name, undefined, undefined, {
+        styleSelector: removal.styleSelector,
+        styleAncestor: removal.styleAncestor,
+        componentType: selector.componentType
+      });
+    }
+  }, [builderHandler, platform, selector, styleAncestor, unused]);
+
   const handleChangeStyleVariant = useCallback((option?: Exclude<Option, OptionGroup>) => {
     setStyleVariant(option?.value);
   }, []);
@@ -261,7 +334,6 @@ const StyleInspector = ({
       builderHandler('styleUpdateSelector', displayMode, selector?.name, undefined, undefined, {
         styleSelector,
         styleVariant: option.value,
-        styleState,
         styleAncestor,
         componentType: selector?.componentType
       });
@@ -280,11 +352,7 @@ const StyleInspector = ({
   );
 
   const hasControls =
-    allowStyleSelector &&
-    (allowStyleVariant ||
-      allowStyleState ||
-      !!styleSelectorsAvailables?.length ||
-      !!componentSubTypesAvailables?.length);
+    allowStyleVariant || allowStyleState || !!styleSelectorsAvailables?.length || !!componentSubTypesAvailables?.length;
 
   return (
     <div className="flex w-full grow flex-col gap-2">
@@ -318,7 +386,7 @@ const StyleInspector = ({
                 ))}
               </Select>
             )}
-            {styleSelectorsAvailables && styleSelectorsAvailables.length > 1 && (
+            {allowStyleSelector && styleSelectorsAvailables && styleSelectorsAvailables.length > 1 && (
               <Select className="grow basis-0" size="xs" onChange={handleChangeStyleSelector} value={styleSelector}>
                 {styleSelectorsAvailables.map(selectorKey => (
                   <option key={selectorKey} value={selectorKey}>
@@ -369,6 +437,18 @@ const StyleInspector = ({
             allowRemoveOptions
             onChange={handleChangeStyleAncestor}
             onRemove={handleRemoveStyleAncestor}
+          />
+        )}
+        {allowStyleState && conditions.length > 0 && (
+          <AncestorRules
+            conditions={conditions}
+            unused={unused}
+            activeAncestor={styleAncestor}
+            activeState={styleState}
+            activeVariant={styleVariant}
+            onSelect={handleSelectCondition}
+            onRemove={handleRemoveCondition}
+            onRemoveUnused={handleRemoveUnused}
           />
         )}
       </div>

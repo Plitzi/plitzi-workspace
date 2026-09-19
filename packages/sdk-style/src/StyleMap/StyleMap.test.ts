@@ -988,6 +988,39 @@ describe('StyleMap / ancestor conditions', () => {
     expect(style.platform.desktop.icon.cache).not.toContain('.card');
   });
 
+  it('clears the rules inside an ancestor with an empty set, keeping its states', () => {
+    const inside = { styleSelector: 'base', styleAncestor: 'card' };
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'font-size', '12px', inside);
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', hoverOfCard);
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, {}, inside);
+
+    expect(style.platform.desktop.icon.attributes.base.ancestors).toEqual({
+      card: { states: { hover: { color: 'red' } } }
+    });
+  });
+
+  it('removes one state of an ancestor variant, and the variant once it holds nothing', () => {
+    const collapsed = { styleSelector: 'base', styleAncestor: 'sidebar', styleVariant: 'collapsed' };
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'display', 'block', { ...collapsed, styleState: 'hover' });
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'display', 'block', { ...collapsed, styleState: 'focus' });
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, { ...collapsed, styleState: 'hover' });
+    expect(style.platform.desktop.icon.attributes.base.ancestors?.sidebar.variants?.collapsed.states).toEqual({
+      focus: { display: 'block' }
+    });
+
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, { ...collapsed, styleState: 'focus' });
+    expect(style.platform.desktop.icon.attributes.base).toEqual({ default: { color: 'black' } });
+  });
+
+  it('removes one state of the class own variant and keeps the variant, as a name to pick', () => {
+    const primary = { styleSelector: 'base', styleVariant: 'primary' };
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'blue', primary);
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'navy', { ...primary, styleState: 'hover' });
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, { ...primary, styleState: 'hover' });
+
+    expect(style.platform.desktop.icon.attributes.base.variants).toEqual({ primary: { default: { color: 'blue' } } });
+  });
+
   it('still drops the last state of the class itself without touching its base', () => {
     const hover = { styleSelector: 'base', styleState: 'hover' as const };
     StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', hover);

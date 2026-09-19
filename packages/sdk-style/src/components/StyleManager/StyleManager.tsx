@@ -52,6 +52,7 @@ const StyleManager = () => {
         <ManagerSelector
           displayMode={displayMode}
           selectors={selectors}
+          flat={flat}
           flatList={flatList}
           selected={selector?.name}
           onSelect={setSelector}

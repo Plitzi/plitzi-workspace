@@ -8,27 +8,31 @@ import { useCallback, use, useMemo, useState, memo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import StyleSelectorTag from './StyleSelectorTag';
 import SelectorForm from '../../models/SelectorForm';
+import { ancestorRemovals, unusedAncestors } from '../StyleInspector/helpers';
 
 import type { SelectorFormValues } from '../../models/SelectorForm';
-import type { DisplayMode, Element, StyleItem } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, Schema, StyleItem } from '@plitzi/sdk-shared';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type ManagerSelectorProps = {
   displayMode: DisplayMode;
+  flat: Schema['flat'];
   flatList: Element[];
   selected?: string;
   onSelect?: Dispatch<SetStateAction<StyleItem | undefined>>;
   selectors?: Record<string, StyleItem>;
 };
 
-const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
+const ManagerSelector = ({ displayMode, flat, flatList, selectors, selected, onSelect }: ManagerSelectorProps) => {
   const selectorsArr = useMemo(() => Object.values(selectors ?? {}), [selectors]);
   const [searchInput, setSearchInput] = useState('');
   const [checkedSelectors, setCheckedSelectors] = useState<string[]>([]);
   const { builderHandler } = use(BuilderContext);
+  const [platform] = useBuilderStore('style.platform');
   const { components } = use(ComponentContext);
   const componentsNotAvailables = useMemo(
     () => selectorsArr.filter(selector => !!selector.componentType).map(selector => selector.componentType as string),
@@ -166,6 +170,42 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
     [finalSelectors, flatList, elementHasSelector]
   );
 
+  // Per selector: the ancestors it has rules under, and the ones no element it dresses sits inside
+  const ancestorHealth = useMemo<Record<string, { count: number; unused: Set<string> }>>(
+    () =>
+      Object.fromEntries(
+        selectorsArr.map(selector => [
+          selector.name,
+          {
+            count: new Set(Object.values(selector.attributes).flatMap(block => Object.keys(block.ancestors ?? {})))
+              .size,
+            unused: unusedAncestors(flat, selector)
+          }
+        ])
+      ),
+    [flat, selectorsArr]
+  );
+
+  const unusedTotal = useMemo(
+    () => Object.values(ancestorHealth).reduce((total, { unused }) => total + unused.size, 0),
+    [ancestorHealth]
+  );
+
+  const unusedLabel = `${unusedTotal} unused ancestor ${unusedTotal === 1 ? 'rule' : 'rules'}`;
+
+  // Rules under an ancestor nothing sits inside never match: dropped at every breakpoint, the rest left alone
+  const handleRemoveUnusedAncestors = useCallback(() => {
+    for (const [name, { unused }] of Object.entries(ancestorHealth)) {
+      for (const removal of ancestorRemovals(platform, name, unused)) {
+        builderHandler('styleUpdateSelector', removal.displayMode, name, undefined, undefined, {
+          styleSelector: removal.styleSelector,
+          styleAncestor: removal.styleAncestor,
+          componentType: platform[removal.displayMode][name].componentType
+        });
+      }
+    }
+  }, [ancestorHealth, builderHandler, platform]);
+
   const handleCloseModal = useCallback(() => void onCloseDeleteSelector(undefined, false), [onCloseDeleteSelector]);
 
   const handleSubmitModal = useCallback(() => void onCloseDeleteSelector(undefined, true), [onCloseDeleteSelector]);
@@ -177,6 +217,17 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
         New Selector
       </Button>
       <Input placeholder="Search Selector" value={searchInput} onChange={handleChangeSearch} size="xs" />
+      {unusedTotal > 0 && (
+        <div className="flex items-center justify-between gap-2 rounded-sm bg-amber-500/10 px-2 py-1">
+          <span className="text-xs text-amber-700 dark:text-amber-300">
+            <i className="fas fa-triangle-exclamation mr-1" />
+            {unusedLabel}
+          </span>
+          <Button size="xs" onClick={handleRemoveUnusedAncestors}>
+            Clean up
+          </Button>
+        </div>
+      )}
       {checkedSelectors.length > 0 && (
         <div className="bg-secondary-50 dark:bg-secondary-900/30 flex items-center justify-between gap-2 rounded-sm px-2 py-1">
           <span className="text-xs text-zinc-600 dark:text-zinc-300">{checkedSelectors.length} selected</span>
@@ -204,6 +255,8 @@ const ManagerSelector = ({ displayMode, flatList, selectors, selected, onSelect 
               label={name}
               type={type}
               elementsCount={elementCounts[name]}
+              ancestorsCount={ancestorHealth[name].count}
+              unusedAncestorsCount={ancestorHealth[name].unused.size}
               onSelect={handleClickSelect}
               onDelete={handleClickDelete}
               onToggleCheck={handleToggleCheck}
