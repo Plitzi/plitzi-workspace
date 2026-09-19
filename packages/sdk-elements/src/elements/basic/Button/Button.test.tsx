@@ -43,4 +43,18 @@ describe('Button Tests', () => {
     expect(menu.getAttribute('aria-expanded')).toBe('false');
     expect(filter.getAttribute('aria-pressed')).toBe('true');
   });
+
+  it('lets an empty content be named by its children or its title', () => {
+    const { getByRole } = render(
+      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+        <Button content="">
+          <span>Refresh your spaces</span>
+        </Button>
+        <Button content="" title="Sign out" />
+      </ElementContext>
+    );
+
+    expect(getByRole('button', { name: 'Refresh your spaces' }).hasAttribute('aria-label')).toBe(false);
+    expect(getByRole('button', { name: 'Sign out' }).hasAttribute('aria-label')).toBe(false);
+  });
 });

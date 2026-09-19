@@ -1,11 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { ReactNode, RefObject } from 'react';
@@ -30,6 +28,9 @@ export type ButtonProps = {
   /**
    * What the button does, in words — shown as a tooltip on hover, and the button's accessible name when it has no text
    * of its own. An icon-only button without one is announced as nothing at all.
+   *
+   * The browser falls back to it by itself, so it is never copied into `aria-label`: an `aria-label` would win over a
+   * visually-hidden label among the children, which is how a button with an empty `content` names itself.
    */
   title?: string;
 };
@@ -47,15 +48,8 @@ const Button = ({
   title
 }: ButtonProps) => {
   const {
-    definition: { label }
-  } = useElement();
-  const {
     settings: { previewMode }
   } = usePlitziServiceContext();
-  const buttonName = useMemo(
-    () => (typeof content === 'string' && content ? content : title || label),
-    [content, title, label]
-  );
 
   return (
     <RootElement
@@ -66,7 +60,7 @@ const Button = ({
         'container--empty--skip': !previewMode && !children && content
       })}
       disabled={disabled}
-      aria-label={buttonName}
+      aria-label={content || undefined}
       title={title || undefined}
       aria-expanded={ariaExpanded}
       aria-pressed={ariaPressed}
