@@ -648,7 +648,10 @@ describe('mcp-ai ancestor conditions (`.card:hover .icon` as part of the class)'
       cap.persisters
     );
     const patched = readResource(cap.saved(), 'main', 'plitzi://definitions/main/icon')?.data as AIDefinition;
-    expect(patched.ancestors).toEqual({ ...hover, sidebar: { variants: { collapsed: { desktop: { display: 'none' } } } } });
+    expect(patched.ancestors).toEqual({
+      ...hover,
+      sidebar: { variants: { collapsed: { desktop: { display: 'none' } } } }
+    });
 
     const removal = capturing(cap.saved());
     await apply(
