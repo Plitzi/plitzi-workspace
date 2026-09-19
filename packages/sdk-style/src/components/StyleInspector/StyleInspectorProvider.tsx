@@ -62,7 +62,7 @@ const StyleInspectorProvider = ({
         const ancestor = block.ancestors?.[styleAncestor];
         const variant = styleVariant ? ancestor?.variants?.[styleVariant] : undefined;
         const scope = styleVariant ? variant : ancestor;
-        attributes = (styleState ? scope?.states?.[styleState] : variant?.default) ?? {};
+        attributes = (styleState ? scope?.states?.[styleState] : scope?.default) ?? {};
       } else if (styleState && styleVariant) {
         attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
       } else if (styleVariant) {

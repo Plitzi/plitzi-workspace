@@ -209,8 +209,8 @@ export interface AIIdStyle extends AIDefinition {
   targetId: string;
 }
 
-/** How a slot looks while an ancestor wearing that class is in a state or a variant. */
-export interface AIAncestorCondition {
+/** How a slot looks inside an ancestor wearing that class: always (per breakpoint), or in its states or variants. */
+export interface AIAncestorCondition extends DisplayModeCss {
   states?: Record<string, DisplayModeCss>;
   variants?: Record<string, DisplayModeCss>;
 }

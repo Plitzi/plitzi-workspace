@@ -31,8 +31,9 @@ export const ancestorClasses = (flat: Schema['flat'], element?: Element): string
   return [...classes];
 };
 
-/** The conditions a selector has rules for under one ancestor: `hover`, `collapsed`, `collapsed:hover`. */
-const conditionsOf = ({ states, variants }: StyleAncestor): string[] => [
+/** The conditions a selector has rules for under one ancestor: `inside`, `hover`, `collapsed`, `collapsed:hover`. */
+const conditionsOf = ({ default: rules, states, variants }: StyleAncestor): string[] => [
+  ...(Object.keys(rules ?? {}).length ? ['inside'] : []),
   ...Object.keys(states ?? {}),
   ...Object.entries(variants ?? {}).flatMap(([variant, block]) => [
     ...(Object.keys(block.default ?? {}).length ? [variant] : []),

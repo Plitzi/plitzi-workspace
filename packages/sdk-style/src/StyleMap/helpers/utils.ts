@@ -145,7 +145,7 @@ const writeStyle = (
     return;
   }
 
-  // Delete the ancestor condition
+  // No path and no value under an ancestor alone purges every rule under it; clearing its rules is a `{}` value
   if (styleAncestor) {
     removeKey(styleItem, `attributes.${styleSelector}.ancestors`, styleAncestor, `attributes.${styleSelector}`);
 

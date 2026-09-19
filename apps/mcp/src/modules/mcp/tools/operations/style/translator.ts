@@ -62,7 +62,12 @@ const fillSlot = (target: AIDefinitionSlot, mode: DisplayMode, block: StyleBlock
 
   fillConditions(target, mode, block);
   for (const [ancestor, condition] of Object.entries(block.ancestors ?? {})) {
-    fillConditions(((target.ancestors ??= {})[ancestor] ??= {}), mode, condition);
+    const conditionTarget = ((target.ancestors ??= {})[ancestor] ??= {});
+    if (condition.default && Object.keys(condition.default).length > 0) {
+      conditionTarget[mode] = condition.default;
+    }
+
+    fillConditions(conditionTarget, mode, condition);
   }
 };
 

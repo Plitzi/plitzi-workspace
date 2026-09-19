@@ -50,7 +50,7 @@ export const isStyleAncestors = (obj: NonNullable<StyleBlock['ancestors']>): boo
   Object.values(obj).every(
     ancestor =>
       isPlainObject(ancestor) &&
-      !('default' in ancestor) &&
+      (!ancestor.default || isStyleObject(ancestor.default)) &&
       (!ancestor.states || isStyleStates(ancestor.states)) &&
       (!ancestor.variants || isStyleVariants(ancestor.variants))
   );

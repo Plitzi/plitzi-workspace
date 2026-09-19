@@ -24,7 +24,9 @@ const spaceWith = (spec: Partial<SpaceSpec>): SpaceSpec => ({
       id: 'home',
       name: 'Home',
       slug: '',
-      body: [container({ class: sidebar, children: [container({ class: card, children: [text('→', { class: icon })] })] })]
+      body: [
+        container({ class: sidebar, children: [container({ class: card, children: [text('→', { class: icon })] })] })
+      ]
     }
   ],
   ...spec
@@ -47,6 +49,12 @@ describe('ancestor conditions', () => {
     expect(blocks.mobile?.ancestors?.card.variants?.open.default).toEqual({ 'row-gap': '2px', 'column-gap': '2px' });
   });
 
+  it('holds rules that apply inside an ancestor at all times', () => {
+    const small = styles('small-icon', { ancestors: { [card.name]: { css: { 'font-size': '12px' } } } });
+
+    expect(small.rules.desktop?.ancestors?.card).toEqual({ default: { 'font-size': '12px' } });
+  });
+
   it('writes them into the class and its compiled rule', () => {
     const { style } = authorSpace(spaceWith({}));
     const item = style.platform.desktop['card-icon'];
@@ -62,7 +70,14 @@ describe('ancestor conditions', () => {
     expect(() =>
       authorSpace(
         spaceWith({
-          pages: [{ id: 'home', name: 'Home', slug: '', body: [container({ class: card, children: [text('x', { class: lost })] })] }]
+          pages: [
+            {
+              id: 'home',
+              name: 'Home',
+              slug: '',
+              body: [container({ class: card, children: [text('x', { class: lost })] })]
+            }
+          ]
         })
       )
     ).toThrow(/names the class "crad", which this space does not declare/);

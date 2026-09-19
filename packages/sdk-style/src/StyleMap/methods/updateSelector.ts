@@ -41,8 +41,6 @@ const updateSelector = (
     (componentType && styleItem.type !== 'element') ||
     (styleSelector && typeof styleSelector !== 'string') ||
     (path && path.includes('.')) ||
-    // An ancestor carries conditions only: no styles of its own outside a state or variant
-    (styleAncestor && !styleState && !styleVariant && (path || value !== undefined)) ||
     !isValidValue(path, value, params)
   ) {
     return false;

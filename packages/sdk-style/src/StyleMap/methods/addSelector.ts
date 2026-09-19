@@ -41,7 +41,6 @@ const addSelector = (
     (componentType && type !== 'element') ||
     (styleSelector && typeof styleSelector !== 'string') ||
     (!styleSelector && (styleState || styleVariant || styleAncestor)) ||
-    (styleAncestor && !styleState && !styleVariant) ||
     (path && path.includes('.')) ||
     !isValidValue(path, value, params)
   ) {

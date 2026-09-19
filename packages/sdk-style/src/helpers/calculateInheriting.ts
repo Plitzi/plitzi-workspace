@@ -159,7 +159,7 @@ const resolveStyleBlock = (
     const ancestorVariant = styleVariant ? ancestor?.variants?.[styleVariant] : undefined;
     const ancestorState = styleState ? (ancestorVariant ?? ancestor)?.states?.[styleState] : undefined;
 
-    return { ...base, ...ancestorVariant?.default, ...ancestorState };
+    return { ...base, ...ancestor?.default, ...ancestorVariant?.default, ...ancestorState };
   }
 
   const variantBase = styleVariant ? (block.variants?.[styleVariant]?.default ?? {}) : {};

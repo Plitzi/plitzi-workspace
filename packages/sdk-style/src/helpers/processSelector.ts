@@ -56,7 +56,11 @@ const variantSelector = (base: string, variant: string, state = '') => [
 const ancestorRules = (ancestors: ProcessedAncestors, inline: boolean, tab: number) => {
   const separator = inline ? ',' : ', ';
   const rules: string[] = [];
-  for (const [ancestor, { states, variants }] of Object.entries(ancestors)) {
+  for (const [ancestor, { default: values, states, variants }] of Object.entries(ancestors)) {
+    if (values?.length) {
+      rules.push(getSelector(`:where(.${ancestor}) &`, values, {}, inline, tab));
+    }
+
     for (const [state, values] of inCascadeOrder(states ?? {})) {
       rules.push(getSelector(`:where(.${ancestor}:${state}) &`, values, {}, inline, tab));
     }

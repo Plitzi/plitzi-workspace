@@ -891,6 +891,15 @@ describe('processSelector / ancestor conditions', () => {
     expect(cache).toBe('.plitzi__text{.plitzi__text-label{:where(.card:hover) &{color:red;}}}');
   });
 
+  it('writes the rules that hold inside an ancestor at all times before its states', () => {
+    const cache = cacheOf({
+      default: {},
+      ancestors: { toolbar: { default: { 'font-size': '12px' }, states: { hover: { 'font-size': '14px' } } } }
+    });
+
+    expect(cache).toBe('.icon{:where(.toolbar) &{font-size:12px;}:where(.toolbar:hover) &{font-size:14px;}}');
+  });
+
   it('leaves out an ancestor with nothing under it', () => {
     expect(cacheOf({ default: { color: 'black' }, ancestors: { card: { states: { hover: {} } } } })).toBe(
       '.icon{color:black;}'

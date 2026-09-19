@@ -279,9 +279,6 @@ const StyleInspector = ({
     ]
   );
 
-  // An ancestor holds no rules of its own: only under one of its states or variants
-  const awaitsCondition = !!styleAncestor && !styleState && !styleVariant;
-
   const hasControls =
     allowStyleSelector &&
     (allowStyleVariant ||
@@ -376,25 +373,18 @@ const StyleInspector = ({
         )}
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300 dark:border-zinc-700">
-        {awaitsCondition && (
-          <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-xs text-zinc-500 select-none dark:border-zinc-600 dark:text-zinc-400">
-            Pick the state or variant of .{styleAncestor} these styles apply in.
-          </div>
-        )}
-        {!awaitsCondition && (
-          <Inspector
-            selectors={selectorsFiltered}
-            componentType={componentType}
-            selector={selector}
-            styleSelector={styleSelector}
-            styleState={styleState}
-            styleVariant={styleVariant}
-            styleAncestor={styleAncestor}
-            element={element}
-            displayMode={displayMode}
-            mode={mode}
-          />
-        )}
+        <Inspector
+          selectors={selectorsFiltered}
+          componentType={componentType}
+          selector={selector}
+          styleSelector={styleSelector}
+          styleState={styleState}
+          styleVariant={styleVariant}
+          styleAncestor={styleAncestor}
+          element={element}
+          displayMode={displayMode}
+          mode={mode}
+        />
       </div>
     </div>
   );

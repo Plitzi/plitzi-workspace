@@ -18,10 +18,10 @@ export const displayModeCss = z.object({
 });
 
 const ANCESTORS_DESCRIPTION =
-  'By the class an ancestor wears: rules while it is in a state or variant — `.card:hover .icon` is ' +
-  '`{ card: { states: { hover: {…} } } }`. Own states and variants win over these.';
+  'By the class an ancestor wears: rules inside it — `.card .icon` is `{ card: { desktop: {…} } }` — or while it ' +
+  'is in a state or variant — `.card:hover .icon` is `{ card: { states: { hover: {…} } } }`.';
 
-export const ancestorCondition = z.object({
+export const ancestorCondition = displayModeCss.extend({
   states: z.record(z.string(), displayModeCss).optional(),
   variants: z.record(z.string(), displayModeCss).optional()
 });
@@ -52,7 +52,7 @@ export const displayModeCssPatch = z.object({
   mobile: cssPatchMap.optional()
 });
 
-export const ancestorConditionPatch = z.object({
+export const ancestorConditionPatch = displayModeCssPatch.extend({
   states: z.record(z.string(), displayModeCssPatch).optional(),
   variants: z.record(z.string(), displayModeCssPatch).optional()
 });

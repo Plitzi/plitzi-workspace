@@ -78,8 +78,9 @@ const slotToBlocks = (slot: DefinitionSlotInput): Partial<Record<DisplayMode, St
 
     for (const [ancestor, condition] of Object.entries(slot.ancestors ?? {})) {
       const conditionBlock = slotToBlocks(condition)[mode];
-      if (conditionBlock?.states || conditionBlock?.variants) {
+      if (conditionBlock) {
         (block.ancestors ??= {})[ancestor] = {
+          ...(conditionBlock.default ? { default: conditionBlock.default } : {}),
           ...(conditionBlock.states ? { states: conditionBlock.states } : {}),
           ...(conditionBlock.variants ? { variants: conditionBlock.variants } : {})
         };
@@ -197,10 +198,11 @@ const mergeAncestors = (
       continue;
     }
 
+    const inside = mergeDisplayMode(base?.[name], conditionPatch ?? undefined);
     const states = mergeNamedModes(base?.[name]?.states, conditionPatch?.states);
     const variants = mergeNamedModes(base?.[name]?.variants, conditionPatch?.variants);
-    if (states || variants) {
-      result[name] = { ...(states ? { states } : {}), ...(variants ? { variants } : {}) };
+    if (Object.keys(inside).length > 0 || states || variants) {
+      result[name] = { ...inside, ...(states ? { states } : {}), ...(variants ? { variants } : {}) };
     }
   }
 

@@ -952,10 +952,16 @@ describe('StyleMap / ancestor conditions', () => {
     expect(style.platform.desktop['text-1'].attributes.base.ancestors?.card.states?.hover).toEqual({ color: 'red' });
   });
 
-  it('refuses rules on an ancestor with no state or variant to hang them on', () => {
-    const bare = { styleSelector: 'base', styleAncestor: 'card' };
-    expect(StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', bare)).toBe(false);
-    expect(StyleMap.addSelector(style, 'desktop', 'other', 'class', 'color', 'red', bare)).toBe(false);
+  it('writes rules that hold inside the ancestor at all times, with no state or variant', () => {
+    const inside = { styleSelector: 'base', styleAncestor: 'toolbar' };
+    expect(StyleMap.updateSelector(style, 'desktop', 'icon', 'font-size', '12px', inside)).toBe(true);
+    expect(style.platform.desktop.icon.attributes.base.ancestors?.toolbar).toEqual({
+      default: { 'font-size': '12px' }
+    });
+    expect(style.platform.desktop.icon.cache).toContain(':where(.toolbar) &{font-size:12px;}');
+
+    expect(StyleMap.addSelector(style, 'desktop', 'other', 'class', 'color', 'red', inside)).toBe(true);
+    expect(style.platform.desktop.other.attributes.base.ancestors?.toolbar.default).toEqual({ color: 'red' });
   });
 
   it('removes one state, then the ancestor once nothing is left under it, and keeps the class', () => {
@@ -973,7 +979,10 @@ describe('StyleMap / ancestor conditions', () => {
   it('purges every rule under an ancestor at once', () => {
     StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', hoverOfCard);
     StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'blue', { ...hoverOfCard, styleAncestor: 'row' });
-    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, { styleSelector: 'base', styleAncestor: 'card' });
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, {
+      styleSelector: 'base',
+      styleAncestor: 'card'
+    });
 
     expect(Object.keys(style.platform.desktop.icon.attributes.base.ancestors ?? {})).toEqual(['row']);
     expect(style.platform.desktop.icon.cache).not.toContain('.card');

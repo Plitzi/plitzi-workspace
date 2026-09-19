@@ -158,7 +158,8 @@ const segmentsOf = (stylesheet: string): Segment[] => {
 
 const SIMPLE_SELECTOR = /^\.([A-Za-z_][\w-]*)(?::([a-z-]+))?$/;
 
-// `.ancestor[data-variant="x"]:state .class` — a variant, a state or both, and one descendant class
+// `.ancestor[data-variant="x"]:state .class` — the ancestor alone, with a variant, a state or both, and one
+// descendant class
 const ANCESTOR_SELECTOR =
   /^\.([A-Za-z_][\w-]*)(?:\[data-variant=(["']?)([\w-]+)\2\])?(?::([a-z-]+))?\s+\.([A-Za-z_][\w-]*)$/;
 
@@ -188,13 +189,7 @@ const targetOf = (selector: string, isClass: (name: string) => boolean): FoldTar
   const variant = nested.at(3);
   const state = nested.at(4);
   const className = nested[5];
-  // An ancestor with neither a state nor a variant is a plain descendant rule: always on, not a condition
-  if (
-    !isClass(ancestorClass) ||
-    !isClass(className) ||
-    (variant === undefined && state === undefined) ||
-    (state !== undefined && !isStyleState(state))
-  ) {
+  if (!isClass(ancestorClass) || !isClass(className) || (state !== undefined && !isStyleState(state))) {
     return undefined;
   }
 

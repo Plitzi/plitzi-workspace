@@ -13,7 +13,10 @@ type CssResult = { variables: Record<string, string>; value: string };
 type ProcessedStates = Partial<Record<StyleState, string[]>>;
 type ProcessedVariants = Record<string, { default: string[]; states?: ProcessedStates }>;
 
-export type ProcessedAncestors = Record<string, { states?: ProcessedStates; variants?: ProcessedVariants }>;
+export type ProcessedAncestors = Record<
+  string,
+  { default?: string[]; states?: ProcessedStates; variants?: ProcessedVariants }
+>;
 
 export type Attributes = Record<
   string,
@@ -177,10 +180,15 @@ const processAncestors = (ancestors?: StyleAncestors): ProcessedAncestors | unde
 
   const processed: ProcessedAncestors = {};
   for (const [ancestorName, ancestor] of Object.entries(ancestors)) {
+    const values = processObject(ancestor.default);
     const states = processStates(ancestor.states);
     const variants = processVariants(ancestor.variants);
-    if (states || variants) {
-      processed[ancestorName] = { ...(states && { states }), ...(variants && { variants }) };
+    if (values.length || states || variants) {
+      processed[ancestorName] = {
+        ...(values.length && { default: values }),
+        ...(states && { states }),
+        ...(variants && { variants })
+      };
     }
   }
 

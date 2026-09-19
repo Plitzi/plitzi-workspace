@@ -101,7 +101,8 @@ describe('specFromSpace / folding ancestor rules out of customCss', () => {
     const { spec, corrections } = specFromSpace(
       authorSpace(
         legacy(
-          '.card:hover .icon { transform: translateX(3px); }\n\n' +
+          '.card .icon { font-size: 12px; }\n\n' +
+            '.card:hover .icon { transform: translateX(3px); }\n\n' +
             '.sidebar[data-variant=\'collapsed\'] .icon { display: none; }\n\n' +
             '.sidebar[data-variant="collapsed"]:hover .icon { display: block; }\n'
         )
@@ -110,7 +111,7 @@ describe('specFromSpace / folding ancestor rules out of customCss', () => {
 
     expect(spec.classes?.icon).toMatchObject({
       ancestors: {
-        card: { states: { hover: { transform: 'translateX(3px)' } } },
+        card: { css: { 'font-size': '12px' }, states: { hover: { transform: 'translateX(3px)' } } },
         sidebar: { variants: { collapsed: { css: { display: 'none' }, states: { hover: { display: 'block' } } } } }
       }
     });
@@ -122,10 +123,19 @@ describe('specFromSpace / folding ancestor rules out of customCss', () => {
 
   it('leaves what is not a condition of a class the space has', () => {
     const kept =
-      '.card .icon { color: red; }\n\n.card:hover .icon::after { opacity: 1; }\n\n.card:hover .missing { color: red; }\n\n.nav:hover .icon { color: red; }\n';
+      '.card .row .icon { color: red; }\n\n.card:hover .icon::after { opacity: 1; }\n\n.card:hover .missing { color: red; }\n\n.nav:hover .icon { color: red; }\n';
     const { spec } = specFromSpace(authorSpace(legacy(kept)));
 
     expect(spec.customCss).toBe(kept);
+  });
+
+  it('leaves a rule the class own smaller breakpoint would now outweigh', () => {
+    const rule = '.card .icon { color: red; }\n';
+    const { spec } = specFromSpace(
+      authorSpace(legacy(rule, { icon: { desktop: { color: 'black' }, mobile: { color: 'gray' } } }))
+    );
+
+    expect(spec.customCss).toBe(rule);
   });
 
   it('leaves a rule the class own state would now outweigh', () => {

@@ -211,7 +211,7 @@ const parkInto =
   (unwritable: UnwritableRules, variant?: string, ancestor?: string) =>
   (breakpoint: DisplayMode, part: 'default' | StyleState, rules: CssProps): void => {
     const block: StyleBlock = unwritable[breakpoint] ?? { default: {} };
-    const scope: { states?: StyleStates; variants?: StyleBlock['variants'] } = ancestor
+    const scope: { default?: StyleObject; states?: StyleStates; variants?: StyleBlock['variants'] } = ancestor
       ? ((block.ancestors ??= {})[ancestor] ??= {})
       : block;
     const target: { default?: StyleObject; states?: StyleStates } = variant
@@ -270,7 +270,7 @@ export const readSelector = (blocks: SelectorBlocks): ReadSelector => {
       readBlock(
         readers.base,
         breakpoint,
-        { states: ancestorBlock.states },
+        { default: ancestorBlock.default, states: ancestorBlock.states },
         parkInto(base.unwritable, undefined, ancestor)
       );
       for (const [name, variantBlock] of Object.entries(ancestorBlock.variants ?? {})) {
@@ -287,14 +287,16 @@ export const readSelector = (blocks: SelectorBlocks): ReadSelector => {
   const states = statesOf(base);
   const variants = variantsOf(variantReaders);
   const ancestorSpecs = [...ancestorReaders].flatMap(([name, readers]): [string, AncestorSpec][] => {
+    const ancestorCss = toCssSpec(readers.base.rules);
     const ancestorStates = statesOf(readers.base);
     const ancestorVariants = variantsOf(readers.variants);
 
-    return ancestorStates || ancestorVariants
+    return ancestorCss || ancestorStates || ancestorVariants
       ? [
           [
             name,
             {
+              ...(ancestorCss ? { css: ancestorCss } : {}),
               ...(ancestorStates ? { states: ancestorStates } : {}),
               ...(ancestorVariants ? { variants: ancestorVariants } : {})
             }

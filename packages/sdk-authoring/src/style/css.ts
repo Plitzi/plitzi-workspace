@@ -124,7 +124,7 @@ const toAncestors = (ancestors: RuleSetSpec['ancestors']) =>
       );
     }
 
-    return [name, toBlocks({ states: ancestor.states, variants: ancestor.variants })] as const;
+    return [name, toBlocks({ css: ancestor.css, states: ancestor.states, variants: ancestor.variants })] as const;
   });
 
 const statesAt = (states: Map<string, ResponsiveStyle>, breakpoint: DisplayMode): StyleStates | undefined => {
@@ -170,9 +170,21 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
 
     const ancestorRules: StyleAncestors = Object.fromEntries(
       ancestors.flatMap(([name, ancestorBlocks]) => {
-        const { states, variants } = ancestorBlocks[breakpoint] ?? {};
+        const { default: rules = {}, states, variants } = ancestorBlocks[breakpoint] ?? {};
+        const inside = Object.keys(rules).length > 0;
 
-        return states || variants ? [[name, { ...(states ? { states } : {}), ...(variants ? { variants } : {}) }]] : [];
+        return inside || states || variants
+          ? [
+              [
+                name,
+                {
+                  ...(inside ? { default: rules } : {}),
+                  ...(states ? { states } : {}),
+                  ...(variants ? { variants } : {})
+                }
+              ]
+            ]
+          : [];
       })
     );
 

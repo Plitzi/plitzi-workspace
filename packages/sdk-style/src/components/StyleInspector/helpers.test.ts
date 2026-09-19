@@ -36,12 +36,12 @@ describe('ancestorClasses', () => {
 describe('ancestorOptions', () => {
   it('says which conditions an ancestor already has rules for', () => {
     const options = ancestorOptions(['card', 'layout'], {
-      card: { states: { hover: { color: 'red' } } },
+      card: { default: { color: 'blue' }, states: { hover: { color: 'red' } } },
       sidebar: { variants: { collapsed: { default: { display: 'none' }, states: { hover: { display: 'block' } } } } }
     });
 
     expect(options).toEqual([
-      { label: '.card — hover', value: 'card' },
+      { label: '.card — inside, hover', value: 'card' },
       { label: '.layout', value: 'layout' },
       { label: '.sidebar — collapsed, collapsed:hover', value: 'sidebar' }
     ]);

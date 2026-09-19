@@ -97,7 +97,11 @@ const blockOf = (block: StyleBlock | undefined): unknown =>
     ancestors: Object.fromEntries(
       Object.entries(block.ancestors ?? {}).map(([name, ancestor]) => [
         name,
-        { states: statesOf(ancestor.states), variants: variantsOf(ancestor.variants) }
+        {
+          default: rulesOf(ancestor.default),
+          states: statesOf(ancestor.states),
+          variants: variantsOf(ancestor.variants)
+        }
       ])
     )
   };

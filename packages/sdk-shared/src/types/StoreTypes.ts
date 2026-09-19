@@ -238,7 +238,7 @@ export type BuilderState = CommonState & {
   styleSelector?: string;
   styleVariant?: string;
   styleState?: StyleState;
-  /** The ancestor class whose state or variant is being edited: `styleState`/`styleVariant` are then its. */
+  /** The ancestor class being edited under: `styleState`/`styleVariant` are then its, and neither means always. */
   styleAncestor?: string;
   elementHovered?: string;
   elementSelected?: string;

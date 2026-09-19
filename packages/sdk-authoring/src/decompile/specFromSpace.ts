@@ -265,7 +265,7 @@ const foldedSelector = ({ className, state, ancestor }: FoldTarget): string => {
   return `.${ancestor.className}${variant}${ancestor.state ? `:${ancestor.state}` : ''} .${className}`;
 };
 
-/** `block` with `rules` added under one ancestor condition — a state, a variant, or a variant's state. */
+/** `block` with `rules` added under one ancestor condition — always, a state, a variant, or a variant's state. */
 const withAncestorRules = (block: StyleBlock, ancestor: FoldAncestor, rules: StyleObject): StyleBlock => {
   const { className, state, variant } = ancestor;
   const conditions: StyleAncestor = block.ancestors?.[className] ?? {};
@@ -278,6 +278,8 @@ const withAncestorRules = (block: StyleBlock, ancestor: FoldAncestor, rules: Sty
     next = { ...conditions, variants: { ...conditions.variants, [variant]: updated } };
   } else if (state) {
     next = { ...conditions, states: { ...conditions.states, [state]: { ...conditions.states?.[state], ...rules } } };
+  } else {
+    next = { ...conditions, default: { ...conditions.default, ...rules } };
   }
 
   return { ...block, ancestors: { ...block.ancestors, [className]: next } };
@@ -483,8 +485,9 @@ class SpecReader {
     const { folded, remaining } = foldCustomCss(
       stylesheet,
       name => this.classBlocks.has(name),
-      // An ancestor's condition weighs what the class alone does, so the class's own states and variants win over
-      // it — where they set the same property, the rule rendered the other way round and stays where it is.
+      // An ancestor's condition weighs what the class alone does, so the class's own states, variants and smaller
+      // breakpoints win over it — where they set the same property, the rule rendered the other way round and stays
+      // where it is.
       (target, rules) =>
         !target.ancestor ||
         !Object.keys(css(rules)).some(property => this.ownConditionProperties(target.className).has(property))
@@ -529,12 +532,16 @@ class SpecReader {
     return this.ancestorNames;
   }
 
-  /** Every property a class sets in its own states and variants, at any breakpoint. */
+  /**
+   * Every property a class sets where it would outweigh a rule folded under an ancestor: its own states and variants,
+   * and its tablet and mobile rules, which come later in the stylesheet at the same weight.
+   */
   private ownConditionProperties(className: string): Set<string> {
-    const blocks = Object.values(this.classBlocks.get(className) ?? {});
+    const blocks = Object.entries(this.classBlocks.get(className) ?? {});
 
     return new Set(
-      blocks.flatMap(block => [
+      blocks.flatMap(([breakpoint, block]) => [
+        ...(breakpoint === 'desktop' ? [] : Object.keys(block.default ?? {})),
         ...Object.values(block.states ?? {}).flatMap(rules => Object.keys(rules)),
         ...Object.values(block.variants ?? {}).flatMap(variant => [
           ...Object.keys(variant.default ?? {}),
