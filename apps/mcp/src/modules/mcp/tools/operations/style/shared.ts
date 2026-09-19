@@ -17,9 +17,21 @@ export const displayModeCss = z.object({
   mobile: cssMap.optional()
 });
 
-export const definitionSlot = displayModeCss.extend({
+const ANCESTORS_DESCRIPTION =
+  'By the class an ancestor wears: rules while it is in a state or variant — `.card:hover .icon` is ' +
+  '`{ card: { states: { hover: {…} } } }`. Own states and variants win over these.';
+
+export const ancestorCondition = z.object({
   states: z.record(z.string(), displayModeCss).optional(),
   variants: z.record(z.string(), displayModeCss).optional()
+});
+
+export const ancestors = z.record(z.string(), ancestorCondition).describe(ANCESTORS_DESCRIPTION);
+
+export const definitionSlot = displayModeCss.extend({
+  states: z.record(z.string(), displayModeCss).optional(),
+  variants: z.record(z.string(), displayModeCss).optional(),
+  ancestors: ancestors.optional()
 });
 
 export type DefinitionSlotInput = z.infer<typeof definitionSlot>;
@@ -40,9 +52,19 @@ export const displayModeCssPatch = z.object({
   mobile: cssPatchMap.optional()
 });
 
-export const definitionSlotPatch = displayModeCssPatch.extend({
+export const ancestorConditionPatch = z.object({
   states: z.record(z.string(), displayModeCssPatch).optional(),
   variants: z.record(z.string(), displayModeCssPatch).optional()
+});
+
+export const ancestorsPatch = z
+  .record(z.string(), ancestorConditionPatch.nullable())
+  .describe(`${ANCESTORS_DESCRIPTION} null removes an ancestor.`);
+
+export const definitionSlotPatch = displayModeCssPatch.extend({
+  states: z.record(z.string(), displayModeCssPatch).optional(),
+  variants: z.record(z.string(), displayModeCssPatch).optional(),
+  ancestors: ancestorsPatch.optional()
 });
 
 export type DefinitionSlotPatch = z.infer<typeof definitionSlotPatch>;
@@ -61,6 +83,7 @@ export const upsertCssShape = {
   mobile: cssMap.optional(),
   states: z.record(z.string(), displayModeCss).optional(),
   variants: z.record(z.string(), displayModeCss).optional(),
+  ancestors: ancestors.optional(),
   slots: z.record(z.string(), definitionSlot).optional()
 };
 
@@ -70,5 +93,6 @@ export const patchCssShape = {
   mobile: cssPatchMap.optional(),
   states: z.record(z.string(), displayModeCssPatch).optional(),
   variants: z.record(z.string(), displayModeCssPatch).optional(),
+  ancestors: ancestorsPatch.optional(),
   slots: z.record(z.string(), definitionSlotPatch).optional()
 };

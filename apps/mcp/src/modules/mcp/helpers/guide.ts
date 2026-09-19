@@ -345,6 +345,11 @@ An element read reports \`availableVariants\` (which variant each attached class
 variant that does not exist yet, **create it (upsertDefinition variants) and apply it in the same batch**.
 - \`initialState.visibility\` (boolean) sets whether the element starts shown or hidden.
 
+**Ancestor conditions** — a class that changes while an ANCESTOR is hovered or in a variant (\`.card:hover .icon\`,
+a collapsed sidebar hiding its labels) is \`ancestors\` on that class, keyed by a class the ancestor wears:
+\`ancestors: { "card": { "states": { "hover": { "desktop": { … } } } }, "sidebar": { "variants": { "collapsed": … } } }\`.
+Any ancestor counts, not only the parent; the class's own states and variants win over these. Never customCss for it.
+
 ## Data bindings
 Connect a data **source** to an element field. A binding is \`{ to, source, transformers?, when?, enabled? }\` grouped
 by **category**: \`attributes\` (a prop), \`style\` (a style value), \`initialState\` (an initial-state key).

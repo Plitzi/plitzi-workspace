@@ -13,7 +13,7 @@ import type {
   StyleCategory,
   StyleItem,
   StyleObject,
-  StyleState,
+  StyleTarget,
   StyleValue,
   StyleVariableCategory,
   StyleVariableValue,
@@ -50,7 +50,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
-    params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
+    params: StyleTarget
   ): boolean {
     return addSelector(this.platform, displayMode, selector, type, path, value, params);
   }
@@ -62,7 +62,7 @@ class StyleMap {
     type: TagType,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
-    params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
+    params: StyleTarget
   ): boolean {
     return this.getInstance(style).addSelector(displayMode, selector, type, path, value, params);
   }
@@ -77,7 +77,7 @@ class StyleMap {
     selector: string,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
-    params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
+    params: StyleTarget & { styleSelector: string }
   ): boolean {
     return updateSelector(this.platform, displayMode, selector, path, value, params);
   }
@@ -88,7 +88,7 @@ class StyleMap {
     selector: string,
     path: StyleCategory | undefined,
     value: StyleItem['attributes'] | Partial<StyleObject> | StyleValue | undefined,
-    params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
+    params: StyleTarget & { styleSelector: string }
   ): boolean {
     return this.getInstance(style).updateSelector(displayMode, selector, path, value, params);
   }

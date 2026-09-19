@@ -42,6 +42,7 @@ export type InspectorProps = {
   selector?: StyleItem;
   styleState?: StyleState;
   styleVariant?: string;
+  styleAncestor?: string;
   styleSelector?: string;
   element?: Element;
   displayMode: DisplayMode;
@@ -55,6 +56,7 @@ const Inspector = ({
   selector,
   styleState,
   styleVariant,
+  styleAncestor,
   styleSelector = 'base',
   element,
   displayMode,
@@ -74,7 +76,8 @@ const Inspector = ({
     selector: selector?.name,
     styleSelector,
     styleState,
-    styleVariant
+    styleVariant,
+    styleAncestor
   });
 
   const handleChangeCollapse = useCallback(
@@ -99,7 +102,8 @@ const Inspector = ({
           componentType: selector.type === 'element' ? componentType : undefined,
           styleSelector,
           styleState,
-          styleVariant
+          styleVariant,
+          styleAncestor
         });
 
         return;
@@ -113,7 +117,8 @@ const Inspector = ({
       builderHandler('styleAddSelector', displayMode, customClass, 'class', styleKey, values, {
         styleSelector,
         styleState,
-        styleVariant
+        styleVariant,
+        styleAncestor
       });
       if (!element) {
         return;
@@ -131,7 +136,17 @@ const Inspector = ({
         })
       );
     },
-    [builderHandler, componentType, displayMode, element, selector, styleSelector, styleState, styleVariant]
+    [
+      builderHandler,
+      componentType,
+      displayMode,
+      element,
+      selector,
+      styleSelector,
+      styleState,
+      styleVariant,
+      styleAncestor
+    ]
   );
 
   const isList = useMemo(() => {
@@ -156,6 +171,7 @@ const Inspector = ({
       styleSelector={styleSelector}
       styleState={styleState}
       styleVariant={styleVariant}
+      styleAncestor={styleAncestor}
       selector={selector}
       element={element}
       inheritData={inheritData}

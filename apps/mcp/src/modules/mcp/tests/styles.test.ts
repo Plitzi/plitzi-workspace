@@ -606,3 +606,57 @@ describe('mcp-ai upsertDefinitions edge cases', () => {
     expect(def.desktop?.['padding-top']).toBe('4px');
   });
 });
+
+describe('mcp-ai ancestor conditions (`.card:hover .icon` as part of the class)', () => {
+  const hover = { card: { states: { hover: { desktop: { transform: 'translateX(3px)' } } } } };
+
+  const withHover = async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply(
+      { operations: [{ type: 'upsertDefinition', ref: 'icon', desktop: { color: 'black' }, ancestors: hover }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(res.applied).toBe(true);
+
+    return cap.saved();
+  };
+
+  it('writes an ancestor state into the class, compiled, and reads it back', async () => {
+    const space = await withHover();
+    const def = readResource(space, 'main', 'plitzi://definitions/main/icon')?.data as AIDefinition;
+
+    expect(def.ancestors).toEqual(hover);
+    expect(space.style.platform.desktop.icon.cache).toContain(':where(.card:hover) &{transform:translateX(3px);}');
+  });
+
+  it('keeps the ancestors through a patch that does not name them, and removes one set to null', async () => {
+    const space = await withHover();
+    const cap = capturing(space);
+    await apply(
+      {
+        operations: [
+          {
+            type: 'patchDefinition',
+            ref: 'icon',
+            desktop: { color: 'red' },
+            ancestors: { sidebar: { variants: { collapsed: { desktop: { display: 'none' } } } } }
+          }
+        ]
+      },
+      space,
+      cap.persisters
+    );
+    const patched = readResource(cap.saved(), 'main', 'plitzi://definitions/main/icon')?.data as AIDefinition;
+    expect(patched.ancestors).toEqual({ ...hover, sidebar: { variants: { collapsed: { desktop: { display: 'none' } } } } });
+
+    const removal = capturing(cap.saved());
+    await apply(
+      { operations: [{ type: 'patchDefinition', ref: 'icon', ancestors: { card: null } }] },
+      cap.saved(),
+      removal.persisters
+    );
+    const removed = readResource(removal.saved(), 'main', 'plitzi://definitions/main/icon')?.data as AIDefinition;
+    expect(Object.keys(removed.ancestors ?? {})).toEqual(['sidebar']);
+  });
+});

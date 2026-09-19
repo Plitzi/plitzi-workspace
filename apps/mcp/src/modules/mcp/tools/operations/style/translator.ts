@@ -1,6 +1,13 @@
 import { familiesInCss, SYSTEM_FONTS } from '@plitzi/sdk-shared/style';
 
-import type { AIDefinition, AIDefinitionSlot, AIGlobalStyle, AIIdStyle, AIStyleVariable } from '../../../types';
+import type {
+  AIAncestorCondition,
+  AIDefinition,
+  AIDefinitionSlot,
+  AIGlobalStyle,
+  AIIdStyle,
+  AIStyleVariable
+} from '../../../types';
 import type { DisplayMode, SpaceFont, Style, StyleBlock, StyleItem } from '@plitzi/sdk-shared';
 
 // Read projections of the STYLE schema: definition names, one definition's CSS, and design tokens.
@@ -28,27 +35,34 @@ export const definitionRefs = (style: Style): string[] => {
   return Array.from(refs).sort();
 };
 
+const fillConditions = (
+  target: AIAncestorCondition,
+  mode: DisplayMode,
+  block: Pick<StyleBlock, 'states' | 'variants'>
+): void => {
+  for (const [state, obj] of Object.entries(block.states ?? {})) {
+    if (Object.keys(obj).length > 0) {
+      (target.states ??= {})[state] ??= {};
+      target.states[state][mode] = obj;
+    }
+  }
+
+  for (const [name, variant] of Object.entries(block.variants ?? {})) {
+    if (variant.default && Object.keys(variant.default).length > 0) {
+      (target.variants ??= {})[name] ??= {};
+      target.variants[name][mode] = variant.default;
+    }
+  }
+};
+
 const fillSlot = (target: AIDefinitionSlot, mode: DisplayMode, block: StyleBlock): void => {
   if (block.default && Object.keys(block.default).length > 0) {
     target[mode] = block.default;
   }
 
-  if (block.states) {
-    for (const [state, obj] of Object.entries(block.states)) {
-      if (Object.keys(obj).length > 0) {
-        (target.states ??= {})[state] ??= {};
-        target.states[state][mode] = obj;
-      }
-    }
-  }
-
-  if (block.variants) {
-    for (const [name, variant] of Object.entries(block.variants)) {
-      if (variant.default && Object.keys(variant.default).length > 0) {
-        (target.variants ??= {})[name] ??= {};
-        target.variants[name][mode] = variant.default;
-      }
-    }
+  fillConditions(target, mode, block);
+  for (const [ancestor, condition] of Object.entries(block.ancestors ?? {})) {
+    fillConditions(((target.ancestors ??= {})[ancestor] ??= {}), mode, condition);
   }
 };
 

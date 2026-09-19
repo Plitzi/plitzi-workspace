@@ -13,7 +13,14 @@ import type {
   StyleRules,
   StyleSpec
 } from './types';
-import type { DisplayMode, StyleBlock, StyleState, StyleStates, StyleVariants } from '@plitzi/sdk-shared';
+import type {
+  DisplayMode,
+  StyleAncestors,
+  StyleBlock,
+  StyleState,
+  StyleStates,
+  StyleVariants
+} from '@plitzi/sdk-shared';
 
 /**
  * The one door CSS goes through while authoring.
@@ -82,12 +89,12 @@ export const STYLE_STATES: readonly StyleState[] = SHARED_STYLE_STATES;
 
 const STYLE_STATE_SET = new Set<string>(STYLE_STATES);
 
-const RULE_SET_KEYS = new Set(['css', 'states', 'variants']);
+const RULE_SET_KEYS = new Set(['css', 'states', 'variants', 'ancestors']);
 
 /**
  * Whether a style is the object form rather than plain CSS.
  *
- * Told apart by the keys, like the per-breakpoint shape: `css`, `states` and `variants` are not CSS properties, so
+ * Told apart by the keys, like the per-breakpoint shape: `css`, `states`, `variants` and `ancestors` are not CSS properties, so
  * an object naming only those is a rule set and anything else is CSS.
  */
 export const isRuleSetSpec = (spec: StyleSpec): spec is RuleSetSpec => {
@@ -106,6 +113,19 @@ const toStates = (states: StatesSpec | undefined): Map<string, ResponsiveStyle> 
 
   return new Map(Object.entries(states ?? {}).map(([state, rules]) => [state, toResponsive(rules)]));
 };
+
+const CLASS_NAME = /^-?[_a-zA-Z][\w-]*$/;
+
+const toAncestors = (ancestors: RuleSetSpec['ancestors']) =>
+  Object.entries(ancestors ?? {}).map(([name, ancestor]) => {
+    if (!CLASS_NAME.test(name)) {
+      throw new Error(
+        `The ancestor "${name}" is not a class name. An ancestor condition is keyed by a class that ancestor wears — \`[card.name]\` for a \`styles()\` declaration.`
+      );
+    }
+
+    return [name, toBlocks({ states: ancestor.states, variants: ancestor.variants })] as const;
+  });
 
 const statesAt = (states: Map<string, ResponsiveStyle>, breakpoint: DisplayMode): StyleStates | undefined => {
   const entries = [...states].flatMap(([state, responsive]) => {
@@ -132,6 +152,7 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
   const base = toResponsive(ruleSet.css);
   const states = toStates(ruleSet.states);
   const variants = Object.entries(ruleSet.variants ?? {}).map(([name, variant]) => [name, toBlocks(variant)] as const);
+  const ancestors = toAncestors(ruleSet.ancestors);
 
   const blocks: ResponsiveBlock = {};
   for (const breakpoint of BREAKPOINTS) {
@@ -147,14 +168,28 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
       })
     );
 
-    if (Object.keys(rules).length === 0 && !stateRules && Object.keys(variantRules).length === 0) {
+    const ancestorRules: StyleAncestors = Object.fromEntries(
+      ancestors.flatMap(([name, ancestorBlocks]) => {
+        const { states, variants } = ancestorBlocks[breakpoint] ?? {};
+
+        return states || variants ? [[name, { ...(states ? { states } : {}), ...(variants ? { variants } : {}) }]] : [];
+      })
+    );
+
+    if (
+      Object.keys(rules).length === 0 &&
+      !stateRules &&
+      Object.keys(variantRules).length === 0 &&
+      Object.keys(ancestorRules).length === 0
+    ) {
       continue;
     }
 
     const block: StyleBlock = {
       default: rules,
       ...(stateRules ? { states: stateRules } : {}),
-      ...(Object.keys(variantRules).length > 0 ? { variants: variantRules } : {})
+      ...(Object.keys(variantRules).length > 0 ? { variants: variantRules } : {}),
+      ...(Object.keys(ancestorRules).length > 0 ? { ancestors: ancestorRules } : {})
     };
     blocks[breakpoint] = block;
   }

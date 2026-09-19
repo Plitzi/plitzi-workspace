@@ -238,6 +238,8 @@ export type BuilderState = CommonState & {
   styleSelector?: string;
   styleVariant?: string;
   styleState?: StyleState;
+  /** The ancestor class whose state or variant is being edited: `styleState`/`styleVariant` are then its. */
+  styleAncestor?: string;
   elementHovered?: string;
   elementSelected?: string;
   setHovered: (elementId?: string) => void;

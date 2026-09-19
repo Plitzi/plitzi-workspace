@@ -4,14 +4,14 @@ import { StyleVariableCategory } from '@plitzi/sdk-shared/types';
 
 import StyleMap from './StyleMap';
 
-import type { SpaceFont, Style, StyleAttributes, StyleState, StyleValue } from '@plitzi/sdk-shared';
+import type { SpaceFont, Style, StyleAttributes, StyleState, StyleTarget, StyleValue } from '@plitzi/sdk-shared';
 
 const createBaseStyle = (): Pick<Style, 'platform' | 'variables'> => ({
   platform: { desktop: {}, tablet: {}, mobile: {} },
   variables: {}
 });
 
-const paramsBase: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string } = {
+const paramsBase: StyleTarget & { styleSelector: string } = {
   componentType: undefined,
   styleSelector: 'base'
 };
@@ -913,5 +913,77 @@ describe('StyleMap fonts', () => {
     StyleMap.addFont(fontStyle, lato);
     expect(StyleMap.removeFont(fontStyle, 'Lato')).toBe(true);
     expect(fontStyle.fonts).toEqual([]);
+  });
+});
+
+describe('StyleMap / ancestor conditions', () => {
+  let style: Pick<Style, 'platform' | 'variables'>;
+  const hoverOfCard: StyleTarget & { styleSelector: string } = {
+    styleSelector: 'base',
+    styleAncestor: 'card',
+    styleState: 'hover'
+  };
+
+  beforeEach(() => {
+    style = createBaseStyle();
+    StyleMap.addSelector(style, 'desktop', 'icon', 'class', undefined, { color: 'black' }, paramsBase);
+  });
+
+  it('writes a property under the ancestor state, and compiles it', () => {
+    expect(StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', hoverOfCard)).toBe(true);
+    expect(style.platform.desktop.icon.attributes.base.ancestors).toEqual({
+      card: { states: { hover: { color: 'red' } } }
+    });
+    expect(style.platform.desktop.icon.cache).toContain(':where(.card:hover) &{color:red;}');
+  });
+
+  it('writes under an ancestor variant and its states', () => {
+    const collapsed = { styleSelector: 'base', styleAncestor: 'sidebar', styleVariant: 'collapsed' };
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'display', 'none', collapsed);
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'display', 'block', { ...collapsed, styleState: 'hover' });
+
+    expect(style.platform.desktop.icon.attributes.base.ancestors?.sidebar).toEqual({
+      variants: { collapsed: { default: { display: 'none' }, states: { hover: { display: 'block' } } } }
+    });
+  });
+
+  it('creates the class with the rule when the element had none', () => {
+    expect(StyleMap.addSelector(style, 'desktop', 'text-1', 'class', 'color', 'red', hoverOfCard)).toBe(true);
+    expect(style.platform.desktop['text-1'].attributes.base.ancestors?.card.states?.hover).toEqual({ color: 'red' });
+  });
+
+  it('refuses rules on an ancestor with no state or variant to hang them on', () => {
+    const bare = { styleSelector: 'base', styleAncestor: 'card' };
+    expect(StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', bare)).toBe(false);
+    expect(StyleMap.addSelector(style, 'desktop', 'other', 'class', 'color', 'red', bare)).toBe(false);
+  });
+
+  it('removes one state, then the ancestor once nothing is left under it, and keeps the class', () => {
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', hoverOfCard);
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'blue', { ...hoverOfCard, styleState: 'active' });
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, hoverOfCard);
+    expect(style.platform.desktop.icon.attributes.base.ancestors).toEqual({
+      card: { states: { active: { color: 'blue' } } }
+    });
+
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, { ...hoverOfCard, styleState: 'active' });
+    expect(style.platform.desktop.icon.attributes.base).toEqual({ default: { color: 'black' } });
+  });
+
+  it('purges every rule under an ancestor at once', () => {
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', hoverOfCard);
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'blue', { ...hoverOfCard, styleAncestor: 'row' });
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, { styleSelector: 'base', styleAncestor: 'card' });
+
+    expect(Object.keys(style.platform.desktop.icon.attributes.base.ancestors ?? {})).toEqual(['row']);
+    expect(style.platform.desktop.icon.cache).not.toContain('.card');
+  });
+
+  it('still drops the last state of the class itself without touching its base', () => {
+    const hover = { styleSelector: 'base', styleState: 'hover' as const };
+    StyleMap.updateSelector(style, 'desktop', 'icon', 'color', 'red', hover);
+    StyleMap.updateSelector(style, 'desktop', 'icon', undefined, undefined, hover);
+
+    expect(style.platform.desktop.icon.attributes.base).toEqual({ default: { color: 'black' } });
   });
 });

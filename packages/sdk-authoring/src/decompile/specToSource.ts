@@ -1,7 +1,7 @@
 /* eslint-disable quotes */
 import { defaultAttributes, defaultLabel } from '../elements';
 import * as factories from '../elements/elements';
-import { isStyleDeclaration } from '../style';
+import { isRuleSetSpec, isStyleDeclaration } from '../style';
 
 import type { ElementSpec, LayoutSpec, PageSpec, SpaceSpec } from '../schema';
 import type { StyleDeclaration, StyleSpec } from '../style';
@@ -145,6 +145,29 @@ const literal = (value: unknown): string => {
   return 'null';
 };
 
+/** A class's rules as a literal, with each ancestor keyed as `ancestorKey` writes it. */
+const ruleSetLiteral = (rules: StyleSpec, ancestorKey: (name: string) => string): string => {
+  if (!isRuleSetSpec(rules) || !rules.ancestors) {
+    return literal(rules);
+  }
+
+  const entries = Object.entries(rules).flatMap(([key, inner]: [string, unknown]) => {
+    if (inner === undefined) {
+      return [];
+    }
+
+    if (key !== 'ancestors' || !rules.ancestors) {
+      return [`${keyLiteral(key)}: ${literal(inner)}`];
+    }
+
+    const ancestors = Object.entries(rules.ancestors).map(([name, spec]) => `${ancestorKey(name)}: ${literal(spec)}`);
+
+    return [`ancestors: { ${ancestors.join(', ')} }`];
+  });
+
+  return `{ ${entries.join(', ')} }`;
+};
+
 /** Names every declaration a file holds, so no two collide with each other or with what the file imports. */
 class Names {
   private readonly taken = new Set<string>([...FACTORY_NAMES, ...RESERVED]);
@@ -227,7 +250,13 @@ class SourceWriter {
     main.types.add('SpaceSpec');
 
     const styleFile = this.options.split ? new FileImports() : main;
-    const declarations = [...named].map(name => this.classDeclaration(name, styleFile));
+    const declared = new Set<string>();
+    const declarations = this.declarationOrder(named).map(name => {
+      const declaration = this.classDeclaration(name, styleFile, declared);
+      declared.add(name);
+
+      return declaration;
+    });
 
     const layouts = (this.spec.layouts ?? []).map(layout =>
       this.root(layout, 'LayoutSpec', main, `layouts/${layout.id}`)
@@ -356,11 +385,45 @@ class SourceWriter {
     return value ?? {};
   }
 
-  private classDeclaration(name: string, imports: FileImports): string {
+  /**
+   * The declarations in an order where each class comes after the ones it names as an ancestor, so the key can be
+   * the ancestor's declaration — `[card.name]` — and a rename reaches it. Declaring them in another order does not
+   * move anything in the stylesheet: that follows where the tree names them.
+   */
+  private declarationOrder(named: Set<string>): string[] {
+    const order: string[] = [];
+    const visiting = new Set<string>();
+    const visit = (name: string): void => {
+      if (order.includes(name) || visiting.has(name)) {
+        return;
+      }
+
+      visiting.add(name);
+      const rules = this.spec.classes?.[name];
+      if (rules && !isStyleDeclaration(rules) && isRuleSetSpec(rules)) {
+        Object.keys(rules.ancestors ?? {})
+          .filter(ancestor => named.has(ancestor))
+          .forEach(visit);
+      }
+
+      order.push(name);
+    };
+
+    named.forEach(visit);
+
+    return order;
+  }
+
+  private classDeclaration(name: string, imports: FileImports, declared: Set<string>): string {
     const rules = this.rulesOf(name, this.spec.classes?.[name]);
     imports.values.add('styles');
+    const ancestorKey = (ancestor: string): string => {
+      const variable = this.classVariables.get(ancestor);
 
-    return `const ${this.classVariables.get(name) ?? camel(name)} = styles(${literal(name)}, ${literal(rules)});`;
+      return variable && declared.has(ancestor) ? `[${variable}.name]` : keyLiteral(ancestor);
+    };
+
+    return `const ${this.classVariables.get(name) ?? camel(name)} = styles(${literal(name)}, ${ruleSetLiteral(rules, ancestorKey)});`;
   }
 
   private classReference(value: unknown, imports: FileImports, stylesPath = '../styles'): string {

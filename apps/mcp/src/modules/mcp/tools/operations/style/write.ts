@@ -76,6 +76,16 @@ const slotToBlocks = (slot: DefinitionSlotInput): Partial<Record<DisplayMode, St
       }
     }
 
+    for (const [ancestor, condition] of Object.entries(slot.ancestors ?? {})) {
+      const conditionBlock = slotToBlocks(condition)[mode];
+      if (conditionBlock?.states || conditionBlock?.variants) {
+        (block.ancestors ??= {})[ancestor] = {
+          ...(conditionBlock.states ? { states: conditionBlock.states } : {}),
+          ...(conditionBlock.variants ? { variants: conditionBlock.variants } : {})
+        };
+      }
+    }
+
     if (Object.keys(block).length > 0) {
       perMode[mode] = block;
     }
@@ -175,6 +185,28 @@ const mergeNamedModes = (
   return Object.keys(result).length > 0 ? result : undefined;
 };
 
+const mergeAncestors = (
+  base: AIDefinitionSlot['ancestors'],
+  patch: DefinitionSlotPatch['ancestors']
+): DefinitionSlotInput['ancestors'] => {
+  const names = new Set([...Object.keys(base ?? {}), ...Object.keys(patch ?? {})]);
+  const result: NonNullable<DefinitionSlotInput['ancestors']> = {};
+  for (const name of names) {
+    const conditionPatch = patch?.[name];
+    if (conditionPatch === null) {
+      continue;
+    }
+
+    const states = mergeNamedModes(base?.[name]?.states, conditionPatch?.states);
+    const variants = mergeNamedModes(base?.[name]?.variants, conditionPatch?.variants);
+    if (states || variants) {
+      result[name] = { ...(states ? { states } : {}), ...(variants ? { variants } : {}) };
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
 const mergeSlot = (base: AIDefinitionSlot | undefined, patch: DefinitionSlotPatch): DefinitionSlotInput => {
   const merged: DefinitionSlotInput = mergeDisplayMode(base, patch);
   const states = mergeNamedModes(base?.states, patch.states);
@@ -185,6 +217,11 @@ const mergeSlot = (base: AIDefinitionSlot | undefined, patch: DefinitionSlotPatc
   const variants = mergeNamedModes(base?.variants, patch.variants);
   if (variants) {
     merged.variants = variants;
+  }
+
+  const ancestors = mergeAncestors(base?.ancestors, patch.ancestors);
+  if (ancestors) {
+    merged.ancestors = ancestors;
   }
 
   return merged;

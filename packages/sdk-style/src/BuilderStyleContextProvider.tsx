@@ -16,19 +16,19 @@ import type {
   ReducerMiddlewareCallback
 } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type {
-  BuilderQueriesMap,
   BuilderMutationsMap,
-  SpaceEventMap,
   BuilderNetworkContextValue,
+  BuilderQueriesMap,
   DisplayMode,
+  SpaceEventMap,
   SpaceFont,
   Style,
+  StyleCategory,
   StyleItem,
+  StyleTarget,
   StyleVariableCategory,
   StyleVariableValue,
-  TagType,
-  StyleCategory,
-  StyleState
+  TagType
 } from '@plitzi/sdk-shared';
 
 /**
@@ -80,7 +80,7 @@ const BuilderStyleContextProvider = ({
       type: TagType,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string },
+      params: StyleTarget,
       fromSubscriptions = false
     ) => {
       if (!selector) {
@@ -107,7 +107,7 @@ const BuilderStyleContextProvider = ({
       selector: string,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string },
+      params: StyleTarget & { styleSelector: string },
       fromSubscriptions = false
     ) =>
       dispatchStyle({

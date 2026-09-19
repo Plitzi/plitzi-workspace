@@ -13,6 +13,7 @@ export type StyleInspectorContextValue = {
   selector?: StyleItem;
   styleSelector: string;
   styleState?: StyleState;
+  styleAncestor?: string;
   styleVariant?: string;
   displayMode: DisplayMode;
   variables: Record<string, unknown>;

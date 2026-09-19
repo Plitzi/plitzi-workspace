@@ -31,6 +31,7 @@ export type StyleInspectorProviderProps = {
   styleSelector?: string;
   styleState?: StyleState;
   styleVariant?: string;
+  styleAncestor?: string;
   element?: Element;
   inheritData: InheritData;
   displayMode: DisplayMode;
@@ -44,6 +45,7 @@ const StyleInspectorProvider = ({
   styleSelector = 'base',
   styleState,
   styleVariant,
+  styleAncestor,
   element,
   inheritData,
   displayMode,
@@ -56,7 +58,12 @@ const StyleInspectorProvider = ({
     let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
     if (selector && styleSelector && (selector.attributes[styleSelector] as StyleBlock | undefined)) {
       const block = selector.attributes[styleSelector];
-      if (styleState && styleVariant) {
+      if (styleAncestor) {
+        const ancestor = block.ancestors?.[styleAncestor];
+        const variant = styleVariant ? ancestor?.variants?.[styleVariant] : undefined;
+        const scope = styleVariant ? variant : ancestor;
+        attributes = (styleState ? scope?.states?.[styleState] : variant?.default) ?? {};
+      } else if (styleState && styleVariant) {
         attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
       } else if (styleVariant) {
         attributes = block.variants?.[styleVariant]?.default ?? {};
@@ -70,7 +77,7 @@ const StyleInspectorProvider = ({
     }
 
     return attributes;
-  }, [selector, styleSelector, styleState, styleVariant]);
+  }, [selector, styleSelector, styleState, styleVariant, styleAncestor]);
 
   const setValue = useCallback(
     (styleKey?: StyleCategory, values?: StyleObject | StyleValue): void => {
@@ -139,6 +146,7 @@ const StyleInspectorProvider = ({
       styleSelector,
       styleState,
       styleVariant,
+      styleAncestor,
       displayMode,
       variables: schemaVariables,
       inheritData: inheritData.style,
@@ -154,6 +162,7 @@ const StyleInspectorProvider = ({
       styleSelector,
       styleState,
       styleVariant,
+      styleAncestor,
       displayMode,
       schemaVariables,
       inheritData.style,

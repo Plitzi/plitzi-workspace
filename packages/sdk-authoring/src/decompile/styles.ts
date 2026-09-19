@@ -4,8 +4,16 @@ import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { BREAKPOINTS, css, expandShorthand, STYLE_STATES } from '../style';
 
-import type { CssProps, CssSpec, RuleSetSpec, StatesSpec, StyleSpec, VariantSpec } from '../style';
-import type { DisplayMode, Style, StyleBlock, StyleItem, StyleObject, StyleState } from '@plitzi/sdk-shared';
+import type { AncestorSpec, CssProps, CssSpec, RuleSetSpec, StatesSpec, StyleSpec, VariantSpec } from '../style';
+import type {
+  DisplayMode,
+  Style,
+  StyleBlock,
+  StyleItem,
+  StyleObject,
+  StyleState,
+  StyleStates
+} from '@plitzi/sdk-shared';
 
 /**
  * Reading a selector back into the shape an author writes it in.
@@ -27,6 +35,7 @@ export interface ReadSelector {
   css: CssSpec | undefined;
   states: StatesSpec | undefined;
   variants: Record<string, CssSpec | VariantSpec> | undefined;
+  ancestors: Record<string, AncestorSpec> | undefined;
   unwritable: UnwritableRules;
   /** State names the document carries that no browser state matches. Dropped: nothing ever matched them. */
   unknownStates: string[];
@@ -160,7 +169,7 @@ const newReader = (): BlockReader => ({ rules: {}, states: new Map(), unwritable
 const readBlock = (
   reader: BlockReader,
   breakpoint: DisplayMode,
-  block: Omit<StyleBlock, 'variants'>,
+  block: Omit<StyleBlock, 'variants' | 'ancestors'>,
   park: (breakpoint: DisplayMode, part: 'default' | StyleState, rules: CssProps) => void
 ): void => {
   const base = splitRules(block.default);
@@ -199,10 +208,15 @@ const statesOf = (reader: BlockReader): StatesSpec | undefined => {
 };
 
 const parkInto =
-  (unwritable: UnwritableRules, variant?: string) =>
+  (unwritable: UnwritableRules, variant?: string, ancestor?: string) =>
   (breakpoint: DisplayMode, part: 'default' | StyleState, rules: CssProps): void => {
     const block: StyleBlock = unwritable[breakpoint] ?? { default: {} };
-    const target: StyleBlock = variant ? ((block.variants ??= {})[variant] ??= { default: {} }) : block;
+    const scope: { states?: StyleStates; variants?: StyleBlock['variants'] } = ancestor
+      ? ((block.ancestors ??= {})[ancestor] ??= {})
+      : block;
+    const target: { default?: StyleObject; states?: StyleStates } = variant
+      ? ((scope.variants ??= {})[variant] ??= { default: {} })
+      : scope;
 
     if (part === 'default') {
       target.default = { ...target.default, ...rules };
@@ -213,10 +227,30 @@ const parkInto =
     unwritable[breakpoint] = block;
   };
 
+const variantsOf = (readers: Map<string, BlockReader>): Record<string, CssSpec | VariantSpec> | undefined => {
+  const specs = [...readers].map(([name, reader]): [string, CssSpec | VariantSpec] => {
+    const variantCss = toCssSpec(reader.rules);
+    const variantStates = statesOf(reader);
+
+    return [
+      name,
+      variantStates ? { ...(variantCss ? { css: variantCss } : {}), states: variantStates } : (variantCss ?? {})
+    ];
+  });
+
+  return specs.length > 0 ? Object.fromEntries(specs) : undefined;
+};
+
+interface AncestorReader {
+  base: BlockReader;
+  variants: Map<string, BlockReader>;
+}
+
 /** One selector's blocks, read back into the shape an author writes. */
 export const readSelector = (blocks: SelectorBlocks): ReadSelector => {
   const base = newReader();
   const variantReaders = new Map<string, BlockReader>();
+  const ancestorReaders = new Map<string, AncestorReader>();
 
   for (const breakpoint of BREAKPOINTS) {
     const block = blocks[breakpoint];
@@ -230,36 +264,68 @@ export const readSelector = (blocks: SelectorBlocks): ReadSelector => {
       readBlock(reader, breakpoint, variantBlock, parkInto(base.unwritable, name));
       variantReaders.set(name, reader);
     }
+
+    for (const [ancestor, ancestorBlock] of Object.entries(block.ancestors ?? {})) {
+      const readers = ancestorReaders.get(ancestor) ?? { base: newReader(), variants: new Map<string, BlockReader>() };
+      readBlock(
+        readers.base,
+        breakpoint,
+        { states: ancestorBlock.states },
+        parkInto(base.unwritable, undefined, ancestor)
+      );
+      for (const [name, variantBlock] of Object.entries(ancestorBlock.variants ?? {})) {
+        const reader = readers.variants.get(name) ?? newReader();
+        readBlock(reader, breakpoint, variantBlock, parkInto(base.unwritable, name, ancestor));
+        readers.variants.set(name, reader);
+      }
+
+      ancestorReaders.set(ancestor, readers);
+    }
   }
 
   const baseCss = toCssSpec(base.rules);
   const states = statesOf(base);
-  const variantSpecs = [...variantReaders].map(([name, reader]): [string, CssSpec | VariantSpec] => {
-    const variantCss = toCssSpec(reader.rules);
-    const variantStates = statesOf(reader);
+  const variants = variantsOf(variantReaders);
+  const ancestorSpecs = [...ancestorReaders].flatMap(([name, readers]): [string, AncestorSpec][] => {
+    const ancestorStates = statesOf(readers.base);
+    const ancestorVariants = variantsOf(readers.variants);
 
-    return [
-      name,
-      variantStates ? { ...(variantCss ? { css: variantCss } : {}), states: variantStates } : (variantCss ?? {})
-    ];
+    return ancestorStates || ancestorVariants
+      ? [
+          [
+            name,
+            {
+              ...(ancestorStates ? { states: ancestorStates } : {}),
+              ...(ancestorVariants ? { variants: ancestorVariants } : {})
+            }
+          ]
+        ]
+      : [];
   });
-
-  const variants = variantSpecs.length > 0 ? Object.fromEntries(variantSpecs) : undefined;
+  const ancestors = ancestorSpecs.length > 0 ? Object.fromEntries(ancestorSpecs) : undefined;
   const ruleSet: RuleSetSpec = {
     ...(baseCss ? { css: baseCss } : {}),
     ...(states ? { states } : {}),
-    ...(variants ? { variants } : {})
+    ...(variants ? { variants } : {}),
+    ...(ancestors ? { ancestors } : {})
   };
+  const readers = [
+    base,
+    ...variantReaders.values(),
+    ...[...ancestorReaders.values()].flatMap(({ base: ancestorBase, variants: ancestorVariants }) => [
+      ancestorBase,
+      ...ancestorVariants.values()
+    ])
+  ];
 
   return {
-    spec: states || variants ? ruleSet : baseCss,
+    spec: states || variants || ancestors ? ruleSet : baseCss,
     css: baseCss,
     states,
     variants,
+    ancestors,
     unwritable: base.unwritable,
-    unknownStates: [
-      ...new Set([...base.unknownStates, ...[...variantReaders.values()].flatMap(reader => [...reader.unknownStates])])
-    ]
+    unknownStates: [...new Set(readers.flatMap(reader => [...reader.unknownStates]))]
   };
 };
 

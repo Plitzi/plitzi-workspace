@@ -1,5 +1,5 @@
 import type { SpaceHandles } from './handles';
-import type { ClassList, CssSpec, StatesSpec, StyleDeclaration, StyleSpec, VariantSpec } from '../style';
+import type { AncestorSpec, ClassList, CssSpec, StatesSpec, StyleDeclaration, StyleSpec, VariantSpec } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   BindingCategory,
@@ -268,6 +268,7 @@ export interface ElementStyleSpec {
   base?: CssSpec;
   states?: StatesSpec;
   variants?: Record<string, CssSpec | VariantSpec>;
+  ancestors?: Record<string, AncestorSpec>;
   slots?: Record<string, StyleSpec>;
 }
 

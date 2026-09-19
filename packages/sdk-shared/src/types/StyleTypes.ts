@@ -36,10 +36,29 @@ export type StyleObject = Partial<Record<StyleCategory, StyleValue>>;
 export type StyleStates = Partial<Record<StyleState, StyleObject>>;
 
 // Variants (sm, lg, primary)
-export type StyleVariants = Record<string, Omit<StyleBlock, 'variants'>>;
+export type StyleVariants = Record<string, Omit<StyleBlock, 'variants' | 'ancestors'>>;
+
+// How the element looks while an ancestor carrying that class is in a state or variant (a card's hover, a collapsed
+// sidebar). Keyed by the ancestor's class name; any ancestor counts, not only the parent.
+export type StyleAncestor = { states?: StyleStates; variants?: StyleVariants };
+export type StyleAncestors = Record<string, StyleAncestor>;
 
 // Full block per selector (base, header, etc)
-export type StyleBlock = { default?: StyleObject; states?: StyleStates; variants?: StyleVariants };
+export type StyleBlock = {
+  default?: StyleObject;
+  states?: StyleStates;
+  variants?: StyleVariants;
+  ancestors?: StyleAncestors;
+};
+
+// Which part of a selector an edit addresses. With `styleAncestor`, state and variant are the ancestor's.
+export type StyleTarget = {
+  componentType?: string;
+  styleSelector?: string;
+  styleState?: StyleState;
+  styleVariant?: string;
+  styleAncestor?: string;
+};
 
 // styleSelector: base, header, icon, etc
 export type StyleAttributes = Record<string, StyleBlock>;

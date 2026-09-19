@@ -145,7 +145,8 @@ const resolveStyleBlock = (
   attributes: StyleItem['attributes'],
   styleSelector: string,
   styleState?: StyleState,
-  styleVariant?: string
+  styleVariant?: string,
+  styleAncestor?: string
 ) => {
   const block = attributes[styleSelector];
   if (!(block as StyleBlock | undefined)) {
@@ -153,6 +154,14 @@ const resolveStyleBlock = (
   }
 
   const base = block.default ?? {};
+  if (styleAncestor) {
+    const ancestor = block.ancestors?.[styleAncestor];
+    const ancestorVariant = styleVariant ? ancestor?.variants?.[styleVariant] : undefined;
+    const ancestorState = styleState ? (ancestorVariant ?? ancestor)?.states?.[styleState] : undefined;
+
+    return { ...base, ...ancestorVariant?.default, ...ancestorState };
+  }
+
   const variantBase = styleVariant ? (block.variants?.[styleVariant]?.default ?? {}) : {};
   const state = styleState ? (block.states?.[styleState] ?? {}) : {};
   const variantState = styleVariant && styleState ? (block.variants?.[styleVariant]?.states?.[styleState] ?? {}) : {};
@@ -169,9 +178,10 @@ const resolveNodeStyle = (
   node: InheritData['tree'][number],
   styleSelector: string,
   styleState?: StyleState,
-  styleVariant?: string
+  styleVariant?: string,
+  styleAncestor?: string
 ) => {
-  return resolveStyleBlock(node.attributes, styleSelector, styleState, styleVariant);
+  return resolveStyleBlock(node.attributes, styleSelector, styleState, styleVariant, styleAncestor);
 };
 
 /* --------------------------- MAIN CALCULATION ----------------------------- */
@@ -281,6 +291,7 @@ const calculateInheriting = (
     styleSelector?: string;
     styleState?: StyleState;
     styleVariant?: string;
+    styleAncestor?: string;
     includeSelf?: boolean;
     skipSelectors?: string[];
     addSelectors?: string[];
@@ -291,6 +302,7 @@ const calculateInheriting = (
     styleSelector = 'base',
     styleState,
     styleVariant,
+    styleAncestor,
     includeSelf = false,
     skipSelectors = [],
     addSelectors = []
@@ -403,7 +415,7 @@ const calculateInheriting = (
 
   const finalStyle: InheritData['style'] = {};
   for (const node of metadata.tree) {
-    let styleData = resolveNodeStyle(node, styleSelector, styleState, styleVariant);
+    let styleData = resolveNodeStyle(node, styleSelector, styleState, styleVariant, styleAncestor);
     if (!(styleData as typeof styleData | undefined) || !Object.keys(styleData).length) {
       continue;
     }
@@ -429,7 +441,10 @@ const calculateInheriting = (
 
   const parentStyle = metadata.tree
     .filter(node => node.isParent)
-    .reduce((acc, node) => ({ ...acc, ...resolveNodeStyle(node, styleSelector, styleState, styleVariant) }), {});
+    .reduce(
+      (acc, node) => ({ ...acc, ...resolveNodeStyle(node, styleSelector, styleState, styleVariant, styleAncestor) }),
+      {}
+    );
 
   return { ...metadata, style: finalStyle, parentStyle };
 };

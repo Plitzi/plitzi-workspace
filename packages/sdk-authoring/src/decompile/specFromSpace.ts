@@ -18,6 +18,7 @@ import type {
   StepSpec
 } from '../schema';
 import type { CssProps, CssSpec, StatesSpec, StyleSpec } from '../style';
+import type { FoldAncestor, FoldTarget } from './customCss';
 import type { ReadSelector, SelectorBlocks, UnwritableRules } from './styles';
 import type {
   BindingCategory,
@@ -26,7 +27,9 @@ import type {
   ElementInteraction,
   Schema,
   Style,
-  StyleBlock
+  StyleAncestor,
+  StyleBlock,
+  StyleObject
 } from '@plitzi/sdk-shared';
 
 /** The class names a selector joins with a space — one for most, several where the builder stacked them. */
@@ -251,6 +254,35 @@ const bindingCorpus = (bindings: unknown): unknown[] =>
     bindingsOf(bindings, category).map(({ source, to, transformers, when }) => ({ source, to, transformers, when }))
   );
 
+/** The selector a folded target was written as, for the correction that reports it. */
+const foldedSelector = ({ className, state, ancestor }: FoldTarget): string => {
+  if (!ancestor) {
+    return `.${className}${state ? `:${state}` : ''}`;
+  }
+
+  const variant = ancestor.variant ? `[data-variant="${ancestor.variant}"]` : '';
+
+  return `.${ancestor.className}${variant}${ancestor.state ? `:${ancestor.state}` : ''} .${className}`;
+};
+
+/** `block` with `rules` added under one ancestor condition — a state, a variant, or a variant's state. */
+const withAncestorRules = (block: StyleBlock, ancestor: FoldAncestor, rules: StyleObject): StyleBlock => {
+  const { className, state, variant } = ancestor;
+  const conditions: StyleAncestor = block.ancestors?.[className] ?? {};
+  let next: StyleAncestor = conditions;
+  if (variant) {
+    const variantBlock = conditions.variants?.[variant] ?? { default: {} };
+    const updated = state
+      ? { ...variantBlock, states: { ...variantBlock.states, [state]: { ...variantBlock.states?.[state], ...rules } } }
+      : { ...variantBlock, default: { ...variantBlock.default, ...rules } };
+    next = { ...conditions, variants: { ...conditions.variants, [variant]: updated } };
+  } else if (state) {
+    next = { ...conditions, states: { ...conditions.states, [state]: { ...conditions.states?.[state], ...rules } } };
+  }
+
+  return { ...block, ancestors: { ...block.ancestors, [className]: next } };
+};
+
 class SpecReader {
   private readonly corrections: SpecCorrection[] = [];
 
@@ -259,6 +291,8 @@ class SpecReader {
   private readonly references: Set<string>;
 
   private readonly classBlocks = new Map<string, SelectorBlocks>();
+
+  private ancestorNames: Set<string> | undefined;
 
   private readonly elementBlocks = new Map<string, Record<string, SelectorBlocks>>();
 
@@ -446,31 +480,68 @@ class SpecReader {
    * written there wins over the longhands the class stores rather than losing to them.
    */
   private foldCustomCss(stylesheet: string): string {
-    const { folded, remaining } = foldCustomCss(stylesheet, name => this.classBlocks.has(name));
+    const { folded, remaining } = foldCustomCss(
+      stylesheet,
+      name => this.classBlocks.has(name),
+      // An ancestor's condition weighs what the class alone does, so the class's own states and variants win over
+      // it — where they set the same property, the rule rendered the other way round and stays where it is.
+      (target, rules) =>
+        !target.ancestor ||
+        !Object.keys(css(rules)).some(property => this.ownConditionProperties(target.className).has(property))
+    );
     for (const { targets, rules } of folded) {
       const expanded = css(rules);
-      for (const { className, state } of targets) {
+      for (const { className, state, ancestor } of targets) {
         const blocks = this.classBlocks.get(className) ?? {};
         const block: StyleBlock = blocks.desktop ?? { default: {} };
-        if (state) {
-          block.states = { ...block.states, [state]: { ...block.states?.[state], ...expanded } };
+        if (ancestor) {
+          blocks.desktop = withAncestorRules(block, ancestor, expanded);
+        } else if (state) {
+          blocks.desktop = {
+            ...block,
+            states: { ...block.states, [state]: { ...block.states?.[state], ...expanded } }
+          };
         } else {
-          block.default = { ...block.default, ...expanded };
+          blocks.desktop = { ...block, default: { ...block.default, ...expanded } };
         }
 
-        blocks.desktop = block;
         this.classBlocks.set(className, blocks);
       }
 
-      const selectors = targets.map(({ className, state }) => `.${className}${state ? `:${state}` : ''}`);
       this.correct(
         'folded-custom-css',
-        `The customCss rule for ${selectors.map(selector => `"${selector}"`).join(', ')} is now part of its class.`,
+        `The customCss rule for ${targets.map(target => `"${foldedSelector(target)}"`).join(', ')} is now part of its class.`,
         targets[0]?.className
       );
     }
 
     return remaining;
+  }
+
+  /** The classes some selector names as an ancestor: a condition reads them by name, so none of them is inlined. */
+  private ancestorClasses(): Set<string> {
+    this.ancestorNames ??= new Set(
+      [...this.classBlocks.values(), ...[...this.elementBlocks.values()].flatMap(slots => Object.values(slots))]
+        .flatMap(blocks => Object.values(blocks))
+        .flatMap(block => Object.keys(block.ancestors ?? {}))
+    );
+
+    return this.ancestorNames;
+  }
+
+  /** Every property a class sets in its own states and variants, at any breakpoint. */
+  private ownConditionProperties(className: string): Set<string> {
+    const blocks = Object.values(this.classBlocks.get(className) ?? {});
+
+    return new Set(
+      blocks.flatMap(block => [
+        ...Object.values(block.states ?? {}).flatMap(rules => Object.keys(rules)),
+        ...Object.values(block.variants ?? {}).flatMap(variant => [
+          ...Object.keys(variant.default ?? {}),
+          ...Object.values(variant.states ?? {}).flatMap(rules => Object.keys(rules))
+        ])
+      ])
+    );
   }
 
   private countSelectorUses(roots: { pages: Element[]; layouts: Element[] }): void {
@@ -513,7 +584,11 @@ class SpecReader {
       Object.values(unwritable).flatMap((block: StyleBlock) => [
         ...Object.keys(block.default ?? {}),
         ...Object.values(block.states ?? {}).flatMap(rules => Object.keys(rules)),
-        ...Object.values(block.variants ?? {}).flatMap(variant => Object.keys(variant.default ?? {}))
+        ...Object.values(block.variants ?? {}).flatMap(variant => Object.keys(variant.default ?? {})),
+        ...Object.values(block.ancestors ?? {}).flatMap(ancestor => [
+          ...Object.values(ancestor.states ?? {}).flatMap(rules => Object.keys(rules)),
+          ...Object.values(ancestor.variants ?? {}).flatMap(variant => Object.keys(variant.default ?? {}))
+        ])
       ])
     );
     this.keptCss.push(unwritableCss(selector, unwritable, mode));
@@ -557,7 +632,9 @@ class SpecReader {
     const canInline =
       (this.selectorUses.get(selector) ?? 0) === 1 &&
       !this.references.has(selector) &&
+      !this.ancestorClasses().has(selector) &&
       !read.variants &&
+      !read.ancestors &&
       isEmpty(read.unwritable) &&
       (inline === 'css-and-states' || !read.states);
 
@@ -639,6 +716,7 @@ class SpecReader {
         ...(read.css ? { base: read.css } : {}),
         ...(read.states ? { states: read.states } : {}),
         ...(read.variants ? { variants: read.variants } : {}),
+        ...(read.ancestors ? { ancestors: read.ancestors } : {}),
         ...(slotSpecs.length > 0 ? { slots: Object.fromEntries(slotSpecs) } : {})
       };
     }

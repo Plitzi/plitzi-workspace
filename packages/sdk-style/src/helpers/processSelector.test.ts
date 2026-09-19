@@ -833,3 +833,67 @@ describe('processSelector / the order states are written in', () => {
     expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf('&:active'));
   });
 });
+
+describe('processSelector / ancestor conditions', () => {
+  const cacheOf = (block: StyleBlock, name = 'icon'): string =>
+    processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
+
+  it('writes an ancestor state as a nested rule that weighs what the class alone does', () => {
+    const cache = cacheOf({
+      default: { transform: 'none' },
+      ancestors: { card: { states: { hover: { transform: 'translateX(3px)' } } } }
+    });
+
+    expect(cache).toBe('.icon{transform:none;:where(.card:hover) &{transform:translateX(3px);}}');
+  });
+
+  it('matches an ancestor variant by attribute and by modifier class, like the variant itself', () => {
+    const cache = cacheOf({
+      default: {},
+      ancestors: {
+        sidebar: {
+          variants: { collapsed: { default: { display: 'none' }, states: { hover: { display: 'block' } } } }
+        }
+      }
+    });
+
+    expect(cache).toBe(
+      '.icon{:where(.sidebar[data-variant="collapsed"],.sidebar--collapsed) &{display:none;}' +
+        ':where(.sidebar[data-variant="collapsed"]:hover,.sidebar--collapsed:hover) &{display:block;}}'
+    );
+  });
+
+  it('writes them after the class own states and variants, and the ancestor states in cascade order', () => {
+    const cache = cacheOf({
+      default: { color: 'black' },
+      states: { hover: { color: 'blue' } },
+      variants: { muted: { default: { color: 'gray' } } },
+      ancestors: { card: { states: { active: { color: 'red' }, hover: { color: 'green' } } } }
+    });
+
+    expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf(':where(.card:hover)'));
+    expect(cache.indexOf('.icon--muted')).toBeLessThan(cache.indexOf(':where(.card:hover)'));
+    expect(cache.indexOf(':where(.card:hover)')).toBeLessThan(cache.indexOf(':where(.card:active)'));
+  });
+
+  it('works on an element type and on its slots', () => {
+    const cache = processSelector({
+      name: 'text',
+      type: 'element',
+      componentType: 'text',
+      attributes: {
+        base: { default: {} },
+        label: { default: {}, ancestors: { card: { states: { hover: { color: 'red' } } } } }
+      },
+      cache: ''
+    });
+
+    expect(cache).toBe('.plitzi__text{.plitzi__text-label{:where(.card:hover) &{color:red;}}}');
+  });
+
+  it('leaves out an ancestor with nothing under it', () => {
+    expect(cacheOf({ default: { color: 'black' }, ancestors: { card: { states: { hover: {} } } } })).toBe(
+      '.icon{color:black;}'
+    );
+  });
+});

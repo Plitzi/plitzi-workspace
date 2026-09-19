@@ -18,7 +18,7 @@ import type {
   StyleVariableCategory,
   StyleVariableValue,
   StyleCategory,
-  StyleState
+  StyleTarget
 } from '@plitzi/sdk-shared';
 
 export const SegmentsActions = {
@@ -92,12 +92,7 @@ export type SegmentsReducerActions =
       selectorType: TagType;
       path?: StyleCategory;
       value?: StyleItem['attributes'];
-      params: {
-        componentType?: string;
-        styleSelector?: string;
-        styleState?: StyleState;
-        styleVariant?: string;
-      };
+      params: StyleTarget;
     } & SegmentsReducerActionsBase)
   | ({
       type: 'SEGMENTS_STYLE_UPDATE_SELECTOR';
@@ -105,12 +100,7 @@ export type SegmentsReducerActions =
       selector: string;
       path?: StyleCategory;
       value?: StyleItem['attributes'];
-      params: {
-        componentType?: string;
-        styleSelector: string;
-        styleState?: StyleState;
-        styleVariant?: string;
-      };
+      params: StyleTarget & { styleSelector: string };
     } & SegmentsReducerActionsBase)
   | ({
       type: 'SEGMENTS_STYLE_REMOVE_SELECTOR';

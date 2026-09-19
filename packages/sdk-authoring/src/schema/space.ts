@@ -144,6 +144,8 @@ class SpaceAuthor {
       this.writeSelector(name, responsive, `Class "${name}"`);
     }
 
+    this.assertAncestorClasses();
+
     const pageFolders = this.buildPageFolders();
     layouts.forEach(layout => this.addLayout(layout));
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
@@ -265,7 +267,12 @@ class SpaceAuthor {
   }
 
   private writeElementDefaults(type: string, spec: ElementStyleSpec): void {
-    const base = toBlocks({ css: spec.base ?? {}, states: spec.states, variants: spec.variants });
+    const base = toBlocks({
+      css: spec.base ?? {},
+      states: spec.states,
+      variants: spec.variants,
+      ancestors: spec.ancestors
+    });
     const slots = Object.entries(spec.slots ?? {}).map(([slot, rules]) => [slot, toBlocks(rules)] as const);
 
     for (const breakpoint of BREAKPOINTS) {
@@ -386,6 +393,22 @@ class SpaceAuthor {
     throw new Error(
       `${where} names the class "${name}", which this space does not declare${didYouMean(name, classes)}. Declare it in \`classes\`, hand it a \`styles()\` declaration, or write the rules inline with \`css\`.`
     );
+  }
+
+  /** An ancestor condition names a class some ancestor wears; one this space does not declare can never match. */
+  private assertAncestorClasses(): void {
+    for (const breakpoint of BREAKPOINTS) {
+      for (const item of Object.values(this.platform[breakpoint])) {
+        for (const [slot, block] of Object.entries(item.attributes)) {
+          for (const ancestor of Object.keys(block.ancestors ?? {})) {
+            this.assertClass(
+              ancestor,
+              `The ${item.type} "${item.name}" (${slot}, ${breakpoint}), in its \`ancestors\`,`
+            );
+          }
+        }
+      }
+    }
   }
 
   /** `<type>-<n>` for an element nobody named. Positional and deterministic, so a re-run writes the same document;

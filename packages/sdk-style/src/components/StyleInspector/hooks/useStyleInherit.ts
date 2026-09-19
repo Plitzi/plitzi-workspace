@@ -15,6 +15,7 @@ export type UseStyleInheritProps = {
   styleSelector?: string;
   styleState?: StyleState;
   styleVariant?: string;
+  styleAncestor?: string;
 };
 
 const useStyleInherit = ({
@@ -24,7 +25,8 @@ const useStyleInherit = ({
   selector,
   styleSelector = 'base',
   styleState,
-  styleVariant
+  styleVariant,
+  styleAncestor
 }: UseStyleInheritProps) => {
   const [[flat, platform]] = useBuilderStore(['schema.flat', 'style.platform']);
   const { componentDefinitions } = use(ComponentContext);
@@ -41,6 +43,7 @@ const useStyleInherit = ({
       styleSelector,
       styleState,
       styleVariant,
+      styleAncestor,
       includeSelf: selectors.length > 1,
       skipSelectors: selectorsToSkip,
       addSelectors: selectorsToInclude
@@ -55,7 +58,8 @@ const useStyleInherit = ({
     componentDefinitions,
     componentSubType,
     styleState,
-    styleVariant
+    styleVariant,
+    styleAncestor
   ]);
 
   return inheritData;

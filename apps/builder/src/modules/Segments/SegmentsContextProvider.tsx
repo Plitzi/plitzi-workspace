@@ -18,24 +18,24 @@ import SegmentsReducer, { SegmentsActions } from './SegmentsReducer';
 import type { SegmentsReducerActions } from './SegmentsReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type {
+  BuilderMutationsMap,
+  BuilderQueriesMap,
+  DisplayMode,
+  DropPosition,
+  Element,
+  Schema,
   SchemaVariable,
   Segment,
   SegmentRaw,
-  DropPosition,
-  Style,
-  Element,
-  Schema,
-  DisplayMode,
-  TagType,
-  StyleItem,
   SegmentsContextValue,
+  SpaceEventMap,
+  Style,
+  StyleCategory,
+  StyleItem,
+  StyleTarget,
   StyleVariableCategory,
   StyleVariableValue,
-  BuilderQueriesMap,
-  BuilderMutationsMap,
-  SpaceEventMap,
-  StyleCategory,
-  StyleState
+  TagType
 } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
@@ -313,7 +313,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       type: TagType,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string },
+      params: StyleTarget,
       fromSubscriptions = false
     ) =>
       dispatchSegments({
@@ -337,7 +337,7 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
       selector: string,
       path: StyleCategory | undefined,
       value: StyleItem['attributes'] | undefined,
-      params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string },
+      params: StyleTarget & { styleSelector: string },
       fromSubscriptions = false
     ) =>
       dispatchSegments({

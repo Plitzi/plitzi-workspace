@@ -57,6 +57,20 @@ export interface VariantSpec {
 export interface RuleSetSpec extends VariantSpec {
   /** By name — what `data-variant` and an element's `variant` select. Plain CSS, or CSS with states of its own. */
   variants?: Record<string, CssSpec | VariantSpec>;
+  /**
+   * How this selector looks while an ANCESTOR is in a state or variant, keyed by a class that ancestor wears: a card's
+   * hover moving its icon, a collapsed sidebar hiding its labels. Any ancestor counts, not only the parent. Name the
+   * class by its declaration — `[card.name]: { states: { hover: … } }` — so a rename reaches it.
+   *
+   * The selector's own states and variants win over these where both set a property.
+   */
+  ancestors?: Record<string, AncestorSpec>;
+}
+
+/** What one ancestor condition changes: in the ancestor's states, or its variants (and their states). */
+export interface AncestorSpec {
+  states?: StatesSpec;
+  variants?: Record<string, CssSpec | VariantSpec>;
 }
 
 /** A selector's rules in either shape: plain CSS, or CSS with its states and variants beside it. */

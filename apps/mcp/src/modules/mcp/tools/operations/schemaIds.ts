@@ -13,6 +13,8 @@ import {
   styleVariantInput
 } from './schema/shared';
 import {
+  ancestors,
+  ancestorsPatch,
   cssMap,
   cssPatchMap,
   definitionSlot,
@@ -54,6 +56,8 @@ const SHARED_SCHEMAS: [z.ZodType, string][] = [
   [definitionSlotPatch, 'StyleSlotPatch'],
   [displayModeCss, 'BreakpointCss'],
   [displayModeCssPatch, 'BreakpointCssPatch'],
+  [ancestors, 'StyleAncestors'],
+  [ancestorsPatch, 'StyleAncestorsPatch'],
   [themeValue, 'ThemeValue'],
   // The connector manifest is the heaviest shape in the union — its endpoints and connection settings appear in
   // both upsertConnector and patchConnector, so without these three ids the listing carries each of them twice per

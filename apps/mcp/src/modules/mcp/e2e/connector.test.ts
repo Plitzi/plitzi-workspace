@@ -40,7 +40,10 @@ const widgetOperations = [
 // schema because they are panel tuning, not decisions an agent makes, and each field is carried four times over.
 // Nothing here is shared enough to earn a registry id (see schemaIds.ts: an id on a schema used once costs more
 // than the copy it replaces).
-const TOOLS_BUDGET_BYTES = 182_000;
+//
+// Raised from 182k for ancestor conditions (`ancestors` on a style slot): a style capability of its own, and ~2.8k
+// with its two shapes already registered (without the ids it cost 27k — every style op carries it, per slot).
+const TOOLS_BUDGET_BYTES = 185_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

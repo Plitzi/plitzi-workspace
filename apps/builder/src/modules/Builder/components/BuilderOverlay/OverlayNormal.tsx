@@ -47,12 +47,13 @@ const OverlayNormal = ({
   color,
   collaboratorName = ''
 }: OverlayNormalProps) => {
-  const [[style, selector, styleSelector, styleVariant, styleState]] = useBuilderStore([
+  const [[style, selector, styleSelector, styleVariant, styleState, styleAncestor]] = useBuilderStore([
     'style',
     'selector',
     'styleSelector',
     'styleVariant',
-    'styleState'
+    'styleState',
+    'styleAncestor'
   ]);
   const [hoverRemove, setHoverRemove] = useState(false);
   const { builderElementPermissions, builderHandler } = use(BuilderContext);
@@ -137,11 +138,11 @@ const OverlayNormal = ({
           selector,
           undefined,
           { ...values, width: `${width}px`, height: `${height}px` },
-          { styleSelector, styleVariant, styleState }
+          { styleSelector, styleVariant, styleState, styleAncestor }
         );
       }
     },
-    [element, mode, selector, builderHandler, displayMode, styleSelector, styleVariant, styleState]
+    [element, mode, selector, builderHandler, displayMode, styleSelector, styleVariant, styleState, styleAncestor]
   );
 
   const handleChange = useCallback(

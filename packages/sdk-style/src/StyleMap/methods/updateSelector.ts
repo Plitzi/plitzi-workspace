@@ -12,8 +12,8 @@ import type {
   StyleCategory,
   StyleItem,
   StyleObject,
-  StyleState,
   StyleStates,
+  StyleTarget,
   StyleValue,
   StyleVariants
 } from '@plitzi/sdk-shared';
@@ -25,13 +25,13 @@ const updateSelector = (
   path: StyleCategory | undefined,
   value:
     StyleItem['attributes'] | StyleValue | Partial<StyleObject> | StyleVariants | StyleStates | StyleBlock | undefined,
-  params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string }
+  params: StyleTarget & { styleSelector: string }
 ) => {
   if (!(params as typeof params | undefined)) {
     return false;
   }
 
-  const { componentType, styleSelector, styleState, styleVariant } = params;
+  const { componentType, styleSelector, styleState, styleVariant, styleAncestor } = params;
   const styleItem = getStyleItem(platform, displayMode, selector);
 
   if (
@@ -41,12 +41,14 @@ const updateSelector = (
     (componentType && styleItem.type !== 'element') ||
     (styleSelector && typeof styleSelector !== 'string') ||
     (path && path.includes('.')) ||
+    // An ancestor carries conditions only: no styles of its own outside a state or variant
+    (styleAncestor && !styleState && !styleVariant && (path || value !== undefined)) ||
     !isValidValue(path, value, params)
   ) {
     return false;
   }
 
-  writeStyle('update', styleItem, styleSelector, path, value, styleState, styleVariant);
+  writeStyle('update', styleItem, styleSelector, path, value, styleState, styleVariant, styleAncestor);
   set(styleItem, 'cache', processSelector(styleItem));
   set(platform, `${displayMode}.${selector}`, styleItem);
 

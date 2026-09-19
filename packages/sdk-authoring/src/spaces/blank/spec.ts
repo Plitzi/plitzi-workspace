@@ -28,7 +28,22 @@ const buttonLink = styles('button-link', {
 
 const titleRow = styles('title-container', { display: 'flex', 'align-items': 'center' });
 
-const titleIcon = styles('title-icon', { 'margin-left': '10px' });
+/** The arrow slides while the card around it is hovered. */
+const titleIcon = styles('title-icon', {
+  css: { 'margin-left': '10px' },
+  ancestors: {
+    [buttonLink.name]: {
+      states: {
+        hover: {
+          transform: 'translateX(10px)',
+          'transition-property': 'transform',
+          'transition-timing-function': 'cubic-bezier(0.4, 0.2, 1)',
+          'transition-duration': '150ms'
+        }
+      }
+    }
+  }
+});
 
 /**
  * The grid behind everything, pinned to the viewport.
@@ -104,14 +119,6 @@ export const space: SpaceSpec = {
     paragraph: { base: { color: 'var(--foreground)' } },
     fontAwesome: { base: { color: 'var(--foreground)' } }
   },
-  /** The arrow slides on hover. A relationship between two elements, which is a stylesheet's job, not an element's. */
-  customCss: `.button-link:hover .title-icon {
-  transform: translateX(10px);
-  transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0.2, 1);
-  transition-duration: 150ms;
-}
-`,
   pages: [
     {
       id: 'home',

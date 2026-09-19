@@ -30,7 +30,7 @@ export const isStyleVariants = (obj: NonNullable<StyleBlock['variants']>): boole
       return false;
     }
 
-    if ('variants' in v) {
+    if ('variants' in v || 'ancestors' in v) {
       return false;
     }
 
@@ -44,6 +44,16 @@ export const isStyleVariants = (obj: NonNullable<StyleBlock['variants']>): boole
 
     return true;
   });
+
+export const isStyleAncestors = (obj: NonNullable<StyleBlock['ancestors']>): boolean =>
+  isPlainObject(obj) &&
+  Object.values(obj).every(
+    ancestor =>
+      isPlainObject(ancestor) &&
+      !('default' in ancestor) &&
+      (!ancestor.states || isStyleStates(ancestor.states)) &&
+      (!ancestor.variants || isStyleVariants(ancestor.variants))
+  );
 
 export const isStyleBlock = (obj: StyleBlock): boolean => {
   if (!isPlainObject(obj)) {
@@ -59,6 +69,10 @@ export const isStyleBlock = (obj: StyleBlock): boolean => {
   }
 
   if (obj.variants && !isStyleVariants(obj.variants)) {
+    return false;
+  }
+
+  if (obj.ancestors && !isStyleAncestors(obj.ancestors)) {
     return false;
   }
 

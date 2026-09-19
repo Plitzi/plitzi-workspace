@@ -78,7 +78,8 @@ const selectorParams = z.object({
   componentType: z.string().optional(),
   styleSelector: z.string().optional(),
   styleState: styleState.optional(),
-  styleVariant: z.string().optional()
+  styleVariant: z.string().optional(),
+  styleAncestor: z.string().optional()
 });
 
 /** Updating a selector always names the one being updated; creating one does not have it yet. */

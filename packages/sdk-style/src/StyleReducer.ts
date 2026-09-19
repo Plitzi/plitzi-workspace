@@ -7,11 +7,11 @@ import StyleMap from './StyleMap';
 import type {
   DisplayMode,
   ReducerActionOrigin,
+  SpaceFont,
   Style,
   StyleCategory,
   StyleItem,
-  StyleState,
-  SpaceFont,
+  StyleTarget,
   StyleVariableCategory,
   StyleVariableValue,
   TagType
@@ -49,7 +49,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
         path?: StyleCategory;
         selectorType: TagType;
         value?: StyleItem['attributes'];
-        params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string };
+        params: StyleTarget;
       }
     | {
         type: 'STYLE_UPDATE_SELECTOR';
@@ -57,7 +57,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
         selector: string;
         path?: StyleCategory;
         value?: StyleItem['attributes'];
-        params: { componentType?: string; styleSelector: string; styleState?: StyleState; styleVariant?: string };
+        params: StyleTarget & { styleSelector: string };
       }
     | { type: 'STYLE_REMOVE_SELECTOR'; displayMode?: DisplayMode; selector: string }
     | { type: 'STYLE_REMOVE_SELECTORS'; displayMode?: DisplayMode; selectors: string[] }

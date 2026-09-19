@@ -1,14 +1,23 @@
-import type { StyleItem, StyleState, StyleValue } from '@plitzi/sdk-shared';
+import type {
+  StyleAncestors,
+  StyleItem,
+  StyleObject,
+  StyleState,
+  StyleStates,
+  StyleValue,
+  StyleVariants
+} from '@plitzi/sdk-shared';
 
 type CssResult = { variables: Record<string, string>; value: string };
 
-type Attributes = Record<
+type ProcessedStates = Partial<Record<StyleState, string[]>>;
+type ProcessedVariants = Record<string, { default: string[]; states?: ProcessedStates }>;
+
+export type ProcessedAncestors = Record<string, { states?: ProcessedStates; variants?: ProcessedVariants }>;
+
+export type Attributes = Record<
   string,
-  {
-    default: string[];
-    states?: Record<StyleState, string[]>;
-    variants?: Record<string, { default: string[]; states?: Record<StyleState, string[]> }>;
-  }
+  { default: string[]; states?: ProcessedStates; variants?: ProcessedVariants; ancestors?: ProcessedAncestors }
 >;
 
 // Helpers
@@ -131,7 +140,54 @@ export const processCssString = (attribute: string, value?: string) => {
   };
 };
 
-function processSelectorAttributes(selector?: StyleItem) {
+const processStates = (states?: StyleStates): ProcessedStates | undefined => {
+  if (!states) {
+    return undefined;
+  }
+
+  const processed: ProcessedStates = {};
+  for (const [state, styleObject] of Object.entries(states) as [StyleState, StyleObject][]) {
+    const values = processObject(styleObject);
+    if (values.length) {
+      processed[state] = values;
+    }
+  }
+
+  return Object.keys(processed).length ? processed : undefined;
+};
+
+const processVariants = (variants?: StyleVariants): ProcessedVariants | undefined => {
+  if (!variants) {
+    return undefined;
+  }
+
+  const processed: ProcessedVariants = {};
+  for (const [variantName, variantBlock] of Object.entries(variants)) {
+    const states = processStates(variantBlock.states);
+    processed[variantName] = { default: processObject(variantBlock.default), ...(states && { states }) };
+  }
+
+  return Object.keys(processed).length ? processed : undefined;
+};
+
+const processAncestors = (ancestors?: StyleAncestors): ProcessedAncestors | undefined => {
+  if (!ancestors) {
+    return undefined;
+  }
+
+  const processed: ProcessedAncestors = {};
+  for (const [ancestorName, ancestor] of Object.entries(ancestors)) {
+    const states = processStates(ancestor.states);
+    const variants = processVariants(ancestor.variants);
+    if (states || variants) {
+      processed[ancestorName] = { ...(states && { states }), ...(variants && { variants }) };
+    }
+  }
+
+  return Object.keys(processed).length ? processed : undefined;
+};
+
+function processSelectorAttributes(selector?: StyleItem): { attributes: Attributes } {
   if (!selector?.attributes || !Object.keys(selector.attributes).length) {
     return { attributes: { base: { default: [] } } };
   }
@@ -139,48 +195,15 @@ function processSelectorAttributes(selector?: StyleItem) {
   const attributes: Attributes = {};
   for (const styleSelector in selector.attributes) {
     const block = selector.attributes[styleSelector];
-    const defaultStyles = processObject(block.default);
-    const states: NonNullable<Attributes[string]['states']> = {} as NonNullable<Attributes[string]['states']>;
-    if (block.states) {
-      for (const [state, styleObject] of Object.entries(block.states) as [StyleState, Record<string, StyleValue>][]) {
-        const processed = processObject(styleObject);
-        if (processed.length) {
-          states[state] = processed;
-        }
-      }
-    }
-
-    const variants: NonNullable<Attributes[string]['variants']> = {};
-    if (block.variants) {
-      for (const variantName in block.variants) {
-        const variantBlock = block.variants[variantName];
-        const variantDefault = processObject(variantBlock.default);
-        const variantStates: NonNullable<Attributes[string]['states']> = {} as NonNullable<
-          Attributes[string]['states']
-        >;
-        if (variantBlock.states) {
-          for (const [state, styleObject] of Object.entries(variantBlock.states) as [
-            StyleState,
-            Record<string, StyleValue>
-          ][]) {
-            const processed = processObject(styleObject);
-            if (processed.length) {
-              variantStates[state] = processed;
-            }
-          }
-        }
-
-        variants[variantName] = {
-          default: variantDefault,
-          ...(Object.keys(variantStates).length && { states: variantStates })
-        };
-      }
-    }
+    const states = processStates(block.states);
+    const variants = processVariants(block.variants);
+    const ancestors = processAncestors(block.ancestors);
 
     attributes[styleSelector] = {
-      default: defaultStyles,
-      ...(Object.keys(states).length && { states }),
-      ...(Object.keys(variants).length && { variants })
+      default: processObject(block.default),
+      ...(states && { states }),
+      ...(variants && { variants }),
+      ...(ancestors && { ancestors })
     };
   }
 

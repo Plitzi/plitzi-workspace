@@ -7,10 +7,10 @@ import { produce } from 'immer';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import { useBuilderStore, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 
 import Selector from '../Selector';
-import { STYLE_STATE_OPTIONS } from './helpers';
+import { ancestorClasses, ancestorOptions, STYLE_STATE_OPTIONS } from './helpers';
 import Inspector from './Inspector';
 
 import type { SelectorValue } from '../Selector';
@@ -59,7 +59,10 @@ const StyleInspector = ({
   const [styleState, setStyleState] = useState<StyleState | undefined>(undefined);
   useBuilderStoreSync('styleSelector', styleSelector, { enabled: mode === 'element' });
   useBuilderStoreSync('styleVariant', styleVariant, { enabled: mode === 'element' });
+  const [styleAncestor, setStyleAncestor] = useState<string | undefined>(undefined);
   useBuilderStoreSync('styleState', styleState, { enabled: mode === 'element' });
+  useBuilderStoreSync('styleAncestor', styleAncestor, { enabled: mode === 'element' });
+  const [flat] = useBuilderStore('schema.flat');
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectorsFiltered = useMemo(
@@ -73,14 +76,28 @@ const StyleInspector = ({
     () => (value ? get(selectors, value) : undefined),
     [selectors, value]
   );
-  const variants = useMemo(
-    () =>
-      Object.keys(selector?.attributes[styleSelector]?.variants ?? {}).map(variant => ({
-        label: variant,
-        value: variant
-      })),
-    [selector?.attributes, styleSelector]
+  const configuredAncestors = selector?.attributes[styleSelector]?.ancestors;
+  const ancestors = useMemo(
+    () => ancestorOptions(mode === 'element' ? ancestorClasses(flat, element) : [], configuredAncestors),
+    [configuredAncestors, element, flat, mode]
   );
+  const ancestorPlaceholder = useMemo(() => {
+    const count = Object.keys(configuredAncestors ?? {}).length;
+
+    return count ? `When an ancestor is… (${count} set)` : 'When an ancestor is…';
+  }, [configuredAncestors]);
+  // With an ancestor, the variants on offer are that class's own, plus any already styled against it
+  const variants = useMemo(() => {
+    const block = selector?.attributes[styleSelector];
+    const names = styleAncestor
+      ? [
+          ...Object.keys(selectors?.[styleAncestor]?.attributes.base.variants ?? {}),
+          ...Object.keys(block?.ancestors?.[styleAncestor]?.variants ?? {})
+        ]
+      : Object.keys(block?.variants ?? {});
+
+    return [...new Set(names)].map(variant => ({ label: variant, value: variant }));
+  }, [selector?.attributes, selectors, styleAncestor, styleSelector]);
 
   useEffect(() => {
     setStyleSelector('base');
@@ -92,6 +109,7 @@ const StyleInspector = ({
     const selector = selectorNames[selectorNames.length - 1];
     onChange?.(selector ? selector : '');
     setStyleState(undefined);
+    setStyleAncestor(undefined);
     setComponentSubType(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChange, styleSelectors]);
@@ -107,12 +125,14 @@ const StyleInspector = ({
     }
     setStyleState(undefined);
     setStyleVariant(undefined);
+    setStyleAncestor(undefined);
     setComponentSubType(undefined);
   }, [styleSelector]);
 
   useDidUpdateEffect(() => {
     setStyleState(undefined);
     setStyleVariant(undefined);
+    setStyleAncestor(undefined);
     setComponentSubType(undefined);
   }, [value]);
 
@@ -196,6 +216,33 @@ const StyleInspector = ({
     []
   );
 
+  const handleChangeStyleAncestor = useCallback((option?: Exclude<Option, OptionGroup>) => {
+    setStyleAncestor(option?.value);
+    setStyleState(undefined);
+    setStyleVariant(undefined);
+  }, []);
+
+  const handleRemoveStyleAncestor = useCallback(
+    (option: Exclude<Option, OptionGroup>) => {
+      if (option.value === styleAncestor) {
+        setStyleAncestor(undefined);
+        setStyleState(undefined);
+        setStyleVariant(undefined);
+      }
+
+      if (!selector?.attributes[styleSelector]?.ancestors?.[option.value]) {
+        return;
+      }
+
+      builderHandler('styleUpdateSelector', displayMode, selector.name, undefined, undefined, {
+        styleSelector,
+        styleAncestor: option.value,
+        componentType: selector.componentType
+      });
+    },
+    [builderHandler, displayMode, selector, styleAncestor, styleSelector]
+  );
+
   const handleChangeStyleVariant = useCallback((option?: Exclude<Option, OptionGroup>) => {
     setStyleVariant(option?.value);
   }, []);
@@ -215,6 +262,7 @@ const StyleInspector = ({
         styleSelector,
         styleVariant: option.value,
         styleState,
+        styleAncestor,
         componentType: selector?.componentType
       });
     },
@@ -226,9 +274,13 @@ const StyleInspector = ({
       selector?.name,
       styleSelector,
       styleState,
-      styleVariant
+      styleVariant,
+      styleAncestor
     ]
   );
+
+  // An ancestor holds no rules of its own: only under one of its states or variants
+  const awaitsCondition = !!styleAncestor && !styleState && !styleVariant;
 
   const hasControls =
     allowStyleSelector &&
@@ -309,19 +361,40 @@ const StyleInspector = ({
             )}
           </div>
         )}
+        {hasControls && allowStyleState && !!ancestors.length && (
+          <Select2
+            className="w-full"
+            value={styleAncestor}
+            options={ancestors}
+            placeholder={ancestorPlaceholder}
+            size="xs"
+            clearable
+            allowRemoveOptions
+            onChange={handleChangeStyleAncestor}
+            onRemove={handleRemoveStyleAncestor}
+          />
+        )}
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300 dark:border-zinc-700">
-        <Inspector
-          selectors={selectorsFiltered}
-          componentType={componentType}
-          selector={selector}
-          styleSelector={styleSelector}
-          styleState={styleState}
-          styleVariant={styleVariant}
-          element={element}
-          displayMode={displayMode}
-          mode={mode}
-        />
+        {awaitsCondition && (
+          <div className="m-3 rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-xs text-zinc-500 select-none dark:border-zinc-600 dark:text-zinc-400">
+            Pick the state or variant of .{styleAncestor} these styles apply in.
+          </div>
+        )}
+        {!awaitsCondition && (
+          <Inspector
+            selectors={selectorsFiltered}
+            componentType={componentType}
+            selector={selector}
+            styleSelector={styleSelector}
+            styleState={styleState}
+            styleVariant={styleVariant}
+            styleAncestor={styleAncestor}
+            element={element}
+            displayMode={displayMode}
+            mode={mode}
+          />
+        )}
       </div>
     </div>
   );

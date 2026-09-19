@@ -13,8 +13,8 @@ import type {
   StyleCategory,
   StyleItem,
   StyleObject,
-  StyleState,
   StyleStates,
+  StyleTarget,
   StyleValue,
   StyleVariants,
   TagType
@@ -28,19 +28,20 @@ const addSelector = (
   path: StyleCategory | undefined,
   value:
     StyleItem['attributes'] | StyleValue | Partial<StyleObject> | StyleVariants | StyleStates | StyleBlock | undefined,
-  params: { componentType?: string; styleSelector?: string; styleState?: StyleState; styleVariant?: string }
+  params: StyleTarget
 ): boolean => {
   if (!(params as typeof params | undefined)) {
     return false;
   }
 
-  const { componentType, styleSelector, styleState, styleVariant } = params;
+  const { componentType, styleSelector, styleState, styleVariant, styleAncestor } = params;
   if (
     getStyleItem(platform, displayMode, selector) ||
     (!componentType && type === 'element') ||
     (componentType && type !== 'element') ||
     (styleSelector && typeof styleSelector !== 'string') ||
-    (!styleSelector && (styleState || styleVariant)) ||
+    (!styleSelector && (styleState || styleVariant || styleAncestor)) ||
+    (styleAncestor && !styleState && !styleVariant) ||
     (path && path.includes('.')) ||
     !isValidValue(path, value, params)
   ) {
@@ -67,7 +68,7 @@ const addSelector = (
     return true;
   }
 
-  writeStyle('add', styleItem, styleSelector ?? 'base', path, value, styleState, styleVariant);
+  writeStyle('add', styleItem, styleSelector ?? 'base', path, value, styleState, styleVariant, styleAncestor);
   styleItem.cache = processSelector(styleItem);
   set(platform, `${displayMode}.${selector}`, styleItem);
 

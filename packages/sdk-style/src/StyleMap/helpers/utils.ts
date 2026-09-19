@@ -39,24 +39,46 @@ const parseValue = (
   return prevValue;
 };
 
-const getTargetPath = (styleSelector: string, styleVariant?: string, styleState?: string) => {
+const getBlockPath = (styleSelector: string, styleAncestor?: string) =>
+  styleAncestor ? `attributes.${styleSelector}.ancestors.${styleAncestor}` : `attributes.${styleSelector}`;
+
+const getTargetPath = (styleSelector: string, styleVariant?: string, styleState?: string, styleAncestor?: string) => {
+  const blockPath = getBlockPath(styleSelector, styleAncestor);
   if (styleVariant && styleState) {
-    return `attributes.${styleSelector}.variants.${styleVariant}.states.${styleState}`;
+    return `${blockPath}.variants.${styleVariant}.states.${styleState}`;
   }
 
   if (styleVariant) {
-    return `attributes.${styleSelector}.variants.${styleVariant}.default`;
+    return `${blockPath}.variants.${styleVariant}.default`;
   }
 
   if (styleState) {
-    return `attributes.${styleSelector}.states.${styleState}`;
+    return `${blockPath}.states.${styleState}`;
   }
 
-  return `attributes.${styleSelector}.default`;
+  return `${blockPath}.default`;
 };
 
 const isEmptyObject = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0;
+
+// Drops `key` from the object at `path`, and each container left empty up to (not including) the selector's block
+const removeKey = (styleItem: StyleItem, path: string, key: string, blockPath: string) => {
+  const current = get(styleItem, path) as Record<string, unknown> | undefined;
+  if (!current) {
+    return;
+  }
+
+  const next = omit(current, [key]);
+  if (Object.keys(next).length || path === blockPath) {
+    set(styleItem, path, next);
+
+    return;
+  }
+
+  const separator = path.lastIndexOf('.');
+  removeKey(styleItem, path.slice(0, separator), path.slice(separator + 1), blockPath);
+};
 
 const writeStyle = (
   mode: 'add' | 'update' = 'add',
@@ -65,20 +87,20 @@ const writeStyle = (
   path?: StyleCategory,
   value?: StyleItem['attributes'] | StyleValue | Partial<StyleObject> | StyleVariants | StyleStates | StyleBlock,
   styleState?: StyleState,
-  styleVariant?: string
+  styleVariant?: string,
+  styleAncestor?: string
 ) => {
-  const targetPath = getTargetPath(styleSelector, styleVariant, styleState);
+  const blockPath = getBlockPath(styleSelector, styleAncestor);
+  const targetPath = getTargetPath(styleSelector, styleVariant, styleState, styleAncestor);
   const hasStateOrVariant = !!styleState || !!styleVariant;
+  const parentPath = styleVariant ? `${blockPath}.variants` : `${blockPath}.states`;
 
   // Set Value
   if (value !== undefined) {
     if (isStyleObject(value as StyleObject) && isEmptyObject(value)) {
       // dont recreate state/variant if they dont already exists
-      if (mode === 'update' && hasStateOrVariant) {
-        const parentPath = styleVariant ? `attributes.${styleSelector}.variants` : `attributes.${styleSelector}.states`;
-        if (!get(styleItem, parentPath)) {
-          return;
-        }
+      if (mode === 'update' && hasStateOrVariant && !get(styleItem, parentPath)) {
+        return;
       }
 
       set(styleItem, targetPath, {});
@@ -94,8 +116,6 @@ const writeStyle = (
 
   // create empty state/variant
   if (mode === 'add' && !path && hasStateOrVariant) {
-    const parentPath = styleVariant ? `attributes.${styleSelector}.variants` : `attributes.${styleSelector}.states`;
-
     if (!get(styleItem, parentPath)) {
       set(styleItem, targetPath, {});
     }
@@ -113,36 +133,21 @@ const writeStyle = (
 
   // Delete Variant
   if (styleVariant) {
-    const variantsPath = `attributes.${styleSelector}.variants`;
-    const variants = get(styleItem, variantsPath) as StyleVariants | undefined;
-    if (!variants) {
-      return;
-    }
-
-    const next = omit(variants, [styleVariant]);
-    if (Object.keys(next).length) {
-      set(styleItem, variantsPath, next);
-    } else {
-      set(styleItem, `attributes.${styleSelector}`, omit(get(styleItem, `attributes.${styleSelector}`), ['variants']));
-    }
+    removeKey(styleItem, `${blockPath}.variants`, styleVariant, `attributes.${styleSelector}`);
 
     return;
   }
 
   // Delete State
   if (styleState) {
-    const statesPath = `attributes.${styleSelector}.states`;
-    const states = get(styleItem, statesPath) as StyleStates | undefined;
-    if (!states) {
-      return;
-    }
+    removeKey(styleItem, `${blockPath}.states`, styleState, `attributes.${styleSelector}`);
 
-    const next = omit(states, [styleState]);
-    if (Object.keys(next).length) {
-      set(styleItem, statesPath, next);
-    } else {
-      set(styleItem, `attributes.${styleSelector}`, omit(get(styleItem, `attributes.${styleSelector}`), ['states']));
-    }
+    return;
+  }
+
+  // Delete the ancestor condition
+  if (styleAncestor) {
+    removeKey(styleItem, `attributes.${styleSelector}.ancestors`, styleAncestor, `attributes.${styleSelector}`);
 
     return;
   }
