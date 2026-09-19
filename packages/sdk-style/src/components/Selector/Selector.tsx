@@ -5,7 +5,7 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
-import { selectorFormatter } from './SelectorHelper';
+import { inStylesheetOrder, overriddenProperties, selectorFormatter } from './SelectorHelper';
 import SelectorItem from './SelectorItem';
 import SelectorSuggestions from './SelectorSuggestions';
 import StyleManager from '../StyleManager';
@@ -54,6 +54,24 @@ const Selector = ({
   const tags = useMemo<SelectorValue[]>(() => {
     return Object.values(pick(selectors ?? {}, value.split(' '))).map(tag => pick(tag, ['name', 'type']));
   }, [selectors, value]);
+  // Shown in the order they win in — the stylesheet's — while every edit keeps addressing a class by where the element
+  // writes it, so reading the order changes nothing that is stored.
+  const orderedTags = useMemo(
+    () =>
+      inStylesheetOrder(
+        tags.map((tag, position) => ({ ...tag, position })),
+        Object.keys(selectors ?? {})
+      ),
+    [tags, selectors]
+  );
+  const overridden = useMemo(
+    () =>
+      overriddenProperties(
+        orderedTags.map(({ name }) => name),
+        selectors ?? {}
+      ),
+    [orderedTags, selectors]
+  );
   const selectorsAvailables = useMemo<StyleItem[]>(
     () => Object.values(omit(selectors ?? {}, value.split(' '))),
     [selectors, value]
@@ -232,7 +250,6 @@ const Selector = ({
   );
 
   const contentStyle = useMemo<CSSProperties>(() => ({ width: triggerRect?.width }), [triggerRect]);
-  const tagsToRender = tagComponent ? [tagComponent, ...tags] : tags;
 
   return (
     <ContainerFloating ref={triggerRef} className="w-full" open={open}>
@@ -258,18 +275,36 @@ const Selector = ({
           >
             <Button.Icon icon="fas fa-swatchbook" />
           </Button>
-          {tagsToRender.map((tag, i) => (
+          {tagComponent && (
             <SelectorItem
-              key={`${i}_${tag.name}`}
+              selector={tagComponent.name}
+              type={tagComponent.type}
+              editable={false}
+              active={tagComponent.name === selectorProp?.name.replace(/:.*/, '')}
+              onClick={handleClickSelector}
+            />
+          )}
+          {orderedTags.map(({ position, ...tag }) => (
+            <SelectorItem
+              key={`${position}_${tag.name}`}
               selector={tag.name}
               type={tag.type}
               editable={tag.type !== 'element'}
               active={tag.name === selectorProp?.name.replace(/:.*/, '')}
-              onAction={handleClickAction(tagComponent ? i - 1 : i)}
+              overriddenBy={overridden[tag.name]}
+              onAction={handleClickAction(position)}
               onClick={handleClickSelector}
-              onChange={handleChangeItem(tagComponent ? i - 1 : i)}
+              onChange={handleChangeItem(position)}
             />
           ))}
+          {orderedTags.length > 1 && (
+            <span
+              className="flex h-7 items-center px-1 text-xs text-gray-500 dark:text-zinc-400"
+              title="Classes apply left to right, in the order the stylesheet lists them: where two set the same property, the one further right wins."
+            >
+              <i className="fas fa-circle-info" />
+            </span>
+          )}
           <input
             ref={inputRef}
             className="flex min-h-0 w-0 border-none bg-transparent px-1 py-0 text-xs text-inherit outline-hidden focus:min-w-[50px] focus:grow focus:ring-transparent"
