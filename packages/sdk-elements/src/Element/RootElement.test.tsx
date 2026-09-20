@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -134,6 +134,36 @@ describe('RootElement', () => {
       expect(node?.className).toContain('ctxClass');
       expect(node?.className).toContain('baseCls');
       expect(node?.className).toContain('rootCls');
+    });
+
+    it('fires onLoad in the live runtime mode, including when the element is a page', async () => {
+      renderRoot(
+        fullContext({
+          definition: {
+            rootId: 'root',
+            label: 'Home',
+            type: 'page',
+            styleSelectors: { base: 'baseCls' },
+            interactions: {
+              load: {
+                id: 'load',
+                title: 'On Load',
+                type: 'trigger',
+                action: 'onLoad',
+                params: {},
+                preview: {},
+                elementId: 'el1',
+                beforeNode: '',
+                afterNode: '',
+                flowId: 'load',
+                enabled: true
+              }
+            }
+          }
+        })
+      );
+
+      await waitFor(() => expect(interactionsManager.interactionTrigger).toHaveBeenCalledWith('el1', 'onLoad', {}));
     });
   });
 });

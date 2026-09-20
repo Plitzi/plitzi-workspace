@@ -209,12 +209,22 @@ class SpaceAuthor {
    */
   private assertStepsKnown(flows: StepSpec[][] | undefined, where: string): void {
     const vocabulary = this.options.vocabulary;
-    if (!vocabulary || !flows) {
+    if (!flows) {
       return;
     }
 
     for (const steps of flows) {
       for (const step of steps) {
+        // This check needs no runtime vocabulary: the document itself says it is addressing the built-in state
+        // source. Keep it available to the lower-level schema entry point as well as the composed SDK surface.
+        if (step.type === 'globalCallback' && step.on === 'state') {
+          this.warnStatePaths(step, where);
+        }
+
+        if (!vocabulary) {
+          continue;
+        }
+
         if (step.type === 'globalCallback') {
           this.assertGlobalCallback(step, vocabulary, where);
         }
@@ -244,6 +254,41 @@ class SpaceAuthor {
       throw new Error(
         `${where} runs the global callback "${step.action}" on ${step.on === undefined ? 'no module' : `"${step.on}"`}, but it is registered on "${declared.source}". A global callback names the module that registered it, never the element the flow sits on — the step builders fill this in.`
       );
+    }
+  }
+
+  /**
+   * State callbacks already operate below `runtime.state`.
+   *
+   * Keeping this a warning deliberately preserves the document exactly as authored: a nested `state` object is
+   * possible, even though `key: 'state.genre'` is overwhelmingly a confused binding source rather than an
+   * intentional request for `runtime.state.state.genre`. An agent gets the correction at author time without a
+   * migration or a changed runtime meaning for existing spaces.
+   */
+  private warnStatePaths(step: StepSpec, where: string): void {
+    const pathParams: Record<string, string[]> = {
+      setState: ['key'],
+      toggleState: ['key'],
+      appendState: ['key'],
+      removeState: ['key'],
+      toggleInState: ['key'],
+      clearState: ['key'],
+      moveState: ['from', 'to']
+    };
+    const params = pathParams[step.action] ?? [];
+
+    for (const param of params) {
+      const value = step.params?.[param];
+      if (typeof value !== 'string' || !/^(?:runtime\.)?state\./.test(value)) {
+        continue;
+      }
+
+      const bare = value.replace(/^(?:runtime\.)?state\./, '');
+      this.stepWarnings.push({
+        code: 'state-key-has-runtime-prefix',
+        message: `${where} passes "${value}" as ${param} to state.${step.action}. State callbacks already write below \`runtime.state\`; use "${bare}" instead, unless you intentionally need \`runtime.state.${value}\`.`,
+        details: { action: step.action, param, value, suggested: bare }
+      });
     }
   }
 

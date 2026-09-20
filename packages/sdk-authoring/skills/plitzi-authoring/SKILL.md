@@ -190,6 +190,11 @@ Use the step builders — they answer the three things that go wrong silently:
   and `toggleElement({ category: 'state', key: 'visibility' }, 'panel')` to show/hide an element (the second
   argument is the element it acts on; omitted, it acts on the one the flow is declared on). Never two branches
   under opposite `when` guards — those read the state as it was when the flow STARTED, so they run a click behind.
+  **Keys are relative:** `setState({ key: 'genre', … })` and `visible: 'state.genre'` name the same value. Never
+  put `state.` or `runtime.state.` in a state callback key: it would write a nested `state` object. `authorSpace`
+  leaves that deliberate shape alone but returns a `state-key-has-runtime-prefix` warning for the likely mistake.
+  `appendState({ key: 'scores', value, withId: true })` deliberately stores `{ id, value }`, not `value` directly:
+  bind the row's displayed value from `.value` and use `.id` when it must be addressed independently.
 - **What it takes.** Params are typed from the same declaration the builder's own panel is drawn from.
 
 `named(id, step)` is how a later step reads an earlier one — the flow scope is keyed by node id, so
@@ -210,6 +215,17 @@ when({ field: 'state.count', operator: '>', value: 3 }, addNotification({ conten
 
 `whenFailed` matches every outcome that is not `completed` — a run also comes back `skipped` or `aborted`, and
 matching only `failed` is how those two end up doing nothing.
+
+**Rule operators are directional.** `contains` is a case-insensitive substring check and accepts strings only.
+For a state array such as `state.genres`, use `when({ field: 'state.genres', operator: 'in', value: 'arcade' }, …)`:
+it asks whether the rule's `value` occurs in the field's array. The inverse is `notIn`, not `doesNotContain`.
+
+**Runtime is `previewMode: true`; the builder canvas is `false`.** That name is historical: the public SDK and SSR
+both default to `true`, so links navigate, forms accept input and their interaction flows run there. `onLoad()` runs
+for every mounted element, pages included. A page also offers `onPageLoad()`, which carries the current page id,
+route params and query params; choose it only when that page-specific context matters. Attribute bindings are
+generic runtime machinery, not limited by an element declaration's `bindings: {}` UI metadata — for example,
+`text({ bind: { content: 'state.genre' } })` updates live.
 
 ## What gets refused
 

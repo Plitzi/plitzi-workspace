@@ -741,6 +741,45 @@ describe('authorSpace / flows', () => {
     // and the utility runs against nothing at all.
     expect(nodes.map(node => node.elementId)).toEqual(['cta', 'state', null, 'cta']);
   });
+
+  it('warns about a state callback key that repeats the runtime prefix without rewriting it', () => {
+    const { schema, warnings } = authorSpace({
+      name: 'State key',
+      permanentUrl: 'state-key',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            {
+              type: 'button',
+              id: 'cta',
+              attributes: { content: 'Choose' },
+              flows: [
+                [
+                  { type: 'trigger', action: 'onClick' },
+                  {
+                    type: 'globalCallback',
+                    action: 'setState',
+                    on: 'state',
+                    params: { key: 'state.genre', type: 'text', value: 'arcade' }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    const warning = warnings.find(candidate => candidate.code === 'state-key-has-runtime-prefix');
+    expect(warning?.details).toMatchObject({ value: 'state.genre', suggested: 'genre' });
+    const button = schema.flat[schema.flat[schema.pages[0]].definition.items?.[0] ?? ''];
+    const stateStep = Object.values(button.definition.interactions ?? {}).find(node => node.action === 'setState');
+
+    // A warning is advisory: published documents and deliberate nested state keep their exact meaning.
+    expect(stateStep?.params.key).toBe('state.genre');
+  });
 });
 
 /**

@@ -50,6 +50,15 @@ export const onClick = (params: { propagateEvent?: boolean } = {}): StepSpec => 
 export const onLoad = (): StepSpec => on('onLoad');
 
 /**
+ * A page has this second load event in addition to {@link onLoad}.
+ *
+ * `onLoad` runs for every mounted element, including a page. `onPageLoad` belongs only to the page and carries its
+ * id plus the current route and query params, so it is the one to use when a flow needs to make a decision from the
+ * address that brought the visitor here.
+ */
+export const onPageLoad = (): StepSpec => on('onPageLoad');
+
+/**
  * The end of a server action this element started — the trigger a `detached` run needs, because that step returns
  * the moment the server accepts the work and leaves the page with nothing to react to when it finishes.
  */
