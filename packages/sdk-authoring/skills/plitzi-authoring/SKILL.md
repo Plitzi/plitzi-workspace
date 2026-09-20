@@ -71,6 +71,13 @@ container([hero, grid])         // an array is the children
 Anything else in the object is an **attribute**. `label` belongs to the attribute (a link and a form control both
 have one); the builder's name for the element is `meta.label`.
 
+**A link's `href` is a page id — and the renderer is polite about paths.** `link({ href: 'reports' })` resolves the
+page by its id, folder included, so a page inside a folder lands on its full route. A path is taken as one, whatever
+the leading `/`: `href: '/reports'`, `href: '//reports'` and `href: '/analytics/reports'` all resolve to
+`/analytics/reports`, and `href: '/'` stays `/`. A leading `/` NEVER yields `//…`, which would be a
+protocol-relative URL and navigate nowhere. `mode` switches the story: `'internal'` for a path within the space
+(which may carry `{{tokens}}` to interpolate at click time), `'external'` for a full URL passed through untouched.
+
 A type this SDK does not ship — a plugin, one the deployment brings — is authored the same way:
 
 ```ts

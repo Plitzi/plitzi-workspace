@@ -86,6 +86,9 @@ function getPageFullPath(
     folder: '',
     default: false
   }) as PageAttributes;
+  // The path halves below are run through `parsePath` everywhere they are built, and never just some branches:
+  // an id or a folder slug that arrives with a leading slash — `'/play'`, as a `link` href reads in city-internal
+  // mode — would otherwise fall back to `'//play'`, which is a protocol-relative URL and quietly navigates nowhere.
   if (defaultPage && !asString) {
     return { '/': pageId, [`/${pageId}`]: pageId }; // '*': pageId
   }
@@ -95,16 +98,18 @@ function getPageFullPath(
   }
 
   if (!folderId && !asString) {
-    return { [parsePath(`/${pageSlug}`)]: pageId, [`/${pageId}`]: pageId };
+    return { [parsePath(`/${pageSlug}`)]: pageId, [parsePath(`/${pageId}`)]: pageId };
   }
 
   if (!folderId && asString) {
-    return `/${pageSlug}`;
+    return parsePath(`/${pageSlug}`);
   }
 
   const pageFolder = pageFolders.find((pageFolder: PageFolder) => pageFolder.id === folderId);
   if (!pageFolder) {
-    return asString ? `/${pageSlug}` : { [parsePath(`/${pageSlug}`)]: pageId, [`/${pageId}`]: pageId };
+    return asString
+      ? parsePath(`/${pageSlug}`)
+      : { [parsePath(`/${pageSlug}`)]: pageId, [parsePath(`/${pageId}`)]: pageId };
   }
 
   const pageFoldersObj = pageFolders.reduce((acum, pageFolder) => ({ ...acum, [pageFolder.id]: pageFolder }), {});
@@ -112,10 +117,10 @@ function getPageFullPath(
   // slug inside the `analytics` folder, the way `/` is the page with none outside any.
   const path = [recursiveFolderSlug(pageFoldersObj, folderId), pageSlug].filter(Boolean).join('/');
   if (asString) {
-    return `/${path}`;
+    return parsePath(`/${path}`);
   }
 
-  return { [`/${path}`]: pageId, [`/${pageId}`]: pageId };
+  return { [parsePath(`/${path}`)]: pageId, [parsePath(`/${pageId}`)]: pageId };
 }
 
 const isPageAuthored = (accessLevel?: NavigationAccessLevel, authenticated?: boolean, previewMode: boolean = true) => {

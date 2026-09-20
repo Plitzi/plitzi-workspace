@@ -47,8 +47,8 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
       return href;
     }
 
-    const urlAux = `/${href}`.replaceAll(/[/]+/gim, '/');
     if (mode === 'internal') {
+      const urlAux = `/${href}`.replaceAll(/[/]+/gim, '/');
       try {
         const result = processTwig(urlAux, { ...queryParams, ...routeParams }, true);
         if (typeof result !== 'string') {
@@ -63,7 +63,11 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
       return urlAux;
     }
 
-    return getPageFullPath(pageDefinitions, pageFolders, href, true);
+    // A page href is a page id, but a habit has you write the path it sits at, with a leading slash in front of it.
+    // `getPageFullPath` falls back to treating whatever does not match a page as a literal path (now a normalized one),
+    // and this strip is what lets `/arcade` find the page whose id is `arcade`, not a `//arcade` protocol-relative URL.
+    const pageHref = href.replace(/^\/+/, '');
+    return getPageFullPath(pageDefinitions, pageFolders, pageHref, true);
   }, [mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
 
   const handleClick = (e: MouseEvent) => {

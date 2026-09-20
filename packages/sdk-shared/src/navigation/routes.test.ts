@@ -38,4 +38,27 @@ describe('routes', () => {
     expect(matchRoutePath(paths, '/analytics/reports', false).pageId).toBe('reportsIndex');
     expect(matchRoutePath(paths, '/analytics/reports/42', false).pageId).toBe('run');
   });
+
+  const sloppySlug = page('sloppy', { slug: 'au//dience', folder: 'analytics' });
+
+  it('cleans a leading slash into a path, not a protocol-relative URL', () => {
+    expect(getPageFullPath(pages, folders, '/audience', true)).toBe('/audience');
+    expect(getPageFullPath(pages, folders, '/analytics/audience', true)).toBe('/analytics/audience');
+    expect(getPageFullPath(pages, folders, '//audience', true)).toBe('/audience');
+    // The memory of the home page is the same: `/` must stay `/`, the router's home, not leave as `//`.
+    expect(getPageFullPath(pages, folders, '/', true)).toBe('/');
+  });
+
+  it('collapses runaway slashes in the folder branch too', () => {
+    expect(getPageFullPath({ ...pages, sloppy: sloppySlug }, folders, 'sloppy', true)).toBe('/analytics/au/dience');
+    expect(getPageFullPath(pages, folders, '/run/42', true)).toBe('/run/42');
+  });
+
+  it('keeps the object form on normalized paths', () => {
+    expect(getPageFullPath(pages, folders, 'audience')).toEqual({
+      '/analytics/audience': 'audience',
+      '/audience': 'audience'
+    });
+    expect(getPageFullPath(pages, folders, '/audience')).toEqual({ '/audience': '/audience' });
+  });
 });
