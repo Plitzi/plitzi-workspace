@@ -7,7 +7,6 @@ import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziService
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import SpaceContainer from '../../Space/SpaceContainer';
-import MadeInPlitzi from '../components/MadeInPlitzi';
 import OverQuotaNotice from '../components/OverQuotaNotice';
 
 import type { RenderMode } from '@plitzi/sdk-shared';
@@ -17,14 +16,12 @@ export type RawModeProps = {
   renderMode?: RenderMode;
   pageId?: string;
   style?: string;
-  branding?: boolean;
   plitziContextValue: PlitziServiceContextValue;
 };
 
 const RawMode = ({
   pageId = '',
   style = '',
-  branding = true,
   plitziContextValue,
   renderMode = 'raw'
 }: RawModeProps) => {
@@ -53,7 +50,6 @@ const RawMode = ({
         {pageId && renderMode !== 'widget' && <Page internalProps={pageValueMemo} />}
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
       </PlitziServiceProvider>
-      {branding && <MadeInPlitzi pageId={pageId} />}
       <OverQuotaNotice />
     </SpaceContainer>
   );

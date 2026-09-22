@@ -97,10 +97,10 @@
   }
 
   /**
-   * The line a site shows while it is over its plan's quota — the counterpart of the badge, sitting beside it.
+   * The line a site shows while it is over its plan's quota.
    *
-   * Fixed to the bottom LEFT so it never covers the badge, and above everything for the same reason the badge is:
-   * a page that renders its own chrome on top of it would hide the one thing its owner needs to see.
+   * Fixed and above everything: a page that renders its own chrome on top of it would hide the one thing its owner
+   * needs to see.
    */
   .plitzi-over-quota {
     padding: 6px 10px;
@@ -135,42 +135,6 @@
     }
   }
 
-  .made-in-plitzi {
-    padding: 6px 8px;
-    right: 12px;
-    bottom: 12px;
-    position: fixed;
-    z-index: 999999;
-    border: 1px solid rgb(229, 231, 235);
-    border-radius: 4px;
-    background-color: white;
-    color: rgb(75, 85, 99);
-    font-weight: 700;
-    line-height: 16px;
-    font-family:
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      BlinkMacSystemFont,
-      'Segoe UI',
-      Roboto,
-      'Helvetica Neue',
-      Arial,
-      'Noto Sans',
-      sans-serif,
-      'Apple Color Emoji',
-      'Segoe UI Emoji',
-      'Segoe UI Symbol',
-      'Noto Color Emoji';
-    font-size: 12px;
-    text-decoration: none;
-    user-select: none;
-    box-shadow:
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(0, 0, 0, 0) 0px 0px 0px 0px,
-      rgba(0, 0, 0, 0.1) 0px 1px 3px 0px,
-      rgba(0, 0, 0, 0) 0px 1px 2px -1px;
-  }
 
   @keyframes pulse {
     0% {

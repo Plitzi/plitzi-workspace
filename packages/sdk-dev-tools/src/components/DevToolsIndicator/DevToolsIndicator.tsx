@@ -11,9 +11,7 @@ export type DevToolsIndicatorProps = {
 };
 
 // Fixed to the viewport rather than docked: while the panel is collapsed this is the only thing the dev tools show,
-// and it has to stay reachable over a page that scrolls. It wears the same chrome as the "Made in Plitzi" badge
-// (.made-in-plitzi in the SDK stylesheet) — restated in Tailwind because that class lives in the page's stylesheet
-// and this renders inside the dev-tools shadow root — sitting in the opposite corner, above it in z-order.
+// and it has to stay reachable over a page that scrolls.
 const DevToolsIndicator = ({ className, onOpen }: DevToolsIndicatorProps) => {
   const { logs } = use(DevToolsContext);
 

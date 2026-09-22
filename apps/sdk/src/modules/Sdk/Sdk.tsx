@@ -28,9 +28,6 @@ import type { Server, SpaceFont } from '@plitzi/sdk-shared';
 
 export type SdkProps = {
   externalStyle?: string;
-  /** Shows the "Made in Plitzi" link over the rendered space. Off for embeds that are not a Plitzi site of their
-   *  own — an MCP widget inside a chat, a component mounted in a host app. */
-  branding?: boolean;
   sdkStylePath?: string;
   server?: Server;
 };
@@ -38,7 +35,7 @@ export type SdkProps = {
 /** Module-level, so a space that declares no font of its own keeps one reference across every render. */
 const NO_FONTS: SpaceFont[] = [];
 
-const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
+const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: SdkProps) => {
   const { resolvedTheme } = useTheme();
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -52,10 +49,7 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
       'runtime.sources.variables',
       'style.fonts'
     ]);
-  const { renderMode, previewMode, debugMode, environment, isHydrating, overQuota } = useRenderSettings();
-  // Pinned on rather than defaulted on: a space over its plan cannot take the badge off from its own settings, and
-  // a server-rendered page pins it the same way (see prepareRender).
-  const brandingShown = branding || overQuota;
+  const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);
 
@@ -155,7 +149,6 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
         <RawMode
           renderMode={renderMode}
           style={css}
-          branding={brandingShown}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
         />
@@ -164,7 +157,6 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
         <ShadowMode
           sdkStylePath={sdkStylePath}
           style={css}
-          branding={brandingShown}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
           assets={assets}
@@ -173,7 +165,6 @@ const Sdk = ({ externalStyle = '', branding = true, sdkStylePath = './plitzi-sdk
       {!['raw', 'widget', 'shadow'].includes(renderMode) && (
         <IframeMode
           style={fontHead.faces ? `${fontHead.faces}\n${css}` : css}
-          branding={brandingShown}
           plitziContextValue={plitziContextValue}
           pageId={currentPageId}
           assets={iframeAssets}

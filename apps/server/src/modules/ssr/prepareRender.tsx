@@ -161,13 +161,10 @@ export const prepareRender = async (
 
   // What the metering adapter decided for this page (see SSRAdapters.pageView). `firstViewCounted` is forced on
   // whatever the adapter returned: this render was already counted server-side, so the browser reporting the
-  // same view again would double it. Degrading pins the badge on rather than merely defaulting it, so a space
-  // over its quota cannot turn it off from its own settings.
+  // same view again would double it.
   const { degrade, analytics } = req.ctx.meter ?? {};
   const clientAnalytics = analytics ? { ...analytics, firstViewCounted: true } : undefined;
-  const branding = degrade ? true : undefined;
-  // The same state, said out loud. `branding` is forced on by it but is also on for every ordinary free space, so
-  // it cannot be what a notice reads — this is the fact that the ACCOUNT is over, and only the server can state it.
+  // The fact that the ACCOUNT is over its quota: only the server can state it, so a space cannot turn the notice off.
   const overQuota = degrade ? true : undefined;
 
   /**
@@ -196,7 +193,6 @@ export const prepareRender = async (
       sdkDevToolsStylePath,
       ...(theme ? { theme } : {}),
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
-      ...(branding ? { branding } : {}),
       ...(overQuota ? { overQuota } : {}),
       ...(actionRuns ? { actionRuns } : {})
     })
@@ -242,7 +238,6 @@ export const prepareRender = async (
       environment: req.ctx.spaceDeployment?.environment ?? environment,
       debugMode: debugRendered,
       sdkDevToolsStylePath,
-      branding,
       overQuota,
       theme
     },

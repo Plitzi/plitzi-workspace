@@ -638,7 +638,6 @@ describeTarget('blog', subject => {
     // puts a newer story in that slot whenever it happens to run first.
     await expect(page.locator('a.hero')).toBeVisible();
 
-    // The badge, not the "Made in Plitzi" branding link.
     await page.locator('button:has-text("Plitzi")').first().click();
     await page.getByRole('button', { name: 'Store' }).click();
 

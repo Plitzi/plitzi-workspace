@@ -50,7 +50,6 @@ export type AppMainProps = {
   sdkDevToolsStylePath?: string;
   previewMode?: boolean;
   debugMode?: boolean;
-  branding?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota. */
   overQuota?: boolean;
   analytics?: AnalyticsConfig;

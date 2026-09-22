@@ -335,16 +335,13 @@ describe('prepareRender / debugging in a render nobody is watching', () => {
 /**
  * What a render says when the account behind it is over quota.
  *
- * `branding` is forced on by the same state, but it is also on for every ordinary free space — so a notice that
- * read it would appear on sites that are perfectly within their plan. The two facts travel separately for that
- * reason, and only the server can state this one.
+ * Only the server can state it: it is a fact about the account, not something the page or its settings decide.
  */
 describe('prepareRender / a degraded render', () => {
-  it('tells the client the account is over quota, and pins the badge on with it', async () => {
+  it('tells the client the account is over quota', async () => {
     const { componentProps, templateParams } = await render('/', { degrade: true });
 
     expect(componentProps.overQuota).toBe(true);
-    expect(componentProps.branding).toBe(true);
     // The browser hydrates from the same fact, so the notice does not appear and then vanish.
     expect(templateParams.offlineData).toContain('overQuota');
   });
@@ -353,7 +350,6 @@ describe('prepareRender / a degraded render', () => {
     const { componentProps, templateParams } = await render('/', { degrade: false });
 
     expect(componentProps.overQuota).toBeUndefined();
-    expect(componentProps.branding).toBeUndefined();
     expect(templateParams.offlineData).not.toContain('overQuota');
   });
 });

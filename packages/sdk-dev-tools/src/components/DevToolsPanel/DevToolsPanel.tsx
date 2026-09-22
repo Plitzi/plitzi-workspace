@@ -56,7 +56,7 @@ const DevToolsPanel = ({
   );
 
   return (
-    // Lifts the docked panel above the fixed "Made in Plitzi" badge (z-index 999999).
+    // Lifts the docked panel above the SDK's fixed over-quota notice (z-index 999999).
     <ContainerResizable
       className={clsx('component__container-resizable-sidebar relative z-[1000000] text-xs', className, {
         'h-full': orientation === 'vertical'

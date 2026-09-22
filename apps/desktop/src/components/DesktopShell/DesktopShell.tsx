@@ -104,7 +104,6 @@ const DesktopShell = () => {
       // business — with the browser router the rail would rewrite the location the moment it mounted.
       routing="memory"
       renderMode="raw"
-      branding={false}
       // The rail is the window's chrome: it follows the window's theme and never writes to it. See PlitziSdkWrapper.
       themeScope="container"
 
