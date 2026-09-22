@@ -144,6 +144,34 @@ describe('createJobWorker', () => {
     expect(job.attempts).toBe(1);
   });
 
+  /**
+   * The failure that used to empty the queue.
+   *
+   * A store that throws is not the job being wrong — it is the guards being unreachable — and counting it as an
+   * attempt is how three attempts and a widening backoff turn a two-minute outage into every scheduled job in the
+   * cluster marked `dead`, permanently.
+   */
+  it('gives the job back untouched when the shared store is unreachable', async () => {
+    const ran = vi.fn(() => ({ ok: true }));
+    const test = world(ran);
+    await test.job();
+
+    const unreachable = () => {
+      throw new Error('Key/value storage is unavailable');
+    };
+    vi.spyOn(test.module.guards, 'begin').mockImplementationOnce(unreachable);
+
+    await test.worker().poll();
+    await settle();
+
+    const held = await test.read();
+    expect(held.status).toBe('pending');
+    expect(held.attempts).toBe(0);
+    expect(held.history).toEqual([]);
+    expect(held.error).toContain('not started');
+    expect(ran).not.toHaveBeenCalled();
+  });
+
   it('retries a failure with a backoff, then leaves it for an operator', async () => {
     const test = world(() => {
       throw new Error('the provider said no');

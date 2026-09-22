@@ -15,6 +15,8 @@ import type { ActionJob, ActionJobQueue, ActionJobSettlement } from '@plitzi/sdk
  */
 const TRY_AGAIN = new Set(['duplicate', 'over_capacity']);
 
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
 /**
  * Refusals no number of attempts will change: the action was deleted, its schedule was switched off, or the
  * document refuses this trigger. Retrying is noise, and the job stops where an operator can see why.
@@ -155,19 +157,25 @@ export const createJobWorker = ({
       });
     } catch (error) {
       const refusal = error instanceof ActionRunError ? error.reason : undefined;
-      if (refusal && TRY_AGAIN.has(refusal)) {
-        await release(job, retryDelay(1), `not started: ${refusal}`);
+      /**
+       * Two different things, and telling them apart is what decides whether the job survives.
+       *
+       * A REFUSAL is the cluster answering: another run holds the key, this replica is full. A throw that is not a
+       * refusal means the guards could not be consulted at all — the shared store is unreachable — and that is
+       * infrastructure rather than anything about this job. Both go back with the attempt REFUNDED.
+       *
+       * Counting an outage as attempts is how a queue loses work: with three attempts and a widening backoff, a
+       * Redis blip of two minutes retires every scheduled job in the cluster as `dead`, permanently, and the digest
+       * nobody got is indistinguishable from one nobody asked for. The job comes back instead, carrying why, and an
+       * operator sees a queue that is waiting rather than a queue that has been emptied.
+       */
+      if (!refusal || TRY_AGAIN.has(refusal)) {
+        await release(job, retryDelay(1), `not started: ${refusal ?? messageOf(error)}`);
 
         return;
       }
 
-      // The MESSAGE when the guards threw something that is not a refusal, because that is a store being
-      // unreachable or a misconfiguration — and "could not start: failed" is a sentence nobody can act on.
-      await fail(
-        job,
-        undefined,
-        `could not start: ${refusal ?? (error instanceof Error ? error.message : String(error))}`
-      );
+      await fail(job, undefined, `could not start: ${refusal}`);
 
       return;
     }
@@ -226,7 +234,7 @@ export const createJobWorker = ({
         return;
       }
 
-      await fail(job, run.runId, error instanceof Error ? error.message : String(error));
+      await fail(job, run.runId, messageOf(error));
     } finally {
       active.delete(job.id);
       await module.guards.end(run);
