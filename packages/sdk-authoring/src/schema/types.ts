@@ -95,7 +95,14 @@ export interface ElementSpec {
    */
   id?: string;
   attributes?: Record<string, unknown>;
-  /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
+  /**
+   * A style variant the element starts in, e.g. a heading's `title`.
+   *
+   * The element TYPE's vocabulary by default. When the element wears a class that declares a variant of this name and
+   * the type declares none, it is that CLASS's variant — `text({ class: avatar, variant: 'violet' })` wears
+   * `avatar--violet`. Keyed by the type instead, it named a selector the element does not wear and rendered plain.
+   * For a variant that follows the data, bind it with `variantFrom`.
+   */
   variant?: string;
   /**
    * A rule set of this element's own. Shorthands are expanded and every property is checked before it is written,

@@ -206,6 +206,27 @@ const zoneFormatter = (timeZone: string): Intl.DateTimeFormat | null => {
  * The zone is what a SERVER flow needs: its process runs in whatever zone the host was given, and "is it already
  * past 21:00 at the restaurant" is a question about the restaurant's clock. `undefined` for a zone that does not exist.
  */
+/**
+ * What a `date` filter was handed, as a Date.
+ *
+ * An epoch in milliseconds is the shape every API here answers with (`nextRunAt`, `dueAt`), and it reaches a template
+ * as a number or — through an attribute — as a string of digits. `new Date("1790143200000")` is Invalid Date, so
+ * both are read as numbers first; anything else is left to the Date parser, which reads ISO strings.
+ */
+const toDate = (value: unknown): Date => {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return new Date(value);
+  }
+
+  const text = String(value).trim();
+
+  return /^-?\d+$/.test(text) ? new Date(Number(text)) : new Date(text);
+};
+
 const dateParts = (date: Date, timeZone: string): DateParts | undefined => {
   if (!timeZone) {
     return {
@@ -754,7 +775,7 @@ export const filters: Record<string, TwigFilter> = {
       return value;
     }
     const format = toStr(args[0]);
-    const date = value instanceof Date ? value : new Date(String(value));
+    const date = toDate(value);
     if (Number.isNaN(date.getTime())) {
       return '';
     }

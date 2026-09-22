@@ -262,6 +262,23 @@ class SpaceAuthor {
   }
 
   /**
+   * Whose vocabulary `variant` names: the element type's, unless a class the element wears declares that variant and
+   * the type does not. The variant map is keyed by selector, and the class is the selector those rules live on — keyed
+   * by the type, `avatar--violet` was never worn and the element rendered as if no variant had been asked for.
+   */
+  private variantOwner(spec: ElementSpec, variant: string): string {
+    if (this.spec.elements?.[spec.type]?.variants?.[variant] !== undefined || spec.class === undefined) {
+      return spec.type;
+    }
+
+    const owner = classNames(spec.class).find(name =>
+      Object.values(this.classRules.get(name) ?? {}).some(block => block.variants?.[variant] !== undefined)
+    );
+
+    return owner ?? spec.type;
+  }
+
+  /**
    * A source read INSIDE a flow has to be named in full: `{{ list_jobRows.item.id }}`, not `{{ jobRows.item.id }}`.
    *
    * A binding's source is a name this module completes — `jobRows.item` becomes `list_jobRows.item` — so the short
@@ -1084,7 +1101,7 @@ class SpaceAuthor {
            * was authored on screen with placeholder text in it until something happened.
            */
           visibility: spec.visible === undefined,
-          ...(spec.variant ? { styleVariant: { [spec.type]: { base: spec.variant } } } : {})
+          ...(spec.variant ? { styleVariant: { [this.variantOwner(spec, spec.variant)]: { base: spec.variant } } } : {})
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
         ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),

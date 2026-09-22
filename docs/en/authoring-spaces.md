@@ -255,7 +255,10 @@ const pill = styles('statusPill', { css: { padding: '2px 8px' }, variants: { pen
 text({ class: pill, bind: [{ to: 'content', source: 'jobs.item.label' }, variantFrom(pill, 'jobs.item.status')] });
 ```
 
-The value at the source names the variant. Written by hand the key is the trap: it names the selector the variants
+The value at the source names the variant; when the data does not already speak in variant names, `template` turns
+it into one — `variantFrom(pill, 'runs.item.status', { template: "{{ source == 'completed' ? 'ok' : 'failed' }}" })`,
+or `{ template: "{{ source == 'code' ? 'on' : '' }}" }` for a control that lights up when a state names it. Written
+by hand the key is the trap: it names the selector the variants
 belong to, and the element's type (`text.base`) is a different selector from its class (`statusPill.base`) — the
 first renders with no variant at all, and nothing reports it.
 

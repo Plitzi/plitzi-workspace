@@ -100,6 +100,18 @@ export const hiddenWhen = (source: string): BindingSpec => ({
   transformers: [{ action: 'not', params: {} }]
 });
 
+/** What {@link variantFrom} takes beyond the class and the source. */
+export interface VariantFromOptions {
+  /** Which of the element's selectors wears the class — `base` for nearly everything, `input` for a form control. */
+  slot?: string;
+  /**
+   * A twig expression turning the value into a variant name, with the value as `source` — for when the data does not
+   * already speak in variant names: `"{{ source == 'completed' ? 'ok' : 'failed' }}"`, or `"{{ source == 'code' ?
+   * 'on' : '' }}"` for a control that lights up when a state names it. An empty answer wears no variant.
+   */
+  template?: string;
+}
+
 /**
  * Switches one of a CLASS's variants from a value the data answered — a status pill that turns amber, green or red
  * as the job it describes moves.
@@ -107,22 +119,25 @@ export const hiddenWhen = (source: string): BindingSpec => ({
  * The variant map is keyed by the SELECTOR the variants belong to, and the obvious guess names a different one:
  * `text.base` selects the text TYPE's own variants (`text--done`), not the class the element wears
  * (`statusPill--done`), so the element renders with no variant at all and nothing reports it. Taken from the class
- * declaration, the key cannot drift from the class it means. The value at `source` names the variant.
- *
- * `slot` is which of the element's selectors wears the class — `base` for nearly everything, `input` for a form
- * control's field.
+ * declaration, the key cannot drift from the class it means. The value at `source` names the variant, or `template`
+ * turns it into one.
  */
-export const variantFrom = (cls: ClassRef, source: string, slot = 'base'): BindingSpec => ({
-  to: 'styleVariant',
-  source,
-  category: 'initialState',
-  transformers: [
-    {
-      action: 'styleVariant',
-      params: { key: `${typeof cls === 'string' ? cls : cls.name}.${slot}`, variant: '', append: 'false' }
-    }
-  ]
-});
+export const variantFrom = (cls: ClassRef, source: string, options: VariantFromOptions = {}): BindingSpec => {
+  const { slot = 'base', template } = options;
+
+  return {
+    to: 'styleVariant',
+    source,
+    category: 'initialState',
+    transformers: [
+      ...(template ? [{ action: 'twigTemplate', params: { template } }] : []),
+      {
+        action: 'styleVariant',
+        params: { key: `${typeof cls === 'string' ? cls : cls.name}.${slot}`, variant: '', append: 'false' }
+      }
+    ]
+  };
+};
 
 /**
  * The bindings an element declared, with its visibility condition among them.

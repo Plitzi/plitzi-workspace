@@ -225,6 +225,18 @@ describe('AST processTwig — spaceless filter', () => {
 });
 
 describe('AST processTwig — date filter', () => {
+  // Every API here answers instants as epoch milliseconds, and an attribute hands them over as text.
+  it('date reads an epoch in milliseconds, as a number or as a string of digits', () => {
+    const at = Date.UTC(2026, 8, 23, 6, 0);
+
+    expect(processTwig('{{ val | date("Y-m-d H:i", "UTC") }}', { val: at })).toBe('2026-09-23 06:00');
+    expect(processTwig('{{ val | date("Y-m-d H:i", "UTC") }}', { val: String(at) })).toBe('2026-09-23 06:00');
+  });
+
+  it('date still answers nothing for text that is not a date', () => {
+    expect(processTwig('{{ val | date("Y") }}', { val: 'soon' })).toBe('');
+  });
+
   it('formats a date string', () => {
     const result = processTwig('{{ val | date("Y-m-d") }}', { val: '2025-01-15T10:30:00' });
     expect(result).toBe('2025-01-15');

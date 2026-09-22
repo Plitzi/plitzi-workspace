@@ -129,8 +129,16 @@ describe('variantFrom', () => {
   });
 
   it('takes a class by name, and another selector of the element', () => {
-    expect(variantFrom('fieldInput', 'form.state', 'input').transformers).toEqual([
+    expect(variantFrom('fieldInput', 'form.state', { slot: 'input' }).transformers).toEqual([
       { action: 'styleVariant', params: { key: 'fieldInput.input', variant: '', append: 'false' } }
+    ]);
+  });
+
+  // Data that does not already speak in variant names: a run's status, or a control that lights up for its own value.
+  it('turns the value into a variant through a template first', () => {
+    expect(variantFrom(pill, 'state.scene', { template: '{{ source == "code" ? "on" : "" }}' }).transformers).toEqual([
+      { action: 'twigTemplate', params: { template: '{{ source == "code" ? "on" : "" }}' } },
+      { action: 'styleVariant', params: { key: 'statusPill.base', variant: '', append: 'false' } }
     ]);
   });
 

@@ -1171,8 +1171,15 @@ class SpecReader {
       return undefined;
     }
 
-    const own = styleVariant[element.definition.type] ?? styleVariant[type];
-    const others = Object.keys(styleVariant).filter(key => key !== element.definition.type && key !== type);
+    // A variant keyed by a class the element wears is that class's — authoring keys it so when the class declares
+    // the variant and the type does not, and reads the same `variant` back into the same key.
+    const worn = element.definition.styleSelectors.base
+      .split(/\s+/)
+      .filter(name => name !== '' && styleVariant[name] !== undefined);
+    const ownKeys = [element.definition.type, type, ...worn];
+    const own =
+      styleVariant[element.definition.type] ?? styleVariant[type] ?? (worn[0] ? styleVariant[worn[0]] : undefined);
+    const others = Object.keys(styleVariant).filter(key => !ownKeys.includes(key));
     if (others.length > 0 || (own && Object.keys(own).some(selector => selector !== 'base'))) {
       this.correct(
         'dropped-initial-state',

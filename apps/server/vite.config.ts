@@ -59,7 +59,6 @@ export default defineConfig(({ mode }) => {
         include: ['src', 'package.json'],
         entryRoot: 'src',
         tsconfigPath: './tsconfig.app.json',
-        insertTypesEntry: true,
         beforeWriteFile: skipUnchangedDts
       }),
       copyAssets()

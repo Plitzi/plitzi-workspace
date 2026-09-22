@@ -225,3 +225,37 @@ describe('the order of `classes`', () => {
     );
   });
 });
+
+describe('a variant the element starts in', () => {
+  const avatar = styles('avatar', {
+    css: { width: '22px', height: '22px' },
+    variants: { violet: { 'background-color': '#5B3DF5' }, pink: { 'background-color': '#E8618C' } }
+  });
+
+  const variantOf = (spec: SpaceSpec, id: string) =>
+    authorSpace(spec).schema.flat[id].definition.initialState?.styleVariant;
+
+  // Keyed by the type it named `text--violet`, a selector nobody wears: the avatars rendered with no colour at all.
+  it('is the class variant when the class it wears declares it and the type does not', () => {
+    const spec = spaceWith([
+      { type: 'text', id: 'mara', class: avatar, variant: 'violet', attributes: { content: 'MR' } }
+    ]);
+
+    expect(variantOf(spec, 'mara')).toEqual({ avatar: { base: 'violet' } });
+  });
+
+  it('stays the type variant when the type declares it', () => {
+    const spec = spaceWith(
+      [{ type: 'text', id: 'mara', class: avatar, variant: 'violet', attributes: { content: 'MR' } }],
+      { elements: { text: { variants: { violet: { color: '#5B3DF5' } } } } }
+    );
+
+    expect(variantOf(spec, 'mara')).toEqual({ text: { base: 'violet' } });
+  });
+
+  it('stays the type variant for an element with no class', () => {
+    const spec = spaceWith([{ type: 'heading', id: 'title', variant: 'lg', attributes: { content: 'Hi' } }]);
+
+    expect(variantOf(spec, 'title')).toEqual({ heading: { base: 'lg' } });
+  });
+});
