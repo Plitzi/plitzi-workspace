@@ -677,6 +677,21 @@ const createValidator = (schema: Schema) => {
             elementId: element.id
           });
         }
+
+        /**
+         * A form hands its submit to a flow only when it is told to: left unmanaged, the browser submits it natively
+         * and `onSubmit` never fires. The flow is saved, sits on the right element and never runs — a warning rather
+         * than an error because a builder document can carry one, and refusing it would block every other edit.
+         */
+        const submitted = node.type === 'trigger' && node.action === 'onSubmit' && node.enabled;
+        const form = submitted ? getElement(node.elementId ?? element.id) : undefined;
+        if (form?.definition.type === 'form' && form.attributes.managedByInteractions !== true) {
+          warnings.push({
+            code: 'FORM_SUBMIT_UNMANAGED',
+            message: `Form "${form.id}" has an onSubmit flow but is not managedByInteractions, so the browser submits it natively and the flow never runs — set managedByInteractions: true`,
+            elementId: form.id
+          });
+        }
       });
     });
   };

@@ -233,17 +233,14 @@ const Form = ({
 
   // Interactions Triggers
 
+  // The one trigger whose preview is not static: the builder offers `values.<name>` for the fields this form holds.
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
       onSubmit: {
-        action: 'onSubmit',
-        title: 'On Form Submit',
-        type: 'trigger',
-        params: {},
+        ...declaration.triggers.onSubmit,
         preview: {
-          values: Object.values(fields).reduce((acum, field) => ({ ...acum, [field.name]: '' }), {}),
-          actionUrl: '',
-          method: ''
+          ...declaration.triggers.onSubmit.preview,
+          values: Object.values(fields).reduce((acum, field) => ({ ...acum, [field.name]: '' }), {})
         }
       }
     }),

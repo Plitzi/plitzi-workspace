@@ -338,6 +338,11 @@ export interface StepVocabulary {
   globalCallbacks: Record<string, { source: string }>;
   /** Utility actions. A utility is resolved by action alone and runs on no module at all. */
   utilities: Record<string, unknown>;
+  /**
+   * Element type → every trigger it fires, the ones all elements share included. A type that is not listed is a
+   * plugin's, whose triggers nobody here can know, and its flows are left alone.
+   */
+  triggers?: Record<string, readonly string[]>;
 }
 
 /**

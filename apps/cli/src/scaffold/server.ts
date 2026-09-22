@@ -48,9 +48,15 @@ const PORT = Number(process.env.PORT ?? 8080);
  * The space, held in this project.
  *
  * \`authorSpace\` turns the declaration in \`src/space.ts\` into the two documents a renderer wants. It runs at
- * boot, so saving that file and letting \`--watch\` restart it is the whole edit loop.
+ * boot, so saving that file and letting \`--watch\` restart it is the whole edit loop — and its warnings are printed
+ * here for the same reason: this restart is the output somebody editing the space is actually watching.
  */
-const offlineData = authorSpace(space);
+const { schema, style, warnings } = authorSpace(space);
+const offlineData = { schema, style };
+
+for (const warning of warnings) {
+  console.warn(\`[author] \${warning.message}\`);
+}
 
 ${PLUGINS}
 

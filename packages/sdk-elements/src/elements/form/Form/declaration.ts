@@ -12,6 +12,15 @@ const declaration = elementDeclaration<FormAttributes>()({
   // Not `form`: what a form offers its descendants is a record like any other provider's, so it registers under
   // the same source kind and a binding reads `apiContainer_<id>.values`.
   sourceType: 'apiContainer',
+  triggers: {
+    onSubmit: {
+      action: 'onSubmit',
+      title: 'On Form Submit',
+      type: 'trigger',
+      params: {},
+      preview: { values: {}, actionUrl: '', method: '' }
+    }
+  },
   content: {
     attributes: {
       method: 'get',

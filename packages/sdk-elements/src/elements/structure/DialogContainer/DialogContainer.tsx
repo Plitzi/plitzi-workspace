@@ -109,40 +109,6 @@ const DialogContainer = ({
     setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, id, internalMetadata, setElementState]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onDialogAccept: {
-        action: 'onDialogAccept',
-        title: 'On Dialog Accept',
-        type: 'trigger',
-        params: { metadata: { type: 'text', defaultValue: '' } },
-        preview: { metadata: '' }
-      },
-      onDialogReject: {
-        action: 'onDialogReject',
-        title: 'On Dialog Reject',
-        type: 'trigger',
-        params: { metadata: { type: 'text', defaultValue: '' } },
-        preview: { metadata: '' }
-      },
-      onDialogOpen: {
-        action: 'onDialogOpen',
-        title: 'On Dialog Open',
-        type: 'trigger',
-        params: { metadata: { type: 'text', defaultValue: '' } },
-        preview: { metadata: '' }
-      },
-      onDialogClose: {
-        action: 'onDialogClose',
-        title: 'On Dialog Close',
-        type: 'trigger',
-        params: { metadata: { type: 'text', defaultValue: '' } },
-        preview: { metadata: '' }
-      }
-    }),
-    []
-  );
-
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
       openDialog: {
@@ -183,7 +149,7 @@ const DialogContainer = ({
     <RootElement
       ref={ref}
       className={clsx('plitzi-component__dialog-container', className)}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
       interactionCallbacks={interactionCallbacks}
     >
       <div

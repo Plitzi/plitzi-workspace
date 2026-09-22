@@ -13,7 +13,7 @@ import { didYouMean } from './suggest';
 import { assertSpaceValid } from './validate';
 
 import type { SourceIndex } from './bindings';
-import type { ElementHandle, PageHandle } from './handles';
+import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
@@ -78,6 +78,7 @@ class SpaceAuthor {
    * it out, and the derived `<type>-<n>` exists nowhere until it is minted below.
    */
   private readonly handles: Record<string, PageHandle> = {};
+  private readonly layoutHandles: Record<string, LayoutHandle> = {};
 
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
   private readonly classRules = new Map<string, ResponsiveBlock>();
@@ -187,7 +188,7 @@ class SpaceAuthor {
     return {
       schema,
       style,
-      handles: buildHandles(this.handles),
+      handles: buildHandles(this.handles, this.layoutHandles),
       warnings: [...this.stepWarnings, ...this.styleWarnings, ...warnings]
     };
   }
@@ -204,10 +205,11 @@ class SpaceAuthor {
    * one. An action the catalog has never heard of is a warning instead, because a plugin may register a module of
    * its own and this process cannot see it.
    *
-   * Triggers, element callbacks and tasks are left alone on purpose: an element type publishes its own triggers and
-   * callbacks, and a task belongs to whatever server runs the flow. None of them are knowable from here.
+   * A trigger is held to the element it is declared on, when that is a built-in type: the vocabulary says every
+   * event such a type fires. A plugin's type publishes its own, and element callbacks and tasks belong to an element
+   * or a server this process cannot see, so those are left alone.
    */
-  private assertStepsKnown(flows: StepSpec[][] | undefined, where: string): void {
+  private assertStepsKnown(flows: StepSpec[][] | undefined, where: string, type: string): void {
     const vocabulary = this.options.vocabulary;
     if (!flows) {
       return;
@@ -229,11 +231,40 @@ class SpaceAuthor {
           this.assertGlobalCallback(step, vocabulary, where);
         }
 
+        // A trigger naming another element (`on`) fires on that one, which is its own business.
+        if (step.type === 'trigger' && step.on === undefined && vocabulary.triggers) {
+          this.assertTriggerFired(step, type, vocabulary.triggers, where);
+        }
+
         if (step.type === 'utility') {
           this.assertUtility(step, vocabulary, where);
         }
       }
     }
+  }
+
+  /**
+   * Refused rather than warned: a trigger its element never fires is a flow that is saved, looks right beside the
+   * element it was meant for, and never runs — there is no reading of it that works. The error names the types that
+   * DO fire it, because the usual mistake is one element off: `onSubmit` on the submit button, not the form.
+   */
+  private assertTriggerFired(
+    step: StepSpec,
+    type: string,
+    triggers: Record<string, readonly string[]>,
+    where: string
+  ): void {
+    const fired = Object.hasOwn(triggers, type) ? triggers[type] : undefined;
+    if (!fired || fired.includes(step.action)) {
+      return;
+    }
+
+    const firedBy = Object.keys(triggers).filter(candidate => triggers[candidate].includes(step.action));
+    const hint = firedBy.length
+      ? ` It is fired by ${firedBy.map(candidate => `"${candidate}"`).join(', ')}: declare the flow on that element.`
+      : ` No built-in element fires it${didYouMean(step.action, fired) || '.'}`;
+
+    throw new Error(`${where} starts a flow on "${step.action}", which a "${type}" never fires.${hint}`);
   }
 
   private assertGlobalCallback(step: StepSpec, vocabulary: StepVocabulary, where: string): void {
@@ -659,7 +690,7 @@ class SpaceAuthor {
 
   private addPage(page: PageSpec, index: number): string {
     const path = this.pathFor(page, index);
-    this.assertStepsKnown(page.flows, `Page "${page.name}"`);
+    this.assertStepsKnown(page.flows, `Page "${page.name}"`, 'page');
     if (page.folder !== undefined && !this.folderPrefixes.has(page.folder)) {
       throw new Error(
         `Page "${page.name}" is in folder "${page.folder}", which this space does not declare${didYouMean(page.folder, [...this.folderPrefixes.keys()])}`
@@ -727,7 +758,7 @@ class SpaceAuthor {
   private addLayout(layout: LayoutSpec): void {
     const path = `${this.spec.permanentUrl}/layout:${layout.id}`;
     const where = `Layout "${layout.id}"`;
-    this.assertStepsKnown(layout.flows, where);
+    this.assertStepsKnown(layout.flows, where, 'layoutContainer');
     if (layout.folder && !this.folderPrefixes.has(layout.folder)) {
       throw new Error(
         `${where} is filed in folder "${layout.folder}", which this space does not declare${didYouMean(layout.folder, [...this.folderPrefixes.keys()])}`
@@ -758,6 +789,14 @@ class SpaceAuthor {
     };
 
     this.insert(element, '', 'custom');
+    this.layoutHandles[layout.id] = {
+      id: layout.id,
+      type: 'layoutContainer',
+      pageId: layout.id,
+      selector: selectorFor(layout.id),
+      named: true,
+      elements: {}
+    };
     layout.body.forEach((child, index) => this.addElement(child, `${path}/${index}`, layout.id, layout.id));
   }
 
@@ -799,18 +838,24 @@ class SpaceAuthor {
   }
 
   /**
-   * Files an element under the page it renders on.
+   * Files an element under the root it renders in: its page, or the layout shell it belongs to.
    *
-   * `rootId` is that page for everything a page contains — a layout container included, since it is a root the page
-   * names rather than a page of its own. An element whose root is not a page it wrote is dropped rather than filed
-   * somewhere plausible: a handle that resolves to the wrong page is worse than one that is absent, which the
-   * lookup reports by name.
+   * A layout's elements go under the layout and never under a page, because they render on every page that names
+   * it — filed under one, a suite would look for the header only there. An element whose root is neither is dropped
+   * rather than filed somewhere plausible: a handle that resolves to the wrong root is worse than one that is absent,
+   * which the lookup reports by name.
    */
   private recordHandle(handle: ElementHandle): void {
     // `hasOwn` rather than a falsy check: an index signature types every read as a hit, so this is the only way to
-    // ask whether a root that is not one of this space's pages has an entry at all.
+    // ask whether a root has an entry at all.
     if (Object.hasOwn(this.handles, handle.pageId)) {
       this.handles[handle.pageId].elements[handle.id] = handle;
+
+      return;
+    }
+
+    if (Object.hasOwn(this.layoutHandles, handle.pageId)) {
+      this.layoutHandles[handle.pageId].elements[handle.id] = handle;
     }
   }
 
@@ -824,7 +869,7 @@ class SpaceAuthor {
     const id = spec.id ?? this.nextId(spec.type);
     const conditional = insideCondition || spec.visible !== undefined;
     const where = `Element "${spec.type}" (${id}) at ${path}`;
-    this.assertStepsKnown(spec.flows, where);
+    this.assertStepsKnown(spec.flows, where, spec.type);
     const bindings = withVisibility(spec);
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
 

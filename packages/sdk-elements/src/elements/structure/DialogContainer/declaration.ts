@@ -10,6 +10,36 @@ export type DialogContainerAttributes = AuthorableAttributes<DialogContainerProp
 const declaration = elementDeclaration<DialogContainerAttributes>()({
   type: 'dialogContainer',
   sourceType: 'dialogContainer',
+  triggers: {
+    onDialogAccept: {
+      action: 'onDialogAccept',
+      title: 'On Dialog Accept',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    onDialogReject: {
+      action: 'onDialogReject',
+      title: 'On Dialog Reject',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    onDialogOpen: {
+      action: 'onDialogOpen',
+      title: 'On Dialog Open',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    onDialogClose: {
+      action: 'onDialogClose',
+      title: 'On Dialog Close',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    }
+  },
   content: {
     attributes: {
       headerLabel: 'Dialog Header',

@@ -41,10 +41,12 @@ describe('routes', () => {
 
   const sloppySlug = page('sloppy', { slug: 'au//dience', folder: 'analytics' });
 
-  it('cleans a leading slash into a path, not a protocol-relative URL', () => {
-    expect(getPageFullPath(pages, folders, '/audience', true)).toBe('/audience');
+  it('reads a page id written as a path, never as a protocol-relative URL', () => {
+    expect(getPageFullPath(pages, folders, '/audience', true)).toBe('/analytics/audience');
+    expect(getPageFullPath(pages, folders, '//audience', true)).toBe('/analytics/audience');
+    // Not a page id at all: taken as the path it already is, slashes collapsed.
     expect(getPageFullPath(pages, folders, '/analytics/audience', true)).toBe('/analytics/audience');
-    expect(getPageFullPath(pages, folders, '//audience', true)).toBe('/audience');
+    expect(getPageFullPath(pages, folders, '//nowhere', true)).toBe('/nowhere');
     // The memory of the home page is the same: `/` must stay `/`, the router's home, not leave as `//`.
     expect(getPageFullPath(pages, folders, '/', true)).toBe('/');
   });
@@ -54,11 +56,19 @@ describe('routes', () => {
     expect(getPageFullPath(pages, folders, '/run/42', true)).toBe('/run/42');
   });
 
+  // The string form is an address somebody reads — the builder shows it — so a dynamic segment stays as written;
+  // `:param` is the router's spelling, and only the route table is for the router.
+  it('keeps a dynamic segment as authored in the string form, and as the router reads it in the table', () => {
+    const post = page('post', { slug: 'post/{{slug}}' });
+
+    expect(getPageFullPath({ ...pages, post }, folders, 'post', true)).toBe('/post/{{slug}}');
+    expect(getPageFullPath({ ...pages, post }, folders, 'post')).toEqual({ '/post/:slug': 'post', '/post': 'post' });
+  });
+
   it('keeps the object form on normalized paths', () => {
     expect(getPageFullPath(pages, folders, 'audience')).toEqual({
       '/analytics/audience': 'audience',
       '/audience': 'audience'
     });
-    expect(getPageFullPath(pages, folders, '/audience')).toEqual({ '/audience': '/audience' });
   });
 });

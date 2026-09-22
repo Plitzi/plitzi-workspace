@@ -18,6 +18,22 @@ export type ApiContainerAttributes = AuthorableAttributes<ApiContainerProps> & {
 const declaration = elementDeclaration<ApiContainerAttributes>()({
   type: 'apiContainer',
   sourceType: 'apiContainer',
+  triggers: {
+    onApiError: {
+      action: 'onApiError',
+      title: 'On Api Error',
+      type: 'trigger',
+      params: {},
+      preview: { url: '', method: '', status: '', data: '' }
+    },
+    onApiSuccess: {
+      action: 'onApiSuccess',
+      title: 'On Api Success',
+      type: 'trigger',
+      params: {},
+      preview: { url: '', method: '', status: '', data: '' }
+    }
+  },
   content: {
     attributes: {
       query: '',

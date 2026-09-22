@@ -1,4 +1,7 @@
+import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
 import { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
+
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 
 /**
  * What each built-in element IS, read off the declarations rather than listed somewhere.
@@ -26,6 +29,7 @@ export interface ElementSemantics {
 type DeclarationShape = {
   type: string;
   sourceType?: string;
+  triggers?: Record<string, InteractionCallback>;
   content?: {
     definition?: { label?: string; description?: string };
     market?: { category?: string };
@@ -62,4 +66,25 @@ export const elementSourceTypes: Record<string, string> = Object.fromEntries(
   Object.values(elementDeclarations as Record<string, DeclarationShape>)
     .filter(declaration => declaration.sourceType)
     .map(declaration => [declaration.type, declaration.sourceType as string])
+);
+
+/**
+ * Every trigger each built-in type fires: the ones all elements share, and the ones its declaration adds.
+ *
+ * What lets a flow on the wrong element be refused instead of written. The trigger names an event, and only the
+ * element that fires it ever starts the flow — an `onSubmit` on a form's submit button is saved, looks right beside
+ * the form, and never runs, which is how a working form reads as "forms do not work outside the builder".
+ */
+export const elementTriggers: Record<string, string[]> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+    declaration.type,
+    [...Object.keys(interactionBasicTriggers), ...Object.keys(declaration.triggers ?? {})]
+  ])
+);
+
+/** The triggers only some types fire, by action name — for a step builder that wants the title the builder shows. */
+export const typeTriggerDefinitions: Record<string, InteractionCallback> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).flatMap(declaration =>
+    Object.entries(declaration.triggers ?? {})
+  )
 );

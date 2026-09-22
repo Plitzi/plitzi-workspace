@@ -1,3 +1,5 @@
+import type { InteractionCallback } from '../types/InteractionTypes';
+
 /**
  * How an element says what it can be authored with.
  *
@@ -31,6 +33,14 @@ export interface ElementDeclarationData {
    * reads it to resolve a binding that named the element alone.
    */
   sourceType?: string;
+  /**
+   * The triggers this type fires on top of the ones every element does (`onClick`, `onLoad`…), by action name.
+   *
+   * Declared here for the reason `sourceType` is: the component registers exactly these, and the authoring surface
+   * reads them to refuse a flow that starts on a trigger its element never fires — an `onSubmit` on the submit
+   * button rather than on the form is a flow that is written, saved and silently never runs.
+   */
+  triggers?: Record<string, InteractionCallback>;
   content?: {
     attributes?: Record<string, unknown>;
     definition?: { label?: string };

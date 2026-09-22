@@ -1,6 +1,9 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
 
+import { typeTriggerDefinitions } from './catalog';
+
 import type { StepSpec } from '../schema';
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 
 /**
  * How a flow starts, and how an element changes itself.
@@ -22,10 +25,18 @@ export type ElementTriggerName = keyof typeof interactionBasicTriggers;
  * may publish triggers of its own — a form's `onSubmit`, a provider's page change — and refusing those would make
  * the builders useless for exactly the flows that matter most.
  */
+// Asked rather than indexed: the argument may name no built-in trigger at all — a plugin type is free to publish
+// its own — and each record's type says every key is there.
+const declaredTrigger = (trigger: string): InteractionCallback | undefined => {
+  if (Object.hasOwn(interactionBasicTriggers, trigger)) {
+    return interactionBasicTriggers[trigger];
+  }
+
+  return Object.hasOwn(typeTriggerDefinitions, trigger) ? typeTriggerDefinitions[trigger] : undefined;
+};
+
 export const on = (trigger: ElementTriggerName | (string & {}), params: Record<string, unknown> = {}): StepSpec => {
-  // Asked rather than indexed: the argument may name no built-in trigger at all — an element type is free to
-  // publish its own — and the record's type says every key is there.
-  const declared = Object.hasOwn(interactionBasicTriggers, trigger) ? interactionBasicTriggers[trigger] : undefined;
+  const declared = declaredTrigger(trigger);
 
   return {
     type: 'trigger',
@@ -119,6 +130,48 @@ export const reloadApi = (target: string): StepSpec => ({
   type: 'callback',
   action: 'performQuery',
   title: 'Reload',
+  on: target,
+  params: {}
+});
+
+/**
+ * Opens a `modalContainer`, by id.
+ *
+ * A modal starts OPEN: declare it `visible: false` — its starting state, not a condition — and open it with this.
+ * `metadata` travels into the modal, which publishes it as its source, so the content can read what opened it
+ * (`{{ modalContainer_<id>.content }}` for a plain value). An element callback, so `target` is the MODAL's id.
+ */
+export const openModal = (target: string, metadata?: string): StepSpec => ({
+  type: 'callback',
+  action: 'openModal',
+  title: 'Open Modal',
+  on: target,
+  params: metadata === undefined ? {} : { metadata }
+});
+
+/** Closes a `modalContainer`, by id — from a button inside it or anywhere else. */
+export const closeModal = (target: string): StepSpec => ({
+  type: 'callback',
+  action: 'closeModal',
+  title: 'Close Modal',
+  on: target,
+  params: {}
+});
+
+/** Opens a `dialogContainer`, by id, the way {@link openModal} opens a modal — it starts open too. */
+export const openDialog = (target: string, metadata?: string): StepSpec => ({
+  type: 'callback',
+  action: 'openDialog',
+  title: 'Open Dialog',
+  on: target,
+  params: metadata === undefined ? {} : { metadata }
+});
+
+/** Closes a `dialogContainer`, by id. */
+export const closeDialog = (target: string): StepSpec => ({
+  type: 'callback',
+  action: 'closeDialog',
+  title: 'Close Dialog',
   on: target,
   params: {}
 });

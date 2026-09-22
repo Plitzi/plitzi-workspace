@@ -362,26 +362,6 @@ const ApiContainer = ({
     return callbacks;
   }, [label, refetch, loadMore, goToPage, serverMode, writeRecord]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onApiError: {
-        action: 'onApiError',
-        title: 'On Api Error',
-        type: 'trigger',
-        params: {},
-        preview: { url: '', method: '', status: '', data: '' }
-      },
-      onApiSuccess: {
-        action: 'onApiSuccess',
-        title: 'On Api Success',
-        type: 'trigger',
-        params: {},
-        preview: { url: '', method: '', status: '', data: '' }
-      }
-    }),
-    []
-  );
-
   const storeContext = useMemo(
     () => (sourceName ? { runtime: { sources: { [sourceName]: publishedData } } } : emptyObject),
     [publishedData, sourceName]
@@ -392,7 +372,7 @@ const ApiContainer = ({
       ref={ref}
       tag={!previewMode && !items?.length ? 'div' : subType}
       className={clsx('plitzi-component__api-container', className)}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
       interactionCallbacks={interactionCallbacks}
     >
       {(!isInitialLoad || renderWhileLoading) && (

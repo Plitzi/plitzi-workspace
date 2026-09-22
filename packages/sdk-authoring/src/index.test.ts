@@ -121,11 +121,110 @@ describe('the step vocabulary', () => {
     expect(Object.keys(authored.schema.flat)).toHaveLength(2);
   });
 
-  /** A trigger, an element callback and a task belong to an element type or to a server; none is knowable here. */
-  it('leaves triggers and element callbacks alone', () => {
+  /** An element callback and a task belong to an element type or to a server; neither is knowable here. */
+  it('leaves element callbacks alone', () => {
     const authored = authoring.authorSpace(
       spaceWith([authoring.onClick(), authoring.updateElement({ category: 'attribute', key: 'content', value: 'x' })])
     );
+
+    expect(authored.warnings).toEqual([]);
+  });
+
+  /**
+   * The mistake that read as "forms do not work outside the builder": the submit flow declared on the submit
+   * button. The form fires `onSubmit`; the button never does, so the flow was saved and never ran.
+   */
+  it('refuses a flow starting on a trigger its element never fires, and names the element that does', () => {
+    expect(() =>
+      authoring.authorSpace(spaceWith([authoring.onSubmit(), authoring.addNotification({ content: 'Saved' })]))
+    ).toThrow(/"onSubmit", which a "button" never fires\. It is fired by "form"/);
+  });
+
+  it('accepts the triggers a type declares on top of the shared ones', () => {
+    const authored = authoring.authorSpace({
+      name: 'Triggers',
+      permanentUrl: 'triggers',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          flows: [[authoring.onPageLoad(), authoring.setState({ key: 'ready', type: 'boolean', value: true })]],
+          body: [
+            authoring.form({
+              id: 'signup',
+              managedByInteractions: true,
+              flows: [[authoring.onSubmit(), authoring.addNotification({ content: 'Saved' })]],
+              children: [authoring.formControl({ id: 'email', name: 'email', label: 'Email', subType: 'email' })]
+            })
+          ]
+        }
+      ]
+    });
+
+    expect(authored.warnings).toEqual([]);
+  });
+
+  // The second half of the same trap: on the right element, a form still has to hand its submit to the flow.
+  it('warns about a submit flow on a form the browser submits natively', () => {
+    const authored = authoring.authorSpace({
+      name: 'Triggers',
+      permanentUrl: 'triggers',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [authoring.form({ id: 'signup', flows: [[authoring.onSubmit()]] })]
+        }
+      ]
+    });
+
+    expect(authored.warnings).toMatchObject([{ code: 'FORM_SUBMIT_UNMANAGED', elementId: 'signup' }]);
+  });
+
+  // A modal starts open; `visible: false` is where it starts instead, and the step is what opens it.
+  it('opens a modal that starts hidden from a button elsewhere on the page', () => {
+    const authored = authoring.authorSpace({
+      name: 'Modal',
+      permanentUrl: 'modal',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            authoring.button({
+              id: 'open',
+              content: 'Credits',
+              flows: [[authoring.onClick(), authoring.openModal('credits')]]
+            }),
+            authoring.modalContainer({
+              id: 'credits',
+              visible: false,
+              children: [authoring.text({ content: 'Made by us' })]
+            })
+          ]
+        }
+      ]
+    });
+
+    expect(authored.warnings).toEqual([]);
+    expect(authored.schema.flat.credits.definition.initialState).toMatchObject({ visibility: false });
+  });
+
+  it('leaves the triggers of a plugin type alone, and a trigger aimed at another element', () => {
+    const authored = authoring.authorSpace({
+      name: 'Triggers',
+      permanentUrl: 'triggers',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            { type: 'acmeWidget', id: 'widget', flows: [[authoring.on('onAcmeTick')]] },
+            authoring.button({ id: 'go', content: 'Go', flows: [[{ ...authoring.onSubmit(), on: 'widget' }]] })
+          ]
+        }
+      ]
+    });
 
     expect(authored.warnings).toEqual([]);
   });

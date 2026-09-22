@@ -1,4 +1,4 @@
-import { elementSourceTypes } from './elements';
+import { elementSourceTypes, elementTriggers } from './elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from './interactions';
 import {
   authorSpace as authorSpaceUnchecked,
@@ -66,7 +66,8 @@ export * from '@plitzi/sdk-shared/authoring';
  */
 const STEP_VOCABULARY: StepVocabulary = {
   globalCallbacks: BUILTIN_GLOBAL_CALLBACKS,
-  utilities: BUILTIN_UTILITIES
+  utilities: BUILTIN_UTILITIES,
+  triggers: elementTriggers
 };
 
 /**
@@ -75,8 +76,9 @@ const STEP_VOCABULARY: StepVocabulary = {
  * Deliberately shadows the one re-exported above — an explicit export wins over a star — so that everybody who
  * imports from this package gets both checks that need to know what this SDK ships.
  *
- * **Flows.** A step naming a callback on the wrong module is refused; one naming an action no built-in source
- * declares comes back in `warnings`, since a plugin is free to register a module this process cannot see.
+ * **Flows.** A step naming a callback on the wrong module is refused, and so is a flow starting on a trigger its
+ * built-in element never fires; one naming an action no built-in source declares comes back in `warnings`, since a
+ * plugin is free to register a module this process cannot see.
  *
  * **Bindings.** A source may name the element alone and the prefix it publishes under is filled in — which
  * is the half an author cannot see, and is not always the element's own type.

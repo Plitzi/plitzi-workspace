@@ -1,5 +1,5 @@
 import { render, waitFor } from '@testing-library/react';
-import { createContext } from 'react';
+import { createContext, useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
@@ -136,34 +136,59 @@ describe('RootElement', () => {
       expect(node?.className).toContain('rootCls');
     });
 
-    it('fires onLoad in the live runtime mode, including when the element is a page', async () => {
-      renderRoot(
-        fullContext({
-          definition: {
-            rootId: 'root',
-            label: 'Home',
-            type: 'page',
-            styleSelectors: { base: 'baseCls' },
-            interactions: {
-              load: {
-                id: 'load',
-                title: 'On Load',
-                type: 'trigger',
-                action: 'onLoad',
-                params: {},
-                preview: {},
-                elementId: 'el1',
-                beforeNode: '',
-                afterNode: '',
-                flowId: 'load',
-                enabled: true
-              }
-            }
-          }
-        })
+    // The global sources register what a flow can call from effects of their own, above every element — and React
+    // runs a parent's effect after its children's. Fired inside the commit, a page's `onLoad` reached a manager with
+    // no `state.setState` yet on the first load.
+    it('fires onLoad only after the sources above it have registered, including when the element is a page', async () => {
+      let registered = false;
+      const registeredWhenFired: boolean[] = [];
+      interactionsManager.interactionTrigger.mockImplementation(() => {
+        registeredWhenFired.push(registered);
+      });
+      const Source = ({ children }: { children: ReactNode }) => {
+        useEffect(() => {
+          registered = true;
+        }, []);
+
+        return children;
+      };
+
+      render(
+        <StoreProvider value={{ runtime: { sources: {} } }}>
+          <Source>
+            <ElementContext
+              value={fullContext({
+                definition: {
+                  rootId: 'root',
+                  label: 'Home',
+                  type: 'page',
+                  styleSelectors: { base: 'baseCls' },
+                  interactions: {
+                    load: {
+                      id: 'load',
+                      title: 'On Load',
+                      type: 'trigger',
+                      action: 'onLoad',
+                      params: {},
+                      preview: {},
+                      elementId: 'el1',
+                      beforeNode: '',
+                      afterNode: '',
+                      flowId: 'load',
+                      enabled: true
+                    }
+                  }
+                }
+              })}
+            >
+              <RootElement>child</RootElement>
+            </ElementContext>
+          </Source>
+        </StoreProvider>
       );
 
       await waitFor(() => expect(interactionsManager.interactionTrigger).toHaveBeenCalledWith('el1', 'onLoad', {}));
+      expect(registeredWhenFired).toEqual([true]);
     });
   });
 });

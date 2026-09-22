@@ -71,12 +71,11 @@ container([hero, grid])         // an array is the children
 Anything else in the object is an **attribute**. `label` belongs to the attribute (a link and a form control both
 have one); the builder's name for the element is `meta.label`.
 
-**A link's `href` is a page id — and the renderer is polite about paths.** `link({ href: 'reports' })` resolves the
-page by its id, folder included, so a page inside a folder lands on its full route. A path is taken as one, whatever
-the leading `/`: `href: '/reports'`, `href: '//reports'` and `href: '/analytics/reports'` all resolve to
-`/analytics/reports`, and `href: '/'` stays `/`. A leading `/` NEVER yields `//…`, which would be a
-protocol-relative URL and navigate nowhere. `mode` switches the story: `'internal'` for a path within the space
-(which may carry `{{tokens}}` to interpolate at click time), `'external'` for a full URL passed through untouched.
+**A link's `href` is a page id.** `link({ href: 'reports' })` resolves the page by its id, folder included — a page
+in the `analytics` folder lands on `/analytics/reports`. A leading slash is forgiven (`'/reports'` finds the same
+page), and an href that names no page is taken as the path it already is, slashes collapsed: `'/analytics/reports'`
+works too and `'/'` stays the home. `mode` switches the story: `'internal'` for a path within the space that carries
+`{{tokens}}` to interpolate at click time, `'external'` for a full URL passed through untouched.
 
 A type this SDK does not ship — a plugin, one the deployment brings — is authored the same way:
 
@@ -220,12 +219,41 @@ matching only `failed` is how those two end up doing nothing.
 For a state array such as `state.genres`, use `when({ field: 'state.genres', operator: 'in', value: 'arcade' }, …)`:
 it asks whether the rule's `value` occurs in the field's array. The inverse is `notIn`, not `doesNotContain`.
 
-**Runtime is `previewMode: true`; the builder canvas is `false`.** That name is historical: the public SDK and SSR
-both default to `true`, so links navigate, forms accept input and their interaction flows run there. `onLoad()` runs
-for every mounted element, pages included. A page also offers `onPageLoad()`, which carries the current page id,
-route params and query params; choose it only when that page-specific context matters. Attribute bindings are
-generic runtime machinery, not limited by an element declaration's `bindings: {}` UI metadata — for example,
-`text({ bind: { content: 'state.genre' } })` updates live.
+**A trigger belongs to the element that fires it.** Every element fires `onClick`, `onLoad`, `onHover`,
+`onMouseEnter`/`onMouseLeave`, `onFocus`/`onBlur`, and the ends of a server action it started (`onFlowEnd`,
+`onFlowError`, `onFlowProgress`). Some types fire more of their own: a `page` fires `onPageLoad` (with the page id,
+route and query params), a `form` `onSubmit`, a `formControl` `onChange`, an `apiContainer` `onApiSuccess` /
+`onApiError`, a `modalContainer` `onModalOpen` / `onModalClose`, a `pagination` `onPageChange`. A flow declared on an
+element that never fires its trigger never runs, so `authorSpace` refuses it and names the type that does fire it.
+
+A form's submit is where that bites. The flow goes on the `form`, never on its submit button, and the form has to
+hand its submit over with `managedByInteractions: true` — left out, the browser submits it natively and `onSubmit`
+never fires (`authorSpace` warns `FORM_SUBMIT_UNMANAGED`):
+
+```ts
+form({
+  id: 'signup',
+  managedByInteractions: true,
+  flows: [[
+    named('submitted', onSubmit()),
+    setState({ key: 'email', type: 'text', value: '{{submitted.values.email}}' })
+  ]],
+  children: [
+    formControl({ id: 'email', name: 'email', label: 'Email', subType: 'email', required: true }),
+    button({ content: 'Sign up', subType: 'submit' })
+  ]
+})
+```
+
+**A modal or a dialog starts open.** Declare it `visible: false` — a starting state, not a condition — and drive it
+with `openModal('credits')` / `closeModal('credits')` (`openDialog` / `closeDialog` for a `dialogContainer`), which
+run on the modal by id from any button on the page. `openModal`'s second argument travels into the modal and is
+read back as `{{ modalContainer_credits.content }}`.
+
+**The page you serve is the runtime.** `previewMode` is `true` in the public SDK and in SSR — `false` only on the
+builder's canvas — so links navigate, form controls accept input and flows run. Bindings resolve on every element
+type, whatever its declaration's `bindings` metadata lists: `text({ bind: { content: 'state.genre' } })` follows the
+state live.
 
 ## What gets refused
 
@@ -239,6 +267,8 @@ generic runtime machinery, not limited by an element declaration's `bindings: {}
 - a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
 - a step target naming an element that is not there
 - two elements answering to one name, a broken flow chain, an orphan, a cycle
+- a flow starting on a trigger its built-in element never fires — `onSubmit` on a button — naming the type that
+  does. A plugin's type publishes its own triggers, so its flows are left alone
 - a global callback on the wrong module — or on none — and a utility given one. A global callback registers under
   its SOURCE MODULE (`auth`, `state`, `actions`), and the pair is what the runtime resolves a step by, so naming
   either half wrong is a control that does nothing at all with no error anywhere. An action no built-in source
@@ -294,6 +324,17 @@ repairing what an older builder left behind and listing each repair in `correcti
 what `corrections` explains. The builder's **Export** (and `POST /utils/transform-to-authoring`) does all three. Edit
 the code it writes from then on, not the JSON.
 
+## Testing what you authored
+
+`authorSpace` also returns `handles`: every element by id, with the selector that finds it in the rendered page
+(`[data-plitzi-el="<id>"]`). `handles.element(id)` throws on a name that does not exist, and `locate(page, handles)`
+turns an id into a Playwright locator. Pages are in `handles.pages`, each with its `path` and its `elements`; a
+layout's elements are in `handles.layouts` — they render on every page that names the layout, so they are filed
+under no page, but `locate` finds them all the same.
+
+An element marked `conditional` is on screen only under a `visible` of its own or of an ancestor: skip it in a "every
+named element is visible" check. A `formControl`'s id names its wrapper — type into `locate('email').locator('input')`.
+
 ## Rules
 
 1. **Never hand-write `flat`, element ids, `styleSelectors`, `beforeNode`/`afterNode`/`flowId`.** They are derived.
@@ -303,4 +344,6 @@ the code it writes from then on, not the JSON.
    the declaration, not a reason to work around the check.
 4. **Ids are stable.** They are hashes of the path that produced them, so re-authoring an unchanged space writes
    byte-identical documents — a seed can re-run and a diff stays readable.
-5. **`warnings` is returned, not printed.** Read it if the space is generated in a build.
+5. **Read `warnings`.** `authorSpace` returns them rather than printing them; a project made with `plitzi create`
+   prints them on every restart of its server and in `npm run author`. Each one names something that is written
+   and will not do what it says — a submit nobody hands over, a state key that nests.

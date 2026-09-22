@@ -9,6 +9,15 @@ export type ThemeToggleAttributes = AuthorableAttributes<ThemeToggleProps>;
 
 const declaration = elementDeclaration<ThemeToggleAttributes>()({
   type: 'themeToggle',
+  triggers: {
+    onThemeChange: {
+      action: 'onThemeChange',
+      title: 'On Theme Change',
+      type: 'trigger',
+      params: {},
+      preview: { theme: 'dark' }
+    }
+  },
   content: {
     attributes: {
       subType: 'switch',

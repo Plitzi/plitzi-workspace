@@ -5,12 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, use, useSyncExternalStore } fr
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
+import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback, Theme } from '@plitzi/sdk-shared';
+import type { Theme } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type ThemeToggleProps = {
@@ -134,26 +135,13 @@ const ThemeToggle = ({
     void interactionsManager.interactionTrigger(id, 'onThemeChange', { theme });
   }, [theme, interactionsManager, id]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onThemeChange: {
-        action: 'onThemeChange',
-        title: 'On Theme Change',
-        type: 'trigger',
-        params: {},
-        preview: { theme: 'dark' }
-      }
-    }),
-    []
-  );
-
   if (subType === 'segmented') {
     return (
       <RootElement
         ref={ref}
         tag="div"
         className={clsx('plitzi-component__theme-toggle plitzi-component__theme-toggle--segmented', className)}
-        interactionTriggers={interactionTriggers}
+        interactionTriggers={declaration.triggers}
       >
         {options.map(option => (
           <button
@@ -178,7 +166,7 @@ const ThemeToggle = ({
       ref={ref}
       tag="button"
       className={clsx('plitzi-component__theme-toggle plitzi-component__theme-toggle--switch', className)}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
       type="button"
       onClick={handleToggle}
       aria-label={`${lightLabel} / ${darkLabel}`}

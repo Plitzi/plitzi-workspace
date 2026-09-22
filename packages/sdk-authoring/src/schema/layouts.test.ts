@@ -44,6 +44,16 @@ describe('authorSpace / layouts', () => {
     expect(schema.flat['main-slot'].definition.rootId).toBe('main-layout');
   });
 
+  // The header and the navigation are what a suite reaches for on every page, and they live in the shell: filed
+  // nowhere, `locate('sidebar')` threw and a test fell back to spelling the selector by hand.
+  it('hands out the shell and its elements, filed under the layout rather than under any page', () => {
+    const { handles } = authorSpace(withLayouts());
+
+    expect(handles.element('sidebar')).toMatchObject({ pageId: 'main-layout', selector: '[data-plitzi-el="sidebar"]' });
+    expect(handles.layouts['main-layout'].elements).toHaveProperty('sidebar');
+    expect(handles.pages.home.elements).not.toHaveProperty('sidebar');
+  });
+
   it('names the shell and its slot on the page, the pair the page reads', () => {
     const { schema } = authorSpace(withLayouts());
 

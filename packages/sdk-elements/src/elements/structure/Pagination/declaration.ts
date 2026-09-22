@@ -9,6 +9,15 @@ export type PaginationAttributes = AuthorableAttributes<PaginationProps>;
 
 const declaration = elementDeclaration<PaginationAttributes>()({
   type: 'pagination',
+  triggers: {
+    onPageChange: {
+      action: 'onPageChange',
+      title: 'On Page Change',
+      type: 'trigger',
+      params: {},
+      preview: { page: '1' }
+    }
+  },
   content: {
     attributes: {
       pageInfo: {},

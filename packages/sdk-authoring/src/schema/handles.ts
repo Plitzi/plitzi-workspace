@@ -17,7 +17,10 @@ export interface ElementHandle {
   /** The one name this element answers to: its key in the document, and what `data-plitzi-el` carries. */
   id: string;
   type: string;
-  /** The page it lives on, by that page's id. */
+  /**
+   * The root it lives on, by id: its page — or, for an element of a layout shell, that layout, since it renders on
+   * every page that names the layout rather than on one of them.
+   */
   pageId: string;
   /** A CSS selector matching exactly this element in a rendered page. */
   selector: string;
@@ -53,10 +56,18 @@ export interface PageHandle extends ElementHandle {
   elements: Record<string, ElementHandle>;
 }
 
+/** A layout shell: what pages render inside, so its elements are on screen wherever a page names it. */
+export interface LayoutHandle extends ElementHandle {
+  /** Everything in the shell, by id — the header and the navigation a test reaches for on any page. */
+  elements: Record<string, ElementHandle>;
+}
+
 export interface SpaceHandles {
   /** The pages, by id. */
   pages: Record<string, PageHandle>;
-  /** Every element of every page, by id — ids are unique across the whole document. */
+  /** The layout shells, by id. */
+  layouts: Record<string, LayoutHandle>;
+  /** Every element of every page and every layout, by id — ids are unique across the whole document. */
   elements: Record<string, ElementHandle>;
   /**
    * One element, by id, or a throw naming what does exist.
@@ -81,17 +92,21 @@ export const selectorFor = (id: string): string => `[data-plitzi-el="${escapeId(
 /** The route for a slug: authoring stores it bare, and everything that navigates wants it absolute. */
 export const pathForSlug = (slug: string): string => (slug ? `/${slug}` : '/');
 
-export const buildHandles = (pages: Record<string, PageHandle>): SpaceHandles => {
+export const buildHandles = (
+  pages: Record<string, PageHandle>,
+  layouts: Record<string, LayoutHandle> = {}
+): SpaceHandles => {
   const elements: Record<string, ElementHandle> = {};
-  for (const page of Object.values(pages)) {
-    elements[page.id] = page;
-    Object.assign(elements, page.elements);
+  for (const root of [...Object.values(pages), ...Object.values(layouts)]) {
+    elements[root.id] = root;
+    Object.assign(elements, root.elements);
   }
 
   const bySlug = new Map(Object.values(pages).map(page => [page.slug, page]));
 
   return {
     pages,
+    layouts,
     elements,
     element(id) {
       // `hasOwn` rather than a falsy check on the lookup: an index signature types every read as a hit, so the
