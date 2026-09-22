@@ -45,6 +45,7 @@ type SettingsProps = {
   cache?: boolean;
   staleTime?: number | string;
   gcTime?: number | string;
+  refreshSeconds?: number | string;
   onUpdate?: (key: string, value: string | boolean | number | object, isDefinition?: boolean) => void;
 };
 
@@ -71,6 +72,7 @@ const Settings = ({
   cache = false,
   staleTime = 30,
   gcTime = 300,
+  refreshSeconds = 0,
   onUpdate
 }: SettingsProps) => {
   const { resolvedTheme } = useTheme();
@@ -342,6 +344,14 @@ const Settings = ({
           />
         </>
       )}
+      <Input
+        value={String(refreshSeconds)}
+        label="Refresh every (s)"
+        title="Asks again on its own this often, for a page showing something that keeps moving. Paused while the tab
+          is hidden. 0 never does."
+        onChange={handleChange('refreshSeconds')}
+        size="xs"
+      />
       <Switch checked={advancedSettings} size="sm" label="Advanced Settings" onChange={handleChangeEnabled} />
       {advancedSettings && (
         <>

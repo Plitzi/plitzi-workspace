@@ -123,6 +123,42 @@ describe('createScheduler', () => {
     expect(new Date(schedule.nextRunAt).toISOString()).toBe('2026-03-01T06:00:00.000Z');
   });
 
+  // A sweep never lands exactly on the minute — it runs every few seconds, so it is almost always a little late. A
+  // late sweep must still owe the very next occurrence, or an every-minute schedule fires every OTHER minute.
+  it('owes the next occurrence after a sweep that ran a few seconds late', async () => {
+    const world = cluster([scheduled('* * * * *')]);
+    world.at('2026-03-01T00:00:30Z');
+    await seed(world);
+
+    world.at('2026-03-01T00:01:07Z');
+    expect((await world.replica().sweep()).enqueued).toEqual([
+      `schedule:1:digest:${Date.parse('2026-03-01T00:01:00Z')}`
+    ]);
+
+    const [schedule] = await world.queue.listSchedules([1]);
+    expect(new Date(schedule.nextRunAt).toISOString()).toBe('2026-03-01T00:02:00.000Z');
+    expect(schedule.missed).toBe(0);
+
+    world.at('2026-03-01T00:02:04Z');
+    expect((await world.replica().sweep()).enqueued).toEqual([
+      `schedule:1:digest:${Date.parse('2026-03-01T00:02:00Z')}`
+    ]);
+  });
+
+  // The boundary itself: a sweep a whole minute late has let one occurrence go by, and owes the one after it.
+  it('counts the occurrence a late sweep let go by, and owes the one after it', async () => {
+    const world = cluster([scheduled('* * * * *')]);
+    world.at('2026-03-01T00:00:30Z');
+    await seed(world);
+
+    world.at('2026-03-01T00:02:00.500Z');
+    await world.replica().sweep();
+
+    const [schedule] = await world.queue.listSchedules([1]);
+    expect(schedule.missed).toBe(1);
+    expect(new Date(schedule.nextRunAt).toISOString()).toBe('2026-03-01T00:03:00.000Z');
+  });
+
   it('does not fire a schedule whose trigger is switched off, and keeps its row', async () => {
     const world = cluster([scheduled('30 0 * * *', false)]);
     await seed(world);

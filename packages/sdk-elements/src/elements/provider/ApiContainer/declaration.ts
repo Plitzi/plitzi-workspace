@@ -85,7 +85,9 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
         'This is how you get backend data into the frontend. Its `mockData` prop is builder-only sample data — the ' +
         'published runtime fetches the real `query`, so always set a real query for production. With `cache: true` a ' +
         'browser request is kept for `staleTime` seconds (default 30) and shared with every provider asking the same ' +
-        'thing; it is off unless set. A flow refreshes it with `performQuery` or the global `invalidateQueries` step. ' +
+        'thing; it is off unless set. A flow refreshes it with `performQuery` or the global `invalidateQueries` step, ' +
+        'and `refreshSeconds` makes it ask again on its own every N seconds (either runtime; paused while the tab is ' +
+        'hidden) — the way to keep a queue, feed or status board current without a plugin. ' +
         'Its `subType` (container tag) is empty by default, and then it renders NO element of its own: its children ' +
         'lay out directly in its parent, and any class, variant or style binding on it applies to nothing. To style ' +
         'the provider itself give it a tag (`subType: "div"`, `section`, …); otherwise style its parent or a child.',

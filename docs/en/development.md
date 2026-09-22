@@ -36,6 +36,27 @@ yarn build:dev
 yarn build:prod
 ```
 
+## After changing a package
+
+Apps, examples and the e2e suite consume the workspace packages as **built output** (`dist/`), so a change in
+`src/` is invisible to them until its package — and every package that bundles it — is rebuilt:
+
+```bash
+yarn turbo build:dev --filter=...@plitzi/sdk-elements   # the package AND everything that depends on it
+```
+
+The dots go **before** the name. `--filter=@plitzi/sdk-elements...` is the opposite — the package and what IT
+depends on — and it quietly leaves the dependents stale, which is exactly the half that needed the change.
+
+Two places a change has to reach that are easy to miss:
+
+- **The browser runs `apps/sdk`'s bundle.** A server-rendered page loads `/sdk-assets/plitzi-sdk.js`, which is
+  `@plitzi/plitzi-sdk`'s `dist`. An element change reaches a page only once that is rebuilt (the filter above
+  includes it). `build-vendor:*` is the third-party half — React and friends — and never carries workspace code.
+- **An element's props are listed in `@plitzi/sdk-authoring`.** Adding or renaming one makes
+  `attributeNames.test.ts` fail until the list is regenerated:
+  `yarn workspace @plitzi/sdk-authoring generate:attribute-names`.
+
 ## Before opening a PR
 
 1. Run `yarn typecheck` and fix TypeScript errors.

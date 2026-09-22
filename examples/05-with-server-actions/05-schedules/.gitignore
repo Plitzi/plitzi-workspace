@@ -1,0 +1,2 @@
+# The queue this example keeps: jobs, schedules and activity. Delete it to start from nothing.
+.data/

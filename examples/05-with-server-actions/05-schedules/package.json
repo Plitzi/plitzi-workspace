@@ -1,0 +1,24 @@
+{
+  "name": "@plitzi/example-server-actions-schedules",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Scheduled and delayed jobs on a self-hosted server: a durable queue in a SQLite file, any number of replicas sharing it, and a page to watch it work.",
+  "type": "module",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --import tsx src/main.ts",
+    "start:dev": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx watch --exclude \".data/**\" src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/sdk-authoring": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.1",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3"
+  }
+}

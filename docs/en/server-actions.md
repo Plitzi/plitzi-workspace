@@ -567,7 +567,9 @@ Both are wired end to end and runnable: **your own tasks**, the lookups and the 
 `runtime: 'server'` element while the page is built — in
 [`02-render`](../../examples/05-with-server-actions/02-render); and **your own trigger**, over a shared `kv`
 adapter written out in full, in
-[`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger).
+[`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger). **Scheduled and delayed jobs** over a
+queue and a `kv` the deployment keeps itself — both seams written out over one SQLite file, with two replicas
+sharing it — are in [`05-schedules`](../../examples/05-with-server-actions/05-schedules).
 
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
 supplies a shared one), the database drivers `db.query` may use, the limits on what `email.send` may send, the
@@ -638,6 +640,9 @@ has lapsed.
 Schedules are rows derived from the action documents. Call `reconcile(spaceId)` whenever a space's actions change
 — the deployment is the only thing that knows when that is — and the periodic pass over `listScheduledSpaces`
 catches whatever a missed call left behind.
+
+[`05-schedules`](../../examples/05-with-server-actions/05-schedules) is the adapter written out: every method of
+the queue over SQLite, each rule above one place in the file, and a page to watch two replicas share it.
 
 ### The `kv` store
 

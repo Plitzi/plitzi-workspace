@@ -12,6 +12,7 @@ pseudo-code, no snippets that assume a step not shown.
 | 02 | [render](./01-my-first-space/02-render) | The same `render()` call from a bundled app | 4001 |
 | 03 | [react-component](./01-my-first-space/03-react-component) | `<PlitziSdk>` inside your own React tree | 4002 |
 | 04 | [server-rendered](./01-my-first-space/04-server-rendered) | The same space, rendered by the server | 4003 |
+| 05 | [from-the-cloud](./01-my-first-space/05-from-the-cloud) | Your server, serving a space that lives in Plitzi | 8080 |
 
 01–03 need no server at all. 04 is the same space with the render moved to the server, which is what the rest of
 these build on.
@@ -43,6 +44,8 @@ these build on.
 | 01 | [actions](./05-with-server-actions/01-actions) | A declarative flow the server runs, called from a page | 4009 + 4010 |
 | 02 | [render](./05-with-server-actions/02-render) | The server fetches an API while the page renders | 4011 |
 | 03 | [no-server](./05-with-server-actions/03-no-server) | The same page with no server tier: every server-side step inert | 4012 |
+| 04 | [custom-trigger](./05-with-server-actions/04-custom-trigger) | A trigger of your own, over a store you already run | — |
+| 05 | [schedules](./05-with-server-actions/05-schedules) | Scheduled and delayed jobs over a durable queue in SQLite, across replicas | 4016 |
 
 ## [`06-full-examples`](./06-full-examples) — a whole small product
 

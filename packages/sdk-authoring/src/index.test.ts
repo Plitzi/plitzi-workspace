@@ -286,6 +286,67 @@ describe('the step vocabulary', () => {
   });
 });
 
+describe('sources read inside a flow', () => {
+  /** A list of jobs, each row with a button that acts on its own job — the shape where the short name bites. */
+  const listWith = (flow: StepSpec[]) => ({
+    name: 'Rows',
+    permanentUrl: 'rows',
+    pages: [
+      {
+        name: 'Home',
+        slug: '',
+        body: [
+          authoring.apiContainer({
+            id: 'board',
+            runtime: 'server',
+            action: 'queue-board',
+            children: [
+              authoring.list({
+                id: 'jobRows',
+                source: 'controlled',
+                bind: { items: 'board.jobs' },
+                children: [authoring.button({ content: 'Retry', flows: [flow] })]
+              })
+            ]
+          })
+        ]
+      }
+    ]
+  });
+
+  const retry = (jobId: string) =>
+    authoring.named('ran', authoring.runServerAction({ actionId: 'job-retry', input: { jobId } }));
+
+  // The binding form is completed for the author; the same short name inside a template resolves to nothing.
+  it('refuses a source named the way a binding names it, and says the name it should have', () => {
+    expect(() => authoring.authorSpace(listWith([authoring.onClick(), retry('{{ jobRows.item.id }}')]))).toThrow(
+      /write "list_jobRows" where it says "jobRows"/
+    );
+  });
+
+  it('finds it wherever it sits in the template', () => {
+    expect(() =>
+      authoring.authorSpace(listWith([authoring.onClick(), retry('{{ board.ready ? jobRows.item.id : "" }}')]))
+    ).toThrow(/write "apiContainer_board" where it says "board"/);
+  });
+
+  it('accepts the source named in full', () => {
+    const authored = authoring.authorSpace(listWith([authoring.onClick(), retry('{{ list_jobRows.item.id }}')]));
+
+    expect(authored.warnings).toEqual([]);
+  });
+
+  // A step of the same flow is read by its own id, and may share a name with an element elsewhere on the page.
+  it('leaves a root alone when it is a step of the same flow', () => {
+    const flow = [
+      authoring.named('board', authoring.onClick()),
+      authoring.setState({ key: 'clicked', type: 'text', value: '{{ board.event }}' })
+    ];
+
+    expect(() => authoring.authorSpace(listWith(flow))).not.toThrow();
+  });
+});
+
 describe('the element catalogs', () => {
   const page = (body: ReturnType<typeof authoring.container>[]) => ({
     name: 'Menu',

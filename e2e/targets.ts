@@ -237,6 +237,15 @@ export const targets: Target[] = [
     warmUp: true
   },
   {
+    id: 'server-actions-schedules',
+    workspace: '@plitzi/example-server-actions-schedules',
+    /** A queue file of its own for every run: the example keeps its jobs across restarts, which is the point of it
+     *  and exactly wrong for a spec that counts them. */
+    command: 'PORT=5017 QUEUE_DB="$(mktemp -d)/queue.db" yarn workspace @plitzi/example-server-actions-schedules start',
+    origin: 'http://127.0.0.1:5017',
+    what: 'Scheduled and delayed jobs over a durable queue the server keeps in SQLite'
+  },
+  {
     id: 'blog',
     workspace: '@plitzi/example-blog',
     command: 'PORT=5014 yarn workspace @plitzi/example-blog start',

@@ -14,6 +14,7 @@ import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
+import useAutoRefresh from './hooks/useAutoRefresh';
 import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
 import pathFields from '../../../dataSource/pathFields';
@@ -83,6 +84,15 @@ export type ApiContainerProps = {
   staleTime?: number | string;
   /** With `cache`: seconds an answer nobody renders is kept, so coming back within it paints at once. */
   gcTime?: number | string;
+  /**
+   * Asks again on its own every this many seconds — for a page showing something that keeps moving: a queue, a
+   * feed, a status board. Off (`0`) by default.
+   *
+   * The same refresh `performQuery` runs, for either runtime: a browser request is re-sent, a server provider
+   * asks the server for its own slice again. Skipped while the tab is hidden and never stacked on one still in
+   * flight. A text field in the builder, hence the string.
+   */
+  refreshSeconds?: number | string;
 };
 
 type ProviderSlice = {
@@ -109,7 +119,8 @@ const ApiContainer = ({
   renderWhileLoading = false,
   cache = false,
   staleTime = DEFAULT_STALE_TIME,
-  gcTime = DEFAULT_GC_TIME
+  gcTime = DEFAULT_GC_TIME,
+  refreshSeconds = 0
 }: ApiContainerProps) => {
   const {
     id,
@@ -262,6 +273,16 @@ const ApiContainer = ({
 
     await refresh([id]);
   }, [serverMode, apiRefetch, refresh, id]);
+
+  /**
+   * Only a provider that can already fetch: a server one once a live payload has answered for this page (the
+   * builder has no `/_rsc` to ask), a browser one when its own request is enabled.
+   */
+  useAutoRefresh({
+    seconds: refreshSeconds,
+    enabled: visible && (serverMode ? rscResolved && !rscPending : apiEnabled),
+    refresh: refetch
+  });
 
   const slice = data as ProviderSlice;
   const windowRecords = useMemo(() => (Array.isArray(slice.records) ? slice.records : []), [slice.records]);

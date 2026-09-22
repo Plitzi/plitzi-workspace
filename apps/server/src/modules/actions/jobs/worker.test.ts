@@ -200,6 +200,25 @@ describe('createJobWorker', () => {
     ]);
   });
 
+  // "The flow ended failed" is true of every failure there is. What an operator opening the queue needs is which step
+  // failed and what it said — the same, redacted, message the run history keeps.
+  it('records which step failed and why, not only that the flow did', async () => {
+    const test = world(() => {
+      throw new Error('the provider said no');
+    });
+    await test.job({ maxAttempts: 1 });
+
+    await test.worker().poll();
+    await settle();
+
+    const job = await test.read();
+    expect(job.status).toBe('dead');
+    expect(job.error).toBe('step "work" failed: the provider said no');
+    expect(job.history).toMatchObject([
+      { attempt: 1, status: 'failed', error: 'step "work" failed: the provider said no' }
+    ]);
+  });
+
   it('stops a running job when an operator cancels it', async () => {
     const test = world(
       (_params, ctx) =>

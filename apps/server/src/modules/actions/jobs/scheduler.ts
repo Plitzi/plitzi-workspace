@@ -103,7 +103,13 @@ export const createScheduler = ({
     // Late by more than the fire itself: the occurrences in between are gone, and an operator is owed the number.
     const lateness = Math.max(fireAt, at.getTime());
     const missed = cronFiresBetween(cron, new Date(fireAt), new Date(lateness), timezone);
-    const next = cronNextFire(cron, new Date(lateness + MINUTE_MS), timezone);
+    /**
+     * The first occurrence strictly after `lateness` — which, fires being whole minutes, is the first at or after
+     * the minute following the one `lateness` falls in. Not `lateness + 1 minute`: `cronNextFire` rounds up to a
+     * whole minute, so a sweep seven seconds late would ask from 00:02:07, get 00:03, and an every-minute schedule
+     * would fire every other minute.
+     */
+    const next = cronNextFire(cron, new Date(Math.floor(lateness / MINUTE_MS) * MINUTE_MS + MINUTE_MS), timezone);
 
     await queue.advanceSchedule({
       spaceId,

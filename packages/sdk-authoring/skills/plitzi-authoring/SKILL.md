@@ -159,6 +159,14 @@ on it styles nothing: the `gap` you wrote between its sections is simply not the
 give the provider a tag (`attributes: { subType: 'div' }`) when it should be the box. `validateSpace` — and so
 `authorSpace` and the MCP — warns with `STYLE_WITHOUT_TAG`.
 
+**A class's variant can follow the data** — `variantFrom(pill, 'jobRows.item.status')` in a `bind` list switches
+`statusPill--pending` → `statusPill--succeeded` as the value moves. Do not write that binding by hand: its key names
+the CLASS (`statusPill.base`), and the obvious guess, the element type (`text.base`), selects the type's own
+variants and renders none.
+
+**A provider can keep itself current**: `refreshSeconds: 2` on an `apiContainer` asks again every two seconds, for
+either runtime — the way to build a live queue, feed or status board without a plugin element.
+
 **Never ask the data for a field's opposite.** Both sides of one question are `visible: 'x'` and `visible: '!x'` —
 not an `x` and a `notX` beside it in the server's answer. The `!` is the `not` transformer, which reads a boolean
 that travelled as text (`"false"`, `"0"`) and treats an empty array as false; an empty object is true. Only for a
@@ -199,6 +207,11 @@ Use the step builders — they answer the three things that go wrong silently:
 `named(id, step)` is how a later step reads an earlier one — the flow scope is keyed by node id, so
 `{{quote.output.summary}}` resolves only when that step is called `quote`. `mode: 'await'` is what puts a run's
 answer in the scope at all, and it is the default.
+
+**Inside a flow, a source is named in full.** A binding completes the prefix (`jobRows.item.id` →
+`list_jobRows.item.id`); a step's params are read as written, so a row's button posts
+`{ jobId: '{{ list_jobRows.item.id }}' }` — the row that was clicked — and the short form is refused with the full
+name in the error.
 
 **Pass `input` as an object, not as a line of JSON text.** Both are accepted, and the text form fails silently: an
 interpolated value carrying a quotation mark or a newline — a post body, a comment — makes it unparseable, and
@@ -273,6 +286,7 @@ state live.
 - an element asking for a shared class AND rules of its own — an element has one base selector
 - one class name declared twice with rules that disagree
 - a binding source naming an element nothing answers to, or one whose prefix is not what that element publishes
+- a flow template reading an element's source by the short name a binding would take (`{{ jobRows.item.id }}`)
 - a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
 - a step target naming an element that is not there
 - two elements answering to one name, a broken flow chain, an orphan, a cycle

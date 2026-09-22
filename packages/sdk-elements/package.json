@@ -750,6 +750,10 @@
       "types": "./dist/elements/provider/ApiContainer/hooks/useApi.d.ts",
       "import": "./dist/elements/provider/ApiContainer/hooks/useApi.mjs"
     },
+    "./elements/provider/ApiContainer/hooks/useAutoRefresh": {
+      "types": "./dist/elements/provider/ApiContainer/hooks/useAutoRefresh.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/hooks/useAutoRefresh.mjs"
+    },
     "./elements/provider/ApiContainer/hooks/useProviderPagination": {
       "types": "./dist/elements/provider/ApiContainer/hooks/useProviderPagination.d.ts",
       "import": "./dist/elements/provider/ApiContainer/hooks/useProviderPagination.mjs"

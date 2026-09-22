@@ -225,11 +225,16 @@ class SpaceAuthor {
     }
 
     for (const steps of flows) {
+      const stepIds = new Set(steps.map(step => step.id).filter((id): id is string => id !== undefined));
       for (const step of steps) {
         // This check needs no runtime vocabulary: the document itself says it is addressing the built-in state
         // source. Keep it available to the lower-level schema entry point as well as the composed SDK surface.
         if (step.type === 'globalCallback' && step.on === 'state') {
           this.warnStatePaths(step, where);
+        }
+
+        if (step.type !== 'trigger') {
+          this.assertFlowSourcesInFull(step, stepIds, where);
         }
 
         if (!vocabulary) {
@@ -251,6 +256,44 @@ class SpaceAuthor {
 
         if (step.type === 'utility') {
           this.assertUtility(step, vocabulary, where);
+        }
+      }
+    }
+  }
+
+  /**
+   * A source read INSIDE a flow has to be named in full: `{{ list_jobRows.item.id }}`, not `{{ jobRows.item.id }}`.
+   *
+   * A binding's source is a name this module completes — `jobRows.item` becomes `list_jobRows.item` — so the short
+   * form is the one an author learns first. A step's params are templates the runtime resolves against the flow
+   * scope as written, and there the short form names nothing: the token renders empty, the button posts a blank
+   * id, and every layer below reports success. Refused with the name it should have been, rather than rewritten,
+   * because a template is the author's text and a token inside it can be anything twig allows.
+   *
+   * A root that is also a step of the same flow is that step's result, and is left alone.
+   */
+  private assertFlowSourcesInFull(step: StepSpec, stepIds: Set<string>, where: string): void {
+    const texts: string[] = [];
+    const collect = (value: unknown): void => {
+      if (typeof value === 'string') {
+        texts.push(value);
+      } else if (Array.isArray(value)) {
+        value.forEach(collect);
+      } else if (typeof value === 'object' && value !== null) {
+        Object.values(value).forEach(collect);
+      }
+    };
+    collect(step.params);
+
+    for (const template of texts) {
+      for (const [, expression = ''] of template.matchAll(/\{\{([\s\S]*?)\}\}/g)) {
+        for (const [, , root = ''] of expression.matchAll(/(^|[^\w.$-])([A-Za-z_][\w-]*)\.[A-Za-z_]/g)) {
+          const prefix = this.sources.get(root);
+          if (prefix && !stepIds.has(root)) {
+            throw new Error(
+              `${where}: step "${step.id ?? step.action}" reads "{{ ${expression.trim()} }}". Inside a flow a source is named in full — write "${prefix}_${root}" where it says "${root}". (A binding completes the prefix; a flow's templates are read as written.)`
+            );
+          }
         }
       }
     }

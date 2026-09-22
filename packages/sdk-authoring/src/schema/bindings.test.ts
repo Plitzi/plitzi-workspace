@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorSpace, GLOBAL_SOURCES, resolveSource, withVisibility } from './index';
+import { authorSpace, GLOBAL_SOURCES, resolveSource, variantFrom, withVisibility } from './index';
+import { apiContainer, list, text } from '../elements';
+import { styles } from '../style';
 
 import type { SourceIndex } from './index';
 
@@ -110,5 +112,61 @@ describe('an element whose visibility is a condition', () => {
 
     expect(visibilityOf('always')).toBe(true);
     expect(visibilityOf('waiting')).toBe(false);
+  });
+});
+
+describe('variantFrom', () => {
+  const pill = styles('statusPill', { css: { padding: '2px 8px' }, variants: { done: { color: 'green' } } });
+
+  // The key names the CLASS. Keyed by the element type it would select the type's own variants and match nothing.
+  it('keys the variant by the class the element wears, not by its type', () => {
+    expect(variantFrom(pill, 'rows.item.status')).toEqual({
+      to: 'styleVariant',
+      source: 'rows.item.status',
+      category: 'initialState',
+      transformers: [{ action: 'styleVariant', params: { key: 'statusPill.base', variant: '', append: 'false' } }]
+    });
+  });
+
+  it('takes a class by name, and another selector of the element', () => {
+    expect(variantFrom('fieldInput', 'form.state', 'input').transformers).toEqual([
+      { action: 'styleVariant', params: { key: 'fieldInput.input', variant: '', append: 'false' } }
+    ]);
+  });
+
+  it('survives authoring as an initial-state binding of the element', () => {
+    const space = authorSpace({
+      name: 'Variants',
+      permanentUrl: 'variants',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            apiContainer({
+              id: 'jobs',
+              children: [
+                list({
+                  id: 'rows',
+                  source: 'controlled',
+                  bind: { items: 'jobs.data.jobs' },
+                  children: [text({ class: pill, bind: [variantFrom(pill, 'rows.item.status')] })]
+                })
+              ]
+            })
+          ]
+        }
+      ]
+    });
+    const pillElement = Object.values(space.schema.flat).find(element => element.definition.type === 'text');
+
+    expect(pillElement?.definition.bindings?.initialState).toEqual([
+      {
+        id: 'initialState-1',
+        source: 'rows.item.status',
+        to: 'styleVariant',
+        transformers: [{ action: 'styleVariant', params: { key: 'statusPill.base', variant: '', append: 'false' } }]
+      }
+    ]);
   });
 });

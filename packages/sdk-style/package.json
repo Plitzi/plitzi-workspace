@@ -698,6 +698,22 @@
       "types": "./dist/components/StyleInspector/categories/Variables/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Variables/index.mjs"
     },
+    "./components/StyleInspector/components/AncestorRules": {
+      "types": "./dist/components/StyleInspector/components/AncestorRules/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/AncestorRules/index.mjs"
+    },
+    "./components/StyleInspector/components/AncestorRules/AncestorRuleChip": {
+      "types": "./dist/components/StyleInspector/components/AncestorRules/AncestorRuleChip.d.ts",
+      "import": "./dist/components/StyleInspector/components/AncestorRules/AncestorRuleChip.mjs"
+    },
+    "./components/StyleInspector/components/AncestorRules/AncestorRules": {
+      "types": "./dist/components/StyleInspector/components/AncestorRules/AncestorRules.d.ts",
+      "import": "./dist/components/StyleInspector/components/AncestorRules/AncestorRules.mjs"
+    },
+    "./components/StyleInspector/components/AncestorRules/index": {
+      "types": "./dist/components/StyleInspector/components/AncestorRules/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/AncestorRules/index.mjs"
+    },
     "./components/StyleInspector/components/CategoryAdvanced": {
       "types": "./dist/components/StyleInspector/components/CategoryAdvanced/index.d.ts",
       "import": "./dist/components/StyleInspector/components/CategoryAdvanced/index.mjs"

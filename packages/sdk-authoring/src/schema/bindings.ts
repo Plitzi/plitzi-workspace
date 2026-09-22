@@ -1,6 +1,7 @@
 import { didYouMean } from './suggest';
 
 import type { BindingSpec, BindingsSpec } from './types';
+import type { ClassRef } from '../style';
 import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
 
 /**
@@ -97,6 +98,30 @@ export const visibleWhen = (source: string): BindingSpec => ({
 export const hiddenWhen = (source: string): BindingSpec => ({
   ...visibleWhen(source),
   transformers: [{ action: 'not', params: {} }]
+});
+
+/**
+ * Switches one of a CLASS's variants from a value the data answered — a status pill that turns amber, green or red
+ * as the job it describes moves.
+ *
+ * The variant map is keyed by the SELECTOR the variants belong to, and the obvious guess names a different one:
+ * `text.base` selects the text TYPE's own variants (`text--done`), not the class the element wears
+ * (`statusPill--done`), so the element renders with no variant at all and nothing reports it. Taken from the class
+ * declaration, the key cannot drift from the class it means. The value at `source` names the variant.
+ *
+ * `slot` is which of the element's selectors wears the class — `base` for nearly everything, `input` for a form
+ * control's field.
+ */
+export const variantFrom = (cls: ClassRef, source: string, slot = 'base'): BindingSpec => ({
+  to: 'styleVariant',
+  source,
+  category: 'initialState',
+  transformers: [
+    {
+      action: 'styleVariant',
+      params: { key: `${typeof cls === 'string' ? cls : cls.name}.${slot}`, variant: '', append: 'false' }
+    }
+  ]
 });
 
 /**

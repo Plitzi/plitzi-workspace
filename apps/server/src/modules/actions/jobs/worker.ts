@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { ActionRunError } from '../runtime/errors';
 
 import type { ActionsModule } from '../index';
-import type { ActionLookups } from '../types';
+import type { ActionLookups, ActionRunResult } from '../types';
 import type { ActionJob, ActionJobQueue, ActionJobSettlement } from '@plitzi/sdk-shared';
 
 /**
@@ -16,6 +16,21 @@ import type { ActionJob, ActionJobQueue, ActionJobSettlement } from '@plitzi/sdk
 const TRY_AGAIN = new Set(['duplicate', 'over_capacity']);
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * Why a run that ended badly did, in the words an operator can act on: the step that failed and what it said.
+ *
+ * Read from `steps` — the outline, whose errors are already redacted of every credential the run resolved — so
+ * nothing lands on the job that the run history would not show. A run that failed without any step failing (a
+ * timeout between steps, a budget spent) has no step to name, and says how it ended instead.
+ */
+const failureOf = (result: ActionRunResult): string => {
+  const failed = result.steps.find(step => step.phase === 'flow' && step.status === 'failed');
+
+  return failed
+    ? `step "${failed.id}" failed: ${failed.error ?? 'no reason given'}`
+    : `the flow ended ${result.status}`;
+};
 
 /**
  * Refusals no number of attempts will change: the action was deleted, its schedule was switched off, or the
@@ -218,7 +233,7 @@ export const createJobWorker = ({
         return;
       }
 
-      await fail(job, run.runId, `the flow ended ${result.status}`);
+      await fail(job, run.runId, failureOf(result));
     } catch (error) {
       const reason = error instanceof ActionRunError ? error.reason : undefined;
       if (reason && GIVE_UP.has(reason)) {

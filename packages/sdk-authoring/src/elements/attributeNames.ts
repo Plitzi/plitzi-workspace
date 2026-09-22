@@ -25,6 +25,7 @@ export const elementAttributeNames = {
     'pageParam',
     'pagination',
     'query',
+    'refreshSeconds',
     'renderWhileLoading',
     'resource',
     'singleRecord',

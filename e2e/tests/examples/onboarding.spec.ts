@@ -8,6 +8,8 @@ import { expectDevToolsAvailable, expectSampleSpaceContent, expectSpaceRendered 
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
 import { sampleSpace } from '../../spaces';
 
+import type { APIRequestContext } from '@playwright/test';
+
 /** The examples are written for a person, not for this suite: each one shows a single wiring decision and stops.
  *  So this category does not test Plitzi through them — the other categories do that, against surfaces the suite
  *  owns. What it checks is narrower and more important: **the example still does what its own README says**.
@@ -282,6 +284,100 @@ describeTarget('server-actions-no-server', subject => {
     expect(attempts, 'a step called a server this page does not have').toEqual([]);
 
     await capture('no-server-tier');
+  });
+});
+
+describeTarget('server-actions-schedules', subject => {
+  type BoardJob = { id: string; name: string; status: string; error: string; history: string };
+  type Board = { schedules: { name: string; next: string; enabled: boolean }[]; jobs: BoardJob[] };
+
+  /** The board as the page receives it: the `queue-board` render action's slice, the one element on the page. */
+  const board = async (request: APIRequestContext): Promise<Board> => {
+    const response = await request.get(`${subject.origin}/_rsc?location=%2F`);
+    const { serverData } = (await response.json()) as { serverData: Record<string, Board> };
+    const [slice] = Object.values(serverData);
+
+    return slice;
+  };
+
+  const call = async (request: APIRequestContext, actionId: string, input: Record<string, unknown>) => {
+    const response = await request.post(`${subject.origin}/_action`, { data: { actionId, input } });
+
+    return { status: response.status(), body: (await response.json()) as { output: { jobId: string } } };
+  };
+
+  const job = async (request: APIRequestContext, jobId: string): Promise<BoardJob | undefined> =>
+    (await board(request)).jobs.find(entry => entry.id === jobId);
+
+  test('the page arrives with the schedules already in it, in UTC and in the zone they were written in', async ({
+    request
+  }) => {
+    const html = await (await request.get(subject.origin)).text();
+
+    expect(html).toContain('Minute heartbeat');
+    // A 9am Madrid digest reads as nine — beside the UTC instant every replica agrees on.
+    expect(html).toMatch(/\d{2}:00 UTC \(09:00 Europe\/Madrid\)/);
+    // Switched off, and still on the board: a missing row could not say so.
+    expect(html).toContain('switched off');
+  });
+
+  test('a reminder queued from the page runs when it comes due, and the board shows it without a reload', async ({
+    page,
+    capture
+  }) => {
+    await page.goto(subject.origin);
+    await page.getByLabel('Remind me to').fill('Water the plants');
+    await page.getByLabel('In how many seconds').fill('2');
+    await page.getByRole('button', { name: 'Queue the reminder' }).click();
+
+    await expect(page.getByText('Queued “Reminder” — due in 2s')).toBeVisible();
+    await capture('reminder-queued');
+
+    // Nobody reloads: `refreshSeconds` asks the server for the board again until the job has run.
+    await expect(page.getByText('Reminder: Water the plants')).toBeVisible({ timeout: 15_000 });
+    await capture('reminder-ran');
+  });
+
+  test('a failing job is retried with a backoff, gives up, and says which step failed', async ({ request }) => {
+    const { body } = await call(request, 'start-flaky', { failures: 99 });
+
+    await expect.poll(async () => (await job(request, body.output.jobId))?.status, { timeout: 30_000 }).toBe('dead');
+
+    const dead = await job(request, body.output.jobId);
+    expect(dead?.error).toBe('step "sync" failed: The upstream refused attempt 3');
+    expect(dead?.history).toContain('#3 failed');
+  });
+
+  test('a running job stops when it is cancelled', async ({ request }) => {
+    const { body } = await call(request, 'start-export', { seconds: 20 });
+    await expect.poll(async () => (await job(request, body.output.jobId))?.status, { timeout: 10_000 }).toBe('running');
+
+    expect((await call(request, 'job-cancel', { jobId: body.output.jobId })).status).toBe(200);
+
+    // The worker reads the flag at its next heartbeat — a third of the ten-second lease.
+    await expect
+      .poll(async () => (await job(request, body.output.jobId))?.status, { timeout: 10_000 })
+      .toBe('cancelled');
+  });
+
+  test('a job that finished runs again from the board, keeping its history', async ({ request }) => {
+    const { body } = await call(request, 'start-flaky', { failures: 0 });
+    await expect
+      .poll(async () => (await job(request, body.output.jobId))?.status, { timeout: 10_000 })
+      .toBe('succeeded');
+
+    expect((await call(request, 'job-retry', { jobId: body.output.jobId })).status).toBe(200);
+
+    await expect
+      .poll(async () => (await job(request, body.output.jobId))?.history, { timeout: 10_000 })
+      .toBe('#1 succeeded on replica-5017 · #2 succeeded on replica-5017');
+  });
+
+  // The README's claim about the queued actions: only a job can start them. A page naming one is refused.
+  test('a page cannot run a queued action directly', async ({ request }) => {
+    const { status } = await call(request, 'reminder', { message: 'skip the queue' });
+
+    expect(status).toBe(403);
   });
 });
 
