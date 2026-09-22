@@ -113,7 +113,10 @@ const boxNotation = (values: string[]): string => {
  * 20px` rather than four declarations — wherever every side is set.
  *
  * Only when expanding the shorthand again gives back exactly those longhands, which is also what keeps a value with
- * a space in it (`calc()`, `rgb()`) written out: the expander would read it as more than one value.
+ * a space in it (`calc()`, `rgb()`) written out: the expander would read it as more than one value — and only when
+ * they already sit together in the order the expansion writes them. Authoring expands a shorthand in that order, so
+ * longhands written any other way (`padding-left` before `padding-top`, a border grouped by side) would come back
+ * reordered: the same rules, and a different document.
  */
 const compact = (rules: CssProps): CssProps => {
   let out: CssProps = { ...rules };
@@ -126,6 +129,13 @@ const compact = (rules: CssProps): CssProps => {
     const notation = boxNotation(values.map(String));
     const expanded = expandShorthand({ [shorthand]: notation });
     if (longhands.some((longhand, index) => String(expanded[longhand]) !== values[index])) {
+      continue;
+    }
+
+    const written = Object.keys(out);
+    const order = Object.keys(expanded);
+    const start = written.indexOf(order[0]);
+    if (start < 0 || order.some((longhand, index) => written[start + index] !== longhand)) {
       continue;
     }
 

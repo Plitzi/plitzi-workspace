@@ -9,7 +9,7 @@ import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
 import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 
-import type { SourceField } from '@plitzi/sdk-shared';
+import type { AuthContextValue, SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type GlobalSourcesProps = {
@@ -78,7 +78,9 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   useCommonStoreSync('runtime.sources.navigation', navigationValue);
 
   // --- auth ---
-  const { user, authenticated } = use(AuthContext);
+  // Read as partial: with no provider mounted the context is its default `{}`, whatever its type promises.
+  const auth: Partial<AuthContextValue> = use(AuthContext);
+  const { user, authenticated, state: status } = auth;
   const [userProvider = 'basic'] = useCommonStore('schema.settings.userProvider');
   // Keyed on whether the space authenticates at all, never on which provider it picked: the context is the same
   // shape whoever filled it, so a space on a registered provider binds `user.*` exactly like one on `basic`.
@@ -90,6 +92,9 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
 
     return {
       isAuthenticated: authenticated,
+      // Where auth is in finding out who this is (`init` … `authenticated` | `guest`). Left out with no provider at
+      // all. What a page shows while it resolves, and what the kept state waits for before it restores anything.
+      ...(status === undefined ? {} : { status }),
       accessToken: user?.accessToken ?? '',
       details: {
         username: '',
@@ -100,7 +105,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
         ...(user?.details ?? {})
       }
     };
-  }, [userProvider, user, authenticated]);
+  }, [userProvider, user, authenticated, status]);
   const authFields = useCallback(
     () => getPathsFromObeject(authValue).map(path => ({ path, name: `user.${path}` })),
     [authValue]

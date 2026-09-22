@@ -317,29 +317,12 @@ const ApiContainer = ({
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     const callbacks: Record<string, InteractionCallback> = {
-      performQuery: {
-        action: 'performQuery',
-        title: `Perform Query ${label}`,
-        type: 'callback',
-        callback: refetch,
-        preview: {},
-        params: {}
-      },
-      loadMore: {
-        action: 'loadMore',
-        title: `Load More ${label}`,
-        type: 'callback',
-        callback: loadMore,
-        preview: {},
-        params: {}
-      },
+      performQuery: { ...declaration.callbacks.performQuery, title: `Perform Query ${label}`, callback: refetch },
+      loadMore: { ...declaration.callbacks.loadMore, title: `Load More ${label}`, callback: loadMore },
       goToPage: {
-        action: 'goToPage',
+        ...declaration.callbacks.goToPage,
         title: `Go To Page ${label}`,
-        type: 'callback',
-        callback: ({ page }: { page?: string | number }) => goToPage(Number(page) || 1),
-        preview: {},
-        params: { page: { label: 'Page', defaultValue: '1', type: 'text' } }
+        callback: ({ page }: { page?: string | number }) => goToPage(Number(page) || 1)
       }
     };
 
@@ -347,15 +330,9 @@ const ApiContainer = ({
     // decides whether the connector allows the action at all.
     if (serverMode) {
       callbacks.writeRecord = {
-        action: 'writeRecord',
+        ...declaration.callbacks.writeRecord,
         title: `Write Record ${label}`,
-        type: 'callback',
-        callback: writeRecord,
-        preview: { action: 'create' },
-        params: {
-          action: { label: 'Endpoint', defaultValue: 'create', type: 'text' },
-          recordId: { label: 'Record Id', defaultValue: '', type: 'text' }
-        }
+        callback: writeRecord
       };
     }
 

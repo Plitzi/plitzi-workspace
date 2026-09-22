@@ -21,6 +21,30 @@ const declaration = elementDeclaration<FormAttributes>()({
       preview: { values: {}, actionUrl: '', method: '' }
     }
   },
+  callbacks: {
+    performReset: { action: 'performReset', title: 'Reset Form', type: 'callback', params: {} },
+    // `name` offers the form's own fields, which only a mounted form knows; the component fills the options in.
+    setFieldValue: {
+      action: 'setFieldValue',
+      title: 'Set Field Value',
+      type: 'callback',
+      preview: {},
+      params: {
+        name: { label: 'Field Name', defaultValue: undefined, type: 'select', options: [] },
+        value: { type: 'text', defaultValue: '' }
+      }
+    },
+    setFieldError: {
+      action: 'setFieldError',
+      title: 'Set Field Error',
+      type: 'callback',
+      preview: {},
+      params: {
+        name: { label: 'Field Name', defaultValue: undefined, type: 'select', options: [] },
+        error: { type: 'text', defaultValue: '' }
+      }
+    }
+  },
   content: {
     attributes: {
       method: 'get',

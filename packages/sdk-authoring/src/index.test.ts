@@ -210,6 +210,62 @@ describe('the step vocabulary', () => {
     expect(authored.schema.flat.credits.definition.initialState).toMatchObject({ visibility: false });
   });
 
+  /** The probe that showed it: `openModal` aimed at a plain container, which renders, saves, and opens nothing. */
+  it('refuses an element callback aimed at an element that does not answer to it, and names the one that does', () => {
+    expect(() =>
+      authoring.authorSpace({
+        name: 'Modal',
+        permanentUrl: 'modal',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [
+              authoring.button({
+                id: 'open',
+                content: 'Open',
+                flows: [[authoring.onClick(), authoring.openModal('credits')]]
+              }),
+              authoring.container({ id: 'credits', visible: false })
+            ]
+          }
+        ]
+      })
+    ).toThrow(
+      /sends "openModal" to "credits", a "container" that never answers to it\. It is a callback of "modalContainer"/
+    );
+  });
+
+  it('lets the callbacks every element answers to reach any of them, and a plugin type its own', () => {
+    const authored = authoring.authorSpace({
+      name: 'Callbacks',
+      permanentUrl: 'callbacks',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            { type: 'acmeWidget', id: 'widget' },
+            authoring.container({ id: 'panel' }),
+            authoring.button({
+              id: 'go',
+              content: 'Go',
+              flows: [
+                [
+                  authoring.onClick(),
+                  authoring.toggleElement({ category: 'state', key: 'visibility' }, 'panel'),
+                  { type: 'callback', action: 'acmeRefresh', on: 'widget' }
+                ]
+              ]
+            })
+          ]
+        }
+      ]
+    });
+
+    expect(authored.warnings).toEqual([]);
+  });
+
   it('leaves the triggers of a plugin type alone, and a trigger aimed at another element', () => {
     const authored = authoring.authorSpace({
       name: 'Triggers',
@@ -227,5 +283,46 @@ describe('the step vocabulary', () => {
     });
 
     expect(authored.warnings).toEqual([]);
+  });
+});
+
+describe('the element catalogs', () => {
+  const page = (body: ReturnType<typeof authoring.container>[]) => ({
+    name: 'Menu',
+    permanentUrl: 'menu',
+    pages: [{ name: 'Home', slug: '', body }]
+  });
+
+  // A dropdown's panel reads the dropdown's state from context; anywhere else it throws on its first render.
+  it('refuses a sub-element outside the element it only works inside', () => {
+    expect(() => authoring.authorSpace(page([authoring.dropdownPopup({ id: 'panel' })]))).toThrow(
+      /only works inside a "dropdown"/
+    );
+  });
+
+  it('accepts it anywhere inside that element, and names the label as a child', () => {
+    const authored = authoring.authorSpace(
+      page([
+        authoring.dropdown({
+          id: 'menu',
+          children: [
+            authoring.text({ content: 'Menu' }),
+            authoring.container({ children: [authoring.dropdownPopup({ id: 'panel' })] })
+          ]
+        })
+      ])
+    );
+
+    expect(authored.warnings).toEqual([]);
+  });
+
+  it('warns about an attribute the element never reads', () => {
+    const authored = authoring.authorSpace(
+      page([{ type: 'dropdown', id: 'menu', attributes: { content: 'Menu' }, children: [authoring.dropdownPopup()] }])
+    );
+
+    expect(authored.warnings).toMatchObject([
+      { code: 'unknown-attribute', details: { type: 'dropdown', attribute: 'content' } }
+    ]);
   });
 });

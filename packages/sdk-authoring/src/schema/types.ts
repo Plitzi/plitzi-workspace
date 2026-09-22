@@ -103,6 +103,12 @@ export interface ElementSpec {
    */
   css?: CssSpec;
   /**
+   * The name of this element's own selector — the one {@link ElementSpec.css} writes to. Left out, it is derived from
+   * where the element sits; given, it is kept exactly, which is how a space read back from the builder keeps the
+   * names its style editor, its `customCss` and anything outside the document already know it by.
+   */
+  selector?: string;
+  /**
    * How this element's own selector reacts — `hover`, `focus`, `active` — beside {@link ElementSpec.css}. A state
    * is part of the element's selector, not a second one, so it is refused alongside a shared `class` for the same
    * reason `css` is: the rules belong in the class.
@@ -213,6 +219,8 @@ export interface PageSpec {
   keepState?: boolean;
   stateStorage?: Schema['settings']['stateStorage'];
   css?: CssSpec;
+  /** As {@link ElementSpec.selector}. */
+  selector?: string;
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
   class?: ClassList;
   flows?: StepSpec[][];
@@ -252,6 +260,8 @@ export interface LayoutSpec {
   attributes?: Record<string, unknown>;
   css?: CssSpec;
   states?: StatesSpec;
+  /** As {@link ElementSpec.selector}. */
+  selector?: string;
   class?: ClassList;
   bind?: BindingsSpec;
   flows?: StepSpec[][];
@@ -343,6 +353,8 @@ export interface StepVocabulary {
    * plugin's, whose triggers nobody here can know, and its flows are left alone.
    */
   triggers?: Record<string, readonly string[]>;
+  /** Element type → every element callback it answers to, the shared `setState`/`toggleState` included. */
+  callbacks?: Record<string, readonly string[]>;
 }
 
 /**
@@ -364,6 +376,13 @@ export interface AuthorSpaceOptions {
    * prefix that does not match the element it names goes unnoticed.
    */
   sourceTypes?: SourceTypes;
+  /** Element type → the type it only works inside. Left out, a sub-element is placed wherever it is written. */
+  ancestorTypes?: Record<string, string>;
+  /**
+   * Element type → the attributes its component reads, `null` for one that reads any. Left out, an attribute
+   * nothing reads is written without a word.
+   */
+  attributeNames?: Readonly<Record<string, readonly string[] | null>>;
 }
 
 export interface AuthoredSpace {

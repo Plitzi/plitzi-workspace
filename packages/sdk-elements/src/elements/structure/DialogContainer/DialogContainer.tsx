@@ -111,22 +111,8 @@ const DialogContainer = ({
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
-      openDialog: {
-        action: 'openDialog',
-        title: `Open ${label}`,
-        type: 'callback',
-        callback: handleOpeDialog,
-        params: { metadata: { type: 'text', defaultValue: '' } },
-        preview: { metadata: '' }
-      },
-      closeDialog: {
-        action: 'closeDialog',
-        title: `Close ${label}`,
-        type: 'callback',
-        callback: handleClickClose,
-        preview: {},
-        params: {}
-      }
+      openDialog: { ...declaration.callbacks.openDialog, title: `Open ${label}`, callback: handleOpeDialog },
+      closeDialog: { ...declaration.callbacks.closeDialog, title: `Close ${label}`, callback: handleClickClose }
     };
   }, [handleClickClose, handleOpeDialog, label]);
 

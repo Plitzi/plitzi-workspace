@@ -82,6 +82,8 @@ class SpaceAuthor {
 
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
   private readonly classRules = new Map<string, ResponsiveBlock>();
+  /** Every element's own selector, named or derived — each one is that element's alone. */
+  private readonly ownSelectors = new Set<string>();
 
   /** Every element in this space that publishes a data source, by id, and the name it publishes it under. */
   private readonly sources: SourceIndex = new Map();
@@ -90,6 +92,8 @@ class SpaceAuthor {
    *  free to register a module of its own, and refusing what this process cannot see would make the check useless
    *  for exactly the spaces that need it most. */
   private readonly stepWarnings: SchemaValidationError[] = [];
+  /** Element callback steps, checked once every element exists: a step may target one declared further down. */
+  private readonly callbackSteps: { action: string; target: string; where: string }[] = [];
 
   /** Rules that render, and render differently from what they plainly mean — see `warnTabletOnly`. */
   private readonly styleWarnings: SchemaValidationError[] = [];
@@ -142,7 +146,11 @@ class SpaceAuthor {
     });
 
     for (const [name, responsive] of this.classRules) {
-      this.writeSelector(name, responsive, `Class "${name}"`);
+      // A class declared with no rules is still a class the space has — a hook for a stylesheet, a name its elements
+      // wear — so it is written, empty. Left out, the document stops saying it exists, and reading it back drops the
+      // name from every element wearing it.
+      const blocks = BREAKPOINTS.some(breakpoint => responsive[breakpoint]) ? responsive : { desktop: {} };
+      this.writeSelector(name, blocks, `Class "${name}"`);
     }
 
     this.assertAncestorClasses();
@@ -154,6 +162,7 @@ class SpaceAuthor {
     // declared further down.
     layouts.forEach(layout => this.assertLayoutRef(layout.layout, `Layout "${layout.id}"`));
     this.spec.pages.forEach(page => this.assertLayoutRef(page.layout, `Page "${page.name}"`));
+    this.assertCallbacksAnswered();
 
     const style: Style = {
       ...EMPTY_STYLE_SCHEMA,
@@ -209,7 +218,7 @@ class SpaceAuthor {
    * event such a type fires. A plugin's type publishes its own, and element callbacks and tasks belong to an element
    * or a server this process cannot see, so those are left alone.
    */
-  private assertStepsKnown(flows: StepSpec[][] | undefined, where: string, type: string): void {
+  private assertStepsKnown(flows: StepSpec[][] | undefined, where: string, type: string, hostId: string): void {
     const vocabulary = this.options.vocabulary;
     if (!flows) {
       return;
@@ -234,6 +243,10 @@ class SpaceAuthor {
         // A trigger naming another element (`on`) fires on that one, which is its own business.
         if (step.type === 'trigger' && step.on === undefined && vocabulary.triggers) {
           this.assertTriggerFired(step, type, vocabulary.triggers, where);
+        }
+
+        if (step.type === 'callback' && vocabulary.callbacks) {
+          this.callbackSteps.push({ action: step.action, target: step.on ?? hostId, where });
         }
 
         if (step.type === 'utility') {
@@ -265,6 +278,35 @@ class SpaceAuthor {
       : ` No built-in element fires it${didYouMean(step.action, fired) || '.'}`;
 
     throw new Error(`${where} starts a flow on "${step.action}", which a "${type}" never fires.${hint}`);
+  }
+
+  /**
+   * An element callback runs on the element it names, and a built-in type says which ones it answers to.
+   *
+   * Refused for the reason a trigger is: `openModal` sent to a plain container is a button that does nothing, saved
+   * and reported nowhere. A target that is missing is the validator's to report, and one of a plugin's type is left
+   * alone — that type registers callbacks nobody here can see.
+   */
+  private assertCallbacksAnswered(): void {
+    const callbacks = this.options.vocabulary?.callbacks;
+    if (!callbacks) {
+      return;
+    }
+
+    for (const { action, target, where } of this.callbackSteps) {
+      const type = (this.flatMap.flat[target] as Element | undefined)?.definition.type;
+      const answered = type !== undefined && Object.hasOwn(callbacks, type) ? callbacks[type] : undefined;
+      if (!answered || answered.includes(action)) {
+        continue;
+      }
+
+      const answeredBy = Object.keys(callbacks).filter(candidate => callbacks[candidate].includes(action));
+      const hint = answeredBy.length
+        ? ` It is a callback of ${answeredBy.map(candidate => `"${candidate}"`).join(', ')}: aim it at one of those.`
+        : ` No built-in element answers to it${didYouMean(action, answered) || '.'}`;
+
+      throw new Error(`${where} sends "${action}" to "${target}", a "${type}" that never answers to it.${hint}`);
+    }
   }
 
   private assertGlobalCallback(step: StepSpec, vocabulary: StepVocabulary, where: string): void {
@@ -558,6 +600,24 @@ class SpaceAuthor {
   }
 
   /**
+   * A name given to an element's own selector has to be one nothing else answers to: a declared class would have its
+   * rules overwritten, and a second element naming it would share rules it never asked for.
+   */
+  private assertOwnSelector(name: string, where: string): void {
+    if (!/^-?[_a-zA-Z][_a-zA-Z0-9-]*$/.test(name)) {
+      throw new Error(`${where} names its selector "${name}", which is not a CSS class name.`);
+    }
+
+    if (this.classRules.has(name) || this.ownSelectors.has(name)) {
+      throw new Error(
+        `${where} names its selector "${name}", which ${this.classRules.has(name) ? 'is a class this space declares' : 'another element already names'}. Use \`class\` to share rules; a selector of an element's own is its alone.`
+      );
+    }
+
+    this.ownSelectors.add(name);
+  }
+
+  /**
    * A shared class when one was named, otherwise a selector of this element's own, named after where it sits.
    *
    * The two are exclusive because an element has exactly one base selector: asking for a shared rule AND a rule of
@@ -566,8 +626,14 @@ class SpaceAuthor {
    */
   private selectorFor(
     path: string,
-    spec: { type: string; class?: ClassList; css?: CssSpec; states?: StatesSpec }
+    spec: { type: string; class?: ClassList; css?: CssSpec; states?: StatesSpec; selector?: string }
   ): string {
+    if (spec.class && spec.selector) {
+      throw new Error(
+        `Element "${spec.type}" at ${path} names its own selector ("${spec.selector}") and wears a shared class. A shared class IS its selector: drop one of the two.`
+      );
+    }
+
     if (spec.class) {
       const names = classNames(spec.class);
       names.forEach(name => this.assertClass(name, `Element "${spec.type}" at ${path}`));
@@ -583,10 +649,23 @@ class SpaceAuthor {
 
     // A class may carry any name — one read back from a builder document is `container-555c` — so the name derived
     // for an element's own rules steps past a class that already answers to it rather than overwriting its rules.
+    if (spec.selector !== undefined) {
+      this.assertOwnSelector(spec.selector, `Element "${spec.type}" at ${path}`);
+      this.writeSelector(
+        spec.selector,
+        toBlocks({ css: spec.css, states: spec.states }),
+        `Element "${spec.type}" at ${path}`
+      );
+
+      return spec.selector;
+    }
+
     let selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}`, 4)}`;
-    for (let attempt = 1; this.classRules.has(selector); attempt += 1) {
+    for (let attempt = 1; this.classRules.has(selector) || this.ownSelectors.has(selector); attempt += 1) {
       selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}#${attempt}`, 4)}`;
     }
+
+    this.ownSelectors.add(selector);
 
     this.writeSelector(selector, toBlocks({ css: spec.css, states: spec.states }), `Element "${spec.type}" at ${path}`);
 
@@ -690,14 +769,13 @@ class SpaceAuthor {
 
   private addPage(page: PageSpec, index: number): string {
     const path = this.pathFor(page, index);
-    this.assertStepsKnown(page.flows, `Page "${page.name}"`, 'page');
+    const id = page.id ?? this.nextId('page');
+    this.assertStepsKnown(page.flows, `Page "${page.name}"`, 'page', id);
     if (page.folder !== undefined && !this.folderPrefixes.has(page.folder)) {
       throw new Error(
         `Page "${page.name}" is in folder "${page.folder}", which this space does not declare${didYouMean(page.folder, [...this.folderPrefixes.keys()])}`
       );
     }
-
-    const id = page.id ?? this.nextId('page');
 
     const element: Element = {
       id,
@@ -722,7 +800,9 @@ class SpaceAuthor {
         type: 'page',
         rootId: id,
         items: [],
-        styleSelectors: { base: this.selectorFor(path, { type: 'page', css: page.css, class: page.class }) },
+        styleSelectors: {
+          base: this.selectorFor(path, { type: 'page', css: page.css, class: page.class, selector: page.selector })
+        },
         ...(page.flows ? { interactions: authorFlows(page.flows, id) } : {})
       }
     };
@@ -758,7 +838,7 @@ class SpaceAuthor {
   private addLayout(layout: LayoutSpec): void {
     const path = `${this.spec.permanentUrl}/layout:${layout.id}`;
     const where = `Layout "${layout.id}"`;
-    this.assertStepsKnown(layout.flows, where, 'layoutContainer');
+    this.assertStepsKnown(layout.flows, where, 'layoutContainer', layout.id);
     if (layout.folder && !this.folderPrefixes.has(layout.folder)) {
       throw new Error(
         `${where} is filed in folder "${layout.folder}", which this space does not declare${didYouMean(layout.folder, [...this.folderPrefixes.keys()])}`
@@ -859,6 +939,53 @@ class SpaceAuthor {
     }
   }
 
+  /**
+   * A sub-element that reads its parent's context — a dropdown's panel, a tab container's parts — throws on its
+   * first render anywhere else, taking the page down with it. Refused here, where the error can say where it belongs.
+   */
+  private assertInsideAncestor(type: string, parentId: string, where: string): void {
+    const ancestorTypes = this.options.ancestorTypes;
+    const ancestor = ancestorTypes && Object.hasOwn(ancestorTypes, type) ? ancestorTypes[type] : undefined;
+    if (!ancestor) {
+      return;
+    }
+
+    for (let id: string | undefined = parentId; id;) {
+      const element = this.flatMap.flat[id] as Element | undefined;
+      if (element?.definition.type === ancestor) {
+        return;
+      }
+
+      id = element?.definition.parentId;
+    }
+
+    throw new Error(`${where} only works inside a "${ancestor}": it reads that element's state. Nest it in one.`);
+  }
+
+  /**
+   * An attribute its component never reads renders nothing and says nothing — a `content` on a `dropdown`, whose
+   * label is a child. A warning, because a plugin's type or a newer element may read what this catalog has not heard of.
+   */
+  private warnUnknownAttributes(spec: ElementSpec, where: string): void {
+    const catalog = this.options.attributeNames;
+    const names = catalog && Object.hasOwn(catalog, spec.type) ? catalog[spec.type] : null;
+    if (!names) {
+      return;
+    }
+
+    for (const name of Object.keys(spec.attributes ?? {})) {
+      if (names.includes(name)) {
+        continue;
+      }
+
+      this.stepWarnings.push({
+        code: 'unknown-attribute',
+        message: `${where} sets "${name}", which a "${spec.type}" never reads${didYouMean(name, names) || ''}.`,
+        details: { type: spec.type, attribute: name }
+      });
+    }
+  }
+
   private addElement(
     spec: ElementSpec,
     path: string,
@@ -869,7 +996,9 @@ class SpaceAuthor {
     const id = spec.id ?? this.nextId(spec.type);
     const conditional = insideCondition || spec.visible !== undefined;
     const where = `Element "${spec.type}" (${id}) at ${path}`;
-    this.assertStepsKnown(spec.flows, where, spec.type);
+    this.assertStepsKnown(spec.flows, where, spec.type, id);
+    this.assertInsideAncestor(spec.type, parentId, where);
+    this.warnUnknownAttributes(spec, where);
     const bindings = withVisibility(spec);
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
 

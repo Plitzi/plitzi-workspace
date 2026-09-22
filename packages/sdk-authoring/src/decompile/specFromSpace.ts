@@ -1,4 +1,10 @@
-import { defaultAttributes, elementAttributeNames, elementSourceTypes } from '../elements';
+import {
+  defaultAttributes,
+  elementAttributeNames,
+  elementCallbacks,
+  elementSourceTypes,
+  elementTriggers
+} from '../elements';
 import { BUILTIN_GLOBAL_CALLBACKS } from '../interactions';
 import { authorFlows, GLOBAL_SOURCES } from '../schema';
 import { css } from '../style';
@@ -66,6 +72,8 @@ export type SpecCorrectionCode =
   | 'broken-binding'
   | 'fixed-binding-source'
   | 'broken-flow'
+  | 'dead-flow'
+  | 'dead-step'
   | 'fixed-global-callback'
   | 'dropped-initial-state'
   | 'missing-folder'
@@ -299,6 +307,8 @@ class SpecReader {
   private readonly elementBlocks = new Map<string, Record<string, SelectorBlocks>>();
 
   private readonly selectorUses = new Map<string, number>();
+  /** The element ids authoring would derive on its own, and so the ones an export leaves out (see derivedIds). */
+  private derived = new Set<string>();
 
   /** Selectors kept as classes under their own name, rather than written into the one element that uses them. */
   private readonly keptClasses = new Set<string>();
@@ -354,6 +364,7 @@ class SpecReader {
     const pageFolders = this.readFolders();
     const roots = this.collectRoots();
     this.countSelectorUses(roots);
+    this.derived = this.derivedIds(roots);
 
     const elements = this.readElementDefaults(style.mode);
     const layouts = roots.layouts.map(layout => this.readLayout(layout));
@@ -551,6 +562,62 @@ class SpecReader {
     );
   }
 
+  /**
+   * The element ids authoring would derive by itself — exactly those, which is what lets an export leave them out.
+   *
+   * Looking like one is not enough. `container-117` has the shape of a derived id, but authoring numbers `<type>-<n>`
+   * by position, per type, stepping over every name written out anywhere — so an id that is not the one its position
+   * would get is a name the author chose, and dropping it renames the element. Walked in authoring's own order
+   * (layouts, then pages, parents before their children). Keeping one id changes what the others would be, since
+   * authoring steps over it, so the pass repeats until nothing more has to be kept; it only ever keeps more, so it ends.
+   */
+  private derivedIds(roots: { pages: Element[]; layouts: Element[] }): Set<string> {
+    const order: Element[] = [];
+    const visit = (element: Element): void => {
+      order.push(element);
+      this.childrenOf(element, false).forEach(visit);
+    };
+    [...roots.layouts, ...roots.pages].forEach(root => this.childrenOf(root, false).forEach(visit));
+
+    const authoredType = ({ definition: { type } }: Element): string =>
+      Object.hasOwn(LEGACY_ELEMENT_TYPES, type) ? LEGACY_ELEMENT_TYPES[type].type : type;
+    const named = new Set<string>([...roots.layouts, ...roots.pages].map(root => root.id));
+    for (const element of order) {
+      if (this.references.has(element.id)) {
+        named.add(element.id);
+      }
+    }
+
+    for (;;) {
+      const counters = new Map<string, number>();
+      const derived = new Set<string>();
+      let kept = false;
+      for (const element of order) {
+        if (named.has(element.id)) {
+          continue;
+        }
+
+        const type = authoredType(element);
+        let next = (counters.get(type) ?? 0) + 1;
+        while (named.has(`${type}-${next}`)) {
+          next += 1;
+        }
+
+        counters.set(type, next);
+        if (element.id === `${type}-${next}`) {
+          derived.add(element.id);
+        } else {
+          named.add(element.id);
+          kept = true;
+        }
+      }
+
+      if (!kept) {
+        return derived;
+      }
+    }
+  }
+
   private countSelectorUses(roots: { pages: Element[]; layouts: Element[] }): void {
     const visit = (element: Element): void => {
       for (const selector of Object.values(element.definition.styleSelectors)) {
@@ -609,14 +676,16 @@ class SpecReader {
   /**
    * How an element's base selector is written: inline, as a class, or not at all.
    *
-   * Inline — the element's own `css` — only when nothing else could notice the name changing: one element uses it,
-   * nothing in the document spells it out (a `customCss` rule, a twig template), and it carries nothing the inline
-   * form cannot (a variant, a rule the editor cannot hold). Everything else stays a class under its own name.
+   * Inline — the element's own `css` — when one element uses it, nothing in the document spells it out (a `customCss`
+   * rule, a twig template), and it carries nothing the inline form cannot (a variant, a rule the editor cannot hold).
+   * Everything else stays a class under its own name. Inlined, it keeps that name too, as `selector`: authoring would
+   * otherwise derive a new one from where the element sits, and the builder, a stylesheet outside the document and
+   * the next export all know the element by the old one.
    */
   private baseStyle(
     selector: string | undefined,
     inline: 'css' | 'css-and-states'
-  ): { class?: string | string[]; css?: CssSpec; states?: StatesSpec } {
+  ): { class?: string | string[]; css?: CssSpec; states?: StatesSpec; selector?: string } {
     if (!selector) {
       return {};
     }
@@ -653,7 +722,11 @@ class SpecReader {
 
     this.readReporting(selector, blocks);
 
-    return { ...(read.css ? { css: read.css } : {}), ...(read.states ? { states: read.states } : {}) };
+    return {
+      ...(read.css ? { css: read.css } : {}),
+      ...(read.states ? { states: read.states } : {}),
+      selector
+    };
   }
 
   /**
@@ -911,10 +984,14 @@ class SpecReader {
     };
   }
 
-  private pageStyle(selector: string | undefined): { class?: string | string[]; css?: CssSpec } {
+  private pageStyle(selector: string | undefined): { class?: string | string[]; css?: CssSpec; selector?: string } {
     const style = this.baseStyle(selector, 'css');
 
-    return { ...(style.class ? { class: style.class } : {}), ...(style.css ? { css: style.css } : {}) };
+    return {
+      ...(style.class ? { class: style.class } : {}),
+      ...(style.css ? { css: style.css } : {}),
+      ...(style.selector ? { selector: style.selector } : {})
+    };
   }
 
   private dropField(field: string): void {
@@ -981,10 +1058,7 @@ class SpecReader {
     // Some documents store an element with no attributes as an empty ARRAY, which reads as an object with none.
     const stored = isRecord(element.attributes) ? element.attributes : {};
     const attributes = this.readAttributes(type, legacy ? legacy.attributes(stored) : stored);
-    const keepId =
-      this.options.keepIds === true ||
-      !new RegExp(`^${definition.type}-\\d+$`).test(element.id) ||
-      this.references.has(element.id);
+    const keepId = this.options.keepIds === true || !this.derived.has(element.id);
 
     const { base: baseSelector, ...slotSelectors } = definition.styleSelectors;
     const baseStyle = this.baseStyle(baseSelector, 'css-and-states');
@@ -1160,52 +1234,72 @@ class SpecReader {
     return undefined;
   }
 
+  /**
+   * An element's bindings in the order they were authored, whatever category files them.
+   *
+   * Authoring numbers a binding by its place in the element's whole list — `initialState-1` then `attributes-2` — and
+   * files it under its category, so reading category by category puts them back in a different order and every id
+   * shifts. The number is the order when every id carries one; a document the builder wrote does not number them that
+   * way, and keeps the category order.
+   */
+  private bindingsInOrder(element: Element): { category: BindingCategory; raw: ElementBinding }[] {
+    const entries = BINDING_CATEGORIES.flatMap(category =>
+      bindingsOf(element.definition.bindings, category).map(raw => ({ category, raw }))
+    );
+    const positions = entries.map(({ category, raw }) => new RegExp(`^${category}-(\\d+)$`).exec(raw.id)?.[1]);
+    if (positions.some(position => position === undefined)) {
+      return entries;
+    }
+
+    return entries
+      .map((entry, index) => ({ entry, position: Number(positions[index]) }))
+      .sort((a, b) => a.position - b.position)
+      .map(({ entry }) => entry);
+  }
+
   private readBindings(element: Element): { bind?: BindingSpec[] | Record<string, string>; visible?: string | false } {
     const hidden = element.definition.initialState?.visibility === false;
     const specs: BindingSpec[] = [];
     let visible: string | false | undefined = hidden ? false : undefined;
 
-    for (const category of BINDING_CATEGORIES) {
-      for (const raw of bindingsOf(element.definition.bindings, category)) {
-        const at = `"${element.id}"`;
-        const source = this.sourceOf(raw.source, at);
-        if (!source) {
-          this.correct(
-            'broken-binding',
-            `${at} bound ${raw.to} to "${raw.source}", which nothing publishes; dropped.`,
-            element.id
-          );
-          continue;
-        }
-
-        const transformers = (raw.transformers ?? []).filter(transformer => transformer.action);
-        const when = conditionOf(raw.when);
-        const spec: BindingSpec = {
-          to: raw.to,
-          source,
-          ...(category === 'attributes' ? {} : { category }),
-          ...(transformers.length > 0 ? { transformers } : {}),
-          ...(when ? { when } : {}),
-          ...(raw.enabled === false ? { enabled: false } : {})
-        };
-
-        // The one binding with a field of its own: a condition that starts the element hidden.
-        const negated =
-          transformers.length === 1 && transformers[0].action === 'not' && isEmpty(transformers[0].params);
-        if (
-          visible === false &&
-          category === 'initialState' &&
-          raw.to === 'visibility' &&
-          !when &&
-          raw.enabled !== false &&
-          (transformers.length === 0 || negated)
-        ) {
-          visible = negated ? `!${source}` : source;
-          continue;
-        }
-
-        specs.push(spec);
+    for (const { category, raw } of this.bindingsInOrder(element)) {
+      const at = `"${element.id}"`;
+      const source = this.sourceOf(raw.source, at);
+      if (!source) {
+        this.correct(
+          'broken-binding',
+          `${at} bound ${raw.to} to "${raw.source}", which nothing publishes; dropped.`,
+          element.id
+        );
+        continue;
       }
+
+      const transformers = (raw.transformers ?? []).filter(transformer => transformer.action);
+      const when = conditionOf(raw.when);
+      const spec: BindingSpec = {
+        to: raw.to,
+        source,
+        ...(category === 'attributes' ? {} : { category }),
+        ...(transformers.length > 0 ? { transformers } : {}),
+        ...(when ? { when } : {}),
+        ...(raw.enabled === false ? { enabled: false } : {})
+      };
+
+      // The one binding with a field of its own: a condition that starts the element hidden.
+      const negated = transformers.length === 1 && transformers[0].action === 'not' && isEmpty(transformers[0].params);
+      if (
+        visible === false &&
+        category === 'initialState' &&
+        raw.to === 'visibility' &&
+        !when &&
+        raw.enabled !== false &&
+        (transformers.length === 0 || negated)
+      ) {
+        visible = negated ? `!${source}` : source;
+        continue;
+      }
+
+      specs.push(spec);
     }
 
     if (specs.length === 0) {
@@ -1251,7 +1345,10 @@ class SpecReader {
         continue;
       }
 
-      flows.push(chain);
+      const live = this.liveSteps(chain, element);
+      if (live.length > 0) {
+        flows.push(live);
+      }
     }
 
     const lost = Object.keys(nodes).filter(id => !reached.has(id));
@@ -1276,6 +1373,54 @@ class SpecReader {
     const original = flows.flat().map(node => node.id);
 
     return { flows: derived.join() === original.join() ? anonymous : named };
+  }
+
+  /**
+   * What of a flow can still run: a trigger its element never fires sinks the whole flow, and a callback its target
+   * never answers to is a step that does nothing.
+   *
+   * Both are what an older builder leaves behind — an animation step from before animations were removed, a submit
+   * flow on a button — and authoring refuses both, so they are dropped here and reported rather than written into a
+   * spec that could not be authored again. Only built-in types are judged: a plugin's registers what nobody here sees.
+   */
+  private liveSteps(chain: ElementInteraction[], element: Element): ElementInteraction[] {
+    const typeOf = (id: string): string | undefined => {
+      const type = (this.flat[id] as Element | undefined)?.definition.type;
+
+      return type && Object.hasOwn(LEGACY_ELEMENT_TYPES, type) ? LEGACY_ELEMENT_TYPES[type].type : type;
+    };
+    const offers = (catalog: Record<string, string[]>, id: string, action: string): boolean => {
+      const type = typeOf(id);
+
+      return !type || !Object.hasOwn(catalog, type) || catalog[type].includes(action);
+    };
+
+    const trigger = chain[0];
+    const firedOn = trigger.elementId ?? element.id;
+    if (trigger.type === 'trigger' && firedOn === element.id && !offers(elementTriggers, firedOn, trigger.action)) {
+      this.correct(
+        'dead-flow',
+        `"${element.id}" had a flow on "${trigger.action}", which a "${String(typeOf(firedOn))}" never fires; dropped.`,
+        element.id
+      );
+
+      return [];
+    }
+
+    return chain.filter(node => {
+      const target = node.elementId ?? element.id;
+      if (node.type !== 'callback' || offers(elementCallbacks, target, node.action)) {
+        return true;
+      }
+
+      this.correct(
+        'dead-step',
+        `"${element.id}" sent "${node.action}" to "${target}", a "${String(typeOf(target))}" that never answers to it; dropped.`,
+        element.id
+      );
+
+      return false;
+    });
   }
 
   private readStep(node: ElementInteraction, host: string): Omit<StepSpec, 'id'> {

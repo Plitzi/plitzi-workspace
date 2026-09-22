@@ -86,22 +86,8 @@ const ModalContainer = ({
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
-      openModal: {
-        action: 'openModal',
-        title: `Open ${label}`,
-        type: 'callback',
-        callback: handleOpenModal,
-        params: { metadata: { type: 'text', defaultValue: '' } },
-        preview: { metadata: '' }
-      },
-      closeModal: {
-        action: 'closeModal',
-        title: `Close ${label}`,
-        type: 'callback',
-        callback: handleClickClose,
-        params: {},
-        preview: {}
-      }
+      openModal: { ...declaration.callbacks.openModal, title: `Open ${label}`, callback: handleOpenModal },
+      closeModal: { ...declaration.callbacks.closeModal, title: `Close ${label}`, callback: handleClickClose }
     };
   }, [handleClickClose, handleOpenModal, label]);
 

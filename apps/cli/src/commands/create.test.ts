@@ -268,8 +268,7 @@ describe('plitzi create', () => {
   it('writes a project that can be installed and started', async () => {
     await inTemp(async dir => {
       const target = path.join(dir, 'my-site');
-      // Named explicitly: the default is read off whatever invoked the test run, and Yarn writes a file npm does not.
-      await create(target, { install: false, packageManager: 'npm' });
+      await create(target, { install: false, packageManager: 'npm', mode: 'server', source: 'local' });
 
       const written = await fs.readdir(target);
       expect(written.sort()).toEqual([
@@ -297,7 +296,14 @@ describe('plitzi create', () => {
   /** The whole reason a key goes in a file of its own: the file it goes in is the one git is told to skip. */
   it('puts a cloud key in .env, and .env in .gitignore', async () => {
     await inTemp(async dir => {
-      await create(dir, { source: 'cloud', key: 'host_key_123', install: false, force: true });
+      await create(dir, {
+        packageManager: 'npm',
+        mode: 'server',
+        source: 'cloud',
+        key: 'host_key_123',
+        install: false,
+        force: true
+      });
 
       expect(await fs.readFile(path.join(dir, '.env'), 'utf-8')).toContain('PLITZI_HOST_KEY=host_key_123');
       expect(await fs.readFile(path.join(dir, '.gitignore'), 'utf-8')).toContain('.env');
@@ -319,6 +325,43 @@ describe('plitzi create', () => {
 
       error.mockRestore();
       process.exitCode = 0;
+    });
+  });
+
+  /**
+   * An agent runs this with nobody at its terminal, and used to get a project built around choices nobody made — the
+   * package manager of whatever invoked it, a Node tier, the space in the repo. The choices are the person's, so with
+   * nobody to ask it stops, writes nothing, and says exactly what to ask them.
+   */
+  it('refuses to choose for the person when nobody is at the terminal, and says what to ask them', async () => {
+    await inTemp(async dir => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await create(dir, { install: false, mode: 'client' });
+
+      const said = error.mock.calls.flat().join('\n');
+      expect(said).toContain('--package-manager npm|yarn|pnpm');
+      expect(said).toContain('--source local|cloud');
+      expect(said).not.toContain('--mode server|client');
+      expect(process.exitCode).toBe(1);
+      expect(await fs.readdir(dir)).toEqual([]);
+
+      error.mockRestore();
+      process.exitCode = 0;
+    });
+  });
+
+  it('takes the defaults for what was not passed when told to with --yes', async () => {
+    await inTemp(async dir => {
+      await create(dir, { install: false, yes: true, packageManager: 'pnpm' });
+
+      const manifest = JSON.parse(await fs.readFile(path.join(dir, 'package.json'), 'utf-8')) as {
+        dependencies: Record<string, string>;
+      };
+      // server + local: the Node tier's server package, and the space in the project.
+      expect(manifest.dependencies).toHaveProperty('@plitzi/sdk-server');
+      expect(await fs.readFile(path.join(dir, 'src', 'space.ts'), 'utf-8')).toContain('SpaceSpec');
+      expect(await fs.readFile(path.join(dir, 'README.md'), 'utf-8')).toContain('pnpm');
     });
   });
 });

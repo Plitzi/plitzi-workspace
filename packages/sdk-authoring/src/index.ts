@@ -1,4 +1,10 @@
-import { elementSourceTypes, elementTriggers } from './elements';
+import {
+  elementAncestorTypes,
+  elementAttributeNames,
+  elementCallbacks,
+  elementSourceTypes,
+  elementTriggers
+} from './elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from './interactions';
 import {
   authorSpace as authorSpaceUnchecked,
@@ -67,7 +73,16 @@ export * from '@plitzi/sdk-shared/authoring';
 const STEP_VOCABULARY: StepVocabulary = {
   globalCallbacks: BUILTIN_GLOBAL_CALLBACKS,
   utilities: BUILTIN_UTILITIES,
-  triggers: elementTriggers
+  triggers: elementTriggers,
+  callbacks: elementCallbacks
+};
+
+/** Everything the composed surface knows about the built-in elements that the assembly half cannot import. */
+const ELEMENT_CATALOGS: AuthorSpaceOptions = {
+  vocabulary: STEP_VOCABULARY,
+  sourceTypes: elementSourceTypes,
+  ancestorTypes: elementAncestorTypes,
+  attributeNames: elementAttributeNames
 };
 
 /**
@@ -77,14 +92,15 @@ const STEP_VOCABULARY: StepVocabulary = {
  * imports from this package gets both checks that need to know what this SDK ships.
  *
  * **Flows.** A step naming a callback on the wrong module is refused, and so is a flow starting on a trigger its
- * built-in element never fires; one naming an action no built-in source declares comes back in `warnings`, since a
- * plugin is free to register a module this process cannot see.
+ * built-in element never fires, or an element callback aimed at a built-in element that does not answer to it; one
+ * naming an action no built-in source declares comes back in `warnings`, since a plugin is free to register a
+ * module this process cannot see.
  *
  * **Bindings.** A source may name the element alone and the prefix it publishes under is filled in — which
  * is the half an author cannot see, and is not always the element's own type.
  */
 export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>
-  authorSpaceUnchecked(spec, { vocabulary: STEP_VOCABULARY, sourceTypes: elementSourceTypes, ...options });
+  authorSpaceUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
 
 /**
  * `validateSpace`, holding this SDK's own source catalog — the same gate, for documents authored elsewhere.
@@ -103,7 +119,7 @@ export const validateSpace = (space: SpaceDocuments, options: SchemaValidationOp
  * stayed behind. Those are the assembly half's; what this adds is the catalog that tells a real source from a typo.
  */
 export const authorTemplate = (spec: TemplateSpec, options: AuthorSpaceOptions = {}): AuthoredTemplate =>
-  authorTemplateUnchecked(spec, { vocabulary: STEP_VOCABULARY, sourceTypes: elementSourceTypes, ...options });
+  authorTemplateUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
 
 /** `validateTemplate`, holding this SDK's own source catalog — for a manifest authored elsewhere. */
 export const validateTemplate = (template: Template, options: SchemaValidationOptions = {}): SchemaValidationResult =>

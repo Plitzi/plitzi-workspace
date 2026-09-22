@@ -34,6 +34,28 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
       preview: { url: '', method: '', status: '', data: '' }
     }
   },
+  callbacks: {
+    performQuery: { action: 'performQuery', title: 'Perform Query', type: 'callback', preview: {}, params: {} },
+    loadMore: { action: 'loadMore', title: 'Load More', type: 'callback', preview: {}, params: {} },
+    goToPage: {
+      action: 'goToPage',
+      title: 'Go To Page',
+      type: 'callback',
+      preview: {},
+      params: { page: { label: 'Page', defaultValue: '1', type: 'text' } }
+    },
+    // Registered only by a server-driven provider: writes go through the server, which owns the credential.
+    writeRecord: {
+      action: 'writeRecord',
+      title: 'Write Record',
+      type: 'callback',
+      preview: { action: 'create' },
+      params: {
+        action: { label: 'Endpoint', defaultValue: 'create', type: 'text' },
+        recordId: { label: 'Record Id', defaultValue: '', type: 'text' }
+      }
+    }
+  },
   content: {
     attributes: {
       query: '',

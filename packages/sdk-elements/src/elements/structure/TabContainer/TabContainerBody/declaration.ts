@@ -9,6 +9,7 @@ export type TabContainerBodyAttributes = AuthorableAttributes<TabContainerBodyPr
 
 const declaration = elementDeclaration<TabContainerBodyAttributes>()({
   type: 'tabContainerBody',
+  ancestorType: 'tabContainer',
   content: {
     attributes: {},
     definition: {

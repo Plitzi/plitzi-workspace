@@ -40,6 +40,16 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
       preview: { metadata: '' }
     }
   },
+  callbacks: {
+    openDialog: {
+      action: 'openDialog',
+      title: 'Open Dialog',
+      type: 'callback',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    closeDialog: { action: 'closeDialog', title: 'Close Dialog', type: 'callback', preview: {}, params: {} }
+  },
   content: {
     attributes: {
       headerLabel: 'Dialog Header',

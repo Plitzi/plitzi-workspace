@@ -9,6 +9,7 @@ export type DropdownPopupAttributes = AuthorableAttributes<DropdownPopupProps>;
 
 const declaration = elementDeclaration<DropdownPopupAttributes>()({
   type: 'dropdownPopup',
+  ancestorType: 'dropdown',
   content: {
     attributes: {},
     definition: {

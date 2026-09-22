@@ -215,9 +215,10 @@ when({ field: 'state.count', operator: '>', value: 3 }, addNotification({ conten
 `whenFailed` matches every outcome that is not `completed` — a run also comes back `skipped` or `aborted`, and
 matching only `failed` is how those two end up doing nothing.
 
-**Rule operators are directional.** `contains` is a case-insensitive substring check and accepts strings only.
-For a state array such as `state.genres`, use `when({ field: 'state.genres', operator: 'in', value: 'arcade' }, …)`:
-it asks whether the rule's `value` occurs in the field's array. The inverse is `notIn`, not `doesNotContain`.
+**`contains` reads the field it is given.** Against text it is a case-insensitive substring check; against a list —
+`state.picks` built with `toggleInState` — it asks whether the list holds the value, matched the way `=` matches:
+`when({ field: 'state.picks', operator: 'contains', value: 'rpg' }, …)`. `doesNotContain` is its inverse. `in` is
+the other direction: the FIELD is one of the rule's values (`value: 'arcade,rpg'`).
 
 **A trigger belongs to the element that fires it.** Every element fires `onClick`, `onLoad`, `onHover`,
 `onMouseEnter`/`onMouseLeave`, `onFocus`/`onBlur`, and the ends of a server action it started (`onFlowEnd`,
@@ -250,6 +251,14 @@ with `openModal('credits')` / `closeModal('credits')` (`openDialog` / `closeDial
 run on the modal by id from any button on the page. `openModal`'s second argument travels into the modal and is
 read back as `{{ modalContainer_credits.content }}`.
 
+**A dropdown's label is a child, and its panel sits inside it.** `dropdown` has no `content`: what you click is
+whatever it holds, and the `dropdownPopup` it opens goes anywhere inside it — outside one, the panel cannot render,
+and `authorSpace` refuses it. A `tabContainer`'s header and body are held to theirs the same way.
+
+```ts
+dropdown({ id: 'menu', children: [text({ content: 'Menu' }), dropdownPopup({ children: [link({ href: 'arcade' })] })] })
+```
+
 **The page you serve is the runtime.** `previewMode` is `true` in the public SDK and in SSR — `false` only on the
 builder's canvas — so links navigate, form controls accept input and flows run. Bindings resolve on every element
 type, whatever its declaration's `bindings` metadata lists: `text({ bind: { content: 'state.genre' } })` follows the
@@ -267,8 +276,11 @@ state live.
 - a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
 - a step target naming an element that is not there
 - two elements answering to one name, a broken flow chain, an orphan, a cycle
-- a flow starting on a trigger its built-in element never fires — `onSubmit` on a button — naming the type that
-  does. A plugin's type publishes its own triggers, so its flows are left alone
+- a flow starting on a trigger its built-in element never fires — `onSubmit` on a button — or an element callback
+  sent to a built-in element that does not answer to it — `openModal` to a container. Both name the type that does;
+  a plugin's type publishes its own, so it is left alone
+- a sub-element outside the element it only works inside: a `dropdownPopup` outside a `dropdown`, a tab
+  container's header or body outside a `tabContainer`
 - a global callback on the wrong module — or on none — and a utility given one. A global callback registers under
   its SOURCE MODULE (`auth`, `state`, `actions`), and the pair is what the runtime resolves a step by, so naming
   either half wrong is a control that does nothing at all with no error anywhere. An action no built-in source
@@ -346,4 +358,5 @@ named element is visible" check. A `formControl`'s id names its wrapper — type
    byte-identical documents — a seed can re-run and a diff stays readable.
 5. **Read `warnings`.** `authorSpace` returns them rather than printing them; a project made with `plitzi create`
    prints them on every restart of its server and in `npm run author`. Each one names something that is written
-   and will not do what it says — a submit nobody hands over, a state key that nests.
+   and will not do what it says — a submit nobody hands over, a state key that nests, an attribute the element
+   never reads (`unknown-attribute`).

@@ -20,6 +20,16 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
     },
     onModalClose: { action: 'onModalClose', title: 'On Modal Close', type: 'trigger', preview: {}, params: {} }
   },
+  callbacks: {
+    openModal: {
+      action: 'openModal',
+      title: 'Open Modal',
+      type: 'callback',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    closeModal: { action: 'closeModal', title: 'Close Modal', type: 'callback', params: {}, preview: {} }
+  },
   content: {
     attributes: {
       title: 'Modal Header',

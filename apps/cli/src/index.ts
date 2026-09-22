@@ -17,18 +17,31 @@ program
   .command('create')
   .argument('[directory]', 'Where to write the project. Defaults to the current directory.')
   .description('Scaffold a project that renders a Plitzi space')
-  .option('-m, --mode <mode>', 'server (SSR + RSC on a Node tier) or client (browser only)', 'server')
-  .option('-s, --source <source>', 'local (the space travels in the project) or cloud (read it from Plitzi)', 'local')
+  // No defaults written here: a choice left out is ASKED for (or, with nobody at the terminal, refused with the question
+  // to put to the person), so it has to arrive as absent rather than already filled in. See `resolveDecisions`.
+  .addOption(
+    new Option('-m, --mode <mode>', 'server (SSR + RSC on a Node tier) or client (browser only)').choices([
+      'server',
+      'client'
+    ])
+  )
+  .addOption(
+    new Option(
+      '-s, --source <source>',
+      'local (the space travels in the project) or cloud (read it from Plitzi)'
+    ).choices(['local', 'cloud'])
+  )
   .option('-k, --key <key>', 'Cloud only: the space key (asked for when omitted)')
   .option('-e, --environment <environment>', 'Which version to serve: main, or a published environment', 'main')
   .addOption(
     new Option(
       '-p, --package-manager <manager>',
-      'The package manager the project is written for. Defaults to the one that invoked this.'
+      'The package manager the project is written for. Asked for when left out.'
     ).choices([...PACKAGE_MANAGERS])
   )
   .option('--no-install', 'Write the files without installing dependencies')
   .option('-f, --force', 'Write into a directory that is not empty')
+  .option('-y, --yes', 'Take the defaults for any choice not passed (server, local, the invoking package manager)')
   .action(create);
 
 program.parse(process.argv);
