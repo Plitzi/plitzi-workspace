@@ -1285,7 +1285,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@plitzi/nexus": "^1.2.2",
-    "@plitzi/plitzi-ui": "^1.6.21",
+    "@plitzi/plitzi-ui": "^1.6.22",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "graphql-tag": "^2.12.7",

@@ -32,7 +32,7 @@
     "@dr.pogodin/react-helmet": "^3.2.3",
     "@fortawesome/fontawesome-free": "^7.3.1",
     "@plitzi/nexus": "^1.2.2",
-    "@plitzi/plitzi-ui": "^1.6.21",
+    "@plitzi/plitzi-ui": "^1.6.22",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-elements": "workspace:*",

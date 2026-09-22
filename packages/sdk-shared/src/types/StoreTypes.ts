@@ -123,7 +123,7 @@ export type RenderSettings = {
    *
    * Not the visitor's business and not the page's either — it is a fact about the account behind the site, which is
    * why it rides the render surface rather than the schema: nothing an author writes can set it, and nothing in the
-   * space's settings can turn it off. `branding` is forced on by the same state; this is what says WHY.
+   * space's settings can turn it off.
    */
   overQuota?: boolean;
   /**
