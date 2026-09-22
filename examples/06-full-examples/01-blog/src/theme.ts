@@ -817,17 +817,4 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .hero:hover .heroImage, .cardLink:hover .cardImage, .moreCard:hover .moreImage,
   .readLink:hover, .button:hover, .buttonWide:hover, .signInLink:hover { transform: none; }
 }
-
-/* The toggle ships both icons and no opinion about either. Which one shows is the same question the palette
-   answers, so it is answered the same way: the machine decides until a class on the root says otherwise. */
-.plitzi-component__theme-toggle [data-theme-icon] { display: none; align-items: center; }
-.plitzi-component__theme-toggle [data-theme-icon='light'] { display: inline-flex; }
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .plitzi-component__theme-toggle [data-theme-icon='light'] { display: none; }
-  :root:not(.light) .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: inline-flex; }
-}
-:root.dark .plitzi-component__theme-toggle [data-theme-icon='light'] { display: none; }
-:root.dark .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: inline-flex; }
-:root.light .plitzi-component__theme-toggle [data-theme-icon='light'] { display: inline-flex; }
-:root.light .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: none; }
 `;

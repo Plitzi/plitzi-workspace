@@ -201,9 +201,11 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
     params: {},
     run: async (_params, ctx) => {
       const spaceIds = [ctx.spaceId];
-      const [at, { jobs }, schedules, actions, totals] = await Promise.all([
+      const [at, { jobs }, waiting, done, schedules, actions, totals] = await Promise.all([
         queue.now(),
         queue.listJobs({ spaceIds, limit: 12, offset: 0 }),
+        queue.listJobs({ spaceIds, actionId: 'reminder', status: 'pending', limit: 20, offset: 0 }),
+        queue.listJobs({ spaceIds, actionId: 'reminder', status: 'succeeded', limit: 1, offset: 0 }),
         queue.listSchedules(spaceIds),
         lookups.listActions?.(ctx.spaceId) ?? Promise.resolve([]),
         Promise.all(STATUSES.map(status => queue.listJobs({ spaceIds, status, limit: 0, offset: 0 })))
@@ -227,7 +229,8 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
         jobs,
         schedules,
         activity: activity.recent(10),
-        counts
+        counts,
+        reminders: { waiting: waiting.jobs, ...(done.jobs[0] ? { last: done.jobs[0] } : {}) }
       });
     }
   };

@@ -237,7 +237,8 @@ the other direction: the FIELD is one of the rule's values (`value: 'arcade,rpg'
 `onMouseEnter`/`onMouseLeave`, `onFocus`/`onBlur`, and the ends of a server action it started (`onFlowEnd`,
 `onFlowError`, `onFlowProgress`). Some types fire more of their own: a `page` fires `onPageLoad` (with the page id,
 route and query params), a `form` `onSubmit`, a `formControl` `onChange`, an `apiContainer` `onApiSuccess` /
-`onApiError`, a `modalContainer` `onModalOpen` / `onModalClose`, a `pagination` `onPageChange`. A flow declared on an
+`onApiError` (per answer, for either runtime — a server provider fires them when its slice arrives, and again on
+each refresh), a `modalContainer` `onModalOpen` / `onModalClose`, a `pagination` `onPageChange`. A flow declared on an
 element that never fires its trigger never runs, so `authorSpace` refuses it and names the type that does fire it.
 
 A form's submit is where that bites. The flow goes on the `form`, never on its submit button, and the form has to

@@ -746,6 +746,10 @@
       "types": "./dist/elements/provider/ApiContainer/declaration.d.ts",
       "import": "./dist/elements/provider/ApiContainer/declaration.mjs"
     },
+    "./elements/provider/ApiContainer/helpers/providerOutcome": {
+      "types": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.mjs"
+    },
     "./elements/provider/ApiContainer/hooks/useApi": {
       "types": "./dist/elements/provider/ApiContainer/hooks/useApi.d.ts",
       "import": "./dist/elements/provider/ApiContainer/hooks/useApi.mjs"

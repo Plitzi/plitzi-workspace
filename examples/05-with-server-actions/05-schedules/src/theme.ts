@@ -98,6 +98,39 @@ export const themeButton = styles('themeButton', {
   cursor: 'pointer'
 });
 
+// ── The reminder banner ──────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The one moment the demo is about — a delayed job running — on top of the page. One banner whose look follows the
+ * reminder's `tone`: counting down, just fired (loud), or fired a while ago (quiet).
+ */
+export const reminderBanner = styles('reminderBanner', {
+  css: {
+    display: 'flex',
+    'flex-direction': 'column',
+    gap: '4px',
+    padding: '16px 20px',
+    'border-radius': '14px',
+    border: '1px solid var(--line)',
+    'background-color': 'var(--surface)',
+    color: 'var(--fg)',
+    transition: 'background-color 300ms ease, border-color 300ms ease'
+  },
+  variants: {
+    pending: {
+      'background-color': 'var(--waiting-tint)',
+      'border-color': 'var(--waiting-ink)',
+      color: 'var(--waiting-ink)'
+    },
+    fresh: { 'background-color': 'var(--done-tint)', 'border-color': 'var(--done-ink)', color: 'var(--done-ink)' },
+    past: { 'background-color': 'var(--surface)', 'border-color': 'var(--line)', color: 'var(--fg-muted)' }
+  }
+});
+
+export const reminderTitle = styles('reminderTitle', { 'font-size': '20px', 'font-weight': '700' });
+
+export const reminderDetail = styles('reminderDetail', { 'font-size': '13px', opacity: '0.85' });
+
 // ── Counters ───────────────────────────────────────────────────────────────────────────────────────────────────
 
 export const stats = styles('stats', {

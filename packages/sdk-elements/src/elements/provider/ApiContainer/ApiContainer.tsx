@@ -13,6 +13,7 @@ import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
+import providerOutcome from './helpers/providerOutcome';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
 import useAutoRefresh from './hooks/useAutoRefresh';
 import useProviderPagination from './hooks/useProviderPagination';
@@ -296,19 +297,25 @@ const ApiContainer = ({
     navigate
   });
 
+  const outcome = providerOutcome({ serverMode, isSuccess, isError, rscResolved, rscPending, elementData });
+
+  /**
+   * Fired per answer, for either runtime — `data` is a new object each time one lands, so a refresh (a flow's
+   * `performQuery`, or `refreshSeconds`) fires the trigger again, the same as a browser refetch does.
+   */
   useEffect(() => {
-    if (isLoading || !id) {
+    if (isLoading || !id || !outcome) {
       return undefined;
     }
 
-    if (isSuccess) {
-      void interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: query, method, ...data });
-    } else if (isError) {
-      void interactionsManager.interactionTrigger(id, 'onApiError', { url: query, method, ...data });
-    }
+    void interactionsManager.interactionTrigger(id, outcome === 'success' ? 'onApiSuccess' : 'onApiError', {
+      url: query,
+      method,
+      ...data
+    });
 
     return undefined;
-  }, [data, id, interactionsManager, isError, isLoading, isSuccess, method, query]);
+  }, [data, id, interactionsManager, isLoading, method, outcome, query]);
   // The published slice, not the raw response: state travels with the data so an empty result, a failed provider
   // and an accumulated "load more" list are all readable through ordinary bindings, with no new slot mechanism.
   const publishedData = useMemo<Record<string, unknown>>(

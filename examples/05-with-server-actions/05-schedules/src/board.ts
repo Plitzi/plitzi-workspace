@@ -166,6 +166,51 @@ const boardActivity = (entry: ActivityEntry): BoardActivity => ({
   message: entry.message
 });
 
+/** How long a reminder that fired stays loud on the page — long enough to be seen by somebody who looked away. */
+const FRESH_MS = 20_000;
+
+export type BoardReminder = {
+  /** Names a variant of the banner: counting down, just fired, or fired a while ago. */
+  tone: 'pending' | 'fresh' | 'past';
+  title: string;
+  detail: string;
+};
+
+const messageOf = (job: ActionJob): string => (typeof job.input.message === 'string' ? job.input.message : 'Reminder');
+
+/**
+ * The reminder the page leads with: the next one still waiting, with its countdown — or, once none is waiting, the
+ * last one that fired, loud for {@link FRESH_MS} and quiet after. The moment a delayed job runs is the point of the
+ * demo, so it is on top of the page rather than one line in a feed below the fold.
+ */
+const boardReminder = (next: ActionJob | undefined, last: ActionJob | undefined, at: number) => {
+  if (next) {
+    return {
+      tone: 'pending',
+      title: `⏰ ${messageOf(next)}`,
+      detail: `due ${relative(next.runAt - at)} · ${time(next.runAt)} — a worker runs it then, on whichever replica is free`
+    } satisfies BoardReminder;
+  }
+
+  if (!last) {
+    return undefined;
+  }
+
+  const firedBy = last.workerId ? ` on ${last.workerId}` : '';
+
+  return at - last.updatedAt < FRESH_MS
+    ? ({
+        tone: 'fresh',
+        title: `⏰ ${messageOf(last)}`,
+        detail: `It is time — the job ran ${relative(last.updatedAt - at)}${firedBy}`
+      } satisfies BoardReminder)
+    : ({
+        tone: 'past',
+        title: `Last reminder: ${messageOf(last)}`,
+        detail: `ran at ${time(last.updatedAt)} · ${relative(last.updatedAt - at)}${firedBy}`
+      } satisfies BoardReminder);
+};
+
 export type BoardInput = {
   at: number;
   replica: string;
@@ -174,13 +219,19 @@ export type BoardInput = {
   schedules: ActionSchedule[];
   activity: ActivityEntry[];
   counts: Record<ActionJobStatus, number>;
+  /** Reminders still waiting, in any order, and the last one that ran. */
+  reminders: { waiting: ActionJob[]; last?: ActionJob };
 };
 
-export const shapeBoard = ({ at, replica, actions, jobs, schedules, activity, counts }: BoardInput) => {
+export const shapeBoard = ({ at, replica, actions, jobs, schedules, activity, counts, reminders }: BoardInput) => {
   const names = new Map(actions.map(entry => [entry.id, entry.document.name]));
+  const [next] = [...reminders.waiting].sort((a, b) => a.runAt - b.runAt);
+  const reminder = boardReminder(next, reminders.last, at);
 
   return {
     servedBy: `served by ${replica} · ${time(at)}`,
+    reminder: reminder ?? { tone: 'past', title: '', detail: '' },
+    hasReminder: reminder !== undefined,
     counts: {
       waiting: counts.pending,
       running: counts.running,

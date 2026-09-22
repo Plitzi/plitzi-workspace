@@ -327,14 +327,21 @@ describeTarget('server-actions-schedules', subject => {
   }) => {
     await page.goto(subject.origin);
     await page.getByLabel('Remind me to').fill('Water the plants');
-    await page.getByLabel('In how many seconds').fill('2');
+    await page.getByLabel('In how many seconds').fill('3');
     await page.getByRole('button', { name: 'Queue the reminder' }).click();
 
-    await expect(page.getByText('Queued “Reminder” — due in 2s')).toBeVisible();
+    await expect(page.getByText('Queued “Reminder” — due in 3s')).toBeVisible();
+
+    // The banner on top counts down while the job waits, and turns to "it is time" once a worker has run it.
+    const banner = page.locator('.reminderBanner');
+    await expect(banner).toContainText('⏰ Water the plants');
+    await expect(banner).toHaveClass(/reminderBanner--pending/);
     await capture('reminder-queued');
 
     // Nobody reloads: `refreshSeconds` asks the server for the board again until the job has run.
-    await expect(page.getByText('Reminder: Water the plants')).toBeVisible({ timeout: 15_000 });
+    await expect(banner).toHaveClass(/reminderBanner--fresh/, { timeout: 15_000 });
+    await expect(banner).toContainText('It is time');
+    await expect(page.getByText('Reminder: Water the plants')).toBeVisible();
     await capture('reminder-ran');
   });
 

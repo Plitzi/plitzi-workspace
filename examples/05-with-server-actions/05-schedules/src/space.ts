@@ -37,6 +37,9 @@ import {
   panel,
   panelTitle,
   primaryButton,
+  reminderBanner,
+  reminderDetail,
+  reminderTitle,
   remindForm,
   replicaTag,
   rowActions,
@@ -140,6 +143,20 @@ const counters = container({
     counter('Running', 'running'),
     counter('Done', 'done'),
     counter('Needs you', 'needsYou')
+  ]
+});
+
+/**
+ * Where a delayed job shows it ran: the next reminder counting down, then — the refresh after its worker ran it — the
+ * same banner turning green. The tone names a variant of `reminderBanner`, so one element carries all three looks.
+ */
+const reminderNotice = container({
+  class: reminderBanner,
+  visible: `${BOARD}.hasReminder`,
+  bind: [variantFrom(reminderBanner, `${BOARD}.reminder.tone`)],
+  children: [
+    text({ content: '', class: reminderTitle, bind: { content: `${BOARD}.reminder.title` } }),
+    text({ content: '', class: reminderDetail, bind: { content: `${BOARD}.reminder.detail` } })
   ]
 });
 
@@ -385,6 +402,7 @@ const board = apiContainer({
   class: shell,
   children: [
     pageHeader,
+    reminderNotice,
     counters,
     container({
       class: columns,

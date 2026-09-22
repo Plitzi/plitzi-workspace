@@ -59,6 +59,55 @@
     }
   }
 
+  /**
+   * The theme toggle shows the icon of the scheme in use, by default.
+   *
+   * It renders BOTH icons on purpose — which one is right depends on stored state, and markup that depended on it
+   * would differ between the server and the browser — so something has to hide one. That used to be every space's
+   * own custom CSS, the same ten lines copied into each; a space that did not copy them showed a sun and a moon side
+   * by side. Here, in the base layer, so a space that wants the opposite icon (or both) still only has to say so.
+   */
+  .plitzi-component__theme-toggle [data-theme-icon] {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .plitzi-component__theme-toggle [data-theme-icon='dark'] {
+    display: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) .plitzi-component__theme-toggle {
+      [data-theme-icon='light'] {
+        display: none;
+      }
+
+      [data-theme-icon='dark'] {
+        display: inline-flex;
+      }
+    }
+  }
+
+  .dark .plitzi-component__theme-toggle {
+    [data-theme-icon='light'] {
+      display: none;
+    }
+
+    [data-theme-icon='dark'] {
+      display: inline-flex;
+    }
+  }
+
+  .light .plitzi-component__theme-toggle {
+    [data-theme-icon='light'] {
+      display: inline-flex;
+    }
+
+    [data-theme-icon='dark'] {
+      display: none;
+    }
+  }
+
   *,
   ::before,
   ::after {

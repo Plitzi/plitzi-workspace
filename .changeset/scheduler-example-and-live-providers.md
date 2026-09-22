@@ -21,6 +21,15 @@
   this a live server provider needed a plugin element of its own to call `useRscRefresh` on a timer: `onApiSuccess`
   never fires for a server provider, so there was no way to author the loop. The builder shows it as "Refresh every
   (s)" for either runtime.
+- **`onApiSuccess` / `onApiError` fire for a server provider.** The declaration offered them for every
+  `apiContainer`, but they were decided from the browser request alone — which a `runtime: 'server'` provider never
+  makes — so a flow wired to them never ran. They now fire when the provider's slice arrives (or the payload arrives
+  without it), and again on each refresh, the same as a browser refetch. A payload resolved for another page fires
+  neither. **A space that wired a flow to one of them will now see it run.**
+- **The theme toggle shows one icon by default.** It renders both — which one is right depends on stored state, and
+  markup that depended on it would differ between the server and the browser — and until now every space had to copy
+  ten lines of `customCss` to hide the other; one that did not showed a sun and a moon side by side. The SDK's base
+  layer now shows the icon of the scheme in use, and a space's own rule still wins.
 - **`variantFrom(cls, source)`** in `@plitzi/sdk-authoring` binds which of a CLASS's variants an element wears to a
   value in the data — a status pill that is amber while a job waits and green once it is done. Written by hand the
   variant key is the trap: it names the selector the variants belong to, and the element's type (`text.base`) is a

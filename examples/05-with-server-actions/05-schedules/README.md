@@ -10,8 +10,11 @@ yarn start:dev   # the same, reloading on save, while you edit it
 # http://127.0.0.1:4016/
 ```
 
-The page is the whole demo. **Queue the reminder** and it appears on the board as *Waiting*, turns *Done* five
-seconds later and writes to the activity feed. The three buttons under it are the failures a queue exists for:
+The page is the whole demo. **Queue the reminder** and a banner appears at the top of the page, amber, counting
+down: *due in 5s… 3s… 0s*. When a worker runs the job the banner turns green — *It is time* — and says which
+replica ran it; the job goes from *Waiting* to *Done* on the board and the reminder lands in the activity feed.
+
+The three buttons under the form are the failures a queue exists for:
 
 | Button | What you see |
 |---|---|
