@@ -316,6 +316,23 @@ describe('the element catalogs', () => {
     expect(authored.warnings).toEqual([]);
   });
 
+  /**
+   * A space dresses a TYPE through `elements: { modalContainer: { slots: … } }`, and that style addresses the class each
+   * element carries per slot. Written only for the slots an element styled itself, a modal that styled none stayed the
+   * SDK's white default while the modal beside it followed the space's theme.
+   */
+  it('gives every element the class for each slot its type dresses', () => {
+    const { schema } = authoring.authorSpace(
+      page([authoring.modalContainer({ id: 'credits', visible: false, children: [authoring.text({ content: 'Hi' })] })])
+    );
+
+    expect(schema.flat.credits.definition.styleSelectors).toMatchObject({
+      rootContainer: '',
+      headerContainer: '',
+      bodyContainer: ''
+    });
+  });
+
   it('warns about an attribute the element never reads', () => {
     const authored = authoring.authorSpace(
       page([{ type: 'dropdown', id: 'menu', attributes: { content: 'Menu' }, children: [authoring.dropdownPopup()] }])

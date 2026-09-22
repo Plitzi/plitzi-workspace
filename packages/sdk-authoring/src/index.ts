@@ -2,6 +2,7 @@ import {
   elementAncestorTypes,
   elementAttributeNames,
   elementCallbacks,
+  elementSlots,
   elementSourceTypes,
   elementTriggers
 } from './elements';
@@ -82,6 +83,7 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
   vocabulary: STEP_VOCABULARY,
   sourceTypes: elementSourceTypes,
   ancestorTypes: elementAncestorTypes,
+  slotNames: elementSlots,
   attributeNames: elementAttributeNames
 };
 

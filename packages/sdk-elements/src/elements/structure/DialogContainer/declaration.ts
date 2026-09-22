@@ -133,7 +133,7 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
             left: '50%',
             width: '500px',
             height: '300px',
-            'background-color': 'white',
+            'background-color': 'light-dark(white, oklch(0.21 0.006 285.885))',
             transform: 'translate3d(-50%, -50%, 0px)',
             'padding-top': '20px',
             'padding-bottom': '20px',

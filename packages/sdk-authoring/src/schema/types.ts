@@ -376,6 +376,11 @@ export interface AuthorSpaceOptions {
    * prefix that does not match the element it names goes unnoticed.
    */
   sourceTypes?: SourceTypes;
+  /**
+   * Element type → its other style selectors (a modal's `rootContainer`). Every element carries a class for each, so a
+   * per-type `slots` style reaches all of them; left out, only the slots an element styles itself are addressable.
+   */
+  slotNames?: Record<string, readonly string[]>;
   /** Element type → the type it only works inside. Left out, a sub-element is placed wherever it is written. */
   ancestorTypes?: Record<string, string>;
   /**

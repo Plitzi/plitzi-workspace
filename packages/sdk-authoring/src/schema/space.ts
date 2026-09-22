@@ -906,6 +906,19 @@ class SpaceAuthor {
     }
   }
 
+  /**
+   * The type's other selectors, empty: each one is a `plitzi__<type>-<slot>` class on the element's own markup.
+   *
+   * Named or not, the element wears them — that is what a space's per-type `slots` style addresses. A modal whose
+   * document did not mention `rootContainer` was the SDK's white default in a dark theme, beside a modal that styled
+   * the slot itself and so followed the space.
+   */
+  private declaredSlots(type: string): Record<string, string> {
+    const slots = this.options.slotNames?.[type] ?? [];
+
+    return Object.fromEntries(slots.map(slot => [slot, '']));
+  }
+
   private slotSelectors(spec: ElementSpec, path: string): Record<string, string> {
     return Object.fromEntries(
       Object.entries(spec.slots ?? {}).map(([slot, value]) => {
@@ -1013,7 +1026,11 @@ class SpaceAuthor {
         items: [],
         // A slot names a class outright: it dresses a part of an element that already exists, and a selector of
         // its own per control would write the same rule once per input on the page.
-        styleSelectors: { base: this.selectorFor(path, spec), ...this.slotSelectors(spec, path) },
+        styleSelectors: {
+          base: this.selectorFor(path, spec),
+          ...this.declaredSlots(spec.type),
+          ...this.slotSelectors(spec, path)
+        },
         initialState: {
           /**
            * An element with a CONDITION starts hidden, and one without starts on screen.

@@ -29,13 +29,12 @@ export interface ElementSemantics {
 
 type DeclarationShape = {
   type: string;
-  content?: { definition?: { styleSelectors?: Record<string, unknown> } };
   sourceType?: string;
   triggers?: Record<string, InteractionCallback>;
   callbacks?: Record<string, InteractionCallback>;
   ancestorType?: string;
   content?: {
-    definition?: { label?: string; description?: string };
+    definition?: { label?: string; description?: string; styleSelectors?: Record<string, unknown> };
     market?: { category?: string };
   };
 };
@@ -112,4 +111,18 @@ export const elementAncestorTypes: Record<string, string> = Object.fromEntries(
   Object.values(elementDeclarations as Record<string, DeclarationShape>)
     .filter(declaration => declaration.ancestorType)
     .map(declaration => [declaration.type, declaration.ancestorType as string])
+);
+
+/**
+ * The OTHER selectors each type dresses — a modal's `rootContainer`, a form control's `input` — by type.
+ *
+ * Every element carries a class per slot (`plitzi__<type>-<slot>`), and that is what a space's per-type `slots` style
+ * addresses. A document that names only the slots its author styled leaves the rest of them classless, so the style
+ * the space wrote for the TYPE reaches some of its elements and not others — which is a themed modal beside a white one.
+ */
+export const elementSlots: Record<string, string[]> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+    declaration.type,
+    Object.keys(declaration.content?.definition?.styleSelectors ?? {}).filter(slot => slot !== 'base')
+  ])
 );
