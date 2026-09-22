@@ -79,7 +79,13 @@ export const createPageServer = (
     label: 'SSR',
     cache,
     plugins,
-    onDestroy: () => {
+    // Only once the transport is bound: a server that was built and never listened on must not be claiming jobs
+    // another replica could be running.
+    onListen: () => actions?.jobs?.start(),
+    onDestroy: async () => {
+      // Awaited first, and before the sockets go: a worker mid-flow is finished rather than abandoned, so a
+      // rolling deploy costs no retries. Anything still running past its lease is another replica's to take.
+      await actions?.jobs?.stop();
       destroyServerCaches(caches);
       pluginManager.destroy();
     }

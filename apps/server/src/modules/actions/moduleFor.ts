@@ -36,6 +36,7 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     limits: config.action?.limits,
     concurrency: config.action?.concurrency,
     kv: config.action?.kv,
+    jobs: config.action?.jobs,
     rateLimit: config.action?.rateLimit,
     idempotency: config.action?.idempotency,
     dbDrivers: config.action?.dbDrivers as ActionsConfig['dbDrivers'],

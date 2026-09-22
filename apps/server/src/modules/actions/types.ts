@@ -1,6 +1,7 @@
 import type { ActionEmailSender } from './runtime/email';
 import type {
   ActionEmailConfig,
+  ActionJobQueue,
   ActionEntry,
   ActionLimits,
   ActionRejectRecord,
@@ -94,6 +95,15 @@ export type ActionLookups = {
   getAction: (spaceId: number, actionId: string, at?: SpaceRevision) => Promise<ActionEntry | undefined>;
   /** Only the builder's catalog, the MCP and the scheduler need the list; a page call never asks for it. */
   listActions?: (spaceId: number, at?: SpaceRevision) => Promise<ActionEntry[]>;
+  /**
+   * Which spaces have something scheduled, for the periodic reconcile.
+   *
+   * Optional, and a safety net rather than the mechanism: a deployment keeps the schedule rows current by calling
+   * `reconcile` whenever a space's actions change, and this is what catches the write that did not happen — a
+   * restore from backup, a row edited by hand, a deploy that missed a save. Absent, nothing reconciles on a timer
+   * and the rows are exactly as correct as the calls that wrote them.
+   */
+  listScheduledSpaces?: () => Promise<number[]>;
   getCredential?: (spaceId: number, identifier: string) => Promise<ActionCredential | undefined>;
   getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<ConnectorManifest | undefined>;
 };
@@ -181,6 +191,15 @@ export type ActionsConfig = {
   concurrency?: { perSpace?: number; perProcess?: number; renderPerProcess?: number };
   /** Where the `kv` tasks keep things. Omitted → an in-process Map, which is per-replica by definition. */
   kv?: ActionKvAdapter;
+  /**
+   * Scheduled runs, and the durable queue they go through. See {@link ActionJobsConfig}.
+   *
+   * On by default wherever `lookups.listActions` is answerable, because a deployment that can list its actions can
+   * schedule them and the old behaviour — a `schedule` trigger that silently did nothing unless the deployment
+   * built a timer and a lock of its own — was a trigger the editor offered and the server did not honour. `false`
+   * turns it off for a replica that must only serve pages.
+   */
+  jobs?: ActionJobsConfig | false;
   /** Inbound webhooks are public, so they are counted per caller per minute. Default 60. */
   rateLimit?: { webhookPerMinute?: number };
   /** Database engines this deployment lets a flow reach. Empty → the `db.query` task is not offered at all. */
@@ -217,6 +236,61 @@ export type ActionsConfig = {
    */
   idempotency?: { replayTtlMs?: number };
   fetchImpl?: typeof fetch;
+};
+
+/**
+ * Scheduled runs: how they are produced, how many run at once, and where they are kept while they wait.
+ *
+ * Supplying nothing still schedules — over an in-process queue, which is correct for one replica and silently
+ * wrong for two, since each gets its own copy of every schedule. A deployment with more than one supplies a
+ * {@link ActionJobQueue} over a store they share.
+ */
+export type ActionJobsConfig = {
+  /**
+   * Where jobs and schedules live. Omitted → this process's memory: nothing survives a restart, and a second
+   * replica produces the same fires all over again.
+   */
+  queue?: ActionJobQueue;
+  /**
+   * How many jobs this replica runs at once. Default 4; `0` makes it a producer that never consumes.
+   *
+   * The number that decides whether a backlog drains in minutes or hours, and it belongs to the deployment because
+   * only it knows what its flows do — a queue of five hundred HTTP calls wants a far higher number than a queue of
+   * five hundred renders. It never widens the run guards: `concurrency.perSpace` still caps one space's runs per
+   * replica, and jobs over that ceiling go back to the queue rather than failing.
+   */
+  workers?: number;
+  /** Whether this replica sweeps schedules into the queue at all. Default true. */
+  produce?: boolean;
+  /**
+   * The spaces this server schedules for, when it serves a known few.
+   *
+   * The self-hosted shape: one space, named once. A multi-tenant deployment answers the same question with
+   * {@link ActionLookups.listScheduledSpaces} instead, which wins when both are given. With neither, nothing tells
+   * the scheduler where to look and it says so at boot rather than sitting silent — a schedule that never fires is
+   * indistinguishable from a cron expression that is wrong.
+   */
+  spaces?: number[];
+  /** How often a free worker looks for a job. Default 1s. */
+  pollMs?: number;
+  /** How often this replica looks for due schedules. Default 15s. */
+  schedulePollMs?: number;
+  /**
+   * How long a claim is held before another replica may take the job over — the failover window. Default 30s,
+   * renewed every third of it while a job runs.
+   */
+  leaseMs?: number;
+  /** Attempts a scheduled job gets before it is left for an operator as `dead`. Default 3. */
+  maxAttempts?: number;
+  /** First retry delay, doubling per attempt, up to `maxMs`. Defaults to 30s and 15 minutes. */
+  backoff?: { baseMs?: number; maxMs?: number };
+  /** Which environment scheduled runs execute in. Default `main`. */
+  environment?: Environment;
+  /** How often schedules are re-derived from documents, where `listScheduledSpaces` allows it. Default 15 min. */
+  reconcileMs?: number;
+  /** Names this replica in the job history. Defaults to the pid and a random suffix. */
+  workerId?: string;
+  onError?: (error: unknown) => void;
 };
 
 /** Re-exported so the module's own files import one place, and a deployment writing an `onRun` or an `onReject`

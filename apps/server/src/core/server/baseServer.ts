@@ -38,7 +38,10 @@ export interface HttpServerParts {
   label: string;
   cache: CacheManager | null;
   plugins: PluginRegistry;
-  onDestroy?: () => void;
+  /** Started once the transport is bound: background work that should not run in a server nobody listened on. */
+  onListen?: () => void;
+  /** Awaited, so a server that holds work in flight — jobs, drains — can finish it before the sockets close. */
+  onDestroy?: () => void | Promise<void>;
 }
 
 // The only thing every server shares: an HTTP transport and the listen/close lifecycle. It knows nothing about
@@ -84,13 +87,14 @@ export const createHttpServer = (
 
       primary.listen(port, host, () => {
         console.log(`[${label}] ${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
+        parts.onListen?.();
       });
     },
     // Tears down what the server owns whether or not it ever listened. A built-but-never-started server still
     // holds the caches and plugin manager onDestroy releases, and closing it must not depend on a socket
     // existing — that is what made an unstarted server throw on close instead of simply releasing its resources.
     async close() {
-      parts.onDestroy?.();
+      await parts.onDestroy?.();
 
       const open = [primary, h3].filter(srv => srv !== undefined);
       primary = undefined;

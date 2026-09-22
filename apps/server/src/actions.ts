@@ -12,18 +12,27 @@
  * Builds a runner outside a page server.
  *
  * The page server builds its own from `action.lookups`; this is for the deployment that needs to run an action
- * from somewhere else — a scheduler, a queue consumer, or the API role answering a builder's test run. Same
- * runner, same checks: a trigger that skipped them would be a weaker path to the same work.
+ * from somewhere else — a queue consumer, or the API role answering a builder's test run. Same runner, same
+ * checks: a trigger that skipped them would be a weaker path to the same work.
  */
 export { createActionsModule } from './modules/actions';
-export { createScheduleRunner } from './modules/actions/runtime/schedule';
+
+/**
+ * Scheduled runs: a durable queue, a leaderless producer and the workers that drain it.
+ *
+ * `createActionsModule` already assembles these from `jobs` — a deployment reaches for them directly only to run a
+ * sweep from its own cron, to build a worker in a process that serves no pages, or to hold the queue itself for an
+ * operator's panel. The in-memory queue is the default and is correct for exactly one replica.
+ */
+export { createActionJobs, createJobWorker, createMemoryJobQueue, createScheduler } from './modules/actions/jobs';
+export { DEFAULT_MAX_ATTEMPTS, scheduleFor, scheduleJobId, schedulesFor } from './modules/actions/jobs';
 /**
  * Cron, straight from `sdk-shared`, where the parser lives because the validator needs it too.
  *
  * Re-exported HERE and nowhere in between: a deployment mounting its own scheduler reaches for one package, and
  * the file that used to sit in `runtime/` existed only so a neighbouring import could look local.
  */
-export { cronMatches, parseCron } from '@plitzi/sdk-shared/actions';
+export { cronFiresBetween, cronMatches, cronNextFire, parseCron } from '@plitzi/sdk-shared/actions';
 /**
  * What only this deployment can answer about an action, before anybody runs it: a task it does not register, a
  * credential the space has not got, a key missing from the one it has, a connector that was deleted, an engine
@@ -66,6 +75,7 @@ export type {
   ActionEmailDelivery,
   ActionEmailMessage,
   ActionEmailTransport,
+  ActionJobsConfig,
   ActionKvAdapter,
   ActionKvStore,
   ActionLookups,
@@ -82,6 +92,14 @@ export type {
 } from './modules/actions/types';
 
 export type { ActionsModule } from './modules/actions';
+export type {
+  ActionJobs,
+  JobWorker,
+  JobWorkerOptions,
+  MemoryJobQueueOptions,
+  Scheduler,
+  SchedulerOptions,
+  SweepResult
+} from './modules/actions/jobs';
 export type { ActiveRun, RunGuards } from './modules/actions/runtime/guards';
-export type { ScheduleResult, ScheduleRunner, ScheduleTick } from './modules/actions/runtime/schedule';
 export type { ActionTaskDescriptor } from './modules/actions/taskCatalog';

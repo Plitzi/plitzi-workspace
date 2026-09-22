@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { cronMatches, isKnownTimeZone, parseCron } from './cron';
+import { cronFiresBetween, cronMatches, cronNextFire, isKnownTimeZone, parseCron, zonedClock } from './cron';
 
 const at = (iso: string) => new Date(iso);
 
@@ -63,5 +63,82 @@ describe('cron', () => {
       expect(isKnownTimeZone('Mars/Olympus')).toBe(false);
       expect(isKnownTimeZone('Europe/Madrid')).toBe(true);
     });
+  });
+});
+
+describe('cronNextFire', () => {
+  it('answers the minute itself when it already matches', () => {
+    expect(cronNextFire('*/5 * * * *', new Date('2026-03-01T10:05:00Z'))?.toISOString()).toBe(
+      '2026-03-01T10:05:00.000Z'
+    );
+  });
+
+  it('rounds a part-minute instant up before matching', () => {
+    expect(cronNextFire('* * * * *', new Date('2026-03-01T10:05:30Z'))?.toISOString()).toBe(
+      '2026-03-01T10:06:00.000Z'
+    );
+  });
+
+  it('crosses into the next day', () => {
+    expect(cronNextFire('30 9 * * *', new Date('2026-03-01T10:00:00Z'))?.toISOString()).toBe(
+      '2026-03-02T09:30:00.000Z'
+    );
+  });
+
+  it('finds a fire years out rather than giving up', () => {
+    expect(cronNextFire('0 0 29 2 *', new Date('2026-03-01T00:00:00Z'))?.toISOString()).toBe(
+      '2028-02-29T00:00:00.000Z'
+    );
+  });
+
+  it('reads the expression in the zone it was written in', () => {
+    // 09:00 in Santiago is 12:00 UTC in March (UTC-3) and 13:00 UTC in July (UTC-4).
+    expect(cronNextFire('0 9 * * *', new Date('2026-03-01T00:00:00Z'), 'America/Santiago')?.toISOString()).toBe(
+      '2026-03-01T12:00:00.000Z'
+    );
+    expect(cronNextFire('0 9 * * *', new Date('2026-07-01T00:00:00Z'), 'America/Santiago')?.toISOString()).toBe(
+      '2026-07-01T13:00:00.000Z'
+    );
+  });
+
+  it('keeps a daily schedule at its wall-clock hour across a spring-forward', () => {
+    // Chile springs forward on 2026-09-06: 00:00 becomes 01:00, so a 00:30 schedule has no minute to fire on that
+    // date and the search must land on the next day rather than an hour that did not happen.
+    const next = cronNextFire('30 0 * * *', new Date('2026-09-06T00:00:00Z'), 'America/Santiago');
+    expect(zonedClock(next as Date, 'America/Santiago')).toMatchObject({ hour: 0, minute: 30 });
+  });
+
+  it('answers nothing for an expression that never fires', () => {
+    expect(cronNextFire('0 0 30 2 *', new Date('2026-01-01T00:00:00Z'))).toBeUndefined();
+  });
+
+  it('answers nothing for an expression it cannot parse, and for a zone it does not know', () => {
+    expect(cronNextFire('not a cron', new Date())).toBeUndefined();
+    expect(cronNextFire('* * * * *', new Date(), 'Mars/Olympus')).toBeUndefined();
+  });
+
+  it('agrees with cronMatches on whatever it answers', () => {
+    const at = cronNextFire('15 3 * * 1', new Date('2026-03-01T00:00:00Z'));
+    expect(at && cronMatches('15 3 * * 1', at)).toBe(true);
+  });
+});
+
+describe('cronFiresBetween', () => {
+  it('counts what went by while nobody was listening', () => {
+    expect(
+      cronFiresBetween('0 * * * *', new Date('2026-03-01T00:00:00Z'), new Date('2026-03-01T05:00:00Z'))
+    ).toBe(5);
+  });
+
+  it('does not count the instant it starts from', () => {
+    expect(
+      cronFiresBetween('0 * * * *', new Date('2026-03-01T00:00:00Z'), new Date('2026-03-01T00:59:00Z'))
+    ).toBe(0);
+  });
+
+  it('stops at the cap rather than counting a week of minutes', () => {
+    expect(
+      cronFiresBetween('* * * * *', new Date('2026-03-01T00:00:00Z'), new Date('2026-03-08T00:00:00Z'), undefined, 50)
+    ).toBe(50);
   });
 });
