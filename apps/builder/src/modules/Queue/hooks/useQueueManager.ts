@@ -176,14 +176,6 @@ const useQueueManager = ({
           return mutate('SpaceUpdateSchema', { schema });
         }
 
-        // case SchemaActions[itemParsed.type]: {
-        //   const { schema } = itemParsed.data;
-
-        //   return mutate('SpaceUpdateSchema', { schema });
-        // }
-
-        // Style
-
         case StyleActions.STYLE_ADD_SELECTOR: {
           const { displayMode, selector, selectorType, path, value, params } = item.action;
 
@@ -273,14 +265,6 @@ const useQueueManager = ({
 
           return mutate('StyleUpdateSettings', { path, value });
         }
-
-        // case StyleActions[itemParsed.type]: {
-        //   const { style } = itemParsed.data;
-
-        //   return mutate('StyleUpdate', { style });
-        // }
-
-        // Schema + Style
 
         case SchemaActions.SCHEMA_ADD_TEMPLATE: {
           const { data, dropPosition, initialItems, to, variables, style } = item.action;
@@ -493,13 +477,6 @@ const useQueueManager = ({
 
           return mutate('SegmentUpdate', { id: segment.id, segment });
         }
-
-        // case SegmentsActions[itemParsed.type]: {
-        //   const { segmentId } = itemParsed.data;
-        //   const { state } = item;
-
-        //   return mutate('SegmentUpdate', { id: segmentId, segment: state[segmentId] });
-        // }
 
         default:
           return null;

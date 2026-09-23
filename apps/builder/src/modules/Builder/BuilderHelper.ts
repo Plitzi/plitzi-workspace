@@ -41,7 +41,6 @@ const getImageSize = async (file: File): Promise<{ height: number; width: number
 
 const processResource = async (clipboardData: DataTransfer) => {
   const file = get(clipboardData, 'files.0') as File | undefined;
-  // const metadata = clipboardData.getData('text/html');
   if (!file) {
     return undefined;
   }

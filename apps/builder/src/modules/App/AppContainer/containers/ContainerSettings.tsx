@@ -32,7 +32,6 @@ const ContainerSettings = () => {
 
   const [settings, setSettings] = useState(settingsProp);
   const {
-    // head = '', // @todo: pending to implement
     userProvider,
     keepState,
     stateStorage,
@@ -83,9 +82,6 @@ const ContainerSettings = () => {
           [name]: value
         }));
         void eventBridge.emit('main', 'schemaUpdateSettings', value, name);
-      } else if (name === 'head') {
-        // setSettings(state => ({ ...state, [name]: e }));
-        // eventBridge.emit('main', 'schemaUpdateSettings', e, name);
       } else {
         setSettings(state => ({ ...state, [name]: value }));
         void eventBridge.emit('main', 'schemaUpdateSettings', value, name);
@@ -295,17 +291,6 @@ const ContainerSettings = () => {
             label="Dev tools on the published SSR site (*.plitzi.app)"
           />
         </div>
-        {/* <div className="p-6 border-b border-gray-300 grow basis-0 flex flex-col gap-4">
-        <Heading type="h4">Space Settings</Heading>
-        <CodeMirror
-          value={head}
-          theme="dark"
-          className="min-h-[300px]"
-          lineWrapping
-          onChange={handleChange('head')}
-          mode="html"
-        />
-      </div> */}
       </Card.Body>
     </Card>
   );

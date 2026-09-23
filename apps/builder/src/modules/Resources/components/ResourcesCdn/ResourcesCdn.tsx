@@ -131,10 +131,6 @@ const ResourcesCdn = ({
     [identifier, onCollapse]
   );
 
-  // const handleClickUpdate = useCallback((e: MouseEvent) => {
-  //   e.stopPropagation();
-  // }, []);
-
   const handleSelectCredential = useCallback(
     async (credentialIdentifier: string) => {
       const response = await mutateNetwork('SpaceSetCdnCredential', { identifier, credentialIdentifier });
@@ -185,23 +181,12 @@ const ResourcesCdn = ({
         <div className="rounded border border-gray-400 px-1 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
           {finalResources.length}
         </div>
-        {/* <Icon
-          icon="fa-solid fa-pencil"
-          className="hidden cursor-pointer group-hover:block"
-          title="Update"
-          onClick={handleClickUpdate}
-        /> */}
         <SpaceCredentialSelectorModal
           providersSupported={['r2', 's3']}
           selected={credentialIdentifier}
           onSelect={handleSelectCredential}
         >
-          <Icon
-            // intent="primary"
-            icon="fa-solid fa-key"
-            className="hidden cursor-pointer group-hover:block"
-            title="Credentials"
-          />
+          <Icon icon="fa-solid fa-key" className="hidden cursor-pointer group-hover:block" title="Credentials" />
         </SpaceCredentialSelectorModal>
         <Icon
           intent="danger"

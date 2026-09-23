@@ -234,31 +234,6 @@ const SegmentsContextProvider = ({ children, includeSubscriptions = true }: Segm
     [dispatchSegments]
   );
 
-  // const segmentCloneElement = useCallback(
-  //   (segmentId, elementId, targetId, fromSubscriptions = false) => {
-  //     const flat = get(getState(), `${segmentId}.schema.flat`);
-  //     const elements = FlatMap.cloneElements(flat, elementId, targetId);
-  //     if (!elements || !elements.item) {
-  //       return null;
-  //     }
-
-  //     if (elements.acum[elements.item.id]) {
-  //       delete elements.acum[elements.item.id];
-  //     }
-
-  //     return dispatch({
-  //       type: SegmentsActions.SEGMENTS_CLONE_ELEMENT,
-  //       segmentId,
-  //       to: targetId ?? get(elements, 'item.definition.parentId'),
-  //       data: elements.item,
-  //       dropPosition: 'inside',
-  //       initialItems: elements.acum,
-  //       fromSubscriptions
-  //     });
-  //   },
-  //   [dispatchSegments, SegmentsReducer]
-  // );
-
   const segmentMoveElement = useCallback(
     (
       segmentId: string,

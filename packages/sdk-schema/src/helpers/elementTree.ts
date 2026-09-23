@@ -93,3 +93,40 @@ export const descendants = (flat: Flat, id: string): string[] => {
 
   return found;
 };
+
+/** One root of a schema — a page, or a layout several pages render inside — and how many elements it holds. */
+export type RootElements = {
+  /** What the author called it. The id is a fallback for a root whose element is missing from the map. */
+  page: string;
+  elements: number;
+};
+
+/**
+ * The element count, grouped by the root each element names (`definition.rootId`), heaviest first.
+ *
+ * A grouping, not a second measurement: it always adds up to the number of elements in `flat`, so the builder's live
+ * meter and the API's usage panel agree with the count the element ceilings are judged on. Layouts are roots too and
+ * are listed as themselves rather than shared out over the pages that render inside them — their elements are authored
+ * once, and splitting them between pages would report a total that no page has.
+ */
+export const elementsByRoot = (flat: Flat): RootElements[] => {
+  const counts = new Map<string, number>();
+  const names = new Map<string, string>();
+  for (const element of Object.values(flat)) {
+    if (!element) {
+      continue;
+    }
+
+    const root = element.definition.rootId;
+    counts.set(root, (counts.get(root) ?? 0) + 1);
+    // A root points at itself, so the pass that counts is also the pass that learns what each root is called.
+    if (element.id === root) {
+      const { name } = element.attributes;
+      names.set(root, typeof name === 'string' && name ? name : element.definition.label);
+    }
+  }
+
+  return [...counts.entries()]
+    .map(([root, elements]) => ({ page: names.get(root) ?? root, elements }))
+    .sort((a, b) => b.elements - a.elements);
+};

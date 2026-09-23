@@ -1,8 +1,7 @@
 import clsx from 'clsx';
 import { useEffect, useImperativeHandle, useRef, useState } from 'react';
 
-import { drawByLiveStream, initialCanvasSetup } from './helpers'; //  drawByBlob, getBarsData,
-// import { useWebWorker } from '../../hooks/useWebWorker';
+import { drawByLiveStream, initialCanvasSetup } from './helpers';
 
 import type { RefObject } from 'react';
 
@@ -59,12 +58,6 @@ const VoiceVisualizer = ({
     setSize({ width, height });
   }, []);
 
-  // const {
-  //   result: barsData,
-  //   setResult: setBarsData,
-  //   run
-  // } = useWebWorker({ fn: getBarsData, initialValue: [], onMessageReceived: completedAudioProcessing });
-
   useEffect(() => {
     if (!canvasRef.current) {
       return;
@@ -106,47 +99,6 @@ const VoiceVisualizer = ({
   ]);
 
   // useEffect(() => {
-  //   if (!bufferFromRecordedBlob || !canvasRef.current || isRecording) {
-  //     return;
-  //   }
-
-  //   if (onlyRecording) {
-  //     clearCanvas();
-
-  //     return;
-  //   }
-
-  //   picksRef.current = [];
-  //   const bufferData = bufferFromRecordedBlob.getChannelData(0);
-
-  //   run({
-  //     bufferData,
-  //     height: size?.height ?? 0,
-  //     width: size?.width ?? 0,
-  //     barWidth: formattedBarWidth,
-  //     gap: formattedGap
-  //   });
-  // }, [bufferFromRecordedBlob, gap, barWidth, size]);
-
-  // useEffect(() => {
-  //   if (onlyRecording || !barsData?.length || !canvasRef.current) return;
-
-  //   if (isCleared) {
-  //     setBarsData([]);
-
-  //     return;
-  //   }
-
-  //   drawByBlob({
-  //     barsData,
-  //     canvas: canvasRef.current,
-  //     barWidth: formattedBarWidth,
-  //     gap: formattedGap,
-  //     backgroundColor,
-  //     mainBarColor,
-  //     rounded
-  //   });
-  // }, [barsData, isCleared, rounded, backgroundColor, mainBarColor]);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -155,10 +107,6 @@ const VoiceVisualizer = ({
   }, [backgroundColor]);
 
   // function completedAudioProcessing() {
-  //   if (audioRef?.current) {
-  //     audioRef.current.src = audioSrc;
-  //   }
-  // }
 
   return (
     <canvas className={clsx('w-full', className)} ref={canvasRef} {...size}>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { descendants, parentChain, renderContext } from './elementTree';
+import { descendants, elementsByRoot, parentChain, renderContext } from './elementTree';
 
 import type { Schema } from '@plitzi/sdk-shared';
 
@@ -99,5 +99,43 @@ describe('descendants', () => {
 
     expect(descendants(withGhost, 'analytics')).toEqual(['analytics-api', 'analytics-body']);
     expect(descendants(flat, 'map')).toEqual([]);
+  });
+});
+
+describe('elementsByRoot', () => {
+  // A grouping, not a second measurement: whatever it says has to add up to the element count the ceilings judge.
+  it('adds up to the element count exactly, heaviest root first', () => {
+    const pages: Schema['flat'] = {
+      home: node('home', 'page', undefined, 'home', { name: 'Home' }, ['hero']),
+      hero: node('hero', 'container', 'home', 'home'),
+      pricing: node('pricing', 'page', undefined, 'pricing', { name: 'Pricing' }, ['table', 'row']),
+      table: node('table', 'container', 'pricing', 'pricing'),
+      row: node('row', 'container', 'pricing', 'pricing')
+    };
+
+    const rows = elementsByRoot(pages);
+
+    expect(rows.reduce((total, row) => total + row.elements, 0)).toBe(Object.keys(pages).length);
+    expect(rows).toEqual([
+      { page: 'Pricing', elements: 3 },
+      { page: 'Home', elements: 2 }
+    ]);
+  });
+
+  // A layout's elements are authored once and rendered by every page that uses it; sharing them out would report a
+  // total that no page actually has.
+  it('lists a layout as itself rather than splitting it over the pages inside it', () => {
+    expect(elementsByRoot(flat)).toEqual([
+      { page: 'shell', elements: 3 },
+      { page: 'analytics', elements: 3 },
+      { page: 'audience', elements: 2 }
+    ]);
+  });
+
+  it('falls back to the id when a root names nothing, and has nothing to say about an empty schema', () => {
+    expect(elementsByRoot({ orphan: node('orphan', 'container', undefined, 'missing-root') })).toEqual([
+      { page: 'missing-root', elements: 1 }
+    ]);
+    expect(elementsByRoot({})).toEqual([]);
   });
 });

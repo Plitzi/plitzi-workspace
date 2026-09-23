@@ -113,6 +113,14 @@
 - Builder resources: one preview (`ResourceContent`) for a resource on its way up, in the list and in its details — the
   list's own copy of the plugin card is gone — and one card for images and videos (`ResourceMedia`). A video was
   dragged as an image and kept its remove button under the cursor while dragged, and so did any other file; both fixed.
+- `elementsByRoot` (and `RootElements`) in `@plitzi/sdk-schema/helpers/elementTree`: the element count grouped by the
+  page or layout that holds it. The builder's quota panel and the server's usage API each carried a copy.
+- Builder: the model picker's ↑/↓ and ↵ do what its footer says (they were swallowed), and the marketplace's "Update
+  Now" moves an installed plugin to the latest revision (it did nothing). Gone: the space setting `head`, which was
+  never wired, a connectivity listener that only logged, and commented-out code across the builder, the SDK app and the
+  packages.
+- No debug logging left in shipped code: `stringToArray` logged every call and the transition editor every change;
+  `BlockJsx` and plugin loading report their failures as errors.
 
 ## Runtime
 

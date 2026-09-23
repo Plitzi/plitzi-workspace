@@ -68,7 +68,7 @@ const TemporalResource = ({
 
   const onError = useCallback(
     (e: Error) => {
-      console.log(e);
+      console.error(e);
       onErrorProp?.(e);
     },
     [onErrorProp]

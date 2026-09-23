@@ -111,7 +111,6 @@ const NetworkContextProvider = ({
       }
 
       let result: ApolloClient.MutateResult<BuilderMutationsMap[T]>;
-      // let abortHandler;
       try {
         result = await client.mutate<BuilderMutationsMap[T]>({
           mutation: BuilderMutations[mutationKey],
@@ -119,14 +118,6 @@ const NetworkContextProvider = ({
           context: {
             fetchOptions: {
               customFetch: false,
-              // onProgress: ev => {
-              //   setProgress(ev.loaded / ev.total);
-              // },
-              // onProgress: undefined,
-              // onAbortPossible: abortHandlerInternal => {
-              //   abortHandler = abortHandlerInternal;
-              // },
-              // onAbortPossible: undefined,
               ...uploadOptions
             }
           }
@@ -159,10 +150,6 @@ const NetworkContextProvider = ({
     },
     [addToast, client, environment]
   );
-
-  const connectivityStatus = useCallback(() => {
-    console.log(window.navigator.onLine);
-  }, []);
 
   const initQuery = useCallback(async () => {
     try {
@@ -217,14 +204,7 @@ const NetworkContextProvider = ({
   }, [environment, query, registerDefinition]);
 
   useEffect(() => {
-    window.addEventListener('offline', connectivityStatus);
-    window.addEventListener('online', connectivityStatus);
-
     void initQuery();
-    return () => {
-      window.removeEventListener('offline', connectivityStatus);
-      window.removeEventListener('online', connectivityStatus);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

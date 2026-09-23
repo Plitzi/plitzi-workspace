@@ -89,12 +89,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
 
   const fetch = useCallback(
     async (filter: object, cursor: string, limit: number) => {
-      // @todo: revisar esto
-      // , append = []
-      // const { pluginsAddMany } = this.props;
       const response = await query('Plugins', { filter, cursor, limit }, 'network-only');
-
-      // pluginsAddMany([...append, ...result.data.Plugins.edges]);
 
       return response.result?.Plugins ?? [];
     },

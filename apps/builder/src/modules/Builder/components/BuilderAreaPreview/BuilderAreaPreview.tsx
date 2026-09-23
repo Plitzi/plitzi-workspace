@@ -23,8 +23,6 @@ import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 
-// eslint-disable-next-line
-// @ts-ignore
 import styleFrame from '../../../Builder/Assets/index-iframe.scss?inline';
 
 export type BuilderAreaPreviewProps = {

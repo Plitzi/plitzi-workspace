@@ -9,7 +9,7 @@ import PluginList from './PluginList';
 import PluginsFilter from './PluginsFilter';
 import { parsePlugin } from '../../helpers/PluginHelper';
 
-import type { PageInfo } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, PageInfo } from '@plitzi/sdk-shared';
 import type { MarketPlacePlugin, MarketPlacePluginRaw } from '@pmodules/Marketplace/types';
 
 const MarketPlugins = () => {
@@ -128,44 +128,31 @@ const MarketPlugins = () => {
     [addToast, pluginSelected, pluginsContext]
   );
 
-  const onUpdate = useCallback(async (version: string) => {
-    console.log('Update to', version);
+  // The installed plugin moved to another revision in place: `SpaceUpdatePlugin` replaces what `add` would refuse.
+  const onUpdate = useCallback(
+    async (version: string) => {
+      if (!pluginSelected) {
+        return false;
+      }
 
-    return await Promise.resolve(false);
-    // if (!pluginSelected) {
-    //   return false;
-    // }
+      const { name, type, version: installedVersion } = pluginSelected;
+      const installed = pluginsInstalled[type] as ComponentDefinition | undefined;
+      if (!installed || version === installedVersion || !(await pluginsContext.update?.(installed, version))) {
+        return false;
+      }
 
-    // const { name, type, revisions } = pluginSelected;
-    // const assets = revisions.find(revision => revision.version === version);
-    // if (!assets) {
-    //   return false;
-    // }
+      addToast(
+        <div>
+          Plugin <b>{`${name} ${version}`}</b> Updated
+        </div>,
+        { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
+      );
+      setPluginSelected(state => ({ ...state, version }) as MarketPlacePlugin);
 
-    // const pluginInstalled = pluginsInstalled[type];
-    // if (version === pluginInstalled.versionInstalled) {
-    //   return false;
-    // }
-
-    // if (await pluginsContext.update?.(type, version)) {
-    //   addToast(
-    //     <div>
-    //       Plugin <b>{`${name} ${version}`}</b> Updated
-    //     </div>,
-    //     {
-    //       appeareance: 'success',
-    //       autoDismiss: true,
-    //       placement: 'top-right'
-    //     }
-    //   );
-
-    //   setPluginSelected(state => ({ ...state, version }) as MarketPlacePlugin);
-
-    //   return true;
-    // }
-
-    // return false;
-  }, []);
+      return true;
+    },
+    [addToast, pluginSelected, pluginsContext, pluginsInstalled]
+  );
 
   const onRemove = useCallback(async () => {
     if (!pluginSelected) {

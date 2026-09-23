@@ -202,8 +202,6 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   );
 
   if (action.type === 'notFound') {
-    // @todo: In the future this should navigate to page 404
-    // return <Navigate to="/not-found" replace />;
     if (ssrResult) {
       ssrResult.status = 404;
     }
@@ -212,8 +210,6 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   }
 
   if (action.type === 'accessDenied') {
-    // @todo: In the future this should navigate to page 403
-    // return <Navigate to="/unauthorized" replace />;
     if (ssrResult) {
       ssrResult.status = 403;
     }

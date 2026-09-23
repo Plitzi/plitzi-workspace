@@ -21,8 +21,6 @@ import RawMode from './renderModes/RawMode';
 import ShadowMode from './renderModes/ShadowMode';
 import SdkPlugin from './SdkPlugin';
 import FontFaces from '../Fonts/FontFaces';
-// eslint-disable-next-line
-// @ts-ignore
 
 import type { Server, SpaceFont } from '@plitzi/sdk-shared';
 
