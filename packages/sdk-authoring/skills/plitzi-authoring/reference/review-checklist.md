@@ -20,8 +20,8 @@ of it; each line is something that has shipped broken before.
 
 ## Every screen, every theme
 
-- [ ] Desktop, tablet and mobile — and nothing scrolls sideways on a phone. Tablet rules are repeated for mobile when
-      phones should keep them.
+- [ ] Desktop, tablet and mobile — and nothing scrolls sideways on a phone. A rule for tablets and phones alike is
+      written under `compact`.
 - [ ] Light AND dark. Every colour is a token with both values; no theme-following text on a fixed background.
 - [ ] Focus is visible on everything clickable (`focus-visible`), and `prefers-reduced-motion` stops what moves.
 
@@ -39,6 +39,9 @@ of it; each line is something that has shipped broken before.
       testimonials. A panel with nothing true to show is an empty state.
 - [ ] Times are formatted with an explicit zone and say which (`… 06:00 UTC`).
 - [ ] Logic lives in binding templates or on the server, not in an attribute (where a condition is never evaluated).
+- [ ] A filtered or sorted list binds its `items` to a template that returns its value — its rows are not hidden one
+      by one.
+- [ ] Every link you wrote was followed at least once: an `href` built from a row goes where it says.
 - [ ] Writes refresh what they changed — and only that (`invalidateQueries`); a multi-step form does not refresh the
       provider that decides whether to leave.
 - [ ] What only an administrator may read is shown only to administrators — and the check is a real boolean, not

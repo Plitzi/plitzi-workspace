@@ -15,8 +15,10 @@ import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
  * validator that refused the name would make that impossible to write.
  *
  * `theme` is `{ mode, resolved }` — `resolved` is always `light` or `dark`, which is what a URL or a rule wants.
+ *
+ * `computed` holds the space's own computed values (`SpaceSpec.computed`), by name.
  */
-export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state', 'host', 'theme'];
+export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state', 'host', 'theme', 'computed'];
 
 /** What an element publishes: the source prefix its type registers under, by the id it was given. */
 export type SourceIndex = Map<string, string>;
@@ -44,7 +46,7 @@ export const resolveSource = (source: string, index: SourceIndex, where: string)
     const prefix = index.get(head);
     if (!prefix) {
       throw new Error(
-        `${where} binds to "${source}", but nothing in this space answers to "${head}"${didYouMean(head, [...index.keys(), ...GLOBAL_SOURCES])}. A source names an element by its id, or one of the globals: ${GLOBAL_SOURCES.join(', ')}.`
+        `${where} binds to "${source}", but nothing in this space answers to "${head}"${didYouMean(head, [...index.keys(), ...GLOBAL_SOURCES]) || '.'} A source names an element by its id, or one of the globals: ${GLOBAL_SOURCES.join(', ')}.`
       );
     }
 
@@ -81,10 +83,62 @@ export const toBindingSpecs = (bind: BindingsSpec): BindingSpec[] =>
  * and getting it wrong writes a `visibility` attribute no element reads, so the element stays visible and nothing
  * reports anything.
  */
-export const visibleWhen = (source: string): BindingSpec => ({
+export const visibleWhen = (source: string, template?: string): BindingSpec => ({
   to: 'visibility',
   source,
-  category: 'initialState'
+  category: 'initialState',
+  ...(template ? { transformers: [{ action: 'twigTemplate', params: { template } }] } : {})
+});
+
+/**
+ * A visibility the data does not answer on its own: a template over the value that says `true` or `false` —
+ * `{ source: 'state.genre', template: "{{ source == '' or source == list_games.item.genre }}" }`.
+ *
+ * As an element's `visible` it also starts the element hidden, which is what a condition computed from data wants:
+ * shown only once the template has said so, rather than drawn and then taken away.
+ */
+export interface VisibleCondition {
+  source: string;
+  template: string;
+}
+
+/** What a binding's template hands its attribute: its rendered text, or the value of its one `{{ expression }}`. */
+export type TemplateReturns = 'text' | 'value';
+
+export interface BindTemplateOptions {
+  /** Where the value goes: an attribute (the default), a style property (`style`), or element state. */
+  category?: BindingCategory;
+  /** `value` for an attribute that holds a list, a number or a flag rather than words — a list's `items`. */
+  returns?: TemplateReturns;
+}
+
+/**
+ * An attribute computed by a template over a source — a label with units, a URL with an id in it, a filtered list.
+ *
+ * The long form is a binding with one `twigTemplate` transformer, which every computed attribute needs and nobody
+ * wants to write out:
+ *
+ * ```ts
+ * text('', { bind: [bindTemplate('content', 'state.xp', '{{ source }} XP')] });
+ * list({ source: 'controlled', bind: [bindTemplate('items', 'games.data', '{{ source|filter(g => g.new) }}', { returns: 'value' })] });
+ * container({ bind: [bindTemplate('width', 'state.progress', '{{ source }}%', { category: 'style' })] });
+ * ```
+ */
+export const bindTemplate = (
+  to: string,
+  source: string,
+  template: string,
+  options: BindTemplateOptions = {}
+): BindingSpec => ({
+  to,
+  source,
+  ...(options.category ? { category: options.category } : {}),
+  transformers: [
+    {
+      action: 'twigTemplate',
+      params: { template, ...(options.returns === 'value' ? { returnMode: 'value' } : {}) }
+    }
+  ]
 });
 
 /**
@@ -153,11 +207,18 @@ export const variantFrom = (cls: ClassRef, source: string, options: VariantFromO
 export const hasVisibilityBinding = (bindings: BindingSpec[] | undefined): boolean =>
   bindings?.some(binding => binding.to === 'visibility' && binding.category === 'initialState') ?? false;
 
-export const withVisibility = (spec: { bind?: BindingsSpec; visible?: string | false }): BindingSpec[] | undefined => {
+export const withVisibility = (spec: {
+  bind?: BindingsSpec;
+  visible?: string | false | VisibleCondition;
+}): BindingSpec[] | undefined => {
   const bound = spec.bind === undefined ? undefined : toBindingSpecs(spec.bind);
   // `false` is a starting state rather than a condition: nothing to bind, only an element that begins hidden.
   if (spec.visible === undefined || spec.visible === false) {
     return bound;
+  }
+
+  if (typeof spec.visible === 'object') {
+    return [...(bound ?? []), visibleWhen(spec.visible.source, spec.visible.template)];
   }
 
   // `!source` is the inverse, and it is one field rather than a `hidden` beside it because `hidden` is a real HTML

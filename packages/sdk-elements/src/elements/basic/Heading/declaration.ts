@@ -1,5 +1,5 @@
 /** Static declaration for Heading: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { HeadingProps } from './Heading';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,9 @@ export type HeadingAttributes = AuthorableAttributes<HeadingProps>;
 
 const declaration = elementDeclaration<HeadingAttributes>()({
   type: 'heading',
+  attributeValues: {
+    subType: valuesOf<NonNullable<HeadingProps['subType']>>()(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+  },
   content: {
     attributes: {
       content: 'Heading',

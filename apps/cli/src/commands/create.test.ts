@@ -181,7 +181,25 @@ describe('the scaffold', () => {
     expect(files['src/plugins/README.md']).toContain('renderType');
     // The element that renders it, and the attributes that reach the component as props.
     expect(files['src/space.ts']).toContain("renderType: 'statCard'");
-    expect(files['src/space.ts']).toContain('"label":"Requests today"');
+    expect(files['src/space.ts']).toContain("label: 'Requests today'");
+  });
+
+  // A client project serves `public/`, so its numbers come from a data file through a provider — never invented.
+  it('feeds the plugin from a data file the project serves, in client mode', () => {
+    const files = scaffold(answers({ mode: 'client' }));
+
+    expect(JSON.parse(files['public/data/stats.json'])).toMatchObject({ value: 12480 });
+    expect(files['src/space.ts']).toContain("query: '/data/stats.json'");
+    expect(files['src/space.ts']).toContain("value: 'stats.data.value'");
+  });
+
+  it('can take a screenshot of any page from the command line', () => {
+    const files = scaffold(answers({ mode: 'client' }));
+    const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
+
+    expect(scripts.shot).toBe('node --import tsx scripts/shot.ts');
+    expect(files['scripts/shot.ts']).toContain('fullPage: true');
+    expect(files['scripts/shot.ts']).toContain('const PORT = 5173;');
   });
 
   /**
@@ -261,7 +279,20 @@ describe('the scaffold', () => {
     expect(spec).toContain('page.goto(pageHandle.path');
     // What a bare visit cannot show is not held against the page: a session, a route param, a condition.
     expect(spec).toContain("pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0");
-    expect(spec).toContain('entry.named && !entry.conditional');
+    expect(spec).toContain('entry.named && !entry.conditional && !entry.repeated && !entry.boxless');
+  });
+
+  // `npm run author` is `node --import tsx`, in a client-mode project too.
+  it('can author the space on a fresh checkout, in either mode', () => {
+    for (const mode of ['client', 'server'] as const) {
+      const { scripts, devDependencies } = JSON.parse(scaffold(answers({ mode }))['package.json']) as {
+        scripts: Record<string, string>;
+        devDependencies: Record<string, string>;
+      };
+
+      expect(scripts.author).toContain('tsx');
+      expect(devDependencies.tsx).toBeTruthy();
+    }
   });
 
   // Claude Code finds the skill on its own; any other agent looks for AGENTS.md, and CLAUDE.md imports it.
@@ -312,6 +343,7 @@ describe('plitzi create', () => {
         'eslint.config.mjs',
         'package.json',
         'playwright.config.ts',
+        'scripts',
         'src',
         'tsconfig.json',
         'visual'

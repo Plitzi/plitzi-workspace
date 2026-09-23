@@ -1,5 +1,5 @@
 /** Static declaration for Dropdown: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { DropdownProps } from './Dropdown';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,9 @@ export type DropdownAttributes = AuthorableAttributes<DropdownProps>;
 
 const declaration = elementDeclaration<DropdownAttributes>()({
   type: 'dropdown',
+  attributeValues: {
+    popupPlacement: valuesOf<NonNullable<DropdownProps['popupPlacement']>>()(['left', 'right', 'top', 'bottom'])
+  },
   content: {
     attributes: {
       popupPlacement: 'bottom',

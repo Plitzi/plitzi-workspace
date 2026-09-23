@@ -21,11 +21,13 @@ const distance = (a: string, b: string): number => {
 };
 
 export const closest = (name: string, candidates: Iterable<string>): string | undefined => {
+  // Read twice below, and an iterator — a map's keys — is empty the second time.
+  const list = [...candidates];
   const limit = Math.max(2, Math.floor(name.length / 3));
   let best: string | undefined;
   let bestDistance = Infinity;
 
-  for (const candidate of candidates) {
+  for (const candidate of list) {
     const value = candidate.toLowerCase() === name.toLowerCase() ? 1 : distance(name, candidate);
     if (value < bestDistance) {
       best = candidate;
@@ -33,7 +35,23 @@ export const closest = (name: string, candidates: Iterable<string>): string | un
     }
   }
 
-  return bestDistance <= limit ? best : undefined;
+  if (bestDistance <= limit) {
+    return best;
+  }
+
+  // Not a typo but a part of the name: `template` for `twigTemplate`, `Container` for `apiContainer`. Only for a name
+  // long enough to mean something on its own, and only when exactly one candidate holds it.
+  const needle = name.toLowerCase();
+  const holding =
+    needle.length >= 4
+      ? list.filter(candidate => {
+          const known = candidate.toLowerCase();
+
+          return known.includes(needle) || needle.includes(known);
+        })
+      : [];
+
+  return holding.length === 1 ? holding[0] : undefined;
 };
 
 /** `… — did you mean "x"?` or nothing at all: the tail of an error message. */

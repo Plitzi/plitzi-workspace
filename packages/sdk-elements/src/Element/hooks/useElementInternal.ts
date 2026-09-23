@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
-import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig, hasValidToken, templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';
@@ -32,6 +32,7 @@ export const getProps = (
     attributes = { ...attributes, ...internalProps.attributes };
   }
 
+  const authored = attributes;
   // Data Sources
   if (Object.keys(dataSource).length > 0) {
     const bindingData = getBindingsDetails(dataSource as Record<string, RuleValue>, { ...element, attributes }, style);
@@ -39,26 +40,47 @@ export const getProps = (
   }
 
   /**
-   * Variables and navigation params injection, for example twig interpolation.
+   * Attribute templates: `{{ list_rows.item.slug }}` in a link's `href`, `{{ state.name }}` in a text's `content`.
    *
-   * The flattened half is what it has always been: a route param is `{{ slug }}`, a variable is `{{ apiUrl }}`.
-   * `navigation` is published BESIDE it, under its own name, because the one thing an attribute could not say was
-   * where it is — `origin` has a port and `hostname` does not, so a link that sends somebody back to this page had
-   * to name each environment's address in a variable of its own. Spelled the way every other source is
-   * (`{{ navigation.origin }}`), so the vocabulary is the same one a binding's template already uses.
+   * Resolved against the same sources a binding reads — every one the attribute names, subscribed by
+   * `useElementInternal` — with the route and query params and the variables flattened beside them, as they always
+   * were: a route param is `{{ slug }}`, a variable `{{ apiUrl }}`. Until the sources were here an attribute saw only
+   * that flattened half, and a card linking to `/games/{{ list_games.item.slug }}` linked to that text, literally.
+   *
+   * `navigation` is the source with `origin` read off the store, spelled the way a binding's template spells it.
+   *
+   * Only what was AUTHORED is a template. A value a binding put there is data — a visitor's comment, a product name —
+   * and data that happens to contain `{{ auth.accessToken }}` must print those characters, not evaluate them.
    */
   const {
     queryParams = {},
     routeParams = {},
     variables = {},
-    origin = ''
-  } = dataSource as { queryParams?: TwigValues; routeParams?: TwigValues; variables?: TwigValues; origin?: string };
-  const data = { ...variables, ...routeParams, ...queryParams, navigation: { routeParams, queryParams, origin } };
+    origin = '',
+    navigation,
+    ...sources
+  } = dataSource as {
+    queryParams?: TwigValues;
+    routeParams?: TwigValues;
+    variables?: TwigValues;
+    origin?: string;
+    navigation?: TwigValues;
+  } & TwigValues;
+  const data = {
+    ...variables,
+    ...routeParams,
+    ...queryParams,
+    ...sources,
+    navigation: { ...navigation, routeParams, queryParams, origin }
+  };
   if (Object.keys(data).length > 0) {
     const interpolated: Element['attributes'] = {};
     for (const key of Object.keys(attributes)) {
       const value = attributes[key];
-      interpolated[key] = typeof value === 'string' && hasValidToken(value) ? processTwig(value, data, true) : value;
+      interpolated[key] =
+        typeof value === 'string' && value === authored[key] && hasValidToken(value)
+          ? processTwig(value, data, true)
+          : value;
     }
 
     attributes = interpolated;
@@ -91,10 +113,14 @@ export const getProps = (
   };
 };
 
-const TEMPLATE_SOURCES = ['variables'];
+const templatesIn = (attributes: Record<string, unknown> | undefined): string[] =>
+  Object.values(attributes ?? {}).filter((value): value is string => typeof value === 'string' && hasValidToken(value));
 
-const hasTemplate = (attributes: Record<string, unknown> | undefined): boolean =>
-  Object.values(attributes ?? {}).some(value => typeof value === 'string' && hasValidToken(value));
+/** Every source an attribute's templates name, and the variables — which a template reads by their bare name. */
+const templateSources = (templates: string[]): string[] => [
+  'variables',
+  ...new Set(templates.flatMap(template => templateRootNames(template)))
+];
 
 export type UseElementInternalProps = {
   // The resolved element is read once by `withElement` and threaded in, so the element is subscribed to a single time
@@ -122,17 +148,19 @@ const useElementInternal = ({
    * Subscribed for every element, those made the whole page render again on each navigation, templates or not: a
    * route change writes new params and new variables, and every element on the page was listening.
    */
-  const usesTemplates = useMemo(
-    () => hasTemplate(element.attributes) || hasTemplate(internalProps.attributes),
-    [element.attributes, internalProps.attributes]
-  );
+  const sources = useMemo(() => {
+    const templates = [...templatesIn(element.attributes), ...templatesIn(internalProps.attributes)];
+
+    return templates.length > 0 ? templateSources(templates) : undefined;
+  }, [element.attributes, internalProps.attributes]);
+  const usesTemplates = sources !== undefined;
   const [[routeParams, queryParams, origin]] = useCommonStore(
     ['navigation.routeParams', 'navigation.queryParams', 'navigation.origin'],
     { enabled: usesTemplates }
   );
   const dataSource = useElementDataSource({
     bindings: element.definition.bindings,
-    sources: usesTemplates ? TEMPLATE_SOURCES : undefined
+    sources
   });
 
   const internalPropsParsed = useMemo(

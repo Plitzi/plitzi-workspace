@@ -18,6 +18,16 @@ const classHasRules = (style: Pick<Style, 'platform'>, name: string): boolean =>
   );
 
 /**
+ * Whether an element renders no element of its own — an `apiContainer` with no `subType`, the builder's "Container
+ * Tag: None". Its children sit straight in its parent, so it has no box: nothing to style, and nothing a test can see.
+ */
+export const rendersNoTag = (element: Pick<Element, 'attributes' | 'definition'>): boolean => {
+  const subType: unknown = element.attributes.subType;
+
+  return element.definition.type === 'apiContainer' && (typeof subType !== 'string' || subType === '');
+};
+
+/**
  * Why an element's style applies to nothing, if it does not.
  *
  * An `apiContainer` whose `subType` is empty — its default, the builder's "Container Tag: None" — renders its
@@ -30,12 +40,7 @@ const classHasRules = (style: Pick<Style, 'platform'>, name: string): boolean =>
  * or not, so a class name on its own says nothing. A provider with no tag is legal and often right.
  */
 export const styleWithoutTag = (element: Element, style: Pick<Style, 'platform'>): string | undefined => {
-  if (element.definition.type !== 'apiContainer') {
-    return undefined;
-  }
-
-  const subType: unknown = element.attributes.subType;
-  if (typeof subType === 'string' && subType !== '') {
+  if (!rendersNoTag(element)) {
     return undefined;
   }
 

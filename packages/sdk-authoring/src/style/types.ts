@@ -23,8 +23,12 @@ export type StyleRules = StyleObject;
  * Per-breakpoint CSS as an author writes it. Omitted breakpoints inherit `desktop`, as they do in the builder — and
  * only `desktop`: `tablet` (48–64rem) and `mobile` (below 48rem) are disjoint ranges, so a `tablet` rule never
  * reaches a phone unless `mobile` repeats it.
+ *
+ * `compact` is both of them at once — everything narrower than a desktop: the dock that replaces a sidebar, the grid
+ * that drops to one column. Written out to `tablet` and `mobile` alike, under whatever either says for itself, so
+ * the document still holds the three breakpoints the builder edits.
  */
-export type ResponsiveCss = Partial<Record<DisplayMode, CssProps>>;
+export type ResponsiveCss = Partial<Record<DisplayMode | 'compact', CssProps>>;
 
 /** Per-breakpoint CSS as it reaches the document. */
 export type ResponsiveStyle = Partial<Record<DisplayMode, StyleRules>>;

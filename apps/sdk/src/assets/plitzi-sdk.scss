@@ -218,8 +218,13 @@
    * variable is declared on the container itself, which is the element that reads it, so it wins over the library's
    * own declaration on `:root` by being the element's own rather than an inherited one.
    */
+  /**
+   * The space's own type, and its colours when it names them: a space recolours its notifications by setting the
+   * library's `--toastify-*` variables on this container — which is what `SpaceSpec.notifications` writes.
+   */
   .Toastify__toast-container.plitzi-sdk-toasts {
     --toastify-z-index: 2000000;
+    --toastify-font-family: inherit;
   }
 
   @include sdkComponents.styles;

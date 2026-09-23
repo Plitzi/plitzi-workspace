@@ -49,8 +49,11 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 const bound = (type: 'text' | 'paragraph', source: string, className: string): ElementSpec =>
   element(type, { content: '', class: className, bind: { content: source } });
 
-const boundHeading = (source: string, className: string, subType: Attributes<'heading'>['subType'] = 'h2'): ElementSpec =>
-  heading({ subType, content: '', class: className, bind: { content: source } });
+const boundHeading = (
+  source: string,
+  className: string,
+  subType: Attributes<'heading'>['subType'] = 'h2'
+): ElementSpec => heading({ subType, content: '', class: className, bind: { content: source } });
 
 const boundImage = (source: string, className: string): ElementSpec =>
   image({ alt: '', loadMode: 'lazy', class: className, bind: { src: source } });
@@ -152,7 +155,10 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                 text('F', { class: 'brandMark' }),
                 container({
                   class: 'stack',
-                  children: [text('Fieldnotes', { class: 'brandName' }), text('Wildlife, close up', { class: 'brandTag' })]
+                  children: [
+                    text('Fieldnotes', { class: 'brandName' }),
+                    text('Wildlife, close up', { class: 'brandTag' })
+                  ]
                 })
               ]),
               container({
@@ -162,7 +168,8 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                   // Hidden unless the session holds `postPublish` — a dead end is bad manners, and that is all
                   // this is: the action behind the link refuses the same people either way.
                   link({
-                    href: '/write', mode: 'internal',
+                    href: '/write',
+                    mode: 'internal',
                     class: 'navLink',
                     visible: `${src}.canWrite`,
                     children: [label('Write')]
@@ -176,7 +183,9 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                    */
                   themeToggle({
                     id: `${ref}Theme`,
-                    subType: 'switch', lightLabel: 'Light', darkLabel: 'Dark',
+                    subType: 'switch',
+                    lightLabel: 'Light',
+                    darkLabel: 'Dark',
                     class: 'themeToggle'
                   }),
                   /**
@@ -187,13 +196,15 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
                    * server answered, which is how a page says "either/or" without a condition in it.
                    */
                   link({
-                    href: '/login', mode: 'internal',
+                    href: '/login',
+                    mode: 'internal',
                     class: 'signInLink',
                     visible: `!${src}.signedIn`,
                     children: [label('Sign in')]
                   }),
                   link({
-                    href: '/login', mode: 'internal',
+                    href: '/login',
+                    mode: 'internal',
                     class: 'accountPill',
                     visible: `${src}.signedIn`,
                     children: [avatar(`${src}.initial`, 'avatarSm'), bound('text', `${src}.accountLabel`, 'bylineName')]
@@ -219,7 +230,8 @@ const chrome = (ref: string, body: ElementSpec[]): ElementSpec => {
  */
 const writeLink = (ref: string): ElementSpec =>
   link({
-    href: '/write', mode: 'internal',
+    href: '/write',
+    mode: 'internal',
     class: 'chipQuiet',
     visible: `${ref}.canWrite`,
     children: [label('Write a post')]
@@ -249,10 +261,9 @@ const footer = (): ElementSpec =>
             class: 'footerEnd',
             children: [
               text('Built with Plitzi', { class: 'footerLabel' }),
-              text(
-                'Every page here is a layout, every read is a flow the server runs, and no page has a build step.',
-                { class: 'meta' }
-                )
+              text('Every page here is a layout, every read is a flow the server runs, and no page has a build step.', {
+                class: 'meta'
+              })
             ]
           })
         ]
@@ -281,14 +292,10 @@ const feedCard = (src: string): ElementSpec =>
 const panel = (title: string, children: ElementSpec[]): ElementSpec =>
   container({
     class: 'panel',
-    children: [
-      heading({ subType: 'h3', content: title, class: 'panelTitle' }),
-      ...children
-    ]
+    children: [heading({ subType: 'h3', content: title, class: 'panelTitle' }), ...children]
   });
 
-const note = (content: string): ElementSpec =>
-  paragraph({ content, class: 'panelText' });
+const note = (content: string): ElementSpec => paragraph({ content, class: 'panelText' });
 
 const home: PageSpec = {
   name: 'Latest posts',
@@ -314,10 +321,10 @@ const home: PageSpec = {
             subType: 'div',
             runtime: 'server',
             action: 'list-posts',
-              // What this element asks of the action, on top of the page's own route and query params.
-              input: { perPage: 4, featured: true },
-              pagination: 'url',
-              pageParam: 'page',
+            // What this element asks of the action, on top of the page's own route and query params.
+            input: { perPage: 4, featured: true },
+            pagination: 'url',
+            pageParam: 'page',
             class: 'pageStack',
             children: [
               /**
@@ -391,7 +398,9 @@ const home: PageSpec = {
                        */
                       pagination({
                         id: 'postPager',
-                        mode: 'pages', target: 'url', pageParam: 'page',
+                        mode: 'pages',
+                        target: 'url',
+                        pageParam: 'page',
                         class: 'pager',
                         bind: { pageInfo: 'posts.pageInfo' }
                       })
@@ -420,7 +429,7 @@ const home: PageSpec = {
                         // whatever the element declares, so without saying so this provider would be filtered by
                         // the URL too — and "From the archive" would only ever show the topic you are already in.
                         action: 'list-posts',
-                          input: { page: 1, perPage: 5, featured: false, topic: '' },
+                        input: { page: 1, perPage: 5, featured: false, topic: '' },
                         class: 'sidebar',
                         children: [
                           panel('Topics', [
@@ -535,7 +544,9 @@ const post: PageSpec = {
           apiContainer({
             id: 'post',
             runtime: 'server',
-            action: 'get-post', singleRecord: true, subType: 'main',
+            action: 'get-post',
+            singleRecord: true,
+            subType: 'main',
             class: 'pageStack',
             children: [
               container({
@@ -591,7 +602,8 @@ const post: PageSpec = {
                    * for an embed the site's own author pasted in and wrong for a body that came out of a store.
                    */
                   richText({
-                    format: 'markdown', content: '',
+                    format: 'markdown',
+                    content: '',
                     class: 'prose',
                     bind: { content: 'post.record.body' }
                   }),
@@ -616,7 +628,8 @@ const post: PageSpec = {
                       }),
                       button({
                         id: 'sighting',
-                        subType: 'button', content: 'I have seen one',
+                        subType: 'button',
+                        content: 'I have seen one',
                         class: 'buttonQuiet',
                         /**
                          * Off once this reader has counted.
@@ -641,7 +654,10 @@ const post: PageSpec = {
                             ),
                             // What the SERVER counted, not what the page guessed. A count incremented in the
                             // browser is a count that disagrees with the next reader's.
-                            named('thanks', setState({ key: 'sighting', type: 'text', value: '{{log.output.message}}' })),
+                            named(
+                              'thanks',
+                              setState({ key: 'sighting', type: 'text', value: '{{log.output.message}}' })
+                            ),
                             named('counted', setState({ key: 'sightingDone', type: 'boolean', value: 'true' }))
                           ]
                         ]
@@ -695,7 +711,8 @@ const post: PageSpec = {
                 visible: '!post.found',
                 children: [
                   heading({
-                    subType: 'h1', content: 'That post does not exist.',
+                    subType: 'h1',
+                    content: 'That post does not exist.',
                     class: 'articleTitle'
                   }),
                   note('The link may be old, or the post may never have been published.'),
@@ -722,7 +739,11 @@ const field = (
   input = 'input'
 ): ElementSpec =>
   formControl({
-    name, label: labelText, subType, required: true, ...extra,
+    name,
+    label: labelText,
+    subType,
+    required: true,
+    ...extra,
     class: 'fieldRow',
     slots: { input, label: 'fieldLabel' }
   });
@@ -743,7 +764,12 @@ const boundField = (
   input = 'input'
 ): ElementSpec =>
   formControl({
-    name, label: labelText, subType, required: true, defaultValue: '', ...extra,
+    name,
+    label: labelText,
+    subType,
+    required: true,
+    defaultValue: '',
+    ...extra,
     class: 'fieldRow',
     slots: { input, label: 'fieldLabel' },
     bind: { defaultValue: source }
@@ -781,7 +807,8 @@ const write: PageSpec = {
                     id: 'postForm',
                     class: 'form',
                     // Without this the browser submits the form itself and the page navigates away; the flow runs.
-                    managedByInteractions: true, method: 'post',
+                    managedByInteractions: true,
+                    method: 'post',
                     flows: [
                       [
                         named('submitted', onSubmit()),
@@ -909,7 +936,9 @@ const edit: PageSpec = {
           apiContainer({
             id: 'editPost',
             runtime: 'server',
-            action: 'get-post', singleRecord: true, subType: 'main',
+            action: 'get-post',
+            singleRecord: true,
+            subType: 'main',
             class: 'pageStack',
             children: [
               container({
@@ -920,14 +949,16 @@ const edit: PageSpec = {
                     class: 'form',
                     children: [
                       heading({
-                        subType: 'h1', content: 'Edit post',
+                        subType: 'h1',
+                        content: 'Edit post',
                         class: 'articleTitle'
                       }),
                       bound('paragraph', 'editPost.record.title', 'articleStandfirst'),
                       form({
                         id: 'editForm',
                         class: 'form',
-                        managedByInteractions: true, method: 'post',
+                        managedByInteractions: true,
+                        method: 'post',
                         flows: [
                           [
                             named('edited', onSubmit()),
@@ -993,7 +1024,8 @@ const edit: PageSpec = {
                             class: 'actionRow',
                             children: [
                               button({
-                                subType: 'submit', content: 'Save changes',
+                                subType: 'submit',
+                                content: 'Save changes',
                                 class: 'button'
                               }),
                               boundLink('editPost.record.url', 'buttonQuiet', [label('Cancel')])
@@ -1034,7 +1066,8 @@ const edit: PageSpec = {
                     class: 'cardSurface',
                     children: [
                       heading({
-                        subType: 'h1', content: 'Not yours to edit',
+                        subType: 'h1',
+                        content: 'Not yours to edit',
                         class: 'formTitle'
                       }),
                       note(
@@ -1053,7 +1086,8 @@ const edit: PageSpec = {
                     class: 'cardSurface',
                     children: [
                       heading({
-                        subType: 'h1', content: 'That post does not exist.',
+                        subType: 'h1',
+                        content: 'That post does not exist.',
                         class: 'formTitle'
                       }),
                       linkTo('/', 'buttonQuiet', [label('Back to the latest')])
@@ -1099,7 +1133,8 @@ const signIn: PageSpec = {
                   form({
                     id: 'loginForm',
                     class: 'form',
-                    managedByInteractions: true, method: 'post',
+                    managedByInteractions: true,
+                    method: 'post',
                     flows: [
                       [
                         named('signIn', onSubmit()),
@@ -1116,7 +1151,8 @@ const signIn: PageSpec = {
                       field('username', 'Username', 'text', { defaultValue: 'ada' }),
                       field('password', 'Password', 'password', { defaultValue: 'password' }),
                       button({
-                        subType: 'submit', content: 'Sign in',
+                        subType: 'submit',
+                        content: 'Sign in',
                         class: 'buttonWide'
                       })
                     ]
@@ -1192,7 +1228,8 @@ const account: PageSpec = {
                       writeLink('chromeAccount'),
                       button({
                         id: 'signOut',
-                        subType: 'button', content: 'Sign out',
+                        subType: 'button',
+                        content: 'Sign out',
                         class: 'buttonQuiet',
                         flows: [[named('signOut', onClick()), authLogout()]]
                       })
@@ -1236,4 +1273,4 @@ const blog: SpaceSpec = {
   pages: [home, post, write, edit, signIn, account]
 };
 
-export const offlineData = (): OfflineDataRaw => authorSpace(blog);
+export const offlineData = (): OfflineDataRaw => authorSpace(blog, { pluginTypes: ['speciesStatus'] });

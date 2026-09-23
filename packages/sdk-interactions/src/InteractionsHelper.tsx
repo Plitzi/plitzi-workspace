@@ -56,7 +56,7 @@ const processParams = (
       // The param as written is a template whatever it holds — a condition or a loop as much as a name. What a pass
       // RETURNS is data, and is read again only when it carries a well-formed token, so text a visitor typed that
       // happens to contain braces is not evaluated.
-      if (hasTemplateSyntax(resolved) && !hasValidToken(resolved)) {
+      if (typeof resolved === 'string' && hasTemplateSyntax(resolved) && !hasValidToken(resolved)) {
         resolved = processTwig(resolved, scope, false, true);
         passes--;
       }

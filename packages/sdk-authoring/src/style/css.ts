@@ -7,6 +7,7 @@ import type {
   CssProps,
   CssSpec,
   ResponsiveBlock,
+  ResponsiveCss,
   ResponsiveStyle,
   RuleSetSpec,
   StatesSpec,
@@ -32,7 +33,27 @@ import type {
  *
  * Idempotent: rules that are already longhand pass through unchanged, so a fragment may be run through it twice.
  */
+/**
+ * Whether a value would end its declaration early — a `;` or a brace outside quotes and `url(…)` turns the rest of the
+ * text into rules of its own, or into nothing. Quoted text and a data URL may carry them legitimately.
+ */
+const breaksDeclaration = (value: string): boolean =>
+  /[;{}]/.test(value.replace(/url\([^)]*\)/gi, '').replace(/"[^"]*"|'[^']*'/g, ''));
+
+/** Refuses a value that is not one CSS value: empty, not text or a number, or one that breaks out of its declaration. */
+const assertValues = (rules: CssProps): void => {
+  for (const [property, value] of Object.entries(rules)) {
+    const text = typeof value === 'number' ? String(value) : value;
+    if (typeof text !== 'string' || text.trim() === '' || breaksDeclaration(text)) {
+      throw new Error(
+        `\`${property}: ${String(value)}\` is not one CSS value. Write a single value — \`'${property}': '…'\` — and one property per key; leave a property out rather than writing it empty.`
+      );
+    }
+  }
+};
+
 export const css = (rules: CssProps): StyleRules => {
+  assertValues(rules);
   const expanded = expandShorthand(rules);
   const unknown = Object.keys(expanded).filter(key => !isCssProperty(key) && !isCustomProperty(key));
 
@@ -54,7 +75,8 @@ export const css = (rules: CssProps): StyleRules => {
 /** The breakpoints a rule set can be written for, widest first — the order they cascade in. */
 export const BREAKPOINTS: DisplayMode[] = ['desktop', 'tablet', 'mobile'];
 
-const BREAKPOINT_SET = new Set<string>(BREAKPOINTS);
+/** The keys a per-breakpoint rule set may use: the breakpoints, and `compact` for tablet and mobile together. */
+const BREAKPOINT_SET = new Set<string>([...BREAKPOINTS, 'compact']);
 
 /**
  * The same door as {@link css}, for the shape that carries more than one breakpoint.
@@ -73,12 +95,19 @@ export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
   }
 
   if (keys.every(key => BREAKPOINT_SET.has(key))) {
-    return Object.fromEntries(
-      Object.entries(spec as Record<string, Record<string, string | number>>).map(([breakpoint, rules]) => [
-        breakpoint,
-        css(rules)
-      ])
+    // Every key is a breakpoint name, which is what makes this the per-breakpoint half of the union; TS cannot narrow
+    // a union by the names of its keys.
+    const { compact, ...byBreakpoint } = spec as ResponsiveCss;
+    const responsive: ResponsiveStyle = Object.fromEntries(
+      Object.entries(byBreakpoint).map(([breakpoint, rules]) => [breakpoint, css(rules)])
     );
+    if (compact) {
+      const shared = css(compact);
+      responsive.tablet = { ...shared, ...responsive.tablet };
+      responsive.mobile = { ...shared, ...responsive.mobile };
+    }
+
+    return responsive;
   }
 
   return { desktop: css(spec as Record<string, string | number>) };

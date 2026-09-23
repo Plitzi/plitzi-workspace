@@ -7,8 +7,9 @@ import type { ASTNode, Expression, IfNode, ForNode, SetNode, ApplyNode, Variable
 import type { Token } from '../Lexer';
 import type { ParseResult } from './types';
 
-export const parse = (tokens: readonly Token[], keepEmptyTokens = false): ParseResult => {
-  const ctx = new ParseContext(tokens, keepEmptyTokens);
+/** `issues`, when given, collects what the expression grammar read past rather than understood — see `inspectTemplate`. */
+export const parse = (tokens: readonly Token[], keepEmptyTokens = false, issues?: string[]): ParseResult => {
+  const ctx = new ParseContext(tokens, keepEmptyTokens, issues);
   const nodes = ctx.parseBody();
 
   if (!ctx.error) {
@@ -49,12 +50,14 @@ const emptyFor = (): ForNode => ({
 class ParseContext {
   private readonly tokens: readonly Token[];
   private readonly keepEmptyTokens: boolean;
+  private readonly issues: string[] | undefined;
   private pos = 0;
   error: string | null = null;
 
-  constructor(tokens: readonly Token[], keepEmptyTokens = false) {
+  constructor(tokens: readonly Token[], keepEmptyTokens = false, issues?: string[]) {
     this.tokens = tokens;
     this.keepEmptyTokens = keepEmptyTokens;
+    this.issues = issues;
   }
 
   peek(): Token | undefined {
@@ -134,7 +137,7 @@ class ParseContext {
         source
       };
     }
-    const expr = parseExpression(trimmed);
+    const expr = parseExpression(trimmed, this.issues);
     return { type: 'variable', raw: token.raw, expression: expr, source };
   }
 
@@ -162,6 +165,7 @@ class ParseContext {
         this.advance();
         return { type: 'continue' };
       default:
+        this.issues?.push(`Unknown tag {% ${firstWord} %}: the tags are if, for, set, apply, break and continue`);
         this.advance();
         return null;
     }
@@ -182,7 +186,7 @@ class ParseContext {
       return emptyIf();
     }
 
-    const condition = parseExpression(condExpr);
+    const condition = parseExpression(condExpr, this.issues);
 
     const body = this.parseBody();
     const elseifClauses: { condition: Expression; body: ASTNode[] }[] = [];
@@ -200,7 +204,7 @@ class ParseContext {
         this.advance();
         const elifContent = token.content.trim();
         const elifExpr = elifContent.slice(elifContent.indexOf(' ') + 1).trim();
-        const elifCondition = parseExpression(elifExpr);
+        const elifCondition = parseExpression(elifExpr, this.issues);
         const elifBody = this.parseBody();
         elseifClauses.push({ condition: elifCondition, body: elifBody });
       } else if (kw === 'else') {
@@ -243,8 +247,8 @@ class ParseContext {
 
     const range = splitRange(collectionStr);
     const collection: Expression = range
-      ? { type: 'range', start: parseExpression(range[0]), end: parseExpression(range[1]) }
-      : parseExpression(collectionStr);
+      ? { type: 'range', start: parseExpression(range[0], this.issues), end: parseExpression(range[1], this.issues) }
+      : parseExpression(collectionStr, this.issues);
 
     const commaIdx = varsStr.indexOf(',');
     const keyVar = commaIdx === -1 ? null : varsStr.slice(0, commaIdx).trim();
@@ -314,7 +318,7 @@ class ParseContext {
 
     const name = rest.slice(0, eqIdx).trim();
     const exprStr = rest.slice(eqIdx + 1).trim();
-    const value = parseExpression(exprStr);
+    const value = parseExpression(exprStr, this.issues);
     return { type: 'set', name, value };
   }
 
@@ -326,7 +330,7 @@ class ParseContext {
     }
     const content = prevToken.content.trim();
     const filtersStr = content.slice(content.indexOf(' ') + 1).trim();
-    const filters = parseApplyFilters(filtersStr);
+    const filters = parseApplyFilters(filtersStr, this.issues);
     const body = this.parseBody();
 
     const endApplyToken = this.peek();

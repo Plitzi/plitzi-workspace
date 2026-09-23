@@ -63,7 +63,12 @@ for (const pageHandle of openable) {
     await page.goto(pageHandle.path, { waitUntil: 'networkidle' });
     const el = locate(page, handles);
 
-    for (const handle of Object.values(pageHandle.elements).filter(entry => entry.named && !entry.conditional)) {
+    // Skipped: what shows only under a condition, what renders once per list row (several times, or none while the
+    // list is empty — give those a test that knows the data), and a provider with no tag, which has no box to see.
+    const always = Object.values(pageHandle.elements).filter(
+      entry => entry.named && !entry.conditional && !entry.repeated && !entry.boxless
+    );
+    for (const handle of always) {
       await expect(el(handle.id), \`\${handle.type} "\${handle.id}"\`).toBeVisible();
     }
 
@@ -95,7 +100,53 @@ test('renders the space without errors', async ({ page }) => {
 });
 `;
 
+const shotScript = ({ mode }: CreateAnswers): string => `import { mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
+
+import { chromium } from '@playwright/test';
+
+/**
+ * A screenshot of one page, to look at a change without writing a test for it.
+ *
+ *   npm run shot -- /about --width 390 --scheme dark
+ *   npm run shot -- / --out shots/home.png --height 900
+ *
+ * The whole page, not one screen of it. The dev server has to be running (npm start).
+ */
+const PORT = ${mode === 'server' ? '8080' : '5173'};
+
+const args = process.argv.slice(2);
+const option = (name: string, fallback: string): string => {
+  const index = args.indexOf('--' + name);
+
+  return index === -1 ? fallback : (args[index + 1] ?? fallback);
+};
+
+const path = args.find(arg => arg.startsWith('/')) ?? '/';
+const width = Number(option('width', '1280'));
+const height = Number(option('height', '800'));
+const scheme = option('scheme', 'light') === 'dark' ? 'dark' : 'light';
+const name = path === '/' ? 'home' : path.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+const out = option('out', 'visual/.shots/' + name + '-' + width + '-' + scheme + '.png');
+
+const browser = await chromium.launch();
+try {
+  const page = await browser.newPage({ viewport: { width, height }, colorScheme: scheme });
+  const response = await page.goto('http://127.0.0.1:' + PORT + path, { waitUntil: 'networkidle' }).catch(() => null);
+  if (!response) {
+    throw new Error('Nothing answers on port ' + PORT + '. Start the project first: npm start');
+  }
+
+  await mkdir(dirname(out), { recursive: true });
+  await page.screenshot({ path: out, fullPage: true });
+  console.log(out);
+} finally {
+  await browser.close();
+}
+`;
+
 export const visualFiles = (answers: CreateAnswers): ProjectFiles => ({
   'playwright.config.ts': playwrightConfig(answers),
+  'scripts/shot.ts': shotScript(answers),
   'visual/home.spec.ts': answers.source === 'local' ? authoredSpec() : documentSpec()
 });

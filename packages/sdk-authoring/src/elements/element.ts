@@ -1,6 +1,6 @@
 import { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
 
-import type { BindingsSpec, ElementSpec, SpecMeta, StepSpec } from '../schema';
+import type { BindingsSpec, ElementSpec, SpecMeta, StepSpec, VisibleCondition } from '../schema';
 import type { ClassList, CssSpec, StatesSpec } from '../style';
 import type { ElementLoadStrategy, ElementRuntime } from '@plitzi/sdk-shared';
 import type {
@@ -47,10 +47,10 @@ export interface AuthoringProps {
   /** `{ content: 'posts.title' }`, or the full form for state, transformers and conditions. */
   bind?: BindingsSpec;
   /**
-   * Show this element only while the value at this source is true. `!source` shows it while the value is false, and
-   * `false` starts it hidden for a flow to reveal.
+   * Show this element only while the value at this source is true. `!source` shows it while the value is false,
+   * `{ source, template }` while a template over it says `true`, and `false` starts it hidden for a flow to reveal.
    */
-  visible?: string | false;
+  visible?: string | false | VisibleCondition;
   /** One flow per entry; steps are chained in the order written. */
   flows?: StepSpec[][];
   /** `server` resolves this element's data on the server rather than in the browser. */

@@ -1,28 +1,33 @@
-import { processTwig } from '../../helpers/twigWrapper';
+import { processTwig, processTwigValue } from '../../helpers/twigWrapper';
 
 import type { DataSourceUtility, DataSourceUtilityParamsValue, Element } from '../../types';
 
+export type TwigTemplateReturnMode = 'text' | 'value';
+
+/**
+ * What a template hands the attribute: its rendered TEXT (the default — a label, a URL, a class name), or the VALUE
+ * of its one expression (`value`).
+ *
+ * Text is what a template is for most of the time, and it is also why a list could never be fed a filtered array: its
+ * `items` received the array written out as JSON, and a list keeps only arrays. `value` answers `{{ source|filter(…) }}`
+ * with the array itself, `{{ count > 0 }}` with a boolean and `{{ total }}` with the number — see `processTwigValue`.
+ */
 const callback = (
-  source: string,
+  source: unknown,
   params: DataSourceUtilityParamsValue<string>,
   _element: Partial<Element>,
   dataSources = {} as Record<string, unknown>
-) => {
-  const { template } = params;
-  let content: string | object = source;
+): unknown => {
+  const { template, returnMode = 'text' } = params;
+  const context = { source, ...dataSources };
   try {
-    const result = processTwig(template, { source, ...dataSources });
-    if (typeof result === 'string' || (typeof result === 'object' && result !== null)) {
-      content = result;
-    }
+    return returnMode === 'value' ? processTwigValue(template, context) : processTwig(template, context);
   } catch {
-    content = source;
+    return source;
   }
-
-  return content;
 };
 
-const twigTemplate: DataSourceUtility<string, string | object, string> = {
+const twigTemplate: DataSourceUtility<unknown, unknown, string> = {
   action: 'twigTemplate',
   title: 'Twig Template',
   type: 'utility',
@@ -32,6 +37,15 @@ const twigTemplate: DataSourceUtility<string, string | object, string> = {
       defaultValue:
         'Tokens {{source}} from the value selected to bind previously, {{sourceTo}} is your original value, other tokens via autocomplete',
       type: 'codemirror-text'
+    },
+    returnMode: {
+      label: 'Returns',
+      defaultValue: 'text',
+      type: 'select',
+      options: [
+        { label: 'Text', value: 'text' },
+        { label: 'Value (a single {{ expression }})', value: 'value' }
+      ]
     }
   },
   preview: { template: '' },

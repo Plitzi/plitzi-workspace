@@ -199,7 +199,7 @@ describe('mcp-ai interactions', () => {
     expect(node?.params).toMatchObject({
       content: 'Saved!',
       placement: 'top-right',
-      appeareance: 'success',
+      appearance: 'success',
       autoDismiss: true,
       autoDismissTimeout: 5000
     });
@@ -303,7 +303,7 @@ describe('mcp-ai interactions', () => {
     expect(notify?.source).toBe('space');
     expect(notify?.strictParams).toBe(true);
     const paramNames = notify?.params.map(p => p.name);
-    expect(paramNames).toEqual(['content', 'placement', 'appeareance', 'autoDismiss', 'autoDismissTimeout']);
+    expect(paramNames).toEqual(['content', 'placement', 'appearance', 'autoDismiss', 'autoDismissTimeout']);
     expect(paramNames).not.toContain('title');
     expect(paramNames).not.toContain('message');
     expect(notify?.params.find(p => p.name === 'autoDismiss')?.default).toBe(true);
@@ -809,9 +809,9 @@ describe('mcp-ai interactions', () => {
   });
 
   it('ERRORS on a select param value outside its options and lists the allowed values', () => {
-    const res = validate({ operations: [notifyFlow({ appeareance: 'bogus' })] }, interactiveSpace());
+    const res = validate({ operations: [notifyFlow({ appearance: 'bogus' })] }, interactiveSpace());
     expect(res.valid).toBe(false);
-    const err = res.errors.find(e => e.message.includes('appeareance'));
+    const err = res.errors.find(e => e.message.includes('appearance'));
     expect(err?.validValues).toContain('success');
   });
 

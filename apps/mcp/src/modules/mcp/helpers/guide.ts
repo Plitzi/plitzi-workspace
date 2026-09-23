@@ -425,7 +425,7 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   **source module id**, never the host element — a node that stored the host element's name here would resolve to
   nothing at runtime. **Omit \`elementId\`**: the MCP sets the correct source and fills the
   builder's **param defaults** (e.g. \`addNotification\` gets \`autoDismiss:true\`, \`autoDismissTimeout:5000\`,
-  \`placement:"top-right"\`, \`appeareance:"success"\`) for any params you leave out. Use **only** the params each
+  \`placement:"top-right"\`, \`appearance:"success"\`) for any params you leave out. Use **only** the params each
   callback declares (exact spelling) — for \`addNotification\` the visible text goes in \`content\`; there is **no**
   \`title\`/\`message\`/\`type\` param, and any unknown key is dropped. See the full param schema for each callback under
   \`globalCallbacks\` in \`plitzi://interactions/{env}\`.

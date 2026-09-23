@@ -55,6 +55,38 @@ describe('getProps (element resolution)', () => {
     expect(result.attributes.text).toBe('Bob');
   });
 
+  it('resolves a token naming a source the element reads — a list row, the state, the current page', () => {
+    const result = getProps(
+      makeElement(undefined, {
+        href: '/games/{{ list_games.item.slug }}',
+        content: '{{ state.callsign|upper }} on {{ navigation.currentPageId }}'
+      }),
+      internal,
+      {
+        list_games: { item: { slug: 'nebula-run' }, index: '0' },
+        state: { callsign: 'kestrel' },
+        navigation: { currentPageId: 'arcade' },
+        routeParams: {}
+      }
+    );
+
+    expect(result.attributes.href).toBe('/games/nebula-run');
+    expect(result.attributes.content).toBe('KESTREL on arcade');
+  });
+
+  it('prints a template that arrived as bound DATA instead of evaluating it', () => {
+    const element = makeElement(
+      { attributes: [{ id: 'b1', source: 'list_comments.item.body', to: 'content', enabled: true }] },
+      { content: '' }
+    );
+    const result = getProps(element, internal, {
+      list_comments: { item: { body: '{{ auth.accessToken }}' } },
+      auth: { accessToken: 'secret' }
+    });
+
+    expect(result.attributes.content).toBe('{{ auth.accessToken }}');
+  });
+
   it('merges element state into attributes but keeps visibility in elementState', () => {
     const result = getProps(makeElement(undefined, { text: 'hi' }), internal, {}, { foo: 'bar', visibility: false });
 

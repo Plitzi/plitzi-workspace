@@ -29,8 +29,9 @@ export type ButtonProps = {
    * What the button does, in words — shown as a tooltip on hover, and the button's accessible name when it has no text
    * of its own. An icon-only button without one is announced as nothing at all.
    *
-   * The browser falls back to it by itself, so it is never copied into `aria-label`: an `aria-label` would win over a
-   * visually-hidden label among the children, which is how a button with an empty `content` names itself.
+   * The browser falls back to it by itself, so it is never copied into `aria-label` — and neither is `content`: the
+   * button's name is what it SHOWS, content and children together. An `aria-label` taken from `content` named a button
+   * whose words were among its children after the default "Button" instead.
    */
   title?: string;
 };
@@ -60,7 +61,6 @@ const Button = ({
         'container--empty--skip': !previewMode && !children && content
       })}
       disabled={disabled}
-      aria-label={content || undefined}
       title={title || undefined}
       aria-expanded={ariaExpanded}
       aria-pressed={ariaPressed}

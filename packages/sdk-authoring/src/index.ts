@@ -1,7 +1,10 @@
 import {
   elementAncestorTypes,
   elementAttributeNames,
+  elementAttributeValues,
   elementCallbacks,
+  elementDefaultAttributes,
+  elementLeafTypes,
   elementSlots,
   elementSourceTypes,
   elementTriggers
@@ -13,6 +16,7 @@ import {
   validateSpace as validateSpaceUnchecked,
   validateTemplate as validateTemplateUnchecked
 } from './schema';
+import { BUILTIN_TRANSFORMERS } from './transformers';
 
 import type {
   AuthorSpaceOptions,
@@ -84,7 +88,11 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
   sourceTypes: elementSourceTypes,
   ancestorTypes: elementAncestorTypes,
   slotNames: elementSlots,
-  attributeNames: elementAttributeNames
+  attributeNames: elementAttributeNames,
+  leafTypes: elementLeafTypes,
+  defaultAttributes: elementDefaultAttributes,
+  attributeValues: elementAttributeValues,
+  transformers: BUILTIN_TRANSFORMERS
 };
 
 /**

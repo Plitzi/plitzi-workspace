@@ -57,4 +57,16 @@ describe('Button Tests', () => {
     expect(getByRole('button', { name: 'Refresh your spaces' }).hasAttribute('aria-label')).toBe(false);
     expect(getByRole('button', { name: 'Sign out' }).hasAttribute('aria-label')).toBe(false);
   });
+
+  it('is named by everything it shows, never by its content alone', () => {
+    const { getByRole } = render(
+      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+        <Button content="">
+          <span>Launch</span>
+        </Button>
+      </ElementContext>
+    );
+
+    expect(getByRole('button', { name: 'Launch' }).hasAttribute('aria-label')).toBe(false);
+  });
 });

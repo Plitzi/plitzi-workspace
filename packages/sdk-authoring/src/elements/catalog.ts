@@ -33,8 +33,15 @@ type DeclarationShape = {
   triggers?: Record<string, InteractionCallback>;
   callbacks?: Record<string, InteractionCallback>;
   ancestorType?: string;
+  attributeValues?: Record<string, readonly string[]>;
   content?: {
-    definition?: { label?: string; description?: string; styleSelectors?: Record<string, unknown> };
+    attributes?: Readonly<Record<string, unknown>>;
+    definition?: {
+      label?: string;
+      description?: string;
+      styleSelectors?: Record<string, unknown>;
+      items?: readonly unknown[];
+    };
     market?: { category?: string };
   };
 };
@@ -125,4 +132,30 @@ export const elementSlots: Record<string, string[]> = Object.fromEntries(
     declaration.type,
     Object.keys(declaration.content?.definition?.styleSelectors ?? {}).filter(slot => slot !== 'base')
   ])
+);
+
+/**
+ * The types that hold no children — a heading, a text, an image, a form control.
+ *
+ * Their components render their own attributes and never read `children`, so anything nested in one is dropped
+ * without a word: a two-tone heading authored as a heading with two texts in it renders the word "Heading". A type
+ * that can hold children says so by declaring `items`, which is also what lets the builder drop into it.
+ */
+export const elementLeafTypes: string[] = Object.values(elementDeclarations as Record<string, DeclarationShape>)
+  .filter(declaration => !Array.isArray(declaration.content?.definition?.items))
+  .map(declaration => declaration.type);
+
+/** The attributes each built-in type starts with — what a factory merges under the author's own. */
+export const elementDefaultAttributes: Record<string, Record<string, unknown>> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+    declaration.type,
+    { ...declaration.content?.attributes }
+  ])
+);
+
+/** The values each built-in type's enumerated attributes take — a heading's `subType`, a link's `mode`. */
+export const elementAttributeValues: Record<string, Record<string, readonly string[]>> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>)
+    .filter(declaration => declaration.attributeValues)
+    .map(declaration => [declaration.type, { ...declaration.attributeValues }])
 );

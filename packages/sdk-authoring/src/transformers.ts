@@ -32,9 +32,9 @@ export const BUILTIN_TRANSFORMERS: Record<string, BuiltinTransformer> = {
   twigTemplate: {
     title: 'Twig Template',
     description:
-      'Render a Twig template around the bound value — the way to format/wrap a value (add units, compose a label). ' +
-      'The incoming value is the token {{source}} (NOT {{value}}); {{sourceTo}} is the field’s previous value, and ' +
-      'other data-source tokens are in scope too.',
+      'Render a Twig template around the bound value — the way to format/wrap a value (add units, compose a label), ' +
+      'or with returnMode "value" to compute one (filter or sort a list). The incoming value is the token {{source}} ' +
+      '(NOT {{value}}); {{sourceTo}} is the field’s previous value, and other data-source tokens are in scope too.',
     strictParams: true,
     params: {
       template: {
@@ -43,6 +43,15 @@ export const BUILTIN_TRANSFORMERS: Record<string, BuiltinTransformer> = {
         description:
           'The Twig template string. Reference the incoming value as {{source}} — e.g. "{{source}} min de cocción". ' +
           'There is NO {{value}} token; {{sourceTo}} is the field’s original value.'
+      },
+      returnMode: {
+        type: 'select',
+        default: 'text',
+        options: ['text', 'value'],
+        description:
+          '`text` (default) hands the attribute the rendered text. `value` hands over the VALUE of a template that ' +
+          'is a single {{ expression }} — the filtered array for a list’s `items`, a number, a boolean — instead of ' +
+          'that value written out as text.'
       }
     }
   },

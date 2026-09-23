@@ -33,6 +33,7 @@ const BUILDER_TYPES: Record<BuiltinParam['type'], InteractionParamType> = {
   // polymorphic value is a text box until the param above it says otherwise.
   number: 'text',
   scalar: 'text',
+  json: 'codemirror-json',
   elementIds: 'elements'
 };
 

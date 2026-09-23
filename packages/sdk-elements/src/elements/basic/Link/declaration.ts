@@ -1,5 +1,5 @@
 /** Static declaration for Link: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { LinkProps } from './Link';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,10 @@ export type LinkAttributes = AuthorableAttributes<LinkProps>;
 
 const declaration = elementDeclaration<LinkAttributes>()({
   type: 'link',
+  attributeValues: {
+    mode: valuesOf<NonNullable<LinkProps['mode']>>()(['page', 'internal', 'external']),
+    target: valuesOf<NonNullable<LinkProps['target']>>()(['self', 'blank', 'parent', 'top'])
+  },
   content: {
     attributes: {
       href: '#',

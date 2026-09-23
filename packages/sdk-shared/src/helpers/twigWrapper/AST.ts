@@ -160,7 +160,8 @@ export type UnaryNode = {
   readonly operand: Expression;
 };
 
-// Binary operators: `and`, `or`, `==`, `!=`, `>`, `<`, `>=`, `<=`, `in`, `not in`, `is`, `is not`
+// Binary operators: `and`, `or`, `==`, `!=`, `>`, `<`, `>=`, `<=`, `in`, `not in`, `is`, `is not`, `starts with`,
+// `ends with`, `+`, `-`, `*`, `/`, `//`, `%`, `**`
 export type BinaryNode = {
   readonly type: 'binary';
   readonly operator: string;
@@ -175,11 +176,12 @@ export type DefaultNode = {
   readonly defaultExpr: Expression;
 };
 
-// Ternary operator: `condition ? trueExpr : falseExpr`
+// Ternary operator: `condition ? trueExpr : falseExpr`. `trueExpr` is null for `condition ?: falseExpr`, whose truthy
+// branch is the condition's own value — evaluated once, not twice.
 export type TernaryNode = {
   readonly type: 'ternary';
   readonly condition: Expression;
-  readonly trueExpr: Expression;
+  readonly trueExpr: Expression | null;
   readonly falseExpr: Expression;
 };
 

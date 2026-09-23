@@ -137,7 +137,7 @@ describe('Testing NavigationHelper', () => {
             params: {
               content: '{{ twigTemplate-1.content }}',
               placement: 'top-right',
-              appeareance: 'success',
+              appearance: 'success',
               autoDismiss: true,
               autoDismissTimeout: 5000
             },

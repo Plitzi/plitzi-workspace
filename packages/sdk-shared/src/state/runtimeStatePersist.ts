@@ -17,11 +17,22 @@ const UNSETTLED = new Set(['init', 'initLoading', 'authenticating']);
  */
 export type StateOwner = { kind: 'browser' } | { kind: 'guest' } | { kind: 'account'; id: string };
 
-/** `undefined` while auth has not settled: nothing kept can be told apart yet from somebody else's. */
+/**
+ * `undefined` while nobody can say yet: nothing kept can be told apart from somebody else's.
+ *
+ * That includes the moment before the `auth` source EXISTS. GlobalSources publishes it for every space — `{}` for one
+ * with no accounts, a `status` for one with a provider — but only once it mounts, and the store is asked for its
+ * storage before that. Read as "the browser" there, the first read of every visit found the guest's entry, called it
+ * somebody else's, and deleted it: a space with `keepState` kept nothing past a reload.
+ */
 export const stateOwner = (state: CommonState): StateOwner | undefined => {
   // The sources are an open record typed `unknown`; this shape is what GlobalSources publishes under `auth`.
   const auth = state.runtime?.sources.auth as AuthSource | undefined;
-  if (!auth || auth.status === undefined) {
+  if (!auth) {
+    return undefined;
+  }
+
+  if (auth.status === undefined) {
     return { kind: 'browser' };
   }
 

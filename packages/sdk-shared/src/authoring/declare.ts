@@ -53,6 +53,15 @@ export interface ElementDeclarationData {
    * else it throws on its first render. A dropdown's panel, a tab container's header and body.
    */
   ancestorType?: string;
+  /**
+   * The values an enumerated attribute takes — a heading's `subType`, a link's `mode` — by attribute name.
+   *
+   * A component's props say this in TypeScript, which is gone at run time; an author writing JavaScript, a document
+   * that arrived as JSON or a value that went through a cast reaches the element anyway, and `subType: 'h7'` renders an
+   * `<h7>`. Written with {@link valuesOf}, so the list cannot drift from the props it mirrors; read by the authoring
+   * surface to refuse a value outside it.
+   */
+  attributeValues?: Record<string, readonly string[]>;
   content?: {
     attributes?: Record<string, unknown>;
     definition?: { label?: string };
@@ -90,6 +99,19 @@ export type AuthorableAttributes<Props, Injected extends keyof Props = never> = 
 > extends never
   ? unknown
   : Partial<AuthorableProps<Props, Injected>>;
+
+/**
+ * Every value of a string-literal union, as a list — and a compile error when the list leaves one out.
+ *
+ * `valuesOf<NonNullable<ButtonProps['subType']>>()(['button', 'submit', 'reset'])`. A value outside the union is
+ * refused by the parameter type; one the union has and the list does not makes the argument ask for `missing`.
+ */
+export const valuesOf =
+  <T extends string>() =>
+  <const V extends readonly T[]>(
+    values: V & ([Exclude<T, V[number]>] extends [never] ? unknown : { readonly missing: Exclude<T, V[number]> })
+  ): readonly string[] =>
+    values;
 
 export const elementDeclaration =
   <A>() =>

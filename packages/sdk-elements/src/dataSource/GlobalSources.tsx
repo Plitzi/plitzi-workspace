@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
-import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
+import { evaluateComputed, resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
@@ -151,6 +151,34 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   );
   useRegisterSource({ id: 'global', source: 'theme', name: 'Theme', fields: themeFields });
   useCommonStoreSync('runtime.sources.theme', themeValue);
+
+  /**
+   * --- computed
+   *
+   * The values a space declares once and reads by name (`{{ computed.xp }}`) instead of repeating one expression in
+   * every binding that shows it. Evaluated here, over the globals above, so they change when what they read changes.
+   */
+  const [definitions] = useCommonStore('schema.settings.computed');
+  const computedValue = useStableValue(
+    useMemo(
+      () =>
+        evaluateComputed(definitions ?? {}, {
+          variables: variablesValue,
+          navigation: navigationValue,
+          auth: authValue,
+          state: state ?? {},
+          host: host ?? {},
+          theme: themeValue
+        }),
+      [definitions, variablesValue, navigationValue, authValue, state, host, themeValue]
+    )
+  );
+  const computedFields = useCallback(
+    () => getPathsFromObeject(computedValue).map(path => ({ path, name: `computed.${path}` })),
+    [computedValue]
+  );
+  useRegisterSource({ id: 'global', source: 'computed', name: 'Computed', fields: computedFields });
+  useCommonStoreSync('runtime.sources.computed', computedValue);
 
   return children;
 };

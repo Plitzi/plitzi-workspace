@@ -1,5 +1,5 @@
 /** Static declaration for List: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { ListProps } from './List';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,10 @@ export type ListAttributes = AuthorableAttributes<ListProps>;
 
 const declaration = elementDeclaration<ListAttributes>()({
   type: 'list',
+  attributeValues: {
+    subType: valuesOf<NonNullable<ListProps['subType']>>()(['ul', 'ol']),
+    source: valuesOf<NonNullable<ListProps['source']>>()(['none', 'controlled'])
+  },
   sourceType: 'list',
   content: {
     attributes: {

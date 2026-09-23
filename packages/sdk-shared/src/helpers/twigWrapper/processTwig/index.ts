@@ -1,1 +1,1 @@
-export { processTwig } from './processTwig';
+export { processTwig, processTwigValue } from './processTwig';

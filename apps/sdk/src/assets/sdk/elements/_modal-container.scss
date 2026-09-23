@@ -1,11 +1,19 @@
 @mixin styles {
   $zIndex: 200;
+  /**
+   * Fixed to the viewport, not absolute to whatever is positioned above it.
+   *
+   * A layout that paints over a background almost always gives its slot `position: relative`, and an absolute overlay
+   * inside one was centred in THAT box — on a long page, half a screen below where the visitor was looking. An
+   * overlay is about the screen, wherever it sits in the tree. (The builder's canvas is an iframe, so there it is the
+   * canvas's screen.)
+   */
   .plitzi-component__modal-container {
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
-    position: absolute;
+    position: fixed;
     z-index: $zIndex;
   }
 
@@ -20,9 +28,12 @@
     opacity: 0.5;
   }
 
+  // As tall as what it holds and never taller than the screen: a fixed 300px let a longer body spill out of the panel.
   .modal-container__root {
-    height: 300px;
     width: 500px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
     left: 50%;
     top: 50%;
     position: absolute;
@@ -54,13 +65,18 @@
     border-bottom-style: solid;
     border-bottom-width: 1px;
 
-    i {
-      height: 20px;
-      width: 20px;
+    .modal-container__close {
+      height: 28px;
+      width: 28px;
       padding: 4px;
       display: flex;
+      flex-shrink: 0;
       justify-content: center;
       align-items: center;
+      border-radius: 4px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
       cursor: pointer;
     }
   }
@@ -79,6 +95,6 @@
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    flex-basis: 0;
+    flex-basis: auto;
   }
 }

@@ -31,7 +31,14 @@ export const webHookSpec: BuiltinActionSpec = {
       options: ['get', 'post', 'put', 'delete', 'patch', 'head'],
       canBind: false
     },
-    body: { type: 'textarea', description: 'Request body.', default: '' },
+    body: {
+      type: 'json',
+      description:
+        'Request body: an object of fields (sent as JSON, or as form data when one of them is a file). Pass a real ' +
+        'object, with templates for its values — `{ email: "{{ submitted.values.email }}" }`.',
+      default: '',
+      builderType: 'textarea'
+    },
     authorizationToken: { type: 'text', description: 'Value sent as the Authorization header.', default: '' },
     credentials: {
       type: 'select',

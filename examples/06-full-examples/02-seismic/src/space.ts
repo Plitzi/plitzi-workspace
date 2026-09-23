@@ -531,7 +531,11 @@ const monitor: ElementSpec = apiContainer({
                       class: eventRow,
                       bind: { href: 'eventRows.item.url' },
                       children: [
-                        text({ content: '', class: magnitudeBadge, bind: { content: 'eventRows.item.magnitudeLabel' } }),
+                        text({
+                          content: '',
+                          class: magnitudeBadge,
+                          bind: { content: 'eventRows.item.magnitudeLabel' }
+                        }),
                         text({ content: '', class: rowRegion, bind: { content: 'eventRows.item.region' } }),
                         text({ content: '', class: rowMeta, bind: { content: 'eventRows.item.depthLabel' } })
                       ]
@@ -616,4 +620,4 @@ export const seismic: SpaceSpec = {
   ]
 };
 
-export const offlineData = (): OfflineDataRaw => authorSpace(seismic);
+export const offlineData = (): OfflineDataRaw => authorSpace(seismic, { pluginTypes: ['seismicMap'] });

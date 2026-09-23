@@ -174,6 +174,13 @@ export type Schema = {
      * `false` there cannot be turned around from here. Never `devMode`, which makes a deployment a development server.
      */
     debugMode?: boolean;
+    /**
+     * Values the space computes once and reads everywhere, by name: `{ xp: '{{ state.favourites|length * 10 }}' }` is
+     * read as `{{ computed.xp }}` in any binding, attribute or step. Each is a template over the global sources and the
+     * values declared before it (`computed.<earlier>`), re-evaluated when any of them changes. A template that is one
+     * `{{ expression }}` gives its value (a number, a list); anything else gives text.
+     */
+    computed?: Record<string, string>;
   };
   rsc?: SchemaRsc;
   pages: Element['id'][];

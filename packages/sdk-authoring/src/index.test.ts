@@ -237,50 +237,56 @@ describe('the step vocabulary', () => {
   });
 
   it('lets the callbacks every element answers to reach any of them, and a plugin type its own', () => {
-    const authored = authoring.authorSpace({
-      name: 'Callbacks',
-      permanentUrl: 'callbacks',
-      pages: [
-        {
-          name: 'Home',
-          slug: '',
-          body: [
-            { type: 'acmeWidget', id: 'widget' },
-            authoring.container({ id: 'panel' }),
-            authoring.button({
-              id: 'go',
-              content: 'Go',
-              flows: [
-                [
-                  authoring.onClick(),
-                  authoring.toggleElement({ category: 'state', key: 'visibility' }, 'panel'),
-                  { type: 'callback', action: 'acmeRefresh', on: 'widget' }
+    const authored = authoring.authorSpace(
+      {
+        name: 'Callbacks',
+        permanentUrl: 'callbacks',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [
+              { type: 'acmeWidget', id: 'widget' },
+              authoring.container({ id: 'panel' }),
+              authoring.button({
+                id: 'go',
+                content: 'Go',
+                flows: [
+                  [
+                    authoring.onClick(),
+                    authoring.toggleElement({ category: 'state', key: 'visibility' }, 'panel'),
+                    { type: 'callback', action: 'acmeRefresh', on: 'widget' }
+                  ]
                 ]
-              ]
-            })
-          ]
-        }
-      ]
-    });
+              })
+            ]
+          }
+        ]
+      },
+      { pluginTypes: ['acmeWidget'] }
+    );
 
     expect(authored.warnings).toEqual([]);
   });
 
   it('leaves the triggers of a plugin type alone, and a trigger aimed at another element', () => {
-    const authored = authoring.authorSpace({
-      name: 'Triggers',
-      permanentUrl: 'triggers',
-      pages: [
-        {
-          name: 'Home',
-          slug: '',
-          body: [
-            { type: 'acmeWidget', id: 'widget', flows: [[authoring.on('onAcmeTick')]] },
-            authoring.button({ id: 'go', content: 'Go', flows: [[{ ...authoring.onSubmit(), on: 'widget' }]] })
-          ]
-        }
-      ]
-    });
+    const authored = authoring.authorSpace(
+      {
+        name: 'Triggers',
+        permanentUrl: 'triggers',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [
+              { type: 'acmeWidget', id: 'widget', flows: [[authoring.on('onAcmeTick')]] },
+              authoring.button({ id: 'go', content: 'Go', flows: [[{ ...authoring.onSubmit(), on: 'widget' }]] })
+            ]
+          }
+        ]
+      },
+      { pluginTypes: ['acmeWidget'] }
+    );
 
     expect(authored.warnings).toEqual([]);
   });
@@ -526,13 +532,17 @@ describe('the element catalogs', () => {
     });
   });
 
-  it('warns about an attribute the element never reads', () => {
-    const authored = authoring.authorSpace(
-      page([{ type: 'dropdown', id: 'menu', attributes: { content: 'Menu' }, children: [authoring.dropdownPopup()] }])
-    );
+  it('refuses an attribute a built-in element never reads, and says what it does read', () => {
+    expect(() =>
+      authoring.authorSpace(
+        page([{ type: 'dropdown', id: 'menu', attributes: { content: 'Menu' }, children: [authoring.dropdownPopup()] }])
+      )
+    ).toThrow(/sets "content", which a "dropdown" never reads\. It reads .*popupPlacement/);
+  });
 
-    expect(authored.warnings).toMatchObject([
-      { code: 'unknown-attribute', details: { type: 'dropdown', attribute: 'content' } }
-    ]);
+  it('tells an event written as an attribute to be a flow', () => {
+    expect(() =>
+      authoring.authorSpace(page([{ type: 'button', id: 'go', attributes: { content: 'Go', onClick: 'save' } }]))
+    ).toThrow(/flows: \[\[onClick\(\)/);
   });
 });

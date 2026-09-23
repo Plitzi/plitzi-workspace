@@ -16,7 +16,13 @@ type SettingsProps = {
     | 'dl'
     | 'dt'
     | 'dd'
-    | 'li';
+    | 'li'
+    | 'h1'
+    | 'h2'
+    | 'h3'
+    | 'h4'
+    | 'h5'
+    | 'h6';
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
@@ -40,6 +46,12 @@ const Settings = ({ subType = 'div', onUpdate }: SettingsProps) => {
         <option value="dt">DT</option>
         <option value="dd">DD</option>
         <option value="li">LI</option>
+        <option value="h1">H1 (heading with parts)</option>
+        <option value="h2">H2 (heading with parts)</option>
+        <option value="h3">H3 (heading with parts)</option>
+        <option value="h4">H4 (heading with parts)</option>
+        <option value="h5">H5 (heading with parts)</option>
+        <option value="h6">H6 (heading with parts)</option>
       </Select>
     </div>
   );

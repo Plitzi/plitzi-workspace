@@ -26,13 +26,12 @@ export const actionsCallbacks: Record<string, BuiltinGlobalCallback> = {
         label: 'Action'
       },
       input: {
-        type: 'text',
+        type: 'json',
         description:
           'The values passed to the action, as a JSON object. The server drops every key the action did not ' +
           'declare. Authoring in code, pass a real object rather than a line of JSON text — an interpolated ' +
           'value containing a quote or a newline makes the text unparseable, and unparseable input posts nothing.',
         default: '{}',
-        builderType: 'codemirror-json',
         label: 'Input'
       },
       mode: {

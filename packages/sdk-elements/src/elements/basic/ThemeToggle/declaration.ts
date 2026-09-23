@@ -1,5 +1,5 @@
 /** Static declaration for ThemeToggle: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { ThemeToggleProps } from './ThemeToggle';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,9 @@ export type ThemeToggleAttributes = AuthorableAttributes<ThemeToggleProps>;
 
 const declaration = elementDeclaration<ThemeToggleAttributes>()({
   type: 'themeToggle',
+  attributeValues: {
+    subType: valuesOf<NonNullable<ThemeToggleProps['subType']>>()(['switch', 'segmented'])
+  },
   triggers: {
     onThemeChange: {
       action: 'onThemeChange',

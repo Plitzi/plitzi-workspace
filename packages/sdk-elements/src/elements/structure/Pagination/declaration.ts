@@ -1,5 +1,5 @@
 /** Static declaration for Pagination: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { PaginationProps } from './Pagination';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,10 @@ export type PaginationAttributes = AuthorableAttributes<PaginationProps>;
 
 const declaration = elementDeclaration<PaginationAttributes>()({
   type: 'pagination',
+  attributeValues: {
+    mode: valuesOf<NonNullable<PaginationProps['mode']>>()(['pages', 'loadMore']),
+    target: valuesOf<NonNullable<PaginationProps['target']>>()(['url', 'interaction'])
+  },
   triggers: {
     onPageChange: {
       action: 'onPageChange',

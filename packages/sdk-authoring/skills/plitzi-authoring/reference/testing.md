@@ -7,9 +7,14 @@
 turns an id into a Playwright locator. Pages are in `handles.pages` (each with its `path` and `elements`); a layout's
 elements are in `handles.layouts` and render on every page that names the layout.
 
-An element marked `conditional` is on screen only under a condition of its own or of an ancestor — skip it in an
-"every named element is visible" check. A `formControl`'s id names its wrapper: type into
-`locate('email').locator('input')`.
+Three flags say what an "every named element is visible" check must skip:
+
+- `conditional` — on screen only under a condition of its own or of an ancestor;
+- `repeated` — inside a list row, so rendered once per row: several copies, or none while the list is empty. Address
+  one with `.first()` / `.nth(i)`, in a test that knows the data;
+- `boxless` — a provider with no tag, which renders its children and no element of its own.
+
+A `formControl`'s id names its wrapper: type into `locate('email').locator('input')`.
 
 Select by `data-plitzi-el`, never by a generated class name: authoring derives `<type>-<hash>` for an element's own
 rules, and that name changes when the rules do.
@@ -50,3 +55,11 @@ expect(await page.evaluate(() => (window as unknown as { __painted: string[] }).
 - **Navigation lands on the new page's content.** After `waitForURL`, wait for an element of the NEW page before typing:
   for a frame the previous page is still mounted, and a form field with the same name there takes the keystrokes.
 - **Console errors are failures.** Collect them and assert the list is empty.
+
+## Screenshots and scrolling
+
+The page scrolls the document in development exactly as in production while the dev-tools panel is folded away (the
+badge). With the panel OPEN, the page shares the window with it and scrolls inside its own pane — close the panel, or
+run with `debugMode: false`, before a `fullPage` screenshot or a scroll measurement. For a screenshot at a width and a
+theme: `page.setViewportSize({ width: 390, height: 844 })`, `page.emulateMedia({ colorScheme: 'dark' })`, and seed state
+with `render(…, { state })` or a flow the test drives.

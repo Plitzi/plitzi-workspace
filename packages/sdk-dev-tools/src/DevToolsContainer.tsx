@@ -36,6 +36,16 @@ export type DevToolsContainerProps = {
   devToolsStyle?: string;
   devToolsStyleLink?: string;
   renderMode?: 'default' | 'shadow';
+  /**
+   * What scrolls while the panel is folded away.
+   *
+   * `container` (the default) keeps the wrapped app in a box of its own, which is what an application shell that fills
+   * its window wants — the builder. `document` is for a PAGE: while the panel is collapsed the page lays out and
+   * scrolls exactly as it does without dev tools, so `position: sticky` and `fixed`, scroll restoration and a
+   * full-page screenshot mean in development what they mean in production. Opening the panel docks it beside the page
+   * either way; a docked panel needs the split.
+   */
+  scroll?: 'container' | 'document';
 };
 
 const DevToolsContainer = ({
@@ -45,6 +55,7 @@ const DevToolsContainer = ({
   enabled = false,
   instanceId,
   renderMode = 'default',
+  scroll = 'container',
   devToolsStyle = '',
   devToolsStyleLink = ''
 }: DevToolsContainerProps) => {
@@ -109,24 +120,30 @@ const DevToolsContainer = ({
     return children;
   }
 
-  return (
-    <div
-      className={clsx(
-        // `relative` so the collapsed badge anchors HERE rather than to the window: a host that gives the space one
-        // pane of its window — the desktop app, beside its sidebar — had the badge land on top of the host's chrome.
-        'relative flex grow overflow-auto',
-        { 'flex-col': dockedAt === 'horizontal', 'h-screen': dockedAt === 'vertical' },
-        className
-      )}
-    >
-      {/* Tag every nested StoreProvider below with this instance's id so the panel's scope dropdown can group them. */}
-      <DevStoreScopeContext value={effectiveInstanceId}>
-        <div className={clsx('grow basis-0 flex-col overflow-auto', innerClassName)}>{children}</div>
-      </DevStoreScopeContext>
-      {isSelected && hydrated && (
-        <DevToolsRoot>
-          <DevToolsContextProvider>
-            {renderMode === 'default' && (
+  // The page stays in the document's flow only while there is no panel to share the screen with. Read as collapsed
+  // until hydration, like the dock position above: the server has no storage to know otherwise.
+  const inFlow = scroll === 'document' && (!hydrated || collapsed);
+  const overlay = isSelected && hydrated && (
+    <DevToolsRoot>
+      <DevToolsContextProvider>
+        {renderMode === 'default' && (
+          <DevToolsOverlay
+            className={clsx({ dark: resolvedTheme === 'dark' })}
+            collapsed={collapsed}
+            orientation={dockedAt}
+            tabSelected={tabSelected}
+            logTypeFilter={logTypeFilter}
+            onOpen={handleOpen}
+            onCollapse={handleCollapse}
+            onTabSelect={handleTabSelect}
+            onChangeOrientation={handleChangeOrientation}
+          />
+        )}
+        {renderMode === 'shadow' && (
+          <ContainerShadow>
+            {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
+            <ContainerShadow.Content>
+              <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
               <DevToolsOverlay
                 className={clsx({ dark: resolvedTheme === 'dark' })}
                 collapsed={collapsed}
@@ -138,29 +155,36 @@ const DevToolsContainer = ({
                 onTabSelect={handleTabSelect}
                 onChangeOrientation={handleChangeOrientation}
               />
-            )}
-            {renderMode === 'shadow' && (
-              <ContainerShadow>
-                {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
-                <ContainerShadow.Content>
-                  <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
-                  <DevToolsOverlay
-                    className={clsx({ dark: resolvedTheme === 'dark' })}
-                    collapsed={collapsed}
-                    orientation={dockedAt}
-                    tabSelected={tabSelected}
-                    logTypeFilter={logTypeFilter}
-                    onOpen={handleOpen}
-                    onCollapse={handleCollapse}
-                    onTabSelect={handleTabSelect}
-                    onChangeOrientation={handleChangeOrientation}
-                  />
-                </ContainerShadow.Content>
-              </ContainerShadow>
-            )}
-          </DevToolsContextProvider>
-        </DevToolsRoot>
+            </ContainerShadow.Content>
+          </ContainerShadow>
+        )}
+      </DevToolsContextProvider>
+    </DevToolsRoot>
+  );
+
+  return (
+    <div
+      className={clsx(
+        // `relative` so the collapsed badge anchors HERE rather than to the window: a host that gives the space one
+        // pane of its window — the desktop app, beside its sidebar — had the badge land on top of the host's chrome.
+        // `min-w-0` because the host lays this out as a flex item: with no overflow of its own to pin it, its minimum
+        // width is its content's, and a marquee or a wide table stretched the whole page sideways.
+        'relative flex min-w-0 grow',
+        {
+          'overflow-auto': !inFlow,
+          'flex-col': inFlow || dockedAt === 'horizontal',
+          'h-screen': !inFlow && dockedAt === 'vertical'
+        },
+        className
       )}
+    >
+      {/* Tag every nested StoreProvider below with this instance's id so the panel's scope dropdown can group them. */}
+      <DevStoreScopeContext value={effectiveInstanceId}>
+        <div className={clsx('grow', { 'basis-0 flex-col overflow-auto': !inFlow }, innerClassName)}>{children}</div>
+      </DevStoreScopeContext>
+      {/* In flow the page is as tall as its content, so the badge rides a zero-height anchor stuck to the bottom of
+          whatever scrolls — the window, or the pane a host gave the space. */}
+      {inFlow ? <div className="sticky bottom-0 h-0">{overlay}</div> : overlay}
     </div>
   );
 };

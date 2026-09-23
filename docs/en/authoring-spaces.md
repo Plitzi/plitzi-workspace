@@ -295,6 +295,11 @@ paragraph({
 })
 ```
 
+A template over a value is common enough to have its own helper, `bindTemplate(to, source, template, options)`:
+`bindTemplate('content', 'cats.count', '{{ source }} cats came back.')`. `{ category: 'style' }` computes a style
+property, and `{ returns: 'value' }` hands over what a single `{{ expression }}` evaluates to instead of its text —
+the only way to feed a list's `items` a filtered or sorted array (a text template there is refused).
+
 **Whether an element is on screen is its own field, not a binding.** `visible` takes a source, and a leading `!`
 inverts it:
 
@@ -353,21 +358,16 @@ An element is visible by default, and which way its condition flips decides how 
 REVEALS — an empty state, a "get started" card, an admin-only panel — starts hidden: `visible` starts the element
 HIDDEN and the data then shows it. One a flag HIDES — the labels of a sidebar until it is folded — keeps the default
 and binds the flag, and an absent flag must leave it shown (a template answering `''` writes nothing and keeps it).
-A revealing condition that is more than one value is `visible: false` — so it waits hidden — plus a visibility
-binding with a template:
+A revealing condition that is more than one value is `visible: { source, template }` — it waits hidden like any
+condition, and the template says `'true'` or `'false'`:
 
 ```ts
 container({
   id: 'first-steps',
-  visible: false,
-  bind: [{
-    to: 'visibility',
+  visible: {
     source: 'stats.data.totals',
-    category: 'initialState',
-    transformers: [{ action: 'twigTemplate', params: {
-      template: "{{ source ? (source.spaces > 0 ? 'false' : 'true') : 'false' }}"
-    } }]
-  }]
+    template: "{{ source ? (source.spaces > 0 ? 'false' : 'true') : 'false' }}"
+  }
 })
 ```
 
@@ -519,6 +519,13 @@ inert specs. That is what keeps every guarantee about the finished document in o
 - a binding source naming an element nothing answers to, or one whose prefix is not what that element publishes
 - a flow's params or a binding's template reading an element's source by its short name (`{{ jobRows.item.id }}`
   for `list_jobRows`, `{{ stats.total }}` for `apiContainer_stats`) — a template is read as written
+- a template the interpreter would read past: an operator it does not implement (`matches`), a filter or a function
+  it does not have, a stray character, an unclosed bracket or tag
+- a name in a binding's template or an attribute's token that nothing answers to, or a source read from outside the
+  element that publishes it (a query parameter is `navigation.queryParams.<name>`)
+- a template feeding an attribute that holds a list or an object (`items`) that renders text
+- children on a type that holds none (`heading`, `text`, `image`, `formControl`…) — a heading made of parts is a
+  `container` with an `h1`–`h6` tag
 - a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `theme`)
 - a step target naming an element that is not there
 - two elements answering to one name — the error says where the first one was written
@@ -526,9 +533,10 @@ inert specs. That is what keeps every guarantee about the finished document in o
 - everything `validateSchema` already checked: orphans, cycles, broken parent/root links, pages
 
 And it returns `warnings` for what is written and will not do what it says — `unknown-attribute`,
-`condition-starts-visible` (a computed visibility that would show until its data answers), `template-never-resolved` (a condition in an ATTRIBUTE, which only resolves `{{ name|filter }}` tokens; conditions
+`condition-starts-visible` (a computed visibility that would show until its data answers), `template-never-resolved` (a condition in an ATTRIBUTE, which only resolves `{{ name|filter }}` tokens — against the sources around the element; conditions
 belong in a binding's template or a step's params, where Twig is evaluated in full), `state-key-has-runtime-prefix`,
-`FORM_SUBMIT_UNMANAGED`, `STYLE_WITHOUT_TAG`, `tablet-rule-skips-mobile`.
+`FORM_SUBMIT_UNMANAGED`, `STYLE_WITHOUT_TAG`, `tablet-rule-skips-mobile` (write the rule under `compact` to reach
+both), `default-content-beside-children` (a `button` whose placeholder "Button" would print beside its children).
 
 Documents you did NOT author here go through the same door:
 

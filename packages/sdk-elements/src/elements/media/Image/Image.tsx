@@ -16,7 +16,8 @@ export type ImageProps = {
   src?: string;
   alt?: string;
   fetchPriority?: 'high' | 'low' | 'auto';
-  loadMode?: 'eager' | 'lazy';
+  /** `auto` leaves the choice to the browser — what the builder offers first. */
+  loadMode?: 'auto' | 'eager' | 'lazy';
 };
 
 const fallback = getFallbackSVGBase64();
@@ -42,6 +43,9 @@ const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'a
     e.currentTarget.src = fallback;
   }, []);
 
+  // `auto` is the browser's own choice, which is what leaving the attribute out asks for.
+  const loading = loadMode === 'auto' ? undefined : loadMode;
+
   if (!previewMode) {
     return (
       <RootElement ref={ref} className={clsx('plitzi-component__image image--edit-mode', className)}>
@@ -49,7 +53,7 @@ const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'a
           draggable={false}
           src={src}
           alt={alt}
-          loading={loadMode}
+          loading={loading}
           fetchPriority={fetchPriority}
           onError={handleError}
         />
@@ -65,7 +69,7 @@ const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'a
       className={clsx('plitzi-component__image', className)}
       src={src}
       alt={alt}
-      loading={loadMode}
+      loading={loading}
       fetchPriority={fetchPriority}
       onError={handleError}
     />

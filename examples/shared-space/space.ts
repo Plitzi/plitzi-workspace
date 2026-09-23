@@ -1,13 +1,4 @@
-import {
-  authorSpace,
-  container,
-  element,
-  fontAwesome,
-  heading,
-  image,
-  link,
-  paragraph
-} from '@plitzi/sdk-authoring';
+import { authorSpace, container, element, fontAwesome, heading, image, link, paragraph } from '@plitzi/sdk-authoring';
 
 import type { AuthoredSpace, ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 import type { ElementRuntime } from '@plitzi/sdk-shared';
@@ -184,9 +175,7 @@ export const sampleSpace: SpaceSpec = {
         container({ class: 'backdrop' }),
         container({
           class: 'logoFrame',
-          children: [
-            image({ id: 'logo', src: 'https://cdn.plitzi.com/resources/img/favicon.svg', class: 'logo' })
-          ]
+          children: [image({ id: 'logo', src: 'https://cdn.plitzi.com/resources/img/favicon.svg', class: 'logo' })]
         }),
         container({
           class: 'headline',
@@ -215,4 +204,7 @@ export const sampleSpace: SpaceSpec = {
 };
 
 /** The space as the two documents every Plitzi renderer consumes, plus whatever the validator had to say. */
-export const offlineData = (): AuthoredSpace => authorSpace(sampleSpace);
+/** The element types the examples register themselves — named, so authoring does not take them for typos. */
+export const pluginTypes = ['serverInfo', 'clientInfo', 'sharedInfo'];
+
+export const offlineData = (): AuthoredSpace => authorSpace(sampleSpace, { pluginTypes });

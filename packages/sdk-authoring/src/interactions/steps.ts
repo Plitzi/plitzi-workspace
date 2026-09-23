@@ -122,7 +122,7 @@ export const navigate = (params: { urlType: 'page' | 'internal' | 'external'; ur
 export const addNotification = (params: {
   content: string;
   placement?: 'top-right' | 'top-center' | 'top-left' | 'bottom-right' | 'bottom-center' | 'bottom-left';
-  appeareance?: 'success' | 'danger' | 'warning' | 'info';
+  appearance?: 'success' | 'danger' | 'warning' | 'info';
   autoDismiss?: boolean;
   autoDismissTimeout?: number;
 }): StepSpec => globalStep('addNotification', params);

@@ -14,15 +14,18 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
       },
       type: {
         type: 'select',
-        description: 'The value type. What is stored is coerced to it — a boolean is a real boolean, not "true".',
-        options: ['boolean', 'number', 'text'],
-        optionLabels: { boolean: 'True / False', number: 'Numeric', text: 'Text' }
+        description:
+          'The value type. What is stored is coerced to it — a boolean is a real boolean, not "true"; `json` stores an ' +
+          'object or a list (a template naming one, or JSON text).',
+        options: ['boolean', 'number', 'text', 'json'],
+        optionLabels: { boolean: 'True / False', number: 'Numeric', text: 'Text', json: 'Object / List (JSON)' }
       },
       value: {
-        // Polymorphic: the stored value is coerced to whatever `type` selects (boolean/number/text), so it may be a
-        // real boolean or number, not only a string.
-        type: 'scalar',
-        description: 'The value to store — its type follows the `type` param (a real boolean/number, or text).',
+        // Polymorphic: the stored value is coerced to whatever `type` selects, so it may be a real boolean or number —
+        // or, for `json`, an object or a list.
+        type: 'json',
+        description:
+          'The value to store — its type follows the `type` param (a real boolean/number, text, or an object/list).',
         when: params => Boolean(params.type),
         builderType: params => (params.type === 'boolean' ? 'select' : 'text'),
         options: ['true', 'false']

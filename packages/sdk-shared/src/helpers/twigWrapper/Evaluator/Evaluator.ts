@@ -1,5 +1,6 @@
 import { isTruthy, valueIn, resolveCollection, resolveObjectEntries } from './helpers';
 import { ARROW_PARAMS, filters, isRawMarker, unwrapRaw } from '../filters/filters';
+import { serializeValue } from '../processTwig/helpers';
 
 import type { ASTNode, Expression, FilterCall, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from '../AST';
 import type { ArrowCallback } from '../filters/filters';
@@ -53,6 +54,10 @@ export const evaluate = (
   const output = ctx.evalNodes(nodes);
   return { output, variables: ctx.variables, hasSet: ctx.hasSet };
 };
+
+/** One expression's value, as it is — not rendered to text. What `processTwigValue` answers a `{{ expr }}` with. */
+export const evaluateExpression = (expression: Expression, context: Record<string, unknown>): unknown =>
+  new Evaluator(context).evalExpression(expression);
 
 // Loop metadata exposed as `{{ loop.* }}`. Each `{% for %}` gets its own instance, so a nested loop never
 // corrupts the enclosing loop's counters.
@@ -360,10 +365,14 @@ class Evaluator {
         const val = this.evalExpression(expr.value);
         return val === undefined || val === null ? this.evalExpression(expr.defaultExpr) : val;
       }
-      case 'ternary':
-        return isTruthy(this.evalExpression(expr.condition))
-          ? this.evalExpression(expr.trueExpr)
-          : this.evalExpression(expr.falseExpr);
+      case 'ternary': {
+        const condition = this.evalExpression(expr.condition);
+        if (!isTruthy(condition)) {
+          return this.evalExpression(expr.falseExpr);
+        }
+
+        return expr.trueExpr ? this.evalExpression(expr.trueExpr) : condition;
+      }
       case 'arrow':
         return this.createArrowFunction(expr.params, expr.body);
     }
@@ -547,6 +556,14 @@ class Evaluator {
         return bothNum ? left * right : Number(left) * Number(right);
       case '/':
         return bothNum ? left / right : Number(left) / Number(right);
+      case '//':
+        return Math.floor(Number(left) / Number(right));
+      case '**':
+        return Number(left) ** Number(right);
+      case 'starts with':
+        return typeof left === 'string' && left.startsWith(serializeValue(right));
+      case 'ends with':
+        return typeof left === 'string' && left.endsWith(serializeValue(right));
       case '%':
         return bothNum ? left % right : Number(left) % Number(right);
       case '==':

@@ -56,8 +56,15 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
   'react-dom': '^19.2.8'
 });
 
-const devDependencies = ({ mode }: CreateAnswers): Record<string, string> =>
-  mode === 'server' ? { ...SHARED_DEV_DEPENDENCIES, tsx: '^4.23.12' } : { ...SHARED_DEV_DEPENDENCIES, vite: '^8.2.1' };
+/**
+ * `tsx` is what runs TypeScript under Node — the server in server mode, `npm run author` in a local project and
+ * `npm run shot` in every one — so every project gets it.
+ */
+const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
+  ...SHARED_DEV_DEPENDENCIES,
+  tsx: '^4.23.12',
+  ...(mode === 'server' ? {} : { vite: '^8.2.1' })
+});
 
 /**
  * What `start` means, which is the whole difference between the two modes.
@@ -89,7 +96,8 @@ const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
   typecheck: 'tsc -p tsconfig.json --noEmit',
   lint: 'eslint .',
   format: 'prettier --write .',
-  visual: 'playwright test'
+  visual: 'playwright test',
+  shot: 'node --import tsx scripts/shot.ts'
 });
 
 export const packageJson = (answers: CreateAnswers): string =>
@@ -128,7 +136,7 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
         lib: ['ES2023', 'DOM', 'DOM.Iterable'],
         jsx: 'react-jsx'
       },
-      include: ['src', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])]
+      include: ['src', 'scripts', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])]
     },
     null,
     2

@@ -715,32 +715,60 @@ export const filters: Record<string, TwigFilter> = {
 
     return Math.round(value * factor) / factor;
   },
-  // `| format(args...)` — sprintf-like string formatting with positional placeholders.
+  // `| format(args...)` — sprintf: `%s`, `%d`, `%f`, `%%`, each with PHP's optional flags (`-` left-justify, `+` sign,
+  // `0` or `'c` padding), width and precision — `'%02d'|format(5)` is `05`, `'%.1f'|format(2.25)` is `2.3`.
   format: (value, args) => {
     if (typeof value !== 'string') {
       return value;
     }
 
     let index = 0;
-    return value.replace(/%s|%d|%f|%%/g, match => {
-      if (match === '%%') {
-        return '%';
-      }
+    return value.replace(
+      /%((?:[-+ 0]|'.)*)(\d*)(?:\.(\d+))?([sdf%])/g,
+      (match, flags: string, width, precision, kind) => {
+        if (kind === '%') {
+          return '%';
+        }
 
-      const replacement = args[index];
-      index++;
-      if (replacement === undefined) {
-        return match;
-      }
-      if (match === '%d') {
-        return String(Math.floor(Number(replacement)));
-      }
-      if (match === '%f') {
-        return String(Number(replacement));
-      }
+        const replacement = args[index];
+        index++;
+        if (replacement === undefined) {
+          return match;
+        }
 
-      return toStr(replacement);
-    });
+        const signed = flags.includes('+');
+        let body: string;
+        if (kind === 'd') {
+          const number = Math.trunc(Number(replacement));
+          body = `${signed && number >= 0 ? '+' : ''}${number}`;
+        } else if (kind === 'f') {
+          const number = Number(replacement);
+          // A bare `%f` keeps the number's own digits (`3.5`, not PHP's `3.500000`); a precision asks for exactly that many.
+          body = `${signed && number >= 0 ? '+' : ''}${precision === undefined ? String(number) : number.toFixed(Number(precision))}`;
+        } else {
+          body = toStr(replacement);
+          body = precision === undefined ? body : body.slice(0, Number(precision));
+        }
+
+        const size = Number(width || 0);
+        if (body.length >= size) {
+          return body;
+        }
+
+        const custom = /'(.)/.exec(flags);
+        const filler = custom ? custom[1] : flags.includes('0') ? '0' : ' ';
+        if (flags.includes('-')) {
+          return body.padEnd(size, filler === '0' ? ' ' : filler);
+        }
+
+        // Zero padding goes between the sign and the digits, as it does in PHP: `%+05d` of 3 is `+0003`.
+        if (filler === '0' && kind !== 's' && /^[+-]/.test(body)) {
+          return body[0] + body.slice(1).padStart(size - 1, '0');
+        }
+
+        return body.padStart(size, filler);
+      }
+    );
   },
 
   // ── Whitespace ────────────────────────────────────────────────────────────
@@ -765,8 +793,10 @@ export const filters: Record<string, TwigFilter> = {
 
   // ── Date ──────────────────────────────────────────────────────────────────
   // `| date(format, timeZone?)` — formats a date string/timestamp.
-  // Tokens: Y, m, d, j (day, unpadded), n (month, unpadded), H, G (hour, unpadded), i, s, w (weekday, 0 = Sunday),
-  // N (ISO weekday, 1 = Monday), U (Unix seconds), l (day name), F (month name), M (short month).
+  // Tokens: Y, y (two digits), m, d, j (day, unpadded), n (month, unpadded), H, G (hour, unpadded), h / g (12-hour,
+  // padded / unpadded), A / a (AM / am), i, s, w (weekday, 0 = Sunday), N (ISO weekday, 1 = Monday), U (Unix
+  // seconds), l (day name), D (short day name), F (month name), M (short month). A backslash prints the next
+  // character as it is (`\T`).
   // The parts are read in `timeZone` when one is named, and in the zone the code runs in otherwise. A bare
   // `YYYY-MM-DD` parses as midnight UTC, so a calendar date is read with `'UTC'` — in any other zone west of
   // Greenwich it would be the day before. An unknown zone formats to `''`, like an unparseable date.
@@ -805,18 +835,24 @@ export const filters: Record<string, TwigFilter> = {
 
     const tokens: Record<string, string> = {
       Y: String(parts.year),
+      y: pad(parts.year % 100),
       m: pad(parts.month),
       n: String(parts.month),
       d: pad(parts.day),
       j: String(parts.day),
       H: pad(parts.hours),
       G: String(parts.hours),
+      h: pad(parts.hours % 12 || 12),
+      g: String(parts.hours % 12 || 12),
+      A: parts.hours < 12 ? 'AM' : 'PM',
+      a: parts.hours < 12 ? 'am' : 'pm',
       i: pad(parts.minutes),
       s: pad(parts.seconds),
       w: String(parts.weekday),
       N: String(parts.weekday === 0 ? 7 : parts.weekday),
       U: String(Math.floor(date.getTime() / 1000)),
       l: dayNames[parts.weekday],
+      D: dayNames[parts.weekday].slice(0, 3),
       F: monthNames[parts.month - 1],
       M: monthShort[parts.month - 1]
     };
@@ -825,8 +861,16 @@ export const filters: Record<string, TwigFilter> = {
     // (an inserted month name such as "March" would have its "M" re-substituted) and only replaces the first
     // occurrence of a repeated token. Scanning char by char avoids both.
     let out = '';
+    let escaped = false;
     for (const char of format) {
-      out += Object.prototype.hasOwnProperty.call(tokens, char) ? tokens[char] : char;
+      if (escaped) {
+        out += char;
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else {
+        out += Object.prototype.hasOwnProperty.call(tokens, char) ? tokens[char] : char;
+      }
     }
 
     return out;

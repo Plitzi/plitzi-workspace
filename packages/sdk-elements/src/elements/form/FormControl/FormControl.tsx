@@ -1,5 +1,4 @@
 /* eslint-disable react-refresh/only-export-components */
-/* eslint-disable react-hooks/rules-of-hooks */
 import clsx from 'clsx';
 import { use, useCallback, useEffect } from 'react';
 
@@ -67,11 +66,10 @@ export type FormControlProps = {
   value: string;
   error: string;
   /**
-   * Supplied by `withFieldValue` — and only when there is a form to supply it.
+   * Supplied by `withFieldValue`, with or without a form around the control.
    *
-   * A control outside a form is a state that HOC handles explicitly (it renders the component with none of its
-   * additions), so these are optional in fact and were only ever required in the type. A select that filters a
-   * screen is exactly such a control: nothing to submit, and the change itself is the event.
+   * Inside a form the value is the form's; outside one it is the control's own, so a select that filters a screen
+   * works on its own — nothing to submit, and its `onChange` is the whole event. Validation only runs inside a form.
    */
   handleChange?: (
     e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLTextAreaElement>
@@ -136,22 +134,8 @@ const FormControl = ({
     },
     [handleChange, previewMode, subType, interactionsManager, id, name]
   );
-  if (!form && !previewMode) {
-    return (
-      <RootElement
-        ref={ref}
-        className={clsx('plitzi-component__form-input', { 'form-input--out-of-context': !previewMode }, className)}
-      >
-        <div>Form Input Only Works inside Form element</div>
-      </RootElement>
-    );
-  }
-
-  if (!form && previewMode) {
-    return null;
-  }
-
-  const { registerField, unregisterField } = form as Partial<FormContextValue>;
+  const registerField = form?.registerField;
+  const unregisterField = form?.unregisterField;
   const isCheck = ['checkbox', 'switch'].includes(subType);
   // A hidden input has nothing to label, and the default label is a word rather than an empty string — so
   // authoring one without remembering to blank it puts "Label" and a box on the page above a field nobody can
@@ -159,15 +143,13 @@ const FormControl = ({
   const isHidden = subType === 'hidden';
 
   useEffect(() => {
-    if (registerField) {
-      registerField({ name, path: name });
+    if (!registerField || !unregisterField) {
+      return undefined;
     }
 
-    return () => {
-      if (unregisterField) {
-        unregisterField(name);
-      }
-    };
+    registerField({ name, path: name });
+
+    return () => unregisterField(name);
   }, [name, registerField, unregisterField]);
 
   return (

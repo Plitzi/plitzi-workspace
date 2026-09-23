@@ -28,10 +28,9 @@ export const spaceCallbacks: Record<string, BuiltinGlobalCallback> = {
         default: 'top-right',
         options: ['top-right', 'top-center', 'top-left', 'bottom-right', 'bottom-center', 'bottom-left']
       },
-      appeareance: {
+      appearance: {
         type: 'select',
-        // Intentionally the misspelling the SDK source uses — the runtime reads exactly this key.
-        description: 'Visual style of the notification. NOTE: the key is spelled "appeareance".',
+        description: 'Visual style of the notification: success, danger, warning or info.',
         default: 'success',
         options: ['success', 'danger', 'warning', 'info']
       },

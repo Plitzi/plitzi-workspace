@@ -5,7 +5,7 @@ import {
   elementSourceTypes,
   elementTriggers
 } from '../elements';
-import { BUILTIN_GLOBAL_CALLBACKS } from '../interactions';
+import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import { authorFlows, GLOBAL_SOURCES } from '../schema';
 import { css } from '../style';
 import { foldCustomCss } from './customCss';
@@ -76,6 +76,7 @@ export type SpecCorrectionCode =
   | 'dead-step'
   | 'fixed-global-callback'
   | 'dropped-initial-state'
+  | 'dropped-param'
   | 'missing-folder'
   | 'broken-layout';
 
@@ -190,7 +191,8 @@ export const SCHEMA_SETTINGS = [
   'sessionExchangeUrl',
   'sessionGate',
   'sessionRevalidateSeconds',
-  'debugMode'
+  'debugMode',
+  'computed'
 ] as const satisfies readonly (keyof Schema['settings'])[];
 
 const SETTING_NAMES = new Set<string>(SCHEMA_SETTINGS);
@@ -374,7 +376,8 @@ class SpecReader {
 
     const classes = this.classesSpec(style.mode);
     // `customCss` is read above — what is left of it once the rules a class can hold have moved into their classes.
-    const settings = this.readSettings(
+    // `computed` too: a space declares it at its top, where authoring reads it, and not inside `settings`.
+    const { computed, ...settings } = this.readSettings(
       Object.fromEntries(Object.entries(schema.settings).filter(([key]) => key !== 'customCss'))
     );
     const customCss = [ownCss, ...this.keptCss].filter(Boolean).join('\n\n');
@@ -390,6 +393,7 @@ class SpecReader {
       ...(isEmpty(classes) ? {} : { classes }),
       ...(schema.variables.length > 0 ? { schemaVariables: this.readSchemaVariables(schema.variables) } : {}),
       ...(isEmpty(settings) ? {} : { settings }),
+      ...(computed && !isEmpty(computed) ? { computed } : {}),
       ...(customCss ? { customCss } : {}),
       ...(schema.rsc ? { rsc: schema.rsc } : {}),
       ...(pageFolders.length > 0 ? { pageFolders } : {}),
@@ -1143,7 +1147,17 @@ class SpecReader {
       kept.push([name, value]);
     }
 
-    return Object.fromEntries(kept);
+    const read = Object.fromEntries(kept);
+    // A link in `page` mode names a page, and a full URL there rendered as a path inside the space: `/https://…`.
+    if (type === 'link' && (read.mode ?? defaults.mode) === 'page' && typeof read.href === 'string') {
+      if (/^https?:\/\//.test(read.href)) {
+        this.correct('fixed-attribute', `A link to "${read.href}" in page mode is \`mode: 'external'\` today.`);
+
+        return { ...read, mode: 'external' };
+      }
+    }
+
+    return read;
   }
 
   private childrenSpec(element: Element): { children?: ElementSpec[] } {
@@ -1433,6 +1447,38 @@ class SpecReader {
     });
   }
 
+  /**
+   * A step's params, without the ones its action does not take.
+   *
+   * The builder's panel kept a field it had shown for another action when the action changed — a `navigate` carrying a
+   * `setState`'s `key` and `type` — and nothing ever read it. Authoring refuses a param a closed action does not take,
+   * so it is left out here, and said.
+   */
+  private readStepParams(node: ElementInteraction, host: string): Record<string, unknown> {
+    const params: Record<string, unknown> = { ...node.params };
+    const catalog =
+      node.type === 'globalCallback' && Object.hasOwn(BUILTIN_GLOBAL_CALLBACKS, node.action)
+        ? BUILTIN_GLOBAL_CALLBACKS[node.action]
+        : node.type === 'utility' && Object.hasOwn(BUILTIN_UTILITIES, node.action)
+          ? BUILTIN_UTILITIES[node.action]
+          : undefined;
+    if (!catalog?.strictParams) {
+      return params;
+    }
+
+    return Object.fromEntries(
+      Object.entries(params).filter(([key]) => {
+        if (Object.hasOwn(catalog.params, key)) {
+          return true;
+        }
+
+        this.correct('dropped-param', `"${host}" gave ${node.action} a "${key}" it does not take; dropped.`, host);
+
+        return false;
+      })
+    );
+  }
+
   private readStep(node: ElementInteraction, host: string): Omit<StepSpec, 'id'> {
     let on: string | undefined;
     if (node.type === 'globalCallback') {
@@ -1451,12 +1497,13 @@ class SpecReader {
     }
 
     const when = conditionOf(node.when);
+    const params = this.readStepParams(node, host);
 
     return {
       type: node.type,
       action: node.action,
       ...(node.title && node.title !== node.action ? { title: node.title } : {}),
-      ...(isEmpty(node.params) ? {} : { params: node.params }),
+      ...(isEmpty(params) ? {} : { params }),
       ...(isEmpty(node.preview) ? {} : { preview: node.preview }),
       ...(on ? { on } : {}),
       ...(when ? { when } : {}),

@@ -26,6 +26,24 @@ const nextId = (): string =>
     ? crypto.randomUUID()
     : `e${++idSeq}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+/**
+ * A `json` value: an object or a list a flow puts in the state whole — a selection, a filter set, a row it was handed.
+ *
+ * A template that names one (`{{ list_rows.item }}`) already arrives as the value; text is parsed. Text that is not
+ * JSON fails the step, which the dev tools log, rather than storing the text where an object was meant to be.
+ */
+const parseJsonValue = (key: string, value: unknown): unknown => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    throw new Error(`setState "${key}" is typed json, and its value is not JSON: ${value.slice(0, 80)}`);
+  }
+};
+
 const StateInteractions = ({ children }: StateInteractionsProps) => {
   const { useInteractions } = use(InteractionsContext);
   // `unknown` covers both forms the store accepts here: a value for `setState`, and the updater `toggleState` needs
@@ -33,16 +51,21 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
   const setState = useCommonStoreSetter() as (path: string, value: unknown) => void;
 
   const handleSetState = useCallback(
-    (params: InteractionCallbackParamValues<{ key: string; type: string; value: string | boolean | number }>) => {
+    (params: InteractionCallbackParamValues<{ key: string; type: string; value: unknown }>) => {
       const { key, type } = params;
-      let { value } = params;
+      let value: unknown = params.value;
       if (type === 'boolean') {
         // The picker in the builder writes the WORD, and a bound or interpolated value arrives as whatever it
         // already was — a step reading `{{ someAction.output.done }}` hands over a real boolean. Reading only the
         // word turned every one of those into `false`, which is the answer that looks like it worked.
         value = value === true || value === 'true';
       } else if (type === 'number') {
-        value = parseInt(value as string, 10);
+        // `parseFloat`, not `parseInt`: a price or a ratio kept only its integer part.
+        value = typeof value === 'number' ? value : parseFloat(String(value));
+      } else if (type === 'json') {
+        setState(`runtime.state.${key}`, parseJsonValue(key, value));
+
+        return;
       }
 
       setState(`runtime.state.${key}`, value);

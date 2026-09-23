@@ -49,8 +49,11 @@ const isOffSite = (url: string): boolean => isAbsoluteUrl(url) || url.includes('
  */
 const collapseSlashes = (path: string) => path.replaceAll(/\/+/g, '/');
 
-/** A route-table key: `{{param}}` becomes the router's `:param`, which only the table reads. */
-const parsePath = (path: string) => collapseSlashes(path.replace(/{{([a-zA-Z0-9-_:*/]+)}}/i, ':$1'));
+/**
+ * A route-table key: every `{{param}}` becomes the router's `:param`, which only the table reads. Every one — a slug
+ * with two (`blog/{{year}}/{{slug}}`) kept its second as literal text, and no address could ever match the page.
+ */
+const parsePath = (path: string) => collapseSlashes(path.replace(/{{([a-zA-Z0-9-_:*/]+)}}/gi, ':$1'));
 
 const recursiveFolderSlug = (pageFolders: Record<string, PageFolder | undefined>, pageFolderId: string): string => {
   if (!pageFolderId || !pageFolders[pageFolderId]) {
@@ -304,4 +307,7 @@ const getRouteParams = (path: string) => {
   return params.map(param => param.replace(':', ''));
 };
 
-export { getPageFullPath, getPaths, matchRoutePath, isPageAuthored, getRouteParams };
+/** The params a page's slug declares, in either spelling a slug accepts: `post/{{slug}}` and `:spaceId/update`. */
+const getSlugParams = (slug: string): string[] => getRouteParams(parsePath(slug));
+
+export { getPageFullPath, getPaths, matchRoutePath, isPageAuthored, getRouteParams, getSlugParams };

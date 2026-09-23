@@ -19,7 +19,9 @@ import type { InteractionParamType } from '../types';
 // The others map to a single JS type — `text`/`textarea` → string, `boolean` → boolean, `number` → number, `select`
 // → one of `options`. This drives value-type validation (see `invalidParams`), not just the builder widget.
 // `elementIds` is a list of element ids — the editor offers the space's elements of `elementType` to pick from.
-export type BuiltinParamType = 'text' | 'textarea' | 'select' | 'boolean' | 'number' | 'scalar' | 'elementIds';
+// `json` is any JSON value — text, a number, a flag, an object or a list: an action's `input`, a state value that may
+// be a whole row.
+export type BuiltinParamType = 'text' | 'textarea' | 'select' | 'boolean' | 'number' | 'scalar' | 'json' | 'elementIds';
 
 export interface BuiltinParam {
   type: BuiltinParamType;
@@ -133,6 +135,13 @@ const matchesType = (value: unknown, param: BuiltinParam): boolean => {
       return typeof value === 'string' && (!param.options || param.options.includes(value));
     case 'scalar':
       return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+    case 'json':
+      return (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean' ||
+        (typeof value === 'object' && value !== null)
+      );
     case 'text':
     case 'textarea':
       return typeof value === 'string';

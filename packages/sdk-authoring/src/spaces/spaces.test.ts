@@ -160,17 +160,33 @@ describe('the copy handed to a project', () => {
   it('hosts a plugin only when asked, and never in the space the platform authors', () => {
     const plain = blankSpaceSource();
     const hosted = blankSpaceSource({
-      plugin: { id: 'stat-card', renderType: 'statCard', settings: { label: 'Elements' } }
+      plugin: { id: 'stat-card', renderType: 'statCard', attributes: { label: "Today's", series: [1, 2] } }
     });
 
     expect(plain).not.toContain('custom(');
     expect(hosted).toContain("renderType: 'statCard'");
     expect(hosted).toContain("id: 'stat-card'");
-    // The settings attribute is a JSON string, so what the copy carries has to be a quoted, escaped one.
-    expect(hosted).toContain('settings: \'{"label":"Elements"}\'');
+    // Attributes, which the component receives as props — written as source a person reads, quotes escaped.
+    expect(hosted).toContain("label: 'Today\\'s'");
+    expect(hosted).toContain('series: [1, 2]');
     // Prepended as its own line, then folded into the package import by the rewrite below.
     expect(hosted).toMatch(/^import \{[^}]*\bcustom\b[^}]*\} from '@plitzi\/sdk-authoring';$/m);
     expect(hosted).not.toMatch(/from '\.\./);
+  });
+
+  it('feeds the plugin from a data file when asked, through a provider and a binding', () => {
+    const hosted = blankSpaceSource({
+      plugin: {
+        id: 'stat-card',
+        renderType: 'statCard',
+        attributes: { label: 'Requests today' },
+        data: { id: 'stats', query: '/data/stats.json', bind: { value: 'stats.data.value' } }
+      }
+    });
+
+    expect(hosted).toContain("query: '/data/stats.json'");
+    expect(hosted).toContain("bind: { value: 'stats.data.value' }");
+    expect(hosted).toMatch(/^import \{[^}]*\bapiContainer\b[^}]*\} from '@plitzi\/sdk-authoring';$/m);
   });
 
   /** Prettier wraps a long import across lines; a rewrite that only reads one-liners would drop the names. */

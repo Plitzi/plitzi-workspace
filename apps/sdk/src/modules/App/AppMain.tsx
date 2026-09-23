@@ -139,7 +139,14 @@ const AppMain = ({
       },
       setState: value => runtimeState?.setState(undefined, value),
       setStateByKey: (key, value) => runtimeState?.setState(key, value),
-      clearState: () => runtimeState?.setState(undefined, {})
+      clearState: () => runtimeState?.setState(undefined, {}),
+      subscribe: listener => {
+        if (!runtimeState) {
+          return () => undefined;
+        }
+
+        return runtimeState.subscribe(() => listener(runtimeState.getState() ?? {}));
+      }
     }),
     [runtimeState]
   );
@@ -174,6 +181,7 @@ const AppMain = ({
                           instanceId={instanceId}
                           devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
                           renderMode="shadow"
+                          scroll="document"
                           innerClassName={clsx({ flex: renderMode === 'iframe' })}
                         >
                           <Sdk sdkStylePath={styleUrl ? styleUrl : sdkStylePath} server={server} {...sdkProps} />

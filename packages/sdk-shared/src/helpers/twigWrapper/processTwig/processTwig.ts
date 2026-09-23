@@ -1,4 +1,4 @@
-import { evaluate } from '../Evaluator';
+import { evaluate, evaluateExpression } from '../Evaluator';
 import { finalizeRaw, flattenContext, renderSimpleTokens } from './helpers';
 import { getNodes, resolveTokens } from '../TemplateCache';
 
@@ -45,6 +45,37 @@ export const processTwig = (
     }
 
     return asRaw ? finalizeRaw(output) : output;
+  } catch {
+    return template;
+  }
+};
+
+/**
+ * A template's VALUE, where it has one: `{{ rows|filter(r => r.open) }}` is the filtered array, `{{ count > 0 }}` a
+ * boolean, `{{ total }}` the number it holds.
+ *
+ * A template that is one `{{ expression }}` and nothing else (surrounding whitespace aside) answers that expression's
+ * value untouched. Anything with text around it, or tags, is text by nature and renders as {@link processTwig}.
+ *
+ * Unlike `processTwig`'s `asRaw`, nothing goes through JSON on the way: `0`, `false` and `null` come back as
+ * themselves, and a string that looks like a number stays a string.
+ */
+export const processTwigValue = (template: string, variables: Record<string, unknown> = {}): unknown => {
+  if (typeof template !== 'string') {
+    return template;
+  }
+
+  const entry = resolveTokens(template);
+  const nodes = entry ? (entry.nodes ?? entry.nodesWithSource) : null;
+  const meaningful = nodes?.filter(node => node.type !== 'text' || node.value.trim() !== '');
+  if (meaningful?.length !== 1 || meaningful[0].type !== 'variable') {
+    return processTwig(template, variables);
+  }
+
+  try {
+    const context = 'variables' in variables ? flattenContext(variables) : variables;
+
+    return evaluateExpression(meaningful[0].expression, context);
   } catch {
     return template;
   }

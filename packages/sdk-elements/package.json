@@ -746,6 +746,10 @@
       "types": "./dist/elements/provider/ApiContainer/declaration.d.ts",
       "import": "./dist/elements/provider/ApiContainer/declaration.mjs"
     },
+    "./elements/provider/ApiContainer/helpers/isEmptyAnswer": {
+      "types": "./dist/elements/provider/ApiContainer/helpers/isEmptyAnswer.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/helpers/isEmptyAnswer.mjs"
+    },
     "./elements/provider/ApiContainer/helpers/providerOutcome": {
       "types": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.d.ts",
       "import": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.mjs"
@@ -893,6 +897,10 @@
     "./elements/structure/ModalContainer/index": {
       "types": "./dist/elements/structure/ModalContainer/index.d.ts",
       "import": "./dist/elements/structure/ModalContainer/index.mjs"
+    },
+    "./elements/structure/ModalContainer/metadataFromText": {
+      "types": "./dist/elements/structure/ModalContainer/metadataFromText.d.ts",
+      "import": "./dist/elements/structure/ModalContainer/metadataFromText.mjs"
     },
     "./elements/structure/Pagination": {
       "types": "./dist/elements/structure/Pagination/index.d.ts",

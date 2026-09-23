@@ -92,6 +92,30 @@ describe('StateInteractions', () => {
     run({ key: 'note', type: 'text', value: 'true' });
     expect(setState).toHaveBeenLastCalledWith('runtime.state.note', 'true');
   });
+  it('keeps the decimals of a number', () => {
+    const { run, setState } = mount();
+    run({ key: 'price', type: 'number', value: '12.5' });
+
+    expect(setState).toHaveBeenCalledWith('runtime.state.price', 12.5);
+  });
+
+  it('stores an object or a list whole with type json, from JSON text or a value a template resolved', () => {
+    const { run, setState } = mount();
+    run({ key: 'filters', type: 'json', value: '{"genre":"arcade","tags":["co-op"]}' });
+
+    expect(setState).toHaveBeenCalledWith('runtime.state.filters', { genre: 'arcade', tags: ['co-op'] });
+
+    run({ key: 'picked', type: 'json', value: { id: 7 } });
+
+    expect(setState).toHaveBeenLastCalledWith('runtime.state.picked', { id: 7 });
+  });
+
+  it('fails the step, rather than storing text, when a json value is not JSON', () => {
+    const { run, setState } = mount();
+
+    expect(() => run({ key: 'filters', type: 'json', value: 'genre=arcade' })).toThrow(/typed json/);
+    expect(setState).not.toHaveBeenCalled();
+  });
 });
 
 /**

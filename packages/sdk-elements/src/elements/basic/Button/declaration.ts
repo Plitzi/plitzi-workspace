@@ -1,5 +1,5 @@
 /** Static declaration for Button: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { ButtonProps } from './Button';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,10 @@ export type ButtonAttributes = AuthorableAttributes<ButtonProps>;
 
 const declaration = elementDeclaration<ButtonAttributes>()({
   type: 'button',
+  attributeValues: {
+    subType: valuesOf<NonNullable<ButtonProps['subType']>>()(['button', 'submit', 'reset']),
+    contentPlacement: valuesOf<NonNullable<ButtonProps['contentPlacement']>>()(['before', 'after'])
+  },
   content: {
     attributes: {
       contentPlacement: 'after',

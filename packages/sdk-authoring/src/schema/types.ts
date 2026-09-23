@@ -1,4 +1,6 @@
+import type { VisibleCondition } from './bindings';
 import type { SpaceHandles } from './handles';
+import type { NotificationsSpec } from './notifications';
 import type { AncestorSpec, ClassList, CssSpec, StatesSpec, StyleDeclaration, StyleSpec, VariantSpec } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
@@ -14,6 +16,7 @@ import type {
   StyleVariables,
   Template
 } from '@plitzi/sdk-shared';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
 
 /**
  * What an author declares, as opposed to what a document stores.
@@ -157,8 +160,11 @@ export interface ElementSpec {
    *
    * `false` starts it hidden with no condition at all: a panel that a flow reveals (`toggleState`, `setState`)
    * rather than one the data does.
+   *
+   * `{ source, template }` is a condition the value does not answer on its own — the template says `true` or `false`
+   * (`"{{ source == '' or source == list_games.item.genre }}"`). Like every condition, it starts hidden.
    */
-  visible?: string | false;
+  visible?: string | false | VisibleCondition;
   /** One flow per entry. Steps are chained in order. */
   flows?: StepSpec[][];
   runtime?: ElementRuntime;
@@ -310,6 +316,27 @@ export interface SpaceSpec {
   schemaVariables?: SchemaVariable[];
   customCss?: string;
   /**
+   * How the notifications an `addNotification` step shows look: `{ background: 'var(--card)', text: 'var(--foreground)',
+   * success: 'var(--accent)', radius: '12px' }`. They follow the light/dark theme and the page's font already.
+   */
+  notifications?: NotificationsSpec;
+  /**
+   * Values computed once and read everywhere as `{{ computed.<name> }}` — an expression a dozen bindings would
+   * otherwise each repeat:
+   *
+   * ```ts
+   * computed: {
+   *   xp: '{{ (state.favourites|length) * 10 + (state.runs ?? 0) * 5 }}',
+   *   level: '{{ computed.xp // 100 + 1 }}'
+   * }
+   * ```
+   *
+   * Each is a template over the globals (`state`, `auth`, `navigation`, `variables`, `theme`, `host`) and the values
+   * declared ABOVE it. One `{{ expression }}` gives its value (a number, a list, a flag); anything else gives text. An
+   * element's source (a list row, a provider) is not readable here: bind that on the element.
+   */
+  computed?: Record<string, string>;
+  /**
    * Everything else the schema's settings carry — where sign-in posts to, which cookie hints at a session, how
    * state is kept. `customCss` above is the one field of that same object every space sets, and it stays named on
    * its own for that reason; these are the rest, spread over it.
@@ -351,10 +378,10 @@ export interface SpaceSpec {
  * makes the fragment usable on documents whose vocabulary nobody here knows.
  */
 export interface StepVocabulary {
-  /** Global callbacks by action name, each naming the module id it is registered on. */
-  globalCallbacks: Record<string, { source: string }>;
-  /** Utility actions. A utility is resolved by action alone and runs on no module at all. */
-  utilities: Record<string, unknown>;
+  /** Global callbacks by action name, each naming the module id it is registered on, and the params it takes. */
+  globalCallbacks: Record<string, { source: string; strictParams?: boolean; params?: ParamSpec }>;
+  /** Utility actions and their params. A utility is resolved by action alone and runs on no module at all. */
+  utilities: Record<string, { strictParams?: boolean; params?: ParamSpec }>;
   /**
    * Element type → every trigger it fires, the ones all elements share included. A type that is not listed is a
    * plugin's, whose triggers nobody here can know, and its flows are left alone.
@@ -395,6 +422,23 @@ export interface AuthorSpaceOptions {
    * nothing reads is written without a word.
    */
   attributeNames?: Readonly<Record<string, readonly string[] | null>>;
+  /** The types that hold no children. Left out, children written into one are dropped at render time unreported. */
+  leafTypes?: readonly string[];
+  /**
+   * Element type → the attributes it starts with. What tells a default `content` rendered beside children apart from
+   * one the author wrote, and an attribute that holds a list from one that holds text.
+   */
+  defaultAttributes?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+  /** Element type → attribute → the values it takes. Left out, `subType: 'h7'` is written as given. */
+  attributeValues?: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>;
+  /**
+   * Element types a plugin of this project registers — its own components, authored with `defineElement` or
+   * `elementsFromManifest`. Any other type that is not built in is reported as `unknown-element-type`, because a typo
+   * (`contaner`) and a plugin nobody registered render the same: nothing.
+   */
+  pluginTypes?: readonly string[];
+  /** The binding transformers and their params. Left out, a transformer nothing implements is written as given. */
+  transformers?: Readonly<Record<string, { strictParams?: boolean; params?: ParamSpec }>>;
 }
 
 export interface AuthoredSpace {

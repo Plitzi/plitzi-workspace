@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPageFullPath, getPaths, matchRoutePath } from './routes';
+import { getPageFullPath, getPaths, getSlugParams, matchRoutePath } from './routes';
 
 import type { Element, PageFolder } from '../types';
 
@@ -70,5 +70,19 @@ describe('routes', () => {
       '/analytics/audience': 'audience',
       '/audience': 'audience'
     });
+  });
+
+  it('routes a page whose slug declares more than one param', () => {
+    const archive = page('archive', { slug: 'blog/{{year}}/{{slug}}' });
+    const match = matchRoutePath(getPaths({ ...pages, archive }, folders), '/blog/2026/hello', false);
+
+    expect(match.pageId).toBe('archive');
+    expect(match.pathMatch?.params).toEqual({ year: '2026', slug: 'hello' });
+  });
+
+  it('reads the params a slug declares, in either spelling', () => {
+    expect(getSlugParams('blog/{{year}}/{{slug}}')).toEqual(['year', 'slug']);
+    expect(getSlugParams(':spaceId/update/*')).toEqual(['spaceId']);
+    expect(getSlugParams('about')).toEqual([]);
   });
 });

@@ -1,5 +1,5 @@
 /** Static declaration for Form: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { FormProps } from './Form';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,9 @@ export type FormAttributes = AuthorableAttributes<FormProps>;
 
 const declaration = elementDeclaration<FormAttributes>()({
   type: 'form',
+  attributeValues: {
+    method: valuesOf<NonNullable<FormProps['method']>>()(['get', 'post'])
+  },
   // Not `form`: what a form offers its descendants is a record like any other provider's, so it registers under
   // the same source kind and a binding reads `apiContainer_<id>.values`.
   sourceType: 'apiContainer',

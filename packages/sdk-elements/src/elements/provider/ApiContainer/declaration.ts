@@ -1,5 +1,5 @@
 /** Static declaration for ApiContainer: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { ApiContainerProps } from './ApiContainer';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -17,6 +17,24 @@ export type ApiContainerAttributes = AuthorableAttributes<ApiContainerProps> & {
 
 const declaration = elementDeclaration<ApiContainerAttributes>()({
   type: 'apiContainer',
+  attributeValues: {
+    subType: valuesOf<NonNullable<ApiContainerProps['subType']>>()([
+      '',
+      'div',
+      'header',
+      'footer',
+      'nav',
+      'main',
+      'section',
+      'article',
+      'aside',
+      'address',
+      'figure'
+    ]),
+    method: valuesOf<NonNullable<ApiContainerProps['method']>>()(['get', 'post', 'put', 'delete', 'patch']),
+    credentials: valuesOf<NonNullable<ApiContainerProps['credentials']>>()(['include', 'omit', 'same-origin']),
+    pagination: valuesOf<NonNullable<ApiContainerProps['pagination']>>()(['none', 'url', 'append'])
+  },
   sourceType: 'apiContainer',
   triggers: {
     onApiError: {

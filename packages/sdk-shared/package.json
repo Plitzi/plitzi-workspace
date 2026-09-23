@@ -138,6 +138,10 @@
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
     },
+    "./dataSource/computed": {
+      "types": "./dist/dataSource/computed.d.ts",
+      "import": "./dist/dataSource/computed.mjs"
+    },
     "./dataSource/getBindingsDetails": {
       "types": "./dist/dataSource/getBindingsDetails.d.ts",
       "import": "./dist/dataSource/getBindingsDetails.mjs"
@@ -395,6 +399,10 @@
     "./helpers/twigWrapper/index": {
       "types": "./dist/helpers/twigWrapper/index.d.ts",
       "import": "./dist/helpers/twigWrapper/index.mjs"
+    },
+    "./helpers/twigWrapper/inspectTemplate": {
+      "types": "./dist/helpers/twigWrapper/inspectTemplate.d.ts",
+      "import": "./dist/helpers/twigWrapper/inspectTemplate.mjs"
     },
     "./helpers/twigWrapper/processTwig": {
       "types": "./dist/helpers/twigWrapper/processTwig/index.d.ts",

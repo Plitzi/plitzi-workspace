@@ -9,6 +9,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import declaration from './declaration';
+import { metadataFromText } from './metadataFromText';
 import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -52,11 +53,7 @@ const ModalContainer = ({
       if (metadata && typeof metadata === 'object') {
         setInternalMetadata(metadata);
       } else if (typeof metadata === 'string') {
-        try {
-          setInternalMetadata(JSON.parse(metadata) as Record<string, unknown>);
-        } catch {
-          setInternalMetadata({ content: metadata });
-        }
+        setInternalMetadata(metadataFromText(metadata));
       } else if (typeof metadata === 'boolean' || typeof metadata === 'number') {
         setInternalMetadata({ content: metadata });
       } else {
@@ -122,11 +119,15 @@ const ModalContainer = ({
           <div className={clsx('modal-container__header__title', styleSelectors.headerTitle)}>
             {title ? title : 'Modal Header'}
           </div>
-          <i
-            className={clsx('fa-solid fa-xmark', styleSelectors.headerCloseButton)}
+          <button
+            type="button"
+            className={clsx('modal-container__close', styleSelectors.headerCloseButton)}
+            aria-label="Close"
             title="Close"
             onClick={handleClickClose}
-          />
+          >
+            <i className="fa-solid fa-xmark" aria-hidden="true" />
+          </button>
         </div>
         <div className={clsx('modal-container__body', styleSelectors.bodyContainer)}>
           <StoreProvider inherit="live" name={`Modal:${id}`} value={storeContextValue}>

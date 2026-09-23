@@ -188,7 +188,7 @@ const legacy = (): SpaceDocuments => {
           { type: 'container', id: 'panel', class: 'box' },
           { type: 'container', id: 'aside', class: 'box' },
           { type: 'text', id: 'label', attributes: { content: 'x' }, bind: { content: 'state.label' } },
-          { type: 'link', id: 'out', attributes: { href: 'https://plitzi.com', target: 'blank' } },
+          { type: 'link', id: 'out', attributes: { href: 'https://plitzi.com', target: 'blank', mode: 'external' } },
           { type: 'list', id: 'rows' },
           {
             type: 'button',
@@ -208,6 +208,8 @@ const legacy = (): SpaceDocuments => {
   const { flat } = documents.schema;
   const platform = documents.style.platform.desktop;
 
+  // A full URL in page mode, which rendered as a path inside the space.
+  flat.out.attributes.mode = 'page';
   // A navbar and its items: types the builder no longer ships.
   flat.nav.definition.type = 'navbar';
   flat.nav.attributes = { subtype: 'ul', direction: 'left' };
@@ -350,7 +352,7 @@ describe('specFromSpace / what it repairs', () => {
   it('writes a link target the way the component spells it, and leaves a null attribute and a dead setting out', () => {
     const [, , , , out, rows] = spec.pages[0].body;
 
-    expect(out.attributes).toMatchObject({ target: 'blank' });
+    expect(out.attributes).toMatchObject({ target: 'blank', mode: 'external', href: 'https://plitzi.com' });
     expect(rows.attributes).not.toHaveProperty('items');
     expect(Object.keys(spec.settings ?? {})).not.toContain('head');
   });

@@ -1,5 +1,5 @@
 /** Static declaration for Container: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { ContainerProps } from './Container';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,30 @@ export type ContainerAttributes = AuthorableAttributes<ContainerProps>;
 
 const declaration = elementDeclaration<ContainerAttributes>()({
   type: 'container',
+  attributeValues: {
+    subType: valuesOf<NonNullable<ContainerProps['subType']>>()([
+      'div',
+      'header',
+      'footer',
+      'nav',
+      'main',
+      'section',
+      'article',
+      'aside',
+      'address',
+      'figure',
+      'dl',
+      'dt',
+      'dd',
+      'li',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6'
+    ])
+  },
   content: {
     attributes: {
       subType: 'div'

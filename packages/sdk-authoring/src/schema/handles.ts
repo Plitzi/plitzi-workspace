@@ -42,6 +42,20 @@ export interface ElementHandle {
    * Present only when true: almost nothing on a page is conditional, and the handles are serialized.
    */
   conditional?: true;
+  /**
+   * Whether this element sits inside a list's row, so it renders once per row — several times, or not at all while the
+   * list is empty. Its selector matches every copy: address one with the driver's `.first()` / `.nth()`.
+   *
+   * Present only when true, like `conditional`.
+   */
+  repeated?: true;
+  /**
+   * Whether this element renders no element of its own — a provider with no tag (`apiContainer` with no `subType`).
+   * Its children render; it has no box to be visible, so an assertion that it is on screen can only fail.
+   *
+   * Present only when true.
+   */
+  boxless?: true;
 }
 
 export interface PageHandle extends ElementHandle {

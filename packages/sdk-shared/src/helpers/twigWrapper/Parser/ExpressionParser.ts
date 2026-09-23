@@ -7,32 +7,98 @@ import type { Expression, FilterCall } from '../AST';
 // Recursive-descent parser turning an expression string (a variable tag or a tag argument) into an
 // Expression AST. Character-level scanning lives in the Cursor base class; this file is pure grammar.
 // Precedence, loosest first:
-//   ternary (? :) → or → and → not → comparisons (==,!=,>=,<=,>,<,in,not in,is,is not)
-//   → ~ (concat) → +,- → *,/,% → ?? (default) → atoms (literals, paths, calls, filters, parens)
+//   ternary (? :, ?:) → or → and → not → comparisons (==,!=,>=,<=,>,<,in,not in,is,is not,starts with,ends with)
+//   → ~ (concat) → +,- → *,/,//,% → ** → ?? (default) → atoms (literals, paths, calls, filters, parens)
+//
+// The parse is forgiving at run time — a template it cannot read renders what it can — and that is exactly what
+// makes a mistake silent. So every place it forgives something can also say so: handed an `issues` list, the parser
+// writes down what it skipped, and `inspectTemplate` turns that into the refusal an author sees.
 
-export const parseExpression = (expr: string): Expression => new ExpressionParser(expr).parseTernary();
+export const parseExpression = (expr: string, issues?: string[]): Expression => {
+  const parser = new ExpressionParser(expr, issues);
+  const expression = parser.parseTernary();
+  parser.expectEnd();
+
+  return expression;
+};
 
 // Parses a bare `{% apply %}` filter chain such as `upper | trim | capitalize` (no leading pipe, no subject).
-export const parseApplyFilters = (expr: string): FilterCall[] => new ExpressionParser(expr).parseApplyChain();
+export const parseApplyFilters = (expr: string, issues?: string[]): FilterCall[] => {
+  const parser = new ExpressionParser(expr, issues);
+  const filters = parser.parseApplyChain();
+  parser.expectEnd();
+
+  return filters;
+};
+
+/**
+ * Twig's regular-expression test, refused rather than implemented.
+ *
+ * Templates are evaluated on the shared page server, and a pattern that backtracks catastrophically would stall it for
+ * every space it serves — so the language keeps the tests that cannot: `starts with`, `ends with` and `in`.
+ */
+const MATCHES_UNSUPPORTED =
+  '`matches` is not supported: templates evaluate no regular expressions. Use `starts with`, `ends with` or `in`.';
 
 class ExpressionParser extends Cursor {
+  private readonly issues: string[] | undefined;
+
+  constructor(src: string, issues?: string[]) {
+    super(src);
+    this.issues = issues;
+  }
+
+  private report(issue: string): void {
+    this.issues?.push(issue);
+  }
+
+  /** Whatever is left once the grammar is done is something it could not read, and was about to drop. */
+  expectEnd(): void {
+    this.skipWs();
+    if (!this.eof()) {
+      this.report(`Unexpected "${this.src.slice(this.pos).trim()}" in "${this.src.trim()}"`);
+    }
+  }
+
+  private expectChar(char: number, what: string): void {
+    this.skipWs();
+    if (this.peek() === char) {
+      this.pos++;
+
+      return;
+    }
+
+    this.report(`Missing ${what} in "${this.src.trim()}"`);
+  }
+
   parseTernary(): Expression {
     const condition = this.parseOr();
     this.skipWs();
-    if (this.peek() === Char.Question) {
-      this.pos++;
-      this.skipWs();
-      const trueExpr = this.parseOr();
-      this.skipWs();
-      if (this.peek() === Char.Colon) {
-        this.pos++;
-        this.skipWs();
-        const falseExpr = this.parseTernary();
-        return { type: 'ternary', condition, trueExpr, falseExpr };
-      }
+    if (this.peek() !== Char.Question) {
+      return condition;
     }
 
-    return condition;
+    this.pos++;
+    this.skipWs();
+    // `a ?: b` — the value itself when it is truthy, the fallback otherwise.
+    if (this.peek() === Char.Colon) {
+      this.pos++;
+      this.skipWs();
+
+      return { type: 'ternary', condition, trueExpr: null, falseExpr: this.parseTernary() };
+    }
+
+    const trueExpr = this.parseOr();
+    this.skipWs();
+    if (this.peek() !== Char.Colon) {
+      // `a ? b` — Twig's short form, empty when the condition is false.
+      return { type: 'ternary', condition, trueExpr, falseExpr: { type: 'literal', value: '' } };
+    }
+
+    this.pos++;
+    this.skipWs();
+
+    return { type: 'ternary', condition, trueExpr, falseExpr: this.parseTernary() };
   }
 
   private parseOr(): Expression {
@@ -90,11 +156,25 @@ class ExpressionParser extends Cursor {
         // A `not` that isn't `not in` is a unary operator over the rest of the expression.
         const rest = this.src.slice(this.pos - 4);
         this.pos = this.src.length;
-        return { type: 'unary', operator: 'not', operand: parseExpression(rest) };
+        return { type: 'unary', operator: 'not', operand: parseExpression(rest, this.issues) };
       }
 
       if (this.matchKeyword('in')) {
         left = { type: 'binary', operator: 'in', left, right: this.parseConcat() };
+        this.skipWs();
+        continue;
+      }
+
+      const affix = this.matchAffixTest();
+      if (affix) {
+        left = { type: 'binary', operator: affix, left, right: this.parseConcat() };
+        this.skipWs();
+        continue;
+      }
+
+      if (this.matchKeyword('matches')) {
+        this.report(MATCHES_UNSUPPORTED);
+        left = { type: 'binary', operator: 'matches', left, right: this.parseConcat() };
         this.skipWs();
         continue;
       }
@@ -110,6 +190,22 @@ class ExpressionParser extends Cursor {
     }
 
     return left;
+  }
+
+  /** `starts with` / `ends with`: two words, so one is not enough to commit — `starts` alone is a name. */
+  private matchAffixTest(): 'starts with' | 'ends with' | null {
+    const start = this.pos;
+    for (const word of ['starts', 'ends'] as const) {
+      if (this.matchKeyword(word)) {
+        if (this.matchKeyword('with')) {
+          return word === 'starts' ? 'starts with' : 'ends with';
+        }
+
+        this.pos = start;
+      }
+    }
+
+    return null;
   }
 
   private parseConcat(): Expression {
@@ -141,16 +237,35 @@ class ExpressionParser extends Cursor {
   }
 
   private parseMultiplicative(): Expression {
-    let left = this.parseDefault();
+    let left = this.parsePower();
     this.skipWs();
     for (let ch = this.peek(); ch === Char.Star || ch === Char.Slash || ch === Char.Percent; ch = this.peek()) {
-      this.pos++;
-      const operator = ch === Char.Star ? '*' : ch === Char.Slash ? '/' : '%';
-      left = { type: 'binary', operator, left, right: this.parseDefault() };
+      // `**` binds tighter and is parsed below; left here it would read as `*` and a dangling `*`.
+      if (ch === Char.Star && this.at(1) === Char.Star) {
+        break;
+      }
+
+      const floor = ch === Char.Slash && this.at(1) === Char.Slash;
+      this.pos += floor ? 2 : 1;
+      const operator = floor ? '//' : ch === Char.Star ? '*' : ch === Char.Slash ? '/' : '%';
+      left = { type: 'binary', operator, left, right: this.parsePower() };
       this.skipWs();
     }
 
     return left;
+  }
+
+  // `**`, right-associative as in Twig: `2 ** 3 ** 2` is `2 ** 9`.
+  private parsePower(): Expression {
+    const base = this.parseDefault();
+    this.skipWs();
+    if (this.peek() !== Char.Star || this.at(1) !== Char.Star) {
+      return base;
+    }
+
+    this.pos += 2;
+
+    return { type: 'binary', operator: '**', left: base, right: this.parsePower() };
   }
 
   private parseDefault(): Expression {
@@ -200,10 +315,7 @@ class ExpressionParser extends Cursor {
       // Not an arrow function, parse as grouped expression
       this.pos = savedPos;
       const expr = this.parseTernary();
-      this.skipWs();
-      if (this.peek() === Char.RParen) {
-        this.pos++;
-      }
+      this.expectChar(Char.RParen, 'a closing ")"');
 
       // `(rows|find('id', 3)).title`: a group is a value like any other, so it takes the same access chain a name
       // does. Without it the chain was never read and the group came back whole — the row, not its title.
@@ -218,14 +330,17 @@ class ExpressionParser extends Cursor {
       return this.maybeTrailingFilters({ type: 'literal', value: this.scanNumber() });
     }
 
+    // A literal is a value like any other, so `['a', 'b'][i]` and `{ a: 1 }.a` read the member they name.
     if (ch === Char.LBracket) {
       this.pos++;
-      return this.maybeTrailingFilters({ type: 'array', elements: this.parseArgList(Char.RBracket) });
+      const array: Expression = { type: 'array', elements: this.parseArgList(Char.RBracket) };
+
+      return this.maybeTrailingFilters(this.parseAccessChain(array, null));
     }
 
     if (ch === Char.LBrace) {
       this.pos++;
-      return this.maybeTrailingFilters(this.parseObjectLiteral());
+      return this.maybeTrailingFilters(this.parseAccessChain(this.parseObjectLiteral(), null));
     }
 
     // Check for single-param arrow function: param =>
@@ -277,6 +392,11 @@ class ExpressionParser extends Cursor {
   private parsePathOrFunctionOrArrow(): Expression {
     const name = this.scanName();
     if (!name) {
+      this.report(
+        this.eof()
+          ? `Missing a value at the end of "${this.src.trim()}"`
+          : `Unexpected "${this.src.slice(this.pos).trim()}" in "${this.src.trim()}"`
+      );
       this.pos++;
       return { type: 'literal', value: '' };
     }
@@ -349,10 +469,7 @@ class ExpressionParser extends Cursor {
 
       this.pos++;
       const index = this.parseTernary();
-      this.skipWs();
-      if (this.peek() === Char.RBracket) {
-        this.pos++;
-      }
+      this.expectChar(Char.RBracket, 'a closing "]"');
 
       // A literal subscript is the same thing as a dotted key, so it joins the run rather than ending it.
       if (staticRun && index.type === 'literal' && typeof index.value !== 'boolean') {
@@ -402,9 +519,7 @@ class ExpressionParser extends Cursor {
       }
     }
 
-    if (this.peek() === Char.RBrace) {
-      this.pos++;
-    }
+    this.expectChar(Char.RBrace, 'a closing "}"');
 
     return { type: 'object', entries };
   }
@@ -449,9 +564,7 @@ class ExpressionParser extends Cursor {
       }
     }
 
-    if (this.peek() === closeChar) {
-      this.pos++;
-    }
+    this.expectChar(closeChar, closeChar === Char.RParen ? 'a closing ")"' : 'a closing "]"');
 
     return args;
   }
@@ -487,6 +600,10 @@ class ExpressionParser extends Cursor {
   // Reads a single filter: a name followed by an optional parenthesised argument list.
   private readFilter(): FilterCall {
     const name = this.scanName();
+    if (!name) {
+      this.report(`A "|" with no filter name after it in "${this.src.trim()}"`);
+    }
+
     this.skipWs();
     if (this.peek() === Char.LParen) {
       this.pos++;

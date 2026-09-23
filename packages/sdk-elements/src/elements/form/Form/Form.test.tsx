@@ -339,3 +339,50 @@ describe('Form / the source it publishes', () => {
     expect(screen.getByTestId('probe').textContent).toBe('correct horse');
   });
 });
+
+describe('FormControl / on its own, with no form around it', () => {
+  beforeEach(() => {
+    interactionTrigger.mockClear();
+  });
+
+  /**
+   * A search box or a select that filters a screen: nothing to submit, and the change is the whole event. It used to
+   * render nothing at all, with no error, while the type comment said it was supported.
+   */
+  it('renders, takes typing, and reports each change as onChange', () => {
+    render(
+      <StoreProvider value={STORE}>
+        <ElementContext value={controlEntry('search')}>
+          <Control {...control({ name: 'q', subType: 'text', label: 'Search', required: false })} />
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    fireEvent.change(input('q'), { target: { value: 'nebula' } });
+
+    expect(input('q').value).toBe('nebula');
+    expect(interactionTrigger).toHaveBeenCalledWith('search', 'onChange', { value: 'nebula', name: 'q' });
+  });
+
+  it('follows its defaultValue when that changes — a bound query that a flow resets', () => {
+    const { rerender } = render(
+      <StoreProvider value={STORE}>
+        <ElementContext value={controlEntry('search')}>
+          <Control {...control({ name: 'q', subType: 'text', label: 'Search' })} defaultValue="arcade" />
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    expect(input('q').value).toBe('arcade');
+
+    rerender(
+      <StoreProvider value={STORE}>
+        <ElementContext value={controlEntry('search')}>
+          <Control {...control({ name: 'q', subType: 'text', label: 'Search' })} defaultValue="" />
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    expect(input('q').value).toBe('');
+  });
+});

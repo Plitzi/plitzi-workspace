@@ -6,5 +6,7 @@
  * are templates by construction, so a condition (`{{ admin ? '1' : '' }}`) or a loop (`{% for %}…{% endfor %}`) is
  * meant to run — read by the narrow test they were handed on as written, and a flag stored its own template text.
  */
-export const hasTemplateSyntax = (value: unknown): value is string =>
+// A plain boolean, not a `value is string` guard: `false` does not mean "not a string", and a guard said it did — a string
+// that failed the test was narrowed to `never` on the other branch.
+export const hasTemplateSyntax = (value: unknown): boolean =>
   typeof value === 'string' && /\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/.test(value);

@@ -8,7 +8,7 @@ button({
     onClick(),
     named('quote', runServerAction({ actionId: 'shipping-quote', input: { city: 'Berlin' }, mode: 'await' })),
     whenSucceeded('quote', setState({ key: 'quote', type: 'text', value: '{{ quote.output.summary }}' })),
-    whenFailed('quote', addNotification({ content: 'Could not reach the courier', appeareance: 'danger' }))
+    whenFailed('quote', addNotification({ content: 'Could not reach the courier', appearance: 'danger' }))
   ]]
 })
 ```
@@ -25,6 +25,23 @@ never a nested tree. Use the step builders — they fill in where a step runs an
   'panel')` to show/hide an element. Never two branches under opposite `when` guards — they read the state as it was
   when the flow started, a click behind.
 - **Keys are flat names.** A dotted key (`docsClosed.start`) is split into a path; use `docsClosedStart`.
+- **`setState` types**: `text`, `number` (decimals kept), `boolean` (the word or a real boolean), and `json` for an
+  object or a list — `value: '{{ list_rows.item }}'` stores the row itself; JSON text is parsed, and text that is not
+  JSON fails the step (the dev tools log it) instead of storing the text.
+
+## What a trigger hands the flow
+
+Name the trigger (`named('changed', onChange())`) and read its payload as `{{ changed.<field> }}`:
+
+| Trigger | Payload |
+| --- | --- |
+| `onChange` (formControl) | `value` (a boolean for a checkbox), `name` |
+| `onSubmit` (form) | `values` (by control `name`), `actionUrl`, `method` |
+| `onPageLoad` (page) | `pageId`, `routeParams`, `queryParams` |
+| `onApiSuccess` / `onApiError` (apiContainer) | `url`, `method`, `status`, `data` |
+| `onModalOpen` / `onModalClose`, `onDialogOpen` / `onDialogClose` / `onDialogAccept` / `onDialogReject` | `metadata` — what `openModal` / `openDialog` was handed |
+| `onPageChange` (pagination) | `page` |
+| `onThemeChange` (themeToggle) | `theme` |
 
 ## Reading what came before
 
@@ -66,10 +83,18 @@ form({
 A `formControl` is `required` by default: an optional field says `required: false`, or an empty one stops the submit
 without a word.
 
+## Notifications
+
+`addNotification({ content: 'Saved', appearance: 'success' })` — `appearance` is `success`, `danger`, `warning` or
+`info`. They follow the page's theme and font; their colours are the space's `notifications`:
+`notifications: { background: 'var(--card)', text: 'var(--foreground)', success: 'var(--accent)', radius: '12px' }`.
+
 ## Modals, dropdowns, tabs
 
 - A modal or dialog is declared `visible: false` and driven with `openModal('credits')` / `closeModal('credits')`
-  (`openDialog` / `closeDialog`). `openModal`'s second argument is read inside as `{{ modalContainer_credits.content }}`.
+  (`openDialog` / `closeDialog`). `openModal`'s second argument is the modal's data: a JSON object is read by its
+  fields (`{{ modalContainer_credits.title }}`); anything else — a row's id, a number, a word — as
+  `{{ modalContainer_credits.content }}`. The close control is a real button, reachable by keyboard.
 - A `dropdown`'s label is a child and its `dropdownPopup` sits inside it; a `tabContainer`'s header and body are held
   inside it too. Outside, they are refused.
 

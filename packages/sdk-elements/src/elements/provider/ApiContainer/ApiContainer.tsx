@@ -13,6 +13,7 @@ import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
+import { isEmptyAnswer } from './helpers/isEmptyAnswer';
 import providerOutcome from './helpers/providerOutcome';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
 import useAutoRefresh from './hooks/useAutoRefresh';
@@ -99,6 +100,7 @@ export type ApiContainerProps = {
 type ProviderSlice = {
   records?: unknown[];
   record?: unknown;
+  data?: unknown;
   pageInfo?: { page?: number };
 };
 
@@ -323,7 +325,7 @@ const ApiContainer = ({
       ...data,
       ...(Array.isArray(slice.records) ? { records } : emptyObject),
       isLoading: isLoading || isLoadingMore,
-      isEmpty: singleRecord ? slice.record === undefined : records.length === 0,
+      isEmpty: isEmptyAnswer(slice, records, singleRecord),
       hasError,
       errorMessage: hasError ? 'The data provider could not be reached' : '',
       // A refresh that could not reach the server leaves what is on screen standing, which is the right thing to

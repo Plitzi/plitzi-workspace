@@ -29,11 +29,18 @@ const entry = (owner: string, state: unknown): string =>
 
 const signedIn = (id: number) => ({ status: 'authenticated', isAuthenticated: true, details: { id } });
 
+/**
+ * A store as the app has it once GlobalSources has mounted. A space with no accounts publishes `auth` as `{}`, which is
+ * what says its one owner is the browser; a seed that brings its own `runtime` replaces it.
+ */
 const build = (seed: Partial<CommonState>) =>
-  createStore<CommonState>(seed, {
-    middlewares: [runtimeStatePersist<CommonState>(42)],
-    deferHydrate: true
-  });
+  createStore<CommonState>(
+    { runtime: { sources: { auth: {} } }, ...seed },
+    {
+      middlewares: [runtimeStatePersist<CommonState>(42)],
+      deferHydrate: true
+    }
+  );
 
 beforeEach(() => {
   localStorage.clear();
@@ -172,7 +179,26 @@ describe('runtimeStatePersist', () => {
       expect(store.getState().runtime?.state).toEqual({ redirect: 'https://app.plitzi.com/spaces' });
     });
 
-    // Auth published after the page mounted: until then the owner reads as the browser, which is nobody either.
+    /**
+     * The first read of every visit happens before GlobalSources has published `auth` at all. Taken for the browser,
+     * that read found the guest's entry, called it somebody else's and deleted it — `keepState` kept nothing past a
+     * reload. Until the source exists the owner is unknown, and an unknown owner reads nothing and deletes nothing.
+     */
+    it('keeps a guest entry through the reads that happen before auth is published', () => {
+      localStorage.setItem(KEY, entry('guest', kept));
+      const store = build({ schema: settings(true), render: { isHydrating: false }, runtime: { sources: {} } });
+      store.hydrate?.();
+      store.setState('schema', settings(true));
+
+      expect(localStorage.getItem(KEY)).not.toBeNull();
+
+      store.setState('runtime.sources.auth', { status: 'init', isAuthenticated: false });
+      store.setState('runtime.sources.auth', guest);
+
+      expect(store.getState().runtime?.state).toEqual(kept);
+    });
+
+    // Auth published after the page mounted: until then the owner is unknown, which takes nothing from anybody.
     it('keeps the state when auth arrives after the page did', () => {
       const store = build({ schema: settings(false), render: { isHydrating: false }, runtime: { sources: {} } });
       store.hydrate?.();

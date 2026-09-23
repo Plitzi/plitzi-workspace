@@ -1,5 +1,5 @@
 /** Static declaration for LayoutContainer: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { LayoutContainerProps } from './LayoutContainer';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,20 @@ export type LayoutContainerAttributes = AuthorableAttributes<LayoutContainerProp
 
 const declaration = elementDeclaration<LayoutContainerAttributes>()({
   type: 'layoutContainer',
+  attributeValues: {
+    subType: valuesOf<NonNullable<LayoutContainerProps['subType']>>()([
+      'div',
+      'header',
+      'footer',
+      'nav',
+      'main',
+      'section',
+      'article',
+      'aside',
+      'address',
+      'figure'
+    ])
+  },
   content: {
     attributes: {
       subType: 'div'

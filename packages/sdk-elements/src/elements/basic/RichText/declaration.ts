@@ -1,5 +1,5 @@
 /** Static declaration for RichText: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { RichTextProps } from './RichText';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,9 @@ export type RichTextAttributes = AuthorableAttributes<RichTextProps>;
 
 const declaration = elementDeclaration<RichTextAttributes>()({
   type: 'richText',
+  attributeValues: {
+    format: valuesOf<NonNullable<RichTextProps['format']>>()(['html', 'markdown', 'text'])
+  },
   content: {
     attributes: {
       content: '',

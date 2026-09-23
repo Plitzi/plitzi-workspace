@@ -1,6 +1,7 @@
 import { blankSpaceSource } from '@plitzi/sdk-authoring';
 
 import type { CreateAnswers, ProjectFiles } from './types';
+import type { PluginHostOptions } from '@plitzi/sdk-authoring';
 
 /**
  * The space, copied into the project as something the developer can change.
@@ -39,24 +40,36 @@ for (const warning of warnings) {
 console.log('space/offline-data.json');
 `;
 
+/** The numbers the example shows: in a data file where one is served, on the element where none is. */
+const STATS = { value: 12480, series: [8, 12, 9, 17, 14, 21, 19, 26] };
+
 /**
- * The plugin the copy hosts, and the numbers it is authored with.
+ * The plugin the copy hosts, and what it is authored with.
  *
  * Asked for here rather than defaulted on in the package: the platform authors a new space from the same
  * declaration and hosts nobody's plugins, so the slot exists only where a project carries the component to fill
- * it. The settings are what the component reads as props — a plain object here, a JSON string on the element,
- * and the same names on both sides.
+ * it. Its attributes are the component's props, by name. A client project serves `public/`, so there the numbers
+ * come from a data file through a provider — the way a project with no backend shows data it did not invent.
  */
-const PLUGIN_HOST = {
-  id: 'stat-card',
-  renderType: 'statCard',
-  settings: { label: 'Requests today', value: 12480, unit: 'reqs', series: [8, 12, 9, 17, 14, 21, 19, 26] }
-};
+const pluginHost = ({ mode }: CreateAnswers): PluginHostOptions =>
+  mode === 'client'
+    ? {
+        id: 'stat-card',
+        renderType: 'statCard',
+        attributes: { label: 'Requests today', unit: 'reqs' },
+        data: {
+          id: 'stats',
+          query: '/data/stats.json',
+          bind: { value: 'stats.data.value', series: 'stats.data.series' }
+        }
+      }
+    : { id: 'stat-card', renderType: 'statCard', attributes: { label: 'Requests today', unit: 'reqs', ...STATS } };
 
-export const spaceFiles = ({ source, name }: CreateAnswers): ProjectFiles =>
-  source === 'cloud'
+export const spaceFiles = (answers: CreateAnswers): ProjectFiles =>
+  answers.source === 'cloud'
     ? {}
     : {
-        'src/space.ts': blankSpaceSource({ name, plugin: PLUGIN_HOST }),
-        'src/author.ts': authorScript()
+        'src/space.ts': blankSpaceSource({ name: answers.name, plugin: pluginHost(answers) }),
+        'src/author.ts': authorScript(),
+        ...(answers.mode === 'client' ? { 'public/data/stats.json': `${JSON.stringify(STATS, null, 2)}\n` } : {})
       };

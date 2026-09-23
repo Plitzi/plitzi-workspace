@@ -54,8 +54,39 @@ export interface BlankSpaceSourceOptions {
    * anyone ever signed up for. It is on for `plitzi create`, where the project being scaffolded carries the
    * component and registers it — which is the one fact about Plitzi a page of built-in elements cannot show.
    */
-  plugin?: { renderType: string; id: string; settings: Record<string, unknown> };
+  plugin?: PluginHostOptions;
 }
+
+export interface PluginHostOptions {
+  renderType: string;
+  id: string;
+  /** Written on the `custom` element as attributes, which the component receives as props of the same names. */
+  attributes: Record<string, unknown>;
+  /**
+   * A provider around the plugin, and the props it feeds: `{ id: 'stats', query: '/data/stats.json', bind: { value:
+   * 'stats.data.value' } }`. What a project with no backend shows its data with — a JSON file it serves itself.
+   */
+  data?: { id: string; query: string; bind: Record<string, string> };
+}
+
+/** A value as TypeScript source, in this codebase's quotes: what a JSON dump would write, with single quotes. */
+const toSource = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map(toSource).join(', ')}]`;
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return `{ ${Object.entries(value)
+      .map(([key, entry]) => `${/^[A-Za-z_$][\w$]*$/.test(key) ? key : toSource(key)}: ${toSource(entry)}`)
+      .join(', ')} }`;
+  }
+
+  return typeof value === 'number' || typeof value === 'boolean' ? String(value) : 'null';
+};
 
 export const blankSpaceSource = (options: BlankSpaceSourceOptions = {}): string => {
   const { name, plugin } = options;
@@ -86,7 +117,27 @@ const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOpti
     );
   }
 
-  const settings = JSON.stringify(plugin.settings).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  /** The `custom(…)` call, its lines indented by `pad`. */
+  const host = (pad: string): string =>
+    [
+      'custom({',
+      `  id: '${plugin.id}',`,
+      `  renderType: '${plugin.renderType}',`,
+      ...Object.entries(plugin.attributes).map(([key, value]) => `  ${key}: ${toSource(value)},`),
+      ...(plugin.data ? [`  bind: ${toSource(plugin.data.bind)},`] : []),
+      "  css: { desktop: { 'margin-top': '24px' } }",
+      '})'
+    ].join(`\n${pad}`);
+  const hosted = plugin.data
+    ? [
+        'apiContainer({',
+        `  id: '${plugin.data.id}',`,
+        `  query: '${plugin.data.query}',`,
+        '  cache: true,',
+        `  children: [${host('              ')}]`,
+        '})'
+      ].join('\n            ')
+    : host('            ');
 
   const element = `children: [
             heroEyebrow,
@@ -96,19 +147,23 @@ const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOpti
             /**
              * A component of YOUR OWN, rendered by the space.
              *
-             * \`renderType\` is the name it is registered under in \`src/main.ts\`; everything else on this
-             * element arrives in the component as a prop of the same name, which is what lets a data source be
-             * pointed at it later without a line of plumbing. See \`src/plugins/README.md\`.
+             * \`renderType\` is the name it is registered under in \`src/main.ts\`; every other attribute arrives in
+             * the component as a prop of the same name — written here, or bound to a source. See
+             * \`src/plugins/README.md\`.${
+               plugin.data
+                 ? `
+             *
+             * Its numbers come from \`public${plugin.data.query}\`, read by the provider around it like any API: data a
+             * project with no backend serves itself, rather than figures written into the page.`
+                 : ''
+             }
              */
-            custom({
-              id: '${plugin.id}',
-              renderType: '${plugin.renderType}',
-              settings: '${settings}',
-              css: { desktop: { 'margin-top': '24px' } }
-            })
+            ${hosted}
           ]`;
 
-  return `import { custom } from '../../elements';\n${source.replace(PLUGIN_ANCHOR, element)}`;
+  const imports = plugin.data ? 'apiContainer, custom' : 'custom';
+
+  return `import { ${imports} } from '../../elements';\n${source.replace(PLUGIN_ANCHOR, element)}`;
 };
 
 /** Replaces one declared literal, and refuses to hand back a copy where it silently did not appear. */

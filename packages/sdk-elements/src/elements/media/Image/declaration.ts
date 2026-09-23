@@ -1,5 +1,5 @@
 /** Static declaration for Image: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
 
 import type { ImageProps } from './Image';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
@@ -9,6 +9,10 @@ export type ImageAttributes = AuthorableAttributes<ImageProps>;
 
 const declaration = elementDeclaration<ImageAttributes>()({
   type: 'image',
+  attributeValues: {
+    fetchPriority: valuesOf<NonNullable<ImageProps['fetchPriority']>>()(['high', 'low', 'auto']),
+    loadMode: valuesOf<NonNullable<ImageProps['loadMode']>>()(['auto', 'eager', 'lazy'])
+  },
   content: {
     attributes: {
       src: 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',

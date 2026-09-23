@@ -40,6 +40,8 @@ const describeType = (type: BuiltinParamType): string => {
       return 'one of its allowed values';
     case 'scalar':
       return 'a string, number or boolean';
+    case 'json':
+      return 'any JSON value — text, a number, a boolean, an object or a list';
     default:
       return 'a string';
   }
