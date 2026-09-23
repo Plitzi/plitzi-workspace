@@ -11,6 +11,7 @@ export * from './bindings';
 export * from './flows';
 export * from './handles';
 export * from './ids';
+export * from './lint';
 export * from './notifications';
 export * from './space';
 export * from './template';

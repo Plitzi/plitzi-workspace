@@ -85,13 +85,13 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
           {
             type: 'upsertElement',
             pageRef: 'home',
-            element: { ref: 'c1', type: 'container', props: { title: 'Renamed' } }
+            element: { ref: 'c1', type: 'container', props: { subType: 'article' } }
           }
         ]
       },
       buildSpace()
     );
-    expect(res.elements?.find(e => e.ref === 'c1')?.props).toEqual({ title: 'Renamed' });
+    expect(res.elements?.find(e => e.ref === 'c1')?.subType).toBe('article');
   });
 
   it('omits the elements field for a delete-only batch', async () => {

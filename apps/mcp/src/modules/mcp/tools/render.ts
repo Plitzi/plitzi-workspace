@@ -12,9 +12,9 @@ import { emptySpace } from '../helpers';
 import { proxifyResources } from '../proxy';
 import { expandOperations } from './shared/expandOperations';
 import { interactionReport } from './shared/interactionReport';
+import { lintDraft } from './shared/lintDraft';
 import { defineTool } from './shared/tool';
 import { validateOperations } from './shared/validator';
-import { auditResources } from './shared/validator/audit';
 
 import type { Space } from '../helpers';
 import type { ResourceProxy } from '../proxy';
@@ -120,7 +120,7 @@ export const render = (input: RenderInput, options: RenderOptions = {}): RenderR
     };
   }
 
-  const audit = auditResources(space, ops);
+  const audit = lintDraft(space, ops);
   const behaviour = interactionReport(space);
   const warnings = [...validation.warnings, ...audit.warnings, ...behaviour.warnings];
   if (audit.errors.length > 0) {

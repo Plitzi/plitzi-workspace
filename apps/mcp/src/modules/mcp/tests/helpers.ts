@@ -12,7 +12,7 @@ const buildSpace = (): Space => {
       },
       c1: {
         id: 'c1',
-        attributes: { subType: 'div', title: 'Box' },
+        attributes: { subType: 'section' },
         definition: {
           rootId: 'home',
           parentId: 'home',
@@ -95,7 +95,7 @@ const spaceWithRoute = (): Space => {
 const varOp = (pageRef: string, type: string, value: string): Operation => ({
   type: 'upsertElement',
   pageRef,
-  element: { ref: 'x', type, props: { q: value } }
+  element: { ref: 'x', type, props: { content: value } }
 });
 
 const scopeSpace = (): Space => ({
@@ -171,14 +171,26 @@ const malformedSpace = (): Space => ({
       home: {
         id: 'home',
         attributes: { slug: '', name: 'Home', default: true },
-        definition: { rootId: 'home', label: 'Page', type: 'page', items: ['txt'], styleSelectors: { base: 'p' } }
+        definition: { rootId: 'home', label: 'Page', type: 'page', items: ['x'], styleSelectors: { base: 'p' } }
+      },
+      x: {
+        id: 'x',
+        attributes: {},
+        definition: {
+          rootId: 'home',
+          parentId: 'home',
+          label: 'Api',
+          type: 'apiContainer',
+          items: ['txt'],
+          styleSelectors: { base: '' }
+        }
       },
       txt: {
         id: 'txt',
         attributes: { content: '' },
         definition: {
           rootId: 'home',
-          parentId: 'home',
+          parentId: 'x',
           label: 'Text',
           type: 'text',
           items: [],
@@ -188,7 +200,7 @@ const malformedSpace = (): Space => ({
               {
                 id: 'b1',
                 to: 'content',
-                source: 'list_x.item.name',
+                source: 'apiContainer_x.data.name',
                 transformers: [{ action: 'template', params: { template: '{{value}}' } }]
               }
             ]

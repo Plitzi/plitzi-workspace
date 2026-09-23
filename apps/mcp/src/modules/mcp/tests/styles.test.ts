@@ -151,12 +151,10 @@ describe('mcp-ai id styles (editable single-element selectors like `#hero { … 
   });
 
   it('inlines the id rule in the detail of an element carrying that DOM id', async () => {
-    const cap = capturing(buildSpace());
-    await apply(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { id: 'hero' } }, idOp] },
-      buildSpace(),
-      cap.persisters
-    );
+    const space = buildSpace();
+    (space.schema.flat.c1.attributes as Record<string, unknown>).id = 'hero';
+    const cap = capturing(space);
+    await apply({ operations: [idOp] }, space, cap.persisters);
     const el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
     expect(el.idStyle?.targetId).toBe('hero');
     expect(el.idStyle?.desktop?.['min-height']).toBe('100vh');

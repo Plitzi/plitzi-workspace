@@ -480,8 +480,12 @@ describe('authorSpace / what it refuses', () => {
             name: 'Home',
             slug: '',
             body: [
-              { type: 'apiContainer', id: 'posts', attributes: { action: 'list' } },
-              { type: 'text', bind: { content: 'posts.title' } }
+              {
+                type: 'apiContainer',
+                id: 'posts',
+                attributes: { action: 'list' },
+                children: [{ type: 'text', bind: { content: 'posts.title' } }]
+              }
             ]
           }
         ]

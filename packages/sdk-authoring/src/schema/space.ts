@@ -1,6 +1,5 @@
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
-import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
@@ -11,28 +10,21 @@ import { BREAKPOINTS, classNames, classRefs, isStyleDeclaration, sameBlocks, toB
 import { GLOBAL_SOURCES, groupBindings, hasVisibilityBinding, withVisibility } from './bindings';
 import { authorFlows } from './flows';
 import {
-  ACCESS_LEVELS,
   ELEMENT_SPEC_KEYS,
   ELEMENT_STYLE_SPEC_KEYS,
   LAYOUT_SPEC_KEYS,
-  LOAD_STRATEGIES,
   PAGE_FOLDER_SPEC_KEYS,
   PAGE_SPEC_KEYS,
-  RUNTIMES,
   SPACE_SPEC_KEYS,
   STEP_SPEC_KEYS,
-  STEP_TYPES,
   assertBindingShape,
   assertId,
-  assertKnownKeys,
-  assertOneOf,
-  assertParams
+  assertKnownKeys
 } from './guard';
 import { buildHandles, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
 import { notificationsCss } from './notifications';
 import { didYouMean } from './suggest';
-import { TemplateScope } from './templateScope';
 import { assertSpaceValid } from './validate';
 
 import type { SourceIndex } from './bindings';
@@ -40,7 +32,6 @@ import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
-  BindingSpec,
   ElementSpec,
   ElementStyleSpec,
   LayoutRef,
@@ -48,8 +39,7 @@ import type {
   PageFolderSpec,
   PageSpec,
   SpaceSpec,
-  StepSpec,
-  StepVocabulary
+  StepSpec
 } from './types';
 import type { ClassList, CssSpec, ResponsiveBlock, StatesSpec } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
@@ -65,8 +55,9 @@ import type { DropPosition, Element, PageFolder, Schema, SpaceFont, Style, Style
  *
  * Insertion goes through `FlatMap`, so a tree built here is held to exactly the same validity and naming rules as
  * one built by dragging elements around the builder, and the finished pair is put through the document validator
- * before it is handed back. This module is the only thing in the SDK that writes a schema document: every other
- * authoring fragment produces specs, and specs are inert until they reach here.
+ * and the linter before it is handed back — the same gate every space goes through, whoever wrote it. This module is
+ * the only thing in the SDK that writes a schema document: every other authoring fragment produces specs, and specs
+ * are inert until they reach here.
  */
 
 /** A selector's cache, written by the same function the style editor writes it with — states and variants included. */
@@ -80,28 +71,6 @@ const withCache = (item: Omit<StyleItem, 'cache'>): StyleItem => {
 /** The two attributes a page or a layout names its shell with. */
 const layoutAttributes = (layout: LayoutRef | undefined): Record<string, string> =>
   layout ? { layout: layout.id, layoutContainer: layout.slot } : {};
-
-/**
- * Sources already known on the first render — what a flow wrote, the route, the space's variables, the theme. A
- * condition on them resolves in the same render that paints the element, so it has no loading frame to flash in.
- */
-const SETTLED_SOURCES = new Set(['state', 'navigation', 'variables', 'theme', 'computed']);
-
-/** Types whose content is prose, where a \`{{ }}\` is far more often a sample of code than a template. */
-const PROSE_TYPES = new Set(['markdown', 'richText', 'blockHtml', 'blockJsx', 'nodeHtml']);
-
-/** Every string inside a value, however deep — a step's params nest objects and lists of them. */
-const stringsIn = (value: unknown): string[] => {
-  if (typeof value === 'string') {
-    return [value];
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(stringsIn);
-  }
-
-  return typeof value === 'object' && value !== null ? Object.values(value).flatMap(stringsIn) : [];
-};
 
 class SpaceAuthor {
   private readonly flatMap = new FlatMap({ flat: {}, variables: [] });
@@ -138,47 +107,13 @@ class SpaceAuthor {
   /** Every element in this space that publishes a data source, by id, and the name it publishes it under. */
   private readonly sources: SourceIndex = new Map();
 
-  /** Steps this space names that the vocabulary could not vouch for. Handed back rather than thrown: a plugin is
-   *  free to register a module of its own, and refusing what this process cannot see would make the check useless
-   *  for exactly the spaces that need it most. */
-  private readonly stepWarnings: SchemaValidationError[] = [];
-  /** Element callback steps, checked once every element exists: a step may target one declared further down. */
-  private readonly callbackSteps: { action: string; target: string; where: string }[] = [];
-
   /** Rules that render, and render differently from what they plainly mean — see `warnTabletOnly`. */
   private readonly styleWarnings: SchemaValidationError[] = [];
-
-  /** Element types already reported as unknown. */
-  private readonly unknownTypes = new Set<string>();
-
-  /** Page ids a link or a `navigate` step names, checked once every page exists. */
-  private readonly pageRefs: { ref: string; where: string }[] = [];
-
-  /** Every route a page answers at, with who it is for — two pages on one of these would shadow each other. */
-  private readonly routes = new Map<string, string>();
-
-  /** What each template may read — see `TemplateScope`. */
-  private readonly templates: TemplateScope;
-
-  /** The route params each page declares, by its id. A layout renders on all of them, so it sees them all. */
-  private readonly routeParams = new Map<string, string[]>();
-  private readonly layoutRouteParams: string[];
 
   constructor(
     private readonly spec: SpaceSpec,
     private readonly options: AuthorSpaceOptions = {}
-  ) {
-    const layoutIds = new Set((spec.layouts ?? []).map(layout => layout.id));
-    const flat = this.flatMap.flat;
-    this.templates = new TemplateScope(
-      this.sources,
-      new Set((spec.schemaVariables ?? []).map(variable => variable.name)),
-      id => Object.hasOwn(flat, id) && layoutIds.has(flat[id].definition.rootId),
-      options.sourceTypes !== undefined,
-      Object.keys(spec.computed ?? {})
-    );
-    this.layoutRouteParams = [...new Set(spec.pages.flatMap(page => getSlugParams(page.slug)))];
-  }
+  ) {}
 
   author(): AuthoredSpace {
     this.assertSpaceShape();
@@ -233,7 +168,7 @@ class SpaceAuthor {
 
     this.assertAncestorClasses();
 
-    this.assertComputed();
+    this.assertComputedOnce();
     const pageFolders = this.buildPageFolders();
     layouts.forEach(layout => this.addLayout(layout));
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
@@ -241,8 +176,6 @@ class SpaceAuthor {
     // declared further down.
     layouts.forEach(layout => this.assertLayoutRef(layout.layout, `Layout "${layout.id}"`));
     this.spec.pages.forEach(page => this.assertLayoutRef(page.layout, `Page "${page.name}"`));
-    this.assertCallbacksAnswered();
-    this.assertPageRefs(pages);
     if (pages.length === 0) {
       throw new Error(
         'The space has no pages. Write at least one: `pages: [{ id: "home", name: "Home", slug: "", body: [] }]`.'
@@ -279,48 +212,30 @@ class SpaceAuthor {
     //
     // `FlatMap.assertValid` is deliberately not also called here: it validates the flat map with no pages
     // attached, which is a strictly weaker reading of the same document than the pair below.
-    const warnings = assertSpaceValid({ schema, style }, `authored space "${this.spec.permanentUrl}"`, {
-      sourceTypes: this.options.sourceTypes
-    });
+    const warnings = assertSpaceValid({ schema, style }, `authored space "${this.spec.permanentUrl}"`, this.options);
 
     return {
       schema,
       style,
       handles: buildHandles(this.handles, this.layoutHandles),
-      warnings: [...this.stepWarnings, ...this.styleWarnings, ...warnings]
+      warnings: [...this.styleWarnings, ...warnings]
     };
   }
 
   /**
-   * A step has to name something that exists, and this is the only place that can tell.
-   *
-   * The runtime resolves a global callback as `callbacksAvailables[<on>][<action>]`, and neither half is checkable
-   * by looking at the document: they are two strings. When they name nothing, the control they are attached to
-   * simply does nothing — no error, no warning, no failed request. That is how three auth builders shipped writing
-   * `authLogin` at a runtime that had registered `login`.
-   *
-   * Refused only when the vocabulary can PROVE it wrong — a known action on the wrong module, a known utility given
-   * one. An action the catalog has never heard of is a warning instead, because a plugin may register a module of
-   * its own and this process cannot see it.
-   *
-   * A trigger is held to the element it is declared on, when that is a built-in type: the vocabulary says every
-   * event such a type fires. A plugin's type publishes its own, and element callbacks and tasks belong to an element
-   * or a server this process cannot see, so those are left alone.
+   * The flows' own shape, before they are written: a flow that has steps, and steps that are step specs. What the
+   * steps MEAN — the module a callback runs on, the params it takes, the trigger that starts it — is read from the
+   * written document by `lintSpace`, the gate every space goes through.
    */
-  private assertStepsKnown(flows: StepSpec[][] | undefined, where: string, type: string, hostId: string): void {
-    const vocabulary = this.options.vocabulary;
-    if (!flows) {
-      return;
-    }
-
-    for (const steps of flows) {
-      if (steps.length === 0 || steps[0].type !== 'trigger') {
+  private assertFlowShapes(flows: StepSpec[][] | undefined, where: string): void {
+    for (const steps of flows ?? []) {
+      // An empty flow is written as nothing at all: the declaration would vanish from the document without a word.
+      if (steps.length === 0) {
         throw new Error(
-          `${where} has a flow that does not start with its trigger. A flow is a list whose first step says WHEN it runs: \`[onClick(), setState({ … })]\`.`
+          `${where} has an empty flow. A flow is a list whose first step says WHEN it runs: \`[onClick(), setState({ … })]\`.`
         );
       }
 
-      const stepIds = new Set(steps.map(step => step.id).filter((id): id is string => id !== undefined));
       for (const step of steps) {
         assertKnownKeys(
           step,
@@ -328,47 +243,6 @@ class SpaceAuthor {
           `${where}: a step`,
           ' Build steps with the step builders — `setState(…)`, `navigate(…)`.'
         );
-        assertOneOf(step.type, STEP_TYPES, `${where}: step "${step.action}"`, 'type');
-        this.collectNavigateRef(step, where);
-        // This check needs no runtime vocabulary: the document itself says it is addressing the built-in state
-        // source. Keep it available to the lower-level schema entry point as well as the composed SDK surface.
-        if (step.type === 'globalCallback' && step.on === 'state') {
-          this.warnStatePaths(step, where);
-        }
-
-        if (step.type !== 'trigger') {
-          this.assertFlowSourcesInFull(step, stepIds, where);
-        }
-
-        if (!vocabulary) {
-          continue;
-        }
-
-        if (step.type === 'globalCallback') {
-          this.assertGlobalCallback(step, vocabulary, where);
-          const declared = Object.hasOwn(vocabulary.globalCallbacks, step.action)
-            ? vocabulary.globalCallbacks[step.action]
-            : undefined;
-          if (declared) {
-            assertParams(step.params, declared, `${where}: step "${step.action}"`);
-          }
-        }
-
-        // A trigger naming another element (`on`) fires on that one, which is its own business.
-        if (step.type === 'trigger' && step.on === undefined && vocabulary.triggers) {
-          this.assertTriggerFired(step, type, vocabulary.triggers, where);
-        }
-
-        if (step.type === 'callback' && vocabulary.callbacks) {
-          this.callbackSteps.push({ action: step.action, target: step.on ?? hostId, where });
-        }
-
-        if (step.type === 'utility') {
-          this.assertUtility(step, vocabulary, where);
-          if (Object.hasOwn(vocabulary.utilities, step.action)) {
-            assertParams(step.params, vocabulary.utilities[step.action], `${where}: step "${step.action}"`);
-          }
-        }
       }
     }
   }
@@ -388,173 +262,6 @@ class SpaceAuthor {
     );
 
     return owner ?? spec.type;
-  }
-
-  /**
-   * A source read INSIDE a flow has to be named in full: `{{ list_jobRows.item.id }}`, not `{{ jobRows.item.id }}`.
-   *
-   * A binding's source is a name this module completes — `jobRows.item` becomes `list_jobRows.item` — so the short
-   * form is the one an author learns first. A step's params are templates the runtime resolves against the flow
-   * scope as written, and there the short form names nothing: the token renders empty, the button posts a blank
-   * id, and every layer below reports success. Refused with the name it should have been, rather than rewritten,
-   * because a template is the author's text and a token inside it can be anything twig allows.
-   *
-   * A root that is also a step of the same flow is that step's result, and is left alone.
-   */
-  private assertFlowSourcesInFull(step: StepSpec, stepIds: Set<string>, where: string): void {
-    const texts: string[] = [];
-    const collect = (value: unknown): void => {
-      if (typeof value === 'string') {
-        texts.push(value);
-      } else if (Array.isArray(value)) {
-        value.forEach(collect);
-      } else if (typeof value === 'object' && value !== null) {
-        Object.values(value).forEach(collect);
-      }
-    };
-    collect(step.params);
-
-    for (const template of texts) {
-      this.templates.assertTemplate(template, `${where}: step "${step.id ?? step.action}"`);
-      for (const [, expression = ''] of template.matchAll(/\{\{([\s\S]*?)\}\}/g)) {
-        for (const [, , root = ''] of expression.matchAll(/(^|[^\w.$-])([A-Za-z_][\w-]*)\.[A-Za-z_]/g)) {
-          const prefix = this.sources.get(root);
-          if (prefix && !stepIds.has(root)) {
-            throw new Error(
-              `${where}: step "${step.id ?? step.action}" reads "{{ ${expression.trim()} }}". Inside a flow a source is named in full — write "${prefix}_${root}" where it says "${root}". (A binding completes the prefix; a flow's templates are read as written.)`
-            );
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Refused rather than warned: a trigger its element never fires is a flow that is saved, looks right beside the
-   * element it was meant for, and never runs — there is no reading of it that works. The error names the types that
-   * DO fire it, because the usual mistake is one element off: `onSubmit` on the submit button, not the form.
-   */
-  private assertTriggerFired(
-    step: StepSpec,
-    type: string,
-    triggers: Record<string, readonly string[]>,
-    where: string
-  ): void {
-    const fired = Object.hasOwn(triggers, type) ? triggers[type] : undefined;
-    if (!fired || fired.includes(step.action)) {
-      return;
-    }
-
-    const firedBy = Object.keys(triggers).filter(candidate => triggers[candidate].includes(step.action));
-    const hint = firedBy.length
-      ? ` It is fired by ${firedBy.map(candidate => `"${candidate}"`).join(', ')}: declare the flow on that element.`
-      : ` No built-in element fires it${didYouMean(step.action, fired) || '.'}`;
-
-    throw new Error(`${where} starts a flow on "${step.action}", which a "${type}" never fires.${hint}`);
-  }
-
-  /**
-   * An element callback runs on the element it names, and a built-in type says which ones it answers to.
-   *
-   * Refused for the reason a trigger is: `openModal` sent to a plain container is a button that does nothing, saved
-   * and reported nowhere. A target that is missing is the validator's to report, and one of a plugin's type is left
-   * alone — that type registers callbacks nobody here can see.
-   */
-  private assertCallbacksAnswered(): void {
-    const callbacks = this.options.vocabulary?.callbacks;
-    if (!callbacks) {
-      return;
-    }
-
-    for (const { action, target, where } of this.callbackSteps) {
-      const type = (this.flatMap.flat[target] as Element | undefined)?.definition.type;
-      const answered = type !== undefined && Object.hasOwn(callbacks, type) ? callbacks[type] : undefined;
-      if (!answered || answered.includes(action)) {
-        continue;
-      }
-
-      const answeredBy = Object.keys(callbacks).filter(candidate => callbacks[candidate].includes(action));
-      const hint = answeredBy.length
-        ? ` It is a callback of ${answeredBy.map(candidate => `"${candidate}"`).join(', ')}: aim it at one of those.`
-        : ` No built-in element answers to it${didYouMean(action, answered) || '.'}`;
-
-      throw new Error(`${where} sends "${action}" to "${target}", a "${type}" that never answers to it.${hint}`);
-    }
-  }
-
-  private assertGlobalCallback(step: StepSpec, vocabulary: StepVocabulary, where: string): void {
-    const declared = vocabulary.globalCallbacks[step.action] as { source: string } | undefined;
-    if (!declared) {
-      this.stepWarnings.push({
-        code: 'unknown-global-callback',
-        message: `${where} runs the global callback "${step.action}", which no built-in source declares. It resolves at run time only if something registers it — a plugin, or a module this space brings itself.`,
-        details: { action: step.action, on: step.on }
-      });
-
-      return;
-    }
-
-    // A global callback registers under its source MODULE, never under the element hosting the flow — and a step
-    // with no target at all is written into the document as `elementId: null`, which resolves to nothing.
-    if (step.on !== declared.source) {
-      throw new Error(
-        `${where} runs the global callback "${step.action}" on ${step.on === undefined ? 'no module' : `"${step.on}"`}, but it is registered on "${declared.source}". A global callback names the module that registered it, never the element the flow sits on — the step builders fill this in.`
-      );
-    }
-  }
-
-  /**
-   * State callbacks already operate below `runtime.state`.
-   *
-   * Keeping this a warning deliberately preserves the document exactly as authored: a nested `state` object is
-   * possible, even though `key: 'state.genre'` is overwhelmingly a confused binding source rather than an
-   * intentional request for `runtime.state.state.genre`. An agent gets the correction at author time without a
-   * migration or a changed runtime meaning for existing spaces.
-   */
-  private warnStatePaths(step: StepSpec, where: string): void {
-    const pathParams: Record<string, string[]> = {
-      setState: ['key'],
-      toggleState: ['key'],
-      appendState: ['key'],
-      removeState: ['key'],
-      toggleInState: ['key'],
-      clearState: ['key'],
-      moveState: ['from', 'to']
-    };
-    const params = pathParams[step.action] ?? [];
-
-    for (const param of params) {
-      const value = step.params?.[param];
-      if (typeof value !== 'string' || !/^(?:runtime\.)?state\./.test(value)) {
-        continue;
-      }
-
-      const bare = value.replace(/^(?:runtime\.)?state\./, '');
-      this.stepWarnings.push({
-        code: 'state-key-has-runtime-prefix',
-        message: `${where} passes "${value}" as ${param} to state.${step.action}. State callbacks already write below \`runtime.state\`; use "${bare}" instead, unless you intentionally need \`runtime.state.${value}\`.`,
-        details: { action: step.action, param, value, suggested: bare }
-      });
-    }
-  }
-
-  private assertUtility(step: StepSpec, vocabulary: StepVocabulary, where: string): void {
-    if (!Object.hasOwn(vocabulary.utilities, step.action)) {
-      this.stepWarnings.push({
-        code: 'unknown-utility',
-        message: `${where} runs the utility "${step.action}", which is not one of the built-in utilities.`,
-        details: { action: step.action }
-      });
-
-      return;
-    }
-
-    // The one kind of step where naming a target is the mistake: the runtime resolves a utility by action alone.
-    if (step.on !== undefined) {
-      throw new Error(
-        `${where} runs the utility "${step.action}" on "${step.on}". A utility is resolved by its action alone and takes no module — drop the \`on\`.`
-      );
-    }
   }
 
   private writeElementDefaults(type: string, spec: ElementStyleSpec): void {
@@ -899,28 +606,12 @@ class SpaceAuthor {
       const where = `Page "${page.name}"`;
       assertKnownKeys(page, PAGE_SPEC_KEYS, where);
       assertId(page.id, where);
-      assertOneOf(page.accessLevel, ACCESS_LEVELS, where, 'accessLevel');
       if (typeof page.slug !== 'string') {
         throw new Error(
           `${where} has no \`slug\`. The home page's is '' and every other page's is its path: 'about', 'blog/{{slug}}'.`
         );
       }
     }
-
-    this.warnColoursWithoutDark();
-  }
-
-  /** Two pages for the same visitor at one address: the router takes one and the other can never be reached. */
-  private assertRouteFree(page: PageSpec): void {
-    const key = `${this.routeFor(page)} ${page.accessLevel ?? 'everyone'}`;
-    const earlier = this.routes.get(key);
-    if (earlier !== undefined) {
-      throw new Error(
-        `Page "${page.name}" answers at ${this.routeFor(page)} for the same visitors as page "${earlier}", so one of them can never be reached. Give it another slug — or, for a sign-in page and the page behind it, \`accessLevel\` 'public' on one and 'authenticated' on the other.`
-      );
-    }
-
-    this.routes.set(key, page.name);
   }
 
   /** An element spec's own fields, before any of them is used. */
@@ -950,264 +641,17 @@ class SpaceAuthor {
     }
 
     assertId(spec.id, where);
-    assertOneOf(spec.runtime, RUNTIMES, where, 'runtime');
-    assertOneOf(spec.loadStrategy, LOAD_STRATEGIES, where, 'loadStrategy');
   }
 
   /**
-   * An attribute's value against what its element takes: one of the values of an enumerated attribute, and the same
-   * kind of value its default is where that decides how the component reads it — a list for a list, a flag for a flag.
-   * A template (`{{ … }}`) is resolved at run time, so it is left to the template checks.
+   * The space's computed values are written once, under `computed` — the same map in `settings` as well would leave
+   * two answers to one question. What they say is `lintSpace`'s to read.
    */
-  private assertAttributeValues(spec: ElementSpec, where: string): void {
-    const enums = this.options.attributeValues?.[spec.type] ?? {};
-    const defaults = this.options.defaultAttributes?.[spec.type] ?? {};
-    for (const [name, value] of Object.entries(spec.attributes ?? {})) {
-      if (value === undefined || (typeof value === 'string' && hasValidToken(value))) {
-        continue;
-      }
-
-      if (Object.hasOwn(enums, name)) {
-        assertOneOf(value, enums[name], where, name);
-      }
-
-      const fallback = defaults[name];
-      const wrongList = Array.isArray(fallback) && !Array.isArray(value);
-      const wrongFlag = typeof fallback === 'boolean' && typeof value !== 'boolean';
-      if (wrongList || wrongFlag) {
-        throw new Error(
-          `${where}: \`${name}\` is ${JSON.stringify(value)}, and a "${spec.type}" reads it as ${wrongList ? 'a list — write an array, or bind it' : 'true or false — write the boolean, not text'}.`
-        );
-      }
-    }
-  }
-
-  /** Every transformer a binding runs has to exist, and to be handed only the params it takes. */
-  private assertTransformers(bindings: BindingSpec[] | undefined, where: string): void {
-    const catalog = this.options.transformers;
-    if (!catalog) {
-      return;
-    }
-
-    for (const binding of bindings ?? []) {
-      for (const transformer of binding.transformers ?? []) {
-        const at = `${where}: the binding of "${binding.to}"`;
-        assertKnownKeys(transformer, ['action', 'params', 'enabled'], `${at}, a transformer`);
-        if (!Object.hasOwn(catalog, transformer.action)) {
-          const names = Object.keys(catalog);
-          throw new Error(
-            `${at} runs the transformer "${transformer.action}", which does not exist${didYouMean(transformer.action, names) || '.'} The transformers are ${names.join(', ')}.`
-          );
-        }
-
-        // A flag param is offered as the words 'true'/'false' and the runtime reads a real boolean the same way.
-        const params = Object.fromEntries(
-          Object.entries(transformer.params).map(([key, value]) => [
-            key,
-            typeof value === 'boolean' ? String(value) : value
-          ])
-        );
-        assertParams(params, catalog[transformer.action], `${at}, transformer "${transformer.action}"`);
-      }
-    }
-  }
-
-  /** A controlled list renders one row per item — with neither items written nor items bound, it renders nothing. */
-  private assertListFed(spec: ElementSpec, bindings: BindingSpec[] | undefined, where: string): void {
-    const { source, items } = spec.attributes ?? {};
-    if (spec.type !== 'list' || source !== 'controlled') {
-      return;
-    }
-
-    const bound = bindings?.some(binding => binding.to === 'items');
-    if (!bound && (!Array.isArray(items) || items.length === 0)) {
-      throw new Error(
-        `${where} is a controlled list with no items: it renders one row per item and would render none. Write \`items: [ … ]\`, or bind them: \`bind: { items: 'catalog.data.games' }\`.`
-      );
-    }
-  }
-
-  /**
-   * Declarations that render, and render something other than what they plainly mean. Warnings, because each has a
-   * rare legitimate reading: an element type a plugin brings, a modal meant to greet the visitor, a provider that only
-   * holds builder data.
-   */
-  private warnElementIntent(spec: ElementSpec, bindings: BindingSpec[] | undefined, where: string): void {
-    const catalog = this.options.attributeNames;
-    const unknownType = catalog && !Object.hasOwn(catalog, spec.type) && !this.options.pluginTypes?.includes(spec.type);
-    // Once per type: a card repeated on twelve pages is one thing to fix, not twelve.
-    if (unknownType && !this.unknownTypes.has(spec.type)) {
-      this.unknownTypes.add(spec.type);
-      this.stepWarnings.push({
-        code: 'unknown-element-type',
-        message: `${where} is a "${spec.type}", which is not a built-in type${didYouMean(spec.type, Object.keys(catalog)) || '.'} It renders only if a plugin registers it: name it in \`authorSpace(space, { pluginTypes: ['${spec.type}'] })\`, or host your component with \`custom({ renderType: '${spec.type}' })\`.`,
-        details: { type: spec.type }
-      });
-    }
-
-    const overlay = spec.type === 'modalContainer' || spec.type === 'dialogContainer';
-    if (overlay && spec.visible === undefined && !hasVisibilityBinding(bindings)) {
-      this.stepWarnings.push({
-        code: 'overlay-starts-open',
-        message: `${where} is shown when the page loads, over everything else. Declare it \`visible: false\` and open it from a flow: \`openModal('${spec.id ?? 'modal'}')\`.`,
-        details: { type: spec.type }
-      });
-    }
-
-    const { query, action, resource, mockData } = spec.attributes ?? {};
-    const asks = [query, action, resource].some(value => typeof value === 'string' && value !== '');
-    const boundToAsk = bindings?.some(binding => ['query', 'action', 'resource'].includes(binding.to));
-    const mocked = typeof mockData === 'string' ? mockData !== '' && mockData !== '{}' : mockData !== undefined;
-    if (spec.type === 'apiContainer' && !asks && !boundToAsk && !mocked) {
-      this.stepWarnings.push({
-        code: 'provider-without-source',
-        message: `${where} asks nothing: it has no \`query\`, \`action\` or \`resource\`, so everything bound to it stays empty. Give it one — \`query: '/data/games.json'\`.`,
-        details: {}
-      });
-    }
-  }
-
-  /**
-   * A `link` whose `mode` is `page` names a page by id — held until every page exists. A path (`/about`) is read as
-   * the path it is; a full URL there renders as a path inside the space (`/https://…`), so it is refused at once.
-   */
-  private collectPageRef(spec: ElementSpec, where: string): void {
-    const { href, mode } = spec.attributes ?? {};
-    if (spec.type === 'link' && (mode ?? 'page') === 'page' && typeof href === 'string') {
-      this.collectPageTarget(href, `${where}: its \`href\``, 'mode');
-    }
-  }
-
-  /** A `navigate` step to a page, the same way. */
-  private collectNavigateRef(step: StepSpec, where: string): void {
-    const { urlType, url } = step.params ?? {};
-    if (step.action === 'navigate' && urlType === 'page' && typeof url === 'string') {
-      this.collectPageTarget(url, `${where}: step "navigate"`, 'urlType');
-    }
-  }
-
-  private collectPageTarget(target: string, where: string, field: 'mode' | 'urlType'): void {
-    if (target === '' || target.startsWith('#') || target.startsWith('/') || hasTemplateSyntax(target)) {
-      return;
-    }
-
-    if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
-      throw new Error(
-        `${where} is "${target}", a full URL, in page mode — it would render as a path inside the space. Write \`${field}: 'external'\` for it.`
-      );
-    }
-
-    this.pageRefs.push({ ref: target, where });
-  }
-
-  private assertPageRefs(pageIds: readonly string[]): void {
-    for (const { ref, where } of this.pageRefs) {
-      if (pageIds.includes(ref)) {
-        continue;
-      }
-
-      throw new Error(
-        `${where} names the page "${ref}", and no page has that id${didYouMean(ref, pageIds) || '.'} A page is named by its \`id\`; a path is written with its leading slash ('/about').`
-      );
-    }
-  }
-
-  /**
-   * A colour token with a light value and no dark one: every theme but the light one gets the light value, which is
-   * how a near-black text ends up on a near-black background.
-   */
-  private warnColoursWithoutDark(): void {
-    const colours: Record<string, unknown> = { ...this.spec.variables?.color };
-    for (const [name, value] of Object.entries(colours)) {
-      if (typeof value === 'object' && value !== null && 'light' in value && !('dark' in value)) {
-        this.styleWarnings.push({
-          code: 'colour-without-dark',
-          message: `The colour "${name}" has a light value and no dark one, so a dark theme shows the light value. Give it both: \`${name}: { light: '…', dark: '…', default: '…' }\`.`,
-          details: { name }
-        });
-      }
-    }
-  }
-
-  /**
-   * The space's computed values: a name a template can say (`computed.xp`), a template the interpreter reads in full,
-   * reading only globals, variables and the values above it. Written once, under `computed` — the same map in
-   * `settings` as well would leave two answers to one question.
-   */
-  private assertComputed(): void {
-    const computed = this.spec.computed ?? {};
+  private assertComputedOnce(): void {
     if (this.spec.settings?.computed !== undefined) {
       throw new Error(
         '`settings.computed` is written through `computed` at the top of the space, not inside `settings`.'
       );
-    }
-
-    const declared: string[] = [];
-    for (const [name, template] of Object.entries(computed)) {
-      const where = `Computed value "${name}"`;
-      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
-        throw new Error(
-          `${where} is not a name a template can read as \`computed.${name}\`. Use letters, digits and "_", starting with a letter: "${name.replace(/[^A-Za-z0-9_]/g, '_')}".`
-        );
-      }
-
-      if (typeof template !== 'string' || !template.includes('{{')) {
-        throw new Error(
-          `${where} is ${JSON.stringify(template)}. A computed value is a template: '{{ state.x * 2 }}'.`
-        );
-      }
-
-      this.templates.assertTemplate(template, where, { kind: 'computed', earlier: [...declared] });
-      declared.push(name);
-    }
-  }
-
-  /**
-   * Every binding template, read the way the runtime will read it — see `TemplateScope`.
-   *
-   * A source inside a template is named in full (\`{{ apiContainer_stats.data.total }}\`): the binding's own \`source\`
-   * is completed for you, which is exactly why the short name looks right inside its template as well. Read as
-   * written, it resolves to nothing and the element renders whatever the empty branch says.
-   */
-  private assertBindingTemplates(
-    bindings: BindingSpec[] | undefined,
-    where: string,
-    ancestors: ReadonlySet<string>
-  ): void {
-    for (const binding of bindings ?? []) {
-      for (const transformer of binding.transformers ?? []) {
-        const template: unknown = transformer.params.template;
-        if (transformer.action === 'twigTemplate' && typeof template === 'string') {
-          this.templates.assertTemplate(
-            template,
-            `${where}: a binding of "${binding.to}"`,
-            { kind: 'binding' },
-            ancestors
-          );
-        }
-      }
-    }
-  }
-
-  /**
-   * An attribute's \`{{ token }}\`, held to what the attribute will see when it renders: the sources around the element,
-   * the globals, the space's variables and the route params of its page.
-   */
-  private assertAttributeTokens(
-    spec: ElementSpec,
-    where: string,
-    rootId: string,
-    ancestors: ReadonlySet<string>
-  ): void {
-    if (PROSE_TYPES.has(spec.type)) {
-      return;
-    }
-
-    const routeParams = this.routeParams.get(rootId) ?? this.layoutRouteParams;
-    for (const [name, value] of Object.entries(spec.attributes ?? {})) {
-      if (typeof value === 'string' && hasValidToken(value)) {
-        this.templates.assertTemplate(value, `${where}: its "${name}"`, { kind: 'attribute', routeParams }, ancestors);
-      }
     }
   }
 
@@ -1224,78 +668,6 @@ class SpaceAuthor {
     }
 
     return ancestors;
-  }
-
-  /**
-   * Children written into a type that holds none.
-   *
-   * Its component renders its own attributes and never reads \`children\`, so they are dropped at render time — a
-   * heading with two texts in it renders the word "Heading". Refused, with where parts of one line do belong.
-   */
-  private assertChildrenHeld(spec: ElementSpec, where: string): void {
-    if (!spec.children?.length || !this.options.leafTypes?.includes(spec.type)) {
-      return;
-    }
-
-    const heading =
-      spec.type === 'heading'
-        ? ` For a heading made of parts — a word in another colour, an icon — use \`container({ subType: '${typeof spec.attributes?.subType === 'string' ? spec.attributes.subType : 'h1'}', children })\`.`
-        : ' Put the children in a `container` beside it, or wrap both in one.';
-
-    throw new Error(
-      `${where} has ${spec.children.length} ${spec.children.length === 1 ? 'child' : 'children'}, but a "${spec.type}" holds none: it renders its own attributes and drops anything nested in it.${heading}`
-    );
-  }
-
-  /**
-   * A template feeding an attribute that holds a list or an object — a list's \`items\`.
-   *
-   * A template renders TEXT unless it is told to hand over its value, so \`{{ source|filter(…) }}\` reached the list as
-   * JSON written out, and a list keeps only arrays: it rendered nothing. \`returnMode: 'value'\` hands over the array.
-   */
-  private assertValueBindings(type: string, bindings: BindingSpec[] | undefined, where: string): void {
-    const defaults = this.options.defaultAttributes?.[type];
-    for (const binding of bindings ?? []) {
-      const declared = defaults?.[binding.to];
-      const last = binding.transformers?.at(-1);
-      if (
-        (binding.category ?? 'attributes') !== 'attributes' ||
-        typeof declared !== 'object' ||
-        declared === null ||
-        last?.action !== 'twigTemplate' ||
-        last.params.returnMode === 'value'
-      ) {
-        continue;
-      }
-
-      throw new Error(
-        `${where} binds "${binding.to}" through a template, which renders text — and "${binding.to}" holds ${Array.isArray(declared) ? 'a list' : 'an object'}. Give the transformer \`returnMode: 'value'\` (\`bindTemplate('${binding.to}', source, template, { returns: 'value' })\`) so a single \`{{ expression }}\` hands over the value itself.`
-      );
-    }
-  }
-
-  /**
-   * A default \`content\` rendered beside children the author wrote: "Button" printed next to "Launch", and taken as
-   * part of the button's name. A warning, because content and children together is a real shape — an icon after a
-   * label — just not with the placeholder word.
-   */
-  private warnDefaultContent(spec: ElementSpec, bindings: BindingSpec[] | undefined, where: string): void {
-    const fallback = this.options.defaultAttributes?.[spec.type]?.content;
-    if (
-      !spec.children?.length ||
-      typeof fallback !== 'string' ||
-      fallback === '' ||
-      spec.attributes?.content !== fallback ||
-      bindings?.some(binding => binding.to === 'content')
-    ) {
-      return;
-    }
-
-    this.stepWarnings.push({
-      code: 'default-content-beside-children',
-      message: `${where} has children and still its default content "${fallback}", which renders beside them. Set \`content: ''\` to show only the children, or put the words in \`content\`.`,
-      details: { type: spec.type, content: fallback }
-    });
   }
 
   /**
@@ -1380,8 +752,7 @@ class SpaceAuthor {
   private addPage(page: PageSpec, index: number): string {
     const path = this.pathFor(page, index);
     const id = page.id ?? this.nextId('page');
-    this.assertStepsKnown(page.flows, `Page "${page.name}"`, 'page', id);
-    this.assertRouteFree(page);
+    this.assertFlowShapes(page.flows, `Page "${page.name}"`);
     if (page.folder !== undefined && !this.folderPrefixes.has(page.folder)) {
       throw new Error(
         `Page "${page.name}" is in folder "${page.folder}", which this space does not declare${didYouMean(page.folder, [...this.folderPrefixes.keys()])}`
@@ -1434,7 +805,6 @@ class SpaceAuthor {
       elements: {}
     };
 
-    this.routeParams.set(id, getSlugParams(page.slug));
     page.body.forEach((child, childIndex) => this.addElement(child, `${path}/${childIndex}`, id, id));
 
     return id;
@@ -1450,7 +820,7 @@ class SpaceAuthor {
   private addLayout(layout: LayoutSpec): void {
     const path = `${this.spec.permanentUrl}/layout:${layout.id}`;
     const where = `Layout "${layout.id}"`;
-    this.assertStepsKnown(layout.flows, where, 'layoutContainer', layout.id);
+    this.assertFlowShapes(layout.flows, where);
     if (layout.folder && !this.folderPrefixes.has(layout.folder)) {
       throw new Error(
         `${where} is filed in folder "${layout.folder}", which this space does not declare${didYouMean(layout.folder, [...this.folderPrefixes.keys()])}`
@@ -1458,7 +828,6 @@ class SpaceAuthor {
     }
 
     const bindings = withVisibility({ bind: layout.bind });
-    this.assertBindingTemplates(bindings, where, new Set());
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
     const element: Element = {
       id: layout.id,
@@ -1565,107 +934,6 @@ class SpaceAuthor {
     }
   }
 
-  /**
-   * A sub-element that reads its parent's context — a dropdown's panel, a tab container's parts — throws on its
-   * first render anywhere else, taking the page down with it. Refused here, where the error can say where it belongs.
-   */
-  private assertInsideAncestor(type: string, parentId: string, where: string): void {
-    const ancestorTypes = this.options.ancestorTypes;
-    const ancestor = ancestorTypes && Object.hasOwn(ancestorTypes, type) ? ancestorTypes[type] : undefined;
-    if (!ancestor) {
-      return;
-    }
-
-    for (let id: string | undefined = parentId; id;) {
-      const element = this.flatMap.flat[id] as Element | undefined;
-      if (element?.definition.type === ancestor) {
-        return;
-      }
-
-      id = element?.definition.parentId;
-    }
-
-    throw new Error(`${where} only works inside a "${ancestor}": it reads that element's state. Nest it in one.`);
-  }
-
-  /**
-   * An attribute its component never reads renders nothing and says nothing — a `content` on a `dropdown`, whose
-   * label is a child. A warning, because a plugin's type or a newer element may read what this catalog has not heard of.
-   */
-  /**
-   * A template the runtime will never resolve, left in an attribute.
-   *
-   * An attribute is resolved only when it carries a TOKEN — a name, with filters: \`{{ post.slug }}\`,
-   * \`{{ redirect|url_encode }}\` — because attributes are where prose lives, and a stray brace in a sentence must not
-   * be evaluated. So a condition, a test or a \`{% %}\` block on its own is used as written: a link to
-   * \`/x/{{ on ? 'a' : 'b' }}\`, a class named after the template. A binding's template is where an expression
-   * belongs; there it is evaluated in full. (A step's params are templates by construction and resolve whatever they
-   * hold.)
-   */
-  private warnUnresolvedTemplates(values: unknown, where: string): void {
-    for (const value of stringsIn(values)) {
-      if (!hasTemplateSyntax(value) || hasValidToken(value)) {
-        continue;
-      }
-
-      this.stepWarnings.push({
-        code: 'template-never-resolved',
-        message: `${where} carries "${value.length > 80 ? `${value.slice(0, 77)}…` : value}", which is never resolved: an attribute only reads a name with filters (\`{{ post.slug|upper }}\`). Move the expression into a binding's \`twigTemplate\`, where it is evaluated in full.`,
-        details: { value }
-      });
-    }
-  }
-
-  /**
-   * A condition computed from data, on an element that starts on screen.
-   *
-   * Until its provider answers, the template has nothing to decide on and the element is drawn — then hidden a moment
-   * later. That is the flash of an empty state, or of a "get started" card for somebody who did everything, on every
-   * load. \`visible: false\` starts it hidden, and the template then shows it. A plain binding to one value is left
-   * alone: an element shown until a flag says otherwise is a real and common shape.
-   */
-  private warnConditionStartsVisible(bindings: BindingSpec[] | undefined, where: string): void {
-    const computed = bindings?.some(
-      binding =>
-        binding.to === 'visibility' &&
-        binding.category === 'initialState' &&
-        !SETTLED_SOURCES.has(binding.source.split('.')[0]) &&
-        binding.transformers?.some(transformer => transformer.action === 'twigTemplate')
-    );
-    if (!computed) {
-      return;
-    }
-
-    this.stepWarnings.push({
-      code: 'condition-starts-visible',
-      message: `${where} computes its visibility from data but starts on screen, so it is drawn until the data answers and then hidden. Add \`visible: false\` so it waits hidden, and let the template answer 'false' until its source arrives.`,
-      details: {}
-    });
-  }
-
-  private assertKnownAttributes(spec: ElementSpec, where: string): void {
-    const catalog = this.options.attributeNames;
-    const names = catalog && Object.hasOwn(catalog, spec.type) ? catalog[spec.type] : null;
-    if (!names) {
-      return;
-    }
-
-    for (const name of Object.keys(spec.attributes ?? {})) {
-      if (names.includes(name)) {
-        continue;
-      }
-
-      // A built-in type's attributes are known exactly — the catalog is the component's own props — so an attribute
-      // outside them is one the component never reads: it would be written, and do nothing.
-      const trigger = /^on[A-Z]/.test(name)
-        ? ` What happens on an event is a flow: \`flows: [[${name}(), setState({ … })]]\`.`
-        : '';
-      throw new Error(
-        `${where} sets "${name}", which a "${spec.type}" never reads${didYouMean(name, names) || '.'}${trigger}${trigger ? '' : ` It reads ${names.join(', ')}.`}`
-      );
-    }
-  }
-
   private addElement(
     spec: ElementSpec,
     path: string,
@@ -1676,31 +944,11 @@ class SpaceAuthor {
     this.assertElementShape(spec, path);
     const id = spec.id ?? this.nextId(spec.type);
     const where = `Element "${spec.type}" (${id}) at ${path}`;
-    this.assertStepsKnown(spec.flows, where, spec.type, id);
-    this.assertInsideAncestor(spec.type, parentId, where);
-    this.assertKnownAttributes(spec, where);
-    if (!PROSE_TYPES.has(spec.type)) {
-      this.warnUnresolvedTemplates(spec.attributes, where);
-    }
-
+    this.assertFlowShapes(spec.flows, where);
     const bindings = withVisibility(spec);
     const conditional = insideCondition || spec.visible !== undefined || hasVisibilityBinding(bindings);
     const ancestors = this.ancestorsOf(parentId);
     bindings?.forEach(binding => assertBindingShape(binding, where));
-    this.assertTransformers(bindings, where);
-    this.assertAttributeValues(spec, where);
-    this.assertListFed(spec, bindings, where);
-    this.warnElementIntent(spec, bindings, where);
-    this.collectPageRef(spec, where);
-    this.assertChildrenHeld(spec, where);
-    this.assertBindingTemplates(bindings, where, ancestors);
-    this.assertAttributeTokens(spec, where, rootId, ancestors);
-    this.assertValueBindings(spec.type, bindings, where);
-    this.warnDefaultContent(spec, bindings, where);
-    if (spec.visible === undefined) {
-      this.warnConditionStartsVisible(bindings, where);
-    }
-
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
 
     const element: Element = {

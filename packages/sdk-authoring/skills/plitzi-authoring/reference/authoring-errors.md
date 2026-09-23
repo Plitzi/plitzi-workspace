@@ -17,6 +17,8 @@ it — the check exists because that declaration renders something other than wh
 | `the template … cannot be read as written` | a template with an operator, filter or function that does not exist, or broken syntax | see [templates](templates.md) for what exists; `matches` never does |
 | `reads "x", which nothing here answers to` | a name in a template that is not a source, a variable or a route param | the full source name (`list_rows.item`), `navigation.queryParams.x` for a query param, `source` for the bound value |
 | `is not around it` | a source read by an element that is not inside the element publishing it | move the element inside it, or share the value through `state` |
+| `lands on "x", which a "text" never reads` | a binding onto an attribute the element does not have — the value arrives and nothing shows it | one it lists (`content`); to follow data with a class, bind `styleSelectors.base` in `initialState` |
+| `no element answers to the name "x"` | a binding whose source names an element that does not exist | the id of the element that publishes it |
 | `renders text — and "items" holds a list` | a text template feeding a list | `bindTemplate('items', src, '{{ … }}', { returns: 'value' })` |
 | `does not start with its trigger` | a flow whose first step is not the event that runs it | `[onClick(), setState(…)]` |
 | `step "x" has the param "y"` / `"type" is "string"` | a step param that does not exist or a value outside its options | the params and values it lists |

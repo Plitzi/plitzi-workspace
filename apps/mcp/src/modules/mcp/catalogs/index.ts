@@ -33,7 +33,6 @@ export {
   expandShorthandPatch,
   getElementCallback,
   getGlobalCallback,
-  getTransformer,
   getUtility,
   hiddenParams,
   invalidParams,
@@ -42,7 +41,6 @@ export {
   reconcileParams,
   shorthandLonghands,
   suggestCssProperty,
-  suggestTransformer,
   transformerCatalog
 } from '@plitzi/sdk-authoring';
 export type {

@@ -2,9 +2,9 @@ import { applyOperations } from './apply/dispatch';
 import { environment, operations } from './operations';
 import { cloneSpace } from '../helpers';
 import { expandOperations } from './shared/expandOperations';
+import { lintDraft } from './shared/lintDraft';
 import { defineTool } from './shared/tool';
 import { validateOperations } from './shared/validator';
-import { auditResources } from './shared/validator/audit';
 
 import type { Space } from '../helpers';
 import type { Env, ValidateInput, ValidationResult } from '../types';
@@ -33,7 +33,7 @@ export const validate = (input: ValidateInput, space: Space): ValidationResult =
     return { valid: false, errors: outcome.errors, warnings: validation.warnings };
   }
 
-  const audit = auditResources(draft, ops);
+  const audit = lintDraft(draft, ops, space);
 
   return {
     valid: audit.errors.length === 0,

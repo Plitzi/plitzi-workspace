@@ -47,6 +47,22 @@
   the attribute template scope, the Twig subset, the filter list, trigger payloads, offline data, `isEmpty`,
   `loadStrategy` and `keepState`.
 
+## One linter for every writer
+
+- `lintSpace({ schema, style }, catalogs)` is the document linter everything is held to: `authorSpace` (through
+  `validateSpace`), `validateTemplate`, the MCP and the server's publish gate read a space with the same rules and the
+  same messages. The per-rule checks that `authorSpace` and the MCP each kept are gone.
+- New rule `binding-target-unknown`: a binding onto an attribute its element never reads (`data-*`, a misspelt name)
+  is refused — the value arrived and nothing showed it. `className` stays bindable.
+- The MCP lints the draft of every batch (`lintDraft`) and holds each element it touches to it; an issue already there
+  is labelled pre-existing. A binding onto an element that does not exist is now refused there too (the structural pass
+  runs with the source catalogue). Its own attribute and `{{ variable }}` checks for built-in types are gone — the lint
+  knows every attribute — so an unknown prop or an unknown variable is an error, not a warning.
+- Builder: a problems button in the header lists what is wrong with the saved space (re-read whenever the save queue
+  drains); each issue selects its element. Snapshot opens that list instead of publishing while there are errors, and
+  shows it when the server refuses a publish with `SPACE_INVALID`. New builder query `SpaceIssues` (`TSpaceIssue`,
+  `TSpaceIssues`).
+
 ## Runtime
 
 - Attribute `{{ tokens }}` resolve against every source around the element — a list row, a provider, `state`, `auth`,

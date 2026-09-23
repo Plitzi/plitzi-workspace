@@ -54,14 +54,20 @@ const rich: SpaceSpec = {
       layout: { id: 'shell', slot: 'slot' },
       css: { 'min-height': '100vh' },
       body: [
-        apiContainer({ id: 'posts', endpoint: '/posts' }),
-        heading('Hello', { subType: 'h1', bind: { content: 'posts.title' }, variant: 'title' }),
+        // What reads the provider sits inside it: its source reaches its descendants only.
+        apiContainer({
+          id: 'posts',
+          endpoint: '/posts',
+          children: [
+            heading('Hello', { subType: 'h1', bind: { content: 'posts.title' }, variant: 'title' }),
+            text('maybe', {
+              visible: '!posts.loading',
+              bind: [{ to: 'className', source: 'state.theme', transformers: [{ action: 'not', params: {} }] }]
+            })
+          ]
+        }),
         container({ class: card, children: [text('a')] }),
         container({ class: card, visible: false }),
-        text('maybe', {
-          visible: '!posts.loading',
-          bind: [{ to: 'className', source: 'state.theme', transformers: [{ action: 'not', params: {} }] }]
-        }),
         button('Go', {
           id: 'go',
           flows: [
@@ -105,21 +111,21 @@ describe('specFromSpace', () => {
     const body = spec.pages[0].body;
 
     expect(body[0].id).toBe('posts');
-    expect(body[1].id).toBeUndefined();
-    expect(body[1].bind).toEqual({ content: 'posts.title' });
+    expect(body[0].children?.[0].id).toBeUndefined();
+    expect(body[0].children?.[0].bind).toEqual({ content: 'posts.title' });
   });
 
   it('keeps every id when asked, for a space people keep working in', () => {
     const { spec } = specFromSpace(authorSpace(rich), { keepIds: true });
 
-    expect(spec.pages[0].body[1].id).toBe('heading-1');
+    expect(spec.pages[0].body[0].children?.[0].id).toBe('heading-1');
   });
 
   it('writes a selector one element uses into that element, and keeps a shared one as a class', () => {
     const { spec } = specFromSpace(authorSpace(rich));
 
     expect(spec.pages[0].css).toEqual({ 'min-height': '100vh' });
-    expect(spec.pages[0].body[2].class).toBe('card');
+    expect(spec.pages[0].body[1].class).toBe('card');
     expect(spec.classes?.card).toMatchObject({ states: { hover: { 'background-color': 'var(--accent)' } } });
     expect(spec.classes?.unused).toEqual({ color: 'red' });
   });
@@ -157,8 +163,8 @@ describe('specFromSpace', () => {
   it('reads visibility back into the field, both the condition and the starting state', () => {
     const { spec } = specFromSpace(authorSpace(rich));
 
-    expect(spec.pages[0].body[3].visible).toBe(false);
-    expect(spec.pages[0].body[4].visible).toBe('!posts.loading');
+    expect(spec.pages[0].body[2].visible).toBe(false);
+    expect(spec.pages[0].body[0].children?.[1].visible).toBe('!posts.loading');
   });
 
   it('refuses a document that names no space unless told which one it is', () => {

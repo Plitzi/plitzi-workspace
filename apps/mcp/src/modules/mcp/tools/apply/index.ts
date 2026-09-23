@@ -8,9 +8,9 @@ import { changedResources, conflictMessage, detectConflicts, resolvedElements } 
 import { cloneSpace } from '../../helpers';
 import { environment, operations } from '../operations';
 import { expandOperations } from '../shared/expandOperations';
+import { lintDraft } from '../shared/lintDraft';
 import { defineTool } from '../shared/tool';
 import { validateOperations } from '../shared/validator';
-import { auditResources } from '../shared/validator/audit';
 
 import type { Space } from '../../helpers';
 import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../../types';
@@ -111,7 +111,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
   // draft. A broken transformer / invalid CSS / malformed node already living in a touched element or definition
   // (not written by this batch) blocks the save until the agent fixes it too — the audit runs on the post-apply
   // draft, so the SAME batch may include the fix and pass. Its warnings ride along either way.
-  const audit = auditResources(draft, ops);
+  const audit = lintDraft(draft, ops, space);
   const warnings = [...validation.warnings, ...audit.warnings];
   if (audit.errors.length > 0) {
     return {

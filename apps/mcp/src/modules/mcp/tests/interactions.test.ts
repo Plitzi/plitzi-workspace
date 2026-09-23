@@ -9,6 +9,23 @@ import type { Operation } from '../tools';
 import type { AIElementDetail } from '../types';
 import type { ComponentCatalog } from '@plitzi/sdk-shared';
 
+// The trigger a hand-written flow starts with: a flow without one never runs, and the linter refuses it.
+const clickTrigger = (next: string) => ({
+  'onClick-1': {
+    id: 'onClick-1',
+    title: 'Click',
+    type: 'trigger' as const,
+    action: 'onClick',
+    params: {},
+    preview: {},
+    elementId: 'c1',
+    beforeNode: '',
+    afterNode: next,
+    flowId: 'onClick-1',
+    enabled: true
+  }
+});
+
 describe('mcp-ai interactions', () => {
   // Interactions are wired by the element's id, which is also how the flow is addressed here.
   const interactiveSpace = (): Space => buildSpace();
@@ -112,8 +129,8 @@ describe('mcp-ai interactions', () => {
       definition: {
         rootId: 'home',
         parentId: 'home',
-        label: 'Bare',
-        type: 'container',
+        label: 'Modal',
+        type: 'modalContainer',
         items: [],
         styleSelectors: { base: '' }
       }
@@ -130,7 +147,7 @@ describe('mcp-ai interactions', () => {
             ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
-              { nodeType: 'callback', action: 'setVisibility', title: 'Hide', elementId: 'c2' }
+              { nodeType: 'callback', action: 'openModal', title: 'Open', elementId: 'c2' }
             ]
           }
         ]
@@ -526,6 +543,7 @@ describe('mcp-ai interactions', () => {
   it('normalizes a stringified nullish elementId ("undefined") on a patched utility to null', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-1'),
       'delayTime-1': {
         id: 'delayTime-1',
         title: 'Wait 2 seconds',
@@ -535,9 +553,9 @@ describe('mcp-ai interactions', () => {
         preview: {},
         // The builder writes the literal string "undefined" here — a known artifact.
         elementId: 'undefined',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-1',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -555,6 +573,7 @@ describe('mcp-ai interactions', () => {
   it('warns when an existing utility node carries a real (host) elementId, on patch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-1'),
       'delayTime-1': {
         id: 'delayTime-1',
         title: 'Wait',
@@ -563,9 +582,9 @@ describe('mcp-ai interactions', () => {
         params: { time: 2000 },
         preview: {},
         elementId: 'c1',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-1',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -583,6 +602,7 @@ describe('mcp-ai interactions', () => {
   it('warns on a literal string "undefined" elementId (stringified nullish, a builder artifact)', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-1'),
       'delayTime-1': {
         id: 'delayTime-1',
         title: 'Wait',
@@ -591,9 +611,9 @@ describe('mcp-ai interactions', () => {
         params: { time: 2000 },
         preview: {},
         elementId: 'undefined',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-1',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -608,7 +628,8 @@ describe('mcp-ai interactions', () => {
     expect(res.warnings.some(w => w.includes('literal string elementId') && w.includes('"undefined"'))).toBe(true);
   });
 
-  it('warns when a global callback is used with nodeType "callback" (wrong node type)', () => {
+  // Refused — no element answers it, so the step would do nothing — and the warning names the node type that fixes it.
+  it('refuses a global callback used with nodeType "callback" and names the right node type', () => {
     const res = validate(
       {
         operations: [
@@ -625,7 +646,7 @@ describe('mcp-ai interactions', () => {
       },
       interactiveSpace()
     );
-    expect(res.valid).toBe(true);
+    expect(res.valid).toBe(false);
     expect(
       res.warnings.some(
         w => w.includes('addNotification') && w.includes('global callback') && w.includes('globalCallback')
@@ -751,8 +772,8 @@ describe('mcp-ai interactions', () => {
     expect(strict.errors.some(e => e.message.includes('container') && e.message.includes('bogus'))).toBe(true);
 
     const lenient = validate(
-      { operations: [upsert] },
-      spaceWithCatalog({ container: { custom: true, attributes: ['title'] } })
+      { operations: [{ ...upsert, element: { ref: 'w-1', type: 'myWidget', props: { bogus: 1 } } }] },
+      spaceWithCatalog({ myWidget: { custom: true, attributes: ['title'] } })
     );
     expect(lenient.valid).toBe(true);
     expect(lenient.warnings.some(w => w.includes('bogus'))).toBe(true);
@@ -838,6 +859,7 @@ describe('mcp-ai interactions', () => {
   it('re-validates the whole merged node on patch, catching a malformed param the patch did not touch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-bad'),
       'delayTime-bad': {
         id: 'delayTime-bad',
         title: 'Notify',
@@ -846,9 +868,9 @@ describe('mcp-ai interactions', () => {
         params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-bad',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -897,6 +919,7 @@ describe('mcp-ai interactions', () => {
   it('blocks the save when a valid patch lands on an already-malformed node, and persists nothing', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-bad'),
       'delayTime-bad': {
         id: 'delayTime-bad',
         title: 'Notify',
@@ -905,9 +928,9 @@ describe('mcp-ai interactions', () => {
         params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-bad',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -937,6 +960,7 @@ describe('mcp-ai interactions', () => {
   it('lets the save through once the same patch ALSO corrects the malformation', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-bad'),
       'delayTime-bad': {
         id: 'delayTime-bad',
         title: 'Notify',
@@ -945,9 +969,9 @@ describe('mcp-ai interactions', () => {
         params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-bad',
+        flowId: 'onClick-1',
         enabled: true
       }
     };

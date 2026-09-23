@@ -72,7 +72,7 @@ const section = (page: number, index: number): ElementSpec => {
         content: 'Status',
         bind: [
           { category: 'initialState', to: 'styleSelectors.base', source: `state.status${n}` },
-          { to: 'data-status', source: `state.status${n}` }
+          { to: 'content', source: `state.status${n}` }
         ]
       }),
       authoring.list({

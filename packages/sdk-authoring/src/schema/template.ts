@@ -4,11 +4,8 @@ import { authorSpace } from './space';
 import { validateSpace } from './validate';
 
 import type { AuthorSpaceOptions, AuthoredTemplate, TemplateSpec } from './types';
-import type {
-  SchemaValidationError,
-  SchemaValidationOptions,
-  SchemaValidationResult
-} from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SpaceValidationOptions } from './validate';
+import type { SchemaValidationError, SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type { Element, Schema, Style, Template } from '@plitzi/sdk-shared';
 
 /**
@@ -184,7 +181,7 @@ const validateBindingScope = (schema: Schema): SchemaValidationError[] => {
  * counted from the base element, since there are no pages to count them from — plus the four things only a
  * template can get wrong.
  */
-export const validateTemplate = (template: Template, options: SchemaValidationOptions = {}): SchemaValidationResult => {
+export const validateTemplate = (template: Template, options: SpaceValidationOptions = {}): SchemaValidationResult => {
   const { definition, schema, style } = template;
   const { baseElementId } = definition;
   const errors: SchemaValidationError[] = [];
@@ -223,7 +220,7 @@ export const validateTemplate = (template: Template, options: SchemaValidationOp
 export const assertTemplateValid = (
   template: Template,
   context: string,
-  options: SchemaValidationOptions = {}
+  options: SpaceValidationOptions = {}
 ): SchemaValidationError[] => {
   const { valid, errors, warnings } = validateTemplate(template, options);
   if (!valid) {

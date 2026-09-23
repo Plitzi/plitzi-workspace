@@ -28,7 +28,7 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
 
   it('execute validates raw args against the shape, then runs the typed tool', () => {
     const searchTool = tools.find(t => t.name === 'plitzi_search');
-    const result = searchTool?.execute({ query: 'box' }, ctx()) as SearchResponse;
+    const result = searchTool?.execute({ query: 'section' }, ctx()) as SearchResponse;
     expect(result.results.some(r => r.ref === 'c1')).toBe(true);
   });
 

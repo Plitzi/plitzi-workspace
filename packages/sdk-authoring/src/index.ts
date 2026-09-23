@@ -13,6 +13,7 @@ import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from './interactions';
 import {
   authorSpace as authorSpaceUnchecked,
   authorTemplate as authorTemplateUnchecked,
+  lintSpace as lintSpaceUnchecked,
   validateSpace as validateSpaceUnchecked,
   validateTemplate as validateTemplateUnchecked
 } from './schema';
@@ -22,13 +23,16 @@ import type {
   AuthorSpaceOptions,
   AuthoredSpace,
   AuthoredTemplate,
+  LintCatalogs,
+  LintResult,
   SpaceDocuments,
+  SpaceValidationOptions,
   SpaceSpec,
   StepVocabulary,
   Template,
   TemplateSpec
 } from './schema';
-import type { SchemaValidationOptions, SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
 
 /**
  * Authoring a space, or a template, in code — and the only place any of it lives.
@@ -113,13 +117,19 @@ export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): 
   authorSpaceUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
 
 /**
- * `validateSpace`, holding this SDK's own source catalog — the same gate, for documents authored elsewhere.
- *
- * Which is where it matters most: a JSON edited by hand, or an export whose bindings were retyped. Without the
- * catalog a source can only be half-checked, and the half it cannot see is the one nobody gets right.
+ * `validateSpace`, holding this SDK's own catalogs — the same gate `authorSpace` puts its output through, for documents
+ * written anywhere else: the builder saving through the API, an import, an agent's edit, a JSON edited by hand.
  */
-export const validateSpace = (space: SpaceDocuments, options: SchemaValidationOptions = {}): SchemaValidationResult =>
-  validateSpaceUnchecked(space, { sourceTypes: elementSourceTypes, ...options });
+export const validateSpace = (space: SpaceDocuments, options: SpaceValidationOptions = {}): SchemaValidationResult =>
+  validateSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options });
+
+/**
+ * `lintSpace`, holding this SDK's own catalogs: what a space's documents MEAN, read the way the runtime will read
+ * them — every template, flow, binding, attribute and link. For a caller that already knows the structure holds and
+ * wants the problems to show — a panel of them, beside the element each one names.
+ */
+export const lintSpace = (space: SpaceDocuments, options: LintCatalogs = {}): LintResult =>
+  lintSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options });
 
 /**
  * `authorTemplate`, holding the same vocabularies — the artefact you publish when you are not building a space.
@@ -131,6 +141,6 @@ export const validateSpace = (space: SpaceDocuments, options: SchemaValidationOp
 export const authorTemplate = (spec: TemplateSpec, options: AuthorSpaceOptions = {}): AuthoredTemplate =>
   authorTemplateUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
 
-/** `validateTemplate`, holding this SDK's own source catalog — for a manifest authored elsewhere. */
-export const validateTemplate = (template: Template, options: SchemaValidationOptions = {}): SchemaValidationResult =>
-  validateTemplateUnchecked(template, { sourceTypes: elementSourceTypes, ...options });
+/** `validateTemplate`, holding this SDK's own catalogs — for a manifest authored elsewhere. */
+export const validateTemplate = (template: Template, options: SpaceValidationOptions = {}): SchemaValidationResult =>
+  validateTemplateUnchecked(template, { ...ELEMENT_CATALOGS, ...options });

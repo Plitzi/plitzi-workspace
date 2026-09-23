@@ -1,3 +1,4 @@
+import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { invalidParams, missingRequiredParams } from '@plitzi/sdk-shared/authoring/paramSpec';
 
 import { didYouMean } from './suggest';
@@ -140,9 +141,6 @@ export const BINDING_CATEGORIES = ['attributes', 'style', 'initialState'] as con
 export const ACCESS_LEVELS = ['public', 'authenticated'] as const;
 export const STEP_TYPES = ['trigger', 'globalCallback', 'callback', 'utility'] as const;
 
-/** An element id, as the builder and a template can both name it: a letter, then letters, digits, `-` and `_`. */
-const ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -166,24 +164,13 @@ export function assertKnownKeys(
   }
 }
 
-/** Refuses a value outside its list — a `runtime`, a `loadStrategy`, a binding's `category`. */
-export const assertOneOf = (value: unknown, allowed: readonly string[], where: string, field: string): void => {
-  if (value === undefined || (typeof value === 'string' && allowed.includes(value))) {
-    return;
-  }
-
-  throw new Error(
-    `${where}: \`${field}\` is ${JSON.stringify(value)}${(typeof value === 'string' && didYouMean(value, allowed)) || '.'} It is one of ${allowed.map(item => `'${item}'`).join(', ')}.`
-  );
-};
-
 /** Refuses an id nothing can name: empty, or with characters a template or a selector cannot carry. */
 export const assertId = (id: unknown, where: string): void => {
   if (id === undefined) {
     return;
   }
 
-  if (typeof id !== 'string' || !ID_PATTERN.test(id)) {
+  if (typeof id !== 'string' || !isValidElementId(id)) {
     throw new Error(
       `${where}: the id ${JSON.stringify(id)} is not one a binding, a template or a test can name. Use a letter first, then letters, digits, "-" and "_" — like "hero-title".`
     );
@@ -191,14 +178,12 @@ export const assertId = (id: unknown, where: string): void => {
 };
 
 /**
- * A binding's own shape: the two fields it cannot work without, a category that exists, and no field it ignores.
- *
- * The map form (`{ content: 'posts.title' }`) writes attributes, so `visibility` there is an attribute nobody reads —
- * the element stays on screen. That one is refused with the field that does it.
+ * A binding's own shape: the two fields it cannot be written without, and no field it ignores. What the binding
+ * means — its category, its transformers, its templates — is `lintSpace`'s to read in the written document.
  */
 export const assertBindingShape = (binding: unknown, where: string): void => {
   assertKnownKeys(binding, BINDING_SPEC_KEYS, `${where}: a binding`);
-  const { to, source, category } = binding;
+  const { to, source } = binding;
   if (typeof to !== 'string' || to.trim() === '') {
     throw new Error(`${where}: a binding has no \`to\` — the attribute, style property or state key it writes.`);
   }
@@ -206,49 +191,38 @@ export const assertBindingShape = (binding: unknown, where: string): void => {
   if (typeof source !== 'string' || source.trim() === '') {
     throw new Error(`${where}: the binding of "${to}" has no \`source\` — where its value comes from ('posts.title').`);
   }
-
-  assertOneOf(category, BINDING_CATEGORIES, `${where}: the binding of "${to}"`, 'category');
-  if (to === 'visibility' && (category ?? 'attributes') === 'attributes') {
-    throw new Error(
-      `${where} binds "visibility" as an attribute, which no element reads — it would stay on screen. Write \`visible: '${source}'\` on the element (or \`visible: { source: '${source}', template }\`).`
-    );
-  }
 };
 
 /**
  * A step's or a transformer's params against the catalog that declares them: an unknown key when the set is closed,
- * a value of the wrong type or outside its options, a required one left out.
+ * a value of the wrong type or outside its options, a required one left out. The first problem, in words, or nothing.
  */
-export const assertParams = (
+export const paramIssue = (
   params: Record<string, unknown> | undefined,
   spec: { strictParams?: boolean; params?: ParamSpec },
   where: string
-): void => {
+): string | undefined => {
   const declared = spec.params ?? {};
   const provided = params ?? {};
   const names = Object.keys(declared);
   if (spec.strictParams) {
-    for (const key of Object.keys(provided)) {
-      if (!names.includes(key)) {
-        throw new Error(
-          `${where} has the param "${key}", which it does not take${didYouMean(key, names) || '.'} It takes ${names.length > 0 ? names.join(', ') : 'none'}.`
-        );
-      }
+    const unknown = Object.keys(provided).find(key => !names.includes(key));
+    if (unknown !== undefined) {
+      return `${where} has the param "${unknown}", which it does not take${didYouMean(unknown, names) || '.'} It takes ${names.length > 0 ? names.join(', ') : 'none'}.`;
     }
   }
 
   const invalid = invalidParams(provided, provided, declared).at(0);
   if (invalid) {
-    const value = JSON.stringify(provided[invalid.key]);
-    throw new Error(
-      invalid.options
-        ? `${where}: "${invalid.key}" is ${value}${(typeof provided[invalid.key] === 'string' && didYouMean(String(provided[invalid.key]), invalid.options)) || '.'} It is one of ${invalid.options.map(option => `'${option}'`).join(', ')}.`
-        : `${where}: "${invalid.key}" is ${value} (${invalid.got}), and it takes a ${invalid.expected}.`
-    );
+    const value = provided[invalid.key];
+    const suggestion = typeof value === 'string' && invalid.options ? didYouMean(value, invalid.options) : '';
+
+    return invalid.options
+      ? `${where}: "${invalid.key}" is ${JSON.stringify(value)}${suggestion || '.'} It is one of ${invalid.options.map(option => `'${option}'`).join(', ')}.`
+      : `${where}: "${invalid.key}" is ${JSON.stringify(value)} (${invalid.got}), and it takes a ${invalid.expected}.`;
   }
 
   const missing = missingRequiredParams(provided, provided, declared).at(0);
-  if (missing) {
-    throw new Error(`${where} needs "${missing}": ${declared[missing].description}`);
-  }
+
+  return missing === undefined ? undefined : `${where} needs "${missing}": ${declared[missing].description}`;
 };

@@ -10,6 +10,7 @@ import SpaceCheckActionQuery from './Space/SpaceCheckActionQuery';
 import SpaceConnectorsQuery from './Space/SpaceConnectorsQuery';
 import SpaceCredentialsQuery from './Space/SpaceCredentialsQuery';
 import SpaceDeploymentsQuery from './Space/SpaceDeploymentsQuery';
+import SpaceIssuesQuery from './Space/SpaceIssuesQuery';
 import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
 import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
@@ -26,17 +27,20 @@ import type { TSpaceCheckActionQuery } from './Space/SpaceCheckActionQuery';
 import type { TSpaceConnectorsQuery } from './Space/SpaceConnectorsQuery';
 import type { TSpaceCredentialsQuery } from './Space/SpaceCredentialsQuery';
 import type { TSpaceDeploymentsQuery } from './Space/SpaceDeploymentsQuery';
+import type { TSpaceIssuesQuery } from './Space/SpaceIssuesQuery';
 import type { TSpaceLatestRevisionQuery } from './Space/SpaceLatestRevisionQuery';
 import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
 import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
 
 // The quota shape is read by whatever renders it (the builder's own meter today), so it travels with the query.
 export type { TQuotaPlane, TSpaceQuota } from './Space/SpaceQuotaQuery';
+export type { TSpaceIssue, TSpaceIssues } from './Space/SpaceIssuesQuery';
 
 export type BuilderQueriesMap = {
   Init: TInitQuery;
   SpaceLatestRevision: TSpaceLatestRevisionQuery;
   SpaceQuota: TSpaceQuotaQuery;
+  SpaceIssues: TSpaceIssuesQuery;
   SpaceResources: TSpaceResourcesQuery;
   SpaceDeployments: TSpaceDeploymentsQuery;
   SpaceCdns: TSpaceCdnsQuery;
@@ -55,6 +59,7 @@ const BuilderQueries = {
   Init: InitQuery,
   SpaceLatestRevision: SpaceLatestRevisionQuery,
   SpaceQuota: SpaceQuotaQuery,
+  SpaceIssues: SpaceIssuesQuery,
   SpaceResources: SpaceResourcesQuery,
   SpaceDeployments: SpaceDeploymentsQuery,
   SpaceCdns: SpaceCdnsQuery,

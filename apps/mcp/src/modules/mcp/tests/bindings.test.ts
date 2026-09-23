@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { buildSpace, capturing } from './helpers';
+import { capturing } from './helpers';
 import { readResource } from '../resources';
 import { apply, validate } from '../tools';
 
@@ -102,7 +102,7 @@ describe('mcp-ai binding source scope (descendants only)', () => {
     const r = bind('out-text');
     expect(r.valid).toBe(false);
     expect(
-      r.errors.some(e => e.message.includes('provided by element "products"') && e.message.includes('subtree'))
+      r.errors.some(e => e.message.includes('"products" is not around it') && e.message.includes('move this one into'))
     ).toBe(true);
   });
 });
@@ -115,20 +115,20 @@ describe('mcp-ai binding transformers', () => {
           {
             type: 'upsertBinding',
             pageRef: 'home',
-            ref: 'c1',
+            ref: 'inner-text',
             category: 'attributes',
-            binding: { to: 'title', source: 'apiContainer_x.data', transformers: [{ action, params }] }
+            binding: { to: 'content', source: 'apiContainer_products.data', transformers: [{ action, params }] }
           }
         ]
       },
-      buildSpace()
+      scopeSpace()
     );
 
   it('errors on an unknown transformer action and suggests the real one', () => {
     const r = withTransformer('template', { template: '{{value}} min' });
     expect(r.valid).toBe(false);
     expect(
-      r.errors.some(e => e.message.includes('Unknown transformer action "template"') && e.hint.includes('twigTemplate'))
+      r.errors.some(e => e.message.includes('the transformer "template"') && e.message.includes('"twigTemplate"'))
     ).toBe(true);
   });
 
@@ -140,28 +140,28 @@ describe('mcp-ai binding transformers', () => {
   it('errors on a missing required param', () => {
     const r = withTransformer('twigTemplate', {});
     expect(r.valid).toBe(false);
-    expect(r.errors.some(e => e.message.includes('missing required param "template"'))).toBe(true);
+    expect(r.errors.some(e => e.message.includes('transformer "twigTemplate" needs "template"'))).toBe(true);
   });
 
   it('errors on a select value outside its options', () => {
     const r = withTransformer('dateConverter', { locale: 'fr' });
     expect(r.valid).toBe(false);
-    expect(r.errors.some(e => e.message.includes('param "locale" is "fr"'))).toBe(true);
+    expect(r.errors.some(e => e.message.includes('"locale" is "fr"'))).toBe(true);
   });
 });
 
 describe('mcp-ai data bindings', () => {
   it('upserts, patches and deletes a binding; reads reflect each step', async () => {
-    const cap = capturing(buildSpace());
+    const cap = capturing(scopeSpace());
     let res = await apply(
       {
         operations: [
           {
             type: 'upsertBinding',
             pageRef: 'home',
-            ref: 'c1',
+            ref: 'inner-text',
             category: 'attributes',
-            binding: { to: 'items', source: 'apiContainer_x.data' }
+            binding: { to: 'content', source: 'apiContainer_products.data' }
           }
         ]
       },
@@ -169,8 +169,8 @@ describe('mcp-ai data bindings', () => {
       cap.persisters
     );
     expect(res.summary.created).toBe(1);
-    let el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
-    expect(el.bindings?.attributes?.[0]).toMatchObject({ to: 'items', source: 'apiContainer_x.data' });
+    let el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/inner-text')?.data as AIElementDetail;
+    expect(el.bindings?.attributes?.[0]).toMatchObject({ to: 'content', source: 'apiContainer_products.data' });
 
     res = await apply(
       {
@@ -178,10 +178,10 @@ describe('mcp-ai data bindings', () => {
           {
             type: 'patchBinding',
             pageRef: 'home',
-            ref: 'c1',
+            ref: 'inner-text',
             category: 'attributes',
-            to: 'items',
-            source: 'other.data'
+            to: 'content',
+            source: 'apiContainer_products.data.title'
           }
         ]
       },
@@ -189,29 +189,33 @@ describe('mcp-ai data bindings', () => {
       cap.persisters
     );
     expect(res.summary.updated).toBe(1);
-    el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
-    expect(el.bindings?.attributes?.[0].source).toBe('other.data');
+    el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/inner-text')?.data as AIElementDetail;
+    expect(el.bindings?.attributes?.[0].source).toBe('apiContainer_products.data.title');
 
     await apply(
-      { operations: [{ type: 'deleteBinding', pageRef: 'home', ref: 'c1', category: 'attributes', to: 'items' }] },
+      {
+        operations: [
+          { type: 'deleteBinding', pageRef: 'home', ref: 'inner-text', category: 'attributes', to: 'content' }
+        ]
+      },
       cap.saved(),
       cap.persisters
     );
-    el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
+    el = readResource(cap.saved(), 'main', 'plitzi://schema/main/elements/inner-text')?.data as AIElementDetail;
     expect(el.bindings).toBeUndefined();
   });
 
   it('exposes an observed data-sources catalog', async () => {
-    const cap = capturing(buildSpace());
+    const cap = capturing(scopeSpace());
     await apply(
       {
         operations: [
           {
             type: 'upsertBinding',
             pageRef: 'home',
-            ref: 'c1',
+            ref: 'inner-text',
             category: 'attributes',
-            binding: { to: 'items', source: 'apiContainer_x.data' }
+            binding: { to: 'content', source: 'apiContainer_products.data' }
           }
         ]
       },
@@ -222,7 +226,7 @@ describe('mcp-ai data bindings', () => {
       sources: string[];
       targets: Record<string, string[]>;
     };
-    expect(catalog.sources).toContain('apiContainer_x.data');
-    expect(catalog.targets.attributes).toContain('items');
+    expect(catalog.sources).toContain('apiContainer_products.data');
+    expect(catalog.targets.attributes).toContain('content');
   });
 });

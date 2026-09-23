@@ -100,13 +100,25 @@ describe('mcp-ai page slug is relative (leading slash stripped)', () => {
 describe('mcp-ai patchElement (I3/R3 — partial merge)', () => {
   it('changes only the listed prop, preserving the rest', async () => {
     const space = buildSpace();
-    (space.schema.flat.c1.attributes as Record<string, unknown>).extra = 'keep';
+    space.schema.flat.home.definition.items = ['c1', 'img'];
+    space.schema.flat.img = {
+      id: 'img',
+      attributes: { src: 'https://cdn.example.com/a.png', alt: 'Before' },
+      definition: {
+        rootId: 'home',
+        parentId: 'home',
+        label: 'Image',
+        type: 'image',
+        items: [],
+        styleSelectors: { base: '' }
+      }
+    };
     const res = await apply(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: 'Renamed' } }] },
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'img', props: { alt: 'After' } }] },
       space
     );
-    const el = res.elements?.find(e => e.ref === 'c1');
-    expect(el?.props).toEqual({ title: 'Renamed', extra: 'keep' });
+    const el = res.elements?.find(e => e.ref === 'img');
+    expect(el?.props).toEqual({ src: 'https://cdn.example.com/a.png', alt: 'After' });
   });
 
   it('unsets a prop when its value is null', async () => {
@@ -487,7 +499,11 @@ describe('mcp-ai write response element versions (R1)', () => {
     const res = await apply(
       {
         operations: [
-          { type: 'upsertElement', pageRef: 'home', element: { ref: 'c1', type: 'container', props: { title: 'X' } } }
+          {
+            type: 'upsertElement',
+            pageRef: 'home',
+            element: { ref: 'c1', type: 'container', props: { subType: 'article' } }
+          }
         ]
       },
       buildSpace()

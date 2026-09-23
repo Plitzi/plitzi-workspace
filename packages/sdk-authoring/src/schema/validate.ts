@@ -1,8 +1,10 @@
 import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import { styleWithoutTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 
+import { lintSpace } from './lint';
 import { isCssProperty, isCustomProperty, suggestCssProperty } from '../style';
 
+import type { LintCatalogs } from './lint';
 import type {
   SchemaValidationError,
   SchemaValidationOptions,
@@ -82,17 +84,24 @@ const validateStyleTargets = (schema: Schema, style: Style): SchemaValidationErr
       : [];
   });
 
+/** The structure's options, and the catalogues the linter reads what the documents mean against. */
+export type SpaceValidationOptions = SchemaValidationOptions & LintCatalogs;
+
 export const validateSpace = (
   { schema, style }: SpaceDocuments,
-  options: SchemaValidationOptions = {}
+  options: SpaceValidationOptions = {}
 ): SchemaValidationResult => {
   const schemaResult = validateSchema(schema, options);
-  const errors = [...schemaResult.errors, ...validateStyle(style)];
+  const structural = [...schemaResult.errors, ...validateStyle(style)];
+  // The linter reads a document whose structure holds: on a broken one it would only report the breakage again, in
+  // other words and from further away.
+  const lint = structural.length === 0 ? lintSpace({ schema, style }, options) : { errors: [], warnings: [] };
+  const errors = [...structural, ...lint.errors];
 
   return {
     valid: errors.length === 0,
     errors,
-    warnings: [...schemaResult.warnings, ...validateStyleTargets(schema, style)]
+    warnings: [...schemaResult.warnings, ...validateStyleTargets(schema, style), ...lint.warnings]
   };
 };
 
@@ -100,7 +109,7 @@ export const validateSpace = (
 export const assertSpaceValid = (
   space: SpaceDocuments,
   context: string,
-  options: SchemaValidationOptions = {}
+  options: SpaceValidationOptions = {}
 ): SchemaValidationError[] => {
   const { valid, errors, warnings } = validateSpace(space, options);
   if (!valid) {

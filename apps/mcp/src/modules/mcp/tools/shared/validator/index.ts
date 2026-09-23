@@ -7,9 +7,9 @@ import {
   batchDeclaredVariants,
   batchDeclaredVars
 } from './batch';
-import { checkBindingSourceScope, checkBindingTarget, checkBindingTransformers } from './bindings';
+import { checkBindingTarget } from './bindings';
 import { batchDeclaredConnectors, checkConnectorOp, checkProviderElement } from './connectors';
-import { checkObservedName, checkVarRefs, warnOnce } from './context';
+import { checkObservedName, warnOnce } from './context';
 import { checkSlotCss } from './css';
 import { checkElementInput, checkRawMarkup, checkTypeProps, checkVariantApplication } from './elements';
 import { checkInteractionNode } from './interactions';
@@ -70,9 +70,8 @@ const buildTypeMeta = (catalog: ComponentCatalog | undefined): Map<string, TypeM
   return meta;
 };
 
-/** The shared validation context, derived from a space (+ the batch's ops, for batch-declared names). Extracted so
- *  the post-apply resource audit (auditResources) can run the same checks against the resulting draft. */
-export const buildValidationCtx = (space: Space, ops: Operation[], mode: ValidationMode = 'space'): ValidationCtx => {
+/** The shared validation context, derived from a space (+ the batch's ops, for batch-declared names). */
+const buildValidationCtx = (space: Space, ops: Operation[], mode: ValidationMode = 'space'): ValidationCtx => {
   const registry = buildTypeRegistry(space.schema, space.catalog);
   const batchElements = batchDeclaredElements(ops);
 
@@ -174,17 +173,9 @@ export const validateOperations = (
         checkRef(op.ref, `${base}.ref`, ctx);
         const page = findRootByRef(space.schema, op.pageRef);
         const target = page ? resolveRef(space.schema, page, op.ref) : undefined;
-        if (op.props) {
-          for (const [key, value] of Object.entries(op.props)) {
-            if (typeof value === 'string') {
-              checkVarRefs(value, `${base}.props.${key}`, ctx);
-            }
-          }
-
-          if (target && target.id !== page?.id) {
-            checkRawMarkup(target.definition.type, op.props, base, ctx);
-            checkTypeProps(target.definition.type, op.props, base, ctx);
-          }
+        if (op.props && target && target.id !== page?.id) {
+          checkRawMarkup(target.definition.type, op.props, base, ctx);
+          checkTypeProps(target.definition.type, op.props, base, ctx);
         }
 
         checkVariantApplication(op.initialState, `${base}.initialState`, ctx);
@@ -336,8 +327,6 @@ export const validateOperations = (
           ctx
         );
         checkBindingTarget(op.ref, op.category, op.binding.to, `${base}.binding.to`, ctx);
-        checkBindingSourceScope(space, ctx, op.ref, op.binding.source, `${base}.binding.source`);
-        checkBindingTransformers(op.binding.transformers, `${base}.binding.transformers`, ctx);
         break;
       case 'patchBinding':
         checkRef(op.ref, `${base}.ref`, ctx);
@@ -350,11 +339,6 @@ export const validateOperations = (
           ctx
         );
         checkBindingTarget(op.ref, op.category, op.to, `${base}.to`, ctx);
-        if (op.source !== undefined) {
-          checkBindingSourceScope(space, ctx, op.ref, op.source, `${base}.source`);
-        }
-
-        checkBindingTransformers(op.transformers, `${base}.transformers`, ctx);
         break;
       case 'deleteBinding':
         checkRef(op.ref, `${base}.ref`, ctx);
