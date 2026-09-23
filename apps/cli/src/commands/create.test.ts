@@ -210,6 +210,19 @@ describe('the scaffold', () => {
     expect(scaffold(answers({ mode: 'client' }))['.gitignore']).not.toContain('.sdk-plugins');
   });
 
+  /** A deploy or a restart closes the server rather than dropping it, so what it is running finishes first. */
+  it('closes its server when the process is told to stop, local or cloud', () => {
+    for (const source of ['local', 'cloud'] as const) {
+      const main = scaffold(answers({ source }))['src/main.ts'];
+
+      expect(main).toMatch(/import \{[^}]*\bcloseOnSignals\b[^}]*\} from '@plitzi\/sdk-server';/);
+      expect(main).toContain('closeOnSignals(server);');
+    }
+
+    // A browser project has no server to close.
+    expect(scaffold(answers({ mode: 'client' }))['src/main.ts']).not.toContain('closeOnSignals');
+  });
+
   /** One answer to "how should this be laid out", and no fight between the two tools on save. */
   it('formats and lints itself, with Prettier owning layout', () => {
     const files = scaffold(answers());

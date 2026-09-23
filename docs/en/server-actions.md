@@ -648,8 +648,26 @@ Schedules are rows derived from the action documents. Call `reconcile(spaceId)` 
 — the deployment is the only thing that knows when that is — and the periodic pass over `listScheduledSpaces`
 catches whatever a missed call left behind.
 
-[`05-schedules`](../../examples/05-with-server-actions/05-schedules) is the adapter written out: every method of
-the queue over SQLite, each rule above one place in the file, and a page to watch two replicas share it.
+**If the replicas already share Mongo or MySQL, the adapters are written.** The package keeps no data of its own and
+opens no connection: these take the database the deployment already has, create what their queries need (indexes,
+or three tables) on first use, and pass the same contract tests as the in-process queue.
+
+```ts
+import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-server/mongo'; // `mongodb`, your client
+import { createMysqlJobQueue, createMysqlKv } from '@plitzi/sdk-server/mysql'; // `mysql2`, your pool
+
+const db = mongoClient.db('app');
+createServer({ action: { lookups, kv: createMongoKv({ db }), jobs: { queue: createMongoJobQueue({ db }) } } });
+```
+
+Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store.
+[`05-schedules`](../../examples/05-with-server-actions/05-schedules) is one written out: every method of the queue
+over SQLite, each rule above one place in the file, and a page to watch two replicas share it.
+
+**Close the server on SIGTERM.** A deploy stops a replica with a signal, and a process that simply exits leaves every
+running job to be retried by somebody else. `closeOnSignals(server, { afterClose })` (from `@plitzi/sdk-server`) calls
+`server.close()` — which finishes the jobs this replica is running and leaves the waiting ones in the queue — and only
+then lets the process exit. A deployment that already handles its own signals calls `server.close()` from there.
 
 ### The `kv` store
 

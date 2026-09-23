@@ -35,6 +35,11 @@
       "import": "./dist/mysql.js",
       "default": "./dist/mysql.js"
     },
+    "./mongo": {
+      "types": "./dist/mongo.d.ts",
+      "import": "./dist/mongo.js",
+      "default": "./dist/mongo.js"
+    },
     "./handlers": {
       "types": "./dist/handlers.d.ts",
       "import": "./dist/handlers.js",
@@ -68,10 +73,14 @@
   "peerDependencies": {
     "mysql2": "^3",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "mongodb": "^6 || ^7"
   },
   "peerDependenciesMeta": {
     "mysql2": {
+      "optional": true
+    },
+    "mongodb": {
       "optional": true
     }
   },
@@ -85,6 +94,7 @@
     "@vitest/coverage-v8": "^5.0.1",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
+    "mongodb": "^7.6.0",
     "mysql2": "^3.24.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

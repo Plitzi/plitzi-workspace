@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
 
 import { lookups, SPACE_ID } from './actions';
@@ -86,15 +86,7 @@ server.listen(PORT, '127.0.0.1');
  * waiting stays in the queue for the other replica. `kill -9` is the other way out, and the one worth trying with two
  * replicas running — the job it was holding is taken over by the other one once its lease lapses.
  */
-const shutdown = (): void => {
-  void server.close().finally(() => {
-    db.close();
-    process.exit(0);
-  });
-};
-
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+closeOnSignals(server, { afterClose: () => db.close() });
 
 console.log(`[scheduler] ${REPLICA} on http://127.0.0.1:${PORT}/ — queue in ${DATABASE}`);
 console.log(`[scheduler] a second replica: PORT=${PORT + 1} yarn start`);

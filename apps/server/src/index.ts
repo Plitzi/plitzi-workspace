@@ -1,4 +1,5 @@
 export { createServer, resolveServices } from './core/createServer';
+export { closeOnSignals } from './core/server/closeOnSignals';
 export { registerHealthCheck, buildHealthPayload } from './core/health';
 export { consoleLogger, renderLogEvent } from './helpers/serverLog';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
@@ -63,4 +64,5 @@ export type {
 } from './modules/connectors';
 export type { FontStore, StoredFont } from './core/fontStore';
 export type { ResolvedServices } from './core/createServer';
+export type { Closable, CloseOnSignalsOptions } from './core/server/closeOnSignals';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';

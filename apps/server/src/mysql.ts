@@ -23,6 +23,18 @@
  *  its existing schema onto the adapters has to be able to answer. */
 
 export { createMysqlStore, mysqlSchemaStatements } from './modules/mysql';
+
+/**
+ *  The job queue and the key/value store server actions run on, for a deployment that keeps them in MySQL rather than
+ *  in one process's memory — which is what running more than one replica needs. They borrow connections from a pool
+ *  the deployment opened (`store.pool` works) and create their three tables on first use:
+ *
+ *  ```ts
+ *  createServer({ action: { lookups, kv: createMysqlKv({ pool }), jobs: { queue: createMysqlJobQueue({ pool }) } } });
+ *  ```
+ */
+export { createMysqlJobQueue, createMysqlKv, mysqlJobSchemaStatements } from './modules/mysql/jobs';
+export type { MysqlJobQueue, MysqlJobQueueOptions, MysqlKvOptions } from './modules/mysql/jobs';
 export { SCHEMA_VERSION, TABLE_NAMES, tableNames } from './modules/mysql';
 
 export type {
