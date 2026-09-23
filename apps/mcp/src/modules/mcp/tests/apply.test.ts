@@ -142,6 +142,23 @@ describe('mcp-ai schema integrity gate (validateSchema)', () => {
     const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
     expect(page.tree.map(n => n.ref)).toEqual(['c1']);
   });
+
+  // The subtree would end up holding itself: refused by the tree operation every writer shares, with the reason.
+  it('refuses to move an element inside one of its own descendants', async () => {
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'home', parentRef: 'c1', element: { ref: 'inner', type: 'container' } },
+          { type: 'moveElement', pageRef: 'home', ref: 'c1', toParentRef: 'inner', position: 'inside' }
+        ]
+      },
+      buildSpace()
+    );
+
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('"c1" cannot move inside "inner"');
+    expect(res.errors?.[0].hint).toContain('inside itself or one of its own descendants');
+  });
 });
 
 describe('mcp-ai AI-facing contract', () => {

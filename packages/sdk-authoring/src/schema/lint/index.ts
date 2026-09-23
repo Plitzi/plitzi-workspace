@@ -9,6 +9,8 @@ import type { LintCatalogs, LintIssue } from './context';
 import type { Schema, Style } from '@plitzi/sdk-shared';
 
 export type { LintCatalogs, LintIssue } from './context';
+export { FIXABLE_CODES, fixSpace } from './fixes';
+export type { AppliedFix, FixResult } from './fixes';
 
 export interface LintResult {
   /** What renders something other than what the document says — a template read past, a link to nowhere. */

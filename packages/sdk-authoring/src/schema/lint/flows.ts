@@ -11,7 +11,7 @@ import type { Element, ElementInteraction } from '@plitzi/sdk-shared';
 const STEP_TYPE_NAMES = new Set<string>(STEP_TYPES);
 
 /** A step's params that name a path under `runtime.state`, by action. */
-const STATE_PATH_PARAMS: Record<string, readonly string[]> = {
+export const STATE_PATH_PARAMS: Record<string, readonly string[]> = {
   setState: ['key'],
   toggleState: ['key'],
   appendState: ['key'],

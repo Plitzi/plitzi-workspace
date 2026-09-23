@@ -78,6 +78,31 @@
   shows it when the server refuses a publish with `SPACE_INVALID`. New builder query `SpaceIssues` (`TSpaceIssue`,
   `TSpaceIssues`).
 
+- `fixSpace(documents, catalogs?, codes?)` and `FIXABLE_CODES`: the issues with a single reading are fixed on a copy
+  — a URL in a page-mode link or `navigate`, an attribute or step param that is a typo (renamed) or is never read
+  (dropped), `'true'`/`'false'` where a flag is read, a global callback on the wrong module, a utility on an element,
+  a visibility binding in `attributes`, a binding onto an attribute nothing reads, a misspelt transformer, an overlay
+  that starts open, a state key with `state.` in it — each reported as a line. Held by a test per code. The builder's
+  problems list offers "Fix N automatically" (server mutation `SpaceFixIssues`; each issue says whether it is
+  `fixable`).
+- The linter's source scope is what the runtime walks: an element sees the providers around it and, past its page,
+  the layout around the slot it renders in — no longer any provider anywhere in a layout.
+- Builder: a template that cannot be read is said under the field while it is typed, in the binding transformer and
+  flow step editors.
+
+## One tree walk, one tree writer
+
+- `@plitzi/sdk-schema/helpers/elementTree`: `parentChain`, `renderContext` and `descendants`, cycle-safe. The runtime's
+  data-source visibility, the builder's reveal, `authorSpace` and the linter all walk the tree through it.
+- `FlatMap` loses what nobody called: `validate`/`isValid`/`assertValid` (the validation lives in `validateSchema`),
+  `getElement`, `elementIdConflict`, `takenIds`, `renameConflict`, `parentTree`, `childTree` and the unused statics.
+  `moveElement` refuses a move into the element's own subtree without walking forever on a cyclic document, and a move
+  into another page or layout carries the subtree's `rootId`.
+- The MCP writes the tree through `FlatMap` (create, move, delete) like every other writer; a move into the element's
+  own descendant is refused with the reason.
+- `schemaToWire`/`schemaFromWire` (sdk-shared `network/spaceEvents`): a whole schema on the live channel has `flat` as
+  a list; the builder reads `SPACE_UPDATED` through `schemaFromWire`.
+
 ## Runtime
 
 - Attribute `{{ tokens }}` resolve against every source around the element — a list row, a provider, `state`, `auth`,

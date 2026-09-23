@@ -22,6 +22,10 @@
       "types": "./dist/helpers/elementId.d.ts",
       "import": "./dist/helpers/elementId.mjs"
     },
+    "./helpers/elementTree": {
+      "types": "./dist/helpers/elementTree.d.ts",
+      "import": "./dist/helpers/elementTree.mjs"
+    },
     "./helpers/schemaValidator": {
       "types": "./dist/helpers/schemaValidator.d.ts",
       "import": "./dist/helpers/schemaValidator.mjs"

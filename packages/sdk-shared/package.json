@@ -628,6 +628,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceDeployMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceDeployMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/SpaceFixIssuesMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceFixIssuesMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceFixIssuesMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/SpaceMoveElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceMoveElementMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceMoveElementMutation.mjs"

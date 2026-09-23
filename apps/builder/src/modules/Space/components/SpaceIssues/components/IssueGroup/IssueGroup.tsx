@@ -10,10 +10,10 @@ export type IssueGroupProps = {
   title: string;
   issues: TSpaceIssue[];
   severity: IssueSeverity;
-  onNavigate: () => void;
+  onDismiss: () => void;
 };
 
-const IssueGroup = ({ title, issues, severity, onNavigate }: IssueGroupProps) => {
+const IssueGroup = ({ title, issues, severity, onDismiss }: IssueGroupProps) => {
   if (issues.length === 0) {
     return null;
   }
@@ -29,7 +29,7 @@ const IssueGroup = ({ title, issues, severity, onNavigate }: IssueGroupProps) =>
             key={`${issue.code}:${issue.elementId ?? ''}:${index}`}
             issue={issue}
             severity={severity}
-            onNavigate={onNavigate}
+            onDismiss={onDismiss}
           />
         ))}
       </ul>

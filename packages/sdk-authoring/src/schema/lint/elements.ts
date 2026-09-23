@@ -151,7 +151,7 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
   const catalog = ctx.catalogs.transformers;
   const defaults = ctx.catalogs.defaultAttributes?.[element.definition.type] ?? {};
   const names = ctx.attributeNames(element.definition.type);
-  const ancestors = ctx.ancestors(element.id);
+  const scope = ctx.scope(element.id);
   for (const { category, binding } of bindingsOf(element)) {
     const at = `${where}: the binding of "${binding.to}"`;
     if (!(BINDING_CATEGORIES as readonly string[]).includes(category)) {
@@ -168,7 +168,7 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
     const head = binding.source.split('.')[0];
     const providerId = head.slice(head.indexOf('_') + 1);
     const prefix = ctx.sources.get(providerId);
-    if (prefix && head === `${prefix}_${providerId}` && !ancestors.has(providerId) && !ctx.inLayout(providerId)) {
+    if (prefix && head === `${prefix}_${providerId}` && !scope.has(providerId)) {
       ctx.error(
         'binding-source-out-of-scope',
         `${at} reads "${binding.source}", but "${providerId}" is not around it. An element's source reaches only the elements inside it — move this one into "${providerId}", or read the value through something both can see, like \`state\`.`,
@@ -222,14 +222,7 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
 
       const template: unknown = transformer.params.template;
       if (transformer.action === 'twigTemplate' && typeof template === 'string') {
-        checkTemplate(
-          ctx,
-          template,
-          `${where}: a binding of "${binding.to}"`,
-          { kind: 'binding' },
-          ancestors,
-          element.id
-        );
+        checkTemplate(ctx, template, `${where}: a binding of "${binding.to}"`, { kind: 'binding' }, scope, element.id);
       }
     }
 
@@ -273,10 +266,10 @@ const checkAttributeTemplates = (ctx: LintContext, element: Element, where: stri
   }
 
   const routeParams = ctx.routeParams(element.id);
-  const ancestors = ctx.ancestors(element.id);
+  const scope = ctx.scope(element.id);
   for (const [name, value] of Object.entries(element.attributes)) {
     if (typeof value === 'string' && hasValidToken(value)) {
-      checkTemplate(ctx, value, `${where}: its "${name}"`, { kind: 'attribute', routeParams }, ancestors, element.id);
+      checkTemplate(ctx, value, `${where}: its "${name}"`, { kind: 'attribute', routeParams }, scope, element.id);
     }
   }
 };

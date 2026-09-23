@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaReducer from '@plitzi/sdk-schema/SchemaReducer';
 
@@ -255,7 +256,7 @@ describe('a template, dropped into a space', () => {
     // `useDragElement`: the base element travels beside its descendants rather than among them, as authored.
     const baseElement = manifest.schema.flat[manifest.definition.baseElementId];
     const elements = Object.fromEntries(
-      FlatMap.childTree(manifest.schema.flat, baseElement.id).map(id => [id, manifest.schema.flat[id]])
+      descendants(manifest.schema.flat, baseElement.id).map(id => [id, manifest.schema.flat[id]])
     );
 
     // `BuilderProvider`: re-rooted on the page it is being dropped into.

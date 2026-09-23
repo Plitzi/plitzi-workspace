@@ -1,3 +1,4 @@
+import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
@@ -655,19 +656,11 @@ class SpaceAuthor {
     }
   }
 
-  /** The element's ancestors, by id, up to and including its root: the only elements whose sources it can read. */
+  /** The element about to be placed under `parentId`, and everything that one is nested in. */
   private ancestorsOf(parentId: string): Set<string> {
-    const ancestors = new Set<string>();
-    const flat = this.flatMap.flat;
-    for (
-      let id = parentId;
-      id && Object.hasOwn(flat, id) && !ancestors.has(id);
-      id = flat[id].definition.parentId ?? ''
-    ) {
-      ancestors.add(id);
-    }
-
-    return ancestors;
+    return Object.hasOwn(this.flatMap.flat, parentId)
+      ? new Set([parentId, ...parentChain(this.flatMap.flat, parentId)])
+      : new Set();
   }
 
   /**

@@ -50,7 +50,7 @@ const checkName = (
   template: string,
   where: string,
   site: TemplateSite,
-  ancestors: ReadonlySet<string>,
+  scope: ReadonlySet<string>,
   id?: string
 ): void => {
   if (GLOBAL_SOURCES.includes(name) || ctx.variables.has(name)) {
@@ -88,7 +88,7 @@ const checkName = (
   const sourceId = separator === -1 ? '' : name.slice(separator + 1);
   const prefix = ctx.sources.get(sourceId);
   if (prefix && name === `${prefix}_${sourceId}`) {
-    if (!ancestors.has(sourceId) && !ctx.inLayout(sourceId)) {
+    if (!scope.has(sourceId)) {
       ctx.error(
         'template-source-out-of-scope',
         `${where} reads "${name}" in "${shorten(template)}", but "${sourceId}" is not around it. An element's source reaches only the elements inside it — move this one into "${sourceId}", or read the value through something both can see, like \`state\`.`,
@@ -123,7 +123,7 @@ export const checkTemplate = (
   template: string,
   where: string,
   site: TemplateSite,
-  ancestors: ReadonlySet<string> = new Set(),
+  scope: ReadonlySet<string> = new Set(),
   id?: string
 ): void => {
   if (!hasTemplateSyntax(template)) {
@@ -147,7 +147,7 @@ export const checkTemplate = (
   }
 
   for (const name of freeNames) {
-    checkName(ctx, name, template, where, site, ancestors, id);
+    checkName(ctx, name, template, where, site, scope, id);
   }
 };
 

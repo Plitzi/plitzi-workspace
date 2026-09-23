@@ -28,28 +28,28 @@ beforeEach(() => {
 
 describe('IssueItem', () => {
   it('takes someone to the element the issue names, and gets out of the way', () => {
-    const onNavigate = vi.fn();
+    const onDismiss = vi.fn();
     const { getByText } = render(
       <IssueItem
-        issue={{ code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'hello' }}
+        issue={{ code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'hello', fixable: false }}
         severity="error"
-        onNavigate={onNavigate}
+        onDismiss={onDismiss}
       />
     );
 
     fireEvent.click(getByText('hello'));
 
     expect(reveal).toHaveBeenCalledWith({ id: 'hello', rootId: 'home', ancestors: ['home', 'box'] });
-    expect(onNavigate).toHaveBeenCalled();
+    expect(onDismiss).toHaveBeenCalled();
   });
 
   // Deleted since the save the list was read from: there is nothing left to take anyone to.
   it('names an element that is gone without linking it', () => {
     const { getByText, queryByRole } = render(
       <IssueItem
-        issue={{ code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'gone' }}
+        issue={{ code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'gone', fixable: false }}
         severity="error"
-        onNavigate={vi.fn()}
+        onDismiss={vi.fn()}
       />
     );
 
@@ -60,9 +60,9 @@ describe('IssueItem', () => {
   it('shows an issue about the whole space with no element at all', () => {
     const { getByText, queryByRole } = render(
       <IssueItem
-        issue={{ code: 'colour-without-dark', message: 'No dark value', elementId: null }}
+        issue={{ code: 'colour-without-dark', message: 'No dark value', elementId: null, fixable: false }}
         severity="warning"
-        onNavigate={vi.fn()}
+        onDismiss={vi.fn()}
       />
     );
 

@@ -5,7 +5,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { chainOf } from '@pmodules/Builder/helpers/elementChain';
 import useRevealElement from '@pmodules/Builder/hooks/useRevealElement';
 
-import { SEVERITY_ICON, SEVERITY_TEXT } from '../../helpers';
+import { MUTED, SEVERITY_ICON, SEVERITY_TEXT } from '../../helpers';
 
 import type { IssueSeverity } from '../../helpers';
 import type { TSpaceIssue } from '@plitzi/sdk-shared';
@@ -14,7 +14,7 @@ export type IssueItemProps = {
   issue: TSpaceIssue;
   severity: IssueSeverity;
   /** Called once the element is on screen, so whatever holds the list can get out of the way. */
-  onNavigate: () => void;
+  onDismiss: () => void;
 };
 
 /**
@@ -22,7 +22,7 @@ export type IssueItemProps = {
  * to it and selects it. An element deleted since the space was saved is named but not linked — there is nothing left
  * to take anyone to, and the issue goes away with the next save.
  */
-const IssueItem = ({ issue, severity, onNavigate }: IssueItemProps) => {
+const IssueItem = ({ issue, severity, onDismiss }: IssueItemProps) => {
   const [flat] = useBuilderStore('schema.flat');
   const revealElement = useRevealElement();
   const { elementId, message } = issue;
@@ -34,14 +34,17 @@ const IssueItem = ({ issue, severity, onNavigate }: IssueItemProps) => {
     }
 
     revealElement({ id: elementId, ...chainOf(flat, elementId) });
-    onNavigate();
-  }, [elementId, flat, onNavigate, revealElement]);
+    onDismiss();
+  }, [elementId, flat, onDismiss, revealElement]);
 
   return (
     <li className="flex gap-2 border-b border-zinc-100 py-2 last:border-b-0 dark:border-zinc-800">
       <i className={clsx('fa-solid mt-0.5 text-xs', SEVERITY_ICON[severity], SEVERITY_TEXT[severity])} />
       <div className="flex min-w-0 flex-col gap-1">
         <p className="text-xs leading-relaxed text-zinc-700 dark:text-zinc-200">{message}</p>
+        {issue.fixable && (
+          <span className={clsx('text-[10px] tracking-wider uppercase', MUTED)}>Fixable automatically</span>
+        )}
         {reachable && (
           <button
             type="button"

@@ -1244,59 +1244,7 @@ describe('Testing FlatMap', () => {
   });
 });
 
-describe('FlatMap.parentTree across nested layouts', () => {
-  const node = (
-    id: string,
-    type: string,
-    parentId: string | undefined,
-    rootId: string,
-    attributes: Record<string, unknown> = {}
-  ): Schema['flat'][string] => ({
-    id,
-    attributes,
-    definition: { label: id, type, parentId, rootId, items: [], styleSelectors: { base: '' } }
-  });
-
-  const flat: Schema['flat'] = {
-    shell: node('shell', 'layoutContainer', undefined, 'shell'),
-    'shell-body': node('shell-body', 'container', 'shell', 'shell'),
-    analytics: node('analytics', 'layoutContainer', undefined, 'analytics', {
-      layout: 'shell',
-      layoutContainer: 'shell-body'
-    }),
-    'analytics-api': node('analytics-api', 'apiContainer', 'analytics', 'analytics'),
-    'analytics-body': node('analytics-body', 'container', 'analytics-api', 'analytics'),
-    audience: node('audience', 'page', undefined, 'audience', {
-      layout: 'analytics',
-      layoutContainer: 'analytics-body'
-    }),
-    map: node('map', 'container', 'audience', 'audience')
-  };
-
-  /** A page's content binds to a provider its SHELL holds, so the shell — and the one around it — are its ancestors. */
-  it('walks from a page into its shell and on into the shell around that', () => {
-    expect(FlatMap.parentTree(flat, 'map')).toEqual([
-      'analytics-body',
-      'analytics-api',
-      'shell-body',
-      'shell',
-      'analytics',
-      'audience'
-    ]);
-  });
-
-  it('stops at shells that name each other', () => {
-    const cyclic: Schema['flat'] = {
-      ...flat,
-      shell: node('shell', 'layoutContainer', undefined, 'shell', {
-        layout: 'analytics',
-        layoutContainer: 'analytics-body'
-      })
-    };
-
-    expect(() => FlatMap.parentTree(cyclic, 'map')).not.toThrow();
-  });
-
+describe('FlatMap.flatAsTemplate', () => {
   it('flatAsTemplate carries every class of a stacked selector', () => {
     const element = (id: string, parentId: string, type: string, base: string, items: string[] = []) => ({
       id,
@@ -1333,5 +1281,44 @@ describe('FlatMap.parentTree across nested layouts', () => {
     const { elementsStyle } = instance.flatAsTemplate(style, 'card');
 
     expect(Object.keys(elementsStyle.platform.desktop).sort()).toEqual(['accent', 'label', 'panel', 'wide']);
+  });
+});
+
+describe('FlatMap.moveElement', () => {
+  const node = (id: string, type: string, rootId: string, parentId?: string, items: string[] = []) => ({
+    id,
+    attributes: {},
+    definition: { label: id, type, rootId, parentId, items, styleSelectors: { base: '' } }
+  });
+  const tree = (): Schema['flat'] => ({
+    home: node('home', 'page', 'home', undefined, ['box']),
+    box: node('box', 'container', 'home', 'home', ['inner']),
+    inner: node('inner', 'container', 'home', 'box', ['leaf']),
+    leaf: node('leaf', 'text', 'home', 'inner'),
+    about: node('about', 'page', 'about', undefined, ['slot']),
+    slot: node('slot', 'container', 'about', 'about')
+  });
+
+  it('refuses to move an element inside itself or one of its descendants', () => {
+    const flat = tree();
+
+    expect(new FlatMap({ flat }).moveElement('home', 'box', 'box', 'inside')).toBe(false);
+    expect(new FlatMap({ flat }).moveElement('home', 'leaf', 'box', 'inside')).toBe(false);
+    expect(flat.home.definition.items).toEqual(['box']);
+  });
+
+  it('takes the subtree to the root it moved into', () => {
+    const flat = tree();
+
+    expect(new FlatMap({ flat }).moveElement('box', 'slot', 'inner', 'inside')).toBe(true);
+    expect([flat.inner.definition.rootId, flat.leaf.definition.rootId]).toEqual(['about', 'about']);
+    expect(flat.slot.definition.items).toEqual(['inner']);
+    expect(flat.box.definition.items).toEqual([]);
+  });
+
+  it('does not hang on parents that name each other', () => {
+    const flat = { ...tree(), a: node('a', 'container', 'x', 'b'), b: node('b', 'container', 'x', 'a') };
+
+    expect(new FlatMap({ flat }).moveElement('home', 'a', 'box', 'inside')).toBe(true);
   });
 });

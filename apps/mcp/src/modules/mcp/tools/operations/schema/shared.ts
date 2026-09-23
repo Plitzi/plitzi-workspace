@@ -141,6 +141,8 @@ export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>
 export const position = z
   .enum(['inside', 'before', 'after'])
   .describe('Placement relative to the anchor: "inside" nests it as a child (default), "before"/"after" as a sibling');
+
+export type Position = z.infer<typeof position>;
 export const scalar = z.union([z.string(), z.number(), z.boolean()]);
 
 // --- Data bindings ---

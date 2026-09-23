@@ -7,6 +7,7 @@ import type {
   DropPosition,
   Element,
   PageFolder,
+  Schema,
   SchemaRaw,
   SchemaVariable,
   SpaceFont,
@@ -39,6 +40,15 @@ const elements = z.array(element);
 
 // `flat` as a list is the wire shape of a schema. The builder re-indexes it on arrival, so the keyed map an MCP
 // write works with is not interchangeable here — and that swap is exactly what this catches.
+/** A schema as the channel carries it: `flat` as a list. What every publisher of a whole schema sends. */
+export const schemaToWire = (schema: Schema): SchemaRaw => ({ ...schema, flat: Object.values(schema.flat) });
+
+/** A schema off the channel, keyed again by element id: what a receiver stores. */
+export const schemaFromWire = (raw: SchemaRaw): Schema => ({
+  ...raw,
+  flat: Object.fromEntries(raw.flat.map(item => [item.id, item]))
+});
+
 const schemaRaw = z.custom<SchemaRaw>(value => isRecord(value) && Array.isArray(value.flat), {
   message: 'expected a schema whose `flat` is a list of elements'
 });

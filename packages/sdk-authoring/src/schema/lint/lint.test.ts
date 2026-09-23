@@ -4,20 +4,18 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { BUILTIN_GLOBAL_CALLBACKS, elementAncestorTypes, lintSpace } from '../../index';
 import {
-  BUILTIN_GLOBAL_CALLBACKS,
-  apiContainer,
-  authorSpace,
-  button,
-  container,
-  elementAncestorTypes,
-  link,
-  lintSpace,
-  modalContainer,
-  text
-} from '../../index';
-
-import type { Element, ElementInteraction, Schema, Style } from '@plitzi/sdk-shared';
+  addElement,
+  authored,
+  errorsOf,
+  homeId,
+  onClick,
+  setFlow,
+  step,
+  warningsOf,
+  withChange
+} from './testUtils/lintFixture';
 
 /**
  * Every rule of the linter, pinned by its code.
@@ -26,100 +24,6 @@ import type { Element, ElementInteraction, Schema, Style } from '@plitzi/sdk-sha
  * Each case starts from a space the linter finds nothing in, changes the one thing the rule is about, and says whether
  * that is refused or warned. The last test holds the file to the linter: a rule added without a case here fails it.
  */
-
-type Documents = { schema: Schema; style: Style };
-
-const authored = (): Documents => {
-  const { schema, style } = authorSpace({
-    name: 'Lint',
-    permanentUrl: 'lint',
-    pages: [
-      {
-        name: 'Home',
-        slug: '',
-        body: [
-          container({ id: 'box', children: [text({ id: 'hello', content: 'Hi' })] }),
-          apiContainer({
-            id: 'feed',
-            subType: 'div',
-            query: '/data/feed.json',
-            children: [text({ id: 'row', bind: { content: 'feed.data.title' } })]
-          }),
-          button({ id: 'go', content: 'Go' }),
-          modalContainer({ id: 'modal', visible: false }),
-          link({ id: 'to-about', mode: 'page', href: '/about' })
-        ]
-      },
-      { name: 'About', slug: 'about', body: [text({ id: 'about-text', content: 'About' })] }
-    ]
-  });
-
-  return { schema, style };
-};
-
-const homeId = (schema: Schema): string => schema.pages[0];
-
-/** The space with one thing changed. */
-const withChange = (change: (documents: Documents) => void): Documents => {
-  const documents = structuredClone(authored());
-  change(documents);
-
-  return documents;
-};
-
-const errorsOf = (documents: Documents): string[] => lintSpace(documents).errors.map(issue => issue.code);
-const warningsOf = (documents: Documents): string[] => lintSpace(documents).warnings.map(issue => issue.code);
-
-const step = (id: string, type: string, action: string, extra: Partial<ElementInteraction> = {}): ElementInteraction =>
-  ({
-    id,
-    title: action,
-    type,
-    action,
-    params: {},
-    preview: {},
-    elementId: null,
-    beforeNode: '',
-    afterNode: '',
-    flowId: '',
-    enabled: true,
-    ...extra
-  }) as ElementInteraction;
-
-/** One flow on `hostId`, its steps linked in the order given — the shape the runtime reads. */
-const setFlow = (schema: Schema, hostId: string, steps: ElementInteraction[]): void => {
-  const [head] = steps;
-  schema.flat[hostId].definition.interactions = Object.fromEntries(
-    steps.map((node, index) => [
-      node.id,
-      {
-        ...node,
-        flowId: head.id,
-        beforeNode: index > 0 ? steps[index - 1].id : '',
-        afterNode: index < steps.length - 1 ? steps[index + 1].id : ''
-      }
-    ])
-  );
-};
-
-const onClick = () => step('click', 'trigger', 'onClick', { elementId: 'go' });
-
-const addElement = (schema: Schema, element: Pick<Element, 'id' | 'attributes'> & { type: string }): void => {
-  const home = homeId(schema);
-  schema.flat[element.id] = {
-    id: element.id,
-    attributes: element.attributes,
-    definition: {
-      type: element.type,
-      label: element.type,
-      rootId: home,
-      parentId: home,
-      items: [],
-      styleSelectors: { base: '' }
-    }
-  };
-  schema.flat[home].definition.items = [...(schema.flat[home].definition.items ?? []), element.id];
-};
 
 describe('lintSpace', () => {
   it('finds nothing in a space the authoring surface wrote', () => {
@@ -265,6 +169,31 @@ describe('lintSpace', () => {
       });
 
       expect(errorsOf(documents)).toContain('binding-source-out-of-scope');
+    });
+
+    // What the runtime walks: past the page, only the layout around the slot it renders in — not a provider beside it.
+    it('binding-source-out-of-scope reaches the layout around the slot, and nothing beside it', () => {
+      const withShell = (source: string) =>
+        withChange(({ schema }) => {
+          const shell = (id: string, type: string, parentId: string | undefined, items: string[] = []) => ({
+            id,
+            attributes: type === 'apiContainer' ? { subType: 'div', query: '/data/nav.json' } : {},
+            definition: { type, label: id, rootId: 'shell', parentId, items, styleSelectors: { base: '' } }
+          });
+          schema.flat.shell = shell('shell', 'layoutContainer', undefined, ['nav', 'frame']);
+          schema.flat.nav = shell('nav', 'apiContainer', 'shell');
+          schema.flat.frame = shell('frame', 'apiContainer', 'shell', ['slot']);
+          schema.flat.slot = shell('slot', 'container', 'frame');
+          schema.flat[homeId(schema)].attributes = {
+            ...schema.flat[homeId(schema)].attributes,
+            layout: 'shell',
+            layoutContainer: 'slot'
+          };
+          schema.flat.hello.definition.bindings = { attributes: [{ id: 'b1', to: 'content', source }] };
+        });
+
+      expect(errorsOf(withShell('apiContainer_frame.data.title'))).not.toContain('binding-source-out-of-scope');
+      expect(errorsOf(withShell('apiContainer_nav.data.title'))).toContain('binding-source-out-of-scope');
     });
 
     it('binding-target-unknown', () => {

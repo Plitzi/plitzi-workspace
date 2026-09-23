@@ -1,3 +1,5 @@
+import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
+
 import type { Element } from '@plitzi/sdk-shared';
 
 /**
@@ -14,23 +16,10 @@ export type ElementLookup = Record<string, Element | undefined>;
  *
  * Walked through `parentId` rather than read off `rootId`, because the tree the panel opens is the chain of
  * PARENTS: revealing a match six levels down means opening all six, and `rootId` names only the far end of it. The
- * seen-set is not paranoia — a schema edited by two people at once can briefly describe a cycle, and without it
- * this loops forever inside a render.
+ * walk is sdk-schema's `parentChain`, the one every reader of the tree shares.
  */
 export const chainOf = (flat: ElementLookup, id: string): { rootId: string; ancestors: string[] } => {
-  const ancestors: string[] = [];
-  const seen = new Set<string>([id]);
-  let current = flat[id]?.definition.parentId;
-  while (current !== undefined && !seen.has(current)) {
-    const parent = flat[current];
-    if (!parent) {
-      break;
-    }
-
-    seen.add(current);
-    ancestors.unshift(current);
-    current = parent.definition.parentId;
-  }
+  const ancestors = parentChain(flat, id).reverse();
 
   return { rootId: ancestors[0] ?? id, ancestors };
 };

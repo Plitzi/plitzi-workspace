@@ -2,11 +2,12 @@ import { z } from 'zod';
 
 import { empty, fail, findRootByRef, resolveRef } from '../../../../helpers';
 import { elementInput, position } from '../shared';
-import { collectInputRefs, createElement, guardNewRef, pageUri, writeInitialState } from '../write';
+import { DROP_POSITION, collectInputRefs, createElement, guardNewRef, pageUri, writeInitialState } from '../write';
 
 import type { Space } from '../../../../helpers';
 import type { OpResult } from '../../../../helpers';
 import type { Env } from '../../../../types';
+import type { DropPosition } from '@plitzi/sdk-shared';
 
 export const upsertElementOp = z
   .object({
@@ -73,25 +74,25 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
     }
   }
 
-  let parent = page;
-  let index: number | undefined;
+  let anchorId = page.id;
+  let drop: DropPosition = 'inside';
   if (op.parentRef) {
     const anchor = resolveRef(space.schema, page, op.parentRef);
     if (!anchor) {
       return fail('parentRef', `Parent "${op.parentRef}" not found in page "${op.pageRef}"`, 'Use an existing ref');
     }
 
-    if (op.position === 'before' || op.position === 'after') {
-      parent = anchor.definition.parentId ? space.schema.flat[anchor.definition.parentId] : page;
-      const items = parent.definition.items ?? [];
-      const at = items.indexOf(anchor.id);
-      index = at < 0 ? undefined : op.position === 'after' ? at + 1 : at;
-    } else {
-      parent = anchor;
-    }
+    anchorId = anchor.id;
+    drop = DROP_POSITION[op.position ?? 'inside'];
   }
 
-  createElement(space, page, op.element, parent, index);
+  if (!createElement(space, page, op.element, anchorId, drop)) {
+    return fail(
+      'parentRef',
+      `"${op.element.ref}" cannot be placed ${op.position ?? 'inside'} "${op.parentRef ?? op.pageRef}"`,
+      'An element goes inside an element that holds children, or before/after one that has a parent — a page has no siblings.'
+    );
+  }
 
   return { ...empty(), created: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
 };

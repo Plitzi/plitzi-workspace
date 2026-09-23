@@ -15,6 +15,7 @@ import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from './interactions';
 import {
   authorSpace as authorSpaceUnchecked,
   authorTemplate as authorTemplateUnchecked,
+  fixSpace as fixSpaceUnchecked,
   lintSpace as lintSpaceUnchecked,
   validateSpace as validateSpaceUnchecked,
   validateTemplate as validateTemplateUnchecked
@@ -25,6 +26,7 @@ import type {
   AuthorSpaceOptions,
   AuthoredSpace,
   AuthoredTemplate,
+  FixResult,
   LintCatalogs,
   LintResult,
   SpaceDocuments,
@@ -133,6 +135,13 @@ export const validateSpace = (space: SpaceDocuments, options: SpaceValidationOpt
  */
 export const lintSpace = (space: SpaceDocuments, options: LintCatalogs = {}): LintResult =>
   lintSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options });
+
+/**
+ * `fixSpace`, holding the same catalogs `lintSpace` reads with — so a fix settles exactly what the linter reports, on
+ * a copy of the documents. `codes` narrows it to some of `FIXABLE_CODES`.
+ */
+export const fixSpace = (space: SpaceDocuments, options: LintCatalogs = {}, codes?: Iterable<string>): FixResult =>
+  fixSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options }, codes);
 
 /**
  * `authorTemplate`, holding the same vocabularies — the artefact you publish when you are not building a space.

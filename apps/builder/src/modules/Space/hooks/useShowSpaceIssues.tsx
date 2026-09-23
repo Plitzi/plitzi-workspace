@@ -1,6 +1,7 @@
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback } from 'react';
 
+import useFixSpaceIssues from './useFixSpaceIssues';
 import SpaceIssues from '../components/SpaceIssues';
 
 import type { TSpaceIssues } from '@plitzi/sdk-shared';
@@ -12,6 +13,7 @@ import type { TSpaceIssues } from '@plitzi/sdk-shared';
  */
 const useShowSpaceIssues = () => {
   const { showModal } = useModal();
+  const fixSpaceIssues = useFixSpaceIssues();
 
   return useCallback(
     (issues: TSpaceIssues, intro?: string) =>
@@ -21,13 +23,13 @@ const useShowSpaceIssues = () => {
         </Modal.Header>,
         ({ onClose }) => (
           <Modal.Body>
-            <SpaceIssues issues={issues} intro={intro} onNavigate={onClose} />
+            <SpaceIssues issues={issues} intro={intro} onDismiss={onClose} onFix={fixSpaceIssues} />
           </Modal.Body>
         ),
         undefined,
         { size: 'md' }
       ),
-    [showModal]
+    [fixSpaceIssues, showModal]
   );
 };
 

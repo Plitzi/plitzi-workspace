@@ -32,6 +32,10 @@ export const issuesFromError = (error: unknown): TSpaceIssue[] | undefined => {
   return Array.isArray(issues) ? issues.filter(isIssue) : undefined;
 };
 
+/** How many of the issues `SpaceFixIssues` settles on its own — the ones with a single reading. */
+export const fixableCount = (issues: TSpaceIssues): number =>
+  [...issues.errors, ...issues.warnings].filter(issue => issue.fixable).length;
+
 /** The worst thing in the list: errors stop a publish, warnings only ask to be looked at. */
 export const levelOf = (issues: TSpaceIssues): IssuesLevel => {
   if (issues.errors.length > 0) {

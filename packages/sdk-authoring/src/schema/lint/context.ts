@@ -1,3 +1,4 @@
+import { parentChain, renderContext } from '@plitzi/sdk-schema/helpers/elementTree';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 
 import type { AuthorSpaceOptions } from '../types';
@@ -109,22 +110,17 @@ export class LintContext {
     return `Element "${element.definition.type}" (${id})${place}`;
   }
 
-  /** The element's ancestors, by id, up to and including its root: the only elements whose sources it can read. */
+  /** The elements `id` is nested in, as the document stores them — what "inside a form" means. */
   ancestors(id: string): Set<string> {
-    const ancestors = new Set<string>();
-    for (let current = this.element(id)?.definition.parentId; current && !ancestors.has(current);) {
-      ancestors.add(current);
-      current = this.element(current)?.definition.parentId;
-    }
-
-    return ancestors;
+    return new Set(parentChain(this.flat, id));
   }
 
-  /** Whether an element lives in a layout shell rather than on a page — its providers surround every page in it. */
-  inLayout(id: string): boolean {
-    const rootId = this.element(id)?.definition.rootId;
-
-    return rootId !== undefined && this.layoutIds.has(rootId);
+  /**
+   * The elements whose sources `id` can read: everything it renders inside, the layout shells around its page included
+   * — the walk the runtime makes, so a provider beside the slot in a layout is not in it.
+   */
+  scope(id: string): Set<string> {
+    return new Set(renderContext(this.flat, id));
   }
 
   /** The route params an element's page declares; a layout renders on every page, so it sees all of them. */
