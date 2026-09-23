@@ -103,6 +103,17 @@
 - `schemaToWire`/`schemaFromWire` (sdk-shared `network/spaceEvents`): a whole schema on the live channel has `flat` as
   a list; the builder reads `SPACE_UPDATED` through `schemaFromWire`.
 
+- `FlatMap` no longer goes through lodash `get`/`set` with string paths: every read and write is typed. `addElement`
+  and `moveElement` share one placement step and validate before they write — an insert that is refused leaves no
+  element behind, and an anchor its parent does not list is refused rather than landing the element before the last
+  sibling. A template's base element has no `parentId` (it was `null`, which the type does not allow).
+- Removed what nothing used: the MCP's `isActionOp`/`isConnectorOp`/`pageStylesUri`; in the builder the empty module
+  barrels, the pending `Integrations` stub, `PluginSettingsForm` and the code commented out around it,
+  `useInfiniteGraphQL`, a second `formatTime`, `ToggleItem`, `ButtonVoice`, and `SpaceContext`/its provider.
+- Builder resources: one preview (`ResourceContent`) for a resource on its way up, in the list and in its details — the
+  list's own copy of the plugin card is gone — and one card for images and videos (`ResourceMedia`). A video was
+  dragged as an image and kept its remove button under the cursor while dragged, and so did any other file; both fixed.
+
 ## Runtime
 
 - Attribute `{{ tokens }}` resolve against every source around the element — a list row, a provider, `state`, `auth`,

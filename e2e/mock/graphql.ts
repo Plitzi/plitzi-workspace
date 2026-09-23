@@ -162,6 +162,10 @@ const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined>
       }
     };
   },
+  /** The header's problems button asks at boot, and again whenever the save queue drains. Same rule: `.errors` off
+   *  `true` is nothing, and Apollo reports the missing field as an error the page guard catches. A mocked space is one
+   *  the linter finds nothing in. */
+  SpaceIssuesQuery: () => ({ data: { SpaceIssues: { errors: [], warnings: [], __typename: 'SpaceIssues' } } }),
   SpaceDeploymentsQuery: () => ({
     data: {
       SpaceDeployments: {

@@ -4,9 +4,9 @@ import { useState, useEffect, useRef, useCallback, use, useMemo } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import ResourceContent from './ResourceContent';
 import ResourceUploadStatus from './ResourceUploadStatus';
 import ResourceName from '../Resource/ResourceName';
+import ResourceContent from '../ResourceContent';
 
 import type {
   BuilderNetworkContextValue,

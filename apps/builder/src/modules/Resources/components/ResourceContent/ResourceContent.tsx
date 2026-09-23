@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import ContentPlugin from './contents/ContentPlugin';
+import ContentPlugin from './components/ContentPlugin';
 
 import type { PluginManifest, ResourceType } from '@plitzi/sdk-shared';
 

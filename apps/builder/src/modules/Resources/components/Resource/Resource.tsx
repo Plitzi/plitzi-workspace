@@ -8,12 +8,11 @@ import { useState, use, useCallback } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import ResourceContent from '../ResourceContent';
 import ResourceFile from './subTypes/ResourceFile';
-import ResourceContent from '../ResourceManager/ResourceContent';
-import ResourceImage from './subTypes/ResourceImage';
+import ResourceMedia from './subTypes/ResourceMedia';
 import ResourcePlugin from './subTypes/ResourcePlugin/ResourcePlugin';
 import ResourceTemplate from './subTypes/ResourceTemplate';
-import ResourceVideo from './subTypes/ResourceVideo';
 
 import type { PluginManifest, ResourceType as TResourceType } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -168,10 +167,8 @@ const Resource = ({
       return <ResourceTemplate {...sharedProps} src={src} />;
 
     case 'image':
-      return <ResourceImage {...sharedProps} src={src} />;
-
     case 'video':
-      return <ResourceVideo {...sharedProps} src={src} />;
+      return <ResourceMedia {...sharedProps} type={type} src={src} />;
 
     case 'plugin':
       return <ResourcePlugin {...sharedProps} src={src} metadata={metadata} />;

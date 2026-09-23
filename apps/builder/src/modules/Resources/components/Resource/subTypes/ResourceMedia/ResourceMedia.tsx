@@ -9,9 +9,10 @@ import ResourceRemoveButton from '../../ResourceRemoveButton';
 
 import type { DragEvent, MouseEvent } from 'react';
 
-export type ResourceVideoProps = {
+export type ResourceMediaProps = {
   className?: string;
   id: string;
+  type: 'image' | 'video';
   src: string;
   title?: string;
   removing?: boolean;
@@ -21,9 +22,10 @@ export type ResourceVideoProps = {
   onRemove?: (e: MouseEvent) => void;
 };
 
-const ResourceVideo = ({
+const ResourceMedia = ({
   className,
   id,
+  type,
   title,
   src,
   removing = false,
@@ -31,17 +33,18 @@ const ResourceVideo = ({
   isLoading = false,
   onClick,
   onRemove
-}: ResourceVideoProps) => {
-  const { onDragStart } = useDragElement({ type: 'video', attributes: { src } });
+}: ResourceMediaProps) => {
+  const { onDragStart } = useDragElement({ type, attributes: { src } });
   const [isDragging, setIsDragging] = useState(false);
   const { setDraggingFile } = use(ResourcesListContext);
 
   const handleDragStart = useCallback(
     (e: DragEvent) => {
       onDragStart(e);
-      setDraggingFile({ id, type: 'image', directoryName });
+      setDraggingFile({ id, type, directoryName });
+      setIsDragging(true);
     },
-    [directoryName, id, onDragStart, setDraggingFile]
+    [directoryName, id, onDragStart, setDraggingFile, type]
   );
 
   const handleDragEnd = useCallback(() => setIsDragging(false), []);
@@ -52,16 +55,22 @@ const ResourceVideo = ({
       onDragEnd={handleDragEnd}
       draggable={!isLoading}
       className={clsx(
-        'group relative flex min-h-20 cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
+        'group relative flex cursor-grabbing overflow-hidden rounded-md border border-gray-300 select-none dark:border-zinc-600',
+        { 'w-full': type === 'image', 'min-h-20': type === 'video' },
         className
       )}
       onClick={onClick}
     >
-      <video draggable={false} src={src} muted className="h-auto w-full object-cover" title={title} />
+      {type === 'image' && (
+        <img draggable={false} src={src} alt={title} className="h-auto w-full object-cover" title={title} />
+      )}
+      {type === 'video' && (
+        <video draggable={false} src={src} muted className="h-auto w-full object-cover" title={title} />
+      )}
       {!isDragging && <ResourceRemoveButton onRemove={onRemove} />}
       {(isLoading || removing) && <ResourceLoading />}
     </div>
   );
 };
 
-export default ResourceVideo;
+export default ResourceMedia;

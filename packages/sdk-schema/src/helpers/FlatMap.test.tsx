@@ -816,7 +816,6 @@ describe('Testing FlatMap', () => {
               },
               items: ['cta-2', 'title-2'],
               label: 'Container',
-              parentId: null,
               rootId: 'wrapper-2',
               styleSelectors: {
                 base: ''
@@ -898,7 +897,6 @@ describe('Testing FlatMap', () => {
             },
             items: ['cta-2', 'title-2'],
             label: 'Container',
-            parentId: null,
             rootId: 'wrapper-2',
             styleSelectors: {
               base: ''
@@ -1027,8 +1025,7 @@ describe('Testing FlatMap', () => {
               initialState: {
                 visibility: true
               },
-              rootId: 'title-2',
-              parentId: null
+              rootId: 'title-2'
             }
           }
         },
@@ -1048,8 +1045,7 @@ describe('Testing FlatMap', () => {
             initialState: {
               visibility: true
             },
-            rootId: 'title-2',
-            parentId: null
+            rootId: 'title-2'
           }
         }
       },
