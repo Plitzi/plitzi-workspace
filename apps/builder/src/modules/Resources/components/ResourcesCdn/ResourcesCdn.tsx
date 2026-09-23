@@ -11,6 +11,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import SpaceCredentialSelectorModal from '@pmodules/Space/components/SpaceCredentialSelectorModal';
 
+import { mainPluginOf } from '../../helpers';
 import ResourceManager from '../ResourceManager';
 import ResourcesList from '../ResourcesList';
 
@@ -113,7 +114,7 @@ const ResourcesCdn = ({
   const handleResourceRemoved = useCallback(
     (resource: TResource) => {
       if (resource.type === 'plugin') {
-        const plugin = Object.values(plugins).find(plugin => plugin.type === resource.metadata.root && plugin.isMain);
+        const plugin = mainPluginOf(plugins, resource.metadata.root);
         if (plugin) {
           void remove?.(plugin.type);
         }

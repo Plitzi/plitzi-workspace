@@ -6,9 +6,13 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useState, use, useCallback } from 'react';
 
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 
+import { mainPluginOf, pluginUsage } from '../../helpers';
 import ResourceContent from '../ResourceContent';
+import PluginInUse from './components/PluginInUse';
 import ResourceFile from './subTypes/ResourceFile';
 import ResourceMedia from './subTypes/ResourceMedia';
 import ResourcePlugin from './subTypes/ResourcePlugin/ResourcePlugin';
@@ -43,6 +47,9 @@ const Resource = ({
   onRemove
 }: ResourceProps) => {
   const { mutate } = use(NetworkContext);
+  const { plugins } = use(PluginsContext);
+  // Read when a removal is asked for, not subscribed to: every card in the list would re-render on every edit.
+  const getSchemaFlat = useBuilderStoreGetter('schema.flat');
   const { showModal, showDialog } = useModal();
   const [removing, setRemoving] = useState(false);
   const { addToast } = useToast();
@@ -128,12 +135,15 @@ const Resource = ({
   const handleClickRemove = useCallback(
     async (e: MouseEvent) => {
       e.stopPropagation();
+      const plugin = type === 'plugin' && metadata ? mainPluginOf(plugins, metadata.root) : undefined;
+      const usage = plugin ? pluginUsage(getSchemaFlat(), plugin) : [];
       const response = await showDialog(
         <Modal.Header>
           <h4>Remove Resource</h4>
         </Modal.Header>,
         <Modal.Body>
           <h4>Do you want to remove this item ?</h4>
+          <PluginInUse usage={usage} />
         </Modal.Body>,
         undefined,
         { size: 'sm' },
@@ -147,7 +157,7 @@ const Resource = ({
         onRemove?.(id);
       }
     },
-    [id, cdnIdentifier, mutate, onRemove, showDialog]
+    [type, metadata, plugins, getSchemaFlat, showDialog, id, mutate, cdnIdentifier, onRemove]
   );
 
   const sharedProps = {

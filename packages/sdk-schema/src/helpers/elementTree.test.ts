@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { descendants, elementsByRoot, parentChain, renderContext } from './elementTree';
+import { descendants, elementsByRoot, parentChain, renderContext, rootName } from './elementTree';
 
 import type { Schema } from '@plitzi/sdk-shared';
 
@@ -137,5 +137,22 @@ describe('elementsByRoot', () => {
       { page: 'missing-root', elements: 1 }
     ]);
     expect(elementsByRoot({})).toEqual([]);
+  });
+
+  it('narrows to the elements asked about, still named after the root that holds them', () => {
+    expect(elementsByRoot(flat, element => element.definition.type === 'apiContainer')).toEqual([
+      { page: 'shell', elements: 1 },
+      { page: 'analytics', elements: 1 }
+    ]);
+  });
+});
+
+describe('rootName', () => {
+  it('prefers the name the author gave, then the label, then the id of a root that is gone', () => {
+    const named = { home: node('home', 'page', undefined, 'home', { name: 'Home' }) };
+
+    expect(rootName(named, 'home')).toBe('Home');
+    expect(rootName(flat, 'shell')).toBe('shell');
+    expect(rootName(flat, 'gone')).toBe('gone');
   });
 });
