@@ -20,8 +20,8 @@ const KEY = 'plitzi_42_state';
 
 const kept = { workspace: { id: 3, name: 'Acme' } };
 
-const settings = (keepState: boolean, stateStorage?: 'localStorage' | 'sessionStorage') =>
-  ({ settings: { keepState, stateStorage } }) as unknown as Schema;
+const settings = (keepState: boolean, stateStorage?: 'localStorage' | 'sessionStorage', transientState?: string[]) =>
+  ({ settings: { keepState, stateStorage, transientState } }) as unknown as Schema;
 
 /** What the middleware writes: the persist envelope, filed under whoever wrote it. */
 const entry = (owner: string, state: unknown): string =>
@@ -217,6 +217,60 @@ describe('runtimeStatePersist', () => {
       store.setState('runtime.sources.auth', guest);
 
       expect(store.getState().runtime?.state).toBeUndefined();
+    });
+  });
+
+  /**
+   * State a space declares transient: a demo, a panel left open — things that must start fresh on every visit while the
+   * rest of the page keeps what it kept. Restoring lands late (after hydration, after auth), so "start fresh" also means
+   * a value set before the restore is not undone by it.
+   */
+  describe('transient keys', () => {
+    const transient = (hydrating = false) =>
+      build({
+        schema: settings(true, undefined, ['demo']),
+        render: hydrating ? { isHydrating: true, hydrated: false } : { isHydrating: false }
+      });
+
+    const stored = () => {
+      const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as { payload?: string };
+
+      return (JSON.parse(raw.payload ?? '{}') as { state?: Record<string, unknown> }).state?.['runtime.state'];
+    };
+
+    it('does not write them', () => {
+      const store = transient();
+      store.hydrate?.();
+      store.setState('runtime.state', { ...kept, demo: 'rose' });
+
+      expect(stored()).toEqual(kept);
+      expect(store.getState().runtime?.state).toEqual({ ...kept, demo: 'rose' });
+    });
+
+    it('does not bring back one kept before it was declared transient', () => {
+      localStorage.setItem(KEY, entry('', { ...kept, demo: 'rose' }));
+      const store = transient();
+      store.hydrate?.();
+
+      expect(store.getState().runtime?.state).toEqual(kept);
+    });
+
+    it('keeps a value set before the rest is restored', () => {
+      const store = transient(true);
+      store.setState('runtime.state', { demo: 'teal' });
+      store.hydrate?.();
+
+      store.setState('render.hydrated', true);
+
+      expect(store.getState().runtime?.state).toEqual({ ...kept, demo: 'teal' });
+    });
+
+    it('keeps everything else as before', () => {
+      localStorage.setItem(KEY, entry('', { ...kept, other: 1 }));
+      const store = transient();
+      store.hydrate?.();
+
+      expect(store.getState().runtime?.state).toEqual({ ...kept, other: 1 });
     });
   });
 });

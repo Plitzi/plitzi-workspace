@@ -89,6 +89,77 @@ const ownedStorage = (storage: Storage, owner: string): PersistStorage => ({
   removeItem: key => storage.removeItem(key)
 });
 
+/** The one path this module keeps. */
+const KEPT_PATH = 'runtime.state';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * A kept payload with its `runtime.state` rewritten.
+ *
+ * The payload is the envelope the persist middleware writes for this module's one path — `{ version, state: {
+ * 'runtime.state': … } }` — which is also what every entry already kept in a browser holds. Anything that is not that
+ * shape is handed through untouched: the middleware is the one that decides an unreadable entry goes.
+ */
+const rewriteKept = (payload: string, rewrite: (kept: Record<string, unknown>) => Record<string, unknown>): string => {
+  try {
+    const envelope: unknown = JSON.parse(payload);
+    if (!isRecord(envelope) || !isRecord(envelope.state)) {
+      return payload;
+    }
+
+    const kept = envelope.state[KEPT_PATH];
+
+    return JSON.stringify({
+      ...envelope,
+      state: { ...envelope.state, [KEPT_PATH]: rewrite(isRecord(kept) ? kept : {}) }
+    });
+  } catch {
+    return payload;
+  }
+};
+
+const omitKeys = (from: Record<string, unknown>, keys: ReadonlySet<string>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(from).filter(([key]) => !keys.has(key)));
+
+const pickKeys = (from: unknown, keys: ReadonlySet<string>): Record<string, unknown> =>
+  isRecord(from) ? Object.fromEntries(Object.entries(from).filter(([key]) => keys.has(key))) : {};
+
+/**
+ * A storage that never holds the space's transient keys.
+ *
+ * Written without them, and read back without them too — an entry kept before a key was declared transient must not
+ * bring it back. And read back WITH the values those keys hold right now: restoring replaces `runtime.state` whole,
+ * and it lands late (after hydration, after auth settles), so without this a click made before it would be undone by
+ * it.
+ */
+const withoutTransient = (
+  storage: PersistStorage,
+  transient: ReadonlySet<string>,
+  current: unknown
+): PersistStorage => ({
+  getItem: key => {
+    const raw = storage.getItem(key);
+
+    return raw === null
+      ? null
+      : rewriteKept(raw, kept => ({ ...omitKeys(kept, transient), ...pickKeys(current, transient) }));
+  },
+  setItem: (key, value) =>
+    storage.setItem(
+      key,
+      rewriteKept(value, kept => omitKeys(kept, transient))
+    ),
+  removeItem: key => storage.removeItem(key)
+});
+
+/** The keys a space declared never to keep. */
+export const transientKeys = (
+  settings: Pick<CommonState['schema']['settings'], 'transientState'> | undefined
+): Set<string> =>
+  new Set((settings?.transientState ?? []).filter((key): key is string => typeof key === 'string' && key !== ''));
+
 const browserStorage = (kind: 'local' | 'session'): Storage | undefined => {
   try {
     return kind === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
@@ -122,7 +193,7 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
   const persist = persistMiddleware<TState>({
     key: `plitzi_${webId}_state`,
     // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
-    paths: ['runtime.state'] as PathOf<TState>[],
+    paths: [KEPT_PATH] as PathOf<TState>[],
     storage: (state: CommonState) => {
       const { schema, render } = state;
       // Only a render that came from SSR waits: a client-only one (the builder, an embed) has no markup to match and
@@ -138,8 +209,14 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
       }
 
       const storage = browserStorage(settings.stateStorage === 'sessionStorage' ? 'session' : 'local');
+      if (!storage) {
+        return false;
+      }
 
-      return storage ? ownedStorage(storage, ownerKey(owner)) : false;
+      const owned = ownedStorage(storage, ownerKey(owner));
+      const transient = transientKeys(settings);
+
+      return transient.size > 0 ? withoutTransient(owned, transient, state.runtime?.state) : owned;
     }
   });
 

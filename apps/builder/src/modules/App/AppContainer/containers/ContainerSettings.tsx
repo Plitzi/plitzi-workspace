@@ -26,11 +26,21 @@ const PROVIDER_SETTINGS = [
   'sessionHintCookie'
 ] as const;
 
+/** The state keys a comma-separated field names, as the runtime compares them: trimmed, none empty. */
+const parseStateKeys = (text: string): string[] =>
+  text
+    .split(',')
+    .map(key => key.trim())
+    .filter(Boolean);
+
 const ContainerSettings = () => {
   const [[settingsProp, styleMode]] = useBuilderStore(['schema.settings', 'style.mode']);
   const { eventBridge } = use(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp);
+  // The field's own text, so a comma being typed is not normalised away under the cursor.
+  const [transientText, setTransientText] = useState((settingsProp.transientState ?? []).join(', '));
+  const dottedKeys = parseStateKeys(transientText).filter(key => key.includes('.'));
   const {
     userProvider,
     keepState,
@@ -58,6 +68,16 @@ const ContainerSettings = () => {
       void eventBridge.emit('main', 'schemaUpdateSettings', '', 'stateStorage');
       setSettings(state => ({ ...state, keepState: e.target.checked }));
       void eventBridge.emit('main', 'schemaUpdateSettings', e.target.checked, 'keepState');
+    },
+    [eventBridge]
+  );
+
+  const handleChangeTransientState = useCallback(
+    (value: string) => {
+      const keys = parseStateKeys(value);
+      setTransientText(value);
+      setSettings(state => ({ ...state, transientState: keys }));
+      void eventBridge.emit('main', 'schemaUpdateSettings', keys, 'transientState');
     },
     [eventBridge]
   );
@@ -273,6 +293,22 @@ const ContainerSettings = () => {
               <option value="localStorage">Local Storage</option>
               <option value="sessionStorage">Session Storage</option>
             </Select>
+          )}
+          {keepState && (
+            <Input
+              size="sm"
+              name="transientState"
+              value={transientText}
+              onChange={handleChangeTransientState}
+              label="Never keep these state keys"
+              placeholder="filter, tourStep, panelOpen"
+            />
+          )}
+          {keepState && dottedKeys.length > 0 && (
+            <Alert intent="warning" size="xs" solid={false}>
+              {dottedKeys.join(', ')}: name the top-level key a Set State step writes, without dots — anything under it
+              is left out with it.
+            </Alert>
           )}
         </div>
         <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">

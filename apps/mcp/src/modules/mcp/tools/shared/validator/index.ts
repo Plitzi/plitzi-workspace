@@ -415,6 +415,19 @@ export const validateOperations = (
       case 'patchConnector':
         checkRef(op.ref, `${base}.ref`, ctx);
         break;
+      case 'patchSettings':
+        // The runtime compares top-level keys, so a dotted or empty one would match nothing and the state it meant
+        // would be kept regardless — with nothing anywhere saying so.
+        (op.transientState ?? []).forEach((key, index) => {
+          if (key.trim() === '' || key.includes('.')) {
+            ctx.errors.push({
+              path: `${base}.transientState[${index}]`,
+              message: `"${key}" is not a top-level state key: no dots, not empty`,
+              hint: `Name the key setState writes — "${key.split('.')[0] || 'tourStep'}" leaves out everything under it`
+            });
+          }
+        });
+        break;
       case 'deleteInteraction':
         checkRef(op.ref, `${base}.ref`, ctx);
         if (Boolean(op.flowId) === Boolean(op.nodeId)) {

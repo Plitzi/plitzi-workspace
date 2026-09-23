@@ -33,7 +33,7 @@ const rich: SpaceSpec = {
     modalContainer: { slots: { rootContainer: { 'background-color': 'white' } } }
   },
   classes: { unused: { color: 'red' } },
-  settings: { keepState: true, stateStorage: 'localStorage' },
+  settings: { keepState: true, stateStorage: 'localStorage', transientState: ['tourStep'] },
   customCss: '.card .title { outline: 1px solid; }',
   pageFolders: [{ id: 'docs', name: 'Docs' }],
   layouts: [
@@ -80,7 +80,7 @@ const rich: SpaceSpec = {
         })
       ]
     },
-    { id: 'guide', name: 'Guide', slug: 'guide', folder: 'docs', keepState: true, body: [] }
+    { id: 'guide', name: 'Guide', slug: 'guide', folder: 'docs', body: [] }
   ]
 };
 
@@ -331,6 +331,27 @@ describe('specFromSpace / what it repairs', () => {
         'fixed-attribute',
         'dropped-setting'
       ])
+    );
+  });
+
+  // Older documents carry `keepState` on a page, which the runtime never read — it keeps state per space. Reading one
+  // back drops it and says so, rather than handing the author a field that promises something nothing does.
+  it('drops a page keepState, which nothing reads', () => {
+    const documents = authorSpace({
+      name: 'Old',
+      permanentUrl: 'old',
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [] }]
+    });
+    documents.schema.flat.home.attributes = {
+      ...documents.schema.flat.home.attributes,
+      keepState: true,
+      stateStorage: 'localStorage'
+    };
+    const { spec: read, corrections: repairs } = specFromSpace(documents);
+
+    expect(read.pages[0]).not.toHaveProperty('keepState');
+    expect(repairs.map(repair => repair.message)).toEqual(
+      expect.arrayContaining([expect.stringContaining('page attribute "keepState"')])
     );
   });
 

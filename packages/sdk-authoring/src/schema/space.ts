@@ -170,6 +170,7 @@ class SpaceAuthor {
     this.assertAncestorClasses();
 
     this.assertComputedOnce();
+    this.assertTransientState();
     const pageFolders = this.buildPageFolders();
     layouts.forEach(layout => this.addLayout(layout));
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
@@ -605,7 +606,12 @@ class SpaceAuthor {
 
     for (const page of this.spec.pages) {
       const where = `Page "${page.name}"`;
-      assertKnownKeys(page, PAGE_SPEC_KEYS, where);
+      assertKnownKeys(
+        page,
+        PAGE_SPEC_KEYS,
+        where,
+        ' Keeping state across visits is a setting of the whole space: `settings: { keepState: true }`, with `transientState` for the keys to leave out.'
+      );
       assertId(page.id, where);
       if (typeof page.slug !== 'string') {
         throw new Error(
@@ -653,6 +659,49 @@ class SpaceAuthor {
       throw new Error(
         '`settings.computed` is written through `computed` at the top of the space, not inside `settings`.'
       );
+    }
+  }
+
+  /**
+   * The keys a space never keeps: a list of `runtime.state` keys, as `setState` writes them.
+   *
+   * Refused when it could not work — not a list, an empty name, or a dotted one: the runtime compares top-level keys, so
+   * `demo.step` would never match anything and the state would be kept exactly as if nothing had been said. Warned
+   * when it cannot DO anything: without `keepState` nothing is kept in the first place.
+   */
+  private assertTransientState(): void {
+    const transient: unknown = this.spec.settings?.transientState;
+    if (transient === undefined) {
+      return;
+    }
+
+    if (!Array.isArray(transient)) {
+      throw new Error(
+        `\`settings.transientState\` is ${JSON.stringify(transient)}. Write the state keys never to keep as a list: \`transientState: ['demoStep', 'panelOpen']\`.`
+      );
+    }
+
+    for (const key of transient) {
+      if (typeof key !== 'string' || key.trim() === '') {
+        throw new Error(
+          `\`settings.transientState\` has ${JSON.stringify(key)}, which is not a state key. Each entry is the \`key\` a \`setState\` step writes, like 'demoStep'.`
+        );
+      }
+
+      if (key.includes('.')) {
+        throw new Error(
+          `\`settings.transientState\` has "${key}", a dotted path. It names top-level keys of \`runtime.state\` — write "${key.split('.')[0]}" to leave out everything under it.`
+        );
+      }
+    }
+
+    if (this.spec.settings?.keepState !== true) {
+      this.styleWarnings.push({
+        code: 'transient-state-without-keep-state',
+        message:
+          '`settings.transientState` names keys never to keep, but `settings.keepState` is not on — nothing is kept in the first place, so it does nothing. Turn `keepState` on, or remove `transientState`.',
+        details: { keys: transient }
+      });
     }
   }
 
@@ -764,8 +813,6 @@ class SpaceAuthor {
         ...(page.unauthorizedRedirect
           ? { unauthorizedBehaviour: 'redirect', unauthorizedPageRedirect: page.unauthorizedRedirect }
           : {}),
-        ...(page.keepState === undefined ? {} : { keepState: page.keepState }),
-        ...(page.stateStorage ? { stateStorage: page.stateStorage } : {}),
         seoEnabled: Boolean(page.seoTitle ?? page.seoDescription),
         ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
         ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {})

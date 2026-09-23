@@ -249,8 +249,11 @@ export interface AISchemaVariable {
  *  configuration. Every field is optional — a patch changes only the keys it sends. */
 export interface AISettings {
   customCss?: string;
+  /** Keep `runtime.state` — what `setState` writes — across reloads, filed under whoever is signed in. */
   keepState?: boolean;
   stateStorage?: 'localStorage' | 'sessionStorage';
+  /** Top-level state keys never kept, even with `keepState` on. */
+  transientState?: string[];
   /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
   userProvider?: 'basic' | 'custom' | '' | (string & {});
   tokenStorage?: 'localStorage' | 'sessionStorage' | '';

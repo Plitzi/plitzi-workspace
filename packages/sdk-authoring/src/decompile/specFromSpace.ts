@@ -160,8 +160,6 @@ const PAGE_ATTRIBUTES = new Set([
   'seoEnabled',
   'seoPageTitle',
   'seoPageDescription',
-  'keepState',
-  'stateStorage',
   'enabled'
 ]);
 
@@ -175,6 +173,7 @@ const LAYOUT_ATTRIBUTES = new Set(['folder', 'layout', 'layoutContainer']);
 export const SCHEMA_SETTINGS = [
   'keepState',
   'stateStorage',
+  'transientState',
   'customCss',
   'userProvider',
   'tokenStorage',
@@ -958,10 +957,6 @@ class SpecReader {
       attributes.unauthorizedBehaviour === 'redirect' && typeof attributes.unauthorizedPageRedirect === 'string'
         ? attributes.unauthorizedPageRedirect
         : undefined;
-    const stateStorage =
-      attributes.stateStorage === 'localStorage' || attributes.stateStorage === 'sessionStorage'
-        ? attributes.stateStorage
-        : undefined;
     const seoTitle = typeof attributes.seoPageTitle === 'string' ? attributes.seoPageTitle : '';
     const seoDescription = typeof attributes.seoPageDescription === 'string' ? attributes.seoPageDescription : '';
 
@@ -980,8 +975,6 @@ class SpecReader {
       ...(layout ? { layout } : {}),
       ...(accessLevel ? { accessLevel } : {}),
       ...(redirect ? { unauthorizedRedirect: redirect } : {}),
-      ...(typeof attributes.keepState === 'boolean' ? { keepState: attributes.keepState } : {}),
-      ...(stateStorage ? { stateStorage } : {}),
       ...this.pageStyle(page.definition.styleSelectors.base),
       ...this.readFlows(page),
       body: this.childrenOf(page).map(child => this.readElement(child))

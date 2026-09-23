@@ -228,9 +228,6 @@ export interface PageSpec {
   folder?: string;
   /** The shared layout this page renders inside. See {@link LayoutRef}. */
   layout?: LayoutRef;
-  /** Keep the page's element state across visits, in the storage named by {@link PageSpec.stateStorage}. */
-  keepState?: boolean;
-  stateStorage?: Schema['settings']['stateStorage'];
   css?: CssSpec;
   /** As {@link ElementSpec.selector}. */
   selector?: string;

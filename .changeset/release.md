@@ -221,3 +221,18 @@
 - `@plitzi/sdk-mcp`: `saveSchema`/`saveStyle` receive an `SSRWriteContext` (the member, one batch per tool call), and an
   optional `getChanges` adapter serves `plitzi://changes/{env}` and `plitzi://changes/{env}/{id}`.
 
+
+## Kept state: what is never kept, and where keeping is decided
+
+- New space setting **`transientState`**: top-level `runtime.state` keys that are never kept, even with `keepState` on.
+  They are not written, not brought back — an entry kept before a key was declared transient does not restore it —
+  and a value one of them holds survives the restore, which lands late (after hydration, once auth settles) and used
+  to undo anything set before it. For demos, open panels, walkthrough steps: state that must start fresh every visit.
+  `authorSpace` refuses a list that is not one, an empty key and a dotted one (naming the top-level key to write), and
+  warns `transient-state-without-keep-state` when `keepState` is off. The builder's State Settings has the field, and
+  the MCP's `patchSettings` takes it.
+- **A page no longer takes `keepState` / `stateStorage`.** The runtime only ever read them from the space's settings,
+  so on a page they promised something nothing did. `authorSpace` refuses them with where they go; reading an older
+  document back drops them and reports it.
+- The authoring skill no longer suggests resetting kept state from `onPageLoad` — the restore lands in the middle of
+  that flow — and the MCP guide describes `keepState` as what it is: `runtime.state`, not element state.

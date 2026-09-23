@@ -29,6 +29,24 @@ describe('mcp-ai settings (space-level customCss + auth config)', () => {
     expect(settings.keepState).toBe(true);
   });
 
+  it('keeps state per space, leaving out the keys it is told never to keep', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'patchSettings', keepState: true, transientState: ['tourStep'] }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as { transientState?: string[] };
+    expect(settings.transientState).toEqual(['tourStep']);
+  });
+
+  // The runtime compares top-level keys: a dotted one would match nothing and the state would be kept regardless.
+  it('refuses a dotted transient key', () => {
+    const res = validate({ operations: [{ type: 'patchSettings', transientState: ['tour.step'] }] }, buildSpace());
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('no dots'))).toBe(true);
+  });
+
   it('exposes settings in the cold-start primer', async () => {
     const cap = capturing(buildSpace());
     await apply({ operations: [{ type: 'patchSettings', customCss: '.z{}' }] }, buildSpace(), cap.persisters);

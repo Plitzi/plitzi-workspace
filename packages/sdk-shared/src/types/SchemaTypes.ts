@@ -130,6 +130,13 @@ export type Schema = {
   settings: {
     keepState?: boolean;
     stateStorage?: 'localStorage' | 'sessionStorage';
+    /**
+     * Keys of `runtime.state` that are never kept, even with `keepState` on: they are not written, not brought back,
+     * and a value one of them already holds survives the moment the rest is restored. For state that must start fresh
+     * on every visit — a demo, a panel somebody left open, a step of a walkthrough. Top-level keys, as `setState`
+     * writes them.
+     */
+    transientState?: string[];
     customCss: string;
     /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
     userProvider?: 'basic' | 'custom' | '' | (string & {});

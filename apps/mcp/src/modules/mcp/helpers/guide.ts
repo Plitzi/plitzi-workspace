@@ -749,7 +749,10 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
 (merge — only the fields you pass change):
 - \`customCss\` — **raw global CSS** injected for the whole space. Use it only for genuinely site-wide rules
   (\`@keyframes\`, \`@font-face\`, resets). To style an element, write a **definition** and attach it — never customCss.
-- \`keepState\` / \`stateStorage\` — persist element state across reloads (\`localStorage\`/\`sessionStorage\`).
+- \`keepState\` / \`stateStorage\` — keep the runtime state (\`state.<key>\`, what \`setState\` writes) across reloads,
+  in \`localStorage\`/\`sessionStorage\`, filed under whoever is signed in. It is the space's setting — pages do not
+  take one. \`transientState\` lists the top-level keys never kept (a filter, a demo, a panel left open); do not
+  reset kept state from \`onPageLoad\` instead — it is restored later than that and undoes half of the reset.
 - **User provider / auth**: \`userProvider\` — \`basic\` for any HTTP+JSON backend, the name of a provider registered
   in the page, or \`""\` to disable auth — plus \`tokenStorage\`, the \`loginUrl\`/\`userUrl\`/\`refreshUrl\`/\`logoutUrl\`
   endpoints and the \`detailsPath\`/\`tokenPath\`/\`refreshTokenPath\`/\`expirationTimePath\` mapping that says where the

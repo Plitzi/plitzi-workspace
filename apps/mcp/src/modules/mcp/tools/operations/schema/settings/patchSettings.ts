@@ -20,8 +20,9 @@ export const patchSettingsOp = z
   .object({
     type: z.literal('patchSettings'),
     customCss: z.string().optional().describe('Raw global CSS for the whole space (keyframes, @font-face, resets)'),
-    keepState: z.boolean().optional().describe('Persist element state across reloads'),
+    keepState: z.boolean().optional().describe('Keep runtime state (setState keys) across reloads'),
     stateStorage: z.enum(['localStorage', 'sessionStorage']).optional(),
+    transientState: z.array(z.string()).optional().describe('Top-level state keys never kept'),
     userProvider: userProvider
       .optional()
       .describe('Auth provider: "basic" for an HTTP+JSON backend, a registered name, or "" to disable auth'),

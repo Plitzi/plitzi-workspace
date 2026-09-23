@@ -56,8 +56,6 @@ export const PAGE_SPEC_KEYS = [
   'unauthorizedRedirect',
   'folder',
   'layout',
-  'keepState',
-  'stateStorage',
   'css',
   'selector',
   'class',
