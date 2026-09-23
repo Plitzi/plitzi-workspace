@@ -71,16 +71,16 @@
     "nodemailer": "^10.0.10"
   },
   "peerDependencies": {
+    "mongodb": "^6 || ^7",
     "mysql2": "^3",
     "react": "^19",
-    "react-dom": "^19",
-    "mongodb": "^6 || ^7"
+    "react-dom": "^19"
   },
   "peerDependenciesMeta": {
-    "mysql2": {
+    "mongodb": {
       "optional": true
     },
-    "mongodb": {
+    "mysql2": {
       "optional": true
     }
   },

@@ -20,13 +20,7 @@ export type IframeModeProps = {
   ref: RefObject<HTMLIFrameElement | null>;
 };
 
-const IframeMode = ({
-  pageId = '',
-  style = '',
-  plitziContextValue,
-  assets = emptyObject,
-  ref
-}: IframeModeProps) => {
+const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = emptyObject, ref }: IframeModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
 
   return (

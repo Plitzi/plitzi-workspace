@@ -146,12 +146,7 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
           ignored, so the faces belong in the head whatever the markup's scope is. */}
       {renderMode !== 'iframe' && <FontFaces head={fontHead} />}
       {(renderMode === 'raw' || renderMode === 'widget') && (
-        <RawMode
-          renderMode={renderMode}
-          style={css}
-          plitziContextValue={plitziContextValue}
-          pageId={currentPageId}
-        />
+        <RawMode renderMode={renderMode} style={css} plitziContextValue={plitziContextValue} pageId={currentPageId} />
       )}
       {renderMode === 'shadow' && (
         <ShadowMode

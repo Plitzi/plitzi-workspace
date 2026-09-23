@@ -18,13 +18,7 @@ export type ShadowModeProps = {
   assets: Record<string, Asset>;
 };
 
-const ShadowMode = ({
-  pageId = '',
-  sdkStylePath = '',
-  style = '',
-  plitziContextValue,
-  assets
-}: ShadowModeProps) => {
+const ShadowMode = ({ pageId = '', sdkStylePath = '', style = '', plitziContextValue, assets }: ShadowModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
   const assetsMemo = useMemo(() => Object.values(assets), [assets]);
 

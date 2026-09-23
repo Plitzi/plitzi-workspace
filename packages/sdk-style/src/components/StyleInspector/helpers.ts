@@ -115,9 +115,10 @@ export const ancestorRemovals = (
 ): AncestorRemoval[] =>
   (Object.keys(platform) as DisplayMode[]).flatMap(displayMode =>
     // A selector need not exist at every breakpoint
-    Object.entries((platform[displayMode][name] as StyleItem | undefined)?.attributes ?? {}).flatMap(([styleSelector, block]) =>
-      Object.keys(block.ancestors ?? {})
-        .filter(ancestor => ancestors.has(ancestor))
-        .map(styleAncestor => ({ displayMode, styleSelector, styleAncestor }))
+    Object.entries((platform[displayMode][name] as StyleItem | undefined)?.attributes ?? {}).flatMap(
+      ([styleSelector, block]) =>
+        Object.keys(block.ancestors ?? {})
+          .filter(ancestor => ancestors.has(ancestor))
+          .map(styleAncestor => ({ displayMode, styleSelector, styleAncestor }))
     )
   );

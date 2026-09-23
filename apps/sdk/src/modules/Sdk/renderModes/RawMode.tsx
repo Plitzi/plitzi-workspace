@@ -19,12 +19,7 @@ export type RawModeProps = {
   plitziContextValue: PlitziServiceContextValue;
 };
 
-const RawMode = ({
-  pageId = '',
-  style = '',
-  plitziContextValue,
-  renderMode = 'raw'
-}: RawModeProps) => {
+const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'raw' }: RawModeProps) => {
   const pageValueMemo = useMemo(() => ({ id: pageId, rootId: pageId }), [pageId]);
   const [flat] = useSdkStore('schema.flat');
 

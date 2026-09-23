@@ -74,9 +74,7 @@ describe('cronNextFire', () => {
   });
 
   it('rounds a part-minute instant up before matching', () => {
-    expect(cronNextFire('* * * * *', new Date('2026-03-01T10:05:30Z'))?.toISOString()).toBe(
-      '2026-03-01T10:06:00.000Z'
-    );
+    expect(cronNextFire('* * * * *', new Date('2026-03-01T10:05:30Z'))?.toISOString()).toBe('2026-03-01T10:06:00.000Z');
   });
 
   it('crosses into the next day', () => {
@@ -125,15 +123,11 @@ describe('cronNextFire', () => {
 
 describe('cronFiresBetween', () => {
   it('counts what went by while nobody was listening', () => {
-    expect(
-      cronFiresBetween('0 * * * *', new Date('2026-03-01T00:00:00Z'), new Date('2026-03-01T05:00:00Z'))
-    ).toBe(5);
+    expect(cronFiresBetween('0 * * * *', new Date('2026-03-01T00:00:00Z'), new Date('2026-03-01T05:00:00Z'))).toBe(5);
   });
 
   it('does not count the instant it starts from', () => {
-    expect(
-      cronFiresBetween('0 * * * *', new Date('2026-03-01T00:00:00Z'), new Date('2026-03-01T00:59:00Z'))
-    ).toBe(0);
+    expect(cronFiresBetween('0 * * * *', new Date('2026-03-01T00:00:00Z'), new Date('2026-03-01T00:59:00Z'))).toBe(0);
   });
 
   it('stops at the cap rather than counting a week of minutes', () => {
