@@ -44,6 +44,19 @@ describe('spaces/blank', () => {
     expect(blankSpace().schema.definition).not.toEqual(first.schema.definition);
   });
 
+  /** The first page anybody sees is a way into the docs, and a card that goes nowhere is a dead end on that page. */
+  it('links every card and button somewhere real', () => {
+    const { schema } = blankSpace();
+    const links = Object.values(schema.flat).filter(element => element.definition.type === 'link');
+
+    expect(links.length).toBeGreaterThan(6);
+    for (const element of links) {
+      expect(element.attributes.href).toMatch(/^https:\/\/plitzi\.com(\/docs(\/[a-z-]+)?)?$/);
+      // A link with no mode is read as a page of this space, and plitzi.com is not one.
+      expect(element.attributes.mode).toBe('external');
+    }
+  });
+
   /** Named so a test, a binding or an agent can point at them; the rest are positional and free to move. */
   it('names the elements worth pointing at', () => {
     const { handles } = blankSpace();
@@ -54,7 +67,7 @@ describe('spaces/blank', () => {
 
     expect(named).toContain('hero-title');
     expect(named).toContain('cards');
-    expect(named).toContain('docs-title');
+    expect(named).toContain('concepts-title');
   });
 });
 
@@ -78,7 +91,7 @@ describe('the plugin host element', () => {
               id: 'stat-card',
               renderType: 'statCard',
               settings: '{"label":"Elements","value":12}',
-              css: { desktop: { 'margin-top': '24px', 'z-index': '1' } }
+              css: { desktop: { 'margin-top': '24px' } }
             })
           ]
         }
@@ -175,6 +188,18 @@ describe('the copy handed to a project', () => {
   it('refuses a relative import it cannot rewrite', () => {
     expect(() => toPortableSource("import spec from '../blank/spec';\n\nconst x = 1;\n")).toThrow(/cannot rewrite/);
     expect(() => toPortableSource("const x = 1;\n\nexport { y } from '../y';\n")).toThrow(/still refers/);
+  });
+
+  /** Laid out as the project's formatter would, so a new project's first lint has nothing to say about it. */
+  it('wraps an import that would not fit the print width', () => {
+    const names = Array.from({ length: 12 }, (_, index) => `factoryNumber${index}`);
+    const rewritten = toPortableSource(`import { ${names.join(', ')} } from '../../elements';\n\nconst x = 1;\n`);
+    const [first, ...rest] = rewritten.split('\n');
+
+    expect(first).toBe('import {');
+    expect(rest.slice(0, 12)).toEqual([...names].sort().map((name, index) => `  ${name}${index < 11 ? ',' : ''}`));
+    expect(rest[12]).toBe("} from '@plitzi/sdk-authoring';");
+    expect(rewritten.split('\n').every(line => line.length <= 120)).toBe(true);
   });
 
   it('merges every relative import into one, values and types apart', () => {

@@ -17,7 +17,7 @@ import type { AuthoredSpace } from '../schema';
 export { space as blankSpaceSpec } from './blank/spec';
 
 /**
- * The space a new space starts as — one page with a hero and four cards, not an empty document.
+ * The space a new space starts as — one page with a hero and six guides into the docs, not an empty document.
  *
  * It lives here rather than in the seeds of whichever server happens to create spaces, because two unrelated
  * things need it and they must not drift: the platform's `POST /spaces`, and `plitzi create`, which scaffolds a
@@ -64,8 +64,8 @@ export const blankSpaceSource = (options: BlankSpaceSourceOptions = {}): string 
   return name === undefined ? portable : renameSpace(portable, name);
 };
 
-/** The one line in the declaration a `custom` element is hung off — the hero, so it lands under the title. */
-const PLUGIN_ANCHOR = "children: [heading({ id: 'hero-title', content: 'Welcome To Plitzi', subType: 'h1' })]";
+/** The one line in the declaration a `custom` element is hung off — the hero, so it lands under its buttons. */
+const PLUGIN_ANCHOR = 'children: [heroEyebrow, heroTitle, heroLede, heroActions]';
 
 /**
  * The copy, with a slot for a component the receiver writes.
@@ -89,7 +89,10 @@ const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOpti
   const settings = JSON.stringify(plugin.settings).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
   const element = `children: [
-            heading({ id: 'hero-title', content: 'Welcome To Plitzi', subType: 'h1' }),
+            heroEyebrow,
+            heroTitle,
+            heroLede,
+            heroActions,
             /**
              * A component of YOUR OWN, rendered by the space.
              *
@@ -101,7 +104,7 @@ const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOpti
               id: '${plugin.id}',
               renderType: '${plugin.renderType}',
               settings: '${settings}',
-              css: { desktop: { 'margin-top': '24px', 'z-index': '1' } }
+              css: { desktop: { 'margin-top': '24px' } }
             })
           ]`;
 
@@ -171,6 +174,28 @@ const leadingImports = (lines: string[]): { statements: string[]; end: number } 
   return { statements, end };
 };
 
+/** The width a scaffolded project formats to. */
+const PRINT_WIDTH = 120;
+
+/**
+ * One import of the package, laid out the way the receiving project's formatter would lay it out.
+ *
+ * Wrapped one name per line past the print width, because a copy that fails its own project's lint on the first
+ * `npm run lint` tells the person who just created it that something is already wrong.
+ */
+const importOf = (names: Set<string>, kind: '' | 'type '): string => {
+  if (names.size === 0) {
+    return '';
+  }
+
+  const sorted = [...names].sort();
+  const line = `import ${kind}{ ${sorted.join(', ')} } from '@plitzi/sdk-authoring';`;
+
+  return line.length <= PRINT_WIDTH
+    ? line
+    : `import ${kind}{\n${sorted.map(name => `  ${name}`).join(',\n')}\n} from '@plitzi/sdk-authoring';`;
+};
+
 export const toPortableSource = (source: string): string => {
   const lines = source.split('\n');
   const { statements, end } = leadingImports(lines);
@@ -203,13 +228,7 @@ export const toPortableSource = (source: string): string => {
     }
   }
 
-  const header = [
-    ...kept,
-    values.size > 0 ? `import { ${[...values].sort().join(', ')} } from '@plitzi/sdk-authoring';` : '',
-    types.size > 0 ? `import type { ${[...types].sort().join(', ')} } from '@plitzi/sdk-authoring';` : ''
-  ]
-    .filter(Boolean)
-    .join('\n\n');
+  const header = [...kept, importOf(values, ''), importOf(types, 'type ')].filter(Boolean).join('\n\n');
 
   const portable = [header, ...lines.slice(end)].join('\n');
 
