@@ -4,11 +4,11 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { chainOf } from '@pmodules/Builder/helpers/elementChain';
 import useRevealElement from '@pmodules/Builder/hooks/useRevealElement';
 
+import LineLabel from '../LineLabel';
+
 import type { ChangeLine as Line } from '@plitzi/sdk-shared/history';
 
 export type ChangeLineProps = { line: Line };
-
-const TEXT = 'text-xs leading-5 text-zinc-700 dark:text-zinc-200';
 
 /**
  * One thing a save did. When it is about an element that is still in the space, the line is the way to it — the same
@@ -27,18 +27,18 @@ const ChangeLine = ({ line }: ChangeLineProps) => {
   }, [elementId, flat, revealElement]);
 
   return (
-    <li className="flex">
+    <li className="flex text-zinc-700 dark:text-zinc-200">
       {reachable && (
         <button
           type="button"
-          className={`${TEXT} text-left underline-offset-2 hover:text-indigo-700 hover:underline dark:hover:text-indigo-300`}
+          className="-mx-1 cursor-pointer rounded px-1 text-left underline-offset-2 hover:bg-indigo-50 hover:text-indigo-700 hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
           title="Select this element"
           onClick={handleReveal}
         >
-          {line.text}
+          <LineLabel line={line} />
         </button>
       )}
-      {!reachable && <span className={TEXT}>{line.text}</span>}
+      {!reachable && <LineLabel line={line} />}
     </li>
   );
 };

@@ -11,6 +11,7 @@ import {
   ORIGIN_LABEL,
   ORIGIN_TONE
 } from '../../helpers';
+import LineLabel from '../LineLabel';
 import SaveDetail from '../SaveDetail';
 
 import type { ChangeGroup as Group } from '../../helpers';
@@ -33,7 +34,7 @@ const ChangeGroup = ({ group }: ChangeGroupProps) => {
     <li className="border-b border-zinc-100 dark:border-zinc-800">
       <button
         type="button"
-        className="flex w-full flex-col gap-1 px-3 py-2 text-left hover:bg-zinc-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 focus-visible:ring-inset dark:hover:bg-zinc-800/60"
+        className="flex w-full cursor-pointer flex-col gap-1 px-3 py-2 text-left hover:bg-zinc-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 focus-visible:ring-inset dark:hover:bg-zinc-800/60"
         aria-expanded={open}
         onClick={handleToggle}
       >
@@ -48,11 +49,9 @@ const ChangeGroup = ({ group }: ChangeGroupProps) => {
           <span className={clsx('shrink-0 text-[11px]', MUTED)}>{formatTime(newest.at)}</span>
         </span>
         {!open && (
-          <span className="flex flex-col gap-0.5">
+          <span className="flex flex-col text-zinc-600 dark:text-zinc-300">
             {lines.slice(0, FOLDED_LINES).map(line => (
-              <span key={line.text} className="text-xs leading-5 text-zinc-600 dark:text-zinc-300">
-                {line.text}
-              </span>
+              <LineLabel key={line.text} line={line} />
             ))}
           </span>
         )}

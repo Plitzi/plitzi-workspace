@@ -83,15 +83,15 @@ describe('History', () => {
   });
 
   it('unfolds a change into each field before and after, and takes someone to the element it touched', () => {
-    const { getByText } = render(<History />);
+    const { getByRole, getByText } = render(<History />);
 
     fireEvent.click(getByText('Changed content of element “hero”'));
 
-    expect(getByText('attributes.content')).toBeTruthy();
+    expect(getByText('attributes.content:')).toBeTruthy();
     expect(getByText('"Hi"')).toBeTruthy();
     expect(getByText('"Hello"')).toBeTruthy();
 
-    fireEvent.click(getByText('hero'));
+    fireEvent.click(getByRole('button', { name: 'Changed content of element “hero”' }));
 
     expect(reveal).toHaveBeenCalledWith({ id: 'hero', rootId: 'home', ancestors: ['home'] });
   });

@@ -66,11 +66,12 @@ Records live in Mongo, in `space_changes` (with `space_change_counters` handing 
 
 **In the builder:** the **History** panel on the left. Newest first, with consecutive saves by the same person from the
 same place folded into one row (one request, or saves less than a minute apart). A row says what it did one line per
-thing — "Added text “hero” to page “test”", "Moved button “cta” from “header” to “footer”", "Changed content of heading
+thing, each with an icon for what was done (added, removed, moved, changed, reordered) — "Added text “hero” to page “test”", "Moved button “cta” from “header” to “footer”", "Changed content of heading
 “title”", "Changed class “card” on tablet" — each said once, so ten keystrokes in one text are one line. A parent is not
 listed as changed because a child was added to it, removed from it or moved: that is the add, the removal or the move.
-Unfolded, a row lists each of its saves on its own, with its number and time, its lines, and each field it changed before
-and after; an element still in the space is a link to it. Filters: who made
+Unfolded, a row lists each of its saves in a compact column — its number and time of day, its lines, and for an edit
+each field before and after (an add, a removal or a move is already said by its line). A line about an element still in
+the space is a link to it. Filters: who made
 it (person, agent, co-worker, autofix), **only the selected element** (that element's own history), and **since the
 last snapshot**. Every row carries its change number (`#50`, or `#48–50` for a row of several saves), and each
 published revision is drawn as a marker right above the last change it includes — "Revision 4 · includes up to #50" —

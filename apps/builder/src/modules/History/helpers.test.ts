@@ -133,14 +133,15 @@ describe('groupLines and the detail', () => {
 
   it('says each thing once, a burst of typing included', () => {
     expect(groupLines({ key: '4', changes: [typed(4, 'Hel'), typed(3, 'He'), added] })).toEqual([
-      'Changed content of text “hero”',
-      'Added text “hero” to page “test”'
+      { text: 'Changed content of text “hero”', action: 'update', elementId: 'hero' },
+      { text: 'Added text “hero” to page “test”', action: 'add', elementId: 'hero' }
     ]);
   });
 
-  // The page gained a child and nothing else: the line says so, and the detail does not list the page as changed.
-  it('leaves an update that only moved the tree out of the detail', () => {
-    expect(detailedEntries(added.entries).map(entry => entry.id)).toEqual(['hero']);
+  // The page gained a child and the child is new: both are said by the line, so neither has fields to list.
+  it('lists only edits in the detail, not an add or a change to the tree', () => {
+    expect(detailedEntries(added.entries)).toEqual([]);
+    expect(detailedEntries(typed(3, 'He').entries).map(entry => entry.id)).toEqual(['hero']);
   });
 });
 

@@ -2,8 +2,11 @@ import type { ChangeEntry, ChangeKind } from './types';
 
 export type FieldChange = { path: string; before?: unknown; after?: unknown };
 
+/** What a line says was done, for a reader who scans the icon before the words. */
+export type ChangeAction = 'add' | 'remove' | 'move' | 'update' | 'reorder';
+
 /** One thing a save did, in words, and the element it is about when it is about one. */
-export type ChangeLine = { text: string; elementId?: string };
+export type ChangeLine = { text: string; action: ChangeAction; elementId?: string };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -112,20 +115,20 @@ type OtherEntry = ChangeEntry & { kind: Exclude<ChangeKind, 'element'> };
 
 const isOther = (entry: ChangeEntry): entry is OtherEntry => entry.kind !== 'element';
 
-const describeOther = (entry: OtherEntry): string => {
+const describeOther = (entry: OtherEntry): ChangeLine => {
   const { kind } = entry;
   if (kind === 'setting' && entry.id === 'pages') {
-    return 'Reordered the pages';
+    return { text: 'Reordered the pages', action: 'reorder' };
   }
 
-  const line = `${VERB[entry.op]} ${KIND_NOUN[kind]} “${entry.id}”`;
+  const text = `${VERB[entry.op]} ${KIND_NOUN[kind]} “${entry.id}”`;
   if (entry.op === 'update' && (kind === 'selector' || kind === 'globalStyle' || kind === 'idStyle')) {
     const modes = modesChanged(entry.before, entry.after);
 
-    return modes.length > 0 ? `${line} on ${modes.join(', ')}` : line;
+    return { text: modes.length > 0 ? `${text} on ${modes.join(', ')}` : text, action: entry.op };
   }
 
-  return line;
+  return { text, action: entry.op };
 };
 
 /** Each line once, the first time it is said. */
@@ -163,24 +166,24 @@ export const describeChange = (entries: ChangeEntry[]): ChangeLine[] => {
 
   for (const entry of elements) {
     const self = nameOf(entry.id, known);
-    const say = (text: string) => lines.push({ text, elementId: entry.id });
+    const say = (text: string, action: ChangeAction) => lines.push({ text, action, elementId: entry.id });
 
     if (entry.op === 'add') {
       const parent = parentOf(entry.after);
-      say(parent ? `Added ${self} to ${nameOf(parent, known)}` : `Added ${self}`);
+      say(parent ? `Added ${self} to ${nameOf(parent, known)}` : `Added ${self}`, 'add');
       continue;
     }
 
     if (entry.op === 'remove') {
       const parent = parentOf(entry.before);
-      say(parent ? `Removed ${self} from ${nameOf(parent, known)}` : `Removed ${self}`);
+      say(parent ? `Removed ${self} from ${nameOf(parent, known)}` : `Removed ${self}`, 'remove');
       continue;
     }
 
     const from = parentOf(entry.before);
     const to = parentOf(entry.after);
     if (from !== to && from && to) {
-      say(`Moved ${self} from ${nameOf(from, known)} to ${nameOf(to, known)}`);
+      say(`Moved ${self} from ${nameOf(from, known)} to ${nameOf(to, known)}`, 'move');
     }
 
     const changes = fieldChanges(entry.before, entry.after);
@@ -188,23 +191,23 @@ export const describeChange = (entries: ChangeEntry[]): ChangeLine[] => {
       ...new Set(changes.map(change => fieldName(change.path)).filter((name): name is string => name !== undefined))
     ];
     if (fields.length > 0) {
-      say(`Changed ${listOf(fields)} of ${self}`);
+      say(`Changed ${listOf(fields)} of ${self}`, 'update');
     }
 
     // The children this save does not account for elsewhere: if their order moved, that is a reorder of its own.
     const kept = (value: unknown) => (shapeOf(value).definition?.items ?? []).filter(id => !placed.has(id));
     const childrenChanged = changes.some(change => change.path === 'definition.items');
     if (childrenChanged && JSON.stringify(kept(entry.before)) !== JSON.stringify(kept(entry.after))) {
-      say(`Reordered the children of ${self}`);
+      say(`Reordered the children of ${self}`, 'reorder');
     }
 
     // A change nothing above could name (a truncated record, or a field of its own): at least say it was touched.
     if (changes.length === 0 || (fields.length === 0 && !childrenChanged && from === to)) {
-      say(`Changed ${self}`);
+      say(`Changed ${self}`, 'update');
     }
   }
 
-  lines.push(...entries.filter(isOther).map(entry => ({ text: describeOther(entry) })));
+  lines.push(...entries.filter(isOther).map(describeOther));
 
   return uniqueLines(lines);
 };

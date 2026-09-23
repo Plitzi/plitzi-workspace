@@ -1,6 +1,7 @@
 import { describeChange, fieldChanges, uniqueLines } from '@plitzi/sdk-shared/history';
 
 import type { ChangeEntry, ChangeKind, ChangeOrigin, TSnapshotMarker, TSpaceChanges } from '@plitzi/sdk-shared';
+import type { ChangeAction } from '@plitzi/sdk-shared/history';
 
 export type ChangeRecord = TSpaceChanges['changes'][number];
 
@@ -103,16 +104,21 @@ export const ORIGIN_TONE: Record<ChangeOrigin, string> = {
   system: 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
 };
 
-export const OP_TONE: Record<ChangeEntry['op'], string> = {
+/** Each action in its own colour and shape, so a folded row is scanned by its icons before its words. */
+export const ACTION_TONE: Record<ChangeAction, string> = {
   add: 'text-emerald-600 dark:text-emerald-400',
+  remove: 'text-red-600 dark:text-red-400',
+  move: 'text-violet-600 dark:text-violet-400',
   update: 'text-sky-600 dark:text-sky-400',
-  remove: 'text-red-600 dark:text-red-400'
+  reorder: 'text-amber-600 dark:text-amber-400'
 };
 
-export const OP_ICON: Record<ChangeEntry['op'], string> = {
-  add: 'fa-plus',
-  update: 'fa-pen',
-  remove: 'fa-minus'
+export const ACTION_ICON: Record<ChangeAction, string> = {
+  add: 'fa-solid fa-plus',
+  remove: 'fa-solid fa-minus',
+  move: 'fa-solid fa-right-left',
+  update: 'fa-solid fa-pen',
+  reorder: 'fa-solid fa-arrow-down-up-across-line'
 };
 
 export const MUTED = 'text-zinc-500 dark:text-zinc-400';

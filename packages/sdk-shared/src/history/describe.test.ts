@@ -16,7 +16,17 @@ describe('describeChange', () => {
   it('ties each line about an element to it, so a reader can go there', () => {
     expect(
       describeChange([{ kind: 'element', id: 'hero', op: 'add', after: element('hero', 'text', 'test') }])
-    ).toEqual([{ text: 'Added text “hero” to “test”', elementId: 'hero' }]);
+    ).toEqual([{ text: 'Added text “hero” to “test”', action: 'add', elementId: 'hero' }]);
+  });
+
+  it('says what each line did, for the icon it is drawn with', () => {
+    const entries: ChangeEntry[] = [
+      { kind: 'element', id: 'old', op: 'remove', before: element('old', 'image', 'gallery') },
+      { kind: 'setting', id: 'pages', op: 'update', before: ['a', 'b'], after: ['b', 'a'] },
+      { kind: 'token', id: 'color/primary', op: 'update', before: '#000', after: '#111' }
+    ];
+
+    expect(describeChange(entries).map(line => line.action)).toEqual(['remove', 'reorder', 'update']);
   });
 
   // The case that read "Added element hero; Updated element test": the page only changed because it gained a child.
