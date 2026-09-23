@@ -4,7 +4,8 @@ The Model Context Protocol server that lets an AI agent **read and edit a Plitzi
 to any MCP client — the standalone MCP role of this server, and the in-process co-worker bridge in
 `modules/ai` — through a small set of tools and a browsable catalog of resources.
 
-Genesis and design rationale live in [`docs/rfc/0002-ai-schema-comprehension-and-improvement.md`](../../../../../docs/rfc/0002-ai-schema-comprehension-and-improvement.md).
+What it is for, how an agent connects and what it can rely on: [AI agents and the MCP server](../../../../../docs/en/mcp.md).
+This README is how it is built.
 
 ## Mental model
 
@@ -26,34 +27,36 @@ and css-properties) works with no auth; a space-dependent tool/resource lazily d
 
 ```
 mcp/
-├── index.ts            # Public surface of the module (re-exports the entry points below)
-├── handler.ts          # HTTP glue: read body, drive one stateless request through a built server
-├── server.ts           # createMcpServer: registers tools + resources onto an McpServer
-├── constants.ts        # Module-wide constants
-├── previewClient.ts    # HTTP client to the SSR renderer (plitzi_preview)
-├── screenshotClient.ts # HTTP client to the browser service (plitzi_screenshot)
-├── mcp.test.ts         # The module's test suite (read/write/validate end-to-end)
+├── index.ts                 # Public surface of the module (re-exports the entry points below)
+├── handler.ts               # HTTP glue: read body, drive one stateless request through a built server
+├── server.ts                # createMcpServer: registers tools + resources onto an McpServer
+├── previewClient.ts         # HTTP client to the SSR renderer (plitzi_preview)
+├── screenshotClient.ts      # HTTP client to the browser service (plitzi_screenshot)
+├── localScreenshotClient.ts # The same, against a browser this process launches (dev / self-hosted)
 │
-├── catalogs/           # Reference VOCABULARIES the server validates + advertises against
-├── helpers/            # Space access, versioning, the usage guide, interaction (de)serialization
-├── resources/          # The read side — the plitzi://… resource catalog
-├── tools/              # The write side — validate / apply / search / read / preview / screenshot
-├── apps/               # MCP Apps: one folder per app (definition + view) over a shared bundler/registrar
-└── types/              # AI-facing shapes (aiSchema), tool/preview/screenshot types
+├── catalogs/                # Reference VOCABULARIES the server validates + advertises against
+├── helpers/                 # Space access, versioning, the agent's texts (guide, agentPrompt), URIs, logging
+├── resources/               # The read side — the plitzi://… resource catalog
+├── tools/                   # The tools — apply / validate / search / read / render / preview / screenshot
+├── apps/                    # MCP Apps: one folder per app (definition + view) over a shared bundler/registrar
+├── proxy/                   # Signed, per-connection proxy for what a rendered widget fetches (assets, API data)
+├── tests/                   # The module suite, one file per domain, against in-memory spaces
+├── e2e/                     # A real MCP client over HTTP, and the view rendered in a DOM
+└── types/                   # AI-facing shapes (aiSchema), tool/preview/screenshot types
 ```
 
 ### `catalogs/` — reference data (not logic)
 
-Static or observed **vocabularies** the server checks input against and advertises to the agent. Grouped here so
-it is obvious which files are reference data rather than behavior:
+The **vocabularies** the server checks input against and advertises to the agent. The built-in ones — callbacks,
+utilities, transformers, the CSS catalog, element semantics, the global sources — live in `@plitzi/sdk-authoring`,
+the same catalogs the linter checks every save against, and `catalogs/index.ts` re-exports them. What stays here is
+what only the MCP derives:
 
-| File                | What it is                                                                                                |
-| ------------------- | --------------------------------------------------------------------------------------------------------- |
-| `builtinCallbacks`  | built-in `globalCallback` actions → source module + param defaults (mirror of `sdk-interactions` sources) |
-| `builtinComponents` | curated metadata for built-in element types                                                               |
-| `cssCatalog`        | valid CSS property keys + shorthand expansion                                                             |
-| `observed`          | interaction actions / data-source paths observed in a space (+ the built-in globalCallbacks)              |
-| `registry`          | the element-type registry (observed types enriched with builtin/plugin metadata)                          |
+| File            | What it is                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| `observed`      | interaction actions / data-source paths observed in a space, beside the built-in catalogs    |
+| `registry`      | the element-type registry: types the space uses, enriched with built-in and plugin metadata |
+| `pluginCatalog` | a space's installed plugins, read from their manifests (a plugin that cannot be read still counts) |
 
 > **Catalog vs. translator.** A _catalog_ is reference data. A _translator_ (in `tools/operations/{schema,style}/translator.ts`)
 > is a **read projection** — it converts stored schema/style into the AI-facing shape. Translators stay beside
@@ -93,7 +96,7 @@ folder builds and tests fine here and is simply **missing from the package** —
 (`shipsAsSource`), the build's copy step asks it, and `apps.test.ts` asks it of every real input of every view's
 bundle.
 
-[`shared/app.ts`](apps/shared/app.ts) is the whole machinery: it bundles a view with esbuild (dependencies
+[`shared/`](apps/shared/) is the whole machinery (`registerApp.ts`, `bundle.ts`, `page.ts`): it bundles a view with esbuild (dependencies
 included), inlines it with its stylesheets into the shell, and registers the result with `registerAppResource`.
 The page references nothing — no import map, no asset mounts, no cross-origin fetches — so the strictest host
 sandbox can run it and no deployment has to serve anything extra. The cost is its size, and each page is built
@@ -116,8 +119,10 @@ owns its whole origin, so MCP answers at the root — no `/mcp` path.
 
 ### `tools/` — the write side
 
-One file per top-level tool (`validate`, `apply`, `search`, `read`, `preview`, `screenshot`), registered from
-`tools/index.ts` into the `tools` array. The edit vocabulary lives under `operations/`:
+One file per top-level tool (`apply`, `validate`, `search`, `read`, `render`, `preview`, `screenshot`), registered
+from `tools/index.ts` into the `tools` array. Every tool that takes operations runs them through
+[`shared/draftBatch.ts`](tools/shared/draftBatch.ts) — expand, validate the input, apply to a copy, lint the copy —
+so `plitzi_validate` answers exactly what `plitzi_apply` would, and `plitzi_render` holds a widget to the same rules. The edit vocabulary lives under `operations/`:
 
 ```
 tools/
@@ -125,15 +130,19 @@ tools/
 ├── apply/                   # validate → apply → persist atomically (dispatch + write result)
 ├── shared/
 │   ├── tool.ts              # ToolDef descriptor
-│   └── validator/           # Batch validation, split by concern (see below)
+│   ├── draftBatch.ts        # The pipeline every operations-taking tool runs
+│   ├── lintDraft.ts         # The result read by sdk-authoring's linter (see below)
+│   └── validator/           # Per-op input validation, split by concern (see below)
 └── operations/
     ├── index.ts             # The discriminated-union `operation` schema (element ∪ style ops)
     ├── schema/              # Element-schema ops, grouped by domain
     │   ├── shared.ts write.ts operations.ts translator.ts index.ts
     │   ├── elements/  pages/  folders/  variables/  bindings/  interactions/  settings/
-    └── style/               # Style-schema ops, grouped by domain
-        ├── shared.ts write.ts operations.ts translator.ts index.ts
-        └── definitions/  globalStyles/  idStyles/  variables/
+    ├── style/               # Style-schema ops, grouped by domain
+    │   ├── shared.ts write.ts operations.ts translator.ts index.ts
+    │   └── definitions/  globalStyles/  idStyles/  variables/  fonts/
+    ├── connectors/          # upsert/patch/deleteConnector — a third store, one row per connector
+    └── actions/             # upsert/patch/deleteAction — a fourth, one row per server action
 ```
 
 Each op file exports **its zod schema (`<name>Op`) and its handler (`<name>`)**. `operations.ts` bundles the
@@ -152,10 +161,16 @@ Input validation was one dense file; it is now a folder whose `index.ts` is the 
 | `refs.ts`     | `checkRef` / `checkIdRef` (charset + element-name rules)                           |
 | `css.ts`      | `checkCss` / `checkSlotCss` (property keys + var refs)                             |
 | `elements.ts` | element-input, type-prop and variant-application checks                            |
+| `bindings.ts` | a binding target a plugin's manifest does not declare                               |
+| `interactions.ts` | node type vs action, and each step's params against its callback's declaration |
+| `connectors.ts` | a connector manifest, through the engine's own validator                          |
 | `batch.ts`    | batch pre-scans (names an earlier op in the same batch declares)                   |
 
-Validation is **lenient by design**: an unrecognized name that could still be valid (a plugin type/action/source)
-is a **warning**, never a hard error. Only structurally-wrong input fails the batch.
+Two stages, two policies. The **validator** reads the operations and is lenient: a name that could still be valid
+(a plugin type, action or source it has not seen) is a **warning**. **`lintDraft`** then reads the *result* with
+`lintSpace` — the linter the builder, `authorSpace` and the server's save all run — and is not: a new structural
+error anywhere blocks the batch, and so does any error in an element the batch touches, including one that was
+already there (reported as `Pre-existing malformation in element …`, so the agent fixes it in the same batch).
 
 ## Conventions
 
@@ -185,26 +200,30 @@ is a **warning**, never a hard error. Only structurally-wrong input fails the ba
 2. Register it: add to `operations.ts` (`elementOps`/`styleOps`), the domain `index.ts` (`export *`), and the
    handler dispatch in `tools/apply/dispatch.ts` if it is not picked up by the `* as schema/style` barrel.
 3. If it needs validation beyond parsing, add a `case` in `tools/shared/validator/index.ts`.
-4. Document it in `helpers/guide.ts` and, for the co-worker, in `modules/ai` system-prompt guidance.
-5. Add a test in `mcp.test.ts`.
+4. Document it in `helpers/guide.ts` — [`tests/guide.test.ts`](tests/guide.test.ts) fails until the guide names it.
+5. Add a test in the `tests/` file for its domain.
 
 ### … a new resource
 
-Add a resolver branch in the matching `resources/*.ts`, register the URI in `resources/register.ts`, and describe
-it in `helpers/guide.ts`.
+Add a resolver branch in the matching `resources/*.ts`, register the URI in `resources/register.ts` (a resource the
+router serves but nobody registered is one no agent can discover), and describe it in `helpers/guide.ts` —
+`tests/guide.test.ts` checks every registered URI is there.
 
 ### … a new catalog
 
-Put it in `catalogs/`, export it from `catalogs/index.ts`, and consume it via `../catalogs` (or `../../catalogs`
-from within tools). If it feeds validation, surface it on the `ValidationCtx`.
+A vocabulary the linter also needs belongs in `@plitzi/sdk-authoring` — re-export it from `catalogs/index.ts`. Only
+what the MCP alone derives goes in `catalogs/`. If it feeds validation, surface it on the `ValidationCtx`; if the
+agent should know it, generate that part of the guide from it rather than writing it out (see `GLOBALS` in
+`helpers/guide.ts`).
 
 ## Testing
 
 ```bash
-yarn vitest run src/modules/mcp/mcp.test.ts   # the module suite
-yarn typecheck                                 # tsc --noEmit
-yarn lint                                      # eslint (must be clean)
+yarn vitest run src/modules/mcp   # the module suite
+yarn typecheck                    # tsc --noEmit
+yarn lint                         # eslint (must be clean)
 ```
 
-`mcp.test.ts` exercises the tools end-to-end against in-memory spaces (`buildSpace`, `capturing`, `readResource`,
-`apply`, `validate`) — prefer extending it over unit-testing internals, so tests track the public contract.
+`tests/` exercises the tools end-to-end against in-memory spaces (the helpers in `tests/helpers.ts`) — prefer
+extending the file for the domain over unit-testing internals, so tests track the public contract. `e2e/` drives the
+server through a real MCP client.

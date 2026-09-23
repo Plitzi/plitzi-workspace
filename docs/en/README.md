@@ -13,6 +13,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Releases](./releases.md) | Versioning and publishing with Changesets |
 | [Authoring spaces](./authoring-spaces.md) | Writing a space — or a publishable template — as TypeScript instead of exported JSON: elements, style, bindings and flows |
 | [Server actions](./server-actions.md) | Work a page cannot do in the browser: authoring flows the server runs, and calling them from a page |
+| [AI agents (MCP)](./mcp.md) | Connecting Claude or any MCP client to a space: what an agent can do, how it works a space, and what the server guarantees |
 | [Fonts](./fonts.md) | What a space loads type from: the manifest, the four sources, hosting faces yourself, and what a deployment configures |
 
 ## Package documentation

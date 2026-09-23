@@ -170,3 +170,19 @@
 - The generated visual test skips list rows and providers with no tag.
 - The example plugin takes its props as attributes; in a client project its numbers come from `public/data/stats.json`
   through a provider — the offline-data pattern.
+
+## MCP: what the agent is told
+
+- The guide explains every operation `plitzi_apply` takes — moving and deleting elements, schema variables, design
+  tokens and fonts had no word in it — and names every resource the server registers, `plitzi://fonts/{env}` (now
+  registered, so it can be discovered), the layouts, the server tasks and the render guide among them. A test fails when
+  an operation, a resource or a global source is missing from it.
+- The global binding sources, the transformer names and the data-sources scope note are generated from
+  `@plitzi/sdk-authoring`, the catalogs the linter checks a save against. They listed `collection` and `space`, which
+  no longer exist, and missed `variables`, `host`, `theme` and `computed`.
+- An `apiContainer` reading a browser `query` publishes the response itself, not `.data`: the guide, the render guide
+  and the scope note said otherwise.
+- Server actions have their own section; the tool list names `plitzi_preview`, `plitzi_screenshot` and
+  `plitzi_render`; the co-worker prompt lists the layouts, fonts, connectors and actions.
+- New guide: `docs/en/mcp.md` — connecting an agent, how it works a space, what the server guarantees, and what is
+  deliberately left open. RFC 0002 is removed now that it shipped.

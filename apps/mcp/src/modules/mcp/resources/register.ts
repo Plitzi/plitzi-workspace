@@ -89,7 +89,7 @@ export const registerResources = (
     [
       'Primer',
       `plitzi://primer/${env}`,
-      'Read this FIRST. Cold-start bundle in one call: guide, types, css-properties and SUMMARIES of pages, ' +
+      'Read this FIRST. Cold-start bundle in one call: the guide’s quickstart, types, css-properties and SUMMARIES of pages, ' +
         'definitions and variables — summaries only, never full page/element trees, so it stays small even on a ' +
         'large space. Open a page or element on demand afterwards.'
     ],
@@ -105,6 +105,7 @@ export const registerResources = (
     ['Global styles', `plitzi://global-styles/${env}`, 'Element types that have a site-wide global style'],
     ['Id styles', `plitzi://id-styles/${env}`, 'DOM ids that have an id rule (#id) targeting a single element'],
     ['Style variables', `plitzi://style-variables/${env}`, 'Design tokens by category'],
+    ['Fonts', `plitzi://fonts/${env}`, 'The font families the space loads, with their source and fallback'],
     ['Schema variables', `plitzi://schema-variables/${env}`, 'Space-level values referenced via {{name}}'],
     ['Settings', `plitzi://settings/${env}`, 'Space-level settings: global customCss and state/auth configuration'],
     [
@@ -192,6 +193,7 @@ export const registerResources = (
     ],
     ['Id style', `plitzi://id-styles/${env}/{targetId}`, 'The CSS of an id rule (#id) targeting a single element'],
     ['Style variables by category', `plitzi://style-variables/${env}/{category}`, 'Design tokens for one category'],
+    ['Font', `plitzi://fonts/${env}/{family}`, 'One font family the space loads: its source, fallback and files'],
     // Aliases under plitzi://schema/{env} (I3).
     [
       'Style definition (schema alias)',

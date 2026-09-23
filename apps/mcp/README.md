@@ -3,6 +3,8 @@
 The AI surface for Plitzi spaces: an [MCP](https://modelcontextprotocol.io) server that lets an agent read and
 edit a space, the tool engine behind it, the widget renderer, and the draft-preview endpoint.
 
+Connecting an agent and what it can do once connected: [AI agents and the MCP server](../../docs/en/mcp.md).
+
 It is a sibling of [`@plitzi/sdk-server`](../server/README.md), not a layer on top of it. That package serves
 pages; this one serves agents. They share only the HTTP kernel, which this package imports from
 `@plitzi/sdk-server/kernel` — a narrow entry that carries the dispatcher and the transports and nothing else, so
@@ -87,6 +89,7 @@ resolves with `canWrite: false` reads everything and is refused at every write t
 | `plitzi_validate` | read | Dry-run a batch of operations and report what would fail |
 | `plitzi_apply` | write | Apply a batch of operations and persist |
 | `plitzi_preview` | read | Render a draft to HTML through an SSR server |
+| `plitzi_screenshot` | read | Render a draft to a PNG (desktop, mobile or both) through the screenshot service |
 | `plitzi_render` | read | Render a self-contained UI widget, offline, with no space |
 
 Reads follow a filesystem model: list cheap, read one item in detail on demand. Agents are told never to

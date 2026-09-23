@@ -405,7 +405,9 @@ The widget runs the live SDK, so beyond static layout it can fetch data and resp
 \`ref\`, just like styling. (Full reference: **plitzi://guide** — sections Data bindings and Interactions.)
 
 ### Fetch data — a provider + a binding
-An \`apiContainer\` fetches at runtime and exposes the result as the source **\`apiContainer_<id>.data\`**, visible
+An \`apiContainer\` fetches at runtime and exposes the **response itself** as the source \`apiContainer_<id>\`: its
+top-level fields are the source's fields, so an API answering \`{ "items": [...] }\` is read as
+**\`apiContainer_<id>.items\`**, beside \`.isLoading\`, \`.isEmpty\` and \`.hasError\`. The source is visible
 to its **DESCENDANTS only** — the bound element must live inside the container's subtree. \`upsertBinding\` then
 connects that source to a descendant's field. With no \`subType\` (its default) the provider renders **no element of
 its own** — its children lay out in its parent, and a class on it styles nothing; give it \`"subType": "div"\` when the
@@ -415,10 +417,10 @@ provider itself is the box.
 {
   "operations": [
     { "type": "upsertElement", "pageRef": "render", "element": {
-        "ref": "products", "type": "apiContainer", "props": { "query": "<your data query — see plitzi://guide>" },
+        "ref": "products", "type": "apiContainer", "props": { "query": "<a URL answering { items: [...] } — see plitzi://guide>" },
         "children": [ { "ref": "title", "type": "heading", "subType": "h3", "props": { "content": "…" } } ]
     } },
-    { "type": "upsertBinding", "pageRef": "render", "ref": "title", "category": "attributes", "binding": { "to": "content", "source": "apiContainer_products.data.0.name" } }
+    { "type": "upsertBinding", "pageRef": "render", "ref": "title", "category": "attributes", "binding": { "to": "content", "source": "apiContainer_products.items.0.name" } }
   ]
 }
 \`\`\`
