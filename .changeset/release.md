@@ -115,6 +115,9 @@
   dragged as an image and kept its remove button under the cursor while dragged, and so did any other file; both fixed.
 - `elementsByRoot` (and `RootElements`) in `@plitzi/sdk-schema/helpers/elementTree`: the element count grouped by the
   page or layout that holds it. The builder's quota panel and the server's usage API each carried a copy.
+- Builder: a plugin removed from the resources leaves the elements panel while it is open, and one installed shows up in
+  it (the panel read the component registry once); removing a plugin no longer takes every other plugin's stylesheet
+  with it.
 - Builder: the model picker's ↑/↓ and ↵ do what its footer says (they were swallowed). Gone: the space setting `head`,
   which was never wired, a connectivity listener that only logged, and commented-out code across the builder, the SDK
   app and the packages.

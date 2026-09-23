@@ -156,8 +156,10 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
       const response = await mutate('SpaceRemovePlugin', { pluginType });
       if (response.result) {
         const subPlugins = get(plugins, `${pluginType}.subPlugins`, []) as string[];
-        pluginsRemove([pluginType, ...subPlugins]);
-        setPluginStyleAssets(state => getStyle(omit(state, [pluginType])));
+        const removed = [pluginType, ...subPlugins];
+        pluginsRemove(removed);
+        // Keyed by asset, not by plugin: what is left is recomputed from the plugins that stay.
+        setPluginStyleAssets(getStyle(omit(plugins, removed)));
         unregisterDefinition(pluginType);
         unregister(pluginType);
 
