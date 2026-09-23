@@ -1,5 +1,150 @@
 # @plitzi/sdk-plugins
 
+## 0.37.2
+
+### Patch Changes
+
+- ## Authoring and agents
+  - **A step's params are templates in full.** Only a bare name (`{{ post.slug }}`) used to be recognised, so a
+    condition or a loop in a `setState` or a webhook body was handed on as its own text — a flag set to
+    `{% if … %}1{% endif %}` stored the template, a non-empty string every later check read as true. Any `{{ }}` or
+    `{% %}` in a param is now evaluated; what it resolves to is data and is not evaluated again.
+  - **Twig tests work.** `x is defined`, `is empty`, `is null`, `is iterable`, `is even`, `is odd` (and `is not …`) used
+    to be read as comparisons with a variable of that name — `x is defined` answered true exactly when `x` was not
+    defined. Anything else on the right of `is` still compares.
+  - **A group takes an access chain.** `(rows|find('id', 3)).title` read the whole row; the key after the parenthesis
+    was never parsed.
+  - **An expression that chose to be empty renders empty** under `keepEmptyTokens`. A kept token is for a name still
+    waiting for a value; `{{ on ? 'active' : '' }}` said "nothing" on purpose, and handing back its text made the
+    empty branch a non-empty string.
+  - **Checkbox params written as text are booleans.** `dateConverter({ isUnix: 'false' })` read `'false'` as yes and
+    gave an ISO date back raw. Every utility's checkbox params are normalised before its callback runs.
+  - **`condition-starts-visible`** warns about a visibility computed from data on an element that starts on screen: it
+    is drawn until its provider answers and then hidden — an empty state or a "get started" card flashing past on
+    every load. `visible: false` makes it wait hidden. The export reads a visibility binding back in its place, so a
+    space whose condition is not its last binding round-trips unchanged.
+  - **A source named by its short id inside a binding's template is refused** with the full name, as it already was in
+    a flow: `{{ stats.total }}` resolved to nothing and the element showed its empty branch.
+  - **`activeOn(class, pageIds)`** marks a menu's current entry from `navigation.currentPageId` — one binding for a menu
+    kept in a layout. `variantFrom` now says `append: 'true'`, which is what it did.
+  - **Two elements with one id** name where the first one was written. **`template-never-resolved`** warns about a
+    condition left in an attribute, which only resolves `{{ name|filter }}` tokens.
+  - **The authoring skill is a folder**: `SKILL.md` plus references for layouts, data and visibility, templates,
+    flows, structure, testing and a review checklist. `plitzi create` copies all of it, and writes an `AGENTS.md`
+    (imported by `CLAUDE.md`) pointing any agent at it.
+
+  - **A new space starts on a page worth keeping.** The space `POST /spaces` and `plitzi create` both begin from is
+    redesigned: a top bar with the theme switch, a hero with two calls to action, and six guides — each a card linking to
+    its page of the docs (`https://plitzi.com/docs/…`). Every link used to be `#`, and one promised a course that does
+    not exist. The palette is a set of light/dark tokens in Geist, the guides are one list mapped to one card, and the
+    bands of the page share a `shell` class — the page is written the way the authoring skill asks a space to be.
+  - **The copy `plitzi create` writes passes its own project's lint.** An import of the package that would not fit
+    120 columns is wrapped one name per line, as the project's formatter would wrap it.
+
+  ## Server actions and scheduled jobs
+
+  **Scheduled jobs across replicas, out of the box, on the database a deployment already runs.** The scheduler and the
+  workers were already the package's; where the jobs wait was left to each deployment to write — and a queue is the part
+  that is easiest to get subtly wrong. Two helpers now build the adapters over a store the deployment owns, without the
+  package opening a connection or keeping data of its own:
+
+  - `@plitzi/sdk-server/mongo` — `createMongoJobQueue({ db })` and `createMongoKv({ db })`, over a `Db` (or a getter for a
+    client that reconnects). Creates the indexes its queries need; `mongodb` is an optional peer, used for its types.
+  - `@plitzi/sdk-server/mysql` — `createMysqlJobQueue({ pool })` and `createMysqlKv({ pool })`, over a `mysql2` pool.
+    Each job is claimed by a single-row compare-and-set, so replicas claiming at once never deadlock. Creates its three
+    tables on first use, or hands them to your own migrations through `mysqlJobSchemaStatements()`.
+
+  Every instant is the database server's, never a replica's. The in-process queue and both helpers pass one contract test
+  suite: exactly-once enqueue, atomic claims, leases that lapse and are reaped, heartbeats, settlements ignored from a
+  worker that lost its claim, refunded hand-backs, schedules advanced by compare-and-set, operator retry and cancel.
+
+  **`closeOnSignals(server, { afterClose })`** closes the server on SIGTERM/SIGINT and exits only once it has — so a
+  deploy finishes the jobs a replica is running and leaves the waiting ones for the next. A second signal exits at once.
+  Opt-in: a host with its own signal handling calls `server.close()` itself. Projects from `plitzi create` use it.
+
+  **A replica that is told to stop finishes the jobs it is running — and only those.** `server.close()` (and the job
+  worker's `stop()`) now waits for every running job to end however long past its lease that is, and keeps renewing
+  their claims while it waits. It used to stop renewing the moment the drain began and give up at the lease: a job longer
+  than its lease was taken over by another replica and run a second time while the first was still finishing it, and the
+  process exited in the middle of it. What is still waiting is not touched — it stays in the shared queue for the replica
+  that is staying or the one the deploy starts — and a job claimed in the instant the stop arrived is handed back with its
+  attempt refunded, never started. A run is bounded by its own timeout, which is the number an orchestrator's grace period
+  has to cover.
+
+  - **An every-minute schedule fired every other minute.** After producing a fire, the scheduler asked for the next
+    one from `lateness + 1 minute`, and `cronNextFire` rounds up to a whole minute — so a sweep that ran even a second
+    late (with the default 15-second sweep, nearly all of them) skipped the minute it should have produced. It now asks
+    from the minute after the one the sweep ran in. Only expressions with consecutive-minute fires were affected;
+    hourly and daily schedules were not.
+  - **A job that gives up says which step failed and why.** Its `error` and the failed attempt in its history used to
+    read "the flow ended failed" for every failure there is; they now read `step "<id>" failed: <message>`, taken from
+    the run's outline — already redacted of every credential the run resolved, so nothing reaches the job that the
+    run history would not show.
+  - **`apiContainer` takes `refreshSeconds`**: it asks again on its own every N seconds, for a page showing something
+    still moving — a queue, a feed, a status board. It is the same refresh `performQuery` runs, so it works for both
+    runtimes (a browser request is sent again; a server provider asks for its own RSC slice again). It pauses while
+    the tab is hidden and never starts a refresh while the last one is in flight. `0`, the default, never does. Before
+    this a live server provider needed a plugin element of its own to call `useRscRefresh` on a timer: `onApiSuccess`
+    never fires for a server provider, so there was no way to author the loop. The builder shows it as "Refresh every
+    (s)" for either runtime.
+  - **`onApiSuccess` / `onApiError` fire for a server provider.** The declaration offered them for every
+    `apiContainer`, but they were decided from the browser request alone — which a `runtime: 'server'` provider never
+    makes — so a flow wired to them never ran. They now fire when the provider's slice arrives (or the payload arrives
+    without it), and again on each refresh, the same as a browser refetch. A payload resolved for another page fires
+    neither. **A space that wired a flow to one of them will now see it run.**
+  - **The theme toggle shows one icon by default.** It renders both — which one is right depends on stored state, and
+    markup that depended on it would differ between the server and the browser — and until now every space had to copy
+    ten lines of `customCss` to hide the other; one that did not showed a sun and a moon side by side. The SDK's base
+    layer now shows the icon of the scheme in use, and a space's own rule still wins.
+  - **`variantFrom(cls, source)`** in `@plitzi/sdk-authoring` binds which of a CLASS's variants an element wears to a
+    value in the data — a status pill that is amber while a job waits and green once it is done. Written by hand the
+    variant key is the trap: it names the selector the variants belong to, and the element's type (`text.base`) is a
+    different selector from its class (`statusPill.base`), so the element rendered with no variant and nothing
+    reported it. The helper takes the key from the class declaration.
+  - **`authorSpace` refuses a flow template that reads a source by its short name.** A binding completes the prefix
+    (`jobRows.item.id` → `list_jobRows.item.id`), so the short form is the one an author learns first; a step's params
+    are read as written, and there it resolved to nothing — a row's button posted an empty id and every layer below
+    reported success. The error names the full source. A root that is a step of the same flow is left alone.
+  - New example, [`05-with-server-actions/05-schedules`](../examples/05-with-server-actions/05-schedules): scheduled and
+    delayed jobs on a self-hosted server, with the `ActionJobQueue` and `kv` seams written out in full over one SQLite
+    file, two replicas sharing it, failover when one is killed, and a board that watches it happen.
+
+  ## Rendering, data and styles
+  - **A server element inside a layout is resolved.** `collectServerElements` walked the page alone, so a
+    `runtime: 'server'` provider in a layout — a dashboard's sidebar, a section's header — was never resolved: the RSC
+    payload came back empty and the element rendered with nothing. It now walks the page and every shell in its layout
+    chain.
+  - **The twig `date` filter reads an epoch.** `new Date("1790143200000")` is Invalid Date, so an epoch in milliseconds
+    handed over as text — how an attribute passes one — formatted as nothing. A number, or a string of digits, is now
+    read as milliseconds.
+  - **An action is called by its name, not by its trigger kind.** `actionName` took the first trigger's title, and a
+    trigger nobody named is titled with its kind — so every rendered action in a workspace read "render" and every clock
+    "schedule". A title that only repeats the kind is no longer a name, and `defineAction` titles each trigger with the
+    action's name.
+  - **`variant` on an element that wears a class is that class's variant** when the class declares it and the type does
+    not. Keyed by the type, `text({ class: avatar, variant: 'violet' })` named `text--violet`, a selector nothing wears,
+    and rendered with no variant at all. Exporting a document back to authoring reads the same key back into `variant`.
+  - **`variantFrom` takes `{ slot, template }`**, where `template` turns a value into a variant name for data that does
+    not already speak in them — `"{{ source == 'code' ? 'on' : '' }}"`. The third argument was the slot name alone.
+  - **Entry declarations no longer alternate with `export {}`.** In `@plitzi/sdk-server` and `@plitzi/sdk-mcp` a repeated
+    `build:dev` left some `dist/<entry>.d.ts` as a ten-byte `export {}`, and consumers saw "has no exported member". The
+    cause was `insertTypesEntry` writing a types entry over the real declaration of the same path; it is gone.
+  - **Signing in keeps what a guest was doing.** `runtimeStatePersist` reset `runtime.state` whenever its owner changed,
+    and a guest becoming a user is a change — so a sign-in screen that remembered where to send somebody (`?redirect=`)
+    forgot it the moment the session arrived, and the sign-in ended on the fallback page instead. Only a change FROM an
+    account resets now: one account's state still never reaches the next, and a guest has no account to protect.
+
+  **A value with functions inside functions is written as it was given, and fast.** A CSS value was split into layers
+  at commas by a pattern that could only see one level of parentheses, so `var(--bg, light-dark(#fff, #111))` was cut at
+  its inner comma and half a function went on into the stylesheet. The half was then tokenised by an expression that
+  nested one quantifier inside another and backtracked exponentially on it — nearly two seconds for thirty characters,
+  on every generation of that selector's cache. Both are now one linear scan that splits only outside parentheses and
+  quotes. Generated caches keep the spacing the value was written with inside functions (`repeat(3, minmax(0, 1fr))`,
+  `color-mix(in oklab, oklch(…) 50%, transparent)`), where they used to drop it after the first comma.
+
+- Updated dependencies
+  - @plitzi/sdk-shared@0.37.2
+
 ## 0.37.1
 
 ### Patch Changes
