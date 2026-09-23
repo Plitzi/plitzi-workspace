@@ -27,7 +27,7 @@ A record holds:
 | `client` | The builder tab it came from |
 | `batch` | Shared by everything one request saved: one builder request, one `plitzi_apply`, one autofix run |
 | `entries` | Each entity changed: `{ kind, id, op, before?, after? }` |
-| `summary` | One line, e.g. `Added class card; Updated element hero, cta` |
+| `summary` | What it did, one line per thing (`describeChange`), e.g. `Added text “hero” to page “test”` |
 
 An entry is one whole **entity** — an element (pages and layouts are elements too), a page folder, a schema variable, a
 setting (`settings.<key>`, `definition.<key>`, the page order `pages`), a class, a global style, an id style, a design
@@ -65,15 +65,22 @@ Records live in Mongo, in `space_changes` (with `space_change_counters` handing 
 ## 4. Reading it
 
 **In the builder:** the **History** panel on the left. Newest first, with consecutive saves by the same person from the
-same place folded into one row (one request, or saves less than a minute apart). A row unfolds into every entity it
-touched, each update field by field before and after; an element still in the space is a link to it. Filters: who made
+same place folded into one row (one request, or saves less than a minute apart). A row says what it did one line per
+thing — "Added text “hero” to page “test”", "Moved button “cta” from “header” to “footer”", "Changed content of heading
+“title”", "Changed class “card” on tablet" — each said once, so ten keystrokes in one text are one line. A parent is not
+listed as changed because a child was added to it, removed from it or moved: that is the add, the removal or the move.
+Unfolded, a row lists each of its saves on its own, with its number and time, its lines, and each field it changed before
+and after; an element still in the space is a link to it. Filters: who made
 it (person, agent, co-worker, autofix), **only the selected element** (that element's own history), and **since the
-last snapshot**. Published revisions are drawn on the timeline as markers at their publish date — what sits below a
-marker is what that revision includes. The markers are indicative: they are placed by date, and the snapshot system
-itself is untouched.
+last snapshot**. Every row carries its change number (`#50`, or `#48–50` for a row of several saves), and each
+published revision is drawn as a marker right above the last change it includes — "Revision 4 · includes up to #50" —
+so what sits below it shipped in that revision and what sits above did not. The marker is derived when the history is
+read, from the revision's publish date (the last change recorded before it); the snapshot system itself is untouched. A
+revision published before the history began says so.
 
 **Over GraphQL:** `SpaceChanges(environment, before?, entityId?, origin?, userId?, since?, limit?)` answers a page
-(`changes`, the `snapshots` to mark it with, and `nextBefore` for the next page). It needs `spaceView`.
+(`changes`, the `snapshots` to mark it with — each with `upToSeq`, the last change it includes — and `nextBefore` for
+the next page). It needs `spaceView`.
 
 **Over MCP:** `plitzi://changes/{env}` (the latest changes) and `plitzi://changes/{env}/{id}` (one entity's), so an
 agent can review what it — or anyone — just did.

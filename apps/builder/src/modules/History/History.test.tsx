@@ -49,7 +49,9 @@ const personEdit: ChangeRecord = {
 const timeline = (overrides: Partial<ReturnType<typeof useSpaceChanges>> = {}) =>
   vi.mocked(useSpaceChanges).mockReturnValue({
     changes: [agentEdit, personEdit],
-    snapshots: [{ revision: 4, environment: 'main', description: 'Launch', publishedAt: Date.UTC(2026, 8, 23) }],
+    snapshots: [
+      { revision: 4, environment: 'main', description: 'Launch', publishedAt: Date.UTC(2026, 8, 23), upToSeq: 1 }
+    ],
     complete: true,
     loading: false,
     error: undefined,
@@ -73,15 +75,17 @@ describe('History', () => {
     const text = container.textContent;
 
     expect(within(getByRole('list')).getByText('Agent')).toBeTruthy();
-    expect(getByText('Updated element hero')).toBeTruthy();
-    expect(text.indexOf('Updated element hero')).toBeLessThan(text.indexOf('Revision 4'));
-    expect(text.indexOf('Revision 4')).toBeLessThan(text.indexOf('Added element card'));
+    expect(getByText('Changed content of element “hero”')).toBeTruthy();
+    expect(getByText('Revision 4 · “Launch” · includes up to #1')).toBeTruthy();
+    expect(within(getByRole('list')).getByText('#2')).toBeTruthy();
+    expect(text.indexOf('Changed content of element “hero”')).toBeLessThan(text.indexOf('Revision 4'));
+    expect(text.indexOf('Revision 4')).toBeLessThan(text.indexOf('Added element “card”'));
   });
 
   it('unfolds a change into each field before and after, and takes someone to the element it touched', () => {
     const { getByText } = render(<History />);
 
-    fireEvent.click(getByText('Updated element hero'));
+    fireEvent.click(getByText('Changed content of element “hero”'));
 
     expect(getByText('attributes.content')).toBeTruthy();
     expect(getByText('"Hi"')).toBeTruthy();

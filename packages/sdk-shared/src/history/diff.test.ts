@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { diffSchema, diffStyle, sameValue, summarizeChange } from './diff';
+import { diffSchema, diffStyle, sameValue } from './diff';
 
 import type { HistorySchema, HistoryStyle } from './diff';
 import type { Element, StyleItem } from '../types';
@@ -108,19 +108,5 @@ describe('diffStyle', () => {
       { kind: 'globalStyle', id: 'button', op: 'add', after: { desktop: selector('button', 'blue', 'element') } },
       { kind: 'token', id: 'color/primary', op: 'update', before: '#000', after: '#111' }
     ]);
-  });
-});
-
-describe('summarizeChange', () => {
-  it('says what happened in one line, and stops naming after three', () => {
-    expect(
-      summarizeChange([
-        { kind: 'element', id: 'a', op: 'update' },
-        { kind: 'element', id: 'b', op: 'update' },
-        { kind: 'element', id: 'c', op: 'update' },
-        { kind: 'element', id: 'd', op: 'update' },
-        { kind: 'selector', id: 'card', op: 'add' }
-      ])
-    ).toBe('Added class card; Updated element a, b, c and 1 more');
   });
 });

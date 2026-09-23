@@ -444,6 +444,10 @@
       "types": "./dist/history/index.d.ts",
       "import": "./dist/history/index.mjs"
     },
+    "./history/describe": {
+      "types": "./dist/history/describe.d.ts",
+      "import": "./dist/history/describe.mjs"
+    },
     "./history/diff": {
       "types": "./dist/history/diff.d.ts",
       "import": "./dist/history/diff.mjs"

@@ -1,4 +1,4 @@
-import { summarizeChange } from '@plitzi/sdk-shared/history';
+import { describeChange, fieldChanges, uniqueLines } from '@plitzi/sdk-shared/history';
 
 import type { ChangeEntry, ChangeKind, ChangeOrigin, TSnapshotMarker, TSpaceChanges } from '@plitzi/sdk-shared';
 
@@ -40,10 +40,14 @@ export const groupChanges = (changes: ChangeRecord[]): ChangeGroup[] => {
 
 export type TimelineRow = { type: 'group'; group: ChangeGroup } | { type: 'snapshot'; snapshot: TSnapshotMarker };
 
+/** Whether a revision was published after a change: by the change it reaches when that is known, by date otherwise. */
+const publishedAfter = (snapshot: TSnapshotMarker, change: ChangeRecord): boolean =>
+  snapshot.upToSeq !== null ? snapshot.upToSeq >= change.seq : snapshot.publishedAt >= change.at;
+
 /**
- * Each published revision drawn above the changes made before its date — so what sits below a marker is what that
- * revision includes. Indicative: it is placed by date, not by any link between a revision and a change. A revision
- * older than everything loaded waits for the page that reaches it, unless the timeline is over.
+ * Each published revision drawn right above the last change it includes — so what sits below a marker is in that
+ * revision, and what sits above is not. A revision older than everything loaded waits for the page that reaches it,
+ * unless the timeline is over.
  */
 export const placeSnapshots = (
   groups: ChangeGroup[],
@@ -53,8 +57,7 @@ export const placeSnapshots = (
   const pending = [...snapshots].sort((a, b) => b.publishedAt - a.publishedAt);
   const rows: TimelineRow[] = [];
   for (const group of groups) {
-    const newest = group.changes[0].at;
-    while (pending.length > 0 && pending[0].publishedAt >= newest) {
+    while (pending.length > 0 && publishedAfter(pending[0], group.changes[0])) {
       rows.push({ type: 'snapshot', snapshot: pending[0] });
       pending.shift();
     }
@@ -67,29 +70,6 @@ export const placeSnapshots = (
   }
 
   return rows;
-};
-
-export type FieldChange = { path: string; before?: unknown; after?: unknown };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-/**
- * What changed inside one entity, field by field (`attributes.content`, `definition.items`). Objects are walked; a list
- * or a value is compared whole, since "the third item moved" reads worse than the list before and after.
- */
-export const fieldChanges = (before: unknown, after: unknown, path = ''): FieldChange[] => {
-  if (isRecord(before) && isRecord(after)) {
-    const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
-
-    return keys.flatMap(key => fieldChanges(before[key], after[key], path ? `${path}.${key}` : key));
-  }
-
-  if (JSON.stringify(before) === JSON.stringify(after)) {
-    return [];
-  }
-
-  return [{ path, ...(before !== undefined ? { before } : {}), ...(after !== undefined ? { after } : {}) }];
 };
 
 const MAX_VALUE_LENGTH = 120;
@@ -142,6 +122,11 @@ const TIME = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle
 /** When, in the reader's own time zone: this is a person looking back at their day, not a log line. */
 export const formatTime = (at: number): string => TIME.format(new Date(at));
 
+const CLOCK = new Intl.DateTimeFormat(undefined, { timeStyle: 'short' });
+
+/** Just the time of day, for a save listed under a row that already says the date. */
+export const formatClock = (at: number): string => CLOCK.format(new Date(at));
+
 /** Who, as a timeline says it: the person, or the kind of writer when no person was behind it. */
 export const authorLabel = (change: ChangeRecord): string => change.author.name || ORIGIN_LABEL[change.origin];
 
@@ -162,15 +147,49 @@ export const KIND_LABEL: Record<ChangeKind, string> = {
   font: 'Font'
 };
 
-/** What a row of saves did, all of it: the entries of every save in the group, said once. */
-export const groupSummary = (group: ChangeGroup): string =>
-  summarizeChange(group.changes.flatMap(change => change.entries));
+/** What a row of saves did, each thing on its own line and said once — ten keystrokes in one text are one line. */
+export const groupLines = (group: ChangeGroup) =>
+  uniqueLines(group.changes.flatMap(change => describeChange(change.entries)));
 
-/** A published revision, as its marker names it. */
-export const snapshotLabel = ({ revision, environment, description }: TSnapshotMarker): string =>
-  [`Revision ${revision}`, environment !== 'main' ? environment : '', description ? `“${description}”` : '']
+/** How many lines a folded row shows before it says how many more there are. */
+export const FOLDED_LINES = 5;
+
+/**
+ * Fields that are the tree rather than the element: a parent's list of children, a child's parent and root. They are
+ * said by the lines about adds, removals and moves, so the detail leaves them out — or a page would read as changed
+ * every time something is added to it.
+ */
+const TREE_PATHS = new Set(['definition.items', 'definition.parentId', 'definition.rootId']);
+
+/** What the detail of an entry shows: the fields that changed, less the tree. */
+export const detailOf = (entry: ChangeEntry) =>
+  entry.op === 'update' ? fieldChanges(entry.before, entry.after).filter(({ path }) => !TREE_PATHS.has(path)) : [];
+
+/**
+ * The entries a save's detail lists: what was edited in more than its place in the tree. An add, a removal or a move is
+ * already its line, and the line is the link to the element.
+ */
+export const detailedEntries = (entries: ChangeEntry[]): ChangeEntry[] =>
+  entries.filter(entry => detailOf(entry).length > 0);
+
+/** A published revision, as its marker names it, and how far into the timeline it reaches. */
+export const snapshotLabel = ({ revision, environment, description, upToSeq }: TSnapshotMarker): string =>
+  [
+    `Revision ${revision}`,
+    environment !== 'main' ? environment : '',
+    description ? `“${description}”` : '',
+    upToSeq !== null ? `includes up to #${upToSeq}` : 'published before this history'
+  ]
     .filter(Boolean)
     .join(' · ');
+
+/** The changes a row covers, by number: `#50`, or `#48–50` for several saves. */
+export const groupRange = (group: ChangeGroup): string => {
+  const newest = group.changes[0].seq;
+  const oldest = group.changes[group.changes.length - 1].seq;
+
+  return oldest === newest ? `#${newest}` : `#${oldest}–${newest}`;
+};
 
 export const rowKey = (row: TimelineRow): string =>
   row.type === 'group' ? `change-${row.group.key}` : `snapshot-${row.snapshot.environment}-${row.snapshot.revision}`;

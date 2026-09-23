@@ -2,8 +2,17 @@ import { gql } from '@apollo/client/core';
 
 import type { SpaceChange } from '../../../../../history';
 
-/** A published revision, to draw on the timeline at its date. Indicative only. */
-export type TSnapshotMarker = { revision: number; environment: string; description: string; publishedAt: number };
+/**
+ * A published revision on the timeline. `upToSeq` is the last change recorded before it was published — what it
+ * includes — or null when none is recorded. Indicative: derived from the dates.
+ */
+export type TSnapshotMarker = {
+  revision: number;
+  environment: string;
+  description: string;
+  publishedAt: number;
+  upToSeq: number | null;
+};
 
 /** A page of the space's change history, newest first. `nextBefore` pages further back; null at the end. */
 export type TSpaceChanges = {
@@ -53,6 +62,7 @@ const SpaceChangesQuery = gql`
         environment
         description
         publishedAt
+        upToSeq
       }
       nextBefore
     }

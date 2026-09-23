@@ -154,37 +154,3 @@ export const diffStyle = (before: Partial<HistoryStyle>, after: Partial<HistoryS
     ...diffKeyed('setting', { theme: before.theme, mode: before.mode }, { theme: after.theme, mode: after.mode })
   ];
 };
-
-const KIND_NOUNS: Record<ChangeKind, string> = {
-  element: 'element',
-  folder: 'folder',
-  variable: 'variable',
-  setting: 'setting',
-  selector: 'class',
-  globalStyle: 'global style',
-  idStyle: 'id style',
-  token: 'token',
-  font: 'font'
-};
-
-const VERBS: Record<ChangeEntry['op'], string> = { add: 'Added', update: 'Updated', remove: 'Removed' };
-
-/** One line a timeline row can show: "Added class card; Updated element hero, cta". Names stop at three per group. */
-export const summarizeChange = (entries: ChangeEntry[]): string =>
-  (['add', 'update', 'remove'] as const)
-    .flatMap(op =>
-      Object.entries(
-        entries
-          .filter(entry => entry.op === op)
-          .reduce<Record<string, string[]>>((groups, entry) => {
-            (groups[KIND_NOUNS[entry.kind]] ??= []).push(entry.id);
-
-            return groups;
-          }, {})
-      ).map(([noun, ids]) => {
-        const names = ids.length > 3 ? `${ids.slice(0, 3).join(', ')} and ${ids.length - 3} more` : ids.join(', ');
-
-        return `${VERBS[op]} ${noun} ${names}`;
-      })
-    )
-    .join('; ');

@@ -213,8 +213,10 @@
   plan. See `docs/en/history.md`.
 - Builder: a **History** panel — the timeline, newest first, with saves folded into rows, each unfolding into a
   field-by-field diff that links to its element; filters by who made it, the selected element, and since the last
-  snapshot; published revisions marked where they fall.
-- `@plitzi/sdk-shared/history`: `diffSchema`, `diffStyle`, `summarizeChange`, `sameValue`, `jsonCopy` and the
+  snapshot; each row numbered (`#50`), and each published revision marked right above the last change it includes
+  ("Revision 4 · includes up to #50") — `upToSeq` on the snapshot markers `SpaceChanges` returns.
+- `@plitzi/sdk-shared/history`: `diffSchema`, `diffStyle`, `describeChange` (a save as lines: "Added text “hero” to
+  page “test”", with the parent's bookkeeping left out), `fieldChanges`, `sameValue`, `jsonCopy` and the
   `SpaceChange` vocabulary; builder query `SpaceChanges` (`TSpaceChanges`, `TSnapshotMarker`).
 - `@plitzi/sdk-mcp`: `saveSchema`/`saveStyle` receive an `SSRWriteContext` (the member, one batch per tool call), and an
   optional `getChanges` adapter serves `plitzi://changes/{env}` and `plitzi://changes/{env}/{id}`.
