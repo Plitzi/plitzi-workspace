@@ -25,3 +25,7 @@
 - **Entry declarations no longer alternate with `export {}`.** In `@plitzi/sdk-server` and `@plitzi/sdk-mcp` a repeated
   `build:dev` left some `dist/<entry>.d.ts` as a ten-byte `export {}`, and consumers saw "has no exported member". The
   cause was `insertTypesEntry` writing a types entry over the real declaration of the same path; it is gone.
+- **Signing in keeps what a guest was doing.** `runtimeStatePersist` reset `runtime.state` whenever its owner changed,
+  and a guest becoming a user is a change — so a sign-in screen that remembered where to send somebody (`?redirect=`)
+  forgot it the moment the session arrived, and the sign-in ended on the fallback page instead. Only a change FROM an
+  account resets now: one account's state still never reaches the next, and a guest has no account to protect.

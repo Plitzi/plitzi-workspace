@@ -9,23 +9,41 @@ type AuthSource = { status?: string; isAuthenticated?: boolean; details?: { id?:
 const UNSETTLED = new Set(['init', 'initLoading', 'authenticating']);
 
 /**
- * Who `runtime.state` belongs to, as the auth source says — `undefined` while auth has not settled.
+ * Who `runtime.state` belongs to.
  *
- * A space with no accounts at all (no provider, or none of its auth published) has one owner, the browser, and says
- * `''`. Otherwise it is the signed-in account, or the guest.
+ * Read from the `auth` source GlobalSources publishes, which every auth provider feeds the same way — so this is the
+ * whole vocabulary, whatever a space signs people in with. A space with no accounts at all (no provider, or none of its
+ * auth published) has one owner, the browser. Otherwise it is the signed-in account, or the guest.
  */
-export const stateOwner = (state: CommonState): string | undefined => {
+export type StateOwner = { kind: 'browser' } | { kind: 'guest' } | { kind: 'account'; id: string };
+
+/** `undefined` while auth has not settled: nothing kept can be told apart yet from somebody else's. */
+export const stateOwner = (state: CommonState): StateOwner | undefined => {
   // The sources are an open record typed `unknown`; this shape is what GlobalSources publishes under `auth`.
   const auth = state.runtime?.sources.auth as AuthSource | undefined;
   if (!auth || auth.status === undefined) {
-    return '';
+    return { kind: 'browser' };
   }
 
   if (UNSETTLED.has(auth.status)) {
     return undefined;
   }
 
-  return auth.isAuthenticated && auth.details?.id !== undefined ? `user:${String(auth.details.id)}` : 'guest';
+  return auth.isAuthenticated && auth.details?.id !== undefined
+    ? { kind: 'account', id: String(auth.details.id) }
+    : { kind: 'guest' };
+};
+
+/** How an owner is written on a kept entry. Entries already in browsers carry exactly these strings. */
+const ownerKey = (owner: StateOwner): string => {
+  switch (owner.kind) {
+    case 'account':
+      return `user:${owner.id}`;
+    case 'guest':
+      return 'guest';
+    case 'browser':
+      return '';
+  }
 };
 
 /**
@@ -110,7 +128,7 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
 
       const storage = browserStorage(settings.stateStorage === 'sessionStorage' ? 'session' : 'local');
 
-      return storage ? ownedStorage(storage, owner) : false;
+      return storage ? ownedStorage(storage, ownerKey(owner)) : false;
     }
   });
 
@@ -127,6 +145,12 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
        * The storage forgets another owner's entry, but the page still HOLDS the previous account's state in memory,
        * and the next write would file it under the new one. So it goes back to what the space starts with — before the
        * write that follows, which is why this runs first.
+       *
+       * Only when the state belonged to an ACCOUNT: another one taking over, or it signing out. The browser and the guest
+       * are nobody in particular, so there is nobody to protect the state from — a guest signing in is the same person,
+       * and what they were doing is theirs. The sign-in screen holds the address to send them back to in this state,
+       * and clearing it as their session arrived sent them to "you are signed in" instead, whenever their account
+       * details landed before the page read it.
        */
       onChange: change => {
         const previous = owner;
@@ -136,7 +160,7 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
           owner = next;
         }
 
-        if (previous !== undefined && next !== undefined && next !== previous) {
+        if (previous?.kind === 'account' && next !== undefined && ownerKey(next) !== ownerKey(previous)) {
           // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
           api.setState('runtime.state' as PathOf<TState>, initial as never);
         }

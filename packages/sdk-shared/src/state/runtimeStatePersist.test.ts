@@ -153,5 +153,44 @@ describe('runtimeStatePersist', () => {
 
       expect(JSON.parse(localStorage.getItem(KEY) ?? '{}')).toMatchObject({ owner: 'user:9' });
     });
+
+    const guest = { status: 'unauthenticated', isAuthenticated: false };
+
+    // The sign-in screen keeps the address to send somebody back to in this state. Cleared as their session arrived,
+    // it sent them to "you are signed in" whenever their account details landed before the page read it.
+    it.each([true, false])('keeps what a guest was doing when they sign in (keepState %s)', keepState => {
+      const store = build({
+        schema: settings(keepState),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: guest } }
+      });
+      store.hydrate?.();
+      store.setState('runtime.state', { redirect: 'https://app.plitzi.com/spaces' });
+
+      store.setState('runtime.sources.auth', signedIn(7));
+
+      expect(store.getState().runtime?.state).toEqual({ redirect: 'https://app.plitzi.com/spaces' });
+    });
+
+    // Auth published after the page mounted: until then the owner reads as the browser, which is nobody either.
+    it('keeps the state when auth arrives after the page did', () => {
+      const store = build({ schema: settings(false), render: { isHydrating: false }, runtime: { sources: {} } });
+      store.hydrate?.();
+      store.setState('runtime.state', { redirect: 'https://app.plitzi.com/spaces' });
+
+      store.setState('runtime.sources.auth', signedIn(7));
+
+      expect(store.getState().runtime?.state).toEqual({ redirect: 'https://app.plitzi.com/spaces' });
+    });
+
+    it('drops the state of an account that signs out', () => {
+      const store = withAuth(signedIn(7));
+      store.hydrate?.();
+      store.setState('runtime.state', kept);
+
+      store.setState('runtime.sources.auth', guest);
+
+      expect(store.getState().runtime?.state).toBeUndefined();
+    });
   });
 });
