@@ -41,7 +41,10 @@ program
   )
   .option('--no-install', 'Write the files without installing dependencies')
   .option('-f, --force', 'Write into a directory that is not empty')
-  .option('-y, --yes', 'Take the defaults for any choice not passed (server, local, the invoking package manager)')
+  .option(
+    '-y, --yes',
+    'At a terminal: take the defaults for any choice not passed. Without one, every choice must be passed'
+  )
   .action(create);
 
 program.parse(process.argv);

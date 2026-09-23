@@ -12,9 +12,10 @@ Scaffolds a project that renders a Plitzi space, installs it, and leaves it read
 the package manager, `--mode` and `--source` — and they are the person's to make, so `create` never makes them alone:
 
 - **At a terminal**, anything not passed is asked for, with the likely answer offered as the default.
-- **With nobody at the terminal** — an agent, CI — it stops before writing anything and prints the flags still
-  missing, so the agent asks the person rather than guessing. `--yes` takes the defaults (`server`, `local`, the
-  invoking package manager) for a script that genuinely means them.
+- **With nobody at the terminal** — an agent, CI — it stops before writing anything and prints each missing choice
+  as a question for the person, addressed to the agent that ran it: ask the user, wait, run again with their answers.
+  It offers no way around them: `--yes` only takes the defaults (`server`, `local`, the invoking package manager) for
+  a person at a terminal. A script passes the three flags — which is also what makes it reproducible.
 
 | | `--source local` | `--source cloud` |
 |---|---|---|
@@ -26,8 +27,8 @@ plitzi create my-site                                                 # asks the
 plitzi create my-site --package-manager npm --mode server --source local
 plitzi create my-site --package-manager pnpm --mode client --source local   # Vite, hot module replacement
 plitzi create my-site --package-manager yarn --mode server --source cloud --key …   # the live space
-plitzi create my-site --yes                                           # server + local + the invoking manager
-plitzi create . --force --no-install --yes                            # into a directory that has work in it
+plitzi create my-site --yes                                           # at a terminal: server + local + the invoking manager
+plitzi create . --force --no-install --package-manager npm --mode server --source local   # into a directory that has work in it
 ```
 
 ## The package manager

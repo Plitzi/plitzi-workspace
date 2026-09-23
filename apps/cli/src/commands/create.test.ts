@@ -35,6 +35,27 @@ const inTemp = async (run: (dir: string) => Promise<void>): Promise<void> => {
   }
 };
 
+/** Runs `run` as if a person were at the terminal: vitest's streams are not TTYs, and neither is an agent's shell. */
+const atTerminal = async (run: () => Promise<void>): Promise<void> => {
+  const stdin = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
+  const stdout = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY');
+  Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
+  Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+  try {
+    await run();
+  } finally {
+    const restore = (stream: NodeJS.ReadStream | NodeJS.WriteStream, descriptor?: PropertyDescriptor) => {
+      if (descriptor) {
+        Object.defineProperty(stream, 'isTTY', descriptor);
+      } else {
+        Reflect.deleteProperty(stream, 'isTTY');
+      }
+    };
+    restore(process.stdin, stdin);
+    restore(process.stdout, stdout);
+  }
+};
+
 describe('the scaffold', () => {
   it('gives a local project the space as its own source', () => {
     const files = scaffold(answers());
@@ -404,9 +425,12 @@ describe('plitzi create', () => {
       await create(dir, { install: false, mode: 'client' });
 
       const said = error.mock.calls.flat().join('\n');
-      expect(said).toContain('--package-manager npm|yarn|pnpm');
-      expect(said).toContain('--source local|cloud');
-      expect(said).not.toContain('--mode server|client');
+      expect(said).toContain('If you are an AI agent: ask the user');
+      expect(said).toContain('--package-manager npm | yarn | pnpm');
+      expect(said).toContain('--source local | cloud');
+      expect(said).not.toContain('--mode server | client');
+      // It used to end with "or with --yes to take the defaults", and an agent took that exit instead of asking.
+      expect(said).not.toContain('--yes');
       expect(process.exitCode).toBe(1);
       expect(await fs.readdir(dir)).toEqual([]);
 
@@ -415,9 +439,40 @@ describe('plitzi create', () => {
     });
   });
 
-  it('takes the defaults for what was not passed when told to with --yes', async () => {
+  it('does not let --yes answer for a person who is not there', async () => {
     await inTemp(async dir => {
-      await create(dir, { install: false, yes: true, packageManager: 'pnpm' });
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await create(dir, { install: false, yes: true });
+
+      expect(error.mock.calls.flat().join('\n')).toContain('--mode server | client');
+      expect(process.exitCode).toBe(1);
+      expect(await fs.readdir(dir)).toEqual([]);
+
+      error.mockRestore();
+      process.exitCode = 0;
+    });
+  });
+
+  it('asks for the cloud key instead of failing over an empty one when nobody is at the terminal', async () => {
+    await inTemp(async dir => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await create(dir, { install: false, packageManager: 'npm', mode: 'client', source: 'cloud' });
+
+      const said = error.mock.calls.flat().join('\n');
+      expect(said).toContain('--key <key>');
+      expect(said).toContain('public render key');
+      expect(await fs.readdir(dir)).toEqual([]);
+
+      error.mockRestore();
+      process.exitCode = 0;
+    });
+  });
+
+  it('takes the defaults for what was not passed when a person at the terminal says --yes', async () => {
+    await inTemp(async dir => {
+      await atTerminal(() => create(dir, { install: false, yes: true, packageManager: 'pnpm' }));
 
       const manifest = JSON.parse(await fs.readFile(path.join(dir, 'package.json'), 'utf-8')) as {
         dependencies: Record<string, string>;

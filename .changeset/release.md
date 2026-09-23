@@ -165,6 +165,10 @@
 
 ## CLI
 
+- With nobody at the terminal (an agent, CI), `create` stops and prints each missing choice — package manager, mode,
+  source, and the key for a cloud project — as a question the agent must put to the user, and offers no way around
+  it: it used to end with "or with --yes to take the defaults", and agents took that exit instead of asking. `--yes`
+  now only answers for a person at a terminal; a script passes the flags.
 - Every project gets `tsx`, so `npm run author` works on a fresh checkout, and `npm run shot -- /path --width 390
   --scheme dark` takes a full-page screenshot.
 - The generated visual test skips list rows and providers with no tag.

@@ -32,7 +32,7 @@ export interface CreateOptions {
   packageManager?: string;
   install?: boolean;
   force?: boolean;
-  /** Take the defaults for whatever was not passed, instead of asking — for a script that means exactly that. */
+  /** At a terminal, take the defaults for whatever was not passed instead of asking. Without one it answers nothing. */
   yes?: boolean;
 }
 
@@ -94,15 +94,49 @@ const install = (manager: PackageManager, cwd: string): Promise<boolean> =>
  * Each one is written into the project: the package manager into every command its README, lockfile, Playwright config
  * and install use; the mode into whether there is a Node tier at all; the source into whether the space is in the repo.
  * Assumed, they are the wrong project for somebody, and an agent running this was the one assuming. So what was not
- * passed is asked for when a person is at the terminal, and refused when nobody is — with the exact question to put
- * to the person — unless `--yes` says the defaults ARE the answer.
+ * passed is asked for when a person is at the terminal, and refused when nobody is — with the exact questions to put
+ * to the person.
  */
-type Question<T extends string> = { flag: string; choices: readonly T[]; help: string; given?: T; fallback: T };
+type Question<T extends string> = { flag: string; choices: readonly T[]; question: string; given?: T; fallback: T };
+
+/** Somebody who can answer a prompt. An agent's shell, CI and a pipe are nobody, whatever they were asked to do. */
+const atTerminal = (): boolean => process.stdin.isTTY && process.stdout.isTTY;
+
+/**
+ * Nobody to ask, so the questions go to whoever ran this — in practice an agent — to put to the person.
+ *
+ * It offers no way around them. It used to end with "or with --yes to take the defaults", and an agent keen to finish
+ * took that exit every time: the person was never asked, which is the whole failure this stop exists to prevent.
+ */
+const refuseWithoutTerminal = (questions: { flag: string; choices: readonly string[]; question: string }[]) => {
+  console.error(
+    chalk.red(
+      '\nplitzi create stopped before writing anything: these choices shape the whole project, they belong to the ' +
+        'person it is for, and nobody is at this terminal to make them.'
+    )
+  );
+  console.error(
+    chalk.bold(
+      '\nIf you are an AI agent: ask the user each question below, show them the options, and wait for their answers. ' +
+        'Do not choose for them and do not fall back to a default.\n'
+    )
+  );
+  questions.forEach(({ flag, choices, question }, index) => {
+    console.error(`  ${index + 1}. ${question}`);
+    console.error(`     ${flag} ${choices.join(' | ')}`);
+  });
+
+  const flags = questions.map(({ flag }) => `${flag} <their answer>`).join(' ');
+  console.error(`\nThen run the same command again with their answers: ${flags}`);
+  process.exitCode = 1;
+};
 
 /** One choice at the terminal: Enter takes the default, anything off the list is refused rather than guessed at. */
 const ask = async <T extends string>(rl: readline.Interface, question: Question<T>): Promise<T | undefined> => {
   const reply = (
-    await rl.question(`\n${question.help}\n${question.flag} (${question.choices.join('/')}) [${question.fallback}] > `)
+    await rl.question(
+      `\n${question.question}\n${question.flag} (${question.choices.join('/')}) [${question.fallback}] > `
+    )
   ).trim();
   const chosen = question.choices.find(choice => choice === (reply || question.fallback));
   if (!chosen) {
@@ -117,27 +151,29 @@ const resolveDecisions = async (options: CreateOptions): Promise<Decisions | und
   const packageManager: Question<PackageManager> = {
     flag: '--package-manager',
     choices: PACKAGE_MANAGERS,
-    help: `The package manager the project will be worked in (this was run through ${detected}).`,
+    question: `Which package manager will you work in? (this was run through ${detected})`,
     given: PACKAGE_MANAGERS.find(manager => manager === options.packageManager),
     fallback: detected
   };
   const mode: Question<Decisions['mode']> = {
     flag: '--mode',
     choices: MODES,
-    help: 'server: SSR + RSC on a Node tier. client: browser only.',
+    question: 'Should pages render on a Node server of your own (server: SSR + RSC), or only in the browser (client)?',
     given: MODES.find(candidate => candidate === options.mode),
     fallback: 'server'
   };
   const source: Question<Decisions['source']> = {
     flag: '--source',
     choices: SOURCES,
-    help: 'local: the space travels in the project. cloud: read it from Plitzi.',
+    question:
+      'Should the space live in the project as code you edit (local), or be read live from your Plitzi account ' +
+      '(cloud, which needs a key from Credentials in the builder)?',
     given: SOURCES.find(candidate => candidate === options.source),
     fallback: 'local'
   };
   const missing = [packageManager, mode, source].filter(question => question.given === undefined);
 
-  if (missing.length === 0 || options.yes) {
+  if (missing.length === 0 || (options.yes && atTerminal())) {
     return {
       packageManager: packageManager.given ?? packageManager.fallback,
       mode: mode.given ?? mode.fallback,
@@ -145,17 +181,10 @@ const resolveDecisions = async (options: CreateOptions): Promise<Decisions | und
     };
   }
 
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    console.error(
-      chalk.red('\nplitzi create needs these decided by whoever the project is for. Ask them; do not assume:')
-    );
-    for (const question of missing) {
-      console.error(`  ${`${question.flag} ${question.choices.join('|')}`.padEnd(36)} ${chalk.dim(question.help)}`);
-    }
-
-    const defaults = missing.map(question => `${question.flag} ${question.fallback}`).join(' ');
-    console.error(chalk.dim(`\nThen run it again with those flags — or with --yes to take ${defaults}.`));
-    process.exitCode = 1;
+  // `--yes` is a person at a terminal saying the defaults ARE their answer. With nobody there it is whoever ran this
+  // deciding for them, which is the one thing not allowed.
+  if (!atTerminal()) {
+    refuseWithoutTerminal(missing);
 
     return undefined;
   }
@@ -177,11 +206,13 @@ const resolveDecisions = async (options: CreateOptions): Promise<Decisions | und
   }
 };
 
+const keyQuestion = (mode: string): string =>
+  `The ${mode === 'server' ? 'self-hosting' : 'public render'} key the project reads the space with (Credentials, in the builder).`;
+
 const askForKey = async (mode: string): Promise<string> => {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   try {
-    const which = mode === 'server' ? 'self-hosting' : 'public render';
-    return (await rl.question(`\n${which} key (Credentials, in the builder)\n> `)).trim();
+    return (await rl.question(`\n${keyQuestion(mode)}\n> `)).trim();
   } finally {
     rl.close();
   }
@@ -206,6 +237,12 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   const { packageManager, mode, source } = decisions;
 
   // A cloud project is nothing without its credential, so it is the one thing worth stopping to ask for.
+  if (source === 'cloud' && !options.key && !atTerminal()) {
+    refuseWithoutTerminal([{ flag: '--key', choices: ['<key>'], question: keyQuestion(mode) }]);
+
+    return;
+  }
+
   const key = source === 'cloud' ? (options.key ?? (await askForKey(mode))) : '';
   if (source === 'cloud' && !key) {
     console.error(chalk.red('\nNo key. Mint one under Credentials in the builder, then run this again.'));
