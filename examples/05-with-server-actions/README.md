@@ -9,7 +9,7 @@ webhook from a provider.
 | 02 | [render](./02-render) | The server fetches an API while the page renders, and the HTML arrives finished | 4011 |
 | 03 | [no-server](./03-no-server) | The same page in the browser alone: every server-side step declares itself inert | 4012 |
 | 04 | [custom-trigger](./04-custom-trigger) | A way in this deployment mounts itself — a queue consumer — over a store it already runs | — |
-| 05 | [schedules](./05-schedules) | Jobs on a clock and jobs on a delay, over a durable queue the server keeps in SQLite | 4016 |
+| 05 | [schedules](./05-schedules) | Jobs on a clock and jobs on a delay, over a durable queue the server keeps in SQLite — and how the same runs on Mongo or MySQL | 4016 |
 
 The page names an action and hands it inputs. It never learns what happened in between — not the URL, not the
 credential, not the systems involved — because the flow is a **document the server holds**, not code the browser

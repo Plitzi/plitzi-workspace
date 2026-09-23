@@ -62,7 +62,8 @@ single place in that file:
 | `claim` is atomic, and it reaps | one `BEGIN IMMEDIATE` that takes due jobs AND jobs whose lease lapsed |
 | `advanceSchedule` is compare-and-set | `WHERE next_run_at = from` |
 
-Against Postgres the same shape is `SELECT … FOR UPDATE SKIP LOCKED`; against Mongo, `findOneAndUpdate`.
+Against Postgres the same shape is `SELECT … FOR UPDATE SKIP LOCKED`. For Mongo and MySQL you do not write it at all —
+see [On Mongo or MySQL](#on-mongo-or-mysql) below.
 
 **So is `kv`, and it is not optional past one replica.** A worker takes a job's single-flight key before running
 it, and with the default in-process Map each replica holds its own keys — so a stalled replica waking up would run
@@ -77,6 +78,11 @@ action: { lookups, kv, jobs: { queue, spaces: [SPACE_ID], workers: 2 } }
 `lookups.listActions` is what turns scheduling on at all — without it there is no way to know what a space has
 scheduled. `spaces` is the self-hosted shape: one space, named once. The rest of `jobs` is tuned so the demo moves
 at the speed of somebody watching it; the defaults are the right ones in production.
+
+**A stop finishes what it started.** [`src/main.ts`](./src/main.ts) ends by calling
+`closeOnSignals(server, { afterClose: () => db.close() })`: on `^C` or a deploy's SIGTERM the server stops claiming,
+finishes the jobs it is running — renewing their claims meanwhile — and only then exits. What is still waiting stays
+in the file for the other replica.
 
 **A schedule is a row, not a timer.** [`src/actions.ts`](./src/actions.ts) declares three `schedule` triggers — one
 of them switched off, which keeps its row so the board can say so. At boot the server derives each one's next fire
@@ -101,6 +107,54 @@ code; the operator's **Run again** and **Cancel** are two more actions.
 
 > The operator actions are `access: 'public'` because this example has no sign-in. On a real site they are behind
 > `{ mode: 'role', permissions: [...] }` — running a job again sends the email again.
+
+## On Mongo or MySQL
+
+This example keeps its queue in a SQLite file so it runs with nothing installed, and so the adapter is there to read.
+A deployment that already runs Mongo or MySQL does not write [`src/store/queue.ts`](./src/store/queue.ts) or
+[`src/store/kv.ts`](./src/store/kv.ts): `@plitzi/sdk-server` has both, written against the same contract and tested
+against the same rules. They use the connection you already have and keep nothing of their own — Mongo gets the
+indexes its queries need, MySQL gets three tables on first use.
+
+Only the two stores change in [`src/main.ts`](./src/main.ts); the actions, the tasks and the page stay as they are.
+
+**Mongo** — add `mongodb` to the project:
+
+```ts
+import { MongoClient } from 'mongodb';
+import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-server/mongo';
+
+const client = await new MongoClient(process.env.MONGO_URL ?? 'mongodb://127.0.0.1:27017').connect();
+const db = client.db('app');
+
+const queue = createMongoJobQueue({ db }); // collections action_jobs and action_schedules
+const kv = createMongoKv({ db }); // collection action_kv
+
+// …the same createServer({ action: { lookups, kv, jobs: { queue, … } } }) as today, then:
+closeOnSignals(server, { afterClose: () => client.close() });
+```
+
+**MySQL** — add `mysql2` to the project:
+
+```ts
+import mysql from 'mysql2/promise';
+import { createMysqlJobQueue, createMysqlKv } from '@plitzi/sdk-server/mysql';
+
+const pool = mysql.createPool(process.env.DATABASE_URL ?? 'mysql://user:password@127.0.0.1:3306/app');
+
+const queue = createMysqlJobQueue({ pool }); // tables action_jobs, action_schedules and action_kv, made on first use
+const kv = createMysqlKv({ pool });
+
+closeOnSignals(server, { afterClose: () => pool.end() });
+```
+
+Running your own migrations? Pass `createTables: false` to both and apply `mysqlJobSchemaStatements()` yourself. A
+`tablePrefix` keeps the three tables apart from yours.
+
+Two things this example keeps that you would move too. The **activity feed** ([`src/store/activity.ts`](./src/store/activity.ts))
+is the demo's own table, not part of the queue: on replicas that do not share a disk it belongs in your database as
+well. And **every replica points at the same database** — that, not the helper, is what makes them share the jobs:
+two replicas on two databases are two clusters, and the heartbeat fires once in each.
 
 ## The file
 
