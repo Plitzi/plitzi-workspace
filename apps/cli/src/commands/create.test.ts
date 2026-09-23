@@ -251,8 +251,25 @@ describe('the scaffold', () => {
     expect(spec).toContain('entry.named && !entry.conditional');
   });
 
+  // Claude Code finds the skill on its own; any other agent looks for AGENTS.md, and CLAUDE.md imports it.
+  it('tells any agent where to start, with the commands this project really has', () => {
+    const local = scaffold(answers());
+    const cloud = scaffold(answers({ source: 'cloud' }));
+
+    expect(local['AGENTS.md']).toContain('.claude/skills/plitzi-authoring/SKILL.md');
+    expect(local['AGENTS.md']).toMatch(/`npm run author` \| author the space/);
+    expect(local['CLAUDE.md']).toBe('@AGENTS.md\n');
+    // A space that lives in Plitzi has no `author` script to run.
+    expect(cloud['AGENTS.md']).not.toContain('run author');
+  });
+
   it('carries the authoring skill for whatever agent opens the project', () => {
-    expect(scaffold(answers())['.claude/skills/plitzi-authoring/SKILL.md']).toContain('---');
+    const files = scaffold(answers());
+
+    expect(files['.claude/skills/plitzi-authoring/SKILL.md']).toContain('---');
+    // The references the skill links to travel with it, or every link in it points at nothing.
+    expect(files['.claude/skills/plitzi-authoring/reference/layouts.md']).toContain('activeOn');
+    expect(files['.claude/skills/plitzi-authoring/reference/review-checklist.md']).toBeDefined();
   });
 
   /** Vite binds `localhost`, which is IPv6 here, while everything waiting for a dev server asks 127.0.0.1. */
@@ -276,6 +293,8 @@ describe('plitzi create', () => {
         '.gitignore',
         '.prettierignore',
         '.prettierrc',
+        'AGENTS.md',
+        'CLAUDE.md',
         'README.md',
         'eslint.config.mjs',
         'package.json',

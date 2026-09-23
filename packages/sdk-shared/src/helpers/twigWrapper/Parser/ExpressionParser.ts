@@ -205,7 +205,9 @@ class ExpressionParser extends Cursor {
         this.pos++;
       }
 
-      return this.maybeTrailingFilters(expr);
+      // `(rows|find('id', 3)).title`: a group is a value like any other, so it takes the same access chain a name
+      // does. Without it the chain was never read and the group came back whole — the row, not its title.
+      return this.maybeTrailingFilters(this.parseAccessChain(expr, null));
     }
 
     if (ch === Char.SingleQuote || ch === Char.DoubleQuote) {

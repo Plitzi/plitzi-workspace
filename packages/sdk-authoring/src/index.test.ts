@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import * as authoring from './index';
 
-import type { StepSpec } from './index';
+import type { ElementSpec, StepSpec } from './index';
 
 /**
  * The surface, in the environment it exists for.
@@ -344,6 +344,138 @@ describe('sources read inside a flow', () => {
     ];
 
     expect(() => authoring.authorSpace(listWith(flow))).not.toThrow();
+  });
+});
+
+/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
+describe('sources read inside a binding template', () => {
+  /** A card that joins its row to the stats around it — the lookup where the short name looked right and was not. */
+  const cardReading = (template: string) => ({
+    name: 'Cards',
+    permanentUrl: 'cards',
+    pages: [
+      {
+        name: 'Home',
+        slug: '',
+        body: [
+          authoring.apiContainer({
+            id: 'stats',
+            children: [
+              authoring.text('', {
+                id: 'views',
+                bind: [
+                  {
+                    to: 'content',
+                    source: 'stats.data.total',
+                    transformers: [{ action: 'twigTemplate', params: { template } }]
+                  }
+                ]
+              })
+            ]
+          })
+        ]
+      }
+    ]
+  });
+
+  it('refuses a source named the way a binding names it, and says the name it should have', () => {
+    expect(() => authoring.authorSpace(cardReading('{{ stats.data.total }} views'))).toThrow(
+      /write "apiContainer_stats" where it says "stats"/
+    );
+  });
+
+  it('finds it inside a tag too', () => {
+    expect(() =>
+      authoring.authorSpace(cardReading("{% set s = stats.data.rows|first %}{{ s ? s.views : '—' }}"))
+    ).toThrow(/write "apiContainer_stats"/);
+  });
+
+  it('accepts the source named in full, and the `source` of the binding itself', () => {
+    expect(() =>
+      authoring.authorSpace(cardReading('{{ source }} of {{ apiContainer_stats.data.limit }}'))
+    ).not.toThrow();
+  });
+});
+
+describe('a condition written as a binding', () => {
+  const spaceWith = (element: ElementSpec) => ({
+    name: 'Cond',
+    permanentUrl: 'cond',
+    pages: [{ name: 'Home', slug: '', body: [authoring.apiContainer({ id: 'stats', children: [element] })] }]
+  });
+
+  const computed = {
+    to: 'visibility',
+    source: 'stats.data',
+    category: 'initialState' as const,
+    transformers: [{ action: 'twigTemplate', params: { template: "{{ source ? 'true' : 'false' }}" } }]
+  };
+
+  const flag = { to: 'visibility', source: 'state.layout.sidebarVisible', category: 'initialState' as const };
+
+  const warned = (element: ElementSpec) =>
+    authoring.authorSpace(spaceWith(element)).warnings.filter(warning => warning.code === 'condition-starts-visible');
+
+  /**
+   * Computed from data and drawn until the data answers: the flash of an empty state on every load. Warned rather than
+   * hidden by default, because an element shown until a flag says otherwise is a shape spaces rely on.
+   */
+  it('warns when a computed condition starts on screen', () => {
+    expect(warned(authoring.container({ id: 'empty', bind: [computed] }))).toHaveLength(1);
+  });
+
+  it('is quiet once it starts hidden, for a plain flag, and for a source known on the first render', () => {
+    expect(warned(authoring.container({ id: 'empty', visible: false, bind: [computed] }))).toEqual([]);
+    expect(warned(authoring.container({ id: 'logo', bind: [flag] }))).toEqual([]);
+    expect(warned(authoring.container({ id: 'done', bind: [{ ...computed, source: 'state.tasks' }] }))).toEqual([]);
+  });
+
+  it('keeps an element with a plain flag on screen until the flag answers', () => {
+    const authored = authoring.authorSpace(spaceWith(authoring.container({ id: 'logo', bind: [flag] })));
+
+    expect(authored.schema.flat.logo.definition.initialState).toMatchObject({ visibility: true });
+    expect(authored.handles.element('logo').conditional).toBe(true);
+  });
+});
+
+describe('a template the runtime never resolves', () => {
+  const pageWith = (element: ElementSpec) => ({
+    name: 'Tpl',
+    permanentUrl: 'tpl',
+    pages: [{ name: 'Home', slug: '', body: [element] }]
+  });
+
+  const codes = (element: ElementSpec) =>
+    authoring.authorSpace(pageWith(element)).warnings.filter(warning => warning.code === 'template-never-resolved');
+
+  // An attribute resolves a name with filters, not an expression: a condition there is used as written.
+  it('warns about a condition in an attribute', () => {
+    expect(codes(authoring.link({ href: "/x/{{ state.on ? 'a' : 'b' }}", mode: 'internal' }))).toHaveLength(1);
+  });
+
+  it('leaves a token alone, and prose that shows one', () => {
+    expect(codes(authoring.link({ href: '/x/{{ state.slug|url_encode }}', mode: 'internal' }))).toEqual([]);
+    expect(codes(authoring.markdown("Write `{{ on ? 'a' : 'b' }}` in a binding."))).toEqual([]);
+  });
+});
+
+/* eslint-enable quotes */
+
+describe('a name used twice', () => {
+  // Ids are one namespace for the whole space; a helper called once per page is where it bites.
+  it('says where the name was taken first', () => {
+    const foot = () => authoring.container({ id: 'foot' });
+
+    expect(() =>
+      authoring.authorSpace({
+        name: 'Twice',
+        permanentUrl: 'twice',
+        pages: [
+          { name: 'One', slug: '', body: [foot()] },
+          { name: 'Two', slug: 'two', body: [foot()] }
+        ]
+      })
+    ).toThrow(/uses a name already taken at .*prefixed by what it is for/);
   });
 });
 

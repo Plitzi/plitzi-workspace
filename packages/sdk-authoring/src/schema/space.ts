@@ -1,11 +1,12 @@
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { BREAKPOINTS, classNames, classRefs, isStyleDeclaration, sameBlocks, toBlocks } from '../style';
-import { GLOBAL_SOURCES, groupBindings, withVisibility } from './bindings';
+import { GLOBAL_SOURCES, groupBindings, hasVisibilityBinding, withVisibility } from './bindings';
 import { authorFlows } from './flows';
 import { buildHandles, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
@@ -17,6 +18,7 @@ import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
+  BindingSpec,
   ElementSpec,
   ElementStyleSpec,
   LayoutRef,
@@ -57,6 +59,28 @@ const withCache = (item: Omit<StyleItem, 'cache'>): StyleItem => {
 const layoutAttributes = (layout: LayoutRef | undefined): Record<string, string> =>
   layout ? { layout: layout.id, layoutContainer: layout.slot } : {};
 
+/**
+ * Sources already known on the first render — what a flow wrote, the route, the space's variables, the theme. A
+ * condition on them resolves in the same render that paints the element, so it has no loading frame to flash in.
+ */
+const SETTLED_SOURCES = new Set(['state', 'navigation', 'variables', 'theme']);
+
+/** Types whose content is prose, where a \`{{ }}\` is far more often a sample of code than a template. */
+const PROSE_TYPES = new Set(['markdown', 'richText', 'blockHtml', 'blockJsx', 'nodeHtml']);
+
+/** Every string inside a value, however deep — a step's params nest objects and lists of them. */
+const stringsIn = (value: unknown): string[] => {
+  if (typeof value === 'string') {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(stringsIn);
+  }
+
+  return typeof value === 'object' && value !== null ? Object.values(value).flatMap(stringsIn) : [];
+};
+
 class SpaceAuthor {
   private readonly flatMap = new FlatMap({ flat: {}, variables: [] });
 
@@ -68,6 +92,10 @@ class SpaceAuthor {
   private readonly authorNames = new Set<string>();
 
   private readonly pagePaths = new Set<string>();
+
+  /** Where each id was written, so a second element answering to it can say where the first one is. */
+  private readonly authoredAt = new Map<string, string>();
+
   /** Each folder's route prefix, resolved through its parents. Filled before any page is written. */
   private readonly folderPrefixes = new Map<string, string>();
 
@@ -740,11 +768,50 @@ class SpaceAuthor {
    * belonged to authors perfectly well. The reason it is nearly always declined is a name two elements share,
    * and a name written twice is worth hearing about at the line that wrote it.
    */
-  private insert(element: Element, to: string, position: DropPosition): void {
+  private insert(element: Element, to: string, position: DropPosition, path = to): void {
+    const earlier = this.authoredAt.get(element.id);
+    if (earlier !== undefined) {
+      throw new Error(
+        `Element "${element.id}" (${element.definition.type}) at ${path} uses a name already taken at ${earlier}. Ids are one namespace for the whole space — layouts and every page share it — so an element built by a function called more than once needs its id prefixed by what it is for (\`\${pageId}-foot\`).`
+      );
+    }
+
     if (!this.flatMap.addElement(element, to, position)) {
       throw new Error(
-        `Could not author element "${element.id}" (${element.definition.type}): the schema refused it, which usually means another element already answers to that name`
+        `Could not author element "${element.id}" (${element.definition.type}) at ${path}: the schema refused it`
       );
+    }
+
+    this.authoredAt.set(element.id, path);
+  }
+
+  /**
+   * A source read inside a BINDING's template is named in full too: \`{{ apiContainer_stats.data.total }}\`.
+   *
+   * The binding's own \`source\` is completed for you, which is exactly why the short name looks right inside its
+   * template as well. It is not: the template is read as written, the short name resolves to nothing, and the
+   * element renders whatever the empty branch says — every card of a list reading "Shared" because none of them
+   * found the stats it was looking for. Refused with the name it should have been.
+   */
+  private assertTemplateSourcesInFull(bindings: BindingSpec[] | undefined, where: string): void {
+    for (const binding of bindings ?? []) {
+      for (const transformer of binding.transformers ?? []) {
+        const template: unknown = transformer.params.template;
+        if (transformer.action !== 'twigTemplate' || typeof template !== 'string') {
+          continue;
+        }
+
+        for (const [, expression = ''] of template.matchAll(/\{[{%]([\s\S]*?)[}%]\}/g)) {
+          for (const [, , root = ''] of expression.matchAll(/(^|[^\w.$-])([A-Za-z_][\w-]*)\.[A-Za-z_]/g)) {
+            const prefix = this.sources.get(root);
+            if (prefix && root !== 'source') {
+              throw new Error(
+                `${where}: a binding of "${binding.to}" reads "${root}" in its template. Inside a template a source is named in full — write "${prefix}_${root}" where it says "${root}". (The binding's own \`source\` is completed for you; its template is read as written.)`
+              );
+            }
+          }
+        }
+      }
     }
   }
 
@@ -868,7 +935,7 @@ class SpaceAuthor {
     };
 
     // `custom` is the one drop position that inserts without a parent, which is what a page is.
-    this.insert(element, '', 'custom');
+    this.insert(element, '', 'custom', path);
 
     this.handles[id] = {
       id,
@@ -906,6 +973,7 @@ class SpaceAuthor {
     }
 
     const bindings = withVisibility({ bind: layout.bind });
+    this.assertTemplateSourcesInFull(bindings, where);
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
     const element: Element = {
       id: layout.id,
@@ -928,7 +996,7 @@ class SpaceAuthor {
       }
     };
 
-    this.insert(element, '', 'custom');
+    this.insert(element, '', 'custom', path);
     this.layoutHandles[layout.id] = {
       id: layout.id,
       type: 'layoutContainer',
@@ -1039,6 +1107,57 @@ class SpaceAuthor {
    * An attribute its component never reads renders nothing and says nothing — a `content` on a `dropdown`, whose
    * label is a child. A warning, because a plugin's type or a newer element may read what this catalog has not heard of.
    */
+  /**
+   * A template the runtime will never resolve, left in an attribute.
+   *
+   * An attribute is resolved only when it carries a TOKEN — a name, with filters: \`{{ post.slug }}\`,
+   * \`{{ redirect|url_encode }}\` — because attributes are where prose lives, and a stray brace in a sentence must not
+   * be evaluated. So a condition, a test or a \`{% %}\` block on its own is used as written: a link to
+   * \`/x/{{ on ? 'a' : 'b' }}\`, a class named after the template. A binding's template is where an expression
+   * belongs; there it is evaluated in full. (A step's params are templates by construction and resolve whatever they
+   * hold.)
+   */
+  private warnUnresolvedTemplates(values: unknown, where: string): void {
+    for (const value of stringsIn(values)) {
+      if (!hasTemplateSyntax(value) || hasValidToken(value)) {
+        continue;
+      }
+
+      this.stepWarnings.push({
+        code: 'template-never-resolved',
+        message: `${where} carries "${value.length > 80 ? `${value.slice(0, 77)}…` : value}", which is never resolved: an attribute only reads a name with filters (\`{{ post.slug|upper }}\`). Move the expression into a binding's \`twigTemplate\`, where it is evaluated in full.`,
+        details: { value }
+      });
+    }
+  }
+
+  /**
+   * A condition computed from data, on an element that starts on screen.
+   *
+   * Until its provider answers, the template has nothing to decide on and the element is drawn — then hidden a moment
+   * later. That is the flash of an empty state, or of a "get started" card for somebody who did everything, on every
+   * load. \`visible: false\` starts it hidden, and the template then shows it. A plain binding to one value is left
+   * alone: an element shown until a flag says otherwise is a real and common shape.
+   */
+  private warnConditionStartsVisible(bindings: BindingSpec[] | undefined, where: string): void {
+    const computed = bindings?.some(
+      binding =>
+        binding.to === 'visibility' &&
+        binding.category === 'initialState' &&
+        !SETTLED_SOURCES.has(binding.source.split('.')[0]) &&
+        binding.transformers?.some(transformer => transformer.action === 'twigTemplate')
+    );
+    if (!computed) {
+      return;
+    }
+
+    this.stepWarnings.push({
+      code: 'condition-starts-visible',
+      message: `${where} computes its visibility from data but starts on screen, so it is drawn until the data answers and then hidden. Add \`visible: false\` so it waits hidden, and let the template answer 'false' until its source arrives.`,
+      details: {}
+    });
+  }
+
   private warnUnknownAttributes(spec: ElementSpec, where: string): void {
     const catalog = this.options.attributeNames;
     const names = catalog && Object.hasOwn(catalog, spec.type) ? catalog[spec.type] : null;
@@ -1067,12 +1186,21 @@ class SpaceAuthor {
     insideCondition = false
   ): string {
     const id = spec.id ?? this.nextId(spec.type);
-    const conditional = insideCondition || spec.visible !== undefined;
     const where = `Element "${spec.type}" (${id}) at ${path}`;
     this.assertStepsKnown(spec.flows, where, spec.type, id);
     this.assertInsideAncestor(spec.type, parentId, where);
     this.warnUnknownAttributes(spec, where);
+    if (!PROSE_TYPES.has(spec.type)) {
+      this.warnUnresolvedTemplates(spec.attributes, where);
+    }
+
     const bindings = withVisibility(spec);
+    const conditional = insideCondition || spec.visible !== undefined || hasVisibilityBinding(bindings);
+    this.assertTemplateSourcesInFull(bindings, where);
+    if (spec.visible === undefined) {
+      this.warnConditionStartsVisible(bindings, where);
+    }
+
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
 
     const element: Element = {
@@ -1099,6 +1227,11 @@ class SpaceAuthor {
            * that resolves to nothing writes nothing, and an absent `visibility` is read as visible. So a panel
            * waiting on a selection nobody has made yet, or on any state that only exists once the page is live,
            * was authored on screen with placeholder text in it until something happened.
+           *
+           * A visibility binding written by hand keeps its element on screen until it answers, as it always has —
+           * spaces rely on that (a sidebar's logo bound to a state nobody sets until the sidebar is folded). A
+           * computed one that should wait for its data says so with \`visible: false\`; see
+           * \`warnConditionStartsVisible\`.
            */
           visibility: spec.visible === undefined,
           ...(spec.variant ? { styleVariant: { [this.variantOwner(spec, spec.variant)]: { base: spec.variant } } } : {})
@@ -1110,7 +1243,7 @@ class SpaceAuthor {
       }
     };
 
-    this.insert(element, parentId, 'inside');
+    this.insert(element, parentId, 'inside', path);
 
     this.recordHandle({
       id,

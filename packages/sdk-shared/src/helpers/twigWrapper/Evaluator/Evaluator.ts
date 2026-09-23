@@ -4,6 +4,37 @@ import { ARROW_PARAMS, filters, isRawMarker, unwrapRaw } from '../filters/filter
 import type { ASTNode, Expression, FilterCall, IfNode, ForNode, SetNode, ApplyNode, VariableNode } from '../AST';
 import type { ArrowCallback } from '../filters/filters';
 
+/** The Twig tests `is` understands. Anything else on the right of `is` is a value to compare with, as before. */
+const TESTS: Record<string, ((value: unknown) => boolean) | undefined> = {
+  defined: value => value !== undefined,
+  null: value => value === null || value === undefined,
+  none: value => value === null || value === undefined,
+  empty: value =>
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    value === false ||
+    (Array.isArray(value) && value.length === 0) ||
+    (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0),
+  iterable: value => Array.isArray(value) || (typeof value === 'object' && value !== null),
+  even: value => typeof value === 'number' && value % 2 === 0,
+  odd: value => typeof value === 'number' && Math.abs(value % 2) === 1
+};
+
+/**
+ * Whether a token kept under `keepEmptyTokens` is still waiting for a value, rather than one that answered empty.
+ *
+ * Kept tokens are for a later pass that knows more — `{{ redirect }}` in an attribute resolved before the query is
+ * read. A name with nothing behind it is that case, filtered or not (`{{ redirect|url_encode }}`). An expression the author wrote to come out empty is not:
+ * `{{ active ? 'on' : '' }}` said "nothing" on purpose, and handing back its own text made every such branch a
+ * non-empty string — a variant named after the template, a condition that read as true.
+ */
+const readsOneName = (expression: Expression): boolean =>
+  expression.type === 'path' || (expression.type === 'filter' && readsOneName(expression.subject));
+
+const isUnresolved = (expression: Expression, value: unknown): boolean =>
+  value === undefined || value === null || (value === '' && readsOneName(expression));
+
 export type EvalResult = {
   readonly output: string;
   readonly variables: Record<string, unknown>;
@@ -96,7 +127,7 @@ class Evaluator {
   private evalVariable(node: VariableNode): string {
     const value = this.evalExpression(node.expression);
 
-    if (this.keepEmptyTokens && (value === undefined || value === null || value === '')) {
+    if (this.keepEmptyTokens && isUnresolved(node.expression, value)) {
       return node.source;
     }
 
@@ -482,6 +513,18 @@ class Evaluator {
   }
 
   private evalBinary(operator: string, leftExpr: Expression, rightExpr: Expression): unknown {
+    // `x is defined`, `x is not empty`: a Twig test names a question about the value, not a variable to compare it
+    // with. Read as a comparison, `defined` was a variable nobody set, so `anything is defined` asked whether the
+    // value was undefined — true exactly when it was not defined.
+    if ((operator === 'is' || operator === 'is not') && rightExpr.type === 'path' && rightExpr.segments.length === 1) {
+      const test = TESTS[rightExpr.segments[0]];
+      if (test) {
+        const answer = test(this.evalExpression(leftExpr));
+
+        return operator === 'is' ? answer : !answer;
+      }
+    }
+
     if (operator === 'or') {
       return isTruthy(this.evalExpression(leftExpr)) || isTruthy(this.evalExpression(rightExpr));
     }

@@ -2,7 +2,7 @@ import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
-import { processTwig, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { hasTemplateSyntax, hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import utility from './utility';
 
@@ -53,6 +53,14 @@ const processParams = (
     if (typeof value === 'string') {
       let resolved: unknown = value;
       let passes = MAX_TWIG_RESOLUTION_PASSES;
+      // The param as written is a template whatever it holds — a condition or a loop as much as a name. What a pass
+      // RETURNS is data, and is read again only when it carries a well-formed token, so text a visitor typed that
+      // happens to contain braces is not evaluated.
+      if (hasTemplateSyntax(resolved) && !hasValidToken(resolved)) {
+        resolved = processTwig(resolved, scope, false, true);
+        passes--;
+      }
+
       while (typeof resolved === 'string' && hasValidToken(resolved) && passes > 0) {
         resolved = processTwig(resolved, scope, false, true);
         passes--;

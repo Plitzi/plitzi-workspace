@@ -106,6 +106,17 @@ The slot is checked to be inside the layout: a slot anywhere else renders the sh
 nothing downstream would say so. A layout may sit inside another one (`layout` on the layout itself), and the page
 resolves the chain from the outside in. `folder` files a layout under a page folder in the builder; it routes nothing.
 
+Ids are one namespace for the layout and every page that names it — a helper that builds an element per page
+prefixes its ids with the page (`` `${pageId}-foot` ``), and authoring names both places when two elements collide.
+
+**A menu in a layout marks the current page with `activeOn`.** The menu is the same nodes on every page, so its
+current entry cannot be styled by hand: `activeOn(navLink, ['spaces', 'space-record'])` binds the class's `active`
+variant to `navigation.currentPageId` for those pages and `idle` for every other. The entries themselves are data —
+one list of pages (id, slug, title, summary, order) that the menu, the page titles, the meta descriptions and the
+"previous / next" links all read — and the pages that share a shape come from one function that takes that entry
+and the page's content. This site's own docs are built that way: sixteen pages that used to carry the whole sidebar
+each (some 900 elements) are one layout, one list and sixteen calls.
+
 ---
 
 ## 3. Elements
@@ -336,6 +347,41 @@ container({ visible: '!post.found', children: [text('No such post.')] })
 `visible: false` is the third answer: the element starts hidden with nothing bound, for a flow to reveal
 (`toggleState`, `setState`) — a panel, a confirmation, a second step.
 
+### A condition that has to be computed
+
+An element is visible by default, and which way its condition flips decides how it is written. One the logic
+REVEALS — an empty state, a "get started" card, an admin-only panel — starts hidden: `visible` starts the element
+HIDDEN and the data then shows it. One a flag HIDES — the labels of a sidebar until it is folded — keeps the default
+and binds the flag, and an absent flag must leave it shown (a template answering `''` writes nothing and keeps it).
+A revealing condition that is more than one value is `visible: false` — so it waits hidden — plus a visibility
+binding with a template:
+
+```ts
+container({
+  id: 'first-steps',
+  visible: false,
+  bind: [{
+    to: 'visibility',
+    source: 'stats.data.totals',
+    category: 'initialState',
+    transformers: [{ action: 'twigTemplate', params: {
+      template: "{{ source ? (source.spaces > 0 ? 'false' : 'true') : 'false' }}"
+    } }]
+  }]
+})
+```
+
+Its template answers `'true'` or `'false'`, and `'false'` while the source has not arrived: an element that shows
+until its data lands and then hides is a flash on every load. A visibility binding on its own keeps the element on
+screen until it answers — right for "shown until a flag says otherwise", wrong for a condition on data, which is why
+`authorSpace` warns `condition-starts-visible` when a computed one starts on screen. Hide the element itself, never a wrapper around it —
+a visible wrapper with a hidden child still takes a slot in its parent's `gap`.
+
+An **empty state** is "the answer arrived and is empty", which is not what `!items` says: before the answer,
+`!undefined` is true, and "Nothing here yet" shows on every load. Ask for both —
+`{{ items is defined and items is empty ? 'true' : 'false' }}` — or bind to the provider's `isEmpty` together with
+`not isLoading`.
+
 The `!` is the `not` transformer, which is available to any binding (`transformers: [{ action: 'not', params: {} }]`).
 It reads a boolean that travelled as TEXT — `"false"` and `"0"`, which JavaScript calls true — and treats an empty
 array as false. An empty object is true, because a data source answers `{}` both for "no record" and for a record
@@ -391,6 +437,11 @@ list({ id: 'jobRows', source: 'controlled', bind: { items: 'board.jobs' }, child
 ```
 
 The list publishes one scope per row, so `list_jobRows.item` is the row whose button was pressed, not the first one.
+
+A step's params are Twig in full — a condition (`{{ member.isAdmin ? '1' : '' }}`) or a loop runs, as it does in a
+binding's template. What a param RESOLVES to is data and is not evaluated again, so text a visitor typed that happens
+to contain braces reaches the step as typed. An attribute is the one place that is narrower: it resolves
+`{{ name|filter }}` tokens only, because attributes carry prose.
 A root that is a step of the same flow is that step's result and is left alone.
 
 ### Cached requests
@@ -466,12 +517,18 @@ inert specs. That is what keeps every guarantee about the finished document in o
 - an element asking for a shared class AND rules of its own — an element has one base selector
 - one class name declared twice with rules that disagree
 - a binding source naming an element nothing answers to, or one whose prefix is not what that element publishes
-- a flow template reading an element's source by its short name (`{{ jobRows.item.id }}` for `list_jobRows`)
-- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
+- a flow's params or a binding's template reading an element's source by its short name (`{{ jobRows.item.id }}`
+  for `list_jobRows`, `{{ stats.total }}` for `apiContainer_stats`) — a template is read as written
+- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `theme`)
 - a step target naming an element that is not there
-- two elements answering to one name
+- two elements answering to one name — the error says where the first one was written
 - a flow whose chain points at a node that is not there
 - everything `validateSchema` already checked: orphans, cycles, broken parent/root links, pages
+
+And it returns `warnings` for what is written and will not do what it says — `unknown-attribute`,
+`condition-starts-visible` (a computed visibility that would show until its data answers), `template-never-resolved` (a condition in an ATTRIBUTE, which only resolves `{{ name|filter }}` tokens; conditions
+belong in a binding's template or a step's params, where Twig is evaluated in full), `state-key-has-runtime-prefix`,
+`FORM_SUBMIT_UNMANAGED`, `STYLE_WITHOUT_TAG`, `tablet-rule-skips-mobile`.
 
 Documents you did NOT author here go through the same door:
 

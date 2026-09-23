@@ -107,7 +107,8 @@ export interface VariantFromOptions {
   /**
    * A twig expression turning the value into a variant name, with the value as `source` — for when the data does not
    * already speak in variant names: `"{{ source == 'completed' ? 'ok' : 'failed' }}"`, or `"{{ source == 'code' ?
-   * 'on' : '' }}"` for a control that lights up when a state names it. An empty answer wears no variant.
+   * 'on' : 'off' }}"` for a control that lights up when a state names it. A name the class does not declare wears no
+   * variant, so the other branch can simply name one nothing styles.
    */
   template?: string;
 }
@@ -133,7 +134,9 @@ export const variantFrom = (cls: ClassRef, source: string, options: VariantFromO
       ...(template ? [{ action: 'twigTemplate', params: { template } }] : []),
       {
         action: 'styleVariant',
-        params: { key: `${typeof cls === 'string' ? cls : cls.name}.${slot}`, variant: '', append: 'false' }
+        // Appended, so each \`variantFrom\` on an element sets its own selector's variant and leaves the others be —
+        // two of them on one element (the base and a slot) would otherwise take turns wiping each other.
+        params: { key: `${typeof cls === 'string' ? cls : cls.name}.${slot}`, variant: '', append: 'true' }
       }
     ]
   };
@@ -146,6 +149,10 @@ export const variantFrom = (cls: ClassRef, source: string, options: VariantFromO
  * list would have: a binding's id carries its position, and a space that moves to the field should not move its
  * ids.
  */
+/** Whether any of these bindings decides the element's visibility — which makes it a condition, authored hidden. */
+export const hasVisibilityBinding = (bindings: BindingSpec[] | undefined): boolean =>
+  bindings?.some(binding => binding.to === 'visibility' && binding.category === 'initialState') ?? false;
+
 export const withVisibility = (spec: { bind?: BindingsSpec; visible?: string | false }): BindingSpec[] | undefined => {
   const bound = spec.bind === undefined ? undefined : toBindingSpecs(spec.bind);
   // `false` is a starting state rather than a condition: nothing to bind, only an element that begins hidden.
@@ -185,3 +192,40 @@ export const groupBindings = (
 
     return groups;
   }, {});
+
+/** What {@link activeOn} takes beyond the class and the pages. */
+export interface ActiveOnOptions {
+  /** The variant worn on those pages. `active` unless the class calls it something else. */
+  variant?: string;
+  /** Which of the element's selectors wears the class, as in {@link variantFrom}. */
+  slot?: string;
+}
+
+/**
+ * Marks a navigation entry as the current one on the pages it stands for.
+ *
+ * The page being shown is \`navigation.currentPageId\`, so an entry lights up when that is one of its pages — one
+ * binding, the same on every entry of a menu that lives in a layout, instead of a copy of the menu per page with the
+ * right entry styled by hand. Several ids for one entry: a section and the pages beneath it (\`['spaces',
+ * 'space-record']\`). Every other page wears \`idle\`, a name the class need not declare.
+ *
+ * \`\`\`ts
+ * const navLink = styles('nav-link', { css: { … }, variants: { active: { color: 'var(--accent)' } } });
+ * link({ href: 'docs-data', class: navLink, bind: [activeOn(navLink, 'docs-data')] });
+ * \`\`\`
+ */
+export const activeOn = (
+  cls: ClassRef,
+  pages: string | readonly string[],
+  options: ActiveOnOptions = {}
+): BindingSpec => {
+  const ids = typeof pages === 'string' ? [pages] : pages;
+  const variant = options.variant ?? 'active';
+  // Quoted as JSON, which twig reads as a string literal whatever the id holds.
+  const list = ids.map(id => JSON.stringify(id)).join(', ');
+
+  return variantFrom(cls, 'navigation.currentPageId', {
+    ...(options.slot ? { slot: options.slot } : {}),
+    template: `{{ source in [${list}] ? '${variant}' : 'idle' }}`
+  });
+};

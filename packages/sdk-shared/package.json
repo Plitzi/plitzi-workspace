@@ -186,6 +186,10 @@
       "types": "./dist/dataSource/utility/capitalize.d.ts",
       "import": "./dist/dataSource/utility/capitalize.mjs"
     },
+    "./dataSource/utility/checkboxParams": {
+      "types": "./dist/dataSource/utility/checkboxParams.d.ts",
+      "import": "./dist/dataSource/utility/checkboxParams.mjs"
+    },
     "./dataSource/utility/dateConverter": {
       "types": "./dist/dataSource/utility/dateConverter.d.ts",
       "import": "./dist/dataSource/utility/dateConverter.mjs"
@@ -411,6 +415,10 @@
     "./helpers/twigWrapper/templateRoots": {
       "types": "./dist/helpers/twigWrapper/templateRoots.d.ts",
       "import": "./dist/helpers/twigWrapper/templateRoots.mjs"
+    },
+    "./helpers/twigWrapper/tokens/hasTemplateSyntax": {
+      "types": "./dist/helpers/twigWrapper/tokens/hasTemplateSyntax.d.ts",
+      "import": "./dist/helpers/twigWrapper/tokens/hasTemplateSyntax.mjs"
     },
     "./helpers/twigWrapper/tokens/hasValidToken": {
       "types": "./dist/helpers/twigWrapper/tokens/hasValidToken.d.ts",

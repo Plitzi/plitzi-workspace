@@ -3,6 +3,7 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { produce } from 'immer';
 
 import utility from './utility';
+import { checkboxParams } from './utility/checkboxParams';
 
 import type { BindingCategory, Element, ElementBinding } from '../types';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -59,12 +60,15 @@ const getBindingsDetails = (
               return;
             }
 
-            const callback = get(utility, `${action}.callback`);
-            if (typeof callback !== 'function') {
+            const definition = utility[action] as (typeof utility)[string] | undefined;
+            if (!definition) {
               return;
             }
 
-            resultValue = callback(resultValue, params, draft, { ...dataSource, sourceTo: toValue });
+            resultValue = definition.callback(resultValue, checkboxParams(definition, params) ?? {}, draft, {
+              ...dataSource,
+              sourceTo: toValue
+            });
           });
         }
 

@@ -1268,8 +1268,9 @@ class SpecReader {
     const hidden = element.definition.initialState?.visibility === false;
     const specs: BindingSpec[] = [];
     let visible: string | false | undefined = hidden ? false : undefined;
+    const ordered = this.bindingsInOrder(element);
 
-    for (const { category, raw } of this.bindingsInOrder(element)) {
+    for (const [index, { category, raw }] of ordered.entries()) {
       const at = `"${element.id}"`;
       const source = this.sourceOf(raw.source, at);
       if (!source) {
@@ -1292,10 +1293,12 @@ class SpecReader {
         ...(raw.enabled === false ? { enabled: false } : {})
       };
 
-      // The one binding with a field of its own: a condition that starts the element hidden.
+      // The one binding with a field of its own: a condition that starts the element hidden. Only the LAST binding,
+      // because that is where the field is authored back — taken from the middle, it would move to the end.
       const negated = transformers.length === 1 && transformers[0].action === 'not' && isEmpty(transformers[0].params);
       if (
         visible === false &&
+        index === ordered.length - 1 &&
         category === 'initialState' &&
         raw.to === 'visibility' &&
         !when &&

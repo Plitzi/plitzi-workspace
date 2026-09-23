@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { dirname, join, relative, sep } from 'node:path';
 
 import type { ProjectFiles } from './types';
 
@@ -30,12 +31,34 @@ const SKILLS = [{ package: '@plitzi/sdk-authoring', name: 'plitzi-authoring' }];
 const skillPath = (packageName: string, skill: string): string =>
   require.resolve(`${packageName}/skills/${skill}/SKILL.md`);
 
+/**
+ * Every file under a skill's folder, by its path inside it.
+ *
+ * A skill is a folder, not a file: \`SKILL.md\` is the short part an agent reads first, and the references it links to
+ * sit beside it and are opened when the task needs them. Copying \`SKILL.md\` alone left every one of those links
+ * pointing at nothing.
+ */
+const filesUnder = (root: string, folder = root): [string, string][] =>
+  readdirSync(folder, { withFileTypes: true }).flatMap(entry => {
+    const path = join(folder, entry.name);
+    if (entry.isDirectory()) {
+      return filesUnder(root, path);
+    }
+
+    return entry.isFile()
+      ? [[relative(root, path).split(sep).join('/'), readFileSync(path, 'utf-8')] as [string, string]]
+      : [];
+  });
+
 export const skillFiles = (): ProjectFiles => {
   const files: ProjectFiles = {};
 
   for (const skill of SKILLS) {
     try {
-      files[`.claude/skills/${skill.name}/SKILL.md`] = readFileSync(skillPath(skill.package, skill.name), 'utf-8');
+      const root = dirname(skillPath(skill.package, skill.name));
+      for (const [path, content] of filesUnder(root)) {
+        files[`.claude/skills/${skill.name}/${path}`] = content;
+      }
     } catch {
       // A skill that cannot be read is a skill the project does without. It is documentation for an agent, not a
       // dependency of the project, and failing the scaffold over it would trade a working project for a file.
