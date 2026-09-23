@@ -86,9 +86,9 @@ images); where they are missing, the tools say so instead of failing silently.
 - **An agent is held to the same rules as the builder.** A save runs the same linter every writer of a space runs.
   Anything an edit would break is refused, and so is a problem already present in an element the batch touches, so an
   agent cannot build on top of it. It fixes the problem in the same batch; the refusal says exactly what to change.
-- **Secrets never reach the agent.** It writes connector manifests and server actions that *name* a credential; the
-  space owner attaches the secret in the builder. An integration an agent builds saves without one and works once the
-  owner adds it.
+- **Secrets never reach the agent.** It writes [connector](./connectors.md) manifests and
+  [server actions](./server-actions.md) that *name* a credential; the space owner attaches the secret in the builder.
+  An integration an agent builds saves without one and works once the owner adds it.
 - **Names are ids.** The agent names every element it creates, and that name is the element's id and its wiring key.
   Renaming one repoints every binding and interaction that referred to it.
 

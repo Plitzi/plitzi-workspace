@@ -22,8 +22,8 @@ The binding's `source` is completed for you; its template is read as written, so
 
 An element re-renders when anything it reads changes: the first part of each binding's `source` and every source its
 templates name. The globals are `variables`, `navigation` (`routeParams`, `queryParams`, `origin`, `currentPageId`),
-`auth` (who is signed in, `status` while that is being found out), `state` (what flows wrote) and `theme`
-(`mode`, `resolved`).
+`auth` (who is signed in, `status` while that is being found out), `state` (what flows wrote), `theme`
+(`mode`, `resolved`), `host` (the `hostData` an application embedding the space hands the SDK) and `computed` (below).
 
 ## Values computed once
 

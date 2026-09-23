@@ -405,9 +405,10 @@ provider's records into a list element:
   "binding": { "to": "items", "source": "apiContainer_products.records" } }\`.
 
 **What an \`apiContainer\` publishes** depends on where it reads. Through a connector (\`runtime: "server"\`) it is the
-fixed shape under *Connectors* — \`.records\` or \`.record\`, \`.pageInfo\`, … With a browser \`query\` it publishes the
-**response itself**: its top-level fields become the source's fields (an API answering \`{ "items": [...] }\` is read as
-\`apiContainer_<name>.items\`). Both add \`.isLoading\`, \`.isEmpty\`, \`.hasError\` and \`.errorMessage\`.
+fixed shape under *Connectors* — \`.records\` or \`.record\`, \`.pageInfo\`, … With a browser \`query\` it is the
+response: \`.data\` (the parsed body — an API answering \`{ "items": [...] }\` is read as
+\`apiContainer_<name>.data.items\`) and \`.status\` (the HTTP status). Both add \`.isLoading\`, \`.isEmpty\`,
+\`.hasError\` and \`.errorMessage\`.
 
 **Source scope — a source is visible to the provider's DESCENDANTS only.** An element source named
 \`<type>_<name>\` (e.g. \`apiContainer_products\`, \`list_food-list\`) is published by that element into the scope of
@@ -595,7 +596,8 @@ The provider element is \`apiContainer\`, and it needs **both halves**:
    other than \`list\`), \`filters\`, \`limit\`, \`singleRecord\`, \`pagination\`, \`pageParam\`.
 
 It then publishes one source **to its descendants only** (like any provider — bind *inside* its subtree):
-\`apiContainer_<name>.records\` (an array), \`.pageInfo\` (\`page\`, \`pageCount\`, \`total\`, \`hasNextPage\`…),
+\`apiContainer_<name>.records\` (an array of \`{ id, values }\` — a record's fields are under \`values\`, so a row
+reads \`list_<name>.item.values.<field>\`), \`.pageInfo\` (\`page\`, \`pageCount\`, \`total\`, \`hasNextPage\`…),
 \`.isEmpty\`, \`.hasError\`, \`.errorMessage\`, \`.isLoading\`. With \`singleRecord: true\` it publishes \`.record\`
 instead of \`.records\` — that is what a **detail page** uses. Bind an empty-state block's visibility to \`.isEmpty\`
 and an error block's to \`.hasError\`; they are ordinary bindings, no special mechanism.
@@ -612,7 +614,7 @@ and an error block's to \`.hasError\`; they are ordinary bindings, no special me
   { "type": "upsertBinding", "pageRef": "blog", "ref": "posts", "category": "attributes",
     "binding": { "to": "items", "source": "apiContainer_posts-api.records" } },
   { "type": "upsertBinding", "pageRef": "blog", "ref": "post-title", "category": "attributes",
-    "binding": { "to": "content", "source": "list_posts.item.title" } } ] }
+    "binding": { "to": "content", "source": "list_posts.item.values.title" } } ] }
 \`\`\`
 
 **A detail page** is the same provider with \`singleRecord\` and a filter resolved from the URL. Create the page with a
@@ -623,7 +625,7 @@ route param (\`"slug": "blog/:postSlug"\`), then filter on it — the filter \`v
     "props": { "connector": "strapi-blog", "resource": "articles", "singleRecord": true,
       "filters": [ { "field": "slug", "operator": "eq", "value": "{{routeParams.postSlug}}" } ] } } }
 \`\`\`
-Its children then bind to \`apiContainer_post-api.record.<field>\`. A filter whose template resolves to nothing
+Its children then bind to \`apiContainer_post-api.record.values.<field>\`. A filter whose template resolves to nothing
 returns **no records** rather than the whole collection — a URL that addressed one post never renders a different one.
 
 **Paging** is the \`pagination\` prop: \`"none"\`, \`"url"\` (the page number rides the query string, so pages are

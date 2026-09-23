@@ -33,10 +33,13 @@ Plitzi is an open-source **web application builder** designed to empower develop
 ├─ apps/
 │  ├─ sdk/              # Core SDK modules
 │  ├─ builder/          # Web app builder UI and logic
-│  ├─ server/           # SSR/RSC/MCP Server
+│  ├─ server/           # SSR/RSC server
+│  ├─ mcp/              # MCP server for AI agents
+│  ├─ cli/              # Scaffold a server that renders a space you own
+│  └─ desktop/          # Desktop client
 ├─ packages/
 │  ├─ sdk-auth/         # Authentication SDK components
-│  ├─ sdk-collections/  # Collections
+│  ├─ sdk-authoring/    # Write a space in TypeScript; the linter every writer runs
 │  ├─ sdk-dev-tools/    # Developer utilities
 │  ├─ sdk-elements/     # UI elements and components
 │  ├─ sdk-event-bridge/ # Event handling bridge

@@ -137,7 +137,7 @@ const DATA_SOURCE_SCOPE_NOTE =
   'SCOPE: an element source named `<type>_<id>` (e.g. `apiContainer_products`, `list_food-list`) is provided by ' +
   'that element to its DESCENDANTS ONLY — the provider wraps its subtree in the source’s scope, so only elements ' +
   'INSIDE the provider can bind to it. Binding a sibling or unrelated element to it is schema-valid but broken at ' +
-  'runtime (the source is not in scope), and validate/apply REJECT it as an error. To consume `apiContainer_x.records`, ' +
+  'runtime (the source is not in scope), and validate/apply REJECT it as an error. To consume `apiContainer_x.data`, ' +
   'the bound element must live under that apiContainer. The global sources (no `<type>_<id>` head — ' +
   `${GLOBAL_SOURCES.join(', ')}) are bindable anywhere.`;
 

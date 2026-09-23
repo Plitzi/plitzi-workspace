@@ -180,9 +180,15 @@
 - The global binding sources, the transformer names and the data-sources scope note are generated from
   `@plitzi/sdk-authoring`, the catalogs the linter checks a save against. They listed `collection` and `space`, which
   no longer exist, and missed `variables`, `host`, `theme` and `computed`.
-- An `apiContainer` reading a browser `query` publishes the response itself, not `.data`: the guide, the render guide
-  and the scope note said otherwise.
+- The guide says what an `apiContainer` publishes in each mode: through a connector `.records`/`.record`/`.pageInfo`,
+  with a browser `query` the body under `.data` and the HTTP `.status`; both `.isLoading`, `.isEmpty`, `.hasError`.
 - Server actions have their own section; the tool list names `plitzi_preview`, `plitzi_screenshot` and
   `plitzi_render`; the co-worker prompt lists the layouts, fonts, connectors and actions.
-- New guide: `docs/en/mcp.md` — connecting an agent, how it works a space, what the server guarantees, and what is
-  deliberately left open. RFC 0002 is removed now that it shipped.
+- The guide's connector examples read a record's fields under `values` (`list_posts.item.values.title`,
+  `.record.values.<field>`), which is where the engine puts them; they bound to nothing as written.
+- The `plitzi-render` skill's first example no longer sets the `min-width: 0` its own rules say is unneeded; the
+  authoring skill lists `host` and `computed` among the globals.
+- New guides: `docs/en/mcp.md` — connecting an agent, how it works a space, what the server guarantees, what is
+  deliberately left open — and `docs/en/connectors.md`, which only existed in Spanish. RFC 0002 is removed now that it
+  shipped. The repository READMEs, `claude.md`, onboarding and repository-structure list `apps/mcp`, `apps/cli`,
+  `apps/desktop` and `sdk-authoring`, and no longer `sdk-collections`.
