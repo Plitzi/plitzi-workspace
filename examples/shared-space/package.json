@@ -17,8 +17,8 @@
   },
   "devDependencies": {
     "@plitzi/sdk-shared": "workspace:*",
-    "@types/node": "^26.6.1",
-    "tsx": "^4.23.13",
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.1"
   },
