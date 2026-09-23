@@ -372,6 +372,13 @@ Four properties follow, and they are the reason the design looks the way it does
 - **A job survives its worker.** A claim is held under a lease and renewed while the flow runs. A replica that is
   killed stops renewing, and the next worker to claim takes the job over — with the dead one's attempt written into
   the history as `lost`, so a machine that keeps dying is visible rather than merely slow.
+- **A replica that is told to stop finishes what it is running, and nothing else.** `server.close()` — what a
+  SIGTERM from a deploy should call — stops claiming, keeps renewing the claims it holds, and waits for each running
+  job to end, however long past its lease that is. What is still waiting stays in the queue, for the replica that is
+  staying or the one the deploy starts; a job claimed in the moment the stop arrived is handed back with its attempt
+  refunded. A run is bounded by its own timeout, so that is the number an orchestrator's grace period has to cover.
+  This is also why the queue cannot live in one process's memory past one replica: the jobs waiting in it are exactly
+  the ones another process has to be able to take.
 - **No node's clock is trusted.** Every instant — is this due, has this lease lapsed, may this retry be claimed —
   comes from the store the cluster shares. Replicas in different countries agree about what has run without
   agreeing about what time it is.

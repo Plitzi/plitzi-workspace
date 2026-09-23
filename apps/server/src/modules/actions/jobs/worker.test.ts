@@ -328,3 +328,144 @@ describe('createJobWorker', () => {
     expect(ran).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * What a replica does when it is told to go — a deploy, a scale-down, a restart.
+ *
+ * One rule: the job it is RUNNING is finished here, and nothing else is. What is still waiting belongs to the queue the
+ * replicas share, for whichever of them is running next — the one staying, or the one this deploy starts.
+ */
+describe('stopping a worker', () => {
+  /** A run the test finishes when it says so, and a way to know it has started. */
+  const gated = () => {
+    let finish: () => void = () => {};
+    let started: () => void = () => {};
+    const running = new Promise<void>(resolve => {
+      started = resolve;
+    });
+    const run = vi.fn(async () => {
+      started();
+      await new Promise<void>(resolve => {
+        finish = resolve;
+      });
+
+      return { ok: true };
+    });
+
+    return { run, running, finish: () => finish() };
+  };
+
+  it('finishes the job it is running before it stops', async () => {
+    const gate = gated();
+    const test = world(gate.run);
+    await test.job();
+
+    const worker = test.worker({ workerId: 'pod-a', leaseMs: 60_000 });
+    worker.start();
+    await gate.running;
+
+    let stopped = false;
+    const stopping = worker.stop().then(() => {
+      stopped = true;
+    });
+    await settle();
+    expect(stopped).toBe(false);
+    expect((await test.read()).status).toBe('running');
+
+    gate.finish();
+    await stopping;
+
+    const job = await test.read();
+    expect(job.status).toBe('succeeded');
+    // Finished where it started: one attempt, no lost one for another replica to have picked up.
+    expect(job.history).toMatchObject([{ attempt: 1, status: 'succeeded', workerId: 'pod-a' }]);
+  });
+
+  /**
+   * The half that makes waiting safe. A job longer than its lease used to lose its claim the moment the drain began,
+   * and another replica ran it again while this one was still finishing it.
+   */
+  it('keeps renewing its claim while it drains, so no other replica takes the job over', async () => {
+    const gate = gated();
+    const test = world(gate.run);
+    await test.job();
+
+    // The shortest heartbeat the worker keeps is one second, whatever the lease: a real second has to pass.
+    const worker = test.worker({ workerId: 'pod-a', leaseMs: 1_000 });
+    worker.start();
+    await gate.running;
+    const stopping = worker.stop();
+
+    // The lease it was claimed with runs out while it drains…
+    test.advance(900);
+    await new Promise(resolve => setTimeout(resolve, 1_100));
+    test.advance(900);
+
+    // …and the heartbeat has moved it on, so a replica that is staying finds nothing to take.
+    expect(await test.queue.claim({ workerId: 'pod-b', leaseMs: 1_000, limit: 5 })).toEqual([]);
+
+    gate.finish();
+    await stopping;
+
+    expect((await test.read()).history).toMatchObject([{ attempt: 1, status: 'succeeded', workerId: 'pod-a' }]);
+  });
+
+  it('leaves what is still waiting in the queue, for the replica that runs next', async () => {
+    const gate = gated();
+    const test = world(gate.run);
+    await test.job({ id: 'first' });
+    await test.job({ id: 'second' });
+
+    // One slot: it runs one job and the other waits behind it.
+    const worker = test.worker({ workerId: 'pod-a', workers: 1, leaseMs: 60_000 });
+    worker.start();
+    await gate.running;
+    const stopping = worker.stop();
+    gate.finish();
+    await stopping;
+
+    const jobs = [await test.read('first'), await test.read('second')];
+    const ran = jobs.filter(job => job.status === 'succeeded');
+    const waiting = jobs.filter(job => job.status !== 'succeeded');
+    expect(ran).toHaveLength(1);
+    expect(waiting).toMatchObject([{ status: 'pending', attempts: 0, history: [] }]);
+
+    // Untouched, and there for the next replica to take.
+    const [taken] = await test.queue.claim({ workerId: 'pod-new', leaseMs: 60_000, limit: 5 });
+    expect(taken.id).toBe(waiting[0].id);
+  });
+
+  it('hands back a job it claimed while being told to stop, without running it', async () => {
+    const ran = vi.fn(() => ({ ok: true }));
+    const test = world(ran);
+    await test.job();
+
+    // A claim that is still on its way when the stop arrives.
+    let release: () => void = () => {};
+    const claiming = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    let asked: () => void = () => {};
+    const askedToClaim = new Promise<void>(resolve => {
+      asked = resolve;
+    });
+    const claim = test.queue.claim;
+    test.queue.claim = async options => {
+      asked();
+      await claiming;
+
+      return claim(options);
+    };
+
+    const worker = test.worker({ workerId: 'pod-a', leaseMs: 60_000 });
+    worker.start();
+    await askedToClaim;
+    const stopping = worker.stop();
+    release();
+    await stopping;
+
+    expect(ran).not.toHaveBeenCalled();
+    // Given back as it was: waiting, its attempt refunded, nothing written against it.
+    expect(await test.read()).toMatchObject({ status: 'pending', attempts: 0, history: [] });
+  });
+});

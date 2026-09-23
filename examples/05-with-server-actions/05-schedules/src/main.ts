@@ -81,9 +81,10 @@ const server = createServer({
 server.listen(PORT, '127.0.0.1');
 
 /**
- * ^C drains rather than drops: `close` stops claiming, waits for the jobs in flight (up to the lease) and only then
- * lets go of the file. `kill -9` is the other way out, and the one worth trying with two replicas running — the
- * job it was holding is taken over by the other one once its lease lapses.
+ * ^C drains rather than drops: `close` stops claiming, waits for the jobs this replica is RUNNING to finish — renewing
+ * their claims meanwhile, so the other replica never takes one over — and only then lets go of the file. What is still
+ * waiting stays in the queue for the other replica. `kill -9` is the other way out, and the one worth trying with two
+ * replicas running — the job it was holding is taken over by the other one once its lease lapses.
  */
 const shutdown = (): void => {
   void server.close().finally(() => {

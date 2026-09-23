@@ -34,7 +34,12 @@ Same file, so it is a second replica rather than a second copy: the two share th
 guards' keys. The heartbeat still fires **once** a minute — whichever replica sweeps first writes the job, and the
 other one's identical write is a no-op. The activity feed names the replica that did each thing.
 
-Now start a slow export and `kill -9` the replica running it (the board says which one). Its lease lapses after ten
+Start a slow export and press `^C` in the terminal of the replica running it (the board says which one) — what a
+deploy does to a replica it is replacing. The replica does not exit until the export is done, and keeps its claim on
+it meanwhile, so the history reads `#1 succeeded on replica-4016`: finished once, where it started. Anything queued
+while it winds down is left to the other replica. Start it again, and it is the updated replica joining.
+
+Now start another and `kill -9` the replica running it (the board says which one). Its lease lapses after ten
 seconds and the other replica takes the job over — the history reads `#1 lost on replica-4016 · #2 succeeded on
 replica-4017`. The takeover waits for the dead replica's single-flight key to expire too (the run timeout, thirty
 seconds here), which is what stops a replica that merely *stalled* from running the export alongside its

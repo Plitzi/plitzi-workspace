@@ -83,8 +83,14 @@ export type JobWorker = {
    */
   beat: () => Promise<void>;
   start: () => void;
-  /** Stops claiming, then waits for what is in flight. A job still running when the process goes is not lost —
-   *  its lease lapses and another replica takes it. */
+  /**
+   * Stops claiming, then waits for every job this worker is running to FINISH — however long past its lease that is.
+   *
+   * The heartbeat keeps renewing their claims meanwhile, so no other replica takes a job over while this one is still
+   * running it, and an operator's cancel still reaches it. Each wait is bounded by the run's own timeout, which is
+   * the number an orchestrator's grace period has to cover: a pod killed before that loses the run to a lease that
+   * lapses, and another replica runs it again.
+   */
   stop: () => Promise<void>;
   inFlight: () => number;
 };
@@ -102,10 +108,15 @@ export const createJobWorker = ({
 }: JobWorkerOptions): JobWorker => {
   const { baseMs = 30_000, maxMs = 15 * 60_000 } = backoff;
   const active = new Map<string, AbortController>();
+  /** Every job this worker started, until it has settled — what `stop()` waits for. */
+  const inFlight = new Set<Promise<void>>();
   let timer: NodeJS.Timeout | undefined;
   let heart: NodeJS.Timeout | undefined;
   let stopping = false;
-  let polling = false;
+  let pass: Promise<void> | undefined;
+  // Read through a call where it is read after an await: `stop()` can set it meanwhile, and the compiler keeps the
+  // value it narrowed before the await.
+  const isStopping = (): boolean => stopping;
 
   /** Doubles per attempt, with a jitter so a batch that failed together does not retry together. */
   const retryDelay = (attempts: number): number => {
@@ -263,9 +274,19 @@ export const createJobWorker = ({
     }
 
     const claimed = await queue.claim({ workerId, leaseMs, limit: free });
+    if (isStopping()) {
+      // Claimed while this replica was being told to stop: handed straight back, attempt refunded, for a replica
+      // that is staying to take now — rather than started here and held up the shutdown.
+      await Promise.all(claimed.map(job => release(job, 0, 'not started: the replica was shutting down')));
+
+      return 0;
+    }
+
     for (const job of claimed) {
       // Deliberately not awaited: the point of `workers` is that this pass starts several and returns.
-      void execute(job).catch(onError);
+      const running = execute(job).catch(onError);
+      inFlight.add(running);
+      void running.finally(() => inFlight.delete(running));
     }
 
     return claimed.length;
@@ -283,19 +304,19 @@ export const createJobWorker = ({
     }
   };
 
-  const guarded = async (pass: () => Promise<unknown>): Promise<void> => {
-    if (polling) {
+  /** One pass at a time, and the one under way is kept so `stop()` can wait for the claim it may be making. */
+  const guarded = async (): Promise<void> => {
+    if (pass) {
       return;
     }
 
-    polling = true;
-    try {
-      await pass();
-    } catch (error) {
-      onError(error);
-    } finally {
-      polling = false;
-    }
+    pass = poll()
+      .then(() => undefined)
+      .catch(onError)
+      .finally(() => {
+        pass = undefined;
+      });
+    await pass;
   };
 
   return {
@@ -307,7 +328,7 @@ export const createJobWorker = ({
         return;
       }
 
-      timer = setInterval(() => void guarded(poll), pollMs);
+      timer = setInterval(() => void guarded(), pollMs);
       timer.unref();
       heart = setInterval(() => void beat().catch(onError), Math.max(1_000, Math.floor(leaseMs / 3)));
       heart.unref();
@@ -315,16 +336,25 @@ export const createJobWorker = ({
     stop: async () => {
       stopping = true;
       clearInterval(timer);
-      clearInterval(heart);
       timer = undefined;
-      heart = undefined;
 
-      // Drained rather than abandoned, so a rolling deploy finishes the jobs it started instead of leaving them to
-      // time out and be retried. Bounded by the lease: past that another replica owns them anyway.
-      const deadline = Date.now() + leaseMs;
-      while (active.size > 0 && Date.now() < deadline) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+      // A claim already on its way comes back to a worker that is stopping, and hands its jobs back — see `poll`.
+      await pass;
+
+      if (inFlight.size > 0) {
+        console.info(`[Actions] waiting for ${inFlight.size} running job(s) to finish before stopping`);
       }
+
+      /**
+       * Drained rather than abandoned: a deploy finishes the jobs it started instead of leaving them to be retried.
+       *
+       * The heartbeat is stopped only AFTER, and that is the half that makes waiting safe. A job longer than its
+       * lease used to lose its claim the moment the drain began — another replica took it over and ran it again
+       * while this one was still finishing it, and the drain gave up at the lease regardless.
+       */
+      await Promise.allSettled([...inFlight]);
+      clearInterval(heart);
+      heart = undefined;
     }
   };
 };

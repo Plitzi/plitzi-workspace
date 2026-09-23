@@ -78,30 +78,34 @@ const boot = async (name: string, queueFile: string): Promise<Replica> => {
   throw new Error(`${name} never answered:\n${replica.output.join('').slice(-2000)}`);
 };
 
-const exited = (replica: Replica): Promise<void> =>
+/** The code the replica exited with — `null` when a signal ended it rather than the process itself. */
+const exited = (replica: Replica): Promise<number | null> =>
   new Promise(resolve => {
     if (replica.process.exitCode !== null || replica.process.signalCode !== null) {
-      resolve();
+      resolve(replica.process.exitCode);
 
       return;
     }
 
-    replica.process.once('exit', () => {
-      resolve();
+    replica.process.once('exit', code => {
+      resolve(code);
     });
   });
+
+const alive = (replica: Replica): boolean => replica.process.exitCode === null && replica.process.signalCode === null;
 
 describeTarget('server-actions-schedules', () => {
   test.describe('two replicas over one queue file', () => {
     test.describe.configure({ mode: 'serial' });
 
     let queueDir = '';
+    let queueFile = '';
     let replicas: Replica[] = [];
 
     test.beforeAll(async () => {
       test.setTimeout(90_000);
       queueDir = mkdtempSync(path.join(tmpdir(), 'plitzi-schedules-pair-'));
-      const queueFile = path.join(queueDir, 'queue.db');
+      queueFile = path.join(queueDir, 'queue.db');
 
       // One after the other: the first creates the file's tables, and the README's second terminal comes second too.
       replicas = [await boot('replica-a', queueFile), await boot('replica-b', queueFile)];
@@ -186,11 +190,63 @@ describeTarget('server-actions-schedules', () => {
       expect(ranOn).toEqual(new Set(['replica-a', 'replica-b']));
     });
 
+    /**
+     * A deploy: `^C` (SIGTERM) on the replica running an export, and a new replica in its place.
+     *
+     * Twelve seconds of work against a ten-second lease: a replica that stopped renewing its claim while it waited
+     * would see the other one take the export over and run it a second time.
+     */
+    test('a replica told to stop finishes its job first, and leaves the rest to the one staying', async ({
+      request
+    }) => {
+      test.setTimeout(60_000);
+      const [a] = replicas;
+
+      const { body } = await callAction(request, a.origin, 'start-export', { seconds: 12 });
+      const jobId = body.output.jobId;
+      await expect
+        .poll(async () => (await boardJob(request, a.origin, jobId))?.status, { timeout: 15_000 })
+        .toBe('running');
+
+      const running = await boardJob(request, a.origin, jobId);
+      const holder = replicas.find(replica => running?.detail.startsWith(`on ${replica.name} `));
+      const staying = replicas.find(replica => replica !== holder && alive(replica));
+      if (!holder || !staying) {
+        throw new Error(`the running job names no replica this spec booted: ${running?.detail ?? 'no job'}`);
+      }
+
+      holder.process.kill('SIGTERM');
+      const exit = exited(holder);
+
+      // Queued while it drains: the stopping replica does not take it, the one staying does.
+      const queued = await callAction(request, staying.origin, 'start-export', { seconds: 1 });
+      expect(queued.status).toBe(200);
+
+      expect(await exit).toBe(0);
+      // Gone only once the export was done — on the replica that started it, once.
+      expect(await boardJob(request, staying.origin, jobId)).toMatchObject({
+        status: 'succeeded',
+        history: `#1 succeeded on ${holder.name}`
+      });
+
+      await expect
+        .poll(async () => (await boardJob(request, staying.origin, queued.body.output.jobId))?.history, {
+          timeout: 15_000
+        })
+        .toBe(`#1 succeeded on ${staying.name}`);
+
+      // The updated replica, on the same queue file.
+      replicas.push(await boot('replica-c', queueFile));
+    });
+
     test('a replica killed mid-job leaves it to the other one', async ({ request }) => {
       // A ten-second lease, then the dead replica's single-flight key — the run timeout, thirty seconds here — before
       // the survivor may run it: see the README.
       test.setTimeout(90_000);
-      const [a] = replicas;
+      const a = replicas.find(alive);
+      if (!a) {
+        throw new Error('no replica is running');
+      }
 
       const { body } = await callAction(request, a.origin, 'start-export', { seconds: 5 });
       const jobId = body.output.jobId;
@@ -201,7 +257,7 @@ describeTarget('server-actions-schedules', () => {
 
       const running = await boardJob(request, a.origin, jobId);
       const holder = replicas.find(replica => running?.detail.startsWith(`on ${replica.name} `));
-      const survivor = replicas.find(replica => replica !== holder);
+      const survivor = replicas.find(replica => replica !== holder && alive(replica));
       if (!holder || !survivor) {
         throw new Error(`the running job names no replica this spec booted: ${running?.detail ?? 'no job'}`);
       }
