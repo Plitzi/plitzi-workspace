@@ -35,7 +35,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   }, [internalData.plugins, pluginsProp]);
   const [plugins, dispatchPlugins] = useReducer(PluginsReducer, pluginsPropMemo);
   const [temporalCustomStyles, setTemporalCustomStyles] = useState<Record<string, Asset>>({});
-  const { mutate, query } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const { components, registerDefinition, unregisterDefinition, unregister } = use(ComponentContext);
 
   const pluginsAdd = useCallback(
@@ -84,17 +84,6 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   // internal
 
   const [pluginStyleAssets, setPluginStyleAssets] = useState(() => getStyle(plugins));
-
-  // plugins
-
-  const fetch = useCallback(
-    async (filter: object, cursor: string, limit: number) => {
-      const response = await query('Plugins', { filter, cursor, limit }, 'network-only');
-
-      return response.result?.Plugins ?? [];
-    },
-    [query]
-  );
 
   const add = useCallback(
     async (pluginType: string, resource?: string) => {
@@ -261,7 +250,6 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
       assets: assetsState,
       plugins,
       dispatchPlugins,
-      fetch,
       add,
       setSettings: setPluginSettings,
       getSettings: getPluginSettings,
@@ -275,7 +263,6 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
       assetsState,
       plugins,
       dispatchPlugins,
-      fetch,
       add,
       registerCustomAssets,
       unregisterCustomAssets,

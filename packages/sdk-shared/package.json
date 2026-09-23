@@ -856,10 +856,6 @@
       "types": "./dist/network/graphql/builder/Queries/InitQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/InitQuery.mjs"
     },
-    "./network/graphql/builder/Queries/PluginsQuery": {
-      "types": "./dist/network/graphql/builder/Queries/PluginsQuery.d.ts",
-      "import": "./dist/network/graphql/builder/Queries/PluginsQuery.mjs"
-    },
     "./network/graphql/builder/Queries/Segment/SegmentQuery": {
       "types": "./dist/network/graphql/builder/Queries/Segment/SegmentQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Segment/SegmentQuery.mjs"

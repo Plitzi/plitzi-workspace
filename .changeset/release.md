@@ -115,10 +115,13 @@
   dragged as an image and kept its remove button under the cursor while dragged, and so did any other file; both fixed.
 - `elementsByRoot` (and `RootElements`) in `@plitzi/sdk-schema/helpers/elementTree`: the element count grouped by the
   page or layout that holds it. The builder's quota panel and the server's usage API each carried a copy.
-- Builder: the model picker's ↑/↓ and ↵ do what its footer says (they were swallowed), and the marketplace's "Update
-  Now" moves an installed plugin to the latest revision (it did nothing). Gone: the space setting `head`, which was
-  never wired, a connectivity listener that only logged, and commented-out code across the builder, the SDK app and the
-  packages.
+- Builder: the model picker's ↑/↓ and ↵ do what its footer says (they were swallowed). Gone: the space setting `head`,
+  which was never wired, a connectivity listener that only logged, and commented-out code across the builder, the SDK
+  app and the packages.
+- The plugin marketplace is removed. Nothing in the builder opened it any more; a space's plugins are still installed
+  from its resources. Gone with it: the builder's `Marketplace` module and the `integrations` placeholder panel,
+  `PluginsContextValue.fetch`, and the builder query `Plugins` (`@plitzi/sdk-shared/network/graphql/builder/Queries/PluginsQuery`).
+  The server drops the catalog behind it — the `Plugins`/`Plugin` queries, `/api/plugins` and its six tables.
 - No debug logging left in shipped code: `stringToArray` logged every call and the transition editor every change;
   `BlockJsx` and plugin loading report their failures as errors.
 
