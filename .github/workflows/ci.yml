@@ -71,6 +71,17 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
+      # Turbo's own cache, carried from run to run: a package whose inputs did not change is replayed, not rebuilt.
+      # Keyed by commit so every run saves what it produced, and restored from the latest — a release reuses what the
+      # push of the same commit already did.
+      - name: Restore Cache turbo
+        uses: actions/cache@v6
+        with:
+          path: .turbo/cache
+          key: ${{ runner.os }}-turbo-build-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-build-${{ secrets.CACHE_VERSION }}-
+
       - name: Restore Cache build
         uses: actions/cache@v6
         env:
@@ -81,6 +92,11 @@ jobs:
 
       - name: Yarn Build
         run: yarn build:prod && yarn build-vendor:dev && yarn build-vendor:prod
+
+      # An entry nothing has written for a week is dropped before the cache is saved again, so it cannot grow forever.
+      # One still in use costs one rebuild a week.
+      - name: Prune Cache turbo
+        run: find .turbo/cache -type f -mtime +7 -delete || true
 
   lint:
     needs: build-packages
@@ -119,6 +135,17 @@ jobs:
         if: steps.cache-packages.outputs.cache-hit != 'true'
         run: exit 1
 
+      # Turbo's own cache, carried from run to run: lint, style lint and typecheck of a package whose inputs did not
+      # change are replayed. Keyed by commit so every run saves what it produced, and restored from the latest — a
+      # release reuses what the push of the same commit already did.
+      - name: Restore Cache turbo
+        uses: actions/cache@v6
+        with:
+          path: .turbo/cache
+          key: ${{ runner.os }}-turbo-lint-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-lint-${{ secrets.CACHE_VERSION }}-
+
       - name: Yarn Lint
         run: yarn lint
 
@@ -127,6 +154,11 @@ jobs:
 
       - name: Yarn Typecheck
         run: yarn typecheck
+
+      # An entry nothing has written for a week is dropped before the cache is saved again, so it cannot grow forever.
+      # One still in use costs one rebuild a week.
+      - name: Prune Cache turbo
+        run: find .turbo/cache -type f -mtime +7 -delete || true
 
   # The browser suite. Needs the build — the examples render built output, so an e2e run on an unbuilt tree tests
   # nothing — but NOT lint: a formatting complaint says nothing about whether the app works, and waiting for one

@@ -1,6 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": [
+    "**/.env.*local",
+    ".prettierrc",
+    "babel.config.js",
+    "packages/sdk-shared/eslint.config.mjs",
+    "packages/sdk-shared/tsconfig.json",
+    "packages/sdk-shared/tsconfig.app.json",
+    "packages/sdk-shared/tsconfig.node.json"
+  ],
   "tasks": {
     "start": {
       "dependsOn": ["^start"],
@@ -22,11 +30,13 @@
     },
     "lint": {
       "dependsOn": ["^lint"],
-      "cache": false
+      "cache": true,
+      "outputs": []
     },
     "lint-style": {
       "dependsOn": ["^lint-style"],
-      "cache": false
+      "cache": true,
+      "outputs": []
     },
     "lint-style:fix": {
       "dependsOn": ["^lint-style:fix"],
@@ -34,7 +44,8 @@
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "cache": false
+      "cache": true,
+      "outputs": []
     },
     "build:dev": {
       "dependsOn": ["^build:dev"],
@@ -63,7 +74,7 @@
     },
     "build:prod": {
       "dependsOn": ["^build:prod"],
-      "cache": false,
+      "cache": true,
       "outputs": ["dist/**"]
     },
     "build:prod-watch": {
@@ -89,12 +100,12 @@
     },
     "build-vendor:dev": {
       "dependsOn": ["^build-vendor:dev"],
-      "cache": false,
+      "cache": true,
       "outputs": ["dist/**"]
     },
     "build-vendor:prod": {
       "dependsOn": ["^build-vendor:prod"],
-      "cache": false,
+      "cache": true,
       "outputs": ["dist/**"]
     }
   }
