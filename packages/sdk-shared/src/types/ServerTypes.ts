@@ -16,6 +16,7 @@ import type { ConnectorEntry } from './ConnectorTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
 import type { FontHead, Style } from './StyleTypes';
+import type { SpaceChange } from '../history/types';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
 
@@ -202,6 +203,16 @@ export type SSRGrant = {
   canWrite: boolean;
 };
 
+/** A page of a space's change history, newest first; `nextBefore` reads further back, null at the end. */
+export type SSRChangePage = { changes: SpaceChange[]; nextBefore: number | null };
+
+/** What to read of the history: older than `before`, only the changes that touched `entityId`, `limit` at a time. */
+export type SSRChangeQuery = { before?: number; entityId?: string; limit: number };
+
+/** Who a write is made for and which request made it, for a consumer that records its changes. Every document one
+ *  request writes shares its `batch`: one `plitzi_apply`, read back as one change. */
+export type SSRWriteContext = { userId?: number; batch: string };
+
 /**
  * A session, as the thing that issued it describes it. Deliberately free of transport: whoever mints one says what
  * the credentials are and when they die, and the server decides how they are carried — which is what lets a
@@ -360,12 +371,15 @@ export type SSRAdapters = {
   /** Remove one action by its identifier. Omitted alongside `saveAction` for a read-only deployment. */
   deleteAction?: (spaceId: number, actionId: string) => Promise<void>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
-  saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
+  saveSchema?: (spaceId: number, environment: Environment, schema: Schema, write: SSRWriteContext) => Promise<void>;
   /** Persist the style document mutated by the MCP `apply` tool — store it as given. `style.cache` arrives already
    *  compiled: the renderer serves that string and nothing else, so recomputing it is not a detail to delegate, and
    *  asking every deployment to remember it was one bug each of them could write alone. When omitted, `apply`
    *  reports `persisted: false`. */
-  saveStyle?: (spaceId: number, environment: Environment, style: Style) => Promise<void>;
+  saveStyle?: (spaceId: number, environment: Environment, style: Style, write: SSRWriteContext) => Promise<void>;
+  /** The space's change history, read-only: what every writer saved, and for whom. When omitted, the MCP offers no
+   *  history resource. */
+  getChanges?: (spaceId: number, environment: Environment, query: SSRChangeQuery) => Promise<SSRChangePage>;
   /** Who this request carries, if anyone. The adapter reads the credential and resolves it; the cookie it arrived
    *  in was written by the server, from {@link SSRAuthCookie}. */
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;

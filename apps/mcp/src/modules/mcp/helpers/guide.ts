@@ -200,6 +200,10 @@ Never download a whole tree you do not need.
   input/output contract a caller is held to. \`/{ref}\` opens one flow in full. See *Server actions* below.
 - \`plitzi://actions/{env}/tasks\` — the **server tasks this deployment can run**, each with its params: the steps an
   action may be built from.
+- \`plitzi://changes/{env}\` — the space's **change history**, read-only and newest first: who made each change (a
+  person in the builder, an agent, the autofix), when, and every element, class, token or font it touched, whole, before
+  and after. \`/{id}\` for the history of one of them — how you find what changed an element you are asked about, or
+  review what you or another agent just did.
 - \`plitzi://render/guide\`, \`plitzi://render/types\` — the manual and the type table for \`plitzi_render\` (offline
   widgets, not this space).
 

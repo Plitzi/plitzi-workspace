@@ -7,6 +7,7 @@ import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Elements from '@pmodules/Elements';
 import Fonts from '@pmodules/Fonts';
+import History from '@pmodules/History';
 import Resources from '@pmodules/Resources';
 import Segments from '@pmodules/Segments';
 import StateManager from '@pmodules/StateManager/StateManager';
@@ -183,6 +184,22 @@ export const getPopups = ({
       settings: {
         icon: 'fa-solid fa-diamond',
         title: 'Segments',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: true,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
+      id: 'history',
+      component: <History />,
+      active: activeIds.includes('history'),
+      placementSettings: { left: { position: 9, minSize: 200 } },
+      settings: {
+        icon: 'fa-solid fa-clock-rotate-left',
+        title: 'History',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,

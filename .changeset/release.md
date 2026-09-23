@@ -196,3 +196,26 @@
   deliberately left open — and `docs/en/connectors.md`, which only existed in Spanish. RFC 0002 is removed now that it
   shipped. The repository READMEs, `claude.md`, onboarding and repository-structure list `apps/mcp`, `apps/cli`,
   `apps/desktop` and `sdk-authoring`, and no longer `sdk-collections`.
+
+## Interactions: "Propagate Event" does what it says
+
+- A click, hover or focus trigger with **Propagate Event** off — the default — now answers the event for the elements
+  around it too: a button inside a clickable card runs the button's flow and not the card's as well. It used to decide
+  only `preventDefault`, so every clickable ancestor ran its flow after the inner one.
+- The DOM event itself is not stopped: a component's own handler (a dropdown opening from a click inside it), the dev
+  tools' element picker and anything listening above the space still receive it. `preventDefault` is unchanged.
+- To keep the old behaviour on one element, turn Propagate Event on for the inner trigger.
+
+## Change history
+
+- Every save of a space's schema and style is recorded by the server — who made it (a person, an agent, the co-worker,
+  the autofix), from where, and each element, class, token or font it touched, before and after. Read-only; kept per
+  plan. See `docs/en/history.md`.
+- Builder: a **History** panel — the timeline, newest first, with saves folded into rows, each unfolding into a
+  field-by-field diff that links to its element; filters by who made it, the selected element, and since the last
+  snapshot; published revisions marked where they fall.
+- `@plitzi/sdk-shared/history`: `diffSchema`, `diffStyle`, `summarizeChange`, `sameValue`, `jsonCopy` and the
+  `SpaceChange` vocabulary; builder query `SpaceChanges` (`TSpaceChanges`, `TSnapshotMarker`).
+- `@plitzi/sdk-mcp`: `saveSchema`/`saveStyle` receive an `SSRWriteContext` (the member, one batch per tool call), and an
+  optional `getChanges` adapter serves `plitzi://changes/{env}` and `plitzi://changes/{env}/{id}`.
+

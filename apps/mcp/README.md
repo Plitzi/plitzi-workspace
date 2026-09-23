@@ -71,6 +71,7 @@ The server is stateless: it resolves the space per request and reads and writes 
 | `getStyle(spaceId, env)` | yes | The full style document, including `platform`/`mode`. |
 | `saveSchema(spaceId, env, schema)` | for writes | Persist a mutated schema. Without it, `plitzi_apply` reports `persisted: false`. |
 | `saveStyle(spaceId, env, style)` | for writes | Persist a mutated style document. |
+| `getChanges(spaceId, env, query)` | no | The space's change history, for the `plitzi://changes` resources. Writes arrive with an `SSRWriteContext` (`userId`, one `batch` per tool call) so a consumer can record them. |
 | `getOfflineData(spaceId, env, rev)` | for preview | Read side of draft-preview. Only the preview endpoint calls it. |
 
 Schema and style are read as **separate documents** on purpose: `getOfflineData` is SSR-shaped and strips

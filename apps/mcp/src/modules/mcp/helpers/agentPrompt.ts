@@ -54,6 +54,7 @@ const RESOURCES = [
   '• plitzi://data-sources/{env} — data-source paths and binding targets (vocabulary for upsertBinding).',
   '• plitzi://connectors/{env} , plitzi://connector-presets — CMS/API connectors (this space’s, and working ones).',
   '• plitzi://actions/{env} , /tasks — server actions, and the tasks this deployment can build them from.',
+  '• plitzi://changes/{env} , /{id} — the change history (read-only): who changed what, before and after.',
   '• plitzi://settings/{env} — space-level settings.'
 ].join('\n');
 

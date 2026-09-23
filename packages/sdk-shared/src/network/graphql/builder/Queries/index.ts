@@ -5,6 +5,7 @@ import SpaceActionEventsQuery from './Space/SpaceActionEventsQuery';
 import SpaceActionsQuery from './Space/SpaceActionsQuery';
 import SpaceActionTasksQuery from './Space/SpaceActionTasksQuery';
 import SpaceCdnsQuery from './Space/SpaceCdnsQuery';
+import SpaceChangesQuery from './Space/SpaceChangesQuery';
 import SpaceCheckActionQuery from './Space/SpaceCheckActionQuery';
 import SpaceConnectorsQuery from './Space/SpaceConnectorsQuery';
 import SpaceCredentialsQuery from './Space/SpaceCredentialsQuery';
@@ -21,6 +22,7 @@ import type { TSpaceActionEventsQuery } from './Space/SpaceActionEventsQuery';
 import type { TSpaceActionsQuery } from './Space/SpaceActionsQuery';
 import type { TSpaceActionTasksQuery } from './Space/SpaceActionTasksQuery';
 import type { TSpaceCdnsQuery } from './Space/SpaceCdnsQuery';
+import type { TSpaceChangesQuery } from './Space/SpaceChangesQuery';
 import type { TSpaceCheckActionQuery } from './Space/SpaceCheckActionQuery';
 import type { TSpaceConnectorsQuery } from './Space/SpaceConnectorsQuery';
 import type { TSpaceCredentialsQuery } from './Space/SpaceCredentialsQuery';
@@ -33,12 +35,14 @@ import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
 // The quota shape is read by whatever renders it (the builder's own meter today), so it travels with the query.
 export type { TQuotaPlane, TSpaceQuota } from './Space/SpaceQuotaQuery';
 export type { TSpaceIssue, TSpaceIssues } from './Space/SpaceIssuesQuery';
+export type { TSnapshotMarker, TSpaceChanges } from './Space/SpaceChangesQuery';
 
 export type BuilderQueriesMap = {
   Init: TInitQuery;
   SpaceLatestRevision: TSpaceLatestRevisionQuery;
   SpaceQuota: TSpaceQuotaQuery;
   SpaceIssues: TSpaceIssuesQuery;
+  SpaceChanges: TSpaceChangesQuery;
   SpaceResources: TSpaceResourcesQuery;
   SpaceDeployments: TSpaceDeploymentsQuery;
   SpaceCdns: TSpaceCdnsQuery;
@@ -57,6 +61,7 @@ const BuilderQueries = {
   SpaceLatestRevision: SpaceLatestRevisionQuery,
   SpaceQuota: SpaceQuotaQuery,
   SpaceIssues: SpaceIssuesQuery,
+  SpaceChanges: SpaceChangesQuery,
   SpaceResources: SpaceResourcesQuery,
   SpaceDeployments: SpaceDeploymentsQuery,
   SpaceCdns: SpaceCdnsQuery,

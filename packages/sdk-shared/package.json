@@ -440,6 +440,21 @@
       "types": "./dist/helpers/utils.d.ts",
       "import": "./dist/helpers/utils.mjs"
     },
+    "./history": {
+      "types": "./dist/history/index.d.ts",
+      "import": "./dist/history/index.mjs"
+    },
+    "./history/diff": {
+      "types": "./dist/history/diff.d.ts",
+      "import": "./dist/history/diff.mjs"
+    },
+    "./history/index": {
+      "types": "./dist/history/index.d.ts",
+      "import": "./dist/history/index.mjs"
+    },
+    "./history/types": {
+      "types": "./dist/history/types.d.ts"
+    },
     "./hooks": {
       "types": "./dist/hooks/index.d.ts",
       "import": "./dist/hooks/index.mjs"
@@ -879,6 +894,10 @@
     "./network/graphql/builder/Queries/Space/SpaceCdnsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceCdnsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceCdnsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceChangesQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceChangesQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceChangesQuery.mjs"
     },
     "./network/graphql/builder/Queries/Space/SpaceCheckActionQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceCheckActionQuery.d.ts",

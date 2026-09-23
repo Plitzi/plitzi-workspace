@@ -17,6 +17,23 @@ import type { Context } from 'react';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
+/**
+ * The events an element's trigger has already answered without propagating it.
+ *
+ * `propagateEvent` is about the INTERACTION, not the DOM: an element whose trigger does not propagate answers the event
+ * for its ancestors too, so a click on a button inside a clickable card runs the button's flow and not the card's as
+ * well. The DOM event is left alone on purpose — a dropdown that opens from a click inside it, the dev tools' element
+ * picker and every component's own `onClick` still see it — so this is recorded beside the event rather than done with
+ * `stopPropagation`.
+ *
+ * Keyed by the native event: React hands every handler on the path the same one, and a WeakSet lets it go with the
+ * event.
+ */
+const answeredEvents = new WeakSet<object>();
+
+const nativeOf = (event: object): object =>
+  'nativeEvent' in event && isRecord(event.nativeEvent) ? event.nativeEvent : event;
+
 export type UseRootElementInteractionsProps = {
   elementContext: ElementContextValue;
   InteractionsContext: Context<InteractionsContextValue>;
@@ -75,6 +92,16 @@ const useRootElementInteractions = ({
       if (originalCallback) {
         // If otherProps contains the same event, hook it
         originalCallback(e);
+      }
+
+      const native = nativeOf(e);
+      // An element inside this one already answered the event and did not let it go further.
+      if (answeredEvents.has(native)) {
+        return;
+      }
+
+      if (!propagateEvent) {
+        answeredEvents.add(native);
       }
 
       void interactionsManager.interactionTrigger(id, actionName, { event: e });

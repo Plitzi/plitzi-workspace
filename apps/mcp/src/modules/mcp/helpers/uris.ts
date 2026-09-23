@@ -11,6 +11,7 @@ export const cssPropertiesUri = 'plitzi://css-properties';
 
 // --- Cold-start bundle ---
 export const primerUri = (env: Env): string => `plitzi://primer/${env}`;
+export const changesUri = (env: Env): string => `plitzi://changes/${env}`;
 
 // --- Element schema ---
 export const pagesUri = (env: Env): string => `plitzi://schema/${env}/pages`;

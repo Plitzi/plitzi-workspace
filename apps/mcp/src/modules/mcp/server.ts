@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { registerAppTool } from '@modelcontextprotocol/ext-apps/server';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
@@ -23,7 +25,7 @@ import type { ResourceProxy } from './proxy';
 import type { Persisters, ToolContext, ToolDef } from './tools';
 import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { SSRAdapters, Environment, ServerLogger, SSRGrant } from '@plitzi/sdk-shared';
+import type { SSRAdapters, Environment, ServerLogger, SSRGrant, SSRWriteContext } from '@plitzi/sdk-shared';
 
 /** The MCP service is stateless: every request resolves its own `spaceId` (from the request JWT) and reads the
  *  space fresh through the adapters — schema and style are two documents, read/written independently. The spaceId
@@ -115,9 +117,11 @@ export const createMcpServer = async ({
   // Every write in the server funnels through these four, which is why the check lives here rather than in each
   // tool: a tool that forgot to ask is the bug this arrangement makes impossible.
   const { saveSchema, saveStyle, saveConnector, deleteConnector, saveAction, deleteAction } = adapters;
+  // A stateless server builds itself per request, and a request is one tool call: everything it writes is one batch.
+  const write: SSRWriteContext = { userId: grant?.userId, batch: randomUUID() };
   const persisters: Persisters = {
-    schema: saveSchema ? schema => saveSchema(requireWritableSpaceId(), MCP_ENV, schema) : undefined,
-    style: saveStyle ? style => saveStyle(requireWritableSpaceId(), MCP_ENV, style) : undefined,
+    schema: saveSchema ? schema => saveSchema(requireWritableSpaceId(), MCP_ENV, schema, write) : undefined,
+    style: saveStyle ? style => saveStyle(requireWritableSpaceId(), MCP_ENV, style, write) : undefined,
     saveConnector: saveConnector ? entry => saveConnector(requireWritableSpaceId(), entry) : undefined,
     deleteConnector: deleteConnector ? id => deleteConnector(requireWritableSpaceId(), id) : undefined,
     saveAction: saveAction ? entry => saveAction(requireWritableSpaceId(), entry) : undefined,
@@ -133,7 +137,15 @@ export const createMcpServer = async ({
     { instructions: hasSpace ? serverInstructions : widgetsOnlyInstructions }
   );
 
-  registerResources(server, getSpace, MCP_ENV, log, hasSpace);
+  const { getChanges } = adapters;
+  registerResources(
+    server,
+    getSpace,
+    MCP_ENV,
+    log,
+    hasSpace,
+    getChanges ? query => getChanges(requireSpaceId(), MCP_ENV, query) : undefined
+  );
 
   // Every MCP App's ui:// page. They carry their own script and styles, so they are always registered; the
   // settings are the deployment's, not the connection's, and only change what the page hands the view.

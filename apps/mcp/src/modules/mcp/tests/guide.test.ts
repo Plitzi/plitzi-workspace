@@ -27,7 +27,8 @@ const registeredUris = (): string[] => {
   // Registering logs nothing; a read would, and none happens here.
   const log = {} as McpLog;
 
-  registerResources(server, vi.fn(), ENV, log, true);
+  // With the history adapter, so its resources are registered — and held to the guide — like every other.
+  registerResources(server, vi.fn(), ENV, log, true, vi.fn());
   registerRenderResources(server, log);
 
   return uris.map(uri => uri.replaceAll(`/${ENV}`, '/{env}'));
