@@ -20,10 +20,7 @@ export type ComponentProps = {
   ssrResult?: SSRRenderResult;
   sdkDevToolsStylePath?: string;
   debugMode?: boolean;
-  /** Forced on when the metering adapter degrades this render; otherwise left to the SDK's own default so the
-   *  markup here matches what the browser hydrates with. */
-  branding?: boolean;
-  /** The same degraded render, as the reason: the account behind this space is over its quota. */
+  /** Set when the metering adapter degrades this render: the account behind this space is over its quota. */
   overQuota?: boolean;
   /** The theme this document was rendered with, from the visitor's cookie. See `prepareRender`. */
   theme?: Theme;
@@ -39,7 +36,6 @@ const Component = ({
   ssrResult,
   sdkDevToolsStylePath,
   debugMode = false,
-  branding,
   overQuota,
   theme
 }: ComponentProps) => {
@@ -57,7 +53,6 @@ const Component = ({
       offlineData={offlineData}
       sdkDevToolsStylePath={sdkDevToolsStylePath}
       debugMode={debugMode}
-      {...(branding === undefined ? {} : { branding })}
       {...(overQuota === undefined ? {} : { overQuota })}
       {...(theme === undefined ? {} : { theme })}
     >

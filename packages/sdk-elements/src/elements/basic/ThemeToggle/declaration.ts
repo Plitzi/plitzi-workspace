@@ -9,6 +9,15 @@ export type ThemeToggleAttributes = AuthorableAttributes<ThemeToggleProps>;
 
 const declaration = elementDeclaration<ThemeToggleAttributes>()({
   type: 'themeToggle',
+  triggers: {
+    onThemeChange: {
+      action: 'onThemeChange',
+      title: 'On Theme Change',
+      type: 'trigger',
+      params: {},
+      preview: { theme: 'dark' }
+    }
+  },
   content: {
     attributes: {
       subType: 'switch',
@@ -21,7 +30,7 @@ const declaration = elementDeclaration<ThemeToggleAttributes>()({
       label: 'Theme Toggle',
       type: 'themeToggle',
       description:
-        'Lets a visitor choose light or dark. It writes the choice on the document root, where a space stylesheet is already looking for it, and remembers it — so the machine decides until somebody says otherwise. It ships no colours of its own: style it with the space own classes, and use `data-theme-icon` to decide which icon each scheme shows.',
+        'Lets a visitor choose light or dark. It writes the choice on the document root, where a space stylesheet is already looking for it, and remembers it — so the machine decides until somebody says otherwise. It ships no colours of its own: style it with the space own classes. It shows the icon of the scheme in use by default; key a rule off `data-theme-icon` to change that.',
       items: [],
       bindings: {},
       styleSelectors: {

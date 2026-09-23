@@ -72,7 +72,6 @@ const PlitziSdkWrapper = ({
       // The window's own build decides, and only the development one may: a packaged copy handed to a customer has
       // no business offering the element tree and the store of a space that is not theirs.
       debugMode={app.environment === 'development'}
-      branding={false}
     />
   );
 };

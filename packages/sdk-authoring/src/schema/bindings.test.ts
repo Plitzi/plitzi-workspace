@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorSpace, GLOBAL_SOURCES, resolveSource, withVisibility } from './index';
+import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+
+import { activeOn, authorSpace, GLOBAL_SOURCES, resolveSource, variantFrom, withVisibility } from './index';
+import { apiContainer, list, text } from '../elements';
+import { styles } from '../style';
 
 import type { SourceIndex } from './index';
 
@@ -110,5 +114,100 @@ describe('an element whose visibility is a condition', () => {
 
     expect(visibilityOf('always')).toBe(true);
     expect(visibilityOf('waiting')).toBe(false);
+  });
+});
+
+describe('variantFrom', () => {
+  const pill = styles('statusPill', { css: { padding: '2px 8px' }, variants: { done: { color: 'green' } } });
+
+  // The key names the CLASS. Keyed by the element type it would select the type's own variants and match nothing.
+  it('keys the variant by the class the element wears, not by its type', () => {
+    expect(variantFrom(pill, 'rows.item.status')).toEqual({
+      to: 'styleVariant',
+      source: 'rows.item.status',
+      category: 'initialState',
+      transformers: [{ action: 'styleVariant', params: { key: 'statusPill.base', variant: '', append: 'true' } }]
+    });
+  });
+
+  it('takes a class by name, and another selector of the element', () => {
+    expect(variantFrom('fieldInput', 'form.state', { slot: 'input' }).transformers).toEqual([
+      { action: 'styleVariant', params: { key: 'fieldInput.input', variant: '', append: 'true' } }
+    ]);
+  });
+
+  // Data that does not already speak in variant names: a run's status, or a control that lights up for its own value.
+  it('turns the value into a variant through a template first', () => {
+    expect(variantFrom(pill, 'state.scene', { template: '{{ source == "code" ? "on" : "" }}' }).transformers).toEqual([
+      { action: 'twigTemplate', params: { template: '{{ source == "code" ? "on" : "" }}' } },
+      { action: 'styleVariant', params: { key: 'statusPill.base', variant: '', append: 'true' } }
+    ]);
+  });
+
+  it('survives authoring as an initial-state binding of the element', () => {
+    const space = authorSpace({
+      name: 'Variants',
+      permanentUrl: 'variants',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            apiContainer({
+              id: 'jobs',
+              children: [
+                list({
+                  id: 'rows',
+                  source: 'controlled',
+                  bind: { items: 'jobs.data.jobs' },
+                  children: [text({ class: pill, bind: [variantFrom(pill, 'rows.item.status')] })]
+                })
+              ]
+            })
+          ]
+        }
+      ]
+    });
+    const pillElement = Object.values(space.schema.flat).find(element => element.definition.type === 'text');
+
+    expect(pillElement?.definition.bindings?.initialState).toEqual([
+      {
+        id: 'initialState-1',
+        source: 'rows.item.status',
+        to: 'styleVariant',
+        transformers: [{ action: 'styleVariant', params: { key: 'statusPill.base', variant: '', append: 'true' } }]
+      }
+    ]);
+  });
+});
+
+describe('activeOn', () => {
+  const navLink = styles('navLink', { css: { color: 'gray' }, variants: { active: { color: 'black' } } });
+
+  const variantOn = (binding: ReturnType<typeof activeOn>, page: string): unknown =>
+    processTwig(String(binding.transformers?.[0].params.template), { source: page });
+
+  // The page being shown is the source, so one binding serves every entry of a menu kept in a layout.
+  it('reads the page being shown', () => {
+    expect(activeOn(navLink, 'docs-data')).toMatchObject({
+      to: 'styleVariant',
+      source: 'navigation.currentPageId',
+      category: 'initialState'
+    });
+  });
+
+  it('wears the variant on its pages and `idle` everywhere else', () => {
+    const binding = activeOn(navLink, ['spaces', 'space-record']);
+
+    expect(variantOn(binding, 'space-record')).toBe('active');
+    expect(variantOn(binding, 'spaces')).toBe('active');
+    expect(variantOn(binding, 'analytics')).toBe('idle');
+  });
+
+  it('takes another variant name, and a slot', () => {
+    const binding = activeOn(navLink, 'docs-data', { variant: 'current', slot: 'label' });
+
+    expect(variantOn(binding, 'docs-data')).toBe('current');
+    expect(binding.transformers?.[1].params.key).toBe('navLink.label');
   });
 });

@@ -1,6 +1,7 @@
 import { didYouMean } from './suggest';
 
 import type { BindingSpec, BindingsSpec } from './types';
+import type { ClassRef } from '../style';
 import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
 
 /**
@@ -99,6 +100,48 @@ export const hiddenWhen = (source: string): BindingSpec => ({
   transformers: [{ action: 'not', params: {} }]
 });
 
+/** What {@link variantFrom} takes beyond the class and the source. */
+export interface VariantFromOptions {
+  /** Which of the element's selectors wears the class — `base` for nearly everything, `input` for a form control. */
+  slot?: string;
+  /**
+   * A twig expression turning the value into a variant name, with the value as `source` — for when the data does not
+   * already speak in variant names: `"{{ source == 'completed' ? 'ok' : 'failed' }}"`, or `"{{ source == 'code' ?
+   * 'on' : 'off' }}"` for a control that lights up when a state names it. A name the class does not declare wears no
+   * variant, so the other branch can simply name one nothing styles.
+   */
+  template?: string;
+}
+
+/**
+ * Switches one of a CLASS's variants from a value the data answered — a status pill that turns amber, green or red
+ * as the job it describes moves.
+ *
+ * The variant map is keyed by the SELECTOR the variants belong to, and the obvious guess names a different one:
+ * `text.base` selects the text TYPE's own variants (`text--done`), not the class the element wears
+ * (`statusPill--done`), so the element renders with no variant at all and nothing reports it. Taken from the class
+ * declaration, the key cannot drift from the class it means. The value at `source` names the variant, or `template`
+ * turns it into one.
+ */
+export const variantFrom = (cls: ClassRef, source: string, options: VariantFromOptions = {}): BindingSpec => {
+  const { slot = 'base', template } = options;
+
+  return {
+    to: 'styleVariant',
+    source,
+    category: 'initialState',
+    transformers: [
+      ...(template ? [{ action: 'twigTemplate', params: { template } }] : []),
+      {
+        action: 'styleVariant',
+        // Appended, so each \`variantFrom\` on an element sets its own selector's variant and leaves the others be —
+        // two of them on one element (the base and a slot) would otherwise take turns wiping each other.
+        params: { key: `${typeof cls === 'string' ? cls : cls.name}.${slot}`, variant: '', append: 'true' }
+      }
+    ]
+  };
+};
+
 /**
  * The bindings an element declared, with its visibility condition among them.
  *
@@ -106,6 +149,10 @@ export const hiddenWhen = (source: string): BindingSpec => ({
  * list would have: a binding's id carries its position, and a space that moves to the field should not move its
  * ids.
  */
+/** Whether any of these bindings decides the element's visibility — which makes it a condition, authored hidden. */
+export const hasVisibilityBinding = (bindings: BindingSpec[] | undefined): boolean =>
+  bindings?.some(binding => binding.to === 'visibility' && binding.category === 'initialState') ?? false;
+
 export const withVisibility = (spec: { bind?: BindingsSpec; visible?: string | false }): BindingSpec[] | undefined => {
   const bound = spec.bind === undefined ? undefined : toBindingSpecs(spec.bind);
   // `false` is a starting state rather than a condition: nothing to bind, only an element that begins hidden.
@@ -145,3 +192,40 @@ export const groupBindings = (
 
     return groups;
   }, {});
+
+/** What {@link activeOn} takes beyond the class and the pages. */
+export interface ActiveOnOptions {
+  /** The variant worn on those pages. `active` unless the class calls it something else. */
+  variant?: string;
+  /** Which of the element's selectors wears the class, as in {@link variantFrom}. */
+  slot?: string;
+}
+
+/**
+ * Marks a navigation entry as the current one on the pages it stands for.
+ *
+ * The page being shown is \`navigation.currentPageId\`, so an entry lights up when that is one of its pages — one
+ * binding, the same on every entry of a menu that lives in a layout, instead of a copy of the menu per page with the
+ * right entry styled by hand. Several ids for one entry: a section and the pages beneath it (\`['spaces',
+ * 'space-record']\`). Every other page wears \`idle\`, a name the class need not declare.
+ *
+ * \`\`\`ts
+ * const navLink = styles('nav-link', { css: { … }, variants: { active: { color: 'var(--accent)' } } });
+ * link({ href: 'docs-data', class: navLink, bind: [activeOn(navLink, 'docs-data')] });
+ * \`\`\`
+ */
+export const activeOn = (
+  cls: ClassRef,
+  pages: string | readonly string[],
+  options: ActiveOnOptions = {}
+): BindingSpec => {
+  const ids = typeof pages === 'string' ? [pages] : pages;
+  const variant = options.variant ?? 'active';
+  // Quoted as JSON, which twig reads as a string literal whatever the id holds.
+  const list = ids.map(id => JSON.stringify(id)).join(', ');
+
+  return variantFrom(cls, 'navigation.currentPageId', {
+    ...(options.slot ? { slot: options.slot } : {}),
+    template: `{{ source in [${list}] ? '${variant}' : 'idle' }}`
+  });
+};

@@ -32,7 +32,14 @@ export interface CreateOptions {
   packageManager?: string;
   install?: boolean;
   force?: boolean;
+  /** Take the defaults for whatever was not passed, instead of asking — for a script that means exactly that. */
+  yes?: boolean;
 }
+
+const MODES = ['server', 'client'] as const;
+const SOURCES = ['local', 'cloud'] as const;
+
+type Decisions = { packageManager: PackageManager; mode: (typeof MODES)[number]; source: (typeof SOURCES)[number] };
 
 /** A directory that does not exist yet is as empty as one can be, which is the answer this question wants. */
 const isEmpty = async (target: string): Promise<boolean> => {
@@ -61,9 +68,6 @@ const nearestExisting = async (target: string): Promise<string> => {
   return dir;
 };
 
-const oneOf = <T extends string>(value: string | undefined, allowed: readonly T[], fallback: T): T =>
-  allowed.includes(value as T) ? (value as T) : fallback;
-
 /**
  * What a first install is most likely refused over, and what to do about it.
  *
@@ -83,6 +87,95 @@ const install = (manager: PackageManager, cwd: string): Promise<boolean> =>
     child.on('error', () => resolve(false));
     child.on('close', code => resolve(code === 0));
   });
+
+/**
+ * The choices a project is BUILT around, which belong to whoever it is for — never to a default nobody chose.
+ *
+ * Each one is written into the project: the package manager into every command its README, lockfile, Playwright config
+ * and install use; the mode into whether there is a Node tier at all; the source into whether the space is in the repo.
+ * Assumed, they are the wrong project for somebody, and an agent running this was the one assuming. So what was not
+ * passed is asked for when a person is at the terminal, and refused when nobody is — with the exact question to put
+ * to the person — unless `--yes` says the defaults ARE the answer.
+ */
+type Question<T extends string> = { flag: string; choices: readonly T[]; help: string; given?: T; fallback: T };
+
+/** One choice at the terminal: Enter takes the default, anything off the list is refused rather than guessed at. */
+const ask = async <T extends string>(rl: readline.Interface, question: Question<T>): Promise<T | undefined> => {
+  const reply = (
+    await rl.question(`\n${question.help}\n${question.flag} (${question.choices.join('/')}) [${question.fallback}] > `)
+  ).trim();
+  const chosen = question.choices.find(choice => choice === (reply || question.fallback));
+  if (!chosen) {
+    console.error(chalk.red(`"${reply}" is not one of ${question.choices.join(', ')}.`));
+  }
+
+  return chosen;
+};
+
+const resolveDecisions = async (options: CreateOptions): Promise<Decisions | undefined> => {
+  const detected = detectPackageManager();
+  const packageManager: Question<PackageManager> = {
+    flag: '--package-manager',
+    choices: PACKAGE_MANAGERS,
+    help: `The package manager the project will be worked in (this was run through ${detected}).`,
+    given: PACKAGE_MANAGERS.find(manager => manager === options.packageManager),
+    fallback: detected
+  };
+  const mode: Question<Decisions['mode']> = {
+    flag: '--mode',
+    choices: MODES,
+    help: 'server: SSR + RSC on a Node tier. client: browser only.',
+    given: MODES.find(candidate => candidate === options.mode),
+    fallback: 'server'
+  };
+  const source: Question<Decisions['source']> = {
+    flag: '--source',
+    choices: SOURCES,
+    help: 'local: the space travels in the project. cloud: read it from Plitzi.',
+    given: SOURCES.find(candidate => candidate === options.source),
+    fallback: 'local'
+  };
+  const missing = [packageManager, mode, source].filter(question => question.given === undefined);
+
+  if (missing.length === 0 || options.yes) {
+    return {
+      packageManager: packageManager.given ?? packageManager.fallback,
+      mode: mode.given ?? mode.fallback,
+      source: source.given ?? source.fallback
+    };
+  }
+
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    console.error(
+      chalk.red('\nplitzi create needs these decided by whoever the project is for. Ask them; do not assume:')
+    );
+    for (const question of missing) {
+      console.error(`  ${`${question.flag} ${question.choices.join('|')}`.padEnd(36)} ${chalk.dim(question.help)}`);
+    }
+
+    const defaults = missing.map(question => `${question.flag} ${question.fallback}`).join(' ');
+    console.error(chalk.dim(`\nThen run it again with those flags — or with --yes to take ${defaults}.`));
+    process.exitCode = 1;
+
+    return undefined;
+  }
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const manager = packageManager.given ?? (await ask(rl, packageManager));
+    const tier = manager && (mode.given ?? (await ask(rl, mode)));
+    const origin = tier && (source.given ?? (await ask(rl, source)));
+    if (!manager || !tier || !origin) {
+      process.exitCode = 1;
+
+      return undefined;
+    }
+
+    return { packageManager: manager, mode: tier, source: origin };
+  } finally {
+    rl.close();
+  }
+};
 
 const askForKey = async (mode: string): Promise<string> => {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -105,18 +198,12 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     return;
   }
 
-  const mode = oneOf(options.mode, ['server', 'client'] as const, 'server');
-  const source = oneOf(options.source, ['local', 'cloud'] as const, 'local');
+  const decisions = await resolveDecisions(options);
+  if (!decisions) {
+    return;
+  }
 
-  /**
-   * Asked for first, detected second.
-   *
-   * The invoking agent is a good guess and a bad rule: reaching for `npx` to run a scaffold once and then working
-   * in the project with Yarn is an ordinary thing to do, and the guess writes a README, a Playwright config, a
-   * `.gitignore` and an install into that project which all name the wrong one. `--package-manager` is how
-   * somebody says which one they will actually be using.
-   */
-  const packageManager: PackageManager = oneOf(options.packageManager, PACKAGE_MANAGERS, detectPackageManager());
+  const { packageManager, mode, source } = decisions;
 
   // A cloud project is nothing without its credential, so it is the one thing worth stopping to ask for.
   const key = source === 'cloud' ? (options.key ?? (await askForKey(mode))) : '';

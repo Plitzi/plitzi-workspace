@@ -80,3 +80,31 @@ describe('processTwig / indexing a collection', () => {
     expect(hasValidToken('{{}}', true)).toBe(false);
   });
 });
+
+/**
+ * A group is a value, so what follows it is read like what follows a name.
+ *
+ * `(rows|find(…)).title` came back as the whole row: the access after the closing parenthesis was never parsed, and
+ * the only way around it was a `{% set %}` for every lookup.
+ */
+/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
+describe('processTwig / reading into a group', () => {
+  it('reads a key of a parenthesised expression', () => {
+    expect(render("{{ (rows|find('title', 'second')).title }}")).toBe('second');
+    expect(render("{{ (rows|find('title', 'first')).tags.1 }}")).toBe('b');
+  });
+
+  it('indexes a parenthesised expression', () => {
+    expect(render('{{ (numbers|reverse)[0] }}')).toBe('30');
+    expect(render('{{ (rows|first)[field] }}')).toBe('first');
+  });
+
+  it('filters what it read', () => {
+    expect(render("{{ (rows|find('title', 'first')).title|upper }}")).toBe('FIRST');
+  });
+
+  it('answers nothing for a key the group does not have', () => {
+    expect(render("{{ (rows|find('title', 'nobody')).title }}")).toBe('');
+  });
+});
+/* eslint-enable quotes */

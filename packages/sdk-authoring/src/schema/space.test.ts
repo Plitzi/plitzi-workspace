@@ -741,6 +741,45 @@ describe('authorSpace / flows', () => {
     // and the utility runs against nothing at all.
     expect(nodes.map(node => node.elementId)).toEqual(['cta', 'state', null, 'cta']);
   });
+
+  it('warns about a state callback key that repeats the runtime prefix without rewriting it', () => {
+    const { schema, warnings } = authorSpace({
+      name: 'State key',
+      permanentUrl: 'state-key',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            {
+              type: 'button',
+              id: 'cta',
+              attributes: { content: 'Choose' },
+              flows: [
+                [
+                  { type: 'trigger', action: 'onClick' },
+                  {
+                    type: 'globalCallback',
+                    action: 'setState',
+                    on: 'state',
+                    params: { key: 'state.genre', type: 'text', value: 'arcade' }
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    const warning = warnings.find(candidate => candidate.code === 'state-key-has-runtime-prefix');
+    expect(warning?.details).toMatchObject({ value: 'state.genre', suggested: 'genre' });
+    const button = schema.flat[schema.flat[schema.pages[0]].definition.items?.[0] ?? ''];
+    const stateStep = Object.values(button.definition.interactions ?? {}).find(node => node.action === 'setState');
+
+    // A warning is advisory: published documents and deliberate nested state keep their exact meaning.
+    expect(stateStep?.params.key).toBe('state.genre');
+  });
 });
 
 /**
@@ -806,5 +845,43 @@ describe('page folders', () => {
         )
       )
     ).toThrow(/inside itself/);
+  });
+});
+
+describe('authorSpace / a selector of its own', () => {
+  const withBody = (body: ElementSpec[]): SpaceSpec => ({
+    name: 'Named',
+    permanentUrl: 'named',
+    classes: { card: { padding: '8px' } },
+    pages: [{ name: 'Home', slug: '', selector: 'page-Qx7a', css: { display: 'flex' }, body }]
+  });
+
+  // The name the builder gave it is the one its style editor, a stylesheet outside the document and the next export
+  // know it by — derived again from where the element sits, it would be a different selector with the same rules.
+  it('keeps the name it was given, rules and all', () => {
+    const { schema, style } = authorSpace(
+      withBody([{ type: 'container', id: 'hero', selector: 'container-Ab3x', css: { gap: '4px' } }])
+    );
+
+    expect(schema.flat.hero.definition.styleSelectors.base).toBe('container-Ab3x');
+    expect(schema.flat[schema.pages[0]].definition.styleSelectors.base).toBe('page-Qx7a');
+    expect(style.platform.desktop['container-Ab3x'].attributes.base.default).toMatchObject({ 'row-gap': '4px' });
+  });
+
+  it('refuses a name another element or a class already answers to', () => {
+    expect(() =>
+      authorSpace(
+        withBody([
+          { type: 'container', selector: 'container-Ab3x', css: { gap: '4px' } },
+          { type: 'container', selector: 'container-Ab3x', css: { gap: '8px' } }
+        ])
+      )
+    ).toThrow(/another element already names/);
+    expect(() => authorSpace(withBody([{ type: 'container', selector: 'card', css: { gap: '4px' } }]))).toThrow(
+      /is a class this space declares/
+    );
+    expect(() => authorSpace(withBody([{ type: 'container', selector: 'card', class: 'card' }]))).toThrow(
+      /A shared class IS its selector/
+    );
   });
 });

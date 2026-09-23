@@ -265,4 +265,33 @@ describe('a param that is not a string', () => {
 
     expect(handed.input.list[0]).toContain('Line one');
   });
+  /**
+   * A param is a template whatever it holds.
+   *
+   * Only a bare name used to be recognised, so a condition or a loop was handed on as its own text — and a flag
+   * set that way stored the template, a non-empty string that every later check read as true.
+   */
+  it('runs a condition and a loop, not only a name', async () => {
+    const spy = await runWith({
+      // eslint-disable-next-line quotes -- a template quoting its own strings reads best in the other quotes
+      flag: "{{ trig.body ? '1' : '' }}",
+      loop: '{% for n in [1, 2] %}{{ n }}{% endfor %}'
+    });
+
+    // Typed the way a token is: a template that renders a number hands on the number.
+    expect(spy.mock.calls[0]?.[0]).toMatchObject({ flag: 1, loop: 12 });
+  });
+
+  // What a visitor typed is data: resolved once as the value of a token, it is not evaluated again.
+  it('does not evaluate braces inside a value it resolved', async () => {
+    const manager = new InteractionsManager('page1');
+    const spy = vi.fn<(context: Record<string, unknown>) => string>(() => 'ok');
+    manager.subscribe('el1', withParams({ echo: '{{trig.body}}' }), triggerDef, {
+      spy: { action: 'spy', title: 'Spy', type: 'callback', callback: spy, params: {} }
+    });
+
+    await manager.interactionTrigger('el1', 'click', { body: 'see {% if x %}this{% endif %}' });
+
+    expect(spy.mock.calls[0]?.[0]).toMatchObject({ echo: 'see {% if x %}this{% endif %}' });
+  });
 });

@@ -300,7 +300,7 @@ const RenderApp = () => {
     >
       {iconCss && <style>{iconCss}</style>}
       <RenderBoundary>
-        <PlitziSdk offlineData={offlineData} offlineMode environment="main" renderMode="raw" branding={false} />
+        <PlitziSdk offlineData={offlineData} offlineMode environment="main" renderMode="raw" />
       </RenderBoundary>
     </div>
   );

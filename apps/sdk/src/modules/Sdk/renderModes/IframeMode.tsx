@@ -6,7 +6,6 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import SpaceContainer from '../../Space/SpaceContainer';
-import MadeInPlitzi from '../components/MadeInPlitzi';
 import OverQuotaNotice from '../components/OverQuotaNotice';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
@@ -16,7 +15,6 @@ import type { RefObject } from 'react';
 export type IframeModeProps = {
   pageId?: string;
   style?: string;
-  branding?: boolean;
   plitziContextValue: PlitziServiceContextValue;
   assets: Record<string, Asset>;
   ref: RefObject<HTMLIFrameElement | null>;
@@ -25,7 +23,6 @@ export type IframeModeProps = {
 const IframeMode = ({
   pageId = '',
   style = '',
-  branding = true,
   plitziContextValue,
   assets = emptyObject,
   ref
@@ -43,7 +40,6 @@ const IframeMode = ({
               are keyed by element id and pages never share one, so nothing from the old page survives. */}
           {pageId && <Page internalProps={pageValueMemo} />}
         </PlitziServiceProvider>
-        {branding && <MadeInPlitzi pageId={pageId} />}
         <OverQuotaNotice />
       </SpaceContainer>
     </ContainerFrame>

@@ -10,6 +10,46 @@ export type DialogContainerAttributes = AuthorableAttributes<DialogContainerProp
 const declaration = elementDeclaration<DialogContainerAttributes>()({
   type: 'dialogContainer',
   sourceType: 'dialogContainer',
+  triggers: {
+    onDialogAccept: {
+      action: 'onDialogAccept',
+      title: 'On Dialog Accept',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    onDialogReject: {
+      action: 'onDialogReject',
+      title: 'On Dialog Reject',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    onDialogOpen: {
+      action: 'onDialogOpen',
+      title: 'On Dialog Open',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    onDialogClose: {
+      action: 'onDialogClose',
+      title: 'On Dialog Close',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    }
+  },
+  callbacks: {
+    openDialog: {
+      action: 'openDialog',
+      title: 'Open Dialog',
+      type: 'callback',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    closeDialog: { action: 'closeDialog', title: 'Close Dialog', type: 'callback', preview: {}, params: {} }
+  },
   content: {
     attributes: {
       headerLabel: 'Dialog Header',
@@ -93,7 +133,7 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
             left: '50%',
             width: '500px',
             height: '300px',
-            'background-color': 'white',
+            'background-color': 'light-dark(white, oklch(0.21 0.006 285.885))',
             transform: 'translate3d(-50%, -50%, 0px)',
             'padding-top': '20px',
             'padding-bottom': '20px',

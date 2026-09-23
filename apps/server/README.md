@@ -1134,6 +1134,32 @@ A stage receives the `SSRContext` — the request, the config, and the render si
 **is** the decision to mount them: there is no config flag mirroring it, and a server that never passes them
 never loads them.
 
+## Scheduled jobs across replicas
+
+Server actions with a `schedule` trigger, and jobs queued for later, run with no configuration — over an in-process
+queue, which is right for one replica and wrong for two: each keeps its own schedules, and the jobs a replica holds
+leave with it. More than one replica needs a queue and a key/value store they share. They are adapters, so the jobs
+live in your database; for Mongo and MySQL they are already written, over the connection you already have:
+
+```ts
+import { closeOnSignals, createServer } from '@plitzi/sdk-server';
+import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-server/mongo';
+
+const db = mongoClient.db('app');
+const server = createServer({
+  adapters,
+  action: { lookups, kv: createMongoKv({ db }), jobs: { queue: createMongoJobQueue({ db }) } }
+});
+
+server.listen(3000);
+// On SIGTERM: finish the jobs this replica is running, leave the waiting ones for the next, then exit.
+closeOnSignals(server, { afterClose: () => mongoClient.close() });
+```
+
+`@plitzi/sdk-server/mysql` has the same pair over a `mysql2` pool (`createMysqlJobQueue`, `createMysqlKv`). Anything
+else is the `ActionJobQueue` contract written against your store — see
+[server actions § self-hosted](https://github.com/plitzi/plitzi-workspace/blob/main/docs/en/server-actions.md#13-for-a-self-hosted-deployment).
+
 ## Running it locally
 
 The package ships a small harness in [`dev/`](./dev) — file-backed adapters over a sample space, three demo

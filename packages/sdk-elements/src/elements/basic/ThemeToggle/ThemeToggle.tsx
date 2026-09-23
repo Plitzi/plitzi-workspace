@@ -5,12 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, use, useSyncExternalStore } fr
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
+import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback, Theme } from '@plitzi/sdk-shared';
+import type { Theme } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type ThemeToggleProps = {
@@ -134,26 +135,13 @@ const ThemeToggle = ({
     void interactionsManager.interactionTrigger(id, 'onThemeChange', { theme });
   }, [theme, interactionsManager, id]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onThemeChange: {
-        action: 'onThemeChange',
-        title: 'On Theme Change',
-        type: 'trigger',
-        params: {},
-        preview: { theme: 'dark' }
-      }
-    }),
-    []
-  );
-
   if (subType === 'segmented') {
     return (
       <RootElement
         ref={ref}
         tag="div"
         className={clsx('plitzi-component__theme-toggle plitzi-component__theme-toggle--segmented', className)}
-        interactionTriggers={interactionTriggers}
+        interactionTriggers={declaration.triggers}
       >
         {options.map(option => (
           <button
@@ -178,17 +166,17 @@ const ThemeToggle = ({
       ref={ref}
       tag="button"
       className={clsx('plitzi-component__theme-toggle plitzi-component__theme-toggle--switch', className)}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
       type="button"
       onClick={handleToggle}
       aria-label={`${lightLabel} / ${darkLabel}`}
       title={`${lightLabel} / ${darkLabel}`}
     >
       {/*
-        Both icons, always, each marked with the scheme it belongs to. WHICH one is on screen is left to the
-        space's own stylesheet, and deliberately: it is the same question the palette answers, and answering it
-        twice — once here in colours nobody chose, once there — is how a control ends up looking foreign on every
-        site that uses it. `data-theme-icon` is what a rule keys off.
+        Both icons, always, each marked with the scheme it belongs to: which one is right depends on stored
+        state, and markup that depended on it would differ between the server and the browser. The SDK's base
+        layer shows the one for the scheme in use; a space that wants otherwise keys a rule off `data-theme-icon`,
+        and its stylesheet wins. The colours stay the space's — nothing here chooses any.
       */}
       <span className={clsx('plitzi-component__theme-toggle-icon', styleSelectors.icon)} data-theme-icon="light">
         <SunIcon />

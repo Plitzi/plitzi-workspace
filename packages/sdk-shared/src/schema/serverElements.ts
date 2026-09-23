@@ -1,3 +1,5 @@
+import { resolveLayoutChain } from './layoutChain';
+
 import type { Element, Schema } from '../types';
 
 /**
@@ -11,6 +13,11 @@ import type { Element, Schema } from '../types';
  *
  * The walk is iterative to stay safe on deeply nested schemas, and follows `definition.items`, so a server element
  * nested under any number of plain containers is still found.
+ *
+ * **It starts from the page AND every shell around it.** A layout is rendered with the page — its sidebar, its header
+ * — so a server element that lives in one is on this page as far as the visitor can tell. Walked from the page alone,
+ * a provider in the dashboard's sidebar was never resolved: the payload came back empty, the element rendered with
+ * nothing, and no layer reported it.
  */
 export const collectServerElements = (schema: Schema, pageId: string | undefined, ids?: string[]): Element[] => {
   if (pageId === undefined) {
@@ -20,7 +27,16 @@ export const collectServerElements = (schema: Schema, pageId: string | undefined
   const requested = ids ? new Set(ids) : undefined;
   const collected: Element[] = [];
   const seen = new Set<string>();
-  const pending = [pageId];
+  const page = schema.flat[pageId] as Element | undefined;
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '');
+  const shells = page
+    ? resolveLayoutChain(
+        id => schema.flat[id] as Element | undefined,
+        text(page.attributes.layout),
+        text(page.attributes.layoutContainer)
+      ).map(link => link.layout)
+    : [];
+  const pending = [pageId, ...shells];
   while (pending.length > 0) {
     const id = pending.pop();
     if (id === undefined || seen.has(id)) {

@@ -355,8 +355,52 @@ Times are **UTC** unless the trigger names a **timezone** — an IANA name like 
 there in January and in July alike, and the schedule follows the change. A zone the server does not know is refused
 at save time, for the same reason an unreadable expression is.
 
-Missed ticks are **not** replayed: a scheduler that catches up fires an hour of digests at once after an outage,
-which is worse than the one nobody got.
+### What happens to a scheduled run
+
+A schedule does not run the flow directly. It produces a **job** — a durable row — and a worker picks it up. That
+is the difference between a digest that is "probably fine" and one you can answer for, because a run is only
+recorded when it FINISHES: before this, work still waiting, work in flight and work that died with the machine
+carrying it were all indistinguishable from work that never existed.
+
+Four properties follow, and they are the reason the design looks the way it does:
+
+- **A fire happens exactly once**, however many replicas reach it at the same instant. The job's id is derived from
+  the fire's own stored instant, so two replicas racing write the same id and the queue keeps the first. There is
+  no leader to elect, and therefore no minute in which the cluster has no producer.
+- **A fire is never lost.** The job is written BEFORE the schedule moves forward. A replica that dies between the
+  two leaves the schedule still due; the next sweep writes the same id — a no-op — and moves it on.
+- **A job survives its worker.** A claim is held under a lease and renewed while the flow runs. A replica that is
+  killed stops renewing, and the next worker to claim takes the job over — with the dead one's attempt written into
+  the history as `lost`, so a machine that keeps dying is visible rather than merely slow.
+- **A replica that is told to stop finishes what it is running, and nothing else.** `server.close()` — what a
+  SIGTERM from a deploy should call — stops claiming, keeps renewing the claims it holds, and waits for each running
+  job to end, however long past its lease that is. What is still waiting stays in the queue, for the replica that is
+  staying or the one the deploy starts; a job claimed in the moment the stop arrived is handed back with its attempt
+  refunded. A run is bounded by its own timeout, so that is the number an orchestrator's grace period has to cover.
+  This is also why the queue cannot live in one process's memory past one replica: the jobs waiting in it are exactly
+  the ones another process has to be able to take.
+- **No node's clock is trusted.** Every instant — is this due, has this lease lapsed, may this retry be claimed —
+  comes from the store the cluster shares. Replicas in different countries agree about what has run without
+  agreeing about what time it is.
+
+A failed run is retried with a widening backoff, up to the attempts the deployment allows, and then left as
+**dead**: visible, with every attempt and every error, for somebody to run again or drop.
+
+Missed fires are **not** replayed as a burst. After an outage the overdue fire runs once and the schedule jumps to
+the next occurrence, recording how many went by — a digest missed for a day sends once and says it missed 23,
+rather than sending 23 times.
+
+### Watching the queue
+
+Runs are history; the queue is the work. In the Plitzi dashboard, **Automations → Queue** shows what is scheduled and
+when it next fires, how many fires were missed, and every job with its status, its attempts and its last error.
+Two buttons act on a row: **Run again** — allowed on any finished job, including one that went fine, because
+re-sending last night's digest is the ordinary reason to open the screen — and **Cancel**, which drops a waiting
+job and stops a running one at its next step.
+
+Over HTTP the same thing is `GET /workspaces/:id/actions/queue`, with `POST …/actions/jobs/:jobId/retry` and
+`…/cancel`; per space, `GET /spaces/:id/actions/jobs` and `…/schedules`. All of them are the workspace's
+administrators' alone.
 
 ---
 
@@ -481,11 +525,16 @@ The same feed the panel shows is available over HTTP, for everything that is not
 dashboard, a support script, a terminal at 3am:
 
 ```
-GET /spaces/:spaceId/actions/runs?actionId=&status=&limit=&offset=
-GET /spaces/:spaceId/actions/runs/:runId
+GET  /spaces/:spaceId/actions/runs?actionId=&status=&limit=&offset=
+GET  /spaces/:spaceId/actions/runs/:runId
+GET  /spaces/:spaceId/actions/jobs?actionId=&status=&limit=&offset=
+GET  /spaces/:spaceId/actions/jobs/:jobId
+GET  /spaces/:spaceId/actions/schedules
+POST /spaces/:spaceId/actions/jobs/:jobId/retry
+POST /spaces/:spaceId/actions/jobs/:jobId/cancel
 ```
 
-Both need a session with `spaceView` on the space. They answer runs and refusals in one shape (`status: 'refused'`
+The reads need a session with `spaceView` on the space; the two that act need `spaceUpdate`. They answer runs and refusals in one shape (`status: 'refused'`
 carries the `reason` that turned a delivery away), and never the trace: step results are the space's own data, and
 a history is which steps ran and how each ended. A `runId` is what a caller already holds — it comes back on the
 answer, on the `X-Plitzi-Run-Id` header, and on the trigger that fires when a detached run lands.
@@ -525,7 +574,9 @@ Both are wired end to end and runnable: **your own tasks**, the lookups and the 
 `runtime: 'server'` element while the page is built — in
 [`02-render`](../../examples/05-with-server-actions/02-render); and **your own trigger**, over a shared `kv`
 adapter written out in full, in
-[`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger).
+[`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger). **Scheduled and delayed jobs** over a
+queue and a `kv` the deployment keeps itself — both seams written out over one SQLite file, with two replicas
+sharing it — are in [`05-schedules`](../../examples/05-with-server-actions/05-schedules).
 
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
 supplies a shared one), the database drivers `db.query` may use, the limits on what `email.send` may send, the
@@ -551,6 +602,72 @@ that only workspace admins can read.
 still running). Which of them are worth keeping is yours to decide — Plitzi's own deployment writes the
 misconfigurations into the space's activity feed and throttles them to one a minute, and sends all of them to the
 log stream.
+
+### Scheduled jobs
+
+A `schedule` trigger works with no configuration at all — over an in-process queue, which is correct for one
+replica and silently wrong for two, because each keeps its own schedules and the nightly email goes out once per
+replica. `false` turns the whole thing off for a server that must only render pages.
+
+```ts
+createServer({
+  action: {
+    lookups,
+    jobs: {
+      // Two collections, a table, whatever the replicas already share. Not a cache: this holds work nobody can
+      // re-derive if it is evicted.
+      queue: myJobQueue,
+      // The spaces this server schedules for. A multi-tenant deployment answers the same question with
+      // `lookups.listScheduledSpaces` instead.
+      spaces: [1],
+      // Jobs this replica runs AT ONCE. The number to raise when a backlog drains too slowly.
+      workers: 4
+    }
+  }
+});
+```
+
+Everything else has a working default: `leaseMs` (30s — how long a claim survives without a heartbeat, which is
+the window a killed replica's jobs are picked up in), `maxAttempts` (3), `backoff` (30s doubling to 15 minutes),
+`pollMs`, `schedulePollMs`, and `produce` — set it `false` on a pod that should consume without sweeping, or set
+`workers: 0` on one that should sweep without consuming.
+
+`workers` never widens the run guards: `concurrency.perSpace` still caps one space's runs per replica, and a job
+over that ceiling goes back to the queue rather than failing, with its attempt refunded.
+
+**The queue is a seam, and it has one rule the adapter cannot be written without: every instant comes from the
+store.** `now()` is the cluster's clock, and every comparison the queue makes internally — is this schedule due,
+has this lease lapsed, may this retry be claimed — is made against it, never against the caller's. That is why
+`settle` takes a `delayMs` and not a deadline, and `claim` a `leaseMs` and not a `leaseUntil`: durations survive a
+cluster spread across time zones and machines whose clocks drift; absolute instants minted by a caller do not.
+`enqueue` must be idempotent by id and answer whether it created the job — that alone is what makes a fire happen
+exactly once with several replicas producing — and `claim` must be atomic and must also reclaim jobs whose lease
+has lapsed.
+
+Schedules are rows derived from the action documents. Call `reconcile(spaceId)` whenever a space's actions change
+— the deployment is the only thing that knows when that is — and the periodic pass over `listScheduledSpaces`
+catches whatever a missed call left behind.
+
+**If the replicas already share Mongo or MySQL, the adapters are written.** The package keeps no data of its own and
+opens no connection: these take the database the deployment already has, create what their queries need (indexes,
+or three tables) on first use, and pass the same contract tests as the in-process queue.
+
+```ts
+import { createMongoJobQueue, createMongoKv } from '@plitzi/sdk-server/mongo'; // `mongodb`, your client
+import { createMysqlJobQueue, createMysqlKv } from '@plitzi/sdk-server/mysql'; // `mysql2`, your pool
+
+const db = mongoClient.db('app');
+createServer({ action: { lookups, kv: createMongoKv({ db }), jobs: { queue: createMongoJobQueue({ db }) } } });
+```
+
+Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store.
+[`05-schedules`](../../examples/05-with-server-actions/05-schedules) is one written out: every method of the queue
+over SQLite, each rule above one place in the file, and a page to watch two replicas share it.
+
+**Close the server on SIGTERM.** A deploy stops a replica with a signal, and a process that simply exits leaves every
+running job to be retried by somebody else. `closeOnSignals(server, { afterClose })` (from `@plitzi/sdk-server`) calls
+`server.close()` — which finishes the jobs this replica is running and leaves the waiting ones in the queue — and only
+then lets the process exit. A deployment that already handles its own signals calls `server.close()` from there.
 
 ### The `kv` store
 

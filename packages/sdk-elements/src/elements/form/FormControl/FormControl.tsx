@@ -1,12 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react-hooks/rules-of-hooks */
 import clsx from 'clsx';
-import { use, useCallback, useEffect, useMemo } from 'react';
+import { use, useCallback, useEffect } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import Label from './components/Label';
+import declaration from './declaration';
 import withFieldValue from './hocs/withFieldValue';
 import Checkbox from './inputs/Checkbox';
 import Hidden from './inputs/Hidden';
@@ -19,7 +20,6 @@ import RootElement from '../../../Element/RootElement';
 
 import type { FormContextValue } from '../Form';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { ChangeEvent, RefObject } from 'react';
 
 export type FormControlProps = {
@@ -121,18 +121,6 @@ const FormControl = ({
    * The value is handed over already read off the element, so a flow writes `{{ <trigger>.value }}` without knowing
    * whether it came from a checkbox or a text box.
    */
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onChange: {
-        action: 'onChange',
-        title: 'On Change',
-        type: 'trigger',
-        params: {},
-        preview: { value: '', name: '' }
-      }
-    }),
-    []
-  );
 
   const handleChangeInteraction = useCallback(
     (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLTextAreaElement>) => {
@@ -185,7 +173,7 @@ const FormControl = ({
   return (
     <RootElement
       ref={ref}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
       className={clsx(
         'plitzi-component__form-control',
         { 'form-control--invalid': error && previewMode, [`plitzi-component__form-control-${subType}`]: subType },

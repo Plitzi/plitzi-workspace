@@ -1,3 +1,5 @@
+import type { InteractionCallback } from '../types/InteractionTypes';
+
 /**
  * How an element says what it can be authored with.
  *
@@ -31,6 +33,26 @@ export interface ElementDeclarationData {
    * reads it to resolve a binding that named the element alone.
    */
   sourceType?: string;
+  /**
+   * The triggers this type fires on top of the ones every element does (`onClick`, `onLoad`…), by action name.
+   *
+   * Declared here for the reason `sourceType` is: the component registers exactly these, and the authoring surface
+   * reads them to refuse a flow that starts on a trigger its element never fires — an `onSubmit` on the submit
+   * button rather than on the form is a flow that is written, saved and silently never runs.
+   */
+  triggers?: Record<string, InteractionCallback>;
+  /**
+   * The callbacks this type runs on itself on top of the ones every element does (`setState`, `toggleState`) —
+   * their static half. The component adds what only a mounted element has: the function, a title naming its label,
+   * options drawn from its children. Read by the authoring surface to refuse a step aimed at an element that does not
+   * answer to it — an `openModal` sent to a plain container is a button that does nothing.
+   */
+  callbacks?: Record<string, InteractionCallback>;
+  /**
+   * The type this one only works somewhere inside: it reads its state from that element's context, and anywhere
+   * else it throws on its first render. A dropdown's panel, a tab container's header and body.
+   */
+  ancestorType?: string;
   content?: {
     attributes?: Record<string, unknown>;
     definition?: { label?: string };

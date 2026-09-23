@@ -151,7 +151,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.21",
+    "@plitzi/plitzi-ui": "^1.6.22",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
     "zod": "^4.6.5"

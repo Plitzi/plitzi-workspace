@@ -130,10 +130,16 @@ const verifyParams = (verify: WebhookVerifySpec | undefined): Partial<ActionTrig
       }
     : {};
 
-const triggerStep = (spec: ActionTriggerSpec, id: string): StepSpec => ({
+/**
+ * A way in, as the step the flow starts on. Titled with the action's name: the trigger's title IS what the builder,
+ * the run history and the queue call the action (`actionName`), and left to the default it would read as its kind —
+ * a workspace of actions all called "render".
+ */
+const triggerStep = (spec: ActionTriggerSpec, id: string, name: string): StepSpec => ({
   id,
   type: 'trigger',
   action: spec.type,
+  title: name,
   params: {
     ...('access' in spec ? accessParams(spec.access) : {}),
     ...(spec.input ? { input: JSON.stringify(spec.input) } : {}),
@@ -230,7 +236,7 @@ export const defineAction = (spec: ActionSpec): ActionEntry => {
   });
 
   const steps: StepSpec[] = [
-    ...triggers.map((trigger, index) => triggerStep(trigger, triggerIds[index])),
+    ...triggers.map((trigger, index) => triggerStep(trigger, triggerIds[index], spec.name)),
     ...spec.steps.map(taskStep),
     { id: 'answer', type: 'task', action: 'flow.output', params: { values: spec.output ?? `{{ ${last.id} }}` } },
     // After the answer, because a run that reaches the handler has succeeded and ends there.

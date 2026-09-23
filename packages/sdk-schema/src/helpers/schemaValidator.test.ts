@@ -721,6 +721,57 @@ describe('schemaValidator', () => {
     });
   });
 
+  describe('form submit', () => {
+    const submit = (enabled = true) =>
+      ({
+        id: 'submitted',
+        title: 'On Form Submit',
+        type: 'trigger',
+        action: 'onSubmit',
+        params: {},
+        preview: {},
+        elementId: null,
+        beforeNode: '',
+        afterNode: '',
+        flowId: 'submitted',
+        enabled
+      }) as never;
+
+    const withForm = (managedByInteractions: boolean, enabled = true): Schema => ({
+      ...EMPTY_SCHEMA.schema,
+      pages: ['page-1'],
+      flat: {
+        'page-1': {
+          ...createElement('page-1', 'page'),
+          definition: { ...createElement('page-1', 'page').definition, items: ['signup'] }
+        },
+        signup: {
+          ...createElement('signup', 'form'),
+          attributes: { managedByInteractions },
+          definition: {
+            ...createElement('signup', 'form').definition,
+            parentId: 'page-1',
+            interactions: { submitted: submit(enabled) }
+          }
+        }
+      }
+    });
+
+    // Left unmanaged, the browser submits the form itself and the flow is saved, correct, and never runs.
+    it('warns about an onSubmit flow on a form the browser submits natively', () => {
+      const result = validateSchema(withForm(false));
+
+      expect(result.warnings).toContainEqual(
+        expect.objectContaining({ code: 'FORM_SUBMIT_UNMANAGED', elementId: 'signup' })
+      );
+    });
+
+    it('says nothing once the form hands its submit to the flow, or when the flow is switched off', () => {
+      expect(validateSchema(withForm(true)).warnings.map(w => w.code)).not.toContain('FORM_SUBMIT_UNMANAGED');
+      expect(validateSchema(withForm(false, false)).warnings.map(w => w.code)).not.toContain('FORM_SUBMIT_UNMANAGED');
+    });
+  });
+
   // Tests for baseElementId (useful for AI templates/previews)
   describe('baseElementId option (AI templates/previews)', () => {
     it('should validate valid template without pages when baseElementId provided', () => {

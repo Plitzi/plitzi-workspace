@@ -746,9 +746,17 @@
       "types": "./dist/elements/provider/ApiContainer/declaration.d.ts",
       "import": "./dist/elements/provider/ApiContainer/declaration.mjs"
     },
+    "./elements/provider/ApiContainer/helpers/providerOutcome": {
+      "types": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.mjs"
+    },
     "./elements/provider/ApiContainer/hooks/useApi": {
       "types": "./dist/elements/provider/ApiContainer/hooks/useApi.d.ts",
       "import": "./dist/elements/provider/ApiContainer/hooks/useApi.mjs"
+    },
+    "./elements/provider/ApiContainer/hooks/useAutoRefresh": {
+      "types": "./dist/elements/provider/ApiContainer/hooks/useAutoRefresh.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/hooks/useAutoRefresh.mjs"
     },
     "./elements/provider/ApiContainer/hooks/useProviderPagination": {
       "types": "./dist/elements/provider/ApiContainer/hooks/useProviderPagination.d.ts",
@@ -1013,7 +1021,7 @@
   "sideEffects": false,
   "dependencies": {
     "@plitzi/nexus": "^1.2.2",
-    "@plitzi/plitzi-ui": "^1.6.21",
+    "@plitzi/plitzi-ui": "^1.6.22",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

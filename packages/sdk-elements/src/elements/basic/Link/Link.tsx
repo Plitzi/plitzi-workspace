@@ -47,8 +47,8 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
       return href;
     }
 
-    const urlAux = `/${href}`.replaceAll(/[/]+/gim, '/');
     if (mode === 'internal') {
+      const urlAux = `/${href}`.replaceAll(/[/]+/gim, '/');
       try {
         const result = processTwig(urlAux, { ...queryParams, ...routeParams }, true);
         if (typeof result !== 'string') {

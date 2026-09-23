@@ -67,6 +67,15 @@ const defaultErrorStyle = {
 
 const declaration = elementDeclaration<FormControlAttributes>()({
   type: 'formControl',
+  triggers: {
+    onChange: {
+      action: 'onChange',
+      title: 'On Change',
+      type: 'trigger',
+      params: {},
+      preview: { value: '', name: '' }
+    }
+  },
   content: {
     attributes: {
       subType: 'text',

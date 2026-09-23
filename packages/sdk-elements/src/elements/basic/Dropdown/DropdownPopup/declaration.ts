@@ -9,6 +9,7 @@ export type DropdownPopupAttributes = AuthorableAttributes<DropdownPopupProps>;
 
 const declaration = elementDeclaration<DropdownPopupAttributes>()({
   type: 'dropdownPopup',
+  ancestorType: 'dropdown',
   content: {
     attributes: {},
     definition: {
@@ -46,7 +47,7 @@ const declaration = elementDeclaration<DropdownPopupAttributes>()({
       style: {
         base: {
           default: {
-            'background-color': 'white',
+            'background-color': 'light-dark(white, oklch(0.21 0.006 285.885))',
             'padding-right': '4px',
             'padding-bottom': '4px',
             'padding-left': '4px',

@@ -1429,18 +1429,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   outline: 2px solid var(--accent); outline-offset: 3px;
 }
 
-/* The toggle ships both icons and no opinion: the scheme picks one, and a class on the root overrides the machine. */
-.plitzi-component__theme-toggle [data-theme-icon] { display: none; align-items: center; }
-.plitzi-component__theme-toggle [data-theme-icon='light'] { display: inline-flex; }
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) .plitzi-component__theme-toggle [data-theme-icon='light'] { display: none; }
-  :root:not(.light) .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: inline-flex; }
-}
-:root.dark .plitzi-component__theme-toggle [data-theme-icon='light'] { display: none; }
-:root.dark .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: inline-flex; }
-:root.light .plitzi-component__theme-toggle [data-theme-icon='light'] { display: inline-flex; }
-:root.light .plitzi-component__theme-toggle [data-theme-icon='dark'] { display: none; }
-
 /* The dot beside "Abierto ahora": a pseudo-element, which no class can declare. */
 .hoursStatus::before, .hoursStatusOpen::before {
   content: ''; width: 8px; height: 8px; border-radius: 999px; background: currentColor; opacity: 0.6;

@@ -9,7 +9,7 @@ no server, no account, no API key. The last two move the render to the server.
 | 02 | [render](./02-render) | The same `render()` call from a bundled app | 4001 |
 | 03 | [react-component](./03-react-component) | `<PlitziSdk>` inside your own React tree | 4002 |
 | 04 | [server-rendered](./04-server-rendered) | The same space, rendered by the server | 4003 |
-| 05 | [from-the-cloud](./05-from-the-cloud) | Your server, serving a space that lives in Plitzi | 4005 |
+| 05 | [from-the-cloud](./05-from-the-cloud) | Your server, serving a space that lives in Plitzi | 8080 |
 
 ## With or without a server
 

@@ -38,6 +38,17 @@ describe('getProps (element resolution)', () => {
     expect(result.attributes.text).toBe('Hello');
   });
 
+  it('resolves a text element content binding from runtime state', () => {
+    const element = makeElement(
+      { attributes: [{ id: 'b1', source: 'state.genre', to: 'content', enabled: true }] },
+      { content: 'All genres' }
+    );
+    const result = getProps(element, internal, { state: { genre: 'Arcade' } });
+
+    // Declarations use `bindings` for builder metadata; resolution itself is generic and reaches native elements too.
+    expect(result.attributes.content).toBe('Arcade');
+  });
+
   it('interpolates variable tokens in string attributes', () => {
     const result = getProps(makeElement(undefined, { text: '{{ name }}' }), internal, { variables: { name: 'Bob' } });
 

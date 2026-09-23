@@ -266,6 +266,12 @@ export const foldCustomCss = (
     }
   }
 
+  // Nothing moved, nothing to tidy: the stylesheet goes back exactly as it was written, whitespace included, or a
+  // space read back and authored again would differ from itself by a line break.
+  if (folded.length === 0) {
+    return { folded, remaining: stylesheet };
+  }
+
   const remaining = kept
     .join('')
     .replace(/\n{3,}/g, '\n\n')

@@ -1,11 +1,12 @@
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { BREAKPOINTS, classNames, classRefs, isStyleDeclaration, sameBlocks, toBlocks } from '../style';
-import { GLOBAL_SOURCES, groupBindings, withVisibility } from './bindings';
+import { GLOBAL_SOURCES, groupBindings, hasVisibilityBinding, withVisibility } from './bindings';
 import { authorFlows } from './flows';
 import { buildHandles, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
@@ -13,10 +14,11 @@ import { didYouMean } from './suggest';
 import { assertSpaceValid } from './validate';
 
 import type { SourceIndex } from './bindings';
-import type { ElementHandle, PageHandle } from './handles';
+import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
+  BindingSpec,
   ElementSpec,
   ElementStyleSpec,
   LayoutRef,
@@ -57,6 +59,28 @@ const withCache = (item: Omit<StyleItem, 'cache'>): StyleItem => {
 const layoutAttributes = (layout: LayoutRef | undefined): Record<string, string> =>
   layout ? { layout: layout.id, layoutContainer: layout.slot } : {};
 
+/**
+ * Sources already known on the first render — what a flow wrote, the route, the space's variables, the theme. A
+ * condition on them resolves in the same render that paints the element, so it has no loading frame to flash in.
+ */
+const SETTLED_SOURCES = new Set(['state', 'navigation', 'variables', 'theme']);
+
+/** Types whose content is prose, where a \`{{ }}\` is far more often a sample of code than a template. */
+const PROSE_TYPES = new Set(['markdown', 'richText', 'blockHtml', 'blockJsx', 'nodeHtml']);
+
+/** Every string inside a value, however deep — a step's params nest objects and lists of them. */
+const stringsIn = (value: unknown): string[] => {
+  if (typeof value === 'string') {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(stringsIn);
+  }
+
+  return typeof value === 'object' && value !== null ? Object.values(value).flatMap(stringsIn) : [];
+};
+
 class SpaceAuthor {
   private readonly flatMap = new FlatMap({ flat: {}, variables: [] });
 
@@ -68,6 +92,10 @@ class SpaceAuthor {
   private readonly authorNames = new Set<string>();
 
   private readonly pagePaths = new Set<string>();
+
+  /** Where each id was written, so a second element answering to it can say where the first one is. */
+  private readonly authoredAt = new Map<string, string>();
+
   /** Each folder's route prefix, resolved through its parents. Filled before any page is written. */
   private readonly folderPrefixes = new Map<string, string>();
 
@@ -78,9 +106,12 @@ class SpaceAuthor {
    * it out, and the derived `<type>-<n>` exists nowhere until it is minted below.
    */
   private readonly handles: Record<string, PageHandle> = {};
+  private readonly layoutHandles: Record<string, LayoutHandle> = {};
 
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
   private readonly classRules = new Map<string, ResponsiveBlock>();
+  /** Every element's own selector, named or derived — each one is that element's alone. */
+  private readonly ownSelectors = new Set<string>();
 
   /** Every element in this space that publishes a data source, by id, and the name it publishes it under. */
   private readonly sources: SourceIndex = new Map();
@@ -89,6 +120,8 @@ class SpaceAuthor {
    *  free to register a module of its own, and refusing what this process cannot see would make the check useless
    *  for exactly the spaces that need it most. */
   private readonly stepWarnings: SchemaValidationError[] = [];
+  /** Element callback steps, checked once every element exists: a step may target one declared further down. */
+  private readonly callbackSteps: { action: string; target: string; where: string }[] = [];
 
   /** Rules that render, and render differently from what they plainly mean — see `warnTabletOnly`. */
   private readonly styleWarnings: SchemaValidationError[] = [];
@@ -141,7 +174,11 @@ class SpaceAuthor {
     });
 
     for (const [name, responsive] of this.classRules) {
-      this.writeSelector(name, responsive, `Class "${name}"`);
+      // A class declared with no rules is still a class the space has — a hook for a stylesheet, a name its elements
+      // wear — so it is written, empty. Left out, the document stops saying it exists, and reading it back drops the
+      // name from every element wearing it.
+      const blocks = BREAKPOINTS.some(breakpoint => responsive[breakpoint]) ? responsive : { desktop: {} };
+      this.writeSelector(name, blocks, `Class "${name}"`);
     }
 
     this.assertAncestorClasses();
@@ -153,6 +190,7 @@ class SpaceAuthor {
     // declared further down.
     layouts.forEach(layout => this.assertLayoutRef(layout.layout, `Layout "${layout.id}"`));
     this.spec.pages.forEach(page => this.assertLayoutRef(page.layout, `Page "${page.name}"`));
+    this.assertCallbacksAnswered();
 
     const style: Style = {
       ...EMPTY_STYLE_SCHEMA,
@@ -187,7 +225,7 @@ class SpaceAuthor {
     return {
       schema,
       style,
-      handles: buildHandles(this.handles),
+      handles: buildHandles(this.handles, this.layoutHandles),
       warnings: [...this.stepWarnings, ...this.styleWarnings, ...warnings]
     };
   }
@@ -204,25 +242,158 @@ class SpaceAuthor {
    * one. An action the catalog has never heard of is a warning instead, because a plugin may register a module of
    * its own and this process cannot see it.
    *
-   * Triggers, element callbacks and tasks are left alone on purpose: an element type publishes its own triggers and
-   * callbacks, and a task belongs to whatever server runs the flow. None of them are knowable from here.
+   * A trigger is held to the element it is declared on, when that is a built-in type: the vocabulary says every
+   * event such a type fires. A plugin's type publishes its own, and element callbacks and tasks belong to an element
+   * or a server this process cannot see, so those are left alone.
    */
-  private assertStepsKnown(flows: StepSpec[][] | undefined, where: string): void {
+  private assertStepsKnown(flows: StepSpec[][] | undefined, where: string, type: string, hostId: string): void {
     const vocabulary = this.options.vocabulary;
-    if (!vocabulary || !flows) {
+    if (!flows) {
       return;
     }
 
     for (const steps of flows) {
+      const stepIds = new Set(steps.map(step => step.id).filter((id): id is string => id !== undefined));
       for (const step of steps) {
+        // This check needs no runtime vocabulary: the document itself says it is addressing the built-in state
+        // source. Keep it available to the lower-level schema entry point as well as the composed SDK surface.
+        if (step.type === 'globalCallback' && step.on === 'state') {
+          this.warnStatePaths(step, where);
+        }
+
+        if (step.type !== 'trigger') {
+          this.assertFlowSourcesInFull(step, stepIds, where);
+        }
+
+        if (!vocabulary) {
+          continue;
+        }
+
         if (step.type === 'globalCallback') {
           this.assertGlobalCallback(step, vocabulary, where);
+        }
+
+        // A trigger naming another element (`on`) fires on that one, which is its own business.
+        if (step.type === 'trigger' && step.on === undefined && vocabulary.triggers) {
+          this.assertTriggerFired(step, type, vocabulary.triggers, where);
+        }
+
+        if (step.type === 'callback' && vocabulary.callbacks) {
+          this.callbackSteps.push({ action: step.action, target: step.on ?? hostId, where });
         }
 
         if (step.type === 'utility') {
           this.assertUtility(step, vocabulary, where);
         }
       }
+    }
+  }
+
+  /**
+   * Whose vocabulary `variant` names: the element type's, unless a class the element wears declares that variant and
+   * the type does not. The variant map is keyed by selector, and the class is the selector those rules live on — keyed
+   * by the type, `avatar--violet` was never worn and the element rendered as if no variant had been asked for.
+   */
+  private variantOwner(spec: ElementSpec, variant: string): string {
+    if (this.spec.elements?.[spec.type]?.variants?.[variant] !== undefined || spec.class === undefined) {
+      return spec.type;
+    }
+
+    const owner = classNames(spec.class).find(name =>
+      Object.values(this.classRules.get(name) ?? {}).some(block => block.variants?.[variant] !== undefined)
+    );
+
+    return owner ?? spec.type;
+  }
+
+  /**
+   * A source read INSIDE a flow has to be named in full: `{{ list_jobRows.item.id }}`, not `{{ jobRows.item.id }}`.
+   *
+   * A binding's source is a name this module completes — `jobRows.item` becomes `list_jobRows.item` — so the short
+   * form is the one an author learns first. A step's params are templates the runtime resolves against the flow
+   * scope as written, and there the short form names nothing: the token renders empty, the button posts a blank
+   * id, and every layer below reports success. Refused with the name it should have been, rather than rewritten,
+   * because a template is the author's text and a token inside it can be anything twig allows.
+   *
+   * A root that is also a step of the same flow is that step's result, and is left alone.
+   */
+  private assertFlowSourcesInFull(step: StepSpec, stepIds: Set<string>, where: string): void {
+    const texts: string[] = [];
+    const collect = (value: unknown): void => {
+      if (typeof value === 'string') {
+        texts.push(value);
+      } else if (Array.isArray(value)) {
+        value.forEach(collect);
+      } else if (typeof value === 'object' && value !== null) {
+        Object.values(value).forEach(collect);
+      }
+    };
+    collect(step.params);
+
+    for (const template of texts) {
+      for (const [, expression = ''] of template.matchAll(/\{\{([\s\S]*?)\}\}/g)) {
+        for (const [, , root = ''] of expression.matchAll(/(^|[^\w.$-])([A-Za-z_][\w-]*)\.[A-Za-z_]/g)) {
+          const prefix = this.sources.get(root);
+          if (prefix && !stepIds.has(root)) {
+            throw new Error(
+              `${where}: step "${step.id ?? step.action}" reads "{{ ${expression.trim()} }}". Inside a flow a source is named in full — write "${prefix}_${root}" where it says "${root}". (A binding completes the prefix; a flow's templates are read as written.)`
+            );
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Refused rather than warned: a trigger its element never fires is a flow that is saved, looks right beside the
+   * element it was meant for, and never runs — there is no reading of it that works. The error names the types that
+   * DO fire it, because the usual mistake is one element off: `onSubmit` on the submit button, not the form.
+   */
+  private assertTriggerFired(
+    step: StepSpec,
+    type: string,
+    triggers: Record<string, readonly string[]>,
+    where: string
+  ): void {
+    const fired = Object.hasOwn(triggers, type) ? triggers[type] : undefined;
+    if (!fired || fired.includes(step.action)) {
+      return;
+    }
+
+    const firedBy = Object.keys(triggers).filter(candidate => triggers[candidate].includes(step.action));
+    const hint = firedBy.length
+      ? ` It is fired by ${firedBy.map(candidate => `"${candidate}"`).join(', ')}: declare the flow on that element.`
+      : ` No built-in element fires it${didYouMean(step.action, fired) || '.'}`;
+
+    throw new Error(`${where} starts a flow on "${step.action}", which a "${type}" never fires.${hint}`);
+  }
+
+  /**
+   * An element callback runs on the element it names, and a built-in type says which ones it answers to.
+   *
+   * Refused for the reason a trigger is: `openModal` sent to a plain container is a button that does nothing, saved
+   * and reported nowhere. A target that is missing is the validator's to report, and one of a plugin's type is left
+   * alone — that type registers callbacks nobody here can see.
+   */
+  private assertCallbacksAnswered(): void {
+    const callbacks = this.options.vocabulary?.callbacks;
+    if (!callbacks) {
+      return;
+    }
+
+    for (const { action, target, where } of this.callbackSteps) {
+      const type = (this.flatMap.flat[target] as Element | undefined)?.definition.type;
+      const answered = type !== undefined && Object.hasOwn(callbacks, type) ? callbacks[type] : undefined;
+      if (!answered || answered.includes(action)) {
+        continue;
+      }
+
+      const answeredBy = Object.keys(callbacks).filter(candidate => callbacks[candidate].includes(action));
+      const hint = answeredBy.length
+        ? ` It is a callback of ${answeredBy.map(candidate => `"${candidate}"`).join(', ')}: aim it at one of those.`
+        : ` No built-in element answers to it${didYouMean(action, answered) || '.'}`;
+
+      throw new Error(`${where} sends "${action}" to "${target}", a "${type}" that never answers to it.${hint}`);
     }
   }
 
@@ -244,6 +415,41 @@ class SpaceAuthor {
       throw new Error(
         `${where} runs the global callback "${step.action}" on ${step.on === undefined ? 'no module' : `"${step.on}"`}, but it is registered on "${declared.source}". A global callback names the module that registered it, never the element the flow sits on — the step builders fill this in.`
       );
+    }
+  }
+
+  /**
+   * State callbacks already operate below `runtime.state`.
+   *
+   * Keeping this a warning deliberately preserves the document exactly as authored: a nested `state` object is
+   * possible, even though `key: 'state.genre'` is overwhelmingly a confused binding source rather than an
+   * intentional request for `runtime.state.state.genre`. An agent gets the correction at author time without a
+   * migration or a changed runtime meaning for existing spaces.
+   */
+  private warnStatePaths(step: StepSpec, where: string): void {
+    const pathParams: Record<string, string[]> = {
+      setState: ['key'],
+      toggleState: ['key'],
+      appendState: ['key'],
+      removeState: ['key'],
+      toggleInState: ['key'],
+      clearState: ['key'],
+      moveState: ['from', 'to']
+    };
+    const params = pathParams[step.action] ?? [];
+
+    for (const param of params) {
+      const value = step.params?.[param];
+      if (typeof value !== 'string' || !/^(?:runtime\.)?state\./.test(value)) {
+        continue;
+      }
+
+      const bare = value.replace(/^(?:runtime\.)?state\./, '');
+      this.stepWarnings.push({
+        code: 'state-key-has-runtime-prefix',
+        message: `${where} passes "${value}" as ${param} to state.${step.action}. State callbacks already write below \`runtime.state\`; use "${bare}" instead, unless you intentionally need \`runtime.state.${value}\`.`,
+        details: { action: step.action, param, value, suggested: bare }
+      });
     }
   }
 
@@ -482,6 +688,24 @@ class SpaceAuthor {
   }
 
   /**
+   * A name given to an element's own selector has to be one nothing else answers to: a declared class would have its
+   * rules overwritten, and a second element naming it would share rules it never asked for.
+   */
+  private assertOwnSelector(name: string, where: string): void {
+    if (!/^-?[_a-zA-Z][_a-zA-Z0-9-]*$/.test(name)) {
+      throw new Error(`${where} names its selector "${name}", which is not a CSS class name.`);
+    }
+
+    if (this.classRules.has(name) || this.ownSelectors.has(name)) {
+      throw new Error(
+        `${where} names its selector "${name}", which ${this.classRules.has(name) ? 'is a class this space declares' : 'another element already names'}. Use \`class\` to share rules; a selector of an element's own is its alone.`
+      );
+    }
+
+    this.ownSelectors.add(name);
+  }
+
+  /**
    * A shared class when one was named, otherwise a selector of this element's own, named after where it sits.
    *
    * The two are exclusive because an element has exactly one base selector: asking for a shared rule AND a rule of
@@ -490,8 +714,14 @@ class SpaceAuthor {
    */
   private selectorFor(
     path: string,
-    spec: { type: string; class?: ClassList; css?: CssSpec; states?: StatesSpec }
+    spec: { type: string; class?: ClassList; css?: CssSpec; states?: StatesSpec; selector?: string }
   ): string {
+    if (spec.class && spec.selector) {
+      throw new Error(
+        `Element "${spec.type}" at ${path} names its own selector ("${spec.selector}") and wears a shared class. A shared class IS its selector: drop one of the two.`
+      );
+    }
+
     if (spec.class) {
       const names = classNames(spec.class);
       names.forEach(name => this.assertClass(name, `Element "${spec.type}" at ${path}`));
@@ -507,10 +737,23 @@ class SpaceAuthor {
 
     // A class may carry any name — one read back from a builder document is `container-555c` — so the name derived
     // for an element's own rules steps past a class that already answers to it rather than overwriting its rules.
+    if (spec.selector !== undefined) {
+      this.assertOwnSelector(spec.selector, `Element "${spec.type}" at ${path}`);
+      this.writeSelector(
+        spec.selector,
+        toBlocks({ css: spec.css, states: spec.states }),
+        `Element "${spec.type}" at ${path}`
+      );
+
+      return spec.selector;
+    }
+
     let selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}`, 4)}`;
-    for (let attempt = 1; this.classRules.has(selector); attempt += 1) {
+    for (let attempt = 1; this.classRules.has(selector) || this.ownSelectors.has(selector); attempt += 1) {
       selector = `${spec.type}-${digest(`plitzi:selector:${this.spec.permanentUrl}:${path}#${attempt}`, 4)}`;
     }
+
+    this.ownSelectors.add(selector);
 
     this.writeSelector(selector, toBlocks({ css: spec.css, states: spec.states }), `Element "${spec.type}" at ${path}`);
 
@@ -525,11 +768,50 @@ class SpaceAuthor {
    * belonged to authors perfectly well. The reason it is nearly always declined is a name two elements share,
    * and a name written twice is worth hearing about at the line that wrote it.
    */
-  private insert(element: Element, to: string, position: DropPosition): void {
+  private insert(element: Element, to: string, position: DropPosition, path = to): void {
+    const earlier = this.authoredAt.get(element.id);
+    if (earlier !== undefined) {
+      throw new Error(
+        `Element "${element.id}" (${element.definition.type}) at ${path} uses a name already taken at ${earlier}. Ids are one namespace for the whole space — layouts and every page share it — so an element built by a function called more than once needs its id prefixed by what it is for (\`\${pageId}-foot\`).`
+      );
+    }
+
     if (!this.flatMap.addElement(element, to, position)) {
       throw new Error(
-        `Could not author element "${element.id}" (${element.definition.type}): the schema refused it, which usually means another element already answers to that name`
+        `Could not author element "${element.id}" (${element.definition.type}) at ${path}: the schema refused it`
       );
+    }
+
+    this.authoredAt.set(element.id, path);
+  }
+
+  /**
+   * A source read inside a BINDING's template is named in full too: \`{{ apiContainer_stats.data.total }}\`.
+   *
+   * The binding's own \`source\` is completed for you, which is exactly why the short name looks right inside its
+   * template as well. It is not: the template is read as written, the short name resolves to nothing, and the
+   * element renders whatever the empty branch says — every card of a list reading "Shared" because none of them
+   * found the stats it was looking for. Refused with the name it should have been.
+   */
+  private assertTemplateSourcesInFull(bindings: BindingSpec[] | undefined, where: string): void {
+    for (const binding of bindings ?? []) {
+      for (const transformer of binding.transformers ?? []) {
+        const template: unknown = transformer.params.template;
+        if (transformer.action !== 'twigTemplate' || typeof template !== 'string') {
+          continue;
+        }
+
+        for (const [, expression = ''] of template.matchAll(/\{[{%]([\s\S]*?)[}%]\}/g)) {
+          for (const [, , root = ''] of expression.matchAll(/(^|[^\w.$-])([A-Za-z_][\w-]*)\.[A-Za-z_]/g)) {
+            const prefix = this.sources.get(root);
+            if (prefix && root !== 'source') {
+              throw new Error(
+                `${where}: a binding of "${binding.to}" reads "${root}" in its template. Inside a template a source is named in full — write "${prefix}_${root}" where it says "${root}". (The binding's own \`source\` is completed for you; its template is read as written.)`
+              );
+            }
+          }
+        }
+      }
     }
   }
 
@@ -614,14 +896,13 @@ class SpaceAuthor {
 
   private addPage(page: PageSpec, index: number): string {
     const path = this.pathFor(page, index);
-    this.assertStepsKnown(page.flows, `Page "${page.name}"`);
+    const id = page.id ?? this.nextId('page');
+    this.assertStepsKnown(page.flows, `Page "${page.name}"`, 'page', id);
     if (page.folder !== undefined && !this.folderPrefixes.has(page.folder)) {
       throw new Error(
         `Page "${page.name}" is in folder "${page.folder}", which this space does not declare${didYouMean(page.folder, [...this.folderPrefixes.keys()])}`
       );
     }
-
-    const id = page.id ?? this.nextId('page');
 
     const element: Element = {
       id,
@@ -646,13 +927,15 @@ class SpaceAuthor {
         type: 'page',
         rootId: id,
         items: [],
-        styleSelectors: { base: this.selectorFor(path, { type: 'page', css: page.css, class: page.class }) },
+        styleSelectors: {
+          base: this.selectorFor(path, { type: 'page', css: page.css, class: page.class, selector: page.selector })
+        },
         ...(page.flows ? { interactions: authorFlows(page.flows, id) } : {})
       }
     };
 
     // `custom` is the one drop position that inserts without a parent, which is what a page is.
-    this.insert(element, '', 'custom');
+    this.insert(element, '', 'custom', path);
 
     this.handles[id] = {
       id,
@@ -682,7 +965,7 @@ class SpaceAuthor {
   private addLayout(layout: LayoutSpec): void {
     const path = `${this.spec.permanentUrl}/layout:${layout.id}`;
     const where = `Layout "${layout.id}"`;
-    this.assertStepsKnown(layout.flows, where);
+    this.assertStepsKnown(layout.flows, where, 'layoutContainer', layout.id);
     if (layout.folder && !this.folderPrefixes.has(layout.folder)) {
       throw new Error(
         `${where} is filed in folder "${layout.folder}", which this space does not declare${didYouMean(layout.folder, [...this.folderPrefixes.keys()])}`
@@ -690,6 +973,7 @@ class SpaceAuthor {
     }
 
     const bindings = withVisibility({ bind: layout.bind });
+    this.assertTemplateSourcesInFull(bindings, where);
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
     const element: Element = {
       id: layout.id,
@@ -712,7 +996,15 @@ class SpaceAuthor {
       }
     };
 
-    this.insert(element, '', 'custom');
+    this.insert(element, '', 'custom', path);
+    this.layoutHandles[layout.id] = {
+      id: layout.id,
+      type: 'layoutContainer',
+      pageId: layout.id,
+      selector: selectorFor(layout.id),
+      named: true,
+      elements: {}
+    };
     layout.body.forEach((child, index) => this.addElement(child, `${path}/${index}`, layout.id, layout.id));
   }
 
@@ -742,6 +1034,19 @@ class SpaceAuthor {
     }
   }
 
+  /**
+   * The type's other selectors, empty: each one is a `plitzi__<type>-<slot>` class on the element's own markup.
+   *
+   * Named or not, the element wears them — that is what a space's per-type `slots` style addresses. A modal whose
+   * document did not mention `rootContainer` was the SDK's white default in a dark theme, beside a modal that styled
+   * the slot itself and so followed the space.
+   */
+  private declaredSlots(type: string): Record<string, string> {
+    const slots = this.options.slotNames?.[type] ?? [];
+
+    return Object.fromEntries(slots.map(slot => [slot, '']));
+  }
+
   private slotSelectors(spec: ElementSpec, path: string): Record<string, string> {
     return Object.fromEntries(
       Object.entries(spec.slots ?? {}).map(([slot, value]) => {
@@ -754,18 +1059,122 @@ class SpaceAuthor {
   }
 
   /**
-   * Files an element under the page it renders on.
+   * Files an element under the root it renders in: its page, or the layout shell it belongs to.
    *
-   * `rootId` is that page for everything a page contains — a layout container included, since it is a root the page
-   * names rather than a page of its own. An element whose root is not a page it wrote is dropped rather than filed
-   * somewhere plausible: a handle that resolves to the wrong page is worse than one that is absent, which the
-   * lookup reports by name.
+   * A layout's elements go under the layout and never under a page, because they render on every page that names
+   * it — filed under one, a suite would look for the header only there. An element whose root is neither is dropped
+   * rather than filed somewhere plausible: a handle that resolves to the wrong root is worse than one that is absent,
+   * which the lookup reports by name.
    */
   private recordHandle(handle: ElementHandle): void {
     // `hasOwn` rather than a falsy check: an index signature types every read as a hit, so this is the only way to
-    // ask whether a root that is not one of this space's pages has an entry at all.
+    // ask whether a root has an entry at all.
     if (Object.hasOwn(this.handles, handle.pageId)) {
       this.handles[handle.pageId].elements[handle.id] = handle;
+
+      return;
+    }
+
+    if (Object.hasOwn(this.layoutHandles, handle.pageId)) {
+      this.layoutHandles[handle.pageId].elements[handle.id] = handle;
+    }
+  }
+
+  /**
+   * A sub-element that reads its parent's context — a dropdown's panel, a tab container's parts — throws on its
+   * first render anywhere else, taking the page down with it. Refused here, where the error can say where it belongs.
+   */
+  private assertInsideAncestor(type: string, parentId: string, where: string): void {
+    const ancestorTypes = this.options.ancestorTypes;
+    const ancestor = ancestorTypes && Object.hasOwn(ancestorTypes, type) ? ancestorTypes[type] : undefined;
+    if (!ancestor) {
+      return;
+    }
+
+    for (let id: string | undefined = parentId; id;) {
+      const element = this.flatMap.flat[id] as Element | undefined;
+      if (element?.definition.type === ancestor) {
+        return;
+      }
+
+      id = element?.definition.parentId;
+    }
+
+    throw new Error(`${where} only works inside a "${ancestor}": it reads that element's state. Nest it in one.`);
+  }
+
+  /**
+   * An attribute its component never reads renders nothing and says nothing — a `content` on a `dropdown`, whose
+   * label is a child. A warning, because a plugin's type or a newer element may read what this catalog has not heard of.
+   */
+  /**
+   * A template the runtime will never resolve, left in an attribute.
+   *
+   * An attribute is resolved only when it carries a TOKEN — a name, with filters: \`{{ post.slug }}\`,
+   * \`{{ redirect|url_encode }}\` — because attributes are where prose lives, and a stray brace in a sentence must not
+   * be evaluated. So a condition, a test or a \`{% %}\` block on its own is used as written: a link to
+   * \`/x/{{ on ? 'a' : 'b' }}\`, a class named after the template. A binding's template is where an expression
+   * belongs; there it is evaluated in full. (A step's params are templates by construction and resolve whatever they
+   * hold.)
+   */
+  private warnUnresolvedTemplates(values: unknown, where: string): void {
+    for (const value of stringsIn(values)) {
+      if (!hasTemplateSyntax(value) || hasValidToken(value)) {
+        continue;
+      }
+
+      this.stepWarnings.push({
+        code: 'template-never-resolved',
+        message: `${where} carries "${value.length > 80 ? `${value.slice(0, 77)}…` : value}", which is never resolved: an attribute only reads a name with filters (\`{{ post.slug|upper }}\`). Move the expression into a binding's \`twigTemplate\`, where it is evaluated in full.`,
+        details: { value }
+      });
+    }
+  }
+
+  /**
+   * A condition computed from data, on an element that starts on screen.
+   *
+   * Until its provider answers, the template has nothing to decide on and the element is drawn — then hidden a moment
+   * later. That is the flash of an empty state, or of a "get started" card for somebody who did everything, on every
+   * load. \`visible: false\` starts it hidden, and the template then shows it. A plain binding to one value is left
+   * alone: an element shown until a flag says otherwise is a real and common shape.
+   */
+  private warnConditionStartsVisible(bindings: BindingSpec[] | undefined, where: string): void {
+    const computed = bindings?.some(
+      binding =>
+        binding.to === 'visibility' &&
+        binding.category === 'initialState' &&
+        !SETTLED_SOURCES.has(binding.source.split('.')[0]) &&
+        binding.transformers?.some(transformer => transformer.action === 'twigTemplate')
+    );
+    if (!computed) {
+      return;
+    }
+
+    this.stepWarnings.push({
+      code: 'condition-starts-visible',
+      message: `${where} computes its visibility from data but starts on screen, so it is drawn until the data answers and then hidden. Add \`visible: false\` so it waits hidden, and let the template answer 'false' until its source arrives.`,
+      details: {}
+    });
+  }
+
+  private warnUnknownAttributes(spec: ElementSpec, where: string): void {
+    const catalog = this.options.attributeNames;
+    const names = catalog && Object.hasOwn(catalog, spec.type) ? catalog[spec.type] : null;
+    if (!names) {
+      return;
+    }
+
+    for (const name of Object.keys(spec.attributes ?? {})) {
+      if (names.includes(name)) {
+        continue;
+      }
+
+      this.stepWarnings.push({
+        code: 'unknown-attribute',
+        message: `${where} sets "${name}", which a "${spec.type}" never reads${didYouMean(name, names) || ''}.`,
+        details: { type: spec.type, attribute: name }
+      });
     }
   }
 
@@ -777,10 +1186,21 @@ class SpaceAuthor {
     insideCondition = false
   ): string {
     const id = spec.id ?? this.nextId(spec.type);
-    const conditional = insideCondition || spec.visible !== undefined;
     const where = `Element "${spec.type}" (${id}) at ${path}`;
-    this.assertStepsKnown(spec.flows, where);
+    this.assertStepsKnown(spec.flows, where, spec.type, id);
+    this.assertInsideAncestor(spec.type, parentId, where);
+    this.warnUnknownAttributes(spec, where);
+    if (!PROSE_TYPES.has(spec.type)) {
+      this.warnUnresolvedTemplates(spec.attributes, where);
+    }
+
     const bindings = withVisibility(spec);
+    const conditional = insideCondition || spec.visible !== undefined || hasVisibilityBinding(bindings);
+    this.assertTemplateSourcesInFull(bindings, where);
+    if (spec.visible === undefined) {
+      this.warnConditionStartsVisible(bindings, where);
+    }
+
     const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
 
     const element: Element = {
@@ -794,7 +1214,11 @@ class SpaceAuthor {
         items: [],
         // A slot names a class outright: it dresses a part of an element that already exists, and a selector of
         // its own per control would write the same rule once per input on the page.
-        styleSelectors: { base: this.selectorFor(path, spec), ...this.slotSelectors(spec, path) },
+        styleSelectors: {
+          base: this.selectorFor(path, spec),
+          ...this.declaredSlots(spec.type),
+          ...this.slotSelectors(spec, path)
+        },
         initialState: {
           /**
            * An element with a CONDITION starts hidden, and one without starts on screen.
@@ -803,9 +1227,14 @@ class SpaceAuthor {
            * that resolves to nothing writes nothing, and an absent `visibility` is read as visible. So a panel
            * waiting on a selection nobody has made yet, or on any state that only exists once the page is live,
            * was authored on screen with placeholder text in it until something happened.
+           *
+           * A visibility binding written by hand keeps its element on screen until it answers, as it always has —
+           * spaces rely on that (a sidebar's logo bound to a state nobody sets until the sidebar is folded). A
+           * computed one that should wait for its data says so with \`visible: false\`; see
+           * \`warnConditionStartsVisible\`.
            */
           visibility: spec.visible === undefined,
-          ...(spec.variant ? { styleVariant: { [spec.type]: { base: spec.variant } } } : {})
+          ...(spec.variant ? { styleVariant: { [this.variantOwner(spec, spec.variant)]: { base: spec.variant } } } : {})
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
         ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),
@@ -814,7 +1243,7 @@ class SpaceAuthor {
       }
     };
 
-    this.insert(element, parentId, 'inside');
+    this.insert(element, parentId, 'inside', path);
 
     this.recordHandle({
       id,

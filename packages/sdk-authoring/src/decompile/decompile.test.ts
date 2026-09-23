@@ -272,6 +272,39 @@ const legacy = (): SpaceDocuments => {
   return documents;
 };
 
+describe('specFromSpace / a condition among other bindings', () => {
+  /**
+   * A visibility binding that is not the last one stays in \`bind\`.
+   *
+   * \`visible\` is authored as the element's LAST binding, so reading a condition out of the middle of the list into
+   * the field moved it to the end on the way back, and the document came back different from the one exported.
+   */
+  it('keeps its place', () => {
+    const { first, second } = roundTrip({
+      name: 'Cond',
+      permanentUrl: 'cond',
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            text('', {
+              id: 'caret',
+              visible: false,
+              bind: [
+                { to: 'visibility', source: 'state.open', category: 'initialState' },
+                { to: 'content', source: 'state.label' }
+              ]
+            })
+          ]
+        }
+      ]
+    });
+
+    expect(second.schema.flat.caret).toEqual(first.schema.flat.caret);
+  });
+});
+
 describe('specFromSpace / what it repairs', () => {
   const { spec, corrections } = specFromSpace(legacy());
   const codes = corrections.map(correction => correction.code);

@@ -1,4 +1,8 @@
+import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
 import { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+
+import type { InteractionCallback } from '@plitzi/sdk-shared';
 
 /**
  * What each built-in element IS, read off the declarations rather than listed somewhere.
@@ -26,8 +30,11 @@ export interface ElementSemantics {
 type DeclarationShape = {
   type: string;
   sourceType?: string;
+  triggers?: Record<string, InteractionCallback>;
+  callbacks?: Record<string, InteractionCallback>;
+  ancestorType?: string;
   content?: {
-    definition?: { label?: string; description?: string };
+    definition?: { label?: string; description?: string; styleSelectors?: Record<string, unknown> };
     market?: { category?: string };
   };
 };
@@ -62,4 +69,60 @@ export const elementSourceTypes: Record<string, string> = Object.fromEntries(
   Object.values(elementDeclarations as Record<string, DeclarationShape>)
     .filter(declaration => declaration.sourceType)
     .map(declaration => [declaration.type, declaration.sourceType as string])
+);
+
+/**
+ * Every trigger each built-in type fires: the ones all elements share, and the ones its declaration adds.
+ *
+ * What lets a flow on the wrong element be refused instead of written. The trigger names an event, and only the
+ * element that fires it ever starts the flow — an `onSubmit` on a form's submit button is saved, looks right beside
+ * the form, and never runs, which is how a working form reads as "forms do not work outside the builder".
+ */
+export const elementTriggers: Record<string, string[]> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+    declaration.type,
+    [...Object.keys(interactionBasicTriggers), ...Object.keys(declaration.triggers ?? {})]
+  ])
+);
+
+/** The triggers only some types fire, by action name — for a step builder that wants the title the builder shows. */
+export const typeTriggerDefinitions: Record<string, InteractionCallback> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).flatMap(declaration =>
+    Object.entries(declaration.triggers ?? {})
+  )
+);
+
+/**
+ * Every element callback each built-in type answers to: `setState` and `toggleState`, which every element registers,
+ * and the ones its declaration adds.
+ *
+ * A callback runs on the element it names, so aiming it at one of the wrong type is the same silent dead end as a
+ * trigger on the wrong element — the builder offers `openModal` only on a modal, and a hand-written step does not.
+ */
+export const elementCallbacks: Record<string, string[]> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+    declaration.type,
+    [...Object.keys(BUILTIN_ELEMENT_CALLBACKS), ...Object.keys(declaration.callbacks ?? {})]
+  ])
+);
+
+/** The sub-elements that only work inside another type, and that type — see `ElementDeclarationData.ancestorType`. */
+export const elementAncestorTypes: Record<string, string> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>)
+    .filter(declaration => declaration.ancestorType)
+    .map(declaration => [declaration.type, declaration.ancestorType as string])
+);
+
+/**
+ * The OTHER selectors each type dresses — a modal's `rootContainer`, a form control's `input` — by type.
+ *
+ * Every element carries a class per slot (`plitzi__<type>-<slot>`), and that is what a space's per-type `slots` style
+ * addresses. A document that names only the slots its author styled leaves the rest of them classless, so the style
+ * the space wrote for the TYPE reaches some of its elements and not others — which is a themed modal beside a white one.
+ */
+export const elementSlots: Record<string, string[]> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+    declaration.type,
+    Object.keys(declaration.content?.definition?.styleSelectors ?? {}).filter(slot => slot !== 'base')
+  ])
 );

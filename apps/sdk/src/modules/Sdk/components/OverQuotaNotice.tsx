@@ -4,8 +4,8 @@ import useRenderSettings from '@plitzi/sdk-shared/store/renderSettings';
  * What a site says while it is over its plan's quota.
  *
  * The server decides this, not the page: `render.overQuota` is set from what metering answered for THIS render, so
- * a space cannot turn it off from its own settings — the same reason the "Made in Plitzi" badge is forced on while
- * degraded. It renders nothing at all the rest of the time, which is every render of every paid or in-quota space.
+ * a space cannot turn it off from its own settings. It renders nothing at all the rest of the time, which is every
+ * render of every paid or in-quota space.
  *
  * Deliberately a line and a link rather than a modal or an interstitial: the site still works, its visitors are not
  * the ones who can fix this, and the person who can is the one who recognises their own site.

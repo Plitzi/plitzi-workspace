@@ -44,6 +44,7 @@ export const ELEMENT_FIELDS = [
   'class',
   'css',
   'states',
+  'selector',
   'variant',
   'slots',
   'bind',

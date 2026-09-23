@@ -106,6 +106,17 @@ The slot is checked to be inside the layout: a slot anywhere else renders the sh
 nothing downstream would say so. A layout may sit inside another one (`layout` on the layout itself), and the page
 resolves the chain from the outside in. `folder` files a layout under a page folder in the builder; it routes nothing.
 
+Ids are one namespace for the layout and every page that names it — a helper that builds an element per page
+prefixes its ids with the page (`` `${pageId}-foot` ``), and authoring names both places when two elements collide.
+
+**A menu in a layout marks the current page with `activeOn`.** The menu is the same nodes on every page, so its
+current entry cannot be styled by hand: `activeOn(navLink, ['spaces', 'space-record'])` binds the class's `active`
+variant to `navigation.currentPageId` for those pages and `idle` for every other. The entries themselves are data —
+one list of pages (id, slug, title, summary, order) that the menu, the page titles, the meta descriptions and the
+"previous / next" links all read — and the pages that share a shape come from one function that takes that entry
+and the page's content. This site's own docs are built that way: sixteen pages that used to carry the whole sidebar
+each (some 900 elements) are one layout, one list and sixteen calls.
+
 ---
 
 ## 3. Elements
@@ -246,6 +257,22 @@ refused next to a shared `class` for the same reason `css` is. An element type's
 `states` and `variants`, and `slots` for the type's other selectors — a modal's `rootContainer`, a form control's
 `input` — so every element of the type is dressed at once.
 
+Which variant an element wears can come from the data — a status pill that is amber while a job waits and green once
+it is done. `variantFrom` writes that binding, keyed by the class the element wears:
+
+```ts
+const pill = styles('statusPill', { css: { padding: '2px 8px' }, variants: { pending: {…}, succeeded: {…} } });
+
+text({ class: pill, bind: [{ to: 'content', source: 'jobs.item.label' }, variantFrom(pill, 'jobs.item.status')] });
+```
+
+The value at the source names the variant; when the data does not already speak in variant names, `template` turns
+it into one — `variantFrom(pill, 'runs.item.status', { template: "{{ source == 'completed' ? 'ok' : 'failed' }}" })`,
+or `{ template: "{{ source == 'code' ? 'on' : '' }}" }` for a control that lights up when a state names it. Written
+by hand the key is the trap: it names the selector the variants
+belong to, and the element's type (`text.base`) is a different selector from its class (`statusPill.base`) — the
+first renders with no variant at all, and nothing reports it.
+
 ---
 
 ## 5. Data
@@ -320,6 +347,41 @@ container({ visible: '!post.found', children: [text('No such post.')] })
 `visible: false` is the third answer: the element starts hidden with nothing bound, for a flow to reveal
 (`toggleState`, `setState`) — a panel, a confirmation, a second step.
 
+### A condition that has to be computed
+
+An element is visible by default, and which way its condition flips decides how it is written. One the logic
+REVEALS — an empty state, a "get started" card, an admin-only panel — starts hidden: `visible` starts the element
+HIDDEN and the data then shows it. One a flag HIDES — the labels of a sidebar until it is folded — keeps the default
+and binds the flag, and an absent flag must leave it shown (a template answering `''` writes nothing and keeps it).
+A revealing condition that is more than one value is `visible: false` — so it waits hidden — plus a visibility
+binding with a template:
+
+```ts
+container({
+  id: 'first-steps',
+  visible: false,
+  bind: [{
+    to: 'visibility',
+    source: 'stats.data.totals',
+    category: 'initialState',
+    transformers: [{ action: 'twigTemplate', params: {
+      template: "{{ source ? (source.spaces > 0 ? 'false' : 'true') : 'false' }}"
+    } }]
+  }]
+})
+```
+
+Its template answers `'true'` or `'false'`, and `'false'` while the source has not arrived: an element that shows
+until its data lands and then hides is a flash on every load. A visibility binding on its own keeps the element on
+screen until it answers — right for "shown until a flag says otherwise", wrong for a condition on data, which is why
+`authorSpace` warns `condition-starts-visible` when a computed one starts on screen. Hide the element itself, never a wrapper around it —
+a visible wrapper with a hidden child still takes a slot in its parent's `gap`.
+
+An **empty state** is "the answer arrived and is empty", which is not what `!items` says: before the answer,
+`!undefined` is true, and "Nothing here yet" shows on every load. Ask for both —
+`{{ items is defined and items is empty ? 'true' : 'false' }}` — or bind to the provider's `isEmpty` together with
+`not isLoading`.
+
 The `!` is the `not` transformer, which is available to any binding (`transformers: [{ action: 'not', params: {} }]`).
 It reads a boolean that travelled as TEXT — `"false"` and `"0"`, which JavaScript calls true — and treats an empty
 array as false. An empty object is true, because a data source answers `{}` both for "no record" and for a record
@@ -359,6 +421,28 @@ Three things go wrong when a step is written as a literal, and the builders answ
 `named(id, step)` is how a later step reads an earlier one: a running flow keeps its scope keyed by node id, so
 `{{quote.output.summary}}` resolves only when the step that produced it is called `quote`. Unnamed steps get a
 derived id — unique, and nothing you can write down.
+
+**A source read inside a flow is named in full.** A binding completes the prefix for you (`jobRows.item.id` becomes
+`list_jobRows.item.id`); a step's params are templates the runtime reads as written, so there the short name
+resolves to nothing — the button posts an empty id and every layer below reports success. `authorSpace` refuses
+it and says the full name:
+
+```ts
+list({ id: 'jobRows', source: 'controlled', bind: { items: 'board.jobs' }, children: [
+  button({ content: 'Retry', flows: [[
+    onClick(),
+    runServerAction({ actionId: 'job-retry', input: { jobId: '{{ list_jobRows.item.id }}' } })  // the row clicked
+  ]] })
+] })
+```
+
+The list publishes one scope per row, so `list_jobRows.item` is the row whose button was pressed, not the first one.
+
+A step's params are Twig in full — a condition (`{{ member.isAdmin ? '1' : '' }}`) or a loop runs, as it does in a
+binding's template. What a param RESOLVES to is data and is not evaluated again, so text a visitor typed that happens
+to contain braces reaches the step as typed. An attribute is the one place that is narrower: it resolves
+`{{ name|filter }}` tokens only, because attributes carry prose.
+A root that is a step of the same flow is that step's result and is left alone.
 
 ### Cached requests
 
@@ -401,6 +485,19 @@ button({
 })
 ```
 
+### Keeping a provider current
+
+A page that shows something still moving — a queue, a feed, a status board — sets `refreshSeconds` on its provider,
+and it asks again on its own that often:
+
+```ts
+apiContainer({ id: 'board', runtime: 'server', action: 'queue-board', refreshSeconds: 2 })
+```
+
+The same refresh `performQuery` runs, so it works for either runtime: a browser request is sent again, a server
+provider asks the server for its own slice again. It pauses while the tab is hidden and never starts a refresh while
+the last one is still in flight. `0`, the default, never does.
+
 A refused request (`4xx`/`5xx`) is shown but never kept. Server-driven providers (`runtime: 'server'`) are not
 part of this: their data arrives with the page. The dev-tools' Store tab lists what the cache holds under
 "Queries", with how long each answer has left and a button to expire it.
@@ -420,11 +517,18 @@ inert specs. That is what keeps every guarantee about the finished document in o
 - an element asking for a shared class AND rules of its own — an element has one base selector
 - one class name declared twice with rules that disagree
 - a binding source naming an element nothing answers to, or one whose prefix is not what that element publishes
-- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`)
+- a flow's params or a binding's template reading an element's source by its short name (`{{ jobRows.item.id }}`
+  for `list_jobRows`, `{{ stats.total }}` for `apiContainer_stats`) — a template is read as written
+- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `theme`)
 - a step target naming an element that is not there
-- two elements answering to one name
+- two elements answering to one name — the error says where the first one was written
 - a flow whose chain points at a node that is not there
 - everything `validateSchema` already checked: orphans, cycles, broken parent/root links, pages
+
+And it returns `warnings` for what is written and will not do what it says — `unknown-attribute`,
+`condition-starts-visible` (a computed visibility that would show until its data answers), `template-never-resolved` (a condition in an ATTRIBUTE, which only resolves `{{ name|filter }}` tokens; conditions
+belong in a binding's template or a step's params, where Twig is evaluated in full), `state-key-has-runtime-prefix`,
+`FORM_SUBMIT_UNMANAGED`, `STYLE_WITHOUT_TAG`, `tablet-rule-skips-mobile`.
 
 Documents you did NOT author here go through the same door:
 

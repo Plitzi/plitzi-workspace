@@ -9,6 +9,15 @@ export type PageAttributes = AuthorableAttributes<PageProps>;
 
 const declaration = elementDeclaration<PageAttributes>()({
   type: 'page',
+  triggers: {
+    onPageLoad: {
+      action: 'onPageLoad',
+      title: 'On Page Load',
+      type: 'trigger',
+      params: {},
+      preview: { pageId: '', routeParams: '', queryParams: '' }
+    }
+  },
   content: {
     attributes: {
       enabled: true,

@@ -13,7 +13,9 @@ import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
+import providerOutcome from './helpers/providerOutcome';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
+import useAutoRefresh from './hooks/useAutoRefresh';
 import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
 import pathFields from '../../../dataSource/pathFields';
@@ -83,6 +85,15 @@ export type ApiContainerProps = {
   staleTime?: number | string;
   /** With `cache`: seconds an answer nobody renders is kept, so coming back within it paints at once. */
   gcTime?: number | string;
+  /**
+   * Asks again on its own every this many seconds — for a page showing something that keeps moving: a queue, a
+   * feed, a status board. Off (`0`) by default.
+   *
+   * The same refresh `performQuery` runs, for either runtime: a browser request is re-sent, a server provider
+   * asks the server for its own slice again. Skipped while the tab is hidden and never stacked on one still in
+   * flight. A text field in the builder, hence the string.
+   */
+  refreshSeconds?: number | string;
 };
 
 type ProviderSlice = {
@@ -109,7 +120,8 @@ const ApiContainer = ({
   renderWhileLoading = false,
   cache = false,
   staleTime = DEFAULT_STALE_TIME,
-  gcTime = DEFAULT_GC_TIME
+  gcTime = DEFAULT_GC_TIME,
+  refreshSeconds = 0
 }: ApiContainerProps) => {
   const {
     id,
@@ -263,6 +275,16 @@ const ApiContainer = ({
     await refresh([id]);
   }, [serverMode, apiRefetch, refresh, id]);
 
+  /**
+   * Only a provider that can already fetch: a server one once a live payload has answered for this page (the
+   * builder has no `/_rsc` to ask), a browser one when its own request is enabled.
+   */
+  useAutoRefresh({
+    seconds: refreshSeconds,
+    enabled: visible && (serverMode ? rscResolved && !rscPending : apiEnabled),
+    refresh: refetch
+  });
+
   const slice = data as ProviderSlice;
   const windowRecords = useMemo(() => (Array.isArray(slice.records) ? slice.records : []), [slice.records]);
   const { records, isLoadingMore, goToPage, loadMore } = useProviderPagination({
@@ -275,19 +297,25 @@ const ApiContainer = ({
     navigate
   });
 
+  const outcome = providerOutcome({ serverMode, isSuccess, isError, rscResolved, rscPending, elementData });
+
+  /**
+   * Fired per answer, for either runtime — `data` is a new object each time one lands, so a refresh (a flow's
+   * `performQuery`, or `refreshSeconds`) fires the trigger again, the same as a browser refetch does.
+   */
   useEffect(() => {
-    if (isLoading || !id) {
+    if (isLoading || !id || !outcome) {
       return undefined;
     }
 
-    if (isSuccess) {
-      void interactionsManager.interactionTrigger(id, 'onApiSuccess', { url: query, method, ...data });
-    } else if (isError) {
-      void interactionsManager.interactionTrigger(id, 'onApiError', { url: query, method, ...data });
-    }
+    void interactionsManager.interactionTrigger(id, outcome === 'success' ? 'onApiSuccess' : 'onApiError', {
+      url: query,
+      method,
+      ...data
+    });
 
     return undefined;
-  }, [data, id, interactionsManager, isError, isLoading, isSuccess, method, query]);
+  }, [data, id, interactionsManager, isLoading, method, outcome, query]);
   // The published slice, not the raw response: state travels with the data so an empty result, a failed provider
   // and an accumulated "load more" list are all readable through ordinary bindings, with no new slot mechanism.
   const publishedData = useMemo<Record<string, unknown>>(
@@ -317,29 +345,12 @@ const ApiContainer = ({
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     const callbacks: Record<string, InteractionCallback> = {
-      performQuery: {
-        action: 'performQuery',
-        title: `Perform Query ${label}`,
-        type: 'callback',
-        callback: refetch,
-        preview: {},
-        params: {}
-      },
-      loadMore: {
-        action: 'loadMore',
-        title: `Load More ${label}`,
-        type: 'callback',
-        callback: loadMore,
-        preview: {},
-        params: {}
-      },
+      performQuery: { ...declaration.callbacks.performQuery, title: `Perform Query ${label}`, callback: refetch },
+      loadMore: { ...declaration.callbacks.loadMore, title: `Load More ${label}`, callback: loadMore },
       goToPage: {
-        action: 'goToPage',
+        ...declaration.callbacks.goToPage,
         title: `Go To Page ${label}`,
-        type: 'callback',
-        callback: ({ page }: { page?: string | number }) => goToPage(Number(page) || 1),
-        preview: {},
-        params: { page: { label: 'Page', defaultValue: '1', type: 'text' } }
+        callback: ({ page }: { page?: string | number }) => goToPage(Number(page) || 1)
       }
     };
 
@@ -347,40 +358,14 @@ const ApiContainer = ({
     // decides whether the connector allows the action at all.
     if (serverMode) {
       callbacks.writeRecord = {
-        action: 'writeRecord',
+        ...declaration.callbacks.writeRecord,
         title: `Write Record ${label}`,
-        type: 'callback',
-        callback: writeRecord,
-        preview: { action: 'create' },
-        params: {
-          action: { label: 'Endpoint', defaultValue: 'create', type: 'text' },
-          recordId: { label: 'Record Id', defaultValue: '', type: 'text' }
-        }
+        callback: writeRecord
       };
     }
 
     return callbacks;
   }, [label, refetch, loadMore, goToPage, serverMode, writeRecord]);
-
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onApiError: {
-        action: 'onApiError',
-        title: 'On Api Error',
-        type: 'trigger',
-        params: {},
-        preview: { url: '', method: '', status: '', data: '' }
-      },
-      onApiSuccess: {
-        action: 'onApiSuccess',
-        title: 'On Api Success',
-        type: 'trigger',
-        params: {},
-        preview: { url: '', method: '', status: '', data: '' }
-      }
-    }),
-    []
-  );
 
   const storeContext = useMemo(
     () => (sourceName ? { runtime: { sources: { [sourceName]: publishedData } } } : emptyObject),
@@ -392,7 +377,7 @@ const ApiContainer = ({
       ref={ref}
       tag={!previewMode && !items?.length ? 'div' : subType}
       className={clsx('plitzi-component__api-container', className)}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
       interactionCallbacks={interactionCallbacks}
     >
       {(!isInitialLoad || renderWhileLoading) && (

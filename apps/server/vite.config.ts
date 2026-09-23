@@ -59,7 +59,6 @@ export default defineConfig(({ mode }) => {
         include: ['src', 'package.json'],
         entryRoot: 'src',
         tsconfigPath: './tsconfig.app.json',
-        insertTypesEntry: true,
         beforeWriteFile: skipUnchangedDts
       }),
       copyAssets()
@@ -86,6 +85,9 @@ export default defineConfig(({ mode }) => {
           // The account store, implemented. Its own entry because it is the only thing in the package that reaches
           // for a database driver: a deployment bringing its own store never loads `mysql2` to find that out.
           mysql: path.resolve(root, 'src/mysql.ts'),
+          // Job queue and key/value adapters over a Mongo database the deployment owns. Its own entry for the same
+          // reason: a deployment that stores its jobs elsewhere never loads anything that knows what Mongo is.
+          mongo: path.resolve(root, 'src/mongo.ts'),
           ssr: path.resolve(root, 'src/ssr.ts'),
           // Server actions. Own entry so a deployment writing its own tasks imports the contract alone, and a
           // server that runs none never loads the runner or the task set to find that out.

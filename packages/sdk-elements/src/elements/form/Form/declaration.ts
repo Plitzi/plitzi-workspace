@@ -12,6 +12,39 @@ const declaration = elementDeclaration<FormAttributes>()({
   // Not `form`: what a form offers its descendants is a record like any other provider's, so it registers under
   // the same source kind and a binding reads `apiContainer_<id>.values`.
   sourceType: 'apiContainer',
+  triggers: {
+    onSubmit: {
+      action: 'onSubmit',
+      title: 'On Form Submit',
+      type: 'trigger',
+      params: {},
+      preview: { values: {}, actionUrl: '', method: '' }
+    }
+  },
+  callbacks: {
+    performReset: { action: 'performReset', title: 'Reset Form', type: 'callback', params: {} },
+    // `name` offers the form's own fields, which only a mounted form knows; the component fills the options in.
+    setFieldValue: {
+      action: 'setFieldValue',
+      title: 'Set Field Value',
+      type: 'callback',
+      preview: {},
+      params: {
+        name: { label: 'Field Name', defaultValue: undefined, type: 'select', options: [] },
+        value: { type: 'text', defaultValue: '' }
+      }
+    },
+    setFieldError: {
+      action: 'setFieldError',
+      title: 'Set Field Error',
+      type: 'callback',
+      preview: {},
+      params: {
+        name: { label: 'Field Name', defaultValue: undefined, type: 'select', options: [] },
+        error: { type: 'text', defaultValue: '' }
+      }
+    }
+  },
   content: {
     attributes: {
       method: 'get',

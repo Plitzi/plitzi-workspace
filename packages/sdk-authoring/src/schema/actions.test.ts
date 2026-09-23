@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { validateActionDocument } from '@plitzi/sdk-shared/actions';
+import { actionName, validateActionDocument } from '@plitzi/sdk-shared/actions';
 
 import { defineAction } from './index';
 
@@ -65,6 +65,23 @@ describe('defineAction', () => {
    * are the same list of names written twice. A field added to one and not the other is invisible from both ends
    * — the caller's value passes validation, is dropped before the task runs, and the task sees nothing.
    */
+  // The trigger's title is what the builder, the run history and the queue call the action. Left at its kind, every
+  // rendered action in a workspace read "render".
+  it('titles every way in with the action name, which is what the action is called everywhere', () => {
+    const entry = defineAction(
+      minimal({
+        trigger: [
+          { type: 'call', access: 'public' },
+          { type: 'webhook', access: 'public' }
+        ]
+      })
+    );
+    const triggers = Object.values(entry.document.nodes).filter(node => node.type === 'trigger');
+
+    expect(triggers.map(node => node.title)).toEqual(['Quote', 'Quote']);
+    expect(actionName(entry.document)).toBe('Quote');
+  });
+
   it('passes the declared input through to a step that names no params', () => {
     const nodes = nodesOf(
       minimal({

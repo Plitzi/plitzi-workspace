@@ -84,38 +84,10 @@ const ModalContainer = ({
     setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onModalOpen: {
-        action: 'onModalOpen',
-        title: 'On Modal Open',
-        type: 'trigger',
-        params: { metadata: { type: 'text', defaultValue: '' } },
-        preview: { metadata: '' }
-      },
-      onModalClose: { action: 'onModalClose', title: 'On Modal Close', type: 'trigger', preview: {}, params: {} }
-    }),
-    []
-  );
-
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
-      openModal: {
-        action: 'openModal',
-        title: `Open ${label}`,
-        type: 'callback',
-        callback: handleOpenModal,
-        params: { metadata: { type: 'text', defaultValue: '' } },
-        preview: { metadata: '' }
-      },
-      closeModal: {
-        action: 'closeModal',
-        title: `Close ${label}`,
-        type: 'callback',
-        callback: handleClickClose,
-        params: {},
-        preview: {}
-      }
+      openModal: { ...declaration.callbacks.openModal, title: `Open ${label}`, callback: handleOpenModal },
+      closeModal: { ...declaration.callbacks.closeModal, title: `Close ${label}`, callback: handleClickClose }
     };
   }, [handleClickClose, handleOpenModal, label]);
 
@@ -138,7 +110,7 @@ const ModalContainer = ({
     <RootElement
       ref={ref}
       className={clsx('plitzi-component__modal-container', className)}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
       interactionCallbacks={interactionCallbacks}
     >
       <div

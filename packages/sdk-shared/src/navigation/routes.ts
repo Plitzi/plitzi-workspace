@@ -43,7 +43,14 @@ export const isAbsoluteUrl = (url: string): boolean => /^https?:\/\//i.test(url)
  */
 const isOffSite = (url: string): boolean => isAbsoluteUrl(url) || url.includes('{{');
 
-const parsePath = (path: string) => path.replace(/{{([a-zA-Z0-9-_:*/]+)}}/i, ':$1').replaceAll(/[/]+/gim, '/');
+/**
+ * A run of slashes is one: a slug or folder written with one too many would otherwise build `//play`, which is a
+ * protocol-relative URL and quietly navigates nowhere.
+ */
+const collapseSlashes = (path: string) => path.replaceAll(/\/+/g, '/');
+
+/** A route-table key: `{{param}}` becomes the router's `:param`, which only the table reads. */
+const parsePath = (path: string) => collapseSlashes(path.replace(/{{([a-zA-Z0-9-_:*/]+)}}/i, ':$1'));
 
 const recursiveFolderSlug = (pageFolders: Record<string, PageFolder | undefined>, pageFolderId: string): string => {
   if (!pageFolderId || !pageFolders[pageFolderId]) {
@@ -77,12 +84,14 @@ function getPageFullPath(
   pageId: string,
   asString: boolean = false
 ): string | Record<string, string> {
+  // A page id never starts with a slash, but a habit writes the page's path, `/play`, where its id goes.
+  const id = pageId.replace(/^\/+/, '');
   const {
     slug: pageSlug = '',
     folder: folderId,
     default: defaultPage
-  } = ((pages[pageId] as Element | undefined)?.attributes ?? {
-    slug: pageId,
+  } = ((pages[id] as Element | undefined)?.attributes ?? {
+    slug: id,
     folder: '',
     default: false
   }) as PageAttributes;
@@ -95,16 +104,18 @@ function getPageFullPath(
   }
 
   if (!folderId && !asString) {
-    return { [parsePath(`/${pageSlug}`)]: pageId, [`/${pageId}`]: pageId };
+    return { [parsePath(`/${pageSlug}`)]: pageId, [parsePath(`/${pageId}`)]: pageId };
   }
 
   if (!folderId && asString) {
-    return `/${pageSlug}`;
+    return collapseSlashes(`/${pageSlug}`);
   }
 
   const pageFolder = pageFolders.find((pageFolder: PageFolder) => pageFolder.id === folderId);
   if (!pageFolder) {
-    return asString ? `/${pageSlug}` : { [parsePath(`/${pageSlug}`)]: pageId, [`/${pageId}`]: pageId };
+    return asString
+      ? collapseSlashes(`/${pageSlug}`)
+      : { [parsePath(`/${pageSlug}`)]: pageId, [parsePath(`/${pageId}`)]: pageId };
   }
 
   const pageFoldersObj = pageFolders.reduce((acum, pageFolder) => ({ ...acum, [pageFolder.id]: pageFolder }), {});
@@ -112,10 +123,10 @@ function getPageFullPath(
   // slug inside the `analytics` folder, the way `/` is the page with none outside any.
   const path = [recursiveFolderSlug(pageFoldersObj, folderId), pageSlug].filter(Boolean).join('/');
   if (asString) {
-    return `/${path}`;
+    return collapseSlashes(`/${path}`);
   }
 
-  return { [`/${path}`]: pageId, [`/${pageId}`]: pageId };
+  return { [parsePath(`/${path}`)]: pageId, [parsePath(`/${pageId}`)]: pageId };
 }
 
 const isPageAuthored = (accessLevel?: NavigationAccessLevel, authenticated?: boolean, previewMode: boolean = true) => {
@@ -170,7 +181,7 @@ const getPaths = (
       if (unauthorizedPageRedirect) {
         unauthorizedPageRedirect = isOffSite(unauthorizedPageRedirect)
           ? unauthorizedPageRedirect
-          : getPageFullPath(pages, pageFolders, unauthorizedPageRedirect.replace('/', ''), true);
+          : getPageFullPath(pages, pageFolders, unauthorizedPageRedirect, true);
       }
 
       const subPaths = getPageFullPath(pages, pageFolders, pageId);

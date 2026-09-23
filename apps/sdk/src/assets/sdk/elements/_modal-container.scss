@@ -33,7 +33,12 @@
     border-bottom-right-radius: 8px;
     border-bottom-left-radius: 8px;
     border-top-left-radius: 8px;
-    background-color: white;
+    /**
+     * The SDK's floor for a panel that sits ON the page, which a fixed white is not: in a dark theme it was a white
+     * card with the page's near-white text on it. Light is what it has always been, dark the same zinc the dev-tools
+     * use, and `light-dark()` answers from the used `color-scheme` the theme class sets. An authored style beats it.
+     */
+    background-color: light-dark(white, oklch(0.21 0.006 285.885));
     transform: translate3d(-50%, -50%, 0px);
   }
 
@@ -45,7 +50,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom-color: #d1d5db;
+    border-bottom-color: light-dark(#d1d5db, oklch(0.37 0.013 285.805));
     border-bottom-style: solid;
     border-bottom-width: 1px;
 

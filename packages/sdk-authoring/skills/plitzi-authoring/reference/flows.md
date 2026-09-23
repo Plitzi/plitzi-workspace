@@ -1,0 +1,80 @@
+# Flows
+
+```ts
+button({
+  id: 'cta',
+  content: 'Get a quote',
+  flows: [[
+    onClick(),
+    named('quote', runServerAction({ actionId: 'shipping-quote', input: { city: 'Berlin' }, mode: 'await' })),
+    whenSucceeded('quote', setState({ key: 'quote', type: 'text', value: '{{ quote.output.summary }}' })),
+    whenFailed('quote', addNotification({ content: 'Could not reach the courier', appeareance: 'danger' }))
+  ]]
+})
+```
+
+A flow is a list: a trigger, then steps in order. "Only if" is on the step (`when`, `whenSucceeded`, `whenFailed`),
+never a nested tree. Use the step builders — they fill in where a step runs and what it takes:
+
+- **Where it runs.** A global callback registers under its source MODULE (`state`, `auth`, `actions`), an element
+  callback under an element's id, a utility under nothing. Naming either half wrong is a control that does nothing,
+  with no error — which is why the builders exist.
+- **Which `setState`.** `setState({ key })` writes `runtime.state.<key>` and is read as `state.<key>`; never put
+  `state.` in the key. `updateElement(…)` changes one element's own attribute or state.
+- **Flip in one step.** `toggleState({ key })` for app state, `toggleElement({ category: 'state', key: 'visibility' },
+  'panel')` to show/hide an element. Never two branches under opposite `when` guards — they read the state as it was
+  when the flow started, a click behind.
+- **Keys are flat names.** A dotted key (`docsClosed.start`) is split into a path; use `docsClosedStart`.
+
+## Reading what came before
+
+`named('quote', step)` is how a later step reads an earlier one: `{{ quote.output.total }}`. The trigger too:
+`named('submitted', onSubmit())` → `{{ submitted.values.email }}`. Unnamed steps get ids nothing can refer to.
+
+A step's params are templates, evaluated in full (conditions, loops, filters). A source in them is named in full:
+a row's button posts `{ jobId: '{{ list_jobRows.item.id }}' }` — the row that was clicked; the short name is refused.
+
+**Pass objects, not JSON text.** `input: { title: '{{ form.values.title }}' }`, never `input: '{"title": …}'` — a
+value with a quotation mark or a newline makes the text unparseable, and unparseable input posts `{}`.
+
+## Writes and what they refresh
+
+`webHook` (not GET) refreshes every request to its own site when it succeeds; `runServerAction` refreshes
+everything. Say what it should refresh — `invalidateQueries: 'elements', invalidateElements: ['orders']` — or
+`'none'` for a step that only reads, or when a refresh would make the page act on the new answer mid-flow.
+
+## Triggers belong to the element that fires them
+
+Every element fires `onClick`, `onLoad`, `onHover`, `onMouseEnter`/`onMouseLeave`, `onFocus`/`onBlur` and the ends of a
+server action it started (`onFlowEnd`, `onFlowError`, `onFlowProgress`). A `page` fires `onPageLoad`, a `form`
+`onSubmit`, a `formControl` `onChange`, an `apiContainer` `onApiSuccess`/`onApiError` (each answer, either runtime,
+each refresh), a `modalContainer` `onModalOpen`/`onModalClose`, a `pagination` `onPageChange`. A flow on an element
+that never fires its trigger is refused, naming the type that does.
+
+**A form's flow goes on the `form`**, which hands its submit over with `managedByInteractions: true`
+(`FORM_SUBMIT_UNMANAGED` otherwise — the browser submits it natively and `onSubmit` never fires):
+
+```ts
+form({
+  id: 'signup',
+  managedByInteractions: true,
+  flows: [[named('submitted', onSubmit()), setState({ key: 'email', type: 'text', value: '{{ submitted.values.email }}' })]],
+  children: [formControl({ id: 'email', name: 'email', label: 'Email', subType: 'email' }), button({ content: 'Sign up', subType: 'submit' })]
+})
+```
+
+A `formControl` is `required` by default: an optional field says `required: false`, or an empty one stops the submit
+without a word.
+
+## Modals, dropdowns, tabs
+
+- A modal or dialog is declared `visible: false` and driven with `openModal('credits')` / `closeModal('credits')`
+  (`openDialog` / `closeDialog`). `openModal`'s second argument is read inside as `{{ modalContainer_credits.content }}`.
+- A `dropdown`'s label is a child and its `dropdownPopup` sits inside it; a `tabContainer`'s header and body are held
+  inside it too. Outside, they are refused.
+
+## Lists as state
+
+`toggleInState({ key: 'picks', value })` keeps a list; `when({ field: 'state.picks', operator: 'contains', value })`
+asks it. `appendState({ key, value, withId: true })` stores `{ id, value }` — bind `.value`, address by `.id`.
+`whenFailed` matches every outcome that is not `completed` (also `skipped`, `aborted`).

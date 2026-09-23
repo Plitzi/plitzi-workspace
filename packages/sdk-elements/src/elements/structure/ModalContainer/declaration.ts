@@ -10,6 +10,26 @@ export type ModalContainerAttributes = AuthorableAttributes<ModalContainerProps>
 const declaration = elementDeclaration<ModalContainerAttributes>()({
   type: 'modalContainer',
   sourceType: 'modalContainer',
+  triggers: {
+    onModalOpen: {
+      action: 'onModalOpen',
+      title: 'On Modal Open',
+      type: 'trigger',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    onModalClose: { action: 'onModalClose', title: 'On Modal Close', type: 'trigger', preview: {}, params: {} }
+  },
+  callbacks: {
+    openModal: {
+      action: 'openModal',
+      title: 'Open Modal',
+      type: 'callback',
+      params: { metadata: { type: 'text', defaultValue: '' } },
+      preview: { metadata: '' }
+    },
+    closeModal: { action: 'closeModal', title: 'Close Modal', type: 'callback', params: {}, preview: {} }
+  },
   content: {
     attributes: {
       title: 'Modal Header',
@@ -91,7 +111,7 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
             left: '50%',
             width: '500px',
             height: '300px',
-            'background-color': 'white',
+            'background-color': 'light-dark(white, oklch(0.21 0.006 285.885))',
             transform: 'translate3d(-50%, -50%, 0px)',
             'border-top-left-radius': '8px',
             'border-top-right-radius': '8px',
@@ -105,7 +125,7 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
             'align-items': 'center',
             'justify-content': 'space-between',
             'border-bottom-width': '1px',
-            'border-bottom-color': '#d1d5db',
+            'border-bottom-color': 'light-dark(#d1d5db, oklch(0.37 0.013 285.805))',
             'border-bottom-style': 'solid',
             'padding-left': '20px',
             'padding-right': '20px',

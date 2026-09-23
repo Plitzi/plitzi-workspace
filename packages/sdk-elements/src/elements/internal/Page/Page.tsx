@@ -12,9 +12,10 @@ import useLayoutChain from '../../../Element/hooks/useLayoutChain';
 import LayoutBody from '../../../Element/LayoutBody';
 import RootElement from '../../../Element/RootElement';
 import LayoutContainer from '../LayoutContainer';
+import declaration from './declaration';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { ElementLayout, InteractionCallback } from '@plitzi/sdk-shared';
+import type { ElementLayout } from '@plitzi/sdk-shared';
 import type { LayoutLink } from '@plitzi/sdk-shared/schema/layoutChain';
 import type { ReactNode, RefObject } from 'react';
 
@@ -80,23 +81,6 @@ const Page = ({
   const links = useMemo(() => toLinks(layoutChain), [layoutChain]);
   const body = useMemo(() => wrapInLayouts(links, id, children), [links, id, children]);
 
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onPageLoad: {
-        action: 'onPageLoad',
-        title: 'On Page Load',
-        type: 'trigger',
-        params: {
-          // pageId: { canBind: false, defaultValue: '', type: 'text', label: 'Page ID' },
-          // routeParams: { canBind: false, defaultValue: '', type: 'text', label: 'Route Params' },
-          // queryParams: { canBind: false, defaultValue: '', type: 'text', label: 'Query params' }
-        },
-        preview: { pageId: '', routeParams: '', queryParams: '' }
-      }
-    }),
-    []
-  );
-
   /**
    * Announced once the commit that mounted this page has finished, not in the middle of it.
    *
@@ -125,7 +109,7 @@ const Page = ({
     <RootElement
       ref={ref}
       className={clsx('plitzi-component__page', className)}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
     >
       {seoEnabled && previewMode && (
         <Helmet>

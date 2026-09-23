@@ -321,9 +321,8 @@ is already keyed on exactly that, because `styleVariablesToCss` emits both a `pr
 on the absence of the class and a rule for the class itself. A space with no switch on it never sees a class and
 behaves as it always did.
 
-It ships two icons and no opinion about which one shows either — that is the same question the palette answers, so
-this space answers it the same way, in four rules keyed on `data-theme-icon` at the bottom of `theme.ts`. Styling
-the control is styling an ordinary element: one class on it, and `subType: 'segmented'` if you would rather offer
+It ships two icons, and the SDK shows the one for the scheme in use; a space that wants otherwise keys a rule off
+`data-theme-icon` and its stylesheet wins. Styling the control is styling an ordinary element: one class on it, and `subType: 'segmented'` if you would rather offer
 the three answers, including handing the decision back to the machine.
 
 **A space only needs to author one of these if its VISITORS should have one.** While you are building, the dev

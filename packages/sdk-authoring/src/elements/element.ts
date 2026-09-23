@@ -38,6 +38,8 @@ export interface AuthoringProps {
   css?: CssSpec;
   /** How the element's own rules react — `hover`, `focus` — beside {@link AuthoringProps.css}. */
   states?: StatesSpec;
+  /** The name of the element's own selector; derived from where it sits when left out. */
+  selector?: string;
   /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
   variant?: string;
   /** A class for one of the element's other selectors — a form control's `input`, `label`, `error`. */
@@ -88,6 +90,7 @@ const buildSpec = (
     class: shared,
     css,
     states,
+    selector,
     variant,
     slots,
     bind,
@@ -106,6 +109,7 @@ const buildSpec = (
     ...(shared === undefined ? {} : { class: shared }),
     ...(css === undefined ? {} : { css }),
     ...(states === undefined ? {} : { states }),
+    ...(selector === undefined ? {} : { selector }),
     ...(variant === undefined ? {} : { variant }),
     ...(slots === undefined ? {} : { slots }),
     ...(bind === undefined ? {} : { bind }),

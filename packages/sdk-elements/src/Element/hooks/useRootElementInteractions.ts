@@ -125,12 +125,26 @@ const useRootElementInteractions = ({
 
   useInteractions({ id, interactions, triggers, callbacks, getAdditionalParams });
 
+  // Deferred past the commit for the reason `onPageLoad` is (see Page): the global sources register their callbacks
+  // from effects ABOVE this element, which React runs after this one, so a synchronous trigger on the first mount
+  // ran a flow whose `state.setState` did not exist yet — and a page's `onLoad` did nothing on the load it is for.
   useEffect(() => {
     if (!previewMode || !interactions || !Object.keys(interactions).length) {
       return;
     }
 
-    void interactionsManager.interactionTrigger(id, 'onLoad', {});
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      void interactionsManager.interactionTrigger(id, 'onLoad', {});
+    });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -1,6 +1,7 @@
 import type {
   ActionEmailConfig,
   ActionEntry,
+  ActionJobQueue,
   ActionLimits,
   ActionRejectReason,
   ActionRunSummary,
@@ -501,6 +502,8 @@ export type SpaceRevision = { environment: Environment; revision: number };
 export type ActionLookupsConfig = {
   getAction: (spaceId: number, actionId: string, at?: SpaceRevision) => Promise<unknown>;
   listActions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown[]>;
+  /** Which spaces have something scheduled — the periodic reconcile's safety net. See `ActionLookups`. */
+  listScheduledSpaces?: () => Promise<number[]>;
   getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
   getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
 };
@@ -583,6 +586,53 @@ export type SSRActionConfig = {
     increment: (key: string, amount: number) => Promise<number>;
     expire: (key: string, ttlSeconds: number) => Promise<void>;
   };
+  /**
+   * Scheduled runs: the durable queue they wait in, how many this replica runs at once, and whether it produces.
+   *
+   * On wherever `lookups.listActions` is answerable — a `schedule` trigger the editor offers is a trigger the
+   * server honours, which before this it only did if the deployment wrote a timer and a distributed lock of its
+   * own. With no `queue` it runs over this process's memory: right for one replica, and wrong for two, because
+   * each then keeps its own schedules and the nightly email goes out once per replica.
+   *
+   * `false` turns it off for a replica that must only serve pages.
+   */
+  jobs?: SSRActionJobsConfig | false;
+};
+
+/**
+ * How this deployment runs what a clock starts.
+ *
+ * Every default here is a safe one for a single machine; the two a cluster has to think about are `queue` — which
+ * must be shared, or the replicas do not see each other's work — and `workers`, which is how fast a backlog
+ * drains. Nothing in this config is a clock: the queue's own is the only one the scheduling path reads, so
+ * replicas in different countries agree about what has run without agreeing about what time it is.
+ */
+export type SSRActionJobsConfig = {
+  /** Shaped as `ActionJobQueue`. Omitted → this process's memory. */
+  queue?: ActionJobQueue;
+  /** Jobs this replica runs at once. Default 4; `0` produces without consuming. */
+  workers?: number;
+  /** Whether this replica sweeps due schedules into the queue. Default true. */
+  produce?: boolean;
+  /** The spaces this server schedules for, when it serves a known few — the self-hosted shape. */
+  spaces?: number[];
+  /** How often a free worker looks for a job. Default 1s. */
+  pollMs?: number;
+  /** How often this replica looks for due schedules. Default 15s. */
+  schedulePollMs?: number;
+  /** How long a claim is held before another replica may take the job over — the failover window. Default 30s. */
+  leaseMs?: number;
+  /** Attempts a job gets before it is left for an operator as `dead`. Default 3. */
+  maxAttempts?: number;
+  /** First retry delay, doubling per attempt, up to `maxMs`. Defaults to 30s and 15 minutes. */
+  backoff?: { baseMs?: number; maxMs?: number };
+  /** Which environment scheduled runs execute in. Default `main`. */
+  environment?: Environment;
+  /** How often schedules are re-derived from documents. Default 15 minutes. */
+  reconcileMs?: number;
+  /** Names this replica in the job history. Defaults to the pid and a random suffix. */
+  workerId?: string;
+  onError?: (error: unknown) => void;
 };
 
 /**

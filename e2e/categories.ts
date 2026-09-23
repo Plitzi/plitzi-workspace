@@ -42,6 +42,7 @@ const EXAMPLE_TARGETS = [
   'server-actions',
   'server-actions-render',
   'server-actions-no-server',
+  'server-actions-schedules',
   'blog',
   'ceniza'
 ];

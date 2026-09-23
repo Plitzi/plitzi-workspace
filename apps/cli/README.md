@@ -8,28 +8,35 @@ npx @plitzi/cli create my-site
 
 ## `create`
 
-Scaffolds a project that renders a Plitzi space, installs it, and leaves it ready to start. Two decisions shape
-it and nothing else does:
+Scaffolds a project that renders a Plitzi space, installs it, and leaves it ready to start. Three choices shape it —
+the package manager, `--mode` and `--source` — and they are the person's to make, so `create` never makes them alone:
+
+- **At a terminal**, anything not passed is asked for, with the likely answer offered as the default.
+- **With nobody at the terminal** — an agent, CI — it stops before writing anything and prints the flags still
+  missing, so the agent asks the person rather than guessing. `--yes` takes the defaults (`server`, `local`, the
+  invoking package manager) for a script that genuinely means them.
 
 | | `--source local` | `--source cloud` |
 |---|---|---|
-| **`--mode server`** (default) | A page server of your own, rendering a space that lives in the project. No account. | A page server of your own, rendering the live space out of Plitzi. |
+| **`--mode server`** | A page server of your own, rendering a space that lives in the project. No account. | A page server of your own, rendering the live space out of Plitzi. |
 | **`--mode client`** | Vite + the SDK in the browser. No server at all, no account. | The SDK fetches the space from Plitzi with the public render key. |
 
 ```bash
-plitzi create my-site                          # server + local: the default, and the one that needs nothing
-plitzi create my-site --mode client            # browser-rendered, Vite, hot module replacement
-plitzi create my-site --source cloud --key …   # read the live space out of Plitzi
-plitzi create . --force --no-install           # write into a directory that has work in it, install nothing
-plitzi create my-site --package-manager yarn   # run it with npx, work in it with yarn
+plitzi create my-site                                                 # asks the three choices
+plitzi create my-site --package-manager npm --mode server --source local
+plitzi create my-site --package-manager pnpm --mode client --source local   # Vite, hot module replacement
+plitzi create my-site --package-manager yarn --mode server --source cloud --key …   # the live space
+plitzi create my-site --yes                                           # server + local + the invoking manager
+plitzi create . --force --no-install --yes                            # into a directory that has work in it
 ```
 
 ## The package manager
 
 `--package-manager npm|yarn|pnpm` says which one the project is written for: what it installs with, and what
-every command in its README and its Playwright config names. Omitted, it is taken from the one that invoked the
-CLI — so `yarn dlx` and `pnpm dlx` get their own commands back — but that is a guess about the *invocation*, and
-running `npx` once to scaffold a project you then work in with Yarn is exactly the case it gets wrong.
+every command in its README and its Playwright config names. The one that invoked the CLI is only offered as the
+default when it is asked for — `yarn dlx` and `pnpm dlx` get their own name suggested — because it is a guess about
+the *invocation*: running `npx` once to scaffold a project you then work in with Yarn is exactly the case it gets
+wrong.
 
 A Yarn project also gets a `.yarnrc.yml` pinning `nodeLinker: node-modules`. Yarn 4 installs Plug'n'Play by
 default and a server-mode project cannot start under it — `node --import tsx` dies resolving its own entry — so

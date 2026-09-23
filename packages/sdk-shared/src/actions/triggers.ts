@@ -30,9 +30,17 @@ export const isActionEnabled = (document: ActionDocument): boolean =>
  *
  * Falls back to whatever the document already carries, so a document written before this — or by a caller that
  * names it directly, like the authoring API — keeps the name it was given.
+ *
+ * A title that only repeats the trigger's kind is not a name: it is the default a node gets before anybody names
+ * it. Read as one, every page-rendered action in a workspace was called "render" and every clock "schedule" — a list
+ * of runs nobody could tell apart — while the document's own name sat unused beside it.
  */
 export const actionName = (document: ActionDocument): string => {
-  const titled = actionTriggers(document).find(node => node.title.trim() !== '');
+  const titled = actionTriggers(document).find(node => {
+    const title = node.title.trim();
+
+    return title !== '' && title !== node.action;
+  });
 
   return titled?.title.trim() ?? document.name;
 };

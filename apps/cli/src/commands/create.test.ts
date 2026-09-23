@@ -210,6 +210,19 @@ describe('the scaffold', () => {
     expect(scaffold(answers({ mode: 'client' }))['.gitignore']).not.toContain('.sdk-plugins');
   });
 
+  /** A deploy or a restart closes the server rather than dropping it, so what it is running finishes first. */
+  it('closes its server when the process is told to stop, local or cloud', () => {
+    for (const source of ['local', 'cloud'] as const) {
+      const main = scaffold(answers({ source }))['src/main.ts'];
+
+      expect(main).toMatch(/import \{[^}]*\bcloseOnSignals\b[^}]*\} from '@plitzi\/sdk-server';/);
+      expect(main).toContain('closeOnSignals(server);');
+    }
+
+    // A browser project has no server to close.
+    expect(scaffold(answers({ mode: 'client' }))['src/main.ts']).not.toContain('closeOnSignals');
+  });
+
   /** One answer to "how should this be laid out", and no fight between the two tools on save. */
   it('formats and lints itself, with Prettier owning layout', () => {
     const files = scaffold(answers());
@@ -251,8 +264,25 @@ describe('the scaffold', () => {
     expect(spec).toContain('entry.named && !entry.conditional');
   });
 
+  // Claude Code finds the skill on its own; any other agent looks for AGENTS.md, and CLAUDE.md imports it.
+  it('tells any agent where to start, with the commands this project really has', () => {
+    const local = scaffold(answers());
+    const cloud = scaffold(answers({ source: 'cloud' }));
+
+    expect(local['AGENTS.md']).toContain('.claude/skills/plitzi-authoring/SKILL.md');
+    expect(local['AGENTS.md']).toMatch(/`npm run author` \| author the space/);
+    expect(local['CLAUDE.md']).toBe('@AGENTS.md\n');
+    // A space that lives in Plitzi has no `author` script to run.
+    expect(cloud['AGENTS.md']).not.toContain('run author');
+  });
+
   it('carries the authoring skill for whatever agent opens the project', () => {
-    expect(scaffold(answers())['.claude/skills/plitzi-authoring/SKILL.md']).toContain('---');
+    const files = scaffold(answers());
+
+    expect(files['.claude/skills/plitzi-authoring/SKILL.md']).toContain('---');
+    // The references the skill links to travel with it, or every link in it points at nothing.
+    expect(files['.claude/skills/plitzi-authoring/reference/layouts.md']).toContain('activeOn');
+    expect(files['.claude/skills/plitzi-authoring/reference/review-checklist.md']).toBeDefined();
   });
 
   /** Vite binds `localhost`, which is IPv6 here, while everything waiting for a dev server asks 127.0.0.1. */
@@ -268,8 +298,7 @@ describe('plitzi create', () => {
   it('writes a project that can be installed and started', async () => {
     await inTemp(async dir => {
       const target = path.join(dir, 'my-site');
-      // Named explicitly: the default is read off whatever invoked the test run, and Yarn writes a file npm does not.
-      await create(target, { install: false, packageManager: 'npm' });
+      await create(target, { install: false, packageManager: 'npm', mode: 'server', source: 'local' });
 
       const written = await fs.readdir(target);
       expect(written.sort()).toEqual([
@@ -277,6 +306,8 @@ describe('plitzi create', () => {
         '.gitignore',
         '.prettierignore',
         '.prettierrc',
+        'AGENTS.md',
+        'CLAUDE.md',
         'README.md',
         'eslint.config.mjs',
         'package.json',
@@ -297,7 +328,14 @@ describe('plitzi create', () => {
   /** The whole reason a key goes in a file of its own: the file it goes in is the one git is told to skip. */
   it('puts a cloud key in .env, and .env in .gitignore', async () => {
     await inTemp(async dir => {
-      await create(dir, { source: 'cloud', key: 'host_key_123', install: false, force: true });
+      await create(dir, {
+        packageManager: 'npm',
+        mode: 'server',
+        source: 'cloud',
+        key: 'host_key_123',
+        install: false,
+        force: true
+      });
 
       expect(await fs.readFile(path.join(dir, '.env'), 'utf-8')).toContain('PLITZI_HOST_KEY=host_key_123');
       expect(await fs.readFile(path.join(dir, '.gitignore'), 'utf-8')).toContain('.env');
@@ -319,6 +357,43 @@ describe('plitzi create', () => {
 
       error.mockRestore();
       process.exitCode = 0;
+    });
+  });
+
+  /**
+   * An agent runs this with nobody at its terminal, and used to get a project built around choices nobody made — the
+   * package manager of whatever invoked it, a Node tier, the space in the repo. The choices are the person's, so with
+   * nobody to ask it stops, writes nothing, and says exactly what to ask them.
+   */
+  it('refuses to choose for the person when nobody is at the terminal, and says what to ask them', async () => {
+    await inTemp(async dir => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await create(dir, { install: false, mode: 'client' });
+
+      const said = error.mock.calls.flat().join('\n');
+      expect(said).toContain('--package-manager npm|yarn|pnpm');
+      expect(said).toContain('--source local|cloud');
+      expect(said).not.toContain('--mode server|client');
+      expect(process.exitCode).toBe(1);
+      expect(await fs.readdir(dir)).toEqual([]);
+
+      error.mockRestore();
+      process.exitCode = 0;
+    });
+  });
+
+  it('takes the defaults for what was not passed when told to with --yes', async () => {
+    await inTemp(async dir => {
+      await create(dir, { install: false, yes: true, packageManager: 'pnpm' });
+
+      const manifest = JSON.parse(await fs.readFile(path.join(dir, 'package.json'), 'utf-8')) as {
+        dependencies: Record<string, string>;
+      };
+      // server + local: the Node tier's server package, and the space in the project.
+      expect(manifest.dependencies).toHaveProperty('@plitzi/sdk-server');
+      expect(await fs.readFile(path.join(dir, 'src', 'space.ts'), 'utf-8')).toContain('SpaceSpec');
+      expect(await fs.readFile(path.join(dir, 'README.md'), 'utf-8')).toContain('pnpm');
     });
   });
 });

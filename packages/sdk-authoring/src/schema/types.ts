@@ -95,13 +95,26 @@ export interface ElementSpec {
    */
   id?: string;
   attributes?: Record<string, unknown>;
-  /** Style variant of the element's own vocabulary, e.g. a heading's `title`. */
+  /**
+   * A style variant the element starts in, e.g. a heading's `title`.
+   *
+   * The element TYPE's vocabulary by default. When the element wears a class that declares a variant of this name and
+   * the type declares none, it is that CLASS's variant — `text({ class: avatar, variant: 'violet' })` wears
+   * `avatar--violet`. Keyed by the type instead, it named a selector the element does not wear and rendered plain.
+   * For a variant that follows the data, bind it with `variantFrom`.
+   */
   variant?: string;
   /**
    * A rule set of this element's own. Shorthands are expanded and every property is checked before it is written,
    * so what reaches the document is what the style editor can read back.
    */
   css?: CssSpec;
+  /**
+   * The name of this element's own selector — the one {@link ElementSpec.css} writes to. Left out, it is derived from
+   * where the element sits; given, it is kept exactly, which is how a space read back from the builder keeps the
+   * names its style editor, its `customCss` and anything outside the document already know it by.
+   */
+  selector?: string;
   /**
    * How this element's own selector reacts — `hover`, `focus`, `active` — beside {@link ElementSpec.css}. A state
    * is part of the element's selector, not a second one, so it is refused alongside a shared `class` for the same
@@ -213,6 +226,8 @@ export interface PageSpec {
   keepState?: boolean;
   stateStorage?: Schema['settings']['stateStorage'];
   css?: CssSpec;
+  /** As {@link ElementSpec.selector}. */
+  selector?: string;
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
   class?: ClassList;
   flows?: StepSpec[][];
@@ -252,6 +267,8 @@ export interface LayoutSpec {
   attributes?: Record<string, unknown>;
   css?: CssSpec;
   states?: StatesSpec;
+  /** As {@link ElementSpec.selector}. */
+  selector?: string;
   class?: ClassList;
   bind?: BindingsSpec;
   flows?: StepSpec[][];
@@ -338,6 +355,13 @@ export interface StepVocabulary {
   globalCallbacks: Record<string, { source: string }>;
   /** Utility actions. A utility is resolved by action alone and runs on no module at all. */
   utilities: Record<string, unknown>;
+  /**
+   * Element type → every trigger it fires, the ones all elements share included. A type that is not listed is a
+   * plugin's, whose triggers nobody here can know, and its flows are left alone.
+   */
+  triggers?: Record<string, readonly string[]>;
+  /** Element type → every element callback it answers to, the shared `setState`/`toggleState` included. */
+  callbacks?: Record<string, readonly string[]>;
 }
 
 /**
@@ -359,6 +383,18 @@ export interface AuthorSpaceOptions {
    * prefix that does not match the element it names goes unnoticed.
    */
   sourceTypes?: SourceTypes;
+  /**
+   * Element type → its other style selectors (a modal's `rootContainer`). Every element carries a class for each, so a
+   * per-type `slots` style reaches all of them; left out, only the slots an element styles itself are addressable.
+   */
+  slotNames?: Record<string, readonly string[]>;
+  /** Element type → the type it only works inside. Left out, a sub-element is placed wherever it is written. */
+  ancestorTypes?: Record<string, string>;
+  /**
+   * Element type → the attributes its component reads, `null` for one that reads any. Left out, an attribute
+   * nothing reads is written without a word.
+   */
+  attributeNames?: Readonly<Record<string, readonly string[] | null>>;
 }
 
 export interface AuthoredSpace {

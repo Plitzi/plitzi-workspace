@@ -18,6 +18,20 @@ describe('AST processTwig — keepEmptyTokens', () => {
   it('resolves the hit and keeps the miss when both appear', () => {
     expect(processTwig('{{ a }} {{ b }}', { a: 'X' }, true)).toBe('X {{ b }}');
   });
+
+  // A kept token waits for a later pass that knows the name. An expression the author wrote to answer "nothing" is
+  // not waiting for anything, and handing its own text back made the empty branch a non-empty string.
+  it('renders an expression that chose to be empty as empty', () => {
+    expect(processTwig("{{ on ? 'active' : '' }}", { on: false }, true)).toBe('');
+    expect(processTwig("{{ on ? 'active' : '' }}", { on: true }, true)).toBe('active');
+    expect(processTwig("x{{ n > 0 ? n : '' }}y", { n: 0 }, true)).toBe('xy');
+  });
+
+  it('still keeps a name that is waiting, filtered or not', () => {
+    expect(processTwig('{{ redirect|url_encode }}', {}, true)).toBe('{{ redirect|url_encode }}');
+    expect(processTwig('{{ redirect|upper }}', { redirect: '' }, true)).toBe('{{ redirect|upper }}');
+    expect(processTwig("{{ on ? missing : 'x' }}", { on: true }, true)).toBe("{{ on ? missing : 'x' }}");
+  });
 });
 
 describe('AST processTwig — asRaw', () => {

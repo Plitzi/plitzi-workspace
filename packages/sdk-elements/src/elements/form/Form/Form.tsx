@@ -233,17 +233,14 @@ const Form = ({
 
   // Interactions Triggers
 
+  // The one trigger whose preview is not static: the builder offers `values.<name>` for the fields this form holds.
   const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
     () => ({
       onSubmit: {
-        action: 'onSubmit',
-        title: 'On Form Submit',
-        type: 'trigger',
-        params: {},
+        ...declaration.triggers.onSubmit,
         preview: {
-          values: Object.values(fields).reduce((acum, field) => ({ ...acum, [field.name]: '' }), {}),
-          actionUrl: '',
-          method: ''
+          ...declaration.triggers.onSubmit.preview,
+          values: Object.values(fields).reduce((acum, field) => ({ ...acum, [field.name]: '' }), {})
         }
       }
     }),
@@ -325,45 +322,22 @@ const Form = ({
   );
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
+    const { performReset, setFieldValue, setFieldError } = declaration.callbacks;
+    const fieldNames = Object.values(fields).map(field => ({ value: field.name, label: field.name }));
+
     return {
-      performReset: {
-        action: 'performReset',
-        title: `Reset ${label}`,
-        type: 'callback',
-        callback: handleReset,
-        params: {}
-      },
+      performReset: { ...performReset, title: `Reset ${label}`, callback: handleReset },
       setFieldValue: {
-        action: 'setFieldValue',
+        ...setFieldValue,
         title: `Set Field Value ${label}`,
-        type: 'callback',
         callback: handleSetFieldValue,
-        preview: {},
-        params: {
-          name: {
-            label: 'Field Name',
-            defaultValue: undefined,
-            type: 'select',
-            options: Object.values(fields).map(field => ({ value: field.name, label: field.name }))
-          },
-          value: { type: 'text', defaultValue: '' }
-        }
+        params: { ...setFieldValue.params, name: { ...setFieldValue.params.name, options: fieldNames } }
       },
       setFieldError: {
-        action: 'setFieldError',
+        ...setFieldError,
         title: `Set Field Error ${label}`,
-        type: 'callback',
         callback: handleSetFieldError,
-        preview: {},
-        params: {
-          name: {
-            label: 'Field Name',
-            defaultValue: undefined,
-            type: 'select',
-            options: Object.values(fields).map(field => ({ value: field.name, label: field.name }))
-          },
-          error: { type: 'text', defaultValue: '' }
-        }
+        params: { ...setFieldError.params, name: { ...setFieldError.params.name, options: fieldNames } }
       }
     };
   }, [label, handleReset, handleSetFieldValue, fields, handleSetFieldError]);

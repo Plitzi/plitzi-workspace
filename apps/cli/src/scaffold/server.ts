@@ -36,7 +36,7 @@ const pluginNames = Object.keys(plugins);`;
 
 const localMain = (): string => `import path from 'node:path';
 
-import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
@@ -48,9 +48,15 @@ const PORT = Number(process.env.PORT ?? 8080);
  * The space, held in this project.
  *
  * \`authorSpace\` turns the declaration in \`src/space.ts\` into the two documents a renderer wants. It runs at
- * boot, so saving that file and letting \`--watch\` restart it is the whole edit loop.
+ * boot, so saving that file and letting \`--watch\` restart it is the whole edit loop — and its warnings are printed
+ * here for the same reason: this restart is the output somebody editing the space is actually watching.
  */
-const offlineData = authorSpace(space);
+const { schema, style, warnings } = authorSpace(space);
+const offlineData = { schema, style };
+
+for (const warning of warnings) {
+  console.warn(\`[author] \${warning.message}\`);
+}
 
 ${PLUGINS}
 
@@ -74,11 +80,18 @@ const server = createServer({
 
 server.listen(PORT, '127.0.0.1');
 console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
+
+/**
+ * A deploy, a restart or ^C closes the server instead of dropping it: requests in flight are answered, and once the
+ * space runs scheduled actions, the jobs this server is running finish first — what is still waiting stays in the
+ * queue for whichever server runs next. A second ^C exits at once.
+ */
+closeOnSignals(server);
 `;
 
 const cloudMain = (): string => `import path from 'node:path';
 
-import { consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
+import { closeOnSignals, consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 8080);
 
@@ -125,6 +138,13 @@ const server = createServer({
 
 server.listen(PORT, '127.0.0.1');
 console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
+
+/**
+ * A deploy, a restart or ^C closes the server instead of dropping it: requests in flight are answered, and once the
+ * space runs scheduled actions, the jobs this server is running finish first — what is still waiting stays in the
+ * queue for whichever server runs next. A second ^C exits at once.
+ */
+closeOnSignals(server);
 `;
 
 export const serverFiles = (answers: CreateAnswers): ProjectFiles => ({

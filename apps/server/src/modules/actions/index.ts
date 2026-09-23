@@ -1,3 +1,4 @@
+import { createActionJobs } from './jobs';
 import { createRunGuards } from './runtime/guards';
 import { createKvStore } from './runtime/kvStore';
 import { resolveLimits } from './runtime/limits';
@@ -6,6 +7,7 @@ import { namespaceKv } from './runtime/namespaceKv';
 import { createActionRunner } from './runtime/runAction';
 import { createTaskRegistry } from './tasks/registry';
 
+import type { ActionJobs } from './jobs';
 import type { RunGuards } from './runtime/guards';
 import type { ActionRunner } from './runtime/runAction';
 import type { ActionKvStore, ActionsConfig, ActionTaskRegistry, ResolvedActionLimits } from './types';
@@ -19,6 +21,14 @@ export type ActionsModule = ActionRunner & {
   kv: (spaceId: number) => ActionKvStore;
   /** What this server will allow one run of that document to spend — the deployment's ceilings, tightened by it. */
   limitsFor: (document: ActionDocument) => ResolvedActionLimits;
+  /**
+   * Scheduled runs: the queue, the sweep that fills it and the workers that drain it.
+   *
+   * Built but NOT started — whoever owns the process decides when background work begins, and a server nobody
+   * listened on must not be quietly claiming jobs. Absent when the deployment cannot list a space's actions, since
+   * there is then no way to know what is scheduled.
+   */
+  jobs?: ActionJobs;
 };
 
 /**
@@ -38,14 +48,20 @@ export const createActionsModule = (config: ActionsConfig): ActionsModule => {
    */
   const guards = createRunGuards(config.concurrency, config.kv, config.idempotency);
   const kv = createKvStore(config.kv ?? createMemoryKv());
-
-  return {
+  const limitsFor = (document: ActionDocument) => resolveLimits(config.limits, document.limits);
+  const module: ActionsModule = {
     runAction,
     registry,
     guards,
     kv: spaceId => namespaceKv(kv, spaceId),
-    limitsFor: document => resolveLimits(config.limits, document.limits)
+    limitsFor
   };
+
+  if (config.jobs !== false && config.lookups.listActions) {
+    module.jobs = createActionJobs(config.jobs ?? {}, module, config.lookups);
+  }
+
+  return module;
 };
 
 export { ActionRunError } from './runtime/errors';
@@ -53,7 +69,7 @@ export { precheckRun } from './runtime/precheck';
 export { checkAction } from './runtime/check';
 export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';
 export { createRunGuards, deriveRunKey } from './runtime/guards';
-export { createScheduleRunner } from './runtime/schedule';
+export { createActionJobs, createJobWorker, createMemoryJobQueue, createScheduler } from './jobs';
 export { createMemoryKv } from './runtime/memoryKv';
 export { createRunLogger, createRejectLogger } from './runtime/runLogger';
 export { createTaskRegistry, taskName } from './tasks/registry';
@@ -64,8 +80,8 @@ export { handleActionWebhook } from './transport/webhookHandler';
 export { verifySignature } from './transport/verifySignature';
 export { handleActionCancel } from './transport/cancelHandler';
 
+export type { ActionJobs, JobWorker, JobWorkerOptions, Scheduler, SchedulerOptions, SweepResult } from './jobs';
 export type { ActiveRun, RunGuards } from './runtime/guards';
-export type { ScheduleResult, ScheduleRunner, ScheduleTick } from './runtime/schedule';
 export type { ActionTaskDescriptor } from './taskCatalog';
 export type { TaskRegistryOptions } from './tasks/registry';
 export type {
@@ -75,6 +91,7 @@ export type {
   ActionEmailDelivery,
   ActionEmailMessage,
   ActionEmailTransport,
+  ActionJobsConfig,
   ActionKvStore,
   ActionLookups,
   ActionRejectRecord,

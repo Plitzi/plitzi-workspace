@@ -7,12 +7,12 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import buildPageWindow from './buildPageWindow';
+import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type PaginationPageInfo = {
@@ -115,19 +115,6 @@ const Pagination = ({
     [goToPage]
   );
 
-  const interactionTriggers = useMemo<Record<string, InteractionCallback>>(
-    () => ({
-      onPageChange: {
-        action: 'onPageChange',
-        title: 'On Page Change',
-        type: 'trigger',
-        params: {},
-        preview: { page: '1' }
-      }
-    }),
-    []
-  );
-
   // In the builder there is no data behind the pager, so it renders its controls disabled rather than collapsing
   // to nothing — an element that disappears when deselected cannot be styled.
   const isIdle = pageCount === 0 && !hasNextPage && !hasPrevPage;
@@ -137,7 +124,7 @@ const Pagination = ({
       ref={ref}
       tag="nav"
       className={clsx('plitzi-component__pagination', className)}
-      interactionTriggers={interactionTriggers}
+      interactionTriggers={declaration.triggers}
     >
       {mode === 'loadMore' && (
         <button

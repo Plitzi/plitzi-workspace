@@ -200,8 +200,59 @@ ${spaceSection(answers)}
 ## The skills
 
 \`.claude/skills/\` carries Plitzi's authoring skill, so an agent working in this repository knows how a space is
-put together before it touches one. It is read by Claude Code automatically; nothing to wire.
+put together before it touches one. Claude Code reads it automatically; \`AGENTS.md\` points any other agent at it.
 `;
+
+/**
+ * What any agent opening the project reads first, whichever agent it is.
+ *
+ * The skill in \`.claude/skills/\` is found by Claude Code on its own; other agents look for \`AGENTS.md\`. So this
+ * file carries the commands, where the space is, and the rules that go wrong most — and points at the skill for the
+ * rest. \`CLAUDE.md\` imports it, so both kinds of agent start from the same page.
+ */
+export const agentsFile = (answers: CreateAnswers): string => {
+  const code = (value: string): string => `\`${value}\``;
+  const run = (script: string): string => code(runCommand(answers.packageManager, script));
+  const local = answers.source === 'local';
+  const where = local
+    ? `The space is ${code('src/space.ts')}, declared with ${code('@plitzi/sdk-authoring')}. Edit that; never the JSON it produces.`
+    : 'The space lives in Plitzi and is edited in the builder (or by an agent over MCP); this project serves it.';
+  const commands = [
+    `| ${code(installCommand(answers.packageManager))} | install |`,
+    `| ${run('start')} | serve it |`,
+    ...(local ? [`| ${run('author')} | author the space and print its warnings |`] : []),
+    `| ${run('visual')} | open the page in a browser and check it rendered |`
+  ];
+  const zeroWarnings = local ? `Zero warnings from ${run('author')}.` : 'Zero warnings from authoring.';
+
+  return `# ${answers.name} — notes for agents
+
+A Plitzi space, rendered ${answers.mode === 'server' ? 'by the server in this project (SSR + RSC)' : 'in the browser by a Vite app'}.
+${where}
+
+## Commands
+
+| | |
+| --- | --- |
+${commands.join('\n')}
+
+## Before anything else
+
+Read ${code('.claude/skills/plitzi-authoring/SKILL.md')} — how a space is written, and the references it links to for
+layouts, data, templates and flows. The types of ${code('@plitzi/sdk-authoring')} document every factory and field.
+
+## The rules that go wrong most
+
+- Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration.
+- ${zeroWarnings}
+- Chrome shared by pages is a layout; a look used twice is a class; a repeated block is a function or a ${code('map')}.
+- Ids are one namespace for the whole space: name what is referred to, prefix ids made by a helper.
+- Elements are visible by default. One the logic REVEALS starts hidden (${code('visible')}, or ${code('visible: false')} plus a computed binding) so nothing flashes while loading; one a flag HIDES stays shown while the flag is unset.
+- Inside a template a source is spelled in full (${code('apiContainer_stats')}); an attribute only resolves ${code('{{ name|filter }}')}.
+- Colours are tokens with light and dark values; times carry an explicit zone and say it.
+- Go through ${code('.claude/skills/plitzi-authoring/reference/review-checklist.md')} before calling a change done.
+`;
+};
 
 /**
  * The credential, and the prefix it has to carry.
@@ -236,5 +287,8 @@ export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   'tsconfig.json': tsconfig(answers),
   '.gitignore': gitignore(answers),
   'README.md': readme(answers),
+  'AGENTS.md': agentsFile(answers),
+  // Claude Code reads CLAUDE.md, other agents AGENTS.md: one imports the other, so there is one text to keep true.
+  'CLAUDE.md': '@AGENTS.md\n',
   ...(answers.source === 'cloud' ? { '.env': envFile(answers) } : {})
 });
