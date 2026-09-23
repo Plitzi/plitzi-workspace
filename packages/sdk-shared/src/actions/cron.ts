@@ -207,7 +207,7 @@ export const cronNextFire = (expression: string, from: Date, timeZone?: string):
   const horizon = start + SEARCH_HORIZON_MS;
   const [minutes, hours] = parsed;
 
-  for (let at = start; at <= horizon; ) {
+  for (let at = start; at <= horizon;) {
     const candidate = new Date(at);
     const clock = read(candidate);
     if (!clock) {

@@ -16,12 +16,12 @@ jobs:
   packages:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Enable Corepack
         run: corepack enable
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -30,7 +30,7 @@ jobs:
 
       - name: Cache node_modules
         id: cache-packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -50,12 +50,12 @@ jobs:
     needs: packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Enable Corepack
         run: corepack enable
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -64,7 +64,7 @@ jobs:
 
       - name: Restore Cache node_modules
         id: cache-packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -72,7 +72,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
       - name: Restore Cache build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-build
         with:
@@ -86,12 +86,12 @@ jobs:
     needs: build-packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Enable Corepack
         run: corepack enable
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -99,7 +99,7 @@ jobs:
           cache: 'yarn'
 
       - name: Restore Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -108,7 +108,7 @@ jobs:
 
       - name: Restore Cache build
         id: cache-packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-build
         with:
@@ -141,12 +141,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Enable Corepack
         run: corepack enable
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -154,7 +154,7 @@ jobs:
           cache: 'yarn'
 
       - name: Restore Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -163,7 +163,7 @@ jobs:
 
       - name: Restore Cache build
         id: cache-build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-build
         with:
@@ -177,7 +177,7 @@ jobs:
       # Keyed on the lockfile, so the download happens again only when the Playwright version moves.
       - name: Restore Cache browsers
         id: cache-browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
@@ -199,7 +199,7 @@ jobs:
       # The report carries the trace of every failure: open it and step through the run that broke.
       - name: Upload report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: e2e/.artifacts/report
@@ -207,7 +207,7 @@ jobs:
 
       - name: Upload screenshots
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-screenshots
           path: e2e/.artifacts/screenshots
@@ -218,19 +218,19 @@ jobs:
   #   needs: lint
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v7
 
   # - name: Enable Corepack
   # run: corepack enable
 
-  #     - uses: actions/setup-node@v4
+  #     - uses: actions/setup-node@v7
   #       with:
   #         node-version: 24
   #         registry-url: https://npm.pkg.github.com/plitzi
   # cache: 'yarn'
 
   #     - name: Restore Cache
-  #       uses: actions/cache@v4
+  #       uses: actions/cache@v6
   #       env:
   #         cache-name: cache-node-modules
   #       with:
@@ -258,12 +258,12 @@ jobs:
             scope: '@plitzi'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Enable Corepack
         run: corepack enable
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: ${{ matrix.registry.url }}
@@ -272,7 +272,7 @@ jobs:
 
       - name: Restore Cache node_modules
         id: cache-packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-node-modules
         with:
@@ -281,7 +281,7 @@ jobs:
 
       - name: Restore Cache build
         id: cache-build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           cache-name: cache-build
         with:
