@@ -3,6 +3,7 @@ import { createHmac } from 'node:crypto';
 import { describeTarget, expect, test } from '../../fixtures';
 import { paintTrace, resetPaint, watchPaint } from '../../helpers/flicker';
 import { mailFor, uniqueRecipient } from '../../helpers/mail';
+import { boardJob, callAction } from '../../helpers/schedules';
 import { RSC_IDS } from '../../helpers/space';
 import { expectDevToolsAvailable, expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
@@ -288,26 +289,10 @@ describeTarget('server-actions-no-server', subject => {
 });
 
 describeTarget('server-actions-schedules', subject => {
-  type BoardJob = { id: string; name: string; status: string; error: string; history: string };
-  type Board = { schedules: { name: string; next: string; enabled: boolean }[]; jobs: BoardJob[] };
+  const call = (request: APIRequestContext, actionId: string, input: Record<string, unknown>) =>
+    callAction(request, subject.origin, actionId, input);
 
-  /** The board as the page receives it: the `queue-board` render action's slice, the one element on the page. */
-  const board = async (request: APIRequestContext): Promise<Board> => {
-    const response = await request.get(`${subject.origin}/_rsc?location=%2F`);
-    const { serverData } = (await response.json()) as { serverData: Record<string, Board> };
-    const [slice] = Object.values(serverData);
-
-    return slice;
-  };
-
-  const call = async (request: APIRequestContext, actionId: string, input: Record<string, unknown>) => {
-    const response = await request.post(`${subject.origin}/_action`, { data: { actionId, input } });
-
-    return { status: response.status(), body: (await response.json()) as { output: { jobId: string } } };
-  };
-
-  const job = async (request: APIRequestContext, jobId: string): Promise<BoardJob | undefined> =>
-    (await board(request)).jobs.find(entry => entry.id === jobId);
+  const job = (request: APIRequestContext, jobId: string) => boardJob(request, subject.origin, jobId);
 
   test('the page arrives with the schedules already in it, in UTC and in the zone they were written in', async ({
     request
