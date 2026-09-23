@@ -1,6 +1,7 @@
 import { readOfflineData } from '@plitzi/example-space';
 
 import { actionSpace } from './actions';
+import { keptStateSpace } from './keptState';
 import { minimalSpace } from './minimal';
 import { plainSpace } from './plain';
 import { querySpace } from './queries';
@@ -11,6 +12,7 @@ import { unaskedQuerySpace } from './unaskedQueries';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export * from './actions';
+export * from './keptState';
 export * from './minimal';
 export * from './plain';
 export * from './queries';
@@ -32,6 +34,7 @@ export * from './unaskedQueries';
  *  | `querySpace()` | A browser-side provider behind a panel that opens and closes, and a step that invalidates it — for counting the requests the query cache saves |
  *  | `routeQuerySpace()` | A detail page inside a shell whose provider URL names a route param — for what a provider does on the way out |
  *  | `unaskedQuerySpace()` | Two providers with nothing to ask — one whose URL keeps an unanswered token, one whose URL a button empties |
+ *  | `keptStateSpace()` | Kept state with one transient key — for what comes back after a reload and what starts fresh |
  *  | `themedSpace()` | A page painted only from a light/dark palette, and a theme toggle — for asserting the colours a theme puts in force |
  *
  *  Only `sampleSpace()` carries **custom plugins** (its three RSC elements), and only a deployment that provides
@@ -75,4 +78,13 @@ export const sampleId = (ref: string, data: OfflineDataRaw = sampleSpace()): str
   return ref;
 };
 
-export { actionSpace, minimalSpace, plainSpace, querySpace, routeQuerySpace, themedSpace, unaskedQuerySpace };
+export {
+  actionSpace,
+  keptStateSpace,
+  minimalSpace,
+  plainSpace,
+  querySpace,
+  routeQuerySpace,
+  themedSpace,
+  unaskedQuerySpace
+};

@@ -4011,9 +4011,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/nexus@npm:^1.2.2":
-  version: 1.2.2
-  resolution: "@plitzi/nexus@npm:1.2.2"
+"@plitzi/nexus@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@plitzi/nexus@npm:1.3.0"
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
@@ -4025,7 +4025,7 @@ __metadata:
       optional: true
     vue:
       optional: true
-  checksum: 10c0/96ff5cad9bbbb0cc1557e73909abef2d8c58ece35a0458a29a48a4c8d494184e8d9679c7316388f358d4b689c1991bb200298fac2b047ec79ae6d0ae3ac3239f
+  checksum: 10c0/1a3475fd62956d95ec446475f8a5197ca5963116fb5cf03e064d26a15d9a0c4b18baad4627405b3d79e3a0e8c711daa4bdbebcb3f48e05eeee0c3afe7f0265a5
   languageName: node
   linkType: hard
 
@@ -4045,7 +4045,7 @@ __metadata:
     "@babel/preset-env": "npm:^8.0.6"
     "@babel/preset-react": "npm:^8.0.1"
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
-    "@plitzi/nexus": "npm:^1.2.2"
+    "@plitzi/nexus": "npm:^1.3.0"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/plitzi-ui": "npm:^1.6.22"
     "@plitzi/sdk-auth": "workspace:*"
@@ -4162,7 +4162,7 @@ __metadata:
     "@babel/preset-typescript": "npm:^8.0.1"
     "@dr.pogodin/react-helmet": "npm:^3.3.2"
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
-    "@plitzi/nexus": "npm:^1.2.2"
+    "@plitzi/nexus": "npm:^1.3.0"
     "@plitzi/plitzi-ui": "npm:^1.6.22"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -4280,7 +4280,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-auth@workspace:packages/sdk-auth"
   dependencies:
-    "@plitzi/nexus": "npm:^1.2.2"
+    "@plitzi/nexus": "npm:^1.3.0"
     "@plitzi/plitzi-ui": "npm:^1.6.22"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
@@ -4321,7 +4321,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-dev-tools@workspace:packages/sdk-dev-tools"
   dependencies:
-    "@plitzi/nexus": "npm:^1.2.2"
+    "@plitzi/nexus": "npm:^1.3.0"
     "@plitzi/plitzi-ui": "npm:^1.6.22"
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
@@ -4347,7 +4347,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-elements@workspace:packages/sdk-elements"
   dependencies:
-    "@plitzi/nexus": "npm:^1.2.2"
+    "@plitzi/nexus": "npm:^1.3.0"
     "@plitzi/plitzi-ui": "npm:^1.6.22"
     "@plitzi/sdk-auth": "workspace:*"
     "@plitzi/sdk-dev-tools": "workspace:*"
@@ -4537,7 +4537,7 @@ __metadata:
     "@babel/preset-env": "npm:^8.0.6"
     "@eslint/js": "npm:^10.0.1"
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
-    "@plitzi/nexus": "npm:^1.2.2"
+    "@plitzi/nexus": "npm:^1.3.0"
     "@plitzi/plitzi-ui": "npm:^1.6.22"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@testing-library/dom": "npm:^10.4.2"

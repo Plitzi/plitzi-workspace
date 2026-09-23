@@ -227,7 +227,9 @@
 - New space setting **`transientState`**: top-level `runtime.state` keys that are never kept, even with `keepState` on.
   They are not written, not brought back — an entry kept before a key was declared transient does not restore it —
   and a value one of them holds survives the restore, which lands late (after hydration, once auth settles) and used
-  to undo anything set before it. For demos, open panels, walkthrough steps: state that must start fresh every visit.
+  to undo anything set before it. Built on `@plitzi/nexus` 1.3.0's `partializePath`/`mergePath`; every `@plitzi/nexus`
+  range here is `^1.3.0`. Covered by
+  `e2e/tests/sdk/keptState.spec.ts` across a real reload. For demos, open panels, walkthrough steps: state that must start fresh every visit.
   `authorSpace` refuses a list that is not one, an empty key and a dotted one (naming the top-level key to write), and
   warns `transient-state-without-keep-state` when `keepState` is off. The builder's State Settings has the field, and
   the MCP's `patchSettings` takes it.

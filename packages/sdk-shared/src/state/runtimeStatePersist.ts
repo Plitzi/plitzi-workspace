@@ -95,69 +95,18 @@ const KEPT_PATH = 'runtime.state';
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/**
- * A kept payload with its `runtime.state` rewritten.
- *
- * The payload is the envelope the persist middleware writes for this module's one path — `{ version, state: {
- * 'runtime.state': … } }` — which is also what every entry already kept in a browser holds. Anything that is not that
- * shape is handed through untouched: the middleware is the one that decides an unreadable entry goes.
- */
-const rewriteKept = (payload: string, rewrite: (kept: Record<string, unknown>) => Record<string, unknown>): string => {
-  try {
-    const envelope: unknown = JSON.parse(payload);
-    if (!isRecord(envelope) || !isRecord(envelope.state)) {
-      return payload;
-    }
-
-    const kept = envelope.state[KEPT_PATH];
-
-    return JSON.stringify({
-      ...envelope,
-      state: { ...envelope.state, [KEPT_PATH]: rewrite(isRecord(kept) ? kept : {}) }
-    });
-  } catch {
-    return payload;
-  }
-};
-
 const omitKeys = (from: Record<string, unknown>, keys: ReadonlySet<string>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(from).filter(([key]) => !keys.has(key)));
 
 const pickKeys = (from: unknown, keys: ReadonlySet<string>): Record<string, unknown> =>
   isRecord(from) ? Object.fromEntries(Object.entries(from).filter(([key]) => keys.has(key))) : {};
 
-/**
- * A storage that never holds the space's transient keys.
- *
- * Written without them, and read back without them too — an entry kept before a key was declared transient must not
- * bring it back. And read back WITH the values those keys hold right now: restoring replaces `runtime.state` whole,
- * and it lands late (after hydration, after auth settles), so without this a click made before it would be undone by
- * it.
- */
-const withoutTransient = (
-  storage: PersistStorage,
-  transient: ReadonlySet<string>,
-  current: unknown
-): PersistStorage => ({
-  getItem: key => {
-    const raw = storage.getItem(key);
-
-    return raw === null
-      ? null
-      : rewriteKept(raw, kept => ({ ...omitKeys(kept, transient), ...pickKeys(current, transient) }));
-  },
-  setItem: (key, value) =>
-    storage.setItem(
-      key,
-      rewriteKept(value, kept => omitKeys(kept, transient))
-    ),
-  removeItem: key => storage.removeItem(key)
-});
+/** `schema` is typed required but seeded after mount, so it is read defensively. */
+const schemaSettings = (state: CommonState): CommonState['schema']['settings'] | undefined =>
+  (state.schema as CommonState['schema'] | undefined)?.settings;
 
 /** The keys a space declared never to keep. */
-export const transientKeys = (
-  settings: Pick<CommonState['schema']['settings'], 'transientState'> | undefined
-): Set<string> =>
+const transientKeys = (settings: Pick<CommonState['schema']['settings'], 'transientState'> | undefined): Set<string> =>
   new Set((settings?.transientState ?? []).filter((key): key is string => typeof key === 'string' && key !== ''));
 
 const browserStorage = (kind: 'local' | 'session'): Storage | undefined => {
@@ -170,8 +119,7 @@ const browserStorage = (kind: 'local' | 'session'): Storage | undefined => {
 };
 
 // Persists `runtime.state` to local/session storage (keyed per web), gated reactively by `schema.settings`: while
-// `keepState` is off the storage resolver returns `false` and persist skips entirely. `schema` is typed required but
-// seeded after mount, so it's read defensively. Mounted in each app's root StoreProvider; the persist middleware
+// `keepState` is off the storage resolver returns `false` and persist skips entirely. Mounted in each app's root StoreProvider; the persist middleware
 // self-hydrates on its first commit once storage becomes resolvable (i.e. once `keepState` is turned on).
 //
 // Nothing is restored while a render is still hydrating, and that gate is the whole reason this resolver reads
@@ -194,29 +142,37 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
     key: `plitzi_${webId}_state`,
     // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
     paths: [KEPT_PATH] as PathOf<TState>[],
+    /**
+     * The space's transient keys stay out of what is written — and out of what is read back, so an entry kept before a
+     * key was declared transient does not bring it back — while the values they hold now survive the restore, which
+     * lands late (after hydration, once auth settles) and would otherwise put `runtime.state` back whole over them.
+     */
+    partializePath: (_path, value, state) =>
+      isRecord(value) ? omitKeys(value, transientKeys(schemaSettings(state))) : value,
+    mergePath: (_path, persisted, current, state) => {
+      const transient = transientKeys(schemaSettings(state));
+
+      return transient.size > 0 && isRecord(persisted)
+        ? { ...omitKeys(persisted, transient), ...pickKeys(current, transient) }
+        : persisted;
+    },
     storage: (state: CommonState) => {
-      const { schema, render } = state;
+      const { render } = state;
       // Only a render that came from SSR waits: a client-only one (the builder, an embed) has no markup to match and
       // restores as soon as the setting says to.
       if (render?.isHydrating && !render.hydrated) {
         return false;
       }
 
-      const settings = (schema as CommonState['schema'] | undefined)?.settings;
+      const settings = schemaSettings(state);
       const owner = stateOwner(state);
       if (!settings?.keepState || owner === undefined) {
         return false;
       }
 
       const storage = browserStorage(settings.stateStorage === 'sessionStorage' ? 'session' : 'local');
-      if (!storage) {
-        return false;
-      }
 
-      const owned = ownedStorage(storage, ownerKey(owner));
-      const transient = transientKeys(settings);
-
-      return transient.size > 0 ? withoutTransient(owned, transient, state.runtime?.state) : owned;
+      return storage ? ownedStorage(storage, ownerKey(owner)) : false;
     }
   });
 
