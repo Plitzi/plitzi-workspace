@@ -1,5 +1,5 @@
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
-import { invalidParams, missingRequiredParams } from '@plitzi/sdk-shared/authoring/paramSpec';
+import { invalidParams, missingRequiredParams, reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
 
 import { didYouMean } from './suggest';
 
@@ -212,7 +212,10 @@ export const paramIssue = (
     }
   }
 
-  const invalid = invalidParams(provided, provided, declared).at(0);
+  // Read as the runtime reads them: with the defaults of what was left out filled in, since a param that applies only
+  // when another is on (`autoDismissTimeout` under `autoDismiss`) applies when that one is on by default.
+  const effective = reconcileParams(provided, declared, false);
+  const invalid = invalidParams(provided, effective, declared).at(0);
   if (invalid) {
     const value = provided[invalid.key];
     const suggestion = typeof value === 'string' && invalid.options ? didYouMean(value, invalid.options) : '';
@@ -222,7 +225,7 @@ export const paramIssue = (
       : `${where}: "${invalid.key}" is ${JSON.stringify(value)} (${invalid.got}), and it takes a ${invalid.expected}.`;
   }
 
-  const missing = missingRequiredParams(provided, provided, declared).at(0);
+  const missing = missingRequiredParams(provided, effective, declared).at(0);
 
   return missing === undefined ? undefined : `${where} needs "${missing}": ${declared[missing].description}`;
 };

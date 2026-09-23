@@ -20,7 +20,7 @@ export type QueueContextProviderProps = {
 const QueueContextProvider = ({ children, includeSubscriptions = true }: QueueContextProviderProps) => {
   const { mutate } = use(NetworkContext);
 
-  const { queueManager, processing } = useQueueManager({
+  const { enqueue, processing } = useQueueManager({
     delay: 100,
     mutate,
     maxRetries: 0,
@@ -33,11 +33,11 @@ const QueueContextProvider = ({ children, includeSubscriptions = true }: QueueCo
       state: Style | Schema | Record<string, Segment>,
       dispatch: ActionDispatch<[action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions]>,
       action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions
-    ) => queueManager.enqueue({ action, prevState, state, dispatch }, 'normal'),
-    [queueManager]
+    ) => enqueue({ action, prevState, state, dispatch }),
+    [enqueue]
   );
 
-  const queueValue = useMemo(() => ({ queueManager, enqueueMiddleware }), [queueManager, enqueueMiddleware]);
+  const queueValue = useMemo(() => ({ enqueueMiddleware }), [enqueueMiddleware]);
 
   return (
     <QueueContext value={queueValue}>

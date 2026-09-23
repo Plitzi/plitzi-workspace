@@ -22,6 +22,7 @@ it — the check exists because that declaration renders something other than wh
 | `renders text — and "items" holds a list` | a text template feeding a list | `bindTemplate('items', src, '{{ … }}', { returns: 'value' })` |
 | `does not start with its trigger` | a flow whose first step is not the event that runs it | `[onClick(), setState(…)]` |
 | `step "x" has the param "y"` / `"type" is "string"` | a step param that does not exist or a value outside its options | the params and values it lists |
+| `step "setState" sets "x" on "y", which a "z" never reads` | an element `setState`/`toggleState` writing a field the element does not have | an attribute it lists, or for `category: 'state'` `visibility` / `styleSelectors.<selector>` |
 | `names the page "x", and no page has that id` | a link or `navigate` to a page id that does not exist | an existing page id, or a path with its slash (`'/about'`) |
 | `a full URL, in page mode` | a URL, `mailto:` or `tel:` in a link left in page mode | `mode: 'external'` |
 | `is a controlled list with no items` | a list with nothing to render | `items: [ … ]` or `bind: { items: 'provider.data.rows' }` |

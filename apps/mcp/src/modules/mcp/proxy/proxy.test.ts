@@ -237,7 +237,7 @@ describe('a rendered widget', () => {
                 nodeType: 'callback',
                 action: 'setState',
                 elementId: 'shot',
-                params: { category: 'attribute', key: 'content', value: 'A photo' }
+                params: { category: 'attribute', key: 'alt', value: 'A photo' }
               },
               {
                 title: 'Leave',

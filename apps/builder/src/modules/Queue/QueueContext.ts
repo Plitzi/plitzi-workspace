@@ -15,21 +15,14 @@ export type QueueItem<TState = any, TDispatchAction = any> = {
   dispatch: ActionDispatch<[action: TDispatchAction]>;
 };
 
-export type QueuePriority = 'normal' | 'urgent' | 'all';
-
 export type QueueContextValue = {
-  queueManager: {
-    count: (priority?: QueuePriority) => number;
-    enqueue: (items?: QueueItem | QueueItem[], priority?: QueuePriority) => void;
-    getIsProcessing: () => boolean;
-  };
   enqueueMiddleware: ReducerMiddlewareCallback<
     Schema | Style | Record<string, Segment>,
     [action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions]
   >;
 };
 
-const queueContextDefaultValue = { queueManager: {}, enqueueMiddleware: () => {} } as unknown as QueueContextValue;
+const queueContextDefaultValue: QueueContextValue = { enqueueMiddleware: () => {} };
 
 const QueueContext = createContext(queueContextDefaultValue);
 QueueContext.displayName = 'QueueContext';

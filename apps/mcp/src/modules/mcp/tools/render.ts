@@ -2,19 +2,15 @@ import { randomUUID } from 'node:crypto';
 
 import { z } from 'zod';
 
-import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
-import { applyOperations } from './apply/dispatch';
 import { documentOperations } from './operations';
 import { iconFontCss, RENDER_APP_URI } from '../apps';
 import { emptySpace } from '../helpers';
 import { proxifyResources } from '../proxy';
-import { expandOperations } from './shared/expandOperations';
+import { draftBatch } from './shared/draftBatch';
 import { interactionReport } from './shared/interactionReport';
-import { lintDraft } from './shared/lintDraft';
 import { defineTool } from './shared/tool';
-import { validateOperations } from './shared/validator';
 
 import type { Space } from '../helpers';
 import type { ResourceProxy } from '../proxy';
@@ -85,47 +81,17 @@ export type RenderResponse =
     };
 
 // Build a self-contained render payload from agent-authored operations, WITHOUT any space or cloud. The ops are
-// applied to a throwaway seed space (one host page) using the exact same validate → apply → integrity → audit
-// pipeline as plitzi_apply, then the style cache is compiled and the result returned as OfflineDataRaw — the SDK's
+// applied to a throwaway seed space (one host page) through the same draftBatch as plitzi_apply, then the style cache is compiled and the result returned as OfflineDataRaw — the SDK's
 // offline render input. The agent authors the widget by targeting `pageRef: "render"`.
 export const render = (input: RenderInput, options: RenderOptions = {}): RenderResponse => {
-  const space = seedSpace();
-
-  const expansion = expandOperations(input.operations);
-  if (expansion.errors.length > 0) {
-    return { rendered: false, errors: expansion.errors };
+  const result = draftBatch(seedSpace(), 'main', input.operations, 'widget');
+  if (!result.ok) {
+    return { rendered: false, errors: result.errors, warnings: noWarnings(result.warnings) };
   }
 
-  const ops = expansion.operations;
-  const validation = validateOperations(space, ops, 'widget');
-  if (!validation.valid) {
-    return { rendered: false, errors: validation.errors, warnings: noWarnings(validation.warnings) };
-  }
-
-  const outcome = applyOperations(space, 'main', ops);
-  if (outcome.errors.length > 0) {
-    return { rendered: false, errors: outcome.errors, warnings: noWarnings(validation.warnings) };
-  }
-
-  const integrity = validateSchema(space.schema);
-  if (!integrity.valid) {
-    return {
-      rendered: false,
-      errors: integrity.errors.map(error => ({
-        path: error.elementId ? `schema.${error.elementId}` : 'schema',
-        message: error.message,
-        hint: 'The authored widget is structurally inconsistent (broken parent/child link or a cycle).'
-      })),
-      warnings: noWarnings(validation.warnings)
-    };
-  }
-
-  const audit = lintDraft(space, ops);
+  const { ops, draft: space } = result;
   const behaviour = interactionReport(space);
-  const warnings = [...validation.warnings, ...audit.warnings, ...behaviour.warnings];
-  if (audit.errors.length > 0) {
-    return { rendered: false, errors: audit.errors, warnings: noWarnings(warnings) };
-  }
+  const warnings = [...result.warnings, ...behaviour.warnings];
 
   // A widget renders inside the host's sandbox, under a CSP built from the origins this server declared BEFORE
   // any widget existed (it belongs to the ui:// resource, and the protocol has no per-call CSP) — so an external

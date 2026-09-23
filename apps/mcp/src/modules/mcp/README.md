@@ -47,15 +47,15 @@ mcp/
 Static or observed **vocabularies** the server checks input against and advertises to the agent. Grouped here so
 it is obvious which files are reference data rather than behavior:
 
-| File | What it is |
-|---|---|
-| `builtinCallbacks` | built-in `globalCallback` actions → source module + param defaults (mirror of `sdk-interactions` sources) |
-| `builtinComponents` | curated metadata for built-in element types |
-| `cssCatalog` | valid CSS property keys + shorthand expansion |
-| `observed` | interaction actions / data-source paths observed in a space (+ the built-in globalCallbacks) |
-| `registry` | the element-type registry (observed types enriched with builtin/plugin metadata) |
+| File                | What it is                                                                                                |
+| ------------------- | --------------------------------------------------------------------------------------------------------- |
+| `builtinCallbacks`  | built-in `globalCallback` actions → source module + param defaults (mirror of `sdk-interactions` sources) |
+| `builtinComponents` | curated metadata for built-in element types                                                               |
+| `cssCatalog`        | valid CSS property keys + shorthand expansion                                                             |
+| `observed`          | interaction actions / data-source paths observed in a space (+ the built-in globalCallbacks)              |
+| `registry`          | the element-type registry (observed types enriched with builtin/plugin metadata)                          |
 
-> **Catalog vs. translator.** A *catalog* is reference data. A *translator* (in `tools/operations/{schema,style}/translator.ts`)
+> **Catalog vs. translator.** A _catalog_ is reference data. A _translator_ (in `tools/operations/{schema,style}/translator.ts`)
 > is a **read projection** — it converts stored schema/style into the AI-facing shape. Translators stay beside
 > their ops; they are not catalogs.
 
@@ -145,14 +145,14 @@ imports the whole domain via the barrel and never needs to know the subfolders.
 Input validation was one dense file; it is now a folder whose `index.ts` is the only public entry
 (`validateOperations`). Consumers import the folder (`./shared/validator`), so the split is invisible to them.
 
-| File | Responsibility |
-|---|---|
-| `index.ts` | orchestrator: build the `ValidationCtx`, run the per-op switch, the pageRef guard |
-| `context.ts` | `ValidationCtx`, `warnOnce`, `checkObservedName`, `{{name}}`/`var(--…)` ref checks |
-| `refs.ts` | `checkRef` / `checkIdRef` (charset + element-name rules) |
-| `css.ts` | `checkCss` / `checkSlotCss` (property keys + var refs) |
-| `elements.ts` | element-input, type-prop and variant-application checks |
-| `batch.ts` | batch pre-scans (names an earlier op in the same batch declares) |
+| File          | Responsibility                                                                     |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `index.ts`    | orchestrator: build the `ValidationCtx`, run the per-op switch, the pageRef guard  |
+| `context.ts`  | `ValidationCtx`, `warnOnce`, `checkObservedName`, `{{name}}`/`var(--…)` ref checks |
+| `refs.ts`     | `checkRef` / `checkIdRef` (charset + element-name rules)                           |
+| `css.ts`      | `checkCss` / `checkSlotCss` (property keys + var refs)                             |
+| `elements.ts` | element-input, type-prop and variant-application checks                            |
+| `batch.ts`    | batch pre-scans (names an earlier op in the same batch declares)                   |
 
 Validation is **lenient by design**: an unrecognized name that could still be valid (a plugin type/action/source)
 is a **warning**, never a hard error. Only structurally-wrong input fails the batch.

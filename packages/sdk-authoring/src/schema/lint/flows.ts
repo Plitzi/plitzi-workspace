@@ -1,3 +1,5 @@
+import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
+
 import { STEP_TYPES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
 import { checkPageTarget } from './pages';
@@ -18,6 +20,9 @@ const STATE_PATH_PARAMS: Record<string, readonly string[]> = {
   clearState: ['key'],
   moveState: ['from', 'to']
 };
+
+/** The element callbacks that write one field of the element they run on, named by `category` and `key`. */
+const FIELD_CALLBACKS = new Set(['setState', 'toggleState']);
 
 /** Every string inside a value, however deep — a step's params nest objects and lists of them. */
 const stringsIn = (value: unknown): string[] => {
@@ -183,6 +188,67 @@ const checkCallbackTarget = (ctx: LintContext, node: ElementInteraction, where: 
 };
 
 /**
+ * The field `setState`/`toggleState` write, against what the element they run on has: an attribute it reads, or its
+ * visibility or one of its style selectors. A key it does not have is written and never read — the click works, and
+ * nothing changes. A template key is only known when the step runs, and a plugin's type says nothing here.
+ */
+const checkCallbackKey = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
+  const { key, category } = node.params;
+  const target = node.elementId ?? hostId;
+  const type = ctx.element(target)?.definition.type;
+  const names = type === undefined ? null : ctx.attributeNames(type);
+  if (typeof key !== 'string' || key === '' || hasTemplateSyntax(key) || type === undefined || !names) {
+    return;
+  }
+
+  const at = `${where}: step "${node.action}" sets`;
+  if (category === 'state') {
+    const selectors = ['base', ...(ctx.catalogs.slotNames?.[type] ?? [])].map(selector => `styleSelectors.${selector}`);
+    const keys = ['visibility', ...selectors];
+    if (!keys.includes(key)) {
+      ctx.error(
+        'callback-key-unknown',
+        `${at} the state "${key}" on "${target}", which a "${type}" does not have${didYouMean(key, keys) || '.'} Its state is ${keys.join(', ')}.`,
+        hostId
+      );
+    }
+
+    return;
+  }
+
+  // `className` is never written as an attribute, but every element hands it to its root.
+  if (key !== 'className' && !names.includes(key)) {
+    ctx.error(
+      'callback-key-unknown',
+      `${at} "${key}" on "${target}", which a "${type}" never reads — the step runs and nothing changes${didYouMean(key, names) || '.'} It reads ${names.join(', ')}.`,
+      hostId
+    );
+  }
+};
+
+/**
+ * The callbacks every element answers to take params the runtime reads as declared; a type's own callbacks describe
+ * theirs for the builder's controls, so only these are held to them.
+ */
+const checkSharedCallback = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
+  const shared = ctx.catalogs.vocabulary?.sharedCallbacks;
+  if (!shared || !Object.hasOwn(shared, node.action)) {
+    return;
+  }
+
+  const issue = paramIssue(node.params, shared[node.action], `${where}: step "${node.action}"`);
+  if (issue) {
+    ctx.error('step-params', issue, hostId);
+
+    return;
+  }
+
+  if (FIELD_CALLBACKS.has(node.action)) {
+    checkCallbackKey(ctx, node, where, hostId);
+  }
+};
+
+/**
  * A step's params are templates the runtime resolves against the flow scope as written, so a source in them is named
  * in full: `{{ list_jobRows.item.id }}`, not `{{ jobRows.item.id }}` — the short form renders empty and the button
  * posts a blank id. A root that is also a step of the same flow is that step's result, and is left alone.
@@ -276,6 +342,7 @@ export const lintFlows = (ctx: LintContext): void => {
         checkAction(ctx, node, where, host.id);
         if (node.type === 'callback') {
           checkCallbackTarget(ctx, node, where, host.id);
+          checkSharedCallback(ctx, node, where, host.id);
         }
       }
     }

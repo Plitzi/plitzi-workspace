@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaReducer from '@plitzi/sdk-schema/SchemaReducer';
 
+import { elementSourceTypes } from '../elements';
 import { authorSpace, authorTemplate, validateSpace, validateTemplate } from './index';
 
 import type { ElementSpec, TemplateSpec } from './index';
@@ -175,10 +176,12 @@ describe('validateTemplate', () => {
       }
     };
 
-    const result = validateTemplate(bound);
-
-    expect(result.valid).toBe(false);
-    expect(result.errors.map(error => error.code)).toContain('TEMPLATE_BINDING_OUT_OF_SCOPE');
+    // Read with the source catalogue too, which makes the same binding a name the structural pass cannot resolve: the
+    // one problem is told once, by the reading that says what to do about it.
+    for (const result of [validateTemplate(bound), validateTemplate(bound, { sourceTypes: elementSourceTypes })]) {
+      expect(result.valid).toBe(false);
+      expect(result.errors.map(error => error.code)).toEqual(['TEMPLATE_BINDING_OUT_OF_SCOPE']);
+    }
   });
 
   it('leaves a binding onto a global alone — the space registers those, whichever space it is', () => {

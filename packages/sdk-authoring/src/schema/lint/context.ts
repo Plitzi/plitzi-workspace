@@ -9,7 +9,7 @@ import type { Element, Schema, Style } from '@plitzi/sdk-shared';
  * declare — the same catalogues `authorSpace` takes, documented there. Each is optional, and a check that needs one it
  * was not given is skipped: a document read with no catalogue is held only to what it can prove on its own.
  */
-export type LintCatalogs = Omit<AuthorSpaceOptions, 'slotNames'>;
+export type LintCatalogs = AuthorSpaceOptions;
 
 export type LintIssue = SchemaValidationError;
 
@@ -74,6 +74,13 @@ export class LintContext {
 
   element(id: string): Element | undefined {
     return Object.hasOwn(this.flat, id) ? this.flat[id] : undefined;
+  }
+
+  /** The attributes a type reads, or null where that is open: a plugin, or a `custom` whose component decides. */
+  attributeNames(type: string): readonly string[] | null {
+    const { attributeNames } = this.catalogs;
+
+    return attributeNames && Object.hasOwn(attributeNames, type) ? attributeNames[type] : null;
   }
 
   /** How a message names an element: its type and id, and the page or layout it is on. */

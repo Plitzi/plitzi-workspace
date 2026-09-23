@@ -1,20 +1,14 @@
 import { z } from 'zod';
 
-import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
-import { applyOperations } from './dispatch';
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
-import { cloneSpace } from '../../helpers';
 import { environment, operations } from '../operations';
-import { expandOperations } from '../shared/expandOperations';
-import { lintDraft } from '../shared/lintDraft';
+import { draftBatch } from '../shared/draftBatch';
 import { defineTool } from '../shared/tool';
-import { validateOperations } from '../shared/validator';
 
 import type { Space } from '../../helpers';
-import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../../types';
-import type { SchemaValidationError } from '@plitzi/sdk-schema';
+import type { ApplyInput, Env, Persisters, WriteResponse } from '../../types';
 
 export const applyShape = {
   environment,
@@ -34,43 +28,11 @@ export const applyShape = {
 
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
 
-// Post-apply integrity: the canonical schema validator (@plitzi/sdk-schema) catches any structural corruption the
-// ops would produce — orphaned/inconsistent parent-child links, cycles, bad rootIds — that the per-op checks miss.
-// A failure here rejects the whole batch (the draft is discarded, nothing persists), so apply stays all-or-nothing.
-const schemaErrorToValidation = (error: SchemaValidationError): ValidationError => ({
-  path: error.elementId ? `schema.${error.elementId}` : 'schema',
-  message: error.message,
-  hint: 'This batch would leave the schema inconsistent (broken parent/child link or a cycle); nothing was applied.'
-});
-
 export const apply = async (input: ApplyInput, space: Space, persisters?: Persisters): Promise<WriteResponse> => {
   const env = (input.environment ?? 'main') as Env;
 
-  // Sugar ops (repeatElement) become their plain equivalents before anything else looks at the batch.
-  const expansion = expandOperations(input.operations);
-  if (expansion.errors.length > 0) {
-    return {
-      applied: false,
-      persisted: false,
-      summary: { created: 0, updated: 0, deleted: 0 },
-      changed: [],
-      errors: expansion.errors
-    };
-  }
-
-  const ops = expansion.operations;
-  const validation = validateOperations(space, ops);
-  if (!validation.valid) {
-    return {
-      applied: false,
-      persisted: false,
-      summary: { created: 0, updated: 0, deleted: 0 },
-      changed: [],
-      errors: validation.errors,
-      warnings: noWarnings(validation.warnings)
-    };
-  }
-
+  // First, before anything is read into a draft: a batch written against versions that have moved on is answered
+  // with the conflict whatever else is wrong with it, since the agent has to read again before it can fix anything.
   const conflicts = detectConflicts(space, env, input.expectedResourceVersions);
   if (conflicts.length > 0) {
     return {
@@ -82,47 +44,20 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     };
   }
 
-  const draft = cloneSpace(space);
-  const outcome = applyOperations(draft, env, ops);
-  if (outcome.errors.length > 0) {
+  // All-or-nothing: the batch runs on a copy, and a refusal at any stage discards it — nothing persists.
+  const result = draftBatch(space, env, input.operations);
+  if (!result.ok) {
     return {
       applied: false,
       persisted: false,
       summary: { created: 0, updated: 0, deleted: 0 },
       changed: [],
-      errors: outcome.errors,
-      warnings: noWarnings(validation.warnings)
+      errors: result.errors,
+      warnings: noWarnings(result.warnings)
     };
   }
 
-  const integrity = validateSchema(draft.schema);
-  if (!integrity.valid) {
-    return {
-      applied: false,
-      persisted: false,
-      summary: { created: 0, updated: 0, deleted: 0 },
-      changed: [],
-      errors: integrity.errors.map(schemaErrorToValidation),
-      warnings: noWarnings(validation.warnings)
-    };
-  }
-
-  // Pre-existing malformation guard: every resource this batch touches must be malformation-free in the resulting
-  // draft. A broken transformer / invalid CSS / malformed node already living in a touched element or definition
-  // (not written by this batch) blocks the save until the agent fixes it too — the audit runs on the post-apply
-  // draft, so the SAME batch may include the fix and pass. Its warnings ride along either way.
-  const audit = lintDraft(draft, ops, space);
-  const warnings = [...validation.warnings, ...audit.warnings];
-  if (audit.errors.length > 0) {
-    return {
-      applied: false,
-      persisted: false,
-      summary: { created: 0, updated: 0, deleted: 0 },
-      changed: [],
-      errors: audit.errors,
-      warnings: noWarnings(warnings)
-    };
-  }
+  const { draft, outcome, warnings } = result;
 
   // Dry run: everything is applied to the in-memory draft and reported (changed versions + full element detail),
   // but nothing is persisted — the agent inspects the outcome, then re-runs without dryRun to commit.

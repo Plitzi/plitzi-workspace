@@ -389,6 +389,12 @@ export interface StepVocabulary {
   triggers?: Record<string, readonly string[]>;
   /** Element type → every element callback it answers to, the shared `setState`/`toggleState` included. */
   callbacks?: Record<string, readonly string[]>;
+  /**
+   * The callbacks every element answers to, and the params each takes. A type's own callbacks (`openModal`) describe
+   * their params for the builder's controls, whose options only a mounted element knows, so only these are held to
+   * their params.
+   */
+  sharedCallbacks?: Record<string, { strictParams?: boolean; params?: ParamSpec }>;
 }
 
 /**

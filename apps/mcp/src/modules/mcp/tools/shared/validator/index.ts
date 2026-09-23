@@ -345,13 +345,6 @@ export const validateOperations = (
         break;
       case 'upsertInteractionFlow':
         checkRef(op.ref, `${base}.ref`, ctx);
-        if (op.nodes[0] && op.nodes[0].nodeType !== 'trigger') {
-          ctx.errors.push({
-            path: `${base}.nodes[0].nodeType`,
-            message: 'The first node of a flow must be a trigger',
-            hint: 'Put the trigger first; the callbacks/utilities that run after it follow in order'
-          });
-        }
 
         // A flow is stored as a MAP keyed by step id, so two steps named the same do not both land — the second
         // replaces the first, and the flow that runs is shorter than the one that was written.

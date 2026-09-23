@@ -1,12 +1,14 @@
 import { get, debounce } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 
 import { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
 import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
 import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 
-import type { QueueItem, QueuePriority } from '../QueueContext';
+import { worthRetrying, writeFailed } from '../helpers';
+
+import type { QueueItem } from '../QueueContext';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type { BuilderMutationsMap, BuilderQueriesMap, Element, Schema, Segment, Style } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
@@ -28,13 +30,8 @@ const useQueueManager = ({
   retryTimeout = 2500,
   disabled = false
 }: UseQueueManagerProps) => {
-  const queues = useMemo<{ queueNormal: QueueItem[]; queueUrgent: QueueItem[] }>(
-    () => ({ queueNormal: [], queueUrgent: [] }),
-    []
-  );
+  const queue = useMemo<QueueItem[]>(() => [], []);
   const [processing, setProcessing] = useState(false);
-  const processingRef = useRef(processing);
-  processingRef.current = processing;
 
   const processItem = useCallback(
     async (
@@ -557,94 +554,48 @@ const useQueueManager = ({
   );
 
   const processQueue = useCallback(async () => {
-    const { queueNormal } = queues;
-    if (queueNormal.length === 0) {
+    if (queue.length === 0) {
       return;
     }
 
     setProcessing(true);
     do {
-      const item = queueNormal.shift();
+      const item = queue.shift();
       if (item) {
-        let result = await processItem(item);
-        if (result instanceof Error) {
-          for (let currentRetries = 0; currentRetries < maxRetries; currentRetries++) {
-            if (result instanceof Error) {
-              await delayFunction(retryTimeout);
-              result = await processItem(item);
-            } else {
-              break;
-            }
-          }
+        let outcome = await processItem(item);
+        for (let attempt = 0; attempt < maxRetries && worthRetrying(outcome); attempt++) {
+          await delayFunction(retryTimeout);
+          outcome = await processItem(item);
+        }
 
-          if (result instanceof Error) {
-            // if query fails, we have to revert the change in the builder
-            revertItem(item);
-          }
+        // The builder already shows the change; the server not storing it means taking it back, or the two drift apart
+        // and the next save builds on a state the server never had.
+        if (writeFailed(outcome)) {
+          revertItem(item);
         }
       }
-    } while (queueNormal.length > 0);
+    } while (queue.length > 0);
 
     setProcessing(false);
-  }, [queues, processItem, revertItem, setProcessing, maxRetries, retryTimeout]);
+  }, [queue, processItem, revertItem, maxRetries, retryTimeout]);
 
-  const queueHandler = useMemo(
-    () => ({
-      queueNormal: debounce(processQueue, delay),
-      queueUrgent: debounce(processQueue, 0)
-    }),
-    [processQueue, delay]
-  );
+  const processQueueDebounced = useMemo(() => debounce(processQueue, delay), [processQueue, delay]);
 
   const enqueue = useCallback(
-    (items: QueueItem | QueueItem[] = [], priority: QueuePriority = 'normal') => {
+    (item: QueueItem) => {
       if (disabled) {
         return;
       }
 
-      if (priority === 'normal') {
-        if (Array.isArray(items)) {
-          queues.queueNormal.push(...items);
-        } else {
-          queues.queueNormal.push(items);
-        }
-
-        void queueHandler.queueNormal();
-      }
-
-      if (priority === 'urgent') {
-        if (Array.isArray(items)) {
-          queues.queueUrgent.push(...items);
-        } else {
-          queues.queueUrgent.push(items);
-        }
-
-        void queueHandler.queueUrgent();
-      }
+      queue.push(item);
+      void processQueueDebounced();
     },
-    [queues, queueHandler, disabled]
-  );
-
-  const count = useCallback(
-    (priority: QueuePriority = 'all') => {
-      const { queueNormal, queueUrgent } = queues;
-
-      if (priority === 'normal') {
-        return queueNormal.length;
-      }
-
-      if (priority === 'urgent') {
-        return queueUrgent.length;
-      }
-
-      return queueNormal.length + queueUrgent.length;
-    },
-    [queues]
+    [queue, processQueueDebounced, disabled]
   );
 
   const handleBeforeUnload = useCallback(
     (e: BeforeUnloadEvent) => {
-      if (queues.queueNormal.length > 0) {
+      if (queue.length > 0) {
         e.preventDefault();
         e.returnValue = 'Some changes still being saved.';
 
@@ -653,10 +604,8 @@ const useQueueManager = ({
 
       return undefined;
     },
-    [queues]
+    [queue]
   );
-
-  const getIsProcessing = useCallback(() => processingRef.current, []);
 
   useEffect(() => {
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -666,9 +615,7 @@ const useQueueManager = ({
     };
   }, [handleBeforeUnload]);
 
-  const queueManagerMemo = useMemo(() => ({ count, enqueue, getIsProcessing }), [count, enqueue, getIsProcessing]);
-
-  return { queueManager: queueManagerMemo, processing };
+  return { enqueue, processing };
 };
 
 export default useQueueManager;

@@ -1,3 +1,5 @@
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+
 import {
   elementAncestorTypes,
   elementAttributeNames,
@@ -83,7 +85,8 @@ const STEP_VOCABULARY: StepVocabulary = {
   globalCallbacks: BUILTIN_GLOBAL_CALLBACKS,
   utilities: BUILTIN_UTILITIES,
   triggers: elementTriggers,
-  callbacks: elementCallbacks
+  callbacks: elementCallbacks,
+  sharedCallbacks: BUILTIN_ELEMENT_CALLBACKS
 };
 
 /** Everything the composed surface knows about the built-in elements that the assembly half cannot import. */

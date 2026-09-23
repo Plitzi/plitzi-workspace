@@ -58,6 +58,21 @@
   is labelled pre-existing. A binding onto an element that does not exist is now refused there too (the structural pass
   runs with the source catalogue). Its own attribute and `{{ variable }}` checks for built-in types are gone — the lint
   knows every attribute — so an unknown prop or an unknown variable is an error, not a warning.
+- New rule `callback-key-unknown`: an element `setState`/`toggleState` writing a field its target never reads (or a
+  state other than `visibility` / `styleSelectors.<selector>`) is refused. The params of the callbacks every element
+  answers to are held to their spec (`vocabulary.sharedCallbacks`), and step params are read with their defaults
+  filled in, as the runtime reads them — `autoDismissTimeout: 'soon'` is caught though `autoDismiss` was left out.
+- `lintSpace` has one test per code, and a test that fails when a rule is added without one.
+- `validateTemplate` tells a binding onto a provider left behind once (`TEMPLATE_BINDING_OUT_OF_SCOPE`), no longer also
+  as `UNRESOLVED_BINDING_SOURCE`.
+- `@plitzi/sdk-schema`: `REFERENCE_ERROR_CODES` and `isIntegrityError` tell a reference left dangling from a broken tree.
+- MCP: `plitzi_validate`, `plitzi_apply` and `plitzi_render` share one pipeline (`draftBatch`), so validate answers
+  exactly what apply would. A structural error a batch introduces blocks it wherever it lands; one already in an
+  untouched element no longer blocks every edit. Its own checks that the lint now makes (first node a trigger, param
+  types, a missing step target, a setState key on a built-in type) are gone.
+- Builder: a write the server refuses is now put back in the editor (the check never matched, so a refused change
+  stayed on screen and the next save built on it); only a write the server never answered is retried. The unused
+  `urgent` queue — which nothing ever processed — `count` and `getIsProcessing` are gone.
 - Builder: a problems button in the header lists what is wrong with the saved space (re-read whenever the save queue
   drains); each issue selects its element. Snapshot opens that list instead of publishing while there are errors, and
   shows it when the server refuses a publish with `SPACE_INVALID`. New builder query `SpaceIssues` (`TSpaceIssue`,

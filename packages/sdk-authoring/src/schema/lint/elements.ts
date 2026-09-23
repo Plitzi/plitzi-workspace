@@ -52,12 +52,6 @@ const checkAncestor = (ctx: LintContext, element: Element, where: string): void 
   );
 };
 
-/** The attributes a type reads, or null where that is open: a plugin, or a `custom` whose component decides. */
-const attributeNamesOf = (ctx: LintContext, type: string): readonly string[] | null =>
-  ctx.catalogs.attributeNames && Object.hasOwn(ctx.catalogs.attributeNames, type)
-    ? ctx.catalogs.attributeNames[type]
-    : null;
-
 /**
  * An attribute's value against what its element takes: known at all (a built-in type's attributes are exactly its
  * component's props), one of the values of an enumerated attribute, and the same kind of value its default is where
@@ -66,7 +60,7 @@ const attributeNamesOf = (ctx: LintContext, type: string): readonly string[] | n
  */
 const checkAttributes = (ctx: LintContext, element: Element, where: string): void => {
   const type = element.definition.type;
-  const names = attributeNamesOf(ctx, type);
+  const names = ctx.attributeNames(type);
   const enums = ctx.catalogs.attributeValues?.[type] ?? {};
   const defaults = ctx.catalogs.defaultAttributes?.[type] ?? {};
   for (const [name, value] of Object.entries(element.attributes)) {
@@ -156,7 +150,7 @@ const checkChildren = (ctx: LintContext, element: Element, where: string): void 
 const checkBindings = (ctx: LintContext, element: Element, where: string): void => {
   const catalog = ctx.catalogs.transformers;
   const defaults = ctx.catalogs.defaultAttributes?.[element.definition.type] ?? {};
-  const names = attributeNamesOf(ctx, element.definition.type);
+  const names = ctx.attributeNames(element.definition.type);
   const ancestors = ctx.ancestors(element.id);
   for (const { category, binding } of bindingsOf(element)) {
     const at = `${where}: the binding of "${binding.to}"`;

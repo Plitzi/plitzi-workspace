@@ -115,11 +115,11 @@ slugs prepend the path). A \`:name\` segment (\`"posts/:postId"\`) is a route pa
 source \`navigation.routeParams.name\` → build dynamic pages this way. To move between pages **prefer the \`Link\`
 element** (a container: \`mode\` "page"/"internal"/"external") over a \`navigate\` interaction.
 
-**Touched resources must be malformation-free.** Editing an element/definition also checks its CURRENT stored content
-and BLOCKS the save on any \`Pre-existing malformation in <resource>\` error (a broken transformer, malformed node,
-invalid CSS) — even parts you did not touch. These are NOT from your change (the message says so); fix them in the
+**Touched elements must be malformation-free.** Editing an element also checks its CURRENT stored content and BLOCKS
+the save on any \`Pre-existing malformation in element …\` error (a broken transformer, a malformed step, an attribute
+it never reads) — even parts you did not touch. These are NOT from your change (the message says so); fix them in the
 SAME batch and re-apply (the check runs on the result, so the fix unblocks it). \`Pre-existing issue\` warnings advise
-but do not block.
+but do not block. A broken tree your batch leaves ANYWHERE (an element orphaned by a delete) blocks it too.
 
 Read \`plitzi://guide\` before anything above is unclear.
 `;
@@ -714,15 +714,16 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   Example — recolor one definition without resending it: \`{ "type": "patchDefinition", "ref": "btn-x",
   "desktop": { "background-color": "#111" } }\`.
 - **Atomic batches**: if any operation fails, \`plitzi_apply\` persists nothing.
-- **Every resource you touch must be malformation-free — pre-existing errors block the save.** When your batch edits
-  an element (or a definition/global/id style), the validator also checks the resource's **current stored content**
-  for malformations — a broken transformer action, a malformed interaction node, invalid CSS — even in parts your
-  edit does not touch. Such a finding is reported as a \`Pre-existing malformation in <resource>: …\` **error**, and
+- **Every element you touch must be malformation-free — pre-existing errors block the save.** When your batch edits
+  an element, the result is read by the same linter every writer of a space is held to, and the element's **current
+  stored content** with it — a broken transformer action, a malformed step, an attribute it never reads — even in
+  parts your edit does not touch. Such a finding is reported as a \`Pre-existing malformation in element …\` **error**, and
   \`plitzi_apply\` rejects the batch until it is fixed. These are **not caused by your change** (the message says so)
   — do not be confused; fix them **in the same batch** and re-apply. Because the check runs on the resulting state,
   including the fix in your batch is exactly what unblocks the save. (Advisory issues — an unobserved source/action
   name that may still be a valid plugin, a binding target a plugin manifest does not list — come back as
-  \`Pre-existing issue …\` **warnings** and do not block.)
+  \`Pre-existing issue …\` **warnings** and do not block.) Elements you do not touch are not held against you — except
+  that a broken tree your batch leaves anywhere (an element orphaned by a delete) is refused.
 - **Optimistic concurrency — read before you write, and prove your read is current.** Editing a resource means you
   read it first, so you hold its \`stateVersion\`. **Always pass \`expectedResourceVersions\`** (URI → the stateVersion
   you read) for every resource your batch changes. If another agent edited it in the meantime, the live version no

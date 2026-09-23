@@ -5,7 +5,7 @@ import { styleWithoutTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 import { findElementByRef, findPageByRef } from '../../helpers';
 
 import type { Space } from '../../helpers';
-import type { ValidationResult } from '../../types';
+import type { ValidationError, ValidationResult } from '../../types';
 import type { Operation } from '../operations';
 import type { LintIssue } from '@plitzi/sdk-authoring';
 
@@ -35,11 +35,10 @@ const touchedRefs = (ops: Operation[]): Set<string> => {
   return refs;
 };
 
-const lintOf = (space: Space): { errors: LintIssue[]; warnings: LintIssue[] } => {
-  // The source catalogue is what lets the structural pass tell a binding onto an element that does not exist from one
-  // onto a type this document happens not to hold yet — without it, `apiContainer_ghost` passes for plausible.
+/** One reading of a space: its structure — with the source catalogue, so a binding onto nothing is caught — and its meaning. */
+const readingOf = (space: Space) => {
   const structure = validateSchema(space.schema, { sourceTypes: elementSourceTypes });
-  const lint = lintSpace(
+  const meaning = lintSpace(
     { schema: space.schema, style: space.style },
     // The deployment's own plugins are types too; without them every one of them reads as a typo.
     {
@@ -49,19 +48,20 @@ const lintOf = (space: Space): { errors: LintIssue[]; warnings: LintIssue[] } =>
     }
   );
 
-  return { errors: [...structure.errors, ...lint.errors], warnings: [...structure.warnings, ...lint.warnings] };
+  return { structure, meaning };
 };
 
-const key = (issue: LintIssue): string => `${issue.code} ${issue.elementId ?? ''} ${issue.message}`;
+const keyOf = (issue: LintIssue): string => JSON.stringify([issue.code, issue.elementId ?? '', issue.message]);
 
 /**
- * The resulting space, read by the same linter every other door uses — the one `authorSpace`, the API and the builder
- * run — and held to what this batch touches.
+ * The resulting space, read by the same checks every other door uses — `authorSpace`, the server's publish gate, the
+ * builder's problems panel — and held to what this batch did.
  *
- * Every element the batch writes or edits must come out clean, so a malformation already living in a touched element
- * (a broken transformer, a source out of scope, a step with params its action does not take) blocks the save until
- * the same batch fixes it. Found in `before` too, a finding is labelled pre-existing so the agent never takes it for
- * its own change. Elements the batch never touches are not held against it.
+ * - A structural error the batch introduced blocks it wherever it landed: a delete can orphan an element the batch
+ *   never named, and a broken tree is never left for later.
+ * - Everything found in an element the batch touches blocks it, structural or not. One already there is labelled
+ *   pre-existing, so the agent never takes it for its own change — and fixes it in the same batch.
+ * - Elements the batch never touches are not held against it.
  */
 export const lintDraft = (draft: Space, ops: Operation[], before?: Space): ValidationResult => {
   const touched = new Set(
@@ -71,37 +71,42 @@ export const lintDraft = (draft: Space, ops: Operation[], before?: Space): Valid
       return element ? [element.id] : [];
     })
   );
-  const earlier = before ? lintOf(before) : undefined;
-  const previous = new Set(earlier ? [...earlier.errors, ...earlier.warnings].map(key) : []);
-  const { errors, warnings } = lintOf(draft);
-  const inScope = (issue: LintIssue): boolean => issue.elementId !== undefined && touched.has(issue.elementId);
-  const label = (issue: LintIssue): string =>
-    previous.has(key(issue))
-      ? `Pre-existing malformation in element "${issue.elementId ?? ''}": ${issue.message}`
-      : issue.message;
+  const earlier = before ? readingOf(before) : undefined;
+  const previous = new Set(
+    earlier ? [...earlier.structure.errors, ...earlier.meaning.errors, ...earlier.meaning.warnings].map(keyOf) : []
+  );
+  const { structure, meaning } = readingOf(draft);
+  const onTouched = (issue: LintIssue): boolean => issue.elementId !== undefined && touched.has(issue.elementId);
+  const preExisting = (issue: LintIssue): boolean => previous.has(keyOf(issue));
 
-  const result: ValidationResult = {
-    valid: true,
-    errors: errors.filter(inScope).map(issue => ({
-      path: `element "${issue.elementId ?? ''}"`,
-      message: label(issue),
-      hint: previous.has(key(issue))
-        ? 'This issue already exists in the space (NOT caused by your change), but the save is blocked until you fix it too, in this same batch.'
-        : ''
-    })),
-    warnings: warnings.filter(inScope).map(label)
-  };
+  const toError = (issue: LintIssue): ValidationError => ({
+    path: issue.elementId ? `element "${issue.elementId}"` : 'schema',
+    message: preExisting(issue)
+      ? `Pre-existing malformation in element "${issue.elementId ?? ''}": ${issue.message}`
+      : issue.message,
+    hint: preExisting(issue)
+      ? 'This issue already exists in the space (NOT caused by your change), but the save is blocked until you fix it too, in this same batch.'
+      : ''
+  });
+
+  const errors = [
+    ...structure.errors.filter(issue => onTouched(issue) || !preExisting(issue)),
+    ...meaning.errors.filter(onTouched)
+  ].map(toError);
+  const warnings = [...structure.warnings, ...meaning.warnings]
+    .filter(onTouched)
+    .map(issue =>
+      preExisting(issue) ? `Pre-existing issue in element "${issue.elementId ?? ''}": ${issue.message}` : issue.message
+    );
 
   // Not a malformation: styling a provider that renders no element is what a batch does by accident, so it is said
   // about the element as it now stands.
   for (const id of touched) {
     const tagless = styleWithoutTag(draft.schema.flat[id], draft.style);
     if (tagless) {
-      result.warnings.push(`element "${id}" ${tagless}`);
+      warnings.push(`element "${id}" ${tagless}`);
     }
   }
 
-  result.valid = result.errors.length === 0;
-
-  return result;
+  return { valid: errors.length === 0, errors, warnings };
 };

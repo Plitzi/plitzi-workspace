@@ -28,7 +28,26 @@ const clickTrigger = (next: string) => ({
 
 describe('mcp-ai interactions', () => {
   // Interactions are wired by the element's id, which is also how the flow is addressed here.
-  const interactiveSpace = (): Space => buildSpace();
+  // A button beside the container: what an element setState writes has to be something the element reads, and a
+  // button reads `content` and `disabled`.
+  const interactiveSpace = (): Space => {
+    const space = buildSpace();
+    space.schema.flat.b1 = {
+      id: 'b1',
+      attributes: { subType: 'button', content: 'Save' },
+      definition: {
+        rootId: 'home',
+        parentId: 'home',
+        label: 'Button',
+        type: 'button',
+        items: [],
+        styleSelectors: { base: '' }
+      }
+    };
+    space.schema.flat.home.definition.items = [...(space.schema.flat.home.definition.items ?? []), 'b1'];
+
+    return space;
+  };
 
   const flowOp: Operation = {
     type: 'upsertInteractionFlow',
@@ -398,7 +417,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'c1',
+            ref: 'b1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               {
@@ -415,10 +434,10 @@ describe('mcp-ai interactions', () => {
       cap.persisters
     );
 
-    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+    const node = Object.values(cap.saved().schema.flat.b1.definition.interactions ?? {}).find(
       n => n.type === 'callback' && n.action === 'setState'
     );
-    expect(node?.elementId).toBe('c1');
+    expect(node?.elementId).toBe('b1');
     expect(node?.params).toMatchObject({
       category: 'attribute',
       key: 'content',
@@ -431,7 +450,7 @@ describe('mcp-ai interactions', () => {
     const op: Operation = {
       type: 'upsertInteractionFlow',
       pageRef: 'home',
-      ref: 'c1',
+      ref: 'b1',
       nodes: [
         { nodeType: 'trigger', action: 'onClick', title: 'Click' },
         {
@@ -448,7 +467,7 @@ describe('mcp-ai interactions', () => {
 
     const cap = capturing(interactiveSpace());
     await apply({ operations: [op] }, cap.saved(), cap.persisters);
-    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+    const node = Object.values(cap.saved().schema.flat.b1.definition.interactions ?? {}).find(
       n => n.type === 'callback' && n.action === 'setState'
     );
     expect(node?.params).not.toHaveProperty('type');
@@ -690,68 +709,73 @@ describe('mcp-ai interactions', () => {
 
   const spaceWithCatalog = (catalog: ComponentCatalog): Space => ({ ...interactiveSpace(), catalog });
 
-  const setStateFlow = (params: Record<string, unknown>): Operation => ({
+  const setStateFlow = (params: Record<string, unknown>, elementId?: string): Operation => ({
     type: 'upsertInteractionFlow',
     pageRef: 'home',
-    ref: 'c1',
+    ref: 'b1',
     nodes: [
       { nodeType: 'trigger', action: 'onClick', title: 'Click' },
-      { nodeType: 'callback', action: 'setState', title: 'Set', params }
+      { nodeType: 'callback', action: 'setState', title: 'Set', params, ...(elementId ? { elementId } : {}) }
     ]
   });
 
-  it('warns when the element setState is missing required params (category/key)', () => {
+  // A setState with no key writes nothing: the step runs and nothing changes, so it does not get saved.
+  it('refuses an element setState missing its key', () => {
     const res = validate({ operations: [setStateFlow({ value: 'x' })] }, interactiveSpace());
-    expect(res.valid).toBe(true);
-    const missing = res.warnings.find(w => w.includes('setState') && w.includes('missing required'));
-    expect(missing).toBeTruthy();
-    expect(missing).toContain('"category"');
-    expect(missing).toContain('"key"');
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('setState') && e.message.includes('needs "key"'))).toBe(true);
   });
 
-  it('ERRORS on a setState attribute key not on a default (custom:false) target type; a real key passes', () => {
-    const catalog: ComponentCatalog = {
-      container: { custom: false, attributes: ['title', 'content'], styleSelectors: ['base'] }
-    };
+  it('refuses a setState attribute key the built-in target never reads; a real key passes', () => {
     const ok = validate(
       { operations: [setStateFlow({ category: 'attribute', key: 'content', value: 'x' })] },
-      spaceWithCatalog(catalog)
+      interactiveSpace()
     );
     expect(ok.valid).toBe(true);
 
     const bad = validate(
       { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' })] },
-      spaceWithCatalog(catalog)
+      interactiveSpace()
     );
     expect(bad.valid).toBe(false);
-    expect(bad.errors.some(e => e.message.includes('container') && e.message.includes('bogus'))).toBe(true);
+    expect(bad.errors.some(e => e.message.includes('"button"') && e.message.includes('"bogus"'))).toBe(true);
   });
 
-  it('only WARNS on a bad setState key for a plugin (custom:true) target type', () => {
-    const catalog: ComponentCatalog = {
-      container: { custom: true, attributes: ['title'], styleSelectors: ['base'] }
+  // Only this deployment's manifest knows a plugin's attributes, and it is a best-effort snapshot.
+  it('only WARNS on a bad setState key for a plugin target type', () => {
+    const space = spaceWithCatalog({ myWidget: { custom: true, attributes: ['title'], styleSelectors: ['base'] } });
+    space.schema.flat.w1 = {
+      id: 'w1',
+      attributes: { title: 'Weather' },
+      definition: {
+        rootId: 'home',
+        parentId: 'home',
+        label: 'Widget',
+        type: 'myWidget',
+        items: [],
+        styleSelectors: { base: '' }
+      }
     };
+    space.schema.flat.home.definition.items = [...(space.schema.flat.home.definition.items ?? []), 'w1'];
+
     const res = validate(
-      { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' })] },
-      spaceWithCatalog(catalog)
+      { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' }, 'w1')] },
+      space
     );
     expect(res.valid).toBe(true);
-    expect(res.warnings.some(w => w.includes('container') && w.includes('bogus'))).toBe(true);
+    expect(res.warnings.some(w => w.includes('myWidget') && w.includes('bogus'))).toBe(true);
   });
 
   it('validates category="state" keys against the type visibility + styleSelectors', () => {
-    const catalog: ComponentCatalog = {
-      container: { custom: false, attributes: ['title'], styleSelectors: ['base'] }
-    };
     const ok = validate(
       { operations: [setStateFlow({ category: 'state', key: 'styleSelectors.base', value: 'true' })] },
-      spaceWithCatalog(catalog)
+      interactiveSpace()
     );
     expect(ok.valid).toBe(true);
 
     const bad = validate(
       { operations: [setStateFlow({ category: 'state', key: 'styleSelectors.nope', value: 'true' })] },
-      spaceWithCatalog(catalog)
+      interactiveSpace()
     );
     expect(bad.valid).toBe(false);
   });
@@ -833,7 +857,7 @@ describe('mcp-ai interactions', () => {
     const res = validate({ operations: [notifyFlow({ appearance: 'bogus' })] }, interactiveSpace());
     expect(res.valid).toBe(false);
     const err = res.errors.find(e => e.message.includes('appearance'));
-    expect(err?.validValues).toContain('success');
+    expect(err?.message).toContain('success');
   });
 
   // `value` is a `scalar` param: its data type follows the target attribute (a boolean attribute stores a real
@@ -842,10 +866,15 @@ describe('mcp-ai interactions', () => {
     const flow = (value: unknown): Operation => ({
       type: 'upsertInteractionFlow',
       pageRef: 'home',
-      ref: 'c1',
+      ref: 'b1',
       nodes: [
         { nodeType: 'trigger', action: 'onClick', title: 'Click' },
-        { nodeType: 'callback', action: 'setState', title: 'Set', params: { category: 'attribute', key: 'x', value } }
+        {
+          nodeType: 'callback',
+          action: 'setState',
+          title: 'Set',
+          params: { category: 'attribute', key: 'content', value }
+        }
       ]
     });
     expect(validate({ operations: [flow(true)] }, interactiveSpace()).valid).toBe(true);
