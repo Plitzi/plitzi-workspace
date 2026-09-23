@@ -25,6 +25,62 @@ export type Attributes = Record<
 
 // Helpers
 
+/**
+ * Splits a CSS value where `separator` stands outside every parenthesis and every quoted string.
+ *
+ * A scan rather than a regular expression, for two reasons that both reached users. A lookahead can only see one level
+ * of parentheses, so `var(--bg, light-dark(#fff, #111))` was cut at its inner comma and half a function went on to be
+ * emitted as CSS. And the pattern that tokenised a layer nested one quantifier inside another: handed that broken half,
+ * it backtracked exponentially — nearly two seconds for thirty characters, on every save of the selector.
+ */
+const splitTopLevel = (
+  value: string,
+  separator: (char: string) => boolean,
+  { keepEmpty = false, closeEndsPart = false }: { keepEmpty?: boolean; closeEndsPart?: boolean } = {}
+): string[] => {
+  const parts: string[] = [];
+  let depth = 0;
+  let quote = '';
+  let current = '';
+
+  const flush = () => {
+    if (keepEmpty || current) {
+      parts.push(current);
+    }
+
+    current = '';
+  };
+
+  for (const char of value) {
+    if (quote) {
+      quote = char === quote ? '' : quote;
+    } else if (/["']/.test(char)) {
+      quote = char;
+    } else if (char === '(') {
+      depth += 1;
+    } else if (char === ')') {
+      depth = Math.max(0, depth - 1);
+      // `var(--gap)10px` is two values written without the space between them; the call ends where it closes.
+      if (closeEndsPart && depth === 0) {
+        current += char;
+        flush();
+        continue;
+      }
+    } else if (depth === 0 && separator(char)) {
+      flush();
+      continue;
+    }
+
+    current += char;
+  }
+
+  flush();
+
+  return parts;
+};
+
+const isWhitespace = (char: string): boolean => /\s/.test(char);
+
 const getValue = (attribute: string, cssValue: string, nested: boolean = false) =>
   nested ? cssValue : `${attribute}:${cssValue};`;
 
@@ -90,8 +146,8 @@ const processLayer = (result: CssResult, attribute: string, value: string, neste
   // The terminator only, not every semicolon in the value. A `data:` URI carries its media type as
   // `image/svg+xml;charset=utf-8`, and stripping that one turned a working icon into a URI no browser resolves —
   // silently, and only once the selector was next saved, so the JSON on disk stayed right and the builder broke it.
-  const subValues = value.replace(/\s*;\s*$/, '').match(/[a-z-]+\((?:[^()]+|\([^()]*\))*\)|[^\s]+/gi);
-  if (!nested && subValues && subValues.length > 1) {
+  const subValues = splitTopLevel(value.replace(/\s*;\s*$/, ''), isWhitespace, { closeEndsPart: true });
+  if (!nested && subValues.length > 1) {
     subValues.forEach(subValue => {
       const partialResult = processLayer(result, attribute, subValue, true, skipAttribute);
       myResult.variables = { ...myResult.variables, ...partialResult.variables };
@@ -105,7 +161,7 @@ const processLayer = (result: CssResult, attribute: string, value: string, neste
     return myResult;
   }
 
-  value = subValues?.[0] ?? value;
+  value = subValues[0] ?? value;
 
   const matchFunction = value.match(
     /^(?!var\()\s*(?<functionName>[a-z-]+)\s*\(\s*(?<functionContent>[\s\S]*)\s*\)\s*$/i
@@ -121,7 +177,10 @@ const processLayer = (result: CssResult, attribute: string, value: string, neste
 
 export const processCssString = (attribute: string, value?: string) => {
   const result: CssResult = { variables: {}, value: '' };
-  const layers = value?.split(/,(?![^(]*\))/).map(layer => layer.trim()) ?? [];
+  const layers =
+    value === undefined
+      ? []
+      : splitTopLevel(value, char => char === ',', { keepEmpty: true }).map(layer => layer.trim());
   layers.forEach(layer => {
     const layerResult = processLayer(result, attribute, layer, false, true);
 

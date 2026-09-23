@@ -156,7 +156,7 @@ describe('processSelectorAttributes', () => {
       );
       expect(result).toEqual({
         value:
-          'background-image:radial-gradient(circle,transparent 45%,var(--color1) 48%),radial-gradient(ellipse farthest-corner,var(--color2) 20%, #cf15cf 80%);',
+          'background-image:radial-gradient(circle, transparent 45%, var(--color1) 48%),radial-gradient(ellipse farthest-corner, var(--color2) 20%, #cf15cf 80%);',
         variables: []
       });
 
@@ -302,9 +302,39 @@ describe('processSelectorAttributes', () => {
     it('handles nested functions with var', () => {
       const result = processCssString('background', 'linear-gradient(to right, rgba(var(--rgb),0.5), #000)');
       expect(result).toEqual({
-        value: 'background:linear-gradient(to right,rgba(var(--rgb),0.5) , #000);',
+        value: 'background:linear-gradient(to right, rgba(var(--rgb),0.5), #000);',
         variables: []
       });
+    });
+
+    // A fallback that is itself a function: the commas inside it are not layers.
+    it('keeps a var() whose fallback is a function whole', () => {
+      const result = processCssString(
+        'background-color',
+        'var(--color-background-secondary, light-dark(#ffffff, #1f2430))'
+      );
+      expect(result).toEqual({
+        value: 'background-color:var(--color-background-secondary, light-dark(#ffffff, #1f2430));',
+        variables: []
+      });
+    });
+
+    it('splits layers only at their own commas, however deep the functions inside them go', () => {
+      const result = processCssString(
+        'box-shadow',
+        '0 1px 2px var(--a, rgba(0, 0, 0, 0.1)), inset 0 0 0 1px color-mix(in srgb, var(--b) 6%, transparent)'
+      );
+      expect(result.value).toBe(
+        'box-shadow:0 1px 2px var(--a, rgba(0, 0, 0, 0.1)),inset 0 0 0 1px color-mix(in srgb, var(--b) 6%, transparent);'
+      );
+    });
+
+    // Tokenising used to backtrack exponentially on a value like this: seconds for a few dozen characters.
+    it('reads a value with an unclosed parenthesis in linear time', () => {
+      const started = performance.now();
+      processCssString('color', `var(--${'a-'.repeat(40)}secondary`);
+
+      expect(performance.now() - started).toBeLessThan(50);
     });
 
     it('handles multiple different vars in shorthand', () => {
