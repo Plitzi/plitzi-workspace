@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { BUILTIN_GLOBAL_CALLBACKS, elementAncestorTypes, lintSpace } from '../../index';
 import {
   addElement,
+  addForm,
   authored,
   errorsOf,
   homeId,
@@ -348,6 +349,90 @@ describe('lintSpace', () => {
       });
 
       expect(warningsOf(documents)).toContain('provider-without-source');
+    });
+
+    it('server-data-without-rsc', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.feed.attributes.connector = 'crm';
+        schema.flat.feed.definition.runtime = 'server';
+        schema.rsc = { enabled: false };
+      });
+
+      expect(warningsOf(documents)).toContain('server-data-without-rsc');
+    });
+
+    it('route-param-undeclared', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.hello.definition.bindings = {
+          attributes: [{ id: 'slug', to: 'content', source: 'navigation.routeParams.slug' }]
+        };
+      });
+
+      expect(warningsOf(documents)).toContain('route-param-undeclared');
+    });
+
+    it('route-param-undeclared is not raised when the page declares it', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat[homeId(schema)].attributes.slug = 'posts/:slug';
+        schema.flat.hello.definition.bindings = {
+          attributes: [{ id: 'slug', to: 'content', source: 'navigation.routeParams.slug' }]
+        };
+      });
+
+      expect(warningsOf(documents)).not.toContain('route-param-undeclared');
+    });
+
+    it('route-param-undeclared is not raised for prose that only mentions one', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, {
+          id: 'docs',
+          type: 'markdown',
+          attributes: { content: 'Read it with `navigation.routeParams.slug`.' }
+        });
+      });
+
+      expect(warningsOf(documents)).not.toContain('route-param-undeclared');
+    });
+
+    it('form-control-unnamed', () => {
+      const documents = withChange(({ schema }) => addForm(schema, { email: 'email', nameless: undefined }));
+
+      expect(warningsOf(documents)).toContain('form-control-unnamed');
+    });
+
+    it('form-control-name-taken', () => {
+      const documents = withChange(({ schema }) => addForm(schema, { email: 'email', again: 'email' }));
+
+      expect(warningsOf(documents)).toContain('form-control-name-taken');
+    });
+
+    it('form controls with a name each are not warned about', () => {
+      const documents = withChange(({ schema }) => addForm(schema, { email: 'email', password: 'password' }));
+
+      expect(warningsOf(documents).filter(code => code.startsWith('form-control'))).toEqual([]);
+    });
+
+    it('overlay-never-opened', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat['open-modal'].definition.interactions = {};
+      });
+
+      expect(warningsOf(documents)).toContain('overlay-never-opened');
+    });
+
+    it('server-data-without-rsc is not raised once the space turns server data on, or for a browser provider', () => {
+      const serverOn = withChange(({ schema }) => {
+        schema.flat.feed.attributes.connector = 'crm';
+        schema.flat.feed.definition.runtime = 'server';
+        schema.rsc = { enabled: true };
+      });
+      const browser = withChange(({ schema }) => {
+        schema.flat.feed.attributes.connector = 'crm';
+        schema.rsc = { enabled: false };
+      });
+
+      expect(warningsOf(serverOn)).not.toContain('server-data-without-rsc');
+      expect(warningsOf(browser)).not.toContain('server-data-without-rsc');
     });
 
     /** The server resolves a provider that names a connector, so it asks something — found by an e2e fixture. */

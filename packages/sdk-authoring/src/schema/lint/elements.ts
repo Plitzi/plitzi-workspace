@@ -2,6 +2,7 @@ import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twi
 
 import { BINDING_CATEGORIES, LOAD_STRATEGIES, RUNTIMES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
+import { textOf } from './context';
 import { checkPageTarget } from './pages';
 import { checkTemplate } from './templates';
 
@@ -318,6 +319,20 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
     );
   }
 
+  // A server provider is answered by the page server's resolver, and that resolver asks only for a space that turned
+  // server data on — without it the provider renders its mock data, and nothing anywhere said why.
+  const serverSource = ['connector', 'action'].find(
+    key => typeof attributes[key] === 'string' && attributes[key] !== ''
+  );
+  if (element.definition.runtime === 'server' && serverSource && ctx.schema.rsc?.enabled !== true) {
+    ctx.warn(
+      'server-data-without-rsc',
+      `${where} is resolved on the server (\`runtime: 'server'\`) through its \`${serverSource}\`, but the space does not turn server data on, so it renders its mock data and never asks. Add \`rsc: { enabled: true }\` to the space.`,
+      element.id,
+      { source: serverSource }
+    );
+  }
+
   const fallback = ctx.catalogs.defaultAttributes?.[type]?.content;
   if (
     (element.definition.items?.length ?? 0) > 0 &&
@@ -360,6 +375,85 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
  * Every element's rules. The roots — pages and layout shells — carry the document's own fields rather than an
  * element's, so only their bindings are read.
  */
+const ROUTE_PARAM = /navigation\.routeParams\.([A-Za-z_][\w-]*)/g;
+
+/**
+ * A route param the page's address never fills. `navigation.routeParams.<name>` holds what the matched route caught,
+ * and a slug without `:<name>` catches nothing under that name — so what reads it is always empty, and nothing says so.
+ * A layout renders on every page and may read any of theirs.
+ */
+const warnRouteParams = (ctx: LintContext, element: Element, where: string): void => {
+  const read = new Set(
+    [
+      // A prose element's text is content: a `navigation.routeParams.x` in it is a sample of code, not a read.
+      ...(PROSE_TYPES.has(element.definition.type) ? [] : stringsIn(element.attributes)),
+      ...bindingsOf(element).flatMap(({ binding }) => [binding.source, ...stringsIn(binding.transformers)]),
+      ...stringsIn(Object.values(element.definition.interactions ?? {}).map(node => node.params))
+    ].flatMap(text => [...text.matchAll(ROUTE_PARAM)].map(([, name]) => name))
+  );
+  const declared = ctx.routeParams(element.id);
+  for (const name of read) {
+    if (!declared.includes(name)) {
+      ctx.warn(
+        'route-param-undeclared',
+        `${where} reads "navigation.routeParams.${name}", but its page's address has no ":${name}"${declared.length > 0 ? ` (it has ${declared.map(param => `:${param}`).join(', ')})` : ''}, so it is always empty. Add \`:${name}\` to the page's slug — \`slug: 'posts/:${name}'\` — or, for a query parameter, read \`navigation.queryParams.${name}\`.`,
+        element.id,
+        { param: name }
+      );
+    }
+  }
+};
+
+/** The form controls a form owns: its descendants, down to a form nested in it, which owns its own. */
+const controlsOf = (ctx: LintContext, formId: string): Element[] =>
+  (ctx.element(formId)?.definition.items ?? []).flatMap(id => {
+    const child = ctx.element(id);
+    if (!child || child.definition.type === 'form') {
+      return [];
+    }
+
+    return [...(child.definition.type === 'formControl' ? [child] : []), ...controlsOf(ctx, id)];
+  });
+
+/**
+ * A form's values are its controls' values under their names. A control with no name lands under the empty key — it
+ * never reaches `values.<name>` — and two with one name write over each other. Both submit, and one field is missing.
+ */
+const warnFormControls = (ctx: LintContext): void => {
+  for (const form of Object.values(ctx.flat).filter(element => element.definition.type === 'form')) {
+    const named = new Map<string, string>();
+    for (const control of controlsOf(ctx, form.id)) {
+      if (bindingsOf(control).some(({ binding }) => binding.to === 'name')) {
+        continue;
+      }
+
+      const name = textOf(control.attributes.name).trim();
+      const where = ctx.describe(control.id);
+      if (name === '') {
+        ctx.warn(
+          'form-control-unnamed',
+          `${where} is in the form "${form.id}" with no \`name\`, so what it holds never reaches the form's values. Give it one — \`formControl({ name: 'email', … })\` — and read it as \`values.email\`.`,
+          control.id
+        );
+        continue;
+      }
+
+      const first = named.get(name);
+      if (first === undefined) {
+        named.set(name, control.id);
+        continue;
+      }
+
+      ctx.warn(
+        'form-control-name-taken',
+        `${where} has the name "${name}", which "${first}" in the same form already has: one writes over the other in \`values.${name}\`, and one of the two answers is lost. Give each control its own name.`,
+        control.id,
+        { name, first }
+      );
+    }
+  }
+};
+
 export const lintElements = (ctx: LintContext): void => {
   const catalog = ctx.catalogs.attributeNames;
   const unknownTypes = new Set<string>();
@@ -392,5 +486,8 @@ export const lintElements = (ctx: LintContext): void => {
     checkChildren(ctx, element, where);
     checkAttributeTemplates(ctx, element, where);
     checkIntent(ctx, element, where);
+    warnRouteParams(ctx, element, where);
   }
+
+  warnFormControls(ctx);
 };

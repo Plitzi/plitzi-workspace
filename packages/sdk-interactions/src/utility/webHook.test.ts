@@ -72,6 +72,20 @@ describe('webHook', () => {
     expect(invalidateAfterWrite).not.toHaveBeenCalled();
   });
 
+  it('sends an empty object for a write left with no body, never the text ""', async () => {
+    await send({ method: 'post', body: '' });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBe('{}');
+  });
+
+  it('sends the fields of a write that has them', async () => {
+    await send({ method: 'post', body: { email: 'ada@example.com' } });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBe('{"email":"ada@example.com"}');
+  });
+
   it('sends a head without a body', async () => {
     await send({ method: 'head', body: { a: '1' } });
 

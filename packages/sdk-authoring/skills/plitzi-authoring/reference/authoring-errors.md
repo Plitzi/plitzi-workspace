@@ -50,3 +50,8 @@ A warning means the space renders, and renders something you probably did not me
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
 | `FORM_SUBMIT_UNMANAGED` | a form the browser would submit itself | `managedByInteractions: true` |
 | `STYLE_WITHOUT_TAG` | style on a provider that renders no element | `subType: 'div'` on the provider, or style its parent |
+| `server-data-without-rsc` | a `runtime: 'server'` provider with a `connector` or `action` in a space that does not turn server data on — it renders its mock data | `rsc: { enabled: true }` on the space |
+| `route-param-undeclared` | `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty | add `:x` to the slug, or read `navigation.queryParams.x` |
+| `form-control-unnamed` | a control in a form with no `name` — its value never reaches `values` | `formControl({ name: 'email', … })` |
+| `form-control-name-taken` | two controls in one form with one name — one overwrites the other | a name each |
+| `overlay-never-opened` | a modal or dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |

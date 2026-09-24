@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { lintDraft } from './lintDraft';
+import { fixTouched, lintDraft } from './lintDraft';
 import { cloneSpace } from '../../helpers';
 import { buildSpace } from '../../tests/helpers';
 
 import type { Space } from '../../helpers';
 import type { Operation } from '../operations';
+import type { ElementBinding } from '@plitzi/sdk-shared';
 
 /** The fixture with a text beside the container, so an edit can touch one element and leave the other alone. */
 const space = (): Space => {
@@ -99,6 +100,32 @@ describe('lintDraft', () => {
     expect(result.errors.some(error => error.message.includes('label'))).toBe(true);
   });
 
+  /** A binding onto a provider nothing on the page publishes — a structural error, on `label`. */
+  const dangling = (id: string, source: string): ElementBinding => ({ id, to: 'content', source, enabled: true });
+
+  // The message says what the issue might have meant, which a batch elsewhere can change: the issue is the same.
+  it('knows an old issue in other words, on an element it never touched', () => {
+    const before = space();
+    before.schema.flat.label.definition.bindings = { attributes: [dangling('b1', 'apiContainer_ghost.data')] };
+    const draft = drafted(before, next => {
+      next.schema.flat.label.definition.bindings = { attributes: [dangling('b1', 'apiContainer_ghosts.data')] };
+    });
+
+    expect(lintDraft(draft, [patch('c1')], before).valid).toBe(true);
+  });
+
+  it('still blocks one more of the same issue than the space had, on an element it never touched', () => {
+    const before = space();
+    before.schema.flat.label.definition.bindings = { attributes: [dangling('b1', 'apiContainer_ghost.data')] };
+    const draft = drafted(before, next => {
+      next.schema.flat.label.definition.bindings = {
+        attributes: [dangling('b1', 'apiContainer_ghost.data'), dangling('b2', 'apiContainer_phantom.data')]
+      };
+    });
+
+    expect(lintDraft(draft, [patch('c1')], before).valid).toBe(false);
+  });
+
   it('reads a plugin installed on the space as a type, not a typo', () => {
     const before: Space = {
       ...space(),
@@ -110,5 +137,39 @@ describe('lintDraft', () => {
     });
 
     expect(lintDraft(draft, [patch('label')], before)).toEqual({ valid: true, errors: [], warnings: [] });
+  });
+});
+
+/**
+ * What was already wrong with an element a batch is about to change is fixed first, where it has one reading — on the
+ * space before the batch, so the batch's own mistakes are still refused rather than quietly "fixed".
+ */
+describe('fixTouched', () => {
+  it('fixes an old issue on an element the batch touches, and says so', () => {
+    const before = space();
+    before.schema.flat.label.attributes.title = 'Never read';
+
+    const { space: fixed, fixed: said } = fixTouched(before, [patch('label')]);
+
+    expect(fixed.schema.flat.label.attributes).toEqual({ content: 'Hello' });
+    expect(said).toHaveLength(1);
+    expect(said[0]).toMatch(/^Fixed a pre-existing problem in element "label" while changing it: .*"title"/);
+    expect(before.schema.flat.label.attributes.title).toBe('Never read');
+  });
+
+  it('leaves an element the batch does not touch as it found it', () => {
+    const before = space();
+    before.schema.flat.label.attributes.title = 'Never read';
+
+    const result = fixTouched(before, [patch('c1')]);
+
+    expect(result.fixed).toEqual([]);
+    expect(result.space).toBe(before);
+  });
+
+  it('answers the space itself when there is nothing to fix', () => {
+    const before = space();
+
+    expect(fixTouched(before, [patch('label')]).space).toBe(before);
   });
 });

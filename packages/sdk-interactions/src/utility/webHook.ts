@@ -8,7 +8,8 @@ import type { InteractionCallback } from '@plitzi/sdk-shared';
 type WebHookParams = {
   url: string;
   method: string;
-  body: Record<string, string | Blob>;
+  /** The fields to send — or, left as the step's default, the empty text. */
+  body: Record<string, string | Blob> | string;
   authorizationToken: string;
   credentials: RequestCredentials;
   cache?: boolean | string;
@@ -34,10 +35,19 @@ const toMilliseconds = (seconds: unknown): number => {
 
 const authorizationOf = (token: string): Record<string, string> => (token ? { Authorization: `Bearer ${token}` } : {});
 
+/**
+ * The fields a write sends. A body left empty is the step's default, the empty text — and sent as JSON that was the
+ * text `""`, which an endpoint reading JSON refuses with a 400: a button that looked like it did nothing. Nothing to
+ * send has one reading, the empty object.
+ */
+const fieldsOf = (body: WebHookParams['body'] | null | undefined): Record<string, string | Blob> =>
+  typeof body === 'object' && body !== null ? body : {};
+
 const send = async (
-  { url, authorizationToken, body, credentials }: WebHookParams,
+  { url, authorizationToken, body: given, credentials }: WebHookParams,
   method: string
 ): Promise<WebHookResponse> => {
+  const body = fieldsOf(given);
   try {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

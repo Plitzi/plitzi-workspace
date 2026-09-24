@@ -141,8 +141,12 @@ export const lintSpace = (space: SpaceDocuments, options: LintCatalogs = {}): Li
  * `fixSpace`, holding the same catalogs `lintSpace` reads with — so a fix settles exactly what the linter reports, on
  * a copy of the documents. `codes` narrows it to some of `FIXABLE_CODES`.
  */
-export const fixSpace = (space: SpaceDocuments, options: LintCatalogs = {}, codes?: Iterable<string>): FixResult =>
-  fixSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options }, codes);
+export const fixSpace = (
+  space: SpaceDocuments,
+  options: LintCatalogs = {},
+  codes?: Iterable<string>,
+  elements?: Iterable<string>
+): FixResult => fixSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options }, codes, elements);
 
 /**
  * `authorTemplate`, holding the same vocabularies — the artefact you publish when you are not building a space.

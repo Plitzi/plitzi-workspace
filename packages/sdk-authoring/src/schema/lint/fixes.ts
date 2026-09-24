@@ -244,25 +244,42 @@ export const FIXABLE_CODES: ReadonlySet<string> = new Set(Object.keys(FIXERS));
 /**
  * The space with every issue that has one reading fixed, and a line for each change.
  *
- * Works on a copy: the documents handed in are untouched. `codes` narrows it to some of the fixable codes. What it
- * cannot fix — anything that needs a decision only the author can make — is left as it was, for the linter to keep
- * reporting.
+ * Works on a copy: the documents handed in are untouched, and with nothing to fix the schema handed in is answered. `codes` narrows it to some of the fixable codes, and
+ * `elements` to some of the elements — what an editor fixes in passing on the ones it is about to change, leaving the
+ * rest of the space as it found it. What it cannot fix — anything that needs a decision only the author can make — is
+ * left as it was, for the linter to keep reporting.
  */
 export const fixSpace = (
   { schema, style }: { schema: Schema; style: Style },
   catalogs: LintCatalogs = {},
-  codes: Iterable<string> = FIXABLE_CODES
+  codes: Iterable<string> = FIXABLE_CODES,
+  elements?: Iterable<string>
 ): FixResult => {
   const wanted = new Set(codes);
-  const next = structuredClone(schema);
+  const only = elements ? new Set(elements) : undefined;
   const applied: AppliedFix[] = [];
-  for (const element of Object.values(next.flat)) {
+  const changed: Schema['flat'] = {};
+  // A fixer changes the element it is handed and nothing else, so each is fixed on a copy of its own, and the space
+  // is copied only around the ones that changed — a fix on one element of thousands no longer clones them all.
+  for (const element of Object.values(schema.flat)) {
+    if (only && !only.has(element.id)) {
+      continue;
+    }
+
+    const draft = structuredClone(element);
+    const before = applied.length;
     for (const [code, fix] of Object.entries(FIXERS)) {
       if (wanted.has(code)) {
-        fix(element, catalogs, message => applied.push({ code, elementId: element.id, message }));
+        fix(draft, catalogs, message => applied.push({ code, elementId: element.id, message }));
       }
     }
+
+    if (applied.length > before) {
+      changed[element.id] = draft;
+    }
   }
+
+  const next = Object.keys(changed).length > 0 ? { ...schema, flat: { ...schema.flat, ...changed } } : schema;
 
   return { schema: next, style, applied };
 };

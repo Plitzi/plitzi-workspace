@@ -136,6 +136,19 @@ describe('fixSpace', () => {
     expect(applied.map(fix => fix.code)).toEqual(['page-target-url']);
   });
 
+  it('fixes only the elements asked for, and leaves the rest as it found them', () => {
+    const documents = withChange(({ schema }) => {
+      addElement(schema, { id: 'mine', type: 'text', attributes: { content: 'x', title: 'Never read' } });
+      addElement(schema, { id: 'theirs', type: 'text', attributes: { content: 'y', title: 'Never read' } });
+    });
+
+    const { schema, applied } = fixSpace(documents, {}, undefined, ['mine']);
+
+    expect(applied.map(fix => fix.elementId)).toEqual(['mine']);
+    expect(schema.flat.mine.attributes).toEqual({ content: 'x' });
+    expect(schema.flat.theirs.attributes).toEqual({ content: 'y', title: 'Never read' });
+  });
+
   it('has a case for every code it can fix', () => {
     expect([...FIXABLE_CODES].filter(code => !Object.hasOwn(broken, code))).toEqual([]);
   });

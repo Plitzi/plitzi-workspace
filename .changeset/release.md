@@ -395,3 +395,27 @@
   publish webhook that invalidated a space cleared no page. The key is now read by the same list that writes it.
 - `PluginManager.forget(name?, version?)` drops what a process remembers of a plugin and leaves the files: what an
   invalidation in another worker does.
+
+## Fewer silent failures, less friction for an agent
+
+- **New lint warnings**, each with the fix in its message, held by `authorSpace`, the builder's problems list, the
+  publish gate and the MCP server alike:
+  - `server-data-without-rsc`: a `runtime: 'server'` provider with a `connector` or `action` in a space that does not
+    turn server data on — it rendered its mock data and nothing said why. Add `rsc: { enabled: true }`.
+  - `route-param-undeclared`: `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty. Prose
+    elements that only mention one are not read.
+  - `form-control-unnamed` / `form-control-name-taken`: a control in a form with no `name` never reached the form's
+    values, and two with one name wrote over each other.
+  - `overlay-never-opened`: a modal or dialog that starts hidden and that no step opens.
+- **A `webHook` that writes with an empty body sends `{}`**, not the JSON text `""` a JSON endpoint refuses with a 400.
+- `fixSpace(space, catalogs, codes, elements)`: `elements` narrows the fixes to some elements. It now clones only the
+  elements it changes, and with nothing to fix answers the schema it was handed.
+- **MCP `plitzi_apply` / `plitzi_validate`:**
+  - What was already wrong with an element a batch changes is fixed on the way, where it has one reading, and every
+    fix is said in `warnings`. The fixes run on the space before the batch, so the batch's own mistakes are still
+    refused.
+  - An old issue is told from a new one by its code on its element, not only by its message, so a page rename or a
+    changed suggestion no longer makes an old issue on an untouched element look new and block the batch. One more
+    of an issue than before is still the batch's.
+  - The space as it was is read only when the result has something to classify: ~15% less time a batch on the
+    largest spaces.

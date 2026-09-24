@@ -1,10 +1,22 @@
-import { apiContainer, authorSpace, button, container, link, lintSpace, modalContainer, text } from '../../../index';
+import {
+  apiContainer,
+  authorSpace,
+  button,
+  container,
+  link,
+  lintSpace,
+  modalContainer,
+  onClick as clicked,
+  openModal,
+  text
+} from '../../../index';
 
 import type { Element, ElementInteraction, Schema, Style } from '@plitzi/sdk-shared';
 
 /**
  * The space the linter and its fixes are tested against: one the linter finds nothing in, with an element of each kind
- * a rule is about — a provider with a row inside it, a button to hang flows on, a modal, a link and a second page.
+ * a rule is about — a provider with a row inside it, a button to hang flows on, a modal and the button that opens it,
+ * a link and a second page.
  */
 export type Documents = { schema: Schema; style: Style };
 
@@ -25,6 +37,7 @@ export const authored = (): Documents => {
             children: [text({ id: 'row', bind: { content: 'feed.data.title' } })]
           }),
           button({ id: 'go', content: 'Go' }),
+          button({ id: 'open-modal', content: 'Open', flows: [[clicked(), openModal('modal')]] }),
           modalContainer({ id: 'modal', visible: false }),
           link({ id: 'to-about', mode: 'page', href: '/about' })
         ]
@@ -103,4 +116,16 @@ export const addElement = (schema: Schema, element: Pick<Element, 'id' | 'attrib
     }
   };
   schema.flat[home].definition.items = [...(schema.flat[home].definition.items ?? []), element.id];
+};
+
+/** A form on the home page holding these controls, by id and name — a name of `undefined` is a control left unnamed. */
+export const addForm = (schema: Schema, controls: Record<string, string | undefined>): void => {
+  addElement(schema, { id: 'signup', type: 'form', attributes: { managedByInteractions: true } });
+  for (const [id, name] of Object.entries(controls)) {
+    addElement(schema, { id, type: 'formControl', attributes: name === undefined ? {} : { name } });
+    const home = homeId(schema);
+    schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(item => item !== id);
+    schema.flat[id].definition.parentId = 'signup';
+    schema.flat.signup.definition.items = [...(schema.flat.signup.definition.items ?? []), id];
+  }
 };

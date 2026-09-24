@@ -302,6 +302,42 @@ const warnStatePaths = (ctx: LintContext, node: ElementInteraction, where: strin
   }
 };
 
+/** The callbacks that show an overlay, by the type that answers them; closing one is not a way to see it. */
+const OPENERS: Readonly<Record<string, string>> = { modalContainer: 'openModal', dialogContainer: 'openDialog' };
+const CLOSERS = new Set(['closeModal', 'closeDialog']);
+
+/**
+ * An overlay that starts hidden and that no step anywhere shows: everything inside it is authored and never seen.
+ * Any step aimed at it other than a close counts — a `setState` of its visibility shows it as surely as `openModal`.
+ */
+const warnOverlaysNeverOpened = (ctx: LintContext): void => {
+  const aimedAt = new Set(
+    Object.values(ctx.flat).flatMap(host =>
+      Object.values(host.definition.interactions ?? {})
+        .filter(node => node.type === 'callback' && !CLOSERS.has(node.action) && typeof node.elementId === 'string')
+        .map(node => node.elementId ?? '')
+    )
+  );
+  for (const element of Object.values(ctx.flat)) {
+    const opener = OPENERS[element.definition.type];
+    if (!opener || aimedAt.has(element.id) || element.definition.initialState?.visibility !== false) {
+      continue;
+    }
+
+    const bindings = Object.values(element.definition.bindings ?? {}).flat();
+    if (bindings.some(binding => binding.to === 'visibility')) {
+      continue;
+    }
+
+    ctx.warn(
+      'overlay-never-opened',
+      `${ctx.describe(element.id)} starts hidden and no step anywhere opens it, so what it holds is never seen. Open it from a flow: \`flows: [[onClick(), ${opener}('${element.id}')]]\`.`,
+      element.id,
+      { opener }
+    );
+  }
+};
+
 /** Every flow of every element, page and layout. */
 export const lintFlows = (ctx: LintContext): void => {
   for (const host of Object.values(ctx.flat)) {
@@ -347,4 +383,6 @@ export const lintFlows = (ctx: LintContext): void => {
       }
     }
   }
+
+  warnOverlaysNeverOpened(ctx);
 };

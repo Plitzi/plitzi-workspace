@@ -589,7 +589,8 @@ describe('mcp-ai interactions', () => {
     expect(cap.saved().schema.flat.c1.definition.interactions?.['delayTime-1'].elementId).toBeNull();
   });
 
-  it('warns when an existing utility node carries a real (host) elementId, on patch', () => {
+  // Touching the node fixes what was already wrong with it, where that has one reading — and says so.
+  it('fixes, and says it fixed, a utility node that carries a real (host) elementId, on patch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
       ...clickTrigger('delayTime-1'),
@@ -615,10 +616,13 @@ describe('mcp-ai interactions', () => {
       },
       space
     );
-    expect(res.warnings.some(w => w.includes('delayTime') && w.includes('takes NO element'))).toBe(true);
+    expect(res.valid).toBe(true);
+    expect(
+      res.warnings.some(w => w.startsWith('Fixed a pre-existing problem in element "c1"') && w.includes('delayTime'))
+    ).toBe(true);
   });
 
-  it('warns on a literal string "undefined" elementId (stringified nullish, a builder artifact)', () => {
+  it('fixes, and says it fixed, a literal string "undefined" elementId (stringified nullish, a builder artifact)', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
       ...clickTrigger('delayTime-1'),
@@ -644,7 +648,10 @@ describe('mcp-ai interactions', () => {
       },
       space
     );
-    expect(res.warnings.some(w => w.includes('literal string elementId') && w.includes('"undefined"'))).toBe(true);
+    expect(res.valid).toBe(true);
+    expect(
+      res.warnings.some(w => w.startsWith('Fixed a pre-existing problem in element "c1"') && w.includes('delayTime'))
+    ).toBe(true);
   });
 
   // Refused — no element answers it, so the step would do nothing — and the warning names the node type that fixes it.
@@ -915,7 +922,7 @@ describe('mcp-ai interactions', () => {
     expect(res.errors.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
   });
 
-  it('surfaces leftover unknown params (delay/time) on the merged node when patching one field', () => {
+  it('drops leftover unknown params (delay/time) on the node it patches, and says so', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
       'setState-1': {
@@ -940,7 +947,9 @@ describe('mcp-ai interactions', () => {
       },
       space
     );
-    expect(res.warnings.some(w => w.includes('setState') && w.includes('"delay"') && w.includes('"time"'))).toBe(true);
+    const fixed = res.warnings.filter(w => w.startsWith('Fixed a pre-existing problem in element "c1"'));
+    expect(fixed.some(w => w.includes('"delay"'))).toBe(true);
+    expect(fixed.some(w => w.includes('"time"'))).toBe(true);
   });
 
   // The whole point: a patch whose OWN fields are correct must still be REJECTED (and NOT persisted) while the node
