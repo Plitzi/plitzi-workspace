@@ -1,6 +1,20 @@
-import { format, parseISO, differenceInMilliseconds, formatDistanceToNow, getTime, isValid, parse } from 'date-fns';
-import { enUS, es, pt } from 'date-fns/locale';
-import { toZonedTime } from 'date-fns-tz';
+/**
+ * One function per import, from its own subpath — never the package root.
+ *
+ * This module is published file by file, so nothing tree-shakes it for a server: `from 'date-fns'` loaded all 826 of
+ * the package's modules, and `from 'date-fns/locale'` every locale there is, for a handful of functions and three
+ * languages. On a page server that was the single largest cost of starting at all — about 300 MB of resident memory,
+ * held for the life of the process.
+ */
+import { differenceInMilliseconds } from 'date-fns/differenceInMilliseconds';
+import { format } from 'date-fns/format';
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { getTime } from 'date-fns/getTime';
+import { enUS } from 'date-fns/locale/en-US';
+import { es } from 'date-fns/locale/es';
+import { pt } from 'date-fns/locale/pt';
+import { parseISO } from 'date-fns/parseISO';
+import { toZonedTime } from 'date-fns-tz/toZonedTime';
 
 import type { FormatDistanceToNowOptions, Locale } from 'date-fns';
 
@@ -149,29 +163,3 @@ export function isValidFormat(formatStr: string): boolean {
 export const toUnixSeconds = (input: string | number | Date): string => {
   return Math.floor(getTime(parseDate(input)) / 1000).toString();
 };
-
-/** Strictly validates whether a string matches a given date-fns format. */
-export function isDate(value: string, formatStr: string): boolean {
-  if (typeof value !== 'string') {
-    return false;
-  }
-
-  try {
-    // 1. Parse date using date-fns
-    const parsed = parse(value, formatStr, new Date());
-
-    // 2. Check if parsed date is valid
-    if (!isValid(parsed)) {
-      return false;
-    }
-
-    // 3. Strict format validation:
-    // Re-format parsed date and compare with original input
-    // If they differ → input didn't strictly match the format
-    const reformatted = format(parsed, formatStr);
-
-    return reformatted === value;
-  } catch {
-    return false;
-  }
-}

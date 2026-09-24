@@ -279,3 +279,14 @@
 - The CLI's generated visual test uses `inspectPage`.
 - The sample space (`examples/shared-space`) no longer sizes itself by the window: embedded beside a host's sidebar
   (`03-react-component`) it overflowed by the sidebar's width. Its RSC section is named `rsc-section`.
+
+## A page server that starts in less memory
+
+- `sdk-shared` imports date-fns one function per subpath, and its locales one by one: `from 'date-fns'` loaded all
+  826 of its modules (and `date-fns/locale` every language) wherever the date helpers were imported, which is on every
+  page server — the largest single cost of starting at all.
+- `isDate(value, format)` moved to `@plitzi/sdk-shared/helpers/isDate` (still exported from `@plitzi/sdk-shared/helpers`):
+  it needs date-fns `parse`, which alone costs about 100 MB, and nothing that only formats dates should load it. It is
+  no longer exported from `helpers/formatDate`.
+- Needs `@plitzi/plitzi-ui` with the same fix in its `formatDate` (the QueryBuilder evaluator a server loads imported
+  date-fns whole, and `parse` for one fixed format). Measured on the SSR example: resident memory at rest 308 → 177 MB.

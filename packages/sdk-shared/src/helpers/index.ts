@@ -4,6 +4,7 @@ import syntaxHighlight from './syntaxHighlight';
 
 export * from './fetchManifest';
 export * from './formatDate';
+export * from './isDate';
 export * from './generateFacade';
 export * from './reducerOrigin';
 export * from './ruleEvaluator';
