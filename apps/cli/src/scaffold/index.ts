@@ -17,7 +17,14 @@ export {
   runCommand
 } from './packageManager';
 
-export { pluginNameProblem, pluginNames, scaffoldElement, scaffoldPlugin } from './pluginPackage';
+export {
+  declarationsRegistry,
+  elementsRegistry,
+  pluginNameProblem,
+  pluginNames,
+  scaffoldElement,
+  scaffoldPlugin
+} from './pluginPackage';
 
 export type { PluginNames } from './pluginPackage';
 export type { CreateAnswers, PackageManager, PluginAnswers, ProjectFiles } from './types';

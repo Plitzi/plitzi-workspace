@@ -187,6 +187,19 @@ describe('the copy handed to a project', () => {
     expect(hosted).toMatch(/^import \{[^}]*\belement\b[^}]*\} from '@plitzi\/sdk-authoring';$/m);
   });
 
+  it('hosts every plugin of a list, one after another', () => {
+    const hosted = blankSpaceSource({
+      plugin: [
+        { id: 'seat-picker', renderType: 'seatPicker', as: 'element', attributes: {} },
+        { id: 'legend', renderType: 'legend', as: 'element', attributes: { label: 'Key' } }
+      ]
+    });
+
+    expect(hosted).toContain("element('seatPicker', {");
+    expect(hosted).toContain("element('legend', {");
+    expect(hosted.indexOf("element('seatPicker'")).toBeLessThan(hosted.indexOf("element('legend'"));
+  });
+
   it('feeds the plugin from a data file when asked, through a provider and a binding', () => {
     const hosted = blankSpaceSource({
       plugin: {

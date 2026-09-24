@@ -1,16 +1,20 @@
 import { installCommand, runCommand } from '../packageManager';
+import { pluginNames } from './names';
 
 import type { PluginNames } from './names';
 import type { PluginAnswers, ProjectFiles } from '../types';
 
-const readme = (names: PluginNames, { packageManager }: PluginAnswers): string => {
+const readme = (elements: PluginNames[], { packageName, packageManager }: PluginAnswers): string => {
   const run = (script: string): string => runCommand(packageManager, script);
-  const { packageName, type, component, base } = names;
+  const { base } = pluginNames(packageName);
+  const [{ type, component }] = elements;
+  const held = elements.map(element => `\`${element.type}\``).join(', ');
 
   return `# ${packageName}
 
-A Plitzi plugin: an element of your own that any space can render. A \`custom\` element naming
-\`renderType: '${type}'\` renders the component in \`src/${component}\`, and the element's attributes arrive as its props.
+A Plitzi plugin: ${elements.length === 1 ? 'an element' : 'elements'} of your own that any space can render — ${held}.
+An element of that type renders the component in its folder under \`src/\`, and its attributes arrive as the
+component's props.
 
 \`\`\`bash
 ${installCommand(packageManager)}
@@ -21,7 +25,7 @@ ${run('zip')}      # build, then pack the build the way the builder takes it
 
 ## What is where
 
-The element is written the way Plitzi's own elements are (\`@plitzi/sdk-elements\`): one folder, four files.
+Each element is written the way Plitzi's own elements are (\`@plitzi/sdk-elements\`): one folder, four files.
 
 - \`src/${component}/${component}.tsx\` — the component: what a page renders.
 - \`src/${component}/declaration.ts\` — the element as the platform knows it: its \`type\`, the events it fires and the
@@ -29,7 +33,9 @@ The element is written the way Plitzi's own elements are (\`@plitzi/sdk-elements
   writes it into the manifest.
 - \`src/${component}/Settings.tsx\` — its panel in the builder.
 - \`src/${component}/index.ts\` — the three put together: what a space loads.
-- \`src/declarations.ts\` — every element the package holds, for the manifest.
+- \`src/elements.ts\` and \`src/declarations.ts\` — every element the package holds, the one it is named after first:
+  \`src/index.ts\` publishes the first as the plugin and the rest as its \`plugins\`, and the build writes each
+  declaration into the manifest.
 - \`preview/\` — a space to look at the plugin in, rendered in the browser with no server.
 
 ## Publishing
@@ -42,6 +48,21 @@ MCP server read to know the plugin before they load it.
 - **From your own host.** Serve \`dist/\` at an address that never changes for a given version
   (\`https://cdn.example.com/${base}/0.1.0\`), with CORS open to the sites that use it, and list it in the space's
   plugins: \`{ type: '${type}', resource: '<that address>' }\`.
+
+## In a project of your own
+
+- **In the browser** — \`render()\`, or \`<PlitziSdk>\` in a React application — install the package and register every
+  element it holds:
+
+  \`\`\`ts
+  import { elements } from '${packageName}';
+
+  render('root', options, Object.fromEntries(elements.map(element => [element.type, { component: element }])));
+  \`\`\`
+
+- **On a page server of your own**, compile each element from its source, which is what renders it on the server:
+  \`plugins: { ${type}: { js: path.resolve('node_modules/${packageName}/src/${component}/index.ts'), action: 'compile' } }\`,
+  one entry per element, each named in the deployment's \`pluginNames\`.
 
 ## The contract
 
@@ -59,20 +80,25 @@ MCP server read to know the plugin before they load it.
 - **Do not name colours.** The page has a palette and a light/dark theme; use \`currentColor\` and the space's own
   \`var(--…)\` variables.
 
-## More than one element
+## Another element
 
-A package can hold several: export the others as \`plugins\` from \`src/index.ts\`
-(\`export const plugins = { legend: Legend }\`) and give each an entry in \`pluginSchema\` beside \`${type}\`'s.
+\`\`\`bash
+npx @plitzi/cli add plugin legend
+\`\`\`
+
+Run in this package, it writes \`src/Legend/\` and lists it in \`src/elements.ts\` and \`src/declarations.ts\` — the
+package publishes it from then on, beside \`${type}\`. Put an \`element('legend', { id: 'legend' })\` in
+\`preview/space.ts\` to look at it.
 `;
 };
 
-const agents = (names: PluginNames, { packageManager }: PluginAnswers): string => {
+const agents = (elements: PluginNames[], { packageName, packageManager }: PluginAnswers): string => {
   const run = (script: string): string => `\`${runCommand(packageManager, script)}\``;
 
-  return `# ${names.packageName} — notes for agents
+  return `# ${packageName} — notes for agents
 
-A Plitzi plugin: the \`${names.type}\` element, in \`src/${names.component}\`, written the way \`@plitzi/sdk-elements\` writes its
-own. \`declaration.ts\` there says how the platform knows it.
+A Plitzi plugin holding ${elements.map(element => `\`${element.type}\` (\`src/${element.component}\`)`).join(', ')}, each written
+the way \`@plitzi/sdk-elements\` writes its own. An element's \`declaration.ts\` says how the platform knows it.
 
 - ${run('start')} — the preview: the plugin inside a space.
 - ${run('visual')} — a browser checks the preview.
@@ -89,9 +115,9 @@ own. \`declaration.ts\` there says how the platform knows it.
 `;
 };
 
-export const docsFiles = (names: PluginNames, answers: PluginAnswers): ProjectFiles => ({
-  'README.md': readme(names, answers),
-  'AGENTS.md': agents(names, answers),
+export const docsFiles = (elements: PluginNames[], answers: PluginAnswers): ProjectFiles => ({
+  'README.md': readme(elements, answers),
+  'AGENTS.md': agents(elements, answers),
   // Claude Code reads CLAUDE.md, other agents AGENTS.md: one imports the other, so there is one text to keep true.
   'CLAUDE.md': '@AGENTS.md\n'
 });

@@ -20,11 +20,16 @@ const packageJson = ({ packageName, base }: PluginNames, { packageManager, owner
       license: 'MIT',
       ...(owner ? { author: owner } : {}),
       type: 'module',
-      files: ['dist'],
-      exports: { '.': `./dist/${base}.mjs`, './plugin-manifest.json': './dist/plugin-manifest.json' },
+      // The source ships too: a page server compiles each element from it, which is what renders it on the server.
+      files: ['dist', 'src'],
+      // A project installing the package imports its elements, typed; a page loads the same file through the manifest.
+      exports: {
+        '.': { types: './dist/types/index.d.ts', import: `./dist/${base}.mjs` },
+        './plugin-manifest.json': './dist/plugin-manifest.json'
+      },
       scripts: {
         start: 'vite',
-        build: 'vite build',
+        build: 'vite build && tsc -p tsconfig.build.json',
         zip: 'vite build && node build/zip.ts',
         typecheck: 'tsc -p tsconfig.json --noEmit',
         lint: 'eslint .',
@@ -78,6 +83,20 @@ const tsconfig = (): string => `{
 }
 `;
 
+/** What `build` adds to the bundle: the type declarations a project installing the package reads, in `dist/types`. */
+const tsconfigBuild = (): string => `{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist/types",
+    "rootDir": "src"
+  },
+  "include": ["src"]
+}
+`;
+
 /** Yarn's own recommendation: with the `node-modules` linker it writes a cache into `.yarn/` that no repository wants. */
 const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases\n!.yarn/versions\n';
 
@@ -87,5 +106,6 @@ const gitignore = ({ packageManager, inProject }: PluginAnswers): string =>
 export const packageFiles = (names: PluginNames, answers: PluginAnswers): ProjectFiles => ({
   'package.json': packageJson(names, answers),
   'tsconfig.json': tsconfig(),
+  'tsconfig.build.json': tsconfigBuild(),
   '.gitignore': gitignore(answers)
 });

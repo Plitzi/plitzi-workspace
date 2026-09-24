@@ -12,7 +12,7 @@ custom({ id: 'arcade', renderType: 'nebulaRun', shipColor: 'amber', bind: { best
 The CLI writes it, in the shape Plitzi's own elements are written in:
 
 ```bash
-npx @plitzi/cli add plugin seat-picker        # an element of this project (src/plugins/SeatPicker in a CLI project)
+npx @plitzi/cli add plugin seat-picker legend # elements of this project (src/plugins/<Name> in a CLI project)
 npx @plitzi/cli create seat-picker --plugin   # a package of its own: build, manifest, preview, and a zip for the builder
 ```
 

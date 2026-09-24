@@ -1,3 +1,5 @@
+import { elementTypeNames } from '@plitzi/sdk-authoring';
+
 /**
  * Everything a plugin is called, from the one name somebody gives it.
  *
@@ -43,6 +45,14 @@ export const pluginNameProblem = (packageName: string): string | undefined => {
     return (
       `"${packageName}" has to name the plugin in words — lowercase letters and digits between single dashes, ` +
       'starting with a letter (seat-picker, chart2) — since the component and the type a space uses are made from it.'
+    );
+  }
+
+  const { type } = pluginNames(packageName);
+  if (elementTypeNames.includes(type)) {
+    return (
+      `"${packageName}" would make the type "${type}", which is a built-in element: a space could not tell the two ` +
+      'apart. Name it after what it does (seat-picker, sales-chart).'
     );
   }
 

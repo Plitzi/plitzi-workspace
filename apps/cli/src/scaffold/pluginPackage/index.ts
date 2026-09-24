@@ -12,6 +12,7 @@ import type { ElementText } from './source';
 import type { PluginAnswers, ProjectFiles } from '../types';
 
 export { pluginNameProblem, pluginNames } from './names';
+export { declarationsRegistry, elementsRegistry } from './source';
 export type { PluginNames } from './names';
 export type { ElementText } from './source';
 
@@ -23,17 +24,22 @@ const OUTPUTS = ['dist', 'visual/.results'];
  * it — a project of its own, with nothing about it shared with whatever repository it sits in except the folder.
  */
 export const scaffoldPlugin = (answers: PluginAnswers): ProjectFiles => {
-  const names = { ...pluginNames(answers.packageName), title: answers.title };
+  const names = pluginNames(answers.packageName);
+  const elements = answers.elements.map(element => ({
+    names: { ...pluginNames(element.name), title: element.title },
+    text: { title: element.title, description: element.description, owner: answers.owner }
+  }));
+  const elementNames = elements.map(element => element.names);
 
   return {
     ...(answers.inProject ? {} : managerFiles(answers.packageManager, answers.managerVersion)),
     ...packageFiles(names, answers),
     ...qualityFilesFor('browser', OUTPUTS),
-    ...packageSourceFiles(names, answers),
+    ...packageSourceFiles(elements),
     ...buildFiles(names),
-    ...previewFiles(names),
-    ...visualFiles(names, answers),
-    ...docsFiles(names, answers)
+    ...previewFiles(elementNames),
+    ...visualFiles(elementNames, answers),
+    ...docsFiles(elementNames, answers)
   };
 };
 

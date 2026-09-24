@@ -4,7 +4,7 @@ The command line for Plitzi.
 
 ```bash
 npx @plitzi/cli create my-site                 # a project that renders a space
-npx @plitzi/cli add plugin seat-picker         # an element of your own, in the project you are in
+npx @plitzi/cli add plugin seat-picker legend  # elements of your own, in the project you are in
 npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can load
 ```
 
@@ -90,15 +90,23 @@ when an install fails the CLI says which setting names it.
 
 ## `add plugin`
 
-Adds an element of your own to the project you are in: one folder, written the way Plitzi's own elements are
-(`@plitzi/sdk-elements`) — the component, its `declaration.ts` (its `type`, the events it fires, the actions it answers
-to, and the element the builder adds), its `Settings.tsx` panel for the builder, and the `index.ts` that puts them
-together. It asks what to call it, what the builder shows, and what it is for, before writing anything.
+Adds elements of your own to the project you are in — one, several at once (`add plugin seat-picker legend`), or one at
+a time as the need comes. Each is a folder, written the way Plitzi's own elements are (`@plitzi/sdk-elements`): the
+component, its `declaration.ts` (its `type`, the events it fires, the actions it answers to, and the element the builder
+adds), its `Settings.tsx` panel for the builder, and the `index.ts` that puts them together. It asks what to call each,
+what the builder shows, and what it is for, and checks every folder is free before writing any.
 
 - **In a project `plitzi create` wrote**, it goes in `src/plugins`, where the project already looks: nothing to
-  register. Host it with `custom({ renderType: 'seatPicker' })` in `src/space.ts`.
+  register, and `start:dev` restarts onto it. Host it with `custom({ renderType: 'seatPicker' })` in `src/space.ts`
+  — or, when the space lives in Plitzi, with a Custom element in the builder.
+- **In a project written before plugins were found by folder**, it goes in `src/plugins` too, and prints the line to
+  add to the `plugins` list in `src/main.ts`.
+- **In a plugin package**, it goes in `src/`, and is added to `src/elements.ts` and `src/declarations.ts`, from which
+  the package publishes it.
 - **In any other project**, it asks which folder holds the project's components (`--dir` answers it) and prints how
   to register the element — for `render()`, for `<PlitziSdk>` in a React application, and for a page server.
+
+A name that would make a built-in element's type (`button`, `form`) is refused: a space could not tell the two apart.
 
 ## `create --plugin`
 
@@ -107,6 +115,7 @@ A plugin package: one element any space can load, with a Vite preview to write i
 ```bash
 plitzi create seat-picker --plugin                   # asks the name, what the builder shows, what it is for, who publishes it
 plitzi create packages/seat-picker --plugin --name @acme/plitzi-plugin-seat-picker --package-manager yarn
+plitzi create seat-picker --plugin --elements legend,price-tag   # a package of three elements
 ```
 
 Without a directory, inside a repository, it offers the folders that repository keeps its packages in (its workspace
@@ -115,7 +124,8 @@ settings alone.
 
 - `start` — the plugin inside a space, rendered by the SDK in the browser, with hot module replacement.
 - `build` — `dist/`: one ES module and `plugin-manifest.json`, written from the elements' declarations with each
-  file's integrity hash. React and the SDK stay out of the bundle; the page provides them.
+  file's integrity hash, and the type declarations a project installing the package reads. React and the SDK stay out
+  of the bundle; the page provides them.
 - `zip` — the build as the builder takes it: upload it under Resources, as a plugin. Or serve `dist/` at a versioned
   address with CORS open, and list it in a space's plugins as `{ type, resource }`.
 - `visual` — a browser opens the preview and checks the element renders, answers a click, and leaves the page whole.

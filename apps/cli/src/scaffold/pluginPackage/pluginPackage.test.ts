@@ -1,7 +1,14 @@
 /* eslint-disable quotes */
 import { describe, expect, it } from 'vitest';
 
-import { pluginNameProblem, pluginNames, scaffoldElement, scaffoldPlugin } from '.';
+import {
+  declarationsRegistry,
+  elementsRegistry,
+  pluginNameProblem,
+  pluginNames,
+  scaffoldElement,
+  scaffoldPlugin
+} from '.';
 import { htmlText, tsString } from './quote';
 
 import type { PluginAnswers } from '../types';
@@ -14,8 +21,7 @@ import type { PluginAnswers } from '../types';
 
 const answers = (over: Partial<PluginAnswers> = {}): PluginAnswers => ({
   packageName: 'plitzi-plugin-seat-picker',
-  title: 'Seat Picker',
-  description: 'Picks a seat.',
+  elements: [{ name: 'seat-picker', title: 'Seat Picker', description: 'Picks a seat.' }],
   owner: 'Acme',
   packageManager: 'npm',
   inProject: false,
@@ -39,6 +45,11 @@ describe('the names of a plugin', () => {
     expect(pluginNameProblem('plitzi-plugin-2d')).toContain('starting with a letter');
     expect(pluginNameProblem('seat--picker')).toContain('single dashes');
     expect(pluginNameProblem('@acme/seat-picker')).toBeUndefined();
+  });
+
+  it('refuses a name that would make a built-in element’s type', () => {
+    expect(pluginNameProblem('button')).toContain('built-in element');
+    expect(pluginNameProblem('plitzi-plugin-form')).toContain('built-in element');
   });
 });
 
@@ -125,11 +136,80 @@ describe('the plugin package', () => {
   });
 
   it('writes what somebody typed as source that still parses', () => {
-    const files = scaffoldPlugin(answers({ title: "Carlos's picker", description: 'Say "hi" \\ bye' }));
+    const files = scaffoldPlugin(
+      answers({ elements: [{ name: 'seat-picker', title: "Carlos's picker", description: 'Say "hi" \\ bye' }] })
+    );
 
     expect(files['src/SeatPicker/declaration.ts']).toContain('label: "Carlos\'s picker"');
     expect(files['src/SeatPicker/declaration.ts']).toContain('description: \'Say "hi" \\\\ bye\'');
     expect(files['index.html']).toContain("<title>Carlos's picker — preview</title>");
+  });
+});
+
+describe('a package of several elements', () => {
+  const several = () =>
+    scaffoldPlugin(
+      answers({
+        elements: [
+          { name: 'seat-picker', title: 'Seat Picker', description: '' },
+          { name: 'legend', title: 'Legend', description: 'The key to the seats.' }
+        ]
+      })
+    );
+
+  it('gives each its folder, and publishes the first as the plugin and the rest as its plugins', () => {
+    const files = several();
+
+    expect(files['src/Legend/declaration.ts']).toContain("type: 'legend'");
+    expect(files['src/elements.ts']).toContain('export const elements = [SeatPicker, Legend];');
+    expect(files['src/declarations.ts']).toContain('export const declarations = [seatPicker, legend];');
+    expect(files['src/index.ts']).toContain('const [main, ...others] = elements;');
+    expect(files['src/index.ts']).toContain('export const plugins = Object.fromEntries(');
+  });
+
+  it('previews and checks every one of them', () => {
+    const files = several();
+
+    expect(files['preview/space.ts']).toContain("element('seatPicker', {");
+    expect(files['preview/space.ts']).toContain("element('legend', {");
+    expect(files['visual/plugin.spec.ts']).toContain("{ id: 'legend', label: 'Legend' }");
+  });
+
+  it('keeps its lists in the layout Prettier gives them, however long they grow', () => {
+    const components = [
+      'SeatPicker',
+      'Legend',
+      'SeatMap',
+      'PriceTag',
+      'Countdown',
+      'RatingStars',
+      'WeatherCard',
+      'OpeningHours',
+      'BookingCalendar'
+    ];
+
+    expect(elementsRegistry(components)).toContain('export const elements = [\n  SeatPicker,\n  Legend,');
+    expect(declarationsRegistry(['SeatPicker'])).toContain('export const declarations = [seatPicker];');
+  });
+});
+
+describe('what a plugin package is, beside its elements', () => {
+  it('publishes its types for a project that installs it, and keeps no build-only global in its code', () => {
+    const files = scaffoldPlugin(answers());
+    const pkg = JSON.parse(files['package.json']) as {
+      exports: Record<string, unknown>;
+      scripts: Record<string, string>;
+    };
+
+    expect(pkg.exports['.']).toEqual({ types: './dist/types/index.d.ts', import: './dist/seat-picker.mjs' });
+    expect(pkg.scripts.build).toBe('vite build && tsc -p tsconfig.build.json');
+    expect(files['tsconfig.build.json']).toContain('"emitDeclarationOnly": true');
+    // Compiled by any bundler — a page server's included — so nothing in it may need this package's own Vite config.
+    expect(Object.values(files).some(contents => contents.includes('__PLUGIN_VERSION__'))).toBe(false);
+  });
+
+  it('zips the files a page loads, and not the types folder beside them', () => {
+    expect(scaffoldPlugin(answers())['build/zip.ts']).toContain('.filter(entry => entry.isFile())');
   });
 });
 

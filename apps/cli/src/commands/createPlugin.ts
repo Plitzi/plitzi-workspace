@@ -40,6 +40,8 @@ import type { PackageManager } from '../scaffold';
 
 export interface CreatePluginOptions {
   name?: string;
+  /** Other elements the package holds besides the one it is named after, by name, separated by commas. */
+  elements?: string;
   title?: string;
   description?: string;
   owner?: string;
@@ -63,6 +65,30 @@ const QUESTIONS = {
     choices: ['<folder>'],
     question: 'Which folder should the plugin be written to?'
   }
+};
+
+const splitNames = (list: string): string[] =>
+  list
+    .split(',')
+    .map(name => name.trim())
+    .filter(Boolean);
+
+/**
+ * What is wrong with the other elements asked for, if anything: a name that makes no element, or two elements — the
+ * package's own among them — that would share a type, which a space could not tell apart.
+ */
+const elementListProblem = (main: string, others: string[]): string | undefined => {
+  for (const name of others) {
+    const problem = pluginNameProblem(name);
+    if (problem) {
+      return problem;
+    }
+  }
+
+  const types = [pluginNames(main).type, ...others.map(name => pluginNames(name).type)];
+  const repeated = types.find((type, index) => types.indexOf(type) !== index);
+
+  return repeated ? `Two elements would both be "${repeated}": give each a name of its own.` : undefined;
 };
 
 /** The folders a repository keeps its packages in, as places for this one — or `./<name>` outside of any. */
@@ -130,7 +156,11 @@ const resolveManager = async (
 
 const createPlugin = async (directory: string | undefined, options: CreatePluginOptions): Promise<void> => {
   const nameGiven = options.name ?? (directory ? path.basename(path.resolve(directory)) : undefined);
-  const nameProblem = nameGiven === undefined ? undefined : pluginNameProblem(nameGiven);
+  const othersGiven = options.elements === undefined ? undefined : splitNames(options.elements);
+  const nameProblem =
+    nameGiven === undefined
+      ? undefined
+      : (pluginNameProblem(nameGiven) ?? elementListProblem(pluginNames(nameGiven).base, othersGiven ?? []));
   if (nameProblem) {
     console.error(chalk.red(nameProblem));
     process.exitCode = 1;
@@ -169,6 +199,27 @@ const createPlugin = async (directory: string | undefined, options: CreatePlugin
     );
     const owner = await answer('Who publishes it?', options.owner, '');
 
+    // Asked last and optional: most packages hold one element, and the ones that hold more say so here — each
+    // described in turn, the way the first was.
+    const others =
+      othersGiven ??
+      (rl && !options.yes
+        ? splitNames(
+            await askText(rl, 'Any other elements in this package? Their names, separated by commas.', '', reply =>
+              elementListProblem(names.base, splitNames(reply))
+            )
+          )
+        : []);
+    const otherElements = [];
+    for (const other of others) {
+      const otherNames = pluginNames(other);
+      otherElements.push({
+        name: other,
+        title: await answer(`What does the builder call ${other}?`, undefined, otherNames.title),
+        description: await answer(`What is ${other} for, in a sentence?`, undefined, '')
+      });
+    }
+
     const target = directory ? path.resolve(directory) : rl ? await askDirectory(rl, here, names.base) : undefined;
     if (!target) {
       return;
@@ -204,8 +255,7 @@ const createPlugin = async (directory: string | undefined, options: CreatePlugin
       target,
       scaffoldPlugin({
         packageName: name,
-        title,
-        description,
+        elements: [{ name: names.base, title, description }, ...otherElements],
         owner,
         packageManager,
         managerVersion: detectManagerVersion(packageManager, await nearestExisting(target)),

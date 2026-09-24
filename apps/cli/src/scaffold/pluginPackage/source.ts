@@ -305,36 +305,62 @@ export type { ${name}Attributes } from './declaration';
 export default ${name};
 `;
 
-const declarationsList = ({
-  component: name,
-  type
-}: PluginNames): string => `import ${type} from './${name}/declaration';
+/** A type's spelling as a variable: `seatPicker` for `SeatPicker`. */
+const typeOf = (component: string): string => `${component.charAt(0).toLowerCase()}${component.slice(1)}`;
 
 /**
- * Every element this package holds, the one it is named after first: the build writes each into
- * \`plugin-manifest.json\`, and the first is the one a space's \`plugins\` entry loads the package by.
+ * `export const <name> = [...]`, laid out the way Prettier lays it out — on one line while it fits in 120 columns,
+ * one entry per line past that — so a list the CLI rewrote is a list the project's formatter leaves alone.
  */
-export const declarations = [${type}];
-`;
+const listSource = (name: string, entries: string[]): string => {
+  const inline = `export const ${name} = [${entries.join(', ')}];`;
 
-const entry = ({ component: name }: PluginNames): string => `import ${name} from './${name}';
+  return inline.length <= 120
+    ? inline
+    : `export const ${name} = [\n${entries.map(entry => `  ${entry}`).join(',\n')}\n];`;
+};
 
 /**
- * What a space loads: the element this package is named after.
- *
- * A package can hold more than one: export the others as \`plugins\` (\`export const plugins = { legend: Legend }\`),
- * each written the way \`${name}/\` is, and add its declaration to \`declarations.ts\`.
+ * `src/elements.ts`: every element the package holds, the one it is named after first. Written from the folders'
+ * names alone, so the CLI can tell a list it wrote from one somebody changed — and add to the first safely.
  */
+export const elementsRegistry = (components: string[]): string => `${components
+  .map(component => `import ${component} from './${component}';`)
+  .join('\n')}
 
-/** The package's version, kept by the runtime on the element. Written in at build time from \`package.json\`. */
-export const version = __PLUGIN_VERSION__;
-
-export default ${name};
+/**
+ * Every element this package holds, the one it is named after first. \`plitzi add plugin\` writes this list — add an
+ * element with it, or by hand: its folder, and a line here and in \`declarations.ts\`.
+ */
+${listSource('elements', components)}
 `;
 
-const env =
-  (): string => `/** Written in by \`vite.config.ts\` from \`package.json\`: the version the manifest and the runtime report. */
-declare const __PLUGIN_VERSION__: string;
+/** `src/declarations.ts`: the same elements' declarations, which the build reads without loading any React. */
+export const declarationsRegistry = (components: string[]): string => `${components
+  .map(component => `import ${typeOf(component)} from './${component}/declaration';`)
+  .join('\n')}
+
+/**
+ * Every element's declaration, in the order of \`elements.ts\`: the build writes each into \`plugin-manifest.json\`, and
+ * the first is the one a space's \`plugins\` entry loads the package by. \`plitzi add plugin\` writes this list.
+ */
+${listSource('declarations', components.map(typeOf))}
+`;
+
+const entry = (): string => `import { elements } from './elements';
+
+/**
+ * What a space loads: the element the package is named after, and every other element it holds as \`plugins\`, by
+ * type. Nothing here changes when one is added — \`plitzi add plugin\` writes its folder and lists it in \`elements.ts\`.
+ */
+const [main, ...others] = elements;
+
+export const plugins = Object.fromEntries(others.map(element => [element.type, element]));
+
+/** Every element, for a project that installs the package and registers them itself. */
+export { elements };
+
+export default main;
 `;
 
 /** The element alone: its folder's files, by their path inside it. */
@@ -345,12 +371,21 @@ export const elementFiles = (names: PluginNames, text: ElementText): ProjectFile
   'index.ts': elementIndex(names)
 });
 
-/** The element inside a plugin package, beside the list of its declarations and the entry that publishes it. */
-export const packageSourceFiles = (names: PluginNames, text: ElementText): ProjectFiles => ({
-  ...Object.fromEntries(
-    Object.entries(elementFiles(names, text)).map(([file, contents]) => [`src/${names.component}/${file}`, contents])
-  ),
-  'src/declarations.ts': declarationsList(names),
-  'src/index.ts': entry(names),
-  'src/env.d.ts': env()
-});
+/** Every element of a plugin package in its own folder, the two lists that gather them, and the entry. */
+export const packageSourceFiles = (elements: { names: PluginNames; text: ElementText }[]): ProjectFiles => {
+  const components = elements.map(({ names }) => names.component);
+
+  return {
+    ...Object.fromEntries(
+      elements.flatMap(({ names, text }) =>
+        Object.entries(elementFiles(names, text)).map(([file, contents]) => [
+          `src/${names.component}/${file}`,
+          contents
+        ])
+      )
+    ),
+    'src/elements.ts': elementsRegistry(components),
+    'src/declarations.ts': declarationsRegistry(components),
+    'src/index.ts': entry()
+  };
+};

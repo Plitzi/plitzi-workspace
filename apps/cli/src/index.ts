@@ -53,6 +53,7 @@ program
   .option('--title <title>', 'Plugin only: what the builder calls the element')
   .option('--description <description>', 'Plugin only: what the element is for, in a sentence')
   .option('--owner <owner>', 'Plugin only: who publishes it')
+  .option('--elements <names>', 'Plugin only: other elements the package holds, by name, separated by commas')
   .option('--no-install', 'Write the files without installing dependencies')
   .option('-f, --force', 'Write into a directory that is not empty')
   .option(
@@ -76,12 +77,12 @@ const add = program.command('add').description('Add something to the project you
 
 add
   .command('plugin')
-  .argument('[name]', 'What the element is called: seat-picker. Asked for when left out.')
-  .description('Add an element of your own to this project: its component, declaration and builder panel')
+  .argument('[names...]', 'What each element is called: seat-picker. Asked for when left out.')
+  .description('Add elements of your own to this project: each one its component, declaration and builder panel')
   .option('-d, --dir <folder>', 'The folder that holds the project’s components. Asked for, unless the project says.')
-  .option('--title <title>', 'What the builder calls the element')
-  .option('--description <description>', 'What the element is for, in a sentence')
+  .option('--title <title>', 'One element only: what the builder calls it')
+  .option('--description <description>', 'One element only: what it is for, in a sentence')
   .option('-f, --force', 'Write into a folder that is not empty')
-  .action((name: string | undefined, options: AddPluginOptions) => addPlugin(name, options));
+  .action((names: string[], options: AddPluginOptions) => addPlugin(names, options));
 
 program.parse(process.argv);

@@ -40,12 +40,12 @@ body {
 }
 `;
 
-const main = (): string => `import { render } from '@plitzi/plitzi-sdk';
+const mainFile = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
 import { declarations } from '../src/declarations.ts';
-import plugin from '../src/index.ts';
+import { elements } from '../src/elements.ts';
 import { space } from './space.ts';
 
 import './preflight.css';
@@ -54,11 +54,11 @@ import '@plitzi/plitzi-sdk/plitzi-sdk.css';
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
 /**
- * The plugin, registered from its source under the type the space names it by — so a save is a hot module
- * replacement. What a published page does instead is load the built file through the manifest; \`npm run build\` is
- * what makes that file.
+ * Every element of the package, registered from its source under the type a space names it by — so a save is a hot
+ * module replacement. What a published page does instead is load the built file through the manifest;
+ * \`npm run build\` is what makes that file.
  */
-const plugins = { [plugin.type]: { component: plugin } };
+const plugins = Object.fromEntries(elements.map(element => [element.type, { component: element }]));
 
 /** The types this package's elements are: named, so authoring takes them for plugins and not for typos. */
 const pluginTypes = declarations.map(declaration => declaration.type);
@@ -101,20 +101,20 @@ if (import.meta.hot) {
 }
 `;
 
-export const previewFiles = (names: PluginNames): ProjectFiles => ({
-  'index.html': indexHtml(names),
+export const previewFiles = ([main, ...others]: PluginNames[]): ProjectFiles => ({
+  'index.html': indexHtml(main),
   'preview/preflight.css': preflightCss(),
-  'preview/main.ts': main(),
-  // The space a new account starts with, carrying the plugin in its hero as an element of its own type — how the builder
-  // adds it, and how a space that loads it from its manifest hosts it. The preview's to change: put the element where
-  // it will really live, give it the attributes it will really get.
+  'preview/main.ts': mainFile(),
+  // The space a new account starts with, carrying every element in its hero as an element of its own type — how the
+  // builder adds one, and how a space that loads the package from its manifest hosts it. The preview's to change: put
+  // each element where it will really live, give it the attributes it will really get.
   'preview/space.ts': blankSpaceSource({
-    name: `${names.title} preview`,
-    plugin: {
+    name: `${main.title} preview`,
+    plugin: [main, ...others].map(names => ({
       id: names.base,
       renderType: names.type,
-      as: 'element',
+      as: 'element' as const,
       attributes: { label: names.title, start: 0, step: 1 }
-    }
+    }))
   })
 });

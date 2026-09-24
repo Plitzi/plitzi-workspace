@@ -8,6 +8,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import addPlugin from './addPlugin';
 import createPlugin from './createPlugin';
 import { coveredByWorkspace, findProject } from './existingProject';
+import { scaffold } from '../scaffold';
+
+import type { CreateAnswers } from '../scaffold';
 
 /**
  * The two ways an element of one's own comes into being — a package of its own, or a folder of a project — run as an
@@ -116,6 +119,35 @@ describe('plitzi create --plugin', () => {
     expect(process.exitCode).toBeUndefined();
   });
 
+  it('holds several elements when asked, the one it is named after first', async () => {
+    captureErrors();
+    await inTemp(async dir => {
+      const target = path.join(dir, 'seat-picker');
+      await from(dir, () =>
+        createPlugin(target, { install: false, packageManager: 'npm', elements: 'legend, price-tag' })
+      );
+
+      expect(await fs.readFile(path.join(target, 'src/elements.ts'), 'utf-8')).toContain(
+        'export const elements = [SeatPicker, Legend, PriceTag];'
+      );
+      expect(await exists(path.join(target, 'src/PriceTag/Settings.tsx'))).toBe(true);
+    });
+
+    expect(process.exitCode).toBeUndefined();
+  });
+
+  it('refuses other elements that would share a type with it', async () => {
+    const errors = captureErrors();
+    await inTemp(dir =>
+      from(dir, () =>
+        createPlugin(path.join(dir, 'seat-picker'), { install: false, packageManager: 'npm', elements: 'seat-picker' })
+      )
+    );
+
+    expect(process.exitCode).toBe(1);
+    expect(errors()).toContain('would both be "seatPicker"');
+  });
+
   it('never writes over a folder with work in it', async () => {
     const errors = captureErrors();
     await inTemp(async dir => {
@@ -129,32 +161,123 @@ describe('plitzi create --plugin', () => {
   });
 });
 
+/** A project exactly as `plitzi create` writes it, in `dir`. */
+const cliProject = async (dir: string, over: Partial<CreateAnswers> = {}): Promise<void> => {
+  const files = scaffold({
+    name: 'site',
+    mode: 'server',
+    source: 'local',
+    key: '',
+    environment: 'main',
+    packageManager: 'npm',
+    ...over
+  });
+  await Promise.all(Object.entries(files).map(([file, contents]) => write(path.join(dir, file), contents)));
+};
+
+/** Everything the command printed on stdout, as one string. */
+const captureOutput = () => {
+  const lines: string[] = [];
+  vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => lines.push(args.join(' ')));
+
+  return () => lines.join('\n');
+};
+
 describe('plitzi add plugin', () => {
   it('needs a project to add to', async () => {
     const errors = captureErrors();
-    await inTemp(dir => from(dir, () => addPlugin('seat-picker', {})));
+    await inTemp(dir => from(dir, () => addPlugin(['seat-picker'], {})));
 
     expect(process.exitCode).toBe(1);
     expect(errors()).toContain('plitzi create <folder> --plugin');
   });
 
-  it('puts it in src/plugins of a project plitzi create wrote, which registers it by itself', async () => {
+  it('adds one after another to a project plitzi create wrote, which registers each by itself', async () => {
     captureErrors();
+    const output = captureOutput();
     await inTemp(async dir => {
-      await write(
-        path.join(dir, 'package.json'),
-        JSON.stringify({ dependencies: { '@plitzi/plitzi-sdk': '^1', '@plitzi/sdk-server': '^1' } })
-      );
-      await write(path.join(dir, 'src/main.ts'), 'readdirSync(PLUGINS_DIR, { withFileTypes: true })');
+      await cliProject(dir);
 
-      await from(dir, () => addPlugin('seat-picker', {}));
+      await from(dir, () => addPlugin(['seat-picker'], {}));
+      await from(dir, () => addPlugin(['legend', 'price-tag'], {}));
 
-      for (const file of ['SeatPicker.tsx', 'declaration.ts', 'Settings.tsx', 'index.ts']) {
-        expect(await exists(path.join(dir, 'src/plugins/SeatPicker', file)), file).toBe(true);
+      for (const folder of ['SeatPicker', 'Legend', 'PriceTag']) {
+        for (const file of [`${folder}.tsx`, 'declaration.ts', 'Settings.tsx', 'index.ts']) {
+          expect(await exists(path.join(dir, 'src/plugins', folder, file)), `${folder}/${file}`).toBe(true);
+        }
       }
     });
 
     expect(process.exitCode).toBeUndefined();
+    expect(output()).toContain('Registered: src/main.ts finds every folder of src/plugins.');
+    expect(output()).toContain("custom({ id: 'legend', renderType: 'legend' })");
+  });
+
+  it('sends a project whose space lives in Plitzi to the builder to place it', async () => {
+    captureErrors();
+    const output = captureOutput();
+    await inTemp(async dir => {
+      await cliProject(dir, { source: 'cloud', key: 'k' });
+      await from(dir, () => addPlugin(['seat-picker'], {}));
+    });
+
+    expect(output()).toContain('In the builder, add a Custom element with the render type "seatPicker"');
+    expect(output()).not.toContain('src/space.ts');
+  });
+
+  it('tells a project from before plugins were found by folder the line its list needs', async () => {
+    captureErrors();
+    const output = captureOutput();
+    await inTemp(async dir => {
+      await cliProject(dir);
+      await write(
+        path.join(dir, 'src/main.ts'),
+        "const plugins = { statCard: { js: path.resolve(PROJECT_ROOT, 'src/plugins/StatCard/index.ts'), action: 'compile' as const } };"
+      );
+
+      await from(dir, () => addPlugin(['seat-picker'], {}));
+
+      expect(await exists(path.join(dir, 'src/plugins/SeatPicker/index.ts'))).toBe(true);
+    });
+
+    expect(output()).toContain("seatPicker: { js: path.resolve(PROJECT_ROOT, 'src/plugins/SeatPicker/index.ts')");
+  });
+
+  it('adds to a plugin package, and lists the element where the package publishes its elements', async () => {
+    captureErrors();
+    await inTemp(async dir => {
+      const pkg = path.join(dir, 'seat-picker');
+      await from(dir, () => createPlugin(pkg, { install: false, packageManager: 'npm' }));
+
+      await from(pkg, () => addPlugin(['legend'], {}));
+
+      expect(await exists(path.join(pkg, 'src/Legend/declaration.ts'))).toBe(true);
+      expect(await fs.readFile(path.join(pkg, 'src/elements.ts'), 'utf-8')).toContain(
+        'export const elements = [SeatPicker, Legend];'
+      );
+      expect(await fs.readFile(path.join(pkg, 'src/declarations.ts'), 'utf-8')).toContain(
+        'export const declarations = [seatPicker, legend];'
+      );
+    });
+
+    expect(process.exitCode).toBeUndefined();
+  });
+
+  it('leaves a package’s lists alone once somebody changed them, and says what to add', async () => {
+    captureErrors();
+    const output = captureOutput();
+    await inTemp(async dir => {
+      const pkg = path.join(dir, 'seat-picker');
+      await from(dir, () => createPlugin(pkg, { install: false, packageManager: 'npm' }));
+      const edited = `${await fs.readFile(path.join(pkg, 'src/elements.ts'), 'utf-8')}// mine\n`;
+      await write(path.join(pkg, 'src/elements.ts'), edited);
+
+      await from(pkg, () => addPlugin(['legend'], {}));
+
+      expect(await fs.readFile(path.join(pkg, 'src/elements.ts'), 'utf-8')).toBe(edited);
+    });
+
+    expect(output()).toContain('are not the lists the CLI wrote');
   });
 
   it('asks where any other project keeps its components, and writes where it was told', async () => {
@@ -162,16 +285,47 @@ describe('plitzi add plugin', () => {
     await inTemp(async dir => {
       await write(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { '@plitzi/plitzi-sdk': '^1' } }));
 
-      await from(dir, () => addPlugin('seat-picker', {}));
+      await from(dir, () => addPlugin(['seat-picker'], {}));
       expect(errors()).toContain('--dir');
       expect(await exists(path.join(dir, 'src'))).toBe(false);
 
       process.exitCode = undefined;
-      await from(dir, () => addPlugin('seat-picker', { dir: 'src/components' }));
+      await from(dir, () => addPlugin(['seat-picker'], { dir: 'src/components' }));
       expect(await exists(path.join(dir, 'src/components/SeatPicker/index.ts'))).toBe(true);
     });
 
     expect(process.exitCode).toBeUndefined();
+  });
+
+  it('writes none of several when one of them has nowhere to go', async () => {
+    captureErrors();
+    await inTemp(async dir => {
+      await cliProject(dir);
+      await write(path.join(dir, 'src/plugins/Legend/notes.md'), 'mine');
+
+      await from(dir, () => addPlugin(['seat-picker', 'legend'], {}));
+
+      expect(await exists(path.join(dir, 'src/plugins/SeatPicker'))).toBe(false);
+    });
+
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('refuses names that make the same element twice, a built-in one, or one --title cannot describe', async () => {
+    const errors = captureErrors();
+    await inTemp(async dir => {
+      await cliProject(dir);
+
+      await from(dir, () => addPlugin(['seat-picker', 'plitzi-plugin-seat-picker'], {}));
+      await from(dir, () => addPlugin(['button'], {}));
+      await from(dir, () => addPlugin(['legend', 'price-tag'], { title: 'Key' }));
+
+      expect(await fs.readdir(path.join(dir, 'src/plugins'))).toEqual(['README.md', 'StatCard']);
+    });
+
+    expect(errors()).toContain('would both be "seatPicker"');
+    expect(errors()).toContain('built-in element');
+    expect(errors()).toContain('--title and --description describe one element');
   });
 });
 

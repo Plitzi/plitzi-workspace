@@ -60,11 +60,8 @@ const devToolsStylesheet = (): Plugin => ({
  */
 export default defineConfig(({ command }) => ({
   plugins: [devToolsStylesheet(), manifest({ version })],
-  define: {
-    __PLUGIN_VERSION__: JSON.stringify(version),
-    // A library build leaves \`process.env.NODE_ENV\` as it was written, and a browser has no \`process\` to read it from.
-    ...(command === 'build' ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {})
-  },
+  // A library build leaves \`process.env.NODE_ENV\` as it was written, and a browser has no \`process\` to read it from.
+  define: command === 'build' ? { 'process.env.NODE_ENV': JSON.stringify('production') } : {},
   server: { host: '127.0.0.1', port: 5173 },
   build: {
     lib: { entry: 'src/index.ts', formats: ['es'], fileName: () => '${base}.mjs', cssFileName: '${base}' },
@@ -180,7 +177,10 @@ import { zipSync } from 'fflate';
 const DIST = 'dist';
 
 const { name, version } = JSON.parse(readFileSync('package.json', 'utf-8')) as { name: string; version: string };
-const files = readdirSync(DIST);
+// The files the page loads. The type declarations in \`types/\` are for a project installing the package, not for a page.
+const files = readdirSync(DIST, { withFileTypes: true })
+  .filter(entry => entry.isFile())
+  .map(entry => entry.name);
 if (!files.includes('plugin-manifest.json')) {
   throw new Error(\`\${DIST}/ has no plugin-manifest.json — build the plugin first.\`);
 }
