@@ -1,11 +1,10 @@
 # Lists
 
-A `list` renders its children once per item. Its rows come from its `items`, which it reads in one of two ways:
-
-| `source` | `items` is | Use it for |
-| --- | --- | --- |
-| `'controlled'` | written or bound on the list — an array | anything you have: a provider's answer, `state`, a fixed set |
-| a connector | fetched by the list from a connector | server-driven CMS lists (see the provider in data-and-visibility) |
+A `list` renders its children once per item. Its rows come from its `items` — an array written or bound on the list:
+a provider's answer, `state`, a fixed set. **Only `source: 'controlled'` reads them.** The default, `'none'`, renders
+its children once as a plain `<ul>` and never looks at `items`, so a list with items and any other source is refused
+(`list-items-ignored`). A CMS collection arrives the same way: a provider with its `connector` around the list, and the
+list bound to its records (see the provider in data-and-visibility).
 
 ```ts
 list({

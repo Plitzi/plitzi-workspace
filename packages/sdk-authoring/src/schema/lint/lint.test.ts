@@ -335,6 +335,19 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('list-without-items');
     });
 
+    it('list-items-ignored', () => {
+      const written = withChange(({ schema }) => {
+        addElement(schema, { id: 'rows', type: 'list', attributes: { source: 'none', items: [{ title: 'One' }] } });
+      });
+      const bound = withChange(({ schema }) => {
+        addElement(schema, { id: 'rows', type: 'list', attributes: {} });
+        schema.flat.rows.definition.bindings = { attributes: [{ id: 'b1', to: 'items', source: 'state.rows' }] };
+      });
+
+      expect(errorsOf(written)).toContain('list-items-ignored');
+      expect(errorsOf(bound)).toContain('list-items-ignored');
+    });
+
     it('overlay-starts-open', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.modal.definition.initialState = { visibility: true };

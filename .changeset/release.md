@@ -407,6 +407,12 @@
   - `form-control-unnamed` / `form-control-name-taken`: a control in a form with no `name` never reached the form's
     values, and two with one name wrote over each other.
   - `overlay-never-opened`: a modal or dialog that starts hidden and that no step opens.
+- **New lint error `list-items-ignored`** (fixable): a `list` with items (bound or written) and a `source` other than
+  `'controlled'` rendered its children once and never read them — one empty row where the rows should be. `fixSpace`
+  sets `source: 'controlled'`. It found the Feature Lab seed's catalogue rendering one blank card.
+- **The page server logs a plugin it has nothing for**: a `custom` element whose `renderType` has neither a component
+  in the render nor a bundle for the browser is reported at `error`, once per space and type, naming the element and
+  `plugins` + the deployment's `pluginNames`. It used to render "Custom Component … Not Found" and say nothing.
 - **A `webHook` that writes with an empty body sends `{}`**, not the JSON text `""` a JSON endpoint refuses with a 400.
 - `fixSpace(space, catalogs, codes, elements)`: `elements` narrows the fixes to some elements. It now clones only the
   elements it changes, and with nothing to fix answers the schema it was handed.

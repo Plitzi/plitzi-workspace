@@ -295,6 +295,16 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
     }
   }
 
+  // Only a controlled list reads `items`: any other source renders its children once, so bound rows never appear.
+  const hasItems = bound('items') || (Array.isArray(attributes.items) && attributes.items.length > 0);
+  if (type === 'list' && attributes.source !== 'controlled' && hasItems) {
+    ctx.error(
+      'list-items-ignored',
+      `${where} has items, but its \`source\` is "${typeof attributes.source === 'string' ? attributes.source : 'none'}": it renders its children once and never reads them. Write \`source: 'controlled'\`.`,
+      element.id
+    );
+  }
+
   const hidden = element.definition.initialState?.visibility === false;
   const visibilityBound = bindings.some(binding => binding.to === 'visibility' && binding.category === 'initialState');
   if ((type === 'modalContainer' || type === 'dialogContainer') && !hidden && !visibilityBound) {

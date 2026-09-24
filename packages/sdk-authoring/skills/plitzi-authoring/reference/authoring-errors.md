@@ -30,6 +30,7 @@ would write. It names that break, and only that one: `authorSpace(spec, { allow:
 | `names the page "x", and no page has that id` | a link or `navigate` to a page id that does not exist | an existing page id, or a path with its slash (`'/about'`) |
 | `a full URL, in page mode` | a URL, `mailto:` or `tel:` in a link left in page mode | `mode: 'external'` |
 | `is a controlled list with no items` | a list with nothing to render | `items: [ … ]` or `bind: { items: 'provider.data.rows' }` |
+| `` has items, but its `source` is "none" `` | a list whose items nothing reads — it renders its children once | `source: 'controlled'` |
 | `answers at /x for the same visitors as page` | two pages at one address | another slug — or `accessLevel` `'public'` on one and `'authenticated'` on the other |
 | `is not one CSS value` | an empty CSS value, or one with `;` or `{}` | one value per property; leave a property out instead of writing it empty |
 | `computed … declared after it` / `does not compute` | a computed value read before it is declared, or never declared | declare it in `computed`, above the one that reads it |

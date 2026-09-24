@@ -72,6 +72,10 @@ const broken: Record<string, () => Documents> = {
         ]
       };
     }),
+  'list-items-ignored': () =>
+    withChange(({ schema }) => {
+      addElement(schema, { id: 'rows', type: 'list', attributes: { source: 'none', items: [{ title: 'One' }] } });
+    }),
   'overlay-starts-open': () =>
     withChange(({ schema }) => {
       schema.flat.modal.definition.initialState = { visibility: true };

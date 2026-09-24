@@ -208,6 +208,18 @@ const FIXERS: Record<string, Fixer> = {
     }
   },
 
+  'list-items-ignored': (element, _catalogs, report) => {
+    const { attributes } = element;
+    const bound = Object.values(element.definition.bindings ?? {})
+      .flat()
+      .some(binding => binding.to === 'items');
+    const written = Array.isArray(attributes.items) && attributes.items.length > 0;
+    if (element.definition.type === 'list' && attributes.source !== 'controlled' && (bound || written)) {
+      attributes.source = 'controlled';
+      report('The list now reads its items (`source: controlled`), one row per item.');
+    }
+  },
+
   'overlay-starts-open': (element, _catalogs, report) => {
     const { type, bindings } = element.definition;
     const visibilityBound = (bindings?.initialState ?? []).some(binding => binding.to === 'visibility');

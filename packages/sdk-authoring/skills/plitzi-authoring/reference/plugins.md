@@ -58,7 +58,8 @@ const stop = state.subscribe(next => save(next));      // called after every cha
 
 The client entry registers the component under its `renderType` (the third argument to `render()` in a client
 project; `plugins` in a server one — see the project's `src/plugins/README.md`). A `renderType` nothing registered
-renders "Custom Component … Not Found".
+renders "Custom Component … Not Found", and a page server logs the missing `renderType` at `error` once per
+space: on a server, register it in `plugins` AND name it in the deployment's `pluginNames`.
 
 A plugin that is its own element TYPE (`defineElement`, `elementsFromManifest`) rather than a `custom` host is named
 to `authorSpace` so it is not taken for a typo: `authorSpace(space, { pluginTypes: ['acmeChart'] })`.

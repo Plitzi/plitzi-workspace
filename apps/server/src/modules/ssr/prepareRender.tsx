@@ -5,6 +5,7 @@ import { themeFromCookies } from '@plitzi/sdk-shared/theme';
 
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
+import { reportMissingPlugins } from './reportMissingPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
 import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
 import { sdkAssetVersion } from '../../core/sdkAssets';
@@ -219,6 +220,11 @@ export const prepareRender = async (
   const entries = allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : [];
 
   const pluginComponents = await m('plugins', () => loadPluginComponents(entries, pluginManager.getComponents()));
+  reportMissingPlugins(
+    spaceId,
+    schema,
+    new Set([...Object.keys(pluginComponents), ...entries.map(entry => entry.keyName)])
+  );
 
   const templateEntries = entries.length > 0 ? entries : req.ctx.spaceDeployment?.templateProps?.plugins;
   // `pluginComponents` is the exact set this render had a component for, so it is the only honest answer to
