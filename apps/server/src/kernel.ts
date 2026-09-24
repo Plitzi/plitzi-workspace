@@ -17,7 +17,7 @@ export { healthStage } from './core/http/stages/health';
 export { configStaticStage, publicDirStage, wellKnownStage } from './core/http/stages/static';
 export { buildHealthPayload, registerHealthCheck } from './core/health';
 export { clientIp, parseRequest, readRawBody, requestOrigin } from './core/requestParser';
-export { consoleLogger, renderLogEvent } from './helpers/serverLog';
+export { consoleLogger, isLogged, logLevelOf, renderLogEvent, serverLog } from './helpers/serverLog';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 
 export type { HttpServerParts } from './core/server/baseServer';

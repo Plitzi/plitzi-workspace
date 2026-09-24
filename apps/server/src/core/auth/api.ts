@@ -16,6 +16,7 @@ import {
   totpUri,
   verifyTotp
 } from './totp';
+import { serverLog } from '../../helpers/serverLog';
 
 import type { CredentialCarrier } from './credentials';
 import type { Csrf } from './csrf';
@@ -328,7 +329,7 @@ export interface AuthApiConfig {
    * A refusal is a 429 with `retryAfter`, raised before any password is checked so it costs no hash.
    */
   rateLimit?: (attempt: ThrottleAttempt) => Promise<boolean | { allowed: boolean; retryAfter?: number }>;
-  /** Where a failed delivery is reported. Defaults to `console.error`; it is never thrown — see `deliver`. */
+  /** Where a failed delivery is reported. Defaults to the server log at `error`; it is never thrown — see `deliver`. */
   onMailError?: (error: unknown, message: { to: string; template: string }) => void;
   /**
    * Every act worth recording, as it happens.
@@ -482,7 +483,7 @@ export const createAuthApi = ({
     try {
       onEvent({ ...event, at: Math.floor(Date.now() / 1000) });
     } catch (error: unknown) {
-      console.error('[auth] security event handler threw:', error);
+      serverLog.error('auth', 'security event handler threw', error);
     }
   };
 
@@ -522,7 +523,7 @@ export const createAuthApi = ({
     try {
       await adapters.sendMail?.(message);
     } catch (error: unknown) {
-      const report = onMailError ?? ((cause: unknown) => console.error('[auth] could not send mail:', cause));
+      const report = onMailError ?? ((cause: unknown) => serverLog.error('auth', 'could not send mail', cause));
       report(error, { to: message.to, template: message.template });
     }
   };

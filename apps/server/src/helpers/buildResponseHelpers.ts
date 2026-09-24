@@ -1,7 +1,7 @@
 import { compressBody, DEFAULT_COMPRESSION, selectEncoding } from './compress';
 
 import type { ContentEncoding, ResolvedCompression } from './compress';
-import type { SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { CompressedBodies, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 export type RawResponse = {
   headersSent: boolean;
@@ -22,6 +22,34 @@ export type RawResponse = {
   writableFinished?: boolean;
 };
 
+/**
+ * `compressBody`, remembered in `store` when the caller keeps one: the same body in the same encoding is compressed
+ * once. What comes back uncompressed (identity, or a body under the threshold) is never stored — there is nothing to
+ * reuse, and a stored copy would only be the body again.
+ */
+const compressOnce = (
+  body: string,
+  encoding: ContentEncoding,
+  compression: ResolvedCompression,
+  store: CompressedBodies | undefined
+): Buffer | string => {
+  if (!store || encoding === 'identity') {
+    return compressBody(body, encoding, compression);
+  }
+
+  const kept = store[encoding];
+  if (kept) {
+    return kept;
+  }
+
+  const compressed = compressBody(body, encoding, compression);
+  if (typeof compressed !== 'string') {
+    store[encoding] = compressed;
+  }
+
+  return compressed;
+};
+
 export const buildResponseHelpers = (
   raw: RawResponse,
   acceptEncoding?: string,
@@ -40,7 +68,7 @@ export const buildResponseHelpers = (
    */
   const transformable = (): boolean => !String(raw.getHeaders()['cache-control']).includes('no-transform');
 
-  const writeSend = (body: string | Buffer) => {
+  const writeSend = (body: string | Buffer, store?: CompressedBodies) => {
     /**
      * A Buffer goes out untouched.
      *
@@ -49,7 +77,8 @@ export const buildResponseHelpers = (
      * corrupts any font, image or archive served through it. What a Buffer holds is also compressed already
      * (woff2, png), so re-encoding it would cost CPU to make it bigger.
      */
-    const compressed = typeof body === 'string' && transformable() ? compressBody(body, encoding, compression) : body;
+    const compressed =
+      typeof body === 'string' && transformable() ? compressOnce(body, encoding, compression, store) : body;
     const isCompressed = compressed !== body;
     if (isCompressed) {
       raw.setHeader('Content-Encoding', encoding);
@@ -75,8 +104,8 @@ export const buildResponseHelpers = (
     setStatus(code) {
       statusCode = code;
     },
-    send(body) {
-      writeSend(body);
+    send(body, options) {
+      writeSend(body, options?.compressed);
     },
     write(chunk) {
       if (!raw.headersSent) {

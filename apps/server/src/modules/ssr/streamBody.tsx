@@ -6,7 +6,7 @@ import { applySSRResult } from './applySSRResult';
 import Component from './Component';
 import { prepareRender } from './prepareRender';
 
-import type { TtlCache } from '../../helpers/cache';
+import type { CachedPage, TtlCache } from '../../helpers/cache';
 import type { RequestMetrics } from '../../helpers/metrics';
 import type { PluginManager } from '../../plugins/manager';
 import type {
@@ -32,7 +32,7 @@ export const streamBody = async (
   renderFn: SSRTemplateFn,
   pluginManager: PluginManager,
   offlineDataCache?: TtlCache<string>,
-  htmlCache?: TtlCache<string>,
+  htmlCache?: TtlCache<CachedPage>,
   cacheKey?: string,
   metrics?: RequestMetrics,
   offlineDataOverride?: OfflineDataRaw
@@ -78,7 +78,7 @@ export const streamBody = async (
         res.end();
 
         if (chunks && cacheKey && htmlCache) {
-          htmlCache.set(cacheKey, head + Buffer.concat(chunks).toString('utf-8') + tail);
+          htmlCache.set(cacheKey, { html: head + Buffer.concat(chunks).toString('utf-8') + tail, compressed: {} });
         }
 
         resolve();

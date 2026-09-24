@@ -1,6 +1,8 @@
 import { createHttpServer } from './baseServer';
 import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../../helpers/normalizePlugins';
+import { reportReactBuild } from '../../helpers/reportReactBuild';
+import { configureServerLog, defaultLogLevel, isLogged, logLevelOf } from '../../helpers/serverLog';
 import { actionsModuleFor } from '../../modules/actions/moduleFor';
 import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
 import { createMemoryDraftStore } from '../../modules/ssr/preview';
@@ -23,6 +25,21 @@ export const createPageServer = (
   extensions?: PipelineExtensions
 ): SSRServer => {
   const { cacheTtlMs: htmlTtlMs = DEFAULT_TTL_MS.html } = config;
+  // One threshold for everything this server says — its requests, its runs, and the server's own messages — decided
+  // here once, so no emitter needs to know it: the logger it calls already drops what is below it.
+  const logLevel = config.logLevel ?? defaultLogLevel(config.devMode);
+  const { logger } = config;
+  config.logLevel = logLevel;
+  if (logger) {
+    config.logger = event => {
+      if (isLogged(logLevel, logLevelOf(event))) {
+        logger(event);
+      }
+    };
+  }
+
+  configureServerLog({ level: logLevel, logger });
+  reportReactBuild(config.devMode);
   // Draft-preview tokens need a store shared between the /preview writer and the __pt render reader; default to
   // an in-process one when the consumer injects none (single replica). Set on config so both paths see it.
   if (config.preview?.enabled && !config.draftStore) {

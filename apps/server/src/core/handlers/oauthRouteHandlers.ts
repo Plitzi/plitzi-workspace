@@ -1,3 +1,4 @@
+import { serverLog } from '../../helpers/serverLog';
 import { handleAuthorizeStart, handleAuthorizeSubmit } from '../oauth/authorize';
 import { authorizationServerMetadata, protectedResourceMetadata } from '../oauth/metadata';
 import { handleRegister } from '../oauth/register';
@@ -112,7 +113,7 @@ export const createOAuthRouteHandlers = ({
         if (onError) {
           onError(error, { method, path });
         } else {
-          console.error(`[oauth] ${method} ${path} failed:`, error);
+          serverLog.error('oauth', `${method} ${path} failed`, error);
         }
 
         sendErrorJson(asHelpers(res), 500, 'server_error', 'The authorization server failed to answer.');

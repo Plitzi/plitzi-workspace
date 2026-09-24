@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { serverLog } from '../../helpers/serverLog';
+
 import type { PluginManager } from '../../plugins/manager';
 import type { OfflineDataRaw, PluginManifest, PluginRaw, PluginSourceFile } from '@plitzi/sdk-shared';
 
@@ -40,7 +42,7 @@ const writeDiskEntry = async (dir: string, resource: string, entry: ManifestCach
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(cacheFilePath(dir, resource), JSON.stringify(entry), 'utf-8');
   } catch (err) {
-    console.warn(`[SSR] Failed to persist plugin manifest cache for ${resource}:`, err);
+    serverLog.warn('SSR', `Failed to persist plugin manifest cache for ${resource}`, err);
   }
 };
 
@@ -49,7 +51,7 @@ const fetchAndStore = async (dir: string, resource: string): Promise<PluginManif
     const url = `${resource}/plugin-manifest.json`;
     const res = await fetch(url);
     if (!res.ok) {
-      console.warn(`[SSR] Failed to fetch plugin manifest from ${url}: HTTP ${res.status}`);
+      serverLog.warn('SSR', `Failed to fetch plugin manifest from ${url}: HTTP ${res.status}`);
       return null;
     }
 
@@ -60,7 +62,7 @@ const fetchAndStore = async (dir: string, resource: string): Promise<PluginManif
 
     return manifest;
   } catch (err) {
-    console.warn(`[SSR] Error fetching plugin manifest from ${resource}:`, err);
+    serverLog.warn('SSR', `Error fetching plugin manifest from ${resource}`, err);
     return null;
   }
 };
@@ -122,7 +124,7 @@ const registerPlugin = async (pluginManager: PluginManager, plugin: PluginRaw): 
 
   const jsUrl = findAsset(manifest, 'script', plugin.resource);
   if (!jsUrl) {
-    console.warn(`[SSR] Plugin "${plugin.type}" has no JS asset in manifest, skipping`);
+    serverLog.warn('SSR', `Plugin "${plugin.type}" has no JS asset in manifest, skipping`);
     return null;
   }
 

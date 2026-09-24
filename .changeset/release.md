@@ -294,3 +294,31 @@
   beside it. The plugin loader's dynamic imports split a chunk off, which every host serving the SDK by name had to
   know about. `codeSplitting: false` (rolldown's name for the deprecated `inlineDynamicImports`) in both the SDK and
   the vendor builds.
+
+## A page server that fits in half a CPU and 256 MB
+
+- **Fixed: a page server leaked on every request until it ran out of memory.** The auth/deployment middleware chain
+  was rebuilt per request, and `basicAuthMiddleware` starts a credential cache with a sweep timer — each request left
+  one behind that its timer kept alive for good (about a kilobyte a request; a 256 MB container died after a few
+  hundred thousand). The chain is built once per server, and the credential cache finally caches.
+- **A cached page is compressed once.** The render cache keeps the Brotli and gzip bodies beside the HTML, so a hit is
+  a copy instead of a compression — which was 87% of a hit's CPU. `res.send(body, { compressed })` takes the store to
+  fill; `CompressedBodies` and the cache's `CachedPage` are exported.
+- **Log levels: `logLevel` (`silent` < `error` < `warn` < `info` < `debug`).** One threshold for everything a server
+  says, process-wide. Default `error` — in production only what went wrong is written — and `info` with `devMode`.
+  - Requests below the threshold are not turned into events; a 5xx or a request that threw is an `error`, the rest
+    `info`. A refused action is a `warn`, a run that did not complete an `error`.
+  - The server's own lines (`listening on`, plugin builds, manifest fetches, failures in adapters, RSC, actions, auth
+    flows) are `kind: 'message'` events on the same `logger`, where they used to go straight to the console. With
+    no `logger` they still go to the console.
+  - The dev metrics line is `debug`.
+  - `serverLog` (`error`/`warn`/`info`/`debug`/`enabled`/`emit`), `logLevelOf` and `isLogged` are exported.
+    `createRunLogger`/`createRejectLogger` are held to the same threshold.
+- **`createJsonAdapters` parses a file once per version of it**, not once per request (a tenth of a render's CPU on a
+  real space). A file edited by hand is read again by its mtime and size; a save drops the copy it replaced. Every
+  request shares the parsed space, as they already did with `createCloudAdapters`.
+- A server with `devMode` off that runs without `NODE_ENV=production` says so once, at `error`: React chose its
+  development build from `NODE_ENV` when it was imported, and renders about 40% fewer pages a second with it. The
+  README no longer claims `devMode` defaults from `NODE_ENV` — it defaults to off.
+- `@plitzi/sdk-server` and `@plitzi/sdk-mcp` no longer bake `process.env.NODE_ENV` in at build time. The published
+  build always read `"production"`, whatever the process was started with; a server reads it from its process now.

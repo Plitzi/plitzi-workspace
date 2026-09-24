@@ -1,5 +1,7 @@
 import { pathToFileURL } from 'node:url';
 
+import { serverLog } from '../../helpers/serverLog';
+
 import type { PluginEntry, SSRPlugin } from '@plitzi/sdk-shared';
 import type { FC } from 'react';
 
@@ -85,9 +87,10 @@ export const loadPluginComponents = async (
             component = (mod.default ?? mod) as FC;
             componentCache.set(cacheKey, component);
           } catch (err) {
-            console.warn(
-              `[SSR] Plugin "${e.keyName}" cannot be imported server-side, falling back to client rendering:`,
-              (err as Error).message
+            serverLog.warn(
+              'SSR',
+              `Plugin "${e.keyName}" cannot be imported server-side, falling back to client rendering`,
+              err
             );
             failedImports.add(filePath);
 

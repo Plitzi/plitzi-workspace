@@ -2,6 +2,7 @@ import { readDraftToken } from '../../core/previewToken';
 import { buildRscCacheKey, DEFAULT_TTL_MS } from '../../helpers/cache';
 import { resolveDebugAuthorization } from '../../helpers/debugAuthorization';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
+import { serverLog } from '../../helpers/serverLog';
 
 import type { TtlCache } from '../../helpers/cache';
 import type { PluginManager } from '../../plugins/manager';
@@ -184,7 +185,7 @@ export const handleRsc = async (
       loadOfflineData
     });
   } catch (err) {
-    console.error('[RSC] getRscData error:', err);
+    serverLog.error('RSC', 'getRscData error', err);
     res.setStatus(500);
     res.send(JSON.stringify({ error: 'RSC data fetch failed' }));
 

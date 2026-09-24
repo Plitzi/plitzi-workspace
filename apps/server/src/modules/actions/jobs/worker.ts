@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { serverLog } from '../../../helpers/serverLog';
 import { ActionRunError } from '../runtime/errors';
 
 import type { ActionsModule } from '../index';
@@ -104,7 +105,7 @@ export const createJobWorker = ({
   leaseMs = 30_000,
   backoff = {},
   workerId = `${process.pid}-${randomUUID().slice(0, 8)}`,
-  onError = error => console.error('[Actions] job worker failed:', error)
+  onError = error => serverLog.error('Actions', 'job worker failed', error)
 }: JobWorkerOptions): JobWorker => {
   const { baseMs = 30_000, maxMs = 15 * 60_000 } = backoff;
   const active = new Map<string, AbortController>();
@@ -342,7 +343,7 @@ export const createJobWorker = ({
       await pass;
 
       if (inFlight.size > 0) {
-        console.info(`[Actions] waiting for ${inFlight.size} running job(s) to finish before stopping`);
+        serverLog.info('Actions', `waiting for ${inFlight.size} running job(s) to finish before stopping`);
       }
 
       /**

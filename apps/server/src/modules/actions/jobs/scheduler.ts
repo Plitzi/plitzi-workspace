@@ -1,6 +1,7 @@
 import { cronFiresBetween, cronNextFire } from '@plitzi/sdk-shared/actions';
 
 import { DEFAULT_MAX_ATTEMPTS, scheduleJobId, schedulesFor } from './schedules';
+import { serverLog } from '../../../helpers/serverLog';
 
 import type { ActionLookups } from '../types';
 import type { ActionJobQueue, ActionSchedule, Environment } from '@plitzi/sdk-shared';
@@ -78,7 +79,7 @@ export const createScheduler = ({
   maxAttempts = DEFAULT_MAX_ATTEMPTS,
   reconcileMs = 15 * MINUTE_MS,
   spaces,
-  onError = error => console.error('[Actions] schedule sweep failed:', error)
+  onError = error => serverLog.error('Actions', 'schedule sweep failed', error)
 }: SchedulerOptions): Scheduler => {
   let timer: NodeJS.Timeout | undefined;
   let reconcileTimer: NodeJS.Timeout | undefined;
@@ -183,8 +184,9 @@ export const createScheduler = ({
       if (!lookups.listScheduledSpaces && !spaces?.length) {
         // Said out loud, once, because the alternative is a schedule that never fires and no way to tell that
         // apart from an expression that does not match — an afternoon of looking at the wrong thing.
-        console.warn(
-          '[Actions] schedules are running but nothing says which spaces to watch. Name them as ' +
+        serverLog.warn(
+          'Actions',
+          'schedules are running but nothing says which spaces to watch. Name them as ' +
             '`action.jobs.spaces`, or answer `action.lookups.listScheduledSpaces`.'
         );
 

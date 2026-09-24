@@ -1,3 +1,5 @@
+import { serverLog } from '../../../helpers/serverLog';
+
 import type { ActionRejectRecord, ActionRunRecord, ServerLogger } from '@plitzi/sdk-shared';
 
 /**
@@ -12,13 +14,16 @@ import type { ActionRejectRecord, ActionRunRecord, ServerLogger } from '@plitzi/
  * deployment that wants run HISTORY rather than run logs keeps its own `onRun` and writes rows; the two compose,
  * since `onRun` is one function.
  *
+ * Held to the server's `logLevel` like everything else on the stream: a run that completed is `info`, one that did not
+ * is `error`.
+ *
  * Never throws: the runner treats the record as best-effort, and a logging outage must not take an action down.
  */
 export const createRunLogger =
   (logger: ServerLogger) =>
   (record: ActionRunRecord): void => {
     try {
-      logger({
+      serverLog.emit(logger, {
         kind: 'run',
         name: record.actionId,
         spaceId: record.spaceId,
@@ -50,6 +55,8 @@ export const createRunLogger =
  * It carries no body, no signature and no header — what went wrong is `reason`, and `detail` is the server's own
  * words about it.
  *
+ * A refusal is a `warn`: the caller was turned away, the server did not fail.
+ *
  * Never throws, for the same reason the run logger does not: the caller was refused either way, and a sink's
  * problem must not become the response's.
  */
@@ -57,7 +64,7 @@ export const createRejectLogger =
   (logger: ServerLogger) =>
   (record: ActionRejectRecord): void => {
     try {
-      logger({
+      serverLog.emit(logger, {
         kind: 'reject',
         name: record.actionId,
         spaceId: record.spaceId,

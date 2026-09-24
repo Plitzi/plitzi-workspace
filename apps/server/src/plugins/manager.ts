@@ -5,6 +5,7 @@ import { compilePlugin } from './compile';
 import { copyPlugin } from './copy';
 import { detectAction, isComponentSource } from './detect';
 import { assertPluginSources } from './validate';
+import { serverLog } from '../helpers/serverLog';
 
 import type { PluginEntry, PluginSource } from '@plitzi/sdk-shared';
 
@@ -260,12 +261,12 @@ export class PluginManager {
 
         // Dropped rather than rebuilt here, so the rebuild goes through the in-flight map at the end of this method
         // and two renders arriving together share one build instead of writing the same directory twice.
-        console.log(`[SSR] Plugin "${key}" source changed since it was built, rebuilding…`);
+        serverLog.info('SSR', `Plugin "${key}" source changed since it was built, rebuilding…`);
         this.mem.delete(key);
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else {
         // File was deleted from disk — drop memory cache and rebuild
-        console.warn(`[SSR] Plugin "${key}" cache invalidated: output file missing, rebuilding…`);
+        serverLog.warn('SSR', `Plugin "${key}" cache invalidated: output file missing, rebuilding…`);
         this.mem.delete(key);
       }
     }
@@ -275,12 +276,13 @@ export class PluginManager {
       const sourceVersion = source.version;
 
       if (await this.isStale(meta, source)) {
-        console.log(`[SSR] Plugin "${key}" source changed since it was built, rebuilding…`);
+        serverLog.info('SSR', `Plugin "${key}" source changed since it was built, rebuilding…`);
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else if (sourceVersion && meta.version !== sourceVersion) {
         // Version changed — nuke disk cache so build() starts clean
-        console.log(
-          `[SSR] Plugin "${key}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`
+        serverLog.info(
+          'SSR',
+          `Plugin "${key}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`
         );
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else if (sourceVersion || !this.isExpired(meta.compiledAt)) {
@@ -325,7 +327,7 @@ export class PluginManager {
       return this.toEntry(name, false, undefined, source.props);
     }
 
-    console.log(`[SSR] Plugin "${name}" building (${action}: ${jsPath})…`);
+    serverLog.info('SSR', `Plugin "${name}" building (${action}: ${jsPath})…`);
 
     try {
       let cssUrl: string | undefined;
@@ -393,10 +395,10 @@ export class PluginManager {
 
       const entry = this.toEntry(name, true, cssUrl, source.props, compiledAt);
       this.mem.set(name, { compiledAt, entry, inputs: buildInputs });
-      console.log(`[SSR] Plugin "${name}" ready → ${entry.js}`);
+      serverLog.info('SSR', `Plugin "${name}" ready → ${entry.js}`);
       return entry;
     } catch (err) {
-      console.error(`[SSR] Plugin "${name}" build failed (js: ${source.js ?? 'none'}):`, err);
+      serverLog.error('SSR', `Plugin "${name}" build failed (js: ${source.js ?? 'none'})`, err);
       this.failed.add(name);
       return null;
     }

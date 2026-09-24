@@ -12,6 +12,7 @@ import { namespaceKv } from './namespaceKv';
 import { precheckRun } from './precheck';
 import { createRedactor, projectUser } from './scope';
 import { onAbort } from '../../../helpers/onAbort';
+import { serverLog } from '../../../helpers/serverLog';
 
 import type {
   ActionKvAdapter,
@@ -344,7 +345,7 @@ export const createActionRunner = (
     try {
       await config.onRun?.(entry);
     } catch (error) {
-      console.error('[Actions] run record failed:', error);
+      serverLog.error('Actions', 'run record failed', error);
     }
   };
   const runAction = async (request: ActionRunRequest): Promise<ActionRunResult> => {

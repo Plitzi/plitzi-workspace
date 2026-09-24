@@ -158,7 +158,7 @@ serve it — worth running over anything that arrives as a file.
 |---|---|---|---|
 | `httpVersion` | `1 \| 2 \| 3` | `2` with `tls`, else `1` | HTTP protocol version. Falls back to the nearest available lower version. |
 | `tls` | `{ key, cert, minVersion? }` | — | TLS key and certificate. Required for versions 2 and 3; optional for version 1. |
-| `devMode` | `boolean` | `NODE_ENV !== 'production'` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). |
+| `devMode` | `boolean` | `false` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). Off, the process must run with `NODE_ENV=production` or React renders with its development build; the server says so once, at `error`. |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `loginPath` | `string \| false` | `'/auth/login'` | Path for the built-in login endpoint. Set to `false` to disable it entirely. |
@@ -177,6 +177,8 @@ serve it — worth running over anything that arrives as a file.
 | `compression` | `SSRCompressionConfig \| false` | Brotli, then gzip | Response compression (see [Compression](#compression)). `false` never compresses. |
 | `health` | `SSRHealthConfig` | identity payload | The `/health` endpoint. `check` adds live state per probe and turns it into a readiness probe (see [Health](#health)). |
 | `adapters` | `SSRAdapters` | — | Required. Adapter callbacks for data fetching. |
+| `logLevel` | `'silent' \| 'error' \| 'warn' \| 'info' \| 'debug'` | `info` with `devMode`, else `error` | How much the server says, for the whole process (see [Logging](#logging)). |
+| `logger` | `ServerLogger` | the console | Where it says it: one structured `ServerLogEvent` stream. `consoleLogger` prints each as one line. |
 | `onListenError` | `(error, { port, host, label }) => void` | exits non-zero | What to do when the server cannot take its port. By default it prints what went wrong and what to do about it, then exits — a process whose server never bound is not running. Supply this to keep it alive and decide yourself. |
 
 ### HTTP version behaviour
@@ -1291,12 +1293,41 @@ How it works:
 
 **Compression**: streaming responses use chunked transfer encoding and skip Brotli/gzip compression. A `Content-Length` header cannot be set before the body is complete, so compression is intentionally bypassed for streaming responses.
 
+## Logging
+
+One stream and one threshold, the usual hierarchy: `silent` < `error` < `warn` < `info` < `debug`. In production the
+server says only what went wrong — a failed request, a failed run, a server that could not start — and everything
+below it is one `logLevel` away:
+
+| Level | What it adds |
+|---|---|
+| `error` | Requests answered 5xx or that threw, runs that did not complete, anything the server could not do. |
+| `warn` | Refused actions (a bad webhook signature, a missing session), plugin manifests it could not fetch, HTTP/3 falling back. |
+| `info` | Every request line, every run, plugin builds, `listening on`. |
+| `debug` | The per-render phase breakdown of [Dev metrics](#dev-metrics). |
+
+```ts
+createServer({ adapters, logLevel: process.env.LOG_LEVEL === 'info' ? 'info' : 'error', logger: consoleLogger });
+```
+
+A request below the threshold is not even turned into an event, so a quiet server pays nothing per request. Everything goes to the `logger` —
+requests, MCP tool calls, runs, and the server's own messages as `kind: 'message'` events — and `logLevelOf(event)`
+tells a sink how severe each one is. The run and refusal loggers a deployment wires itself (`createRunLogger`,
+`createRejectLogger`) are held to the same threshold, and so is `serverLog`, the server's own voice, which a
+deployment's adapters can speak through too:
+
+```ts
+import { serverLog } from '@plitzi/sdk-server';
+
+serverLog.warn('Adapters', 'space 12 has no deployment, serving main');
+```
+
 ## Dev metrics
 
 When `devMode: true`, per-phase timing is instrumented on every render and reported in two ways:
 
 - A `Server-Timing` header is set on the response, visible in the browser's DevTools under **Network → Timing**.
-- A one-line summary is logged to stdout:
+- A one-line summary is logged at `debug` (see [Logging](#logging)):
 
 ```
 [SSR] GET / — schema=1ms rsc=0ms extPlugins=0ms plugins=0ms template=2ms react=16ms | total=19ms

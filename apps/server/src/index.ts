@@ -1,7 +1,7 @@
 export { createServer, resolveServices } from './core/createServer';
 export { closeOnSignals } from './core/server/closeOnSignals';
 export { registerHealthCheck, buildHealthPayload } from './core/health';
-export { consoleLogger, renderLogEvent } from './helpers/serverLog';
+export { consoleLogger, isLogged, logLevelOf, renderLogEvent, serverLog } from './helpers/serverLog';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export { createCloudAdapters } from './adapters/cloudAdapters';
 export { createJsonAdapters } from './adapters/jsonAdapters';

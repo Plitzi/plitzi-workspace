@@ -4,7 +4,7 @@ import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
 import { fontAssetsStage } from '../http/stages/fontAssets';
 import { healthStage } from '../http/stages/health';
-import { middlewaresStage } from '../http/stages/middlewares';
+import { createMiddlewaresStage } from '../http/stages/middlewares';
 import { pluginAssetsStage } from '../http/stages/pluginAssets';
 import { configStaticStage, publicDirStage, sdkAssetsStage, wellKnownStage } from '../http/stages/static';
 
@@ -31,7 +31,7 @@ export const buildPagePipeline = (
 
   stages.push(...(extensions.preAuth ?? []));
 
-  stages.push(middlewaresStage);
+  stages.push(createMiddlewaresStage());
 
   if (services.rsc) {
     stages.push(rscStage);

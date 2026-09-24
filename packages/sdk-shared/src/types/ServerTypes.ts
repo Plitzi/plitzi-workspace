@@ -43,6 +43,9 @@ export type SSRRequest = {
   ctx: SSRContext;
 };
 
+/** A body's compressed forms, by content encoding — filled as they are first asked for. */
+export type CompressedBodies = Partial<Record<'br' | 'gzip', Buffer>>;
+
 export type SSRResponseHelpers = {
   status: number;
   /** Multi-valued for the headers that genuinely are, `Set-Cookie` above all — see `setHeader`. */
@@ -55,7 +58,12 @@ export type SSRResponseHelpers = {
    * A `Buffer` is sent byte for byte and never compressed: it is how a binary reaches the wire — a font file, an
    * image — and what it holds is usually compressed already. A string keeps the encoding negotiation.
    */
-  send: (body: string | Buffer) => void;
+  /**
+   * `compressed` is where this body's compressed forms are kept, for a body that is sent again unchanged — a cached
+   * page. The first send of each encoding compresses and stores it; every later one sends the stored bytes. Without it
+   * a cache hit recompressed the same page on every request, which was nearly all the CPU a cached page cost.
+   */
+  send: (body: string | Buffer, options?: { compressed?: CompressedBodies }) => void;
   write: (chunk: string | Buffer) => void;
   end: () => void;
 };
@@ -723,6 +731,13 @@ export type SSRRscConfig = {
 };
 
 /** What every log event carries, whatever layer it came from. */
+/**
+ * How much a server says, from least to most: each level includes every one above it. `error` is what a production
+ * server shows unless told otherwise — something went wrong — and `warn`, `info` (every request answered, every
+ * plugin built) and `debug` are asked for. `silent` says nothing at all.
+ */
+export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
+
 type ServerLogEventBase = {
   /** Wall-clock duration of the work the event describes, in milliseconds. */
   durationMs: number;
@@ -824,8 +839,25 @@ export type ActionRejectLogEvent = ServerLogEventBase & {
  *  are stripped from paths, tool arguments are reduced to their shape and a run to its steps. Two fields are NOT
  *  anonymous and a consumer shipping these events must handle them accordingly: `clientIp` on a request event, and
  *  the request path, which is kept verbatim because it is what makes the log usable. */
+/** Anything else the server has to say — a plugin rebuilt, a manifest that would not load — at its own level. */
+export type ServerMessageLogEvent = {
+  kind: 'message';
+  level: LogLevel;
+  /** What is speaking: `SSR`, `RSC`, `Actions`, `auth`… — what a line used to start with in brackets. */
+  scope: string;
+  message: string;
+  ok: boolean;
+  error?: string;
+  timestamp: string;
+};
+
 export type ServerLogEvent =
-  ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent | ActionRunLogEvent | ActionRejectLogEvent;
+  | ServerRequestLogEvent
+  | McpToolLogEvent
+  | McpResourceLogEvent
+  | ActionRunLogEvent
+  | ActionRejectLogEvent
+  | ServerMessageLogEvent;
 
 /** The sink a consumer provides to receive every {@link ServerLogEvent} (see `SSRServerConfig.logger`). */
 export type ServerLogger = (event: ServerLogEvent) => void;
@@ -885,8 +917,17 @@ export type SSRServerConfig = {
   connectors?: ConnectorLookupsConfig;
   /** Receives a {@link ServerLogEvent} for every HTTP request this server answers — whatever stage answered it
    *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the
-   *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). */
+   *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). Everything
+   *  else the server has to say — a failure, a plugin rebuilt — comes here too as a `message` event, and goes to the
+   *  console when there is no logger. */
   logger?: ServerLogger;
+  /**
+   * The least severe thing worth saying — see {@link LogLevel}. `error` by default, `info` with `devMode`: a server
+   * in production reports what went wrong and nothing else, unless asked. A request that was answered is `info`, one
+   * that failed `error`; a refused action is `warn`. Below the level nothing is built, so a quiet server pays nothing
+   * per request for the log it is not keeping.
+   */
+  logLevel?: LogLevel | 'silent';
   /**
    * How responses are compressed. Omit for Brotli where the client takes it and gzip otherwise; `false` never
    * compresses, which is what to use when a proxy or CDN in front already does it.

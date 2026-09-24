@@ -73,7 +73,8 @@ export default defineConfig(({ mode }) => {
       copyAssets()
     ],
     define: {
-      'process.env.NODE_ENV': devMode ? '"development"' : '"production"',
+      // No `process.env.NODE_ENV`: a server reads it from the process it runs in. Baked in, the published build always
+      // believed it ran in production, whatever the deployment set — the build React renders with is the process's.
       VERSION: JSON.stringify(PACKAGE.version)
     },
     build: {

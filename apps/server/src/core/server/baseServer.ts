@@ -1,3 +1,4 @@
+import { serverLog } from '../../helpers/serverLog';
 import { buildTransport, protoLabel } from '../transports';
 
 import type { Handler } from '../transports';
@@ -78,7 +79,7 @@ export const createHttpServer = (
           return;
         }
 
-        console.error(bindFailure(error, port, label));
+        serverLog.error(label, bindFailure(error, port, label));
         // Set as well as exit: the code is what a supervisor reads, and it is already right if something the
         // deployment installed swallows the exit.
         process.exitCode = 1;
@@ -86,7 +87,7 @@ export const createHttpServer = (
       });
 
       primary.listen(port, host, () => {
-        console.log(`[${label}] ${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
+        serverLog.info(label, `${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
         parts.onListen?.();
       });
     },

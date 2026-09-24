@@ -1,3 +1,5 @@
+import { serverLog } from '../../../helpers/serverLog';
+
 import type { ActionRejectRecord, SSRPageServerConfig } from '@plitzi/sdk-shared';
 
 /**
@@ -16,6 +18,6 @@ export const reportReject = async (config: SSRPageServerConfig, record: ActionRe
   try {
     await config.action?.onReject?.(record);
   } catch (error) {
-    console.error('[Actions] reject record failed:', error);
+    serverLog.error('Actions', 'reject record failed', error);
   }
 };

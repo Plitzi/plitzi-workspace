@@ -1,6 +1,8 @@
 import { applySecurityHeaders } from './securityHeaders';
 import { buildResponseHelpers } from '../../helpers/buildResponseHelpers';
 import { resolveCompression } from '../../helpers/compress';
+import { serverLog } from '../../helpers/serverLog';
+import { isLogged } from '../../helpers/serverLog';
 import { clientIp, parseRequest } from '../requestParser';
 
 import type { BaseContext, Stage } from './types';
@@ -84,6 +86,12 @@ const runPipeline = async <C extends BaseContext>(
     }
 
     const status = statusOf(rawRes, res);
+    const failed = !!error || status >= 500;
+    // Decided before the event is built: at the default `error`, an answered request costs nothing to not log.
+    if (!isLogged(ctx.config.logLevel ?? 'error', failed ? 'error' : 'info')) {
+      return;
+    }
+
     logger({
       kind: 'request',
       server,
@@ -146,7 +154,7 @@ export const makeHandler = <C extends BaseContext>(
 
   return (raw, rawRes) => {
     runPipeline(raw, rawRes, buildContext, stages, label, compression).catch((err: unknown) => {
-      console.error(`[${label}] Unhandled error:`, err);
+      serverLog.error(label, 'Unhandled error', err);
       try {
         if (!rawRes.headersSent) {
           rawRes.writeHead(500, { 'Content-Type': 'text/plain' });

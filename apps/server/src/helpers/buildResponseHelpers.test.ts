@@ -109,4 +109,29 @@ describe('sending bytes', () => {
 
     expect(headers['content-length']).toBe(String(binary.byteLength));
   });
+
+  /** A cached page is the same body every time; compressing it on every hit was nearly all the CPU a hit cost. */
+  it('compresses a kept body once per encoding, and sends the kept bytes after that', () => {
+    const compressed = {};
+    const first = rawResponse();
+    buildResponseHelpers(first.raw, 'gzip').send(body, { compressed });
+
+    const kept = (compressed as { gzip?: Buffer }).gzip;
+    expect(kept).toBeInstanceOf(Buffer);
+
+    const second = rawResponse();
+    buildResponseHelpers(second.raw, 'gzip').send(body, { compressed });
+
+    expect(second.state.body).toBe(kept);
+    expect(second.headers['content-encoding']).toBe('gzip');
+    expect(gunzipSync(second.state.body as Buffer).toString()).toBe(body);
+  });
+
+  it('keeps nothing for a body it did not compress', () => {
+    const compressed = {};
+    buildResponseHelpers(rawResponse().raw, undefined).send(body, { compressed });
+    buildResponseHelpers(rawResponse().raw, 'gzip').send('small', { compressed });
+
+    expect(compressed).toEqual({});
+  });
 });

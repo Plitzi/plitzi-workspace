@@ -1,3 +1,4 @@
+import { serverLog } from '../../helpers/serverLog';
 import { applySessionOutcome, authRoutes } from '../auth/routes';
 
 import type { AuthedRequest, JsonResponse, HttpRoute, RouterLike } from './types';
@@ -16,7 +17,7 @@ export interface AuthRouteHandlersOptions {
    * deployment that means to go without says so with `csrf: false` there rather than by forgetting here.
    */
   csrf?: Csrf;
-  /** Reports a flow that threw. Without it the failure goes to `console.error`; the caller still gets a 500. */
+  /** Reports a flow that threw. Without it the failure goes to the server log at `error`; the caller still gets a 500. */
   onError?: (error: unknown, context: { method: string; path: string }) => void;
 }
 
@@ -72,7 +73,7 @@ export const createAuthRouteHandlers = ({ api, cookies, csrf, onError }: AuthRou
         if (onError) {
           onError(error, { method, path });
         } else {
-          console.error(`[auth] ${method} ${path} failed:`, error);
+          serverLog.error('auth', `${method} ${path} failed`, error);
         }
 
         res.status(500).json({ error: 'Internal server error' });

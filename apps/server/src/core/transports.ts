@@ -2,6 +2,8 @@ import http from 'node:http';
 import http2 from 'node:http2';
 import https from 'node:https';
 
+import { serverLog } from '../helpers/serverLog';
+
 import type { RawResponse } from '../helpers/buildResponseHelpers';
 import type { SSRServerConfig } from '@plitzi/sdk-shared';
 import type { IncomingMessage, RequestListener } from 'node:http';
@@ -60,11 +62,12 @@ export const buildTransport = (
         const mod = (await import('node:http3')) as unknown as H3Module;
         h3 = mod.createServer(tlsOptions(config, label), handler);
         h3.listen(port, '0.0.0.0', () => {
-          console.log(`[${label}] HTTP/3 (QUIC) listening on port ${port}`);
+          serverLog.info(label, `HTTP/3 (QUIC) listening on port ${port}`);
         });
       } catch {
-        console.warn(
-          `[${label}] HTTP/3 unavailable — start Node.js with --experimental-quic (requires Node ≥ 23). Falling back to HTTP/2.`
+        serverLog.warn(
+          label,
+          'HTTP/3 unavailable — start Node.js with --experimental-quic (requires Node ≥ 23). Falling back to HTTP/2.'
         );
       }
     })();

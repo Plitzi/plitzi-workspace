@@ -1,6 +1,7 @@
 import { collectServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 
 import { matchRscPage } from './matchRscPage';
+import { serverLog } from '../../helpers/serverLog';
 
 import type { Element, Environment, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 
@@ -135,7 +136,7 @@ export const resolveRscData = async ({
 
   const serverData = settled.reduce<Record<string, unknown>>((acum, result, index) => {
     if (result.status === 'rejected') {
-      console.error(`[RSC] element ${targets[index].id} failed to resolve:`, result.reason);
+      serverLog.error('RSC', `element ${targets[index].id} failed to resolve`, result.reason);
 
       return acum;
     }

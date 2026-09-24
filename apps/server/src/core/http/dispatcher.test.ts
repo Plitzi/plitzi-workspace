@@ -5,7 +5,7 @@ import { makeHandler } from './dispatcher';
 import type { BuildContext } from './dispatcher';
 import type { BaseContext, Stage } from './types';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
-import type { ServerLogEvent, ServerRequestLogEvent } from '@plitzi/sdk-shared';
+import type { LogLevel, ServerLogEvent, ServerRequestLogEvent } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
 
 const fakeRequest = (url: string, method = 'GET'): IncomingMessage =>
@@ -38,9 +38,14 @@ const fakeResponse = (): RawResponse => ({
 });
 
 // Drives one request through the dispatcher with the given stages and returns what the logger saw.
-const run = async (raw: IncomingMessage, stages: Stage[], rawRes: RawResponse = fakeResponse()) => {
+const run = async (
+  raw: IncomingMessage,
+  stages: Stage[],
+  rawRes: RawResponse = fakeResponse(),
+  logLevel: LogLevel = 'info'
+) => {
   const events: ServerLogEvent[] = [];
-  const config = { adapters: {}, logger: (event: ServerLogEvent) => events.push(event) };
+  const config = { adapters: {}, logLevel, logger: (event: ServerLogEvent) => events.push(event) };
   const buildContext: BuildContext<BaseContext> = (rawReq, res, req, helpers) => ({
     raw: rawReq,
     rawRes: res,
@@ -173,6 +178,14 @@ describe('dispatcher request log', () => {
     const events = await run(fakeRequest('/broken'), [answer(503)]);
 
     expect(firstRequest(events)).toMatchObject({ status: 503, ok: false });
+  });
+
+  it('logs only the requests that failed at the production level', async () => {
+    const served = await run(fakeRequest('/pricing'), [answer(200)], fakeResponse(), 'error');
+    const broken = await run(fakeRequest('/broken'), [answer(503)], fakeResponse(), 'error');
+
+    expect(served).toHaveLength(0);
+    expect(firstRequest(broken).status).toBe(503);
   });
 
   it('reports the operation a stage recorded', async () => {
