@@ -30,6 +30,7 @@ lost, it simply stops being read as a plan.
 | # | Title | Status | Scope |
 |---|---|---|---|
 | [0001](./0001-native-mobile-renderer.md) | Native mobile renderer (React Native) | Proposal | `plitzi-sdk` render packages |
+| [0016](./0016-space-templates.md) | Space templates | Implemented | `plitzi-sdk-server`, `sdk-mcp` preview |
 
 ## Conventions
 

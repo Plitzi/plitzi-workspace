@@ -66,6 +66,10 @@ export const previewStage: Stage<SSRContext> = async ctx => {
     return json(ctx, 400, { error: 'BAD_REQUEST', message: 'spaceId (number) is required.' });
   }
 
+  if (body.revision !== undefined && (!Number.isInteger(body.revision) || body.revision < 1)) {
+    return json(ctx, 400, { error: 'BAD_REQUEST', message: 'revision must be a positive integer when given.' });
+  }
+
   const result = await createPreview(body, ctx.config, ctx.renderFn, ctx.pluginManager, ctx.caches);
 
   return json(ctx, result.ok ? 200 : 422, result);

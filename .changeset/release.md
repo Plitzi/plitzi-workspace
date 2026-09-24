@@ -197,6 +197,13 @@
   shipped. The repository READMEs, `claude.md`, onboarding and repository-structure list `apps/mcp`, `apps/cli`,
   `apps/desktop` and `sdk-authoring`, and no longer `sdk-collections`.
 
+## Preview a published revision
+
+- The draft preview takes an optional `revision` (`PreviewRequestBody.revision`, carried by `PreviewClient.render`):
+  a published revision of `env` rendered instead of its latest, so a capture can show one exact version — the one a
+  reviewer approved rather than whatever was published after. Ignored for `main`; a revision that is not a positive
+  integer is a 400.
+
 ## Interactions: "Propagate Event" does what it says
 
 - A click, hover or focus trigger with **Propagate Event** off — the default — now answers the event for the elements
