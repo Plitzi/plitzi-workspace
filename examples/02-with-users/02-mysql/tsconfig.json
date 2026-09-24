@@ -1,6 +1,8 @@
 {
   "extends": "../../../packages/sdk-shared/tsconfig.app.json",
   "compilerOptions": {
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
     // `rootDir` reaches up because the pages come from the sibling example. With `composite` left on, that also
     // moves where TypeScript puts its build state — it landed in `packages/` — and a check emits nothing anyway.
     "rootDir": "..",

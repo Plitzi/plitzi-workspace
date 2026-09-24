@@ -1,7 +1,7 @@
-import { acceptsQueuedJobs } from './actions';
-import { shapeBoard } from './board';
+import { acceptsQueuedJobs } from './actions.ts';
+import { shapeBoard } from './board.ts';
 
-import type { ActivityLog } from './store/activity';
+import type { ActivityLog } from './store/activity.ts';
 import type { ActionLookups, ActionTask } from '@plitzi/sdk-server/actions';
 import type { ActionJobQueue, ActionJobStatus } from '@plitzi/sdk-shared';
 

@@ -9,7 +9,7 @@ import {
   topics,
   updatePost,
   view
-} from './posts';
+} from './posts.ts';
 
 import type { ActionTask } from '@plitzi/sdk-server/actions';
 

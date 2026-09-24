@@ -74,12 +74,11 @@ const compareMetrics = <T>(
 
 /**
  * What moved beyond `tolerance` (a fraction: 0.1 is 10%) between a baseline and this run, target by target and
- * phase by phase, for targets run the same way in both. A target that ran before and fails now is always a regression, whatever its numbers were.
+ * phase by phase. A target that ran before and fails now is always a regression, whatever its numbers were.
  */
 export const compareRuns = (baseline: TargetResult[], current: TargetResult[], tolerance: number): Change[] =>
   current.flatMap(target => {
-    // Measured another way, the same target is not the same measurement.
-    const before = baseline.find(candidate => candidate.target === target.target && candidate.runner === target.runner);
+    const before = baseline.find(candidate => candidate.target === target.target);
     if (!before) {
       return [];
     }

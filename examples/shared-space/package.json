@@ -18,17 +18,19 @@
   "devDependencies": {
     "@plitzi/sdk-shared": "workspace:*",
     "@types/node": "^26.6.2",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.1"
   },
   "scripts": {
-    "author": "node --import tsx ./author.ts",
+    "author": "node ./author.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@plitzi/sdk-authoring": "workspace:*",
     "@plitzi/sdk-server": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

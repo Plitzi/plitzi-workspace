@@ -5,8 +5,8 @@
   "description": "A page rendered with data the server fetched: an action runs while the page renders, and the HTML arrives with the cats already in it.",
   "type": "module",
   "scripts": {
-    "start": "node --import tsx src/main.ts",
-    "start:dev": "tsx watch --exclude \".sdk-plugins/**\" src/main.ts",
+    "start": "node src/main.ts",
+    "start:dev": "node --watch-path=./src src/main.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -18,7 +18,9 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

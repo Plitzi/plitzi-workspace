@@ -1,8 +1,8 @@
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
-import { lookups } from './actions';
-import { offlineData } from './space';
-import { shippingRate } from './tasks';
+import { lookups } from './actions.ts';
+import { offlineData } from './space.ts';
+import { shippingRate } from './tasks.ts';
 
 import type { SSRSpaceDeployment } from '@plitzi/sdk-shared';
 

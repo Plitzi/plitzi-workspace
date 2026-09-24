@@ -3,17 +3,29 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { compareRuns } from './compare';
-import { measureTarget } from './measure';
+import { markdownMatrix, markdownRun } from './markdown';
+import { combineRuns, measureTarget } from './measure';
+import { findPortals } from './portals';
+import { compileProbe } from './probe';
 import { findProfile, PROFILES } from './profiles';
 import { formatChanges, formatTarget } from './report';
-import { baselinePath, describeGit, describeHost, readBaseline, saveBaseline, saveResult } from './results';
+import {
+  baselinePath,
+  describeGit,
+  describeHost,
+  latestResults,
+  readBaseline,
+  saveBaseline,
+  saveMarkdown,
+  saveReport,
+  saveResult
+} from './results';
 import { createDockerRuntime } from './runtime/docker';
 import { createLocalRuntime } from './runtime/local';
 import { selectTargets, TARGETS } from './targets';
 
 import type { RunResult } from './results';
 import type { Runtime } from './runtime/types';
-import type { Runner } from './targets';
 
 const HELP = `Usage: yarn bench [options]
 
@@ -23,13 +35,14 @@ const HELP = `Usage: yarn bench [options]
   --concurrency <list>  Connections in flight, comma-separated (default: 1,10,50)
   --duration <s>        Seconds measured per scenario and concurrency (default: 10)
   --warmup <s>          Seconds of unmeasured load before each (default: 3)
-  --runner <name>       tsx or node: run every target this way instead of its own (see targets.ts)
+  --repeat <n>          Cold runs of each target, the median kept (default: 1; 3 before trusting a comparison)
   --node-options="<s>"  V8/Node flags instead of the profile's own (with =, since they start with --)
   --env <KEY=VALUE>     Extra environment for the server, repeatable
   --image <name>        Docker image (default: node:24-slim)
   --save-baseline       Keep this run as the baseline for its profile and runtime
   --check               Exit non-zero when anything regressed beyond the tolerance
   --tolerance <n>       Relative change that counts, as a fraction (default: 0.1)
+  --report              Only write results/report.md from the latest run of each profile, measuring nothing
   --list                List targets and profiles
 `;
 
@@ -41,7 +54,7 @@ const { values } = parseArgs({
     concurrency: { type: 'string', default: '1,10,50' },
     duration: { type: 'string', default: '10' },
     warmup: { type: 'string', default: '3' },
-    runner: { type: 'string' },
+    repeat: { type: 'string', default: '1' },
     'node-options': { type: 'string' },
     env: { type: 'string', multiple: true, default: [] },
     image: { type: 'string', default: 'node:24-slim' },
@@ -49,6 +62,7 @@ const { values } = parseArgs({
     check: { type: 'boolean', default: false },
     tolerance: { type: 'string', default: '0.1' },
     list: { type: 'boolean', default: false },
+    report: { type: 'boolean', default: false },
     help: { type: 'boolean', default: false }
   }
 });
@@ -74,14 +88,6 @@ const createRuntime = (name: string): Runtime => {
   throw new Error(`--runtime must be docker or local, got "${name}"`);
 };
 
-const parseRunner = (raw: string | undefined): Runner | undefined => {
-  if (raw === undefined || raw === 'tsx' || raw === 'node') {
-    return raw;
-  }
-
-  throw new Error(`--runner must be tsx or node, got "${raw}"`);
-};
-
 const parseEnv = (entries: string[]): Record<string, string> =>
   Object.fromEntries(
     entries.map(entry => {
@@ -97,9 +103,7 @@ const parseEnv = (entries: string[]): Record<string, string> =>
 const list = (): void => {
   console.log('Targets:');
   for (const target of TARGETS) {
-    console.log(
-      `  ${target.name.padEnd(20)} ${target.description}${target.requires ? ` (needs ${target.requires})` : ''}`
-    );
+    console.log(`  ${target.name.padEnd(20)} ${target.description}`);
   }
 
   console.log('\nProfiles:');
@@ -122,17 +126,34 @@ const main = async (): Promise<number> => {
   }
 
   const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+  if (values.report) {
+    const order = PROFILES.map(profile => profile.name);
+    const results = latestResults(workspaceRoot).sort(
+      (a, b) => order.indexOf(a.profile.name) - order.indexOf(b.profile.name)
+    );
+    console.log(
+      `Report: ${path.relative(workspaceRoot, saveReport(workspaceRoot, markdownMatrix(results)))} (${results.length} profile(s))`
+    );
+
+    return 0;
+  }
+
   const runtime = createRuntime(values.runtime);
+  await compileProbe(workspaceRoot);
   const targets = selectTargets(values.target);
   const profiles = values.profile.map(findProfile);
   const concurrency = values.concurrency.split(',').map(level => positiveNumber('concurrency', level));
   const durationMs = positiveNumber('duration', values.duration) * 1000;
   const warmupMs = positiveNumber('warmup', values.warmup) * 1000;
+  const repeat = Math.max(1, Math.round(positiveNumber('repeat', values.repeat)));
   const tolerance = positiveNumber('tolerance', values.tolerance);
-  const runner = parseRunner(values.runner);
   const env = parseEnv(values.env);
   const runtimeDetails = await runtime.describe();
   const git = await describeGit(workspaceRoot);
+  const portals = Object.fromEntries(findPortals(workspaceRoot).map(portal => [portal.name, portal.target]));
+  if (Object.keys(portals).length > 0) {
+    console.log(`Portals: ${Object.keys(portals).join(', ')} — measured from their working copies, not npm.`);
+  }
   let regressed = false;
 
   if (
@@ -144,6 +165,7 @@ const main = async (): Promise<number> => {
     );
   }
 
+  const finished: RunResult[] = [];
   for (const profile of profiles) {
     const nodeOptions = values['node-options']?.split(' ').filter(Boolean) ?? profile.nodeOptions;
     console.log(
@@ -154,33 +176,48 @@ const main = async (): Promise<number> => {
       profile,
       runtime: { name: runtime.name, enforcesLimits: runtime.enforcesLimits, details: runtimeDetails },
       git,
+      portals,
       host: describeHost(),
-      options: { concurrency, durationMs, warmupMs, nodeOptions, env },
+      options: { concurrency, durationMs, warmupMs, repeat, nodeOptions, env },
       targets: []
     };
 
     for (const target of targets) {
       console.log(`\n… ${target.name}`);
-      const measured = await measureTarget(
-        runtime,
-        target,
-        profile,
-        { workspaceRoot, runner, concurrency, durationMs, warmupMs, nodeOptions, env },
-        line => console.log(`    ${line}`)
-      );
+      const runs = [];
+      for (let attempt = 1; attempt <= repeat; attempt += 1) {
+        if (repeat > 1) {
+          console.log(`    run ${attempt} of ${repeat}`);
+        }
+
+        runs.push(
+          await measureTarget(
+            runtime,
+            target,
+            profile,
+            { workspaceRoot, concurrency, durationMs, warmupMs, nodeOptions, env },
+            line => console.log(`    ${line}`)
+          )
+        );
+      }
+
+      const measured = combineRuns(runs);
       result.targets.push(measured);
       console.log(formatTarget(measured));
     }
 
-    console.log(`\nSaved ${path.relative(workspaceRoot, saveResult(workspaceRoot, result))}`);
+    const saved = saveResult(workspaceRoot, result);
+    console.log(`\nSaved ${path.relative(workspaceRoot, saved)}`);
     const baselineFile = baselinePath(workspaceRoot, profile.name, runtime.name);
     const baseline = readBaseline(baselineFile);
-    if (baseline) {
+    const changes = baseline ? compareRuns(baseline.targets, result.targets, tolerance) : undefined;
+    console.log(`Table: ${path.relative(workspaceRoot, saveMarkdown(saved, markdownRun(result, changes)))}`);
+    finished.push(result);
+    if (baseline && changes) {
       if (baseline.host.cpu !== result.host.cpu) {
         console.log(`Note: the baseline was measured on "${baseline.host.cpu}"; numbers across machines differ.`);
       }
 
-      const changes = compareRuns(baseline.targets, result.targets, tolerance);
       console.log(`\nAgainst ${path.relative(workspaceRoot, baselineFile)} (${baseline.git.commit}):`);
       console.log(formatChanges(changes));
       regressed ||= changes.some(change => change.verdict === 'regression');
@@ -191,6 +228,8 @@ const main = async (): Promise<number> => {
       console.log(`Baseline written: ${path.relative(workspaceRoot, baselineFile)}`);
     }
   }
+
+  console.log(`\nReport: ${path.relative(workspaceRoot, saveReport(workspaceRoot, markdownMatrix(finished)))}`);
 
   return values.check && regressed ? 1 : 0;
 };

@@ -56,21 +56,26 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
   'react-dom': '^19.2.8'
 });
 
-/**
- * `tsx` is what runs TypeScript under Node — the server in server mode, `npm run author` in a local project and
- * `npm run shot` in every one — so every project gets it.
- */
+/** A server-mode project runs no bundler of its own: the page server builds the plugins, and Node runs the rest. */
 const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
   ...SHARED_DEV_DEPENDENCIES,
-  tsx: '^4.23.12',
   ...(mode === 'server' ? {} : { vite: '^8.2.1' })
 });
+
+/**
+ * Node runs this project's TypeScript itself — the server, `author`, `shot` — by stripping the types, which it does
+ * without a flag from 22.18. Nothing transpiles beside the server: `tsx` did, and its loader thread cost a server
+ * more memory than the server itself (~270 MB to start where the same server starts in ~90), which is the difference
+ * between a small host and one that is killed on boot. The price is the one `tsconfig` enforces: relative imports
+ * name their `.ts` file, and only syntax that erases (no `enum`, no parameter properties).
+ */
+const NODE_ENGINES = { node: '>=22.18' };
 
 /**
  * What `start` means, which is the whole difference between the two modes.
  *
  * `client` runs Vite, so a save is a hot module replacement — the page updates without reloading, and editing the
- * space is a live loop. `server` runs the page server under `tsx watch`: there is no client bundle of this
+ * space is a live loop. `server` runs the page server under Node's `--watch`: there is no client bundle of this
  * project's own to hot-replace (the SDK is served by the server from its own copy), so a save restarts the
  * process and the next request renders the change. Both are one command; only one of them is HMR, and calling
  * the other one HMR would be a promise the loop does not keep.
@@ -78,26 +83,33 @@ const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
 const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
   ...(mode === 'server'
     ? {
-        start: 'node --import tsx src/main.ts',
+        start: 'node src/main.ts',
         /**
          * Watched by PATH, not wholesale.
          *
          * The server compiles the project's plugins into `.sdk-plugins/` and then IMPORTS what it built, so a
          * bare `--watch` sees its own output land, restarts, compiles again, and never stops.
          */
-        'start:dev': 'node --import tsx --watch-path=./src src/main.ts'
+        'start:dev': 'node --watch-path=./src src/main.ts',
+        /**
+         * What production runs: the same entry compiled to JavaScript. Node strips types by loading a TypeScript
+         * transformer into the process — ~10 MB a server keeps for its whole life to read one file — so a deployment
+         * runs what `build` emitted and carries no TypeScript at all.
+         */
+        build: 'tsc -p tsconfig.build.json',
+        'start:prod': 'node dist/main.js'
       }
     : {
         start: 'vite',
         build: 'vite build',
         preview: 'vite preview'
       }),
-  ...(source === 'local' ? { author: 'node --import tsx src/author.ts' } : {}),
+  ...(source === 'local' ? { author: 'node src/author.ts' } : {}),
   typecheck: 'tsc -p tsconfig.json --noEmit',
   lint: 'eslint .',
   format: 'prettier --write .',
   visual: 'playwright test',
-  shot: 'node --import tsx scripts/shot.ts'
+  shot: 'node scripts/shot.ts'
 });
 
 export const packageJson = (answers: CreateAnswers): string =>
@@ -110,7 +122,29 @@ export const packageJson = (answers: CreateAnswers): string =>
       scripts: scripts(answers),
       dependencies: dependencies(answers),
       devDependencies: devDependencies(answers),
+      engines: NODE_ENGINES,
       ...managerPackageFields(answers.packageManager)
+    },
+    null,
+    2
+  )}\n`;
+
+/**
+ * What `build` compiles: the server's own code, to \`dist/\`, with each \`./space.ts\` import rewritten to the \`.js\` it
+ * becomes. The plugins are left out — the page server builds those itself, from their source.
+ */
+export const tsconfigBuild = (): string =>
+  `${JSON.stringify(
+    {
+      extends: './tsconfig.json',
+      compilerOptions: {
+        noEmit: false,
+        outDir: 'dist',
+        rootDir: 'src',
+        rewriteRelativeImportExtensions: true
+      },
+      include: ['src'],
+      exclude: ['src/plugins']
     },
     null,
     2
@@ -128,6 +162,11 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
         esModuleInterop: true,
         skipLibCheck: true,
         resolveJsonModule: true,
+        // What Node's own TypeScript support needs, checked here rather than found at `npm start`: a relative import
+        // names its file, a type-only import says so, and nothing is written that stripping types would leave broken.
+        allowImportingTsExtensions: true,
+        verbatimModuleSyntax: true,
+        erasableSyntaxOnly: true,
         /**
          * `vite/client` in the browser build, and it is not optional there: it is what declares a side-effect CSS
          * import and `import.meta.env`, both of which the entry point uses.
@@ -158,7 +197,7 @@ export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
 
 const startLine = ({ mode, packageManager }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080. \`${runCommand(packageManager, 'start:dev')}\` restarts on save.`
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080. \`${runCommand(packageManager, 'start:dev')}\` restarts on save. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
     : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
 
 const spaceSection = (answers: CreateAnswers): string => {
@@ -293,6 +332,7 @@ export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   ...managerFiles(answers.packageManager, answers.managerVersion),
   'package.json': packageJson(answers),
   'tsconfig.json': tsconfig(answers),
+  ...(answers.mode === 'server' ? { 'tsconfig.build.json': tsconfigBuild() } : {}),
   '.gitignore': gitignore(answers),
   'README.md': readme(answers),
   'AGENTS.md': agentsFile(answers),

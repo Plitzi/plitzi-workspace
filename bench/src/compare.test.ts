@@ -20,7 +20,6 @@ const phase = (rps: number, maxMb: number): PhaseResult => ({
 
 const target = (overrides: Partial<TargetResult>): TargetResult => ({
   target: 'blog',
-  runner: 'tsx',
   status: 'ok',
   bootMs: 3000,
   idleMb: 60,
@@ -63,8 +62,7 @@ describe('compareRuns', () => {
     expect(changes).toEqual([]);
   });
 
-  it('says nothing about a target the baseline never measured, or measured under another runner', () => {
+  it('says nothing about a target the baseline never measured', () => {
     expect(compareRuns([], [target({})], 0.1)).toEqual([]);
-    expect(compareRuns([target({})], [target({ runner: 'node', phases: [phase(10, 300)] })], 0.1)).toEqual([]);
   });
 });

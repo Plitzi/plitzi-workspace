@@ -4,13 +4,13 @@ import { fileURLToPath } from 'node:url';
 import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
 
-import { lookups, SPACE_ID } from './actions';
-import { offlineData } from './space';
-import { createActivityLog } from './store/activity';
-import { openDatabase } from './store/database';
-import { createSqliteKv } from './store/kv';
-import { createSqliteJobQueue } from './store/queue';
-import { createTasks } from './tasks';
+import { lookups, SPACE_ID } from './actions.ts';
+import { offlineData } from './space.ts';
+import { createActivityLog } from './store/activity.ts';
+import { openDatabase } from './store/database.ts';
+import { createSqliteKv } from './store/kv.ts';
+import { createSqliteJobQueue } from './store/queue.ts';
+import { createTasks } from './tasks.ts';
 
 const PORT = Number(process.env.PORT ?? 4016);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.

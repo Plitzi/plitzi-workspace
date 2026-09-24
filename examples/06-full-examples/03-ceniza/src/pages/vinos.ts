@@ -1,6 +1,6 @@
 import { container, heading, image, paragraph, text } from '@plitzi/sdk-authoring';
 
-import { photo, photos, restaurant, sommelier, tastingMenu, wineSections, wineValues } from '../content';
+import { photo, photos, restaurant, sommelier, tastingMenu, wineSections, wineValues } from '../content.ts';
 import {
   arrow,
   closeMenuOnLoad,
@@ -13,9 +13,9 @@ import {
   sectionHead,
   shell,
   stat
-} from '../layout';
+} from '../layout.ts';
 
-import type { Wine, WineSection } from '../content';
+import type { Wine, WineSection } from '../content.ts';
 import type { ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 
 /**

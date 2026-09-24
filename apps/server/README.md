@@ -106,8 +106,11 @@ server.listen(3001, '127.0.0.1');
 
 ```bash
 yarn add @plitzi/sdk-server react react-dom
-yarn tsx server.ts     # http://127.0.0.1:3001/
+node server.ts     # http://127.0.0.1:3001/ — Node 22.18+ runs TypeScript itself
 ```
+
+No transpiler in front of it: Node strips the types. A loader such as `tsx` costs a page server more memory than the
+server itself — on a 128 MB host, the difference between starting and being killed on boot.
 
 Both pages render server-side, with the CSS the space declared. `authorSpace` refuses to hand back a space that
 would not render — a CSS property the style editor could not read back, a class nothing declares, a binding

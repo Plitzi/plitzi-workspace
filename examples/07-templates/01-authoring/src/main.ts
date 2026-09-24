@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { pricingCard } from './template';
+import { pricingCard } from './template.ts';
 
 /**
  * The whole build: author the template, write the JSON.

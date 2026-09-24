@@ -3,9 +3,9 @@ import { fileURLToPath } from 'node:url';
 
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
-import { lookups } from './actions';
-import { offlineData } from './space';
-import { seismicTasks } from './tasks';
+import { lookups } from './actions.ts';
+import { offlineData } from './space.ts';
+import { seismicTasks } from './tasks.ts';
 
 const PORT = Number(process.env.PORT ?? 4014);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.

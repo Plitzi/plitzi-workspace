@@ -36,7 +36,7 @@ const authoredSpec = (): string => `import { expect, test } from '@playwright/te
 
 import { authorSpace, inspectPage } from '@plitzi/sdk-authoring';
 
-import { space } from '../src/space';
+import { space } from '../src/space.ts';
 
 /**
  * Every page renders whole: everything the space NAMES is on screen, images arrived, nothing scrolls sideways, and no

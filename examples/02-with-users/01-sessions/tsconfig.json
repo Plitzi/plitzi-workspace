@@ -3,10 +3,20 @@
   "compilerOptions": {
     "rootDir": "./",
     "noEmit": true,
-    "types": ["node"],
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

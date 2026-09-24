@@ -10,7 +10,7 @@ import {
   text
 } from '@plitzi/sdk-authoring';
 
-import { customCss, variables } from './theme';
+import { customCss, variables } from './theme.ts';
 
 import type { ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';

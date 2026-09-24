@@ -40,8 +40,17 @@ the *invocation*: running `npx` once to scaffold a project you then work in with
 wrong.
 
 A Yarn project also gets a `.yarnrc.yml` pinning `nodeLinker: node-modules`. Yarn 4 installs Plug'n'Play by
-default and a server-mode project cannot start under it — `node --import tsx` dies resolving its own entry — so
-the linker is pinned to the layout npm and pnpm already give it.
+default, and the project runs straight from `node_modules` — its server by Node, its plugins by the page server's
+bundler — so the linker is pinned to the layout npm and pnpm already give it.
+
+## Node runs the TypeScript
+
+Every script that runs TypeScript — `start`, `author`, `shot` — is plain `node`: Node 22.18+ strips the types
+itself, so nothing transpiles beside the server. (`tsx` did, and its loader thread cost a page server more memory
+than the server: ~270 MB to start where the same server starts in ~90.) The project's `tsconfig` holds it to what
+that needs — relative imports name their `.ts` file (`allowImportingTsExtensions`), type-only imports say so
+(`verbatimModuleSyntax`), nothing is written that stripping would leave broken (`erasableSyntaxOnly`) — so a
+mistake is a `typecheck` error, not a crash at `npm start`. `engines` says `>=22.18`.
 
 Each project also carries what lets its **first install through on release day**, which is the day every
 `@plitzi/*` package it depends on is new:

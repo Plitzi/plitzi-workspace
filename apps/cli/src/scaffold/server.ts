@@ -16,9 +16,12 @@ const PLUGINS = `/**
  * it into the render — so the component's markup is in the HTML before any JavaScript arrives. Add another by
  * writing it under \`src/plugins\` and adding a line here; see \`src/plugins/README.md\`.
  */
+// From the project root, so the path holds whether this file runs as \`src/main.ts\` or compiled as \`dist/main.js\`.
+const PROJECT_ROOT = path.resolve(import.meta.dirname, '..');
+
 const plugins = {
   statCard: {
-    js: path.resolve(import.meta.dirname, 'plugins/StatCard/index.ts'),
+    js: path.resolve(PROJECT_ROOT, 'src/plugins/StatCard/index.ts'),
     action: 'compile' as const,
     version: '1.0.0'
   }
@@ -40,9 +43,11 @@ import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from 
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
-import { space } from './space';
+import { space } from './space.ts';
 
 const PORT = Number(process.env.PORT ?? 8080);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on (\`HOST=0.0.0.0\`).
+const HOST = process.env.HOST ?? '127.0.0.1';
 
 /**
  * The space, held in this project.
@@ -78,7 +83,7 @@ const server = createServer({
   logger: consoleLogger
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
 
 /**
@@ -94,6 +99,8 @@ const cloudMain = (): string => `import path from 'node:path';
 import { closeOnSignals, consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 8080);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on (\`HOST=0.0.0.0\`).
+const HOST = process.env.HOST ?? '127.0.0.1';
 
 ${PLUGINS}
 
@@ -136,7 +143,7 @@ const server = createServer({
   logger: consoleLogger
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
 
 /**

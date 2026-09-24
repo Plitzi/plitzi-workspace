@@ -1,6 +1,6 @@
 import type { ProbeSample } from '../../probe/protocol';
 import type { Profile } from '../profiles';
-import type { Runner, Target } from '../targets';
+import type { Target } from '../targets';
 
 export type ResourceSample = {
   /** Memory charged to the server: the container's cgroup, or the resident set of the process tree outside one. */
@@ -44,24 +44,26 @@ export type LaunchOptions = {
   profile: Profile;
   workspaceRoot: string;
   nodeOptions: string[];
-  runner: Runner;
   /** Extra environment for the server, over the target's own — an allocator setting, a feature flag. */
   env: Record<string, string>;
 };
 
 /**
- * The command line that starts `entry` under `runner`, with the probe loaded first. The flags go on the command line
- * rather than in `NODE_OPTIONS`, which accepts only a fixed list of V8 flags.
+ * The command line that starts `entry`, with the probe loaded first. The flags go on the command line rather than in
+ * `NODE_OPTIONS`, which accepts only a fixed list of V8 flags.
  */
-export const nodeArgs = (runner: Runner, entry: string, probe: string, flags: string[]): string[] => [
+export const nodeArgs = (entry: string, probe: string, flags: string[]): string[] => [
   ...flags,
   '--import',
   probe,
-  ...(runner === 'tsx' ? ['--import', 'tsx'] : []),
   entry
 ];
 
-export const PROBE_ENTRY = 'bench/probe/memoryProbe.ts';
+/**
+ * The probe as the servers load it: compiled to JavaScript by `compileProbe`. Loaded as TypeScript, it put Node's
+ * type stripper into every server measured — ~10 MB that was then counted as the server's.
+ */
+export const PROBE_ENTRY = 'bench/.cache/probe/memoryProbe.js';
 
 export type Runtime = {
   name: 'docker' | 'local';

@@ -13,12 +13,26 @@ export type Profile = {
    *   the live set is a third of that — past what the container may use.
    * - Below one core, `--single-threaded`: V8's background GC and compiler threads bring no parallelism under a
    *   fraction of a core, only contention for the same quota, and each keeps a malloc arena of its own. At a quarter
-   *   core it serves ~45% more pages in ~25 MB less.
+   *   core it serves ~45% more pages in ~25 MB less. From one core up they run beside the main thread, and stay on.
    */
   nodeOptions: string[];
 };
 
 export const PROFILES: Profile[] = [
+  {
+    name: 'edge-64',
+    description: 'Quarter of a core, 64 MB — the floor being probed',
+    cpus: 0.25,
+    memoryMb: 64,
+    nodeOptions: ['--single-threaded', '--max-semi-space-size=1', '--max-old-space-size=24']
+  },
+  {
+    name: 'edge-96',
+    description: 'Quarter of a core, 96 MB',
+    cpus: 0.25,
+    memoryMb: 96,
+    nodeOptions: ['--single-threaded', '--max-semi-space-size=1', '--max-old-space-size=32']
+  },
   {
     name: 'edge-128',
     description: 'Quarter of a core, 128 MB',
@@ -46,6 +60,27 @@ export const PROFILES: Profile[] = [
     cpus: 1,
     memoryMb: 512,
     nodeOptions: ['--max-old-space-size=384']
+  },
+  {
+    name: 'medium',
+    description: 'Two cores, 1 GB',
+    cpus: 2,
+    memoryMb: 1024,
+    nodeOptions: ['--max-old-space-size=768']
+  },
+  {
+    name: 'large',
+    description: 'Four cores, 2 GB',
+    cpus: 4,
+    memoryMb: 2048,
+    nodeOptions: ['--max-old-space-size=1536']
+  },
+  {
+    name: 'enterprise',
+    description: 'Eight cores, 4 GB',
+    cpus: 8,
+    memoryMb: 4096,
+    nodeOptions: ['--max-old-space-size=3072']
   },
   {
     name: 'unbounded',

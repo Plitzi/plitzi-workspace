@@ -1,4 +1,4 @@
-import { optionalText, storeNow, text } from './database';
+import { optionalText, storeNow, text } from './database.ts';
 
 import type { ActionKvAdapter } from '@plitzi/sdk-server/actions';
 import type { DatabaseSync } from 'node:sqlite';

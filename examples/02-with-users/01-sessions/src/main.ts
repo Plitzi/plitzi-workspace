@@ -1,8 +1,8 @@
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createAuth } from '@plitzi/sdk-server/auth';
 
-import { accounts, verifyPassword } from './accounts';
-import { offlineData } from './space';
+import { accounts, verifyPassword } from './accounts.ts';
+import { offlineData } from './space.ts';
 
 const PORT = Number(process.env.PORT ?? 4007);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.

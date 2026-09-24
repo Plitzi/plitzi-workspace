@@ -1,7 +1,7 @@
-// Preloaded into every server the bench starts (`--import`), and run by Node's own type stripping so it adds no
-// transpiler to what is measured. It reports what only the process knows about its memory, which no reading from
-// outside can split: the V8 heap, its code space, and what lives off it. One JSON line every half second on stderr,
-// prefixed so the bench can pick them out of the server's own output.
+// Preloaded into every server the bench starts (`--import`), compiled to JavaScript first so it adds nothing to what
+// is measured but itself. It reports what only the process knows about its memory, which no reading from outside can
+// split: the V8 heap, its code space, and what lives off it. One JSON line every half second on stderr, prefixed so
+// the bench can pick them out of the server's own output.
 import { getHeapSpaceStatistics } from 'node:v8';
 
 import { PROBE_PREFIX } from './protocol.ts';

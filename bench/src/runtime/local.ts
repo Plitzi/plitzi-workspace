@@ -64,11 +64,10 @@ export const createLocalRuntime = (): Runtime => {
     target,
     workspaceRoot,
     nodeOptions,
-    runner,
     env: extraEnv
   }: LaunchOptions): Promise<RunningTarget> => {
     const port = await freePort();
-    const child = spawn('node', nodeArgs(runner, target.entry, path.join(workspaceRoot, PROBE_ENTRY), nodeOptions), {
+    const child = spawn('node', nodeArgs(target.entry, path.join(workspaceRoot, PROBE_ENTRY), nodeOptions), {
       cwd: path.join(workspaceRoot, target.cwd),
       env: {
         ...process.env,

@@ -1,6 +1,6 @@
 import { container, heading, image, paragraph, text } from '@plitzi/sdk-authoring';
 
-import { eventSteps, events, faqs, photo, photos, restaurant, rooms } from '../content';
+import { eventSteps, events, faqs, photo, photos, restaurant, rooms } from '../content.ts';
 import {
   arrow,
   closeMenuOnLoad,
@@ -15,7 +15,7 @@ import {
   section,
   sectionHead,
   shell
-} from '../layout';
+} from '../layout.ts';
 
 import type { PageSpec } from '@plitzi/sdk-authoring';
 

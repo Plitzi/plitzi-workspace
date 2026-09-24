@@ -3,6 +3,7 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { createInterface } from 'node:readline';
 
+import { findPortals } from '../portals';
 import { linuxEsbuildBinary } from './esbuildBinary';
 import { freePort, run, runCapturingAll } from './process';
 import { nodeArgs, PROBE_ENTRY } from './types';
@@ -63,6 +64,18 @@ const parseReading = (line: string): ResourceSample | undefined => {
   };
 };
 
+/**
+ * A portal is a relative symlink out of the workspace, and only the workspace is mounted: inside the container it
+ * dangles and the server cannot start — the package under test is exactly the one missing. Each is mounted read-only
+ * where its link resolves to from the workspace mount.
+ */
+const portalMounts = (workspaceRoot: string): string[] =>
+  findPortals(workspaceRoot).map(portal => {
+    const linkDir = path.posix.join(WORKSPACE_MOUNT, path.dirname(portal.link));
+
+    return `${portal.target}:${path.posix.resolve(linkDir, portal.linkTarget)}:ro`;
+  });
+
 const dockerArch = async (): Promise<'arm64' | 'x64'> => {
   const arch = await run('docker', ['info', '--format', '{{.Architecture}}']);
   if (arch === 'aarch64' || arch === 'arm64') {
@@ -89,7 +102,6 @@ export const createDockerRuntime = (image: string): Runtime => {
     profile,
     workspaceRoot,
     nodeOptions,
-    runner,
     env: extraEnv
   }: LaunchOptions): Promise<RunningTarget> => {
     const name = `plitzi-bench-${target.name}-${process.pid}`;
@@ -127,12 +139,13 @@ export const createDockerRuntime = (image: string): Runtime => {
       `${workspaceRoot}:${WORKSPACE_MOUNT}:ro`,
       '--volume',
       `${esbuild}:${ESBUILD_MOUNT}:ro`,
+      ...portalMounts(workspaceRoot).flatMap(mount => ['--volume', mount]),
       ...WRITABLE_DIRS.flatMap(dir => ['--volume', path.posix.join(cwd, dir)]),
       '--workdir',
       cwd,
       image,
       'node',
-      ...nodeArgs(runner, target.entry, path.posix.join(WORKSPACE_MOUNT, PROBE_ENTRY), nodeOptions)
+      ...nodeArgs(target.entry, path.posix.join(WORKSPACE_MOUNT, PROBE_ENTRY), nodeOptions)
     ]);
 
     const sample = async (): Promise<ResourceSample> => {

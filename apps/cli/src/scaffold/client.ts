@@ -100,7 +100,7 @@ const localMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 import { authorSpace } from '@plitzi/sdk-authoring';
 
 import StatCard from './plugins/StatCard';
-import { space } from './space';
+import { space } from './space.ts';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';

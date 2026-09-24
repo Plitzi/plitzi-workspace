@@ -26,7 +26,7 @@ const authorScript = (): string => `import { mkdirSync, writeFileSync } from 'no
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
-import { space } from './space';
+import { space } from './space.ts';
 
 const { schema, style, warnings } = authorSpace(space);
 

@@ -7,13 +7,11 @@ import type { Scenario } from './load';
 import type { Profile } from './profiles';
 import type { ResourceSample, RunningTarget, Runtime } from './runtime/types';
 import type { LatencySummary } from './stats';
-import type { Runner, Target } from './targets';
+import type { Target } from './targets';
 import type { ProbeSample } from '../probe/protocol';
 
 export type MeasureOptions = {
   workspaceRoot: string;
-  /** Overrides every target's own runner. */
-  runner?: Runner;
   concurrency: number[];
   durationMs: number;
   warmupMs: number;
@@ -46,7 +44,6 @@ export type ProcessMemory = { heapUsed: number; heapTotal: number; codeSpace: nu
 
 export type TargetResult = {
   target: string;
-  runner: Runner;
   status: 'ok' | 'failed';
   failure?: string;
   /** From asking for the server to it answering its first page: process start, imports, first render. */
@@ -144,15 +141,23 @@ export const measureTarget = async (
   options: MeasureOptions,
   progress: (line: string) => void
 ): Promise<TargetResult> => {
-  const runner = options.runner ?? target.runner;
-  const result: TargetResult = { target: target.name, runner, status: 'ok', phases: [], oomKilled: false };
+  const result: TargetResult = { target: target.name, status: 'ok', phases: [], oomKilled: false };
+  try {
+    await target.prepare?.(options.workspaceRoot);
+  } catch (error) {
+    return {
+      ...result,
+      status: 'failed',
+      failure: `could not be prepared: ${error instanceof Error ? error.message : String(error)}`
+    };
+  }
+
   const launchedAt = performance.now();
   const server = await runtime.launch({
     target,
     profile,
     workspaceRoot: options.workspaceRoot,
     nodeOptions: options.nodeOptions,
-    runner,
     env: options.env
   });
 
@@ -218,4 +223,49 @@ export const measureTarget = async (
   }
 
   return result;
+};
+
+const median = (values: number[]): number | undefined => {
+  if (values.length === 0) {
+    return undefined;
+  }
+
+  return [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
+};
+
+const defined = (values: (number | undefined)[]): number[] => values.filter(value => value !== undefined);
+
+/**
+ * Several cold runs of one target, as one: each phase is the run of it with the median requests a second, and each
+ * whole-run figure the median of the runs.
+ *
+ * Runs are separate processes on purpose. On a machine whose cores are not alike — Apple silicon's performance and
+ * efficiency cores — a container can land on either and a whole process runs at one speed or the other, up to twice
+ * apart. Repeating inside one process only measures that one landing again.
+ */
+export const combineRuns = (runs: TargetResult[]): TargetResult => {
+  const failed = runs.find(run => run.status === 'failed');
+  if (failed || runs.length === 1) {
+    return failed ?? runs[0];
+  }
+
+  const [first] = runs;
+  const phases = first.phases.map((phase, index) => {
+    const candidates = runs.map(run => run.phases[index]).sort((a, b) => a.rps - b.rps);
+
+    return candidates[Math.floor(candidates.length / 2)] ?? phase;
+  });
+  const bootMs = median(defined(runs.map(run => run.bootMs)));
+  const idleMb = median(defined(runs.map(run => run.idleMb)));
+  const retainedMb = median(defined(runs.map(run => run.retainedMb)));
+  const peakMb = median(defined(runs.map(run => run.peakMb)));
+
+  return {
+    ...first,
+    phases,
+    ...(bootMs === undefined ? {} : { bootMs }),
+    ...(idleMb === undefined ? {} : { idleMb }),
+    ...(retainedMb === undefined ? {} : { retainedMb }),
+    ...(peakMb === undefined ? {} : { peakMb })
+  };
 };

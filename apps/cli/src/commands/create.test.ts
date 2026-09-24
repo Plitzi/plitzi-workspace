@@ -136,8 +136,8 @@ describe('the scaffold', () => {
   });
 
   /**
-   * Yarn installs Plug'n'Play by default and a server-mode project cannot start under it: `node --import tsx`
-   * fails to resolve its own entry. The linker is pinned so all three managers produce a project that runs.
+   * Yarn installs Plug'n'Play by default, and the project runs straight from `node_modules`. The linker is pinned so
+   * all three managers produce a project that runs.
    */
   it('pins Yarn to the layout the other two already give it', () => {
     expect(scaffold(answers({ packageManager: 'yarn' }))['.yarnrc.yml']).toContain('nodeLinker: node-modules\n');
@@ -218,7 +218,7 @@ describe('the scaffold', () => {
     const files = scaffold(answers({ mode: 'client' }));
     const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
 
-    expect(scripts.shot).toBe('node --import tsx scripts/shot.ts');
+    expect(scripts.shot).toBe('node scripts/shot.ts');
     expect(files['scripts/shot.ts']).toContain('fullPage: true');
     expect(files['scripts/shot.ts']).toContain('const PORT = 5173;');
   });
@@ -304,17 +304,67 @@ describe('the scaffold', () => {
     expect(spec).toContain('inspectPage(page, handles, { page: pageHandle.id })');
   });
 
-  // `npm run author` is `node --import tsx`, in a client-mode project too.
-  it('can author the space on a fresh checkout, in either mode', () => {
+  /**
+   * Node runs the project's TypeScript itself: no transpiler loads beside the server, whose loader thread cost more
+   * memory than the server. What that needs is checked by `tsc` rather than discovered at `npm start`.
+   */
+  it('runs its TypeScript on Node alone, in either mode', () => {
     for (const mode of ['client', 'server'] as const) {
-      const { scripts, devDependencies } = JSON.parse(scaffold(answers({ mode }))['package.json']) as {
+      const files = scaffold(answers({ mode }));
+      const { scripts, devDependencies, engines } = JSON.parse(files['package.json']) as {
         scripts: Record<string, string>;
         devDependencies: Record<string, string>;
+        engines: Record<string, string>;
       };
+      const { compilerOptions } = JSON.parse(files['tsconfig.json']) as { compilerOptions: Record<string, unknown> };
 
-      expect(scripts.author).toContain('tsx');
-      expect(devDependencies.tsx).toBeTruthy();
+      expect(scripts.author).toBe('node src/author.ts');
+      expect(devDependencies.tsx).toBeUndefined();
+      expect(engines.node).toBe('>=22.18');
+      expect(compilerOptions).toMatchObject({
+        allowImportingTsExtensions: true,
+        verbatimModuleSyntax: true,
+        erasableSyntaxOnly: true
+      });
+      expect(files['src/author.ts']).toContain("from './space.ts'");
     }
+
+    const server = JSON.parse(scaffold(answers({ mode: 'server' }))['package.json']) as {
+      scripts: Record<string, string>;
+    };
+    expect(server.scripts.start).toBe('node src/main.ts');
+  });
+
+  /**
+   * Production runs JavaScript: stripping types loads a TypeScript transformer into the server for its whole life
+   * (~10 MB), so a deployment runs what `build` emitted. The plugins stay source — the page server builds them.
+   */
+  it('builds the server to JavaScript for production, leaving the plugins to the page server', () => {
+    const files = scaffold(answers({ mode: 'server' }));
+    const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
+    const build = JSON.parse(files['tsconfig.build.json']) as {
+      compilerOptions: Record<string, unknown>;
+      exclude: string[];
+    };
+
+    expect(scripts.build).toBe('tsc -p tsconfig.build.json');
+    expect(scripts['start:prod']).toBe('node dist/main.js');
+    expect(build.compilerOptions).toMatchObject({
+      noEmit: false,
+      outDir: 'dist',
+      rewriteRelativeImportExtensions: true
+    });
+    expect(build.exclude).toEqual(['src/plugins']);
+    // The same path from `src/main.ts` and from `dist/main.js`.
+    expect(files['src/main.ts']).toContain("path.resolve(PROJECT_ROOT, 'src/plugins/StatCard/index.ts')");
+    expect(scaffold(answers({ mode: 'client' }))['tsconfig.build.json']).toBeUndefined();
+  });
+
+  it('listens where the deployment says, loopback when it says nothing', () => {
+    const main = scaffold(answers({ mode: 'server' }))['src/main.ts'];
+
+    expect(main).toContain("const HOST = process.env.HOST ?? '127.0.0.1';");
+    expect(main).toContain('server.listen(PORT, HOST);');
   });
 
   // Claude Code finds the skill on its own; any other agent looks for AGENTS.md, and CLAUDE.md imports it.
@@ -367,6 +417,7 @@ describe('plitzi create', () => {
         'playwright.config.ts',
         'scripts',
         'src',
+        'tsconfig.build.json',
         'tsconfig.json',
         'visual'
       ]);

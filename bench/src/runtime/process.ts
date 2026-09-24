@@ -11,8 +11,12 @@ export const run = async (command: string, args: string[]): Promise<string> => {
 
     return stdout.trim();
   } catch (error) {
-    const stderr = error instanceof Error && 'stderr' in error ? String(error.stderr).trim() : '';
-    throw new Error(`${command} ${args.join(' ')} failed${stderr ? `: ${stderr}` : ''}`, { cause: error });
+    // Some tools report on stdout (tsc among them), so both say why.
+    const output = ['stderr', 'stdout']
+      .map(stream => (error instanceof Error && stream in error ? String(Reflect.get(error, stream)).trim() : ''))
+      .filter(Boolean)
+      .join('\n');
+    throw new Error(`${command} ${args.join(' ')} failed${output ? `: ${output}` : ''}`, { cause: error });
   }
 };
 

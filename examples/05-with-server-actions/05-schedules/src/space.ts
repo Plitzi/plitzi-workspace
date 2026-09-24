@@ -62,7 +62,7 @@ import {
   themeButton,
   title,
   variables
-} from './theme';
+} from './theme.ts';
 
 import type { AuthoredSpace, ElementSpec, SpaceSpec, StepSpec } from '@plitzi/sdk-authoring';
 

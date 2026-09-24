@@ -1,7 +1,7 @@
 import { container, heading, image, paragraph, text } from '@plitzi/sdk-authoring';
 
-import { chef, milestones, photo, photos, pillars, producers, team } from '../content';
-import { closeMenuOnLoad, eyebrow, pageHero, pillarCard, section, sectionHead, shell, stat } from '../layout';
+import { chef, milestones, photo, photos, pillars, producers, team } from '../content.ts';
+import { closeMenuOnLoad, eyebrow, pageHero, pillarCard, section, sectionHead, shell, stat } from '../layout.ts';
 
 import type { PageSpec } from '@plitzi/sdk-authoring';
 

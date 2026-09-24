@@ -346,3 +346,29 @@
 - `bench/` (private): load and footprint benchmarks of the self-hosted servers under hardware profiles, with
   baselines — `yarn bench`, see its README.
 
+
+## Self-hosted servers run compiled, without a transpiler
+
+- **`plitzi create` (server mode) runs on Node alone.** `start` is `node src/main.ts` — Node 22.18+ strips the types
+  itself — and `tsx` is gone: its loader thread cost a page server more memory than the server, ~270 MB to start where
+  the same server starts in ~90. For production, `build` (`tsc -p tsconfig.build.json`) emits `dist/` and `start:prod`
+  runs `node dist/main.js`: stripping types keeps a TypeScript transformer in the process for its whole life (~10 MB),
+  compiled JavaScript does not. The project's `tsconfig` holds the code to what stripping needs
+  (`allowImportingTsExtensions`, `verbatimModuleSyntax`, `erasableSyntaxOnly`), `engines` says `>=22.18`, relative
+  imports name their `.ts` file, the plugin path resolves from the project root (the same from `src/` and `dist/`),
+  and the server listens on `HOST` (loopback by default).
+- The examples run the same way: `node src/main.ts`, `node --watch-path=./src` while editing, no `tsx`.
+- `@plitzi/nexus` 1.3.1, now required (`^1.3.1`) by every package that uses it: `useStore` runs one set of hooks for a
+  single path and a list of paths, instead of both side by side with the idle one disabled (a page allocates about a
+  quarter less to render); `useStoreGetter` reads a function entry from the latest render instead of an earlier
+  closure with the same source; and the path caches no longer evict every path of a page of a few hundred elements
+  just before reading it again.
+- `bench/`: `cli-server` measures a project as `plitzi create` writes it, built and run with `start:prod`; portals are
+  mounted into the container and recorded in every result; `edge-96` and `edge-64` probe the floor.
+- `sdk-elements`: an element that binds nothing no longer resolves bindings on every render, and one whose attributes
+  hold no template no longer builds template data and copies its attributes to interpolate none — the work every
+  element of a page did on each render, for nothing, however few of them bind or template.
+- `bench/`: the memory probe is compiled to JavaScript before a run (loaded as TypeScript, it put Node's type stripper
+  into every server measured, ~10 MB counted as the server's); `--repeat N` starts a target cold N times and keeps
+  each phase's median run, since on Apple silicon a container runs on a fast or a slow core for its whole life.
+

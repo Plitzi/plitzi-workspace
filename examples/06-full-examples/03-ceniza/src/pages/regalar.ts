@@ -1,6 +1,6 @@
 import { container, heading, paragraph, text } from '@plitzi/sdk-authoring';
 
-import { faqs, giftCards, giftSteps, photos, restaurant } from '../content';
+import { faqs, giftCards, giftSteps, photos, restaurant } from '../content.ts';
 import {
   closeMenuOnLoad,
   externalLink,
@@ -13,9 +13,9 @@ import {
   section,
   sectionHead,
   shell
-} from '../layout';
+} from '../layout.ts';
 
-import type { GiftCard } from '../content';
+import type { GiftCard } from '../content.ts';
 import type { ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 
 /** There is no shop behind this demo: a card is asked for by email, with the subject already written. */

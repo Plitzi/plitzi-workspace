@@ -1,4 +1,4 @@
-import { isFeedWindow, seismicReport } from './feed';
+import { isFeedWindow, seismicReport } from './feed.ts';
 
 import type { ActionTask } from '@plitzi/sdk-server/actions';
 
