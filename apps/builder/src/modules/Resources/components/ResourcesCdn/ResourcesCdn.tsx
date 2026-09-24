@@ -54,7 +54,7 @@ const ResourcesCdn = ({
   const [removing, setRemoving] = useState(false);
   const { plugins, remove, add } = use(PluginsContext);
   const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
-  const { data, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
+  const { data, error, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
     cdnIdentifier: identifier
   });
 
@@ -207,7 +207,21 @@ const ResourcesCdn = ({
             onUploadAdded={handleUploadAdded}
           />
         )}
-        {!isLoading && !removing && (
+        {/* Kept on screen, beside the toast that announced it: an empty list would read as "nothing uploaded yet". */}
+        {error && !isLoading && !removing && (
+          <div className="flex flex-col gap-2 rounded border border-red-300 bg-red-50 p-3 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+            <span className="font-semibold">This CDN cannot be read</span>
+            <span>{error.message}</span>
+            <SpaceCredentialSelectorModal
+              providersSupported={['r2', 's3']}
+              selected={credentialIdentifier}
+              onSelect={handleSelectCredential}
+            >
+              <span className="cursor-pointer font-semibold underline">Choose or fix the credential</span>
+            </SpaceCredentialSelectorModal>
+          </div>
+        )}
+        {!error && !isLoading && !removing && (
           <ResourcesList
             className="overflow-y-auto"
             prefix={prefix}

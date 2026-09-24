@@ -181,7 +181,7 @@ published revision") and adds no template-specific code to the platform.
   pin needs a guard.
 - **Uploaded resources** stay linked to the author's CDN URLs, and deleting them breaks every copy. This was accepted
   in D5 as the price of not copying them.
-- **Plan gating** (e.g. workspace templates only on paid plans) was not decided and is not implemented.
+- **Plan gating** — decided: none. A copy is an ordinary space and the plan's ceilings bind it at publish, as any other.
 
 ## 12. Implementation checklist
 

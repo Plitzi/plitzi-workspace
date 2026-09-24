@@ -76,11 +76,22 @@ const NetworkContextProvider = ({
           fetchPolicy
         });
       } catch (e) {
+        /**
+         * The server's own sentence when it answered with one — "the credential was refused", "no such bucket" —
+         * because that is what the person can act on. Only a request that never got an answer is a network problem;
+         * a GraphQL error is the server speaking, and used to be announced as the network being down.
+         */
+        const answered = CombinedGraphQLErrors.is(e);
         if (!silentError) {
-          addToast(`Query ${queryKey} Failed`, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
+          const message = answered ? e.errors.map(error => error.message).join(' ') : '';
+          addToast(message || `Query ${queryKey} Failed`, {
+            appeareance: 'error',
+            autoDismiss: true,
+            placement: 'top-right'
+          });
         }
 
-        if (CombinedGraphQLErrors.is(e)) {
+        if (!answered) {
           addToast('Network Not Available, Please try again', {
             appeareance: 'error',
             autoDismiss: true,

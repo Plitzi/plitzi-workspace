@@ -204,6 +204,18 @@
   reviewer approved rather than whatever was published after. Ignored for `main`; a revision that is not a positive
   integer is a 400.
 
+## Builder: the server's reason, not "network not available"
+
+- A query the server refused shows the server's own message in its toast — "the storage provider refused this CDN's
+  credential", "there is no bucket …" — where it used to say "Query … Failed" and, wrongly, "Network Not Available".
+  Only a request that got no answer is reported as a network problem.
+- A CDN that cannot be listed says so in its panel, with the reason and a way to choose or fix its credential, instead
+  of an empty list that read as "nothing uploaded".
+- Every builder preview renders again — element templates from a CDN, directory items, transformer and AI previews.
+  The preview's render-settings scope inherited nothing (a nexus scope is isolated unless `inherit="live"`), so it held
+  `render` alone and each element failed with "Element … not found". `useRenderOverride` now says the scope must be
+  live, and a test holds it.
+
 ## Interactions: "Propagate Event" does what it says
 
 - A click, hover or focus trigger with **Propagate Event** off — the default — now answers the event for the elements
