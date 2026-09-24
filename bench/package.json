@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "bench": "node --import tsx src/cli.ts",
-    "report": "node --import tsx src/cli.ts --target all --profile all",
+    "report": "node --import tsx src/cli.ts --target sdk-server-render --target sdk-server-cached --scenario page --profile all --warmup 1 --duration 3",
     "test": "vitest run",
     "lint": "TIMING=1 eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"

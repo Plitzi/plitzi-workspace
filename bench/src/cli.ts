@@ -30,6 +30,7 @@ import type { Runtime } from './runtime/types';
 const HELP = `Usage: yarn bench [options]
 
   --target <name>       A target, repeatable, or "all" (default): every target that needs nothing else running
+  --scenario <name>     Only this scenario of each target, repeatable (page, sdk-js, sdk-css, health)
   --profile <name>      A hardware profile, repeatable, or "all": every limited one (default: edge-256)
   --runtime <name>      docker (default: holds the server to the profile's limits) or local (no limits, RSS)
   --concurrency <list>  Connections in flight, comma-separated (default: 1,10,50)
@@ -49,6 +50,7 @@ const HELP = `Usage: yarn bench [options]
 const { values } = parseArgs({
   options: {
     target: { type: 'string', multiple: true, default: ['all'] },
+    scenario: { type: 'string', multiple: true },
     profile: { type: 'string', multiple: true, default: ['edge-256'] },
     runtime: { type: 'string', default: 'docker' },
     concurrency: { type: 'string', default: '1,10,50' },
@@ -147,7 +149,15 @@ const main = async (): Promise<number> => {
 
   const runtime = createRuntime(values.runtime);
   await compileProbe(workspaceRoot);
-  const targets = selectTargets(values.target);
+  const onlyScenarios = values.scenario;
+  // A target keeps the scenarios named, and is left out when it has none of them.
+  const targets = selectTargets(values.target).flatMap(target => {
+    const scenarios = onlyScenarios
+      ? target.scenarios.filter(scenario => onlyScenarios.includes(scenario.name))
+      : target.scenarios;
+
+    return scenarios.length > 0 ? [{ ...target, scenarios }] : [];
+  });
   const profiles =
     values.profile.length === 1 && values.profile[0] === 'all' ? LIMITED_PROFILES : values.profile.map(findProfile);
   const concurrency = values.concurrency.split(',').map(level => positiveNumber('concurrency', level));

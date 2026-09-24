@@ -10,11 +10,11 @@ yarn bench                                      # every target at edge-256, in D
 yarn bench --target sdk-server-render --profile edge-128
 yarn bench --profile edge-128 --profile small   # one run per profile
 yarn bench --list                               # targets and profiles
-yarn bench:report                               # from the root: every target on every profile, then report.md
+yarn bench:report                               # from the root: every profile, a few minutes, then report.md
 ```
 
-`yarn bench:report` is the one to run before reading the report: all three targets on every profile from an eighth of a
-core to eight cores. It takes most of an hour; `yarn bench --report` only rewrites `report.md` from what is saved.
+`yarn bench:report` is the one to run before reading the report: the page rendered and the page cached on every profile from an eighth of a
+core to eight cores, in short phases — a few minutes; `yarn bench --report` only rewrites `report.md` from what is saved.
 
 Needs Docker. The workspace is mounted read-only into a `node:24-slim` container with the profile's CPU and memory
 limits; nothing is installed, so build first — `yarn build:prod` measures what is published, `yarn build:dev` a
