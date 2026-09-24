@@ -10,7 +10,11 @@ yarn bench                                      # every target at edge-256, in D
 yarn bench --target sdk-server-render --profile edge-128
 yarn bench --profile edge-128 --profile small   # one run per profile
 yarn bench --list                               # targets and profiles
+yarn bench:report                               # from the root: every target on every profile, then report.md
 ```
+
+`yarn bench:report` is the one to run before reading the report: all three targets on every profile from an eighth of a
+core to eight cores. It takes most of an hour; `yarn bench --report` only rewrites `report.md` from what is saved.
 
 Needs Docker. The workspace is mounted read-only into a `node:24-slim` container with the profile's CPU and memory
 limits; nothing is installed, so build first — `yarn build:prod` measures what is published, `yarn build:dev` a
@@ -20,9 +24,10 @@ downloads the Linux build of the esbuild the workspace uses (the page server's p
 
 ## Reading the results
 
-Open **`results/report.md`** — every profile side by side, Plitzi against typical published numbers for other
-frameworks (ranges, not measured here), then each profile in detail. It is rewritten after every run, and
-`yarn bench --report` rewrites it from what is saved without measuring anything.
+Open **`results/report.md`**: one table — Plitzi at every hardware size measured (RAM at rest and under load, pages
+rendered per request, a cached page, the pod size), beside the typical ranges of other Node frameworks from public
+benchmarks (not measured here). It is rewritten after every run, and `yarn bench --report` rewrites it from what is
+saved without measuring anything.
 
 `results/` keeps the latest run of each profile and runtime — `<profile>-<runtime>.json` and a `.md` table beside it —
 and each run replaces the one before, so it never grows. A run worth keeping is a baseline (below).
@@ -49,18 +54,20 @@ output.
 
 ## Profiles
 
-| Profile      | CPU  | Memory | Node flags                                                                      |
-| ------------ | ---- | ------ | ------------------------------------------------------------------------------- |
-| `edge-64`    | 0.25 | 64 MB  | `--single-threaded --max-semi-space-size=1 --max-old-space-size=24` — the floor |
-| `edge-96`    | 0.25 | 96 MB  | `--single-threaded --max-semi-space-size=1 --max-old-space-size=32`             |
-| `edge-128`   | 0.25 | 128 MB | `--single-threaded --max-semi-space-size=2 --max-old-space-size=48`             |
-| `edge-256`   | 0.25 | 256 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=160`            |
-| `small`      | 0.5  | 256 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=160`            |
-| `standard`   | 1    | 512 MB | `--max-old-space-size=384`                                                      |
-| `medium`     | 2    | 1 GB   | `--max-old-space-size=768`                                                      |
-| `large`      | 4    | 2 GB   | `--max-old-space-size=1536`                                                     |
-| `enterprise` | 8    | 4 GB   | `--max-old-space-size=3072`                                                     |
-| `unbounded`  | —    | —      | —                                                                               |
+| Profile      | CPU   | Memory | Node flags                                                                              |
+| ------------ | ----- | ------ | --------------------------------------------------------------------------------------- |
+| `micro-64`   | 0.125 | 64 MB  | `--single-threaded --max-semi-space-size=1 --max-old-space-size=24` — the extreme floor |
+| `micro-128`  | 0.125 | 128 MB | `--single-threaded --max-semi-space-size=2 --max-old-space-size=48`                     |
+| `edge-64`    | 0.25  | 64 MB  | `--single-threaded --max-semi-space-size=1 --max-old-space-size=24` — the floor         |
+| `edge-96`    | 0.25  | 96 MB  | `--single-threaded --max-semi-space-size=1 --max-old-space-size=32`                     |
+| `edge-128`   | 0.25  | 128 MB | `--single-threaded --max-semi-space-size=2 --max-old-space-size=48`                     |
+| `edge-256`   | 0.25  | 256 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=160`                    |
+| `small`      | 0.5   | 256 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=160`                    |
+| `standard`   | 1     | 512 MB | `--max-old-space-size=384`                                                              |
+| `medium`     | 2     | 1 GB   | `--max-old-space-size=768`                                                              |
+| `large`      | 4     | 2 GB   | `--max-old-space-size=1536`                                                             |
+| `enterprise` | 8     | 4 GB   | `--max-old-space-size=3072`                                                             |
+| `unbounded`  | —     | —      | —                                                                                       |
 
 The flags are part of the profile because they are what that hardware should run with, and they were found with
 this bench:

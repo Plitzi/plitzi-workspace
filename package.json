@@ -12,6 +12,7 @@
     "e2e:report": "playwright show-report e2e/.artifacts/report",
     "e2e:install": "playwright install chromium",
     "bench": "yarn workspace @plitzi/bench bench",
+    "bench:report": "yarn workspace @plitzi/bench report",
     "lint": "turbo lint --parallel",
     "lint-style": "turbo lint-style --parallel",
     "lint-style:fix": "turbo lint-style:fix --parallel --concurrency=20",

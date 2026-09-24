@@ -3,11 +3,11 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { compareRuns } from './compare';
-import { markdownMatrix, markdownRun } from './markdown';
+import { markdownReport, markdownRun } from './markdown';
 import { combineRuns, measureTarget } from './measure';
 import { findPortals } from './portals';
 import { compileProbe } from './probe';
-import { findProfile, PROFILES } from './profiles';
+import { findProfile, LIMITED_PROFILES, PROFILES } from './profiles';
 import { formatChanges, formatTarget } from './report';
 import {
   baselinePath,
@@ -30,7 +30,7 @@ import type { Runtime } from './runtime/types';
 const HELP = `Usage: yarn bench [options]
 
   --target <name>       A target, repeatable, or "all" (default): every target that needs nothing else running
-  --profile <name>      A hardware profile, repeatable (default: edge-256)
+  --profile <name>      A hardware profile, repeatable, or "all": every limited one (default: edge-256)
   --runtime <name>      docker (default: holds the server to the profile's limits) or local (no limits, RSS)
   --concurrency <list>  Connections in flight, comma-separated (default: 1,10,50)
   --duration <s>        Seconds measured per scenario and concurrency (default: 10)
@@ -100,6 +100,19 @@ const parseEnv = (entries: string[]): Record<string, string> =>
     })
   );
 
+/**
+ * `results/report.md` from the latest run of every profile, smallest to largest — not only the profiles this run
+ * measured, so measuring one profile again leaves the others in the table.
+ */
+const writeReport = (workspaceRoot: string): void => {
+  const order = PROFILES.map(profile => profile.name);
+  const results = latestResults(workspaceRoot).sort(
+    (a, b) => order.indexOf(a.profile.name) - order.indexOf(b.profile.name)
+  );
+  const file = saveReport(workspaceRoot, markdownReport(results));
+  console.log(`\nReport: ${path.relative(workspaceRoot, file)} (${results.length} profile(s))`);
+};
+
 const list = (): void => {
   console.log('Targets:');
   for (const target of TARGETS) {
@@ -127,13 +140,7 @@ const main = async (): Promise<number> => {
 
   const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
   if (values.report) {
-    const order = PROFILES.map(profile => profile.name);
-    const results = latestResults(workspaceRoot).sort(
-      (a, b) => order.indexOf(a.profile.name) - order.indexOf(b.profile.name)
-    );
-    console.log(
-      `Report: ${path.relative(workspaceRoot, saveReport(workspaceRoot, markdownMatrix(results)))} (${results.length} profile(s))`
-    );
+    writeReport(workspaceRoot);
 
     return 0;
   }
@@ -141,7 +148,8 @@ const main = async (): Promise<number> => {
   const runtime = createRuntime(values.runtime);
   await compileProbe(workspaceRoot);
   const targets = selectTargets(values.target);
-  const profiles = values.profile.map(findProfile);
+  const profiles =
+    values.profile.length === 1 && values.profile[0] === 'all' ? LIMITED_PROFILES : values.profile.map(findProfile);
   const concurrency = values.concurrency.split(',').map(level => positiveNumber('concurrency', level));
   const durationMs = positiveNumber('duration', values.duration) * 1000;
   const warmupMs = positiveNumber('warmup', values.warmup) * 1000;
@@ -165,7 +173,6 @@ const main = async (): Promise<number> => {
     );
   }
 
-  const finished: RunResult[] = [];
   for (const profile of profiles) {
     const nodeOptions = values['node-options']?.split(' ').filter(Boolean) ?? profile.nodeOptions;
     console.log(
@@ -212,7 +219,6 @@ const main = async (): Promise<number> => {
     const baseline = readBaseline(baselineFile);
     const changes = baseline ? compareRuns(baseline.targets, result.targets, tolerance) : undefined;
     console.log(`Table: ${path.relative(workspaceRoot, saveMarkdown(saved, markdownRun(result, changes)))}`);
-    finished.push(result);
     if (baseline && changes) {
       if (baseline.host.cpu !== result.host.cpu) {
         console.log(`Note: the baseline was measured on "${baseline.host.cpu}"; numbers across machines differ.`);
@@ -229,7 +235,7 @@ const main = async (): Promise<number> => {
     }
   }
 
-  console.log(`\nReport: ${path.relative(workspaceRoot, saveReport(workspaceRoot, markdownMatrix(finished)))}`);
+  writeReport(workspaceRoot);
 
   return values.check && regressed ? 1 : 0;
 };

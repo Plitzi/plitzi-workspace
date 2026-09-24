@@ -20,6 +20,20 @@ export type Profile = {
 
 export const PROFILES: Profile[] = [
   {
+    name: 'micro-64',
+    description: 'An eighth of a core, 64 MB — the extreme floor',
+    cpus: 0.125,
+    memoryMb: 64,
+    nodeOptions: ['--single-threaded', '--max-semi-space-size=1', '--max-old-space-size=24']
+  },
+  {
+    name: 'micro-128',
+    description: 'An eighth of a core, 128 MB',
+    cpus: 0.125,
+    memoryMb: 128,
+    nodeOptions: ['--single-threaded', '--max-semi-space-size=2', '--max-old-space-size=48']
+  },
+  {
     name: 'edge-64',
     description: 'Quarter of a core, 64 MB — the floor being probed',
     cpus: 0.25,
@@ -88,6 +102,9 @@ export const PROFILES: Profile[] = [
     nodeOptions: []
   }
 ];
+
+/** Every profile with limits, smallest to largest — what `--profile all` and `yarn bench:report` measure. */
+export const LIMITED_PROFILES = PROFILES.filter(profile => profile.cpus !== undefined);
 
 export const findProfile = (name: string): Profile => {
   const profile = PROFILES.find(candidate => candidate.name === name);

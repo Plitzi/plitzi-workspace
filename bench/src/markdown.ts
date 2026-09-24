@@ -173,96 +173,72 @@ export const markdownRun = (result: RunResult, changes?: Change[]): string =>
     ...(changes ? ['### Against the baseline', '', changesTable(changes), ''] : [])
   ].join('\n');
 
-const range = ([low, high]: [number, number], unit = ''): string =>
-  `${low.toLocaleString('en')}–${high.toLocaleString('en')}${unit}`;
+const bestRps = (target: TargetResult | undefined, scenario: string): number | undefined => {
+  const rates =
+    target?.status === 'ok' ? target.phases.filter(phase => phase.scenario === scenario).map(phase => phase.rps) : [];
 
-/**
- * Plitzi as measured, beside what other frameworks typically cost. Throughput per vCPU is `1000 ÷ CPU ms per
- * request` — pages per second of CPU — so it compares across profiles; requests a second under a quota also carry
- * how the scheduler throttled the process.
- */
-const referenceTable = (results: RunResult[]): string => {
-  const measured = results.flatMap(result =>
-    result.targets.flatMap(target => {
-      const phase = phaseAt(target, 'page', middle(result.options.concurrency));
-      if (target.status !== 'ok' || !phase || phase.cpuMsPerRequest === 0) {
-        return [];
-      }
+  return rates.length > 0 ? Math.max(...rates) : undefined;
+};
 
-      const cached = target.target.includes('cached');
+const thousands = (value: number): string => Math.round(value).toLocaleString('en');
 
-      return [
-        [
-          `**Plitzi — ${target.target}** (${result.profile.name}, measured${cached ? ', from the cache' : ''})`,
-          cell(target.idleMb, ' MB'),
-          cell(target.peakMb, ' MB'),
-          `${Math.round(1000 / phase.cpuMsPerRequest).toLocaleString('en')}${cached ? ' (not a render)' : ''}`
-        ]
-      ];
-    })
-  );
-  const references = REFERENCES.map(reference => [
-    reference.name,
-    range(reference.idleMb, ' MB'),
-    range(reference.loadedMb, ' MB'),
-    reference.rpsPerVcpu ? range(reference.rpsPerVcpu) : '–'
-  ]);
+const podSize = (result: RunResult): string =>
+  `${result.profile.cpus ?? '∞'} vCPU / ${result.profile.memoryMb === undefined ? '∞' : `${result.profile.memoryMb} Mi`}`;
+
+/** Plitzi at one hardware size, in the columns of the reference table. */
+const plitziRow = (result: RunResult): string[] => {
+  const render = result.targets.find(target => target.target === 'sdk-server-render');
+  const cached = result.targets.find(target => target.target === 'sdk-server-cached');
+  const rendered = bestRps(render, 'page');
+  const served = bestRps(cached, 'page');
+  const cpus = result.profile.cpus;
+  const failed = (target: TargetResult | undefined) =>
+    target?.status === 'failed' ? (target.oomKilled ? 'does not fit (OOM)' : 'does not fit') : '–';
 
   return [
-    '## Against typical published numbers',
-    '',
-    'The other rows are ranges from public benchmarks and deployments, not measured here: a mid-sized page (300–800',
-    'nodes) rendered per request, production builds, Node 22–24. Any framework serves a cached page at 10–50k a second.',
-    '',
-    table(['', 'Memory at rest', 'Memory under load', 'Pages per vCPU a second'], [...measured, ...references], ['l'])
-  ].join('\n');
+    `**Plitzi** — ${podSize(result).replace(' / ', ' · ')}`,
+    cell(render?.idleMb, ' MB'),
+    cell(render?.peakMb ?? cached?.peakMb, ' MB'),
+    rendered === undefined
+      ? failed(render)
+      : `${thousands(rendered)}${cpus === undefined ? '' : ` (${thousands(rendered / cpus)})`}`,
+    served === undefined ? failed(cached) : thousands(served),
+    podSize(result)
+  ];
 };
 
 /**
- * Several profiles side by side: for each target and scenario, requests a second at the middle concurrency and the
- * memory it peaked at — the one table to read first.
+ * The report: Plitzi at every hardware size measured, beside what other Node frameworks typically cost, in one table
+ * read the same way for both. Every phase of every profile is in its own `results/<profile>-docker.md`.
  */
-export const markdownMatrix = (results: RunResult[]): string => {
-  const profiles = results.map(result => result.profile.name);
-  const keys = [
-    ...new Set(
-      results.flatMap(result =>
-        result.targets.flatMap(target => scenariosOf(target).map(scenario => `${target.target}\u0000${scenario}`))
-      )
-    )
+export const markdownReport = (results: RunResult[]): string => {
+  const newest = [...results].sort((a, b) => b.date.localeCompare(a.date)).at(0);
+  const header = [
+    'Platform (Node server)',
+    'RAM at rest',
+    'RAM under load',
+    'Dynamic SSR, req/s (per vCPU)',
+    'Cached page, req/s',
+    'Pod size (request → limit)'
   ];
-  const rows = keys.map(key => {
-    const [targetName, scenario] = key.split('\u0000');
-
-    return [
-      `**${targetName}**`,
-      scenario,
-      ...results.map(result => {
-        const target = result.targets.find(candidate => candidate.target === targetName);
-        if (!target) {
-          return '–';
-        }
-
-        if (target.status === 'failed') {
-          return target.oomKilled ? 'OOM' : 'failed';
-        }
-
-        const phase = phaseAt(target, scenario, middle(result.options.concurrency));
-
-        return phase ? `${cell(phase.rps)} req/s · ${cell(phase.cpuMsPerRequest)} ms · ${cell(target.peakMb)} MB` : '–';
-      })
-    ];
-  });
+  const references = REFERENCES.map(reference => [
+    reference.name,
+    reference.idle,
+    reference.loaded,
+    reference.ssrPerVcpu,
+    reference.cached,
+    reference.pod
+  ]);
 
   return [
-    '# Bench report',
+    '# Plitzi self-hosted — bench report',
     '',
-    'Each cell: requests a second at the middle concurrency · CPU per request · peak memory of the run.',
+    newest
+      ? `Plitzi measured ${newest.date.slice(0, 10)} (\`${newest.git.commit}\`${newest.git.dirty ? ' + changes' : ''}): one page, rendered on every request and served from the cache, in a container held to each size, at 1–50 connections; the best of those. The other rows are typical ranges from public benchmarks, not measured here.`
+      : 'Nothing measured yet: run `yarn bench:report`.',
     '',
-    table(['Target', 'Scenario', ...profiles], rows, ['l', 'l']),
+    table(header, [...results.map(plitziRow), ...references], ['l', 'r', 'r', 'r', 'r', 'l']),
     '',
-    referenceTable(results),
-    '',
-    ...results.flatMap(result => [markdownRun(result), ''])
+    'Every phase of every size — latency, CPU per request, memory — is in `results/<profile>-docker.md`.'
   ].join('\n');
 };
