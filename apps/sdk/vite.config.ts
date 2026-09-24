@@ -258,8 +258,13 @@ export default defineConfig(({ mode, command }) => {
           {
             format: 'es',
             exports: 'named',
-            manualChunks: undefined,
-            // inlineDynamicImports: true, // false if u want to have chunks !devMode,
+            /**
+             * One file, always. The SDK is loaded from a `<script>` by name — by the page server, by a static HTML, by a
+             * space somebody hosts wherever — and a hashed chunk beside it is a file every one of those has to know
+             * about and serve. A dynamic `import()` in the source (the plugin loader has three, to break an evaluation
+             * cycle) is inlined rather than split.
+             */
+            codeSplitting: false,
             entryFileNames: 'plitzi-sdk.js',
             assetFileNames: '[name].[ext]',
             globals: {

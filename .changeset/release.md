@@ -290,3 +290,7 @@
   no longer exported from `helpers/formatDate`.
 - Needs `@plitzi/plitzi-ui` with the same fix in its `formatDate` (the QueryBuilder evaluator a server loads imported
   date-fns whole, and `parse` for one fixed format). Measured on the SSR example: resident memory at rest 308 → 177 MB.
+- The SDK builds to one file again: `plitzi-sdk.js`, with no `withElement-<hash>.js` or `rolldown-runtime-<hash>.js`
+  beside it. The plugin loader's dynamic imports split a chunk off, which every host serving the SDK by name had to
+  know about. `codeSplitting: false` (rolldown's name for the deprecated `inlineDynamicImports`) in both the SDK and
+  the vendor builds.
