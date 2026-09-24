@@ -11,7 +11,7 @@ import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
-import { fontLinkAssets, fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
+import { fontLinkAssets, fontsToHead, fontUrlResolver, markStyleCache } from '@plitzi/sdk-shared/style';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
@@ -67,7 +67,8 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
     const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
     const cssVariables = schemaVariablesToCss(variables);
     const cacheParsed = processCssTokens(styleCache, variables);
-    const cssParsed = `.plitzi-sdk{${cssVariables}}\n${cacheParsed}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
+    // Marked so a server-rendered page can leave the cache out of its payload and read it back from here.
+    const cssParsed = `.plitzi-sdk{${cssVariables}}\n${markStyleCache(cacheParsed)}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
 
     return `@layer plitzi-sdk-runtime{${cssParsed}}`;
   }, [segments, variables, styleCache, schemaSettings.customCss, externalStyle]);

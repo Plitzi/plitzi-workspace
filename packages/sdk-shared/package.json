@@ -1179,6 +1179,10 @@
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
     },
+    "./style/runtimeStyle": {
+      "types": "./dist/style/runtimeStyle.d.ts",
+      "import": "./dist/style/runtimeStyle.mjs"
+    },
     "./style/styleConstants": {
       "types": "./dist/style/styleConstants.d.ts",
       "import": "./dist/style/styleConstants.mjs"

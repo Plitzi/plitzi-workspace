@@ -35,4 +35,33 @@ describe('hydrationPayload', () => {
     expect(hydrationPayload(first, {})).toBe(payload);
     expect(hydrationPayload(replaced, {})).toContain('second');
   });
+
+  describe('the stylesheet the page already carries', () => {
+    const styled = (cache: string) =>
+      ({ schema: { settings: {} }, style: { cache, variables: {} } }) as unknown as OfflineDataRaw;
+    const parsed = (payload: string) =>
+      JSON.parse(payload) as { offlineData: { style: { cache: string } }; styleCacheInDocument?: boolean };
+
+    it('is left out, and the bootstrap told to read it from the page', () => {
+      const payload = parsed(hydrationPayload(styled('.a{color:red}'), { offlineMode: true }));
+
+      expect(payload.offlineData.style.cache).toBe('');
+      expect(payload.styleCacheInDocument).toBe(true);
+    });
+
+    it('is sent when the page would not give it back as it is', () => {
+      for (const cache of ['.a{color:{{ brand }}}', '.a{content:"<"}', '.a{}\r\n', '']) {
+        const payload = parsed(hydrationPayload(styled(cache), {}));
+
+        expect(payload.offlineData.style.cache).toBe(cache);
+        expect(payload.styleCacheInDocument).toBeUndefined();
+      }
+    });
+
+    it('is serialized once per space, like the whole one', () => {
+      const space = styled('.a{color:red}');
+
+      expect(hydrationPayload(space, {})).toBe(hydrationPayload(space, {}));
+    });
+  });
 });

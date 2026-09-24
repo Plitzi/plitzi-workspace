@@ -21,6 +21,7 @@ import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
+import { styleCacheFromDocument } from '@plitzi/sdk-shared/style';
 
 import App from './App';
 import { getEnvironmentServer } from './config';
@@ -89,6 +90,28 @@ const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
 };
 
 /**
+ * Puts back the stylesheet a server-rendered page left out of its payload (see `styleCacheTravelsInDocument`), read
+ * from the runtime `<style>` the server rendered under `root` — before hydration, so the first render in the browser
+ * draws the stylesheet the server drew.
+ */
+const withDocumentStyleCache = <P extends PlitziSdkProps>(params: P, root: HTMLElement | null | undefined): P => {
+  const { offlineData } = params;
+  if (!offlineData || !root) {
+    return params;
+  }
+
+  const cache = styleCacheFromDocument(root);
+  if (cache === undefined) {
+    // The server leaves the cache out only of a page it rendered it into, so the document was changed on the way.
+    console.error('[plitzi] The server-rendered stylesheet is missing from the page: it renders without its styles.');
+
+    return params;
+  }
+
+  return { ...params, offlineData: { ...offlineData, style: { ...offlineData.style, cache } } };
+};
+
+/**
  * A registered plugin is a COMPONENT, not a decorated one.
  *
  * `ComponentPluginFC` and not `ComponentPlugin`, because the metadata the latter carries — `type`, `assets`,
@@ -125,7 +148,9 @@ export function render(
    * They are a record, not a prop: nothing on the page reads them, and they reach the dev-tools through the same
    * log every client-side run goes into. A server sends them only to a page it authorized for debugging.
    */
-  const { actionRuns, ...renderParams } = withDerivedAnalytics(params);
+  const { actionRuns, styleCacheInDocument, ...derivedParams } = withDerivedAnalytics(params);
+  const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
+  const renderParams = styleCacheInDocument ? withDocumentStyleCache(derivedParams, rootDOM) : derivedParams;
   /**
    * Two ways to authorize the dev tools, and the params win.
    *
@@ -181,7 +206,6 @@ export function render(
     );
   };
 
-  const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
   if (!rootDOM) {
     return undefined;
   }
@@ -232,6 +256,11 @@ export type PlitziSdkProps = {
   debugMode?: boolean;
   /** What the server ran to build this page, for the dev-tools. Only ever sent to a page allowed to debug them. */
   actionRuns?: ActionRunSummary[];
+  /**
+   * Set by the server that rendered this page: `offlineData.style.cache` was left out of the payload because the
+   * page's own stylesheet holds it, and `render()` reads it back from there before hydrating.
+   */
+  styleCacheInDocument?: boolean;
   isHydrating?: boolean;
   previewMode?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota, so the page says

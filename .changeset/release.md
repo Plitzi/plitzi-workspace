@@ -425,3 +425,17 @@
     of an issue than before is still the batch's.
   - The space as it was is read only when the result has something to classify: ~15% less time a batch on the
     largest spaces.
+
+## A server-rendered page carries its stylesheet once, and its data as JSON
+
+- **The compiled stylesheet no longer travels twice.** The runtime `<style>` a page renders already holds
+  `style.cache`, verbatim, and the hydration payload carried it again. The server now leaves it out
+  (`styleCacheInDocument: true` in the payload) whenever the page gives it back byte for byte — no `{{ token }}`, no
+  `<`, no `\r` or `\0` — and `render()` reads it back from that `<style>` before hydrating, so the browser draws the
+  same stylesheet and the store holds the same cache. The cache sits between two CSS comments in the stylesheet it was
+  always in: the element, its place in the tree and the cascade are unchanged. `plitzi.com`'s home: 2.82 → 2.53 MB,
+  350 → 313 KB with per-request Brotli.
+- **The payload is a `<script type="application/json">` block**, parsed with `JSON.parse` and removed once read,
+  instead of a JavaScript literal inside the bootstrap module. On a first load of that page Chromium parses it in
+  6.7 ms instead of 15.4 ms; the page no longer holds the space twice.
+- `sdk-shared/style`: `markStyleCache`, `styleCacheTravelsInDocument`, `styleCacheFromDocument`, `RUNTIME_STYLE_ID`.

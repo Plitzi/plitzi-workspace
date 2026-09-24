@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { compileTemplate } from './template';
 
-import type { FontHead } from '@plitzi/sdk-shared';
+import type { FontHead, PluginEntry } from '@plitzi/sdk-shared';
 
 const render = (fonts?: FontHead) => compileTemplate()({ html: '<div />', offlineData: '{}', ssrOnly: true, fonts });
 
@@ -83,5 +83,38 @@ describe('the SSR document / the theme', () => {
   /** The server already knew the theme, so nothing in the head runs to settle it before the first paint. */
   it('ships no script for a theme the server already knew', () => {
     expect(withTheme('dark')).not.toContain('classList.add');
+  });
+});
+
+describe('the SSR document / bootstrap', () => {
+  const bootstrap = (offlineData: string, plugins?: PluginEntry[]) =>
+    compileTemplate()({ html: '<div />', offlineData, jsPath: '/sdk-assets/plitzi-sdk.js', plugins });
+  const dataBlock = (html: string) =>
+    /<script type="application\/json" id="plitzi-ssr-data">([\s\S]*?)<\/script>/.exec(html)?.[1];
+
+  it('carries the payload as a JSON block the module parses, not as a literal in the module', () => {
+    const payload = '{"offlineData":{"schema":{"settings":{"title":"\\u003c/script\\u003e"}}},"offlineMode":true}';
+    const html = bootstrap(payload);
+
+    expect(dataBlock(html)).toBe(payload);
+    expect(JSON.parse(dataBlock(html) ?? '')).toEqual({
+      offlineData: { schema: { settings: { title: '</script>' } } },
+      offlineMode: true
+    });
+    expect(html).toContain('JSON.parse(__plitziData.textContent)');
+    expect(html).not.toContain(`render('plitzi', ${payload}`);
+  });
+
+  it('hands the plugins to the same render call, and none when there are none', () => {
+    expect(bootstrap('{}')).toMatch(/render\('plitzi', __plitziParams, __plitziPlugins/);
+    expect(
+      bootstrap('{}', [
+        { name: 'chart', keyName: 'chart', varName: 'chart', js: '/sdk-plugins/chart/index.js', props: {} }
+      ])
+    ).toContain('import { default as chart } from \'/sdk-plugins/chart/index.js\'');
+  });
+
+  it('ships no bootstrap for a page that renders on the server only', () => {
+    expect(compileTemplate()({ html: '<div />', offlineData: '{}', ssrOnly: true })).not.toContain('plitzi-ssr-data');
   });
 });
