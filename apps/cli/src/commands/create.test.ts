@@ -225,16 +225,21 @@ describe('the scaffold', () => {
 
   /**
    * `compile` is what makes a server-mode plugin part of the HTML rather than something hydration adds later.
-   * The browser build has no server to compile anything, so it registers the component it already bundles.
+   * The browser build has no server to compile anything, so it registers the component it already bundles. Both find
+   * the plugins by folder, so one `plitzi add plugin` writes is registered with no line of this file changed.
    */
-  it('registers the plugin the way each mode can actually render it', () => {
+  it('registers every plugin folder the way each mode can actually render it', () => {
     const server = scaffold(answers())['src/main.ts'];
     const client = scaffold(answers({ mode: 'client' }))['src/main.ts'];
 
     expect(server).toContain("action: 'compile' as const");
-    expect(server).toContain('plugins/StatCard/index.ts');
-    expect(client).toContain('const plugins = { statCard: { component: StatCard } };');
-    expect(client).toContain("import StatCard from './plugins/StatCard';");
+    expect(server).toContain('readdirSync(PLUGINS_DIR, { withFileTypes: true })');
+    expect(server).toContain("path.join(PLUGINS_DIR, entry.name, 'index.ts')");
+    expect(client).toContain(
+      "import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.ts'"
+    );
+    expect(client).toContain('{ component: module.default }');
+    expect(client).not.toContain("import StatCard from './plugins/StatCard';");
   });
 
   /**
@@ -355,8 +360,8 @@ describe('the scaffold', () => {
       rewriteRelativeImportExtensions: true
     });
     expect(build.exclude).toEqual(['src/plugins']);
-    // The same path from `src/main.ts` and from `dist/main.js`.
-    expect(files['src/main.ts']).toContain("path.resolve(PROJECT_ROOT, 'src/plugins/StatCard/index.ts')");
+    // The same folder from `src/main.ts` and from `dist/main.js`.
+    expect(files['src/main.ts']).toContain("const PLUGINS_DIR = path.join(PROJECT_ROOT, 'src/plugins');");
     expect(scaffold(answers({ mode: 'client' }))['tsconfig.build.json']).toBeUndefined();
   });
 

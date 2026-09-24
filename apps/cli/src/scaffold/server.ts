@@ -9,23 +9,27 @@ import type { CreateAnswers, ProjectFiles } from './types';
 
 /** Written into both entry points, because how a plugin is registered does not change with where the space lives. */
 const PLUGINS = `/**
- * The project's own components, by the \`renderType\` the space names them with.
+ * The project's own components: every folder of \`src/plugins\` is one, registered under its name in camelCase —
+ * \`src/plugins/StatCard\` is what a space's \`custom({ renderType: 'statCard' })\` renders. \`plitzi add plugin\` writes
+ * a new one there; the next start registers it.
  *
  * \`action: 'compile'\` is what makes them SERVER-rendered. The server builds the entry with esbuild, keeps React
  * external so the plugin runs on the one copy this page already has, serves the bundle to the browser AND imports
- * it into the render — so the component's markup is in the HTML before any JavaScript arrives. Add another by
- * writing it under \`src/plugins\` and adding a line here; see \`src/plugins/README.md\`.
+ * it into the render — so the component's markup is in the HTML before any JavaScript arrives. See
+ * \`src/plugins/README.md\`.
  */
 // From the project root, so the path holds whether this file runs as \`src/main.ts\` or compiled as \`dist/main.js\`.
 const PROJECT_ROOT = path.resolve(import.meta.dirname, '..');
+const PLUGINS_DIR = path.join(PROJECT_ROOT, 'src/plugins');
 
-const plugins = {
-  statCard: {
-    js: path.resolve(PROJECT_ROOT, 'src/plugins/StatCard/index.ts'),
-    action: 'compile' as const,
-    version: '1.0.0'
-  }
-};
+const plugins = Object.fromEntries(
+  readdirSync(PLUGINS_DIR, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => [
+      \`\${entry.name.charAt(0).toLowerCase()}\${entry.name.slice(1)}\`,
+      { js: path.join(PLUGINS_DIR, entry.name, 'index.ts'), action: 'compile' as const, version: '1.0.0' }
+    ])
+);
 
 /**
  * Registering a plugin is not the same as turning it on.
@@ -37,7 +41,8 @@ const plugins = {
  */
 const pluginNames = Object.keys(plugins);`;
 
-const localMain = (): string => `import path from 'node:path';
+const localMain = (): string => `import { readdirSync } from 'node:fs';
+import path from 'node:path';
 
 import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
@@ -94,7 +99,8 @@ console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
 closeOnSignals(server);
 `;
 
-const cloudMain = (): string => `import path from 'node:path';
+const cloudMain = (): string => `import { readdirSync } from 'node:fs';
+import path from 'node:path';
 
 import { closeOnSignals, consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
 

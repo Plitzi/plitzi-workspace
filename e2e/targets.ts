@@ -151,6 +151,13 @@ export const targets: Target[] = [
     what: 'The sample space served by two processes on one port, as production uses a machine with several cores'
   },
   {
+    id: 'plugin-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:plugin',
+    origin: 'http://127.0.0.1:5208',
+    what: 'A plugin as `plitzi create --plugin` writes it, built and published, loaded by a page from its manifest'
+  },
+  {
     id: 'mail-sink',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:mail',

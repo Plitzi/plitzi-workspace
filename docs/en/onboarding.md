@@ -34,8 +34,6 @@ between them are absolute paths).
 | **plitzi-sdk-server** | REST API, GraphQL, the auth kernel and RBAC, Prisma/MySQL, MongoDB, Redis, and the local dev gateway | Persistence, permissions, tokens, anything returning 401/403 |
 | **plitzi-ui** | The design system the builder is built from | Shared UI components |
 | **nexus** | The state store (`@plitzi/nexus`), its own repository | Store internals, reactivity, performance |
-| **plitzi-cli** | Command-line tooling | Scaffolding and local workflows |
-| **plitzi-plugin-template** | Starting point for a third-party plugin | Writing or debugging a plugin |
 | **plitzi-platform** | Cluster (k3s + ArgoCD) and Terraform | Deploying, cluster config, secrets |
 
 ## Inside the monorepo
@@ -46,7 +44,7 @@ apps/
   sdk/       @plitzi/plitzi-sdk       the runtime that renders a space
   server/    @plitzi/sdk-server       page server: SSR, RSC, plugins, connectors
   mcp/       @plitzi/sdk-mcp          the AI surface, built on top of apps/server
-  cli/       @plitzi/cli              scaffold a server that renders a space you own
+  cli/       @plitzi/cli              scaffold a project or a plugin package; add elements to a project
   desktop/   @plitzi/plitzi-desktop   the desktop client
 packages/
   sdk-*                               shared libraries, consumed by the apps and by each other

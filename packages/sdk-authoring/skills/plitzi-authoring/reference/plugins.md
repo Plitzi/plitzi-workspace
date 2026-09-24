@@ -7,6 +7,20 @@ element that names it by `renderType`:
 custom({ id: 'arcade', renderType: 'nebulaRun', shipColor: 'amber', bind: { best: 'state.arcadeBest' } })
 ```
 
+## Creating one
+
+The CLI writes it, in the shape Plitzi's own elements are written in:
+
+```bash
+npx @plitzi/cli add plugin seat-picker        # an element of this project (src/plugins/SeatPicker in a CLI project)
+npx @plitzi/cli create seat-picker --plugin   # a package of its own: build, manifest, preview, and a zip for the builder
+```
+
+One folder, four files: `SeatPicker.tsx` (the component), `declaration.ts` (its `type`, the `triggers` it fires, the
+`callbacks` it answers to, and the element the builder adds — data only), `Settings.tsx` (its panel in the builder), and
+`index.ts` (`Object.assign(Component, declaration, { pluginSettings: Settings })`). An event or an action is declared in
+`declaration.ts` and registered by the component from there, never only in the component.
+
 ## Props
 
 **The host element's attributes ARE the component's props.** Whatever the space writes on the `custom` element arrives
@@ -56,10 +70,15 @@ const stop = state.subscribe(next => save(next));      // called after every cha
 
 ## Registering
 
-The client entry registers the component under its `renderType` (the third argument to `render()` in a client
-project; `plugins` in a server one — see the project's `src/plugins/README.md`). A `renderType` nothing registered
+A project `plitzi create` wrote registers every folder of `src/plugins` by itself, under the folder's name in
+camelCase (`StatCard` → `statCard`). Anywhere else, the entry registers the component under its `renderType`: the
+third argument to `render()`, `<PlitziSdk.Plugin>` in a React application, `plugins` on a page server of your own. A `renderType` nothing registered
 renders "Custom Component … Not Found", and a page server logs the missing `renderType` at `error` once per
 space: on a server, register it in `plugins` AND name it in the deployment's `pluginNames`.
 
-A plugin that is its own element TYPE (`defineElement`, `elementsFromManifest`) rather than a `custom` host is named
-to `authorSpace` so it is not taken for a typo: `authorSpace(space, { pluginTypes: ['acmeChart'] })`.
+A plugin PACKAGE, loaded by a space from its `plugin-manifest.json`, is an element TYPE of its own rather than a
+`custom` host — it is how the builder adds one somebody dropped. Author it with a typed factory:
+`defineElement<SeatPickerAttributes>(declaration)` from the plugin's own `declaration.ts`, or
+`elementsFromManifest<{ seatPicker: SeatPickerAttributes }>(manifest)` from what it published — or untyped,
+`element('seatPicker', { id: 'seats', start: 3 })`. Name its type to `authorSpace` so it is not taken for a typo:
+`authorSpace(space, { pluginTypes: ['seatPicker'] })`.

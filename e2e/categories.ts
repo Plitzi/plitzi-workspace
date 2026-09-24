@@ -77,7 +77,8 @@ export const categories: Category[] = [
       'published-server',
       'devtools-server',
       'mail-sink',
-      'workers-server'
+      'workers-server',
+      'plugin-server'
     ],
     subcategories: [
       { name: 'ssr', what: 'What arrives before a script runs, and what happens after' },
@@ -88,7 +89,8 @@ export const categories: Category[] = [
       },
       { name: 'preview', what: 'Draft renders that are never saved, and the one-shot token' },
       { name: 'auth', what: 'A visitor becoming a member and back: guest/member pages, sessions, bindings' },
-      { name: 'workers', what: 'One port served by several processes: the load spread, every page the same' }
+      { name: 'workers', what: 'One port served by several processes: the load spread, every page the same' },
+      { name: 'plugins', what: 'A plugin package from the CLI, published and loaded by a page from its manifest' }
     ]
   },
   {

@@ -85,26 +85,35 @@ body {
  * Written into both entry points, because how a plugin is registered does not change with where the space lives.
  */
 const PLUGINS = `/**
- * The project's own components, by the \`renderType\` the space names them with.
- *
- * A \`custom\` element naming \`statCard\` renders this component, and the element's attributes arrive as its
- * props — which is what makes a plugin bindable rather than static. There is no server here, so it is part of
- * this project's bundle and Vite hot-replaces it like any other module. Add another by writing it under
- * \`src/plugins\` and adding a line here; see \`src/plugins/README.md\`.
+ * The project's own components: every folder of \`src/plugins\` is one, registered under its name in camelCase —
+ * \`src/plugins/StatCard\` is what a space's \`custom({ renderType: 'statCard' })\` renders, and its attributes arrive
+ * as the component's props. \`plitzi add plugin\` writes a new one there, and Vite picks it up. There is no server
+ * here, so the plugins are part of this project's bundle and hot-replaced like any other module; see
+ * \`src/plugins/README.md\`.
  */
-const plugins = { statCard: { component: StatCard } };`;
+const pluginModules = import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.ts', {
+  eager: true
+});
+
+const plugins: RenderPlugins = Object.fromEntries(
+  Object.entries(pluginModules).map(([file, module]) => {
+    const folder = file.split('/')[2];
+
+    return [\`\${folder.charAt(0).toLowerCase()}\${folder.slice(1)}\`, { component: module.default }];
+  })
+);`;
 
 /** The two ways the space reaches the entry point, written once because both modes phrase them identically. */
 const localMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
-import StatCard from './plugins/StatCard';
 import { space } from './space.ts';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
 
+import type { RenderPlugins } from '@plitzi/plitzi-sdk';
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
 ${PLUGINS}
@@ -166,10 +175,10 @@ if (import.meta.hot) {
 
 const cloudMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
-import StatCard from './plugins/StatCard';
-
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+
+import type { RenderPlugins } from '@plitzi/plitzi-sdk';
 
 ${PLUGINS}
 

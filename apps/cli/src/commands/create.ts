@@ -1,10 +1,20 @@
-import { spawn } from 'node:child_process';
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
+import {
+  INSTALL_HINTS,
+  ask,
+  atTerminal,
+  cdPrefix,
+  install,
+  isEmpty,
+  nearestExisting,
+  refuseWithoutTerminal,
+  runScript,
+  writeFiles
+} from './terminal';
 import {
   PACKAGE_MANAGERS,
   detectManagerVersion,
@@ -14,6 +24,7 @@ import {
   scaffold
 } from '../scaffold';
 
+import type { Question } from './terminal';
 import type { CreateAnswers, PackageManager } from '../scaffold';
 
 /**
@@ -41,53 +52,6 @@ const SOURCES = ['local', 'cloud'] as const;
 
 type Decisions = { packageManager: PackageManager; mode: (typeof MODES)[number]; source: (typeof SOURCES)[number] };
 
-/** A directory that does not exist yet is as empty as one can be, which is the answer this question wants. */
-const isEmpty = async (target: string): Promise<boolean> => {
-  try {
-    return (await fs.readdir(target)).length === 0;
-  } catch {
-    return true;
-  }
-};
-
-const isDirectory = async (candidate: string): Promise<boolean> => {
-  try {
-    return (await fs.stat(candidate)).isDirectory();
-  } catch {
-    return false;
-  }
-};
-
-/** The closest directory that already exists: the project's own does not until its files are written. */
-const nearestExisting = async (target: string): Promise<string> => {
-  let dir = target;
-  while (!(await isDirectory(dir)) && path.dirname(dir) !== dir) {
-    dir = path.dirname(dir);
-  }
-
-  return dir;
-};
-
-/**
- * What a first install is most likely refused over, and what to do about it.
- *
- * The scaffold already exempts what it ships, but not the rest of the tree: a third-party dependency published in
- * the last day is held back by the same age gates, and says so in a code that means nothing to somebody who has
- * not touched the project yet.
- */
-const INSTALL_HINTS: Record<PackageManager, string> = {
-  npm: 'A peer-dependency conflict (ERESOLVE) is a bug in this scaffold: please report it. `npm install --legacy-peer-deps` gets past it meanwhile.',
-  yarn: 'YN0016 ("quarantined") means a dependency was published less than a day ago. Wait, or add it to `npmPreapprovedPackages` in .yarnrc.yml.',
-  pnpm: 'A dependency published too recently is added to `minimumReleaseAgeExclude` in pnpm-workspace.yaml; a skipped build script is approved with `pnpm approve-builds`.'
-};
-
-const install = (manager: PackageManager, cwd: string): Promise<boolean> =>
-  new Promise(resolve => {
-    const child = spawn(manager, ['install'], { cwd, stdio: 'inherit', shell: process.platform === 'win32' });
-    child.on('error', () => resolve(false));
-    child.on('close', code => resolve(code === 0));
-  });
-
 /**
  * The choices a project is BUILT around, which belong to whoever it is for — never to a default nobody chose.
  *
@@ -97,55 +61,6 @@ const install = (manager: PackageManager, cwd: string): Promise<boolean> =>
  * passed is asked for when a person is at the terminal, and refused when nobody is — with the exact questions to put
  * to the person.
  */
-type Question<T extends string> = { flag: string; choices: readonly T[]; question: string; given?: T; fallback: T };
-
-/** Somebody who can answer a prompt. An agent's shell, CI and a pipe are nobody, whatever they were asked to do. */
-const atTerminal = (): boolean => process.stdin.isTTY && process.stdout.isTTY;
-
-/**
- * Nobody to ask, so the questions go to whoever ran this — in practice an agent — to put to the person.
- *
- * It offers no way around them. It used to end with "or with --yes to take the defaults", and an agent keen to finish
- * took that exit every time: the person was never asked, which is the whole failure this stop exists to prevent.
- */
-const refuseWithoutTerminal = (questions: { flag: string; choices: readonly string[]; question: string }[]) => {
-  console.error(
-    chalk.red(
-      '\nplitzi create stopped before writing anything: these choices shape the whole project, they belong to the ' +
-        'person it is for, and nobody is at this terminal to make them.'
-    )
-  );
-  console.error(
-    chalk.bold(
-      '\nIf you are an AI agent: ask the user each question below, show them the options, and wait for their answers. ' +
-        'Do not choose for them and do not fall back to a default.\n'
-    )
-  );
-  questions.forEach(({ flag, choices, question }, index) => {
-    console.error(`  ${index + 1}. ${question}`);
-    console.error(`     ${flag} ${choices.join(' | ')}`);
-  });
-
-  const flags = questions.map(({ flag }) => `${flag} <their answer>`).join(' ');
-  console.error(`\nThen run the same command again with their answers: ${flags}`);
-  process.exitCode = 1;
-};
-
-/** One choice at the terminal: Enter takes the default, anything off the list is refused rather than guessed at. */
-const ask = async <T extends string>(rl: readline.Interface, question: Question<T>): Promise<T | undefined> => {
-  const reply = (
-    await rl.question(
-      `\n${question.question}\n${question.flag} (${question.choices.join('/')}) [${question.fallback}] > `
-    )
-  ).trim();
-  const chosen = question.choices.find(choice => choice === (reply || question.fallback));
-  if (!chosen) {
-    console.error(chalk.red(`"${reply}" is not one of ${question.choices.join(', ')}.`));
-  }
-
-  return chosen;
-};
-
 const resolveDecisions = async (options: CreateOptions): Promise<Decisions | undefined> => {
   const detected = detectPackageManager();
   const packageManager: Question<PackageManager> = {
@@ -184,7 +99,7 @@ const resolveDecisions = async (options: CreateOptions): Promise<Decisions | und
   // `--yes` is a person at a terminal saying the defaults ARE their answer. With nobody there it is whoever ran this
   // deciding for them, which is the one thing not allowed.
   if (!atTerminal()) {
-    refuseWithoutTerminal(missing);
+    refuseWithoutTerminal('project', missing);
 
     return undefined;
   }
@@ -222,7 +137,8 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   const target = path.resolve(directory ?? '.');
   const name = path.basename(target);
 
-  if (!options.force && !(await isEmpty(target))) {
+  const wasEmpty = await isEmpty(target);
+  if (!options.force && !wasEmpty) {
     console.error(chalk.red(`${target} is not empty. Pass --force to write into it anyway.`));
     process.exitCode = 1;
 
@@ -238,7 +154,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
 
   // A cloud project is nothing without its credential, so it is the one thing worth stopping to ask for.
   if (source === 'cloud' && !options.key && !atTerminal()) {
-    refuseWithoutTerminal([{ flag: '--key', choices: ['<key>'], question: keyQuestion(mode) }]);
+    refuseWithoutTerminal('project', [{ flag: '--key', choices: ['<key>'], question: keyQuestion(mode) }]);
 
     return;
   }
@@ -261,16 +177,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     managerVersion: detectManagerVersion(packageManager, await nearestExisting(target))
   };
 
-  const files = scaffold(answers);
-
-  await Promise.all(
-    Object.entries(files).map(async ([file, contents]) => {
-      const destination = path.join(target, file);
-      await fs.mkdir(path.dirname(destination), { recursive: true });
-
-      return fs.writeFile(destination, contents);
-    })
-  );
+  await writeFiles(target, scaffold(answers));
 
   const wantsInstall = options.install !== false;
   const installed = wantsInstall && (await install(packageManager, target));
@@ -293,13 +200,15 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   }
 
   /**
-   * How to get there, in whichever form is shorter.
-   *
-   * A relative path out of a temp directory is six `../` and unreadable; an absolute one to a sibling folder is
-   * noise. These lines are meant to be pasted, so they are printed the way somebody would have typed them.
+   * Formatted by the project's own Prettier, once, so the first commit is already in its style — the scaffold writes
+   * tables and lists whose layout depends on what they hold. Only into a folder that was empty: `--force` into one
+   * with work in it must never reformat that work.
    */
-  const relative = path.relative(process.cwd(), target);
-  const where = target === process.cwd() ? '' : `cd ${relative.length < target.length ? relative : target} && `;
+  if (installed && wasEmpty) {
+    await runScript(packageManager, 'format', target);
+  }
+
+  const where = cdPrefix(target);
 
   console.log(
     chalk.green(

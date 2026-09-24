@@ -17,7 +17,10 @@ export {
   runCommand
 } from './packageManager';
 
-export type { CreateAnswers, PackageManager, ProjectFiles } from './types';
+export { pluginNameProblem, pluginNames, scaffoldElement, scaffoldPlugin } from './pluginPackage';
+
+export type { PluginNames } from './pluginPackage';
+export type { CreateAnswers, PackageManager, PluginAnswers, ProjectFiles } from './types';
 
 /**
  * Every file of a generated project, assembled from the two decisions that shape it.

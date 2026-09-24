@@ -60,6 +60,12 @@ export interface BlankSpaceSourceOptions {
 export interface PluginHostOptions {
   renderType: string;
   id: string;
+  /**
+   * How the space hosts it. `custom` (the default) is a `custom` element naming the component by `renderType` — a
+   * component the page registers itself, as a project's own are. `element` is an element OF the plugin's type, the
+   * way the builder adds a plugin somebody dropped: the one shape a plugin loaded from its manifest renders as.
+   */
+  as?: 'custom' | 'element';
   /** Written on the `custom` element as attributes, which the component receives as props of the same names. */
   attributes: Record<string, unknown>;
   /**
@@ -70,9 +76,23 @@ export interface PluginHostOptions {
 }
 
 /** A value as TypeScript source, in this codebase's quotes: what a JSON dump would write, with single quotes. */
+/**
+ * A string literal, quoted the way Prettier quotes one: single quotes, unless the text holds more of them than of
+ * double quotes. The copy is somebody's source file, and one their formatter rewrites on the first save is noise in
+ * their first diff.
+ */
+const stringLiteral = (value: string): string => {
+  // \x22 and \x27 are the two quotes: spelled so, neither needs a quote of the other kind around it.
+  const singles = value.split('\x27').length - 1;
+  const doubles = value.split('\x22').length - 1;
+  const quote = singles > doubles ? '\x22' : '\x27';
+
+  return `${quote}${value.replace(/\\/g, '\\\\').replaceAll(quote, `\\${quote}`)}${quote}`;
+};
+
 const toSource = (value: unknown): string => {
   if (typeof value === 'string') {
-    return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+    return stringLiteral(value);
   }
 
   if (Array.isArray(value)) {
@@ -117,12 +137,13 @@ const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOpti
     );
   }
 
-  /** The `custom(…)` call, its lines indented by `pad`. */
+  const asElement = plugin.as === 'element';
+  /** The `custom(…)` or `element(…)` call, its lines indented by `pad`. */
   const host = (pad: string): string =>
     [
-      'custom({',
+      asElement ? `element('${plugin.renderType}', {` : 'custom({',
       `  id: '${plugin.id}',`,
-      `  renderType: '${plugin.renderType}',`,
+      ...(asElement ? [] : [`  renderType: '${plugin.renderType}',`]),
       ...Object.entries(plugin.attributes).map(([key, value]) => `  ${key}: ${toSource(value)},`),
       ...(plugin.data ? [`  bind: ${toSource(plugin.data.bind)},`] : []),
       "  css: { desktop: { 'margin-top': '24px' } }",
@@ -146,10 +167,17 @@ const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOpti
             heroActions,
             /**
              * A component of YOUR OWN, rendered by the space.
-             *
+             *${
+               asElement
+                 ? `
+             * An element of the plugin's own type — what the builder adds when somebody drops the plugin on a page, and
+             * how a space that loads it from its manifest hosts it. Every attribute arrives in the component as a prop
+             * of the same name — written here, or bound to a source.`
+                 : `
              * \`renderType\` is the name it is registered under in \`src/main.ts\`; every other attribute arrives in
              * the component as a prop of the same name — written here, or bound to a source. See
-             * \`src/plugins/README.md\`.${
+             * \`src/plugins/README.md\`.`
+             }${
                plugin.data
                  ? `
              *
@@ -161,7 +189,7 @@ const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOpti
             ${hosted}
           ]`;
 
-  const imports = plugin.data ? 'apiContainer, custom' : 'custom';
+  const imports = [...(plugin.data ? ['apiContainer'] : []), asElement ? 'element' : 'custom'].join(', ');
 
   return `import { ${imports} } from '../../elements';\n${source.replace(PLUGIN_ANCHOR, element)}`;
 };
@@ -176,7 +204,7 @@ const replaceLiteral = (source: string, field: string, from: string, to: string)
     );
   }
 
-  return source.replace(declaration, `${field}: '${to}'`);
+  return source.replace(declaration, `${field}: ${stringLiteral(to)}`);
 };
 
 /**
@@ -187,7 +215,7 @@ const replaceLiteral = (source: string, field: string, from: string, to: string)
  * `My Site` has to become `my-site` here — before the documents carry it, not after.
  */
 const renameSpace = (source: string, name: string): string => {
-  const renamed = replaceLiteral(source, 'name', blankSpaceSpec.name, name.replace(/'/g, "\\'"));
+  const renamed = replaceLiteral(source, 'name', blankSpaceSpec.name, name);
 
   return replaceLiteral(renamed, 'permanentUrl', blankSpaceSpec.permanentUrl, slugify(name, 'space'));
 };

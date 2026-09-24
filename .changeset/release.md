@@ -439,3 +439,35 @@
   instead of a JavaScript literal inside the bootstrap module. On a first load of that page Chromium parses it in
   6.7 ms instead of 15.4 ms; the page no longer holds the space twice.
 - `sdk-shared/style`: `markStyleCache`, `styleCacheTravelsInDocument`, `styleCacheFromDocument`, `RUNTIME_STYLE_ID`.
+
+## Plugins from the CLI
+
+- **`plitzi add plugin [name]`** adds an element of your own to the project you are in. It asks what to call it, what
+  the builder shows and what it is for, then writes one folder the way `@plitzi/sdk-elements` writes its own elements:
+  the component, `declaration.ts` (its `type`, the `triggers` it fires, the `callbacks` it answers to and the element
+  the builder adds — data only), `Settings.tsx` (its builder panel) and `index.ts`
+  (`Object.assign(Component, declaration, { pluginSettings: Settings })`). In a project `plitzi create` wrote it lands in
+  `src/plugins`; anywhere else it asks for the folder (`--dir`) and prints how to register the element for `render()`,
+  `<PlitziSdk.Plugin>` and a page server.
+- **`plitzi create [directory] --plugin`** writes a plugin package any space can load: the element, a Vite preview that
+  renders it inside a space, `build` (one ES module plus `plugin-manifest.json`, written from the elements' declarations
+  with each file's integrity hash; React and the SDK stay out of the bundle), `zip` (the build as the builder takes it
+  under Resources) and a visual test. `--name`, `--title`, `--description` and `--owner` answer what it otherwise asks;
+  inside a repository it offers the folders that repository keeps its packages in, installs with its package manager and
+  leaves its install settings alone. It replaces the `plitzi-plugin-template` repository, which is deprecated.
+- **A project `plitzi create` writes registers every folder of `src/plugins` by itself**, under its name in camelCase
+  — `readdirSync` in server mode, `import.meta.glob` in client mode — so a new element needs no line of `src/main.ts`.
+- **A new project is formatted by its own Prettier** once installed, so the first commit is already in its style. Only
+  into a folder that was empty: `--force` never reformats work that was there.
+- `sdk-shared` / `plitzi-sdk`: **`PluginDeclaration`**, the declaration type of an element of somebody's own — what
+  `ElementDeclarationData` says of any element, plus the `content` a manifest publishes. Exported as a type from
+  `@plitzi/plitzi-sdk`.
+- **Fixed: a plugin on its own host rendered "Not Found".** `fetchManifest` sent `Content-Type` on a GET, which made the
+  browser ask the host's permission first; a host that allows plain cross-origin reads — the usual CORS setting of a
+  bucket — refused, and the element never loaded. It asks with `Accept` now, and answers nothing for a 404 rather than
+  for a body that failed to parse.
+- `sdk-authoring`: `blankSpaceSource({ plugin: { as: 'element' } })` hosts a plugin as an element of its own type — how
+  the builder adds one and how a space loading it from its manifest renders it. Strings in the copy are quoted the way
+  Prettier quotes them (`"Today's"`, not `'Today\'s'`), and a name with a backslash no longer breaks the file.
+- e2e: `plugin-server` generates a package with the CLI, builds it, publishes it on a host of its own and checks a page
+  loads it from its manifest.

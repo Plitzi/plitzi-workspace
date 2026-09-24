@@ -1,4 +1,6 @@
 import type { InteractionCallback } from '../types/InteractionTypes';
+import type { PluginBuilder, PluginSchema } from '../types/PluginTypes';
+import type { ElementDefinition } from '../types/SchemaTypes';
 
 /**
  * How an element says what it can be authored with.
@@ -65,6 +67,43 @@ export interface ElementDeclarationData {
   content?: {
     attributes?: Record<string, unknown>;
     definition?: { label?: string };
+  };
+}
+
+/**
+ * A plugin's declaration: an element of somebody's own, declared the way the built-in ones declare themselves.
+ *
+ * On top of what {@link ElementDeclarationData} says of any element it carries the whole `content`, because for a
+ * plugin that is also what gets PUBLISHED — its build writes it into `plugin-manifest.json`, which the builder, the page
+ * server and the MCP server read before they load any code. Data only, so that build can read it without React.
+ *
+ * `A` is the attributes the element accepts: its component's props, minus what the runtime supplies.
+ * `const declaration = { … } satisfies PluginDeclaration<SeatPickerAttributes>` then refuses a default the component
+ * does not take.
+ */
+export interface PluginDeclaration<A extends object = Record<string, unknown>> extends Omit<
+  ElementDeclarationData,
+  'content'
+> {
+  content: {
+    /** The element's starting attributes — its component's defaults, where the builder can show them. */
+    attributes: A;
+    definition: Omit<ElementDefinition, 'rootId' | 'parentId' | 'interactions' | 'runtime' | 'loadStrategy'> & {
+      /** What the element is for, in a sentence: the builder shows it, and an agent reads it to choose the element. */
+      description?: string;
+    };
+    builder: PluginBuilder;
+    /** How the builder's catalogue shows the element. Whether it is verified is the platform's to say, never its own. */
+    market: {
+      category: string;
+      owner: string;
+      license: string;
+      website: string;
+      backgroundColor: string;
+      icon: string;
+    };
+    defaultStyle: PluginSchema['defaultStyle'];
+    settings?: Record<string, string | number | boolean>;
   };
 }
 

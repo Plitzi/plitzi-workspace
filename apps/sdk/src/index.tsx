@@ -57,6 +57,7 @@ import type {
   ThemeScope,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
+import type { PluginDeclaration } from '@plitzi/sdk-shared/authoring/declare';
 import type { ReactNode } from 'react';
 
 let stateManager: RuntimeStateInstance;
@@ -367,7 +368,8 @@ export type {
   PlitziServiceContextValue,
   OfflineDataRaw,
   InteractionCallback,
-  InteractionCallbackParamValues
+  InteractionCallbackParamValues,
+  PluginDeclaration
 };
 
 export const version = typeof VERSION !== 'undefined' ? VERSION : '';

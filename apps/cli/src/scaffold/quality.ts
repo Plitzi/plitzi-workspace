@@ -28,7 +28,11 @@ const prettierrc = (): string =>
     2
   )}\n`;
 
-const prettierignore = (): string => 'node_modules\ndist\nspace\nvisual/.results\nvisual/screenshots\n';
+/** What a project writes that is nobody's to format or lint: its builds, its authored documents, its test output. */
+const PROJECT_OUTPUTS = ['dist', 'space', '.sdk-plugins', 'visual/.results', 'visual/screenshots'];
+
+const prettierignore = (outputs: readonly string[]): string =>
+  `${['node_modules', ...outputs.filter(output => output !== '.sdk-plugins')].join('\n')}\n`;
 
 /**
  * Flat config, and only what earns its place.
@@ -38,14 +42,14 @@ const prettierignore = (): string => 'node_modules\ndist\nspace\nvisual/.results
  * that no amount of formatting would have shown. `eslintConfigPrettier` goes last, so it can switch off the
  * stylistic rules the earlier entries turned on.
  */
-const eslintConfig = ({ mode }: CreateAnswers): string => `import js from '@eslint/js';
+const eslintConfig = (globals: 'node' | 'browser', outputs: readonly string[]): string => `import js from '@eslint/js';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tsEslint from 'typescript-eslint';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tsEslint.config(
-  { ignores: ['dist', 'space', '.sdk-plugins', 'visual/.results', 'visual/screenshots'] },
+  { ignores: [${outputs.map(output => `'${output}'`).join(', ')}] },
   js.configs.recommended,
   {
     /**
@@ -58,7 +62,7 @@ export default tsEslint.config(
     files: ['**/*.{ts,tsx}'],
     extends: [tsEslint.configs.recommendedTypeChecked],
     languageOptions: {
-      globals: { ...globals.${mode === 'server' ? 'node' : 'browser'} },
+      globals: { ...globals.${globals} },
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname }
     }
   },
@@ -78,8 +82,12 @@ export default tsEslint.config(
 );
 `;
 
-export const qualityFiles = (answers: CreateAnswers): ProjectFiles => ({
+/** The three files for code that runs where `globals` says, with `outputs` left alone. */
+export const qualityFilesFor = (globals: 'node' | 'browser', outputs: readonly string[]): ProjectFiles => ({
   '.prettierrc': prettierrc(),
-  '.prettierignore': prettierignore(),
-  'eslint.config.mjs': eslintConfig(answers)
+  '.prettierignore': prettierignore(outputs),
+  'eslint.config.mjs': eslintConfig(globals, outputs)
 });
+
+export const qualityFiles = ({ mode }: CreateAnswers): ProjectFiles =>
+  qualityFilesFor(mode === 'server' ? 'node' : 'browser', PROJECT_OUTPUTS);

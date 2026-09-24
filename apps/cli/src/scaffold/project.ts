@@ -13,7 +13,7 @@ import type { CreateAnswers, ProjectFiles } from './types';
  */
 const require = createRequire(import.meta.url);
 
-const SDK_VERSION = `^${(require('@plitzi/sdk-authoring/package.json') as { version: string }).version}`;
+export const SDK_VERSION = `^${(require('@plitzi/sdk-authoring/package.json') as { version: string }).version}`;
 
 /**
  * What every generated project builds and checks itself with.
@@ -22,7 +22,11 @@ const SDK_VERSION = `^${(require('@plitzi/sdk-authoring/package.json') as { vers
  * `.tsx` file wherever it renders. The lint stack is the same one Plitzi's own packages use — type-checked rules,
  * with Prettier owning layout and `eslint-config-prettier` keeping ESLint out of that argument.
  */
-const SHARED_DEV_DEPENDENCIES = {
+/** The React and the Vite every generated package is written against, project or plugin. */
+export const REACT_VERSION = '^19.2.8';
+export const VITE_VERSION = '^8.2.1';
+
+export const SHARED_DEV_DEPENDENCIES = {
   '@eslint/js': '^10.0.1',
   '@playwright/test': '^1.56.1',
   '@types/node': '^26.2.0',
@@ -52,14 +56,14 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
   // Authoring is what turns `src/space.ts` into documents, so a local project always needs it. A cloud one never
   // does: its space is a document Plitzi holds, and nothing here builds one.
   ...(source === 'local' ? { '@plitzi/sdk-authoring': SDK_VERSION } : {}),
-  react: '^19.2.8',
-  'react-dom': '^19.2.8'
+  react: REACT_VERSION,
+  'react-dom': REACT_VERSION
 });
 
 /** A server-mode project runs no bundler of its own: the page server builds the plugins, and Node runs the rest. */
 const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
   ...SHARED_DEV_DEPENDENCIES,
-  ...(mode === 'server' ? {} : { vite: '^8.2.1' })
+  ...(mode === 'server' ? {} : { vite: VITE_VERSION })
 });
 
 /**
