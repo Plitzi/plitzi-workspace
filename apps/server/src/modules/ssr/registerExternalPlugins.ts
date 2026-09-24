@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { writeFileAtomic } from '../../helpers/atomicFile';
 import { serverLog } from '../../helpers/serverLog';
 
 import type { PluginManager } from '../../plugins/manager';
@@ -40,7 +41,7 @@ const readDiskEntry = async (dir: string, resource: string): Promise<ManifestCac
 const writeDiskEntry = async (dir: string, resource: string, entry: ManifestCacheEntry): Promise<void> => {
   try {
     await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(cacheFilePath(dir, resource), JSON.stringify(entry), 'utf-8');
+    await writeFileAtomic(cacheFilePath(dir, resource), JSON.stringify(entry));
   } catch (err) {
     serverLog.warn('SSR', `Failed to persist plugin manifest cache for ${resource}`, err);
   }

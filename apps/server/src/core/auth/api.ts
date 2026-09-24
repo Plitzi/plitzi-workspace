@@ -6,7 +6,7 @@ import {
   hashPassword as defaultHashPassword,
   verifyPassword as defaultVerifyPassword
 } from './passwords';
-import { createMemoryRateLimit } from './throttle';
+import { createMemoryRateLimit, fleetRateLimit } from './throttle';
 import { authFailureMessage } from './tokens';
 import {
   generateRecoveryCodes,
@@ -467,7 +467,7 @@ export const createAuthApi = ({
     adminPermission = 'userManage',
     impersonationPermission,
     password: policy = {},
-    rateLimit = createMemoryRateLimit(),
+    rateLimit = fleetRateLimit() ?? createMemoryRateLimit(),
     onMailError,
     onEvent,
     mfaIssuer,

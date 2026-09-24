@@ -144,6 +144,13 @@ export const targets: Target[] = [
     what: 'The same published site with the space’s own dev-tools setting on — the outline, and never a step’s data'
   },
   {
+    id: 'workers-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:workers',
+    origin: 'http://127.0.0.1:5207',
+    what: 'The sample space served by two processes on one port, as production uses a machine with several cores'
+  },
+  {
     id: 'mail-sink',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:mail',

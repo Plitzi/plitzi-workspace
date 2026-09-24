@@ -64,9 +64,9 @@ output.
 | `edge-256`   | 0.25  | 256 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=160`                    |
 | `small`      | 0.5   | 256 MB | `--single-threaded --max-semi-space-size=4 --max-old-space-size=160`                    |
 | `standard`   | 1     | 512 MB | `--max-old-space-size=384`                                                              |
-| `medium`     | 2     | 1 GB   | `--max-old-space-size=768`                                                              |
-| `large`      | 4     | 2 GB   | `--max-old-space-size=1536`                                                             |
-| `enterprise` | 8     | 4 GB   | `--max-old-space-size=3072`                                                             |
+| `medium`     | 2     | 1 GB   | `--max-old-space-size=384` per worker                                                   |
+| `large`      | 4     | 2 GB   | `--max-old-space-size=384` per worker                                                   |
+| `enterprise` | 8     | 4 GB   | `--max-old-space-size=384` per worker                                                   |
 | `unbounded`  | —     | —      | —                                                                                       |
 
 The flags are part of the profile because they are what that hardware should run with, and they were found with

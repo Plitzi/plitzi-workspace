@@ -5,6 +5,7 @@ import { compilePlugin } from './compile';
 import { copyPlugin } from './copy';
 import { detectAction, isComponentSource } from './detect';
 import { assertPluginSources } from './validate';
+import { writeFileAtomic } from '../helpers/atomicFile';
 import { serverLog } from '../helpers/serverLog';
 
 import type { PluginEntry, PluginSource } from '@plitzi/sdk-shared';
@@ -218,6 +219,14 @@ export class PluginManager {
     return s.startsWith('/') || s.startsWith('http://') || s.startsWith('https://');
   }
 
+  /**
+   * Builds every registered plugin now rather than on first use. A primary does it before starting its workers, so
+   * the workers find each one built — instead of all of them compiling the same plugin into the same folder at once.
+   */
+  async prepareAll(): Promise<void> {
+    await Promise.all(Object.keys(this.plugins).map(key => this.prepare(key)));
+  }
+
   async prepare(name: string): Promise<PluginEntry | null> {
     const key = this.resolveKey(name) ?? name;
 
@@ -354,7 +363,7 @@ export class PluginManager {
           throw new Error(`HTTP ${jsRes.status} downloading ${jsPath}`);
         }
 
-        await fs.writeFile(path.join(dir, 'index.js'), await jsRes.text());
+        await writeFileAtomic(path.join(dir, 'index.js'), await jsRes.text());
         if (cssPath) {
           const isRemote = cssPath.startsWith('http://') || cssPath.startsWith('https://');
           if (isRemote) {
@@ -363,7 +372,7 @@ export class PluginManager {
               throw new Error(`HTTP ${cssRes.status} downloading ${cssPath}`);
             }
 
-            await fs.writeFile(path.join(dir, 'index.css'), await cssRes.text());
+            await writeFileAtomic(path.join(dir, 'index.css'), await cssRes.text());
           } else if (this.isWebUrl(cssPath)) {
             cssUrl = cssPath; // absolute local path — serve as-is
           } else {
@@ -426,17 +435,21 @@ export class PluginManager {
     return out;
   }
 
-  async invalidate(name?: string, version?: string): Promise<void> {
+  /**
+   * Drops what this process remembers of a plugin — its entry, its failure, which version its name means — and
+   * leaves the disk alone. What an invalidation elsewhere in the fleet does here: that process removes the files,
+   * and each of the others only has to stop pointing at them.
+   */
+  forget(name?: string, version?: string): void {
     if (!name) {
       this.mem.clear();
       this.failed.clear();
       this.nameIndex.clear();
-      await fs.rm(this.outputDir, { recursive: true, force: true });
+
       return;
     }
 
     if (version) {
-      // Invalidate one specific version
       const key = `${name}@${version}`;
       this.mem.delete(key);
       this.failed.delete(key);
@@ -444,22 +457,13 @@ export class PluginManager {
         this.nameIndex.delete(name);
       }
 
-      await fs.rm(this.pluginDir(key), { recursive: true, force: true });
-
       return;
     }
 
-    // Invalidate all versions: exact name + every name@* variant
+    // Every version: the exact name and every name@* variant
     const prefix = `${name}@`;
-    const keysToEvict = new Set<string>();
-    keysToEvict.add(name);
-    for (const key of Object.keys(this.plugins)) {
-      if (key.startsWith(prefix)) {
-        keysToEvict.add(key);
-      }
-    }
-
-    for (const key of this.mem.keys()) {
+    const keysToEvict = new Set<string>([name]);
+    for (const key of [...Object.keys(this.plugins), ...this.mem.keys()]) {
       if (key.startsWith(prefix)) {
         keysToEvict.add(key);
       }
@@ -469,9 +473,25 @@ export class PluginManager {
       this.mem.delete(key);
       this.failed.delete(key);
     }
-    this.nameIndex.delete(name);
 
-    // Remove matching dirs from disk
+    this.nameIndex.delete(name);
+  }
+
+  async invalidate(name?: string, version?: string): Promise<void> {
+    this.forget(name, version);
+    if (!name) {
+      await fs.rm(this.outputDir, { recursive: true, force: true });
+
+      return;
+    }
+
+    if (version) {
+      await fs.rm(this.pluginDir(`${name}@${version}`), { recursive: true, force: true });
+
+      return;
+    }
+
+    const prefix = `${name}@`;
     try {
       const entries = await fs.readdir(this.outputDir);
       await Promise.all(
@@ -500,7 +520,7 @@ export class PluginManager {
   }
 
   private async writeMeta(name: string, meta: Meta): Promise<void> {
-    await fs.writeFile(path.join(this.pluginDir(name), META_FILE), JSON.stringify(meta), 'utf-8');
+    await writeFileAtomic(path.join(this.pluginDir(name), META_FILE), JSON.stringify(meta));
   }
 
   private async fileExists(p: string): Promise<boolean> {

@@ -14,6 +14,8 @@ export type Profile = {
    * - Below one core, `--single-threaded`: V8's background GC and compiler threads bring no parallelism under a
    *   fraction of a core, only contention for the same quota, and each keeps a malloc arena of its own. At a quarter
    *   core it serves ~45% more pages in ~25 MB less. From one core up they run beside the main thread, and stay on.
+   * - From two cores the server runs a worker per core (`workers`, on in production), and the heap flag is each
+   *   worker's — so it stays the one-core size however large the machine.
    */
   nodeOptions: string[];
 };
@@ -80,21 +82,21 @@ export const PROFILES: Profile[] = [
     description: 'Two cores, 1 GB',
     cpus: 2,
     memoryMb: 1024,
-    nodeOptions: ['--max-old-space-size=768']
+    nodeOptions: ['--max-old-space-size=384']
   },
   {
     name: 'large',
     description: 'Four cores, 2 GB',
     cpus: 4,
     memoryMb: 2048,
-    nodeOptions: ['--max-old-space-size=1536']
+    nodeOptions: ['--max-old-space-size=384']
   },
   {
     name: 'enterprise',
     description: 'Eight cores, 4 GB',
     cpus: 8,
     memoryMb: 4096,
-    nodeOptions: ['--max-old-space-size=3072']
+    nodeOptions: ['--max-old-space-size=384']
   },
   {
     name: 'unbounded',

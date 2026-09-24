@@ -3,6 +3,21 @@ import { themeFromCookies } from '@plitzi/sdk-shared/theme';
 
 import { readCookie } from '../readCookie';
 
+/** The fields of an HTML key, in the order they are joined. */
+const HTML_KEY_FIELDS = [
+  'accessToken',
+  'spaceId',
+  'environment',
+  'revision',
+  'theme',
+  'debugHidden',
+  'hostname',
+  'path',
+  'search'
+] as const;
+
+type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
+
 /**
  * The key a rendered document is cached under.
  *
@@ -25,10 +40,31 @@ export const buildHtmlCacheKey = (
   revision: number,
   req: { hostname: string; path: string; search: string; headers: { cookie?: string; host?: string } }
 ): string => {
-  const theme = themeFromCookies(req.headers.cookie) ?? '';
-  const debugHidden = readCookie(req.headers.cookie, debugCookieName(req.headers.host)) === 'false' ? 'debug-off' : '';
+  const fields: HtmlCacheKeyFields = {
+    accessToken,
+    spaceId: String(spaceId ?? 1),
+    environment,
+    revision: String(revision),
+    theme: themeFromCookies(req.headers.cookie) ?? '',
+    debugHidden: readCookie(req.headers.cookie, debugCookieName(req.headers.host)) === 'false' ? 'debug-off' : '',
+    hostname: req.hostname,
+    path: req.path,
+    search: req.search
+  };
 
-  return `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${theme}\0${debugHidden}\0${req.hostname}\0${req.path}\0${req.search}`;
+  return HTML_KEY_FIELDS.map(field => fields[field]).join('\0');
+};
+
+/**
+ * What an HTML key says about the page it holds, read by the one list that also writes it. `server.cache.invalidate`
+ * filters on these; it used to split the key by positions of its own, and when the key grew a field in front the
+ * filter went on reading the wrong ones — every invalidation by space matched nothing.
+ */
+export const readHtmlCacheKey = (key: string): { spaceId: string; environment: string; hostname: string } => {
+  const parts = key.split('\0');
+  const at = (field: (typeof HTML_KEY_FIELDS)[number]): string => parts[HTML_KEY_FIELDS.indexOf(field)] ?? '';
+
+  return { spaceId: at('spaceId'), environment: at('environment'), hostname: at('hostname') };
 };
 
 export const buildOfflineDataCacheKey = (spaceId: number, environment: string, revision: number): string =>

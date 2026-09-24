@@ -1,3 +1,4 @@
+import type { StoreMethods } from '../../../core/server/fleet/channel';
 import type { ActionKvAdapter } from '../types';
 
 type Entry = { value: string; expiresAt?: number };
@@ -14,6 +15,15 @@ type Entry = { value: string; expiresAt?: number };
  */
 /** How many writes go by before the map is swept. Cheap enough to be unnoticeable, often enough to bound it. */
 const SWEEP_EVERY = 256;
+
+/** Every method of the store, for the copy a server's workers share (see `fleet/stores.ts`). */
+export const KV_METHODS: StoreMethods<ActionKvAdapter> = {
+  get: true,
+  set: true,
+  delete: true,
+  increment: true,
+  expire: true
+};
 
 export const createMemoryKv = (): ActionKvAdapter => {
   const entries = new Map<string, Entry>();

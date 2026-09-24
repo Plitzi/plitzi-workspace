@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import esbuild from 'esbuild';
 
+import { writeFileAtomic } from '../helpers/atomicFile';
+
 const EXTERNAL = [
   'react',
   'react-dom',
@@ -66,13 +68,14 @@ export const compilePlugin = async (
     splitting: false,
     logLevel: 'warning',
     // Only where something watches for a change: a deployment's plugins do not move under it.
-    metafile: devMode
+    metafile: devMode,
+    // Kept in memory and written file by file whole — another worker may be building or reading the same plugin.
+    write: false
   });
 
-  const hasCSS = await fs
-    .access(path.join(outDir, 'index.css'))
-    .then(() => true)
-    .catch(() => false);
+  await fs.mkdir(outDir, { recursive: true });
+  await Promise.all(result.outputFiles.map(output => writeFileAtomic(output.path, output.contents)));
+  const hasCSS = result.outputFiles.some(output => path.basename(output.path) === 'index.css');
 
   return { hasCSS, inputs: sourceInputs(result.metafile) };
 };

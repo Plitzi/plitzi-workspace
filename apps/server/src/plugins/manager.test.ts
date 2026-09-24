@@ -99,3 +99,48 @@ describe('PluginManager staleness', () => {
     expect(second).toBe(first);
   });
 });
+
+/**
+ * With workers, one process invalidates a plugin — the files go — and the others are told to forget it. Forgetting
+ * must leave the disk alone: the others share it, and the files may already be the rebuild.
+ */
+describe('PluginManager forget and invalidate', () => {
+  const exists = (file: string) =>
+    fs.access(file).then(
+      () => true,
+      () => false
+    );
+
+  it('forgets a plugin without touching its files, and prepares it afresh next time', async () => {
+    const { entry, cache } = await workspace();
+    const manager = new PluginManager({ widget: { js: entry, action: 'compile' } }, cache, 60_000, false);
+    const first = await manager.prepare('widget');
+
+    manager.forget('widget');
+
+    expect(await exists(path.join(cache, 'widget', 'index.js'))).toBe(true);
+    const again = await manager.prepare('widget');
+    expect(again).not.toBe(first);
+    expect(again).toEqual(first);
+  });
+
+  it('forgets every plugin, and still leaves the disk alone', async () => {
+    const { entry, cache } = await workspace();
+    const manager = new PluginManager({ widget: { js: entry, action: 'compile' } }, cache, 60_000, false);
+    await manager.prepare('widget');
+
+    manager.forget();
+
+    expect(await exists(path.join(cache, 'widget', 'index.js'))).toBe(true);
+  });
+
+  it('removes the files when it invalidates', async () => {
+    const { entry, cache } = await workspace();
+    const manager = new PluginManager({ widget: { js: entry, action: 'compile' } }, cache, 60_000, false);
+    await manager.prepare('widget');
+
+    await manager.invalidate('widget');
+
+    expect(await exists(path.join(cache, 'widget'))).toBe(false);
+  });
+});

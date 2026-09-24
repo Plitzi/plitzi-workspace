@@ -1,11 +1,13 @@
 import { createHttpServer } from './baseServer';
+import { fleetStore } from './fleet/link';
+import { runsFleetJobs } from './fleet/role';
 import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../../helpers/normalizePlugins';
 import { reportReactBuild } from '../../helpers/reportReactBuild';
 import { configureServerLog, defaultLogLevel, isLogged, logLevelOf } from '../../helpers/serverLog';
 import { actionsModuleFor } from '../../modules/actions/moduleFor';
 import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
-import { createMemoryDraftStore } from '../../modules/ssr/preview';
+import { createMemoryDraftStore, DRAFT_STORE_METHODS } from '../../modules/ssr/preview';
 import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
 import { makeHandler } from '../http/dispatcher';
@@ -14,7 +16,7 @@ import { buildPagePipeline } from '../services/registry';
 import type { BuildContext } from '../http/dispatcher';
 import type { PipelineExtensions, SSRContext } from '../http/types';
 import type { ResolvedServices } from '../services/resolve';
-import type { CacheManager, PluginRegistry, SSRPageServerConfig, SSRServer } from '@plitzi/sdk-shared';
+import type { CacheManager, DraftStore, PluginRegistry, SSRPageServerConfig, SSRServer } from '@plitzi/sdk-shared';
 
 /** The page-serving machinery: html/rsc caches, the render template and the plugin manager, driving the page
  *  pipeline. Which services it mounts is the CALLER's decision — {@link createServer} passes whatever the config
@@ -41,9 +43,10 @@ export const createPageServer = (
   configureServerLog({ level: logLevel, logger });
   reportReactBuild(config.devMode);
   // Draft-preview tokens need a store shared between the /preview writer and the __pt render reader; default to
-  // an in-process one when the consumer injects none (single replica). Set on config so both paths see it.
+  // an in-process one when the consumer injects none — the primary's, when workers serve, since the draft is written
+  // through one of them and read back by whichever serves the render. Set on config so both paths see it.
   if (config.preview?.enabled && !config.draftStore) {
-    config.draftStore = createMemoryDraftStore();
+    config.draftStore = fleetStore<DraftStore>('ssr.drafts', DRAFT_STORE_METHODS) ?? createMemoryDraftStore();
   }
 
   const caches = createServerCaches(htmlTtlMs, config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc);
@@ -97,8 +100,17 @@ export const createPageServer = (
     cache,
     plugins,
     // Only once the transport is bound: a server that was built and never listened on must not be claiming jobs
-    // another replica could be running.
-    onListen: () => actions?.jobs?.start(),
+    // another replica could be running. With workers, only the one that carries the fleet's jobs starts them.
+    onListen: () => {
+      if (runsFleetJobs()) {
+        actions?.jobs?.start();
+      }
+    },
+    beforeFork: () => pluginManager.prepareAll(),
+    forgetPlugins: (name, version) => {
+      pluginManager.forget(name, version);
+      invalidatePluginComponentCache();
+    },
     onDestroy: async () => {
       // Awaited first, and before the sockets go: the jobs running here are finished rather than abandoned, so a
       // rolling deploy costs no retries. Nothing else is waited for — what is still pending stays in the shared

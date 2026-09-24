@@ -70,7 +70,15 @@ export const categories: Category[] = [
     name: 'server',
     app: '@plitzi/sdk-server',
     what: 'The page server: what it renders, and who it renders it for',
-    targets: ['server', 'auth-server', 'action-server', 'published-server', 'devtools-server', 'mail-sink'],
+    targets: [
+      'server',
+      'auth-server',
+      'action-server',
+      'published-server',
+      'devtools-server',
+      'mail-sink',
+      'workers-server'
+    ],
     subcategories: [
       { name: 'ssr', what: 'What arrives before a script runs, and what happens after' },
       { name: 'rsc', what: 'Per-element server data: the three runtimes, the slices, the partial refresh' },
@@ -79,7 +87,8 @@ export const categories: Category[] = [
         what: 'Flows run on the server: inside the render, from a click, and out through the space’s own SMTP server'
       },
       { name: 'preview', what: 'Draft renders that are never saved, and the one-shot token' },
-      { name: 'auth', what: 'A visitor becoming a member and back: guest/member pages, sessions, bindings' }
+      { name: 'auth', what: 'A visitor becoming a member and back: guest/member pages, sessions, bindings' },
+      { name: 'workers', what: 'One port served by several processes: the load spread, every page the same' }
     ]
   },
   {

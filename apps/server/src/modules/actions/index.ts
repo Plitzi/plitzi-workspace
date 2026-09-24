@@ -2,15 +2,16 @@ import { createActionJobs } from './jobs';
 import { createRunGuards } from './runtime/guards';
 import { createKvStore } from './runtime/kvStore';
 import { resolveLimits } from './runtime/limits';
-import { createMemoryKv } from './runtime/memoryKv';
+import { createMemoryKv, KV_METHODS } from './runtime/memoryKv';
 import { namespaceKv } from './runtime/namespaceKv';
 import { createActionRunner } from './runtime/runAction';
 import { createTaskRegistry } from './tasks/registry';
+import { fleetStore } from '../../core/server/fleet/link';
 
 import type { ActionJobs } from './jobs';
 import type { RunGuards } from './runtime/guards';
 import type { ActionRunner } from './runtime/runAction';
-import type { ActionKvStore, ActionsConfig, ActionTaskRegistry, ResolvedActionLimits } from './types';
+import type { ActionKvAdapter, ActionKvStore, ActionsConfig, ActionTaskRegistry, ResolvedActionLimits } from './types';
 import type { ActionDocument } from '@plitzi/sdk-shared';
 
 export type ActionsModule = ActionRunner & {
@@ -38,7 +39,24 @@ export type ActionsModule = ActionRunner & {
  * are a single set for the process — two instances would each think they were the only run in flight, which is
  * the same as having no single-flight at all. Nothing outside this folder needs to know how a run is assembled.
  */
-export const createActionsModule = (config: ActionsConfig): ActionsModule => {
+/**
+ * The workers of one server are one replica, so with no `kv` configured they share the primary's: a flow's counter,
+ * a webhook's rate limit, a run's single-flight key, a cancel and a replayed answer then mean the same whichever
+ * worker the request lands on — the path a deployment with its own shared store already takes. One process keeps
+ * its own maps, as it always did.
+ */
+const withFleetKv = (config: ActionsConfig): ActionsConfig => {
+  if (config.kv) {
+    return config;
+  }
+
+  const shared = fleetStore<ActionKvAdapter>('actions.kv', KV_METHODS);
+
+  return shared ? { ...config, kv: shared } : config;
+};
+
+export const createActionsModule = (given: ActionsConfig): ActionsModule => {
+  const config = withFleetKv(given);
   const registry = createTaskRegistry(config.tasks, { db: (config.dbDrivers?.length ?? 0) > 0 });
   const { runAction } = createActionRunner(config, registry, config.fetchImpl);
   /**

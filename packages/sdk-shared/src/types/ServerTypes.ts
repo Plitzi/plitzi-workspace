@@ -955,6 +955,32 @@ export type SSRServerConfig = {
    * supervisor that retries, a test that asserts the failure. Handling it here replaces the exit entirely.
    */
   onListenError?: (error: NodeJS.ErrnoException, context: { port: number; host: string; label: string }) => void;
+  /**
+   * How many processes serve this port. Node runs JavaScript on one thread, so one process renders on one core however
+   * many the machine has; each worker is a whole server of its own, and the connections are spread between them —
+   * more requests a second, and less time waiting behind another render.
+   *
+   * `true` / `'auto'`: one per core the process may actually use (a container's CPU quota included). `false`: one
+   * process. A number: that many, lowered to the cores there are (more only take turns on the same cores). Default: on
+   * under `NODE_ENV=production`, off otherwise — a development server and a test runner stay one process. The
+   * `SDK_SERVER_WORKERS` environment variable sets it when this does not.
+   *
+   * The workers are one server — one replica — and behave as one:
+   *
+   * - The stores kept in memory by default (an action's `kv`, the job queue, draft previews, the sign-in rate
+   *   limit) are the primary's, and each worker reaches them over the cluster channel. A store the deployment
+   *   supplies (Redis, a table) is used as it is.
+   * - The scheduler and the job consumers run in one worker only, so a schedule fires once and `jobs.workers` is the
+   *   whole server's concurrency; if that worker dies, its replacement takes them over.
+   * - `server.cache.invalidate()`, `server.plugins.register()` and `server.plugins.invalidate()` reach every worker,
+   *   whichever process calls them.
+   *
+   * Per worker: the rendered-page cache (each renders a page once), the plugin components, and the action run caps
+   * (`action.concurrency`: `perSpace`, `perProcess`, `renderPerProcess`), which a cluster of replicas already counts
+   * per replica. A plugin registered with a `component` stays in the process that registered it — register those
+   * where the server is created.
+   */
+  workers?: boolean | number | 'auto';
   adapters: SSRAdapters;
   /** Which request-handling services this server mounts: `ssr` on by default, `rsc` whenever
    *  `adapters.getRscData` exists. Stages a companion package contributes are deliberately NOT flags here —

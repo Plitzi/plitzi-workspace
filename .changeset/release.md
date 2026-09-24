@@ -372,3 +372,26 @@
   into every server measured, ~10 MB counted as the server's); `--repeat N` starts a target cold N times and keeps
   each phase's median run, since on Apple silicon a container runs on a fast or a slow core for its whole life.
 
+
+## A page server on every core
+
+- **`workers`: one process per core.** Node renders on one thread, so a server used one core however many the
+  machine had. `workers: 'auto' | <n> | false` (and `SDK_SERVER_WORKERS`) runs the server in that many processes on
+  one port; `'auto'` is the default under `NODE_ENV=production`, one process anywhere else. The count follows the
+  cores the process may use — a container's CPU quota included — and a number above them is lowered, with a warning.
+  One process (workers off, one asked for, one core) is the server exactly as before: nothing forked, nothing wrapped.
+- **The workers are one server.** The in-memory defaults — an action's `kv`, the job queue, draft previews, the
+  sign-in rate limit — are kept once, by the process that was started, and every worker reaches the same copy over
+  the cluster channel; a store the deployment supplies is used as it is. The scheduler and the job consumers run in
+  one worker. `server.cache.invalidate()`, `server.plugins.register()` and `server.plugins.invalidate()` reach every
+  worker. Plugins are built once, before the workers start, and their files are written atomically (a temporary file
+  renamed over the target), so no process reads a half-written one.
+- **A worker that dies is replaced**, and takes its jobs with it to the replacement. Past one death per worker a minute
+  the replacements wait longer each time (half a second, doubling, up to thirty), so a crash on every request is not a
+  fork loop; a replacement that cannot start is retried while the others keep serving. A worker that dies before any
+  has served stops the server with a non-zero exit, and a server killed outright takes its workers with it.
+- **Fixed: `server.cache.invalidate({ spaceId | environment | hostname })` matched nothing.** It read the page cache's
+  key by positions it no longer had once the key gained the visitor's token, theme and dev-tools choice in front; a
+  publish webhook that invalidated a space cleared no page. The key is now read by the same list that writes it.
+- `PluginManager.forget(name?, version?)` drops what a process remembers of a plugin and leaves the files: what an
+  invalidation in another worker does.

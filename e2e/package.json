@@ -13,7 +13,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start:auth": "node --import tsx server/authServer.ts",
     "start:published": "NODE_ENV=production node --import tsx server/publishedServer.ts",
-    "start:published-devtools": "NODE_ENV=production PORT=5206 E2E_SPACE_DEBUG_MODE=1 node --import tsx server/publishedServer.ts"
+    "start:published-devtools": "NODE_ENV=production PORT=5206 E2E_SPACE_DEBUG_MODE=1 node --import tsx server/publishedServer.ts",
+    "start:workers": "NODE_ENV=production node --import tsx server/workersServer.ts"
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",

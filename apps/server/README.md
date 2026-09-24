@@ -183,6 +183,7 @@ serve it — worth running over anything that arrives as a file.
 | `logLevel` | `'silent' \| 'error' \| 'warn' \| 'info' \| 'debug'` | `info` with `devMode`, else `error` | How much the server says, for the whole process (see [Logging](#logging)). |
 | `logger` | `ServerLogger` | the console | Where it says it: one structured `ServerLogEvent` stream. `consoleLogger` prints each as one line. |
 | `onListenError` | `(error, { port, host, label }) => void` | exits non-zero | What to do when the server cannot take its port. By default it prints what went wrong and what to do about it, then exits — a process whose server never bound is not running. Supply this to keep it alive and decide yourself. |
+| `workers` | `boolean \| number \| 'auto'` | `'auto'` under `NODE_ENV=production`, else `false` | How many processes serve the port: one per core, a number (lowered to the cores there are), or one. `SDK_SERVER_WORKERS` sets it when the config does not. See [Using every core](#using-every-core). |
 
 ### HTTP version behaviour
 
@@ -1139,6 +1140,54 @@ A stage receives the `SSRContext` — the request, the config, and the render si
 `pluginManager`, `caches`) — and returns `true` when it has answered, `false` to fall through. Passing the stages
 **is** the decision to mount them: there is no config flag mirroring it, and a server that never passes them
 never loads them.
+
+## Using every core
+
+Node runs JavaScript on one thread, so one process renders on one core however many the machine has. With
+`workers`, the server runs one process per core and the connections are spread between them: more requests a second,
+and less time waiting behind another page's render.
+
+```ts
+createServer({ adapters, workers: 'auto' }); // one per core — the default under NODE_ENV=production
+createServer({ adapters, workers: 4 });      // at most four, and never more than the cores there are
+createServer({ adapters, workers: false });  // one process, exactly as before
+```
+
+`SDK_SERVER_WORKERS=auto|false|<n>` sets it from the environment. The cores are the ones the process may use: a
+container's CPU quota counts, so a pod limited to one CPU runs one process whatever the node has.
+
+**One process is the server as it always was.** Workers off, one asked for, or one core to run on: nothing is forked,
+nothing is wrapped, and every in-memory default is this process's own.
+
+**Several are still one server.** The process you started serves nothing itself; it starts the workers, restarts them
+and keeps what they must share:
+
+- The in-memory defaults — an action's `kv`, the job queue, draft previews, the sign-in rate limit — are kept once, by
+  that process, and every worker reaches the same copy. A counter counts every request once; a draft written through
+  one worker is read through another. A store you supply (Redis, a table) is used as it is.
+- The scheduler and the job consumers run in one worker only: a schedule fires once, and `jobs.workers` is the whole
+  server's concurrency.
+- `server.cache.invalidate()`, `server.plugins.register()` and `server.plugins.invalidate()` reach every worker,
+  whichever process calls them — a publish webhook lands on one of them.
+- Plugins are built once, before the workers start.
+
+Per worker: the rendered-page cache (each renders a page once), the plugin components, and the action caps
+(`action.concurrency`). A plugin registered with a `component` stays in the process that registered it — register
+those where the server is created.
+
+**When a worker dies** — a crash, an uncaught error, the OOM killer — it is replaced, and its replacement takes over the
+jobs it carried (a claimed job goes back to the queue when its lease lapses). Past one death per worker a minute the
+replacements wait, doubling from half a second up to thirty, so a request that crashes every worker it reaches cannot
+turn the server into a fork loop. A replacement that fails to start is retried the same way while the rest keep
+serving. Two exceptions: a worker that dies before any has served stops the server with a non-zero exit (a port in use
+would fail the same way every time), and a server that is killed outright takes its workers with it.
+
+`closeOnSignals(server)` stops them all on SIGTERM, each finishing what it is serving. The workers of one machine are
+one replica; several machines are several replicas, and what must hold across those still needs a shared store — see
+below.
+
+A process that starts servers of its own beside this one (an Express app on another port) should say `workers:
+false`: each worker runs the whole entry file again.
 
 ## Scheduled jobs across replicas
 
