@@ -355,8 +355,15 @@ describe('workers — a server on several processes', () => {
     const run = await start({ WORKERS: '3' });
     await untilServing(run);
 
-    const enqueued = await fromEach(run.port, 'queue/enqueue?key=job-1', 3, asBoolean);
-    expect([...enqueued.values()].filter(Boolean)).toHaveLength(1);
+    // Every answer, not one per process: a worker asked twice answers `true` and then `false`, and keeping only its
+    // last answer lost the one enqueue that happened.
+    const answers: { pid: number; value: boolean }[] = [];
+    for (let attempt = 0; attempt < 90 && new Set(answers.map(answer => answer.pid)).size < 3; attempt += 1) {
+      answers.push(await fleet(run.port, 'queue/enqueue?key=job-1', asBoolean));
+    }
+
+    expect(new Set(answers.map(answer => answer.pid)).size).toBe(3);
+    expect(answers.filter(answer => answer.value)).toHaveLength(1);
     expect([...(await fromEach(run.port, 'queue/now', 3, asBoolean)).values()]).toEqual([true, true, true]);
 
     const claims = await Promise.all(Array.from({ length: 9 }, () => fleet(run.port, 'queue/claim', asStrings)));
