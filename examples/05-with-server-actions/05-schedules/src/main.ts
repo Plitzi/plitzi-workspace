@@ -13,6 +13,8 @@ import { createSqliteJobQueue } from './store/queue';
 import { createTasks } from './tasks';
 
 const PORT = Number(process.env.PORT ?? 4016);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
@@ -39,7 +41,7 @@ const runLogger = createRunLogger(consoleLogger);
  * the action documents are). `sdk-server` connects to nothing on its own; everything it keeps, it keeps here.
  */
 const server = createServer({
-  devMode: true,
+  devMode: process.env.NODE_ENV !== 'production',
   logger: consoleLogger,
   adapters: createJsonAdapters({
     offlineData: offlineData(),
@@ -78,7 +80,7 @@ const server = createServer({
   }
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 
 /**
  * ^C drains rather than drops: `close` stops claiming, waits for the jobs this replica is RUNNING to finish — renewing

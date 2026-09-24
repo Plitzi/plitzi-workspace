@@ -1,0 +1,431 @@
+{
+  "date": "2026-09-24T14:42:17.635Z",
+  "profile": {
+    "name": "edge-128",
+    "description": "Quarter of a core, 128 MB",
+    "cpus": 0.25,
+    "memoryMb": 128,
+    "nodeOptions": [
+      "--single-threaded",
+      "--max-semi-space-size=2",
+      "--max-old-space-size=48"
+    ]
+  },
+  "runtime": {
+    "name": "docker",
+    "enforcesLimits": true,
+    "details": {
+      "docker": "29.1.3",
+      "architecture": "arm64",
+      "image": "node:24-slim",
+      "node": "v24.21.0"
+    }
+  },
+  "git": {
+    "commit": "ab5ec466e",
+    "dirty": true
+  },
+  "host": {
+    "platform": "darwin-arm64",
+    "cpu": "Apple M2 Max",
+    "cores": 12,
+    "memoryGb": 64
+  },
+  "options": {
+    "concurrency": [
+      1,
+      10,
+      50
+    ],
+    "durationMs": 8000,
+    "warmupMs": 3000,
+    "nodeOptions": [
+      "--single-threaded",
+      "--max-semi-space-size=2",
+      "--max-old-space-size=48"
+    ],
+    "env": {}
+  },
+  "targets": [
+    {
+      "target": "sdk-server-render",
+      "runner": "node",
+      "status": "ok",
+      "phases": [
+        {
+          "scenario": "page",
+          "concurrency": 1,
+          "requests": 477,
+          "rps": 59.6,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 5287,
+          "latencyMs": {
+            "mean": 16.771139490566018,
+            "p50": 4.163000000000466,
+            "p90": 76.2527910000008,
+            "p99": 103.47175000000061,
+            "max": 290.49504200000047
+          },
+          "cpuMsPerRequest": 4.25,
+          "cpuCores": 0.25,
+          "throttledShare": 1,
+          "memoryMb": {
+            "mean": 94.1,
+            "max": 95.4,
+            "anonMax": 85.1
+          },
+          "processMb": {
+            "heapUsed": 39.2,
+            "heapTotal": 44.4,
+            "codeSpace": 3.8,
+            "external": 17.6
+          }
+        },
+        {
+          "scenario": "page",
+          "concurrency": 10,
+          "requests": 697,
+          "rps": 86.8,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 5287,
+          "latencyMs": {
+            "mean": 115.07763175035875,
+            "p50": 99.23870900000111,
+            "p90": 202.56183299999975,
+            "p99": 307.53941600000326,
+            "max": 402.6602500000008
+          },
+          "cpuMsPerRequest": 2.92,
+          "cpuCores": 0.25,
+          "throttledShare": 0.98,
+          "memoryMb": {
+            "mean": 97.2,
+            "max": 97.7,
+            "anonMax": 86.7
+          },
+          "processMb": {
+            "heapUsed": 35.9,
+            "heapTotal": 44.9,
+            "codeSpace": 4,
+            "external": 16.5
+          }
+        },
+        {
+          "scenario": "page",
+          "concurrency": 50,
+          "requests": 749,
+          "rps": 87,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 5287,
+          "latencyMs": {
+            "mean": 549.2450747036055,
+            "p50": 588.6618329999983,
+            "p90": 686.4305410000015,
+            "p99": 1092.9423339999994,
+            "max": 1294.6592089999976
+          },
+          "cpuMsPerRequest": 2.91,
+          "cpuCores": 0.25,
+          "throttledShare": 0.99,
+          "memoryMb": {
+            "mean": 96.3,
+            "max": 98.8,
+            "anonMax": 87.4
+          },
+          "processMb": {
+            "heapUsed": 33.8,
+            "heapTotal": 46.2,
+            "codeSpace": 4.3,
+            "external": 16.5
+          }
+        }
+      ],
+      "oomKilled": false,
+      "bootMs": 2265,
+      "idleMb": 89.5,
+      "idleAnonMb": 79,
+      "idleProcessMb": {
+        "heapUsed": 25.6,
+        "heapTotal": 31.8,
+        "codeSpace": 1.3,
+        "external": 15.8
+      },
+      "retainedMb": 95.3,
+      "peakMb": 101.1
+    },
+    {
+      "target": "sdk-server-cached",
+      "runner": "node",
+      "status": "ok",
+      "phases": [
+        {
+          "scenario": "page",
+          "concurrency": 1,
+          "requests": 19271,
+          "rps": 2408.8,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 5289,
+          "latencyMs": {
+            "mean": 0.41488689274039464,
+            "p50": 0.3570000000036089,
+            "p90": 0.4553749999977299,
+            "p99": 1.4527079999970738,
+            "max": 65.1472089999952
+          },
+          "cpuMsPerRequest": 0.07,
+          "cpuCores": 0.16,
+          "throttledShare": 0.11,
+          "memoryMb": {
+            "mean": 86.7,
+            "max": 87.3,
+            "anonMax": 76.4
+          },
+          "processMb": {
+            "heapUsed": 27.9,
+            "heapTotal": 33.7,
+            "codeSpace": 1.8,
+            "external": 15.4
+          }
+        },
+        {
+          "scenario": "page",
+          "concurrency": 10,
+          "requests": 29312,
+          "rps": 3657.2,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 5289,
+          "latencyMs": {
+            "mean": 2.7340145146015367,
+            "p50": 0.8745409999974072,
+            "p90": 1.8398750000051223,
+            "p99": 64.88775000000169,
+            "max": 83.23079200000211
+          },
+          "cpuMsPerRequest": 0.07,
+          "cpuCores": 0.25,
+          "throttledShare": 0.98,
+          "memoryMb": {
+            "mean": 94,
+            "max": 94.8,
+            "anonMax": 83.3
+          },
+          "processMb": {
+            "heapUsed": 40.9,
+            "heapTotal": 44.7,
+            "codeSpace": 2,
+            "external": 15.4
+          }
+        },
+        {
+          "scenario": "page",
+          "concurrency": 50,
+          "requests": 31987,
+          "rps": 3985,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 5289,
+          "latencyMs": {
+            "mean": 12.54478152308751,
+            "p50": 3.4890830000076676,
+            "p90": 68.97879199999443,
+            "p99": 83.86870799999451,
+            "max": 98.86808400000155
+          },
+          "cpuMsPerRequest": 0.06,
+          "cpuCores": 0.25,
+          "throttledShare": 0.98,
+          "memoryMb": {
+            "mean": 95.3,
+            "max": 95.8,
+            "anonMax": 83.9
+          },
+          "processMb": {
+            "heapUsed": 39.3,
+            "heapTotal": 43.4,
+            "codeSpace": 2,
+            "external": 15.4
+          }
+        },
+        {
+          "scenario": "health",
+          "concurrency": 1,
+          "requests": 21954,
+          "rps": 2744.2,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 43,
+          "latencyMs": {
+            "mean": 0.36426909005193975,
+            "p50": 0.31362499999522697,
+            "p90": 0.3866249999991851,
+            "p99": 1.3575419999979204,
+            "max": 26.141709000003175
+          },
+          "cpuMsPerRequest": 0.06,
+          "cpuCores": 0.15,
+          "throttledShare": 0.09,
+          "memoryMb": {
+            "mean": 95.2,
+            "max": 95.9,
+            "anonMax": 84.3
+          },
+          "processMb": {
+            "heapUsed": 27.9,
+            "heapTotal": 35.7,
+            "codeSpace": 2,
+            "external": 15.4
+          }
+        },
+        {
+          "scenario": "health",
+          "concurrency": 10,
+          "requests": 38047,
+          "rps": 4755.6,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 43,
+          "latencyMs": {
+            "mean": 2.1025789980550362,
+            "p50": 0.693249999996624,
+            "p90": 1.3560839999991003,
+            "p99": 61.98050000000512,
+            "max": 80.22070800000802
+          },
+          "cpuMsPerRequest": 0.05,
+          "cpuCores": 0.25,
+          "throttledShare": 0.99,
+          "memoryMb": {
+            "mean": 96.9,
+            "max": 97.8,
+            "anonMax": 86
+          },
+          "processMb": {
+            "heapUsed": 34.2,
+            "heapTotal": 41.7,
+            "codeSpace": 2,
+            "external": 15.4
+          }
+        },
+        {
+          "scenario": "health",
+          "concurrency": 50,
+          "requests": 38966,
+          "rps": 4869.4,
+          "errors": 0,
+          "unexpected": {},
+          "bytesPerResponse": 43,
+          "latencyMs": {
+            "mean": 10.26626797952052,
+            "p50": 2.6941250000090804,
+            "p90": 64.97879100000137,
+            "p99": 83.7542919999978,
+            "max": 96.075874999995
+          },
+          "cpuMsPerRequest": 0.05,
+          "cpuCores": 0.25,
+          "throttledShare": 0.99,
+          "memoryMb": {
+            "mean": 99.8,
+            "max": 100.2,
+            "anonMax": 87.6
+          },
+          "processMb": {
+            "heapUsed": 37.6,
+            "heapTotal": 43.2,
+            "codeSpace": 2,
+            "external": 15.4
+          }
+        }
+      ],
+      "oomKilled": false,
+      "bootMs": 2857,
+      "idleMb": 89.4,
+      "idleAnonMb": 79,
+      "idleProcessMb": {
+        "heapUsed": 25.7,
+        "heapTotal": 31.8,
+        "codeSpace": 1.3,
+        "external": 15.8
+      },
+      "retainedMb": 99,
+      "peakMb": 101
+    },
+    {
+      "target": "server-rendered",
+      "runner": "tsx",
+      "status": "failed",
+      "phases": [],
+      "oomKilled": true,
+      "failure": "the server stopped before / answered",
+      "logsTail": ""
+    },
+    {
+      "target": "server-components",
+      "runner": "tsx",
+      "status": "failed",
+      "phases": [],
+      "oomKilled": true,
+      "failure": "the server stopped before / answered",
+      "logsTail": ""
+    },
+    {
+      "target": "sessions",
+      "runner": "tsx",
+      "status": "failed",
+      "phases": [],
+      "oomKilled": true,
+      "failure": "the server stopped before / answered",
+      "logsTail": ""
+    },
+    {
+      "target": "actions-render",
+      "runner": "tsx",
+      "status": "failed",
+      "phases": [],
+      "oomKilled": true,
+      "failure": "the server stopped before / answered",
+      "logsTail": ""
+    },
+    {
+      "target": "blog",
+      "runner": "tsx",
+      "status": "failed",
+      "phases": [],
+      "oomKilled": true,
+      "failure": "the server stopped before / answered",
+      "logsTail": ""
+    },
+    {
+      "target": "seismic",
+      "runner": "tsx",
+      "status": "failed",
+      "phases": [],
+      "oomKilled": true,
+      "failure": "the server stopped before / answered",
+      "logsTail": ""
+    },
+    {
+      "target": "ceniza",
+      "runner": "tsx",
+      "status": "failed",
+      "phases": [],
+      "oomKilled": true,
+      "failure": "the server stopped before / answered",
+      "logsTail": ""
+    },
+    {
+      "target": "mcp-server",
+      "runner": "tsx",
+      "status": "failed",
+      "phases": [],
+      "oomKilled": true,
+      "failure": "the server stopped before /health answered",
+      "logsTail": ""
+    }
+  ]
+}

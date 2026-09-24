@@ -1,6 +1,8 @@
 import { consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 8080);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 /**
  * The space's HOST key — not the public one the published page embeds.
  *
@@ -44,10 +46,10 @@ const adapters = createCloudAdapters({
 
 const server = createServer({
   port: PORT,
-  devMode: true,
+  devMode: process.env.NODE_ENV !== 'production',
   adapters,
   logger: consoleLogger
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 console.log(`[example] pages on http://127.0.0.1:${PORT}/`);

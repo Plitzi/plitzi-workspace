@@ -1,0 +1,25 @@
+{
+  "name": "@plitzi/bench",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Load and footprint benchmarks for the self-hosted servers: throughput, latency, CPU and memory under hardware limits.",
+  "type": "module",
+  "scripts": {
+    "bench": "node --import tsx src/cli.ts",
+    "test": "vitest run",
+    "lint": "TIMING=1 eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@plitzi/example-space": "workspace:*",
+    "@plitzi/sdk-server": "workspace:*",
+    "@plitzi/sdk-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "eslint": "^9.39.5",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.1"
+  }
+}

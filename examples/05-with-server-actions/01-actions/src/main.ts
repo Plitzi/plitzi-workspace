@@ -7,6 +7,8 @@ import { shippingRate } from './tasks';
 import type { SSRSpaceDeployment } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4009);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 const DRAFT_PORT = PORT + 1;
 
 const space = offlineData();
@@ -20,7 +22,7 @@ const space = offlineData();
  */
 const serverFor = (deployment: SSRSpaceDeployment) =>
   createServer({
-    devMode: true,
+    devMode: process.env.NODE_ENV !== 'production',
     logger: consoleLogger,
     adapters: createJsonAdapters({ offlineData: space, deployment }),
     action: {
@@ -49,8 +51,8 @@ const serverFor = (deployment: SSRSpaceDeployment) =>
 const published = serverFor({ spaceId: 1, environment: 'production', revision: 2 });
 const draft = serverFor({ spaceId: 1, environment: 'main', revision: 0 });
 
-published.listen(PORT, '127.0.0.1');
-draft.listen(DRAFT_PORT, '127.0.0.1');
+published.listen(PORT, HOST);
+draft.listen(DRAFT_PORT, HOST);
 
 console.log(`[example] published site (production, revision 2) on http://127.0.0.1:${PORT}/`);
 console.log(`[example] the draft      (main, revision 0)       on http://127.0.0.1:${DRAFT_PORT}/`);

@@ -12,7 +12,7 @@ import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/r
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { authorizesDebugging } from '../../helpers/debugAuthorization';
-import { escapeJson } from '../../helpers/escapeJson';
+import { hydrationPayload } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
@@ -183,20 +183,17 @@ export const prepareRender = async (
    */
   const theme = themeFromCookies(req.headers.cookie);
 
-  const offlineDataStr = escapeJson(
-    JSON.stringify({
-      offlineData,
-      offlineMode: true,
-      environment,
-      renderMode: 'raw',
-      server,
-      sdkDevToolsStylePath,
-      ...(theme ? { theme } : {}),
-      ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
-      ...(overQuota ? { overQuota } : {}),
-      ...(actionRuns ? { actionRuns } : {})
-    })
-  );
+  const offlineDataStr = hydrationPayload(offlineData, {
+    offlineMode: true,
+    environment,
+    renderMode: 'raw',
+    server,
+    sdkDevToolsStylePath,
+    ...(theme ? { theme } : {}),
+    ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
+    ...(overQuota ? { overQuota } : {}),
+    ...(actionRuns ? { actionRuns } : {})
+  });
 
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
   const pluginSources = req.ctx.spaceDeployment?.pluginSources;

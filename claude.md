@@ -43,6 +43,7 @@ apps/
   mcp/              # MCP server for AI agents (@plitzi/sdk-mcp)
   cli/              # @plitzi/cli
   desktop/          # Desktop client
+bench/              # Load + footprint benchmarks of the self-hosted servers under hardware limits (`yarn bench`)
 packages/
   sdk-shared/       # Shared ESLint + TSConfig base configs
   sdk-auth/

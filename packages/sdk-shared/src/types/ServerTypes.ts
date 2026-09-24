@@ -57,13 +57,16 @@ export type SSRResponseHelpers = {
   /**
    * A `Buffer` is sent byte for byte and never compressed: it is how a binary reaches the wire — a font file, an
    * image — and what it holds is usually compressed already. A string keeps the encoding negotiation.
-   */
-  /**
+   *
    * `compressed` is where this body's compressed forms are kept, for a body that is sent again unchanged — a cached
-   * page. The first send of each encoding compresses and stores it; every later one sends the stored bytes. Without it
-   * a cache hit recompressed the same page on every request, which was nearly all the CPU a cached page cost.
+   * page, a static file. The first send of each encoding compresses and stores it; every later one sends the stored
+   * bytes. Without it a cache hit recompressed the same page on every request, which was nearly all the CPU a cached
+   * page cost.
+   *
+   * A function is a body read only when it is needed: when the stored form for this request's encoding is missing, or
+   * the client takes no compression. A static file is then read from disk once per encoding, not on every request.
    */
-  send: (body: string | Buffer, options?: { compressed?: CompressedBodies }) => void;
+  send: (body: string | Buffer | (() => string), options?: { compressed?: CompressedBodies }) => void;
   write: (chunk: string | Buffer) => void;
   end: () => void;
 };
@@ -703,8 +706,18 @@ export type SSRCompressionConfig = {
   encodings?: ('br' | 'gzip')[];
   /** Responses smaller than this many bytes go out uncompressed. Default 1024. */
   threshold?: number;
-  /** Brotli quality, 0–11. Default 4 — past that the CPU cost outgrows the bytes saved on HTML. */
+  /**
+   * Brotli quality, 0–11, for a body compressed on every request — a page rendered for this request alone. Default 2:
+   * measured on a quarter core, going to 4 cost a tenth of the pages a second to save half a kilobyte on each.
+   */
   brotliQuality?: number;
+  /**
+   * Brotli quality, 0–11, for a body compressed once and kept — a cached page, a static file such as the SDK bundle.
+   * Default 6: paid once, and every later response is that much smaller (the SDK bundle 10% under quality 4), for
+   * the same memory as 4. 9 needs ~40 MB more to compress the bundle, which a 128 MB server does not have; 10 and
+   * 11 cost seconds, which the request that fills the cache would wait for.
+   */
+  keptBrotliQuality?: number;
   /** Gzip level, 0–9. Default 6. */
   gzipLevel?: number;
 };

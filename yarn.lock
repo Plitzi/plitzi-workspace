@@ -3678,6 +3678,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@plitzi/bench@workspace:bench":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/bench@workspace:bench"
+  dependencies:
+    "@plitzi/example-space": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
+    "@plitzi/sdk-shared": "workspace:*"
+    "@types/node": "npm:^26.6.2"
+    eslint: "npm:^9.39.5"
+    tsx: "npm:^4.23.15"
+    typescript: "npm:^6.0.3"
+    vitest: "npm:^5.0.1"
+  languageName: unknown
+  linkType: soft
+
 "@plitzi/cli@workspace:apps/cli":
   version: 0.0.0-use.local
   resolution: "@plitzi/cli@workspace:apps/cli"

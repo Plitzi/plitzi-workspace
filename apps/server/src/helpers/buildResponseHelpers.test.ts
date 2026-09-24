@@ -135,3 +135,32 @@ describe('sending bytes', () => {
     expect(compressed).toEqual({});
   });
 });
+
+describe('sending a body read on demand', () => {
+  it('reads it once, and sends the stored form without reading it again', () => {
+    const store = {};
+    let reads = 0;
+    const read = () => {
+      reads += 1;
+
+      return body;
+    };
+
+    buildResponseHelpers(rawResponse().raw, 'gzip').send(read, { compressed: store });
+    const second = rawResponse();
+    buildResponseHelpers(second.raw, 'gzip').send(read, { compressed: store });
+
+    expect(reads).toBe(1);
+    expect(second.headers['content-encoding']).toBe('gzip');
+    expect(gunzipSync(second.state.body as Buffer).toString()).toBe(body);
+  });
+
+  it('reads it for a client that takes no compression, and sends it as it is', () => {
+    const { raw, headers, state } = rawResponse();
+
+    buildResponseHelpers(raw, undefined).send(() => body, { compressed: { gzip: Buffer.from('stale') } });
+
+    expect(headers['content-encoding']).toBeUndefined();
+    expect(state.body).toBe(body);
+  });
+});

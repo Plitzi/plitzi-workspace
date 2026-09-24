@@ -8,6 +8,8 @@ import { offlineData } from './space';
 import { seismicTasks } from './tasks';
 
 const PORT = Number(process.env.PORT ?? 4014);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
@@ -31,7 +33,7 @@ const plugins = {
  */
 const server = createServer({
   port: PORT,
-  devMode: true,
+  devMode: process.env.NODE_ENV !== 'production',
   logger: consoleLogger,
   adapters: createJsonAdapters({
     offlineData: offlineData(),
@@ -56,7 +58,7 @@ const server = createServer({
   }
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 
 console.log(`[tremor] the monitor on http://127.0.0.1:${PORT}/`);
 console.log('[tremor] ranges: /?window=hour · /?window=day · /?window=week');

@@ -5,6 +5,8 @@ import { accounts, verifyPassword } from './accounts';
 import { offlineData } from './space';
 
 const PORT = Number(process.env.PORT ?? 4007);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 
 /**
  * Auth, in one call.
@@ -28,7 +30,7 @@ const space = createJsonAdapters({ offlineData: offlineData() });
 
 const server = createServer({
   port: PORT,
-  devMode: true,
+  devMode: process.env.NODE_ENV !== 'production',
   logger: consoleLogger,
   adapters: space,
   // The whole of wiring sessions into a page server. `POST /auth/login` and `POST /auth/logout` now answer, the
@@ -37,7 +39,7 @@ const server = createServer({
   auth
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 
 console.log(`[example] a space with users on http://127.0.0.1:${PORT}/`);
 console.log('[example] sign in:  curl -i -X POST http://127.0.0.1:%d/auth/login \\', PORT);

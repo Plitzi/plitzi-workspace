@@ -411,7 +411,8 @@ createServer({ compression: false, adapters });
 |---|---|---|---|
 | `encodings` | `('br' \| 'gzip')[]` | `['br', 'gzip']` | What this server offers, most preferred first; the first one the client accepts wins. `[]` disables compression. |
 | `threshold` | `number` | `1024` | Responses smaller than this many bytes go out uncompressed. |
-| `brotliQuality` | `number` | `4` | Brotli quality, 0–11. Past 4 the CPU cost outgrows the bytes saved on HTML. |
+| `brotliQuality` | `number` | `2` | Brotli quality, 0–11, for a body compressed on every request (a page rendered for that request alone). Measured on a quarter core, 4 cost a tenth of the pages a second to save half a kilobyte each. |
+| `keptBrotliQuality` | `number` | `6` | Brotli quality for a body compressed once and kept: a cached page, a static file such as the SDK bundle. Paid once; the bundle comes out 10% smaller than at 4, for the same memory. 9 needs ~40 MB more to compress the bundle, which a 128 MB server does not have. |
 | `gzipLevel` | `number` | `6` | Gzip level, 0–9. |
 
 A response that sets `Cache-Control: no-transform` is never compressed, whatever the settings say — that header is

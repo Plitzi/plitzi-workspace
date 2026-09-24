@@ -322,3 +322,27 @@
   README no longer claims `devMode` defaults from `NODE_ENV` — it defaults to off.
 - `@plitzi/sdk-server` and `@plitzi/sdk-mcp` no longer bake `process.env.NODE_ENV` in at build time. The published
   build always read `"production"`, whatever the process was started with; a server reads it from its process now.
+
+## Static files compressed, and compressed once
+
+- **Fixed: static files went out uncompressed.** Every body sent as a `Buffer` skips compression (the rule that
+  keeps fonts and images intact), and static files were read as Buffers — so the SDK bundle, its vendor and its
+  stylesheet travelled whole: 2.7 MB, 1 MB and 220 KB on a first visit. Text files (scripts, stylesheets, JSON, SVG,
+  plain text) are compressed now; images and fonts still go out as the bytes on disk.
+- Each is compressed once per version of the file and kept, within 16 MB, least recently served first out — and read
+  from disk only when an encoding it has not been compressed to yet is asked for. `res.send` takes a function for such a
+  body: `send(() => read(), { compressed })` reads it only when the stored form is missing.
+- **Two Brotli qualities.** `compression.brotliQuality` (default 2, was 4) is for a body compressed on every request;
+  `compression.keptBrotliQuality` (default 6) for one compressed once and kept — a cached page, a static file. Measured
+  on a quarter core: 4 cost a tenth of the pages a second to save half a kilobyte each; 6 makes the SDK bundle 10%
+  smaller than 4 for the same memory, where 9 needs ~40 MB more than a 128 MB server has.
+- The space embedded in a rendered page is serialized once per space object instead of on every render — a tenth of a
+  render's CPU spent producing the same string.
+- `sdk-shared`: the dev-tools console no longer keeps logs on a server, where nobody could ever receive them and they
+  held other visitors' state; and stamps a log by hand instead of through date-fns. A page renders ~25% faster on a
+  quarter core with both.
+- Examples: the servers take `HOST` (still loopback by default) and derive `devMode` from `NODE_ENV` — a copy of an
+  example run in production no longer runs in development mode.
+- `bench/` (private): load and footprint benchmarks of the self-hosted servers under hardware profiles, with
+  baselines — `yarn bench`, see its README.
+

@@ -42,7 +42,7 @@ const compressOnce = (
     return kept;
   }
 
-  const compressed = compressBody(body, encoding, compression);
+  const compressed = compressBody(body, encoding, compression, true);
   if (typeof compressed !== 'string') {
     store[encoding] = compressed;
   }
@@ -68,7 +68,31 @@ export const buildResponseHelpers = (
    */
   const transformable = (): boolean => !String(raw.getHeaders()['cache-control']).includes('no-transform');
 
-  const writeSend = (body: string | Buffer, store?: CompressedBodies) => {
+  /** A stored form this request can take as it is, without the body it was made from. */
+  const storedFor = (store: CompressedBodies | undefined): Buffer | undefined =>
+    encoding === 'identity' || !transformable() ? undefined : store?.[encoding];
+
+  const writeBody = (payload: string | Buffer, encoded: boolean) => {
+    if (encoded) {
+      raw.setHeader('Content-Encoding', encoding);
+      raw.setHeader('Vary', 'Accept-Encoding');
+    }
+    raw.setHeader('Content-Length', Buffer.byteLength(payload).toString());
+    if (!raw.headersSent) {
+      raw.writeHead(statusCode);
+    }
+    raw.end(payload);
+  };
+
+  const writeSend = (content: string | Buffer | (() => string), store?: CompressedBodies) => {
+    const stored = typeof content === 'function' ? storedFor(store) : undefined;
+    if (stored) {
+      writeBody(stored, true);
+
+      return;
+    }
+
+    const body = typeof content === 'function' ? content() : content;
     /**
      * A Buffer goes out untouched.
      *
@@ -79,16 +103,7 @@ export const buildResponseHelpers = (
      */
     const compressed =
       typeof body === 'string' && transformable() ? compressOnce(body, encoding, compression, store) : body;
-    const isCompressed = compressed !== body;
-    if (isCompressed) {
-      raw.setHeader('Content-Encoding', encoding);
-      raw.setHeader('Vary', 'Accept-Encoding');
-    }
-    raw.setHeader('Content-Length', Buffer.byteLength(compressed).toString());
-    if (!raw.headersSent) {
-      raw.writeHead(statusCode);
-    }
-    raw.end(compressed);
+    writeBody(compressed, compressed !== body);
   };
 
   return {
