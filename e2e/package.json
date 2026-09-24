@@ -18,6 +18,7 @@
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
     "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-authoring": "workspace:*",
     "@plitzi/sdk-mcp": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",

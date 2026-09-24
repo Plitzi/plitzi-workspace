@@ -1,3 +1,5 @@
+import { locate } from '@plitzi/sdk-authoring';
+
 import { describeTarget, expect, isMockBackend, test } from '../../fixtures';
 import { PLAIN_IDS, plainSpace } from '../../spaces';
 
@@ -67,7 +69,7 @@ describeTarget('builder', subject => {
       await expect(canvas(page).getByText('Explore the playground')).toBeVisible();
       // A space with no plugin-backed elements leaves nothing for the builder to report as missing.
       await expect(canvas(page).getByText('Not Found')).toBeHidden();
-      await expect(canvas(page).locator(`.${PLAIN_IDS.logo}`)).toBeVisible();
+      await expect(locate(canvas(page), plainSpace().handles)(PLAIN_IDS.logo)).toBeVisible();
     });
   });
 });

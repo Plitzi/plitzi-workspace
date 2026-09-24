@@ -397,6 +397,59 @@ describe('BasicAuthProvider failures', () => {
   });
 });
 
+/**
+ * An answer belongs to the session it was asked for. The account screen asks who is there while its "sign out" is
+ * pressed; answered after the sign-out, that identity carried the old cookie, came back `ok`, and signed the person
+ * straight back in — the router then read a session on the guest's own page and answered "Access Denied".
+ */
+describe('answers that arrive after the session changed', () => {
+  const deferred = () => {
+    let resolve: (response: Response) => void = () => undefined;
+    const promise = new Promise<Response>(settle => {
+      resolve = settle;
+    });
+
+    return { promise, resolve };
+  };
+
+  it('does not sign back in on an identity asked for before the sign-out', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-3600));
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    await provider.init();
+    expect(provider.getState()).toBe('authenticated');
+
+    const identity = deferred();
+    mockFetch.mockReturnValueOnce(identity.promise).mockResolvedValueOnce(jsonResponse({}));
+    const revalidating = provider.revalidate(true);
+    await provider.logout();
+    expect(provider.getState()).toBe('guest');
+
+    identity.resolve(jsonResponse(session(inSeconds(3600))));
+    await revalidating;
+
+    expect(provider.getState()).toBe('guest');
+    expect(provider.user).toBeUndefined();
+  });
+
+  it('does not end a new sign-in on a refusal meant for the one before it', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-3600));
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    await provider.init();
+
+    const identity = deferred();
+    mockFetch.mockReturnValueOnce(identity.promise).mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    const revalidating = provider.revalidate(true);
+    await provider.login({ username: 'ada', password: 'pw' });
+
+    identity.resolve(jsonResponse({ error: 'revoked' }, 401));
+    await revalidating;
+
+    expect(provider.getState()).toBe('authenticated');
+  });
+});
+
 // The interaction offers a `token` mode, and the provider has to honour it. A rewrite that mapped only
 // username/password turned every token sign-in into `{ username: '', password: '' }` — the backend answered 400
 // saying credentials were required, for a flow that was never meant to send any.

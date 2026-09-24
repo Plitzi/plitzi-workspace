@@ -63,6 +63,7 @@ export * from './interactions';
 export * from './schema';
 export * from './spaces';
 export * from './style';
+export * from './testing';
 export * from './transformers';
 
 /**

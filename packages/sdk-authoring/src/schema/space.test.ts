@@ -211,9 +211,85 @@ describe('authorSpace', () => {
     const members = schema.flat[schema.pages[0]];
 
     expect(members.attributes.unauthorizedBehaviour).toBe('redirect');
-    expect(members.attributes.unauthorizedPageRedirect).toBe('login');
+    // Written as the page's id — what the router reads first — whatever name the author reached it by.
+    expect(members.attributes.unauthorizedPageRedirect).toBe(schema.pages[1]);
     // Absent unless asked for: a page with no destination is answered 403, which is a different behaviour.
     expect(schema.flat[schema.pages[1]].attributes.unauthorizedBehaviour).toBeUndefined();
+  });
+
+  /**
+   * `''` is the home page's slug, and the router reads an empty destination as none: a members page redirecting to the
+   * sign-in at `/` was left answering "Access Denied" — and signing out of it stranded the visitor there.
+   */
+  it('sends a visitor to the home page when the destination is its empty slug', () => {
+    const { schema } = authorSpace({
+      name: 'Gated',
+      permanentUrl: 'gated',
+      pages: [
+        { id: 'login', name: 'Sign in', slug: '', body: [text('in')] },
+        {
+          id: 'account',
+          name: 'Account',
+          slug: 'account',
+          accessLevel: 'authenticated',
+          unauthorizedRedirect: '',
+          body: []
+        }
+      ]
+    });
+
+    expect(schema.flat.account.attributes).toMatchObject({
+      unauthorizedBehaviour: 'redirect',
+      unauthorizedPageRedirect: 'login'
+    });
+  });
+
+  it('takes a path as well as an id or a slug, and keeps an address off the space as written', () => {
+    const pages = (redirect: string) =>
+      authorSpace({
+        name: 'Gated',
+        permanentUrl: 'gated',
+        pages: [
+          { id: 'home', name: 'Home', slug: '', body: [] },
+          { id: 'sign-in', name: 'Sign in', slug: 'login', body: [] },
+          {
+            id: 'members',
+            name: 'Members',
+            slug: 'members',
+            accessLevel: 'authenticated',
+            unauthorizedRedirect: redirect,
+            body: []
+          }
+        ]
+      }).schema.flat.members.attributes.unauthorizedPageRedirect;
+
+    expect(pages('/login')).toBe('sign-in');
+    expect(pages('sign-in')).toBe('sign-in');
+    expect(pages('/')).toBe('home');
+    expect(pages('https://auth.example.com/')).toBe('https://auth.example.com/');
+    expect(pages('{{authUrl}}/')).toBe('{{authUrl}}/');
+  });
+
+  it('refuses a destination that is no page of the space, naming the nearest', () => {
+    expect(() =>
+      authorSpace({
+        name: 'Gated',
+        permanentUrl: 'gated',
+        pages: [
+          { id: 'login', name: 'Sign in', slug: 'login', body: [] },
+          {
+            id: 'members',
+            name: 'Members',
+            slug: 'members',
+            accessLevel: 'authenticated',
+            unauthorizedRedirect: 'logn',
+            body: []
+          }
+        ]
+      })
+    ).toThrow(
+      /Page "Members" sends a visitor it is not for to "logn", which is no page of this space — did you mean "login"/
+    );
   });
 
   it('carries the page SEO fields, and marks SEO off when none were declared', () => {

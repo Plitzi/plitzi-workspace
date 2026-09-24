@@ -350,6 +350,16 @@ describe('lintSpace', () => {
       expect(warningsOf(documents)).toContain('provider-without-source');
     });
 
+    /** The server resolves a provider that names a connector, so it asks something — found by an e2e fixture. */
+    it('provider-without-source is not raised for a connector provider', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.feed.attributes.query = '';
+        schema.flat.feed.attributes.connector = 'crm';
+      });
+
+      expect(warningsOf(documents)).not.toContain('provider-without-source');
+    });
+
     it('default-content-beside-children', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.go.attributes.content = 'Button';

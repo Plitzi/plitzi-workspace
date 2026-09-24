@@ -17,6 +17,28 @@ import path from 'node:path';
 import { targetsForRun } from './categories';
 import { builderCredentials } from './credentials';
 
+/** Whether the MySQL the mysql example connects to answers — the one IT reads, not a variable of the suite's own.
+ *
+ *  The example takes `DATABASE_URL`, or `MYSQL_HOST`/`MYSQL_PORT` with 127.0.0.1:33006 (a local docker MySQL) as the
+ *  default, and makes its own database. The gate used to ask for a `MYSQL_URL` nothing read: the example was skipped on
+ *  a machine whose docker was up, and exporting the variable opened it without changing where it connected. */
+let mysqlUp: boolean | undefined;
+const mysqlReachable = (): boolean => {
+  if (mysqlUp === undefined) {
+    const url = process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL) : undefined;
+    const host = url?.hostname ?? process.env.MYSQL_HOST ?? '127.0.0.1';
+    const port = url?.port || process.env.MYSQL_PORT || '33006';
+    try {
+      execSync(`nc -z -w 2 ${host} ${port}`, { stdio: 'ignore' });
+      mysqlUp = true;
+    } catch {
+      mysqlUp = false;
+    }
+  }
+
+  return mysqlUp;
+};
+
 /** The prebuilt bundle the no-build example loads straight from a script tag. */
 const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
 
@@ -200,7 +222,10 @@ export const targets: Target[] = [
     command: 'PORT=5008 yarn workspace @plitzi/example-with-users-mysql start',
     origin: 'http://127.0.0.1:5008',
     what: 'The same sessions, over a MySQL account store',
-    gate: { open: () => !!process.env.MYSQL_URL, hint: 'point MYSQL_URL at a reachable database' }
+    gate: {
+      open: mysqlReachable,
+      hint: 'start a MySQL on 127.0.0.1:33006 (the services compose of plitzi-sdk-server has one), or set DATABASE_URL'
+    }
   },
   {
     id: 'server-actions',

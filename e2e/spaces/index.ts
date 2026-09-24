@@ -1,4 +1,5 @@
 import { readOfflineData } from '@plitzi/example-space';
+import { offlineData } from '@plitzi/example-space/space';
 
 import { actionSpace } from './actions';
 import { keptStateSpace } from './keptState';
@@ -9,6 +10,7 @@ import { routeQuerySpace } from './routeQueries';
 import { themedSpace } from './themed';
 import { unaskedQuerySpace } from './unaskedQueries';
 
+import type { AuthoredSpace } from '@plitzi/sdk-authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export * from './actions';
@@ -42,6 +44,9 @@ export * from './unaskedQueries';
  *  it belongs in the specs that are about RSC and nowhere else. */
 
 export const sampleSpace = (): OfflineDataRaw => readOfflineData();
+
+/** The same space as authored, handles included — what `expectPageWhole` checks a rendered sample against. */
+export const sampleAuthored = (): AuthoredSpace => offlineData();
 
 /** The sample space with one element's props overridden — the usual shape of "same page, one thing different". */
 export const sampleSpaceWith = (ref: string, props: Record<string, unknown>): OfflineDataRaw => {

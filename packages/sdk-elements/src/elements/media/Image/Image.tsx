@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
@@ -8,7 +8,7 @@ import { getFallbackSVGBase64 } from './ImageHelper';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { RefObject, SyntheticEvent } from 'react';
+import type { RefObject } from 'react';
 
 export type ImageProps = {
   ref?: RefObject<HTMLElement>;
@@ -38,10 +38,19 @@ const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'a
    */
   const src = srcProp || PLACEHOLDER;
 
-  const handleError = useCallback((e: SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.onerror = null;
-    e.currentTarget.src = fallback;
-  }, []);
+  /**
+   * The source that failed, so the fallback is drawn in its place — and SAID to be.
+   *
+   * State rather than a write to the node: the fallback is a picture that loads, so to the browser a broken image and
+   * a working one look the same, and `data-plitzi-failed` is the only thing on the page that tells them apart — for a
+   * test checking every image arrived, and for whoever is looking at a grey box wondering why. Keyed by the source, so
+   * a new `src` gets its own attempt and the marker goes with the old one.
+   */
+  const [failed, setFailed] = useState<string | undefined>(undefined);
+  const broken = failed === src;
+  const handleError = useCallback(() => setFailed(src), [src]);
+  const shown = broken ? fallback : src;
+  const marker = broken ? { 'data-plitzi-failed': src } : {};
 
   // `auto` is the browser's own choice, which is what leaving the attribute out asks for.
   const loading = loadMode === 'auto' ? undefined : loadMode;
@@ -51,11 +60,12 @@ const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'a
       <RootElement ref={ref} className={clsx('plitzi-component__image image--edit-mode', className)}>
         <img
           draggable={false}
-          src={src}
+          src={shown}
           alt={alt}
           loading={loading}
           fetchPriority={fetchPriority}
-          onError={handleError}
+          onError={broken ? undefined : handleError}
+          {...marker}
         />
       </RootElement>
     );
@@ -67,11 +77,12 @@ const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'a
       draggable={false}
       ref={ref}
       className={clsx('plitzi-component__image', className)}
-      src={src}
+      src={shown}
       alt={alt}
       loading={loading}
       fetchPriority={fetchPriority}
-      onError={handleError}
+      onError={broken ? undefined : handleError}
+      {...marker}
     />
   );
 };

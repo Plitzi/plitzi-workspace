@@ -2,12 +2,12 @@ import { createHmac } from 'node:crypto';
 
 import { describeTarget, expect, test } from '../../fixtures';
 import { paintTrace, resetPaint, watchPaint } from '../../helpers/flicker';
+import { expectPageWhole } from '../../helpers/harness';
 import { mailFor, uniqueRecipient } from '../../helpers/mail';
 import { boardJob, callAction } from '../../helpers/schedules';
-import { RSC_IDS } from '../../helpers/space';
-import { expectDevToolsAvailable, expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
+import { expectDevToolsAvailable, expectSampleSpaceContent, RSC_IDS, WITHOUT_RSC } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
-import { sampleSpace } from '../../spaces';
+import { sampleAuthored } from '../../spaces';
 
 import type { APIRequestContext } from '@playwright/test';
 
@@ -35,8 +35,7 @@ describeTarget('render', subject => {
     await page.goto(subject.origin);
 
     await expectSampleSpaceContent(page);
-    await expectSpaceRendered(page, sampleSpace());
-    await expectVisuallyHealthy(page);
+    await expectPageWhole(page, sampleAuthored(), { elements: 'all', ...WITHOUT_RSC });
     await expectDevToolsAvailable(page);
 
     await capture('render');

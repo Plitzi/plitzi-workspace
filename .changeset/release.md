@@ -257,3 +257,25 @@
   document back drops them and reports it.
 - The authoring skill no longer suggests resetting kept state from `onPageLoad` — the restore lands in the middle of
   that flow — and the MCP guide describes `keepState` as what it is: `runtime.state`, not element state.
+
+## Testing an authored space: one call, every problem
+
+- **`inspectPage(page, handles, options?)`** (`@plitzi/sdk-authoring`): the open page, checked whole — every element it
+  owes present and visible (its own and those of the layouts around it), images arrived, nothing scrolling sideways, no
+  text in the colour painted behind it. Returns every problem at once, each naming the element and why
+  (`display:none on "panel"`), and retries like an assertion. Driver-agnostic (anything with `evaluate`), no new
+  dependency. `inspectDocument(page)` runs the page half for a page whose space is not in hand.
+- `onScreen(handles, page, { elements, ignore })`: what a freshly opened page owes. Page handles carry their `layout`,
+  layout handles theirs.
+- `singlePageSpace(body, space?)` and `withElement(spec, id, patch)`: a one-page space, and the same space with one
+  element changed — on the SPEC, so a variant is validated like any space.
+- `authorSpace(spec, { allow: [{ code, element, why }] })`: a fixture that breaks a check on purpose names that break.
+  It comes back in `warnings` with the reason; an entry that matches nothing is refused.
+- Fixed: `defineAction` with several triggers chained them one after another, so a run through the first executed the
+  second as a step. Every way in now heads the same chain.
+- Fixed: `provider-without-source` warned on a provider that names a `connector`.
+- The image element says when it drew its fallback: `data-plitzi-failed="<src>"`. The fallback loads, so to a browser
+  a broken image looked loaded. The fallback is now state, keyed by the source: a new `src` gets its own attempt.
+- The CLI's generated visual test uses `inspectPage`.
+- The sample space (`examples/shared-space`) no longer sizes itself by the window: embedded beside a host's sidebar
+  (`03-react-component`) it overflowed by the sidebar's width. Its RSC section is named `rsc-section`.

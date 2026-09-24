@@ -212,7 +212,8 @@ export interface PageSpec {
    */
   accessLevel?: 'public' | 'authenticated';
   /**
-   * Where a visitor this page is not for is sent — a slug, e.g. `login`.
+   * Where a visitor this page is not for is sent — a page's id or slug (`login`; `''` is the home page), its path, or a
+   * full URL for somewhere off this space. Resolved to the page's id, and refused when it names no page.
    *
    * Without it they are answered 403, which is correct and rarely what a site wants: somebody who followed a link
    * to a members page should land on the sign-in, not on a refusal. One field rather than the router's two,
@@ -402,6 +403,22 @@ export interface StepVocabulary {
  */
 export type SourceTypes = Record<string, string>;
 
+/**
+ * One refusal a document is allowed to carry, named exactly: which check, on which element, and why.
+ *
+ * Narrow on purpose — a code alone would let a second, accidental instance through beside the intended one. It is
+ * never silent either: the refusal comes back in `warnings` with the reason in front, and an entry that matches nothing
+ * is itself refused, so it cannot outlive the break it was written for.
+ */
+export interface AllowedBreak {
+  /** The validator code, as a refusal prints it in brackets — `template-unknown-name`. */
+  code: string;
+  /** The id of the element that breaks it. */
+  element: string;
+  /** Why this is on purpose. Printed with the warning, for whoever reads it next. */
+  why: string;
+}
+
 export interface AuthorSpaceOptions {
   /**
    * The step vocabulary to hold this space's flows to. Left out, flows are written as declared and only their
@@ -440,6 +457,11 @@ export interface AuthorSpaceOptions {
    * (`contaner`) and a plugin nobody registered render the same: nothing.
    */
   pluginTypes?: readonly string[];
+  /**
+   * What this document breaks ON PURPOSE — a fixture for how the runtime copes with something no author would write,
+   * like a provider whose URL names a route param no page has. See {@link AllowedBreak}.
+   */
+  allow?: readonly AllowedBreak[];
   /** The binding transformers and their params. Left out, a transformer nothing implements is written as given. */
   transformers?: Readonly<Record<string, { strictParams?: boolean; params?: ParamSpec }>>;
 }

@@ -66,6 +66,8 @@ export interface PageHandle extends ElementHandle {
   accessLevel?: 'public' | 'authenticated';
   /** The route params its slug declares (`post/{{slug}}` → `['slug']`). A path with any is not a URL until they are filled. */
   params: string[];
+  /** The layout this page renders inside, by id — whose elements are on screen here too. */
+  layout?: string;
   /** Everything on this page, by id. */
   elements: Record<string, ElementHandle>;
 }
@@ -74,6 +76,8 @@ export interface PageHandle extends ElementHandle {
 export interface LayoutHandle extends ElementHandle {
   /** Everything in the shell, by id — the header and the navigation a test reaches for on any page. */
   elements: Record<string, ElementHandle>;
+  /** The layout this shell itself renders inside, for a shell within a shell. */
+  layout?: string;
 }
 
 export interface SpaceHandles {

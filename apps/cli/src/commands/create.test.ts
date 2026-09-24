@@ -300,7 +300,8 @@ describe('the scaffold', () => {
     expect(spec).toContain('page.goto(pageHandle.path');
     // What a bare visit cannot show is not held against the page: a session, a route param, a condition.
     expect(spec).toContain("pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0");
-    expect(spec).toContain('entry.named && !entry.conditional && !entry.repeated && !entry.boxless');
+    // The condition, the list row and the boxless provider are set aside by `inspectPage`, from what authoring knows.
+    expect(spec).toContain('inspectPage(page, handles, { page: pageHandle.id })');
   });
 
   // `npm run author` is `node --import tsx`, in a client-mode project too.

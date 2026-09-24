@@ -305,15 +305,15 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
     );
   }
 
-  const asks = ['query', 'action', 'resource'].some(
-    key => typeof attributes[key] === 'string' && attributes[key] !== ''
-  );
+  // `connector` is a way to ask on its own: the server resolves a provider that names one, whatever its `resource`.
+  const sources = ['query', 'action', 'connector', 'resource'];
+  const asks = sources.some(key => typeof attributes[key] === 'string' && attributes[key] !== '');
   const mockData = attributes.mockData;
   const mocked = typeof mockData === 'string' ? mockData !== '' && mockData !== '{}' : mockData !== undefined;
-  if (type === 'apiContainer' && !asks && !['query', 'action', 'resource'].some(bound) && !mocked) {
+  if (type === 'apiContainer' && !asks && !sources.some(bound) && !mocked) {
     ctx.warn(
       'provider-without-source',
-      `${where} asks nothing: it has no \`query\`, \`action\` or \`resource\`, so everything bound to it stays empty. Give it one — \`query: '/data/games.json'\`.`,
+      `${where} asks nothing: it has no \`query\`, \`action\`, \`connector\` or \`resource\`, so everything bound to it stays empty. Give it one — \`query: '/data/games.json'\`.`,
       element.id
     );
   }

@@ -8,5 +8,5 @@
     "jsx": "react-jsx",
     "resolveJsonModule": true
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "test", "playwright.config.ts", "vite.config.ts"]
 }

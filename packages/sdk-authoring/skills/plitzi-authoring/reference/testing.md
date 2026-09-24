@@ -1,13 +1,37 @@
 # Testing what you authored
 
+## One call: `inspectPage`
+
+```ts
+import { authorSpace, inspectPage } from '@plitzi/sdk-authoring';
+
+const { handles } = authorSpace(space);
+await page.goto('/');
+expect((await inspectPage(page, handles)).problems).toEqual([]);
+```
+
+It checks the open page and returns EVERY problem at once, one sentence each, naming the element and the reason:
+
+- every element the page owes is present and visible — its own and those of the layouts around it
+  (`heading "hero-title" is on the page but not visible: display:none on "hero"`);
+- every image arrived — an image element that failed says so (`data-plitzi-failed`), though its fallback loads;
+- nothing scrolls sideways (`the page scrolls sideways by 37px — widest: "cards"`);
+- no text is drawn in the colour painted behind it.
+
+It retries for up to 5 s like an assertion does (`timeout`), so a provider still answering is not a failure. Options:
+`page` (id or slug; the home page by default), `elements: 'all'` to owe the unnamed elements too, `ignore: ['id']` for
+what a test knows is not there yet (a typo is refused), `skip: ['images']` for a check a page breaks on purpose.
+`inspectDocument(page)` runs the page checks alone, for a page whose space is not in hand.
+
 ## Handles
 
 `authorSpace` returns `handles`: every element by id, with the selector that finds it in the rendered page
 (`[data-plitzi-el="<id>"]`). `handles.element(id)` throws on a name that does not exist, and `locate(page, handles)`
-turns an id into a Playwright locator. Pages are in `handles.pages` (each with its `path` and `elements`); a layout's
-elements are in `handles.layouts` and render on every page that names the layout.
+turns an id into a Playwright locator. Pages are in `handles.pages` (each with its `path`, `elements` and `layout`); a
+layout's elements are in `handles.layouts` and render on every page that names the layout. `onScreen(handles, page)` is
+the list `inspectPage` holds a page to.
 
-Three flags say what an "every named element is visible" check must skip:
+Three flags say what a bare visit cannot promise, and `onScreen` leaves out:
 
 - `conditional` — on screen only under a condition of its own or of an ancestor;
 - `repeated` — inside a list row, so rendered once per row: several copies, or none while the list is empty. Address
@@ -18,6 +42,22 @@ A `formControl`'s id names its wrapper: type into `locate('email').locator('inpu
 
 Select by `data-plitzi-el`, never by a generated class name: authoring derives `<type>-<hash>` for an element's own
 rules, and that name changes when the rules do.
+
+## Spaces written for a test
+
+Author them like any space — never as JSON: the validator is what tells a fixture that tests something from one that
+tests nothing.
+
+```ts
+import { authorSpace, heading, singlePageSpace, withElement } from '@plitzi/sdk-authoring';
+
+const space = singlePageSpace([heading('Hi', { id: 'title', subType: 'h1' })]);   // one page, nothing else
+const edited = withElement(space, 'title', { attributes: { content: 'Changed' } }); // same page, one thing different
+```
+
+A fixture that must break a check ON PURPOSE — the runtime's answer to a document no author would write is the
+subject — names the break: `authorSpace(spec, { allow: [{ code: 'template-unknown-name', element: 'feed', why: '…' }] })`.
+One code on one element; it comes back in `warnings` with the reason, and an entry that no longer matches is refused.
 
 ## What to check
 

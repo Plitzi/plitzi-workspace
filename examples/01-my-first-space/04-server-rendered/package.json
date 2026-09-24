@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node --import tsx src/main.ts",
     "start:dev": "tsx watch --exclude \".sdk-plugins/**\" src/main.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "playwright test"
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
@@ -16,6 +17,8 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@plitzi/sdk-authoring": "workspace:*",
     "@types/node": "^26.6.2",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"

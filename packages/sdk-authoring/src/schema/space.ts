@@ -178,6 +178,9 @@ class SpaceAuthor {
     // declared further down.
     layouts.forEach(layout => this.assertLayoutRef(layout.layout, `Layout "${layout.id}"`));
     this.spec.pages.forEach(page => this.assertLayoutRef(page.layout, `Page "${page.name}"`));
+    // After every page is written, too: a redirect names a page that may be declared further down, by an id authoring
+    // derives when it is.
+    this.spec.pages.forEach((page, index) => this.writeRedirect(page, pages[index]));
     if (pages.length === 0) {
       throw new Error(
         'The space has no pages. Write at least one: `pages: [{ id: "home", name: "Home", slug: "", body: [] }]`.'
@@ -214,7 +217,12 @@ class SpaceAuthor {
     //
     // `FlatMap.assertValid` is deliberately not also called here: it validates the flat map with no pages
     // attached, which is a strictly weaker reading of the same document than the pair below.
-    const warnings = assertSpaceValid({ schema, style }, `authored space "${this.spec.permanentUrl}"`, this.options);
+    const warnings = assertSpaceValid(
+      { schema, style },
+      `authored space "${this.spec.permanentUrl}"`,
+      this.options,
+      this.options.allow
+    );
 
     return {
       schema,
@@ -773,6 +781,50 @@ class SpaceAuthor {
   }
 
   /** Where a page ANSWERS: its folder's chain of slugs, then its own. What a test navigates to. */
+  /**
+   * Where a visitor a page is not for is sent, written the way the router reads it: a page's id, or an address off
+   * this space.
+   *
+   * An author reaches for the page's id, its slug, its path or `''` for the home page, and all of them are resolved
+   * here — the router takes an empty value for "no redirect", so `unauthorizedRedirect: ''`, meaning "the sign-in,
+   * which is the home page", used to be dropped without a word: a visitor signing out of a members page was left on
+   * "Access Denied", with the flow that would have navigated away unmounted under it.
+   */
+  private writeRedirect(page: PageSpec, id: string): void {
+    if (page.unauthorizedRedirect === undefined) {
+      return;
+    }
+
+    const element = this.flatMap.flat[id];
+    this.flatMap.updateElement({
+      ...element,
+      attributes: {
+        ...element.attributes,
+        unauthorizedBehaviour: 'redirect',
+        unauthorizedPageRedirect: this.redirectTarget(page.unauthorizedRedirect, `Page "${page.name}"`)
+      }
+    });
+  }
+
+  private redirectTarget(target: string, where: string): string {
+    // Somewhere else — a whole URL, or one a template fills at run time (`{{authUrl}}/`) — is kept as written.
+    if (/^[a-z][a-z0-9+.-]*:\/\//iu.test(target) || target.includes('{{')) {
+      return target;
+    }
+
+    const pages = Object.values(this.handles);
+    const path = pathForSlug(target.replace(/^\/+|\/+$/gu, ''));
+    const page = pages.find(candidate => candidate.id === target) ?? pages.find(candidate => candidate.path === path);
+    if (!page) {
+      const names = pages.flatMap(candidate => [candidate.id, candidate.path]);
+      throw new Error(
+        `${where} sends a visitor it is not for to "${target}", which is no page of this space${didYouMean(target, names)}. Write a page's id or slug (\`''\` is the home page), or a full URL for somewhere else.`
+      );
+    }
+
+    return page.id;
+  }
+
   private routeFor(page: PageSpec): string {
     if (page.isDefault) {
       return '/';
@@ -810,9 +862,6 @@ class SpaceAuthor {
         ...(page.folder === undefined ? {} : { folder: page.folder }),
         ...layoutAttributes(page.layout),
         ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
-        ...(page.unauthorizedRedirect
-          ? { unauthorizedBehaviour: 'redirect', unauthorizedPageRedirect: page.unauthorizedRedirect }
-          : {}),
         seoEnabled: Boolean(page.seoTitle ?? page.seoDescription),
         ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
         ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {})
@@ -842,6 +891,7 @@ class SpaceAuthor {
       path: this.routeFor(page),
       ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
       params: getSlugParams(page.slug),
+      ...(page.layout ? { layout: page.layout.id } : {}),
       elements: {}
     };
 
@@ -897,6 +947,7 @@ class SpaceAuthor {
       pageId: layout.id,
       selector: selectorFor(layout.id),
       named: true,
+      ...(layout.layout ? { layout: layout.layout.id } : {}),
       elements: {}
     };
     layout.body.forEach((child, index) => this.addElement(child, `${path}/${index}`, layout.id, layout.id));

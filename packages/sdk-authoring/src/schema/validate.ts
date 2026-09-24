@@ -5,6 +5,7 @@ import { lintSpace } from './lint';
 import { isCssProperty, isCustomProperty, suggestCssProperty } from '../style';
 
 import type { LintCatalogs } from './lint';
+import type { AllowedBreak } from './types';
 import type {
   SchemaValidationError,
   SchemaValidationOptions,
@@ -105,18 +106,39 @@ export const validateSpace = (
   };
 };
 
-/** The throwing flavour. Returns what was survivable so a caller can decide what to do about it. */
+/**
+ * The throwing flavour. Returns what was survivable so a caller can decide what to do about it.
+ *
+ * `allow` turns the refusals it names into warnings (see `AllowedBreak`), and refuses an entry that names nothing.
+ */
 export const assertSpaceValid = (
   space: SpaceDocuments,
   context: string,
-  options: SpaceValidationOptions = {}
+  options: SpaceValidationOptions = {},
+  allow: readonly AllowedBreak[] = []
 ): SchemaValidationError[] => {
-  const { valid, errors, warnings } = validateSpace(space, options);
-  if (!valid) {
-    throw new Error(
-      `Invalid space (${context}):\n${errors.map(error => `  - [${error.code}] ${error.message}`).join('\n')}`
-    );
+  const result = validateSpace(space, options);
+  const allowed = (error: SchemaValidationError): AllowedBreak | undefined =>
+    allow.find(entry => entry.code === error.code && entry.element === error.elementId);
+  const errors = result.errors.filter(error => !allowed(error));
+  const stale = allow.filter(entry => !result.errors.some(error => allowed(error) === entry));
+  const refusals = [
+    ...errors.map(error => `  - [${error.code}] ${error.message}`),
+    ...stale.map(
+      entry =>
+        `  - [allow] "${entry.code}" on "${entry.element}" is allowed, but nothing raised it — remove it from \`allow\``
+    )
+  ];
+  if (refusals.length > 0) {
+    throw new Error(`Invalid space (${context}):\n${refusals.join('\n')}`);
   }
 
-  return warnings;
+  return [
+    ...result.errors.flatMap(error => {
+      const entry = allowed(error);
+
+      return entry ? [{ ...error, message: `Allowed (${entry.why}): ${error.message}` }] : [];
+    }),
+    ...result.warnings
+  ];
 };

@@ -5,6 +5,10 @@ render as written. The message names the element (`Element "text" (price) at sho
 instead. **Do what the message says.** Never cast past a check, silence it, or move the logic into a plugin to avoid
 it — the check exists because that declaration renders something other than what it says.
 
+The one exception is a TEST fixture whose subject is the break itself — how the runtime copes with a document no author
+would write. It names that break, and only that one: `authorSpace(spec, { allow: [{ code, element, why }] })`. See
+[testing](testing.md#spaces-written-for-a-test). A space anybody visits never has an `allow`.
+
 ## Refused
 
 | The message says | What was wrong | Write instead |
@@ -41,7 +45,7 @@ A warning means the space renders, and renders something you probably did not me
 | `tablet-rule-skips-mobile` | a tablet rule phones never get | write it under `compact` |
 | `default-content-beside-children` | a button prints "Button" beside its children | `content: ''` |
 | `overlay-starts-open` | a modal or dialog is open when the page loads | `visible: false`, opened by `openModal` |
-| `provider-without-source` | an `apiContainer` asks nothing | give it a `query` (or `action`, `resource`) |
+| `provider-without-source` | an `apiContainer` asks nothing | give it a `query` (or `action`, `connector`, `resource`) |
 | `unknown-element-type` | a type no built-in element has | the built-in it suggests; a plugin's type goes in `authorSpace(space, { pluginTypes: ['name'] })` |
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
 | `FORM_SUBMIT_UNMANAGED` | a form the browser would submit itself | `managedByInteractions: true` |

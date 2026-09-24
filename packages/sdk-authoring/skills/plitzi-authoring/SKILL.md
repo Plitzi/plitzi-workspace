@@ -138,6 +138,6 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | [flows.md](reference/flows.md) | Clicks, submits, page loads, server actions, modals, state |
 | [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, registering |
 | [structure.md](reference/structure.md) | A space bigger than one screen: files, helpers, naming, keeping it short |
-| [testing.md](reference/testing.md) | Handles, visual checks, catching a flash from the first frame |
+| [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame |
 | [templates-and-export.md](reference/templates-and-export.md) | Publishing a template; turning an exported JSON into code |
 | [review-checklist.md](reference/review-checklist.md) | Before you say it is done |

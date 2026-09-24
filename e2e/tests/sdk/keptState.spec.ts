@@ -1,5 +1,5 @@
 import { describeTarget, expect, test } from '../../fixtures';
-import { openHarness, renderSpace } from '../../helpers/harness';
+import { el, openHarness, renderSpace } from '../../helpers/harness';
 import { KEPT_IDS, keptStateSpace } from '../../spaces';
 
 import type { Page } from '@playwright/test';
@@ -9,7 +9,7 @@ import type { Page } from '@playwright/test';
  * transient starts fresh. A unit test can only simulate the reload; here the storage is the browser's own.
  */
 
-const shown = (page: Page, id: string) => page.locator(`.${id}`);
+const shown = (page: Page, id: string) => el(page, keptStateSpace(), id);
 
 describeTarget('harness', () => {
   test('keeps what the space keeps, and starts the transient keys fresh', async ({ page, step }) => {
