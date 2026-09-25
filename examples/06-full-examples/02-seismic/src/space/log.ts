@@ -13,7 +13,7 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { BUTTON_RESET, PANEL, caption, chipButton, heading, segmented } from './kit.ts';
+import { BUTTON_RESET, PANEL, caption, chipButton, sectionContent, sectionHeader, segmented } from './kit.ts';
 import { shown } from './state.ts';
 
 import type { ElementSpec } from '@plitzi/sdk-authoring';
@@ -42,8 +42,19 @@ const logSearch = styles('logSearch', { flex: '1', 'min-width': '0px', margin: '
 
 const logPanel = styles('logPanel', {
   ...PANEL,
-  padding: '14px 0px 0px',
+  // No side padding (the rows reach the edges) and a little at the foot, so a folded log still closes its frame.
+  padding: '14px 0px 8px',
   gap: '8px',
+  'min-height': '0px',
+  overflow: 'hidden'
+});
+
+/** What folds away: the search, the rows and their empty state — filling the panel, so the rows scroll inside it. */
+const logBody = styles('logBody', {
+  display: 'flex',
+  'flex-direction': 'column',
+  gap: '8px',
+  flex: '1',
   'min-height': '0px',
   overflow: 'hidden'
 });
@@ -229,7 +240,8 @@ export const log = (): ElementSpec =>
       container({
         class: logHead,
         children: [
-          heading(
+          sectionHeader(
+            'log',
             'Contact log',
             text({
               id: 'log-count',
@@ -237,77 +249,89 @@ export const log = (): ElementSpec =>
               class: caption,
               bind: [bindTemplate('content', 'feed.records', `{{ (${matching})|length }} contacts`)]
             })
-          ),
+          )
+        ]
+      }),
+      sectionContent(
+        'log',
+        [
           container({
-            class: logTools,
+            class: logHead,
             children: [
-              formControl({
-                id: 'log-search',
-                name: 'search',
-                label: '',
-                placeholder: 'Search a place — Tonga, Alaska…',
-                required: false,
-                autoComplete: false,
-                class: logSearch,
-                bind: { defaultValue: 'state.search' },
-                // A control outside a form keeps its own value and reports every keystroke: the filter is live.
-                flows: [
-                  [
-                    named('typed', on('onChange')),
-                    setState({ key: 'search', type: 'text', value: '{{ typed.value }}' })
-                  ]
+              container({
+                class: logTools,
+                children: [
+                  formControl({
+                    id: 'log-search',
+                    name: 'search',
+                    label: '',
+                    placeholder: 'Search a place — Tonga, Alaska…',
+                    required: false,
+                    autoComplete: false,
+                    class: logSearch,
+                    bind: { defaultValue: 'state.search' },
+                    // A control outside a form keeps its own value and reports every keystroke: the filter is live.
+                    flows: [
+                      [
+                        named('typed', on('onChange')),
+                        setState({ key: 'search', type: 'text', value: '{{ typed.value }}' })
+                      ]
+                    ]
+                  }),
+                  container({
+                    id: 'log-sort',
+                    class: segmented,
+                    children: [
+                      chipButton({
+                        id: 'sort-newest',
+                        content: 'NEW',
+                        hint: 'Newest first',
+                        source: 'computed.sort',
+                        on: "source == 'newest'",
+                        flow: [onClick(), setState({ key: 'sort', type: 'text', value: 'newest' })]
+                      }),
+                      chipButton({
+                        id: 'sort-strongest',
+                        content: 'MAX',
+                        hint: 'Strongest first',
+                        source: 'computed.sort',
+                        on: "source == 'strongest'",
+                        flow: [onClick(), setState({ key: 'sort', type: 'text', value: 'strongest' })]
+                      })
+                    ]
+                  })
                 ]
               }),
               container({
-                id: 'log-sort',
-                class: segmented,
+                class: columns,
                 children: [
-                  chipButton({
-                    id: 'sort-newest',
-                    content: 'NEW',
-                    hint: 'Newest first',
-                    source: 'computed.sort',
-                    on: "source == 'newest'",
-                    flow: [onClick(), setState({ key: 'sort', type: 'text', value: 'newest' })]
-                  }),
-                  chipButton({
-                    id: 'sort-strongest',
-                    content: 'MAX',
-                    hint: 'Strongest first',
-                    source: 'computed.sort',
-                    on: "source == 'strongest'",
-                    flow: [onClick(), setState({ key: 'sort', type: 'text', value: 'strongest' })]
-                  })
+                  text({ content: 'Mag', class: caption }),
+                  text({ content: 'Region', class: caption }),
+                  text({ content: 'Age', class: caption })
                 ]
               })
             ]
           }),
-          container({
-            class: columns,
-            children: [
-              text({ content: 'Mag', class: caption }),
-              text({ content: 'Region', class: caption }),
-              text({ content: 'Age', class: caption })
-            ]
+          list({
+            id: 'contacts',
+            source: 'controlled',
+            class: rows,
+            bind: [bindTemplate('items', 'feed.records', rowsShown, { returns: 'value' })],
+            children: [row()]
+          }),
+          // "Arrived and empty" — never "not arrived yet": the provider is server-resolved, so the records are always there.
+          text({
+            id: 'log-empty',
+            content:
+              'Nothing passes these filters in this window. Lower the floor, widen the window or clear the search.',
+            class: emptyNotice,
+            visible: {
+              source: 'feed.records',
+              template: `{{ source is defined and (${matching})|length == 0 ? 'true' : 'false' }}`
+            }
           })
-        ]
-      }),
-      list({
-        id: 'contacts',
-        source: 'controlled',
-        class: rows,
-        bind: [bindTemplate('items', 'feed.records', rowsShown, { returns: 'value' })],
-        children: [row()]
-      }),
-      // "Arrived and empty" — never "not arrived yet": the provider is server-resolved, so the records are always there.
-      text({
-        id: 'log-empty',
-        content: 'Nothing passes these filters in this window. Lower the floor, widen the window or clear the search.',
-        class: emptyNotice,
-        visible: {
-          source: 'feed.records',
-          template: `{{ source is defined and (${matching})|length == 0 ? 'true' : 'false' }}`
-        }
-      })
+        ],
+        logBody
+      )
     ]
   });

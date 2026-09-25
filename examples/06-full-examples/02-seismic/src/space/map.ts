@@ -95,7 +95,10 @@ export const map: ElementSpec = seismicMap({
      * A pick on the globe is the same act as a pick in the log or on the "strongest" card: it writes the one key the
      * dossier, the log's highlight and the map's own lock all read. The sea sends an empty id, which unlocks.
      */
-    [named('picked', declaredTrigger(declaration, 'onQuakeSelect')), setState({ key: 'selectedId', type: 'text', value: '{{ picked.id }}' })],
+    [
+      named('picked', declaredTrigger(declaration, 'onQuakeSelect')),
+      setState({ key: 'selectedId', type: 'text', value: '{{ picked.id }}' })
+    ],
     /**
      * An event the feed did not have on the last refresh, at or above the reader's alert threshold. Announced louder
      * when it is one that damages buildings — the map has already thrown out its shockwave — and, while FOLLOW is on,

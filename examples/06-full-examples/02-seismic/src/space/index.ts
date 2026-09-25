@@ -1,8 +1,11 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+
 import { apiContainer, container, styles, text, variantFrom } from '@plitzi/sdk-authoring';
 
 import { FEED_ACTION } from '../actions.ts';
 import { activity, board, strongest } from './board.ts';
-import { dock, legend, settingsBackdrop } from './controls.ts';
+import { dock, legend, settingsBackdrop, settingsCorner } from './controls.ts';
 import { customCss } from './css.ts';
 import { commandBar } from './header.ts';
 import { log } from './log.ts';
@@ -21,6 +24,18 @@ import type { ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
  * ids, class names and flow chains are derived from what is written here, so authoring it twice writes byte-identical
  * documents, and the space would open in the builder exactly as it reads.
  */
+
+/**
+ * A fingerprint of the world's outlines, for the address the page asks for them at.
+ *
+ * The file is served with a cache lifetime of an hour, so a browser that had the old one kept drawing it after
+ * `yarn geography` fixed it — the antimeridian bands stayed on screen for anybody who had already been. An address
+ * that changes with the contents cannot be answered from a stale copy.
+ */
+const WORLD_VERSION = createHash('sha256')
+  .update(readFileSync(new URL('../../public/geo/world.json', import.meta.url)))
+  .digest('hex')
+  .slice(0, 12);
 
 /** The components this space ships, as their declarations: `main.ts` hands them to `authorSpace`, which checks them. */
 export const PLUGINS = [MAP_DECLARATION];
@@ -198,6 +213,7 @@ const hudPanels = (): ElementSpec =>
       container({ id: 'legend-area', class: legendArea, children: [legend()] }),
       container({ id: 'target-area', class: targetArea, children: [target()] }),
       settingsBackdrop(),
+      settingsCorner(),
       dock(),
       // A provider that could not answer is not a quiet planet, and the two must never look alike.
       text({
@@ -242,8 +258,9 @@ const monitor: ElementSpec = apiContainer({
       id: 'atlas',
       subType: 'div',
       class: stage,
-      // The world's outlines, a static file this server serves. Cached for the day: coastlines do not move.
-      query: '/geo/world.json',
+      // The world's outlines, a static file this server serves. Cached for the day: coastlines do not move — but the
+      // FILE does when `yarn geography` regenerates it, so its address carries a hash of what is in it.
+      query: `/geo/world.json?v=${WORLD_VERSION}`,
       cache: true,
       staleTime: 86400,
       children: [map]

@@ -12,6 +12,18 @@ import { ALERTS, DEFAULT_ALERT, DEFAULT_FLOOR, DEFAULT_REFRESH, FLOORS } from '.
  * the counters and the activity strip.
  */
 
+/**
+ * The panels a reader can fold away, each under a `<section>Collapsed` key — named for how it leaves its default, since
+ * every panel starts open — and read back as `computed.<section>Open`.
+ */
+export const SECTIONS = ['totals', 'strongest', 'activity', 'log', 'legend'] as const;
+
+export type SectionKey = (typeof SECTIONS)[number];
+
+const sectionsOpen = Object.fromEntries(
+  SECTIONS.map(section => [`${section}Open`, `{{ state.${section}Collapsed ? false : true }}`])
+);
+
 const table = (entries: readonly { key: string; min: number }[]): string =>
   entries.map(entry => `'${entry.key}': ${entry.min}`).join(', ');
 
@@ -35,10 +47,13 @@ export const computed = {
   size: "{{ state.size ?? 'desk' }}",
   plates: '{{ state.platesOff ? false : true }}',
   density: '{{ state.densityOn ? true : false }}',
-  rotate: '{{ state.spinOff ? false : true }}',
+  /** Only a globe turns: on a flat map turning is scrolling sideways off the data, so it is off whatever was chosen. */
+  rotate: "{{ state.spinOff or computed.projection == 'flat' ? false : true }}",
   replaying: '{{ state.replay ? true : false }}',
   /** Whether the settings panel is open. Starts closed, and is never kept: a panel open on arrival is in the way. */
-  settingsOpen: '{{ state.settingsOpen ? true : false }}'
+  settingsOpen: '{{ state.settingsOpen ? true : false }}',
+  /** Whether each panel is open. A flag that HIDES: until it is written, the panel shows. */
+  ...sectionsOpen
 };
 
 /**

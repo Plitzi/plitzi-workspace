@@ -14,17 +14,18 @@ import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
  */
 
 const navPanel = styles('navPanel', {
-  css: {
-    desktop: {
-      ...PANEL,
-      display: 'grid',
-      'grid-template-columns': 'repeat(3, 30px)',
-      'grid-auto-rows': '30px',
-      gap: '4px',
-      padding: '8px'
-    },
-    mobile: { display: 'none' }
-  }
+  css: { desktop: { ...PANEL, gap: '6px', padding: '8px' }, mobile: { display: 'none' } }
+});
+
+/** Zoom out and in, side by side: the pair a reader reaches for most, in the order the numbers go. */
+const zoomRow = styles('zoomRow', { display: 'grid', 'grid-template-columns': '1fr 1fr', gap: '4px' });
+
+/** The cross: north, west, home, east, south — a direction per arm, the whole view in the middle. */
+const pad = styles('pad', {
+  display: 'grid',
+  'grid-template-columns': 'repeat(3, 30px)',
+  'grid-auto-rows': '30px',
+  gap: '4px'
 });
 
 const navButton = styles('navButton', {
@@ -33,6 +34,7 @@ const navButton = styles('navButton', {
     display: 'flex',
     'align-items': 'center',
     'justify-content': 'center',
+    height: '30px',
     padding: '0px',
     'font-family': 'var(--mono)',
     'font-size': '15px',
@@ -47,23 +49,14 @@ const navButton = styles('navButton', {
     hover: { 'border-color': 'var(--trace)', 'background-color': 'var(--edge-soft)' },
     active: { 'background-color': 'var(--trace)', color: 'var(--void)' },
     'focus-visible': { outline: '1px solid var(--trace)', 'outline-offset': '2px' }
-  },
-  // The zoom pair spans the cluster's width: they are the two a reader reaches for most.
-  variants: { wide: { 'grid-column': 'span 3' } }
+  }
 });
 
 /** An empty cell, so the pad keeps its cross shape without a button in its corners. */
 const navGap = styles('navGap', { 'pointer-events': 'none' });
 
-const control = (id: string, content: string, hint: string, step: StepSpec, variant?: string): ElementSpec =>
-  button({
-    id: `nav-${id}`,
-    content,
-    title: hint,
-    class: navButton,
-    ...(variant ? { variant } : {}),
-    flows: [[onClick(), step]]
-  });
+const control = (id: string, content: string, hint: string, step: StepSpec): ElementSpec =>
+  button({ id: `nav-${id}`, content, title: hint, class: navButton, flows: [[onClick(), step]] });
 
 const gap = (): ElementSpec => container({ class: navGap });
 
@@ -72,16 +65,26 @@ export const nav = (): ElementSpec =>
     id: 'nav',
     class: navPanel,
     children: [
-      control('zoom-in', '+', 'Zoom in', mapAction('zoomIn'), 'wide'),
-      control('zoom-out', '−', 'Zoom out', mapAction('zoomOut'), 'wide'),
-      gap(),
-      control('north', '▲', 'Pan north', mapAction('pan', { direction: 'north' })),
-      gap(),
-      control('west', '◀', 'Pan west', mapAction('pan', { direction: 'west' })),
-      control('home', '⌂', 'Back to the whole view', mapAction('resetView')),
-      control('east', '▶', 'Pan east', mapAction('pan', { direction: 'east' })),
-      gap(),
-      control('south', '▼', 'Pan south', mapAction('pan', { direction: 'south' })),
-      gap()
+      container({
+        class: zoomRow,
+        children: [
+          control('zoom-out', '−', 'Zoom out', mapAction('zoomOut')),
+          control('zoom-in', '+', 'Zoom in', mapAction('zoomIn'))
+        ]
+      }),
+      container({
+        class: pad,
+        children: [
+          gap(),
+          control('north', '▲', 'Pan north', mapAction('pan', { direction: 'north' })),
+          gap(),
+          control('west', '◀', 'Pan west', mapAction('pan', { direction: 'west' })),
+          control('home', '⌂', 'Back to the whole view', mapAction('resetView')),
+          control('east', '▶', 'Pan east', mapAction('pan', { direction: 'east' })),
+          gap(),
+          control('south', '▼', 'Pan south', mapAction('pan', { direction: 'south' })),
+          gap()
+        ]
+      })
     ]
   });

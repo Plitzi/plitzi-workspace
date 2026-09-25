@@ -14,7 +14,17 @@ import {
 import { ALERTS, REFRESH } from '../filters.ts';
 import { resetMapView } from './map.ts';
 import { nav } from './nav.ts';
-import { BUTTON_RESET, PANEL, caption, chip, chipButton, heading, segmented } from './kit.ts';
+import {
+  BUTTON_RESET,
+  PANEL,
+  caption,
+  chip,
+  heading,
+  segmented,
+  chipButton,
+  sectionContent,
+  sectionHeader
+} from './kit.ts';
 
 import type { ElementSpec } from '@plitzi/sdk-authoring';
 
@@ -36,15 +46,15 @@ const settingsPanel = styles('controlPanel', {
     desktop: {
       ...PANEL,
       position: 'absolute',
-      right: 'calc(100% + 12px)',
-      bottom: '0px',
+      top: 'calc(100% + 10px)',
+      right: '0px',
       width: '360px',
       gap: '8px',
       'background-color': 'var(--panel-strong)',
       border: '1px solid var(--trace)',
       'box-shadow': '0 24px 60px -24px var(--trace-glow)'
     },
-    mobile: { right: '0px', bottom: 'calc(100% + 10px)', width: 'min(360px, calc(100vw - 20px))', padding: '10px 12px' }
+    mobile: { width: 'min(360px, calc(100vw - 20px))', padding: '10px 12px' }
   }
 });
 
@@ -57,25 +67,31 @@ const backdrop = styles('settingsBackdrop', {
   'background-color': 'transparent'
 });
 
-/**
- * The corner dock: the camera controls and the gear, in the display's bottom-right corner — under the log, which ends
- * above it. Right-aligned in its cell, so it sits in the corner however wide the column is.
- */
+/** The camera controls, in the display's bottom-right corner under the log. */
 const dockClass = styles('dock', {
+  css: {
+    desktop: { 'grid-area': 'dock', 'justify-self': 'end', 'align-self': 'end', 'pointer-events': 'auto' },
+    mobile: { display: 'none' }
+  }
+});
+
+/**
+ * The gear, in the display's top-right corner, over the end of the command bar — a grid item of its own rather than a
+ * child of the bar, so it can sit above the backdrop an open panel spreads without lifting the whole bar with it: a
+ * click on a filter while the panel is open lands on the backdrop and closes it, like a click anywhere else.
+ */
+const settingsCornerClass = styles('settingsCorner', {
   css: {
     desktop: {
       position: 'relative',
-      'grid-area': 'dock',
+      'grid-area': 'bar',
       'justify-self': 'end',
-      'align-self': 'end',
+      'align-self': 'center',
+      'margin-right': '12px',
       'z-index': '7',
-      display: 'flex',
-      'flex-direction': 'column',
-      'align-items': 'stretch',
-      gap: '8px',
       'pointer-events': 'auto'
     },
-    mobile: { 'grid-column': '1 / 2', 'grid-row': '2 / 3' }
+    compact: { 'align-self': 'start', 'margin-top': '8px', 'margin-right': '8px' }
   }
 });
 
@@ -85,17 +101,13 @@ const gearButton = styles('gearButton', {
     display: 'flex',
     'align-items': 'center',
     'justify-content': 'center',
-    gap: '8px',
-    height: '40px',
-    padding: '0px 12px',
+    width: '34px',
+    height: '34px',
+    padding: '0px',
     border: '1px solid var(--edge)',
-    'background-color': 'var(--panel-strong)',
+    'background-color': 'transparent',
     color: 'var(--trace)',
-    'font-family': 'var(--mono)',
-    'font-size': '10px',
-    'font-weight': '700',
-    'letter-spacing': '0.2em',
-    transition: 'border-color 140ms linear, box-shadow 140ms linear'
+    transition: 'border-color 140ms linear, box-shadow 140ms linear, background-color 140ms linear'
   },
   states: {
     hover: { 'border-color': 'var(--trace)', 'box-shadow': '0 0 24px -10px var(--trace-glow)' },
@@ -106,8 +118,8 @@ const gearButton = styles('gearButton', {
 
 /** The gear itself: a mask over `currentColor`, so it is drawn in whatever colour the button is. Its shape is in `css.ts`. */
 const gearIcon = styles('gearIcon', {
-  width: '18px',
-  height: '18px',
+  width: '20px',
+  height: '20px',
   'flex-shrink': '0',
   'background-color': 'currentColor'
 });
@@ -177,8 +189,23 @@ const SIZES = [
 ] as const;
 
 /** A switch whose state key names the way it leaves its default, read back through `computed`. */
-const toggle = (id: string, content: string, hint: string, key: string, reads: string): ElementSpec =>
-  chipButton({ id, content, hint, source: reads, on: 'source', flow: [onClick(), toggleState({ key })] });
+const toggle = (
+  id: string,
+  content: string,
+  hint: string,
+  key: string,
+  reads: string,
+  unavailable?: { source: string; when: string; hint: string }
+): ElementSpec =>
+  chipButton({
+    id,
+    content,
+    hint,
+    source: reads,
+    on: 'source',
+    flow: [onClick(), toggleState({ key })],
+    ...(unavailable ? { unavailable } : {})
+  });
 
 const row = (name: string, id: string, chips: ElementSpec[]): ElementSpec =>
   container({
@@ -246,7 +273,11 @@ const settingsPanelElement = (): ElementSpec =>
         choice('layer-switches', [
           toggle('layer-plates', 'PLATES', 'Tectonic plate boundaries', 'platesOff', 'computed.plates'),
           toggle('layer-density', 'DENSITY', 'Where the energy concentrates', 'densityOn', 'computed.density'),
-          toggle('layer-rotate', 'ROTATE', 'Turn the globe while idle', 'spinOff', 'computed.rotate')
+          toggle('layer-rotate', 'ROTATE', 'Turn the globe while idle', 'spinOff', 'computed.rotate', {
+            source: 'computed.projection',
+            when: "source == 'flat'",
+            hint: 'Only the globe turns: switch to GLOBE to rotate'
+          })
         ])
       ]),
       container({ class: settingDivider }),
@@ -329,19 +360,20 @@ export const settingsBackdrop = (): ElementSpec =>
     flows: [[onClick(), closeSettings]]
   });
 
+/** The camera, in the bottom-right corner. */
+export const dock = (): ElementSpec => container({ id: 'dock', class: dockClass, children: [nav()] });
+
 /**
- * The corner of the globe: camera controls, and the gear that opens SETTINGS beside them.
+ * SETTINGS: the gear that opens it, and the panel that drops below it.
  *
  * The gear is a button like any other: it flips `settingsOpen`, the panel shows while that is true, and the backdrop
  * behind it closes it on a click anywhere else. No popup machinery — three elements and one state key.
  */
-export const dock = (): ElementSpec =>
+export const settingsCorner = (): ElementSpec =>
   container({
-    id: 'dock',
-    class: dockClass,
+    id: 'settings-corner',
+    class: settingsCornerClass,
     children: [
-      settingsPanelElement(),
-      nav(),
       button({
         id: 'settings-toggle',
         content: '',
@@ -352,8 +384,10 @@ export const dock = (): ElementSpec =>
           bindTemplate('ariaExpanded', 'computed.settingsOpen', "{{ source ? 'true' : 'false' }}")
         ],
         flows: [[onClick(), toggleState({ key: 'settingsOpen' })]],
-        children: [text({ content: '', class: gearIcon }), text('SETTINGS')]
-      })
+        // An icon alone: its name is the button's title and aria label, which is what a screen reader announces.
+        children: [text({ content: '', class: gearIcon })]
+      }),
+      settingsPanelElement()
     ]
   });
 
@@ -458,60 +492,62 @@ export const legend = (): ElementSpec =>
     id: 'legend',
     class: legendPanel,
     children: [
-      heading('Legend'),
-      container({
-        class: legendColumns,
-        children: [
-          container({
-            class: legendGroup,
-            children: [
-              text({ content: 'Focal depth', class: caption }),
-              ...DEPTHS.map(entry =>
+      sectionHeader('legend', 'Legend'),
+      sectionContent('legend', [
+        container({
+          class: legendColumns,
+          children: [
+            container({
+              class: legendGroup,
+              children: [
+                text({ content: 'Focal depth', class: caption }),
+                ...DEPTHS.map(entry =>
+                  container({
+                    class: legendRow,
+                    children: [text({ content: '', class: dot, variant: entry.band }), text(entry.text)]
+                  })
+                )
+              ]
+            }),
+            container({
+              id: 'legend-plates',
+              class: legendGroup,
+              visible: 'computed.plates',
+              children: [
+                text({ content: 'Plate boundary', class: caption }),
+                ...PLATES.map(entry =>
+                  container({
+                    class: legendRow,
+                    children: [
+                      text({ content: '', class: stroke, ...(entry.kind ? { variant: entry.kind } : {}) }),
+                      text(entry.text)
+                    ]
+                  })
+                )
+              ]
+            }),
+            container({
+              class: sizes,
+              children: (['m3', 'm5', 'm7'] as const).map(size =>
                 container({
-                  class: legendRow,
-                  children: [text({ content: '', class: dot, variant: entry.band }), text(entry.text)]
-                })
-              )
-            ]
-          }),
-          container({
-            id: 'legend-plates',
-            class: legendGroup,
-            visible: 'computed.plates',
-            children: [
-              text({ content: 'Plate boundary', class: caption }),
-              ...PLATES.map(entry =>
-                container({
-                  class: legendRow,
+                  class: sizeMark,
                   children: [
-                    text({ content: '', class: stroke, ...(entry.kind ? { variant: entry.kind } : {}) }),
-                    text(entry.text)
+                    text({ content: '', class: ring, variant: size }),
+                    text({ content: size.toUpperCase(), class: caption })
                   ]
                 })
               )
-            ]
-          }),
-          container({
-            class: sizes,
-            children: (['m3', 'm5', 'm7'] as const).map(size =>
-              container({
-                class: sizeMark,
-                children: [
-                  text({ content: '', class: ring, variant: size }),
-                  text({ content: size.toUpperCase(), class: caption })
-                ]
-              })
-            )
-          }),
-          container({
-            class: legendRow,
-            children: [text({ content: '', class: pulse }), text('Pulse · last hour')]
-          })
-        ]
-      }),
-      text({
-        content: 'Events USGS NEIC · coastlines Natural Earth · plates PB2002, Bird 2003 · times UTC',
-        class: credits
-      })
+            }),
+            container({
+              class: legendRow,
+              children: [text({ content: '', class: pulse }), text('Pulse · last hour')]
+            })
+          ]
+        }),
+        text({
+          content: 'Events USGS NEIC · coastlines Natural Earth · plates PB2002, Bird 2003 · times UTC',
+          class: credits
+        })
+      ])
     ]
   });

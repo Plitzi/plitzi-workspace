@@ -16,8 +16,8 @@ export const FEED_ACTION = 'seismic-feed';
  * or sixty seconds — the reader's choice — the browser asks THIS server for its slice again, and the action answers.
  *
  * `cacheSeconds` is what makes a public monitor affordable. A render answer is SHARED — one run answers everyone asking
- * within ten seconds of each other — so a room full of monitors on the fastest setting is still one outbound request
- * every ten seconds, not one per screen.
+ * within five seconds of each other — so a room full of monitors on the fastest setting is still one outbound request
+ * every five seconds, not one per screen.
  */
 const feed = defineAction({
   id: FEED_ACTION,
@@ -28,9 +28,10 @@ const feed = defineAction({
     // A monitor is public, and saying so is a decision rather than a default: a trigger with no access rule is
     // refused, because an unstated one is either a lock-out or a hole.
     access: 'public',
-    // The shortest refresh the page offers. The feed itself regenerates once a minute, so anything tighter only asks
-    // the USGS the same question again.
-    cacheSeconds: 10,
+    // Half the shortest refresh the page offers, so every refresh is a fresh check — one landing exactly on a ten-second
+    // boundary was answered from the cache and showed the time of the check before. Still one outbound request per
+    // five seconds, however many screens are watching.
+    cacheSeconds: 5,
     input: {
       // Arrives from the page's own query string — a render trigger's input is the route and query params plus
       // whatever the element declares. `/?window=week` is the whole of how the window control works.

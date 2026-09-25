@@ -10,7 +10,7 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { BUTTON_RESET, PANEL, caption, heading, label, readout } from './kit.ts';
+import { BUTTON_RESET, PANEL, caption, label, readout, sectionContent, sectionHeader } from './kit.ts';
 import { shown } from './state.ts';
 
 import type { BindingSpec, ElementSpec } from '@plitzi/sdk-authoring';
@@ -110,7 +110,8 @@ export const board = (): ElementSpec =>
     id: 'board',
     class: boardPanel,
     children: [
-      heading(
+      sectionHeader(
+        'totals',
         'Totals',
         text({
           id: 'board-scope',
@@ -125,42 +126,51 @@ export const board = (): ElementSpec =>
           ]
         })
       ),
-      container({
-        class: statGrid,
-        children: [
-          stat('stat-events', 'Events', bindTemplate('content', 'feed.stats', total('count'))),
-          stat('stat-m6', 'M6+', bindTemplate('content', 'feed.stats', total('m6')), alarmAbove('m6')),
-          stat(
-            'stat-tsunami',
-            'Tsunami',
-            bindTemplate('content', 'feed.stats', total('tsunami')),
-            alarmAbove('tsunami')
-          ),
-          stat('stat-pager', 'PAGER', bindTemplate('content', 'feed.stats', total('alerts')), alarmAbove('alerts'))
-        ]
-      }),
-      container({
-        id: 'energy',
-        class: energyRow,
-        children: [
-          label('Energy released'),
-          text({
-            id: 'energy-value',
-            content: '',
-            class: energyValue,
-            bind: [bindTemplate('content', 'feed.stats', `${total('energy')} ${total('energyUnit')}`)]
-          })
-        ]
-      })
+      sectionContent('totals', [
+        container({
+          class: statGrid,
+          children: [
+            stat('stat-events', 'Events', bindTemplate('content', 'feed.stats', total('count'))),
+            stat('stat-m6', 'M6+', bindTemplate('content', 'feed.stats', total('m6')), alarmAbove('m6')),
+            stat(
+              'stat-tsunami',
+              'Tsunami',
+              bindTemplate('content', 'feed.stats', total('tsunami')),
+              alarmAbove('tsunami')
+            ),
+            stat('stat-pager', 'PAGER', bindTemplate('content', 'feed.stats', total('alerts')), alarmAbove('alerts'))
+          ]
+        }),
+        container({
+          id: 'energy',
+          class: energyRow,
+          children: [
+            label('Energy released'),
+            text({
+              id: 'energy-value',
+              content: '',
+              class: energyValue,
+              bind: [bindTemplate('content', 'feed.stats', `${total('energy')} ${total('energyUnit')}`)]
+            })
+          ]
+        })
+      ])
     ]
   });
 
 // ── The strongest event ────────────────────────────────────────────────────────────────────────────────────────────
 
+/** The panel around the card: it keeps its header when the card folds, or when nothing passes the filters. */
+const strongestPanel = styles('strongestPanel', { ...PANEL, gap: '10px' });
+
+/** The card itself — the body of the panel, and the button that locks the map on the event. */
 const strongestCard = styles('strongestCard', {
   css: {
     ...BUTTON_RESET,
-    ...PANEL,
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid var(--edge-soft)',
+    'background-color': 'var(--cell)',
     display: 'grid',
     'grid-template-columns': 'auto 1fr',
     'column-gap': '14px',
@@ -179,7 +189,7 @@ const strongestCard = styles('strongestCard', {
 const cardHead = styles('cardHead', {
   'grid-column': '1 / -1',
   display: 'flex',
-  'justify-content': 'space-between',
+  'justify-content': 'flex-end',
   'align-items': 'baseline',
   gap: '10px'
 });
@@ -238,77 +248,104 @@ const isLockedStrongest = "{{ source == list_strongestPick.item.id ? 'locked' : 
  * as every other panel: the strongest SHALLOW event when the reader filtered to shallow ones, and nothing at all when
  * nothing passes — never a card pointing at an event the map is not showing.
  */
+const noneShown = `{{ source is defined and (source|filter(q => ${shown('q')})|length) == 0 ? 'true' : 'false' }}`;
+
+const emptyCard = styles('emptyCard', {
+  'font-family': 'var(--mono)',
+  'font-size': '10px',
+  'letter-spacing': '0.14em',
+  'text-transform': 'uppercase',
+  color: 'var(--dim)'
+});
+
 export const strongest = (): ElementSpec =>
-  list({
-    id: 'strongestPick',
-    source: 'controlled',
-    class: strongestSlot,
-    bind: [bindTemplate('items', 'feed.records', strongestShown, { returns: 'value' })],
+  container({
+    id: 'strongest-panel',
+    class: strongestPanel,
     children: [
-      container({
-        subType: 'li',
-        class: strongestSlot,
-        children: [
-          button({
-            id: 'strongest',
-            content: '',
-            title: 'Lock the map on the strongest event that passes the filters',
-            class: strongestCard,
-            bind: [variantFrom(strongestCard, 'state.selectedId', { template: isLockedStrongest })],
-            flows: [
-              [onClick(), setState({ key: 'selectedId', type: 'text', value: '{{ list_strongestPick.item.id }}' })]
-            ],
-            children: [
-              container({
-                class: cardHead,
-                children: [
-                  text({ content: 'Strongest in window', class: caption }),
-                  text({
-                    id: 'strongest-action',
-                    content: '',
-                    class: cardAction,
-                    bind: [
-                      bindTemplate(
-                        'content',
-                        'state.selectedId',
-                        "{{ source == list_strongestPick.item.id ? '■ LOCKED' : 'LOCK ▸' }}"
-                      ),
-                      variantFrom(cardAction, 'state.selectedId', { template: isLockedStrongest })
+      sectionHeader('strongest', 'Strongest in window'),
+      sectionContent('strongest', [
+        list({
+          id: 'strongestPick',
+          source: 'controlled',
+          class: strongestSlot,
+          bind: [bindTemplate('items', 'feed.records', strongestShown, { returns: 'value' })],
+          children: [
+            container({
+              subType: 'li',
+              class: strongestSlot,
+              children: [
+                button({
+                  id: 'strongest',
+                  content: '',
+                  title: 'Lock the map on the strongest event that passes the filters',
+                  class: strongestCard,
+                  bind: [variantFrom(strongestCard, 'state.selectedId', { template: isLockedStrongest })],
+                  flows: [
+                    [
+                      onClick(),
+                      setState({ key: 'selectedId', type: 'text', value: '{{ list_strongestPick.item.id }}' })
                     ]
-                  })
-                ]
-              }),
-              text({
-                id: 'strongest-magnitude',
-                content: '',
-                class: bandMagnitude,
-                bind: [
-                  { to: 'content', source: 'strongestPick.item.magnitudeLabel' },
-                  variantFrom(bandMagnitude, 'strongestPick.item.band')
-                ]
-              }),
-              text({
-                id: 'strongest-region',
-                content: '',
-                class: cardRegion,
-                bind: { content: 'strongestPick.item.region' }
-              }),
-              text({
-                id: 'strongest-meta',
-                content: '',
-                class: cardMeta,
-                bind: [
-                  bindTemplate(
-                    'content',
-                    'strongestPick.item',
-                    "{{ source.time|date('d M · H:i', 'UTC')|upper }} UTC · {{ source.depthLabel }} · {{ source.ageLabel }} ago"
-                  )
-                ]
-              })
-            ]
-          })
-        ]
-      })
+                  ],
+                  children: [
+                    container({
+                      class: cardHead,
+                      children: [
+                        text({
+                          id: 'strongest-action',
+                          content: '',
+                          class: cardAction,
+                          bind: [
+                            bindTemplate(
+                              'content',
+                              'state.selectedId',
+                              "{{ source == list_strongestPick.item.id ? '■ LOCKED' : 'LOCK ▸' }}"
+                            ),
+                            variantFrom(cardAction, 'state.selectedId', { template: isLockedStrongest })
+                          ]
+                        })
+                      ]
+                    }),
+                    text({
+                      id: 'strongest-magnitude',
+                      content: '',
+                      class: bandMagnitude,
+                      bind: [
+                        { to: 'content', source: 'strongestPick.item.magnitudeLabel' },
+                        variantFrom(bandMagnitude, 'strongestPick.item.band')
+                      ]
+                    }),
+                    text({
+                      id: 'strongest-region',
+                      content: '',
+                      class: cardRegion,
+                      bind: { content: 'strongestPick.item.region' }
+                    }),
+                    text({
+                      id: 'strongest-meta',
+                      content: '',
+                      class: cardMeta,
+                      bind: [
+                        bindTemplate(
+                          'content',
+                          'strongestPick.item',
+                          "{{ source.time|date('d M · H:i', 'UTC')|upper }} UTC · {{ source.depthLabel }} · {{ source.ageLabel }} ago"
+                        )
+                      ]
+                    })
+                  ]
+                })
+              ]
+            })
+          ]
+        }),
+        text({
+          id: 'strongest-none',
+          content: 'Nothing passes these filters',
+          class: emptyCard,
+          visible: { source: 'feed.records', template: noneShown }
+        })
+      ])
     ]
   });
 
@@ -358,35 +395,38 @@ export const activity = (): ElementSpec =>
     id: 'activity',
     class: activityPanel,
     children: [
-      heading(
+      sectionHeader(
+        'activity',
         'Activity',
         text({ id: 'activity-bins', content: '', class: caption, bind: { content: 'feed.binLabel' } })
       ),
-      list({
-        id: 'bins',
-        source: 'controlled',
-        class: bars,
-        bind: { items: 'feed.bins' },
-        children: [
-          container({
-            subType: 'li',
-            class: barSlot,
-            children: [
-              container({
-                class: bar,
-                bind: [
-                  bindTemplate('height', 'bins.item.pct', '{{ source[computed.floor][computed.depth] }}%', {
-                    category: 'style'
-                  })
-                ]
-              })
-            ]
-          })
-        ]
-      }),
-      container({
-        class: axis,
-        children: [text({ id: 'axis-start', content: '', bind: { content: 'feed.axisStart' } }), text('NOW')]
-      })
+      sectionContent('activity', [
+        list({
+          id: 'bins',
+          source: 'controlled',
+          class: bars,
+          bind: { items: 'feed.bins' },
+          children: [
+            container({
+              subType: 'li',
+              class: barSlot,
+              children: [
+                container({
+                  class: bar,
+                  bind: [
+                    bindTemplate('height', 'bins.item.pct', '{{ source[computed.floor][computed.depth] }}%', {
+                      category: 'style'
+                    })
+                  ]
+                })
+              ]
+            })
+          ]
+        }),
+        container({
+          class: axis,
+          children: [text({ id: 'axis-start', content: '', bind: { content: 'feed.axisStart' } }), text('NOW')]
+        })
+      ])
     ]
   });

@@ -1,6 +1,17 @@
-import { bindTemplate, button, container, styles, text, variantFrom } from '@plitzi/sdk-authoring';
+import {
+  bindTemplate,
+  button,
+  container,
+  onClick,
+  styles,
+  text,
+  toggleState,
+  variantFrom
+} from '@plitzi/sdk-authoring';
 
-import type { CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
+import type { SectionKey } from './state.ts';
+
+import type { ClassRef, CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 /**
  * The pieces every panel of the display is made of, declared once.
@@ -117,7 +128,8 @@ export const chip = styles('chip', {
   },
   states: {
     hover: { color: 'var(--trace)', 'border-color': 'var(--edge)' },
-    'focus-visible': { outline: '1px solid var(--trace)', 'outline-offset': '2px' }
+    'focus-visible': { outline: '1px solid var(--trace)', 'outline-offset': '2px' },
+    disabled: { opacity: '0.35', cursor: 'not-allowed', color: 'var(--dim)', 'border-color': 'transparent' }
   },
   // The chosen chip is a different SHAPE, not the same one tinted: it is a position of a switch, not an emphasis.
   variants: {
@@ -137,6 +149,82 @@ export const segmented = styles('segmented', {
   gap: '1px',
   'pointer-events': 'auto'
 });
+
+// ── Collapsible panels ────────────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A panel's header, as the button that folds it: its name, whatever it says beside it, and a chevron that turns.
+ *
+ * The whole header is the target — a panel on a wall screen is folded by whoever is nearest, with whatever they are
+ * holding — and it is a real button, so it takes the keyboard and says `aria-expanded`.
+ */
+const sectionHead = styles('sectionHead', {
+  css: {
+    ...BUTTON_RESET,
+    width: '100%',
+    display: 'flex',
+    'align-items': 'baseline',
+    'justify-content': 'space-between',
+    gap: '12px',
+    padding: '0px'
+  },
+  states: { 'focus-visible': { outline: '1px solid var(--trace)', 'outline-offset': '4px' } },
+  variants: { closed: {} }
+});
+
+const sectionMeta = styles('sectionMeta', {
+  display: 'flex',
+  'align-items': 'baseline',
+  gap: '10px',
+  'min-width': '0px',
+  'text-align': 'right'
+});
+
+/** The chevron points down while the panel is open and turns to the side when it is folded. */
+const chevron = styles('chevron', {
+  css: {
+    display: 'inline-block',
+    'font-family': 'var(--mono)',
+    'font-size': '10px',
+    'line-height': '1',
+    color: 'var(--dim)',
+    transition: 'transform 180ms ease-out'
+  },
+  ancestors: { sectionHead: { variants: { closed: { transform: 'rotate(-90deg)' } } } }
+});
+
+/** The panel's contents, spaced as the panel spaces its children. */
+export const sectionBody = styles('sectionBody', {
+  display: 'flex',
+  'flex-direction': 'column',
+  gap: 'inherit',
+  'min-height': '0px'
+});
+
+/** The header of a panel that folds. `meta` is what the header says beside the name — a count, a scope. */
+export const sectionHeader = (section: SectionKey, name: string, meta?: ElementSpec): ElementSpec =>
+  button({
+    id: `${section}-toggle`,
+    content: '',
+    title: `Show or hide ${name.toLowerCase()}`,
+    class: sectionHead,
+    bind: [
+      variantFrom(sectionHead, `computed.${section}Open`, { template: "{{ source ? '' : 'closed' }}" }),
+      bindTemplate('ariaExpanded', `computed.${section}Open`, "{{ source ? 'true' : 'false' }}")
+    ],
+    flows: [[onClick(), toggleState({ key: `${section}Collapsed` })]],
+    children: [
+      text({ content: name, class: title }),
+      container({ class: sectionMeta, children: [...(meta ? [meta] : []), text({ content: '▾', class: chevron })] })
+    ]
+  });
+
+/** What a folded panel hides. Its own class when it has to lay out differently — the log's has to fill and scroll. */
+export const sectionContent = (
+  section: SectionKey,
+  children: ElementSpec[],
+  bodyClass: ClassRef = sectionBody
+): ElementSpec => container({ id: `${section}-body`, class: bodyClass, visible: `computed.${section}Open`, children });
 
 export const label = (content: string, id?: string): ElementSpec =>
   text({ content, class: caption, ...(id ? { id } : {}) });
@@ -159,6 +247,11 @@ export const chipButton = (params: {
   flow: StepSpec[];
   /** A mark drawn before the label — a colour swatch. The label then becomes a child, beside it. */
   lead?: ElementSpec;
+  /**
+   * When the switch does not apply at all — a condition over `source`, and what the chip says instead of its hint.
+   * Disabled rather than hidden: the control stays where the reader expects it, and says why it is not there for them.
+   */
+  unavailable?: { source: string; when: string; hint: string };
 }): ElementSpec =>
   button({
     id: params.id,
@@ -168,7 +261,19 @@ export const chipButton = (params: {
     class: chip,
     bind: [
       variantFrom(chip, params.source, { template: `{{ ${params.on} ? 'on' : '' }}` }),
-      bindTemplate('ariaPressed', params.source, `{{ ${params.on} ? 'true' : 'false' }}`)
+      bindTemplate('ariaPressed', params.source, `{{ ${params.on} ? 'true' : 'false' }}`),
+      ...(params.unavailable
+        ? [
+            bindTemplate('disabled', params.unavailable.source, `{{ ${params.unavailable.when} }}`, {
+              returns: 'value'
+            }),
+            bindTemplate(
+              'title',
+              params.unavailable.source,
+              `{{ ${params.unavailable.when} ? '${params.unavailable.hint}' : '${params.hint}' }}`
+            )
+          ]
+        : [])
     ],
     flows: [params.flow]
   });

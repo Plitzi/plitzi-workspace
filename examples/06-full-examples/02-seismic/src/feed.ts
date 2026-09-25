@@ -151,8 +151,13 @@ export type SeismicReport = {
   bins: ActivityBin[];
   binLabel: string;
   axisStart: string;
-  /** When the FEED was generated, not when this ran: the difference is how stale the answer is. */
+  /** When the USGS generated the feed. It moves once a minute, whatever the page's cadence. */
   generatedAt: number;
+  /**
+   * When this server asked the USGS for it — what moves on every refresh. The two together say both "the page is
+   * listening" and "how old the news is": a feed checked a second ago can still be a minute old.
+   */
+  checkedAt: number;
 };
 
 type Feature = {
@@ -347,6 +352,7 @@ export const seismicReport = async (window: FeedWindow): Promise<SeismicReport> 
     bins: binsOf(records, window, generatedAt),
     binLabel: SPANS[window].binLabel,
     axisStart: SPANS[window].axisStart,
-    generatedAt
+    generatedAt,
+    checkedAt: Date.now()
   };
 };

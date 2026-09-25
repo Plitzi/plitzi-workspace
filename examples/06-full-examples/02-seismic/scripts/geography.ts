@@ -53,6 +53,112 @@ const roundLine = (line: Position[]): Position[] =>
 
 const roundPolygon = (rings: Position[][]): Position[][] => rings.map(roundLine).filter(ring => ring.length >= 4);
 
+/**
+ * A ring made continuous: every step shorter than half the world, so a coast that crosses the antimeridian runs on past
+ * 180° (to 190°) instead of jumping back to -170°.
+ */
+const unwrap = (ring: Position[]): Position[] => {
+  let offset = 0;
+
+  return ring.map((point, index) => {
+    if (index > 0) {
+      const step = point[0] + offset - (ring[index - 1][0] + offset);
+      offset += step > 180 ? -360 : step < -180 ? 360 : 0;
+    }
+
+    return [point[0] + offset, point[1]];
+  });
+};
+
+/** Sutherland–Hodgman against one vertical line: the part of a ring on one side of `x = at`, closed along it. */
+const clip = (ring: Position[], at: number, keepLeft: boolean): Position[] => {
+  const inside = (point: Position): boolean => (keepLeft ? point[0] <= at : point[0] >= at);
+  const crossing = (from: Position, to: Position): Position => [
+    at,
+    from[1] + ((to[1] - from[1]) * (at - from[0])) / (to[0] - from[0])
+  ];
+  const out: Position[] = [];
+  ring.forEach((point, index) => {
+    const previous = ring[(index + ring.length - 1) % ring.length];
+    if (inside(point)) {
+      if (!inside(previous)) {
+        out.push(crossing(previous, point));
+      }
+
+      out.push(point);
+    } else if (inside(previous)) {
+      out.push(crossing(previous, point));
+    }
+  });
+
+  return out.length >= 3 ? [...out, out[0]] : [];
+};
+
+const shift = (ring: Position[], by: number): Position[] => ring.map(point => [point[0] + by, point[1]]);
+
+/**
+ * A polygon that straddles the antimeridian, cut into the pieces on each side of it.
+ *
+ * Drawn on a globe, a ring that steps from 179.9° to -180° is a short stretch behind the Earth. Drawn on a flat map it
+ * is an edge across the whole world, and the fill between it and the rest of the ring was a band of land from Chukotka
+ * to Alaska — one straight across the Arctic for Wrangel Island. Each ring is made continuous, clipped at ±180°, and
+ * the parts past the line moved back by a whole turn, so every piece lies inside one copy of the world.
+ */
+/** A ring with no area — every point on one parallel, as the pole's own edge of Antarctica comes out. */
+const hasArea = (ring: Position[]): boolean => ring.some(point => point[1] !== ring[0][1]);
+
+/**
+ * A ring that goes AROUND a pole — Antarctica's coast — closed through it.
+ *
+ * It does not straddle the antimeridian, it circles the whole Earth, so there is nothing to split: the step from 180°
+ * to -180° is where it has to leave the coast, run along the pole's edge of the map and come back. Left as a step, the
+ * fill drew it as a band across the bottom of a flat map.
+ */
+const closeThroughPole = (ring: Position[]): Position[] => {
+  const pole = ring.reduce((sum, point) => sum + point[1], 0) < 0 ? -90 : 90;
+
+  return ring.flatMap((point, index) => {
+    const previous = index > 0 ? ring[index - 1] : undefined;
+    if (!previous || Math.abs(point[0] - previous[0]) <= 180) {
+      return [point];
+    }
+
+    const from = previous[0] > 0 ? 180 : -180;
+
+    return [[from, pole], [-from, pole], point];
+  });
+};
+
+const splitAtAntimeridian = (polygon: Position[][]): Position[][][] => {
+  const rings = polygon.filter(hasArea).map(unwrap);
+  const [outer] = rings;
+  // Nothing left that encloses anything: a polygon that was only the pole's edge of the map draws nothing.
+  if (!outer) {
+    return [];
+  }
+
+  const west = Math.min(...outer.map(point => point[0]));
+  const east = Math.max(...outer.map(point => point[0]));
+  if (east - west >= 359) {
+    return [polygon.filter(hasArea).map(closeThroughPole)];
+  }
+
+  if (west >= -180 && east <= 180) {
+    return [polygon];
+  }
+
+  const line = east > 180 ? 180 : -180;
+  const turn = east > 180 ? -360 : 360;
+  const inside = rings.map(ring => clip(ring, line, line === 180)).filter(ring => ring.length > 0);
+  const beyond = rings
+    .map(ring => clip(ring, line, line !== 180))
+    .filter(ring => ring.length > 0)
+    .map(ring => shift(ring, turn));
+
+  // A hole only stays with the piece its outer ring survived in; one clipped to nothing goes with it.
+  return [inside, beyond].filter(piece => piece.length > 0 && piece[0].length >= 4);
+};
+
 const readTopology = (file: string): Topology =>
   JSON.parse(fs.readFileSync(require.resolve(`world-atlas/${file}`), 'utf8')) as Topology;
 
@@ -73,7 +179,10 @@ const land = (): FeatureCollection<MultiPolygon> => {
         properties: {},
         geometry: {
           type: 'MultiPolygon',
-          coordinates: polygons.map(roundPolygon).filter(polygon => polygon.length > 0)
+          coordinates: polygons
+            .flatMap(splitAtAntimeridian)
+            .map(roundPolygon)
+            .filter(polygon => polygon.length > 0)
         }
       }
     ]
@@ -175,7 +284,12 @@ const plates = async (): Promise<FeatureCollection<LineString, PlateProperties>>
       }
 
       const wraps = Math.abs(end[0] - start[0]) > 180;
-      const continues = run && run.kind === kind && run.boundary === step.PLATEBOUND && run.last === step.SEQNUM - 1;
+      // Consecutive in the sequence is not the same as touching: where the model skips a stretch, the next step starts
+      // somewhere else, and joining the two drew a straight line across an ocean.
+      const lastPoint = run?.points[run.points.length - 1];
+      const touches = lastPoint !== undefined && Math.hypot(lastPoint[0] - start[0], lastPoint[1] - start[1]) < 0.5;
+      const continues =
+        run && run.kind === kind && run.boundary === step.PLATEBOUND && run.last === step.SEQNUM - 1 && touches;
       if (!continues || wraps) {
         close();
       }

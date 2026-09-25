@@ -40,9 +40,11 @@ const bar = styles('commandBar', {
       'align-items': 'center',
       'justify-content': 'space-between',
       gap: '10px 22px',
-      padding: '8px 14px'
+      padding: '8px 14px',
+      // The gear sits over the bar's end (see `settingsCorner`): its room is kept free here.
+      'padding-right': '64px'
     },
-    mobile: { 'justify-content': 'center', padding: '8px 10px' }
+    mobile: { 'justify-content': 'flex-start', padding: '8px 10px', 'padding-right': '56px' }
   }
 });
 
@@ -174,9 +176,24 @@ const brand = (): ElementSpec =>
                 ]
               }),
               text({
+                id: 'feed-checked',
+                content: '',
+                bind: [bindTemplate('content', 'feed.checkedAt', "Checked {{ source|date('H:i:s', 'UTC') }} UTC")]
+              })
+            ]
+          }),
+          /**
+           * How old the news is, apart from how recently anybody asked: the USGS regenerates its feed once a minute,
+           * so the checked time above moves on every refresh and this one only when there is something new to read.
+           */
+          container({
+            id: 'feed-age',
+            class: statusRow,
+            children: [
+              text({
                 id: 'feed-clock',
                 content: '',
-                bind: [bindTemplate('content', 'feed.generatedAt', "Feed {{ source|date('H:i:s', 'UTC') }} UTC")]
+                bind: [bindTemplate('content', 'feed.generatedAt', "USGS feed {{ source|date('H:i:s', 'UTC') }}")]
               }),
               text({
                 id: 'feed-cadence',

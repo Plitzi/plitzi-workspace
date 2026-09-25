@@ -56,12 +56,12 @@ body { font-family: var(--mono); color: var(--ink); -webkit-font-smoothing: anti
 
 /* Corner brackets on every panel, so the furniture reads as one instrument. */
 .commandBar::before, .livePopup::before, .navPanel::before, .boardPanel::before, .activityPanel::before, .logPanel::before, .legendPanel::before,
-.controlPanel::before, .dossier::before, .strongestCard::before {
+.controlPanel::before, .dossier::before, .strongestPanel::before {
   content: ''; position: absolute; top: -1px; left: -1px; width: 9px; height: 9px; pointer-events: none;
   border-top: 1px solid var(--trace); border-left: 1px solid var(--trace);
 }
 .commandBar::after, .livePopup::after, .navPanel::after, .boardPanel::after, .activityPanel::after, .logPanel::after, .legendPanel::after,
-.controlPanel::after, .dossier::after, .strongestCard::after {
+.controlPanel::after, .dossier::after, .strongestPanel::after {
   content: ''; position: absolute; bottom: -1px; right: -1px; width: 9px; height: 9px; pointer-events: none;
   border-bottom: 1px solid var(--trace); border-right: 1px solid var(--trace);
 }
