@@ -22,6 +22,12 @@ One folder, four files: `SeatPicker.tsx` (the component), `declaration.ts` (its 
 `index.ts` (`Object.assign(Component, declaration, { pluginSettings: Settings })`). An event or an action is declared in
 `declaration.ts` and registered by the component from there, never only in the component.
 
+A plugin fires its events with `interactionsManager.interactionTrigger(id, action, payload)` whenever it has news —
+from its first effect too: a flow starts once the page has finished mounting, so the `setState` it calls is there. No
+`queueMicrotask` or delay of your own. An event that REPORTS a state, and may fire again before its flow ends (as a
+component reads its real value right after mounting), wants `whileRunning('queue', …)` on the flow: by default a firing
+while the flow runs is dropped, and the stale first report would stick.
+
 ## Props
 
 **The host element's attributes ARE the component's props.** Whatever the space writes on the `custom` element arrives

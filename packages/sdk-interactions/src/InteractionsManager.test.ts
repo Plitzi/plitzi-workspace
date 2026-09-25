@@ -561,3 +561,80 @@ describe('InteractionsManager — whileRunning', () => {
     expect(finished).toEqual([1, 2, 3]);
   });
 });
+
+/**
+ * A trigger fired while the page mounts: the sources a flow calls register AFTER the element that fired, in the same
+ * commit. The flow starts once they have.
+ */
+describe('InteractionsManager — a trigger fired while the page mounts', () => {
+  const firesOn = (elementId: string): Record<string, ElementInteraction> => ({
+    trig: {
+      id: 'trig',
+      title: 'Found',
+      type: 'trigger',
+      action: 'found',
+      params: {},
+      preview: {},
+      elementId,
+      beforeNode: '',
+      afterNode: 'write',
+      flowId: 'trig',
+      enabled: true
+    },
+    write: {
+      id: 'write',
+      title: 'Write',
+      type: 'globalCallback',
+      action: 'write',
+      params: {},
+      preview: {},
+      elementId: 'store',
+      beforeNode: 'trig',
+      afterNode: '',
+      flowId: 'trig',
+      enabled: true
+    }
+  });
+  const foundTrigger = { found: { action: 'found', title: 'Found', type: 'trigger' as const, params: {} } };
+
+  it('runs the flow against a source that registered right after the trigger fired', async () => {
+    const write = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe('plugin', firesOn('plugin'), foundTrigger);
+
+    const fired = manager.interactionTrigger('plugin', 'found', {});
+    manager.subscribe(
+      'store',
+      {},
+      {},
+      {
+        write: { action: 'write', title: 'Write', type: 'globalCallback', params: {}, callback: write }
+      }
+    );
+    await fired;
+
+    expect(write).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not run the flow of an element gone before it started', async () => {
+    const write = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'store',
+      {},
+      {},
+      {
+        write: { action: 'write', title: 'Write', type: 'globalCallback', params: {}, callback: write }
+      }
+    );
+    manager.subscribe('plugin', firesOn('plugin'), foundTrigger);
+
+    const fired = manager.interactionTrigger('plugin', 'found', {});
+    // Unmounted and mounted again in the same tick — React's development double mount.
+    manager.unsubscribe('plugin');
+    manager.subscribe('plugin', firesOn('plugin'), foundTrigger);
+    await fired;
+
+    expect(write).not.toHaveBeenCalled();
+  });
+});

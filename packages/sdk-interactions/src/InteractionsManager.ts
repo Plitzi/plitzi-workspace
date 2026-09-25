@@ -72,6 +72,23 @@ class InteractionsManager {
         return;
       }
 
+      /**
+       * Past the commit before a flow starts.
+       *
+       * The page's sources — `state`, `navigation`, the actions — register their callbacks from effects React runs
+       * AFTER the effects of the elements under them. A trigger fired while the page mounts (a plugin saying what it
+       * found, an element's first answer) ran a flow whose `setState` did not exist yet, and the step failed with
+       * nothing to show for it. One microtask is enough: the whole commit's effects have run by then.
+       *
+       * The element must still be the one that fired: unmounted meanwhile, or mounted again (React's development
+       * double mount), its flow is not run for a subscription that is gone.
+       */
+      const subscription = this.subscriptors[subscriptorId] as Subscriptor | undefined;
+      await Promise.resolve();
+      if (!subscription || this.subscriptors[subscriptorId] !== subscription) {
+        return;
+      }
+
       const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
       // Read again before every step rather than once here: a step sees the page as it is when it runs.
       const readGlobals = (): Record<string, unknown> => ({

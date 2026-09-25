@@ -51,6 +51,8 @@ export const computed = {
   rotate: "{{ state.spinOff or computed.projection == 'flat' ? false : true }}",
   replaying: '{{ state.replay ? true : false }}',
   touring: '{{ state.tour ? true : false }}',
+  /** Whether an arrival is heard: the page's ping, and the sound of its desktop notification. Kept per screen. */
+  sound: '{{ state.soundOff ? false : true }}',
   /** A wall display left alone tours by itself after two minutes; each screen decides. */
   idleSeconds: '{{ state.autoTour ? 120 : 0 }}',
   /**
@@ -79,4 +81,14 @@ export const shown = (q: string): string =>
  * A lock restored on the next visit points at an event that may have left the window, a replay restored halfway is a
  * display that starts doing something by itself, and a search restored is a log that looks broken.
  */
-export const transientState = ['selectedId', 'replay', 'tour', 'detail', 'search', 'settingsOpen', 'keysOpen'];
+export const transientState = [
+  'selectedId',
+  'replay',
+  'tour',
+  'detail',
+  'search',
+  'settingsOpen',
+  'keysOpen',
+  // The browser's to say, on every visit: a permission remembered from the last one may since have been revoked.
+  'alertsPermission'
+];

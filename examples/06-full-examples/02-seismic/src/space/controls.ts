@@ -2,19 +2,25 @@ import {
   bindTemplate,
   button,
   container,
+  declaredCallback,
+  declaredTrigger,
   defineElement,
+  named,
   onClick,
   setState,
   styles,
   text,
   themeToggle,
   toggleState,
-  variantFrom
+  variantFrom,
+  when,
+  whileRunning
 } from '@plitzi/sdk-authoring';
 
 import { ALERTS, REFRESH } from '../filters.ts';
 import fullscreenDeclaration from '../plugins/FullscreenToggle/declaration.ts';
-import { FULLSCREEN_ID } from './keys.ts';
+import notifierDeclaration from '../plugins/Notifier/declaration.ts';
+import { FULLSCREEN_ID, NOTIFIER_ID } from './ids.ts';
 import { resetMapView } from './map.ts';
 import { nav } from './nav.ts';
 import {
@@ -30,12 +36,18 @@ import {
 } from './kit.ts';
 
 import type { FullscreenToggleAttributes } from '../plugins/FullscreenToggle/declaration.ts';
+import type { NotifierAttributes } from '../plugins/Notifier/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';
 
 /** Full screen, authored from the plugin's declaration like the map — see why it is an element in its declaration. */
 const fullscreenToggle = defineElement<FullscreenToggleAttributes>(fullscreenDeclaration);
 
 export const FULLSCREEN_DECLARATION = fullscreenDeclaration;
+
+/** The display's voice — see the plugin's declaration for why it is an element. */
+const notifier = defineElement<NotifierAttributes>(notifierDeclaration);
+
+export const NOTIFIER_DECLARATION = notifierDeclaration;
 
 /**
  * SETTINGS: how the display draws, and how it behaves while it is open — in the corner a reader looks for them.
@@ -362,6 +374,59 @@ const settingsPanelElement = (): ElementSpec =>
           source: 'computed.follow',
           on: 'source',
           flow: [onClick(), toggleState({ key: 'followOff' })]
+        })
+      ]),
+      row('Sound', 'sound-settings', [
+        choice('sound-switch', [
+          chipButton({
+            id: 'sound',
+            content: 'SOUND',
+            hint: 'Heard on every new event: a ping on the page, and the sound of the desktop alert  (M)',
+            source: 'computed.sound',
+            on: 'source',
+            flow: [onClick(), toggleState({ key: 'soundOff' })]
+          }),
+          chipButton({
+            id: 'sound-test',
+            content: '▶ TEST',
+            hint: 'Play the alert of a strong event, as it will sound',
+            source: 'computed.sound',
+            on: 'false',
+            flow: [
+              onClick(),
+              when(
+                { field: 'state.soundOff', operator: '!=', value: true },
+                declaredCallback(notifierDeclaration, 'chime', { on: NOTIFIER_ID, params: { magnitude: '6' } })
+              ),
+              declaredCallback(notifierDeclaration, 'notify', {
+                on: NOTIFIER_ID,
+                params: {
+                  title: 'M6.0 · TEST ALERT',
+                  body: 'This is how a new event is announced.',
+                  silent: "{{ state.soundOff ? 'true' : 'false' }}",
+                  tag: 'tremor-test'
+                }
+              })
+            ]
+          })
+        ])
+      ]),
+      row('Alerts', 'alert-desktop', [
+        notifier({
+          id: NOTIFIER_ID,
+          class: chip,
+          enableLabel: 'ENABLE DESKTOP ALERTS',
+          onLabel: 'DESKTOP ALERTS ON',
+          blockedLabel: 'BLOCKED BY THE BROWSER',
+          bind: [variantFrom(chip, 'state.alertsPermission', { template: "{{ source == 'granted' ? 'on' : '' }}" })],
+          flows: [
+            [
+              // Queued: the notifier reports twice as it mounts — unknown, then what the browser says — and the last
+              // report is the one that must stick, not the first one still running.
+              whileRunning('queue', named('permission', declaredTrigger(notifierDeclaration, 'onPermission'))),
+              setState({ key: 'alertsPermission', type: 'text', value: '{{ permission.permission }}' })
+            ]
+          ]
         })
       ]),
       row('Tour', 'tour-settings', [

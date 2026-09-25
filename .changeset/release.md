@@ -758,3 +758,12 @@
 - The guard is now per FLOW rather than per event: one flow on a click still running no longer holds back another flow
   on the same click.
 - `lintSpace` refuses `whileRunning` on a step that is not the trigger, or an unknown value (`while-running`).
+
+## A trigger fired while the page mounts runs its flow
+
+- A flow starts one microtask after its trigger fires, once the commit that fired it has run all its effects. The
+  page's sources (`state`, `navigation`, the actions) register from effects React runs after those of the elements
+  under them, so a plugin firing an event from its first effect used to run a flow whose steps found nothing
+  registered — and did nothing, silently. `onLoad` and `onPageLoad` had each worked around it on their own.
+- An element unmounted — or mounted again, as React does twice in development — before its flow starts does not run
+  it for the subscription that is gone.

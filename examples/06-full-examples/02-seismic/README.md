@@ -28,6 +28,7 @@ read for how far a space goes before you write a component, and for how a compon
 | [`src/space/`](./src/space)                                             | The display: one file per panel, the state it keeps, its palette and its CSS                                    |
 | [`src/plugins/SeismicMap/`](./src/plugins/SeismicMap)                   | The globe — component, declaration, layers, overlays                                                            |
 | [`src/plugins/FullscreenToggle/`](./src/plugins/FullscreenToggle)       | Full screen, from a click — the one control a flow cannot do                                                    |
+| [`src/plugins/Notifier/`](./src/plugins/Notifier)                       | Desktop alerts (asked for once) and the page's ping — the two ways a screen nobody touches is heard             |
 | [`scripts/geography.ts`](./scripts/geography.ts)                        | Writes `public/geo/world.json`: coastlines, borders and plate boundaries                                        |
 
 ---
@@ -58,6 +59,7 @@ The globe is the only code that draws, and the full-screen button the only one t
 | History                      | Faulting from the moment tensor; how the event ranks among every M5+ within 300 km since 1900, and the largest on record                                                             |
 | Tour                         | The map visits the window's strongest events (`onTourStep` selects each); grabbing the map ends it; AUTO WHEN IDLE starts it after two minutes alone (`onIdle`)                      |
 | Keyboard                     | `onKey` flows on the HUD — `+`/`−`, arrows, `H`, `G`, `T`, `R`, `F`, `S`, `?`, `Esc` — listed by `?`                                                                                 |
+| Sound and alerts             | Every arrival calls the notifier: a desktop notification with the system's sound, and a ping on the page; SOUND (or `M`) mutes both, and the alert still shows                       |
 | Size (DESK · WALL · TV)      | A variant on the HUD, scaled as one piece — a TV and a monitor can be the same pixels wide                                                                                           |
 | Night · Day · Auto           | `themeToggle`, two schemes of tokens; the globe re-reads its colours when `theme.resolved` changes                                                                                   |
 | Remembered                   | `keepState` keeps every setting per screen; `transientState` never keeps the lock, a replay or a search                                                                              |
@@ -92,6 +94,17 @@ dossier, the log's highlight and the map's own lock all read. The space is autho
 component registers from (`defineElement(declaration)`), so a flow can only start on an event the component fires.
 
 ---
+
+## A screen nobody touches
+
+A browser keeps a page silent until somebody clicks or presses a key on it, and a wall display may never be touched.
+Two things make it heard anyway:
+
+- **Desktop alerts.** Press ENABLE DESKTOP ALERTS in the settings once; the browser remembers it for the site, and from
+  then on every new event is a system notification with the system's sound — after a reload too, and with the tab in
+  the background.
+- **The page's own ping** sounds from the first gesture. On a kiosk, start Chrome with
+  `--autoplay-policy=no-user-gesture-required` and it sounds without one.
 
 ## The browser never talks to the USGS
 

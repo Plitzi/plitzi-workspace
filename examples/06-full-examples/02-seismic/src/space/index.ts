@@ -5,7 +5,14 @@ import { apiContainer, container, styles, text, variantFrom } from '@plitzi/sdk-
 
 import { FEED_ACTION } from '../actions.ts';
 import { activity, board, strongest } from './board.ts';
-import { FULLSCREEN_DECLARATION, dock, legend, settingsBackdrop, settingsCorner } from './controls.ts';
+import {
+  FULLSCREEN_DECLARATION,
+  NOTIFIER_DECLARATION,
+  dock,
+  legend,
+  settingsBackdrop,
+  settingsCorner
+} from './controls.ts';
 import { customCss } from './css.ts';
 import { commandBar } from './header.ts';
 import { keysHelp, shortcuts } from './keys.ts';
@@ -39,7 +46,7 @@ const WORLD_VERSION = createHash('sha256')
   .slice(0, 12);
 
 /** The components this space ships, as their declarations: `main.ts` hands them to `authorSpace`, which checks them. */
-export const PLUGINS = [MAP_DECLARATION, FULLSCREEN_DECLARATION];
+export const PLUGINS = [MAP_DECLARATION, FULLSCREEN_DECLARATION, NOTIFIER_DECLARATION];
 
 const screen = styles('screen', {
   position: 'relative',

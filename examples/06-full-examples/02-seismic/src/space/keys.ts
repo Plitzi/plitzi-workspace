@@ -12,6 +12,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import fullscreenDeclaration from '../plugins/FullscreenToggle/declaration.ts';
+import { FULLSCREEN_ID } from './ids.ts';
 import { BUTTON_RESET, PANEL, caption, heading } from './kit.ts';
 import { mapAction, releaseLock, resetMapView } from './map.ts';
 
@@ -24,8 +25,6 @@ import type { ElementSpec, Rule, StepSpec } from '@plitzi/sdk-authoring';
  * Each shortcut is an ordinary flow on the HUD — `onKey` is a trigger like `onClick` — so what a key does is written
  * once, beside what the button for it does, and the list below is the whole of it.
  */
-
-export const FULLSCREEN_ID = 'fullscreen-toggle';
 
 /** Nothing is open on top of the display: Escape then means "let go", not "close". */
 const nothingOpen: Rule[] = [
@@ -71,6 +70,7 @@ export const shortcuts: StepSpec[][] = [
   ],
   [onKey('f'), declaredCallback(fullscreenDeclaration, 'toggle', { on: FULLSCREEN_ID })],
   [onKey('s'), setState({ key: 'keysOpen', type: 'boolean', value: false }), toggleState({ key: 'settingsOpen' })],
+  [onKey('m'), toggleState({ key: 'soundOff' })],
   [onKey('?'), setState({ key: 'settingsOpen', type: 'boolean', value: false }), toggleState({ key: 'keysOpen' })],
   escape
 ];
@@ -85,6 +85,7 @@ const KEYS: readonly { keys: string[]; does: string }[] = [
   { keys: ['R'], does: 'Replay the window' },
   { keys: ['F'], does: 'Full screen' },
   { keys: ['S'], does: 'Settings' },
+  { keys: ['M'], does: 'Sound on · off' },
   { keys: ['?'], does: 'This list' },
   { keys: ['Esc'], does: 'Close · let go · stop' }
 ];

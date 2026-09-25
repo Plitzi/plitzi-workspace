@@ -13,7 +13,9 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { DETAIL_ACTION } from '../actions.ts';
+import notifierDeclaration from '../plugins/Notifier/declaration.ts';
 import declaration from '../plugins/SeismicMap/declaration.ts';
+import { NOTIFIER_ID } from './ids.ts';
 
 import type { SeismicMapAttributes } from '../plugins/SeismicMap/declaration.ts';
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
@@ -158,6 +160,26 @@ export const map: ElementSpec = seismicMap({
           autoDismissTimeout: ARRIVAL_SECONDS * 1000
         })
       ),
+      /**
+       * Heard as well as seen: the page's ping, and a desktop alert — which reaches a screen nobody is touching, and
+       * plays the system's sound. Muted, the alert still shows, silently.
+       */
+      when(
+        { field: 'state.soundOff', operator: '!=', value: true },
+        declaredCallback(notifierDeclaration, 'chime', {
+          on: NOTIFIER_ID,
+          params: { magnitude: '{{ arrived.magnitude }}' }
+        })
+      ),
+      declaredCallback(notifierDeclaration, 'notify', {
+        on: NOTIFIER_ID,
+        params: {
+          title: 'NEW EVENT · {{ arrived.magnitudeLabel }}',
+          body: '{{ arrived.region }} · {{ arrived.depthLabel }} deep',
+          silent: "{{ state.soundOff ? 'true' : 'false' }}",
+          tag: '{{ arrived.id }}'
+        }
+      }),
       when(
         [
           { field: 'arrived.lead', operator: '=', value: true },
