@@ -3,11 +3,13 @@ import { Option, program } from 'commander';
 import addPlugin from './commands/addPlugin';
 import create from './commands/create';
 import createPlugin from './commands/createPlugin';
+import packPluginCommand from './commands/packPlugin';
 import { PACKAGE_MANAGERS } from './scaffold';
 
 import type { AddPluginOptions } from './commands/addPlugin';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
+import type { PackPluginOptions } from './commands/packPlugin';
 
 /**
  * The command line for Plitzi.
@@ -84,5 +86,16 @@ add
   .option('--description <description>', 'One element only: what it is for, in a sentence')
   .option('-f, --force', 'Write into a folder that is not empty')
   .action((names: string[], options: AddPluginOptions) => addPlugin(names, options));
+
+const pack = program.command('pack').description('Build something of this project into what the platform takes');
+
+pack
+  .command('plugin')
+  .argument('[folders...]', 'Element folders to pack, the main one first. In a plugin package, left out: all of them.')
+  .description('Build a plugin: one ES module, its plugin-manifest.json, and the zip the builder takes under Resources')
+  .option('-o, --out <folder>', 'Where the build goes. Emptied first; it must be inside the project.')
+  .option('--no-zip', 'Build without the zip')
+  .option('--plugin-version <version>', 'The version the manifest carries. Defaults to the one in package.json.')
+  .action((folders: string[], options: PackPluginOptions) => packPluginCommand(folders, options));
 
 program.parse(process.argv);

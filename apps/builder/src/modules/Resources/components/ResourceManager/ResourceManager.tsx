@@ -57,6 +57,8 @@ const ResourceManager = ({
             [file.resourceType] = type.split('/') as [ResourceFile['resourceType']];
             break;
 
+          // The same zip is `application/zip` from macOS and Linux, and `application/x-zip-compressed` from Windows.
+          case 'application/x-zip-compressed':
           case 'application/zip': {
             [file.resourceType] = type.split('/') as [ResourceFile['resourceType']];
             const pluginManifest = await getPluginManifest(file);

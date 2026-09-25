@@ -59,7 +59,8 @@ run(
   ],
   WORKSPACE
 );
-run('node', [path.join(WORKSPACE, 'node_modules/vite/bin/vite.js'), 'build'], PLUGIN_DIR);
+// Built the way the package's own `build` builds it: by the CLI.
+run('node', [CLI, 'pack', 'plugin', '--no-zip'], PLUGIN_DIR);
 
 const TYPES: Record<string, string> = { '.json': 'application/json', '.mjs': 'text/javascript', '.css': 'text/css' };
 

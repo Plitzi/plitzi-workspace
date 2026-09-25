@@ -20,7 +20,7 @@ component's props.
 ${installCommand(packageManager)}
 ${run('start')}    # the plugin inside a space, with hot module replacement
 ${run('visual')}   # a browser opens the preview and checks the plugin works
-${run('zip')}      # build, then pack the build the way the builder takes it
+npx @plitzi/cli pack plugin   # the plugin, built — and zipped the way the builder takes it
 \`\`\`
 
 ## What is where
@@ -40,14 +40,17 @@ Each element is written the way Plitzi's own elements are (\`@plitzi/sdk-element
 
 ## Publishing
 
-\`${run('build')}\` writes \`dist/\`: \`${base}.mjs\` and \`plugin-manifest.json\`, which the builder, the page server and the
-MCP server read to know the plugin before they load it.
+\`npx @plitzi/cli pack plugin\` builds the plugin — the CLI is the one place a plugin is packed, so this package carries
+no build of its own. It writes \`dist/\`: \`${base}.mjs\`, \`plugin-manifest.json\` — which the builder, the page server and
+the MCP server read to know the plugin before they load it — and \`types/\`, the declarations a project installing the
+package reads. Beside it, \`${base}-<version>.zip\`.
 
-- **Through the builder.** \`${run('zip')}\` writes \`${base}-<version>.zip\`. Upload it under **Resources**, as a plugin: the
-  platform unpacks it at an address of its own and the space can use it.
+- **Through the builder.** Upload the zip under **Resources**, as a plugin: the platform unpacks it at an address of its
+  own and the space can use it.
 - **From your own host.** Serve \`dist/\` at an address that never changes for a given version
-  (\`https://cdn.example.com/${base}/0.1.0\`), with CORS open to the sites that use it, and list it in the space's
-  plugins: \`{ type: '${type}', resource: '<that address>' }\`.
+  (\`https://cdn.example.com/${base}/0.1.0\`), with CORS open to plain reads, and list it in the space's plugins:
+  \`{ type: '${type}', resource: '<that address>' }\`.
+- **On npm.** Pack first, then publish: \`exports\` points at \`dist/\`.
 
 ## In a project of your own
 
@@ -103,14 +106,14 @@ the way \`@plitzi/sdk-elements\` writes its own. An element's \`declaration.ts\`
 - ${run('start')} — the preview: the plugin inside a space.
 - ${run('visual')} — a browser checks the preview.
 - ${run('typecheck')} and ${run('lint')} — before calling a change done.
-- ${run('build')} — \`dist/\`: the module and \`plugin-manifest.json\`.
+- \`npx @plitzi/cli pack plugin\` — \`dist/\` (the module, \`plugin-manifest.json\`, the types) and the zip for the builder.
 
 - The component's props are the element's attributes. A new one goes in three places: the props, the declaration
   (\`content.attributes\`, and \`bindingsAllowed\` if data may drive it), and \`Settings.tsx\`.
 - A new event or action is declared in \`declaration.ts\` (\`triggers\`, \`callbacks\`) and registered by the component
   from there — never only in the component.
 - Render through \`RootElement\`; never render anything on the first pass that differs between a server and a browser.
-- Never import a second React or SDK, and never make the build split into chunks — see the README's contract.
+- Never bundle a second React or SDK: the page provides both — see the README's contract.
 - \`type\` in the declaration is what every space using the plugin names; renaming it orphans those elements.
 `;
 };

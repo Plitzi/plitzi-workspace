@@ -65,8 +65,6 @@ describe('the plugin package', () => {
       'src/declarations.ts',
       'src/index.ts',
       'vite.config.ts',
-      'build/manifest.ts',
-      'build/zip.ts',
       'preview/main.ts',
       'preview/space.ts',
       'visual/plugin.spec.ts',
@@ -94,23 +92,6 @@ describe('the plugin package', () => {
     expect(component).toContain('...declaration.callbacks.reset');
   });
 
-  it('writes the manifest from the declarations and the files the build made', () => {
-    const manifest = scaffoldPlugin(answers())['build/manifest.ts'];
-
-    expect(manifest).toContain("runnerImport<DeclarationsModule>(path.join(root, 'src/declarations.ts')");
-    expect(manifest).toContain('root: main.type');
-    expect(manifest).toContain('verified: false');
-    expect(manifest).toContain("createHash('sha384')");
-  });
-
-  it('builds one file that imports the page’s React and SDK rather than carrying its own', () => {
-    const config = scaffoldPlugin(answers())['vite.config.ts'];
-
-    expect(config).toContain(String.raw`/^(react|react-dom|@plitzi\/plitzi-sdk)(\/.*)?$/`);
-    expect(config).toContain('codeSplitting: false');
-    expect(config).toContain("fileName: () => 'seat-picker.mjs'");
-  });
-
   it('makes React and the SDK peers, and names the scripts the README quotes', () => {
     const pkg = JSON.parse(scaffoldPlugin(answers())['package.json']) as {
       name: string;
@@ -122,11 +103,7 @@ describe('the plugin package', () => {
     expect(pkg.name).toBe('plitzi-plugin-seat-picker');
     expect(pkg.author).toBe('Acme');
     expect(Object.keys(pkg.peerDependencies).sort()).toEqual(['@plitzi/plitzi-sdk', 'react', 'react-dom']);
-    expect(Object.keys(pkg.scripts)).toEqual(
-      expect.arrayContaining(['start', 'build', 'zip', 'typecheck', 'lint', 'format', 'visual'])
-    );
-    // `pack` is npm's, Yarn's and pnpm's own command: a script by that name would never be the one that runs.
-    expect(pkg.scripts.pack).toBeUndefined();
+    expect(Object.keys(pkg.scripts).sort()).toEqual(['format', 'lint', 'start', 'typecheck', 'visual']);
   });
 
   it('leaves how to install to a project it is written inside', () => {
@@ -194,22 +171,21 @@ describe('a package of several elements', () => {
 });
 
 describe('what a plugin package is, beside its elements', () => {
-  it('publishes its types for a project that installs it, and keeps no build-only global in its code', () => {
+  /** The CLI is the one place a plugin is packed: a copy of the build in every package is what went stale before. */
+  it('builds nothing itself, and points at what `plitzi pack plugin` writes', () => {
     const files = scaffoldPlugin(answers());
     const pkg = JSON.parse(files['package.json']) as {
       exports: Record<string, unknown>;
-      scripts: Record<string, string>;
+      devDependencies: Record<string, string>;
     };
 
     expect(pkg.exports['.']).toEqual({ types: './dist/types/index.d.ts', import: './dist/seat-picker.mjs' });
-    expect(pkg.scripts.build).toBe('vite build && tsc -p tsconfig.build.json');
-    expect(files['tsconfig.build.json']).toContain('"emitDeclarationOnly": true');
+    expect(Object.keys(pkg.devDependencies)).not.toEqual(expect.arrayContaining(['@plitzi/cli']));
+    expect(Object.keys(pkg.devDependencies).filter(name => ['esbuild', 'fflate'].includes(name))).toEqual([]);
+    expect(Object.keys(files).filter(file => file.startsWith('build/') || file === 'tsconfig.build.json')).toEqual([]);
+    expect(files['vite.config.ts']).not.toContain('build:');
     // Compiled by any bundler — a page server's included — so nothing in it may need this package's own Vite config.
     expect(Object.values(files).some(contents => contents.includes('__PLUGIN_VERSION__'))).toBe(false);
-  });
-
-  it('zips the files a page loads, and not the types folder beside them', () => {
-    expect(scaffoldPlugin(answers())['build/zip.ts']).toContain('.filter(entry => entry.isFile())');
   });
 });
 

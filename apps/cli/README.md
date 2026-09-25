@@ -6,6 +6,7 @@ The command line for Plitzi.
 npx @plitzi/cli create my-site                 # a project that renders a space
 npx @plitzi/cli add plugin seat-picker legend  # elements of your own, in the project you are in
 npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can load
+npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
 ```
 
 ## `create`
@@ -110,7 +111,8 @@ A name that would make a built-in element's type (`button`, `form`) is refused: 
 
 ## `create --plugin`
 
-A plugin package: one element any space can load, with a Vite preview to write it in and a build that publishes it.
+A plugin package: elements any space can load, with a Vite preview to write them in. It builds nothing itself —
+`pack plugin` does, for every plugin — so it carries no bundler config and no build dependency.
 
 ```bash
 plitzi create seat-picker --plugin                   # asks the name, what the builder shows, what it is for, who publishes it
@@ -122,13 +124,29 @@ Without a directory, inside a repository, it offers the folders that repository 
 globs, and `plugins/`); inside one it installs with the repository's own package manager and leaves its install
 settings alone.
 
-- `start` — the plugin inside a space, rendered by the SDK in the browser, with hot module replacement.
-- `build` — `dist/`: one ES module and `plugin-manifest.json`, written from the elements' declarations with each
-  file's integrity hash, and the type declarations a project installing the package reads. React and the SDK stay out
-  of the bundle; the page provides them.
-- `zip` — the build as the builder takes it: upload it under Resources, as a plugin. Or serve `dist/` at a versioned
-  address with CORS open, and list it in a space's plugins as `{ type, resource }`.
-- `visual` — a browser opens the preview and checks the element renders, answers a click, and leaves the page whole.
+Its scripts: `start` (every element inside a space, rendered by the SDK in the browser, with hot module
+replacement), `visual` (a browser checks each element renders, answers a click, and leaves the page whole),
+`typecheck`, `lint` and `format`.
+
+## `pack plugin`
+
+The one place a plugin is built — from a plugin package, or from element folders of any project:
+
+```bash
+plitzi pack plugin                                    # in a plugin package: every element it holds
+plitzi pack plugin src/plugins/SeatPicker             # an element of a self-hosted project
+plitzi pack plugin src/plugins/SeatPicker src/plugins/Legend   # several in one plugin, the first its main
+```
+
+It writes one ES module (esbuild; React and the SDK kept out — the page provides them; images and fonts inside, since
+a page imports the module from a blob URL), `plugin-manifest.json` written from the elements' declarations with each
+file's integrity hash, and the zip the builder takes: upload it under Resources, as a plugin. A package also gets its
+type declarations, written with its own TypeScript. Or serve the build at a versioned address with CORS open, and list
+it in a space's plugins as `{ type, resource }`.
+
+Without folders, outside a package, it offers the elements in `src/plugins` — the folders with a declaration, which is
+what a manifest is written from. `--out` moves the build, `--no-zip` leaves the zip out, and `--plugin-version` sets the
+version the manifest carries (the project's own by default).
 
 ## Credentials
 

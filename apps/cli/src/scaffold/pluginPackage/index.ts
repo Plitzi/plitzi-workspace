@@ -36,7 +36,7 @@ export const scaffoldPlugin = (answers: PluginAnswers): ProjectFiles => {
     ...packageFiles(names, answers),
     ...qualityFilesFor('browser', OUTPUTS),
     ...packageSourceFiles(elements),
-    ...buildFiles(names),
+    ...buildFiles(),
     ...previewFiles(elementNames),
     ...visualFiles(elementNames, answers),
     ...docsFiles(elementNames, answers)

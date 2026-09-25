@@ -13,7 +13,8 @@ The CLI writes it, in the shape Plitzi's own elements are written in:
 
 ```bash
 npx @plitzi/cli add plugin seat-picker legend # elements of this project (src/plugins/<Name> in a CLI project)
-npx @plitzi/cli create seat-picker --plugin   # a package of its own: build, manifest, preview, and a zip for the builder
+npx @plitzi/cli create seat-picker --plugin   # a package of its own, with a preview
+npx @plitzi/cli pack plugin                   # built, with its manifest and the zip the builder takes
 ```
 
 One folder, four files: `SeatPicker.tsx` (the component), `declaration.ts` (its `type`, the `triggers` it fires, the

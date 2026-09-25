@@ -10,6 +10,9 @@ import type { PluginAnswers, ProjectFiles } from '../types';
  * React and the SDK are PEER dependencies, which is the package-manager spelling of the build's `external`: the page
  * provides them and the plugin uses those, so a project installing the plugin never gets a second copy to fight with.
  * They are dev dependencies too, because the preview renders a page of its own.
+ *
+ * It builds nothing itself. `plitzi pack plugin` is the one place a plugin is packed — into `dist/`, which `exports`
+ * points at, and a zip for the builder — so the package carries no bundler config and no build dependency of its own.
  */
 
 const packageJson = ({ packageName, base }: PluginNames, { packageManager, owner }: PluginAnswers): string =>
@@ -29,8 +32,6 @@ const packageJson = ({ packageName, base }: PluginNames, { packageManager, owner
       },
       scripts: {
         start: 'vite',
-        build: 'vite build && tsc -p tsconfig.build.json',
-        zip: 'vite build && node build/zip.ts',
         typecheck: 'tsc -p tsconfig.json --noEmit',
         lint: 'eslint .',
         format: 'prettier --write .',
@@ -45,7 +46,6 @@ const packageJson = ({ packageName, base }: PluginNames, { packageManager, owner
         ...SHARED_DEV_DEPENDENCIES,
         '@plitzi/plitzi-sdk': SDK_VERSION,
         '@plitzi/sdk-authoring': SDK_VERSION,
-        fflate: '^0.8.3',
         react: REACT_VERSION,
         'react-dom': REACT_VERSION,
         vite: VITE_VERSION
@@ -79,21 +79,7 @@ const tsconfig = (): string => `{
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx"
   },
-  "include": ["src", "preview", "build", "visual", "vite.config.ts", "playwright.config.ts"]
-}
-`;
-
-/** What `build` adds to the bundle: the type declarations a project installing the package reads, in `dist/types`. */
-const tsconfigBuild = (): string => `{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "noEmit": false,
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "dist/types",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+  "include": ["src", "preview", "visual", "vite.config.ts", "playwright.config.ts"]
 }
 `;
 
@@ -106,6 +92,5 @@ const gitignore = ({ packageManager, inProject }: PluginAnswers): string =>
 export const packageFiles = (names: PluginNames, answers: PluginAnswers): ProjectFiles => ({
   'package.json': packageJson(names, answers),
   'tsconfig.json': tsconfig(),
-  'tsconfig.build.json': tsconfigBuild(),
   '.gitignore': gitignore(answers)
 });

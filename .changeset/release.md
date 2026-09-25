@@ -456,16 +456,22 @@
   - any other project is asked for the folder (`--dir`) and told how to register it for `render()`,
     `<PlitziSdk.Plugin>` and a page server.
   A name that would make a built-in element's type (`button`, `form`) is refused.
-- **`plitzi create [directory] --plugin`** writes a plugin package any space can load: the element, a Vite preview that
-  renders it inside a space, `build` (one ES module plus `plugin-manifest.json`, written from the elements' declarations
-  with each file's integrity hash; React and the SDK stay out of the bundle), `zip` (the build as the builder takes it
-  under Resources) and a visual test of every element. A package holds as many elements as it needs (`--elements
-  legend,price-tag`, or asked): the first is published as the plugin, the rest as its `plugins`, and the manifest
-  describes each. The build also emits type declarations, the package ships its source (a page server compiles an
-  element from it) and exports `elements` for a project registering them itself; nothing in it needs the package's own
-  Vite config to compile. `--name`, `--title`, `--description` and `--owner` answer what it otherwise asks;
-  inside a repository it offers the folders that repository keeps its packages in, installs with its package manager and
-  leaves its install settings alone. It replaces the `plitzi-plugin-template` repository, which is deprecated.
+- **`plitzi create [directory] --plugin`** writes a plugin package: its elements, a Vite preview that renders them
+  inside a space, and a visual test of each. A package holds as many elements as it needs (`--elements
+  legend,price-tag`, or asked): the first is published as the plugin, the rest as its `plugins`. It builds nothing
+  itself — no bundler config, no build dependency — since `plitzi pack plugin` is the one place a plugin is built.
+  It ships its source (a page server compiles an element from it) and exports `elements` for a project registering
+  them itself. `--name`, `--title`, `--description` and `--owner` answer what it otherwise asks; inside a repository it
+  offers the folders that repository keeps its packages in, installs with its package manager and leaves its install
+  settings alone. It replaces the `plitzi-plugin-template` repository, which is deprecated.
+- **`plitzi pack plugin [folders...]`** builds a plugin — a package's elements, or element folders of any project, a
+  self-hosted one included: one ES module (esbuild; React and the SDK kept out for the page to provide, images and
+  fonts kept in, since a page imports it from a blob URL), `plugin-manifest.json` written from the elements'
+  declarations with each file's integrity hash, and the zip the builder takes under Resources — checked against how
+  the upload and the builder read it. A package also gets its type declarations, written with its own TypeScript. A
+  declaration missing what the manifest needs is refused by name.
+- **Fixed: a plugin uploaded from Windows was refused** ("Type file not supported"). Chrome and Edge on Windows send a
+  zip as `application/x-zip-compressed`, and both the builder and the upload accepted only `application/zip`.
 - **A project `plitzi create` writes registers every folder of `src/plugins` by itself**, under its name in camelCase
   — `readdirSync` in server mode, `import.meta.glob` in client mode — so a new element needs no line of `src/main.ts`.
 - **A new project is formatted by its own Prettier** once installed, so the first commit is already in its style. Only

@@ -35,8 +35,8 @@ describeTarget('plugin-server', subject => {
 
     // The page's React and SDK, imported rather than carried: a second copy is "Invalid hook call" and a blank element.
     const code = file.toString('utf-8');
-    expect(code).toMatch(/from "react"/);
-    expect(code).toMatch(/from "@plitzi\/plitzi-sdk"/);
+    expect(code).toMatch(/from\s*"react"/);
+    expect(code).toMatch(/from\s*"@plitzi\/plitzi-sdk"/);
   });
 
   test('renders in a page that loads it from its manifest, and does what it declares', async ({ page }) => {

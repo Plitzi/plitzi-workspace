@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import addPlugin from './addPlugin';
 import createPlugin from './createPlugin';
 import { coveredByWorkspace, findProject } from './existingProject';
+import packPluginCommand from './packPlugin';
 import { scaffold } from '../scaffold';
 
 import type { CreateAnswers } from '../scaffold';
@@ -326,6 +327,60 @@ describe('plitzi add plugin', () => {
     expect(errors()).toContain('would both be "seatPicker"');
     expect(errors()).toContain('built-in element');
     expect(errors()).toContain('--title and --description describe one element');
+  });
+});
+
+describe('plitzi pack plugin', () => {
+  it('packs an element of a self-hosted project into the zip the builder takes', async () => {
+    captureErrors();
+    const output = captureOutput();
+    await inTemp(async dir => {
+      await cliProject(dir);
+      await from(dir, () => addPlugin(['seat-picker'], {}));
+
+      await from(dir, () => packPluginCommand(['src/plugins/SeatPicker'], {}));
+
+      expect(await exists(path.join(dir, 'dist/plugins/seat-picker/plugin-manifest.json'))).toBe(true);
+      expect(await exists(path.join(dir, 'dist/plugins/seat-picker-0.0.0.zip'))).toBe(true);
+    });
+
+    expect(process.exitCode).toBeUndefined();
+    expect(output()).toContain('Upload it in the builder under Resources, as a plugin.');
+  });
+
+  it('asks which elements to pack instead of choosing, offering only the folders that are elements', async () => {
+    const errors = captureErrors();
+    captureOutput();
+    await inTemp(async dir => {
+      await cliProject(dir);
+      await from(dir, () => addPlugin(['seat-picker'], {}));
+
+      await from(dir, () => packPluginCommand([], {}));
+    });
+
+    expect(process.exitCode).toBe(1);
+    expect(errors()).toContain('src/plugins/SeatPicker');
+    // The scaffold's example has no declaration, so it is not an element the CLI can pack.
+    expect(errors()).not.toContain('src/plugins/StatCard');
+  });
+
+  it('packs a plugin package as the package publishes itself, zip beside it', async () => {
+    captureErrors();
+    captureOutput();
+    await inTemp(async dir => {
+      const pkg = path.join(dir, 'seat-picker');
+      await from(dir, () => createPlugin(pkg, { install: false, packageManager: 'npm', elements: 'legend' }));
+
+      await from(pkg, () => packPluginCommand([], {}));
+
+      const manifest = JSON.parse(await fs.readFile(path.join(pkg, 'dist/plugin-manifest.json'), 'utf-8')) as {
+        pluginSchema: Record<string, unknown>;
+      };
+      expect(Object.keys(manifest.pluginSchema)).toEqual(['seatPicker', 'legend']);
+      expect(await exists(path.join(pkg, 'seat-picker-0.1.0.zip'))).toBe(true);
+    });
+
+    expect(process.exitCode).toBeUndefined();
   });
 });
 
