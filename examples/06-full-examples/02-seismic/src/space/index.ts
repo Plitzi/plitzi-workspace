@@ -5,7 +5,7 @@ import { apiContainer, container, styles, text, variantFrom } from '@plitzi/sdk-
 
 import { FEED_ACTION } from '../actions.ts';
 import { activity, board, strongest } from './board.ts';
-import { dock, legend, settingsBackdrop, settingsCorner } from './controls.ts';
+import { FULLSCREEN_DECLARATION, dock, legend, settingsBackdrop, settingsCorner } from './controls.ts';
 import { customCss } from './css.ts';
 import { commandBar } from './header.ts';
 import { log } from './log.ts';
@@ -17,7 +17,7 @@ import { fonts, notifications, variables } from './tokens.ts';
 import type { ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 
 /**
- * Tremor, declared: one screen, one server provider, one element of the space's own, and the instrument around it.
+ * Tremor, declared: one screen, one server provider, two elements of the space's own, and the instrument around it.
  *
  * The tree reads top to bottom as the display is layered: the server's answer wraps everything; inside it, the world's
  * outlines and the globe; above them, the heads-up display — seven panels on a grid, each in its own file. Element
@@ -38,7 +38,7 @@ const WORLD_VERSION = createHash('sha256')
   .slice(0, 12);
 
 /** The components this space ships, as their declarations: `main.ts` hands them to `authorSpace`, which checks them. */
-export const PLUGINS = [MAP_DECLARATION];
+export const PLUGINS = [MAP_DECLARATION, FULLSCREEN_DECLARATION];
 
 const screen = styles('screen', {
   position: 'relative',

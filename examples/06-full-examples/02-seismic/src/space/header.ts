@@ -41,14 +41,21 @@ const bar = styles('commandBar', {
       'justify-content': 'space-between',
       gap: '10px 22px',
       padding: '8px 14px',
-      // The gear sits over the bar's end (see `settingsCorner`): its room is kept free here.
-      'padding-right': '64px'
+      // Full screen and the gear sit over the bar's end (see `settingsCorner`): their room is kept free here.
+      'padding-right': '108px'
     },
-    mobile: { 'justify-content': 'flex-start', padding: '8px 10px', 'padding-right': '56px' }
+    mobile: { 'justify-content': 'flex-start', padding: '8px 10px', 'padding-right': '98px' }
   }
 });
 
-const brandBlock = styles('brandBlock', { display: 'flex', 'align-items': 'center', gap: '14px' });
+/** Wraps rather than running under the corner buttons: on a phone the status drops below the wordmark. */
+const brandBlock = styles('brandBlock', {
+  display: 'flex',
+  'flex-wrap': 'wrap',
+  'align-items': 'center',
+  gap: '8px 14px',
+  'min-width': '0px'
+});
 
 const wordmark = styles('wordmark', {
   margin: '0px',

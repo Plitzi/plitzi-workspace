@@ -1,16 +1,7 @@
-import {
-  bindTemplate,
-  button,
-  container,
-  list,
-  onClick,
-  setState,
-  styles,
-  text,
-  variantFrom
-} from '@plitzi/sdk-authoring';
+import { bindTemplate, button, container, list, onClick, styles, text, variantFrom } from '@plitzi/sdk-authoring';
 
 import { BUTTON_RESET, PANEL, caption, label, readout, sectionContent, sectionHeader } from './kit.ts';
+import { toggleLock } from './map.ts';
 import { shown } from './state.ts';
 
 import type { BindingSpec, ElementSpec } from '@plitzi/sdk-authoring';
@@ -241,9 +232,9 @@ const strongestShown = `{{ source|filter(q => ${shown('q')})|sort((a, b) => b.ma
 const isLockedStrongest = "{{ source == list_strongestPick.item.id ? 'locked' : '' }}";
 
 /**
- * The largest event of the window, as a button: pressing it locks the map on it.
+ * The largest event of the window, as a button: pressing it locks the map on it, and pressing it again lets go.
  *
- * It is the same act as clicking the dot or a row of the log — one `setState` of the one key all three read — so the
+ * It is the same act as clicking the dot or a row of the log — one write of the one key all three read — so the
  * dossier, the reticle and the flight to it come with it for free. A list of at most one, filtered by the same test
  * as every other panel: the strongest SHALLOW event when the reader filtered to shallow ones, and nothing at all when
  * nothing passes — never a card pointing at an event the map is not showing.
@@ -278,15 +269,10 @@ export const strongest = (): ElementSpec =>
                 button({
                   id: 'strongest',
                   content: '',
-                  title: 'Lock the map on the strongest event that passes the filters',
+                  title: 'Lock the map on the strongest event that passes the filters — press again to let go',
                   class: strongestCard,
                   bind: [variantFrom(strongestCard, 'state.selectedId', { template: isLockedStrongest })],
-                  flows: [
-                    [
-                      onClick(),
-                      setState({ key: 'selectedId', type: 'text', value: '{{ list_strongestPick.item.id }}' })
-                    ]
-                  ],
+                  flows: [[onClick(), ...toggleLock('list_strongestPick.item.id')]],
                   children: [
                     container({
                       class: cardHead,

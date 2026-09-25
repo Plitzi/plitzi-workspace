@@ -26,7 +26,7 @@ import type { FeatureCollection } from 'geojson';
 import type * as MapLibre from 'maplibre-gl';
 
 /**
- * The globe, and the only element this space ships itself.
+ * The globe: the element this space ships to draw what cannot be arranged out of boxes.
  *
  * **Why this is a plugin.** A position on the Earth is a projection and a magnitude is an area: neither can be
  * arranged out of boxes. Everything that IS text in a box — the counters, the log, the target dossier, the filters —
@@ -37,7 +37,8 @@ import type * as MapLibre from 'maplibre-gl';
  * colour scheme to `theme`. It holds no URL of its own and asks nobody for data.
  *
  * **It talks back through events, never through the page's state.** Picking an event fires `onQuakeSelect`; one
- * arriving live fires `onQuakeArrival`; the end of a replay fires `onReplayEnd`. The flows the space hangs on those
+ * arriving live fires `onQuakeArrival`, and `onArrivalSettled` once its moment is over if it still holds the lock; the
+ * end of a replay fires `onReplayEnd`. The flows the space hangs on those
  * decide what they mean — which is why the same click can select from the map, the log or the "strongest" card, and
  * every one of them is visible in the space rather than buried in here.
  *
@@ -59,6 +60,12 @@ export type SeismicMapProps = {
    * still throw out a shockwave if they are on screen; they are simply not news. Above any magnitude, nothing is.
    */
   alertMagnitude?: number | string;
+  /**
+   * How long an announced arrival has the stage. When it is over and the arrival is still the event selected, the map
+   * fires `onArrivalSettled` — and not when the reader has picked something else in the meantime, or a newer arrival
+   * took the lock: those are not the arrival's to give back.
+   */
+  arrivalSeconds?: number | string;
   /** The event to lock on to. Changing it flies there; an id the events do not hold clears the lock. */
   selectedId?: string;
   /** `globe` or `flat`. */
@@ -235,6 +242,7 @@ const SeismicMap = ({
   minMagnitude,
   depthBand = 'all',
   alertMagnitude,
+  arrivalSeconds = 8,
   selectedId = '',
   projection = 'globe',
   showPlates = true,
@@ -251,6 +259,7 @@ const SeismicMap = ({
   const world = useMemo(() => toGeography(geography), [geography]);
   const floor = numeric(minMagnitude, 0);
   const alertFrom = numeric(alertMagnitude, 99);
+  const arrivalMs = numeric(arrivalSeconds, 8) * 1000;
   const replaying = flag(replay, false);
   const rotating = flag(autoRotate, true);
 
@@ -282,9 +291,9 @@ const SeismicMap = ({
    * They are attached once, when the map is created, and a click lands whenever it lands — so they read the props of
    * THAT moment through here rather than the ones they closed over.
    */
-  const latest = useRef({ quakes, floor, depthBand, alertFrom, selectedId, projection, fire });
+  const latest = useRef({ quakes, floor, depthBand, alertFrom, arrivalMs, selectedId, projection, fire });
   useEffect(() => {
-    latest.current = { quakes, floor, depthBand, alertFrom, selectedId, projection, fire };
+    latest.current = { quakes, floor, depthBand, alertFrom, arrivalMs, selectedId, projection, fire };
   });
 
   /** Where the replay's clock is. Past the end of time outside a replay, so every event counts as having happened. */
@@ -295,6 +304,13 @@ const SeismicMap = ({
   const handsOn = useRef(0);
   const seen = useRef<{ key: string; ids: Set<string> } | null>(null);
   const lock = useRef<{ target: string; markers: MapLibre.Marker[] }>({ target: '', markers: [] });
+  /** The arrivals still on stage, each waiting to hand back its lock. */
+  const onStage = useRef(new Set<number>());
+  useEffect(() => {
+    const timers = onStage.current;
+
+    return () => timers.forEach(timer => window.clearTimeout(timer));
+  }, []);
 
   const resetView = useCallback(() => {
     const map = mapRef.current;
@@ -533,7 +549,17 @@ const SeismicMap = ({
     arrived
       .filter(quake => quake.magnitude >= latest.current.alertFrom)
       .slice(0, MAX_ANNOUNCED)
-      .forEach(quake => fire('onQuakeArrival', payloadOf(quake)));
+      .forEach(quake => {
+        fire('onQuakeArrival', payloadOf(quake));
+        // Read when the time is up, not now: the flow that locks on it runs after this, and the reader may move on.
+        const timer = window.setTimeout(() => {
+          onStage.current.delete(timer);
+          if (latest.current.selectedId === quake.id) {
+            latest.current.fire('onArrivalSettled', { id: quake.id });
+          }
+        }, latest.current.arrivalMs);
+        onStage.current.add(timer);
+      });
   }, [ready, quakes, feedKey, burst, fire, onScreen]);
 
   /** A ring that keeps pulsing on every event logged in the feed's last hour. Rebuilt when the events or the floor move. */

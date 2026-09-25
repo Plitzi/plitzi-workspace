@@ -86,8 +86,8 @@ body { font-family: var(--mono); color: var(--ink); -webkit-font-smoothing: anti
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z'/%3E%3Cpath d='M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.54V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.54 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.54-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.54V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.54 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.54 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.54 1Z'/%3E%3C/svg%3E") center / contain no-repeat;
   transition: transform 420ms cubic-bezier(0.2, 0.9, 0.2, 1);
 }
-.gearButton:hover .gearIcon { transform: rotate(45deg); }
-.gearButton--open .gearIcon { transform: rotate(120deg); }
+.cornerButton:hover .gearIcon { transform: rotate(45deg); }
+.cornerButton--open .gearIcon { transform: rotate(120deg); }
 
 /* The settings panel arrives from the gear. */
 .controlPanel { animation: tremor-unfold 320ms cubic-bezier(0.2, 0.9, 0.2, 1) both; transform-origin: bottom right; }

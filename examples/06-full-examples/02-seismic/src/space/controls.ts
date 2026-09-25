@@ -2,6 +2,7 @@ import {
   bindTemplate,
   button,
   container,
+  defineElement,
   onClick,
   setState,
   styles,
@@ -12,6 +13,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { ALERTS, REFRESH } from '../filters.ts';
+import fullscreenDeclaration from '../plugins/FullscreenToggle/declaration.ts';
 import { resetMapView } from './map.ts';
 import { nav } from './nav.ts';
 import {
@@ -26,7 +28,13 @@ import {
   sectionHeader
 } from './kit.ts';
 
+import type { FullscreenToggleAttributes } from '../plugins/FullscreenToggle/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';
+
+/** Full screen, authored from the plugin's declaration like the map — see why it is an element in its declaration. */
+const fullscreenToggle = defineElement<FullscreenToggleAttributes>(fullscreenDeclaration);
+
+export const FULLSCREEN_DECLARATION = fullscreenDeclaration;
 
 /**
  * SETTINGS: how the display draws, and how it behaves while it is open — in the corner a reader looks for them.
@@ -76,7 +84,7 @@ const dockClass = styles('dock', {
 });
 
 /**
- * The gear, in the display's top-right corner, over the end of the command bar — a grid item of its own rather than a
+ * The display's own buttons — full screen and the gear — in its top-right corner, over the end of the command bar — a grid item of its own rather than a
  * child of the bar, so it can sit above the backdrop an open panel spreads without lifting the whole bar with it: a
  * click on a filter while the panel is open lands on the backdrop and closes it, like a click anywhere else.
  */
@@ -85,6 +93,8 @@ const settingsCornerClass = styles('settingsCorner', {
     desktop: {
       position: 'relative',
       'grid-area': 'bar',
+      display: 'flex',
+      gap: '8px',
       'justify-self': 'end',
       'align-self': 'center',
       'margin-right': '12px',
@@ -95,7 +105,8 @@ const settingsCornerClass = styles('settingsCorner', {
   }
 });
 
-const gearButton = styles('gearButton', {
+/** The frame both corner buttons share: an icon in a square, lit on hover. The gear's `open` is the panel showing. */
+const cornerButton = styles('cornerButton', {
   css: {
     ...BUTTON_RESET,
     display: 'flex',
@@ -374,13 +385,14 @@ export const settingsCorner = (): ElementSpec =>
     id: 'settings-corner',
     class: settingsCornerClass,
     children: [
+      fullscreenToggle({ id: 'fullscreen-toggle', class: cornerButton }),
       button({
         id: 'settings-toggle',
         content: '',
         title: 'Settings',
-        class: gearButton,
+        class: cornerButton,
         bind: [
-          variantFrom(gearButton, 'computed.settingsOpen', { template: "{{ source ? 'open' : '' }}" }),
+          variantFrom(cornerButton, 'computed.settingsOpen', { template: "{{ source ? 'open' : '' }}" }),
           bindTemplate('ariaExpanded', 'computed.settingsOpen', "{{ source ? 'true' : 'false' }}")
         ],
         flows: [[onClick(), toggleState({ key: 'settingsOpen' })]],

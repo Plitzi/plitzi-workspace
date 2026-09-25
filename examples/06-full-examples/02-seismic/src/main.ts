@@ -17,15 +17,17 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
 /**
- * The element this space ships itself.
+ * The elements this space ships itself.
  *
- * `seismicMap` is not in the SDK and never will be — a globe of earthquakes is this deployment's business. A
+ * `seismicMap` is not in the SDK and never will be — a globe of earthquakes is this deployment's business — and
+ * `fullscreenToggle` is the one control a flow cannot do, since a browser grants full screen to a click alone. A
  * deployment hands the server the file and the type name, the server compiles it and serves it with everything else,
  * and the page authors it exactly like a heading. Two halves, and forgetting either is quiet: name a plugin the server
  * has no component for and the element resolves to nothing, on a page that renders perfectly.
  */
 const plugins = {
-  seismicMap: { js: path.resolve(here, 'plugins/SeismicMap/index.ts'), action: 'compile' as const }
+  seismicMap: { js: path.resolve(here, 'plugins/SeismicMap/index.ts'), action: 'compile' as const },
+  fullscreenToggle: { js: path.resolve(here, 'plugins/FullscreenToggle/index.ts'), action: 'compile' as const }
 };
 
 /**
@@ -47,7 +49,7 @@ const offlineData = authorSpace(space, { plugins: PLUGINS });
  * A global seismic monitor, in one server and no account.
  *
  * Nothing to sign into: everything the page shows is public. What is left is the part worth reading — a space, one
- * server task, one action document, and one element of the space's own.
+ * server task, one action document, and two elements of the space's own.
  */
 const server = createServer({
   port: PORT,

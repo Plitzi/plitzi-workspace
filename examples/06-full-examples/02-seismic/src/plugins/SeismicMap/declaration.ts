@@ -11,8 +11,8 @@ export type SeismicMapAttributes = Omit<SeismicMapProps, 'className'>;
  * same object, so the attributes a flow or a binding writes are the ones the component reads. No React in here: the
  * space is authored in Node, where there is nothing to render.
  *
- * The three events are how the map talks to the page. It never writes the page's state itself: it says what
- * happened — this event was picked, this one just arrived, the replay is over — and the flows the space hangs on
+ * The events are how the map talks to the page. It never writes the page's state itself: it says what happened —
+ * this event was picked, this one just arrived and its moment is over, the replay is over — and the flows the space hangs on
  * those decide what that means. That is why the detail panel, the notifications and the replay button are ordinary
  * elements authored in the space, and not features of a map.
  */
@@ -33,6 +33,13 @@ const declaration = {
       type: 'trigger',
       params: {},
       preview: { id: '', magnitude: '', magnitudeLabel: '', region: '', depthLabel: '' }
+    },
+    onArrivalSettled: {
+      action: 'onArrivalSettled',
+      title: 'On Arrival Settled',
+      type: 'trigger',
+      params: {},
+      preview: { id: '' }
     },
     onReplayEnd: { action: 'onReplayEnd', title: 'On Replay End', type: 'trigger', params: {}, preview: {} }
   },
@@ -56,6 +63,7 @@ const declaration = {
       minMagnitude: 0,
       depthBand: 'all',
       alertMagnitude: 99,
+      arrivalSeconds: 8,
       selectedId: '',
       projection: 'globe',
       showPlates: true,
@@ -73,7 +81,7 @@ const declaration = {
       description:
         'A WebGL globe (or flat map) of earthquakes: size is magnitude, colour is focal depth, and plate boundaries ' +
         'are drawn by kind. Bind `events` to a list of quakes and `geography` to the world outlines; it fires ' +
-        '`onQuakeSelect`, `onQuakeArrival` and `onReplayEnd`, and answers `resetView`, `zoomIn`, `zoomOut` and `pan`. Colours come from the ' +
+        '`onQuakeSelect`, `onQuakeArrival`, `onArrivalSettled` and `onReplayEnd`, and answers `resetView`, `zoomIn`, `zoomOut` and `pan`. Colours come from the ' +
         '`--seismic-*` custom properties on the element.',
       items: [],
       bindings: {},
@@ -108,6 +116,7 @@ const declaration = {
           { path: 'minMagnitude', label: 'Minimum magnitude' },
           { path: 'depthBand', label: 'Depth band' },
           { path: 'alertMagnitude', label: 'Announce arrivals from' },
+          { path: 'arrivalSeconds', label: 'Seconds an arrival holds the lock' },
           { path: 'selectedId', label: 'Selected event' },
           { path: 'projection', label: 'Projection' },
           { path: 'showPlates', label: 'Plate boundaries' },

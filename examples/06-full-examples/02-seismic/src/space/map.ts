@@ -63,6 +63,27 @@ export const mapAction = (
 
 export const resetMapView = (): StepSpec => mapAction('resetView');
 
+/** Letting go of the lock: nothing selected, and the camera home, as the home button leaves it. */
+export const releaseLock = (): StepSpec[] => [setState({ key: 'selectedId', type: 'text', value: '' }), resetMapView()];
+
+/**
+ * Pressing an event locks on it; pressing the one already locked lets go and goes home.
+ *
+ * `idPath` is where the pressed event's id is, as a path (`list_contacts.item.id`). Both steps read the state as it was
+ * when the press started, which is the point: the second one asks whether the event WAS locked, and flies home only
+ * if it was — not because the first step just changed it.
+ */
+export const toggleLock = (idPath: string): StepSpec[] => [
+  setState({ key: 'selectedId', type: 'text', value: `{{ state.selectedId == ${idPath} ? '' : ${idPath} }}` }),
+  when({ field: 'state.selectedId', operator: '=', value: idPath, isBinding: true }, resetMapView())
+];
+
+/**
+ * How long a new event has the stage: its notification is up exactly as long as the map stays locked on it, and when
+ * both are over the display lets go and goes home — ready for the next one.
+ */
+const ARRIVAL_SECONDS = 8;
+
 const notice = '{{ arrived.magnitudeLabel }} · {{ arrived.region|upper }} · {{ arrived.depthLabel }} DEEP';
 
 export const map: ElementSpec = seismicMap({
@@ -75,6 +96,7 @@ export const map: ElementSpec = seismicMap({
   class: mapCanvas,
   // Long enough for the camera to travel between the events it follows, short enough to watch in a meeting.
   replaySeconds: 40,
+  arrivalSeconds: ARRIVAL_SECONDS,
   bind: {
     events: 'feed.records',
     geography: 'atlas.data',
@@ -114,7 +136,7 @@ export const map: ElementSpec = seismicMap({
           content: `NEW EVENT · ${notice}`,
           appearance: 'danger',
           placement: 'top-center',
-          autoDismissTimeout: 9000
+          autoDismissTimeout: ARRIVAL_SECONDS * 1000
         })
       ),
       when(
@@ -123,7 +145,7 @@ export const map: ElementSpec = seismicMap({
           content: `NEW EVENT · ${notice}`,
           appearance: 'info',
           placement: 'top-center',
-          autoDismissTimeout: 6000
+          autoDismissTimeout: ARRIVAL_SECONDS * 1000
         })
       ),
       setState({
@@ -132,6 +154,12 @@ export const map: ElementSpec = seismicMap({
         value: "{{ state.followOff ? (state.selectedId ?? '') : arrived.id }}"
       })
     ],
+    /**
+     * The arrival's moment is over and it still holds the lock: let it go and go home, as the home button does. The
+     * map only says so when nothing else took the lock meanwhile — a flow reads the state as it was when it started,
+     * so a `delay` at the end of the arrival's flow could not tell, and would have undone the reader's own pick.
+     */
+    [declaredTrigger(declaration, 'onArrivalSettled'), ...releaseLock()],
     // The replay is the page's switch, not the map's: the map says it reached the end, and the page turns it off.
     [declaredTrigger(declaration, 'onReplayEnd'), setState({ key: 'replay', type: 'boolean', value: false })]
   ]

@@ -1,18 +1,8 @@
-import {
-  bindTemplate,
-  button,
-  container,
-  link,
-  list,
-  onClick,
-  setState,
-  styles,
-  text,
-  variantFrom
-} from '@plitzi/sdk-authoring';
+import { bindTemplate, button, container, link, list, onClick, styles, text, variantFrom } from '@plitzi/sdk-authoring';
 
 import { bandMagnitude } from './board.ts';
 import { BUTTON_RESET, PANEL, caption, chip, label } from './kit.ts';
+import { releaseLock } from './map.ts';
 
 import type { BindingSpec, ElementSpec } from '@plitzi/sdk-authoring';
 
@@ -252,7 +242,7 @@ const dossierCard = (): ElementSpec =>
             content: '✕',
             title: 'Release the lock',
             class: closeButton,
-            flows: [[onClick(), setState({ key: 'selectedId', type: 'text', value: '' })]]
+            flows: [[onClick(), ...releaseLock()]]
           })
         ]
       }),

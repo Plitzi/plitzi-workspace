@@ -14,6 +14,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { BUTTON_RESET, PANEL, caption, chipButton, sectionContent, sectionHeader, segmented } from './kit.ts';
+import { toggleLock } from './map.ts';
 import { shown } from './state.ts';
 
 import type { ElementSpec } from '@plitzi/sdk-authoring';
@@ -192,7 +193,7 @@ const row = (): ElementSpec =>
             template: "{{ source == list_contacts.item.id ? 'locked' : '' }}"
           })
         ],
-        flows: [[onClick(), setState({ key: 'selectedId', type: 'text', value: '{{ list_contacts.item.id }}' })]],
+        flows: [[onClick(), ...toggleLock('list_contacts.item.id')]],
         children: [
           text({
             content: '',
