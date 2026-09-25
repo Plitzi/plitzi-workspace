@@ -108,6 +108,8 @@ computed for you). Node types: \`callback\` (an element's own callback — \`ele
 (category/key/value/revertOnFinish) ≠ global \`setState\` (source \`state\`, key/type/value). To turn a step off use
 \`patchInteractionNode {enabled:false}\` — \`deleteInteraction\` removes it (destructive; confirm first). Any param
 **value** can be a binding token \`{{ source }}\` (e.g. notification \`content: "{{ list_<name>.item.name }}"\`).
+Steps read the page as it is when they run; a refiring trigger is ignored unless \`whileRunning: "queue"\`; keyboard
+shortcuts are the \`onKey\` trigger (\`keys: "shift+f, escape"\`).
 
 **CMS / API integrations** (\`upsertConnector\`): a **connector** is a manifest declaring a provider's base URL,
 endpoints, auth template and filter operators, executed by the **server** — so integrating Strapi, WordPress,
@@ -454,6 +456,14 @@ and/or). The guard is validated structurally. Example — only bind when a flag 
 An interaction **flow** is a **trigger** (an event like \`onClick\`, \`onPageLoad\`) followed by the callbacks/utilities
 it runs, in order. You pass the steps **in order** and the stored beforeNode/afterNode/flowId links are computed for
 you — never wire them by hand. Each step also has an \`enabled\` flag (see disable vs delete below).
+
+**Each step reads the page as it is when it runs**: a \`when\` or a \`{{ state.x }}\` after a \`setState\` sees the new
+value, and one after a \`delay\` sees what changed meanwhile. To act on the value from BEFORE a write, put the reading
+step first. **A trigger fired again while its flow runs is ignored** (no double submit); set \`"whileRunning": "queue"\`
+on the trigger node for a stream of events that must each run in order (\`"parallel"\` runs them at once).
+**Keyboard shortcuts** are a trigger every element has: \`onKey\` with param \`keys\` — \`"f"\`, \`"shift+f"\`,
+\`"mod+k"\` (⌘ on a Mac, Ctrl elsewhere), \`"plus, ="\`, \`"escape"\`. Heard on the whole page while the element is
+mounted, ignored while someone types in a field; the flow reads the key pressed as \`{{ <trigger id>.key }}\`.
 
 **Node types & \`elementId\`** — a step names which element (or module) provides the callback it runs. Picking the
 **wrong node type for an action** makes the runtime resolve it against nothing, so the step **silently does nothing**:
