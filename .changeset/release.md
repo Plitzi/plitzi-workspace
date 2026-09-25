@@ -493,6 +493,13 @@
   as well. `sdk-auth`: a login answered with `mfaRequired` is a **`MfaChallenge`** (`{ ok: false, reason: 'mfa',
   mfaToken }`), not a session — the provider read it as one and ended signed out. The space names where the code is
   sent with **`mfaUrl`**; the `auth.login` step's mode **`'mfa'`** sends `{ mfaToken, code }` there.
+- **Fixed: an AI connector ended from the account console came back.** Ending it — one connector, "sign out everywhere
+  else", or the space's own credentials — deleted its row, and the host's next renewal put the row back. A renewal of
+  a connector that has been ended now ends too (`invalid_grant`).
+- **Fixed: a new account made by signing in with GitHub or Google could not use its session.** It was created active
+  but not verified — the column's default — and an unverified account holds no session, so every request after the
+  sign-up answered 401. The provider verified the address, so the account is created verified; a migration verifies
+  the accounts already created that way. The credential exchange made accounts the same way and is fixed with it.
 - **Fixed: a code could sign in twice.** A TOTP code is valid for its whole window, and nothing remembered that one had
   been used: seen over a shoulder or lifted by a phishing page, it opened a second session within that window. The
   step of the last code accepted is kept (`MfaRecord.lastUsedStep`; `totpStep(secret, code)` in `sdk-server/auth`
