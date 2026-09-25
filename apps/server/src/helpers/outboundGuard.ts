@@ -35,16 +35,39 @@ const IPV4_RANGES: [string, number][] = [
 
 const IPV6_RANGES: [string, number][] = [
   ['::', 96], // unspecified, loopback and the deprecated IPv4-compatible form
-  ['64:ff9b::', 96], // NAT64: an IPv4 address the gateway reaches for us
-  ['64:ff9b:1::', 48], // local-use NAT64
-  ['2002::', 16], // 6to4: an IPv4 address carried in the prefix
+  ['64:ff9b:1::', 48], // local-use NAT64, whose layout is the operator's own
   ['fc00::', 7], // unique-local
   ['fe80::', 10], // link-local
   ['ff00::', 8] // multicast
 ];
 
+/** An IPv4 address as the two 16-bit groups it occupies inside an IPv6 one. */
+const ipv4Groups = (address: string): [string, string] => {
+  const [a = 0, b = 0, c = 0, d = 0] = address.split('.').map(Number);
+
+  return [((a << 8) | b).toString(16), ((c << 8) | d).toString(16)];
+};
+
+/**
+ * The same private IPv4 ranges where IPv6 carries an IPv4 address inside it.
+ *
+ * NAT64 (`64:ff9b::/96`) is how an IPv6-only cluster reaches EVERY IPv4 host — DNS64 answers a public API with an address
+ * in it — so the prefix cannot be refused whole; what it carries is judged instead. 6to4 (`2002::/16`) carries its
+ * address in bits 16–47.
+ */
+const EMBEDDED_IPV4_RANGES: [string, number][] = IPV4_RANGES.flatMap(([network, prefix]) => {
+  const [high, low] = ipv4Groups(network);
+
+  return [
+    [`64:ff9b::${high}:${low}`, 96 + prefix],
+    [`2002:${high}:${low}::`, 16 + prefix]
+  ] satisfies [string, number][];
+});
+
 IPV4_RANGES.forEach(([network, prefix]) => privateRanges.addSubnet(network, prefix, 'ipv4'));
-IPV6_RANGES.forEach(([network, prefix]) => privateRanges.addSubnet(network, prefix, 'ipv6'));
+[...IPV6_RANGES, ...EMBEDDED_IPV4_RANGES].forEach(([network, prefix]) =>
+  privateRanges.addSubnet(network, prefix, 'ipv6')
+);
 
 const isBlockedName = (host: string): boolean =>
   host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal');
@@ -120,7 +143,8 @@ const BODY_HEADERS = ['content-type', 'content-length', 'content-encoding', 'con
  * The request a redirect continues as — the rules `fetch` itself follows, applied by hand because it no longer does.
  *
  * A 303, and a 301/302 answering a POST, become a bodiless GET; 307 and 308 repeat the request exactly. Leaving the
- * origin drops the credentials, so a provider that redirects elsewhere cannot hand the customer's key to that host.
+ * origin drops the headers the Fetch standard drops, and only those: a key the author put in a header of its own
+ * travels on as it did before, and the author already decides where it is sent.
  */
 const redirectedInit = (init: RequestInit, status: number, crossOrigin: boolean): RequestInit => {
   const method = (init.method ?? 'GET').toUpperCase();

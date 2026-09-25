@@ -37,10 +37,23 @@ describe('isBlockedHost', () => {
       'http://[::ffff:10.0.0.1]/',
       'http://[::]/',
       'http://[::127.0.0.1]/',
-      'http://[64:ff9b::a9fe:a9fe]/'
+      'http://[64:ff9b::a9fe:a9fe]/',
+      'http://[64:ff9b::10.0.0.1]/',
+      'http://[2002:7f00:1::]/',
+      'http://[2002:c0a8:101::1]/'
     ]) {
       const { hostname } = new URL(raw);
       expect(isBlockedHost(hostname), `${raw} (${hostname}) was allowed`).toBe(true);
+    }
+  });
+
+  /**
+   * An IPv6-only cluster reaches every IPv4 API through NAT64 — DNS64 answers `api.example.com` with `64:ff9b::` and the
+   * public address inside it. Refusing the prefix whole would refuse every one of them.
+   */
+  it('allows a public IPv4 address carried by NAT64 or 6to4', () => {
+    for (const host of ['64:ff9b::5db8:d822', '64:ff9b::93.184.216.34', '2002:5db8:d822::1']) {
+      expect(isBlockedHost(host), `${host} was refused`).toBe(false);
     }
   });
 

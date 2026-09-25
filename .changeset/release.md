@@ -623,8 +623,9 @@
 ## Outbound requests stay outside the cluster
 
 - `sdk-server`: the `http.request` task and the connector engine refuse private destinations however they are written.
-  An address is judged by range, so IPv4 written as IPv6 (`[::ffff:127.0.0.1]`, `[::]`, NAT64, 6to4) and the
-  multicast, CGNAT and reserved ranges are refused too, and a DNS name is no longer refused just because it starts
-  like an IPv6 prefix (`fcbarcelona.com`).
+  An address is judged by range, so private IPv4 written as IPv6 (`[::ffff:127.0.0.1]`, `[::]`) is refused, and so
+  are the multicast, CGNAT and reserved ranges. NAT64 and 6to4 addresses are judged by the IPv4 address they carry,
+  so an IPv6-only cluster still reaches public IPv4 APIs. A DNS name is no longer refused just because it starts like
+  an IPv6 prefix (`fcbarcelona.com`).
 - Redirects are followed one hop at a time, and each destination is checked before anything is sent to it. A public
   URL that redirects into the cluster is refused. A redirect that leaves the origin drops `Authorization` and `Cookie`.
