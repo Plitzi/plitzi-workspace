@@ -2,25 +2,29 @@
   "name": "@plitzi/example-seismic",
   "version": "0.0.0",
   "private": true,
-  "description": "A live global seismic monitor: a world map of the last day's earthquakes, resolved on the server and drawn by an element of the space's own.",
+  "description": "A live global seismic monitor: a WebGL globe of every earthquake the USGS publishes, resolved on the server, filtered and explained by the space around it.",
   "type": "module",
   "scripts": {
     "start": "node src/main.ts",
     "start:dev": "node --watch-path=./src src/main.ts",
+    "geography": "node scripts/geography.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@plitzi/sdk-authoring": "workspace:*",
     "@plitzi/sdk-elements": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
-    "leaflet": "^1.9.4",
+    "maplibre-gl": "^6.11.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.22",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^26.6.2",
-    "typescript": "^6.0.3"
+    "@types/topojson-client": "^3.1.5",
+    "topojson-client": "^3.1.0",
+    "typescript": "^6.0.3",
+    "world-atlas": "^2.0.2"
   },
   "engines": {
     "node": ">=22.18"

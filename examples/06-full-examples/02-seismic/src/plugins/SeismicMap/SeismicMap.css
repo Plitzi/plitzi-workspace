@@ -1,0 +1,415 @@
+/*
+ * The map's own markup: structure and motion, never colour.
+ *
+ * Every colour is one of the `--seismic-*` properties the space sets on the element, so this sheet ships with the
+ * plugin and the look stays the space's. `--seismic-band` is set per marker from the event's depth band, which is how
+ * a reticle or a shockwave wears the colour of the dot it belongs to.
+ */
+
+.seismic__canvas {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.seismic__canvas .maplibregl-canvas {
+  outline: none;
+}
+
+.seismic__probe {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.seismic__reticle--shallow,
+.seismic__shock--shallow {
+  --seismic-band: var(--seismic-shallow);
+}
+
+.seismic__reticle--intermediate,
+.seismic__shock--intermediate {
+  --seismic-band: var(--seismic-intermediate);
+}
+
+.seismic__reticle--deep,
+.seismic__shock--deep {
+  --seismic-band: var(--seismic-deep);
+}
+
+/* ── The lock ───────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/*
+ * A marker's root is MapLibre's to position: it is `position: absolute` and moved by a transform. Setting a position
+ * here puts it back in the flow, and every marker then lands offset by the height of the ones added before it.
+ */
+.seismic__reticle {
+  width: 64px;
+  height: 64px;
+  pointer-events: none;
+  color: var(--seismic-accent);
+}
+
+.seismic__reticle-pulse {
+  position: absolute;
+  inset: 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--seismic-band);
+  animation: seismic-reticle-pulse 1.8s ease-out infinite;
+}
+
+/* A crosshair that reaches past the brackets, broken where the event is so it never covers the dot. */
+.seismic__reticle-cross {
+  position: absolute;
+  inset: -40px;
+  background:
+    linear-gradient(currentColor, currentColor) center top / 1px calc(50% - 18px) no-repeat,
+    linear-gradient(currentColor, currentColor) center bottom / 1px calc(50% - 18px) no-repeat,
+    linear-gradient(currentColor, currentColor) left center / calc(50% - 18px) 1px no-repeat,
+    linear-gradient(currentColor, currentColor) right center / calc(50% - 18px) 1px no-repeat;
+  opacity: 0.55;
+  mask: radial-gradient(circle, #000 55%, transparent 72%);
+  animation: seismic-reticle-cross 700ms ease-out both;
+}
+
+.seismic__reticle-bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  filter: drop-shadow(0 0 6px currentColor);
+  animation: seismic-reticle-lock 650ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.seismic__reticle-bracket--nw {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  --seismic-from: translate(-26px, -26px);
+}
+
+.seismic__reticle-bracket--ne {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+  --seismic-from: translate(26px, -26px);
+}
+
+.seismic__reticle-bracket--sw {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+  --seismic-from: translate(-26px, 26px);
+}
+
+.seismic__reticle-bracket--se {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+  --seismic-from: translate(26px, 26px);
+}
+
+.seismic__reticle-tag {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: -6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px 7px;
+  white-space: nowrap;
+  background: var(--seismic-panel);
+  border-left: 2px solid currentColor;
+  box-shadow: 0 0 24px -8px currentColor;
+  animation: seismic-reticle-tag 500ms 350ms ease-out both;
+}
+
+.seismic__reticle-code {
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  animation: seismic-blink 1.1s steps(2, jump-none) 3;
+}
+
+.seismic__reticle-magnitude {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--seismic-ink);
+}
+
+.seismic__reticle-where {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--seismic-ink);
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+.seismic__ring-label {
+  padding: 1px 5px;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--seismic-accent);
+  background: var(--seismic-panel);
+  pointer-events: none;
+}
+
+/* ── Arrivals ───────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.seismic__shock {
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+}
+
+.seismic__shock-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1.5px solid var(--seismic-band);
+  opacity: 0;
+  animation: seismic-shock 1.4s cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
+}
+
+.seismic__shock-ring:nth-child(2) {
+  animation-delay: 0.35s;
+}
+
+.seismic__shock-ring:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
+.seismic__shock--strong .seismic__shock-ring {
+  border-width: 2.5px;
+  animation-duration: 2.6s;
+  --seismic-reach: 14;
+}
+
+/* An event logged in the feed's last hour keeps one ring pulsing on it while the page is open. */
+.seismic__shock--fresh .seismic__shock-ring {
+  animation: seismic-ping 2.6s ease-out infinite;
+}
+
+.seismic__shock--fresh .seismic__shock-ring:nth-child(n + 2) {
+  display: none;
+}
+
+/* ── Readouts ───────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.seismic__cursor,
+.seismic__replay {
+  position: absolute;
+  left: 50%;
+  top: var(--seismic-readout-top, 84px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 12px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--seismic-ink);
+  background: var(--seismic-panel);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.seismic__cursor[data-hidden='true'] {
+  display: none;
+}
+
+.seismic__cursor-label,
+.seismic__replay-label {
+  color: var(--seismic-accent);
+}
+
+.seismic__replay {
+  gap: 14px;
+  padding: 8px 14px;
+  border: 1px solid var(--seismic-accent);
+  box-shadow: 0 0 30px -10px var(--seismic-accent);
+}
+
+.seismic__replay[data-active='false'] {
+  display: none;
+}
+
+.seismic__replay-label::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: var(--seismic-shallow);
+  animation: seismic-blink 1s steps(2, jump-none) infinite;
+}
+
+.seismic__replay-clock {
+  min-width: 17ch;
+  font-size: 13px;
+  color: var(--seismic-ink);
+}
+
+.seismic__replay-track {
+  position: relative;
+  width: 160px;
+  height: 3px;
+  background: color-mix(in srgb, var(--seismic-accent) 20%, transparent);
+}
+
+.seismic__replay-progress {
+  position: absolute;
+  inset: 0;
+  background: var(--seismic-accent);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+/* ── The tooltip ────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.seismic__tip .maplibregl-popup-content {
+  padding: 6px 10px;
+  border-radius: 0;
+  background: var(--seismic-panel);
+  color: var(--seismic-ink);
+  border: 1px solid var(--seismic-accent);
+  box-shadow: 0 0 22px -8px var(--seismic-accent);
+  font: inherit;
+}
+
+.seismic__tip .maplibregl-popup-tip {
+  display: none;
+}
+
+.seismic__tip-body {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 10px;
+  align-items: baseline;
+}
+
+.seismic__tip-magnitude {
+  grid-row: span 2;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--seismic-accent);
+}
+
+.seismic__tip-region {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.seismic__tip-meta {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+@keyframes seismic-reticle-lock {
+  from {
+    opacity: 0;
+    transform: var(--seismic-from) scale(1.6);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes seismic-reticle-cross {
+  from {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+
+  to {
+    opacity: 0.55;
+    transform: none;
+  }
+}
+
+@keyframes seismic-reticle-pulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+@keyframes seismic-reticle-tag {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes seismic-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes seismic-shock {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.4);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(var(--seismic-reach, 8));
+  }
+}
+
+@keyframes seismic-ping {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.8);
+  }
+
+  80%,
+  100% {
+    opacity: 0;
+    transform: scale(4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seismic__reticle *,
+  .seismic__shock-ring {
+    animation: none !important;
+  }
+
+  .seismic__shock:not(.seismic__shock--fresh) {
+    display: none;
+  }
+
+  .seismic__shock--fresh .seismic__shock-ring {
+    opacity: 0.8;
+    transform: scale(2);
+  }
+}

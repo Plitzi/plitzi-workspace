@@ -6,7 +6,7 @@ built out of those decisions, so you can see how they fit and how much of it you
 | | Example | What it is | Port |
 |---|---|---|---|
 | 01 | [blog](./01-blog) | A front page, posts, a sidebar, sessions, and who may publish | 4013 |
-| 02 | [seismic](./02-seismic) | One live screen: a world map of USGS earthquakes, refreshing itself | 4014 |
+| 02 | [seismic](./02-seismic) | One live screen: a WebGL globe of USGS earthquakes — filtered, replayed and explained by the space around it | 4014 |
 | 03 | [ceniza](./03-ceniza) | A restaurant's website: live availability, bookings with email, a journal — no server code | 4015 |
 
 A full example is allowed to be opinionated where the others are not — it picks a route shape, a permission name,

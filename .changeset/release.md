@@ -155,6 +155,8 @@
 - `getStateManager()` gains `subscribe`.
 - Routes: a slug with more than one `{{param}}` matches (only the first was converted).
 - Dev tools: with the panel collapsed, the page scrolls the document as it does in production.
+- The base stylesheet has no invalid declarations: `markdown` fills its box (`height`/`width: 100%` were quoted
+  strings the browser dropped), and `text` no longer declares a size it never applied — it still inherits its own.
 
 ## Twig
 
