@@ -13,8 +13,8 @@ import {
   generateTotpSecret,
   normalizeRecoveryCode,
   randomCode,
-  totpUri,
-  verifyTotp
+  totpStep,
+  totpUri
 } from './totp';
 import { serverLog } from '../../helpers/serverLog';
 import { forwardedIp } from '../requestParser';
@@ -99,6 +99,12 @@ export interface MfaRecord {
   /** Unix seconds the enrolment was proven with a real code. Absent means started and never finished. */
   confirmedAt?: number;
   recoveryCodes?: string[];
+  /**
+   * The time step of the last code that was accepted. A code of that step or an earlier one is refused: a code is valid
+   * for its whole window, and one watched over a shoulder or lifted from a phishing page would otherwise sign a second
+   * person in within that window (RFC 6238 §5.2).
+   */
+  lastUsedStep?: number;
 }
 
 /** Something worth writing down. Fed to an audit log, a webhook, a SIEM — whatever the deployment has. */
@@ -855,6 +861,9 @@ export const createAuthApi = ({
        */
       const mfa = capabilities.mfa ? await adapters.loadMfa?.(account.id) : undefined;
       if (mfa?.confirmedAt) {
+        // The password was proved, so what this counter guards against did not happen: counted as a failure, an
+        // account with a second factor was locked out by signing in often. The codes have a counter of their own.
+        throttleSucceeded({ action: 'login', key: username, carrier });
         record({ type: 'login.mfa-required', userId: account.id, carrier });
 
         return {
@@ -907,16 +916,23 @@ export const createAuthApi = ({
       const stored = mfa.recoveryCodes ?? [];
       const supplied = digestRecoveryCode(code);
       const usedRecovery = stored.includes(supplied);
+      const step = usedRecovery ? undefined : totpStep(mfa.secret, code);
+      const replayed = step !== undefined && mfa.lastUsedStep !== undefined && step <= mfa.lastUsedStep;
 
-      if (!usedRecovery && !verifyTotp(mfa.secret, code)) {
-        record({ type: 'mfa.failed', userId, carrier });
+      if (!usedRecovery && (step === undefined || replayed)) {
+        record({ type: 'mfa.failed', userId, carrier, ...(replayed ? { detail: { replayed: true } } : {}) });
 
         return refuse(401, 'Invalid code');
       }
 
-      if (usedRecovery) {
-        await adapters.saveMfa?.(userId, { ...mfa, recoveryCodes: stored.filter(entry => entry !== supplied) });
-      }
+      // Spent before the session exists: a code is good for one sign-in, and a failure to record that must not
+      // leave it good for another.
+      await adapters.saveMfa?.(
+        userId,
+        usedRecovery
+          ? { ...mfa, recoveryCodes: stored.filter(entry => entry !== supplied) }
+          : { ...mfa, lastUsedStep: step }
+      );
 
       const session = await issue(userId, { client: clientOf(carrier) });
       throttleSucceeded({ action: 'mfa', key: String(userId), carrier });
@@ -1107,19 +1123,22 @@ export const createAuthApi = ({
           return refuse(409, 'A second factor is already set up');
         }
 
-        if (!verifyTotp(mfa.secret, code)) {
+        const step = totpStep(mfa.secret, code);
+        if (step === undefined) {
           record({ type: 'mfa.failed', userId: actor.id });
 
           return refuse(401, 'Invalid code');
         }
 
         // Shown once and stored hashed, which is what makes them worth having: a deployment that could print them
-        // again is a deployment where reading the database is enough to bypass the second factor.
+        // again is a deployment where reading the database is enough to bypass the second factor. The code that
+        // proved the enrolment is spent like any other: it does not also sign somebody in.
         const plain = generateRecoveryCodes();
         await adapters.saveMfa?.(actor.id, {
           ...mfa,
           confirmedAt: Math.floor(Date.now() / 1000),
-          recoveryCodes: plain.map(digestRecoveryCode)
+          recoveryCodes: plain.map(digestRecoveryCode),
+          lastUsedStep: step
         });
         record({ type: 'mfa.enabled', userId: actor.id });
 

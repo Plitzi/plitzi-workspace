@@ -279,6 +279,14 @@ const step4 = (t: Tables): string[] => {
   ];
 };
 
+/**
+ * The time step of the last second-factor code accepted, so the same code cannot sign in twice within the window it
+ * stays valid for (RFC 6238 §5.2) — see `MfaRecord.lastUsedStep`.
+ */
+const step5 = (t: Tables): string[] => [
+  ...addColumn(unquote(t.mfa), 'last_used_step', 'BIGINT NULL AFTER recovery_codes')
+];
+
 interface Step {
   version: number;
   statements: (tables: Tables) => string[];
@@ -289,7 +297,8 @@ const STEPS: Step[] = [
   { version: 1, statements: step1 },
   { version: 2, statements: step2 },
   { version: 3, statements: step3 },
-  { version: 4, statements: step4 }
+  { version: 4, statements: step4 },
+  { version: 5, statements: step5 }
 ];
 
 export const SCHEMA_VERSION = STEPS[STEPS.length - 1].version;

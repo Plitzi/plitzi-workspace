@@ -64,6 +64,7 @@ export {
   normalizeRecoveryCode,
   randomCode,
   totpCode,
+  totpStep,
   totpUri,
   verifyTotp
 } from './core/auth/totp';

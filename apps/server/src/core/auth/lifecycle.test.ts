@@ -617,6 +617,29 @@ describe('throttling', () => {
     ]);
   });
 
+  /** A second factor makes a right password buy a challenge — still a right password, still not a failure to count. */
+  it('reports a right password as a success when it is answered with a second-factor challenge', async () => {
+    const seen: { action: string; succeeded?: boolean }[] = [];
+    const api = limited(
+      {
+        findByUsername: () => Promise.resolve(ada),
+        loadMfa: () => Promise.resolve({ secret: 'JBSWY3DPEHPK3PXP', confirmedAt: 1 }),
+        saveMfa: () => Promise.resolve()
+      },
+      attempt => {
+        seen.push({ action: attempt.action, succeeded: attempt.succeeded });
+
+        return Promise.resolve(true);
+      }
+    );
+
+    expect(body(await api.login({ username: 'ada', password: 'pw' }))).toMatchObject({ mfaRequired: true });
+    expect(seen).toEqual([
+      { action: 'login', succeeded: undefined },
+      { action: 'login', succeeded: true }
+    ]);
+  });
+
   it('says nothing back when the attempt failed', async () => {
     const seen: (boolean | undefined)[] = [];
     const api = limited({ findByUsername: () => Promise.resolve(ada) }, attempt => {
@@ -995,14 +1018,43 @@ describe('a second factor', () => {
     expect(outcome.ok && outcome.session).toBeUndefined();
   });
 
+  /** The code the app shows NEXT: the one on screen now was spent proving the enrolment. */
+  const nextCode = (secret: string) => totpCode(secret, Date.now() + 30_000);
+
   it('finishes the sign-in with a code from the app', async () => {
     const { api, secret } = await enrol();
     const challenge = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
 
-    const outcome = await api.completeMfa(challenge, totpCode(secret));
+    const outcome = await api.completeMfa(challenge, nextCode(secret));
 
     expect(outcome).toMatchObject({ ok: true });
     expect(outcome.ok && outcome.session?.token).toEqual(expect.any(String));
+  });
+
+  /**
+   * A code is valid for its whole window. Without remembering which step was last accepted, one seen over a shoulder or
+   * lifted by a phishing page signs a second person in within that window — RFC 6238 §5.2 forbids exactly this.
+   */
+  it('refuses a code that already signed somebody in, and any older one', async () => {
+    const { api, secret, current } = await enrol();
+    const code = nextCode(secret);
+    const first = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+    expect(await api.completeMfa(first, code)).toMatchObject({ ok: true });
+
+    const second = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+    expect(await api.completeMfa(second, code)).toMatchObject({ status: 401 });
+    expect(await api.completeMfa(second, totpCode(secret))).toMatchObject({ status: 401 });
+    expect(current()?.lastUsedStep).toEqual(expect.any(Number));
+  });
+
+  it('refuses the code that proved the enrolment as a way in', async () => {
+    const { api } = withMfa();
+    const begun = body(await api.mfa.begin(actorFor(ada)));
+    const code = totpCode(begun.secret as string);
+    await api.mfa.confirm(actorFor(ada), code);
+    const challenge = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+
+    expect(await api.completeMfa(challenge, code)).toMatchObject({ status: 401 });
   });
 
   it('refuses the wrong code, and anything that is not a challenge', async () => {

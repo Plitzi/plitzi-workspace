@@ -9,7 +9,7 @@ import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import { authorFlows, GLOBAL_SOURCES } from '../schema';
 import { css } from '../style';
 import { foldCustomCss } from './customCss';
-import { categoryOf, definitionOf, isRecord } from './documents';
+import { categoryOf, definitionOf, isRecord, withNamedIds } from './documents';
 import { readSelector, unwritableCss } from './styles';
 
 import type {
@@ -56,6 +56,7 @@ const classesOf = (selector: string): string[] => selector.split(/\s+/).filter(B
  */
 
 export type SpecCorrectionCode =
+  | 'legacy-element-id'
   | 'legacy-element-type'
   | 'unknown-element-type'
   | 'dropped-field'
@@ -329,11 +330,25 @@ class SpecReader {
 
   private readonly droppedAttributes = new Map<string, number>();
 
+  private readonly documents: SpaceDocuments;
+
   constructor(
-    private readonly documents: SpaceDocuments,
+    documents: SpaceDocuments,
     private readonly options: SpecFromSpaceOptions
   ) {
-    this.flat = documents.schema.flat;
+    const { schema, renames } = withNamedIds(documents.schema);
+    for (const { from, to, fromIdRef } of renames) {
+      this.correct(
+        'legacy-element-id',
+        fromIdRef
+          ? `"${from}" is the key an older builder gave "${to}", whose id is its name now; renamed, and everything that pointed at it.`
+          : `"${from}" is not an id anything can name; renamed "${to}", and everything that pointed at it.`,
+        to
+      );
+    }
+
+    this.documents = { ...documents, schema };
+    this.flat = schema.flat;
     this.pluginTypes = new Set(options.pluginTypes ?? []);
     this.references = tokensOf(
       JSON.stringify([
@@ -342,8 +357,8 @@ class SpecReader {
           bindingCorpus(element.definition.bindings),
           stepCorpus(element.id, element.definition.interactions ?? {})
         ]),
-        documents.schema.settings,
-        documents.schema.variables
+        schema.settings,
+        schema.variables
       ])
     );
   }
@@ -365,6 +380,10 @@ class SpecReader {
     const ownCss = this.foldCustomCss(typeof written === 'string' ? written : '');
     const pageFolders = this.readFolders();
     const roots = this.collectRoots();
+    if (roots.pages.length === 0) {
+      throw new Error('The space has no pages, so there is nothing to write out: add one before exporting it as code.');
+    }
+
     this.countSelectorUses(roots);
     this.derived = this.derivedIds(roots);
 

@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
+import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
+
 import { apiContainer, button, container, heading, text } from '../elements';
 import { authorSpace } from '../index';
 import { blankSpaceSpec } from '../spaces';
@@ -386,6 +388,56 @@ describe('specFromSpace / what it repairs', () => {
 
   it('authors what it read into a space the validator accepts', () => {
     expect(authorSpace(spec).warnings.filter(warning => warning.code !== 'tablet-rule-skips-mobile')).toEqual([]);
+  });
+});
+
+describe('specFromSpace / element keys from before the id was the name', () => {
+  /**
+   * `documents` as a builder kept them before an element's id was its name: `flat` keyed by ObjectIds and the name
+   * beside each in `idRef`. Every other one starts with a letter, which is a valid id and still not the name.
+   */
+  const keyedByObjectId = (documents: SpaceDocuments): SpaceDocuments => {
+    const schema = structuredClone(documents.schema);
+    const names = Object.keys(schema.flat);
+    const keys = Object.fromEntries(
+      names.map((name, index) => [
+        name,
+        `${index % 2 ? 'a' : '6'}55221a12565b83ac5060e${String(index).padStart(2, '0')}`
+      ])
+    );
+    repointIds(schema.flat, keys, schema.pages);
+    names.forEach(name => Object.assign(schema.flat[keys[name]], { idRef: name }));
+
+    return { ...documents, schema };
+  };
+
+  it('reads them back under their names, with everything that pointed at them', () => {
+    const current = authorSpace(rich);
+    const { spec, corrections } = specFromSpace(keyedByObjectId(current));
+
+    expect(spec).toEqual(specFromSpace(current).spec);
+    expect(corrections).toHaveLength(Object.keys(current.schema.flat).length);
+    expect(new Set(corrections.map(correction => correction.code))).toEqual(new Set(['legacy-element-id']));
+  });
+
+  it('names one that carries no name after its type', () => {
+    const documents = authorSpace({
+      name: 'Old',
+      permanentUrl: 'old',
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [heading({ id: 'intro', content: 'Hi' })] }]
+    });
+    repointIds(documents.schema.flat, { intro: '6552289be0053d3e506eafe5' }, documents.schema.pages);
+    const { spec, corrections } = specFromSpace(documents, { keepIds: true });
+
+    expect(spec.pages[0].body[0].id).toBe('heading-1');
+    expect(corrections).toEqual([expect.objectContaining({ code: 'legacy-element-id', at: 'heading-1' })]);
+  });
+
+  it('refuses a space with no pages, which there is no code to write for', () => {
+    const documents = authorSpace(rich);
+    documents.schema.pages = [];
+
+    expect(() => specFromSpace(documents)).toThrow(/has no pages/);
   });
 });
 

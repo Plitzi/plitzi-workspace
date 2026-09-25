@@ -1,5 +1,6 @@
 import { use, useCallback } from 'react';
 
+import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
@@ -35,6 +36,7 @@ export type SpaceExportResult =
 const useSpaceExport = () => {
   const { server, webKey } = use(NetworkContext);
   const { networkQuery } = useNetwork({ initLoading: false, server, webKey });
+  const { plugins } = use(PluginsContext);
   const getSchema = useBuilderStoreGetter('schema');
   const getStyle = useBuilderStoreGetter('style');
 
@@ -61,9 +63,11 @@ const useSpaceExport = () => {
       }
 
       const split = format === 'authoring-split';
+      // The element types the space's plugins bring, which the reader keeps as they are rather than report unknown.
+      const pluginTypes = Object.keys(plugins);
       const response = await networkQuery<AuthoringResponse>(
         '/utils/transform-to-authoring',
-        { schema, style, split },
+        { schema, style, split, pluginTypes },
         'post'
       );
       if (!response?.data) {
@@ -86,7 +90,7 @@ const useSpaceExport = () => {
         spaceExport: { format, fileName, files: { [fileName]: files['index.ts'] }, corrections, differences }
       };
     },
-    [getSchema, getStyle, networkQuery]
+    [getSchema, getStyle, networkQuery, plugins]
   );
 
   return { exportSpace };

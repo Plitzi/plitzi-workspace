@@ -493,6 +493,13 @@
   as well. `sdk-auth`: a login answered with `mfaRequired` is a **`MfaChallenge`** (`{ ok: false, reason: 'mfa',
   mfaToken }`), not a session — the provider read it as one and ended signed out. The space names where the code is
   sent with **`mfaUrl`**; the `auth.login` step's mode **`'mfa'`** sends `{ mfaToken, code }` there.
+- **Fixed: a code could sign in twice.** A TOTP code is valid for its whole window, and nothing remembered that one had
+  been used: seen over a shoulder or lifted by a phishing page, it opened a second session within that window. The
+  step of the last code accepted is kept (`MfaRecord.lastUsedStep`; `totpStep(secret, code)` in `sdk-server/auth`
+  says which step a code matched) and nothing up to it is taken again — the code that confirms the enrolment
+  included (RFC 6238 §5.2). The MySQL store migrates to schema step 5 (`account_mfa.last_used_step`).
+- **Fixed: an account with a second factor was locked out by signing in often.** A right password answered with a
+  challenge was not reported as a success, so the sign-in limit counted it as a failure (ten in five minutes).
 - `sdk-server`: a numeric field in an `/auth` body is read as its text (a code typed into a number field was dropped
   as missing).
 - **Fixed: signing out of the auth space could loop between two pages** (over a thousand navigations in six seconds):
@@ -593,3 +600,15 @@
   Prettier quotes them (`"Today's"`, not `'Today\'s'`), and a name with a backslash no longer breaks the file.
 - e2e: `plugin-server` generates a package with the CLI, builds it, publishes it on a host of its own and checks a page
   loads it from its manifest.
+
+## Export as code: spaces from an older builder
+
+- `sdk-authoring`: **`specFromSpace` reads a document an older builder keyed by ObjectId.** Before an element's id was
+  its name, `flat` was keyed by a Mongo ObjectId and the name lived in `idRef`; reading one kept the ObjectId, and
+  `authorSpace` refused it ("not one a binding, a template or a test can name"), so the builder's Export failed on
+  every such space. Each element takes its `idRef` back as its id — a positional `<type>-<n>` where it has none and
+  its key is not a valid id — with every reference repointed, and the rename is reported as `legacy-element-id`.
+  `withNamedIds` is exported so a caller comparing what it read compares it under the same names.
+- `sdk-authoring`: a space with no pages is refused up front with a reason a person can act on, instead of the
+  authoring error about writing one.
+- Builder: Export sends the space's plugin types, so an element a plugin provides is no longer reported as unknown.

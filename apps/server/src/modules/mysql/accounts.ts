@@ -541,11 +541,14 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
      * read whole and written whole, and a text column that a human can read in a crisis beats one they cannot.
      */
     loadMfa: async (userId: number): Promise<MfaRecord | undefined> => {
-      const row = await selectOne<{ secret: string; confirmed_at: number | null; recovery_codes: string | null }>(
-        db,
-        `SELECT secret, confirmed_at, recovery_codes FROM ${t.mfa} WHERE account_id = ? LIMIT 1`,
-        [userId]
-      );
+      const row = await selectOne<{
+        secret: string;
+        confirmed_at: number | null;
+        recovery_codes: string | null;
+        last_used_step: number | null;
+      }>(db, `SELECT secret, confirmed_at, recovery_codes, last_used_step FROM ${t.mfa} WHERE account_id = ? LIMIT 1`, [
+        userId
+      ]);
 
       if (!row) {
         return undefined;
@@ -554,17 +557,25 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
       return {
         secret: row.secret,
         ...(row.confirmed_at !== null ? { confirmedAt: row.confirmed_at } : {}),
-        recoveryCodes: (row.recovery_codes ?? '').split('\n').filter(Boolean)
+        recoveryCodes: (row.recovery_codes ?? '').split('\n').filter(Boolean),
+        ...(row.last_used_step !== null ? { lastUsedStep: row.last_used_step } : {})
       };
     },
 
     saveMfa: async (userId: number, mfaRecord: MfaRecord): Promise<void> => {
       await execute(
         db,
-        `INSERT INTO ${t.mfa} (account_id, secret, confirmed_at, recovery_codes) VALUES (?, ?, ?, ?)
+        `INSERT INTO ${t.mfa} (account_id, secret, confirmed_at, recovery_codes, last_used_step) VALUES (?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
-           secret = VALUES(secret), confirmed_at = VALUES(confirmed_at), recovery_codes = VALUES(recovery_codes)`,
-        [userId, mfaRecord.secret, mfaRecord.confirmedAt ?? null, (mfaRecord.recoveryCodes ?? []).join('\n')]
+           secret = VALUES(secret), confirmed_at = VALUES(confirmed_at), recovery_codes = VALUES(recovery_codes),
+           last_used_step = VALUES(last_used_step)`,
+        [
+          userId,
+          mfaRecord.secret,
+          mfaRecord.confirmedAt ?? null,
+          (mfaRecord.recoveryCodes ?? []).join('\n'),
+          mfaRecord.lastUsedStep ?? null
+        ]
       );
     },
 

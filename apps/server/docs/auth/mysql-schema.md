@@ -178,6 +178,11 @@ server's and worth knowing:
   finish that one sign-in; it verifies as nothing else.
 - **Recovery codes are stored hashed and shown once**, and a used one is spent. One that survives being used is a
   password with extra steps.
+- **A code signs in once.** A code stays valid for its whole window (a step either side of now), so the step of the
+  last one accepted is kept (`account_mfa.last_used_step`, step 5) and nothing up to it is taken again — RFC 6238
+  §5.2. The code that confirms the enrolment is spent the same way.
+- **Proving the password forgives the sign-in counter** even when a code is still owed; codes have a counter of their
+  own (five wrong ones in five minutes).
 
 ### Signing in by email
 
