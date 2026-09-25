@@ -672,3 +672,13 @@
   again.
 - New in `@plitzi/sdk-server/auth`: `parseSessionHint`, `readSessionHint`, `sessionReturnTarget`,
   `isDocumentNavigation`, `renewForNavigation`.
+
+## Scheduled jobs: a store hiccup is not an incident
+
+- `sdk-server`: a schedule sweep, reconcile, job claim or heartbeat that fails is reported by how long it has been
+  failing. The first failure is a one-line warning with its reason (it runs again by itself, and every pass is safe
+  to repeat); a pass still failing a minute later is the error, with the cause; the pass that ends such a streak says
+  so. A Mongo driver resetting its pool while the host was busy used to print an error with a stack on every pass it
+  caught. A deployment's own `onError` still receives every failure.
+- Tests that ran slow under a busy machine: the CLI's type-declarations test (a real compile) has a timeout of its own,
+  and the workers test waits for every worker to listen rather than a fixed number of requests.

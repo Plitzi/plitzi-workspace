@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createMemoryJobQueue } from './memoryQueue';
 import { createScheduler } from './scheduler';
 import { schedulesFor } from './schedules';
+import { serverLog } from '../../../helpers/serverLog';
 
 import type { ActionEntry, ActionJobQueue, ElementInteraction } from '@plitzi/sdk-shared';
 
@@ -189,6 +190,36 @@ describe('createScheduler', () => {
 
     const [after] = await world.queue.listSchedules([1]);
     expect(after.nextRunAt).toBe(before.nextRunAt);
+  });
+
+  // A store that drops its connections for a moment fails one sweep, and the next works: nothing to raise an alarm
+  // about. See `createFailureStreak`.
+  it('reports a sweep that failed once as a warning, and sweeps again', async () => {
+    const warn = vi.spyOn(serverLog, 'warn').mockImplementation(() => {});
+    const error = vi.spyOn(serverLog, 'error').mockImplementation(() => {});
+    const memory = createMemoryJobQueue();
+    const dueSchedules = vi
+      .fn<ActionJobQueue['dueSchedules']>()
+      .mockRejectedValueOnce(new Error('interrupted due to server monitor timeout'))
+      .mockImplementation(limit => memory.dueSchedules(limit));
+    const scheduler = createScheduler({
+      queue: { ...memory, dueSchedules },
+      lookups: { getAction: () => Promise.resolve(undefined), listActions: () => Promise.resolve([]) },
+      spaces: [1],
+      pollMs: 5
+    });
+
+    scheduler.start();
+    await vi.waitFor(() => expect(dueSchedules.mock.calls.length).toBeGreaterThan(1));
+    scheduler.stop();
+
+    expect(warn).toHaveBeenCalledWith(
+      'Actions',
+      'schedule sweep failed, trying again',
+      'interrupted due to server monitor timeout'
+    );
+    expect(error).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
   });
 
   it('says so, once, when nothing tells it which spaces to watch', () => {

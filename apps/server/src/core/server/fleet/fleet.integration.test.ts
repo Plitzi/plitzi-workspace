@@ -96,11 +96,23 @@ const untilServing = async (run: Started, timeoutMs = 30_000): Promise<void> => 
   throw new Error(`the server did not answer within ${timeoutMs}ms:\n${run.output()}`);
 };
 
-/** Which processes answer: as many connections as it takes to see `expected` of them, or a bounded number. */
-const servingPids = async (port: number, expected: number): Promise<Set<number>> => {
+/**
+ * Which processes answer: as many connections as it takes to see `expected` of them, for up to `timeoutMs`.
+ *
+ * Bounded by time rather than by a number of requests. `untilServing` returns when the FIRST worker answers, and the
+ * others can take seconds more to listen when the machine is busy — the whole workspace testing at once. A fixed run
+ * of back-to-back requests was over in milliseconds, every one of them handed to the only worker that was up.
+ */
+const servingPids = async (port: number, expected: number, timeoutMs = 30_000): Promise<Set<number>> => {
   const pids = new Set<number>();
-  for (let attempt = 0; attempt < expected * 20 && pids.size < expected; attempt += 1) {
+  const deadline = Date.now() + timeoutMs;
+  while (pids.size < expected && Date.now() < deadline) {
+    const seen = pids.size;
     pids.add(Number((await get(port)).body));
+
+    if (pids.size === seen) {
+      await sleep(50);
+    }
   }
 
   return pids;

@@ -196,6 +196,10 @@ describe('a plugin package’s types', () => {
       types: true
     });
 
+  /**
+   * A real compile: declarations need the whole program's types, React's and the SDK's among them. About four seconds
+   * on its own, so the default five failed whenever the rest of the workspace was testing beside it.
+   */
   it('writes them with the package’s own TypeScript, for what src/ holds', async () => {
     // Inside the workspace, where a TypeScript resolves — as it does in a package with its dependencies installed.
     const dir = await fs.mkdtemp(path.join(import.meta.dirname, '../../.pack-types-'));
@@ -212,7 +216,7 @@ describe('a plugin package’s types', () => {
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   it('says so when the package has no TypeScript to write them with, rather than failing the build', async () => {
     await inTemp(async dir => {
