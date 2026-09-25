@@ -1,3 +1,5 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
+
 import { readRawBody } from '@plitzi/sdk-server/kernel';
 
 import { createPreview } from '../preview/createPreview';
@@ -6,6 +8,18 @@ import type { PreviewRequestBody } from '../modules/mcp/types';
 import type { SSRContext, Stage } from '@plitzi/sdk-server/kernel';
 
 const PREVIEW_PATH_DEFAULT = '/__preview';
+
+const digest = (value: string): Buffer => createHash('sha256').update(value).digest();
+
+/**
+ * Whether the request carries the configured secret — and there has to BE one.
+ *
+ * This endpoint lives on the page server, which is what the public reaches on every published host. Treating a
+ * missing secret as "no check" turned an internal endpoint into a public one that renders any space's draft, so an
+ * enabled endpoint with no secret refuses everybody. Compared as digests, in constant time.
+ */
+const presentsSecret = (header: string | string[] | undefined, secret: string | undefined): boolean =>
+  !!secret && typeof header === 'string' && timingSafeEqual(digest(header), digest(secret));
 
 const json = (ctx: SSRContext, status: number, payload: unknown): true => {
   ctx.res.setHeader('Content-Type', 'application/json');
@@ -30,7 +44,7 @@ export const previewStage: Stage<SSRContext> = async ctx => {
     return false;
   }
 
-  if (preview.secret && ctx.req.headers['x-preview-secret'] !== preview.secret) {
+  if (!presentsSecret(ctx.req.headers['x-preview-secret'], preview.secret)) {
     return json(ctx, 403, { error: 'FORBIDDEN', message: 'Invalid or missing preview secret.' });
   }
 

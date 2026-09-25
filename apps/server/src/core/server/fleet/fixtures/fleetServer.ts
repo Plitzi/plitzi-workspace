@@ -123,7 +123,7 @@ const fleetRoute = async (path: string, query: Record<string, string>, res: SSRR
       return json(res, (await queue?.now()) instanceof Date);
     case '/fleet/draft/put':
       // The store keeps whatever it is handed; what a draft holds is not what is under test.
-      await drafts.put(key, { schema: {} } as never, { ttlMs: 60_000 });
+      await drafts.put(key, { schema: {} } as never, { ttlMs: 60_000, spaceId: 1 });
 
       return json(res, true);
     case '/fleet/draft/take':

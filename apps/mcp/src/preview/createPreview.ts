@@ -108,7 +108,7 @@ export const createPreview = async (
   let token: string | undefined;
   if (config.draftStore) {
     token = randomUUID();
-    await config.draftStore.put(token, draftOffline, { ttlMs, reusable });
+    await config.draftStore.put(token, draftOffline, { ttlMs, reusable, spaceId: body.spaceId });
   }
 
   return {

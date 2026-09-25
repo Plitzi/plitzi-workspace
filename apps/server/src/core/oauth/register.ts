@@ -6,22 +6,27 @@ import { sendErrorJson, sendJson } from './respond';
 
 import type { OAuthConfig, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
-// A redirect target must be one the user's browser can be sent to safely. https anywhere, plain http only on the
-// loopback interface — the exception RFC 8252 carves out for a client listening on a local port.
-const isUsableRedirectUri = (value: string): boolean => {
-  let url: URL;
+const parseUri = (value: string): URL | undefined => {
   try {
-    url = new URL(value);
+    return new URL(value);
   } catch {
-    return false;
+    return undefined;
   }
-
-  if (url.protocol === 'https:') {
-    return true;
-  }
-
-  return url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
 };
+
+/** Plain http on the loopback interface — the exception RFC 8252 carves out for a native app listening on a port. */
+export const isLoopbackRedirectUri = (value: string): boolean => {
+  const url = parseUri(value);
+
+  return url?.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+};
+
+/**
+ * A redirect target must be one the user's browser can be sent to safely: https anywhere, or loopback. A deployment
+ * whose clients are all native apps narrows that to loopback alone (see `OAuthConfig.loopbackRedirectsOnly`).
+ */
+const isUsableRedirectUri = (value: string, loopbackOnly: boolean): boolean =>
+  isLoopbackRedirectUri(value) || (!loopbackOnly && parseUri(value)?.protocol === 'https:');
 
 const stringList = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
@@ -66,9 +71,17 @@ export const handleRegister = async (config: OAuthConfig, res: SSRResponseHelper
   }
 
   const metadata = body as Record<string, unknown>;
-  const redirectUris = stringList(metadata['redirect_uris']).filter(isUsableRedirectUri);
+  const loopbackOnly = config.loopbackRedirectsOnly === true;
+  const redirectUris = stringList(metadata['redirect_uris']).filter(uri => isUsableRedirectUri(uri, loopbackOnly));
   if (redirectUris.length === 0) {
-    sendErrorJson(res, 400, 'invalid_request', 'redirect_uris must list at least one https (or loopback) URI.');
+    sendErrorJson(
+      res,
+      400,
+      'invalid_request',
+      loopbackOnly
+        ? 'redirect_uris must list at least one loopback URI (http://127.0.0.1:<port>/…).'
+        : 'redirect_uris must list at least one https (or loopback) URI.'
+    );
 
     return;
   }

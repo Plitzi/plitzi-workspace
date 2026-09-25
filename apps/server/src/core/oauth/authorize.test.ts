@@ -6,7 +6,7 @@ import { renderConsentPage } from './consentPage';
 import type { OAuthParams } from './params';
 import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
-const CLIENT = { clientId: 'client-1', redirectUris: ['https://host.test/cb'] };
+const CLIENT = { clientId: 'client-1', clientName: 'Some Connector', redirectUris: ['https://host.test/cb'] };
 
 const backingStore = () => {
   const rows = new Map<string, string>([[`oauth:client:${CLIENT.clientId}`, JSON.stringify(CLIENT)]]);
@@ -49,12 +49,17 @@ const capture = () => {
   return { res, sent };
 };
 
-const setup = (signOut?: OAuthConfig['adapters']['signOut'], guest?: OAuthConfig['guest']) => {
+const setup = (
+  signOut?: OAuthConfig['adapters']['signOut'],
+  guest?: OAuthConfig['guest'],
+  loopbackRedirectsOnly?: boolean
+) => {
   const store = backingStore();
   const config = {
     issuer: 'https://mcp.plitzi.test',
     signInUrl: 'https://auth.plitzi.test/login',
     guest,
+    loopbackRedirectsOnly,
     adapters: {
       identify: () => Promise.resolve({ id: '7', label: 'ada@plitzi.test' }),
       grantTargets: () => Promise.resolve([{ value: 'space-1', label: 'Website' }]),
@@ -165,6 +170,50 @@ describe('the grant screen / posting "use another account"', () => {
   });
 });
 
+/**
+ * Anybody can register a client, name it anything and point it anywhere, then send somebody the link to this screen on
+ * the deployment's own domain. What stands between that and a grant is the person reading the screen, so the screen
+ * has to say who is asking and where the answer goes.
+ */
+describe('the grant screen / who is asking', () => {
+  it('names the client and the host the grant is sent back to', async () => {
+    const { sent } = await start();
+
+    expect(sent.body).toContain('Some Connector');
+    expect(sent.body).toContain('host.test');
+  });
+
+  it('escapes what the client calls itself', () => {
+    const markup = renderConsentPage({
+      action: '/authorize',
+      hidden: {},
+      targets: [{ value: 'a', label: 'A' }],
+      user: { id: '1', label: 'ada' },
+      client: { name: '<img src=x onerror=alert(1)>', redirectHost: 'evil.test', loopback: false },
+      branding: {}
+    });
+
+    expect(markup).not.toContain('<img src=x');
+    expect(markup).toContain('evil.test');
+  });
+});
+
+/**
+ * A deployment whose clients are all native apps — a CLI, a desktop app — grants the person's own session, and those
+ * apps only ever listen on this computer. A client pointing anywhere else is somebody collecting sessions.
+ */
+describe('the grant screen / native clients only', () => {
+  it('refuses a client that would be sent anywhere but this computer', async () => {
+    const { config } = setup(undefined, undefined, true);
+    const { res, sent } = capture();
+
+    await handleAuthorizeStart(config, res, params, request);
+
+    expect(sent.body).not.toContain('<form');
+    expect(sent.body).toContain('this computer');
+  });
+});
+
 describe('the grant screen / markup', () => {
   it('escapes what a deployment puts around the form', () => {
     const markup = renderConsentPage({
@@ -173,6 +222,7 @@ describe('the grant screen / markup', () => {
       targets: [{ value: 'a', label: 'A' }],
       user: { id: '1', label: 'ada' },
       canSwitchUser: true,
+      client: { name: 'Some Connector', redirectHost: 'host.test', loopback: false },
       branding: {}
     });
 

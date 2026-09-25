@@ -1230,6 +1230,21 @@ export type OAuthConsentView = {
   canSwitchUser?: boolean;
   /** A message to show the user. */
   error?: string;
+  /**
+   * Who is asking, and where the grant goes if the person says yes.
+   *
+   * Anybody can register a client, call it anything and send somebody this screen on the deployment's own domain, so
+   * the name alone proves nothing. The host the code is sent back to is the one fact the requester cannot choose
+   * freely, and it is what tells "the app I just opened" apart from a stranger's server.
+   */
+  client: {
+    /** What the client registered itself as. Chosen by the client, so it is shown as a claim. */
+    name: string;
+    /** The host of the `redirect_uri` the grant is delivered to. */
+    redirectHost: string;
+    /** The grant goes back to an app listening on this computer (RFC 8252 loopback), not to a server. */
+    loopback: boolean;
+  };
   branding: OAuthBranding;
 };
 
@@ -1280,6 +1295,15 @@ export type OAuthConfig = {
    * holds, and wrapping it costs a store read on every request and gives a second thing to revoke.
    */
   directTokens?: boolean;
+  /**
+   * Accept only loopback `redirect_uri`s (`http://127.0.0.1:<port>/…`, RFC 8252 §7.3), at registration and again at
+   * `/authorize`.
+   *
+   * Turn it on when every client is a native app on the person's own machine — a CLI, a desktop app — and above all
+   * with {@link directTokens}, where the grant IS the person's session. Registration is open to anybody, so with https
+   * redirects allowed a stranger's server can register, send somebody the link, and collect what they approve.
+   */
+  loopbackRedirectsOnly?: boolean;
 };
 
 /** A short-TTL, one-shot store for unsaved draft offline-data behind a preview token. The SDK ships an
@@ -1297,12 +1321,16 @@ export type OAuthConfig = {
 export type DraftPutOptions = {
   ttlMs: number;
   reusable?: boolean;
+  /** The space the draft was made from. It is only ever rendered for that space. */
+  spaceId: number;
 };
 
 /** A stashed draft, and whether the read that resolved it left it there. */
 export type DraftEntry = {
   data: OfflineDataRaw;
   reusable: boolean;
+  /** The space the draft was made from — see {@link DraftPutOptions.spaceId}. */
+  spaceId: number;
 };
 
 export type DraftStore = {
@@ -1326,7 +1354,12 @@ export type SSRPreviewConfig = {
   enabled?: boolean;
   /** Internal endpoint path that mints a preview token. Default '/__preview'. */
   path?: string;
-  /** Shared secret required in the `x-preview-secret` header; requests without it are rejected. */
+  /**
+   * Shared secret required in the `x-preview-secret` header; requests without it are rejected.
+   *
+   * Required for the endpoint to answer at all: the page server that hosts it is the one the public reaches, so an
+   * enabled endpoint with no secret refuses every request rather than serving anyone.
+   */
   secret?: string;
   /** One-shot token time-to-live in milliseconds. Default 60000. */
   ttlMs?: number;

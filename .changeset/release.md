@@ -629,3 +629,20 @@
   an IPv6 prefix (`fcbarcelona.com`).
 - Redirects are followed one hop at a time, and each destination is checked before anything is sent to it. A public
   URL that redirects into the cluster is refused. A redirect that leaves the origin drops `Authorization` and `Cookie`.
+
+## The grant screen says who is asking
+
+- `sdk-server`: the OAuth grant screen names the client and the host the grant is sent back to ("an app on this
+  computer" for a loopback client). Anybody can register a client under any name, so the host is the part a person
+  can check. `OAuthConsentView` carries it as `client: { name, redirectHost, loopback }`.
+- New `OAuthConfig.loopbackRedirectsOnly`: only `http://127.0.0.1` / `localhost` redirects are accepted, when a client
+  registers and again at `/authorize`. Turn it on when every client is a native app, above all with `directTokens`,
+  where the grant is the person's session.
+
+## Draft previews: a secret, and one space
+
+- `sdk-mcp`: the `/__preview` endpoint refuses every request when preview is enabled without a `secret`, and compares
+  the secret in constant time. It lives on the page server the public reaches, so "no secret" used to mean "no check".
+  **A deployment with preview on must set `preview.secret`**, and every caller must send it as `x-preview-secret`.
+- `sdk-server`: a draft is only rendered for the space it was made from. `DraftPutOptions` and `DraftEntry` carry
+  `spaceId`, and a token presented under another space's host is ignored. A custom `DraftStore` has to keep it.

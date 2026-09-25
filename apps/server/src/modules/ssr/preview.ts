@@ -13,11 +13,11 @@ export const DRAFT_STORE_METHODS: StoreMethods<DraftStore> = { put: true, take: 
 /** In-memory draft store — the default when the consumer injects none. Fine for a single replica; a multi-replica
  *  deployment must inject a shared store so a preview URL resolves on any replica. */
 export const createMemoryDraftStore = (): DraftStore => {
-  const store = new Map<string, { data: OfflineDataRaw; expiresAt: number; reusable: boolean }>();
+  const store = new Map<string, { data: OfflineDataRaw; expiresAt: number; reusable: boolean; spaceId: number }>();
 
   return {
-    put(token, data, { ttlMs, reusable = false }) {
-      store.set(token, { data, expiresAt: Date.now() + ttlMs, reusable });
+    put(token, data, { ttlMs, reusable = false, spaceId }) {
+      store.set(token, { data, expiresAt: Date.now() + ttlMs, reusable, spaceId });
     },
     take(token) {
       const hit = store.get(token);
@@ -31,7 +31,7 @@ export const createMemoryDraftStore = (): DraftStore => {
         store.delete(token);
       }
 
-      return hit.expiresAt > Date.now() ? { data: hit.data, reusable: hit.reusable } : undefined;
+      return hit.expiresAt > Date.now() ? { data: hit.data, reusable: hit.reusable, spaceId: hit.spaceId } : undefined;
     },
     drop(token) {
       store.delete(token);
@@ -64,7 +64,13 @@ export const takeDraftOverride = async (
 
   const entry = await config.draftStore.take(token);
 
-  return entry ? { ...entry, token } : undefined;
+  // A draft is one space's authored content. Served under another space's host it would run on that space's origin,
+  // so a token minted for one space means nothing anywhere else.
+  if (!entry || entry.spaceId !== req.ctx.spaceDeployment?.spaceId) {
+    return undefined;
+  }
+
+  return { data: entry.data, reusable: entry.reusable, token };
 };
 
 /** The `Set-Cookie` that carries a draft session through the rest of the visit. */

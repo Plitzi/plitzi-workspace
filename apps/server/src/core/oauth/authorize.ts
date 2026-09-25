@@ -4,6 +4,7 @@ import { AUTHORIZE_PATH } from './metadata';
 import { field, optionalField } from './params';
 import { randomId } from './pkce';
 import { dropPending, getClient, getPending, putCode, putPending } from './records';
+import { isLoopbackRedirectUri } from './register';
 import { redirectToSignIn, redirectWithCode, redirectWithError, sendErrorPage, sendHtml } from './respond';
 
 import type { OAuthParams } from './params';
@@ -34,6 +35,8 @@ const guestView = (guest: OAuthGuestConfig): NonNullable<OAuthConsentView['guest
  *  the client and is echoed back to it, so none of it is trusted beyond having been validated once on the way in. */
 type AuthorizationRequest = {
   clientId: string;
+  /** What the client registered as — read from its registration, never from the request, and never round-tripped. */
+  clientName: string;
   redirectUri: string;
   challenge: string;
   state?: string;
@@ -66,6 +69,13 @@ const hiddenFieldsFor = (request: AuthorizationRequest, pendingId?: string): Rec
 
   return hidden;
 };
+
+/** Who is asking and where the answer goes, as the grant screen shows it (see `OAuthConsentView.client`). */
+const consentClient = (request: AuthorizationRequest): OAuthConsentView['client'] => ({
+  name: request.clientName,
+  redirectHost: new URL(request.redirectUri).host,
+  loopback: isLoopbackRedirectUri(request.redirectUri)
+});
 
 const renderConsent = (res: SSRResponseHelpers, view: OAuthConsentView): void => {
   sendHtml(res, 200, renderConsentPage(view));
@@ -172,6 +182,14 @@ const resolveRequest = async (
     return undefined;
   }
 
+  // Checked here as well as at registration: a client registered before the deployment narrowed its redirects is
+  // still in the store, and this is the request that would hand it a grant.
+  if (config.loopbackRedirectsOnly && !isLoopbackRedirectUri(redirectUri)) {
+    sendErrorPage(res, 'Invalid redirect', 'Only an application running on this computer can sign in here.');
+
+    return undefined;
+  }
+
   const state = optionalField(params, 'state');
   const responseType = field(params, 'response_type');
   if (responseType && responseType !== 'code') {
@@ -194,7 +212,14 @@ const resolveRequest = async (
     return undefined;
   }
 
-  return { clientId, redirectUri, challenge, state, scope: optionalField(params, 'scope') };
+  return {
+    clientId,
+    clientName: client.clientName,
+    redirectUri,
+    challenge,
+    state,
+    scope: optionalField(params, 'scope')
+  };
 };
 
 /** Consent granted: mint the bearer now, park it behind a one-shot code and send the browser back. Minting here
@@ -288,6 +313,7 @@ const askForTarget = async (
     // Offered only when the deployment can act on it — see `OAuthAdapters.signOut`.
     canSwitchUser: config.adapters.signOut !== undefined,
     error,
+    client: consentClient(request),
     branding: config.branding ?? {}
   });
 };
@@ -329,6 +355,7 @@ export const handleAuthorizeStart = async (
       targets: [],
       guest: guestView(config.guest),
       signInUrl: signInWithReturn(config, req, params),
+      client: consentClient(request),
       branding: config.branding ?? {}
     });
 

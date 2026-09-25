@@ -62,4 +62,16 @@ describe('registering a client', () => {
     expect(client?.clientName).toHaveLength(120);
     expect(client?.softwareId).toBeUndefined();
   });
+
+  /** The native deployment grants a whole session, and its apps only ever listen on this computer. */
+  it('takes only loopback redirects when the deployment says so', async () => {
+    const { config, res, answer } = setup();
+    const native = { ...config, loopbackRedirectsOnly: true };
+
+    await handleRegister(native, res, { client_name: 'Plitzi Desktop', redirect_uris: ['https://evil.test/cb'] });
+    expect(res.setStatus).toHaveBeenLastCalledWith(400);
+
+    await handleRegister(native, res, { client_name: 'Plitzi CLI', redirect_uris: ['http://127.0.0.1:5000/callback'] });
+    expect(answer()).toMatchObject({ redirect_uris: ['http://127.0.0.1:5000/callback'] });
+  });
 });

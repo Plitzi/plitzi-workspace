@@ -35,6 +35,8 @@ const STYLES = `
   img.logo { display: block; height: 32px; margin-bottom: 20px; }
   h1 { margin: 0 0 6px; font-size: 20px; font-weight: 600; }
   p.lede { margin: 0 0 24px; color: var(--muted); font-size: 14px; }
+  p.client { margin: -12px 0 24px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: 14px; }
   input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   ul.targets { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
   ul.targets label { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px;
@@ -108,6 +110,18 @@ const anonymousFields = (view: OAuthConsentView): string => {
 };
 
 /**
+ * Who is asking and where the grant goes. The name is whatever the client registered as, so it is never shown alone:
+ * the destination host is what a person can check against the app they just opened.
+ */
+const clientNotice = (client: OAuthConsentView['client']): string => {
+  const destination = client.loopback
+    ? 'an app on this computer'
+    : `<strong>${escapeHtml(client.redirectHost)}</strong>`;
+
+  return `<p class="client"><strong>${escapeHtml(client.name)}</strong> is asking for access. If you continue, it is sent to ${destination}.</p>`;
+};
+
+/**
  * The grant screen — the ONE page this server renders, and it never asks who anybody is.
  *
  * It used to be two steps, the first of which took a username and a password. That is gone: signing in happens on
@@ -139,6 +153,7 @@ export const renderConsentPage = (view: OAuthConsentView): string => {
     ${logo}
     <h1>${escapeHtml(productName)}</h1>
     <p class="lede">${lede}</p>
+    ${clientNotice(view.client)}
     ${error}
     <form method="post" action="${escapeHtml(view.action)}">
       ${hiddenFields(view.hidden)}
