@@ -162,6 +162,11 @@ export default defineConfig(({ mode, command }) => {
           'vendor-entry.ts'
         ],
         tsconfigPath: './tsconfig.app.json',
+        // A development build points the packages at their sources; the types it writes must not. Left to the
+        // plugin, every import of one became a path into `packages/*/src`, and whatever typechecked against this
+        // build compiled those sources under its own settings — the examples' `erasableSyntaxOnly` refusing their
+        // enums — while a production build said nothing.
+        aliasesExclude: Object.keys(packages),
         beforeWriteFile: skipUnchangedDts
       }),
       // {
