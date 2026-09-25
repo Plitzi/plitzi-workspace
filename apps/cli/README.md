@@ -7,6 +7,7 @@ npx @plitzi/cli create my-site                 # a project that renders a space
 npx @plitzi/cli add plugin seat-picker legend  # elements of your own, in the project you are in
 npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can load
 npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
+npx @plitzi/cli upload plugin                  # that zip, on the space you work in, and installed there
 ```
 
 ## `create`
@@ -147,6 +148,35 @@ it in a space's plugins as `{ type, resource }`.
 Without folders, outside a package, it offers the elements in `src/plugins` — the folders with a declaration, which is
 what a manifest is written from. `--out` moves the build, `--no-zip` leaves the zip out, and `--plugin-version` sets the
 version the manifest carries (the project's own by default).
+
+## `login`, `space` and `upload plugin`
+
+```bash
+plitzi login          # sign in, in your browser
+plitzi space          # choose the space to work in, in your browser
+plitzi whoami         # who you are signed in as, and the space
+plitzi upload plugin  # the zip pack plugin left, on that space
+plitzi logout         # the session revoked on the platform, and forgotten here
+```
+
+Signing in happens in the browser, on the platform's own sign-in — the CLI never asks for a password, and MFA or a
+social sign-in work without it knowing. What it keeps is the session and a way to renew it, in
+`~/.config/plitzi/connection.json` (`%APPDATA%\plitzi` on Windows), readable by you alone. It is renewed on its own,
+and it shows among your account's devices, where it can be ended like any other.
+
+**One space at a time.** The space is chosen on the same grant screen an AI connector's is, and the CLI works in that
+one until `plitzi space` chooses another — which replaces the connection, and revokes the one before. No command takes a
+space of its own: an upload goes to the space `plitzi whoami` names, so a plugin meant for a staging space cannot end
+up in the live one because of a flag.
+
+`upload plugin` takes the zip named, or the one `pack plugin` left in the project (the newest, when there are several —
+asked at a terminal). It is checked for its `plugin-manifest.json` before anything is sent. Without a connection, or
+without a space, the browser opens for what is missing, so the first upload is one command too. It goes on one of the
+space's CDNs — `--cdn <identifier>`, or asked when there are several — and is installed, as the builder does when a
+zip is dropped under Resources: added, or the plugin already there moved to the new version with its settings kept.
+
+`--api` (or `PLITZI_API_URL`) points it at another platform, a self-hosted or local one; the CLI trusts the
+certificate authorities the system trusts, as the browser beside it does.
 
 ## Credentials
 

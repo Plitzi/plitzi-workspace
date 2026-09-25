@@ -117,13 +117,17 @@ const chosenFolders = async (project: ExistingProject, foldersGiven: string[]): 
   }
 
   if (!atTerminal()) {
-    refuseWithoutTerminal('plugin', [
-      {
-        flag: '<folders> (the arguments)',
-        choices: candidates.map(folder => path.relative(process.cwd(), folder)),
-        question: 'Which elements go in the plugin? The first is the one it is named after.'
-      }
-    ]);
+    refuseWithoutTerminal(
+      'plugin',
+      [
+        {
+          flag: '<folders> (the arguments)',
+          choices: candidates.map(folder => path.relative(process.cwd(), folder)),
+          question: 'Which elements go in the plugin? The first is the one it is named after.'
+        }
+      ],
+      'plitzi pack plugin stopped before building anything: which elements go in it shape the whole plugin'
+    );
 
     return undefined;
   }

@@ -251,7 +251,7 @@ const askForTarget = async (
   user: OAuthUser,
   error?: string
 ): Promise<void> => {
-  const targets = await config.adapters.grantTargets(user);
+  const targets = await config.adapters.grantTargets(user, { scope: request.scope });
   if (targets.length === 0) {
     redirectWithError(
       res,
@@ -406,7 +406,7 @@ export const handleAuthorizeSubmit = async (
     return;
   }
 
-  const targets = await config.adapters.grantTargets(pending.user);
+  const targets = await config.adapters.grantTargets(pending.user, { scope: request.scope });
   const chosen = targets.find(target => target.value === field(params, 'target'));
   if (!chosen) {
     // The record is dropped and a fresh one minted by askForTarget: a pending id is one attempt, so a screen

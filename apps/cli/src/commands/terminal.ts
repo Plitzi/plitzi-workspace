@@ -8,7 +8,7 @@ import type { PackageManager } from '../scaffold';
 import type readline from 'node:readline/promises';
 
 /**
- * What every `create` shares with the person running it: whether anybody is there, how a choice is put to them, and
+ * What every command shares with the person running it: whether anybody is there, how a choice is put to them, and
  * what happens when nobody is.
  */
 
@@ -32,13 +32,11 @@ export const atTerminal = (): boolean => process.stdin.isTTY && process.stdout.i
  */
 export const refuseWithoutTerminal = (
   what: string,
-  questions: { flag: string; choices: readonly string[]; question: string }[]
+  questions: { flag: string; choices: readonly string[]; question: string }[],
+  stopped = `plitzi create stopped before writing anything: these choices shape the whole ${what}`
 ): void => {
   console.error(
-    chalk.red(
-      `\nplitzi create stopped before writing anything: these choices shape the whole ${what}, they belong to the ` +
-        'person it is for, and nobody is at this terminal to make them.'
-    )
+    chalk.red(`\n${stopped}, they belong to the person it is for, and nobody is at this terminal to make them.`)
   );
   console.error(
     chalk.bold(
@@ -121,6 +119,25 @@ export const askChoice = async (
     }
 
     console.error(chalk.red(`"${reply}" is not a number from 1 to ${options.length + 1}.`));
+  }
+};
+
+/** One of a numbered list and nothing else. Enter takes the first entry. */
+export const askPick = async <T>(
+  rl: readline.Interface,
+  question: string,
+  options: readonly { label: string; value: T }[]
+): Promise<T> => {
+  const menu = options.map(({ label }, index) => `  ${index + 1}. ${label}`).join('\n');
+
+  for (;;) {
+    const reply = (await rl.question(`\n${question}\n${menu}\n[1] > `)).trim() || '1';
+    const index = Number(reply) - 1;
+    if (Number.isInteger(index) && index >= 0 && index < options.length) {
+      return options[index].value;
+    }
+
+    console.error(chalk.red(`"${reply}" is not a number from 1 to ${options.length}.`));
   }
 };
 

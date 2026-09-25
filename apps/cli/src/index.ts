@@ -1,15 +1,19 @@
 import { Option, program } from 'commander';
 
+import { login, logout, space, whoami } from './commands/account';
 import addPlugin from './commands/addPlugin';
 import create from './commands/create';
 import createPlugin from './commands/createPlugin';
 import packPluginCommand from './commands/packPlugin';
+import uploadPluginCommand from './commands/uploadPlugin';
 import { PACKAGE_MANAGERS } from './scaffold';
 
+import type { AccountOptions } from './commands/account';
 import type { AddPluginOptions } from './commands/addPlugin';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
 import type { PackPluginOptions } from './commands/packPlugin';
+import type { UploadPluginOptions } from './commands/uploadPlugin';
 
 /**
  * The command line for Plitzi.
@@ -97,5 +101,43 @@ pack
   .option('--no-zip', 'Build without the zip')
   .option('--plugin-version <version>', 'The version the manifest carries. Defaults to the one in package.json.')
   .action((folders: string[], options: PackPluginOptions) => packPluginCommand(folders, options));
+
+const API_OPTION = [
+  '--api <url>',
+  'The platform’s API. Defaults to PLITZI_API_URL, else the one signed in to, else https://api.plitzi.com.'
+] as const;
+
+program
+  .command('login')
+  .description('Sign in, in your browser. The session is kept and renewed until plitzi logout')
+  .option(...API_OPTION)
+  .action((options: AccountOptions) => login(options));
+
+program
+  .command('logout')
+  .description('Sign out: the session is revoked on the platform and forgotten here')
+  .action(() => logout());
+
+program
+  .command('whoami')
+  .description('Who the CLI is signed in as, and the space it works in')
+  .option(...API_OPTION)
+  .action((options: AccountOptions) => whoami(options));
+
+program
+  .command('space')
+  .description('Choose the space to work in, in your browser. One at a time: it replaces the one chosen before')
+  .option(...API_OPTION)
+  .action((options: AccountOptions) => space(options));
+
+const upload = program.command('upload').description('Put something of this project on the space you work in');
+
+upload
+  .command('plugin')
+  .argument('[zip]', 'The zip plitzi pack plugin built. Left out: the one packed in this project.')
+  .description('Upload a packed plugin to a CDN of the space you work in, and install it there')
+  .option('--cdn <identifier>', 'Which of the space’s CDNs. Asked for when it has several.')
+  .option(...API_OPTION)
+  .action((zip: string | undefined, options: UploadPluginOptions) => uploadPluginCommand(zip, options));
 
 program.parse(process.argv);

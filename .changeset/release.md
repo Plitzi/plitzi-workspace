@@ -470,6 +470,21 @@
   declarations with each file's integrity hash, and the zip the builder takes under Resources — checked against how
   the upload and the builder read it. A package also gets its type declarations, written with its own TypeScript. A
   declaration missing what the manifest needs is refused by name.
+- **`plitzi login`, `logout`, `whoami`, `space` and `upload plugin`.** The CLI signs in the way the desktop app does:
+  in the browser, through the platform's native OAuth (loopback redirect, PKCE), keeping the session and a refresh
+  token in `~/.config/plitzi/connection.json` (0600), renewed on its own and revoked on `logout`. It is connected to
+  **one space at a time**, chosen on the grant screen (`plitzi space`, the `space` scope) — choosing again replaces the
+  connection and revokes the one before, and no command takes a space of its own. `upload plugin` puts the zip
+  `pack plugin` left on one of that space's CDNs and installs it, signing in or choosing the space in the browser
+  first when either is missing.
+- `sdk-server`: `grantTargets(user, { scope })` — the grant screen offers what the scope a client asked with chooses
+  among — and the token response carries the chosen `target` (RFC 6749 §5.1), on renewal too, so a native client knows
+  what it was granted.
+- `plitzi-sdk-server`: the native sign-in offers the person's spaces to a client asking with the `space` scope, and
+  re-checks access to the chosen one whenever it issues a session — a refresh after losing access ends the grant.
+  `GET /spaces/:id/cdns` lists a space's CDNs (never their credentials) and `POST /spaces/:id/cdns/:identifier/plugins`
+  takes a plugin's zip, uploads it the way the builder does (one `uploadResource` now serves both) and installs it on
+  `main`, keeping the settings of a plugin already there; the change is recorded in the space's history as the person's.
 - **Fixed: a plugin uploaded from Windows was refused** ("Type file not supported"). Chrome and Edge on Windows send a
   zip as `application/x-zip-compressed`, and both the builder and the upload accepted only `application/zip`.
 - **A project `plitzi create` writes registers every folder of `src/plugins` by itself**, under its name in camelCase

@@ -1105,8 +1105,13 @@ export type OAuthAdapters = {
    * first visit.
    */
   identify: (req: SSRRequest) => Promise<OAuthUser | undefined>;
-  /** What this user may grant access to. An empty list ends the flow with `access_denied`. */
-  grantTargets: (user: OAuthUser) => Promise<OAuthGrantTarget[]>;
+  /**
+   * What this user may grant access to. An empty list ends the flow with `access_denied`.
+   *
+   * `request.scope` is what the client asked for, so one deployment can offer different choices to different
+   * clients — a native client signing in as the person, and the same client asking which space to work in.
+   */
+  grantTargets: (user: OAuthUser, request: { scope?: string }) => Promise<OAuthGrantTarget[]>;
   /**
    * End whatever session {@link OAuthAdapters.identify} was reading, so the person can connect as somebody else.
    *

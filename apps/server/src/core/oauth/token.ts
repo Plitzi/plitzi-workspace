@@ -52,7 +52,13 @@ const sendTokens = async (
   const body: Record<string, unknown> = {
     access_token: bearer,
     token_type: 'Bearer',
-    scope: scopeOf(config, grant.scope)
+    scope: scopeOf(config, grant.scope),
+    /**
+     * What the person chose on the grant screen — a space, the account. RFC 6749 §5.1 lets a token response carry
+     * parameters of its own, and this one is what a client that asked to CHOOSE needs back: without it, a native
+     * client granted "work in this space" would hold a credential and not know which space it was for.
+     */
+    target: grant.target.value
   };
 
   if (expiresInSeconds !== undefined) {
