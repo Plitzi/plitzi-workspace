@@ -1,5 +1,6 @@
 import { execute, selectOne, selectRows } from './query';
 import { createSessionStore } from './sessions';
+import { activityDue } from '../../core/auth/sessionActivity';
 
 import type { Tables } from './config';
 import type { Queryable } from './query';
@@ -24,7 +25,9 @@ interface AccountRow {
   status: string;
   verified: number;
   /** Joined from the session this lookup came in on, where there is one. */
+  session_id?: number;
   session_expires_at?: number | null;
+  session_last_active_at?: number | null;
   refresh_expires_at?: number | null;
   session_started_at?: number | null;
 }
@@ -100,7 +103,8 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
     findAccountByToken: async (token: string): Promise<Actor | undefined> => {
       const row = await selectOne<AccountRow>(
         db,
-        `SELECT ${ACCOUNT_COLUMNS}, s.expires_at AS session_expires_at
+        `SELECT ${ACCOUNT_COLUMNS}, s.id AS session_id, s.expires_at AS session_expires_at,
+                s.last_active_at AS session_last_active_at
            FROM ${t.session} s
            JOIN ${t.account} a ON a.id = s.account_id
           WHERE s.token = ? AND a.status = 'active'
@@ -110,6 +114,14 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
 
       if (!row) {
         return undefined;
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      if (row.session_id !== undefined && activityDue(row.session_last_active_at, now)) {
+        // Not awaited, and a failure is nothing to refuse a request over: it is the label on a list.
+        void execute(db, `UPDATE ${t.session} SET last_active_at = ? WHERE id = ?`, [now, row.session_id]).catch(
+          () => undefined
+        );
       }
 
       const { roles, permissions } = await loadAccess(row.id);
@@ -203,8 +215,9 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
 
       await execute(
         db,
-        `INSERT INTO ${t.session} (account_id, token, expires_at, refresh_token, refresh_expires_at, user_agent, ip)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO ${t.session}
+           (account_id, token, expires_at, refresh_token, refresh_expires_at, user_agent, ip, app_name, app_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           session.token,
@@ -214,7 +227,9 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
           // Truncated rather than refused: a browser that sends a 4KB user agent has not done anything wrong, and
           // failing a sign-in over a label nobody reads would be absurd.
           context?.client?.userAgent?.slice(0, 255) ?? null,
-          context?.client?.ip ?? null
+          context?.client?.ip ?? null,
+          context?.client?.app?.name.slice(0, 120) ?? null,
+          context?.client?.app?.softwareId?.slice(0, 64) ?? null
         ]
       );
     },

@@ -440,6 +440,42 @@
   6.7 ms instead of 15.4 ms; the page no longer holds the space twice.
 - `sdk-shared/style`: `markStyleCache`, `styleCacheTravelsInDocument`, `styleCacheFromDocument`, `RUNTIME_STYLE_ID`.
 
+## The account console, and telling devices apart
+
+- **`auth.plitzi.*/account` is an account console**, no longer a column beside the sign-in's brand pane: identity along
+  the top, sections down the side (tabs on a phone) — **Profile** (username, and email changed through a link to the
+  new address), **Security** (password, and closing the account), **Devices**, **Connections**.
+- **Devices are listed by device, not by session.** `GET /devices/sessions` groups sessions by what they were created
+  from and answers this device apart; a browser that signed in forty times is one row saying "40 sessions". The list
+  had shipped and drawn every session — 1,218 for one account a test suite signs in as — inside a box that scrolled.
+- **Every device is named for what it is**: the application as it registered over OAuth (`Plitzi CLI on carlos-mbp`,
+  `Plitzi Desktop on studio`), a browser and its system, an automated client (Playwright, headless Chrome) — never a
+  raw user agent. Sessions record their address and **when they were last used** (at most every five minutes, on the
+  lookup a request already makes). A sign-in deletes the account's dead sessions.
+- **AI connectors are one per application**: Claude and ChatGPT granted the same space are two connectors, each named
+  and disconnected on its own (`GET /devices/connectors`).
+- `sdk-server`: **`issueToken(user, target, context)`** — the OAuth layer tells a deployment which application a
+  credential is for (`client_name`, `software_id` kept from registration), the request it is issued on, and on a
+  renewal the credential it **replaces**, so a native client renewing daily stays one session. **`revokeToken`**, new
+  and optional: `/revoke` now ends what the grant issued, not only its renewal — signing the CLI or the desktop app out
+  removes it from the device list at once. Sessions carry `app` and `lastActiveAt` (`SessionApp`,
+  `SESSION_ACTIVITY_RESOLUTION_SECONDS`, `activityDue`); the MySQL store migrates to schema step 4. The session's
+  address is recorded (Express `req.ip`, or the proxies' headers); `SSRRequest.ip`.
+- `sdk-server`: **`deletionBlockers(userId)`** — an account is refused deletion (409, with the list) while it owns
+  something that would be lost with it. `plitzi-sdk-server` refuses while it is the only owner of a workspace holding
+  spaces, other members or a live plan; an empty personal workspace is deleted with the account.
+- **Fixed: a flow's `navigate` to a page in a folder went to the wrong address** — `/security` for `/account/security`,
+  and the home page for a folder's index page. It resolves the page's full path now, as a link does
+  (`navigationTarget` in `sdk-shared/navigation`).
+- **Fixed: changing your email sent a mail with no body** (the `email-change` template did not exist) and a link to no
+  page. It has both now (`/confirm-email` in the auth space).
+- **Fixed: account emails interpolated values unescaped** — a username with markup in it arrived as markup in a mail
+  sent from Plitzi.
+- **Fixed: three first-sign-in error notices said nothing useful** — their templates named steps with a hyphen, which a
+  template reads as a minus. A guard test now refuses a hyphenated step or list inside a template anywhere in the auth
+  space.
+- The visual suite signs every test's session out when it ends; it had left over a thousand on one account a day.
+
 ## Plugins from the CLI
 
 - **`plitzi add plugin [names...]`** adds elements of your own to the project you are in — one, several at once, or one

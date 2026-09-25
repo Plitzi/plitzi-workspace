@@ -103,5 +103,6 @@ export { SCHEMA_VERSION } from './schema';
 
 export type { MysqlConfig, TableKey, Tables } from './config';
 export type { AccountSeed, MysqlAdmin, SpaceTokenSeed } from './admin';
-export type { SessionStore, SessionSummary } from './sessions';
+export type { SessionStore } from './sessions';
+export type { SessionSummary } from '../../core/auth/api';
 export type { IdentityStore, LinkedIdentity } from './identities';

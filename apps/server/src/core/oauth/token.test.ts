@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 
 import { handleAuthorizeStart, handleAuthorizeSubmit } from './authorize';
-import { handleToken } from './token';
+import { handleRevoke, handleToken } from './token';
 
 import type { OAuthParams } from './params';
 import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
@@ -15,7 +15,12 @@ import type { OAuthConfig, SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-sh
  * the choice on it, a native client granted "this space" would hold a working credential and not know what for.
  */
 
-const CLIENT = { clientId: 'cli', redirectUris: ['http://127.0.0.1:4567/callback'] };
+const CLIENT = {
+  clientId: 'cli',
+  clientName: 'Plitzi CLI on carlos-mbp',
+  softwareId: 'plitzi-cli',
+  redirectUris: ['http://127.0.0.1:4567/callback']
+};
 const VERIFIER = 'a-verifier-long-enough-to-be-a-real-one-0123456789';
 const CHALLENGE = createHash('sha256').update(VERIFIER).digest('base64url');
 
@@ -55,6 +60,16 @@ const setup = () => {
         : [{ value: 'account', label: 'Your account' }]
     )
   );
+  let minted = 0;
+  const issueToken = vi.fn(() => {
+    minted += 1;
+
+    return Promise.resolve({
+      token: minted === 1 ? 'session-token' : `session-token-${minted}`,
+      expiresInSeconds: 3600
+    });
+  });
+  const revokeToken = vi.fn(() => Promise.resolve());
   const config = {
     issuer: 'https://api.plitzi.test',
     signInUrl: 'https://auth.plitzi.test/login',
@@ -62,7 +77,8 @@ const setup = () => {
     adapters: {
       identify: () => Promise.resolve({ id: '7', label: 'ada@plitzi.test' }),
       grantTargets,
-      issueToken: () => Promise.resolve({ token: 'session-token', expiresInSeconds: 3600 }),
+      issueToken,
+      revokeToken,
       store: {
         put: (key: string, value: string) => void rows.set(key, value),
         get: (key: string) => rows.get(key),
@@ -71,10 +87,13 @@ const setup = () => {
     }
   } as unknown as OAuthConfig;
 
-  return { config, grantTargets };
+  return { config, grantTargets, issueToken, revokeToken };
 };
 
-const request = { headers: { host: 'api.plitzi.test' } } as unknown as SSRRequest;
+const request = {
+  headers: { host: 'api.plitzi.test', 'user-agent': 'Mozilla/5.0 (Macintosh) Chrome/140' },
+  ip: '203.0.113.7'
+} as unknown as SSRRequest;
 
 const authorizeParams = (scope?: string): OAuthParams => ({
   response_type: 'code',
@@ -155,5 +174,72 @@ describe('the token response / what was chosen', () => {
 
     expect(grantTargets).toHaveBeenCalledWith(expect.anything(), { scope: undefined });
     expect(body).toMatchObject({ target: 'account' });
+  });
+});
+
+describe('who a credential is issued to', () => {
+  /** What lets the person tell their devices apart: the application as it registered, and where it was granted. */
+  it('names the application and the request it was granted on', async () => {
+    const { config, issueToken } = setup();
+
+    await grant(config, undefined, 'account');
+
+    expect(issueToken).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ value: 'account' }), {
+      client: { clientId: 'cli', name: 'Plitzi CLI on carlos-mbp', softwareId: 'plitzi-cli' },
+      request: { userAgent: 'Mozilla/5.0 (Macintosh) Chrome/140', ip: '203.0.113.7' }
+    });
+  });
+
+  /** A client renewing every hour must stay ONE device, not become a new one each time. */
+  it('says, on a renewal, which credential the new one takes the place of', async () => {
+    const { config, issueToken } = setup();
+    const first = await grant(config, undefined, 'account');
+
+    const renewed = capture();
+    await handleToken(config, renewed.res, {
+      grant_type: 'refresh_token',
+      refresh_token: String(first.refresh_token),
+      client_id: CLIENT.clientId
+    });
+
+    expect(issueToken).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ replaces: 'session-token' })
+    );
+
+    const again = capture();
+    await handleToken(config, again.res, {
+      grant_type: 'refresh_token',
+      refresh_token: String(answer(renewed.sent.body).refresh_token),
+      client_id: CLIENT.clientId
+    });
+
+    expect(issueToken).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ replaces: 'session-token-2' })
+    );
+  });
+
+  /** Revoking only the renewal would leave the credential working, and the device listed, until it expired. */
+  it('ends what the grant issued when the grant is revoked, by either of its tokens', async () => {
+    const { config, revokeToken } = setup();
+    const byRefresh = await grant(config, undefined, 'account');
+
+    await handleRevoke(config, capture().res, { token: String(byRefresh.refresh_token) });
+    expect(revokeToken).toHaveBeenLastCalledWith('session-token');
+
+    const byAccess = await grant(config, undefined, 'account');
+    await handleRevoke(config, capture().res, { token: String(byAccess.access_token) });
+    expect(revokeToken).toHaveBeenLastCalledWith(byAccess.access_token);
+  });
+
+  it('revokes nothing for a token it never issued', async () => {
+    const { config, revokeToken } = setup();
+
+    await handleRevoke(config, capture().res, { token: 'never-issued' });
+
+    expect(revokeToken).not.toHaveBeenCalled();
   });
 });

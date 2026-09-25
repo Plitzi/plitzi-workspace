@@ -10,6 +10,8 @@ export interface CredentialCarrier {
   query?: Record<string, unknown>;
   /** Populated by cookie-parser on Express; absent elsewhere, where the header is parsed. */
   cookies?: Record<string, string>;
+  /** The client's address as the host resolved it (Express's `req.ip`, honouring its `trust proxy`). */
+  ip?: string;
 }
 
 const parseCookieHeader = (cookieHeader: string): Record<string, string> => {

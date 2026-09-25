@@ -40,6 +40,11 @@ export type SSRRequest = {
   query: Record<string, string>;
   /** Raw request body. Populated only for endpoints that consume it (e.g. the login/logout handlers). */
   body?: string;
+  /**
+   * The client's address, when the host resolved one — through the proxies it sits behind. Forgeable by a direct
+   * client like every forwarded header, so it names things (a session in a device list) and never decides anything.
+   */
+  ip?: string;
   ctx: SSRContext;
 };
 
@@ -1123,12 +1128,45 @@ export type OAuthAdapters = {
    * that does not mean abandoning the connection and starting over from the host.
    */
   signOut?: (req: SSRRequest, res: SSRResponseHelpers) => void | Promise<void>;
-  /** Mint the bearer the client will send on every MCP request. Return undefined to deny the grant. */
+  /** Mint the bearer the client will send on every request. Return undefined to deny the grant. */
   issueToken: (
     user: OAuthUser,
-    target: OAuthGrantTarget
+    target: OAuthGrantTarget,
+    context: OAuthIssueContext
   ) => Promise<{ token: string; expiresInSeconds?: number } | undefined>;
+  /**
+   * End a credential {@link OAuthAdapters.issueToken} minted, when its grant is revoked (RFC 7009).
+   *
+   * Optional, for a credential that ends on its own. Without it, revoking a grant stops it being RENEWED, and what
+   * was already issued keeps working until it expires — which a person who just signed a device out reads as the
+   * sign-out not having happened, because the device is still there in their list.
+   */
+  revokeToken?: (credential: string) => Promise<void>;
   store: OAuthStore;
+};
+
+/**
+ * Who a credential is being issued to, beyond the person: which application, from where, and — on a renewal — which
+ * credential it takes the place of.
+ *
+ * This is what lets a deployment tell its user WHICH of their devices a credential lives on. The application names
+ * itself when it registers (RFC 7591 `client_name`, `software_id`); the request is the one the credential is being
+ * issued on — at consent, the person's browser, which for a loopback client is the same machine.
+ */
+export type OAuthIssueContext = {
+  client: {
+    clientId: string;
+    /** What the application registered as: `Plitzi CLI on carlos-mbp`, `Claude`. */
+    name: string;
+    /** RFC 7591 `software_id`, when it sent one: a stable name for the SOFTWARE, the same on every machine. */
+    softwareId?: string;
+  };
+  request?: { userAgent?: string; ip?: string };
+  /**
+   * The credential this grant last issued, on a renewal. A deployment that keeps a row per credential updates that
+   * row rather than adding one, so a device renewing every hour stays one device.
+   */
+  replaces?: string;
 };
 
 /** A connection a visitor may take WITHOUT signing in, for a server whose public surface needs no identity — the

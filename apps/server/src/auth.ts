@@ -24,6 +24,7 @@
 export { createAuth } from './core/auth/createAuth';
 export { createAuthApi } from './core/auth/api';
 export { createCsrf, csrfFailureMessage } from './core/auth/csrf';
+export { SESSION_ACTIVITY_RESOLUTION_SECONDS, activityDue } from './core/auth/sessionActivity';
 export { createAuthorizer, checkPermission, checkSpaceAccess, requirementFor } from './core/auth/authorize';
 export { createCarriers, presentedOrigin } from './core/auth/credentials';
 export {
@@ -81,6 +82,7 @@ export type {
   MfaRecord,
   PasswordPolicy,
   SecurityEvent,
+  SessionApp,
   SessionClient,
   SessionContext,
   SessionSummary,

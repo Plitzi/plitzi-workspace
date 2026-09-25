@@ -28,6 +28,8 @@ export interface FakePlatform {
   scopes: string[];
   /** Refresh tokens revoked. */
   revoked: string[];
+  /** What each client registered as. */
+  registrations: Record<string, unknown>[];
   uploads: FakeUpload[];
   cdns: { identifier: string; name: string; domain: string; provider: string }[];
   /** Access tokens the platform accepts; emptied to have it answer 401. */
@@ -93,6 +95,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
           revocation_endpoint: `${platform.api}/revoke`
         });
       } else if (url.pathname === '/register') {
+        platform.registrations.push(JSON.parse(body.toString()) as Record<string, unknown>);
         json(res, 201, { client_id: `client-${issued + 1}` });
       } else if (url.pathname === '/token' && form.get('grant_type') === 'authorization_code') {
         const code = pending.get(form.get('code') ?? '');
@@ -154,6 +157,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     choose: 'space:3',
     scopes: [],
     revoked: [],
+    registrations: [],
     uploads: [],
     cdns: [{ identifier: 'cdn-main', name: 'Main', domain: 'https://cdn.example.com', provider: 'aws' }],
     valid: new Set(),

@@ -207,6 +207,33 @@ describe('closing an account', () => {
     expect(deleteAccount).toHaveBeenCalledWith(1);
   });
 
+  /** What the account owns would be orphaned — a workspace nobody else owns, a plan still billed — so it is refused. */
+  it('refuses while the account still owns something, and says what', async () => {
+    const deleteAccount = vi.fn(() => Promise.resolve());
+    const deletionBlockers = vi.fn(() => Promise.resolve(['“Studio” has 3 spaces.']));
+    const api = build({ findById: () => Promise.resolve(ada), deleteAccount, deletionBlockers });
+
+    expect(await api.deleteSelf(actorFor(ada), 'pw')).toMatchObject({
+      ok: false,
+      status: 409,
+      body: { blockers: ['“Studio” has 3 spaces.'] }
+    });
+    expect(deleteAccount).not.toHaveBeenCalled();
+  });
+
+  /** Asked only once the password is right: a borrowed session learns nothing about what the account owns. */
+  it('says nothing about what it owns to a wrong password', async () => {
+    const deletionBlockers = vi.fn(() => Promise.resolve(['“Studio” has 3 spaces.']));
+    const api = build({
+      findById: () => Promise.resolve(ada),
+      deleteAccount: () => Promise.resolve(),
+      deletionBlockers
+    });
+
+    expect(await api.deleteSelf(actorFor(ada), 'wrong')).toMatchObject({ ok: false, status: 401 });
+    expect(deletionBlockers).not.toHaveBeenCalled();
+  });
+
   /** An account created through an identity provider has no password to be asked for; the session is the proof. */
   it('accepts the session alone for an account with no password', async () => {
     const passwordless = { ...ada, passwordHash: undefined };

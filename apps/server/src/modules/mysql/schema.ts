@@ -265,6 +265,20 @@ const step3 = (t: Tables): string[] => {
   ];
 };
 
+/**
+ * What tells one device from another in the account's session list: the application holding it, when it is not a
+ * browser (`Plitzi CLI on carlos-mbp`, software `plitzi-cli`), and when it was last used — see `sessionActivity`.
+ */
+const step4 = (t: Tables): string[] => {
+  const session = unquote(t.session);
+
+  return [
+    ...addColumn(session, 'app_name', 'VARCHAR(120) NULL AFTER ip'),
+    ...addColumn(session, 'app_id', 'VARCHAR(64) NULL AFTER app_name'),
+    ...addColumn(session, 'last_active_at', 'BIGINT NULL AFTER created_at')
+  ];
+};
+
 interface Step {
   version: number;
   statements: (tables: Tables) => string[];
@@ -274,7 +288,8 @@ interface Step {
 const STEPS: Step[] = [
   { version: 1, statements: step1 },
   { version: 2, statements: step2 },
-  { version: 3, statements: step3 }
+  { version: 3, statements: step3 },
+  { version: 4, statements: step4 }
 ];
 
 export const SCHEMA_VERSION = STEPS[STEPS.length - 1].version;

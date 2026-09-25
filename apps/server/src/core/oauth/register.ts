@@ -38,6 +38,23 @@ const fingerprintOf = (clientName: string, redirectUris: string[]): string =>
     .update(JSON.stringify([clientName, [...redirectUris].sort()]))
     .digest('base64url');
 
+/**
+ * What a client calls itself is shown to the person it acts for — on the grant screen and in their list of devices — so
+ * it is bounded: a name is a line of text, not a document a client can fill the screen with.
+ */
+const CLIENT_NAME_MAX = 120;
+const SOFTWARE_ID_MAX = 64;
+
+const textField = (value: unknown, max: number): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim().slice(0, max);
+
+  return trimmed || undefined;
+};
+
 /** RFC 7591 dynamic client registration. A remote host has no way to be configured into this server ahead of
  *  time, so it registers itself on first connect; the record it gets back is only ever used to pin the redirect
  *  target, since a public client authenticates with PKCE rather than with credentials. */
@@ -56,11 +73,18 @@ export const handleRegister = async (config: OAuthConfig, res: SSRResponseHelper
     return;
   }
 
-  const clientName = typeof metadata['client_name'] === 'string' ? metadata['client_name'] : 'MCP client';
+  const clientName = textField(metadata['client_name'], CLIENT_NAME_MAX) ?? 'MCP client';
+  const softwareId = textField(metadata['software_id'], SOFTWARE_ID_MAX);
   const { store } = config.adapters;
   const fingerprint = fingerprintOf(clientName, redirectUris);
   const existing = await getClientByFingerprint(store, fingerprint);
-  const client = existing ?? { clientId: randomId(), clientName, redirectUris, issuedAt: nowSeconds() };
+  const client = existing ?? {
+    clientId: randomId(),
+    clientName,
+    ...(softwareId ? { softwareId } : {}),
+    redirectUris,
+    issuedAt: nowSeconds()
+  };
 
   // Written on every call, existing or not, so an active client's record and its fingerprint keep their TTL rolling
   // rather than expiring under a host that has been connected all along.
@@ -71,6 +95,7 @@ export const handleRegister = async (config: OAuthConfig, res: SSRResponseHelper
     client_id: client.clientId,
     client_id_issued_at: client.issuedAt,
     client_name: clientName,
+    ...(client.softwareId ? { software_id: client.softwareId } : {}),
     redirect_uris: redirectUris,
     grant_types: config.refreshTtlSeconds === 0 ? ['authorization_code'] : ['authorization_code', 'refresh_token'],
     response_types: ['code'],

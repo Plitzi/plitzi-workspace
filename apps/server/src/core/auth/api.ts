@@ -17,6 +17,7 @@ import {
   verifyTotp
 } from './totp';
 import { serverLog } from '../../helpers/serverLog';
+import { forwardedIp } from '../requestParser';
 
 import type { CredentialCarrier } from './credentials';
 import type { Csrf } from './csrf';
@@ -59,6 +60,17 @@ export interface AccountAccess {
 export interface SessionClient {
   userAgent?: string;
   ip?: string;
+  /**
+   * The application holding it, when it is not a browser: a native client names itself when it registers
+   * (`Plitzi CLI on carlos-mbp`, software `plitzi-cli`). A user agent says which browser; this says which app.
+   */
+  app?: SessionApp;
+}
+
+export interface SessionApp {
+  name: string;
+  /** A stable name for the software, the same on every machine — what a list picks an icon by. */
+  softwareId?: string;
 }
 
 /**
@@ -72,7 +84,10 @@ export interface SessionSummary {
   id: number;
   userAgent?: string;
   ip?: string;
+  app?: SessionApp;
   createdAt: number;
+  /** When it was last used, where the store keeps it; a session never seen since it was made has none. */
+  lastActiveAt?: number;
   expiresAt: number;
   /** The session asking. A device list without it invites someone to revoke the one they are using. */
   current: boolean;
@@ -139,11 +154,24 @@ export interface SessionContext {
   client?: SessionClient;
 }
 
-/** The user agent, off whatever carried the request. Nothing else here reads headers, so it is done once. */
+/**
+ * The user agent and the address, off whatever carried the request — what lets somebody tell their devices apart.
+ * Nothing else here reads headers, so it is done once. The address is the host's when it resolved one, the proxies'
+ * otherwise; it names a session in a list and decides nothing.
+ */
 const clientOf = (carrier?: CredentialCarrier): SessionClient | undefined => {
-  const userAgent = carrier?.headers['user-agent'];
+  if (!carrier) {
+    return undefined;
+  }
 
-  return typeof userAgent === 'string' && userAgent ? { userAgent } : undefined;
+  const userAgent = carrier.headers['user-agent'];
+  const ip = carrier.ip || forwardedIp(carrier.headers);
+  const client: SessionClient = {
+    ...(typeof userAgent === 'string' && userAgent ? { userAgent } : {}),
+    ...(ip ? { ip } : {})
+  };
+
+  return client.userAgent || client.ip ? client : undefined;
 };
 
 /**
@@ -184,6 +212,15 @@ export interface AccountAdapters {
    * session, which deleting the account's sessions does.
    */
   deleteAccount?: (userId: number) => Promise<void>;
+  /**
+   * What would be lost if this account were deleted now, in sentences its owner can act on — "“Studio” has 3 spaces;
+   * delete them or make somebody else an owner". Any at all and the deletion is refused, with the list.
+   *
+   * The account is what holds things a deployment cannot simply drop: a workspace nobody else owns, the spaces in it,
+   * a plan still being paid for. Deleting it anyway leaves them orphaned — unreachable by anyone, and possibly still
+   * billed. Optional, for a deployment whose accounts own nothing.
+   */
+  deletionBlockers?: (userId: number) => Promise<string[]>;
   /** Page through accounts, for an administrator. `total` is the count before the page was taken. */
   listAccounts?: (query: AccountQuery) => Promise<{ accounts: AccountRecord[]; total: number }>;
   /** Replace an account's global roles with exactly these. */
@@ -1556,6 +1593,16 @@ export const createAuthApi = ({
         if (!password || !(await verifyPassword(password, account.passwordHash))) {
           return refuse(401, 'Invalid credentials');
         }
+      }
+
+      // After the password, so a borrowed session learns nothing about what the account owns without it.
+      const blockers = (await adapters.deletionBlockers?.(actor.id)) ?? [];
+      if (blockers.length > 0) {
+        return {
+          ok: false,
+          status: 409,
+          body: { error: 'This account still owns things that would be lost with it', blockers }
+        };
       }
 
       await adapters.deleteAccount(actor.id);

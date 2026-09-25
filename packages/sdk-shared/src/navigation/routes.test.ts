@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPageFullPath, getPaths, getSlugParams, matchRoutePath } from './routes';
+import { getPageFullPath, getPaths, getSlugParams, matchRoutePath, navigationTarget } from './routes';
 
 import type { Element, PageFolder } from '../types';
 
@@ -84,5 +84,28 @@ describe('routes', () => {
     expect(getSlugParams('blog/{{year}}/{{slug}}')).toEqual(['year', 'slug']);
     expect(getSlugParams(':spaceId/update/*')).toEqual(['spaceId']);
     expect(getSlugParams('about')).toEqual([]);
+  });
+});
+
+/**
+ * A flow's `navigate` to a page, which has to land where a link to the same page does.
+ *
+ * It resolved the page's own slug and nothing else, so a page in a folder lost the folder — `/audience` rather than
+ * `/analytics/audience` — and a folder's index page, whose slug is empty, went to the home page.
+ */
+describe('navigationTarget', () => {
+  it('goes to a page in a folder at its full path, as a link to it does', () => {
+    expect(navigationTarget(pages, folders, 'audience')).toBe('/analytics/audience');
+    expect(navigationTarget(pages, folders, 'audience')).toBe(getPageFullPath(pages, folders, 'audience', true));
+  });
+
+  it('goes to a folder\u2019s index page at the folder, not at the home page', () => {
+    expect(navigationTarget(pages, folders, 'overview')).toBe('/analytics');
+    expect(navigationTarget(pages, folders, 'reportsIndex')).toBe('/analytics/reports');
+  });
+
+  it('goes home for the home page, and takes anything that is not a page as the path it is', () => {
+    expect(navigationTarget(pages, folders, 'home')).toBe('/');
+    expect(navigationTarget(pages, folders, '/somewhere/else')).toBe('/somewhere/else');
   });
 });

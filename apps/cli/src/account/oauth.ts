@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
+import os from 'node:os';
 
 import { postForm, requestJson } from './http';
 
@@ -19,6 +20,16 @@ import type { AddressInfo } from 'node:net';
  */
 
 const base64url = (buffer: Buffer): string => buffer.toString('base64url');
+
+/**
+ * What the account's device list calls this sign-in: the CLI, and the machine it runs on — two laptops signed in are
+ * two rows somebody has to tell apart. macOS names a machine `Carlos-MacBook-Pro.local`; the suffix says nothing.
+ */
+export const clientName = (): string => {
+  const host = os.hostname().replace(/\.local$/iu, '');
+
+  return host ? `Plitzi CLI on ${host}` : 'Plitzi CLI';
+};
 
 /** How long the terminal waits for somebody to finish in the browser before giving the port back. */
 const FLOW_TIMEOUT_MS = 5 * 60 * 1000;
@@ -191,7 +202,7 @@ export const signInThroughBrowser = async (apiUrl: string, { scope, open }: Sign
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ client_name: 'Plitzi CLI', redirect_uris: [redirectUri] })
+        body: JSON.stringify({ client_name: clientName(), software_id: 'plitzi-cli', redirect_uris: [redirectUri] })
       }
     );
     if (!registered.ok) {

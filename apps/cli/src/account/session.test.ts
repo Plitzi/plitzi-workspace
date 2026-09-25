@@ -44,6 +44,11 @@ describe('signing in', () => {
     const connection = await signedIn();
 
     expect(platform.scopes).toEqual(['']);
+    // What the account's device list will call it: the CLI, on this machine.
+    expect(platform.registrations[0]).toMatchObject({
+      client_name: expect.stringMatching(/^Plitzi CLI( on .+)?$/u) as string,
+      software_id: 'plitzi-cli'
+    });
     expect(connection).toMatchObject({ api: platform.api, grant: { target: 'account' } });
     expect(connection.space).toBeUndefined();
     expect(await readConnection()).toEqual(connection);

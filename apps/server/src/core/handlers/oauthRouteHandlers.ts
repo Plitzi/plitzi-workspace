@@ -79,7 +79,8 @@ const asRequest = (req: AuthedRequest): SSRRequest => {
     headers: req.headers,
     hostname: req.hostname,
     protocol: protocol === 'http' ? 'http' : 'https',
-    query: (req.query ?? {}) as Record<string, string>
+    query: (req.query ?? {}) as Record<string, string>,
+    ...(req.ip ? { ip: req.ip } : {})
   } as SSRRequest;
 };
 

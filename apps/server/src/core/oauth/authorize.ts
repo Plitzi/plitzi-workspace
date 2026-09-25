@@ -1,4 +1,5 @@
 import { renderConsentPage } from './consentPage';
+import { issueContextFor } from './issueContext';
 import { AUTHORIZE_PATH } from './metadata';
 import { field, optionalField } from './params';
 import { randomId } from './pkce';
@@ -201,11 +202,16 @@ const resolveRequest = async (
 const completeGrant = async (
   config: OAuthConfig,
   res: SSRResponseHelpers,
+  req: SSRRequest,
   request: AuthorizationRequest,
   user: OAuthUser,
   target: OAuthGrantTarget
 ): Promise<void> => {
-  const issued = await config.adapters.issueToken(user, target);
+  const issued = await config.adapters.issueToken(
+    user,
+    target,
+    await issueContextFor(config, request.clientId, { req })
+  );
   if (!issued) {
     redirectWithError(
       res,
@@ -374,7 +380,7 @@ export const handleAuthorizeSubmit = async (
   // the connection can only ever do what that target allows.
   const { guest } = config;
   if (guest && optionalField(params, 'guest')) {
-    await completeGrant(config, res, request, guest.user ?? DEFAULT_GUEST_USER, guest.target);
+    await completeGrant(config, res, req, request, guest.user ?? DEFAULT_GUEST_USER, guest.target);
 
     return;
   }
@@ -418,5 +424,5 @@ export const handleAuthorizeSubmit = async (
   }
 
   await dropPending(config.adapters.store, pendingId);
-  await completeGrant(config, res, request, pending.user, chosen);
+  await completeGrant(config, res, req, request, pending.user, chosen);
 };
