@@ -8,10 +8,14 @@ const config: AnalyticsConfig = { endpoint: 'https://api.test/v1/collect', key: 
 
 const sendBeacon = vi.fn<(url: string, body?: BodyInit | null) => boolean>(() => true);
 
-// What was posted, parsed back out of the Blob the beacon carried.
-const sentEvents = async (call = 0): Promise<{ type: string; name?: string; page: { path: string } }[]> => {
-  const blob = sendBeacon.mock.calls[call][1] as unknown as Blob;
-  const parsed = JSON.parse(await blob.text()) as { events: { type: string; name?: string; page: { path: string } }[] };
+// What was posted, parsed back out of the text the beacon carried.
+const sentEvents = (call = 0): { id: string; type: string; name?: string; page: { path: string } }[] => {
+  const body = sendBeacon.mock.calls[call][1];
+  if (typeof body !== 'string') {
+    throw new Error('the beacon carried something other than text');
+  }
+
+  const parsed = JSON.parse(body) as { events: { id: string; type: string; name?: string; page: { path: string } }[] };
 
   return parsed.events;
 };
@@ -31,7 +35,16 @@ describe('Analytics/createReporter', () => {
     reporter.stop();
   });
 
-  it('batches until the size threshold, then flushes once', async () => {
+  /** A JSON Blob is preflighted, and a beacon goes with credentials only the platform's own origins are answered with. */
+  it('sends the events as text, which a customer domain can post without a preflight', () => {
+    const reporter = createReporter(config, 1);
+    reporter.trackRender();
+
+    expect(typeof sendBeacon.mock.calls[0][1]).toBe('string');
+    reporter.stop();
+  });
+
+  it('batches until the size threshold, then flushes once', () => {
     const reporter = createReporter(config, 3);
 
     reporter.track('a');
@@ -40,27 +53,25 @@ describe('Analytics/createReporter', () => {
 
     reporter.track('c');
     expect(sendBeacon).toHaveBeenCalledOnce();
-    expect(await sentEvents()).toHaveLength(3);
+    expect(sentEvents()).toHaveLength(3);
 
     reporter.stop();
   });
 
-  it('captures the path the event happened on', async () => {
+  it('captures the path the event happened on', () => {
     const reporter = createReporter(config, 1);
     reporter.trackRender();
 
-    expect((await sentEvents())[0].page.path).toBe('/pricing');
+    expect(sentEvents()[0].page.path).toBe('/pricing');
     reporter.stop();
   });
 
-  it('gives every event a distinct id, so a retried batch can be de-duplicated server-side', async () => {
+  it('gives every event a distinct id, so a retried batch can be de-duplicated server-side', () => {
     const reporter = createReporter(config, 2);
     reporter.track('a');
     reporter.track('b');
 
-    const blob = sendBeacon.mock.calls[0][1] as unknown as Blob;
-    const parsed = JSON.parse(await blob.text()) as { events: { id: string }[] };
-    expect(new Set(parsed.events.map(event => event.id)).size).toBe(2);
+    expect(new Set(sentEvents().map(event => event.id)).size).toBe(2);
 
     reporter.stop();
   });
@@ -93,11 +104,11 @@ describe('Analytics/createReporter', () => {
     expect(sendBeacon).toHaveBeenCalledOnce();
   });
 
-  it('reports interactions with their name and props', async () => {
+  it('reports interactions with their name and props', () => {
     const reporter = createReporter(config, 1);
     reporter.track('signup', { plan: 'pro' });
 
-    const [event] = await sentEvents();
+    const [event] = sentEvents();
     expect(event.type).toBe('interaction');
     expect(event.name).toBe('signup');
 

@@ -514,6 +514,10 @@
   victim's cookie and are never asked. `sdk-server`: **`createOriginGuardMiddleware(csrf, { allowedFor, exempt,
   errorKey })`** and `csrf.crossSite(carrier, alsoAllowed?)`; `plitzi-sdk-server` runs it on both roles and refuses
   to start with CSRF switched off.
+- **Analytics beacons are sent as text** (`text/plain`), which the collector reads as JSON. A beacon always goes with
+  credentials, and a JSON one is preflighted: from a customer's domain it would have been refused with the rule above.
+  As text it needs no preflight. **Fixed:** the `fetch` fallback (a batch over the beacon's size) arrived empty — in
+  `no-cors` the browser sends text whatever the header says, and the collector did not read it.
 - **Fixed: the CSRF middleware answered 500 on Node 24.** It built its carrier by spreading the request, and `headers`
   there is a getter on the prototype that a spread does not copy. The carrier is built field by field (`carrierOf`).
 
