@@ -144,12 +144,16 @@ beforeAll(async () => {
   remote.listen(REMOTE_PORT, '127.0.0.1');
   off.listen(OFF_PORT, '127.0.0.1');
 
-  await vi.waitFor(async () => {
-    expect((await fetch(`${BASE}/auth/capabilities`)).status).toBe(200);
-    expect((await fetch(`${origin(REMOTE_PORT)}/health`)).status).toBeLessThan(500);
-    expect((await fetch(`${origin(OFF_PORT)}/auth/capabilities`)).status).toBe(200);
-  });
-});
+  // Three servers booting while the rest of the workspace tests beside them: the default second is not enough.
+  await vi.waitFor(
+    async () => {
+      expect((await fetch(`${BASE}/auth/capabilities`)).status).toBe(200);
+      expect((await fetch(`${origin(REMOTE_PORT)}/health`)).status).toBeLessThan(500);
+      expect((await fetch(`${origin(OFF_PORT)}/auth/capabilities`)).status).toBe(200);
+    },
+    { timeout: 15_000, interval: 100 }
+  );
+}, 20_000);
 
 afterAll(async () => {
   await server.close();
