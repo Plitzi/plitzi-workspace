@@ -117,6 +117,21 @@ export const resetForm = (target: string): StepSpec => ({
 });
 
 /**
+ * Writes one value into a form's control, by the control's `name` — what fills a form with what is already known
+ * (the account's username on a profile page) without a binding on the control, which would be rewritten each time its
+ * source changed, under the person typing.
+ *
+ * A form callback, so `target` is the FORM's id. `value` is a template: `'{{ auth.details.username }}'`.
+ */
+export const setFieldValue = (target: string, name: string, value: string): StepSpec => ({
+  type: 'callback',
+  action: 'setFieldValue',
+  title: 'Set Field Value',
+  on: target,
+  params: { name, value }
+});
+
+/**
  * Asks an `apiContainer` to fetch again, by id.
  *
  * The step every flow that CHANGES what a list is showing needs: a container reads its query once, so a row deleted

@@ -111,7 +111,8 @@ describe('the SSR document / bootstrap', () => {
       bootstrap('{}', [
         { name: 'chart', keyName: 'chart', varName: 'chart', js: '/sdk-plugins/chart/index.js', props: {} }
       ])
-    ).toContain('import { default as chart } from \'/sdk-plugins/chart/index.js\'');
+      // eslint-disable-next-line quotes -- the expected source quotes its own path, which reads best in the other quotes
+    ).toContain("import { default as chart } from '/sdk-plugins/chart/index.js'");
   });
 
   it('ships no bootstrap for a page that renders on the server only', () => {

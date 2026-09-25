@@ -166,6 +166,13 @@ export type Schema = {
      */
     sessionExchangeUrl?: string;
     /**
+     * Where a sign-in that owed a second factor is completed: a password the backend answered with `mfaRequired` and
+     * an `mfaToken` resolves `auth.login` to `{ ok: false, reason: 'mfa', mfaToken }`, and `auth.login` with `mode:
+     * 'mfa'` posts `{ mfaToken, code }` here and adopts the session it answers with. Leave empty when the backend has
+     * no second factor.
+     */
+    mfaUrl?: string;
+    /**
      * What to do on a page that requires a session while the stored one is being re-checked. `optimistic` (the
      * default) renders from the stored session and signs out if the check disagrees; `strict` waits for the answer,
      * trading a round trip for never showing a signed-in page to someone whose session has just ended.

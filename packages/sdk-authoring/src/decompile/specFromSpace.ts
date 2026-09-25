@@ -188,6 +188,7 @@ export const SCHEMA_SETTINGS = [
   'refreshExpirationTimePath',
   'sessionHintCookie',
   'sessionExchangeUrl',
+  'mfaUrl',
   'sessionGate',
   'sessionRevalidateSeconds',
   'debugMode',

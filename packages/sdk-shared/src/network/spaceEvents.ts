@@ -114,6 +114,13 @@ const removeSelectorVariablePayload = z.object({
 });
 const stylePayload = z.object({ category: variableCategory, name: z.string(), value: styleVariableValue });
 
+/** A plugin as a space lists it: the type it registers, where its code is, and how the space configured it. */
+const plugin = z.object({
+  type: z.string(),
+  resource: z.string(),
+  settings: z.custom<Record<string, unknown>>(isRecord, { message: 'expected a plugin settings object' })
+});
+
 export const spaceEventSchemas = {
   SPACE_UPDATED: z.object({ schema: schemaRaw }),
   // Not a whole Style: a style edit publishes the parts a live builder has to re-apply, plus the compiled cache,
@@ -158,6 +165,14 @@ export const spaceEventSchemas = {
     initialItems: elements.optional(),
     variables: z.array(schemaVariable).optional()
   }),
+  /**
+   * A plugin installed — or installed again at a new address, which is how a new version arrives: from the builder,
+   * or from `plitzi upload plugin` with no builder open. An open builder loads it without a reload.
+   */
+  SPACE_ADD_PLUGIN: z.object({ plugin }),
+  /** Its address or its settings changed. */
+  SPACE_UPDATE_PLUGIN: z.object({ plugin }),
+  SPACE_REMOVE_PLUGIN: z.object({ pluginType: z.string() }),
   SPACE_UPDATE_SETTINGS: z.object({ path: z.string(), value: z.union([z.string(), z.number(), z.boolean()]) }),
 
   STYLE_ADD_SELECTOR: z.object({

@@ -28,6 +28,18 @@ const installed = { weather: plugin('weather', 'Weather card'), clock: plugin('c
 const renderBuilder = () => {
   // The network only has to say the removal went through; the stubbed value is the one method the provider calls.
   const mutate = vi.fn(() => Promise.resolve({ success: true, result: { plugins: [] } }));
+  // The space's one channel, as a builder holds it: handlers by event, and a way to deliver one as another builder.
+  const handlers = new Map<string, (payload: unknown) => void>();
+  const subscriptionManager = {
+    subscribe: (event: string, callback: (payload: unknown) => void) => {
+      handlers.set(event, callback);
+
+      return () => handlers.delete(event);
+    },
+    unsubscribe: vi.fn(),
+    stop: vi.fn()
+  };
+  const deliver = (event: string, payload: unknown) => handlers.get(event)?.(payload);
   const contexts: { plugins?: PluginsContextValue; components?: ComponentContextValue } = {};
   const Probe = () => {
     contexts.plugins = use(PluginsContext);
@@ -37,7 +49,7 @@ const renderBuilder = () => {
   };
 
   const tree = () => (
-    <NetworkContext value={{ mutate } as unknown as NetworkContextValue}>
+    <NetworkContext value={{ mutate, subscriptionManager } as unknown as NetworkContextValue}>
       <ComponentProvider>
         <PluginsContextProvider plugins={installed}>
           <Probe />
@@ -52,7 +64,7 @@ const renderBuilder = () => {
   contexts.components?.registerDefinition(installed);
   view.rerender(tree());
 
-  return { ...view, contexts, mutate };
+  return { ...view, contexts, mutate, deliver };
 };
 
 describe('PluginsContextProvider — removing a plugin', () => {
@@ -75,5 +87,35 @@ describe('PluginsContextProvider — removing a plugin', () => {
     expect(contexts.plugins?.assets).not.toHaveProperty(btoa('weather.css'));
     // Every plugin stylesheet used to go with the first plugin removed.
     expect(contexts.plugins?.assets).toHaveProperty(btoa('clock.css'));
+  });
+});
+
+/**
+ * A change another builder made — a collaborator, or `plitzi upload plugin` with no builder open — arriving on the
+ * space's channel, applied here without a reload and without a mutation of this builder's own.
+ */
+describe('PluginsContextProvider — changes from elsewhere', () => {
+  it('takes a plugin somebody else removed out of the catalog', async () => {
+    const { contexts, queryByTitle, getByTitle, mutate, deliver } = renderBuilder();
+
+    await act(async () => {
+      deliver('SPACE_REMOVE_PLUGIN', { pluginType: 'weather' });
+      await Promise.resolve();
+    });
+
+    expect(mutate).not.toHaveBeenCalled();
+    expect(contexts.plugins?.plugins).not.toHaveProperty('weather');
+    expect(queryByTitle('Weather card')).toBeNull();
+    expect(getByTitle('World clock')).toBeTruthy();
+  });
+
+  it('stops listening when it unmounts', () => {
+    const { unmount, deliver, contexts } = renderBuilder();
+    const before = contexts.plugins?.plugins;
+
+    unmount();
+    deliver('SPACE_REMOVE_PLUGIN', { pluginType: 'weather' });
+
+    expect(contexts.plugins?.plugins).toBe(before);
   });
 });

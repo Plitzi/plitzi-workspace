@@ -61,7 +61,7 @@ describe('draftBatch — old issues fixed, new ones refused', () => {
     );
   });
 
-  it('refuses the batch\'s own mistake, of the same kind as the one it fixed', () => {
+  it('refuses the batch’s own mistake, of the same kind as the one it fixed', () => {
     const checked = validate(
       { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: 'Still not read' } }] },
       withOldTypo()

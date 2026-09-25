@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { closeModal, onLoad, onPageLoad, openModal } from './steps';
+import { closeModal, onLoad, onPageLoad, openModal, setFieldValue } from './steps';
 
 describe('element trigger builders', () => {
   it('keeps the generic load event and exposes the page-specific one without raw action strings', () => {
@@ -22,5 +22,17 @@ describe('element trigger builders', () => {
       params: { metadata: 'Thanks' }
     });
     expect(closeModal('credits')).toMatchObject({ type: 'callback', action: 'closeModal', on: 'credits', params: {} });
+  });
+});
+
+describe('setFieldValue', () => {
+  it('writes one control of a form, on the form, by the control’s name', () => {
+    expect(setFieldValue('profile-form', 'username', '{{ auth.details.username }}')).toEqual({
+      type: 'callback',
+      action: 'setFieldValue',
+      title: 'Set Field Value',
+      on: 'profile-form',
+      params: { name: 'username', value: '{{ auth.details.username }}' }
+    });
   });
 });

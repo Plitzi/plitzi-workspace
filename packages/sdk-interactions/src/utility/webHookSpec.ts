@@ -40,6 +40,15 @@ export const webHookSpec: BuiltinActionSpec = {
       builderType: 'textarea'
     },
     authorizationToken: { type: 'text', description: 'Value sent as the Authorization header.', default: '' },
+    headers: {
+      type: 'json',
+      description:
+        'Headers of the request, as an object of name to value, with templates for the values like the body: ' +
+        '`{ "x-api-key": "{{ apiKey }}" }`. Authorization is set by `authorizationToken` and the content type ' +
+        'follows the body, so neither is set here.',
+      default: '',
+      builderType: 'textarea'
+    },
     credentials: {
       type: 'select',
       description: 'fetch credentials mode.',

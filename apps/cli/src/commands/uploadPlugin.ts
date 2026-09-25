@@ -277,7 +277,7 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
     console.log(chalk.dim(`  ${data.resource.path}`));
   }
 
-  console.log(chalk.dim('  A builder already open shows it once reloaded.\n'));
+  console.log(chalk.dim('  Any builder open on the space loads it now.\n'));
 };
 
 export default uploadPluginCommand;

@@ -36,6 +36,13 @@ export type AuthFailureReason =
  *  a backend may answer a refresh with tokens alone, or an identity call with a user alone. */
 export type AuthGrant<U = Record<string, unknown>> = { user?: U; token?: TokenResult };
 
+/**
+ * A right password that bought a CHALLENGE and not a session: the account has a second factor, and `mfaToken` is what
+ * the code is completed against (`auth.login` with `mode: 'mfa'`). Not a failure of the session — nothing was lost —
+ * which is why it is not one of the {@link AuthFailureReason}s.
+ */
+export type MfaChallenge = { ok: false; reason: 'mfa'; mfaToken: string };
+
 export type AuthResult<U = Record<string, unknown>> =
   ({ ok: true } & AuthGrant<U>) | { ok: false; reason: AuthFailureReason };
 
@@ -49,7 +56,7 @@ export type AuthResult<U = Record<string, unknown>> =
  * The success half spreads a {@link TokenResult}, so `accessToken` is read off the outcome itself and a flow written
  * against the old shape still finds it where it always was.
  */
-export type LoginResult = ({ ok: true } & TokenResult) | { ok: false; reason: AuthFailureReason };
+export type LoginResult = ({ ok: true } & TokenResult) | { ok: false; reason: AuthFailureReason } | MfaChallenge;
 
 export type AuthContextValue = {
   /** The credentials your login endpoint expects. Values arrive from interaction parameters, hence `unknown`. */

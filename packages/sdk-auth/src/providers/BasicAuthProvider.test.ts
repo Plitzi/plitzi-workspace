@@ -558,3 +558,49 @@ describe('a space that declared no endpoint', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * An account with a second factor: the password buys a challenge, and the code completes it. Read as a session with
+ * nobody in it, the challenge ended as `inactive` — "this account cannot be used" — for an account that was fine.
+ */
+describe('BasicAuthProvider second factor', () => {
+  const withMfa = { ...plitziApi, mfaUrl: 'https://api.example.com/auth/mfa/complete' };
+
+  it('answers the challenge a right password bought, and announces no lost session', async () => {
+    const provider = new BasicAuthProvider(withMfa);
+    const events: string[] = [];
+    provider.on(event => events.push(event.type));
+    mockFetch.mockResolvedValueOnce(jsonResponse({ success: false, mfaRequired: true, mfaToken: 'challenge-1' }));
+
+    const outcome = await provider.login({ username: 'ada', password: 'pw' });
+
+    expect(outcome).toEqual({ ok: false, reason: 'mfa', mfaToken: 'challenge-1' });
+    expect(provider.getState()).toBe('guest');
+    expect(events).not.toContain('expired');
+  });
+
+  it('completes it with the code, and keeps the whole grant it answers with', async () => {
+    const provider = new BasicAuthProvider(withMfa);
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    const outcome = await provider.login({ mode: 'mfa', mfaToken: 'challenge-1', code: ' 123456 ' });
+
+    expect(outcome).toMatchObject({ ok: true, accessToken: 'token', refreshToken: 'refresh' });
+    expect(provider.getState()).toBe('authenticated');
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe(withMfa.mfaUrl);
+    expect(JSON.parse(init?.body as string)).toEqual({ mfaToken: 'challenge-1', code: '123456' });
+  });
+
+  it('refuses to complete without somewhere to send it, or a challenge to send', async () => {
+    expect(await new BasicAuthProvider(plitziApi).login({ mode: 'mfa', mfaToken: 'challenge-1', code: '1' })).toEqual({
+      ok: false,
+      reason: 'missing'
+    });
+    expect(await new BasicAuthProvider(withMfa).login({ mode: 'mfa', mfaToken: '', code: '1' })).toEqual({
+      ok: false,
+      reason: 'missing'
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});

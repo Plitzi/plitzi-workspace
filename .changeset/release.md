@@ -414,6 +414,15 @@
   in the render nor a bundle for the browser is reported at `error`, once per space and type, naming the element and
   `plugins` + the deployment's `pluginNames`. It used to render "Custom Component … Not Found" and say nothing.
 - **A `webHook` that writes with an empty body sends `{}`**, not the JSON text `""` a JSON endpoint refuses with a 400.
+- **`webHook` takes `headers`** (by name; a template per value): an API key, an `Accept`, an idempotency key.
+  `Authorization` stays `authorizationToken`'s and the content type follows the body, so neither can be named twice.
+  Headers are part of what a cached read is keyed by.
+- **Fixed: a `webHook` sending a file could not be read by any server.** It set `multipart/form-data` by hand, without
+  the boundary the parts are split by; `fetch` writes the type itself now.
+- `sdk-authoring`: **`setFieldValue(target, name, value)`**, the step that fills one field of a form — clearing a code
+  field after a failed attempt, prefilling one from a binding.
+- **Fixed: a step parameter like `"012345"` reached the step as the number `12345`.** A value is read as a number only
+  when it reads back as the same text; a code, a postcode or an id with leading zeros stays text.
 - `fixSpace(space, catalogs, codes, elements)`: `elements` narrows the fixes to some elements. It now clones only the
   elements it changes, and with nothing to fix answers the schema it was handed.
 - **MCP `plitzi_apply` / `plitzi_validate`:**
@@ -471,10 +480,42 @@
   page. It has both now (`/confirm-email` in the auth space).
 - **Fixed: account emails interpolated values unescaped** — a username with markup in it arrived as markup in a mail
   sent from Plitzi.
-- **Fixed: three first-sign-in error notices said nothing useful** — their templates named steps with a hyphen, which a
-  template reads as a minus. A guard test now refuses a hyphenated step or list inside a template anywhere in the auth
-  space.
 - The visual suite signs every test's session out when it ends; it had left over a thousand on one account a day.
+
+## Two-step sign-in
+
+- **An account can turn on a second step** (an authenticator app, TOTP) from Security in the account console: a QR
+  code drawn by the server, the key to type by hand, one code to confirm it works, and ten recovery codes shown once.
+  Turning it off asks for the password. `GET /account/mfa/setup` answers the QR of an enrolment in progress, never of
+  one already confirmed, and is never cached. The secret is encrypted at rest (`user_mfa`) and recovery codes are kept
+  as digests, each good once.
+- **Signing in then asks for the code** on its own page (`/two-factor` in the auth space), which takes a recovery code
+  as well. `sdk-auth`: a login answered with `mfaRequired` is a **`MfaChallenge`** (`{ ok: false, reason: 'mfa',
+  mfaToken }`), not a session — the provider read it as one and ended signed out. The space names where the code is
+  sent with **`mfaUrl`**; the `auth.login` step's mode **`'mfa'`** sends `{ mfaToken, code }` there.
+- `sdk-server`: a numeric field in an `/auth` body is read as its text (a code typed into a number field was dropped
+  as missing).
+- **Fixed: signing out of the auth space could loop between two pages** (over a thousand navigations in six seconds):
+  for a moment the session published to the page was still the one the provider had just ended. Once the provider says
+  nobody is signed in, the page is told nobody is (`publishedSession`).
+- Builder: the space's provider settings take **`mfaUrl`** and **`sessionExchangeUrl`**; both could only be set from
+  code.
+
+## Requests from other sites
+
+- **Fixed: any website could act as a signed-in person against the api and server roles.** CORS answered every origin
+  with `Access-Control-Allow-Credentials`, and the session cookie is `SameSite=None`: a page the person visited could
+  read their account and write to it. Credentialed CORS is now for `PLATFORM_ORIGINS` only; every other origin is
+  still answered, without the person's cookies. A published site calling its own space is unaffected — it presents
+  its space credential, and a customer domain's sign-in exchange is served by its own page server, same-origin.
+- **A write carried by a session cookie from another site is refused** (403, `reason: 'foreign'`), judged by Fetch
+  Metadata and the exact `Origin`: CORS keeps another site from reading, but a plain form POST needs no preflight.
+  Platform origins pass, and so do the origins the request's space credential declares. Bearer requests carry no
+  victim's cookie and are never asked. `sdk-server`: **`createOriginGuardMiddleware(csrf, { allowedFor, exempt,
+  errorKey })`** and `csrf.crossSite(carrier, alsoAllowed?)`; `plitzi-sdk-server` runs it on both roles and refuses
+  to start with CSRF switched off.
+- **Fixed: the CSRF middleware answered 500 on Node 24.** It built its carrier by spreading the request, and `headers`
+  there is a getter on the prototype that a spread does not copy. The carrier is built field by field (`carrierOf`).
 
 ## Plugins from the CLI
 
@@ -512,7 +553,7 @@
   **one space at a time**, chosen on the grant screen (`plitzi space`, the `space` scope) — choosing again replaces the
   connection and revokes the one before, and no command takes a space of its own. `upload plugin` puts the zip
   `pack plugin` left on one of that space's CDNs and installs it, signing in or choosing the space in the browser
-  first when either is missing.
+  first when either is missing. Every builder open on the space loads the new version on the spot.
 - `sdk-server`: `grantTargets(user, { scope })` — the grant screen offers what the scope a client asked with chooses
   among — and the token response carries the chosen `target` (RFC 6749 §5.1), on renewal too, so a native client knows
   what it was granted.
@@ -521,6 +562,14 @@
   `GET /spaces/:id/cdns` lists a space's CDNs (never their credentials) and `POST /spaces/:id/cdns/:identifier/plugins`
   takes a plugin's zip, uploads it the way the builder does (one `uploadResource` now serves both) and installs it on
   `main`, keeping the settings of a plugin already there; the change is recorded in the space's history as the person's.
+- **Plugins change live in every builder open on the space.** Adding, updating or removing one — from a builder, or
+  from `plitzi upload plugin` with none open — is announced on the space's one channel (Redis pub/sub and the GraphQL
+  subscription every other edit travels on), as `SPACE_ADD_PLUGIN`, `SPACE_UPDATE_PLUGIN` and `SPACE_REMOVE_PLUGIN`.
+  The other builders load, swap or drop it, its sub-plugins and its stylesheet included; the builder that made the
+  change does not apply it twice.
+- **Fixed: a plugin's settings could not be saved.** `SpaceUpdatePlugin` required the plugin's address and wrote the
+  settings empty every time. Both are optional now and what is not sent is kept; settings that are not an object, or
+  a plugin the space does not have, are refused.
 - **Fixed: a plugin uploaded from Windows was refused** ("Type file not supported"). Chrome and Edge on Windows send a
   zip as `application/x-zip-compressed`, and both the builder and the upload accepted only `application/zip`.
 - **A project `plitzi create` writes registers every folder of `src/plugins` by itself**, under its name in camelCase

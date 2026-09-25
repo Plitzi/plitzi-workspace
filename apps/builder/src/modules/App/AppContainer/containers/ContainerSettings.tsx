@@ -23,7 +23,9 @@ const PROVIDER_SETTINGS = [
   'refreshTokenPath',
   'expirationTimePath',
   'refreshExpirationTimePath',
-  'sessionHintCookie'
+  'sessionHintCookie',
+  'sessionExchangeUrl',
+  'mfaUrl'
 ] as const;
 
 /** The state keys a comma-separated field names, as the runtime compares them: trimmed, none empty. */
@@ -58,6 +60,8 @@ const ContainerSettings = () => {
     expirationTimePath = 'expire_at',
     refreshExpirationTimePath = 'refresh_expire_at',
     sessionHintCookie = '',
+    sessionExchangeUrl = '',
+    mfaUrl = '',
     sessionGate = 'optimistic',
     sessionRevalidateSeconds = 300,
     debugMode = false
@@ -186,6 +190,20 @@ const ContainerSettings = () => {
                 value={logoutUrl}
                 onChange={handleChange('logoutUrl')}
                 label="API Logout Url"
+              />
+              <Input
+                size="sm"
+                name="mfaUrl"
+                value={mfaUrl}
+                onChange={handleChange('mfaUrl')}
+                label="API Second Factor Url (Optional) - completes a sign-in that asked for a code"
+              />
+              <Input
+                size="sm"
+                name="sessionExchangeUrl"
+                value={sessionExchangeUrl}
+                onChange={handleChange('sessionExchangeUrl')}
+                label="Session Exchange Url (Optional) - for a sign-in that happens in the browser"
               />
               <Input
                 size="sm"

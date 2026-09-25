@@ -86,6 +86,37 @@ describe('webHook', () => {
     expect(init.body).toBe('{"email":"ada@example.com"}');
   });
 
+  it('sends the headers the author named, keeping the two the step owns', async () => {
+    await send({
+      method: 'post',
+      authorizationToken: 'tok',
+      headers: { 'x-api-key': 'k1', Authorization: 'Bearer other', 'content-type': 'text/plain', 'x-empty': '' }
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.headers).toEqual({
+      'x-api-key': 'k1',
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer tok'
+    });
+  });
+
+  /** `multipart/form-data` written by hand has no boundary, and no server can split the parts without one. */
+  it('lets fetch write the content type of a form with a file, boundary and all', async () => {
+    await send({ method: 'post', body: { name: 'photo', file: new Blob(['x']) } });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBeInstanceOf(FormData);
+    expect(init.headers).not.toHaveProperty('Content-Type');
+  });
+
+  it('keeps apart two cached reads that differ only in a header', async () => {
+    await send({ cache: true, headers: { 'x-tenant': 'a' } });
+    await send({ cache: true, headers: { 'x-tenant': 'b' } });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('sends a head without a body', async () => {
     await send({ method: 'head', body: { a: '1' } });
 

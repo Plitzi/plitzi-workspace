@@ -135,7 +135,10 @@ export const addNotification = (params: {
  * would be too vague to read at an import.
  */
 export const authLogin = (
-  params: { mode: 'normal'; username: string; password: string } | { mode: 'token'; token: string }
+  params:
+    | { mode: 'normal'; username: string; password: string }
+    | { mode: 'token'; token: string }
+    | { mode: 'mfa'; mfaToken: string; code: string }
 ): StepSpec => globalStep('login', params);
 
 export const authLogout = (): StepSpec => globalStep('logout');
@@ -211,6 +214,11 @@ export const webHook = (params: {
   method?: 'get' | 'post' | 'put' | 'delete' | 'patch' | 'head';
   body?: string | Record<string, unknown>;
   authorizationToken?: string;
+  /**
+   * Headers of the request by name, templates for the values: `{ 'x-api-key': '{{ apiKey }}' }`. Not `Authorization`
+   * (that is `authorizationToken`) nor the content type (the body's own), which the step sets itself.
+   */
+  headers?: Record<string, string>;
   credentials?: 'include' | 'omit' | 'same-origin';
   /** A read only: serve it from the page's query cache for `staleTime` seconds, shared with api containers. */
   cache?: boolean;

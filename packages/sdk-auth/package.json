@@ -30,6 +30,10 @@
       "types": "./dist/helpers/SessionStore.d.ts",
       "import": "./dist/helpers/SessionStore.mjs"
     },
+    "./helpers/publishedSession": {
+      "types": "./dist/helpers/publishedSession.d.ts",
+      "import": "./dist/helpers/publishedSession.mjs"
+    },
     "./helpers/sessionHint": {
       "types": "./dist/helpers/sessionHint.d.ts",
       "import": "./dist/helpers/sessionHint.mjs"

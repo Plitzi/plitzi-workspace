@@ -5,7 +5,15 @@ import SessionStore from './helpers/SessionStore';
 import { nowInSeconds, toSeconds, tokenExpiresAt } from './helpers/tokenClaims';
 
 import type { StoredSession } from './helpers/SessionStore';
-import type { AuthFailureReason, AuthResult, AuthState, LoginResult, Schema, TokenResult } from '@plitzi/sdk-shared';
+import type {
+  AuthFailureReason,
+  AuthResult,
+  AuthState,
+  LoginResult,
+  MfaChallenge,
+  Schema,
+  TokenResult
+} from '@plitzi/sdk-shared';
 
 /** Why a state changed. Not control flow — it is what makes an auth trace readable, and every transition below
  *  names one, because "it went to guest" is not a diagnosis and "the hint cookie was gone" is. */
@@ -123,7 +131,8 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     return [];
   }
 
-  protected abstract requestLogin(params: Record<string, unknown>): Promise<AuthResult<U>>;
+  /** A session, why there is none — or, for an account with a second factor, the challenge its code completes. */
+  protected abstract requestLogin(params: Record<string, unknown>): Promise<AuthResult<U> | MfaChallenge>;
   protected abstract requestRenewal(refreshToken?: string): Promise<AuthResult<U>>;
   protected abstract requestIdentity(): Promise<AuthResult<U>>;
   protected abstract requestLogout(): Promise<void>;
@@ -351,6 +360,13 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     this.epoch += 1;
     this.setState('authenticating', 'authenticating');
     const result = await this.requestLogin(params);
+    if (!result.ok && result.reason === 'mfa') {
+      // Nothing was lost — there was no session to lose — so no expiry is announced: the page asks for the code.
+      this.endSession();
+
+      return result;
+    }
+
     if (!result.ok) {
       this.endSession(result.reason);
 
