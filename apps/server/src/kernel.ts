@@ -19,6 +19,9 @@ export { buildHealthPayload, registerHealthCheck } from './core/health';
 export { clientIp, parseRequest, readRawBody, requestOrigin } from './core/requestParser';
 export { consoleLogger, isLogged, logLevelOf, renderLogEvent, serverLog } from './helpers/serverLog';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
+// Where a request somebody else authored may go. One rule for every server that fetches on a customer's or an
+// agent's say-so, so that a second copy is never the one that forgot a range.
+export { assertOutboundAllowed, isBlockedHost } from './helpers/outboundGuard';
 
 export type { HttpServerParts } from './core/server/baseServer';
 export type { BuildContext } from './core/http/dispatcher';

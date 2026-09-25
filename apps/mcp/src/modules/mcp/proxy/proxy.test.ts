@@ -301,6 +301,14 @@ describe('the endpoint guard', () => {
     }
   });
 
+  /** How a URL parser writes `[::ffff:127.0.0.1]`, and what a dual-stack socket connects straight to loopback. */
+  it('refuses private IPv4 addresses written as IPv6', async () => {
+    for (const raw of ['http://[::ffff:127.0.0.1]/', 'http://[::ffff:169.254.169.254]/', 'http://[64:ff9b::a00:1]/']) {
+      const { hostname } = new URL(raw);
+      expect(await isPublicHost(hostname), `${raw} (${hostname}) was allowed`).toBe(false);
+    }
+  });
+
   it('refuses hostnames that resolve inside the deployment', async () => {
     expect(await isPublicHost('localhost')).toBe(false);
     expect(await isPublicHost('redis.default.svc.cluster.local')).toBe(false);

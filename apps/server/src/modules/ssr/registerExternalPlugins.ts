@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { writeFileAtomic } from '../../helpers/atomicFile';
+import { fetchOutbound } from '../../helpers/outboundGuard';
 import { serverLog } from '../../helpers/serverLog';
 
 import type { PluginManager } from '../../plugins/manager';
@@ -50,7 +51,9 @@ const writeDiskEntry = async (dir: string, resource: string, entry: ManifestCach
 const fetchAndStore = async (dir: string, resource: string): Promise<PluginManifest | null> => {
   try {
     const url = `${resource}/plugin-manifest.json`;
-    const res = await fetch(url);
+    // The resource is written by whoever edits the space and fetched from inside the cluster, so it answers to the
+    // same outbound rule as a flow's `http.request`; a refusal lands in the catch below like any other failed fetch.
+    const res = await fetchOutbound(fetch, new URL(url));
     if (!res.ok) {
       serverLog.warn('SSR', `Failed to fetch plugin manifest from ${url}: HTTP ${res.status}`);
       return null;

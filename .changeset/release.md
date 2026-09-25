@@ -646,3 +646,11 @@
   **A deployment with preview on must set `preview.secret`**, and every caller must send it as `x-preview-secret`.
 - `sdk-server`: a draft is only rendered for the space it was made from. `DraftPutOptions` and `DraftEntry` carry
   `spaceId`, and a token presented under another space's host is ignored. A custom `DraftStore` has to keep it.
+
+## One outbound rule, everywhere
+
+- `sdk-server`: `@plitzi/sdk-server/kernel` exports `isBlockedHost` and `assertOutboundAllowed`, the rule the
+  `http.request` task and the connector engine follow.
+- `sdk-mcp`: the widget proxy judges addresses with that rule instead of its own copy, which let IPv4 written as IPv6
+  (`[::ffff:127.0.0.1]`) through.
+- `sdk-server`: a space's external plugin manifest is fetched through the same rule, redirects included.
