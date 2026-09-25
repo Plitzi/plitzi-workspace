@@ -31,9 +31,8 @@
   // As tall as what it holds and never taller than the screen: a fixed 300px let a longer body spill out of the panel.
   .dialog-container__root {
     width: 500px;
-    max-width: calc(100vw - 32px);
     max-height: calc(100dvh - 32px);
-    overflow: auto;
+    max-width: calc(100vw - 32px);
     padding-right: 20px;
     padding-bottom: 20px;
     padding-left: 20px;
@@ -55,6 +54,7 @@
      */
     background-color: light-dark(white, oklch(0.21 0.006 285.885));
     transform: translate3d(-50%, -50%, 0px);
+    overflow: auto;
   }
 
   .dialog-container__header {
@@ -67,9 +67,9 @@
       width: 28px;
       padding: 4px;
       display: flex;
-      flex-shrink: 0;
       justify-content: center;
       align-items: center;
+      flex-shrink: 0;
       border-radius: 4px;
       background: transparent;
       color: inherit;

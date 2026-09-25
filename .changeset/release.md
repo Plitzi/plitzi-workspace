@@ -654,3 +654,21 @@
 - `sdk-mcp`: the widget proxy judges addresses with that rule instead of its own copy, which let IPv4 written as IPv6
   (`[::ffff:127.0.0.1]`) through.
 - `sdk-server`: a space's external plugin manifest is fetched through the same rule, redirects included.
+
+## A signed-in visitor is rendered signed in, the day after too
+
+- `sdk-server`: a page asked for once the access cookie has expired but renewal is still possible (the session hint
+  says so) is sent to renew first and comes back signed in, so the server renders the visitor the browser will end up
+  with. The HTML used to be the guest page, swapped for the signed-in one after boot, and a guest-only page was shown
+  and then redirected away from instead of answered with a 302.
+- New `createServer({ sessionRenewal: { url } | false })`. On by default with `auth` (its own `/refresh`); without it,
+  name the endpoint — an absolute URL when another host serves `/auth`.
+- The endpoint is `GET <basePath>/refresh?redirect=<page>`, served by `createServer({ auth })` and now also by
+  `mountAuthRoutes` (34 routes). It renews with the refresh cookie, writes the new session or ends a dead one, and
+  always sends the browser back — to a path, or to a host sharing the session's cookie domain (`/` otherwise).
+- Only whole-tab navigations (`Sec-Fetch-Dest: document`) take part, on both halves: a renewal rotates the session,
+  and an `<img>` or a frame on another site must not be able to. Anything else on `GET /refresh` is a 405. A short
+  `<cookie>_renewing` cookie keeps a renewal that failed without ending the session from sending the visitor round
+  again.
+- New in `@plitzi/sdk-server/auth`: `parseSessionHint`, `readSessionHint`, `sessionReturnTarget`,
+  `isDocumentNavigation`, `renewForNavigation`.

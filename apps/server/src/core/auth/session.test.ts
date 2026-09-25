@@ -5,8 +5,12 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   clearSessionCookies,
   isLocalHost,
+  parseSessionHint,
+  readSessionHint,
   readSessionToken,
   sessionCookieParams,
+  sessionHintValue,
+  sessionReturnTarget,
   writeSessionCookies
 } from './session';
 
@@ -151,6 +155,57 @@ describe('reading a session back', () => {
   it('reports nothing when the browser carries nothing', () => {
     expect(readSessionToken(requestFrom('app.example.com'))).toBeUndefined();
     expect(readSessionToken(requestFrom('app.example.com', 'other=1'))).toBeUndefined();
+  });
+});
+
+describe('the session hint, read on the server', () => {
+  it('reads back what the server wrote beside the session', () => {
+    const { res, cookies } = responseSpy();
+    writeSessionCookies(requestFrom('app.example.com'), res, session);
+    const jar = cookies()
+      .map(cookie => cookie.split(';')[0])
+      .join('; ');
+
+    expect(readSessionHint(requestFrom('app.example.com', jar))).toEqual({
+      expiresAt: session.expiresAt,
+      refreshExpiresAt: session.refreshExpiresAt
+    });
+  });
+
+  it('reads a session with no refresh half, and nothing from what is not a hint', () => {
+    expect(parseSessionHint(sessionHintValue(1_900_000_000))).toEqual({ expiresAt: 1_900_000_000 });
+    expect(parseSessionHint('garbage')).toBeUndefined();
+    expect(parseSessionHint(undefined)).toBeUndefined();
+  });
+});
+
+/**
+ * Where a renewal sends the browser back to. It can be another host — the pages and `/auth` often live apart — but
+ * only one the session's cookies are scoped to: no other host could have sent a browser to renew in the first place.
+ */
+describe('where a renewal sends the browser back', () => {
+  const api = requestFrom('api.acme.test');
+
+  it('takes a path on this host, and a page on any host sharing the cookie domain', () => {
+    expect(sessionReturnTarget(api, '/pricing?plan=pro')).toBe('/pricing?plan=pro');
+    expect(sessionReturnTarget(api, 'https://www.acme.test/pricing')).toBe('https://www.acme.test/pricing');
+    expect(sessionReturnTarget(api, 'https://acme.test/')).toBe('https://acme.test/');
+  });
+
+  it('sends anything else home', () => {
+    expect(sessionReturnTarget(api, 'https://evil.test/')).toBe('/');
+    expect(sessionReturnTarget(api, 'https://acme.test.evil.test/')).toBe('/');
+    expect(sessionReturnTarget(api, '//evil.test/')).toBe('/');
+    expect(sessionReturnTarget(api, '/\\evil.test/')).toBe('/');
+    expect(sessionReturnTarget(api, 'javascript:alert(1)')).toBe('/');
+    expect(sessionReturnTarget(api, undefined)).toBe('/');
+  });
+
+  it('keeps a local host to itself, which shares its cookies with nobody', () => {
+    const local = requestFrom('localhost');
+
+    expect(sessionReturnTarget(local, 'http://localhost:3000/x')).toBe('http://localhost:3000/x');
+    expect(sessionReturnTarget(local, 'http://other.localhost/x')).toBe('/');
   });
 });
 

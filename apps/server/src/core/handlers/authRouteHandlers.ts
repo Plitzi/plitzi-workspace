@@ -1,4 +1,5 @@
 import { serverLog } from '../../helpers/serverLog';
+import { isDocumentNavigation, renewForNavigation } from '../auth/renewal';
 import { applySessionOutcome, authRoutes } from '../auth/routes';
 
 import type { AuthedRequest, JsonResponse, HttpRoute, RouterLike } from './types';
@@ -59,8 +60,18 @@ const carrier = (req: AuthedRequest): AuthRequest => ({
  * Which flows actually answer is decided by the adapters, not here — no `createAccount`, no signup, and the route
  * reports 404 rather than failing at runtime. Mounting all of them is correct for a deployment that offers three.
  */
-export const createAuthRouteHandlers = ({ api, cookies, csrf, onError }: AuthRouteHandlersOptions): HttpRoute[] =>
-  authRoutes({ api, cookies, csrf }).map(({ method, path, handler }) => ({
+export const createAuthRouteHandlers = ({ api, cookies, csrf, onError }: AuthRouteHandlersOptions): HttpRoute[] => {
+  const failed = (error: unknown, method: string, path: string, res: JsonResponse): void => {
+    if (onError) {
+      onError(error, { method, path });
+    } else {
+      serverLog.error('auth', `${method} ${path} failed`, error);
+    }
+
+    res.status(500).json({ error: 'Internal server error' });
+  };
+
+  const flows = authRoutes({ api, cookies, csrf }).map<HttpRoute>(({ method, path, handler }) => ({
     method,
     path,
     handle: async (req: AuthedRequest, res: JsonResponse): Promise<void> => {
@@ -70,16 +81,41 @@ export const createAuthRouteHandlers = ({ api, cookies, csrf, onError }: AuthRou
         applySessionOutcome(req, res, outcome, cookies, csrf);
         res.status(outcome.ok ? (outcome.status ?? 200) : outcome.status).json(outcome.body);
       } catch (error: unknown) {
-        if (onError) {
-          onError(error, { method, path });
-        } else {
-          serverLog.error('auth', `${method} ${path} failed`, error);
-        }
-
-        res.status(500).json({ error: 'Internal server error' });
+        failed(error, method, path, res);
       }
     }
   }));
+
+  /**
+   * Renewal on the way to a page — see `renewForNavigation`. Answered with a status and a `Location` rather than a
+   * framework's `redirect`, so the set keeps asking a response for nothing beyond a status and a body; the body says
+   * the same thing, for whoever reads it. Anything but a whole-tab navigation is told to renew the usual way.
+   */
+  const renewal: HttpRoute = {
+    method: 'GET',
+    path: '/refresh',
+    handle: async (req: AuthedRequest, res: JsonResponse): Promise<void> => {
+      if (!isDocumentNavigation(req.headers)) {
+        res.setHeader('Allow', 'POST');
+        res.status(405).json({ error: 'Renew with POST' });
+
+        return;
+      }
+
+      try {
+        const location = await renewForNavigation(carrier(req), res, { api, cookies, csrf });
+
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Location', location);
+        res.status(303).json({ redirect: location });
+      } catch (error: unknown) {
+        failed(error, 'GET', '/refresh', res);
+      }
+    }
+  };
+
+  return [...flows, renewal];
+};
 
 /**
  * {@link createAuthRouteHandlers}, hung on anything with `get` and `post`.
