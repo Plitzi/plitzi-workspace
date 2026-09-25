@@ -1,5 +1,5 @@
 import { renderTaskParams } from './helpers';
-import { assertOutboundAllowed } from '../../../helpers/outboundGuard';
+import { fetchOutbound } from '../../../helpers/outboundGuard';
 
 import type { ActionTask } from '../types';
 
@@ -86,10 +86,6 @@ const request: ActionTask<HttpRequestParams> = {
       throw new Error('Request URL is not a valid absolute URL');
     }
 
-    // Protocol, literal address and what the NAME resolves to — one rule, shared with the connector engine, which
-    // reaches the outside world on a manifest's say-so exactly as this does on a flow's.
-    await assertOutboundAllowed(url);
-
     const headers = Object.entries(parseJsonParam(params.headers, 'Headers')).reduce<Record<string, string>>(
       (acum, [key, value]) => {
         acum[key] = typeof value === 'string' ? value : JSON.stringify(value);
@@ -107,7 +103,9 @@ const request: ActionTask<HttpRequestParams> = {
       headers['Content-Type'] = 'application/json';
     }
 
-    const response = await ctx.fetch(url.toString(), {
+    // Protocol, literal address and what the NAME resolves to, for this URL and every redirect it takes — one rule,
+    // shared with the connector engine, which reaches the outside world on a manifest's say-so as this does on a flow's.
+    const response = await fetchOutbound(ctx.fetch, url, {
       method,
       headers,
       body: hasBody ? JSON.stringify(parseJsonParam(params.body, 'Body')) : undefined,

@@ -619,3 +619,12 @@
 - `sdk-authoring`: a space with no pages is refused up front with a reason a person can act on, instead of the
   authoring error about writing one.
 - Builder: Export sends the space's plugin types, so an element a plugin provides is no longer reported as unknown.
+
+## Outbound requests stay outside the cluster
+
+- `sdk-server`: the `http.request` task and the connector engine refuse private destinations however they are written.
+  An address is judged by range, so IPv4 written as IPv6 (`[::ffff:127.0.0.1]`, `[::]`, NAT64, 6to4) and the
+  multicast, CGNAT and reserved ranges are refused too, and a DNS name is no longer refused just because it starts
+  like an IPv6 prefix (`fcbarcelona.com`).
+- Redirects are followed one hop at a time, and each destination is checked before anything is sent to it. A public
+  URL that redirects into the cluster is refused. A redirect that leaves the origin drops `Authorization` and `Cookie`.

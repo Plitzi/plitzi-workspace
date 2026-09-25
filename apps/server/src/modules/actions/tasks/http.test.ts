@@ -150,4 +150,25 @@ describe('http.request', () => {
     expect(result.status).toBe('failed');
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('refuses a cluster address written as IPv6', async () => {
+    const fetchMock = vi.fn(ok);
+
+    const result = await run(entry({ url: 'http://[::ffff:127.0.0.1]:6379/', method: 'GET' }), fetchMock);
+
+    expect(result.status).toBe('failed');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  /** The authored URL is public; where it redirects to is not, and that hop is never sent. */
+  it('refuses to follow a redirect inside the cluster', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response(null, { status: 302, headers: { Location: 'http://169.254.169.254/latest/' } }))
+    );
+
+    const result = await run(entry({ url: 'https://api.example.com/items', method: 'GET' }), fetchMock);
+
+    expect(result.status).toBe('failed');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });

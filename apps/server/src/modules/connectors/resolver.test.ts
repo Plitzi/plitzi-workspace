@@ -72,7 +72,7 @@ const boundContext = (attributes: Record<string, unknown>, boundSource: string):
   };
 };
 
-const jsonResponse = (body: unknown) => ({ ok: true, status: 200, json: () => Promise.resolve(body) }) as Response;
+const jsonResponse = (body: unknown) => Response.json(body);
 
 const body = {
   data: [
