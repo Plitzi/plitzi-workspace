@@ -9,6 +9,7 @@ import {
   declaredCallback,
   declaredTrigger,
   defineElement,
+  delay,
   form,
   formControl,
   link,
@@ -16,10 +17,13 @@ import {
   modalContainer,
   named,
   onClick,
+  onKey,
   onSubmit,
   openModal,
+  runServerAction,
   setState,
-  text
+  text,
+  when
 } from './index';
 
 /**
@@ -134,6 +138,84 @@ describe('the skill’s recipes', () => {
       },
       { plugins: [declaration] }
     );
+
+    expect(warnings).toEqual([]);
+  });
+
+  /** `docs/en/authoring-spaces.md`, "What a step reads": a flow that waits, then reads the page as it is by then. */
+  it('a keyboard shortcut authors with no warning, and one that cannot fire is refused where it is written', () => {
+    const { warnings } = authorSpace({
+      name: 'Keys',
+      permanentUrl: 'keys',
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          isDefault: true,
+          body: [
+            text('', { bind: { content: 'state.zoom' } }),
+            button({
+              content: 'Zoom',
+              flows: [
+                [onKey('plus, ='), setState({ key: 'zoom', type: 'text', value: 'in' })],
+                [
+                  named('pressed', onKey('mod+k, escape')),
+                  setState({ key: 'last', type: 'text', value: '{{ pressed.key }}' })
+                ]
+              ]
+            })
+          ]
+        }
+      ]
+    });
+
+    expect(warnings).toEqual([]);
+    expect(() => onKey('ctrl+shift')).toThrow("onKey('ctrl+shift') is not a shortcut");
+    expect(() => onKey('arrowupp')).toThrow('not a key');
+  });
+
+  it('the undo window in the docs authors with no warning', () => {
+    const { warnings } = authorSpace({
+      name: 'Undo',
+      permanentUrl: 'undo',
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          isDefault: true,
+          body: [
+            list({
+              id: 'rows',
+              source: 'controlled',
+              bind: { items: 'state.rows' },
+              children: [
+                button({
+                  id: 'delete',
+                  content: 'Delete',
+                  flows: [
+                    [
+                      onClick(),
+                      setState({ key: 'pendingDelete', type: 'text', value: '{{ list_rows.item.id }}' }),
+                      delay(5000),
+                      when(
+                        { field: 'state.pendingDelete', operator: '=', value: 'list_rows.item.id', isBinding: true },
+                        runServerAction({ actionId: 'row-delete', input: { id: '{{ list_rows.item.id }}' } })
+                      )
+                    ]
+                  ]
+                })
+              ]
+            }),
+            button({
+              content: 'Undo',
+              flows: [[onClick(), setState({ key: 'pendingDelete', type: 'text', value: '' })]]
+            })
+          ]
+        }
+      ]
+    });
 
     expect(warnings).toEqual([]);
   });

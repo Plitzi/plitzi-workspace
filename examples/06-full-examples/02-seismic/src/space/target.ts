@@ -192,6 +192,86 @@ const gaugeValue = styles('gaugeValue', {
   'font-variant-numeric': 'tabular-nums'
 });
 
+const analysis = styles('analysis', {
+  display: 'grid',
+  'grid-template-columns': 'repeat(2, minmax(0, 1fr))',
+  gap: '1px',
+  'background-color': 'var(--edge-soft)'
+});
+
+/** The region's record spans the block: it is one sentence, and the most telling line in the dossier. */
+const historyFact = styles('historyFact', { 'grid-column': '1 / -1' });
+
+const historyRank = styles('historyRank', {
+  'font-family': 'var(--mono)',
+  'font-size': '12px',
+  'font-weight': '700',
+  'letter-spacing': '0.1em',
+  color: 'var(--trace)'
+});
+
+const historyLine = styles('historyLine', {
+  'font-family': 'var(--mono)',
+  'font-size': '10px',
+  'letter-spacing': '0.08em',
+  color: 'var(--dim)',
+  'white-space': 'nowrap',
+  overflow: 'hidden',
+  'text-overflow': 'ellipsis'
+});
+
+const pending = styles('pending', {
+  padding: '8px 10px',
+  'font-family': 'var(--mono)',
+  'font-size': '10px',
+  'letter-spacing': '0.14em',
+  'text-transform': 'uppercase',
+  color: 'var(--dim)',
+  'background-color': 'var(--panel-strong)'
+});
+
+/**
+ * What the server read about the locked event: how the fault moved, how hard the ground shook, and how the event
+ * ranks in its region since 1900. Shown only once the answer is for THIS event — until then, one line saying so.
+ */
+const analysisBlock = (): ElementSpec[] => [
+  container({
+    id: 'target-analysis',
+    class: analysis,
+    visible: 'computed.detailShown',
+    children: [
+      fieldOf('faulting', 'Faulting', 'state.detail.faultingLabel'),
+      fieldOf('shaking', 'ShakeMap estimate', 'state.detail.shakingLabel'),
+      container({
+        id: 'target-history',
+        class: [fact, historyFact],
+        children: [
+          label('History · 300 km · since 1900'),
+          text({ id: 'target-rank', content: '', class: historyRank, bind: { content: 'state.detail.rankLabel' } }),
+          text({
+            id: 'target-record',
+            content: '',
+            class: historyLine,
+            bind: [
+              bindTemplate(
+                'content',
+                'state.detail',
+                "{{ source.historyLabel }}{{ source.largestLabel ? ' · ' ~ source.largestLabel : '' }}"
+              )
+            ]
+          })
+        ]
+      })
+    ]
+  }),
+  text({
+    id: 'target-reading',
+    content: 'Reading the USGS catalogue…',
+    class: pending,
+    visible: { source: 'computed.detailShown', template: "{{ source ? 'false' : 'true' }}" }
+  })
+];
+
 const footer = styles('footer', {
   display: 'flex',
   'justify-content': 'space-between',
@@ -299,6 +379,7 @@ const dossierCard = (): ElementSpec =>
           ])
         ]
       }),
+      ...analysisBlock(),
       container({
         class: significance,
         children: [

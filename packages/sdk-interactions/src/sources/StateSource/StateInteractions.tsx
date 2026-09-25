@@ -74,8 +74,8 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
   );
 
   // Read and written in one pass through the store's updater form, so the value flipped is the one that is there at
-  // that instant. A read-then-write would take the value from the flow's own snapshot, which is what made the
-  // two-branch toggle depend on being one step behind.
+  // that instant. A read-then-write takes the value from when the step read the page, and two presses in the same tick
+  // would both flip from the same value and write the same result: two presses, one flip.
   const handleToggleState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string }>) => {
       const { key } = params;
@@ -97,7 +97,7 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
    * reads and writes in one pass, and a controlled `list` renders whatever array it is bound to.
    *
    * Through the updater form for the same reason `toggleState` is: two rows removed in the same tick would
-   * otherwise both compute from the flow's own snapshot, and the second would put the first one back.
+   * otherwise both compute from the list as their step read it, and the second would put the first one back.
    */
   /** True for the boolean and for the word, because the builder's picker writes the word. */
   const isOn = (flag: unknown): boolean => flag === true || flag === 'true';
@@ -247,8 +247,8 @@ const StateInteractions = ({ children }: StateInteractionsProps) => {
    * The checkbox, as one step: in the list if it was not, out of it if it was.
    *
    * A SET rather than a list — the same value is never in it twice — which is what makes it safe to press twice.
-   * The alternative, an append guarded by a check, reads the list as it was when the flow started, so two presses
-   * in the same tick both found it absent and added it twice.
+   * The alternative, an append guarded by a check, reads the list before the other press's write lands, so two
+   * presses in the same tick both found it absent and added it twice.
    */
   const handleToggleInState = useCallback(
     (params: InteractionCallbackParamValues<{ key: string; value: unknown }>) => {

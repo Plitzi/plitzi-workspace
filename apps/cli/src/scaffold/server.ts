@@ -48,6 +48,7 @@ import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from 
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
+import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
 
 const PORT = Number(process.env.PORT ?? 8080);
@@ -61,7 +62,8 @@ const HOST = process.env.HOST ?? '127.0.0.1';
  * boot, so saving that file and letting \`--watch\` restart it is the whole edit loop — and its warnings are printed
  * here for the same reason: this restart is the output somebody editing the space is actually watching.
  */
-const { schema, style, warnings } = authorSpace(space);
+// \`declarations\`: what the project's plugins fire, answer and read, so the space's use of them is checked too.
+const { schema, style, warnings } = authorSpace(space, { plugins: declarations });
 const offlineData = { schema, style };
 
 for (const warning of warnings) {

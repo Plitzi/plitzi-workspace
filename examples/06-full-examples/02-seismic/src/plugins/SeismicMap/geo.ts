@@ -172,3 +172,91 @@ export const ringLabelPosition = (longitude: number, latitude: number, distanceK
 
   return [lon, lat];
 };
+
+/** An event's shaking, as the page hands over what the detail action answered: the event it is for, and its contours. */
+export type Shaking = { id: string; levels: { mmi: number; lines: [number, number][][] }[] };
+
+const isLine = (value: unknown): value is [number, number][] =>
+  Array.isArray(value) &&
+  value.every(point => Array.isArray(point) && typeof point[0] === 'number' && typeof point[1] === 'number');
+
+export const toShaking = (shaking: unknown): Shaking | undefined => {
+  const value = parsed(shaking);
+  if (!isRecord(value) || typeof value.id !== 'string' || !Array.isArray(value.levels)) {
+    return undefined;
+  }
+
+  const levels = value.levels.flatMap((level: unknown) =>
+    isRecord(level) && typeof level.mmi === 'number' && Array.isArray(level.lines)
+      ? [{ mmi: level.mmi, lines: level.lines.filter(isLine) }]
+      : []
+  );
+
+  return { id: value.id, levels };
+};
+
+/**
+ * A contour's longitudes made continuous, so one that crosses the antimeridian around Tonga or Fiji stays one short
+ * line instead of a stroke across the whole flat map. MapLibre draws a longitude past ±180 where it belongs.
+ */
+const unwrap = (line: [number, number][]): Position[] => {
+  let shift = 0;
+
+  return line.map(([longitude, latitude], index) => {
+    const jump = index > 0 ? longitude - line[index - 1][0] : 0;
+    if (jump > 180) {
+      shift -= 360;
+    } else if (jump < -180) {
+      shift += 360;
+    }
+
+    return [longitude + shift, latitude];
+  });
+};
+
+/** The contours as lines the map can draw, each carrying its intensity. */
+export const shakingFeatures = (shaking: Shaking): FeatureCollection<MultiLineString, { mmi: number }> => ({
+  type: 'FeatureCollection',
+  features: shaking.levels.map(level => ({
+    type: 'Feature',
+    properties: { mmi: level.mmi },
+    geometry: { type: 'MultiLineString', coordinates: level.lines.map(unwrap) }
+  }))
+});
+
+/**
+ * Where each whole level's label goes: the middle of its longest line — the part of the contour most likely on screen
+ * when the camera is framing the event.
+ */
+export const shakingLabels = (shaking: Shaking): { mmi: number; position: Position }[] =>
+  shaking.levels
+    .filter(level => Number.isInteger(level.mmi))
+    .flatMap(level => {
+      const longest = level.lines.reduce<[number, number][] | undefined>(
+        (best, line) => (!best || line.length > best.length ? line : best),
+        undefined
+      );
+      if (!longest) {
+        return [];
+      }
+
+      const line = unwrap(longest);
+
+      return [{ mmi: level.mmi, position: line[Math.floor(line.length / 2)] }];
+    });
+
+/** The box around every contour — what the camera frames when the shaking arrives. `undefined` for none. */
+export const shakingBounds = (shaking: Shaking): [[number, number], [number, number]] | undefined => {
+  const points = shakingFeatures(shaking).features.flatMap(feature => feature.geometry.coordinates.flat());
+  if (!points.length) {
+    return undefined;
+  }
+
+  const longitudes = points.map(point => point[0]);
+  const latitudes = points.map(point => point[1]);
+
+  return [
+    [Math.min(...longitudes), Math.min(...latitudes)],
+    [Math.max(...longitudes), Math.max(...latitudes)]
+  ];
+};

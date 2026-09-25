@@ -3,6 +3,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
+import { KEY_TRIGGER } from '@plitzi/sdk-shared/helpers/keys';
 
 import { flowTrigger } from './InteractionsHelper';
 
@@ -17,6 +18,23 @@ import type {
 } from '@plitzi/sdk-shared';
 
 type InteractionUpdateListener = (timestamp: number) => void;
+
+/**
+ * Whether a key press is for this trigger.
+ *
+ * One press fires the key trigger ONCE, listing every shortcut it matched — fired once per flow instead, the second
+ * would find the first still running and be dropped. So each flow on it runs only when its own `keys` is on the list.
+ * Every other trigger answers whatever fires it.
+ */
+const answersPress = (node: ElementInteraction, payload: Record<string, unknown>): boolean => {
+  if (node.action !== KEY_TRIGGER) {
+    return true;
+  }
+
+  const { shortcuts } = payload;
+
+  return Array.isArray(shortcuts) && shortcuts.includes(node.params.keys);
+};
 
 class InteractionsManager {
   eventBridge: InstanceType<typeof EventBridge>;
@@ -59,13 +77,15 @@ class InteractionsManager {
 
       try {
         const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
-        let dataSource: Record<string, unknown> | undefined;
-        if (typeof getAdditionalParams === 'function') {
-          ({ dataSource } = getAdditionalParams());
-        }
+        // Read again before every step rather than once here: a step sees the page as it is when it runs.
+        const readGlobals = (): Record<string, unknown> => ({
+          ...this.interactionsData,
+          ...(typeof getAdditionalParams === 'function' ? getAdditionalParams().dataSource : undefined)
+        });
 
         const triggersToRun = Object.values(interactions).filter(
-          (node: ElementInteraction) => node.type === 'trigger' && node.action === eventName && node.enabled
+          (node: ElementInteraction) =>
+            node.type === 'trigger' && node.action === eventName && node.enabled && answersPress(node, params)
         );
 
         await Promise.all(
@@ -75,7 +95,7 @@ class InteractionsManager {
               interactions,
               this.getCallbacksAvailables(),
               { [trigger.id]: params },
-              { ...this.interactionsData, ...dataSource },
+              readGlobals,
               subscriptorId
             )
           )

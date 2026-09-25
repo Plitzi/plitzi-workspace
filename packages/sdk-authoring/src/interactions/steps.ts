@@ -54,9 +54,10 @@ export const setState = (params: { key: string; type: (typeof SET_STATE_TYPES)[n
 /**
  * Flips `runtime.state.<key>` — expand and collapse, open and close, from ONE step on ONE trigger.
  *
- * The alternative is two `setState` steps under `when` conditions that have to be exact complements of each other,
- * and those conditions read the state as it was when the flow STARTED, so the pattern only ever worked by being one
- * step behind. Anything not already `true` counts as false, so a key nobody has set yet flips ON first.
+ * The alternative — two `setState` steps under `when` conditions that are complements of each other — undoes itself:
+ * each step reads the state as it is when it runs, so the second sees what the first just wrote and writes it back.
+ * Anything not already `true` counts as false, so a key nobody has set yet flips ON first: for something shown by
+ * default, name the key for hiding it (`sidebarCollapsed`), so its absence means shown.
  */
 export const toggleState = (params: { key: string }): StepSpec => globalStep('toggleState', params);
 
@@ -106,7 +107,7 @@ export const moveState = (params: { from: string; to: string; value: unknown }):
  * A checkbox, as one step: in the list at `runtime.state.<key>` if it was not, out of it if it was.
  *
  * The list is a SET, which is what makes pressing the box twice safe — an append guarded by a check reads the list
- * as it was when the flow started, so two presses in the same tick both add.
+ * before the other press's write lands, so two presses in the same tick both add.
  */
 export const toggleInState = (params: { key: string; value: unknown }): StepSpec => globalStep('toggleInState', params);
 

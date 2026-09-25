@@ -6,7 +6,14 @@ import chalk from 'chalk';
 
 import { findProject } from './existingProject';
 import { askChoice, askText, atTerminal, isEmpty, refuseWithoutTerminal, writeFiles } from './terminal';
-import { declarationsRegistry, elementsRegistry, pluginNameProblem, pluginNames, scaffoldElement } from '../scaffold';
+import {
+  declarationsRegistry,
+  elementsRegistry,
+  pluginNameProblem,
+  pluginNames,
+  projectDeclarations,
+  scaffoldElement
+} from '../scaffold';
 
 import type { ExistingProject, PlitziProject } from './existingProject';
 import type { PluginNames } from '../scaffold';
@@ -201,6 +208,37 @@ const listInPackage = async (root: string, components: string[] | undefined, add
   );
 };
 
+/**
+ * A project's `src/plugins/declarations.ts`, extended with what was added — so the space is checked against the new
+ * plugins' events, actions and attributes from its next authoring on. A list somebody changed is theirs to extend.
+ */
+const declareInProject = async (project: PlitziProject, root: string, added: PluginNames[]): Promise<void> => {
+  if (project.source !== 'local') {
+    return;
+  }
+
+  const { declared } = project;
+  if (!declared) {
+    console.log(
+      chalk.yellow(
+        '\nsrc/plugins/declarations.ts is missing or not the list the CLI wrote, so it is yours to change: import ' +
+          `${added.map(names => `${names.component}/declaration.ts`).join(', ')} there and add ${added.length > 1 ? 'them' : 'it'} to ` +
+          '`declarations` — what `authorSpace(space, { plugins: declarations })` checks the space against.'
+      )
+    );
+
+    return;
+  }
+
+  await writeFiles(root, {
+    'src/plugins/declarations.ts': projectDeclarations([...declared, ...added.map(names => names.component)])
+  });
+  console.log(
+    `\nDeclared in src/plugins/declarations.ts: flows on ${added.length > 1 ? 'their' : 'its'} events and the attributes written on ` +
+      `${added.length > 1 ? 'them' : 'it'} are checked when the space is authored.`
+  );
+};
+
 /** A project the CLI did not write: how to register, and the one dependency the elements import. */
 const registerElsewhere = async (root: string, added: { names: PluginNames; target: string }[]): Promise<void> => {
   console.log(
@@ -332,6 +370,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
       await listInPackage(project.root, plitzi.components, addedNames);
     } else if (plitzi?.kind === 'project' && plitzi.discovers) {
       console.log(`\nRegistered: src/main.ts finds every folder of src/plugins. ${placement(plitzi, addedNames)}`);
+      await declareInProject(plitzi, project.root, addedNames);
     } else if (plitzi?.kind === 'project') {
       console.log(
         '\nThis project lists its plugins in src/main.ts (projects created since find them by folder). Add to its ' +

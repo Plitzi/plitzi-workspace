@@ -26,9 +26,10 @@ const authorScript = (): string => `import { mkdirSync, writeFileSync } from 'no
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
+import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
 
-const { schema, style, warnings } = authorSpace(space);
+const { schema, style, warnings } = authorSpace(space, { plugins: declarations });
 
 mkdirSync('space', { recursive: true });
 writeFileSync('space/offline-data.json', \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);

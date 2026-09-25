@@ -1,3 +1,4 @@
+import { KEY_TRIGGER, parseKeys } from '@plitzi/sdk-shared/helpers/keys';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { STEP_TYPES, paramIssue } from '../guard';
@@ -135,7 +136,28 @@ const checkAction = (ctx: LintContext, node: ElementInteraction, where: string, 
  * error names the types that DO fire it, because the usual mistake is one element off: `onSubmit` on the submit
  * button, not the form. A plugin's type fires its own, and a trigger aimed at another element is that one's.
  */
+/** A shortcut that cannot fire: a key nobody can press, a combo of two keys, or nothing at all. */
+const checkTriggerKeys = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
+  if (node.action !== KEY_TRIGGER) {
+    return;
+  }
+
+  const { keys } = node.params;
+  const problems = typeof keys === 'string' && keys.trim() ? parseKeys(keys).problems : ['no keys at all'];
+  if (!problems.length) {
+    return;
+  }
+
+  ctx.error(
+    'trigger-keys',
+    `${where} starts a flow on a keyboard shortcut that cannot fire: ${problems.join('; ')}. Write one or several, with commas: \`onKey('f')\`, \`onKey('shift+f')\`, \`onKey('mod+k, escape')\`.`,
+    hostId,
+    { keys }
+  );
+};
+
 const checkTrigger = (ctx: LintContext, node: ElementInteraction, where: string, host: Element): void => {
+  checkTriggerKeys(ctx, node, where, host.id);
   const triggers = ctx.catalogs.vocabulary?.triggers;
   const type = ctx.catalogType(host);
   if (
@@ -309,6 +331,52 @@ const warnStatePaths = (ctx: LintContext, node: ElementInteraction, where: strin
   }
 };
 
+/** Every field a condition reads, in its nested groups as much as at its top level. */
+const conditionFields = (group: unknown): string[] => {
+  if (typeof group !== 'object' || group === null) {
+    return [];
+  }
+
+  const field = 'field' in group && typeof group.field === 'string' ? [group.field] : [];
+  const rules = 'rules' in group && Array.isArray(group.rules) ? group.rules.flatMap(conditionFields) : [];
+
+  return [...field, ...rules];
+};
+
+/**
+ * The toggle written in branches: two or more `setState` steps of one key, each only when that key holds some value.
+ *
+ * Every step reads the state as it is when it runs, so the second branch sees what the first just wrote and writes
+ * it back — the flow can turn the value on, never off. `toggleState` is the same thing in one step, with nothing to
+ * order.
+ */
+const warnToggleInBranches = (ctx: LintContext, flow: ElementInteraction[], where: string, hostId: string): void => {
+  const guarded = new Map<string, number>();
+  for (const node of flow) {
+    const { key } = node.params;
+    if (node.type !== 'globalCallback' || node.elementId !== 'state' || node.action !== 'setState') {
+      continue;
+    }
+
+    if (typeof key === 'string' && conditionFields(node.when).includes(`state.${key}`)) {
+      guarded.set(key, (guarded.get(key) ?? 0) + 1);
+    }
+  }
+
+  for (const [key, steps] of guarded) {
+    if (steps < 2) {
+      continue;
+    }
+
+    ctx.warn(
+      'state-toggled-in-branches',
+      `${where} sets "${key}" in ${steps} steps, each only when \`state.${key}\` holds some value. Every step reads the state as it is when it runs, so the second sees what the first just wrote and writes it back — the value can go on and never off. Flip it in one step: \`toggleState({ key: '${key}' })\`. A key never set flips to true, so if what it controls shows while it is unset, name the key for hiding it (\`${key}Hidden\`).`,
+      hostId,
+      { key }
+    );
+  }
+};
+
 /** The callbacks that show an overlay, by the type that answers them; closing one is not a way to see it. */
 const OPENERS: Readonly<Record<string, string>> = { modalContainer: 'openModal', dialogContainer: 'openDialog' };
 const CLOSERS = new Set(['closeModal', 'closeDialog']);
@@ -359,6 +427,7 @@ export const lintFlows = (ctx: LintContext): void => {
         );
       }
 
+      warnToggleInBranches(ctx, flow, where, host.id);
       const stepIds = new Set(flow.map(node => node.id));
       for (const node of flow) {
         if (!STEP_TYPE_NAMES.has(node.type)) {

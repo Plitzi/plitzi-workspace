@@ -9,6 +9,8 @@ import { visualFiles } from './visual';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
+export { projectDeclarations } from './plugin';
+
 export {
   PACKAGE_MANAGERS,
   detectManagerVersion,

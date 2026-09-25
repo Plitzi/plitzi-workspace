@@ -45,6 +45,10 @@ const toggle = (): void => {
   document.documentElement.requestFullscreen().catch(() => undefined);
 };
 
+const CALLBACKS: Record<string, InteractionCallback> = {
+  toggle: { ...declaration.callbacks.toggle, callback: toggle }
+};
+
 /**
  * Full screen, from a click.
  *
@@ -74,6 +78,7 @@ const FullscreenToggle = ({
       aria-pressed={active}
       onClick={toggle}
       interactionTriggers={TRIGGERS}
+      interactionCallbacks={CALLBACKS}
     >
       <svg className="fullscreenToggle__icon" viewBox="0 0 24 24" aria-hidden="true">
         <path d={active ? EXIT_ICON : ENTER_ICON} />

@@ -286,6 +286,10 @@
       "types": "./dist/helpers/isDate.d.ts",
       "import": "./dist/helpers/isDate.mjs"
     },
+    "./helpers/keys": {
+      "types": "./dist/helpers/keys.d.ts",
+      "import": "./dist/helpers/keys.mjs"
+    },
     "./helpers/reducerOrigin": {
       "types": "./dist/helpers/reducerOrigin.d.ts",
       "import": "./dist/helpers/reducerOrigin.mjs"

@@ -22,8 +22,12 @@ never a nested tree. Use the step builders — they fill in where a step runs an
 - **Which `setState`.** `setState({ key })` writes `runtime.state.<key>` and is read as `state.<key>`; never put
   `state.` in the key. `updateElement(…)` changes one element's own attribute or state.
 - **Flip in one step.** `toggleState({ key })` for app state, `toggleElement({ category: 'state', key: 'visibility' },
-  'panel')` to show/hide an element. Never two branches under opposite `when` guards — they read the state as it was
-  when the flow started, a click behind.
+  'panel')` to show/hide an element. Never two branches under opposite `when` guards — the second reads what the
+  first just wrote and flips it back. A key never set toggles to `true`, so for something shown by default name the
+  key for hiding it (`sidebarCollapsed`).
+- **Each step reads the page as it is when it runs.** A `when` or a `{{ state.x }}` after a `setState` sees the new
+  value, and one after a `delay` or a server action sees whatever changed meanwhile. To act on the value from BEFORE
+  a write, put the step that reads it first.
 - **Keys are flat names.** A dotted key (`docsClosed.start`) is split into a path; use `docsClosedStart`.
 - **`setState` types**: `text`, `number` (decimals kept), `boolean` (the word or a real boolean), and `json` for an
   object or a list — `value: '{{ list_rows.item }}'` stores the row itself; JSON text is parsed, and text that is not
@@ -67,6 +71,13 @@ server action it started (`onFlowEnd`, `onFlowError`, `onFlowProgress`). A `page
 `onSubmit`, a `formControl` `onChange`, an `apiContainer` `onApiSuccess`/`onApiError` (each answer, either runtime,
 each refresh), a `modalContainer` `onModalOpen`/`onModalClose`, a `pagination` `onPageChange`. A flow on an element
 that never fires its trigger is refused, naming the type that does.
+
+**Keyboard shortcuts** are a trigger every element has: `onKey('f')`, `onKey('shift+f')`, `onKey('mod+k')` (⌘ on a
+Mac, Ctrl elsewhere), several with commas (`onKey('plus, =')`). Heard on the whole page while the element is mounted,
+so put it on the element whose flows it drives — `onKey('plus'), declaredCallback(map, 'zoomIn', { on: 'map' })` — or
+on the page. A press while typing in a field is the field's, unless Ctrl/⌘/Alt is held or the key is Escape.
+`{{ <step>.key }}` is the key pressed (`shift+f`). A shortcut that cannot fire (`'ctrl+shift'`, `'arrowupp'`) is refused
+where it is written.
 
 **A form's flow goes on the `form`**, which hands its submit over with `managedByInteractions: true`
 (`FORM_SUBMIT_UNMANAGED` otherwise — the browser submits it natively and `onSubmit` never fires):

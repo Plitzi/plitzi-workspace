@@ -15,7 +15,11 @@ export type FullscreenToggleAttributes = Omit<FullscreenToggleProps, 'className'
 const declaration = {
   type: 'fullscreenToggle',
   triggers: {},
-  callbacks: {},
+  /**
+   * The same toggle, asked for by a flow — a keyboard shortcut. A key press is a gesture too, and a browser grants full
+   * screen for a short while after one, which is time enough for a flow's first steps.
+   */
+  callbacks: { toggle: { action: 'toggle', title: 'Toggle Full Screen', type: 'callback', params: {} } },
   content: {
     attributes: { label: 'Full screen', exitLabel: 'Exit full screen' },
     definition: {

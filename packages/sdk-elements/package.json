@@ -134,6 +134,10 @@
       "types": "./dist/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/Element/hooks/useInternalItems.mjs"
     },
+    "./Element/hooks/useKeyTriggers": {
+      "types": "./dist/Element/hooks/useKeyTriggers.d.ts",
+      "import": "./dist/Element/hooks/useKeyTriggers.mjs"
+    },
     "./Element/hooks/useLayoutChain": {
       "types": "./dist/Element/hooks/useLayoutChain.d.ts",
       "import": "./dist/Element/hooks/useLayoutChain.mjs"

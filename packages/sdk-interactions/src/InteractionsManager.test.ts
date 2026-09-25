@@ -295,3 +295,189 @@ describe('a param that is not a string', () => {
     expect(spy.mock.calls[0]?.[0]).toMatchObject({ echo: 'see {% if x %}this{% endif %}' });
   });
 });
+
+/**
+ * A step sees the page as it is when it runs. The sources are read again before every step, so a condition after a
+ * write reads the written value, and one after a wait reads whatever changed meanwhile — not the page as it was when
+ * the trigger fired.
+ */
+describe('InteractionsManager — what a step reads', () => {
+  const chain = (elementId: string, steps: Partial<ElementInteraction>[]): Record<string, ElementInteraction> => {
+    const ids = ['trig', ...steps.map((_, index) => `s${index}`)];
+
+    return Object.fromEntries(
+      ids.map((id, index) => [
+        id,
+        {
+          id,
+          title: id,
+          type: index === 0 ? 'trigger' : 'callback',
+          action: index === 0 ? 'click' : '',
+          params: {},
+          preview: {},
+          elementId,
+          beforeNode: ids[index - 1] ?? '',
+          afterNode: ids[index + 1] ?? '',
+          flowId: 'flow1',
+          enabled: true,
+          ...(index === 0 ? {} : steps[index - 1])
+        } satisfies ElementInteraction
+      ])
+    );
+  };
+
+  const onState = (open: boolean) => ({
+    combinator: 'and' as const,
+    rules: [{ field: 'state.open', operator: '=' as const, value: open }]
+  });
+
+  it('reads what an earlier step of the same flow wrote', async () => {
+    const page = { state: { open: false } };
+    const opened = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      chain('el1', [{ action: 'open' }, { action: 'opened', when: onState(true) }]),
+      triggerDef,
+      {
+        open: {
+          action: 'open',
+          title: 'Open',
+          type: 'callback',
+          params: {},
+          callback: () => (page.state = { open: true })
+        },
+        opened: { action: 'opened', title: 'Opened', type: 'callback', params: {}, callback: opened }
+      },
+      () => ({ dataSource: page })
+    );
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(opened).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads what changed outside the flow while it waited', async () => {
+    const page = { state: { open: true } };
+    const stillOpen = vi.fn();
+    let release = (): void => undefined;
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      chain('el1', [{ action: 'wait' }, { action: 'stillOpen', when: onState(true) }]),
+      triggerDef,
+      {
+        wait: {
+          action: 'wait',
+          title: 'Wait',
+          type: 'callback',
+          params: {},
+          callback: () => new Promise<void>(resolve => (release = resolve))
+        },
+        stillOpen: { action: 'stillOpen', title: 'Still open', type: 'callback', params: {}, callback: stillOpen }
+      },
+      () => ({ dataSource: page })
+    );
+
+    const running = manager.interactionTrigger('el1', 'click', {});
+    await Promise.resolve();
+    page.state = { open: false };
+    release();
+    await running;
+
+    expect(stillOpen).not.toHaveBeenCalled();
+  });
+
+  it('resolves a param template against the page as the step runs', async () => {
+    const page = { state: { count: 1 } };
+    const received = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      chain('el1', [{ action: 'bump' }, { action: 'show', params: { value: '{{ state.count }}' } }]),
+      triggerDef,
+      {
+        bump: {
+          action: 'bump',
+          title: 'Bump',
+          type: 'callback',
+          params: {},
+          callback: () => (page.state = { count: 2 })
+        },
+        show: { action: 'show', title: 'Show', type: 'callback', params: {}, callback: received }
+      },
+      () => ({ dataSource: page })
+    );
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(received).toHaveBeenCalledWith(expect.objectContaining({ value: 2 }), expect.anything());
+  });
+});
+
+/** One key press fires `onKey` once, with the shortcuts it matched; each flow on it runs only for its own. */
+describe('InteractionsManager — keyboard shortcuts', () => {
+  const keyFlow = (id: string, keys: string, action: string): Record<string, ElementInteraction> => ({
+    [`${id}-t`]: {
+      id: `${id}-t`,
+      title: 'On Key',
+      type: 'trigger',
+      action: 'onKey',
+      params: { keys },
+      preview: {},
+      elementId: 'el1',
+      beforeNode: '',
+      afterNode: `${id}-s`,
+      flowId: `${id}-t`,
+      enabled: true
+    },
+    [`${id}-s`]: {
+      id: `${id}-s`,
+      title: action,
+      type: 'callback',
+      action,
+      params: {},
+      preview: {},
+      elementId: 'el1',
+      beforeNode: `${id}-t`,
+      afterNode: '',
+      flowId: `${id}-t`,
+      enabled: true
+    }
+  });
+
+  const setup = () => {
+    const zoom = vi.fn();
+    const close = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      { ...keyFlow('a', 'plus, =', 'zoom'), ...keyFlow('b', 'escape', 'close') },
+      { onKey: { action: 'onKey', title: 'On Key', type: 'trigger', params: {} } },
+      {
+        zoom: { action: 'zoom', title: 'Zoom', type: 'callback', params: {}, callback: zoom },
+        close: { action: 'close', title: 'Close', type: 'callback', params: {}, callback: close }
+      }
+    );
+
+    return { manager, zoom, close };
+  };
+
+  it('runs only the flows whose keys the press matched', async () => {
+    const { manager, zoom, close } = setup();
+
+    await manager.interactionTrigger('el1', 'onKey', { key: '+', shortcuts: ['plus, ='] });
+
+    expect(zoom).toHaveBeenCalledTimes(1);
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('runs every flow one press matched, in one go', async () => {
+    const { manager, zoom, close } = setup();
+
+    await manager.interactionTrigger('el1', 'onKey', { key: 'escape', shortcuts: ['plus, =', 'escape'] });
+
+    expect(zoom).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+});

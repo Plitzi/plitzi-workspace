@@ -711,3 +711,33 @@
 - Skills: `plitzi-authoring` gains `reference/validation.md` (how `authorSpace` checks — first refusals one at a time,
   then the linter's list at once — a one-file author script, and what it cannot see) and plugin guidance; `@plitzi/cli`
   ships a `plitzi-cli` skill, copied into every project `plitzi create` writes and every plugin package.
+
+## A flow's steps read the page as it is when they run
+
+- **Behaviour change.** Every step of a flow reads the sources again when it runs, instead of the page as it was when
+  the trigger fired. A `when` or a `{{ state.x }}` after a `setState` sees the new value; one after a `delay`, a
+  server action or anything else that waits sees what changed meanwhile, including what the person did. `computed`
+  is evaluated again for each step over the state as it is then — read from the store, not from the copy the last
+  render left in `runtime.sources`.
+- What this breaks: a toggle written as two `setState` steps under opposite `when` guards on the same key now flips
+  and flips back. `authorSpace` warns about it (`state-toggled-in-branches`) and names `toggleState`. The Plitzi
+  website's sidebar toggle was the one stored flow of that shape, and is one step now.
+- `liveSources(sources, state, computedDefinitions)` (`@plitzi/sdk-shared/dataSource`) is what an element hands a
+  running flow.
+
+## Keyboard shortcuts: `onKey`
+
+- A trigger every element has, `onKey`, with one param: `keys` — one shortcut or several with commas (`'f'`,
+  `'shift+f'`, `'mod+k'`, `'plus, ='`, `'escape'`). Heard on the window while the element is mounted; ignored while
+  somebody types in a field unless Ctrl/⌘/Alt is held or the key is Escape; a matching press does not also do the
+  browser's default. The flow reads `{{ <step>.key }}`, the key pressed.
+- Authoring: `onKey(keys)` refuses a shortcut that cannot fire where it is written; `lintSpace` reports one written in
+  the builder (`trigger-keys`).
+- `@plitzi/sdk-shared/helpers/keys`: `parseKeys` and `keyPressCombo`, the two halves of matching.
+
+## `plitzi create` projects check their own plugins
+
+- A local project keeps `src/plugins/declarations.ts`, and every place it authors the space — the server or the
+  browser entry, `npm run author`, the visual test — passes it to `authorSpace(space, { plugins: declarations })`.
+  `plitzi add plugin` adds each new plugin's declaration to it (or, when the list was changed by hand, says what to
+  add). A flow on an event a project's plugin never fires is refused at authoring, as it is for a built-in element.

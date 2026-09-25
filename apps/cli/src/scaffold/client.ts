@@ -108,6 +108,7 @@ const localMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
+import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
 
 import './preflight.css';
@@ -133,7 +134,7 @@ const mount = (spec: SpaceSpec) =>
        * space, so there is no account, no key and no server in the picture.
        */
       offlineMode: true,
-      offlineData: authorSpace(spec),
+      offlineData: authorSpace(spec, { plugins: declarations }),
       /**
        * Without this the SDK renders inside an IFRAME — its default, because a space dropped into an unknown page
        * is safest isolated from it. This page is yours, so render straight into the DOM: one document, one

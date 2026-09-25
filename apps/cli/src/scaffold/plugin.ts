@@ -203,8 +203,32 @@ break the plugin, it blanks the page. Put live values in an effect.
 invisible on one of them. Use \`currentColor\` and the space's own \`var(--…)\` variables.
 `;
 
+const declarationName = (component: string): string => `${component.charAt(0).toLowerCase()}${component.slice(1)}`;
+
+/**
+ * `src/plugins/declarations.ts`: the declaration of every plugin that has one, which `authorSpace` holds the space to —
+ * a flow on an event a plugin never fires, or an attribute it does not read, is refused instead of written. Written
+ * from the folders' names alone, so the CLI can tell a list it wrote from one somebody changed, and add to the first.
+ */
+export const projectDeclarations = (components: string[]): string => {
+  const names = components.map(declarationName);
+  const list = `export const declarations: PluginDeclarationData[] = [${names.join(', ')}];`;
+
+  return `${components.map(component => `import ${declarationName(component)} from './${component}/declaration.ts';`).join('\n')}${components.length ? '\n\n' : ''}import type { PluginDeclarationData } from '@plitzi/sdk-authoring';
+
+/**
+ * Every plugin's declaration, handed to \`authorSpace\` wherever the space is authored: its flows on a plugin's events,
+ * its steps to a plugin's actions and its attributes are checked like a built-in element's. \`plitzi add plugin\`
+ * writes this list; a plugin written by hand is added with its \`declaration.ts\`.
+ */
+${list.length <= 120 ? list : `export const declarations: PluginDeclarationData[] = [\n${names.map(name => `  ${name}`).join(',\n')}\n];`}
+`;
+};
+
 export const pluginFiles = (answers: CreateAnswers): ProjectFiles => ({
   'src/plugins/StatCard/StatCard.tsx': component(),
   'src/plugins/StatCard/index.ts': barrel(),
-  'src/plugins/README.md': readme(answers)
+  'src/plugins/README.md': readme(answers),
+  // Only where the space is authored here: a space kept in Plitzi is checked by the builder instead.
+  ...(answers.source === 'local' ? { 'src/plugins/declarations.ts': projectDeclarations([]) } : {})
 });

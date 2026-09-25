@@ -51,6 +51,27 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
   /**
+   * A keyboard shortcut, heard while the element is on the page — on the page itself, the whole page's.
+   *
+   * Not a DOM event of the element: it listens on the window, so the element need not have focus, and it is ignored
+   * while somebody types in a field unless Ctrl, ⌘ or Alt is held, or the key is Escape. `keys` is one shortcut or
+   * several with commas — `'f'`, `'shift+f'`, `'mod+k'` (⌘ on a Mac, Ctrl elsewhere), `'escape, q'`.
+   */
+  onKey: {
+    action: 'onKey',
+    title: 'On Key',
+    type: 'trigger',
+    preview: { key: '', shortcuts: '' },
+    params: {
+      keys: {
+        canBind: false,
+        defaultValue: '',
+        type: 'text',
+        label: 'Keys (e.g. f, shift+f, mod+k, escape)'
+      }
+    }
+  },
+  /**
    * The end of a server action this element started.
    *
    * Not a DOM event — nothing in `nativeEventsList` — so it is never wired to the element's markup: the actions

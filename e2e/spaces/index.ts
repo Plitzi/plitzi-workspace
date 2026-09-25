@@ -2,7 +2,9 @@ import { readOfflineData } from '@plitzi/example-space';
 import { offlineData } from '@plitzi/example-space/space';
 
 import { actionSpace } from './actions';
+import { flowReadsSpace } from './flowReads';
 import { keptStateSpace } from './keptState';
+import { keysSpace } from './keys';
 import { minimalSpace } from './minimal';
 import { plainSpace } from './plain';
 import { querySpace } from './queries';
@@ -14,7 +16,9 @@ import type { AuthoredSpace } from '@plitzi/sdk-authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export * from './actions';
+export * from './flowReads';
 export * from './keptState';
+export * from './keys';
 export * from './minimal';
 export * from './plain';
 export * from './queries';
@@ -36,6 +40,8 @@ export * from './unaskedQueries';
  *  | `querySpace()` | A browser-side provider behind a panel that opens and closes, and a step that invalidates it — for counting the requests the query cache saves |
  *  | `routeQuerySpace()` | A detail page inside a shell whose provider URL names a route param — for what a provider does on the way out |
  *  | `unaskedQuerySpace()` | Two providers with nothing to ask — one whose URL keeps an unanswered token, one whose URL a button empties |
+ *  | `flowReadsSpace()` | Flows that write, compute and wait — for what a step reads when it runs |
+ *  | `keysSpace()` | Two keyboard shortcuts on one element and a field — for what a press on the page and in a field fires |
  *  | `keptStateSpace()` | Kept state with one transient key — for what comes back after a reload and what starts fresh |
  *  | `themedSpace()` | A page painted only from a light/dark palette, and a theme toggle — for asserting the colours a theme puts in force |
  *
@@ -85,7 +91,9 @@ export const sampleId = (ref: string, data: OfflineDataRaw = sampleSpace()): str
 
 export {
   actionSpace,
+  flowReadsSpace,
   keptStateSpace,
+  keysSpace,
   minimalSpace,
   plainSpace,
   querySpace,

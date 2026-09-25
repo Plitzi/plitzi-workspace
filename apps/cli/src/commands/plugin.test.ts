@@ -9,7 +9,7 @@ import addPlugin from './addPlugin';
 import createPlugin from './createPlugin';
 import { coveredByWorkspace, findProject } from './existingProject';
 import packPluginCommand from './packPlugin';
-import { scaffold } from '../scaffold';
+import { projectDeclarations, scaffold } from '../scaffold';
 
 import type { CreateAnswers } from '../scaffold';
 
@@ -207,11 +207,33 @@ describe('plitzi add plugin', () => {
           expect(await exists(path.join(dir, 'src/plugins', folder, file)), `${folder}/${file}`).toBe(true);
         }
       }
+
+      expect(await fs.readFile(path.join(dir, 'src/plugins/declarations.ts'), 'utf-8')).toBe(
+        projectDeclarations(['SeatPicker', 'Legend', 'PriceTag'])
+      );
     });
 
     expect(process.exitCode).toBeUndefined();
     expect(output()).toContain('Registered: src/main.ts finds every folder of src/plugins.');
     expect(output()).toContain("custom({ id: 'legend', renderType: 'legend' })");
+    expect(output()).toContain('Declared in src/plugins/declarations.ts');
+  });
+
+  it('leaves a declarations list somebody changed to them, and says what to add', async () => {
+    captureErrors();
+    const output = captureOutput();
+    await inTemp(async dir => {
+      await cliProject(dir);
+      const changed = `${projectDeclarations([])}// mine\n`;
+      await write(path.join(dir, 'src/plugins/declarations.ts'), changed);
+
+      await from(dir, () => addPlugin(['seat-picker'], {}));
+
+      expect(await fs.readFile(path.join(dir, 'src/plugins/declarations.ts'), 'utf-8')).toBe(changed);
+    });
+
+    expect(output()).toContain('src/plugins/declarations.ts is missing or not the list the CLI wrote');
+    expect(output()).toContain('SeatPicker/declaration.ts');
   });
 
   it('sends a project whose space lives in Plitzi to the builder to place it', async () => {
@@ -321,7 +343,7 @@ describe('plitzi add plugin', () => {
       await from(dir, () => addPlugin(['button'], {}));
       await from(dir, () => addPlugin(['legend', 'price-tag'], { title: 'Key' }));
 
-      expect(await fs.readdir(path.join(dir, 'src/plugins'))).toEqual(['README.md', 'StatCard']);
+      expect(await fs.readdir(path.join(dir, 'src/plugins'))).toEqual(['README.md', 'StatCard', 'declarations.ts']);
     });
 
     expect(errors()).toContain('would both be "seatPicker"');

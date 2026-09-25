@@ -469,8 +469,9 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   \`setState\` has **no** \`type\` param (that belongs to the global one below). Beside it every element registers
   **\`toggleState\`** — the same write with **no \`value\`**: it stores the OPPOSITE of what is there
   (\`category\`, \`key\`, \`revertOnFinish\`). That is how expand/collapse is authored — **one step on one trigger**,
-  never two \`setState\` branches under complementary \`when\` conditions, which read the state as it was when the
-  flow STARTED and so are always one step behind. An element type may also register its own extra callbacks.
+  never two \`setState\` branches under complementary \`when\` conditions: every step reads the page as it is when it
+  runs, so the second sees what the first wrote and flips it back. An element type may also register its own extra
+  callbacks.
 - \`globalCallback\` — a callback provided by a **source module**, NOT by any element: \`addNotification\` (source
   \`space\`), \`setState\`/\`toggleState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`login\`/\`logout\`/
   \`refreshDetails\` (\`auth\`), \`runServerAction\`/\`cancelServerAction\` (\`actions\`). Its \`elementId\` is the

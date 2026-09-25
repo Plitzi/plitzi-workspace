@@ -36,10 +36,9 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
    * The one-step toggle — a menu that opens and closes, a panel that expands and collapses, from a single flow on a
    * single trigger.
    *
-   * Written with `setState` this took two branches guarded by `when` conditions that had to be exact complements of
-   * each other, and the condition read the state as it was when the flow STARTED — so the pattern worked only
-   * because the second branch happened to see a stale value, and stopped working the moment anything else in the
-   * flow touched the same key. Flipping the value where it is read is the only version of this that has no ordering
+   * Written with `setState` this takes two branches guarded by `when` conditions that are complements of each other,
+   * and it undoes itself: each step reads the state as it is when it runs, so the second branch sees what the first
+   * just wrote and puts it back. Flipping the value where it is read is the only version of this that has no ordering
    * to get wrong.
    */
   toggleState: {
@@ -148,8 +147,8 @@ export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {
    * A checkbox, as one step: in the list if it was not, out of it if it was.
    *
    * The list is treated as a SET — the same value is never in it twice — which is what makes pressing the box twice
-   * safe. An append guarded by a check reads the list as it was when the flow started, so two presses in the same
-   * tick both found the value absent and added it twice.
+   * safe. An append guarded by a check reads the list before the other press's write lands, so two presses in the
+   * same tick both found the value absent and added it twice.
    */
   toggleInState: {
     source: 'state',

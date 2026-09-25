@@ -459,6 +459,69 @@ to contain braces reaches the step as typed. An attribute is the one place that 
 `{{ name|filter }}` tokens only, because attributes carry prose.
 A root that is a step of the same flow is that step's result and is left alone.
 
+### Keyboard shortcuts
+
+`onKey(keys)` starts a flow from the keyboard. It is a trigger every element has, heard on the whole page for as long
+as the element is mounted — nobody focuses a map before pressing `+`:
+
+```ts
+seismicMap({
+  id: 'map',
+  flows: [
+    [onKey('plus, ='), declaredCallback(declaration, 'zoomIn', { on: 'map' })],
+    [onKey('minus'), declaredCallback(declaration, 'zoomOut', { on: 'map' })],
+    [onKey('escape'), setState({ key: 'selectedId', type: 'text', value: '' })]
+  ]
+});
+```
+
+`keys` is one shortcut or several with commas: a character (`'f'`, `'?'`, `'+'`), a key's name (`escape`, `space`,
+`arrowup` or `up`, `enter`, `f1`…) and modifiers before it (`shift+f`, `alt+1`, `mod+k` — ⌘ on a Mac, Ctrl
+elsewhere). Shift counts for a letter and not for a symbol, which is typed with whatever the keyboard needs. A press
+while somebody types in a field is the field's, unless Ctrl, ⌘ or Alt is held or the key is Escape; a press that
+matches is the shortcut's alone, so an arrow bound to a flow no longer scrolls the page. `{{ <step>.key }}` is the key
+pressed, for one flow answering several. A shortcut that cannot fire — two keys, only modifiers, a name that is not a
+key — is refused where it is written, and `lintSpace` reports one written in the builder (`trigger-keys`).
+
+### What a step reads
+
+**Each step reads the page as it is when that step runs** — not as it was when the trigger fired. A `when` or a
+`{{ state.x }}` after a `setState` sees the new value; one after a `delay`, a server action or anything else that
+waits sees whatever changed meanwhile, including what the person using the page did. `computed` values are evaluated
+again for each step, over the state as it is then.
+
+That is what makes a flow that waits say what it means:
+
+```ts
+// Delete, with five seconds to take it back: the Undo button beside it only clears `pendingDelete`.
+button({
+  id: 'delete',
+  content: 'Delete',
+  flows: [
+    [
+      onClick(),
+      setState({ key: 'pendingDelete', type: 'text', value: '{{ list_rows.item.id }}' }),
+      delay(5000),
+      // Read after the wait: if Undo was pressed meanwhile, `pendingDelete` is empty and nothing is deleted.
+      when(
+        { field: 'state.pendingDelete', operator: '=', value: 'list_rows.item.id', isBinding: true },
+        runServerAction({ actionId: 'row-delete', input: { id: '{{ list_rows.item.id }}' } })
+      )
+    ]
+  ]
+});
+```
+
+`isBinding: true` compares the field with another path rather than with a literal.
+
+While a flow runs, the same trigger on the same element does not start it again — a second click on Delete during
+those five seconds is ignored, which is what keeps a double click from submitting twice. An event that must never be
+dropped while a flow waits (a stream of arrivals, say) should not wait in the flow it starts.
+
+To act on the value from BEFORE a write, put the step that reads it first. Two branches under opposite `when`
+guards cannot toggle a value — the second sees what the first wrote and flips it back; `toggleState` does it in one
+step.
+
 ### Cached requests
 
 An `apiContainer` that reads from the browser asks for its data every time it is shown, unless its author opts

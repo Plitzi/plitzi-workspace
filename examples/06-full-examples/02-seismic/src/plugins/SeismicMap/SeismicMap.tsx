@@ -13,14 +13,18 @@ import {
   quakeFeatures,
   rangeRings,
   ringLabelPosition,
+  shakingBounds,
+  shakingFeatures,
+  shakingLabels,
   toGeography,
-  toQuakes
+  toQuakes,
+  toShaking
 } from './geo';
 import { LAYERS, PLATE_LAYERS, QUAKE_LAYERS, REPLAY_CLOCK, SOURCES, applyPalette, quakeFilter, style } from './layers';
-import { SHOCKWAVE_MS, reticle, ringLabel, shockwave, tooltip } from './overlays';
+import { SHOCKWAVE_MS, reticle, ringLabel, shakingLabel, shockwave, tooltip } from './overlays';
 import { readPalette } from './palette';
 
-import type { Geography, MapQuake } from './geo';
+import type { Geography, MapQuake, Shaking } from './geo';
 import type { InteractionCallback } from '@plitzi/plitzi-sdk';
 import type { FeatureCollection } from 'geojson';
 import type * as MapLibre from 'maplibre-gl';
@@ -89,6 +93,19 @@ export type SeismicMapProps = {
   feedKey?: string;
   /** Where MapLibre's worker is served. It is a module of its own and cannot be bundled into this one. */
   workerUrl?: string;
+  /**
+   * How hard the ground shook around an event — its ShakeMap contours, with the event's id. Drawn only while that
+   * event is the one locked, so contours that arrive late for an event the reader has left are never shown.
+   */
+  shaking?: Shaking | string | null;
+  /**
+   * Tour the window: every `tourSeconds`, the map moves on to the next of its strongest events that pass the filters
+   * and says so with `onTourStep`. A reader who grabs the map ends it with `onTourEnd`.
+   */
+  tour?: boolean | string;
+  tourSeconds?: number | string;
+  /** After this long with nobody touching the page, `onIdle`. `0` never. The display left on a wall uses it. */
+  idleSeconds?: number | string;
   className?: string;
 };
 
@@ -133,6 +150,12 @@ const ROTATION_SPEED = 4;
 
 /** More arrivals than this in one refresh are announced as the largest few — a backlog, not a sequence. */
 const MAX_ANNOUNCED = 3;
+
+/** How many of the window's strongest events a tour visits before starting again. */
+const TOUR_STOPS = 8;
+
+/** What counts as somebody at the page, for `idleSeconds`. */
+const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
 
 /** Shockwaves on screen at once during a replay. A busy hour would otherwise be a thousand DOM nodes. */
 const MAX_REPLAY_SHOCKS = 24;
@@ -253,6 +276,10 @@ const SeismicMap = ({
   scheme = 'dark',
   feedKey = '',
   workerUrl = '/vendor/maplibre/maplibre-gl-worker.mjs',
+  shaking,
+  tour = false,
+  tourSeconds = 10,
+  idleSeconds = 0,
   className
 }: SeismicMapProps) => {
   const quakes = useMemo(() => toQuakes(events), [events]);
@@ -262,6 +289,10 @@ const SeismicMap = ({
   const arrivalMs = numeric(arrivalSeconds, 8) * 1000;
   const replaying = flag(replay, false);
   const rotating = flag(autoRotate, true);
+  const touring = flag(tour, false);
+  const stopMs = Math.max(numeric(tourSeconds, 10), 3) * 1000;
+  const idleMs = Math.max(numeric(idleSeconds, 0), 0) * 1000;
+  const contours = useMemo(() => toShaking(shaking), [shaking]);
 
   const { id } = useElement();
   const {
@@ -274,6 +305,8 @@ const SeismicMap = ({
   const cursor = useRef<HTMLSpanElement>(null);
   const replayClock = useRef<HTMLSpanElement>(null);
   const replayProgress = useRef<HTMLSpanElement>(null);
+  const tourStop = useRef<HTMLSpanElement>(null);
+  const tourTrack = useRef<HTMLSpanElement>(null);
   const mapRef = useRef<MapLibre.Map | null>(null);
   const libraryRef = useRef<MapLibreModule | null>(null);
   const [ready, setReady] = useState(false);
@@ -645,6 +678,135 @@ const SeismicMap = ({
   }, [ready, quakes, selectedId]);
 
   /**
+   * Every change of the lock, whoever made it — a click, a row of the log, an arrival, the tour — said once.
+   *
+   * A space that wants to do something about "the map is looking at this event now" hangs ONE flow here, instead of
+   * repeating it in every place that can select an event.
+   */
+  const announced = useRef(selectedId);
+  useEffect(() => {
+    if (announced.current === selectedId) {
+      return;
+    }
+
+    announced.current = selectedId;
+    fire('onLock', { id: selectedId });
+  }, [selectedId, fire]);
+
+  /**
+   * The locked event's shaking: its ShakeMap contours and a numeral on each whole level.
+   *
+   * Drawn only when the contours are the locked event's own — they arrive from a request, and the reader may have moved
+   * on before it answered.
+   */
+  const shakingMarkers = useRef<MapLibre.Marker[]>([]);
+  useEffect(() => {
+    const map = mapRef.current;
+    const library = libraryRef.current;
+    if (!ready || !map || !library) {
+      return;
+    }
+
+    shakingMarkers.current.forEach(marker => marker.remove());
+    shakingMarkers.current = [];
+    const shown = contours?.id === selectedId ? contours : undefined;
+    setData(map, SOURCES.shaking, shown ? shakingFeatures(shown) : EMPTY_COLLECTION);
+    if (!shown) {
+      return;
+    }
+
+    shakingMarkers.current = shakingLabels(shown).map(({ mmi, position }) =>
+      new library.Marker({ element: shakingLabel(mmi) }).setLngLat([position[0], position[1]]).addTo(map)
+    );
+
+    // Frame the shaking: an M5's contours are a blot under the reticle at the lock's zoom, an M7's run off the screen.
+    const bounds = shakingBounds(shown);
+    if (bounds) {
+      lastTouched.current = performance.now();
+      map.fitBounds(bounds, { padding: focusPadding(map.getContainer()), maxZoom: 6.5, duration: 1600 });
+    }
+  }, [ready, contours, selectedId]);
+
+  /**
+   * The tour: the window's strongest events, one after another, for a display nobody is driving.
+   *
+   * The map does not select anything itself — it says which event is next (`onTourStep`) and the space selects it,
+   * so a tour stop is the same lock, dossier and shaking as a click. A reader who grabs the map ends it (`onTourEnd`).
+   * The stops are read afresh at each step, so a refresh or a filter changed mid-tour is honoured at the next one.
+   */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !touring) {
+      return undefined;
+    }
+
+    let visited = 0;
+    let timer = 0;
+    tourTrack.current?.style.setProperty('--seismic-tour-ms', `${stopMs}ms`);
+    const step = (): void => {
+      timer = window.setTimeout(step, stopMs);
+      const stops = latest.current.quakes
+        .filter(onScreen)
+        .sort((a, b) => b.magnitude - a.magnitude)
+        .slice(0, TOUR_STOPS);
+      if (!stops.length) {
+        return;
+      }
+
+      const index = visited % stops.length;
+      visited += 1;
+      const stop = `${index + 1} / ${stops.length}`;
+      if (tourStop.current) {
+        tourStop.current.textContent = stop;
+      }
+
+      // A fresh bar restarts its CSS animation: one stop's time, filling.
+      const progress = document.createElement('span');
+      progress.className = 'seismic__tour-progress';
+      tourTrack.current?.replaceChildren(progress);
+      latest.current.fire('onTourStep', { ...payloadOf(stops[index]), stop });
+    };
+    const end = (): void => latest.current.fire('onTourEnd', {});
+    map.on('mousedown', end);
+    map.on('touchstart', end);
+    map.on('wheel', end);
+    step();
+
+    return () => {
+      window.clearTimeout(timer);
+      map.off('mousedown', end);
+      map.off('touchstart', end);
+      map.off('wheel', end);
+    };
+  }, [ready, touring, stopMs, onScreen]);
+
+  /** Nobody at the page for `idleSeconds`: said once, and again only after somebody came back and left. */
+  useEffect(() => {
+    if (!idleMs) {
+      return undefined;
+    }
+
+    let last = Date.now();
+    let told = false;
+    const active = (): void => {
+      last = Date.now();
+      told = false;
+    };
+    ACTIVITY_EVENTS.forEach(type => window.addEventListener(type, active, { passive: true }));
+    const check = window.setInterval(() => {
+      if (!told && Date.now() - last >= idleMs) {
+        told = true;
+        latest.current.fire('onIdle', {});
+      }
+    }, 1000);
+
+    return () => {
+      ACTIVITY_EVENTS.forEach(type => window.removeEventListener(type, active));
+      window.clearInterval(check);
+    };
+  }, [idleMs]);
+
+  /**
    * A projection switch keeps what the reader was looking at: the locked event if there is one, the whole view if not.
    *
    * Left where it was, a globe zoomed on Tonga becomes a flat map of empty ocean at the same zoom — the camera numbers
@@ -860,7 +1022,7 @@ const SeismicMap = ({
         aria-label={`World seismic map, ${quakes.length} events in the window`}
       />
       <span ref={probe} className="seismic__probe" aria-hidden="true" />
-      <div className="seismic__cursor" aria-hidden="true" data-hidden={isReplaying}>
+      <div className="seismic__cursor" aria-hidden="true" data-hidden={isReplaying || touring}>
         <span className="seismic__cursor-label">CURSOR</span>
         <span ref={cursor}>—</span>
       </div>
@@ -870,6 +1032,11 @@ const SeismicMap = ({
         <span className="seismic__replay-track">
           <span ref={replayProgress} className="seismic__replay-progress" />
         </span>
+      </div>
+      <div className="seismic__tour" role="status" data-active={touring}>
+        <span className="seismic__tour-label">TOUR</span>
+        <span ref={tourStop} className="seismic__tour-stop" />
+        <span ref={tourTrack} className="seismic__tour-track" />
       </div>
     </RootElement>
   );

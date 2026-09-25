@@ -525,6 +525,31 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('trigger-never-fired');
     });
 
+    it('trigger-keys', () => {
+      const documents = withChange(({ schema }) => {
+        setFlow(schema, 'go', [
+          step('key', 'trigger', 'onKey', { elementId: 'go', params: { keys: 'ctrl+shift' } }),
+          step('open', 'callback', 'openModal', { elementId: 'modal' })
+        ]);
+      });
+
+      expect(errorsOf(documents)).toContain('trigger-keys');
+    });
+
+    it('state-toggled-in-branches', () => {
+      const branch = (id: string, value: boolean, operator: '=' | '!=') =>
+        step(id, 'globalCallback', 'setState', {
+          elementId: 'state',
+          params: { key: 'menuOpen', type: 'boolean', value },
+          when: { combinator: 'and', rules: [{ field: 'state.menuOpen', operator, value: true }] }
+        });
+      const documents = withChange(({ schema }) => {
+        setFlow(schema, 'go', [onClick(), branch('close', false, '='), branch('open', true, '!=')]);
+      });
+
+      expect(warningsOf(documents)).toContain('state-toggled-in-branches');
+    });
+
     it('unknown-global-callback', () => {
       const documents = withChange(({ schema }) => {
         setFlow(schema, 'go', [onClick(), step('teleport', 'globalCallback', 'teleport', { elementId: 'state' })]);

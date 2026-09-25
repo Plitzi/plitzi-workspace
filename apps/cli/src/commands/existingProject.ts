@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { declarationsRegistry, elementsRegistry } from '../scaffold';
+import { declarationsRegistry, elementsRegistry, projectDeclarations } from '../scaffold';
 
 import type { PackageManager } from '../scaffold';
 
@@ -36,6 +36,11 @@ export interface PlitziProject {
    * plugins in `src/main.ts`, and a new one has to be added to that list.
    */
   discovers: boolean;
+  /**
+   * The plugins listed in `src/plugins/declarations.ts`, which the space is authored with — or `undefined` when the
+   * project has no such list, or it is no longer the one the CLI wrote and so is not the CLI's to rewrite.
+   */
+  declared?: string[];
 }
 
 /** A package `plitzi create --plugin` wrote. */
@@ -181,6 +186,23 @@ const packageComponents = async (root: string): Promise<string[] | undefined> =>
 };
 
 /**
+ * A project's declared plugins, read off `src/plugins/declarations.ts` — and trusted only when writing them back out
+ * gives the file byte for byte, as with a plugin package's lists.
+ */
+const projectDeclared = async (root: string): Promise<string[] | undefined> => {
+  const listed = await readText(path.join(root, 'src/plugins/declarations.ts'));
+  if (listed === undefined) {
+    return undefined;
+  }
+
+  const components = [...listed.matchAll(/^import \w+ from '\.\/(\w+)\/declaration\.ts';$/gm)].map(
+    ([, folder]) => folder
+  );
+
+  return projectDeclarations(components) === listed ? components : undefined;
+};
+
+/**
  * What `plitzi create` wrote, if it did — told by what the project depends on and the files it keeps, never by its
  * name.
  *
@@ -210,7 +232,8 @@ const plitziProject = async (
     source: (await exists(path.join(root, 'src/space.ts'))) ? 'local' : 'cloud',
     discovers: server
       ? main.includes('readdirSync(PLUGINS_DIR')
-      : main.includes('import.meta.glob<{ default: RenderPlugins[string]')
+      : main.includes('import.meta.glob<{ default: RenderPlugins[string]'),
+    declared: await projectDeclared(root)
   };
 };
 

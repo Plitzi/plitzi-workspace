@@ -100,11 +100,18 @@ const processParams = (
   }, {});
 };
 
+/** What a condition can compare: the page's data, without the functions a source may also carry. */
+const isRuleValue = (value: unknown): value is RuleValue =>
+  typeof value !== 'function' && typeof value !== 'symbol' && typeof value !== 'bigint';
+
+const ruleValues = (values: Record<string, unknown>): Record<string, RuleValue> =>
+  Object.fromEntries(Object.entries(values).filter((entry): entry is [string, RuleValue] => isRuleValue(entry[1])));
+
 const processNode = async (
   node: ElementInteraction,
   callbacksAvailables: Record<string, InteractionCallback> = {},
-  flowParams = {},
-  globalParams = {},
+  flowParams: Record<string, unknown> = {},
+  globalParams: Record<string, unknown> = {},
   // The element this flow fired on. Threaded through so a step that starts something asynchronous — a detached
   // server action — can report back to it when it finishes, long after this flow returned.
   context: InteractionCallbackContext = {}
@@ -121,7 +128,7 @@ const processNode = async (
     return { status: 'disabled', result, postCallbacks };
   }
 
-  const whenParams = { ...globalParams, ...flowParams, [id]: params };
+  const whenParams = ruleValues({ ...globalParams, ...flowParams, [id]: params });
   if (when && !QueryBuilderEvaluator(when, whenParams)) {
     return { status: 'skipped', result, postCallbacks, whenParams };
   }
@@ -215,12 +222,24 @@ const processPostCallbacks = async (postCallbacks: PostCallbackNode[] = []) => {
   return results;
 };
 
+/**
+ * The page's sources, as a step reads them.
+ *
+ * A function rather than a value because it is called before EVERY step: a step sees what the steps before it wrote,
+ * and whatever else changed while the flow waited — a `delay`, a request, a person clicking. Read once when the
+ * trigger fired, every step saw the page as it was then: a condition after a `delay` could not tell that the reader
+ * had moved on, and a step after `setState` read the value from before it.
+ */
+export type ReadGlobals = () => Record<string, unknown>;
+
+const noGlobals: ReadGlobals = () => ({});
+
 const flowCallbacks = async (
   parentNode: ElementInteraction | undefined,
   nodes: Record<string, ElementInteraction> = {},
   callbacksAvailables = {},
   flowParams = {},
-  globalParams = {},
+  readGlobals: ReadGlobals = noGlobals,
   postCallbacksTotal: PostCallbackNode[] = [],
   executionResults: Record<string, InteractionNode> = {},
   context: InteractionCallbackContext = {}
@@ -243,7 +262,7 @@ const flowCallbacks = async (
     node,
     callbacksAvailables,
     flowParams,
-    globalParams,
+    readGlobals(),
     context
   );
   executionResults[node.id] = {
@@ -262,7 +281,7 @@ const flowCallbacks = async (
     nodes,
     callbacksAvailables,
     { ...flowParams, [node.id]: result },
-    globalParams,
+    readGlobals,
     postCallbacksTotal,
     executionResults,
     context
@@ -338,14 +357,14 @@ const flowTrigger = async (
   nodes = {},
   callbacksAvailables = {},
   flowParams: Record<string, unknown> = {},
-  globalParams = {},
+  readGlobals: ReadGlobals = noGlobals,
   /** The id of the element this fired on, carried through purely so the log can name it. */
   hostElementId?: string,
   postCallbacksTotal = []
 ) => {
   const startTime = pConsole.getTime().valueOf();
   const { action, enabled, when } = triggerNode;
-  if (!action || !enabled || (when && !QueryBuilderEvaluator(when, { ...globalParams, ...flowParams }))) {
+  if (!action || !enabled || (when && !QueryBuilderEvaluator(when, ruleValues({ ...readGlobals(), ...flowParams })))) {
     storeLog(triggerNode, startTime, {}, 'skipped', hostElementId);
 
     return;
@@ -356,7 +375,7 @@ const flowTrigger = async (
     nodes,
     callbacksAvailables,
     flowParams,
-    globalParams,
+    readGlobals,
     postCallbacksTotal,
     {},
     { hostElementId }

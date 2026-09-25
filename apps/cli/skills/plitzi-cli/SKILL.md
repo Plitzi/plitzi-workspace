@@ -83,9 +83,11 @@ Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 - **Registered by itself**: every folder of `src/plugins` is, under its name in camelCase (`SeatPicker` → `seatPicker`).
   Elsewhere the command prints the line that registers it (for `render()`, `<PlitziSdk>` or a page server).
 - **Host it** with `custom({ renderType: 'seatPicker', … })` in `src/space.ts` — or a Custom element in the builder.
-- **Hand its declaration to authoring**: `authorSpace(space, { plugins: [declaration] })`. Flows on its events, steps
-  to its actions and its attributes are then checked like a built-in element's; `declaredTrigger(declaration, 'onPick')`
-  and `declaredCallback(declaration, 'reset', { on: 'seats' })` build those steps, typed from the declaration.
+- **Checked like a built-in element**: `add plugin` also lists its declaration in `src/plugins/declarations.ts`, which
+  every place the project authors the space hands to `authorSpace(space, { plugins: declarations })`. Flows on its
+  events, steps to its actions and its attributes are refused when wrong; `declaredTrigger(declaration, 'onPick')` and
+  `declaredCallback(declaration, 'reset', { on: 'seats' })` build those steps, typed from the declaration. A plugin
+  written by hand is added to that list with its `declaration.ts`.
 - **A new event or action** is declared in `declaration.ts` and registered by the component FROM there — never only
   in the component, or neither the builder nor the linter knows it exists.
 - A name that is a built-in type (`button`, `form`) is refused: a space could not tell the two apart.
@@ -125,6 +127,6 @@ A self-hosted page server does not need `pack`: it compiles a plugin from its so
 | --- | --- |
 | `create` printed questions and wrote nothing | nobody answered the three choices — ask the user, pass them as flags |
 | An element renders "Custom Component … Not Found" | the `renderType` names no registered plugin — check the folder name's camelCase |
-| A flow on the plugin's event is refused, or never runs | the event is not in `declaration.ts`, or the space was authored without `plugins: [declaration]` |
+| A flow on the plugin's event is refused, or never runs | the event is not in `declaration.ts`, or the plugin is missing from `src/plugins/declarations.ts` |
 | `upload` opens a browser | there is no session, or no space chosen — the person completes it there |
 | The upload went to the wrong space | `plitzi space` chooses another; check `whoami` first |

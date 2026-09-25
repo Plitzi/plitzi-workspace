@@ -1,4 +1,5 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
+import { parseKeys } from '@plitzi/sdk-shared/helpers/keys';
 
 import { typeTriggerDefinitions } from './catalog';
 
@@ -59,6 +60,25 @@ export const onSubmit = (): StepSpec => on('onSubmit');
 export const onClick = (params: { propagateEvent?: boolean } = {}): StepSpec => on('onClick', params);
 
 export const onLoad = (): StepSpec => on('onLoad');
+
+/**
+ * A keyboard shortcut, heard on the whole page for as long as the element is mounted: `onKey('f')`,
+ * `onKey('shift+f')`, `onKey('mod+k')` (⌘ on a Mac, Ctrl elsewhere), several at once with commas (`onKey('plus, =')`).
+ *
+ * Put it on the element whose flows it drives, or on the page for a shortcut of the page's. A press while somebody
+ * types in a field is the field's, unless Ctrl, ⌘ or Alt is held or the key is Escape. `{{ <this step's id>.key }}`
+ * is the key pressed, canonical (`shift+f`) — for one flow answering several shortcuts.
+ */
+export const onKey = (keys: string): StepSpec => {
+  const { problems } = parseKeys(keys);
+  if (problems.length || !keys.trim()) {
+    throw new Error(
+      `onKey('${keys}') is not a shortcut: ${problems.join('; ') || 'it is empty'}. Write one or several, with commas: 'f', 'shift+f', 'mod+k', 'escape, q'.`
+    );
+  }
+
+  return on('onKey', { keys });
+};
 
 /**
  * A page has this second load event in addition to {@link onLoad}.

@@ -36,6 +36,7 @@ const authoredSpec = (): string => `import { expect, test } from '@playwright/te
 
 import { authorSpace, inspectPage } from '@plitzi/sdk-authoring';
 
+import { declarations } from '../src/plugins/declarations.ts';
 import { space } from '../src/space.ts';
 
 /**
@@ -50,7 +51,7 @@ import { space } from '../src/space.ts';
  * left to tests of its own: a page behind a session or with a route param (\`post/{{slug}}\`). What shows only under a
  * condition, renders once per list row or has no box of its own, \`inspectPage\` sets aside by itself.
  */
-const { handles } = authorSpace(space);
+const { handles } = authorSpace(space, { plugins: declarations });
 
 const openable = Object.values(handles.pages).filter(
   pageHandle => pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0

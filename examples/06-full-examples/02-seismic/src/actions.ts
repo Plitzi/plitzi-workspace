@@ -43,7 +43,31 @@ const feed = defineAction({
   steps: [{ id: 'report', task: 'seismic.feed' }]
 });
 
-const actions = [feed];
+/** The detail action's id: the map's flow names it, and its `onFlowEnd` flow tells its answer from any other. */
+export const DETAIL_ACTION = 'seismic-detail';
+
+/**
+ * One event, closely — called by the page when the map locks on an event.
+ *
+ * A `call` trigger this time: nothing about it belongs in the first paint, and it depends on what the reader picked.
+ * The page launches it `detached`, so picking another event while it runs is never blocked, and takes the answer from
+ * the map's `onFlowEnd` — keeping it only if the event is still the one selected.
+ */
+const detail = defineAction({
+  id: DETAIL_ACTION,
+  name: 'Seismic detail',
+  description: 'The ShakeMap, faulting and regional history of one earthquake.',
+  trigger: {
+    type: 'call',
+    access: 'public',
+    input: { id: { type: 'text', required: true, label: 'USGS event id' } }
+  },
+  steps: [{ id: 'detail', task: 'seismic.detail' }],
+  // The whole answer, as the task shaped it: it is already exactly what the page reads, and nothing in it is private.
+  output: '{{ detail }}'
+});
+
+const actions = [feed, detail];
 
 /**
  * How the server reaches an action.

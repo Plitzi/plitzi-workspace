@@ -41,7 +41,21 @@ const declaration = {
       params: {},
       preview: { id: '' }
     },
-    onReplayEnd: { action: 'onReplayEnd', title: 'On Replay End', type: 'trigger', params: {}, preview: {} }
+    onReplayEnd: { action: 'onReplayEnd', title: 'On Replay End', type: 'trigger', params: {}, preview: {} },
+    /** The map locked on an event, or let go (`id` empty) — whoever changed `selectedId`. */
+    onLock: { action: 'onLock', title: 'On Lock', type: 'trigger', params: {}, preview: { id: '' } },
+    /** The tour moved on to its next event. */
+    onTourStep: {
+      action: 'onTourStep',
+      title: 'On Tour Step',
+      type: 'trigger',
+      params: {},
+      preview: { id: '', magnitudeLabel: '', region: '', stop: '' }
+    },
+    /** The reader took the map during a tour. */
+    onTourEnd: { action: 'onTourEnd', title: 'On Tour End', type: 'trigger', params: {}, preview: {} },
+    /** Nobody has touched the page for `idleSeconds`. */
+    onIdle: { action: 'onIdle', title: 'On Idle', type: 'trigger', params: {}, preview: {} }
   },
   /**
    * What the map does when a flow asks: the camera, from buttons the space authors. A map that only answers to a mouse
@@ -71,6 +85,9 @@ const declaration = {
       autoRotate: true,
       replay: false,
       replaySeconds: 40,
+      tour: false,
+      tourSeconds: 10,
+      idleSeconds: 0,
       scheme: 'dark',
       feedKey: '',
       workerUrl: '/vendor/maplibre/maplibre-gl-worker.mjs'
@@ -81,7 +98,7 @@ const declaration = {
       description:
         'A WebGL globe (or flat map) of earthquakes: size is magnitude, colour is focal depth, and plate boundaries ' +
         'are drawn by kind. Bind `events` to a list of quakes and `geography` to the world outlines; it fires ' +
-        '`onQuakeSelect`, `onQuakeArrival`, `onArrivalSettled` and `onReplayEnd`, and answers `resetView`, `zoomIn`, `zoomOut` and `pan`. Colours come from the ' +
+        '`onQuakeSelect`, `onQuakeArrival`, `onArrivalSettled`, `onLock`, `onTourStep`, `onTourEnd`, `onIdle` and `onReplayEnd`, and answers `resetView`, `zoomIn`, `zoomOut` and `pan`. Colours come from the ' +
         '`--seismic-*` custom properties on the element.',
       items: [],
       bindings: {},
@@ -123,6 +140,10 @@ const declaration = {
           { path: 'showHeat', label: 'Density' },
           { path: 'autoRotate', label: 'Rotate when idle' },
           { path: 'replay', label: 'Replaying' },
+          { path: 'shaking', label: 'Shaking contours' },
+          { path: 'tour', label: 'Touring' },
+          { path: 'tourSeconds', label: 'Seconds per tour stop' },
+          { path: 'idleSeconds', label: 'Seconds idle before On Idle' },
           { path: 'scheme', label: 'Colour scheme' },
           { path: 'feedKey', label: 'Feed key' }
         ],

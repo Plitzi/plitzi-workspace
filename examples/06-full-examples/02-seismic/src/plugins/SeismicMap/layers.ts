@@ -31,7 +31,8 @@ export const SOURCES = {
   plates: 'plates',
   graticule: 'graticule',
   quakes: 'quakes',
-  rings: 'rings'
+  rings: 'rings',
+  shaking: 'shaking'
 } as const;
 
 /** The layers the element reads back by name: the one a click resolves against, and the ones it filters or toggles. */
@@ -40,7 +41,8 @@ export const LAYERS = {
   glow: 'quake-glow',
   selected: 'quake-selected',
   heat: 'quake-heat',
-  rings: 'range-rings'
+  rings: 'range-rings',
+  shaking: 'shaking'
 } as const;
 
 const PLATE_KINDS = ['convergent', 'divergent', 'transform'] as const;
@@ -122,6 +124,7 @@ type Paints = {
   'quake-core': CircleLayerSpecification['paint'];
   'quake-selected': CircleLayerSpecification['paint'];
   'range-rings': LineLayerSpecification['paint'];
+  shaking: LineLayerSpecification['paint'];
 };
 
 /** Paint, by layer id, for one palette. `layers()` builds from this, and a theme change re-applies it whole. */
@@ -200,6 +203,23 @@ export const paints = (palette: Palette): Paints => ({
     'line-color': css(palette.accent, 0.7),
     'line-width': 1,
     'line-dasharray': [2, 3]
+  },
+  // Shaking, from felt to damaging, in the colours the map already uses for danger: the instrument's trace where
+  // it is barely felt, the intermediate hue where objects fall, the shallow red where buildings are damaged.
+  shaking: {
+    'line-color': [
+      'interpolate',
+      ['linear'],
+      ['get', 'mmi'],
+      3,
+      css(palette.accent, 0.55),
+      5,
+      css(palette.intermediate, 0.8),
+      7,
+      css(palette.shallow, 0.95)
+    ],
+    'line-width': ['interpolate', ['linear'], ['get', 'mmi'], 3, 1.6, 8, 3.2],
+    'line-blur': 0.3
   }
 });
 
@@ -257,6 +277,13 @@ export const layers = (palette: Palette): LayerSpecification[] => {
       paint: paint['quake-heat']
     },
     { id: LAYERS.rings, type: 'line', source: SOURCES.rings, paint: paint['range-rings'] },
+    {
+      id: LAYERS.shaking,
+      type: 'line',
+      source: SOURCES.shaking,
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: paint.shaking
+    },
     { id: LAYERS.glow, type: 'circle', source: SOURCES.quakes, paint: paint['quake-glow'] },
     // Sorted by magnitude, so a big event is drawn over the small ones around it rather than under them.
     {

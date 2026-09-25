@@ -456,7 +456,7 @@ An element starts hidden with \`initialState: { "visibility": false }\` on the e
 \`true\` counts as false, so a panel that has never been set flips **open** on the first click.
 
 Expand/collapse is therefore **ONE step on ONE trigger** — never two \`setState\` branches under opposite \`when\`
-conditions, which read the state as it was when the flow STARTED and so are always one click behind:
+conditions: every step reads the state as it is when it runs, so the second sees what the first wrote and flips it back:
 
 \`\`\`json
 { "operations": [

@@ -50,6 +50,16 @@ export const computed = {
   /** Only a globe turns: on a flat map turning is scrolling sideways off the data, so it is off whatever was chosen. */
   rotate: "{{ state.spinOff or computed.projection == 'flat' ? false : true }}",
   replaying: '{{ state.replay ? true : false }}',
+  touring: '{{ state.tour ? true : false }}',
+  /** A wall display left alone tours by itself after two minutes; each screen decides. */
+  idleSeconds: '{{ state.autoTour ? 120 : 0 }}',
+  /**
+   * The detail the server answered for the LOCKED event — or nothing while it is on its way, or for another event.
+   * The dossier reads its rows through this, so an answer that arrives late for an event the reader left never shows.
+   */
+  detailShown: '{{ state.detail is defined and state.detail.id == state.selectedId ? true : false }}',
+  /** Whether the keyboard help is open. */
+  keysOpen: '{{ state.keysOpen ? true : false }}',
   /** Whether the settings panel is open. Starts closed, and is never kept: a panel open on arrival is in the way. */
   settingsOpen: '{{ state.settingsOpen ? true : false }}',
   /** Whether each panel is open. A flag that HIDES: until it is written, the panel shows. */
@@ -69,4 +79,4 @@ export const shown = (q: string): string =>
  * A lock restored on the next visit points at an event that may have left the window, a replay restored halfway is a
  * display that starts doing something by itself, and a search restored is a log that looks broken.
  */
-export const transientState = ['selectedId', 'replay', 'search', 'settingsOpen'];
+export const transientState = ['selectedId', 'replay', 'tour', 'detail', 'search', 'settingsOpen', 'keysOpen'];

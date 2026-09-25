@@ -14,6 +14,7 @@ import {
 
 import { ALERTS, REFRESH } from '../filters.ts';
 import fullscreenDeclaration from '../plugins/FullscreenToggle/declaration.ts';
+import { FULLSCREEN_ID } from './keys.ts';
 import { resetMapView } from './map.ts';
 import { nav } from './nav.ts';
 import {
@@ -192,6 +193,32 @@ const themeSwitch = styles('themeSwitch', {
   'text-transform': 'uppercase'
 });
 
+/** Replay and tour, side by side: the two ways the display runs by itself. Starting one stops the other. */
+const runButtons = styles('runButtons', {
+  display: 'grid',
+  'grid-template-columns': 'repeat(2, minmax(0, 1fr))',
+  gap: '8px'
+});
+
+const keysLink = styles('keysLink', {
+  css: {
+    ...BUTTON_RESET,
+    'align-self': 'flex-start',
+    padding: '2px 0px',
+    border: '0px solid transparent',
+    'background-color': 'transparent',
+    'font-family': 'var(--mono)',
+    'font-size': '10px',
+    'letter-spacing': '0.14em',
+    'text-transform': 'uppercase',
+    color: 'var(--dim)'
+  },
+  states: {
+    hover: { color: 'var(--trace)' },
+    'focus-visible': { outline: '1px solid var(--trace)', 'outline-offset': '2px' }
+  }
+});
+
 /** How far away the display is read from. The scale itself is in `css.ts`. */
 const SIZES = [
   { key: 'desk', label: 'DESK', hint: 'Native size, for a monitor at arm’s length' },
@@ -337,23 +364,66 @@ const settingsPanelElement = (): ElementSpec =>
           flow: [onClick(), toggleState({ key: 'followOff' })]
         })
       ]),
+      row('Tour', 'tour-settings', [
+        chipButton({
+          id: 'auto-tour',
+          content: 'AUTO WHEN IDLE',
+          hint: 'After two minutes with nobody at the screen, tour the strongest events — for a display left on a wall',
+          source: 'computed.idleSeconds',
+          on: 'source > 0',
+          flow: [onClick(), toggleState({ key: 'autoTour' })]
+        })
+      ]),
+      container({
+        class: runButtons,
+        children: [
+          button({
+            id: 'replay',
+            content: '',
+            title: 'Replay the window from its first event to its last  (R)',
+            class: replayButton,
+            bind: [
+              bindTemplate('content', 'computed.replaying', "{{ source ? '■  STOP REPLAY' : '▶  REPLAY' }}"),
+              bindTemplate('ariaPressed', 'computed.replaying', "{{ source ? 'true' : 'false' }}"),
+              variantFrom(replayButton, 'computed.replaying', { template: "{{ source ? 'running' : '' }}" })
+            ],
+            // A replay is watched from the whole view: the lock is released and the camera pulled back before it starts.
+            flows: [
+              [
+                onClick(),
+                setState({ key: 'tour', type: 'boolean', value: false }),
+                setState({ key: 'selectedId', type: 'text', value: '' }),
+                resetMapView(),
+                toggleState({ key: 'replay' })
+              ]
+            ]
+          }),
+          button({
+            id: 'tour',
+            content: '',
+            title: 'Visit the strongest events of the window, one after another  (T)',
+            class: replayButton,
+            bind: [
+              bindTemplate('content', 'computed.touring', "{{ source ? '■  STOP TOUR' : '◎  TOUR' }}"),
+              bindTemplate('ariaPressed', 'computed.touring', "{{ source ? 'true' : 'false' }}"),
+              variantFrom(replayButton, 'computed.touring', { template: "{{ source ? 'running' : '' }}" })
+            ],
+            flows: [
+              [onClick(), setState({ key: 'replay', type: 'boolean', value: false }), toggleState({ key: 'tour' })]
+            ]
+          })
+        ]
+      }),
       button({
-        id: 'replay',
-        content: '',
-        title: 'Replay the window from its first event to its last',
-        class: replayButton,
-        bind: [
-          bindTemplate('content', 'computed.replaying', "{{ source ? '■  STOP REPLAY' : '▶  REPLAY WINDOW' }}"),
-          bindTemplate('ariaPressed', 'computed.replaying', "{{ source ? 'true' : 'false' }}"),
-          variantFrom(replayButton, 'computed.replaying', { template: "{{ source ? 'running' : '' }}" })
-        ],
-        // A replay is watched from the whole view: the lock is released and the camera pulled back before it starts.
+        id: 'keys-open',
+        content: '?  Keyboard shortcuts',
+        title: 'Every key the display answers to  (?)',
+        class: keysLink,
         flows: [
           [
             onClick(),
-            setState({ key: 'selectedId', type: 'text', value: '' }),
-            resetMapView(),
-            toggleState({ key: 'replay' })
+            setState({ key: 'settingsOpen', type: 'boolean', value: false }),
+            setState({ key: 'keysOpen', type: 'boolean', value: true })
           ]
         ]
       })
@@ -385,11 +455,16 @@ export const settingsCorner = (): ElementSpec =>
     id: 'settings-corner',
     class: settingsCornerClass,
     children: [
-      fullscreenToggle({ id: 'fullscreen-toggle', class: cornerButton }),
+      fullscreenToggle({
+        id: FULLSCREEN_ID,
+        class: cornerButton,
+        label: 'Full screen (F)',
+        exitLabel: 'Exit full screen (F)'
+      }),
       button({
         id: 'settings-toggle',
         content: '',
-        title: 'Settings',
+        title: 'Settings (S)',
         class: cornerButton,
         bind: [
           variantFrom(cornerButton, 'computed.settingsOpen', { template: "{{ source ? 'open' : '' }}" }),

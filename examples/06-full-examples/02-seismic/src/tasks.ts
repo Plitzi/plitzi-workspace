@@ -1,3 +1,4 @@
+import { isEventId, quakeDetail } from './detail.ts';
 import { isFeedWindow, seismicReport } from './feed.ts';
 
 import type { ActionTask } from '@plitzi/sdk-server/actions';
@@ -33,5 +34,22 @@ export const seismicFeedTask: ActionTask<{ window: string }> = {
   run: ({ window }) => seismicReport(isFeedWindow(window) ? window : 'day')
 };
 
+/** One event, closely: its shaking contours, how the fault moved, and where it ranks in the region since 1900. */
+export const seismicDetailTask: ActionTask<{ id: string }> = {
+  namespace: 'seismic',
+  action: 'detail',
+  title: 'Seismic Detail',
+  description: 'One earthquake’s ShakeMap contours, faulting and regional history, from the USGS.',
+  params: { id: { type: 'text', canBind: true, defaultValue: '', label: 'USGS event id' } },
+  // Refused rather than fetched: the id is interpolated into a USGS path, so only an id's own characters get there.
+  run: ({ id }) => {
+    if (!isEventId(id)) {
+      throw new Error(`"${String(id)}" is not a USGS event id`);
+    }
+
+    return quakeDetail(id);
+  }
+};
+
 // The catalog is heterogeneous by nature — each task declares its own params — and the server reads it as such.
-export const seismicTasks = [seismicFeedTask] as ActionTask<Record<string, unknown>>[];
+export const seismicTasks = [seismicFeedTask, seismicDetailTask] as ActionTask<Record<string, unknown>>[];

@@ -4,11 +4,14 @@ import {
   declaredTrigger,
   defineElement,
   named,
+  on,
+  runServerAction,
   setState,
   styles,
   when
 } from '@plitzi/sdk-authoring';
 
+import { DETAIL_ACTION } from '../actions.ts';
 import declaration from '../plugins/SeismicMap/declaration.ts';
 
 import type { SeismicMapAttributes } from '../plugins/SeismicMap/declaration.ts';
@@ -69,13 +72,12 @@ export const releaseLock = (): StepSpec[] => [setState({ key: 'selectedId', type
 /**
  * Pressing an event locks on it; pressing the one already locked lets go and goes home.
  *
- * `idPath` is where the pressed event's id is, as a path (`list_contacts.item.id`). Both steps read the state as it was
- * when the press started, which is the point: the second one asks whether the event WAS locked, and flies home only
- * if it was — not because the first step just changed it.
+ * `idPath` is where the pressed event's id is, as a path (`list_contacts.item.id`). Each step reads the state as it is
+ * when it runs, so the one asking whether this event WAS locked goes first — after the write it would always be.
  */
 export const toggleLock = (idPath: string): StepSpec[] => [
-  setState({ key: 'selectedId', type: 'text', value: `{{ state.selectedId == ${idPath} ? '' : ${idPath} }}` }),
-  when({ field: 'state.selectedId', operator: '=', value: idPath, isBinding: true }, resetMapView())
+  when({ field: 'state.selectedId', operator: '=', value: idPath, isBinding: true }, resetMapView()),
+  setState({ key: 'selectedId', type: 'text', value: `{{ state.selectedId == ${idPath} ? '' : ${idPath} }}` })
 ];
 
 /**
@@ -96,6 +98,8 @@ export const map: ElementSpec = seismicMap({
   class: mapCanvas,
   // Long enough for the camera to travel between the events it follows, short enough to watch in a meeting.
   replaySeconds: 40,
+  // Long enough to read the dossier a stop opens, short enough that a room sees the whole window.
+  tourSeconds: 12,
   arrivalSeconds: ARRIVAL_SECONDS,
   bind: {
     events: 'feed.records',
@@ -110,7 +114,10 @@ export const map: ElementSpec = seismicMap({
     showHeat: 'computed.density',
     autoRotate: 'computed.rotate',
     replay: 'computed.replaying',
-    scheme: 'theme.resolved'
+    scheme: 'theme.resolved',
+    shaking: 'state.detail.shaking',
+    tour: 'computed.touring',
+    idleSeconds: 'computed.idleSeconds'
   },
   flows: [
     /**
@@ -156,10 +163,54 @@ export const map: ElementSpec = seismicMap({
     ],
     /**
      * The arrival's moment is over and it still holds the lock: let it go and go home, as the home button does. The
-     * map only says so when nothing else took the lock meanwhile — a flow reads the state as it was when it started,
-     * so a `delay` at the end of the arrival's flow could not tell, and would have undone the reader's own pick.
+     * map only says so when nothing else took the lock meanwhile. Not a `delay` at the end of the arrival's own flow:
+     * while that flow waited, the map's next arrival would find it still running and not start it again — dropped,
+     * toast and all.
      */
     [declaredTrigger(declaration, 'onArrivalSettled'), ...releaseLock()],
+    /**
+     * Whatever the map locks on, however it came to — a click, a row, an arrival, a tour stop — its detail is asked
+     * for here and nowhere else. `detached`, so picking the next event while this one is being read is never blocked;
+     * `invalidateQueries: 'none'` because reading an event changes nothing the page asked for.
+     */
+    [
+      named('locked', declaredTrigger(declaration, 'onLock')),
+      when(
+        { field: 'locked.id', operator: '!=', value: '' },
+        runServerAction({
+          actionId: DETAIL_ACTION,
+          input: { id: '{{ locked.id }}' },
+          mode: 'detached',
+          invalidateQueries: 'none'
+        })
+      )
+    ],
+    /**
+     * The answer, kept only if it is still for the event the map is locked on. Read as the step runs — a reader who
+     * moved on while the USGS was being asked has a different `selectedId` by now, and a late answer is dropped.
+     */
+    [
+      named('answered', on('onFlowEnd')),
+      when(
+        [
+          { field: 'answered.actionId', operator: '=', value: DETAIL_ACTION },
+          { field: 'state.selectedId', operator: '=', value: 'answered.output.id', isBinding: true }
+        ],
+        setState({ key: 'detail', type: 'json', value: '{{ answered.output }}' })
+      )
+    ],
+    // A tour stop is a selection like any other: the lock, the dossier and the shaking all follow from it.
+    [
+      named('stop', declaredTrigger(declaration, 'onTourStep')),
+      setState({ key: 'selectedId', type: 'text', value: '{{ stop.id }}' })
+    ],
+    [declaredTrigger(declaration, 'onTourEnd'), setState({ key: 'tour', type: 'boolean', value: false })],
+    // Nobody at the wall for a while: the display starts touring by itself — only where the reader asked it to.
+    [
+      declaredTrigger(declaration, 'onIdle'),
+      setState({ key: 'replay', type: 'boolean', value: false }),
+      setState({ key: 'tour', type: 'boolean', value: true })
+    ],
     // The replay is the page's switch, not the map's: the map says it reached the end, and the page turns it off.
     [declaredTrigger(declaration, 'onReplayEnd'), setState({ key: 'replay', type: 'boolean', value: false })]
   ]

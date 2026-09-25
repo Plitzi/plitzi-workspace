@@ -56,4 +56,6 @@ A warning means the space renders, and renders something you probably did not me
 | `route-param-undeclared` | `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty | add `:x` to the slug, or read `navigation.queryParams.x` |
 | `form-control-unnamed` | a control in a form with no `name` — its value never reaches `values` | `formControl({ name: 'email', … })` |
 | `form-control-name-taken` | two controls in one form with one name — one overwrites the other | a name each |
+| `trigger-keys` | an `onKey` flow whose `keys` cannot fire: two keys in one shortcut, only modifiers, or a name that is not a key | `onKey('f')`, `onKey('shift+f')`, `onKey('mod+k, escape')` |
+| `state-toggled-in-branches` | two `setState` steps of one key, each under a `when` on that key — the second flips back what the first wrote | `toggleState({ key })`; for something shown by default, a key named for hiding it |
 | `overlay-never-opened` | a modal or dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |

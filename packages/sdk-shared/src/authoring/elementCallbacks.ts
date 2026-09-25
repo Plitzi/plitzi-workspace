@@ -72,10 +72,9 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
    * Expand and collapse from ONE flow on ONE trigger — the same write as `setState`, except the value it stores is
    * the opposite of the one already there.
    *
-   * Written with `setState` this needed two steps whose `when` conditions had to be exact complements of each other,
-   * and those conditions read the state as it was when the flow STARTED: the pattern only worked because the second
-   * branch happened to see a value one step behind, and stopped working the moment anything else in the flow touched
-   * the same key. There is no ordering to get wrong here.
+   * Written with `setState` this needs two steps whose `when` conditions are complements of each other, and it undoes
+   * itself: every step reads the element as it is when it runs, so the second sees what the first just wrote and
+   * writes it back. There is no ordering to get wrong here.
    */
   toggleState: {
     title: 'Toggle Element (flip attribute / state)',

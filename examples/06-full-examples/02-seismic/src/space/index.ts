@@ -8,6 +8,7 @@ import { activity, board, strongest } from './board.ts';
 import { FULLSCREEN_DECLARATION, dock, legend, settingsBackdrop, settingsCorner } from './controls.ts';
 import { customCss } from './css.ts';
 import { commandBar } from './header.ts';
+import { keysHelp, shortcuts } from './keys.ts';
 import { log } from './log.ts';
 import { MAP_DECLARATION, map, stage } from './map.ts';
 import { computed, transientState } from './state.ts';
@@ -202,6 +203,8 @@ const hudPanels = (): ElementSpec =>
     id: 'hud',
     class: hud,
     bind: [variantFrom(hud, 'computed.size', { template: "{{ source == 'desk' ? '' : source }}" })],
+    // The keyboard, heard on the whole page for as long as the display is: see `keys.ts`.
+    flows: shortcuts,
     children: [
       container({
         id: 'left-column',
@@ -215,6 +218,7 @@ const hudPanels = (): ElementSpec =>
       settingsBackdrop(),
       settingsCorner(),
       dock(),
+      ...keysHelp(),
       // A provider that could not answer is not a quiet planet, and the two must never look alike.
       text({
         id: 'feed-outage',

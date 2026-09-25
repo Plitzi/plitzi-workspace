@@ -66,6 +66,16 @@ export const shockwave = (band: string, strong: boolean): HTMLElement => {
 /** How long a shockwave lives, matching its CSS animation — the element is removed when it is over. */
 export const SHOCKWAVE_MS = 4200;
 
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
+/** A contour's intensity, on the Modified Mercalli scale's own numerals. */
+export const shakingLabel = (mmi: number): HTMLElement => {
+  const label = node('span', 'seismic__mmi', ROMAN[Math.min(12, Math.max(1, Math.round(mmi)))]);
+  label.dataset.mmi = String(Math.round(mmi));
+
+  return label;
+};
+
 export const ringLabel = (distanceKm: number): HTMLElement =>
   node('span', 'seismic__ring-label', `${distanceKm.toLocaleString('en-US')} KM`);
 

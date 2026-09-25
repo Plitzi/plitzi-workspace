@@ -160,6 +160,30 @@
   pointer-events: none;
 }
 
+/* A contour's intensity: a numeral on the line, in the colour of how hard the ground shook there. */
+.seismic__mmi {
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--seismic-accent);
+  background: var(--seismic-panel);
+  border: 1px solid currentColor;
+  pointer-events: none;
+}
+
+.seismic__mmi[data-mmi='5'],
+.seismic__mmi[data-mmi='6'] {
+  color: var(--seismic-intermediate);
+}
+
+.seismic__mmi[data-mmi='7'],
+.seismic__mmi[data-mmi='8'],
+.seismic__mmi[data-mmi='9'],
+.seismic__mmi[data-mmi='10'] {
+  color: var(--seismic-shallow);
+}
+
 /* ── Arrivals ───────────────────────────────────────────────────────────────────────────────────────────────────── */
 
 .seismic__shock {
@@ -203,7 +227,8 @@
 /* ── Readouts ───────────────────────────────────────────────────────────────────────────────────────────────────── */
 
 .seismic__cursor,
-.seismic__replay {
+.seismic__replay,
+.seismic__tour {
   position: absolute;
   left: 50%;
   top: var(--seismic-readout-top, 84px);
@@ -226,19 +251,47 @@
 }
 
 .seismic__cursor-label,
-.seismic__replay-label {
+.seismic__replay-label,
+.seismic__tour-label {
   color: var(--seismic-accent);
 }
 
-.seismic__replay {
+.seismic__replay,
+.seismic__tour {
   gap: 14px;
   padding: 8px 14px;
   border: 1px solid var(--seismic-accent);
   box-shadow: 0 0 30px -10px var(--seismic-accent);
 }
 
-.seismic__replay[data-active='false'] {
+.seismic__replay[data-active='false'],
+.seismic__tour[data-active='false'] {
   display: none;
+}
+
+.seismic__tour-stop {
+  min-width: 5ch;
+  font-size: 13px;
+  color: var(--seismic-ink);
+}
+
+/* How long until the next stop: the bar fills over each stop's time, and starts again at the next. */
+.seismic__tour-progress {
+  position: absolute;
+  inset: 0;
+  background: var(--seismic-accent);
+  transform-origin: left center;
+  animation: seismic-tour-stop var(--seismic-tour-ms, 10000ms) linear both;
+}
+
+@keyframes seismic-tour-stop {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .seismic__replay-label::before {
@@ -258,7 +311,8 @@
   color: var(--seismic-ink);
 }
 
-.seismic__replay-track {
+.seismic__replay-track,
+.seismic__tour-track {
   position: relative;
   width: 160px;
   height: 3px;
