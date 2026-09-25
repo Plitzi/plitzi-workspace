@@ -7,7 +7,7 @@ import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-ser
 import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
 
 import { lookups } from './actions.ts';
-import { PLUGIN_TYPES, space } from './space/index.ts';
+import { PLUGINS, space } from './space/index.ts';
 import { seismicTasks } from './tasks.ts';
 
 const PORT = Number(process.env.PORT ?? 4014);
@@ -39,9 +39,9 @@ const maplibreDist = path.dirname(require.resolve('maplibre-gl/package.json'));
 
 /**
  * Authored at boot from `src/space`, so saving a panel and letting `start:dev` restart the process is the whole edit
- * loop. `pluginTypes` tells the validator the one type it does not ship is on purpose.
+ * loop. `plugins` hands it the map's declaration, so the space's use of the map is checked like a built-in's.
  */
-const offlineData = authorSpace(space, { pluginTypes: PLUGIN_TYPES });
+const offlineData = authorSpace(space, { plugins: PLUGINS });
 
 /**
  * A global seismic monitor, in one server and no account.

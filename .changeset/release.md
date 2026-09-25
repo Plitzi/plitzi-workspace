@@ -684,3 +684,30 @@
   caught. A deployment's own `onError` still receives every failure.
 - Tests that ran slow under a busy machine: the CLI's type-declarations test (a real compile) has a timeout of its own,
   and the workers test waits for every worker to listen rather than a fixed number of requests.
+
+## Plugins held to their declarations, and fixes a full example found
+
+- `authorSpace(space, { plugins: [declaration] })` (also `validateSpace`, `lintSpace`, `fixSpace`): a plugin handed over
+  as its declaration is checked like a built-in element — authored as its own type or hosted by
+  `custom({ renderType })`. A flow on an event it never fires, a step sent to an action it does not answer and an
+  attribute it does not read are refused, naming what it declares. `pluginTypes` stays as the lighter form.
+- New step builders typed from a declaration: `declaredTrigger(declaration, 'onPick')` and
+  `declaredCallback(declaration, 'reset', { on: 'seats' })` — a name the declaration lacks is a compile error.
+- A `custom` host whose component was not declared is no longer refused for flows on the component's own events: the
+  plugin template `plitzi add plugin` writes (`onCount`) could not be used in a flow as generated.
+- `setState` accepts `type: 'json'` in authoring, as the runtime and the docs always did; a test holds the two lists
+  together.
+- The plugin cache rebuilds when a plugin's entry moved (`Widget.ts` → `Widget/index.ts`) or a file it was built from
+  was deleted — a missing file used to count as unchanged, and a versioned plugin served the old bundle for good in dev.
+- A plugin handed to the SDK after mount — one the server could not import, passed once hydration is done, or a
+  `<PlitziSdk.Plugin>` added later — now renders: the component registry was built once and never learned of it.
+- `dropdown`: a click inside the popup no longer reaches the trigger and closes the menu (`closeOnClickPopup: false`
+  now keeps it open), and `closeOnClickBackground` closes on a click outside even without the blocking background.
+- A space's `style.theme.default` is applied: the server paints a first visit in it, and the SDK starts there. The
+  theme cookie now records only a visitor's CHOICE — the theme a surface merely started in is not written — so a space
+  that changes its default reaches everybody who never chose.
+- `button`, `text`, `markdown` and `heading` default line heights are ratios that land on the same pixels at their
+  default sizes, so a class that resizes the text keeps the proportion instead of a fixed 24px line.
+- Skills: `plitzi-authoring` gains `reference/validation.md` (how `authorSpace` checks — first refusals one at a time,
+  then the linter's list at once — a one-file author script, and what it cannot see) and plugin guidance; `@plitzi/cli`
+  ships a `plitzi-cli` skill, copied into every project `plitzi create` writes and every plugin package.

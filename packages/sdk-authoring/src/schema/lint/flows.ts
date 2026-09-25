@@ -137,8 +137,13 @@ const checkAction = (ctx: LintContext, node: ElementInteraction, where: string, 
  */
 const checkTrigger = (ctx: LintContext, node: ElementInteraction, where: string, host: Element): void => {
   const triggers = ctx.catalogs.vocabulary?.triggers;
-  const type = host.definition.type;
-  if (!triggers || (node.elementId !== null && node.elementId !== host.id) || !Object.hasOwn(triggers, type)) {
+  const type = ctx.catalogType(host);
+  if (
+    !triggers ||
+    type === undefined ||
+    (node.elementId !== null && node.elementId !== host.id) ||
+    !Object.hasOwn(triggers, type)
+  ) {
     return;
   }
 
@@ -166,7 +171,8 @@ const checkTrigger = (ctx: LintContext, node: ElementInteraction, where: string,
 const checkCallbackTarget = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
   const callbacks = ctx.catalogs.vocabulary?.callbacks;
   const target = node.elementId ?? hostId;
-  const type = ctx.element(target)?.definition.type;
+  const targetElement = ctx.element(target);
+  const type = targetElement && ctx.catalogType(targetElement);
   if (!callbacks || type === undefined || !Object.hasOwn(callbacks, type)) {
     return;
   }
@@ -195,7 +201,8 @@ const checkCallbackTarget = (ctx: LintContext, node: ElementInteraction, where: 
 const checkCallbackKey = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
   const { key, category } = node.params;
   const target = node.elementId ?? hostId;
-  const type = ctx.element(target)?.definition.type;
+  const targetElement = ctx.element(target);
+  const type = targetElement && ctx.catalogType(targetElement);
   const names = type === undefined ? null : ctx.attributeNames(type);
   if (typeof key !== 'string' || key === '' || hasTemplateSyntax(key) || type === undefined || !names) {
     return;

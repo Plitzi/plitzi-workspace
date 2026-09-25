@@ -107,6 +107,8 @@ the way \`@plitzi/sdk-elements\` writes its own. An element's \`declaration.ts\`
 - ${run('visual')} — a browser checks the preview.
 - ${run('typecheck')} and ${run('lint')} — before calling a change done.
 - \`npx @plitzi/cli pack plugin\` — \`dist/\` (the module, \`plugin-manifest.json\`, the types) and the zip for the builder.
+- \`npx @plitzi/cli add plugin <name>\` — another element, in the same shape; \`upload plugin\` puts the zip on a space.
+  Everything the CLI does, and how it behaves with nobody at the terminal: \`.claude/skills/plitzi-cli/SKILL.md\`.
 
 - The component's props are the element's attributes. A new one goes in three places: the props, the declaration
   (\`content.attributes\`, and \`bindingsAllowed\` if data may drive it), and \`Settings.tsx\`.

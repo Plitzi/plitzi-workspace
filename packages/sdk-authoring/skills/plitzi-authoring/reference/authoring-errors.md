@@ -24,6 +24,7 @@ would write. It names that break, and only that one: `authorSpace(spec, { allow:
 | `lands on "x", which a "text" never reads` | a binding onto an attribute the element does not have — the value arrives and nothing shows it | one it lists (`content`); to follow data with a class, bind `styleSelectors.base` in `initialState` |
 | `no element answers to the name "x"` | a binding whose source names an element that does not exist | the id of the element that publishes it |
 | `renders text — and "items" holds a list` | a text template feeding a list | `bindTemplate('items', src, '{{ … }}', { returns: 'value' })` |
+| `which a "x" never fires` / `never answers to it` | a flow on an event, or a step to an action, the element does not have | the element that fires it (the message names it); for a plugin, a name its declaration has — `declaredTrigger` / `declaredCallback` make a wrong one a compile error |
 | `does not start with its trigger` | a flow whose first step is not the event that runs it | `[onClick(), setState(…)]` |
 | `step "x" has the param "y"` / `"type" is "string"` | a step param that does not exist or a value outside its options | the params and values it lists |
 | `step "setState" sets "x" on "y", which a "z" never reads` | an element `setState`/`toggleState` writing a field the element does not have | an attribute it lists, or for `category: 'state'` `visibility` / `styleSelectors.<selector>` |
@@ -47,7 +48,7 @@ A warning means the space renders, and renders something you probably did not me
 | `default-content-beside-children` | a button prints "Button" beside its children | `content: ''` |
 | `overlay-starts-open` | a modal or dialog is open when the page loads | `visible: false`, opened by `openModal` |
 | `provider-without-source` | an `apiContainer` asks nothing | give it a `query` (or `action`, `connector`, `resource`) |
-| `unknown-element-type` | a type no built-in element has | the built-in it suggests; a plugin's type goes in `authorSpace(space, { pluginTypes: ['name'] })` |
+| `unknown-element-type` | a type no built-in element has | the built-in it suggests; a plugin's DECLARATION goes in `authorSpace(space, { plugins: [declaration] })`, which also checks its events, actions and attributes |
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
 | `FORM_SUBMIT_UNMANAGED` | a form the browser would submit itself | `managedByInteractions: true` |
 | `STYLE_WITHOUT_TAG` | style on a provider that renders no element | `subType: 'div'` on the provider, or style its parent |

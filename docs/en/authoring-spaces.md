@@ -182,6 +182,21 @@ const { chart } = elementsFromManifest<{ chart: { kind?: string } }>(manifest);
 `defineElement` takes a declaration or a plugin's `pluginSchema` entry — they are the same shape, which is why a
 plugin type costs nothing extra to author.
 
+Hand the same declaration to `authorSpace` and the plugin is checked like a built-in element — authored as its own
+type, or hosted by `custom({ renderType })`:
+
+```ts
+authorSpace(space, { plugins: [declaration] });
+
+speciesStatus({ id: 'status', flows: [[declaredTrigger(declaration, 'onPick'), setState({ … })]] });
+button({ flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'status' })]] });
+```
+
+A flow on an event it never fires, a step sent to an action it does not answer and an attribute it does not read are
+refused, naming what it does declare. `declaredTrigger` and `declaredCallback` build those steps from the declaration,
+so a name it does not have is a compile error. `pluginTypes: ['speciesStatus']` is the lighter form: it says the type
+exists and checks nothing about how the space uses it.
+
 ---
 
 ## 4. Style

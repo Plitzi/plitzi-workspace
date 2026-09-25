@@ -12,6 +12,7 @@ import {
   invalidateQueries,
   navigate,
   runServerAction,
+  SET_STATE_TYPES,
   setState
 } from './steps';
 
@@ -89,5 +90,21 @@ describe('invalidateQueries', () => {
       elements: ['orders', 'members']
     });
     expect(invalidateQueries().params).toEqual({ url: '', elements: [] });
+  });
+});
+
+describe('setState', () => {
+  it('offers exactly the types the state source stores', () => {
+    const declared = BUILTIN_GLOBAL_CALLBACKS.setState.params.type;
+
+    expect('options' in declared ? declared.options : undefined).toEqual([...SET_STATE_TYPES]);
+  });
+
+  it('stores an object or a list as json', () => {
+    expect(setState({ key: 'picked', type: 'json', value: '{{ list_rows.item }}' }).params).toEqual({
+      key: 'picked',
+      type: 'json',
+      value: '{{ list_rows.item }}'
+    });
   });
 });

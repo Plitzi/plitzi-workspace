@@ -419,6 +419,33 @@ export interface AllowedBreak {
   why: string;
 }
 
+/**
+ * What `authorSpace` reads from a plugin's declaration. Structural, so a `PluginDeclaration`, an element's own
+ * declaration and a manifest's `pluginSchema` entry (with its `type`) all fit.
+ */
+export interface PluginDeclarationData {
+  type: string;
+  /** The source name it publishes under, when it publishes one. */
+  sourceType?: string;
+  /** The events it fires beyond the ones every element does, by action. */
+  triggers?: Readonly<Record<string, { action: string }>>;
+  /** The actions it answers to beyond `setState` and `toggleState`, by action. */
+  callbacks?: Readonly<Record<string, { action: string }>>;
+  content?: {
+    /** Its starting attributes: what it reads, and what a factory merges under the author's own. */
+    attributes?: Readonly<Record<string, unknown>>;
+    definition?: {
+      /** Its name in the builder. */
+      label?: string;
+      /** Present when it holds children. */
+      items?: readonly unknown[];
+      styleSelectors?: Readonly<Record<string, unknown>>;
+    };
+    /** The attributes a data source may be pointed at — read as attributes too, since a binding writes them. */
+    defaultStyle?: { bindingsAllowed?: { attributes?: readonly { path: string }[] } };
+  };
+}
+
 export interface AuthorSpaceOptions {
   /**
    * The step vocabulary to hold this space's flows to. Left out, flows are written as declared and only their
@@ -457,6 +484,16 @@ export interface AuthorSpaceOptions {
    * (`contaner`) and a plugin nobody registered render the same: nothing.
    */
   pluginTypes?: readonly string[];
+  /**
+   * The plugins this project ships, as their declarations — the `declaration.ts` beside each component, or the
+   * `pluginSchema` of a published manifest.
+   *
+   * More than `pluginTypes`: a declared plugin is held to what it declares, like a built-in element. A flow that
+   * starts on a trigger it never fires, a step sent to a callback it does not answer, an attribute it does not read
+   * and a binding onto one are all reported — with only a type name, every one of them is written and silently does
+   * nothing.
+   */
+  plugins?: readonly PluginDeclarationData[];
   /**
    * What this document breaks ON PURPOSE — a fixture for how the runtime copes with something no author would write,
    * like a provider whose URL names a route param no page has. See {@link AllowedBreak}.

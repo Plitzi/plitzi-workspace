@@ -146,14 +146,24 @@ export class PluginManager {
     }
 
     const watched = meta.inputs?.length ? meta.inputs : [source.js];
-    // A source that cannot be stat'd is not evidence of anything: the build below reports a missing file far
-    // better than a cache miss would, and a file that has been DELETED is a change the build is about to report too.
+    // Registered under an entry the bundle was not built from: the plugin moved — `Widget.ts` became
+    // `Widget/index.ts` — and nothing about the old files' timestamps can say so. Compared by REAL path, which is what
+    // the build records: an entry reached through a symlink (a temp dir, a Yarn portal) is still the same file.
+    if (meta.inputs?.length) {
+      const entry = await fs.realpath(source.js).catch(() => path.resolve(source.js));
+      if (!meta.inputs.includes(entry)) {
+        return true;
+      }
+    }
+
+    // A file that is gone is a change: the bundle was built from it. Counting it as "unchanged" kept serving the
+    // bundle of a component that no longer existed; rebuilding either succeeds without it or says what is missing.
     const timestamps = await Promise.all(
       watched.map(file =>
         fs
           .stat(file)
           .then(stats => stats.mtimeMs)
-          .catch(() => 0)
+          .catch(() => Number.POSITIVE_INFINITY)
       )
     );
 

@@ -1,4 +1,13 @@
-import { addNotification, defineElement, named, on, setState, styles, when } from '@plitzi/sdk-authoring';
+import {
+  addNotification,
+  declaredCallback,
+  declaredTrigger,
+  defineElement,
+  named,
+  setState,
+  styles,
+  when
+} from '@plitzi/sdk-authoring';
 
 import declaration from '../plugins/SeismicMap/declaration.ts';
 
@@ -13,8 +22,11 @@ import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
  */
 const seismicMap = defineElement<SeismicMapAttributes>(declaration);
 
-/** The type the validator is told about: the one element this space ships that the SDK does not. */
-export const MAP_TYPE = declaration.type;
+/**
+ * What `authorSpace` is handed so it checks the map like a built-in element: every flow on its events, every step sent
+ * to its actions and every attribute written on it, against what the component declares.
+ */
+export const MAP_DECLARATION = declaration;
 
 export const MAP_ID = 'map';
 
@@ -41,22 +53,13 @@ export const mapCanvas = styles('mapCanvas', {
 });
 
 /**
- * One of the map's own actions, sent to it.
- *
- * A plugin's action is an element callback like a modal's `openModal`: it runs ON the element, so the step names the
- * map. The SDK has a builder for each built-in one; a plugin's is written from its declaration — so the action and
- * its title are the component's, and a name it does not declare is a compile error here rather than a dead button.
+ * One of the map's own actions, sent to it — built from its declaration, so a name it does not declare is a compile
+ * error rather than a dead button.
  */
 export const mapAction = (
-  action: keyof typeof declaration.callbacks,
+  action: Parameters<typeof declaredCallback<typeof declaration>>[1],
   params: Record<string, unknown> = {}
-): StepSpec => ({
-  type: 'callback',
-  action: declaration.callbacks[action].action,
-  title: declaration.callbacks[action].title,
-  on: MAP_ID,
-  params
-});
+): StepSpec => declaredCallback(declaration, action, { on: MAP_ID, params });
 
 export const resetMapView = (): StepSpec => mapAction('resetView');
 
@@ -92,7 +95,7 @@ export const map: ElementSpec = seismicMap({
      * A pick on the globe is the same act as a pick in the log or on the "strongest" card: it writes the one key the
      * dossier, the log's highlight and the map's own lock all read. The sea sends an empty id, which unlocks.
      */
-    [named('picked', on('onQuakeSelect')), setState({ key: 'selectedId', type: 'text', value: '{{ picked.id }}' })],
+    [named('picked', declaredTrigger(declaration, 'onQuakeSelect')), setState({ key: 'selectedId', type: 'text', value: '{{ picked.id }}' })],
     /**
      * An event the feed did not have on the last refresh, at or above the reader's alert threshold. Announced louder
      * when it is one that damages buildings — the map has already thrown out its shockwave — and, while FOLLOW is on,
@@ -101,7 +104,7 @@ export const map: ElementSpec = seismicMap({
      * there, which is a step that changes nothing.
      */
     [
-      named('arrived', on('onQuakeArrival')),
+      named('arrived', declaredTrigger(declaration, 'onQuakeArrival')),
       when(
         { field: 'arrived.magnitude', operator: '>=', value: 5 },
         addNotification({
@@ -127,6 +130,6 @@ export const map: ElementSpec = seismicMap({
       })
     ],
     // The replay is the page's switch, not the map's: the map says it reached the end, and the page turns it off.
-    [on('onReplayEnd'), setState({ key: 'replay', type: 'boolean', value: false })]
+    [declaredTrigger(declaration, 'onReplayEnd'), setState({ key: 'replay', type: 'boolean', value: false })]
   ]
 });

@@ -29,11 +29,25 @@ import type {
   PluginEntry,
   SSRPageServerConfig,
   SSRRequest,
-  SSRTemplateProps
+  SSRTemplateProps,
+  Style,
+  Theme
 } from '@plitzi/sdk-shared';
 
 /** Last resort only: used for a page that declares no SEO title and a deployment that supplies none either. */
 const DEFAULT_TITLE = 'Plitzi App';
+
+/**
+ * The theme a space declares a first visit starts in, when it declares one other than `system`.
+ *
+ * `Partial`, because a style document written before themes existed has no `theme` at all, and a published space
+ * is rendered from whatever document it was published with.
+ */
+const declaredTheme = (style: Partial<Pick<Style, 'theme'>> | undefined): Theme | undefined => {
+  const declared = style?.theme?.default;
+
+  return declared && declared !== 'system' ? declared : undefined;
+};
 
 export type RenderPrep = {
   componentProps: ComponentProps;
@@ -179,10 +193,11 @@ export const prepareRender = async (
    * `{{ theme.resolved }}` or gate a rule on the scheme, and a client that started at `system` while the server
    * rendered `dark` would hydrate different markup and throw away the tree.
    *
-   * Absent — a first visit — is not a problem to solve: nothing is stamped, `system` is what the provider starts
-   * at, and the stylesheet's media queries answer, which is exactly right.
+   * Absent — a first visit — the space's own default applies (`style.theme.default`), painted by the server like a
+   * choice would be. A default of `system` stamps nothing and the stylesheet's media queries answer, which is exactly
+   * right for a space that did not pick.
    */
-  const theme = themeFromCookies(req.headers.cookie);
+  const theme = themeFromCookies(req.headers.cookie) ?? declaredTheme(offlineData?.style);
 
   const offlineDataStr = hydrationPayload(offlineData, {
     offlineMode: true,

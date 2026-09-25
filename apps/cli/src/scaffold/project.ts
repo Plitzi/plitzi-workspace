@@ -251,7 +251,8 @@ ${spaceSection(answers)}
 ## The skills
 
 \`.claude/skills/\` carries Plitzi's authoring skill, so an agent working in this repository knows how a space is
-put together before it touches one. Claude Code reads it automatically; \`AGENTS.md\` points any other agent at it.
+put together before it touches one, and the CLI's, so it knows what \`plitzi\` can do for it — plugins, packing,
+uploading. Claude Code reads them automatically; \`AGENTS.md\` points any other agent at them.
 `;
 
 /**
@@ -291,6 +292,8 @@ ${commands.join('\n')}
 
 Read ${code('.claude/skills/plitzi-authoring/SKILL.md')} — how a space is written, and the references it links to for
 layouts, data, templates and flows. The types of ${code('@plitzi/sdk-authoring')} document every factory and field.
+For a component of your own — a plugin — or anything about packing or uploading one, read
+${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi add plugin')} writes it in the shape everything reads.
 
 ## The rules that go wrong most
 

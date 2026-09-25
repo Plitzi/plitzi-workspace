@@ -60,7 +60,8 @@ const checkAncestor = (ctx: LintContext, element: Element, where: string): void 
  * so it is left to the template checks.
  */
 const checkAttributes = (ctx: LintContext, element: Element, where: string): void => {
-  const type = element.definition.type;
+  // A `custom` host is held to the component it hosts, when that component was declared.
+  const type = ctx.catalogType(element) ?? element.definition.type;
   const names = ctx.attributeNames(type);
   const enums = ctx.catalogs.attributeValues?.[type] ?? {};
   const defaults = ctx.catalogs.defaultAttributes?.[type] ?? {};
@@ -485,7 +486,7 @@ export const lintElements = (ctx: LintContext): void => {
       unknownTypes.add(type);
       ctx.warn(
         'unknown-element-type',
-        `${where} is a "${type}", which is not a built-in type${didYouMean(type, Object.keys(catalog)) || '.'} It renders only if a plugin registers it: name it in \`authorSpace(space, { pluginTypes: ['${type}'] })\`, or host your component with \`custom({ renderType: '${type}' })\`.`,
+        `${where} is a "${type}", which is not a built-in type${didYouMean(type, Object.keys(catalog)) || '.'} It renders only if a plugin registers it: hand its declaration to \`authorSpace(space, { plugins: [declaration] })\` — which also checks its triggers, callbacks and attributes — or name it in \`pluginTypes: ['${type}']\`, or host your component with \`custom({ renderType: '${type}' })\`.`,
         element.id,
         { type }
       );

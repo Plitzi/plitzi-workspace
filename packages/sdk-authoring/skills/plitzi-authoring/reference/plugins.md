@@ -81,5 +81,40 @@ A plugin PACKAGE, loaded by a space from its `plugin-manifest.json`, is an eleme
 `custom` host — it is how the builder adds one somebody dropped. Author it with a typed factory:
 `defineElement<SeatPickerAttributes>(declaration)` from the plugin's own `declaration.ts`, or
 `elementsFromManifest<{ seatPicker: SeatPickerAttributes }>(manifest)` from what it published — or untyped,
-`element('seatPicker', { id: 'seats', start: 3 })`. Name its type to `authorSpace` so it is not taken for a typo:
-`authorSpace(space, { pluginTypes: ['seatPicker'] })`.
+`element('seatPicker', { id: 'seats', start: 3 })`.
+
+## Checked like a built-in element
+
+Hand `authorSpace` the plugin's DECLARATION — the `declaration.ts` beside the component, or a manifest's
+`pluginSchema` entry:
+
+```ts
+import declaration from './plugins/SeatPicker/declaration';
+
+authorSpace(space, { plugins: [declaration] });
+```
+
+It is then held to what it declares, whether it is authored as its own type or hosted by `custom({ renderType:
+'seatPicker' })`: a flow on an event it never fires, a step sent to an action it does not answer, an attribute it does
+not read — each is refused with the name it should have been. (`pluginTypes: ['seatPicker']` only tells the linter the
+type exists; nothing about how the space uses it is checked.) A `custom` host whose component is NOT handed over is not
+judged on its events at all — nothing here knows them.
+
+Its events and actions have builders typed from the same declaration, so a name it does not declare is a compile error:
+
+```ts
+seats({ id: 'seats', flows: [[named('picked', declaredTrigger(declaration, 'onPick')), setState({ key: 'seat', type: 'text', value: '{{ picked.seat }}' })]] })
+button({ content: 'Clear', flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'seats' })]] })
+```
+
+A plugin says what HAPPENED through its events (`onPick`, with the seat in the payload) and lets the space's flows
+decide what that means — write `state`, open a modal, call a server action. Prefer that to writing `state` from inside
+the component: the flow is visible in the space, the builder shows it, and the same act can come from a button too.
+
+## Components that draw into DOM they do not render
+
+A map, a chart library, anything that positions its own markers or popups: its roots are the library's to place. Never
+give them a class that sets `position` — the element falls into the page's flow, offset by every marker before it. Put
+the look in the plugin's own stylesheet (imported CSS ships beside the bundle) and take colours from custom properties
+the space sets (`--seat-accent: var(--accent)` in `customCss`); a canvas or WebGL layer resolves them through a probe
+element with `getComputedStyle(probe).color`, again whenever `theme.resolved` changes (bind it as a prop).

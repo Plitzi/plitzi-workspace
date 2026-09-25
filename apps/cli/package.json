@@ -4,11 +4,16 @@
   "license": "AGPL-3.0",
   "description": "Command line for Plitzi: scaffold a project that renders a space, a plugin package, or an element of your own.",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "type": "module",
   "bin": {
     "plitzi": "./dist/index.js"
+  },
+  "exports": {
+    "./skills/*": "./skills/*",
+    "./package.json": "./package.json"
   },
   "repository": {
     "type": "https",

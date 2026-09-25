@@ -38,7 +38,9 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
    helpers already there. Extend them; do not add a second way of doing something the space already does.
 2. **Change the declaration, then author it.** `npm run author` (or restart the server) runs `authorSpace`. It checks
    everything — every field, value, template, name, param and page link — and a refusal says what to write instead:
-   do exactly that. Never work around a check, cast past it, or move the logic into a plugin to escape it.
+   do exactly that. Never work around a check, cast past it, or move the logic into a plugin to escape it. The first
+   refusals come one at a time; the linter's come as ONE list — fix every line of it before running again. How it
+   checks, a one-file author script for any project, and what it cannot see: [validation](reference/validation.md).
 3. **Read every warning.** Each one names something written that will not do what it says. Zero warnings is the bar.
 4. **Look at it.** `npm run shot -- /about --width 390 --scheme dark` saves a picture of one page; `npm run visual`
    runs the checks. Look at desktop, tablet and mobile, light and dark, and the page while its data is still loading.
@@ -79,6 +81,13 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
    (`public/data/*.json`) read by an `apiContainer` — see [data and visibility](reference/data-and-visibility.md).
 10. **Never hand-write** `flat`, derived ids, `styleSelectors`, `beforeNode`/`afterNode`/`flowId`, or a
     `styleVariant` binding's key — use the factories, `variantFrom` and `activeOn`.
+11. **A switch is named for how it leaves its default.** `toggleState` turns a key nobody has set yet ON, so a key
+    named for the default (`showPlates`, on by default) takes a first click to do nothing: name it `platesOff`, and read
+    every switch through `computed` (`plates: '{{ state.platesOff ? false : true }}'`) so its default shows before
+    anybody touches it.
+12. **Hand plugins over as their declarations**: `authorSpace(space, { plugins: [declaration] })` holds a plugin —
+    its own type, or a `custom({ renderType })` host — to the events, actions and attributes it declares. See
+    [plugins](reference/plugins.md).
 
 ## Recipes
 
@@ -121,6 +130,12 @@ form({ id: 'signup', managedByInteractions: true,
 modalContainer({ id: 'details', visible: false, title: 'Details', children: [ … ] })
 button({ content: 'Open', flows: [[onClick(), openModal('details')]] })
 
+// A plugin: author it from its own declaration, flow on its events, call its actions — all checked.
+const seats = defineElement<SeatPickerAttributes>(declaration);
+seats({ id: 'seats', flows: [[named('picked', declaredTrigger(declaration, 'onPick')), setState({ key: 'seat', type: 'text', value: '{{ picked.seat }}' })]] })
+button({ content: 'Clear', flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'seats' })]] })
+authorSpace(space, { plugins: [declaration] })
+
 // A link: to a page by its id, to a path with mode 'internal', to anything else with mode 'external'.
 link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link({ href: 'mailto:hi@x.com', mode: 'external' })
 ```
@@ -133,6 +148,7 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | [layouts.md](reference/layouts.md) | Anything shown on more than one page; menus; reducing duplication of elements and styles |
 | [data-and-visibility.md](reference/data-and-visibility.md) | Bindings, providers, offline data, loading/empty/error states, live data, caching, showing and hiding, kept state |
 | [lists.md](reference/lists.md) | Rendering rows, filtering and sorting them, a detail page for one record |
+| [validation.md](reference/validation.md) | How `authorSpace` checks, the loop that wastes no attempts, and what it cannot see |
 | [authoring-errors.md](reference/authoring-errors.md) | What `authorSpace` refuses or warns about, and what to write instead |
 | [templates.md](reference/templates.md) | Any `{{ … }}` or `{% … %}`: where it runs, naming sources, filters, tests, dates |
 | [flows.md](reference/flows.md) | Clicks, submits, page loads, server actions, modals, state |

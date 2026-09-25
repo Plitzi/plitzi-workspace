@@ -36,8 +36,19 @@ const globalStep = (action: string, params: Record<string, unknown> = {}): StepS
   };
 };
 
-/** Writes `runtime.state.<key>`. NOT the element `setState`, which changes one element's own attribute. */
-export const setState = (params: { key: string; type: 'boolean' | 'number' | 'text'; value: unknown }): StepSpec =>
+/**
+ * What `setState` can store a value as — the state source's own `type` options, spelled once for the type system. A
+ * test holds the two to the same list: this one had lost `json`, so storing a row or an object was a compile error in
+ * exactly the place the runtime and the docs said to do it.
+ */
+export const SET_STATE_TYPES = ['boolean', 'number', 'text', 'json'] as const;
+
+/**
+ * Writes `runtime.state.<key>`. NOT the element `setState`, which changes one element's own attribute.
+ *
+ * `json` stores an object or a list: `value: '{{ list_rows.item }}'` keeps the row itself, not its text.
+ */
+export const setState = (params: { key: string; type: (typeof SET_STATE_TYPES)[number]; value: unknown }): StepSpec =>
   globalStep('setState', params);
 
 /**

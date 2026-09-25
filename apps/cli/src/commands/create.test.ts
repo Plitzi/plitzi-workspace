@@ -393,6 +393,14 @@ describe('the scaffold', () => {
     expect(files['.claude/skills/plitzi-authoring/reference/review-checklist.md']).toBeDefined();
   });
 
+  /** An agent that does not know the CLI hand-writes a plugin, and gets its declaration, registration and build wrong. */
+  it('carries the CLI skill too, and points agents at it for plugins', () => {
+    const files = scaffold(answers());
+
+    expect(files['.claude/skills/plitzi-cli/SKILL.md']).toContain('name: plitzi-cli');
+    expect(files['AGENTS.md']).toContain('.claude/skills/plitzi-cli/SKILL.md');
+  });
+
   /** Vite binds `localhost`, which is IPv6 here, while everything waiting for a dev server asks 127.0.0.1. */
   it('pins the dev server to the address its own tests wait on', () => {
     const files = scaffold(answers({ mode: 'client' }));

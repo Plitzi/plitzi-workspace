@@ -69,7 +69,8 @@ describe('the plugin package', () => {
       'preview/space.ts',
       'visual/plugin.spec.ts',
       'README.md',
-      'AGENTS.md'
+      'AGENTS.md',
+      '.claude/skills/plitzi-cli/SKILL.md'
     ]) {
       expect(files[file], file).toBeDefined();
     }

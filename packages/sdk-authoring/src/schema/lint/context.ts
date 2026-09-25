@@ -10,6 +10,9 @@ import type { Element, Schema, Style } from '@plitzi/sdk-shared';
  * declare — the same catalogues `authorSpace` takes, documented there. Each is optional, and a check that needs one it
  * was not given is skipped: a document read with no catalogue is held only to what it can prove on its own.
  */
+/** The built-in element that hosts a component of the project's own, named by its `renderType`. */
+export const CUSTOM_TYPE = 'custom';
+
 export type LintCatalogs = AuthorSpaceOptions;
 
 export type LintIssue = SchemaValidationError;
@@ -75,6 +78,26 @@ export class LintContext {
 
   element(id: string): Element | undefined {
     return Object.hasOwn(this.flat, id) ? this.flat[id] : undefined;
+  }
+
+  /**
+   * The catalog entry an element is held to — its type, except for a `custom` host, which is the component it hosts.
+   *
+   * A `custom` element is a slot for a component named by `renderType`, and what it fires, answers and reads are that
+   * component's. With the component's declaration handed in (`plugins`), it is held to that, under `custom:<renderType>`;
+   * without one there is nothing to hold it to, and `undefined` says so — so a plugin's own event is not refused as
+   * something a bare `custom` never fires.
+   */
+  catalogType(element: Element): string | undefined {
+    const { type } = element.definition;
+    if (type !== CUSTOM_TYPE) {
+      return type;
+    }
+
+    const renderType = textOf(element.attributes.renderType);
+    const hosted = `${CUSTOM_TYPE}:${renderType}`;
+
+    return renderType && this.catalogs.pluginTypes?.includes(hosted) ? hosted : undefined;
   }
 
   /** The attributes a type reads, or null where that is open: a plugin, or a `custom` whose component decides. */

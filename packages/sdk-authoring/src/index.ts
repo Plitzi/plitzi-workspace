@@ -9,7 +9,8 @@ import {
   elementLeafTypes,
   elementSlots,
   elementSourceTypes,
-  elementTriggers
+  elementTriggers,
+  withPluginCatalogs
 } from './elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from './interactions';
 import {
@@ -106,7 +107,7 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
 };
 
 /**
- * `authorSpace`, holding this SDK's own vocabularies.
+ * `authorSpace`, holding this SDK's own vocabularies — and each plugin handed in as `plugins`, held to its declaration.
  *
  * Deliberately shadows the one re-exported above — an explicit export wins over a star — so that everybody who
  * imports from this package gets both checks that need to know what this SDK ships.
@@ -120,14 +121,14 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
  * is the half an author cannot see, and is not always the element's own type.
  */
 export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>
-  authorSpaceUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
+  authorSpaceUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
 
 /**
  * `validateSpace`, holding this SDK's own catalogs — the same gate `authorSpace` puts its output through, for documents
  * written anywhere else: the builder saving through the API, an import, an agent's edit, a JSON edited by hand.
  */
 export const validateSpace = (space: SpaceDocuments, options: SpaceValidationOptions = {}): SchemaValidationResult =>
-  validateSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options });
+  validateSpaceUnchecked(space, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
 
 /**
  * `lintSpace`, holding this SDK's own catalogs: what a space's documents MEAN, read the way the runtime will read
@@ -135,7 +136,7 @@ export const validateSpace = (space: SpaceDocuments, options: SpaceValidationOpt
  * wants the problems to show — a panel of them, beside the element each one names.
  */
 export const lintSpace = (space: SpaceDocuments, options: LintCatalogs = {}): LintResult =>
-  lintSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options });
+  lintSpaceUnchecked(space, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
 
 /**
  * `fixSpace`, holding the same catalogs `lintSpace` reads with — so a fix settles exactly what the linter reports, on
@@ -146,7 +147,7 @@ export const fixSpace = (
   options: LintCatalogs = {},
   codes?: Iterable<string>,
   elements?: Iterable<string>
-): FixResult => fixSpaceUnchecked(space, { ...ELEMENT_CATALOGS, ...options }, codes, elements);
+): FixResult => fixSpaceUnchecked(space, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }), codes, elements);
 
 /**
  * `authorTemplate`, holding the same vocabularies — the artefact you publish when you are not building a space.

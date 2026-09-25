@@ -83,6 +83,60 @@ describe('PluginManager staleness', () => {
     expect(await bundle(cache, 'widget')).toContain('first');
   });
 
+  /**
+   * A plugin moved into a folder of its own — `Widget.ts` becoming `Widget/index.ts` — is registered under a new entry,
+   * and every file the old bundle was built from is gone. Stat'ing a missing file used to count as "not changed", so a
+   * versioned plugin kept serving the bundle of a component that no longer existed, for as long as the cache lived.
+   */
+  it('rebuilds when the registered entry is not a file the bundle was built from', async () => {
+    const { dir, entry, cache } = await workspace();
+    await new PluginManager(
+      { widget: { js: entry, action: 'compile', version: '1.0.0' } },
+      cache,
+      60_000,
+      true
+    ).prepare('widget');
+
+    const moved = path.join(dir, 'src', 'Widget', 'index.ts');
+    await fs.mkdir(path.dirname(moved), { recursive: true });
+    await fs.writeFile(moved, 'export const widget = "moved";\n');
+    await fs.rm(entry);
+    await new PluginManager(
+      { widget: { js: moved, action: 'compile', version: '1.0.0' } },
+      cache,
+      60_000,
+      true
+    ).prepare('widget');
+
+    expect(await bundle(cache, 'widget')).toContain('moved');
+  });
+
+  it('rebuilds when a file the bundle was built from has been deleted', async () => {
+    const { entry, component, cache } = await workspace();
+    const manager = new PluginManager(
+      { widget: { js: entry, action: 'compile', version: '1.0.0' } },
+      cache,
+      60_000,
+      true
+    );
+    await manager.prepare('widget');
+
+    // The barrel stops importing the component and the component is deleted: the entry's own edit is in the past of
+    // the build, so only the missing file can say anything changed.
+    await fs.writeFile(entry, 'export const widget = "inline";\n');
+    const past = new Date(Date.now() - 60_000);
+    await fs.utimes(entry, past, past);
+    await fs.rm(component);
+    await new PluginManager(
+      { widget: { js: entry, action: 'compile', version: '1.0.0' } },
+      cache,
+      60_000,
+      true
+    ).prepare('widget');
+
+    expect(await bundle(cache, 'widget')).toContain('inline');
+  });
+
   /** An untouched plugin is served from memory: the check is throttled, and it has nothing to report anyway. */
   it('keeps serving the bundle while nothing has changed', async () => {
     const { entry, cache } = await workspace();

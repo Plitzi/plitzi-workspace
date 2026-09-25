@@ -106,4 +106,30 @@ describe('ThemeProvider scope', () => {
     expect(themeStore.getState().mode).toBe('system');
     expect(document.documentElement.className).toBe('');
   });
+
+  /**
+   * The cookie records a CHOICE. Written for the mode a surface merely started in, the space's default became every
+   * first visitor's "choice", and a space that later changed its default never reached anybody who had been before.
+   */
+  it('writes no cookie for the theme the surface started in, and writes one when the visitor chooses', () => {
+    let surface: ReturnType<typeof useTheme> | undefined;
+    mount('document', <Reader onValue={value => (surface = value)} />);
+
+    expect(document.cookie).not.toContain('test-theme=');
+
+    act(() => surface?.setTheme('dark'));
+
+    expect(document.cookie).toContain('test-theme=dark');
+  });
+
+  it('keeps a cookie that was already there up to date, even back to the starting theme', () => {
+    document.cookie = 'test-theme=light;path=/';
+    let surface: ReturnType<typeof useTheme> | undefined;
+    mount('document', <Reader onValue={value => (surface = value)} />);
+
+    act(() => surface?.setTheme('dark'));
+    act(() => surface?.setTheme('light'));
+
+    expect(document.cookie).toContain('test-theme=light');
+  });
 });

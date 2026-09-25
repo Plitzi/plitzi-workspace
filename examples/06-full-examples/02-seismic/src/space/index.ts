@@ -6,7 +6,7 @@ import { dock, legend, settingsBackdrop } from './controls.ts';
 import { customCss } from './css.ts';
 import { commandBar } from './header.ts';
 import { log } from './log.ts';
-import { MAP_TYPE, map, stage } from './map.ts';
+import { MAP_DECLARATION, map, stage } from './map.ts';
 import { computed, transientState } from './state.ts';
 import { target } from './target.ts';
 import { fonts, notifications, variables } from './tokens.ts';
@@ -22,8 +22,8 @@ import type { ElementSpec, SpaceSpec } from '@plitzi/sdk-authoring';
  * documents, and the space would open in the builder exactly as it reads.
  */
 
-/** Every element type authored here that the SDK does not ship. `main.ts` tells the validator they are on purpose. */
-export const PLUGIN_TYPES = [MAP_TYPE];
+/** The components this space ships, as their declarations: `main.ts` hands them to `authorSpace`, which checks them. */
+export const PLUGINS = [MAP_DECLARATION];
 
 const screen = styles('screen', {
   position: 'relative',

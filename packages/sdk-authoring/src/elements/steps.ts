@@ -27,7 +27,7 @@ export type ElementTriggerName = keyof typeof interactionBasicTriggers;
  */
 // Asked rather than indexed: the argument may name no built-in trigger at all — a plugin type is free to publish
 // its own — and each record's type says every key is there.
-const declaredTrigger = (trigger: string): InteractionCallback | undefined => {
+const builtinTrigger = (trigger: string): InteractionCallback | undefined => {
   if (Object.hasOwn(interactionBasicTriggers, trigger)) {
     return interactionBasicTriggers[trigger];
   }
@@ -36,7 +36,7 @@ const declaredTrigger = (trigger: string): InteractionCallback | undefined => {
 };
 
 export const on = (trigger: ElementTriggerName | (string & {}), params: Record<string, unknown> = {}): StepSpec => {
-  const declared = declaredTrigger(trigger);
+  const declared = builtinTrigger(trigger);
 
   return {
     type: 'trigger',
@@ -208,3 +208,55 @@ export const toggleElement = (
   ...(target === undefined ? {} : { on: target }),
   params
 });
+
+/** What a declaration offers the two builders below: its events and its actions, keyed by name. */
+interface DeclaresInteractions {
+  triggers?: Readonly<Record<string, InteractionCallback>>;
+  callbacks?: Readonly<Record<string, InteractionCallback>>;
+}
+
+type TriggerName<D extends DeclaresInteractions> = keyof NonNullable<D['triggers']> & string;
+
+type CallbackName<D extends DeclaresInteractions> = keyof NonNullable<D['callbacks']> & string;
+
+/**
+ * A flow's first step, on one of the triggers a declaration says its element fires — typed from the declaration.
+ *
+ * For an element this SDK does not ship: a plugin fires its own events, and `on('onQuakeSelect')` accepts any string
+ * because it cannot know them. Handed the plugin's `declaration.ts`, a trigger it does not declare is a compile error,
+ * and the step carries the declared title and `preview` — what the builder shows a reader of the flow.
+ */
+export const declaredTrigger = <D extends DeclaresInteractions>(declaration: D, trigger: TriggerName<D>): StepSpec => {
+  const declared = declaration.triggers?.[trigger];
+
+  return {
+    type: 'trigger',
+    action: declared?.action ?? trigger,
+    title: declared?.title ?? trigger,
+    ...(declared?.preview ? { preview: declared.preview as Record<string, unknown> } : {}),
+    params: {}
+  };
+};
+
+/**
+ * A step that runs one of the actions a declaration says its element answers to — on the element named by `on`.
+ *
+ * The built-in elements have a builder per action (`openModal`, `reloadApi`); a plugin's actions are its own, and
+ * without this they were written as a literal step, where naming the wrong action, or forgetting `on`, is a button
+ * that does nothing. Typed from the declaration, so only an action it declares can be named.
+ */
+export const declaredCallback = <D extends DeclaresInteractions>(
+  declaration: D,
+  callback: CallbackName<D>,
+  target: { on: string; params?: Record<string, unknown> }
+): StepSpec => {
+  const declared = declaration.callbacks?.[callback];
+
+  return {
+    type: 'callback',
+    action: declared?.action ?? callback,
+    title: declared?.title ?? callback,
+    on: target.on,
+    params: target.params ?? {}
+  };
+};

@@ -36,7 +36,8 @@ const offlineData = (
   rsc: SchemaRsc | undefined = { enabled: true },
   homeRuntime: 'server' | 'client' = 'client',
   fonts: SpaceFont[] = [],
-  spaceDebugMode = false
+  spaceDebugMode = false,
+  defaultTheme?: 'dark' | 'light' | 'system'
 ): OfflineDataRaw =>
   ({
     schema: {
@@ -62,7 +63,12 @@ const offlineData = (
       rsc
     },
     plugins: [],
-    style: { cache: '', variables: [], fonts }
+    style: {
+      cache: '',
+      variables: [],
+      fonts,
+      ...(defaultTheme ? { theme: { default: defaultTheme, schemes: ['light', 'dark'] } } : {})
+    }
   }) as unknown as OfflineDataRaw;
 
 const request = (path: string, query: Record<string, string> = {}, cookie?: string): SSRRequest =>
@@ -99,6 +105,8 @@ type Options = {
   /** What the space declares, and where this deployment serves uploaded files from. */
   fonts?: SpaceFont[];
   fontsConfig?: SSRFontsConfig;
+  /** The theme the space's style says a visitor starts in. */
+  defaultTheme?: 'dark' | 'light' | 'system';
 };
 
 const render = async (
@@ -114,11 +122,12 @@ const render = async (
     query,
     degrade,
     fonts,
-    fontsConfig
+    fontsConfig,
+    defaultTheme
   }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
-  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime, fonts, spaceDebugMode));
+  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime, fonts, spaceDebugMode, defaultTheme));
   const metrics = new RequestMetrics();
   const config = {
     environment: 'production',
@@ -429,5 +438,29 @@ describe('prepareRender / the theme the visitor already chose', () => {
       expect(templateParams.themeClass).toBeUndefined();
       expect(componentProps.theme).toBeUndefined();
     }
+  });
+
+  /**
+   * A space that says it is dark by default IS dark on a first visit — painted so by the server, not corrected after.
+   * `style.theme.default` was stored, edited in the builder and written by authoring, and nothing rendered with it.
+   */
+  it('starts a first visit in the theme the space declares as its default', async () => {
+    const { templateParams, componentProps } = await render('/', { defaultTheme: 'dark' });
+
+    expect(templateParams.themeClass).toBe('dark');
+    expect(componentProps.theme).toBe('dark');
+  });
+
+  it('lets a choice the visitor made win over the default of the space', async () => {
+    const { templateParams } = await render('/', { cookie: 'theme=light', defaultTheme: 'dark' });
+
+    expect(templateParams.themeClass).toBe('light');
+  });
+
+  it('leaves a space whose default is system to the machine', async () => {
+    const { templateParams, componentProps } = await render('/', { defaultTheme: 'system' });
+
+    expect(templateParams.themeClass).toBeUndefined();
+    expect(componentProps.theme).toBeUndefined();
   });
 });

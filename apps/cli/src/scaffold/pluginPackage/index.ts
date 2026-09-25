@@ -1,4 +1,5 @@
 import { buildFiles } from './build';
+import { skillFiles } from '../skills';
 import { docsFiles } from './docs';
 import { pluginNames } from './names';
 import { packageFiles } from './package';
@@ -39,7 +40,9 @@ export const scaffoldPlugin = (answers: PluginAnswers): ProjectFiles => {
     ...buildFiles(),
     ...previewFiles(elementNames),
     ...visualFiles(elementNames, answers),
-    ...docsFiles(elementNames, answers)
+    ...docsFiles(elementNames, answers),
+    // What the command line does for a package — adding elements, packing, uploading — for the agent working in it.
+    ...skillFiles(['plitzi-cli'])
   };
 };
 
