@@ -8,7 +8,8 @@ import {
   runServerAction,
   setState,
   styles,
-  when
+  when,
+  whileRunning
 } from '@plitzi/sdk-authoring';
 
 import { DETAIL_ACTION } from '../actions.ts';
@@ -132,11 +133,13 @@ export const map: ElementSpec = seismicMap({
      * An event the feed did not have on the last refresh, at or above the reader's alert threshold. Announced louder
      * when it is one that damages buildings — the map has already thrown out its shockwave — and, while FOLLOW is on,
      * locked: the same `selectedId` a click writes, so the map flies there, the reticle closes on it and the dossier
-     * opens, exactly as if the reader had picked it. With FOLLOW off the step writes back the lock that was already
-     * there, which is a step that changes nothing.
+     * opens, exactly as if the reader had picked it — the LEAD of a refresh that brought several, its largest.
+     *
+     * Queued: one refresh can bring three arrivals, fired one after the other, and each is announced. Skipped (the
+     * default) the second and third found the first flow still running and were dropped without a toast.
      */
     [
-      named('arrived', declaredTrigger(declaration, 'onQuakeArrival')),
+      whileRunning('queue', named('arrived', declaredTrigger(declaration, 'onQuakeArrival'))),
       when(
         { field: 'arrived.magnitude', operator: '>=', value: 5 },
         addNotification({
@@ -155,17 +158,18 @@ export const map: ElementSpec = seismicMap({
           autoDismissTimeout: ARRIVAL_SECONDS * 1000
         })
       ),
-      setState({
-        key: 'selectedId',
-        type: 'text',
-        value: "{{ state.followOff ? (state.selectedId ?? '') : arrived.id }}"
-      })
+      when(
+        [
+          { field: 'arrived.lead', operator: '=', value: true },
+          { field: 'state.followOff', operator: '!=', value: true }
+        ],
+        setState({ key: 'selectedId', type: 'text', value: '{{ arrived.id }}' })
+      )
     ],
     /**
      * The arrival's moment is over and it still holds the lock: let it go and go home, as the home button does. The
      * map only says so when nothing else took the lock meanwhile. Not a `delay` at the end of the arrival's own flow:
-     * while that flow waited, the map's next arrival would find it still running and not start it again — dropped,
-     * toast and all.
+     * that flow is queued, so every later arrival would wait out the delay before it was even announced.
      */
     [declaredTrigger(declaration, 'onArrivalSettled'), ...releaseLock()],
     /**

@@ -25,6 +25,8 @@ never a nested tree. Use the step builders — they fill in where a step runs an
   'panel')` to show/hide an element. Never two branches under opposite `when` guards — the second reads what the
   first just wrote and flips it back. A key never set toggles to `true`, so for something shown by default name the
   key for hiding it (`sidebarCollapsed`).
+- **A trigger fired again while its flow runs is IGNORED** (`skip`, the default — no double submit). For a stream of
+  events that must each run, wrap the trigger: `whileRunning('queue', on('onArrival'))` (in order) or `'parallel'`.
 - **Each step reads the page as it is when it runs.** A `when` or a `{{ state.x }}` after a `setState` sees the new
   value, and one after a `delay` or a server action sees whatever changed meanwhile. To act on the value from BEFORE
   a write, put the step that reads it first.

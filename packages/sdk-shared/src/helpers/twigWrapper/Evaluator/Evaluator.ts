@@ -36,6 +36,18 @@ const readsOneName = (expression: Expression): boolean =>
 const isUnresolved = (expression: Expression, value: unknown): boolean =>
   value === undefined || value === null || (value === '' && readsOneName(expression));
 
+/**
+ * The test a right-hand side names, if it is one word: `defined`, `empty`… — and `null`/`none`, which are literals
+ * everywhere else but, after `is`, the test (true for a value that was never set as much as for `null`).
+ */
+const testNameOf = (expression: Expression): string | undefined => {
+  if (expression.type === 'path' && expression.segments.length === 1) {
+    return expression.segments[0];
+  }
+
+  return expression.type === 'literal' && expression.value === null ? 'null' : undefined;
+};
+
 export type EvalResult = {
   readonly output: string;
   readonly variables: Record<string, unknown>;
@@ -525,8 +537,9 @@ class Evaluator {
     // `x is defined`, `x is not empty`: a Twig test names a question about the value, not a variable to compare it
     // with. Read as a comparison, `defined` was a variable nobody set, so `anything is defined` asked whether the
     // value was undefined — true exactly when it was not defined.
-    if ((operator === 'is' || operator === 'is not') && rightExpr.type === 'path' && rightExpr.segments.length === 1) {
-      const test = TESTS[rightExpr.segments[0]];
+    const testName = testNameOf(rightExpr);
+    if ((operator === 'is' || operator === 'is not') && testName !== undefined) {
+      const test = TESTS[testName];
       if (test) {
         const answer = test(this.evalExpression(leftExpr));
 
@@ -582,6 +595,13 @@ class Evaluator {
         return valueIn(left, right);
       case 'not in':
         return !valueIn(left, right);
+      case 'same as':
+        return left === right;
+      case 'divisible by': {
+        const divisor = Number(right);
+
+        return divisor !== 0 && Number.isFinite(divisor) && Number(left) % divisor === 0;
+      }
       case 'is':
         return left === right;
       case 'is not':

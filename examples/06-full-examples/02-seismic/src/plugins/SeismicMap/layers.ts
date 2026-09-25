@@ -41,6 +41,7 @@ export const LAYERS = {
   glow: 'quake-glow',
   selected: 'quake-selected',
   heat: 'quake-heat',
+  pulse: 'quake-pulse',
   rings: 'range-rings',
   shaking: 'shaking'
 } as const;
@@ -60,6 +61,15 @@ export const QUAKE_LAYERS = [LAYERS.heat, LAYERS.glow, LAYERS.quake] as const;
  * appear in order at sixty frames a second. Outside a replay it sits past the end of time and shows everything.
  */
 export const REPLAY_CLOCK = 'until';
+
+/**
+ * Where the fresh events' pulse is in its beat, 0 to 1 — map state for the same reason as the replay clock.
+ *
+ * The pulse is a ring drawn ON the globe: it curves with the surface near the limb and goes behind the Earth with the
+ * dot it belongs to. A DOM ring over the canvas did neither — it faced the screen however the globe turned, and showed
+ * through the planet from the far side. Moving one number a frame is all the animation costs.
+ */
+export const PULSE_PHASE = 'pulse';
 
 const NOT_YET = Number.MAX_SAFE_INTEGER;
 
@@ -90,7 +100,7 @@ const sized = (scale: number): ExpressionSpecification => [
   26 * scale
 ];
 
-const radius = (scale: number, extra = 0): ExpressionSpecification => [
+const radius = (scale: number, extra: number | ExpressionSpecification = 0): ExpressionSpecification => [
   'interpolate',
   ['linear'],
   ['zoom'],
@@ -122,6 +132,7 @@ type Paints = {
   'quake-heat': HeatmapLayerSpecification['paint'];
   'quake-glow': CircleLayerSpecification['paint'];
   'quake-core': CircleLayerSpecification['paint'];
+  'quake-pulse': CircleLayerSpecification['paint'];
   'quake-selected': CircleLayerSpecification['paint'];
   'range-rings': LineLayerSpecification['paint'];
   shaking: LineLayerSpecification['paint'];
@@ -190,6 +201,15 @@ export const paints = (palette: Palette): Paints => ({
     'circle-stroke-width': ['interpolate', ['linear'], ['get', 'magnitude'], 2, 0.4, 6, 1.2],
     'circle-opacity': whenHappened(1),
     'circle-stroke-opacity': whenHappened(1),
+    'circle-pitch-alignment': 'map'
+  },
+  // A ring that leaves the dot and fades as it grows, once per beat.
+  'quake-pulse': {
+    'circle-radius': radius(1, ['*', ['global-state', PULSE_PHASE], 16]),
+    'circle-color': 'rgba(0, 0, 0, 0)',
+    'circle-stroke-color': byBand(palette, 0.9),
+    'circle-stroke-width': 1.4,
+    'circle-stroke-opacity': ['-', 1, ['global-state', PULSE_PHASE]],
     'circle-pitch-alignment': 'map'
   },
   'quake-selected': {
@@ -285,6 +305,13 @@ export const layers = (palette: Palette): LayerSpecification[] => {
       paint: paint.shaking
     },
     { id: LAYERS.glow, type: 'circle', source: SOURCES.quakes, paint: paint['quake-glow'] },
+    {
+      id: LAYERS.pulse,
+      type: 'circle',
+      source: SOURCES.quakes,
+      filter: ['==', ['get', 'fresh'], true],
+      paint: paint['quake-pulse']
+    },
     // Sorted by magnitude, so a big event is drawn over the small ones around it rather than under them.
     {
       id: LAYERS.quake,
@@ -308,14 +335,28 @@ const emptySource = (): SourceSpecification => ({ type: 'geojson', data: { type:
 export const style = (palette: Palette, projection: 'globe' | 'mercator'): StyleSpecification => ({
   version: 8,
   projection: { type: projection },
-  state: { [REPLAY_CLOCK]: { default: NOT_YET } },
+  state: { [REPLAY_CLOCK]: { default: NOT_YET }, [PULSE_PHASE]: { default: 0 } },
   sky: sky(palette),
   sources: Object.fromEntries(Object.values(SOURCES).map(source => [source, emptySource()])),
   layers: layers(palette)
 });
 
+/** The magnitude floor and the depth band, as the conditions an event must meet to be drawn. */
+const quakeConditions = (minMagnitude: number, band: string): ExpressionSpecification[] => {
+  const floor: ExpressionSpecification = ['>=', ['get', 'magnitude'], minMagnitude];
+
+  return band === 'all' ? [floor] : [floor, ['==', ['get', 'band'], band]];
+};
+
 /** The magnitude floor and the depth band, as one filter every event layer shares. */
-export const quakeFilter = (minMagnitude: number, band: string): FilterSpecification =>
-  band === 'all'
-    ? ['>=', ['get', 'magnitude'], minMagnitude]
-    : ['all', ['>=', ['get', 'magnitude'], minMagnitude], ['==', ['get', 'band'], band]];
+export const quakeFilter = (minMagnitude: number, band: string): FilterSpecification => [
+  'all',
+  ...quakeConditions(minMagnitude, band)
+];
+
+/** Fresh events that pass the filters: the pulse layer's filter, which is the event layers' plus freshness. */
+export const pulseFilter = (minMagnitude: number, band: string): FilterSpecification => [
+  'all',
+  ['==', ['get', 'fresh'], true],
+  ...quakeConditions(minMagnitude, band)
+];

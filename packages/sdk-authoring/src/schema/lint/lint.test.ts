@@ -525,6 +525,25 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('trigger-never-fired');
     });
 
+    it('while-running', () => {
+      const onStep = withChange(({ schema }) => {
+        setFlow(schema, 'go', [
+          onClick(),
+          step('open', 'callback', 'openModal', { elementId: 'modal', whileRunning: 'queue' })
+        ]);
+      });
+      const unknownMode = withChange(({ schema }) => {
+        setFlow(schema, 'go', [
+          // A document written outside TypeScript — the builder, the MCP, an import — can hold any string here.
+          step('click', 'trigger', 'onClick', { elementId: 'go', whileRunning: 'later' as 'queue' }),
+          step('open', 'callback', 'openModal', { elementId: 'modal' })
+        ]);
+      });
+
+      expect(errorsOf(onStep)).toContain('while-running');
+      expect(errorsOf(unknownMode)).toContain('while-running');
+    });
+
     it('trigger-keys', () => {
       const documents = withChange(({ schema }) => {
         setFlow(schema, 'go', [

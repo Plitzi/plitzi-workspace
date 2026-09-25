@@ -183,6 +183,10 @@ export const interactionNode = z.object({
   params: z.record(z.string(), z.unknown()).optional(),
   enabled: z.boolean().optional(),
   when: ruleGroup.optional().describe('QueryBuilder RuleGroup gating this step (validated structurally)'),
+  whileRunning: z
+    .enum(['skip', 'parallel', 'queue'])
+    .optional()
+    .describe('Trigger only: a refiring while this flow runs'),
   elementId: z
     .string()
     .optional()

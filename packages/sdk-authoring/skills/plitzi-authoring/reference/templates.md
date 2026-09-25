@@ -61,7 +61,8 @@ outside the element that publishes it — each with the name it should have been
   `{% apply upper %}…{% endapply %}`, `{% break %}`, `{% continue %}`.
 - Arrow functions in filters, closing over `{% set %}` variables: `rows|sort(r => r.at)|first`,
   `rows|sort((a, b) => b.score - a.score)`, `rows|filter(r => r.score >= min)`, `rows|map(r => r.name)`.
-- Tests: `is defined`, `is empty`, `is null`, `is iterable`, `is even`, `is odd`, and their `is not` forms.
+- Tests: `is defined`, `is empty`, `is null`, `is iterable`, `is even`, `is odd`, `is same as(x)` (strict: `false` is
+  not `'false'`, `0` or an unset value), `is divisible by(n)`, and their `is not` forms. `null` and `none` are literals.
 - Functions: `range`, `min`, `max`, `cycle`.
 - **Not supported**: `matches` (no regular expressions are evaluated — use `starts with`, `ends with`, `in`), macros,
   `include`/`extends`, and any filter or function not listed here. `authorSpace` refuses them, and anything else the

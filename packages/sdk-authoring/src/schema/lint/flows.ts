@@ -1,5 +1,6 @@
 import { KEY_TRIGGER, parseKeys } from '@plitzi/sdk-shared/helpers/keys';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
 import { STEP_TYPES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
@@ -151,9 +152,37 @@ const checkTriggerKeys = (ctx: LintContext, node: ElementInteraction, where: str
   ctx.error(
     'trigger-keys',
     `${where} starts a flow on a keyboard shortcut that cannot fire: ${problems.join('; ')}. Write one or several, with commas: \`onKey('f')\`, \`onKey('shift+f')\`, \`onKey('mod+k, escape')\`.`,
-    hostId,
-    { keys }
+    hostId
   );
+};
+
+/**
+ * `whileRunning` is a trigger's: it says what firing the trigger again does. On any other step it means nothing and
+ * runs nothing — and a value outside the three is a flow that does something nobody chose.
+ */
+const checkWhileRunning = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
+  const { whileRunning } = node;
+  if (whileRunning === undefined) {
+    return;
+  }
+
+  if (node.type !== 'trigger') {
+    ctx.error(
+      'while-running',
+      `${where}: step "${node.id}" (${node.action}) sets whileRunning, which only a flow's trigger reads. Put it on the first step: \`[whileRunning('${whileRunning}', onClick()), …]\`.`,
+      hostId
+    );
+
+    return;
+  }
+
+  if (!WHILE_RUNNING_MODES.includes(whileRunning)) {
+    ctx.error(
+      'while-running',
+      `${where}: the trigger "${node.action}" sets whileRunning "${whileRunning}". It is one of ${WHILE_RUNNING_MODES.map(mode => `'${mode}'`).join(', ')}.`,
+      hostId
+    );
+  }
 };
 
 const checkTrigger = (ctx: LintContext, node: ElementInteraction, where: string, host: Element): void => {
@@ -445,6 +474,7 @@ export const lintFlows = (ctx: LintContext): void => {
         }
 
         warnStatePaths(ctx, node, where, host.id);
+        checkWhileRunning(ctx, node, where, host.id);
         if (node.type === 'trigger') {
           checkTrigger(ctx, node, where, host);
           continue;

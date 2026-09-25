@@ -1,4 +1,3 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
 import { describe, it, expect, vi } from 'vitest';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
@@ -59,7 +58,8 @@ describe('InteractionsManager re-entrancy guard', () => {
     await manager.interactionTrigger('el1', 'click', {});
 
     expect(boom).toHaveBeenCalledTimes(2);
-    expect(get(manager.interactionsRunning, 'el1.click')).toBeFalsy();
+    await manager.interactionTrigger('el1', 'click', {});
+    expect(boom).toHaveBeenCalledTimes(3);
   });
 
   it('keeps running healthy flows after a previous flow failed', async () => {
@@ -479,5 +479,85 @@ describe('InteractionsManager — keyboard shortcuts', () => {
 
     expect(zoom).toHaveBeenCalledTimes(1);
     expect(close).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * A trigger firing while its flow still runs: ignored (`skip`, the default), run alongside (`parallel`), or run after
+ * it (`queue`). Each firing here opens a step that waits until the test lets it finish.
+ */
+describe('InteractionsManager — whileRunning', () => {
+  const setup = (whileRunning?: 'skip' | 'parallel' | 'queue') => {
+    const started: number[] = [];
+    const finished: number[] = [];
+    const gates: (() => void)[] = [];
+    const manager = new InteractionsManager('page1');
+    const interactions = makeInteractions('el1', 'click', 'wait');
+    interactions.trig = { ...interactions.trig, ...(whileRunning ? { whileRunning } : {}) };
+    manager.subscribe('el1', interactions, triggerDef, {
+      wait: {
+        action: 'wait',
+        title: 'Wait',
+        type: 'callback',
+        params: {},
+        callback: async () => {
+          const run = started.length + 1;
+          started.push(run);
+          await new Promise<void>(resolve => gates.push(resolve));
+          finished.push(run);
+        }
+      }
+    });
+    const settle = async () => {
+      for (let turn = 0; turn < 10; turn++) {
+        await Promise.resolve();
+      }
+    };
+
+    return { manager, started, finished, gates, settle };
+  };
+
+  it('skips a firing while the flow runs, by default', async () => {
+    const { manager, started, gates, settle } = setup();
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+
+    expect(started).toEqual([1]);
+    gates.forEach(open => open());
+    await settle();
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+    expect(started).toEqual([1, 2]);
+  });
+
+  it('runs every firing at once in parallel', async () => {
+    const { manager, started, settle } = setup('parallel');
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+
+    expect(started).toEqual([1, 2, 3]);
+  });
+
+  it('runs every firing one after another in a queue', async () => {
+    const { manager, started, finished, gates, settle } = setup('queue');
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+    expect(started).toEqual([1]);
+
+    gates[0]();
+    await settle();
+    expect(finished).toEqual([1]);
+    expect(started).toEqual([1, 2]);
+
+    gates[1]();
+    await settle();
+    gates[2]();
+    await settle();
+    expect(finished).toEqual([1, 2, 3]);
   });
 });

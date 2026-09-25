@@ -1,5 +1,5 @@
 import type { CssProps } from '@plitzi/sdk-authoring';
-import type { ElementRuntime, Environment } from '@plitzi/sdk-shared';
+import type { ElementRuntime, Environment, WhileRunning } from '@plitzi/sdk-shared';
 
 export type Env = Environment;
 
@@ -151,6 +151,8 @@ export interface AIInteractionNode {
   params?: Record<string, unknown>;
   enabled?: boolean;
   when?: unknown;
+  /** On a trigger: what firing it again does while its flow still runs. `skip` when absent. */
+  whileRunning?: WhileRunning;
   /** Source element the callback targets (globalCallback/utility). Defaults to this element on write. */
   elementId?: string;
   preview?: Record<string, unknown>;

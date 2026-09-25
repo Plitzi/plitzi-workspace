@@ -515,8 +515,20 @@ button({
 `isBinding: true` compares the field with another path rather than with a literal.
 
 While a flow runs, the same trigger on the same element does not start it again — a second click on Delete during
-those five seconds is ignored, which is what keeps a double click from submitting twice. An event that must never be
-dropped while a flow waits (a stream of arrivals, say) should not wait in the flow it starts.
+those five seconds is ignored, which is what keeps a double click from submitting twice. That is the trigger's
+`whileRunning`, and `skip` is its default; the other two answers are for a trigger that must never lose a firing:
+
+```ts
+flows: [[whileRunning('queue', named('arrived', on('onArrival'))), addNotification({ … }), …]]
+```
+
+| `whileRunning` | A firing while the flow runs |
+| --- | --- |
+| `skip` (default) | is ignored — a button that submits |
+| `queue` | runs after the one in progress, in order — a stream of events, each announced |
+| `parallel` | runs at once, beside it — independent firings that do not touch the same state |
+
+It is per flow: two flows on the same click are two things, and one still running says nothing about the other.
 
 To act on the value from BEFORE a write, put the step that reads it first. Two branches under opposite `when`
 guards cannot toggle a value — the second sees what the first wrote and flips it back; `toggleState` does it in one

@@ -14,7 +14,8 @@ import type {
   InteractionCallback,
   QueryParams,
   RouteParams,
-  Subscriptor
+  Subscriptor,
+  WhileRunning
 } from '@plitzi/sdk-shared';
 
 type InteractionUpdateListener = (timestamp: number) => void;
@@ -44,7 +45,11 @@ class InteractionsManager {
   subscriptors: Record<string, Subscriptor>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   callbacksAvailables: Record<string, Record<string, InteractionCallback<any>>>;
-  interactionsRunning: Record<string, boolean>;
+  /**
+   * The flows running now, by element and trigger node — what `whileRunning` decides against. Per FLOW rather than per
+   * event: two flows on one click are two things, and one still running says nothing about the other.
+   */
+  private flowsRunning = new Map<string, Promise<void>>();
   lastUpdate: number;
   private listeners = new Set<InteractionUpdateListener>();
 
@@ -55,7 +60,6 @@ class InteractionsManager {
 
     this.subscriptors = {};
     this.callbacksAvailables = {};
-    this.interactionsRunning = {};
 
     this.interactionsData = { currentPageId, ...routeParams, ...queryParams };
     this.lastUpdate = Date.now();
@@ -64,32 +68,25 @@ class InteractionsManager {
   eventBridgeCallback =
     (interactions?: Record<string, ElementInteraction>) =>
     async (subscriptorId: string, eventName: string, params: Record<string, unknown>) => {
-      if (
-        !interactions ||
-        !eventName ||
-        !subscriptorId ||
-        get(this.interactionsRunning, `${subscriptorId}.${eventName}`)
-      ) {
+      if (!interactions || !eventName || !subscriptorId) {
         return;
       }
 
-      set(this.interactionsRunning, `${subscriptorId}.${eventName}`, true);
+      const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
+      // Read again before every step rather than once here: a step sees the page as it is when it runs.
+      const readGlobals = (): Record<string, unknown> => ({
+        ...this.interactionsData,
+        ...(typeof getAdditionalParams === 'function' ? getAdditionalParams().dataSource : undefined)
+      });
 
-      try {
-        const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
-        // Read again before every step rather than once here: a step sees the page as it is when it runs.
-        const readGlobals = (): Record<string, unknown> => ({
-          ...this.interactionsData,
-          ...(typeof getAdditionalParams === 'function' ? getAdditionalParams().dataSource : undefined)
-        });
+      const triggersToRun = Object.values(interactions).filter(
+        (node: ElementInteraction) =>
+          node.type === 'trigger' && node.action === eventName && node.enabled && answersPress(node, params)
+      );
 
-        const triggersToRun = Object.values(interactions).filter(
-          (node: ElementInteraction) =>
-            node.type === 'trigger' && node.action === eventName && node.enabled && answersPress(node, params)
-        );
-
-        await Promise.all(
-          triggersToRun.map(trigger =>
+      await Promise.all(
+        triggersToRun.map(trigger =>
+          this.runFlow(`${subscriptorId}.${trigger.id}`, trigger.whileRunning ?? 'skip', () =>
             flowTrigger(
               trigger,
               interactions,
@@ -99,11 +96,31 @@ class InteractionsManager {
               subscriptorId
             )
           )
-        );
-      } finally {
-        set(this.interactionsRunning, `${subscriptorId}.${eventName}`, false);
-      }
+        )
+      );
     };
+
+  /** One firing of one flow, as its trigger's `whileRunning` says — see {@link WhileRunning}. */
+  private runFlow(key: string, whileRunning: WhileRunning, run: () => Promise<void>): Promise<void> {
+    const running = this.flowsRunning.get(key);
+    if (whileRunning === 'parallel') {
+      return run();
+    }
+
+    if (running && whileRunning === 'skip') {
+      return Promise.resolve();
+    }
+
+    // Queued behind the run in progress, if any; a run that failed does not stop the ones waiting for it.
+    const next = (running ? running.then(run, run) : run()).finally(() => {
+      if (this.flowsRunning.get(key) === next) {
+        this.flowsRunning.delete(key);
+      }
+    });
+    this.flowsRunning.set(key, next);
+
+    return next;
+  }
 
   // `id` is the element's id — the one name it answers to, and the only key an interaction is wired by. A caller
   // registered at all: its callbacks would be unreachable (nothing can name them) and its triggers would fire

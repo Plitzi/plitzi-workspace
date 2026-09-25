@@ -23,7 +23,8 @@ import {
   runServerAction,
   setState,
   text,
-  when
+  when,
+  whileRunning
 } from './index';
 
 /**
@@ -173,6 +174,35 @@ describe('the skill’s recipes', () => {
     expect(warnings).toEqual([]);
     expect(() => onKey('ctrl+shift')).toThrow("onKey('ctrl+shift') is not a shortcut");
     expect(() => onKey('arrowupp')).toThrow('not a key');
+  });
+
+  it('a trigger that queues its firings authors with no warning, and only a trigger takes it', () => {
+    const { schema, warnings } = authorSpace({
+      name: 'Queue',
+      permanentUrl: 'queue',
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          isDefault: true,
+          body: [
+            button({
+              id: 'go',
+              content: 'Go',
+              flows: [
+                [whileRunning('queue', onClick()), delay(1000), setState({ key: 'done', type: 'boolean', value: true })]
+              ]
+            })
+          ]
+        }
+      ]
+    });
+    const trigger = Object.values(schema.flat.go.definition.interactions ?? {}).find(node => node.type === 'trigger');
+
+    expect(warnings).toEqual([]);
+    expect(trigger?.whileRunning).toBe('queue');
+    expect(() => whileRunning('queue', delay(1000))).toThrow('wraps a flow');
   });
 
   it('the undo window in the docs authors with no warning', () => {

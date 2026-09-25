@@ -1,8 +1,9 @@
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
 import type { StepSpec } from './types';
 import type { Rule, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
+import type { ElementInteraction, WhileRunning } from '@plitzi/sdk-shared';
 
 /**
  * Public because a step's `when` is one: a project that exports a flow or an action — and so emits declarations for it
@@ -95,7 +96,8 @@ export const authorFlow = (
       afterNode: index === steps.length - 1 ? '' : ids[index + 1],
       flowId,
       enabled: step.enabled ?? true,
-      ...(step.when ? { when: step.when } : {})
+      ...(step.when ? { when: step.when } : {}),
+      ...(step.whileRunning ? { whileRunning: step.whileRunning } : {})
     };
 
     return flow;
@@ -125,6 +127,31 @@ export const when = (rules: Rule | Rule[], step: StepSpec, combinator: 'and' | '
   const group: RuleGroup = { combinator, rules: Array.isArray(rules) ? rules : [rules] };
 
   return { ...step, when: group };
+};
+
+/**
+ * What a trigger does when it fires again while the flow it started still runs.
+ *
+ * `skip` is what happens without this: the new firing is ignored — which is what keeps a double click from submitting
+ * twice, and exactly wrong for a stream of events a flow must answer every one of. `queue` runs each firing after the
+ * last, in order; `parallel` runs them all at once.
+ *
+ * ```ts
+ * [whileRunning('queue', named('arrived', on('onArrival'))), addNotification({ … }), delay(8000), …]
+ * ```
+ */
+export const whileRunning = (mode: WhileRunning, trigger: StepSpec): StepSpec => {
+  if (trigger.type !== 'trigger') {
+    throw new Error(
+      `whileRunning('${mode}', …) wraps a flow's TRIGGER — it decides what firing the trigger again does — and was given a "${trigger.type}" step (${trigger.action}). Put it around the first step: \`[whileRunning('${mode}', onClick()), …]\`.`
+    );
+  }
+
+  if (!WHILE_RUNNING_MODES.includes(mode)) {
+    throw new Error(`whileRunning takes ${WHILE_RUNNING_MODES.map(item => `'${item}'`).join(', ')}, not '${mode}'.`);
+  }
+
+  return { ...trigger, whileRunning: mode };
 };
 
 /**

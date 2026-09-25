@@ -54,6 +54,17 @@ export type ElementBinding = {
   to: string;
 };
 
+/**
+ * What a trigger does when it fires again while the flow it started is still running.
+ *
+ * - `skip` (the default): the new firing is ignored — what keeps a double click from submitting twice.
+ * - `parallel`: every firing runs its own flow, at the same time.
+ * - `queue`: every firing runs, one after another, in the order they came — none lost, none overlapping.
+ */
+export type WhileRunning = 'skip' | 'parallel' | 'queue';
+
+export const WHILE_RUNNING_MODES: readonly WhileRunning[] = ['skip', 'parallel', 'queue'];
+
 export type ElementInteraction<T extends Record<string, unknown> = Record<string, unknown>> = {
   id: string;
   title: string;
@@ -70,6 +81,8 @@ export type ElementInteraction<T extends Record<string, unknown> = Record<string
   flowId: string;
   enabled: boolean;
   when?: RuleGroup;
+  /** On a trigger only: what a firing does while this flow is still running. `skip` when absent. */
+  whileRunning?: WhileRunning;
 };
 
 export type ElementDefinition = {

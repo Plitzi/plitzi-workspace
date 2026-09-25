@@ -741,3 +741,20 @@
   browser entry, `npm run author`, the visual test — passes it to `authorSpace(space, { plugins: declarations })`.
   `plitzi add plugin` adds each new plugin's declaration to it (or, when the list was changed by hand, says what to
   add). A flow on an event a project's plugin never fires is refused at authoring, as it is for a built-in element.
+
+## Templates: `same as`, `divisible by`, and `null`
+
+- `x is same as(y)` and `x is divisible by(n)` (with their `is not` forms) are Twig tests the interpreter now reads.
+  Before, `same` was read as a variable nobody set, so `x is same as(false)` held exactly when `x` was UNSET — silently
+  the opposite of what it says.
+- `null` and `none` are literals, as in Twig, instead of names that resolved to nothing. After `is` they are still the
+  test (`x is null` holds for an unset value too).
+
+## `whileRunning`: what a trigger fired again while its flow runs does
+
+- A trigger's `whileRunning` is `skip` (the default and what always happened: the firing is ignored — no double
+  submit), `queue` (it runs after the one in progress, in order) or `parallel` (it runs at once). Authored with
+  `whileRunning('queue', onClick())`, offered on the trigger in the builder, carried by the MCP and by the export to code.
+- The guard is now per FLOW rather than per event: one flow on a click still running no longer holds back another flow
+  on the same click.
+- `lintSpace` refuses `whileRunning` on a step that is not the trigger, or an unknown value (`while-running`).

@@ -1520,7 +1520,10 @@ class SpecReader {
       ...(isEmpty(node.preview) ? {} : { preview: node.preview }),
       ...(on ? { on } : {}),
       ...(when ? { when } : {}),
-      ...(!node.enabled ? { enabled: false } : {})
+      ...(!node.enabled ? { enabled: false } : {}),
+      ...(node.type === 'trigger' && node.whileRunning && node.whileRunning !== 'skip'
+        ? { whileRunning: node.whileRunning }
+        : {})
     };
   }
 }

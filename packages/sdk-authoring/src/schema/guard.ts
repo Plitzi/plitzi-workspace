@@ -115,7 +115,8 @@ export const STEP_SPEC_KEYS = [
   'preview',
   'on',
   'when',
-  'enabled'
+  'enabled',
+  'whileRunning'
 ] as const satisfies readonly (keyof StepSpec)[];
 
 export const PAGE_FOLDER_SPEC_KEYS = [

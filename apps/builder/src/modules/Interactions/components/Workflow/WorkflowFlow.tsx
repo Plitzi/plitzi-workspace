@@ -54,6 +54,7 @@ const WorkflowFlow = ({
         enabled={trigger.enabled}
         params={trigger.params}
         when={trigger.when}
+        whileRunning={trigger.whileRunning}
         preview={trigger.preview}
         isOpened={nodesOpened[trigger.id]}
         onOpened={handleNodeOpened}

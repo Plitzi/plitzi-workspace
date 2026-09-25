@@ -20,7 +20,18 @@ import {
   toQuakes,
   toShaking
 } from './geo';
-import { LAYERS, PLATE_LAYERS, QUAKE_LAYERS, REPLAY_CLOCK, SOURCES, applyPalette, quakeFilter, style } from './layers';
+import {
+  LAYERS,
+  PLATE_LAYERS,
+  PULSE_PHASE,
+  QUAKE_LAYERS,
+  REPLAY_CLOCK,
+  SOURCES,
+  applyPalette,
+  pulseFilter,
+  quakeFilter,
+  style
+} from './layers';
 import { SHOCKWAVE_MS, reticle, ringLabel, shakingLabel, shockwave, tooltip } from './overlays';
 import { readPalette } from './palette';
 
@@ -150,6 +161,15 @@ const ROTATION_SPEED = 4;
 
 /** More arrivals than this in one refresh are announced as the largest few — a backlog, not a sequence. */
 const MAX_ANNOUNCED = 3;
+
+/**
+ * Every marker is ON the globe, and goes behind it with the Earth. MapLibre's default leaves a covered marker at 0.2 —
+ * a reticle, a label, a shockwave showing through the planet from the far side.
+ */
+const ON_SURFACE = { opacityWhenCovered: '0' } as const;
+
+/** One beat of a fresh event's pulse. */
+const PULSE_MS = 2600;
 
 /** How many of the window's strongest events a tour visits before starting again. */
 const TOUR_STOPS = 8;
@@ -403,6 +423,7 @@ const SeismicMap = ({
     }
 
     const marker = new library.Marker({
+      ...ON_SURFACE,
       element: shockwave(quake.band, quake.magnitude >= 5),
       subpixelPositioning: true
     })
@@ -582,8 +603,9 @@ const SeismicMap = ({
     arrived
       .filter(quake => quake.magnitude >= latest.current.alertFrom)
       .slice(0, MAX_ANNOUNCED)
-      .forEach(quake => {
-        fire('onQuakeArrival', payloadOf(quake));
+      .forEach((quake, index) => {
+        // The largest of the refresh leads: it is the one a space locks on, the rest are announced.
+        fire('onQuakeArrival', { ...payloadOf(quake), lead: index === 0 });
         // Read when the time is up, not now: the flow that locks on it runs after this, and the reader may move on.
         const timer = window.setTimeout(() => {
           onStage.current.delete(timer);
@@ -595,25 +617,41 @@ const SeismicMap = ({
       });
   }, [ready, quakes, feedKey, burst, fire, onScreen]);
 
-  /** A ring that keeps pulsing on every event logged in the feed's last hour. Rebuilt when the events or the floor move. */
+  /**
+   * A ring that keeps pulsing on every event logged in the feed's last hour — drawn on the globe (see `PULSE_PHASE`).
+   *
+   * One number moved a frame, and only while there is a fresh event to pulse: an empty last hour costs nothing. Still
+   * under `prefers-reduced-motion`, where the ring stays, half grown. Hidden during a replay, which has its own clock.
+   */
+  const pulsing = useMemo(() => quakes.some(quake => quake.isFresh), [quakes]);
   useEffect(() => {
     const map = mapRef.current;
-    const library = libraryRef.current;
-    if (!ready || !map || !library || isReplaying) {
+    if (!ready || !map) {
       return undefined;
     }
 
-    const fresh = quakes
-      .filter(quake => quake.isFresh && quake.magnitude >= floor && (depthBand === 'all' || quake.band === depthBand))
-      .map(quake =>
-        new library.Marker({ element: shockwave(quake.band, false), subpixelPositioning: true })
-          .setLngLat([quake.longitude, quake.latitude])
-          .addTo(map)
-      );
-    fresh.forEach(marker => marker.getElement().classList.add('seismic__shock--fresh'));
+    map.setLayoutProperty(LAYERS.pulse, 'visibility', isReplaying || !pulsing ? 'none' : 'visible');
+    if (isReplaying || !pulsing) {
+      return undefined;
+    }
 
-    return () => fresh.forEach(marker => marker.remove());
-  }, [ready, quakes, floor, depthBand, isReplaying]);
+    if (prefersReducedMotion()) {
+      map.setGlobalStateProperty(PULSE_PHASE, 0.5);
+
+      return undefined;
+    }
+
+    let frame = 0;
+    const beat = (now: number): void => {
+      const phase = (now % PULSE_MS) / PULSE_MS;
+      // Out fast, then slowing as it fades: the shape of a wave leaving the point it started from.
+      map.setGlobalStateProperty(PULSE_PHASE, 1 - (1 - phase) ** 2);
+      frame = requestAnimationFrame(beat);
+    };
+    frame = requestAnimationFrame(beat);
+
+    return () => cancelAnimationFrame(frame);
+  }, [ready, pulsing, isReplaying]);
 
   /** The magnitude floor and the depth band, applied on the GPU to every layer that draws an event. */
   useEffect(() => {
@@ -623,6 +661,7 @@ const SeismicMap = ({
     }
 
     QUAKE_LAYERS.forEach(layer => map.setFilter(layer, quakeFilter(floor, depthBand)));
+    map.setFilter(LAYERS.pulse, pulseFilter(floor, depthBand));
   }, [ready, floor, depthBand]);
 
   /**
@@ -655,12 +694,12 @@ const SeismicMap = ({
 
     setData(map, SOURCES.rings, rangeRings(quake.longitude, quake.latitude));
     lock.current.markers = [
-      new library.Marker({ element: reticle(quake), subpixelPositioning: true }).setLngLat([
+      new library.Marker({ ...ON_SURFACE, element: reticle(quake), subpixelPositioning: true }).setLngLat([
         quake.longitude,
         quake.latitude
       ]),
       ...RANGE_RINGS_KM.map(distance =>
-        new library.Marker({ element: ringLabel(distance), anchor: 'top-right' }).setLngLat(
+        new library.Marker({ ...ON_SURFACE, element: ringLabel(distance), anchor: 'top-right' }).setLngLat(
           ringLabelPosition(quake.longitude, quake.latitude, distance)
         )
       )
@@ -716,7 +755,7 @@ const SeismicMap = ({
     }
 
     shakingMarkers.current = shakingLabels(shown).map(({ mmi, position }) =>
-      new library.Marker({ element: shakingLabel(mmi) }).setLngLat([position[0], position[1]]).addTo(map)
+      new library.Marker({ ...ON_SURFACE, element: shakingLabel(mmi) }).setLngLat([position[0], position[1]]).addTo(map)
     );
 
     // Frame the shaking: an M5's contours are a blot under the reticle at the lock's zoom, an M7's run off the screen.

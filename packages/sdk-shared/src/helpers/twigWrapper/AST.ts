@@ -81,10 +81,10 @@ export type Expression =
   | TernaryNode
   | ArrowFunctionNode;
 
-// Literal values: strings, numbers, booleans
+// Literal values: strings, numbers, booleans, and `null` (spelled `null` or `none`)
 export type LiteralNode = {
   readonly type: 'literal';
-  readonly value: string | number | boolean;
+  readonly value: string | number | boolean | null;
 };
 
 // Array literal: `[1, 2, 3]` or `["odd", "even"]`
@@ -161,7 +161,7 @@ export type UnaryNode = {
 };
 
 // Binary operators: `and`, `or`, `==`, `!=`, `>`, `<`, `>=`, `<=`, `in`, `not in`, `is`, `is not`, `starts with`,
-// `ends with`, `+`, `-`, `*`, `/`, `//`, `%`, `**`
+// `ends with`, `same as`, `divisible by` (`is not same as` is `not` over `same as`), `+`, `-`, `*`, `/`, `//`, `%`, `**`
 export type BinaryNode = {
   readonly type: 'binary';
   readonly operator: string;

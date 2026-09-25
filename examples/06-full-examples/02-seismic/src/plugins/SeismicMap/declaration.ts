@@ -32,7 +32,7 @@ const declaration = {
       title: 'On Quake Arrival',
       type: 'trigger',
       params: {},
-      preview: { id: '', magnitude: '', magnitudeLabel: '', region: '', depthLabel: '' }
+      preview: { id: '', magnitude: '', magnitudeLabel: '', region: '', depthLabel: '', lead: '' }
     },
     onArrivalSettled: {
       action: 'onArrivalSettled',

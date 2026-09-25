@@ -46,6 +46,8 @@ export interface StepSpec {
   on?: string;
   when?: ElementInteraction['when'];
   enabled?: boolean;
+  /** On a trigger: what firing it again does while its flow still runs. See {@link whileRunning}. */
+  whileRunning?: ElementInteraction['whileRunning'];
 }
 
 export interface BindingSpec {

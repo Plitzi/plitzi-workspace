@@ -1279,7 +1279,8 @@
       "types": "./dist/types/ResourceTypes.d.ts"
     },
     "./types/SchemaTypes": {
-      "types": "./dist/types/SchemaTypes.d.ts"
+      "types": "./dist/types/SchemaTypes.d.ts",
+      "import": "./dist/types/SchemaTypes.mjs"
     },
     "./types/SdkTypes": {
       "types": "./dist/types/SdkTypes.d.ts"
