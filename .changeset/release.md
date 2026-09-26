@@ -936,12 +936,34 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   drawn on, selected, moved, pasted, deleted and undone, and crowds of fifty collaborators on them. AI agents join as
   collaborators through the MCP server every Pizarra serves at `/mcp` (streamable HTTP, mounted as a `preAuth` pipeline
   stage): anyone on a board adds it to Claude Code, OpenCode or the Claude app from the invite panel, with nothing to
-  install; it joins only that Pizarra's boards, and is a client of the board's server like a browser. It runs on several
+  install, and a guide at `/agents` walks through it — Claude first — and what to do when it does not connect; it
+  joins only that Pizarra's boards, and is a client of the board's server like a browser. It runs on several
   replicas over Redis (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action
   `kv` shared by all of them, and which replica holds each agent's session — a call reaching another is passed on to it
   (`REPLICA_URL`), so no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine,
   and the `whiteboard-replicas` browser test spreads people and an agent across them. See `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
+
+## A page on its way out keeps what it showed
+
+- A server-driven section (`apiContainer` with `runtime: 'server'`, anything reading `useRscData`) on the page being
+  left kept rendering its last answer. A navigation asks for the destination's payload before it goes, and the page it
+  leaves is still drawn over that payload for a moment — first while it lands, then while the next page renders — with
+  no slice for anything on it: every section drew itself empty on the way out (a list turned into its empty state on
+  the click that opened one of its items). An element on a layout, which is on every page, is never held back.
+
+## Links open where they are asked to
+
+- A `link` to a page of the site with a `target` of its own (`blank`…) opened in the same tab — the click was always
+  taken over for in-place navigation. So was a click held with ⌘, Ctrl or Shift, or with the middle button. Only a
+  plain click to the same tab navigates in place now; the rest is the browser's.
+
+## The server names a page's origin with its port
+
+- The origin a page is rendered with (`navigation.origin`, `location.origin`) lacked the port on the server: a site on
+  `:4016` was `http://127.0.0.1` in the first paint and `http://127.0.0.1:4016` once hydrated — a text built from it
+  did not hydrate, and a link built from it pointed nowhere until then. It is taken from the request's authority,
+  guarded as before against a forged Host.
 
 ## `onPointerDown`: the press, before it is a click
 

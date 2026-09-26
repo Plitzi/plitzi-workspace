@@ -135,12 +135,15 @@ install and no access to this repository: every Pizarra serves its agent at **`/
 thing to add for the app the agent lives in, with this Pizarra's address already in it, and the sentence to send it:
 
 ```bash
-claude mcp add --transport http pizarra https://<this pizarra>/mcp     # Claude Code
+claude mcp add --scope user --transport http pizarra https://<this pizarra>/mcp     # Claude Code
 opencode mcp add pizarra --url https://<this pizarra>/mcp              # OpenCode
 # Claude Desktop / claude.ai: Settings → Connectors → Add custom connector, at https://<this pizarra>/mcp
 ```
 
-Then "Join this Pizarra board and help us: <link>". On the board, people see it arrive — an avatar under its app's
+Then "Join this Pizarra board and help us: <link>". Every Pizarra also serves the whole of it as a page, for the people
+who use it: **`/agents`** ([`src/space/guide/agents.ts`](./src/space/guide/agents.ts)) — Claude Code step by step,
+the Claude app, OpenCode, other apps, and what to do when it does not show up — linked from the invite panel and the
+front page. On the board, people see it arrive — an avatar under its app's
 name (Claude Code, OpenCode…, or the one it gives itself), a cursor that glides to what it works on, its lines in the
 chat marked AI. It leaves when told to, or after half an hour nobody has asked it anything.
 

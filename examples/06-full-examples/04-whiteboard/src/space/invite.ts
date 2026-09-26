@@ -3,7 +3,6 @@ import {
   button,
   container,
   declaredTrigger,
-  defineElement,
   onClick,
   setState,
   styles,
@@ -12,12 +11,12 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
+import { copyClass, copyText, COPY_DECLARATION } from './copy.ts';
+import { guideLinkFromBoard } from './guide/agents.ts';
 import { BELOW_HEADER, BUTTON_RESET, FLOAT, ICON_BUTTON, PRESSED, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
-import copyDeclaration from '../plugins/CopyText/declaration.ts';
 
-import type { CopyTextAttributes } from '../plugins/CopyText/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';
 
 /**
@@ -26,17 +25,10 @@ import type { ElementSpec } from '@plitzi/sdk-authoring';
  * draws and talks.
  */
 
-const copyText = defineElement<CopyTextAttributes>(copyDeclaration);
-
-export const COPY_DECLARATION = copyDeclaration;
-
 const note = styles('inviteNote', { 'font-size': '12px', color: 'var(--muted)', 'line-height': '1.45' });
 
-/** The card's colours, and — in `css.ts` — where its `--copy-*` are pointed at the space's tokens. */
-const copyClass = styles('copyText', { color: 'var(--ink)' });
-
 const copied = (what: string) => [
-  declaredTrigger(copyDeclaration, 'onCopied'),
+  declaredTrigger(COPY_DECLARATION, 'onCopied'),
   boardAction('chime', { sound: 'copy' }),
   addNotification({
     content: `${what} copied`,
@@ -122,8 +114,8 @@ const APPS = [
   {
     id: 'claude-code',
     label: 'Claude Code',
-    how: 'In a terminal — then start claude and send it the board.',
-    copy: 'claude mcp add --transport http pizarra {origin}/mcp'
+    how: 'In a terminal, once — for every folder. Then start claude (a new session: it reads its tools as it starts) and send it the board.',
+    copy: 'claude mcp add --scope user --transport http pizarra {origin}/mcp'
   },
   {
     id: 'opencode',
@@ -243,6 +235,7 @@ export const agentPanel = (): ElementSpec =>
         content:
           'Added once, it can be invited to any board on this Pizarra. It shows up under its app’s name — Claude, OpenCode… — and leaves when you tell it to, or after half an hour of quiet.',
         class: note
-      })
+      }),
+      guideLinkFromBoard()
     ]
   });

@@ -4,29 +4,27 @@ import {
   channel,
   container,
   delay,
-  image,
   list,
   on,
   onPageLoad,
   reloadApi,
   styles,
   text,
-  themeToggle,
   variantFrom,
   whileRunning
 } from '@plitzi/sdk-authoring';
 
 import { LIST_ACTION } from '../../actions.ts';
-import { BRAND_PATH } from '../../board/brand.ts';
 import { COLLAB_COLOURS } from '../../board/people.ts';
 import { GALLERY_PROVIDER } from '../ids.ts';
-import { BUTTON_RESET } from '../kit.ts';
 import { identity } from '../state.ts';
 import { featured, recent, templates } from './catalogue.ts';
+import { footnote, page, shell, siteBar } from './chrome.ts';
 import { callToAction } from './cta.ts';
 import { features } from './features.ts';
 import { hero } from './hero.ts';
 import { together } from './together.ts';
+import { guideLink } from '../guide/agents.ts';
 
 import type { CssProps, ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 
@@ -39,58 +37,6 @@ import type { CssProps, ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
  * again — at most once every second and a half, however busy the boards are — and the `lobby` channel says who is
  * on this page with you.
  */
-
-const page = styles('galleryPage', {
-  'min-height': '100dvh',
-  // The hero's glow spills past the edges on purpose; the page never scrolls sideways for it.
-  'overflow-x': 'clip',
-  'background-color': 'var(--paper)',
-  'background-image': 'radial-gradient(var(--dots) 1px, transparent 1px)',
-  'background-size': '24px 24px',
-  color: 'var(--ink)',
-  'font-family': 'var(--ui)',
-  'line-height': '1.4'
-});
-
-const shell = styles('shell', {
-  css: {
-    desktop: {
-      'max-width': '1200px',
-      margin: '0px auto',
-      padding: '24px 32px 64px',
-      display: 'flex',
-      'flex-direction': 'column',
-      gap: '56px'
-    },
-    mobile: { padding: '16px 16px 48px', gap: '40px' }
-  }
-});
-
-const topBar = styles('topBar', {
-  display: 'flex',
-  'align-items': 'center',
-  'justify-content': 'space-between',
-  gap: '12px'
-});
-
-const brand = styles('brand', {
-  display: 'inline-flex',
-  'align-items': 'center',
-  gap: '10px',
-  'font-family': 'var(--hand)',
-  'font-size': '28px',
-  'font-weight': '700'
-});
-
-const brandMark = styles('brandMark', {
-  display: 'block',
-  width: '40px',
-  height: '40px',
-  transform: 'rotate(-6deg)',
-  filter: 'drop-shadow(0 6px 10px rgba(109, 93, 252, 0.35))'
-});
-
-const barEnd = styles('barEnd', { display: 'flex', 'align-items': 'center', gap: '14px' });
 
 const here = styles('hereNow', {
   display: 'flex',
@@ -130,29 +76,6 @@ const face = styles('face', {
   variants: Object.fromEntries(
     COLLAB_COLOURS.map(colour => [colour, { 'background-color': `var(--collab-${colour})` }])
   )
-});
-
-const themeSwitch = styles('galleryTheme', {
-  css: {
-    ...BUTTON_RESET,
-    display: 'inline-flex',
-    width: '40px',
-    height: '40px',
-    'align-items': 'center',
-    'justify-content': 'center',
-    'border-radius': '12px',
-    'background-color': 'var(--surface)',
-    border: '1px solid var(--edge)'
-  },
-  states: { hover: { 'background-color': 'var(--surface-2)' } }
-});
-
-const footnote = styles('footnote', {
-  display: 'block',
-  padding: '0px 16px 32px',
-  'font-size': '12px',
-  color: 'var(--muted)',
-  'text-align': 'center'
 });
 
 /** Everyone on the front page right now, this visitor among them: faces, and how many. */
@@ -240,19 +163,7 @@ export const galleryPage: PageSpec = {
             container({
               class: shell,
               children: [
-                container({
-                  class: topBar,
-                  children: [
-                    container({
-                      class: brand,
-                      children: [image({ src: BRAND_PATH, alt: '', class: brandMark }), text({ content: 'Pizarra' })]
-                    }),
-                    container({
-                      class: barEnd,
-                      children: [hereNow(), themeToggle({ id: 'gallery-theme', subType: 'switch', class: themeSwitch })]
-                    })
-                  ]
-                }),
+                siteBar('gallery', [guideLink(), hereNow()]),
                 hero(),
                 // Who is drawing right now comes first: it is what people come back for, and it shows the place is alive.
                 recent(),

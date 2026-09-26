@@ -13,7 +13,7 @@ import type { BaseContext, Stage } from '@plitzi/sdk-server';
 
 /**
  * Pizarra's agent, served by Pizarra: `/mcp`, over streamable HTTP — what the invite panel tells anyone on a board to
- * add to their agent, with nothing else to install or run. `claude mcp add --transport http pizarra <origin>/mcp`,
+ * add to their agent, with nothing else to install or run. `claude mcp add --scope user --transport http pizarra <origin>/mcp`,
  * `opencode mcp add pizarra --url <origin>/mcp`, a custom connector in the Claude app.
  *
  * An agent is not stateless: it is on a board, with a socket on the board's channels and what it has heard since. So
@@ -160,7 +160,7 @@ const publicOriginOf = (ctx: BaseContext, configured: string | undefined): strin
 
 const WHAT_THIS_IS =
   'This is Pizarra’s endpoint for AI agents (MCP, streamable HTTP). Add this address to your agent — ' +
-  '`claude mcp add --transport http pizarra <this address>`, `opencode mcp add pizarra --url <this address>`, ' +
+  '`claude mcp add --scope user --transport http pizarra <this address>`, `opencode mcp add pizarra --url <this address>`, ' +
   'or a custom connector in the Claude app — then send it a board’s link.';
 
 export type AgentEndpoint = {

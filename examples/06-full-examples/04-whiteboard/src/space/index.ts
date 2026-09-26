@@ -1,8 +1,9 @@
 import { TOPICS } from '../actions.ts';
 import { BOARD_DECLARATION, boardPage } from './board.ts';
+import { COPY_DECLARATION } from './copy.ts';
 import { customCss } from './css.ts';
+import { agentsGuidePage } from './guide/agents.ts';
 import { galleryPage } from './home/index.ts';
-import { COPY_DECLARATION } from './invite.ts';
 import { SHARE_DECLARATION } from './people.ts';
 import { computed, paintedState, transientState } from './state.ts';
 import { COUNTDOWN_DECLARATION } from './timer.ts';
@@ -21,7 +22,7 @@ export const PLUGINS = [
 ];
 
 /**
- * Pizarra, declared: two pages, five server actions, three channels and two elements of its own.
+ * Pizarra, declared: three pages, five server actions, three channels and two elements of its own.
  *
  * Element ids, class names and flow chains are derived from what is written here, so authoring it twice writes
  * byte-identical documents, and the space opens in the builder exactly as it reads.
@@ -60,5 +61,5 @@ export const space: SpaceSpec = {
     // Who is on the front page right now: presence only, nothing said.
     [TOPICS.lobby]: { access: { mode: 'public' }, publish: 'clients', presence: true, messagesPerSecond: 5 }
   },
-  pages: [galleryPage, boardPage]
+  pages: [galleryPage, boardPage, agentsGuidePage]
 };

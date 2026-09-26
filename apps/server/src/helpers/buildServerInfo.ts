@@ -1,3 +1,5 @@
+import { requestOrigin } from '../core/requestParser';
+
 import type { Server, ServerSSR, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
 
 const getEnvironment = (env: string = 'production', server?: Record<string, unknown>): Server => {
@@ -58,7 +60,11 @@ const getEnvironment = (env: string = 'production', server?: Record<string, unkn
  */
 export const buildServerInfo = (req: SSRRequest, config: SSRServerConfig, ssr: ServerSSR): Partial<Server> => {
   const accessToken = req.query['access-token'];
-  const origin = `${req.protocol}://${req.hostname}`;
+  // The port included, as the browser's own `location.origin` has it: without it a page served on :4016 named itself
+  // `http://127.0.0.1` on the server and `http://127.0.0.1:4016` once hydrated — a link built from it pointed nowhere
+  // in the first paint, and the text built from it did not hydrate.
+  const origin = requestOrigin(req) || `${req.protocol}://${req.hostname}`;
+  const host = origin.slice(`${req.protocol}://`.length);
   const user = req.ctx.user;
 
   return getEnvironment(config.environment, {
@@ -75,7 +81,7 @@ export const buildServerInfo = (req: SSRRequest, config: SSRServerConfig, ssr: S
     location: {
       origin,
       protocol: `${req.protocol}:`,
-      host: req.hostname,
+      host,
       hostname: req.hostname,
       pathname: req.path || '/',
       search: req.search

@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
@@ -88,6 +88,46 @@ describe('Link Tests', () => {
     it('keeps an internal path collapsed and an external URL untouched', () => {
       expect(anchorHref({ mode: 'internal', href: '/arcade/' })).toBe('/arcade/');
       expect(anchorHref({ mode: 'external', href: 'https://plitzi.com/a//b' })).toBe('https://plitzi.com/a//b');
+    });
+  });
+
+  describe('where a click goes', () => {
+    const clickWith = (props: Partial<Parameters<typeof Link>[0]>, init: MouseEventInit = {}) => {
+      const navigate = vi.fn();
+      const { container } = render(
+        <StoreProvider value={{ ...storeValue, navigation: { ...navigation, navigate } }}>
+          <ElementContext value={skipHocEntry()}>
+            <Link mode="internal" href="/agents" {...props} />
+          </ElementContext>
+        </StoreProvider>
+      );
+      const anchor = container.querySelector('a');
+      if (!anchor) {
+        throw new Error('No link rendered');
+      }
+
+      const allowed = fireEvent.click(anchor, { button: 0, ...init });
+
+      return { navigate, defaultPrevented: !allowed };
+    };
+
+    it('navigates in place on a plain click', () => {
+      const { navigate, defaultPrevented } = clickWith({});
+
+      expect(navigate).toHaveBeenCalledWith('/agents');
+      expect(defaultPrevented).toBe(true);
+    });
+
+    it('leaves a link with a target of its own to the browser', () => {
+      const { navigate, defaultPrevented } = clickWith({ target: 'blank' });
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(defaultPrevented).toBe(false);
+    });
+
+    it('leaves a click held with ⌘ or Ctrl to the browser: a new tab', () => {
+      expect(clickWith({}, { metaKey: true }).navigate).not.toHaveBeenCalled();
+      expect(clickWith({}, { ctrlKey: true }).navigate).not.toHaveBeenCalled();
     });
   });
 });
