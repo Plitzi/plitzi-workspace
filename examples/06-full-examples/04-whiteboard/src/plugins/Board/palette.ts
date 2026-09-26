@@ -25,6 +25,8 @@ export type Palette = {
   font: string;
   /** The interface's face: the names on the cursors. */
   ui: string;
+  /** This page's laser, bright enough to follow on any drawing. */
+  laser: string;
 };
 
 const read = (style: CSSStyleDeclaration, name: string, fallback: string): string =>
@@ -46,7 +48,8 @@ export const readPalette = (element: HTMLElement): Palette => {
     dots: read(style, '--board-dots', 'rgba(0, 0, 0, 0.12)'),
     accent: read(style, '--board-accent', '#4c6ef5'),
     font: read(style, '--board-font', 'cursive'),
-    ui: read(style, '--board-ui-font', 'system-ui, sans-serif')
+    ui: read(style, '--board-ui-font', 'system-ui, sans-serif'),
+    laser: read(style, '--board-laser', '#ff3b30')
   };
 
   return { ...palette, key: JSON.stringify(palette) };

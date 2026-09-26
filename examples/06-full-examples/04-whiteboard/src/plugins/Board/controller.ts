@@ -1,27 +1,52 @@
-import { FILLS, LIMITS, STROKES, STROKE_WIDTHS, holdsText, isLinear, parseElement } from '../../board/model.ts';
+import {
+  ANCHORS,
+  FILLS,
+  LIMITS,
+  STROKES,
+  STROKE_WIDTHS,
+  holdsText,
+  isConnectable,
+  isConnector,
+  isLinear,
+  parseElement,
+  takesLabel
+} from '../../board/model.ts';
+import { isReaction } from '../../board/reactions.ts';
 import {
   drawCursor,
   drawDots,
   drawHandles,
   drawMarquee,
   drawOutline,
+  drawPoints,
   fontSizeOf,
+  LABEL_PADDING,
+  layoutText,
   measureText,
   STICKY_PADDING,
   STICKY_SIZE,
   createRenderer
 } from './draw.ts';
+import { createEffects } from './effects.ts';
 import {
   anchorOf,
+  anchorPoint,
+  beyondAnchor,
   boundsOf,
   boxFrom,
   capPoints,
+  clampZoom,
   contains,
+  detachEnd,
   fitCamera,
   handlePoint,
   HANDLES,
   hits,
+  resolveConnector,
   scaleElement,
+  isDeepInside,
+  nearestAnchor,
+  snapToAnchor,
   snapAngle,
   toBoard,
   toScreen,
@@ -33,7 +58,7 @@ import { createScene } from './scene.ts';
 
 import type { Box, Camera, Handle } from './geometry.ts';
 import type { Palette } from './palette.ts';
-import type { BoardElement, Fill, Point, ShapeType, Stroke, StrokeWidth } from '../../board/model.ts';
+import type { Binding, BoardElement, Fill, Point, ShapeType, Stroke, StrokeWidth } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 
 export const TOOLS = [
@@ -47,7 +72,8 @@ export const TOOLS = [
   'freehand',
   'text',
   'sticky',
-  'eraser'
+  'eraser',
+  'laser'
 ] as const;
 
 export type Tool = (typeof TOOLS)[number];
@@ -75,13 +101,26 @@ export type TextEditor = {
   padding: number;
   /** A sticky wraps at its width; a text grows with what is typed. */
   wraps: boolean;
+  /** A shape's label is centred in it, both ways; everything else starts at the top left. */
+  align: 'left' | 'center';
+  paddingTop: number;
 };
 
 /** Where the selection is on screen, for the tools the component lays beside it. */
 export type ScreenBox = { left: number; top: number; width: number; height: number };
 
 /** What this page says to the room while its pointer moves: where it is, what it is dragging, what it selected. */
-export type PointerMessage = { x: number; y: number; draft: BoardElement[] | null; selection: string[] };
+export type PointerMessage = {
+  /** Where the pointer is — absent while it is off the canvas, when only the view changed. */
+  x?: number;
+  y?: number;
+  draft: BoardElement[] | null;
+  selection: string[];
+  /** What this page is looking at, as a board box — what a follower's view is set to. */
+  view: [number, number, number, number];
+  /** The pointer is a laser right now: the others draw its trail. */
+  laser?: boolean;
+};
 
 export type ControllerEvent =
   | { type: 'commit'; ops: BoardElement[] }
@@ -100,7 +139,11 @@ export type ControllerEvent =
   | { type: 'selectionBox'; box: ScreenBox | undefined }
   | { type: 'view'; zoom: number }
   | { type: 'editor'; editor: TextEditor | undefined }
-  | { type: 'pointer'; message: PointerMessage; final: boolean };
+  | { type: 'pointer'; message: PointerMessage; final: boolean }
+  /** Who this page follows now — their name, or `''` once it stopped. */
+  | { type: 'follow'; name: string }
+  /** A reaction this person sent, for the room. */
+  | { type: 'reaction'; reaction: { emoji: string; x: number; y: number } };
 
 type Gesture =
   | { kind: 'pan'; start: Point; camera: Camera }
@@ -108,9 +151,16 @@ type Gesture =
   | { kind: 'resize'; handle: Handle; anchor: Point; box: Box; originals: BoardElement[] }
   | { kind: 'marquee'; origin: Point; current: Point; base: Set<string> }
   | { kind: 'box'; origin: Point; element: BoardElement }
-  | { kind: 'linear'; origin: Point; element: BoardElement }
+  /**
+   * A connector being drawn. `facing` is the shape it was started INSIDE: its anchor is not chosen yet — it is the
+   * side facing wherever the other end is, and follows it until the pointer is let go.
+   */
+  | { kind: 'linear'; origin: Point; element: BoardElement; facing?: string }
   | { kind: 'freehand'; element: BoardElement }
-  | { kind: 'erase'; erased: Set<string> };
+  | { kind: 'erase'; erased: Set<string> }
+  /** One end of the selected connector, dragged to a new place — or to another element's anchor. */
+  | { kind: 'endpoint'; which: 'start' | 'end'; element: BoardElement }
+  | { kind: 'laser' };
 
 type Remote = {
   cursor?: Point;
@@ -119,9 +169,22 @@ type Remote = {
   /** When the member's drag ended: its draft is drawn until the server's answer catches up, or this long after. */
   draftEndedAt?: number;
   selection: string[];
+  /** What the member is looking at, for following them. */
+  view?: [number, number, number, number];
 };
 
 const REMOTE_DRAFT_GRACE_MS = 1500;
+
+/** How far off a shape's edge its connection points sit, and how close a pointer must come to grab one — in pixels. */
+const CONNECT_OFFSET = 14;
+
+const GRAB_RADIUS = 9;
+
+/** How far past a shape's box a connector's end still snaps to it — in pixels. */
+const SNAP_REACH = 18;
+
+/** How far a sticky must be dragged off its pad before letting go places it — less is a click, which carries it. */
+const CARRY_DRAG = 8;
 
 /** A cursor nobody has moved for this long is somebody who walked away: it stops being drawn. */
 const CURSOR_IDLE_MS = 60_000;
@@ -143,6 +206,8 @@ const byZ = (a: BoardElement, b: BoardElement): number => a.z - b.z || (a.id < b
 const isOneOf = <T extends string | number>(values: readonly T[], value: unknown): value is T =>
   values.some(entry => entry === value);
 
+const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+
 const isPoint = (value: unknown): value is Point =>
   Array.isArray(value) &&
   value.length === 2 &&
@@ -159,7 +224,8 @@ const CURSORS: Record<Tool, string> = {
   freehand: 'crosshair',
   text: 'text',
   sticky: 'crosshair',
-  eraser: 'cell'
+  eraser: 'cell',
+  laser: 'crosshair'
 };
 
 const HANDLE_CURSORS: Record<Handle, string> = {
@@ -187,10 +253,13 @@ export const createBoardController = (
   host: HTMLElement,
   emit: (event: ControllerEvent) => void
 ) => {
-  const context = canvas.getContext('2d');
-  if (!context) {
+  const context2d = canvas.getContext('2d');
+  if (!context2d) {
     throw new Error('This browser cannot draw on a canvas');
   }
+
+  // Named once narrowed: the functions below are declarations, which a narrowing does not reach.
+  const context: CanvasRenderingContext2D = context2d;
 
   const renderer = createRenderer(canvas);
   const scene = createScene();
@@ -219,6 +288,15 @@ export const createBoardController = (
    * Everywhere else a click on a member picks up the whole group.
    */
   let insideGroup: string | undefined;
+  const effects = createEffects();
+  /** The shape under the pointer, whose connection points show. */
+  let hovered: string | undefined;
+  /** The anchor a connector being drawn will fix to if let go now. */
+  let snapping: Binding | undefined;
+  /** A sticky taken off the pad, following the pointer until it is put down. */
+  let carrying: { element: BoardElement; from?: Point; moved: boolean; over: boolean } | undefined;
+  /** The member whose view this page follows. */
+  let following: string | undefined;
 
   // ── Drawing ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -251,13 +329,175 @@ export const createBoardController = (
       }
     }
 
-    return [...elements.values()].sort(byZ);
+    // Every connector drawn from where its elements are NOW — a shape being dragged pulls its arrows along with it.
+    return [...elements.values()]
+      .map(element =>
+        isConnector(element.type) && (element.start || element.end)
+          ? resolveConnector(element, id => elements.get(id))
+          : element
+      )
+      .sort(byZ);
   };
 
-  const selected = (): BoardElement[] =>
-    [...selection]
-      .map(id => draft.get(id) ?? scene.element(id))
-      .filter((element): element is BoardElement => element !== undefined && !element.deleted);
+  const current = (): Map<string, BoardElement> => new Map(displayed().map(element => [element.id, element]));
+
+  /** What is selected, as it is drawn: a connector with its ends where its elements are. */
+  const selected = (): BoardElement[] => {
+    const shown = current();
+
+    return [...selection].map(id => shown.get(id)).filter((element): element is BoardElement => element !== undefined);
+  };
+
+  /** The one connector selected, when that is the whole selection: its ends are what the handles move. */
+  const soleConnector = (): BoardElement | undefined => {
+    const chosen = selected();
+
+    return chosen.length === 1 && isConnector(chosen[0].type) ? chosen[0] : undefined;
+  };
+
+  const endsOf = (element: BoardElement): { start: Point; end: Point } => {
+    const points = element.points ?? [[0, 0]];
+    const [sx, sy] = points[0];
+    const [ex, ey] = points[points.length - 1];
+
+    return { start: [element.x + sx, element.y + sy], end: [element.x + ex, element.y + ey] };
+  };
+
+  /** The anchor a point snaps to — on the topmost element near it, never on `exclude` or on a line. */
+  const snapAt = (point: Point, exclude?: string, toward?: Point): Binding | undefined => {
+    const reach = SNAP_REACH / camera.zoom;
+    for (const element of displayed().reverse()) {
+      if (element.id === exclude || !isConnectable(element.type)) {
+        continue;
+      }
+
+      const binding = snapToAnchor(element, point, reach, toward);
+      if (binding) {
+        return binding;
+      }
+    }
+
+    return undefined;
+  };
+
+  /**
+   * A connector from `from` to `to`, fixed at whichever ends are bound. Written with its raw points; `displayed` bends
+   * it into its curve.
+   */
+  const connectorBetween = (
+    element: BoardElement,
+    from: Point,
+    to: Point,
+    start: Binding | undefined,
+    end: Binding | undefined
+  ): BoardElement => {
+    const { start: _start, end: _end, ...rest } = element;
+    const offset: Point = [to[0] - from[0], to[1] - from[1]];
+
+    return {
+      ...rest,
+      x: from[0],
+      y: from[1],
+      points: [[0, 0], offset],
+      width: Math.abs(offset[0]),
+      height: Math.abs(offset[1]),
+      ...(start ? { start } : {}),
+      ...(end ? { end } : {})
+    };
+  };
+
+  /**
+   * Connectors let go of every element not among `kept`: a connector moved on its own stays where it was put, rather
+   * than being stretched back to the shapes it was fixed to.
+   */
+  const detachOutside = (element: BoardElement, kept: ReadonlySet<string>): BoardElement => {
+    if (!isConnector(element.type)) {
+      return element;
+    }
+
+    let next = element;
+    if (next.start && !kept.has(next.start.id)) {
+      next = detachEnd(next, 'start');
+    }
+
+    if (next.end && !kept.has(next.end.id)) {
+      next = detachEnd(next, 'end');
+    }
+
+    return next;
+  };
+
+  /** The connectors fixed to any of `removed` that are not removed with them: let go, where they are drawn now. */
+  const releasedFrom = (removed: ReadonlySet<string>): BoardElement[] => {
+    const shown = displayed();
+    const kept = new Set(shown.map(element => element.id).filter(id => !removed.has(id)));
+
+    return shown
+      .filter(
+        element =>
+          isConnector(element.type) &&
+          !removed.has(element.id) &&
+          ((element.start && removed.has(element.start.id)) || (element.end && removed.has(element.end.id)))
+      )
+      .map(element => detachOutside(element, kept));
+  };
+
+  /** The end of the sole selected connector under a screen point, if one is. */
+  const endpointAt = (screenX: number, screenY: number): 'start' | 'end' | undefined => {
+    const connector = props.tool === 'select' ? soleConnector() : undefined;
+    if (!connector) {
+      return undefined;
+    }
+
+    const ends = endsOf(connector);
+
+    return (['start', 'end'] as const).find(which => {
+      const [x, y] = toScreen(camera, ...ends[which]);
+
+      return Math.hypot(screenX - x, screenY - y) <= GRAB_RADIUS;
+    });
+  };
+
+  /** The connection point of the hovered shape under a screen point: where a connector drawn from here starts. */
+  const connectionAt = (screenX: number, screenY: number): Binding | undefined => {
+    const target = props.tool === 'select' && hovered ? current().get(hovered) : undefined;
+    if (!target || !isConnectable(target.type)) {
+      return undefined;
+    }
+
+    const anchor = ANCHORS.find(candidate => {
+      const [x, y] = toScreen(camera, ...beyondAnchor(target, candidate, CONNECT_OFFSET / camera.zoom));
+
+      return Math.hypot(screenX - x, screenY - y) <= GRAB_RADIUS;
+    });
+
+    return anchor ? { id: target.id, anchor } : undefined;
+  };
+
+  /**
+   * The shape whose connection points show: the topmost one within reach of the pointer — past its edge, so the
+   * points just outside it can be reached without them vanishing on the way.
+   */
+  const hoveredAt = (point: Point): string | undefined => {
+    const reach = (CONNECT_OFFSET + GRAB_RADIUS) / camera.zoom;
+
+    return displayed()
+      .reverse()
+      .find(element => {
+        if (!isConnectable(element.type) || element.id === editing) {
+          return false;
+        }
+
+        const box = boundsOf(element);
+
+        return (
+          point[0] >= box.x - reach &&
+          point[0] <= box.x + box.width + reach &&
+          point[1] >= box.y - reach &&
+          point[1] <= box.y + box.height + reach
+        );
+      })?.id;
+  };
 
   const viewport = (): Box => ({
     x: camera.x,
@@ -331,8 +571,31 @@ export const createBoardController = (
     }
 
     const box = unionOf(chosen.map(boundsOf));
-    if (box && props.tool === 'select' && !editing && (!gesture || gesture.kind === 'resize')) {
+    const connector = soleConnector();
+    if (connector && props.tool === 'select' && !editing) {
+      const { start, end } = endsOf(connector);
+      drawPoints(context, camera, [start, end], palette.accent);
+    } else if (box && props.tool === 'select' && !editing && (!gesture || gesture.kind === 'resize')) {
       drawHandles(context, camera, box, palette.accent);
+    }
+
+    // Where a connector can start from, on the shape under the pointer — and where one being drawn will land.
+    const target = snapping
+      ? byId.get(snapping.id)
+      : !gesture && !editing && !carrying && props.tool === 'select' && hovered
+        ? byId.get(hovered)
+        : undefined;
+    if (target && isConnectable(target.type)) {
+      const drawing = gesture?.kind === 'linear' || gesture?.kind === 'endpoint';
+      const points = ANCHORS.map(anchor =>
+        drawing ? anchorPoint(target, anchor) : beyondAnchor(target, anchor, CONNECT_OFFSET / camera.zoom)
+      );
+      drawPoints(context, camera, points, palette.accent, snapping ? anchorPoint(target, snapping.anchor) : undefined);
+    }
+
+    // A laser trail and a reaction fade on their own clock: keep drawing while any is left.
+    if (effects.draw(context, camera, key => (key === 'me' ? palette.laser : colourOf(key)), now)) {
+      invalidate();
     }
 
     if (gesture?.kind === 'marquee') {
@@ -385,7 +648,22 @@ export const createBoardController = (
     camera = next;
     reportView();
     reportEditor();
+    // A follower's view is set from this, as it changes — not only when the pointer moves.
+    reportPointer(false);
     invalidate();
+  };
+
+  const stopFollowing = (): void => {
+    if (following) {
+      following = undefined;
+      emit({ type: 'follow', name: '' });
+    }
+  };
+
+  /** Shows what a followed member shows: the same middle, at the zoom that fits their view in this one. */
+  const showView = ([x, y, width, height]: [number, number, number, number]): void => {
+    const zoom = clampZoom(Math.min(size.width / Math.max(width, 1), size.height / Math.max(height, 1)));
+    setCamera({ x: x + width / 2 - size.width / 2 / zoom, y: y + height / 2 - size.height / 2 / zoom, zoom });
   };
 
   const contentBox = (): Box | undefined => unionOf(scene.visible().map(boundsOf));
@@ -496,18 +774,20 @@ export const createBoardController = (
   });
 
   function reportPointer(final: boolean): void {
-    if (!lastPointer || props.mode !== 'edit') {
+    if (props.mode !== 'edit') {
       return;
     }
 
+    const view = viewport();
     emit({
       type: 'pointer',
       final,
       message: {
-        x: Math.round(lastPointer[0]),
-        y: Math.round(lastPointer[1]),
+        ...(lastPointer ? { x: Math.round(lastPointer[0]), y: Math.round(lastPointer[1]) } : {}),
         draft: draft.size && !final ? [...draft.values()].map(predicted) : null,
-        selection: [...selection].slice(0, 50)
+        selection: [...selection].slice(0, 50),
+        view: [Math.round(view.x), Math.round(view.y), Math.round(view.width), Math.round(view.height)],
+        ...(gesture?.kind === 'laser' ? { laser: true } : {})
       }
     });
   }
@@ -522,20 +802,45 @@ export const createBoardController = (
 
     const [left, top] = toScreen(camera, element.x, element.y);
     const sticky = element.type === 'sticky';
+    const label = takesLabel(element.type);
+    const common = {
+      id: element.id,
+      text: element.text ?? '',
+      left,
+      top,
+      fontSize: fontSizeOf(element) * camera.zoom,
+      font: palette.font,
+      color: palette.stroke[element.stroke]
+    };
+    if (label) {
+      // Typed where it will be drawn: centred, and lowered to the middle as its lines are.
+      const { lines, lineHeight } = layoutText(context, element, palette);
+      emit({
+        type: 'editor',
+        editor: {
+          ...common,
+          width: element.width * camera.zoom,
+          minHeight: element.height * camera.zoom,
+          padding: LABEL_PADDING * camera.zoom,
+          paddingTop: Math.max(0, (element.height - Math.max(1, lines.length) * lineHeight) / 2) * camera.zoom,
+          wraps: true,
+          align: 'center'
+        }
+      });
+
+      return;
+    }
+
     emit({
       type: 'editor',
       editor: {
-        id: element.id,
-        text: element.text ?? '',
-        left,
-        top,
+        ...common,
         width: sticky ? element.width * camera.zoom : Math.max(element.width, 40) * camera.zoom + 24,
         minHeight: (sticky ? element.height : fontSizeOf(element) * 1.25) * camera.zoom,
-        fontSize: fontSizeOf(element) * camera.zoom,
-        font: palette.font,
-        color: palette.stroke[element.stroke],
         padding: sticky ? STICKY_PADDING * camera.zoom : 0,
-        wraps: sticky
+        paddingTop: sticky ? STICKY_PADDING * camera.zoom : 0,
+        wraps: sticky,
+        align: 'left'
       }
     });
   }
@@ -575,9 +880,20 @@ export const createBoardController = (
       .reverse()
       .find(element => hits(element, point, 6 / camera.zoom));
 
+  /** The topmost shape a point is inside — its whole area, not just its outline or its fill. */
+  const shapeAround = (point: Point): BoardElement | undefined =>
+    displayed()
+      .reverse()
+      .find(
+        element =>
+          takesLabel(element.type) &&
+          hits({ ...element, fill: element.fill === 'none' ? 'red' : element.fill }, point, 0)
+      );
+
   const handleAt = (screenX: number, screenY: number): Handle | undefined => {
     const box = unionOf(selected().map(boundsOf));
-    if (!box || props.tool !== 'select') {
+    // A lone connector is resized by its ends, not by its box.
+    if (!box || props.tool !== 'select' || soleConnector()) {
       return undefined;
     }
 
@@ -620,6 +936,19 @@ export const createBoardController = (
 
     const saved = scene.element(id);
     const empty = !(element.text ?? '').trim();
+    if (takesLabel(element.type)) {
+      // A label emptied is no label: the key goes, rather than an empty string being kept and sent.
+      const { text, ...shape } = element;
+      const labelled = empty ? shape : { ...shape, text };
+      if ((saved?.text ?? '') !== (empty ? '' : text)) {
+        commit([labelled]);
+      }
+
+      setSelection([id]);
+
+      return;
+    }
+
     if (element.type === 'text' && empty) {
       if (saved && !saved.deleted) {
         commit([{ ...saved, deleted: true }]);
@@ -679,6 +1008,14 @@ export const createBoardController = (
     }
 
     const screen = screenOf(event);
+    // Touching the board takes it back: a follower who reaches for it stops following.
+    stopFollowing();
+    if (carrying) {
+      putDown(toBoard(camera, ...screen));
+
+      return;
+    }
+
     canvas.setPointerCapture(event.pointerId);
     pointers.set(event.pointerId, screen);
     if (pointers.size === 2) {
@@ -707,11 +1044,34 @@ export const createBoardController = (
 
     switch (props.tool) {
       case 'select': {
+        const end = endpointAt(...screen);
+        const connector = soleConnector();
+        if (end && connector) {
+          gesture = { kind: 'endpoint', which: end, element: connector };
+          break;
+        }
+
+        // From a shape's connection point: an arrow already fixed at this end.
+        const from = connectionAt(...screen);
+        if (from) {
+          const origin = anchorPoint(current().get(from.id) ?? newElement('arrow', point), from.anchor);
+          setSelection([]);
+          gesture = { kind: 'linear', origin, element: { ...newElement('arrow', origin), start: from } };
+          break;
+        }
+
         const handle = handleAt(...screen);
         const chosen = selected();
         const box = unionOf(chosen.map(boundsOf));
         if (handle && box) {
-          gesture = { kind: 'resize', handle, anchor: anchorOf(box, handle), box, originals: chosen };
+          const ids = new Set(chosen.map(element => element.id));
+          gesture = {
+            kind: 'resize',
+            handle,
+            anchor: anchorOf(box, handle),
+            box,
+            originals: chosen.map(element => detachOutside(element, ids))
+          };
           break;
         }
 
@@ -736,9 +1096,16 @@ export const createBoardController = (
           setSelection([hit.id]);
         }
 
-        gesture = { kind: 'move', origin: point, originals: selected() };
+        // A connector moved without the shapes it is fixed to lets go of them, and stays where it is put.
+        const moving = selected();
+        const ids = new Set(moving.map(element => element.id));
+        gesture = { kind: 'move', origin: point, originals: moving.map(element => detachOutside(element, ids)) };
         break;
       }
+      case 'laser':
+        gesture = { kind: 'laser' };
+        effects.trail('me', point);
+        break;
       case 'eraser': {
         const erased = new Set<string>();
         erase(erased, point);
@@ -754,10 +1121,22 @@ export const createBoardController = (
         break;
       }
       case 'arrow':
-      case 'line':
+      case 'line': {
+        // Started on a shape: fixed to its nearest anchor from the first moment.
         setSelection([]);
-        gesture = { kind: 'linear', origin: point, element: newElement(props.tool, point) };
+        const start = snapAt(point);
+        const target = start ? current().get(start.id) : undefined;
+        const origin = start && target ? anchorPoint(target, start.anchor) : point;
+        const element = newElement(props.tool, origin);
+        const facing = start && target && isDeepInside(target, point, SNAP_REACH / camera.zoom) ? start.id : undefined;
+        gesture = {
+          kind: 'linear',
+          origin,
+          element: start ? { ...element, start } : element,
+          ...(facing ? { facing } : {})
+        };
         break;
+      }
       case 'freehand':
         setSelection([]);
         gesture = { kind: 'freehand', element: newElement('freehand', point) };
@@ -785,6 +1164,7 @@ export const createBoardController = (
     }
 
     if (pinch && pointers.size === 2) {
+      stopFollowing();
       const [a, b] = [...pointers.values()];
       const distance = Math.hypot(a[0] - b[0], a[1] - b[1]);
       const center: Point = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
@@ -806,9 +1186,24 @@ export const createBoardController = (
     lastPointer = point;
 
     if (!gesture) {
+      const shown = props.tool === 'select' ? hoveredAt(point) : undefined;
+      if (shown !== hovered) {
+        hovered = shown;
+        invalidate();
+      }
+
       const handle = props.tool === 'select' ? handleAt(...screen) : undefined;
+      const grab = props.tool === 'select' && (endpointAt(...screen) ?? connectionAt(...screen));
       const over = props.tool === 'select' && !handle ? topmostAt(point) : undefined;
-      canvas.style.cursor = spaceHeld ? 'grab' : handle ? HANDLE_CURSORS[handle] : over ? 'move' : CURSORS[props.tool];
+      canvas.style.cursor = spaceHeld
+        ? 'grab'
+        : handle
+          ? HANDLE_CURSORS[handle]
+          : grab
+            ? 'crosshair'
+            : over
+              ? 'move'
+              : CURSORS[props.tool];
       reportPointer(false);
 
       return;
@@ -876,17 +1271,47 @@ export const createBoardController = (
         break;
       }
       case 'linear': {
+        // Over another shape, the end snaps to its nearest anchor — or, deep inside it, to the side facing the start.
+        // Shift holds the angle to 15° steps instead.
+        const shown = current();
+        const startTarget = gesture.facing ? shown.get(gesture.facing) : undefined;
+        snapping = event.shiftKey ? undefined : snapAt(point, gesture.element.start?.id, gesture.origin);
+        if (startTarget && gesture.element.start) {
+          // Started inside a shape: its side is the one facing where this end is now.
+          const endTarget = snapping ? shown.get(snapping.id) : undefined;
+          const aim = endTarget && snapping ? anchorPoint(endTarget, snapping.anchor) : point;
+          const anchor = nearestAnchor(startTarget, aim);
+          gesture.element = { ...gesture.element, start: { id: startTarget.id, anchor } };
+          gesture.origin = anchorPoint(startTarget, anchor);
+        }
+
         const offset: Point = [point[0] - gesture.origin[0], point[1] - gesture.origin[1]];
-        const end = event.shiftKey ? snapAngle(offset) : offset;
-        gesture.element = {
-          ...gesture.element,
-          points: [[0, 0], end],
-          width: Math.abs(end[0]),
-          height: Math.abs(end[1])
-        };
+        const [dx, dy] = event.shiftKey ? snapAngle(offset) : offset;
+        gesture.element = connectorBetween(
+          gesture.element,
+          gesture.origin,
+          [gesture.origin[0] + dx, gesture.origin[1] + dy],
+          gesture.element.start,
+          snapping
+        );
         draft.set(gesture.element.id, gesture.element);
         break;
       }
+      case 'endpoint': {
+        const { element, which } = gesture;
+        const ends = endsOf(element);
+        const other = which === 'start' ? element.end : element.start;
+        snapping = snapAt(point, other?.id);
+        const moved =
+          which === 'start'
+            ? connectorBetween(element, point, ends.end, snapping, element.end)
+            : connectorBetween(element, ends.start, point, element.start, snapping);
+        draft.set(element.id, moved);
+        break;
+      }
+      case 'laser':
+        effects.trail('me', point);
+        break;
       case 'freehand': {
         const points = gesture.element.points ?? [];
         const last = points[points.length - 1];
@@ -910,6 +1335,7 @@ export const createBoardController = (
   const endGesture = (cancelled: boolean): void => {
     const ended = gesture;
     gesture = undefined;
+    snapping = undefined;
     const drafted = [...draft.values()];
     if (!editing) {
       draft.clear();
@@ -957,11 +1383,22 @@ export const createBoardController = (
         break;
       }
       case 'linear': {
-        const end = ended.element.points?.[1];
-        if (end && Math.hypot(end[0], end[1]) * camera.zoom >= 4) {
-          commit([ended.element]);
-          setSelection([ended.element.id]);
+        // Kept as it is drawn — its curve baked into its points — and fixed at whichever ends found an anchor.
+        const drawn = drafted.find(element => element.id === ended.element.id) ?? ended.element;
+        const shown = current().get(drawn.id) ?? drawn;
+        const { start, end } = endsOf(shown);
+        if (Math.hypot(end[0] - start[0], end[1] - start[1]) * camera.zoom >= 4) {
+          commit([resolveConnector(drawn, id => current().get(id))]);
+          setSelection([drawn.id]);
           switchTool('select');
+        }
+
+        break;
+      }
+      case 'endpoint': {
+        const moved = drafted.find(element => element.id === ended.element.id);
+        if (moved) {
+          commit([resolveConnector(moved, id => current().get(id))]);
         }
 
         break;
@@ -987,12 +1424,13 @@ export const createBoardController = (
           .map(id => scene.element(id))
           .filter((element): element is BoardElement => element !== undefined && !element.deleted)
           .map(element => ({ ...element, deleted: true }));
-        commit(erased);
+        commit([...erased, ...releasedFrom(ended.erased)]);
         setSelection([...selection].filter(id => !ended.erased.has(id)));
         break;
       }
       case 'pan':
       case 'marquee':
+      case 'laser':
         break;
     }
 
@@ -1019,7 +1457,8 @@ export const createBoardController = (
     }
 
     const point = toBoard(camera, ...screenOf(event));
-    const hit = topmostAt(point);
+    // Inside a shape is inside it, filled or not: a click there lands on its outline only, a double-click labels it.
+    const hit = topmostAt(point) ?? shapeAround(point);
     // Into a group: the member under the pointer, alone. A second double-click on a text in it edits the text.
     if (hit?.group && hit.group !== insideGroup) {
       insideGroup = hit.group;
@@ -1028,8 +1467,9 @@ export const createBoardController = (
       return;
     }
 
-    if (hit && holdsText(hit.type)) {
-      startEditing(hit);
+    // A text or a sticky is edited; a shape is labelled — the same double-click, what is written sits in its middle.
+    if (hit && (holdsText(hit.type) || takesLabel(hit.type))) {
+      startEditing({ ...hit, text: hit.text ?? '' });
 
       return;
     }
@@ -1046,6 +1486,7 @@ export const createBoardController = (
     }
 
     event.preventDefault();
+    stopFollowing();
     const scale = event.deltaMode === 1 ? 16 : 1;
     const [screenX, screenY] = screenOf(event);
     if (event.ctrlKey || event.metaKey) {
@@ -1086,6 +1527,88 @@ export const createBoardController = (
     }
   };
 
+  // ── A sticky carried off its pad ─────────────────────────────────────────────────────────────────────────────────
+
+  /** Where a carried sticky would land: centred under the pointer, so it is put down where it is seen. */
+  const carriedAt = (element: BoardElement, [x, y]: Point): BoardElement => ({
+    ...element,
+    x: x - element.width / 2,
+    y: y - element.height / 2,
+    z: scene.topZ + 1
+  });
+
+  const endCarry = (): void => {
+    if (!carrying) {
+      return;
+    }
+
+    draft.delete(carrying.element.id);
+    carrying = undefined;
+    window.removeEventListener('pointermove', onCarryMove);
+    window.removeEventListener('pointerup', onCarryUp);
+    canvas.style.cursor = CURSORS[props.tool];
+    reportPointer(true);
+    invalidate();
+  };
+
+  /** Down on the board: kept, selected, and open for typing — the next thing anyone does with a new sticky. */
+  function putDown(point: Point): void {
+    const carried = carrying?.element;
+    endCarry();
+    if (!carried) {
+      return;
+    }
+
+    const placed = carriedAt(carried, point);
+    commit([placed]);
+    setSelection([placed.id]);
+    startEditing(scene.element(placed.id) ?? placed);
+  }
+
+  /** Followed on the whole window: the pad the sticky was taken from is outside the canvas. */
+  function onCarryMove(event: PointerEvent): void {
+    if (!carrying) {
+      return;
+    }
+
+    const from = carrying.from ?? [event.clientX, event.clientY];
+    carrying.from = from;
+    carrying.moved ||= Math.hypot(event.clientX - from[0], event.clientY - from[1]) > CARRY_DRAG;
+    const rect = canvas.getBoundingClientRect();
+    carrying.over =
+      event.clientX >= rect.left &&
+      event.clientX <= rect.right &&
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom;
+    if (carrying.over) {
+      const point = toBoard(camera, event.clientX - rect.left, event.clientY - rect.top);
+      lastPointer = point;
+      draft.set(carrying.element.id, carriedAt(carrying.element, point));
+    } else {
+      draft.delete(carrying.element.id);
+    }
+
+    reportPointer(false);
+    invalidate();
+  }
+
+  /**
+   * Let go: dragged onto the board, it lands there; dragged anywhere else, it goes back. Let go without moving — a
+   * click on the pad — it stays in hand until a click on the board puts it down.
+   */
+  function onCarryUp(event: PointerEvent): void {
+    if (!carrying?.moved) {
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    if (carrying.over) {
+      putDown(toBoard(camera, event.clientX - rect.left, event.clientY - rect.top));
+    } else {
+      endCarry();
+    }
+  }
+
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerup', onPointerUp);
@@ -1115,8 +1638,10 @@ export const createBoardController = (
 
   // ── What the page asks of it ─────────────────────────────────────────────────────────────────────────────────────
 
-  const zoomBy = (factor: number): void =>
+  const zoomBy = (factor: number): void => {
+    stopFollowing();
     setCamera(zoomAt(camera, size.width / 2, size.height / 2, camera.zoom * factor));
+  };
 
   const restyle = ({
     stroke,
@@ -1265,6 +1790,16 @@ export const createBoardController = (
       remote.heardAt = Date.now();
       if ('x' in data && 'y' in data && isPoint([data.x, data.y])) {
         remote.cursor = [Number(data.x), Number(data.y)];
+        if ('laser' in data && data.laser === true) {
+          effects.trail(from, remote.cursor);
+        }
+      }
+
+      if ('view' in data && Array.isArray(data.view) && data.view.length === 4 && data.view.every(isFiniteNumber)) {
+        remote.view = [data.view[0], data.view[1], data.view[2], data.view[3]];
+        if (following === from) {
+          showView(remote.view);
+        }
       }
 
       if ('selection' in data && Array.isArray(data.selection)) {
@@ -1296,6 +1831,11 @@ export const createBoardController = (
         }
       }
 
+      // Somebody followed who left: there is nothing to follow.
+      if (following && !members.has(following)) {
+        stopFollowing();
+      }
+
       invalidate();
     },
 
@@ -1313,7 +1853,12 @@ export const createBoardController = (
     undo: unlessEditing(() => send(scene.undo())),
     redo: unlessEditing(() => send(scene.redo())),
     deleteSelection: unlessEditing(() => {
-      commit(selected().map(element => ({ ...element, deleted: true })));
+      // The arrows fixed to what goes stay, let go where they are drawn.
+      const removed = selected();
+      commit([
+        ...removed.map(element => ({ ...element, deleted: true })),
+        ...releasedFrom(new Set(removed.map(element => element.id)))
+      ]);
       setSelection([]);
     }),
     selectAll: unlessEditing(() => setSelection(scene.visible().map(element => element.id))),
@@ -1321,24 +1866,35 @@ export const createBoardController = (
       const top = scene.topZ;
       // A copy of a group is a group of its own: the copies must not be picked up with the originals.
       const groups = new Map<string, string>();
-      const copies = selected()
-        .sort(byZ)
-        .map((element, index) => {
-          const group = element.group === undefined ? undefined : (groups.get(element.group) ?? newId());
-          if (element.group !== undefined && group !== undefined) {
-            groups.set(element.group, group);
-          }
+      const chosen = selected().sort(byZ);
+      // A connector copied with what it connects connects the copies; copied alone, it lets go.
+      const ids = new Map(chosen.map(element => [element.id, newId()]));
+      const rebind = (binding: Binding | undefined): Binding | undefined => {
+        const id = binding ? ids.get(binding.id) : undefined;
 
-          return {
-            ...element,
-            id: newId(),
-            x: element.x + 16,
-            y: element.y + 16,
-            z: top + 1 + index,
-            version: 0,
-            ...(group === undefined ? {} : { group })
-          };
-        });
+        return binding && id ? { ...binding, id } : undefined;
+      };
+      const copies = chosen.map((element, index) => {
+        const group = element.group === undefined ? undefined : (groups.get(element.group) ?? newId());
+        if (element.group !== undefined && group !== undefined) {
+          groups.set(element.group, group);
+        }
+
+        const { start: _start, end: _end, ...rest } = element;
+        const [start, end] = [rebind(element.start), rebind(element.end)];
+
+        return {
+          ...rest,
+          id: ids.get(element.id) ?? newId(),
+          x: element.x + 16,
+          y: element.y + 16,
+          z: top + 1 + index,
+          version: 0,
+          ...(group === undefined ? {} : { group }),
+          ...(start ? { start } : {}),
+          ...(end ? { end } : {})
+        };
+      });
       commit(copies);
       setSelection(copies.map(element => element.id));
     }),
@@ -1365,8 +1921,67 @@ export const createBoardController = (
       reportSelection();
     }),
     deselect: (): void => {
+      endCarry();
       finishEditing();
       setSelection([]);
+    },
+
+    /** A sticky taken off the pad, in `fill`'s paper: dragged onto the board, or clicked and then placed. */
+    carry: ({ fill }: { fill?: unknown }): void => {
+      endCarry();
+      const paper: Fill = isOneOf(FILLS, fill) && fill !== 'none' ? fill : 'yellow';
+      carrying = {
+        element: { ...newElement('sticky', [0, 0]), ...DEFAULT_BOX.sticky, fill: paper },
+        moved: false,
+        over: false
+      };
+      setSelection([]);
+      canvas.style.cursor = 'grabbing';
+      window.addEventListener('pointermove', onCarryMove);
+      window.addEventListener('pointerup', onCarryUp);
+    },
+
+    /** Show what a member shows, and keep showing it as they move — until this person touches the board. */
+    follow: ({ from }: { from?: unknown }): void => {
+      if (typeof from !== 'string' || !members.has(from)) {
+        return;
+      }
+
+      following = from;
+      emit({ type: 'follow', name: members.get(from)?.name ?? '' });
+      const view = remotes.get(from)?.view;
+      if (view) {
+        showView(view);
+      }
+    },
+    unfollow: stopFollowing,
+
+    /** A reaction, floating up where this person points — or mid-view — for everyone on the board. */
+    react: ({ emoji }: { emoji?: unknown }): void => {
+      if (!isReaction(emoji)) {
+        return;
+      }
+
+      const view = viewport();
+      const point: Point = lastPointer ?? [view.x + view.width / 2, view.y + view.height / 2];
+      effects.react(emoji, point);
+      emit({ type: 'reaction', reaction: { emoji, x: Math.round(point[0]), y: Math.round(point[1]) } });
+      invalidate();
+    },
+
+    remoteReaction: (data: unknown): void => {
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'emoji' in data &&
+        isReaction(data.emoji) &&
+        'x' in data &&
+        'y' in data &&
+        isPoint([data.x, data.y])
+      ) {
+        effects.react(data.emoji, [Number(data.x), Number(data.y)]);
+        invalidate();
+      }
     },
     bringToFront: unlessEditing(() => restack(true)),
     sendToBack: unlessEditing(() => restack(false)),
@@ -1384,6 +1999,7 @@ export const createBoardController = (
       setSelection([...selection].filter(id => !(scene.element(id)?.deleted ?? true)));
     },
     destroy: (): void => {
+      endCarry();
       cancelAnimationFrame(frame);
       resizeObserver.disconnect();
       canvas.removeEventListener('pointerdown', onPointerDown);

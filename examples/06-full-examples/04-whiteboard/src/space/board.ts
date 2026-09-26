@@ -35,6 +35,7 @@ import { RANDOM_COLOUR, RANDOM_NAME } from './state.ts';
 import { boardAction, stylePanel } from './stylePanel.ts';
 import { selectionTools } from './selectionTools.ts';
 import { toolbar } from './toolbar.ts';
+import { bottomTray, followBanner } from './tray.ts';
 
 import type { BoardAttributes } from '../plugins/Board/declaration.ts';
 import type { ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
@@ -301,6 +302,11 @@ const canvas = (): ElementSpec =>
           setState({ key: 'strokeWidth', type: 'number', value: '{{ picked.strokeWidth }}' })
         )
       ],
+      // Following somebody is the canvas's; the banner that says so is the page's.
+      [
+        named('followed', declaredTrigger(declaration, 'onFollowChange')),
+        setState({ key: 'following', type: 'text', value: '{{ followed.name }}' })
+      ],
       [
         named('viewed', declaredTrigger(declaration, 'onViewChange')),
         setState({ key: 'zoom', type: 'number', value: '{{ viewed.zoom }}' })
@@ -503,7 +509,9 @@ export const boardPage: PageSpec = {
                   children: [
                     ...header(),
                     toolbar(),
+                    followBanner(),
                     stylePanel(),
+                    bottomTray(),
                     zoomBar(),
                     helpCorner(),
                     ...popovers(),

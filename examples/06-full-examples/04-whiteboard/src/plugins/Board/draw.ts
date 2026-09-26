@@ -1,6 +1,7 @@
 import { getStroke } from 'perfect-freehand';
 import rough from 'roughjs';
 
+import { takesLabel } from '../../board/model.ts';
 import { handlePoint, HANDLES, toScreen } from './geometry.ts';
 
 import type { Box, Camera } from './geometry.ts';
@@ -18,12 +19,22 @@ export const STICKY_PADDING = 16;
 
 const STICKY_FONT = 22;
 
+/** A label in a shape: one size whatever the outline's width — it is read, not drawn. */
+const LABEL_FONT = 20;
+
+export const LABEL_PADDING = 12;
+
 export const STICKY_SIZE = 200;
 
 export const HANDLE_SIZE = 8;
 
-export const fontSizeOf = (element: BoardElement): number =>
-  element.type === 'sticky' ? STICKY_FONT : FONT_SIZES[element.strokeWidth];
+export const fontSizeOf = (element: BoardElement): number => {
+  if (element.type === 'sticky') {
+    return STICKY_FONT;
+  }
+
+  return takesLabel(element.type) ? LABEL_FONT : FONT_SIZES[element.strokeWidth];
+};
 
 export const fontOf = (element: BoardElement, palette: Palette): string => `${fontSizeOf(element)}px ${palette.font}`;
 
@@ -36,11 +47,11 @@ export const layoutText = (
   context.font = fontOf(element, palette);
   const lineHeight = fontSizeOf(element) * LINE_HEIGHT;
   const paragraphs = (element.text ?? '').split('\n');
-  if (element.type !== 'sticky') {
+  if (element.type !== 'sticky' && !takesLabel(element.type)) {
     return { lines: paragraphs, lineHeight };
   }
 
-  const width = element.width - STICKY_PADDING * 2;
+  const width = element.width - (element.type === 'sticky' ? STICKY_PADDING : LABEL_PADDING) * 2;
   const lines = paragraphs.flatMap(paragraph => {
     const wrapped: string[] = [];
     let line = '';
@@ -93,7 +104,11 @@ const outlinePath = (outline: number[][]): Path2D => {
   return path;
 };
 
-type Shape = { drawables: Drawable[] } | { path: Path2D };
+/**
+ * A drawn element. A hatched fill is its own drawing, clipped to the shape's exact outline: rough.js wobbles every
+ * hatch line as it wobbles the outline, and unclipped they overshoot the border — most at a diamond's corners.
+ */
+type Shape = { drawables: Drawable[]; fill?: { drawable: Drawable; clip: Path2D } } | { path: Path2D };
 
 /**
  * What an element looks like, in its own coordinates, by what can change it. A move changes only `x`/`y`, which is
@@ -159,34 +174,47 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       strokeWidth: element.strokeWidth,
       roughness: element.type === 'sticky' ? 0.6 : 1.1,
       bowing: 1,
-      ...(element.fill === 'none' && element.type !== 'sticky'
-        ? {}
-        : {
-            fill: element.type === 'sticky' ? palette.sticky[element.fill] : palette.fill[element.fill],
-            fillStyle: element.type === 'sticky' ? 'solid' : 'hachure',
-            hachureGap: 6 + element.strokeWidth * 2,
-            fillWeight: Math.max(1, element.strokeWidth / 1.5)
-          })
+      ...(element.type === 'sticky' ? { fill: palette.sticky[element.fill], fillStyle: 'solid' } : {})
     };
     const { width, height } = element;
+    const hatch: Options = {
+      ...options,
+      stroke: 'none',
+      fill: palette.fill[element.fill],
+      fillStyle: 'hachure',
+      hachureGap: 6 + element.strokeWidth * 2,
+      fillWeight: Math.max(1, element.strokeWidth / 1.5)
+    };
+    const hatched = element.fill !== 'none';
+    const diamond: [number, number][] = [
+      [width / 2, 0],
+      [width, height / 2],
+      [width / 2, height],
+      [0, height / 2]
+    ];
 
     switch (element.type) {
-      case 'ellipse':
-        return { drawables: [generator.ellipse(width / 2, height / 2, width, height, options)] };
-      case 'diamond':
+      case 'ellipse': {
+        const clip = new Path2D();
+        clip.ellipse(width / 2, height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+
         return {
-          drawables: [
-            generator.polygon(
-              [
-                [width / 2, 0],
-                [width, height / 2],
-                [width / 2, height],
-                [0, height / 2]
-              ],
-              options
-            )
-          ]
+          drawables: [generator.ellipse(width / 2, height / 2, width, height, options)],
+          ...(hatched
+            ? { fill: { drawable: generator.ellipse(width / 2, height / 2, width, height, hatch), clip } }
+            : {})
         };
+      }
+      case 'diamond': {
+        const clip = new Path2D();
+        diamond.forEach(([px, py], index) => (index ? clip.lineTo(px, py) : clip.moveTo(px, py)));
+        clip.closePath();
+
+        return {
+          drawables: [generator.polygon(diamond, options)],
+          ...(hatched ? { fill: { drawable: generator.polygon(diamond, hatch), clip } } : {})
+        };
+      }
       case 'line':
         return { drawables: [generator.linearPath(element.points ?? [], options)] };
       case 'arrow': {
@@ -200,8 +228,15 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
         return {
           drawables: [generator.rectangle(0, 0, width, height, { ...options, stroke: palette.sticky[element.fill] })]
         };
-      default:
-        return { drawables: [generator.rectangle(0, 0, width, height, options)] };
+      default: {
+        const clip = new Path2D();
+        clip.rect(0, 0, width, height);
+
+        return {
+          drawables: [generator.rectangle(0, 0, width, height, options)],
+          ...(hatched ? { fill: { drawable: generator.rectangle(0, 0, width, height, hatch), clip } } : {})
+        };
+      }
     }
   };
 
@@ -220,11 +255,21 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
 
   const drawText = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
     const { lines, lineHeight } = layoutText(context, element, palette);
-    const inset = element.type === 'sticky' ? STICKY_PADDING : 0;
+    const lift = (lineHeight - fontSizeOf(element)) / 2;
     context.fillStyle = palette.stroke[element.stroke];
     context.textBaseline = 'top';
+    if (takesLabel(element.type)) {
+      // A label sits in the middle of its shape, both ways.
+      const top = (element.height - lines.length * lineHeight) / 2;
+      context.textAlign = 'center';
+      lines.forEach((line, index) => context.fillText(line, element.width / 2, top + index * lineHeight + lift));
+
+      return;
+    }
+
+    const inset = element.type === 'sticky' ? STICKY_PADDING : 0;
     lines.forEach((line, index) => {
-      context.fillText(line, inset, inset + index * lineHeight + (lineHeight - fontSizeOf(element)) / 2);
+      context.fillText(line, inset, inset + index * lineHeight + lift);
     });
   };
 
@@ -256,11 +301,19 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
         context.fillStyle = palette.stroke[element.stroke];
         context.fill(shape.path);
       } else {
+        if (shape.fill) {
+          context.save();
+          context.clip(shape.fill.clip);
+          roughCanvas.draw(shape.fill.drawable);
+          context.restore();
+        }
+
         shape.drawables.forEach(drawable => roughCanvas.draw(drawable));
       }
     }
 
-    if ((element.type === 'text' || element.type === 'sticky') && !hideText) {
+    const written = element.type === 'text' || element.type === 'sticky' || (takesLabel(element.type) && element.text);
+    if (written && !hideText) {
       drawText(context, element, palette);
     }
 
@@ -390,5 +443,32 @@ export const drawCursor = (
   context.fillStyle = '#ffffff';
   context.textBaseline = 'middle';
   context.fillText(label, 18, 30);
+  context.restore();
+};
+
+/**
+ * Points a person can grab, in screen space: a shape's connection points, a connector's ends. `active` is the one the
+ * pointer is over or a connector is about to fix to — filled, so where it will land is never a guess.
+ */
+export const drawPoints = (
+  context: CanvasRenderingContext2D,
+  camera: Camera,
+  points: readonly Point[],
+  colour: string,
+  active?: Point
+): void => {
+  context.save();
+  context.lineWidth = 1.5;
+  context.strokeStyle = colour;
+  for (const point of points) {
+    const [x, y] = toScreen(camera, point[0], point[1]);
+    const lit = active !== undefined && active[0] === point[0] && active[1] === point[1];
+    context.fillStyle = lit ? colour : '#ffffff';
+    context.beginPath();
+    context.arc(x, y, lit ? 6 : 4.5, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+  }
+
   context.restore();
 };

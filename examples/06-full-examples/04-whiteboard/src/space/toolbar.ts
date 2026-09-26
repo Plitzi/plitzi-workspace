@@ -23,7 +23,14 @@ export const TOOLS: readonly { tool: Tool; icon: string; label: string; keys: st
   { tool: 'freehand', icon: 'fa-solid fa-pencil', label: 'Pen', keys: 'p, 7', hint: '7' },
   { tool: 'text', icon: 'fa-solid fa-font', label: 'Text', keys: 't, 8', hint: '8' },
   { tool: 'sticky', icon: 'fa-regular fa-note-sticky', label: 'Sticky note', keys: 's, 9', hint: '9' },
-  { tool: 'eraser', icon: 'fa-solid fa-eraser', label: 'Eraser', keys: 'e, 0', hint: '0' }
+  { tool: 'eraser', icon: 'fa-solid fa-eraser', label: 'Eraser', keys: 'e, 0', hint: '0' },
+  {
+    tool: 'laser',
+    icon: 'fa-solid fa-wand-magic-sparkles',
+    label: 'Laser — point, everyone sees it',
+    keys: 'k',
+    hint: 'K'
+  }
 ];
 
 export const useTool = (tool: Tool): StepSpec => setState({ key: 'tool', type: 'text', value: tool });
@@ -60,7 +67,7 @@ const bar = styles('toolbar', {
 
 const toolButton = styles('toolButton', {
   // Eleven tools across a phone: a little smaller there, so the whole bar fits a 390px screen.
-  css: { desktop: ICON_BUTTON, mobile: { width: '31px', height: '34px', 'font-size': '14px' } },
+  css: { desktop: ICON_BUTTON, mobile: { width: '29px', height: '34px', 'font-size': '14px' } },
   states: {
     hover: { 'background-color': 'var(--surface-2)' },
     'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' }

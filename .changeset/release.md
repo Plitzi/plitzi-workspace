@@ -795,8 +795,9 @@
   `lintSpace` reports `channel-declaration`, and the MCP's `patchSettings` takes `channels` (merged per pattern, `null`
   removes one) and answers with the same sentence. The agent's guide has a "Realtime channels" section.
 - New full example: `examples/06-full-examples/04-whiteboard` (Pizarra) — a collaborative whiteboard over WebSocket:
-  groups, a toolbar authored in the space that the canvas lays beside the selection, stacking. See
-  `docs/en/realtime.md`.
+  arrows fixed to the anchors of what they connect (curved, following every move), labels in shapes, pads of sticky
+  notes to drag from, a laser pointer, reactions, following a collaborator's view, groups, a toolbar authored in the
+  space that the canvas lays beside the selection. See `docs/en/realtime.md`.
 
 ## A render reads what a call wrote
 

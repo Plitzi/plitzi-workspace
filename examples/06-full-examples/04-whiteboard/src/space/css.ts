@@ -33,8 +33,20 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
   --board-sticky-green: var(--sticky-green);
   --board-sticky-blue: var(--sticky-blue);
   --board-sticky-violet: var(--sticky-violet);
+  --board-laser: var(--laser);
   --board-font: var(--hand);
   --board-ui-font: var(--ui);
+}
+
+/* The sticky pads: the same paper the notes are drawn on. */
+.stickyStack {
+  --stack-yellow: var(--sticky-yellow);
+  --stack-red: var(--sticky-red);
+  --stack-orange: var(--sticky-orange);
+  --stack-green: var(--sticky-green);
+  --stack-blue: var(--sticky-blue);
+  --stack-violet: var(--sticky-violet);
+  --stack-focus: var(--accent);
 }
 
 /* The share card's QR code stays dark on light in both schemes: a code is read by contrast. */

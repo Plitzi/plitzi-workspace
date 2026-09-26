@@ -4,12 +4,13 @@ import { customCss } from './css.ts';
 import { galleryPage } from './gallery.ts';
 import { SHARE_DECLARATION } from './people.ts';
 import { computed, transientState } from './state.ts';
+import { STACK_DECLARATION } from './tray.ts';
 import { fonts, notifications, variables } from './tokens.ts';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
 /** The components this space ships, as their declarations: `main.ts` hands them to `authorSpace`, which checks them. */
-export const PLUGINS = [BOARD_DECLARATION, SHARE_DECLARATION];
+export const PLUGINS = [BOARD_DECLARATION, SHARE_DECLARATION, STACK_DECLARATION];
 
 /**
  * Pizarra, declared: two pages, five server actions, three channels and two elements of its own.

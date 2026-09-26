@@ -15,13 +15,14 @@ const HOST = process.env.HOST ?? '127.0.0.1';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * The elements this space ships itself: the canvas, and the share card — a QR code and the clipboard, which are the
- * browser's to offer. Two halves, and forgetting either is quiet: a plugin the server has no component for resolves
+ * The elements this space ships itself: the canvas; the share card — a QR code and the clipboard, which are the
+ * browser's to offer; and the sticky pads, which hand a note over the moment the pointer goes down. Two halves, and forgetting either is quiet: a plugin the server has no component for resolves
  * to nothing, on a page that renders perfectly.
  */
 const plugins = {
   board: { js: path.resolve(here, 'plugins/Board/index.ts'), action: 'compile' as const },
-  shareCard: { js: path.resolve(here, 'plugins/ShareCard/index.ts'), action: 'compile' as const }
+  shareCard: { js: path.resolve(here, 'plugins/ShareCard/index.ts'), action: 'compile' as const },
+  stickyStack: { js: path.resolve(here, 'plugins/StickyStack/index.ts'), action: 'compile' as const }
 };
 
 /** Authored at boot from `src/space`: saving a file and letting `start:dev` restart the process is the whole loop. */

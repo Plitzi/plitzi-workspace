@@ -126,6 +126,7 @@ const Board = ({
   const pending = useRef<PointerMessage | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const roomRef = useRef<((message: PointerMessage) => void) | undefined>(undefined);
+  const reactRef = useRef<((reaction: { emoji: string; x: number; y: number }) => void) | undefined>(undefined);
   const flushPointer = useCallback(() => {
     timer.current = undefined;
     const message = pending.current;
@@ -166,6 +167,12 @@ const Board = ({
           break;
         case 'selectionBox':
           setSelectionBox(event.box);
+          break;
+        case 'follow':
+          trigger(declaration.triggers.onFollowChange.action, { name: event.name });
+          break;
+        case 'reaction':
+          reactRef.current?.(event.reaction);
           break;
         case 'pointer':
           pending.current = event.message;
@@ -241,6 +248,8 @@ const Board = ({
   const onRoomMessage = useCallback((message: RealtimeMessage) => {
     if (message.type === 'pointer') {
       controllerRef.current?.remotePointer(message.from, message.data);
+    } else if (message.type === 'reaction') {
+      controllerRef.current?.remoteReaction(message.data);
     }
   }, []);
 
@@ -249,6 +258,7 @@ const Board = ({
 
   useEffect(() => {
     roomRef.current = message => void room.publish('pointer', message);
+    reactRef.current = reaction => void room.publish('reaction', reaction);
   }, [room]);
 
   useEffect(() => {
@@ -313,7 +323,20 @@ const Board = ({
       zoomReset: call('zoomReset', controller => controller.zoomReset()),
       zoomToFit: call('zoomToFit', controller => controller.zoomToFit()),
       exportPng: call('exportPng', controller => controller.exportPng()),
-      rollback: call('rollback', controller => controller.rollback())
+      rollback: call('rollback', controller => controller.rollback()),
+      carry: {
+        ...declaration.callbacks.carry,
+        callback: (params: { fill?: unknown }) => controllerRef.current?.carry(params)
+      },
+      follow: {
+        ...declaration.callbacks.follow,
+        callback: (params: { from?: unknown }) => controllerRef.current?.follow(params)
+      },
+      unfollow: call('unfollow', controller => controller.unfollow()),
+      react: {
+        ...declaration.callbacks.react,
+        callback: (params: { emoji?: unknown }) => controllerRef.current?.react(params)
+      }
     };
   }, []);
 
@@ -352,6 +375,8 @@ const Board = ({
         fontFamily: editor.font,
         color: editor.color,
         padding: editor.padding,
+        paddingTop: editor.paddingTop,
+        textAlign: editor.align,
         whiteSpace: editor.wraps ? 'pre-wrap' : 'pre'
       },
     [editor]

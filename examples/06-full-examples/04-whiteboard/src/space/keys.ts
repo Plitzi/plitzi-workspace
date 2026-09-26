@@ -37,7 +37,7 @@ export const shortcuts: StepSpec[][] = [
   [onKey('mod+0'), boardAction('zoomReset')],
   [onKey('mod+shift+e'), boardAction('exportPng')],
   [onKey('?'), setState({ key: 'shareOpen', type: 'boolean', value: false }), toggleState({ key: 'keysOpen' })],
-  [onKey('escape'), ...closePanels, boardAction('deselect'), useTool('select')]
+  [onKey('escape'), ...closePanels, boardAction('deselect'), boardAction('unfollow'), useTool('select')]
 ];
 
 /** What the help lists: the keys as a person reads them. */
@@ -56,13 +56,14 @@ const KEYS: readonly { keys: string[]; does: string }[] = [
   { keys: ['⌘', 'D'], does: 'Duplicate' },
   { keys: ['⌘', 'G'], does: 'Group' },
   { keys: ['⌘', '⇧', 'G'], does: 'Ungroup' },
-  { keys: ['double-click'], does: 'Into a group · edit text' },
+  { keys: ['double-click'], does: 'Into a group · edit text · label a shape' },
+  { keys: ['drag', '●'], does: 'Connect from a shape’s point' },
   { keys: ['⌘', 'A'], does: 'Select all' },
   { keys: ['[', ']'], does: 'Send back · bring forward' },
   { keys: ['⌫'], does: 'Delete' },
   { keys: ['⇧', 'drag'], does: 'Square · straight · keep ratio' },
   { keys: ['⌘', '⇧', 'E'], does: 'Export PNG' },
-  { keys: ['Esc'], does: 'Deselect · close' }
+  { keys: ['Esc'], does: 'Deselect · stop following · close' }
 ];
 
 const keysPanel = styles('keysPanel', {

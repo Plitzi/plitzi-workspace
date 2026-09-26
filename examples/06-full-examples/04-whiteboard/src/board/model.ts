@@ -27,6 +27,17 @@ export type StrokeWidth = (typeof STROKE_WIDTHS)[number];
 
 export type Point = [number, number];
 
+/**
+ * Where on another element a line or an arrow is fixed: the middle of one of its four sides — the connection points
+ * every diagramming tool offers, because a connector drawn to "about there" never lines up twice.
+ */
+export const ANCHORS = ['n', 'e', 's', 'w'] as const;
+
+export type Anchor = (typeof ANCHORS)[number];
+
+/** One end of a line, fixed to another element: it follows that element wherever it is moved or resized. */
+export type Binding = { id: string; anchor: Anchor };
+
 export type BoardElement = {
   id: string;
   type: ShapeType;
@@ -36,6 +47,10 @@ export type BoardElement = {
   width: number;
   height: number;
   points?: Point[];
+  /** A line's or an arrow's ends, when they are fixed to other elements rather than to a place on the board. */
+  start?: Binding;
+  end?: Binding;
+  /** What is written: a text or a sticky's content, or the label in the middle of a shape. */
   text?: string;
   stroke: Stroke;
   fill: Fill;
@@ -91,9 +106,33 @@ const LINEAR = new Set<ShapeType>(['arrow', 'line', 'freehand']);
 
 const WITH_TEXT = new Set<ShapeType>(['text', 'sticky']);
 
+const LABELLED = new Set<ShapeType>(['rectangle', 'ellipse', 'diamond']);
+
+/** The lines that can be fixed at their ends. A pen stroke is drawn, not connected. */
+const CONNECTORS = new Set<ShapeType>(['arrow', 'line']);
+
 export const isLinear = (type: ShapeType): boolean => LINEAR.has(type);
 
+/** Whether text IS the element — a text, a sticky — rather than something written on it. */
 export const holdsText = (type: ShapeType): boolean => WITH_TEXT.has(type);
+
+/** Whether a label can be written in its middle. */
+export const takesLabel = (type: ShapeType): boolean => LABELLED.has(type);
+
+export const isConnector = (type: ShapeType): boolean => CONNECTORS.has(type);
+
+/** Whether a connector may be fixed to it: anything with a box — never another line. */
+export const isConnectable = (type: ShapeType): boolean => !LINEAR.has(type);
+
+const parseBinding = (value: unknown): Binding | undefined | false => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return isRecord(value) && isElementId(value.id) && isOneOf(ANCHORS, value.anchor)
+    ? { id: value.id, anchor: value.anchor }
+    : false;
+};
 
 /**
  * An element from outside, checked field by field — or `undefined`. Rebuilt rather than passed through, so nothing a
@@ -113,6 +152,8 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     height,
     points,
     text,
+    start,
+    end,
     stroke,
     fill,
     strokeWidth,
@@ -169,12 +210,21 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     element.points = points.map(([px, py]) => [px, py]);
   }
 
-  if (holdsText(type)) {
+  if (holdsText(type) || (takesLabel(type) && text !== undefined)) {
     if (typeof text !== 'string' || text.length > LIMITS.text) {
       return undefined;
     }
 
     element.text = text;
+  }
+
+  if (isConnector(type)) {
+    const [first, last] = [parseBinding(start), parseBinding(end)];
+    if (first === false || last === false) {
+      return undefined;
+    }
+
+    Object.assign(element, first ? { start: first } : {}, last ? { end: last } : {});
   }
 
   return element;

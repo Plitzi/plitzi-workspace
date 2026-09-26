@@ -1,0 +1,65 @@
+/* Structure and motion only: each pad's paper is `--stack-<colour>`, which the space points at its tokens. */
+.sticky-stack {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* A pad: the top note, and two more peeking out under it — a pile you can see is more than one. */
+.sticky-stack__pad {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: var(--pad);
+  box-shadow:
+    2px 3px 0 -1px var(--pad),
+    2px 3px 0 0 rgba(0, 0, 0, 0.08),
+    4px 6px 0 -1px var(--pad),
+    4px 6px 0 0 rgba(0, 0, 0, 0.08),
+    0 6px 14px -6px rgba(0, 0, 0, 0.35);
+  cursor: grab;
+  transform: rotate(-3deg);
+  transition: transform 140ms ease;
+  touch-action: none;
+}
+
+.sticky-stack__pad:nth-child(even) {
+  transform: rotate(2deg);
+}
+
+/* The top note lifts as the pointer reaches for it. */
+.sticky-stack__pad:hover {
+  transform: translateY(-5px) rotate(-1deg);
+}
+
+.sticky-stack__pad:active {
+  cursor: grabbing;
+  transform: translateY(-8px) rotate(4deg) scale(1.05);
+}
+
+.sticky-stack__pad:focus-visible {
+  outline: 2px solid var(--stack-focus, #4c6ef5);
+  outline-offset: 4px;
+}
+
+.sticky-stack__pad[data-paper='yellow'] {
+  --pad: var(--stack-yellow, #fff3bf);
+}
+.sticky-stack__pad[data-paper='red'] {
+  --pad: var(--stack-red, #ffe0e0);
+}
+.sticky-stack__pad[data-paper='orange'] {
+  --pad: var(--stack-orange, #ffe8cc);
+}
+.sticky-stack__pad[data-paper='green'] {
+  --pad: var(--stack-green, #d3f9d8);
+}
+.sticky-stack__pad[data-paper='blue'] {
+  --pad: var(--stack-blue, #d0ebff);
+}
+.sticky-stack__pad[data-paper='violet'] {
+  --pad: var(--stack-violet, #e5dbff);
+}

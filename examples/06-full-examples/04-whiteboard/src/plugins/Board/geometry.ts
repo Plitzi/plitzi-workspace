@@ -1,6 +1,6 @@
-import { isLinear } from '../../board/model.ts';
+import { ANCHORS, isConnectable, isLinear } from '../../board/model.ts';
 
-import type { BoardElement, Point } from '../../board/model.ts';
+import type { Anchor, Binding, BoardElement, Point } from '../../board/model.ts';
 
 /** Where the canvas looks: the board point at its top-left corner, and how many screen pixels a board unit is. */
 export type Camera = { x: number; y: number; zoom: number };
@@ -219,4 +219,157 @@ export const snapAngle = ([dx, dy]: Point): Point => {
   const length = Math.hypot(dx, dy);
 
   return [Math.cos(angle) * length, Math.sin(angle) * length];
+};
+
+/** Which way each anchor faces: a connector leaves an element outwards, never back across it. */
+const NORMALS: Record<Anchor, Point> = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
+
+/** How far a connector stops short of the element it is fixed to: touching, a stroke overlaps the outline. */
+const ANCHOR_GAP = 6;
+
+/** How many segments a curved connector is drawn, hit and bounded as. */
+const CURVE_STEPS = 24;
+
+/** The middle of one side of an element's box — which is also where an ellipse or a diamond meets it. */
+export const anchorPoint = (element: BoardElement, anchor: Anchor): Point => {
+  const { x, y, width, height } = boundsOf(element);
+  const points: Record<Anchor, Point> = {
+    n: [x + width / 2, y],
+    e: [x + width, y + height / 2],
+    s: [x + width / 2, y + height],
+    w: [x, y + height / 2]
+  };
+
+  return points[anchor];
+};
+
+export const anchorPoints = (element: BoardElement): { anchor: Anchor; point: Point }[] =>
+  ANCHORS.map(anchor => ({ anchor, point: anchorPoint(element, anchor) }));
+
+/**
+ * The anchor a point near an element snaps to: the closest of its four, once the point is over the element or
+ * within `reach` of its box. `undefined` for a point nowhere near it.
+ */
+export const snapToAnchor = (
+  element: BoardElement,
+  point: Point,
+  reach: number,
+  toward?: Point
+): Binding | undefined => {
+  if (!isConnectable(element.type) || element.deleted) {
+    return undefined;
+  }
+
+  const box = boundsOf(element);
+  const near =
+    point[0] >= box.x - reach &&
+    point[0] <= box.x + box.width + reach &&
+    point[1] >= box.y - reach &&
+    point[1] <= box.y + box.height + reach;
+  if (!near) {
+    return undefined;
+  }
+
+  // Deep inside the shape, the pointer is choosing the SHAPE, not a side of it: the side facing the other end is the
+  // one a person means. Near an edge, it is choosing that edge.
+  const aim = toward && isDeepInside(element, point, reach) ? toward : point;
+
+  return { id: element.id, anchor: nearestAnchor(element, aim) };
+};
+
+/** Whether a point is inside an element's box and further than `margin` from each of its edges. */
+export const isDeepInside = (element: BoardElement, [x, y]: Point, margin: number): boolean => {
+  const box = boundsOf(element);
+
+  return x > box.x + margin && x < box.x + box.width - margin && y > box.y + margin && y < box.y + box.height - margin;
+};
+
+/** The anchor of an element closest to a point — the side that faces it. */
+export const nearestAnchor = (element: BoardElement, point: Point): Anchor => {
+  const [closest] = anchorPoints(element).sort(
+    (a, b) =>
+      Math.hypot(a.point[0] - point[0], a.point[1] - point[1]) -
+      Math.hypot(b.point[0] - point[0], b.point[1] - point[1])
+  );
+
+  return closest.anchor;
+};
+
+const cubic = (p0: Point, p1: Point, p2: Point, p3: Point, t: number): Point => {
+  const u = 1 - t;
+
+  return [
+    u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0],
+    u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1]
+  ];
+};
+
+/**
+ * A connector as it is right now: each fixed end at its element's anchor, wherever that element is — and, when an
+ * end is fixed, the line bent into a curve that leaves each anchor straight out of its side, the way a diagramming
+ * tool routes one. Resolved every time it is drawn, so a connector can never be left pointing at where a shape used
+ * to be, on any screen, whoever moved it.
+ *
+ * An end whose element is gone stays where it was last drawn. The result is an ordinary line — its points are the
+ * curve — so hit testing, bounds and drawing need to know nothing about any of this.
+ */
+export const resolveConnector = (
+  element: BoardElement,
+  find: (id: string) => BoardElement | undefined
+): BoardElement => {
+  const absolute = absolutePoints(element);
+  if ((!element.start && !element.end) || absolute.length < 2) {
+    return element;
+  }
+
+  const endOf = (binding: Binding | undefined, fallback: Point): { point: Point; normal?: Point } => {
+    const target = binding ? find(binding.id) : undefined;
+    if (!binding || !target || target.deleted) {
+      return { point: fallback };
+    }
+
+    const [ax, ay] = anchorPoint(target, binding.anchor);
+    const normal = NORMALS[binding.anchor];
+
+    return { point: [ax + normal[0] * ANCHOR_GAP, ay + normal[1] * ANCHOR_GAP], normal };
+  };
+
+  const from = endOf(element.start, absolute[0]);
+  const to = endOf(element.end, absolute[absolute.length - 1]);
+  const length = Math.hypot(to.point[0] - from.point[0], to.point[1] - from.point[1]);
+  const pull = Math.min(160, Math.max(24, length * 0.45));
+  const control = (end: { point: Point; normal?: Point }): Point =>
+    end.normal ? [end.point[0] + end.normal[0] * pull, end.point[1] + end.normal[1] * pull] : end.point;
+  const [c1, c2] = [control(from), control(to)];
+  const curve = Array.from({ length: CURVE_STEPS + 1 }, (_, index) =>
+    cubic(from.point, c1, c2, to.point, index / CURVE_STEPS)
+  );
+  const [x, y] = from.point;
+  const points: Point[] = curve.map(([px, py]) => [px - x, py - y]);
+  const xs = points.map(([px]) => px);
+  const ys = points.map(([, py]) => py);
+
+  return {
+    ...element,
+    x,
+    y,
+    points,
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys)
+  };
+};
+
+/** A connector with one end let go: fixed where it is drawn now, and no longer following anything. */
+export const detachEnd = (resolved: BoardElement, end: 'start' | 'end'): BoardElement => {
+  const { [end]: _released, ...rest } = resolved;
+
+  return rest;
+};
+
+/** A point `distance` outward from one of an element's anchors: where a connection handle sits, just off the edge. */
+export const beyondAnchor = (element: BoardElement, anchor: Anchor, distance: number): Point => {
+  const [x, y] = anchorPoint(element, anchor);
+  const [nx, ny] = NORMALS[anchor];
+
+  return [x + nx * distance, y + ny * distance];
 };

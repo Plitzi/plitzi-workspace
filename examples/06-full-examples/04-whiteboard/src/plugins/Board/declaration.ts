@@ -49,7 +49,15 @@ const declaration = {
      * The board's channel came back after a drop: what was said meanwhile was missed, and the page should read the
      * board again. The canvas merges whatever it is given — it only knows it may have missed something.
      */
-    onResync: { action: 'onResync', title: 'On Resync', type: 'trigger', params: {}, preview: {} }
+    onResync: { action: 'onResync', title: 'On Resync', type: 'trigger', params: {}, preview: {} },
+    /** Whose view this page follows now — a name, or `''` once it stopped (the person touched the board). */
+    onFollowChange: {
+      action: 'onFollowChange',
+      title: 'On Follow Change',
+      type: 'trigger',
+      params: {},
+      preview: { name: '' }
+    }
   },
   callbacks: {
     undo: callback('undo', 'Undo'),
@@ -83,7 +91,31 @@ const declaration = {
      * The server refused a commit: drop every edit it has not confirmed and draw what it holds. What was refused is
      * gone from this screen, as it never reached any other.
      */
-    rollback: callback('rollback', 'Roll Back Unconfirmed')
+    rollback: callback('rollback', 'Roll Back Unconfirmed'),
+    /** A sticky taken off a pad: it follows the pointer until it is put down on the board. */
+    carry: {
+      action: 'carry',
+      title: 'Carry A Sticky',
+      type: 'callback',
+      params: {
+        fill: { label: 'Paper (yellow | red | orange | green | blue | violet)', defaultValue: 'yellow', type: 'text' }
+      }
+    },
+    /** Show what a member of the room shows, and keep showing it until this person touches the board. */
+    follow: {
+      action: 'follow',
+      title: 'Follow',
+      type: 'callback',
+      params: { from: { label: 'Member (their `from` on the room)', defaultValue: '', type: 'text' } }
+    },
+    unfollow: callback('unfollow', 'Stop Following'),
+    /** A reaction floating up where this person points, for everyone on the board. */
+    react: {
+      action: 'react',
+      title: 'React',
+      type: 'callback',
+      params: { emoji: { label: 'Emoji', defaultValue: '👍', type: 'text' } }
+    }
   },
   content: {
     attributes: {
@@ -104,9 +136,11 @@ const declaration = {
       description:
         'An infinite whiteboard in a hand-drawn stroke: pan, zoom, shapes, arrows, lines, freehand, text and sticky ' +
         'notes. Bind `elements` to the board as the server keeps it; `topic` is the channel the server announces ' +
-        'saved elements on and `roomTopic` the one cursors and live drags travel on. It fires `onCommit` with the ' +
-        'changed elements for the page to keep, and `onToolChange`, `onSelectionChange`, `onViewChange` and ' +
-        "`onResync`. Its children are the selection's tools: shown beside whatever is selected, hidden while it is " +
+        'saved elements on and `roomTopic` the one cursors, live drags, lasers and reactions travel on. It fires ' +
+        '`onCommit` with the changed elements for the page to keep, and `onToolChange`, `onSelectionChange`, ' +
+        '`onViewChange`, `onResync` and `onFollowChange`. Arrows and lines fix to the anchors of what they are drawn ' +
+        'to, and follow it. `carry` takes a sticky off a pad, `follow` shows a member of the room, `react` floats an ' +
+        'emoji. Its children are the tools of the selection: shown beside whatever is selected, hidden while it is ' +
         'dragged or typed into. `mode: view` draws a still preview. Colours come from the `--board-*` custom properties.',
       items: [],
       bindings: {},

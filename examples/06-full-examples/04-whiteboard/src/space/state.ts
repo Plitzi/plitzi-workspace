@@ -40,7 +40,9 @@ export const computed = {
   me: "{{ { 'name': computed.name, 'color': computed.color } }}",
   shareOpen: '{{ state.shareOpen ? true : false }}',
   meOpen: '{{ state.meOpen ? true : false }}',
-  keysOpen: '{{ state.keysOpen ? true : false }}'
+  keysOpen: '{{ state.keysOpen ? true : false }}',
+  /** Whose view this page follows — a name, or empty. */
+  following: "{{ state.following ?? '' }}"
 };
 
 /**
@@ -56,5 +58,6 @@ export const transientState = [
   'shareOpen',
   'meOpen',
   'keysOpen',
-  'titleDraft'
+  'titleDraft',
+  'following'
 ];

@@ -20,6 +20,7 @@ import {
 import { COLLAB_COLOURS } from '../board/people.ts';
 import shareDeclaration from '../plugins/ShareCard/declaration.ts';
 import { BUTTON_RESET, FLOAT, caption } from './kit.ts';
+import { boardAction } from './stylePanel.ts';
 
 import type { ShareCardAttributes } from '../plugins/ShareCard/declaration.ts';
 import type { CssProps, ElementSpec } from '@plitzi/sdk-authoring';
@@ -57,7 +58,11 @@ const colourVariants = Object.fromEntries(
 );
 
 const avatar = styles('avatar', {
-  css: { ...AVATAR, 'margin-left': '-6px', cursor: 'default' },
+  css: { ...AVATAR, 'margin-left': '-6px' },
+  states: {
+    hover: { 'box-shadow': '0 0 0 2px var(--accent)', 'z-index': '1' },
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '2px' }
+  },
   variants: colourVariants
 });
 
@@ -101,13 +106,16 @@ const others = (): ElementSpec =>
         subType: 'li',
         class: avatarItem,
         children: [
-          text({
+          // A click follows them: this page shows what they show until the person here touches the board.
+          button({
             content: '',
+            title: 'Follow — see what they see',
             class: avatar,
             bind: [
               bindTemplate('content', 'people.item.state.name', '{{ source|first|upper }}'),
               variantFrom(avatar, 'people.item.state.color')
-            ]
+            ],
+            flows: [[onClick(), boardAction('follow', { from: '{{ list_people.item.from }}' })]]
           })
         ]
       })

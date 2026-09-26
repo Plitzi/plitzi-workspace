@@ -24,6 +24,8 @@ export const variables: SpaceSpec['variables'] = {
     'accent-soft': scheme('rgba(91, 91, 214, 0.12)', 'rgba(139, 140, 245, 0.18)'),
     'on-accent': scheme('#ffffff', '#101014'),
     danger: scheme('#d9383f', '#ff7178'),
+    /** The laser: the one colour on the board that means "look here". */
+    laser: scheme('#ff2d55', '#ff4d6d'),
     /** Strokes: saturated enough to read as lines, in both schemes. */
     red: scheme('#e03131', '#ff6b6b'),
     orange: scheme('#e8590c', '#ff922b'),
