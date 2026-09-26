@@ -37,7 +37,8 @@ const offlineData = (
   homeRuntime: 'server' | 'client' = 'client',
   fonts: SpaceFont[] = [],
   spaceDebugMode = false,
-  defaultTheme?: 'dark' | 'light' | 'system'
+  defaultTheme?: 'dark' | 'light' | 'system',
+  settings: Record<string, unknown> = {}
 ): OfflineDataRaw =>
   ({
     schema: {
@@ -59,7 +60,7 @@ const offlineData = (
       pageFolders: [],
       definition: { name: 'test', permanentUrl: 'test' },
       variables: [],
-      settings: { customCss: '', ...(spaceDebugMode ? { debugMode: true } : {}) },
+      settings: { customCss: '', ...(spaceDebugMode ? { debugMode: true } : {}), ...settings },
       rsc
     },
     plugins: [],
@@ -107,6 +108,8 @@ type Options = {
   fontsConfig?: SSRFontsConfig;
   /** The theme the space's style says a visitor starts in. */
   defaultTheme?: 'dark' | 'light' | 'system';
+  /** The space's own settings, over the fixture's. */
+  settings?: Record<string, unknown>;
 };
 
 const render = async (
@@ -123,11 +126,14 @@ const render = async (
     degrade,
     fonts,
     fontsConfig,
-    defaultTheme
+    defaultTheme,
+    settings
   }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
-  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime, fonts, spaceDebugMode, defaultTheme));
+  const getOfflineData = vi
+    .fn()
+    .mockResolvedValue(offlineData(rsc, homeRuntime, fonts, spaceDebugMode, defaultTheme, settings));
   const metrics = new RequestMetrics();
   const config = {
     environment: 'production',
@@ -462,5 +468,55 @@ describe('prepareRender / the theme the visitor already chose', () => {
 
     expect(templateParams.themeClass).toBeUndefined();
     expect(componentProps.theme).toBeUndefined();
+  });
+});
+
+/**
+ * The theme's reasoning, for the space's own kept state: web storage is the browser's alone, so what a visitor kept that
+ * the first paint shows would be swapped in after hydration. The keys a space declares are read from a cookie instead,
+ * drawn with, and handed to the page as its starting state.
+ */
+describe('prepareRender / the kept state the first paint shows', () => {
+  const cookie = (values: Record<string, unknown>, owner = '') =>
+    `plitzi_0_painted=${encodeURIComponent(JSON.stringify({ owner, values }))}`;
+  const keeping = { keepState: true, paintedState: ['toolPick', 'name'] };
+
+  it('renders with the declared keys, and hands the browser the same values', async () => {
+    const { componentProps, templateParams } = await render('/', {
+      cookie: cookie({ toolPick: 'star', name: 'Ada' }),
+      settings: keeping
+    });
+
+    expect(componentProps.state).toEqual({ toolPick: 'star', name: 'Ada' });
+    expect(templateParams.offlineData).toContain('"state":{"toolPick":"star","name":"Ada"}');
+  });
+
+  // The cookie is the visitor's to edit: a key the space does not declare is not the server's to render with.
+  it('renders with nothing the space does not declare', async () => {
+    const { componentProps } = await render('/', {
+      cookie: cookie({ toolPick: 'star', admin: true }),
+      settings: keeping
+    });
+
+    expect(componentProps.state).toEqual({ toolPick: 'star' });
+  });
+
+  it('reads nothing for a space that does not keep state', async () => {
+    const { componentProps, templateParams } = await render('/', {
+      cookie: cookie({ toolPick: 'star' }),
+      settings: { paintedState: ['toolPick'] }
+    });
+
+    expect(componentProps.state).toBeUndefined();
+    expect(templateParams.offlineData).not.toContain('"state":');
+  });
+
+  it('reads nothing for a space that declares no keys', async () => {
+    const { componentProps } = await render('/', {
+      cookie: cookie({ toolPick: 'star' }),
+      settings: { keepState: true }
+    });
+
+    expect(componentProps.state).toBeUndefined();
   });
 });

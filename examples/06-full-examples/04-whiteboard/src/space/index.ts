@@ -4,7 +4,7 @@ import { customCss } from './css.ts';
 import { galleryPage } from './home/index.ts';
 import { COPY_DECLARATION } from './invite.ts';
 import { SHARE_DECLARATION } from './people.ts';
-import { computed, transientState } from './state.ts';
+import { computed, paintedState, transientState } from './state.ts';
 import { COUNTDOWN_DECLARATION } from './timer.ts';
 import { STACK_DECLARATION } from './tray.ts';
 import { fonts, notifications, variables } from './tokens.ts';
@@ -37,7 +37,7 @@ export const space: SpaceSpec = {
   notifications,
   computed,
   customCss,
-  settings: { keepState: true, stateStorage: 'localStorage', transientState },
+  settings: { keepState: true, stateStorage: 'localStorage', transientState, paintedState },
   /**
    * The realtime channels the pages may open. A topic nothing here matches is refused by the server — and by
    * `authorSpace`, before it ever is.

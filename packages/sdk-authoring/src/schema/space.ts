@@ -173,6 +173,7 @@ class SpaceAuthor {
     this.assertComputedOnce();
     this.assertChannels();
     this.assertTransientState();
+    this.assertPaintedState();
     const pageFolders = this.buildPageFolders();
     layouts.forEach(layout => this.addLayout(layout));
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
@@ -693,44 +694,78 @@ class SpaceAuthor {
   }
 
   /**
-   * The keys a space never keeps: a list of `runtime.state` keys, as `setState` writes them.
-   *
-   * Refused when it could not work — not a list, an empty name, or a dotted one: the runtime compares top-level keys, so
-   * `demo.step` would never match anything and the state would be kept exactly as if nothing had been said. Warned
-   * when it cannot DO anything: without `keepState` nothing is kept in the first place.
+   * A setting that names `runtime.state` keys — `transientState`, `paintedState` — checked the same way: refused when it
+   * could not work — not a list, an empty name, or a dotted one: the runtime compares top-level keys, so `demo.step`
+   * would never match anything and the setting would do nothing at all. Answers the keys.
    */
-  private assertTransientState(): void {
-    const transient: unknown = this.spec.settings?.transientState;
-    if (transient === undefined) {
-      return;
+  private stateKeyList(setting: 'transientState' | 'paintedState', example: string[], does: string): string[] {
+    const listed: unknown = this.spec.settings?.[setting];
+    if (listed === undefined) {
+      return [];
     }
 
-    if (!Array.isArray(transient)) {
+    if (!Array.isArray(listed)) {
       throw new Error(
-        `\`settings.transientState\` is ${JSON.stringify(transient)}. Write the state keys never to keep as a list: \`transientState: ['demoStep', 'panelOpen']\`.`
+        `\`settings.${setting}\` is ${JSON.stringify(listed)}. Write the state keys ${does} as a list: \`${setting}: [${example.map(key => `'${key}'`).join(', ')}]\`.`
       );
     }
 
-    for (const key of transient) {
+    return listed.map((key: unknown) => {
       if (typeof key !== 'string' || key.trim() === '') {
         throw new Error(
-          `\`settings.transientState\` has ${JSON.stringify(key)}, which is not a state key. Each entry is the \`key\` a \`setState\` step writes, like 'demoStep'.`
+          `\`settings.${setting}\` has ${JSON.stringify(key)}, which is not a state key. Each entry is the \`key\` a \`setState\` step writes, like 'demoStep'.`
         );
       }
 
       if (key.includes('.')) {
         throw new Error(
-          `\`settings.transientState\` has "${key}", a dotted path. It names top-level keys of \`runtime.state\` — write "${key.split('.')[0]}" to leave out everything under it.`
+          `\`settings.${setting}\` has "${key}", a dotted path. It names top-level keys of \`runtime.state\` — write "${key.split('.')[0]}" for everything under it.`
         );
       }
-    }
 
-    if (this.spec.settings?.keepState !== true) {
+      return key;
+    });
+  }
+
+  /**
+   * The keys a space never keeps. Warned when it cannot DO anything: without `keepState` nothing is kept in the first
+   * place.
+   */
+  private assertTransientState(): void {
+    const transient = this.stateKeyList('transientState', ['demoStep', 'panelOpen'], 'never to keep');
+    if (transient.length > 0 && this.spec.settings?.keepState !== true) {
       this.styleWarnings.push({
         code: 'transient-state-without-keep-state',
         message:
           '`settings.transientState` names keys never to keep, but `settings.keepState` is not on — nothing is kept in the first place, so it does nothing. Turn `keepState` on, or remove `transientState`.',
         details: { keys: transient }
+      });
+    }
+  }
+
+  /**
+   * The kept keys the first paint depends on, which the server renders with (see `paintedState.ts` in sdk-shared).
+   *
+   * Refused when a key is also transient — never kept, and kept for the server, at once — since whichever the runtime
+   * honoured the other would be silently wrong. Warned without `keepState`: nothing is kept, so there is nothing to
+   * paint with.
+   */
+  private assertPaintedState(): void {
+    const painted = this.stateKeyList('paintedState', ['toolPick', 'name'], 'the first paint shows');
+    const transient = new Set(this.spec.settings?.transientState ?? []);
+    const both = painted.filter(key => transient.has(key));
+    if (both.length > 0) {
+      throw new Error(
+        `\`settings.paintedState\` and \`settings.transientState\` both name ${both.map(key => `"${key}"`).join(', ')}. A painted key is kept, so the server can draw with it; a transient one never is. Remove ${both.length === 1 ? 'it' : 'them'} from one of the two.`
+      );
+    }
+
+    if (painted.length > 0 && this.spec.settings?.keepState !== true) {
+      this.styleWarnings.push({
+        code: 'painted-state-without-keep-state',
+        message:
+          '`settings.paintedState` names kept keys for the server to draw with, but `settings.keepState` is not on — nothing is kept, so there is nothing to draw with. Turn `keepState` on, or remove `paintedState`.',
+        details: { keys: painted }
       });
     }
   }

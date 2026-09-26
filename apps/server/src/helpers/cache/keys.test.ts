@@ -49,6 +49,22 @@ describe('buildHtmlCacheKey', () => {
   it('is not split by a dev tools cookie that does not hide anything', () => {
     expect(html('plitzi_debug=true')).toBe(html());
   });
+
+  /** A page drawn with one visitor's kept state (`settings.paintedState`) must not be served to the next. */
+  it('separates visitors whose painted state differs', () => {
+    const painted = (values: Record<string, unknown>) =>
+      `plitzi_0_painted=${encodeURIComponent(JSON.stringify({ owner: '', values }))}`;
+
+    expect(html(painted({ toolPick: 'star' }))).not.toBe(html(painted({ toolPick: 'hexagon' })));
+    expect(html(painted({ toolPick: 'star' }))).not.toBe(html());
+  });
+
+  it('reads the painted state cookie named for the port the page is served on', () => {
+    const onPort = (cookie: string) =>
+      buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.test', cookie, 'site.test:4016'));
+
+    expect(onPort('plitzi_0_painted_4016=x')).not.toBe(onPort('plitzi_0_painted=x'));
+  });
 });
 
 describe('buildRscCacheKey', () => {

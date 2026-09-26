@@ -1,6 +1,7 @@
 import { setState, when } from '@plitzi/sdk-authoring';
 
 import { COLLAB_COLOURS, GUEST_NAMES } from '../board/people.ts';
+import { CATEGORIES, entriesOf, isGroup } from './elements.ts';
 
 import type { StepSpec } from '@plitzi/sdk-authoring';
 
@@ -11,6 +12,10 @@ import type { StepSpec } from '@plitzi/sdk-authoring';
  * palette nobody has touched still shows ink as chosen, and "the tool" means the same thing to the toolbar, the canvas
  * and the keyboard.
  */
+
+const GROUPS = CATEGORIES.filter(isGroup);
+
+const PICK_OF = (group: string): string => `${group}Pick`;
 
 const list = (values: readonly string[]): string => `[${values.map(value => `'${value}'`).join(', ')}]`;
 
@@ -132,11 +137,13 @@ export const computed = {
   notesOpen: '{{ state.notesOpen ? true : false }}',
   kanbanOpen: '{{ state.kanbanOpen ? true : false }}',
   /** What each group of the toolbar shows: the last thing picked from it. */
-  shapesPick: "{{ state.shapesPick ?? 'rectangle' }}",
-  linesPick: "{{ state.linesPick ?? 'arrow' }}",
-  drawPick: "{{ state.drawPick ?? 'pen' }}",
-  notesPick: "{{ state.notesPick ?? 'sticky' }}",
-  kanbanPick: "{{ state.kanbanPick ?? 'column' }}",
+  // What each group's button shows: the last thing picked from it, its first entry until then.
+  ...Object.fromEntries(
+    GROUPS.map(group => [
+      PICK_OF(group.id),
+      `{{ state.${PICK_OF(group.id)} ?? '${entriesOf(group.id)[0]?.id ?? ''}' }}`
+    ])
+  ),
   framesOpen: '{{ state.framesOpen ? true : false }}',
   agentOpen: '{{ state.agentOpen ? true : false }}',
   libraryOpen: '{{ state.libraryOpen ? true : false }}',
@@ -150,6 +157,13 @@ export const computed = {
   /** Whose view this page follows — a name, or empty. */
   following: "{{ state.following ?? '' }}"
 };
+
+/**
+ * Kept, and drawn by the server: what the first paint shows of what this person chose — each group's last pick in the
+ * toolbar, their name and colour in the avatar, the minimap on or off. The server renders with them from a cookie, so a
+ * reload does not paint the defaults and swap these in. Nothing else: the cookie goes with every request.
+ */
+export const paintedState = [...GROUPS.map(group => PICK_OF(group.id)), 'name', 'color', 'minimap'];
 
 /**
  * Kept across visits: who this person is, and the style they draw with. Not kept: where they were — a tool left in
@@ -197,6 +211,7 @@ export const transientState = [
   'timerOpen',
   'deleteOpen',
   'settingsOpen',
+  'lockProblem',
   'stampOpen',
   'reactOpen',
   // What opening a locked board answered, and the last timer heard: this visit's, never kept. The KEY that opened it

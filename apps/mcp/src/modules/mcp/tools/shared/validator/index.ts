@@ -418,12 +418,24 @@ export const validateOperations = (
       case 'patchSettings':
         // The runtime compares top-level keys, so a dotted or empty one would match nothing and the state it meant
         // would be kept regardless — with nothing anywhere saying so.
-        (op.transientState ?? []).forEach((key, index) => {
-          if (key.trim() === '' || key.includes('.')) {
+        (['transientState', 'paintedState'] as const).forEach(setting => {
+          (op[setting] ?? []).forEach((key, index) => {
+            if (key.trim() === '' || key.includes('.')) {
+              ctx.errors.push({
+                path: `${base}.${setting}[${index}]`,
+                message: `"${key}" is not a top-level state key: no dots, not empty`,
+                hint: `Name the key setState writes — "${key.split('.')[0] || 'tourStep'}" covers everything under it`
+              });
+            }
+          });
+        });
+        // Kept for the server to draw with, and never kept, at once: whichever the runtime honoured, the other is wrong.
+        (op.paintedState ?? []).forEach((key, index) => {
+          if (op.transientState?.includes(key)) {
             ctx.errors.push({
-              path: `${base}.transientState[${index}]`,
-              message: `"${key}" is not a top-level state key: no dots, not empty`,
-              hint: `Name the key setState writes — "${key.split('.')[0] || 'tourStep'}" leaves out everything under it`
+              path: `${base}.paintedState[${index}]`,
+              message: `"${key}" is in both paintedState and transientState`,
+              hint: 'A painted key is kept so the server can draw with it; a transient one never is — remove it from one'
             });
           }
         });

@@ -1,5 +1,6 @@
 import {
   addNotification,
+  bindTemplate,
   button,
   container,
   form,
@@ -7,8 +8,10 @@ import {
   link,
   named,
   on,
+  onClick,
   onSubmit,
   reloadApi,
+  resetForm,
   runServerAction,
   setState,
   styles,
@@ -18,10 +21,11 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { LOCK_ACTION, OPEN_ACTION } from '../actions.ts';
+import { MAX_PASSWORD, MIN_PASSWORD } from '../board/locks.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
 
-import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
+import type { ElementSpec, Rule, StepSpec } from '@plitzi/sdk-authoring';
 
 /**
  * A board behind a password.
@@ -289,11 +293,125 @@ export const unlockScreen = (): ElementSpec =>
   });
 
 /**
- * The password, from the share panel: set, changed or removed. Whoever sets it stays in — the answer carries the new
- * key, and the board is opened again with it; everyone else on the board is told on its old topic, and asked.
+ * Changing the password — to `password`, or to none with an empty one. Whoever does it stays in: the answer carries
+ * the new key, and the board is opened again with it; everyone else on the board is told on its old topic, and asked.
+ * `step` names the run, so the form and the remove button each have their own; `guard`, when given, is a rule every
+ * step also needs — ANDed in, since a `when` around a `when` replaces its rule rather than adding to it.
+ */
+const lockSteps = (step: string, password: string, guard: Rule[] = []): StepSpec[] => {
+  const reopened = `${step}Reopened`;
+  const only = (rule: Rule, then: StepSpec): StepSpec => when([...guard, rule], then);
+  const ran = named(
+    step,
+    runServerAction({
+      actionId: LOCK_ACTION,
+      input: { board: `{{ ${PROVIDER}.id }}`, password, ...BOARD_PASS },
+      invalidateQueries: 'none'
+    })
+  );
+
+  return [
+    guard.length ? when(guard, ran) : ran,
+    only(
+      { field: `${step}.status`, operator: '!=', value: 'completed' },
+      told(`{{ ${step}.error ? ${step}.error : "The password could not be changed — try again" }}`, 'danger')
+    ),
+    only(
+      { field: `${step}.status`, operator: '=', value: 'completed' },
+      named(
+        reopened,
+        runServerAction({
+          actionId: OPEN_ACTION,
+          input: { id: `{{ ${step}.output.id }}`, key: `{{ ${step}.output.key }}` },
+          invalidateQueries: 'none'
+        })
+      )
+    ),
+    ...keepOpened(reopened).map(kept => only({ field: `${reopened}.status`, operator: '=', value: 'completed' }, kept)),
+    only({ field: `${step}.status`, operator: '=', value: 'completed' }, resetForm('lock-form')),
+    only({ field: `${step}.status`, operator: '=', value: 'completed' }, reloadApi(BOARD_PROVIDER)),
+    only(
+      { field: `${step}.output.locked`, operator: '=', value: true },
+      told('🔒 Password set — share it with whoever should get in', 'success')
+    ),
+    only(
+      { field: `${step}.output.locked`, operator: '=', value: false },
+      told('🔓 Password removed — anyone with the link gets in', 'info')
+    )
+  ];
+};
+
+/**
+ * What is wrong with a typed password, said before it is sent — the server refuses the same, but a refused run does
+ * not bring its reason back to the flow, and "could not be set" tells nobody what to fix.
+ */
+const PASSWORD_PROBLEM = [
+  '{{ (setting.values.password ?? "")|length == 0',
+  "? 'Type a password first'",
+  `: ((setting.values.password|length) < ${MIN_PASSWORD} ? 'A password is at least ${MIN_PASSWORD} characters'`,
+  `: ((setting.values.password|length) > ${MAX_PASSWORD} ? 'A password is at most ${MAX_PASSWORD} characters' : '')) }}`
+].join(' ');
+
+const statusRow = styles('lockStatus', {
+  display: 'flex',
+  'align-items': 'center',
+  gap: '8px',
+  padding: '8px 10px',
+  'border-radius': '9px',
+  'font-size': '12px',
+  'line-height': '1.4',
+  'background-color': 'var(--surface-2)'
+});
+
+const lockedStatus = styles('lockStatusOn', { color: 'var(--accent)', 'background-color': 'var(--accent-soft)' });
+
+const removeButton = styles('lockRemove', {
+  css: {
+    ...BUTTON_RESET,
+    height: '30px',
+    'border-radius': '8px',
+    'font-weight': '600',
+    'font-size': '12px',
+    'text-align': 'center',
+    color: 'var(--danger)'
+  },
+  states: {
+    hover: { 'background-color': 'var(--surface-2)' },
+    'focus-visible': { outline: '2px solid var(--danger)', 'outline-offset': '1px' }
+  }
+});
+
+/**
+ * The password, in the board's settings: whether it has one — a password is never shown back, so the panel says so in
+ * words — a field to set or change it, and an explicit way to remove it.
  */
 export const passwordSection = (): ElementSpec[] => [
   text({ content: 'Password', class: caption }),
+  container({
+    class: styles('lockStatusRow', { display: 'contents' }),
+    visible: { source: BOARD_PROVIDER, template: "{{ source.locked ? 'true' : 'false' }}" },
+    children: [
+      container({
+        id: 'lock-status-on',
+        class: [statusRow, lockedStatus],
+        children: [
+          icon('fa-solid fa-lock'),
+          text({ content: 'Protected — whoever opens the link is asked for the password.' })
+        ]
+      })
+    ]
+  }),
+  container({
+    class: styles('lockStatusRowOff', { display: 'contents' }),
+    visible: { source: BOARD_PROVIDER, template: "{{ source.locked ? 'false' : 'true' }}" },
+    children: [
+      container({
+        id: 'lock-status-off',
+        class: statusRow,
+        children: [icon('fa-solid fa-lock-open'), text({ content: 'No password — anyone with the link gets in.' })]
+      })
+    ]
+  }),
   form({
     id: 'lock-form',
     managedByInteractions: true,
@@ -302,46 +420,33 @@ export const passwordSection = (): ElementSpec[] => [
     flows: [
       [
         named('setting', onSubmit()),
-        named(
-          'locked',
-          runServerAction({
-            actionId: LOCK_ACTION,
-            input: { board: `{{ ${PROVIDER}.id }}`, password: '{{ setting.values.password }}', ...BOARD_PASS },
-            invalidateQueries: 'none'
-          })
-        ),
-        whenFailed('locked', told('{{ locked.error ? locked.error : "The password could not be set" }}', 'danger')),
-        when(
-          { field: 'locked.status', operator: '=', value: 'completed' },
-          named(
-            'relocked',
-            runServerAction({
-              actionId: OPEN_ACTION,
-              input: { id: '{{ locked.output.id }}', key: '{{ locked.output.key }}' },
-              invalidateQueries: 'none'
-            })
-          )
-        ),
-        ...keepOpened('relocked').map(step =>
-          when({ field: 'relocked.status', operator: '=', value: 'completed' }, step)
-        ),
-        when({ field: 'locked.status', operator: '=', value: 'completed' }, reloadApi(BOARD_PROVIDER)),
-        when(
-          { field: 'locked.output.locked', operator: '=', value: true },
-          told('🔒 Locked — share the password with who should get in', 'success')
-        ),
-        when(
-          { field: 'locked.output.locked', operator: '=', value: false },
-          told('The board is open to anyone with the link', 'info')
-        )
+        setState({ key: 'lockProblem', type: 'text', value: PASSWORD_PROBLEM }),
+        when({ field: 'state.lockProblem', operator: '!=', value: '' }, told('{{ state.lockProblem }}', 'danger')),
+        ...lockSteps('locked', '{{ setting.values.password }}', [
+          { field: 'state.lockProblem', operator: '=', value: '' }
+        ])
       ]
     ],
     children: [
-      passwordField('lock-password', 'A password (empty: no password)'),
-      button({ id: 'lock-set', subType: 'submit', content: 'Set password', class: quietButton }),
-      text({
-        content: 'Leave it empty and press the button to remove the password.',
-        class: styles('lockHint', { 'font-size': '11px', color: 'var(--muted)' })
+      passwordField('lock-password', 'New password'),
+      button({
+        id: 'lock-set',
+        subType: 'submit',
+        content: 'Set password',
+        class: quietButton,
+        bind: [bindTemplate('content', BOARD_PROVIDER, "{{ source.locked ? 'Change password' : 'Set password' }}")]
+      })
+    ]
+  }),
+  container({
+    class: styles('lockRemoveRow', { display: 'contents' }),
+    visible: { source: BOARD_PROVIDER, template: "{{ source.locked ? 'true' : 'false' }}" },
+    children: [
+      button({
+        id: 'lock-remove',
+        content: 'Remove password',
+        class: removeButton,
+        flows: [[onClick(), ...lockSteps('cleared', '')]]
       })
     ]
   })

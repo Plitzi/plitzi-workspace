@@ -151,6 +151,13 @@ export type Schema = {
      * writes them.
      */
     transientState?: string[];
+    /**
+     * Keys of `runtime.state` the first paint depends on — the tool a toolbar shows, a name in an avatar — kept in a
+     * cookie as well as in `stateStorage`, so the server renders with them and the page does not swap them in after
+     * hydration. Small values only: the cookie travels with every request and holds at most a few kilobytes. Needs
+     * `keepState`; a key cannot be both painted and transient. Top-level keys, as `setState` writes them.
+     */
+    paintedState?: string[];
     customCss: string;
     /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
     userProvider?: 'basic' | 'custom' | '' | (string & {});

@@ -1,5 +1,6 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state/paintedState';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';
 
@@ -15,6 +16,7 @@ import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { authorizesDebugging } from '../../helpers/debugAuthorization';
 import { hydrationPayload } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
+import { ssrPaintedCookieName } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
 import { realtimeModuleFor } from '../realtime';
@@ -206,6 +208,19 @@ export const prepareRender = async (
    */
   const theme = themeFromCookies(req.headers.cookie) ?? declaredTheme(offlineData?.style);
 
+  /**
+   * The kept state the first paint depends on, from the cookie the SDK writes the space's `settings.paintedState` to.
+   *
+   * The theme's reasoning, for the space's own state: web storage is the browser's alone, so what a visitor chose — the
+   * tool a toolbar shows, their name in an avatar — would reach the page only after hydration, and be swapped in over
+   * the defaults the server drew. Read here, the server draws with it, and the page starts from the same values: it
+   * travels as the SDK's `state`, the starting `runtime.state`, in the render and in the payload alike, or the client
+   * would hydrate other markup. Only the keys the space declares, and only with `keepState` on.
+   */
+  const paintedState = schema?.settings.keepState
+    ? paintedStateFor(req.headers.cookie, ssrPaintedCookieName(req.headers.host), paintedKeys(schema.settings))
+    : undefined;
+
   const offlineDataStr = hydrationPayload(offlineData, {
     offlineMode: true,
     environment,
@@ -213,6 +228,7 @@ export const prepareRender = async (
     server,
     sdkDevToolsStylePath,
     ...(theme ? { theme } : {}),
+    ...(paintedState ? { state: paintedState } : {}),
     ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
     ...(overQuota ? { overQuota } : {}),
     ...(actionRuns ? { actionRuns } : {})
@@ -264,7 +280,8 @@ export const prepareRender = async (
       debugMode: debugRendered,
       sdkDevToolsStylePath,
       overQuota,
-      theme
+      theme,
+      ...(paintedState ? { state: paintedState } : {})
     },
     entries,
     templateParams: {

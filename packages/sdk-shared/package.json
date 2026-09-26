@@ -270,6 +270,10 @@
       "types": "./dist/helpers/index.d.ts",
       "import": "./dist/helpers/index.mjs"
     },
+    "./helpers/cookies": {
+      "types": "./dist/helpers/cookies.d.ts",
+      "import": "./dist/helpers/cookies.mjs"
+    },
     "./helpers/fetchManifest": {
       "types": "./dist/helpers/fetchManifest.d.ts",
       "import": "./dist/helpers/fetchManifest.mjs"
@@ -1122,6 +1126,10 @@
     "./state/index": {
       "types": "./dist/state/index.d.ts",
       "import": "./dist/state/index.mjs"
+    },
+    "./state/paintedState": {
+      "types": "./dist/state/paintedState.d.ts",
+      "import": "./dist/state/paintedState.mjs"
     },
     "./state/runtimeStatePersist": {
       "types": "./dist/state/runtimeStatePersist.d.ts",

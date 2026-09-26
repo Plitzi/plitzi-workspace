@@ -175,6 +175,7 @@ export const SCHEMA_SETTINGS = [
   'keepState',
   'stateStorage',
   'transientState',
+  'paintedState',
   'customCss',
   'userProvider',
   'tokenStorage',

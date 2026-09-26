@@ -593,6 +593,25 @@ A refused request (`4xx`/`5xx`) is shown but never kept. Server-driven providers
 part of this: their data arrives with the page. The dev-tools' Store tab lists what the cache holds under
 "Queries", with how long each answer has left and a button to expire it.
 
+### State that outlives a visit
+
+`settings: { keepState: true }` keeps `runtime.state` — what `setState` writes — across reloads, in the browser's
+storage and under whoever is signed in. `transientState` lists the keys never kept: a filter, a panel left open.
+
+Web storage is the browser's alone, so what was kept comes back after hydration: the server paints the space's
+defaults, and the page swaps in what the visitor chose a moment later. For what the first paint SHOWS — the tool a
+toolbar shows as last picked, a name in an avatar — list the keys in `paintedState`:
+
+```ts
+settings: { keepState: true, paintedState: ['toolPick', 'name'], transientState: ['panelOpen'] }
+```
+
+They are kept in a cookie as well. The server renders with them and hands the page the same values as its starting
+state, so nothing is swapped; the HTML cache is keyed by that cookie. Small values only — it travels with every
+request, and past a few kilobytes it is not written (the dev-tools say so). Never a secret, and never a key that is
+also transient. The cookie carries its owner like the kept state does: written by another account, the page drops
+what it rendered with it as soon as auth has settled.
+
 ### Pages that see each other
 
 When "every few seconds" is too slow — cursors, presence, a shared board — the space declares `channels` and a page

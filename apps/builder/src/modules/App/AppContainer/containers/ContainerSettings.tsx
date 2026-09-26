@@ -28,6 +28,9 @@ const PROVIDER_SETTINGS = [
   'mfaUrl'
 ] as const;
 
+/** The settings that name `runtime.state` keys, each edited as a comma-separated field. */
+type StateKeySetting = 'transientState' | 'paintedState';
+
 /** The state keys a comma-separated field names, as the runtime compares them: trimmed, none empty. */
 const parseStateKeys = (text: string): string[] =>
   text
@@ -40,9 +43,15 @@ const ContainerSettings = () => {
   const { eventBridge } = use(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp);
-  // The field's own text, so a comma being typed is not normalised away under the cursor.
-  const [transientText, setTransientText] = useState((settingsProp.transientState ?? []).join(', '));
-  const dottedKeys = parseStateKeys(transientText).filter(key => key.includes('.'));
+  // Each field's own text, so a comma being typed is not normalised away under the cursor.
+  const [keyTexts, setKeyTexts] = useState<Record<StateKeySetting, string>>({
+    transientState: (settingsProp.transientState ?? []).join(', '),
+    paintedState: (settingsProp.paintedState ?? []).join(', ')
+  });
+  const transientKeys = parseStateKeys(keyTexts.transientState);
+  const paintedKeys = parseStateKeys(keyTexts.paintedState);
+  const dottedKeys = [...transientKeys, ...paintedKeys].filter(key => key.includes('.'));
+  const bothKeys = paintedKeys.filter(key => transientKeys.includes(key));
   const {
     userProvider,
     keepState,
@@ -76,12 +85,12 @@ const ContainerSettings = () => {
     [eventBridge]
   );
 
-  const handleChangeTransientState = useCallback(
-    (value: string) => {
+  const handleChangeStateKeys = useCallback(
+    (setting: StateKeySetting) => (value: string) => {
       const keys = parseStateKeys(value);
-      setTransientText(value);
-      setSettings(state => ({ ...state, transientState: keys }));
-      void eventBridge.emit('main', 'schemaUpdateSettings', keys, 'transientState');
+      setKeyTexts(texts => ({ ...texts, [setting]: value }));
+      setSettings(state => ({ ...state, [setting]: keys }));
+      void eventBridge.emit('main', 'schemaUpdateSettings', keys, setting);
     },
     [eventBridge]
   );
@@ -316,16 +325,38 @@ const ContainerSettings = () => {
             <Input
               size="sm"
               name="transientState"
-              value={transientText}
-              onChange={handleChangeTransientState}
+              value={keyTexts.transientState}
+              onChange={handleChangeStateKeys('transientState')}
               label="Never keep these state keys"
               placeholder="filter, tourStep, panelOpen"
             />
           )}
+          {keepState && (
+            <Input
+              size="sm"
+              name="paintedState"
+              value={keyTexts.paintedState}
+              onChange={handleChangeStateKeys('paintedState')}
+              label="Draw these kept keys on the server"
+              placeholder="toolPick, name"
+            />
+          )}
+          {keepState && (
+            <p className="text-xs text-gray-500 dark:text-zinc-400">
+              For what the first paint shows — the tool a toolbar shows, a name in an avatar. They are kept in a cookie
+              too, so a server-rendered page arrives with them instead of swapping them in. Small values only.
+            </p>
+          )}
           {keepState && dottedKeys.length > 0 && (
             <Alert intent="warning" size="xs" solid={false}>
               {dottedKeys.join(', ')}: name the top-level key a Set State step writes, without dots — anything under it
-              is left out with it.
+              goes with it.
+            </Alert>
+          )}
+          {keepState && bothKeys.length > 0 && (
+            <Alert intent="warning" size="xs" solid={false}>
+              {bothKeys.join(', ')}: in both lists. A key drawn on the server is kept; one never kept is not — remove it
+              from one of them.
             </Alert>
           )}
         </div>

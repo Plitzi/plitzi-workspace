@@ -259,6 +259,25 @@
 - The authoring skill no longer suggests resetting kept state from `onPageLoad` — the restore lands in the middle of
   that flow — and the MCP guide describes `keepState` as what it is: `runtime.state`, not element state.
 
+## Kept state the first paint shows is drawn by the server
+
+- Kept state lives in web storage, which only the browser reads, and is restored after hydration — so anything kept
+  that changes what is DRAWN (the tool a toolbar shows as last picked, a name in an avatar, a panel left off) was
+  painted with the space's defaults and swapped a moment later. New space setting **`paintedState`**: the kept keys the
+  first paint shows. They are written to a cookie as well (`plitzi_<webId>_painted`, with the port in the name as the
+  debug cookie has it); `prepareRender` reads it, renders with the declared keys only and hands the page the same
+  values as its starting `runtime.state` (the SDK's `state`), so it hydrates onto them and nothing is swapped. The HTML
+  cache is keyed by that cookie. `e2e/tests/server/ssr/paintedState.spec.ts` checks the raw HTML and the hydration.
+- The cookie carries its owner, like the kept entry in web storage: the server cannot tell whose it is for a space with
+  its own sign-in, so once auth has settled the page drops what it rendered with from somebody else's cookie, and an
+  account change no longer returns to them. Over 3 KB it is not written (the dev tools say so), and the stale one is
+  removed.
+- `authorSpace` checks it like `transientState` — a list of top-level keys — refuses a key that is both painted and
+  transient, and warns `painted-state-without-keep-state`. The builder's State Settings, the MCP's `patchSettings`
+  (validated the same way), its guide, the authoring skill and `docs/en/authoring-spaces.md` describe it.
+- One cookie reader for both halves of the SDK (`cookieFromHeader` in `@plitzi/sdk-shared/helpers/cookies`), which the
+  theme cookie now uses as well.
+
 ## Testing an authored space: one call, every problem
 
 - **`inspectPage(page, handles, options?)`** (`@plitzi/sdk-authoring`): the open page, checked whole — every element it

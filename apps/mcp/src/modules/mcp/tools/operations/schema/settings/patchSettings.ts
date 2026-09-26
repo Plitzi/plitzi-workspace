@@ -35,6 +35,7 @@ export const patchSettingsOp = z
     keepState: z.boolean().optional().describe('Keep runtime state (setState keys) across reloads'),
     stateStorage: z.enum(['localStorage', 'sessionStorage']).optional(),
     transientState: z.array(z.string()).optional().describe('Top-level state keys never kept'),
+    paintedState: z.array(z.string()).optional().describe('Kept keys the first paint shows'),
     userProvider: userProvider
       .optional()
       .describe('Auth provider: "basic" for an HTTP+JSON backend, a registered name, or "" to disable auth'),
@@ -69,10 +70,8 @@ export const patchSettingsOp = z
       .describe('Realtime channels by topic pattern (`board:{id}`); null removes one. See the guide')
   })
   .describe(
-    'Merge space-level settings: the global CSS (customCss), the state/auth (user-provider) configuration and the ' +
-      'realtime channels. ' +
-      'Only the fields you pass change; the rest are preserved. Use customCss for site-wide CSS, never to style ' +
-      'one element (attach a definition for that).'
+    'Merge space-level settings — global CSS, kept state, auth, realtime channels. Only the fields sent change. ' +
+      'customCss is for site-wide CSS, never to style one element (attach a definition for that).'
   );
 
 export type PatchSettings = z.infer<typeof patchSettingsOp>;

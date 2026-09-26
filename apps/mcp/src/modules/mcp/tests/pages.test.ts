@@ -47,6 +47,30 @@ describe('mcp-ai settings (space-level customCss + auth config)', () => {
     expect(res.errors.some(e => e.message.includes('no dots'))).toBe(true);
   });
 
+  // The kept keys the first paint shows: written like the transient ones, and never one of them.
+  it('keeps the painted keys the server draws with', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'patchSettings', keepState: true, paintedState: ['toolPick'] }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as { paintedState?: string[] };
+    expect(settings.paintedState).toEqual(['toolPick']);
+  });
+
+  it('refuses a painted key that is dotted, or also transient', () => {
+    const dotted = validate({ operations: [{ type: 'patchSettings', paintedState: ['tool.pick'] }] }, buildSpace());
+    expect(dotted.errors.some(e => e.path.endsWith('paintedState[0]') && e.message.includes('no dots'))).toBe(true);
+
+    const both = validate(
+      { operations: [{ type: 'patchSettings', paintedState: ['toolPick'], transientState: ['toolPick'] }] },
+      buildSpace()
+    );
+    expect(both.valid).toBe(false);
+    expect(both.errors.some(e => e.message.includes('both paintedState and transientState'))).toBe(true);
+  });
+
   it('declares realtime channels pattern by pattern, and takes one out with null', async () => {
     const cap = capturing(buildSpace());
     await apply(

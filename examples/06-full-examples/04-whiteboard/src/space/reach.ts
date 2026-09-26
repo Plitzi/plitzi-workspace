@@ -251,6 +251,12 @@ const temporaryBadge = styles('temporaryBadge', {
  * the board is gone, and so is everyone on it.
  */
 export const reachBadges = (): ElementSpec[] => [
+  // Behind a password: said beside the title, so whoever is on it knows the link alone does not let anybody in.
+  container({
+    class: badge,
+    visible: { source: BOARD_PROVIDER, template: "{{ source.locked ? 'true' : 'false' }}" },
+    children: [icon('fa-solid fa-lock'), text({ content: 'Password' })]
+  }),
   // Its creator, on a board read-only for the others: a reminder that they are the only one drawing.
   container({
     class: badge,

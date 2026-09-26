@@ -148,6 +148,31 @@ describe('authorSpace / kept state', () => {
 
     expect(warnings.map(warning => warning.code)).toEqual(['transient-state-without-keep-state']);
   });
+
+  // The kept keys the first paint shows, which the server renders with from a cookie.
+  it('writes the painted keys into the settings', () => {
+    const { schema, warnings } = authorSpace(space({ keepState: true, paintedState: ['toolPick', 'name'] }));
+
+    expect(schema.settings.paintedState).toEqual(['toolPick', 'name']);
+    expect(warnings).toEqual([]);
+  });
+
+  it('refuses a painted key that is not a top-level state key', () => {
+    expect(() => authorSpace(space({ keepState: true, paintedState: ['tool.pick'] }))).toThrow(/write "tool"/u);
+    expect(() => authorSpace(space({ keepState: true, paintedState: [''] }))).toThrow(/not a state key/u);
+  });
+
+  it('refuses a key that is both painted and transient', () => {
+    expect(() =>
+      authorSpace(space({ keepState: true, paintedState: ['toolPick'], transientState: ['toolPick', 'demo'] }))
+    ).toThrow(/both name "toolPick"/u);
+  });
+
+  it('warns when nothing is kept to paint with', () => {
+    const { warnings } = authorSpace(space({ paintedState: ['toolPick'] }));
+
+    expect(warnings.map(warning => warning.code)).toEqual(['painted-state-without-keep-state']);
+  });
 });
 
 describe('authorSpace / states, variants and element defaults', () => {

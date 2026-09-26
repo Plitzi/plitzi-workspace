@@ -1,3 +1,5 @@
+import { cookieFromHeader } from '../helpers/cookies';
+
 import type { Theme } from '../types';
 
 /** The name the choice is kept under, and the one a server reads it back with. */
@@ -37,20 +39,9 @@ export const applyThemeClass = (mode: Theme, root: HTMLElement): void => {
  * One function for both sides for the same reason: the server parsing the header with its own regex is that copy.
  */
 export const themeFromCookies = (cookies: string | undefined, name = THEME_COOKIE_NAME): Theme | undefined => {
-  if (!cookies) {
-    return undefined;
-  }
+  const value = cookieFromHeader(cookies, name);
 
-  for (const pair of cookies.split(';')) {
-    const eq = pair.indexOf('=');
-    if (eq > -1 && pair.slice(0, eq).trim() === name) {
-      const value = decodeURIComponent(pair.slice(eq + 1).trim());
-
-      return isTheme(value) ? value : undefined;
-    }
-  }
-
-  return undefined;
+  return isTheme(value) ? value : undefined;
 };
 
 /**
