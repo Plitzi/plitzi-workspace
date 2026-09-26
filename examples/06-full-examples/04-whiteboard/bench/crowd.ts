@@ -42,7 +42,8 @@ export const startCrowd = async (
       return;
     }
 
-    for (const element of data) {
+    const elements: readonly unknown[] = data;
+    for (const element of elements) {
       const id = typeof element === 'object' && element !== null && 'id' in element ? element.id : undefined;
       const entry = typeof id === 'string' ? pending.get(id) : undefined;
       if (!entry || typeof id !== 'string') {

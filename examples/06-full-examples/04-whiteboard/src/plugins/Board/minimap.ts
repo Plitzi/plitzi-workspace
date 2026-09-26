@@ -1,5 +1,5 @@
-import { isLinear } from '../../board/model.ts';
 import { absolutePoints, boundsOf, unionOf } from './geometry.ts';
+import { isLinear } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
 import type { Box } from './geometry.ts';
@@ -19,7 +19,8 @@ export const createMinimap = (core: Core) => {
   let dragging = false;
   /** The minimap's size on the page, told by the browser when it changes — never asked for in a frame. */
   let size = { width: 0, height: 0 };
-  const observer = new ResizeObserver(([entry]) => {
+  const observer = new ResizeObserver(entries => {
+    const entry = entries.at(0);
     if (entry) {
       size = { width: entry.contentRect.width, height: entry.contentRect.height };
       core.invalidate();

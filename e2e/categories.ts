@@ -45,6 +45,7 @@ const EXAMPLE_TARGETS = [
   'server-actions-schedules',
   'blog',
   'ceniza',
+  'seismic',
   'whiteboard'
 ];
 

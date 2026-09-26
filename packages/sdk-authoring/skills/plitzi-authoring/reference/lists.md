@@ -65,7 +65,7 @@ apiContainer({ id: 'catalog', query: '/data/games.json', cache: true, children: 
   text('Signal lost — no game by that name.', {
     id: 'game-missing',
     visible: { source: 'catalog.data.games',
-      template: "{{ source is defined and not (source|find('slug', navigation.routeParams.slug)) ? 'true' : 'false' }}" }
+      template: "{{ source is defined and not (source|find('slug', navigation.routeParams.slug)) }}" }
   })
 ] })
 ```

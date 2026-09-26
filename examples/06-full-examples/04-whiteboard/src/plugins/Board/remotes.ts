@@ -1,5 +1,5 @@
-import { parseElement } from '../../board/model.ts';
 import { isDefined, isFiniteNumber, isPoint } from './values.ts';
+import { parseElement } from '../../board/model.ts';
 
 import type { View } from './types.ts';
 import type { BoardElement, Point } from '../../board/model.ts';

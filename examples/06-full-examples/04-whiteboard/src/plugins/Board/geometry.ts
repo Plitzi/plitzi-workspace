@@ -1,6 +1,6 @@
-import { ANCHORS, LIMITS, isConnectable, isLinear } from '../../board/model.ts';
 import { inkRadius } from './pens.ts';
 import { insidePolygon, outlineOf, rayExit } from './shapes.ts';
+import { ANCHORS, LIMITS, isConnectable, isLinear } from '../../board/model.ts';
 
 import type { Anchor, Binding, BoardElement, Point } from '../../board/model.ts';
 

@@ -1,6 +1,5 @@
-import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
-
 import { offlineDataPath } from '@plitzi/example-space';
+import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 4003);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.

@@ -92,7 +92,7 @@ describe('the skill’s recipes', () => {
                   text('Nothing here yet', {
                     visible: {
                       source: 'catalog.data.games',
-                      template: "{{ source is defined and source|length == 0 ? 'true' : 'false' }}"
+                      template: '{{ source is defined and source|length == 0 }}'
                     }
                   })
                 ]

@@ -394,7 +394,7 @@ a visible wrapper with a hidden child still takes a slot in its parent's `gap`.
 
 An **empty state** is "the answer arrived and is empty", which is not what `!items` says: before the answer,
 `!undefined` is true, and "Nothing here yet" shows on every load. Ask for both —
-`{{ items is defined and items is empty ? 'true' : 'false' }}` — or bind to the provider's `isEmpty` together with
+`{{ items is defined and items is empty }}` — or bind to the provider's `isEmpty` together with
 `not isLoading`.
 
 The `!` is the `not` transformer, which is available to any binding (`transformers: [{ action: 'not', params: {} }]`).

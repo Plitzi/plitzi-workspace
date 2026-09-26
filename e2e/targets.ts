@@ -42,24 +42,30 @@ const mysqlReachable = (): boolean => {
 /** The prebuilt bundle the no-build example loads straight from a script tag. */
 const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
 
-/** Whether the public API the render example fetches can be reached from this machine.
+/** Whether a public URL an example fetches can be reached from this machine.
  *
- *  That example's whole subject is a server-side call to a third party, so there is nothing to assert about it
- *  offline — and a suite that goes red on a train is one people learn to ignore. Asked once, like every other
- *  gate, and answered by the same request the example makes. */
-let catApiUp: boolean | undefined;
-const catApiReachable = (): boolean => {
-  if (catApiUp === undefined) {
-    try {
-      execSync('curl -sfI --max-time 3 https://api.thecatapi.com/v1/images/search', { stdio: 'ignore' });
-      catApiUp = true;
-    } catch {
-      catApiUp = false;
-    }
+ *  An example whose subject is data from a third party has nothing to assert offline — and a suite that goes red on a
+ *  train is one people learn to ignore. Asked once per URL, like every other gate, with the request the example makes. */
+const reachable = new Map<string, boolean>();
+const reachableUrl = (url: string): boolean => {
+  const known = reachable.get(url);
+  if (known !== undefined) {
+    return known;
   }
 
-  return catApiUp;
+  let up = true;
+  try {
+    execSync(`curl -sfI --max-time 3 ${url}`, { stdio: 'ignore' });
+  } catch {
+    up = false;
+  }
+
+  reachable.set(url, up);
+
+  return up;
 };
+
+const catApiReachable = (): boolean => reachableUrl('https://api.thecatapi.com/v1/images/search');
 
 export type TargetGate = {
   /** Whether this machine can run the target at all — asked, not declared, so there is no flag to remember. */
@@ -298,6 +304,17 @@ export const targets: Target[] = [
     command: 'PORT=5016 CENIZA_SMTP_PORT=5204 yarn workspace @plitzi/example-ceniza start',
     origin: 'http://127.0.0.1:5016',
     what: 'A whole restaurant website — live availability, bookings with a confirmation email, a journal, no server code'
+  },
+  {
+    id: 'seismic',
+    workspace: '@plitzi/example-seismic',
+    command: 'PORT=5019 yarn workspace @plitzi/example-seismic start',
+    origin: 'http://127.0.0.1:5019',
+    what: 'Tremor — every earthquake the USGS publishes, on a globe, with a display authored around it',
+    gate: {
+      open: () => reachableUrl('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson'),
+      hint: 'this example reads the USGS earthquake feed — connect to the internet'
+    }
   },
   {
     id: 'whiteboard',

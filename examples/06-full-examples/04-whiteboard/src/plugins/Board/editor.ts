@@ -1,4 +1,3 @@
-import { takesLabel } from '../../board/model.ts';
 import {
   CARD_PADDING,
   CARD_TEXT_LEFT,
@@ -10,6 +9,7 @@ import {
   STICKY_PADDING
 } from './draw.ts';
 import { FRAME_HEADER, toScreen } from './geometry.ts';
+import { takesLabel } from '../../board/model.ts';
 
 import type { Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';

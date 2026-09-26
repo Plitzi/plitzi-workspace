@@ -11,10 +11,10 @@ import {
   when
 } from '@plitzi/sdk-authoring';
 
-import fullscreenDeclaration from '../plugins/FullscreenToggle/declaration.ts';
 import { FULLSCREEN_ID } from './ids.ts';
 import { BUTTON_RESET, PANEL, caption, heading } from './kit.ts';
 import { mapAction, releaseLock, resetMapView } from './map.ts';
+import fullscreenDeclaration from '../plugins/FullscreenToggle/declaration.ts';
 
 import type { ElementSpec, Rule, StepSpec } from '@plitzi/sdk-authoring';
 

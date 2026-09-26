@@ -1,3 +1,14 @@
+import { frameAt, frameUnder, insertionAt, layoutColumn, membersOf as inFrame, moved } from './containers.ts';
+import { CARD_WIDTH, measureCard, measureText, STICKY_SIZE } from './draw.ts';
+import { editorFor } from './editor.ts';
+import { boundsOf, clampZoom, fitCamera, movedBy, resolveConnector, shiftOf, unionOf } from './geometry.ts';
+import { readPalette } from './palette.ts';
+import { createRemotes } from './remotes.ts';
+import { RevisionedMap, RevisionedSet } from './revisioned.ts';
+import { createScene } from './scene.ts';
+import { createSounds } from './sounds.ts';
+import { byField, restyled, styleOf } from './styling.ts';
+import { newId, newSeed } from './values.ts';
 import {
   byStacking,
   holdsText,
@@ -9,17 +20,6 @@ import {
   takesLabel,
   takesStyle
 } from '../../board/model.ts';
-import { frameAt, frameUnder, insertionAt, layoutColumn, membersOf as inFrame, moved } from './containers.ts';
-import { CARD_WIDTH, measureCard, measureText, STICKY_SIZE } from './draw.ts';
-import { editorFor } from './editor.ts';
-import { boundsOf, clampZoom, fitCamera, movedBy, resolveConnector, shiftOf, unionOf } from './geometry.ts';
-import { readPalette } from './palette.ts';
-import { createSounds } from './sounds.ts';
-import { byField, restyled, styleOf } from './styling.ts';
-import { createRemotes } from './remotes.ts';
-import { RevisionedMap, RevisionedSet } from './revisioned.ts';
-import { createScene } from './scene.ts';
-import { newId, newSeed } from './values.ts';
 
 import type { Box, Camera, Handle } from './geometry.ts';
 import type { Palette } from './palette.ts';

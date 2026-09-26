@@ -13,12 +13,12 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { REACTIONS, STAMPS } from '../board/reactions.ts';
-import stackDeclaration from '../plugins/StickyStack/declaration.ts';
 import { editOnly } from './access.ts';
 import { BUTTON_RESET, FLOAT, ICON_BUTTON, divide, icon } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
+import { REACTIONS, STAMPS } from '../board/reactions.ts';
+import stackDeclaration from '../plugins/StickyStack/declaration.ts';
 
 import type { StickyStackAttributes } from '../plugins/StickyStack/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';

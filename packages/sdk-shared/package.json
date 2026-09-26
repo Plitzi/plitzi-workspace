@@ -226,6 +226,10 @@
       "types": "./dist/dataSource/utility/styleVariant.d.ts",
       "import": "./dist/dataSource/utility/styleVariant.mjs"
     },
+    "./dataSource/utility/truthiness": {
+      "types": "./dist/dataSource/utility/truthiness.d.ts",
+      "import": "./dist/dataSource/utility/truthiness.mjs"
+    },
     "./dataSource/utility/twigTemplate": {
       "types": "./dist/dataSource/utility/twigTemplate.d.ts",
       "import": "./dist/dataSource/utility/twigTemplate.mjs"

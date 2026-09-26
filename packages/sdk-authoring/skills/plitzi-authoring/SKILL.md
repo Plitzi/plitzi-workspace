@@ -113,7 +113,7 @@ list({ id: 'shown', source: 'controlled',
 text('', { bind: [bindTemplate('content', 'catalog.data.games', '{{ source|length }} games')] })
 
 // Shown only when a computed condition says so (starts hidden, no flash).
-text('Nothing here yet', { visible: { source: 'catalog.data.games', template: "{{ source is defined and source|length == 0 ? 'true' : 'false' }}" } })
+text('Nothing here yet', { visible: { source: 'catalog.data.games', template: '{{ source is defined and source|length == 0 }}' } })
 
 // A value used in many places: declare it once in the space, read it anywhere as computed.xp.
 computed: { xp: '{{ (state.favourites|length) * 10 }}' }
@@ -154,6 +154,7 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | [flows.md](reference/flows.md) | Clicks, submits, page loads, server actions, realtime channels, modals, state |
 | [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, channels, registering |
 | [structure.md](reference/structure.md) | A space bigger than one screen: files, helpers, naming, keeping it short |
-| [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame |
+| [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame, shortcuts, counting renders |
+| [performance.md](reference/performance.md) | A page with many elements, a busy flow, something that feels slow: what renders, what it costs, how to measure it |
 | [templates-and-export.md](reference/templates-and-export.md) | Publishing a template; turning an exported JSON into code |
 | [review-checklist.md](reference/review-checklist.md) | Before you say it is done |

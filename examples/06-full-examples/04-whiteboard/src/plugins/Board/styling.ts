@@ -1,3 +1,4 @@
+import { isOneOf } from './values.ts';
 import {
   BRUSHES,
   DASHES,
@@ -10,7 +11,6 @@ import {
   STROKE_WIDTHS,
   takesStyle
 } from '../../board/model.ts';
-import { isOneOf } from './values.ts';
 
 import type { BoardElement, StyleField } from '../../board/model.ts';
 

@@ -276,7 +276,7 @@ const TRIGGERS: Record<string, InteractionCallback> = declaration.triggers;
 
 const setData = (map: MapLibre.Map, source: string, data: FeatureCollection): void => {
   const target = map.getSource<MapLibre.GeoJSONSource>(source);
-  target?.setData(data);
+  void target?.setData(data);
 };
 
 const SeismicMap = ({
@@ -510,7 +510,8 @@ const SeismicMap = ({
         const found = hits
           .map(hit => current.find(quake => quake.id === hit.properties.id))
           .filter((quake): quake is MapQuake => quake !== undefined && quake.time <= clock.current)
-          .sort((a, b) => b.magnitude - a.magnitude)[0];
+          .sort((a, b) => b.magnitude - a.magnitude)
+          .at(0);
 
         if (found) {
           emit('onQuakeSelect', payloadOf(found));

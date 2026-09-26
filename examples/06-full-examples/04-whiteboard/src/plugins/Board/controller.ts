@@ -1,5 +1,3 @@
-import { byStacking, fitsInFrame, isLinear, isTask, parseElement } from '../../board/model.ts';
-import { isReaction, isStamp, STAMP_SIZE } from '../../board/reactions.ts';
 import { createCarry } from './carry.ts';
 import { cloneElements } from './clone.ts';
 import { releasedFrom } from './connectors.ts';
@@ -15,11 +13,13 @@ import { createPicking } from './picking.ts';
 import { createPictures } from './pictures.ts';
 import { createPointer } from './pointer.ts';
 import { createQuick } from './quick.ts';
+import { isView } from './remotes.ts';
 import { createPainter } from './render.ts';
 import { isSound, REACTION_SOUNDS } from './sounds.ts';
 import { restyled } from './styling.ts';
-import { isView } from './remotes.ts';
 import { isDefined, isPoint, newId } from './values.ts';
+import { byStacking, fitsInFrame, isLinear, isTask, parseElement } from '../../board/model.ts';
+import { isReaction, isStamp, STAMP_SIZE } from '../../board/reactions.ts';
 
 import type { StyleChoice } from './styling.ts';
 import type { ControllerEvent, ControllerProps, FrameEntry } from './types.ts';
@@ -822,7 +822,7 @@ export const createBoardController = (
     }),
     /** The one frame selected, made a column — which lays out what is in it — or a free area again. */
     toggleColumn: whenEditable(() => {
-      const [frame] = core.changeable();
+      const frame = core.changeable().at(0);
       if (frame?.type !== 'frame' || core.changeable().length !== 1) {
         return;
       }
@@ -841,7 +841,7 @@ export const createBoardController = (
     /** A presentation of the board's frames, from the first — or from the one selected — for everyone on the board. */
     present: (): void => {
       const frames = framesInOrder();
-      const [chosen] = core.selected();
+      const chosen = core.selected().at(0);
       const from = frames.findIndex(frame => frame.id === chosen?.id || frame.id === chosen?.parent);
       core.setSelection([]);
       presentAt(Math.max(from, 0));

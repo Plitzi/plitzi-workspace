@@ -695,9 +695,9 @@ const mural = (): BoardElement[] => {
   const letter = pixel * 6;
   const left = -((word.length * letter) / 2);
   const top = -520;
-  const pieces: Draft[] = [...word].flatMap((character, index) =>
+  const pieces: Draft[] = Array.from(word).flatMap((character, index) =>
     FONT[character].flatMap((row, rowIndex) =>
-      [...row].flatMap((on, columnIndex) =>
+      Array.from(row).flatMap((on, columnIndex) =>
         on === '1'
           ? Array.from({ length: 9 }, (_, sub): Draft => ({
               type: 'rectangle',

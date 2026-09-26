@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-import { inspectPage, locate } from '@plitzi/sdk-authoring';
-
 import { offlineData } from '@plitzi/example-space/space';
+import { inspectPage, locate } from '@plitzi/sdk-authoring';
 
 /** The space this server renders, as authored: every element by the name it was given. */
 const { handles } = offlineData();

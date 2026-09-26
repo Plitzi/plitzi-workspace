@@ -275,7 +275,7 @@ const describe = async (id: string): Promise<QuakeDetail> => {
   const felt = numberOf(properties.felt);
   const faulting = rake === null ? null : faultingOf(rake);
   const past = settled(history);
-  const [largest] = past?.largest ?? [];
+  const largest = past?.largest.at(0);
 
   return {
     id,

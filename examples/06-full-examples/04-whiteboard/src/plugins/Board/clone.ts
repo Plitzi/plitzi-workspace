@@ -1,5 +1,5 @@
-import { byStacking } from '../../board/model.ts';
 import { newId } from './values.ts';
+import { byStacking } from '../../board/model.ts';
 
 import type { Binding, BoardElement } from '../../board/model.ts';
 

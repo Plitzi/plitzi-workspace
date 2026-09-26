@@ -99,14 +99,16 @@ modalContainer({ visible: false, … })           // starts hidden; a flow opens
 | hides it: shown unless a flag says otherwise | sidebar labels until the sidebar is folded, a banner until dismissed | a binding with no `visible`; an absent flag must leave it shown |
 
 `visible` starts the element **hidden**, and it appears when its data says so. A revealing condition you have to
-compute is `visible: { source, template }` — it starts hidden too, and the template says `'true'` or `'false'`:
+compute is `visible: { source, template }` — it starts hidden too, and the template's value is read as a yes or a
+no: `false`, `0`, an empty text, an empty list and nothing at all are a no, anything else a yes. Write the condition
+itself; `? 'true' : 'false'` is not needed:
 
 ```ts
 container({
   id: 'first-steps',
   visible: {
     source: 'stats.data.totals',
-    template: "{{ source ? (source.spaces > 0 and source.published > 0 ? 'false' : 'true') : 'false' }}"
+    template: '{{ source and not (source.spaces > 0 and source.published > 0) }}'
   }
 })
 ```
@@ -134,7 +136,7 @@ Four states, and each has its own element:
 | State | How to tell |
 | --- | --- |
 | Loading | `apiContainer_x.isLoading` — or simply nothing: every condition is hidden until data arrives |
-| Empty | the answer ARRIVED and is empty: `{{ source is defined and source is empty ? 'true' : 'false' }}` over the list |
+| Empty | the answer ARRIVED and is empty: `{{ source is defined and source is empty }}` over the list |
 | Error | `apiContainer_x.hasError` |
 | Data | the list itself |
 

@@ -101,7 +101,7 @@ describe('useElementDataSource (subscribes to referenced `runtime.sources.*`)', 
 
         return useElementDataSource({ bindings: { attributes: binding } });
       },
-      { wrapper: ({ children }: { children: ReactNode }) => createElement(StoreProvider, { store }, children) }
+      { wrapper: ({ children }: { children: ReactNode }) => <StoreProvider store={store}>{children}</StoreProvider> }
     );
     const before = renders;
 

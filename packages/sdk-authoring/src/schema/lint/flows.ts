@@ -372,6 +372,50 @@ const conditionFields = (group: unknown): string[] => {
   return [...field, ...rules];
 };
 
+/** Every rule of a condition, in its nested groups as much as at its top level. */
+const conditionRules = (group: unknown): { field: string; operator: unknown; value: unknown }[] => {
+  if (typeof group !== 'object' || group === null) {
+    return [];
+  }
+
+  const rule =
+    'field' in group && typeof group.field === 'string'
+      ? [
+          {
+            field: group.field,
+            operator: 'operator' in group ? group.operator : undefined,
+            value: 'value' in group ? group.value : undefined
+          }
+        ]
+      : [];
+  const rules = 'rules' in group && Array.isArray(group.rules) ? group.rules.flatMap(conditionRules) : [];
+
+  return [...rule, ...rules];
+};
+
+/** A form's submitted field, as a step reads it: `sent.values.code`. */
+const FORM_VALUE = /\.values\.[^.]+$/;
+
+/**
+ * A submitted field compared with `""`. A form sends what was typed, and a field nobody typed in is not in `values` at
+ * all — so `= ""` never holds for it and `!= ""` always does: the step that should catch an empty field lets it through.
+ */
+const warnBlankFormValue = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
+  for (const { field, operator, value } of conditionRules(node.when)) {
+    if (!FORM_VALUE.test(field) || (operator !== '=' && operator !== '!=') || (value !== '' && value != null)) {
+      continue;
+    }
+
+    const instead = operator === '=' ? 'empty' : 'notEmpty';
+    ctx.warn(
+      'form-value-compared-to-blank',
+      `${where}: step "${node.id}" asks whether \`${field}\` ${operator} "". A form sends only what was typed — a field nobody typed in is not in \`values\` at all — so this ${operator === '=' ? 'never holds' : 'always holds'} for an empty field. Ask \`{ field: '${field}', operator: '${instead}' }\`, which takes a missing value and "" alike.`,
+      hostId,
+      { field, operator, suggested: instead }
+    );
+  }
+};
+
 /**
  * The toggle written in branches: two or more `setState` steps of one key, each only when that key holds some value.
  *
@@ -474,6 +518,7 @@ export const lintFlows = (ctx: LintContext): void => {
         }
 
         warnStatePaths(ctx, node, where, host.id);
+        warnBlankFormValue(ctx, node, where, host.id);
         checkWhileRunning(ctx, node, where, host.id);
         if (node.type === 'trigger') {
           checkTrigger(ctx, node, where, host);

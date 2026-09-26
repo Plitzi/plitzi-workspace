@@ -1,3 +1,5 @@
+import { isRecord, textOf } from '../board/model.ts';
+
 /**
  * An agent's line to a board's channels: the same `/_realtime` socket a page opens, spoken from Node.
  *
@@ -14,8 +16,6 @@ const HEARTBEAT_MS = 20_000;
 
 /** How long a publish waits for the server's answer. */
 const ACK_MS = 5000;
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 export type Connection = {
   /** This connection's name on the channels: the `from` of what it says. */
@@ -124,7 +124,7 @@ export const connect = (origin: string, topics: string[], onMessage: (heard: Hea
           void send(data.topic, '$presence', presence.get(data.topic));
         }
 
-        const from = String(data.from ?? '');
+        const from = textOf(data.from);
         onMessage({ topic: data.topic, type: data.type, from, data: data.data, mine: from === me });
       }
     });

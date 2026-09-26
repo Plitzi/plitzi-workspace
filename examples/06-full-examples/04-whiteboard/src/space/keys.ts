@@ -1,6 +1,6 @@
 import { button, container, onClick, onKey, setState, styles, text, toggleState } from '@plitzi/sdk-authoring';
 
-import { useTool } from './elements.ts';
+import { setTool } from './elements.ts';
 import { FLOAT, ICON_BUTTON, caption } from './kit.ts';
 import { closeOthers, closePanels } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
@@ -51,7 +51,7 @@ export const shortcuts: StepSpec[][] = [
     boardAction('stopPresenting'),
     boardAction('deselect'),
     boardAction('unfollow'),
-    useTool('select')
+    setTool('select')
   ]
 ];
 

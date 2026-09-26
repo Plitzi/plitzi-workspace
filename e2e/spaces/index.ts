@@ -8,6 +8,7 @@ import { keysSpace } from './keys';
 import { minimalSpace } from './minimal';
 import { plainSpace } from './plain';
 import { querySpace } from './queries';
+import { rendersSpace } from './renders';
 import { routeQuerySpace } from './routeQueries';
 import { themedSpace } from './themed';
 import { unaskedQuerySpace } from './unaskedQueries';
@@ -22,6 +23,7 @@ export * from './keys';
 export * from './minimal';
 export * from './plain';
 export * from './queries';
+export * from './renders';
 export * from './routeQueries';
 export * from './themed';
 export * from './unaskedQueries';
@@ -42,6 +44,7 @@ export * from './unaskedQueries';
  *  | `unaskedQuerySpace()` | Two providers with nothing to ask — one whose URL keeps an unanswered token, one whose URL a button empties |
  *  | `flowReadsSpace()` | Flows that write, compute and wait — for what a step reads when it runs |
  *  | `keysSpace()` | Two keyboard shortcuts on one element and a field — for what a press on the page and in a field fires |
+ *  | `rendersSpace()` | A counter, labels that read nothing, and labels reading a computed list — for counting what an interaction renders |
  *  | `keptStateSpace()` | Kept state with one transient key — for what comes back after a reload and what starts fresh |
  *  | `themedSpace()` | A page painted only from a light/dark palette, and a theme toggle — for asserting the colours a theme puts in force |
  *
@@ -97,6 +100,7 @@ export {
   minimalSpace,
   plainSpace,
   querySpace,
+  rendersSpace,
   routeQuerySpace,
   themedSpace,
   unaskedQuerySpace

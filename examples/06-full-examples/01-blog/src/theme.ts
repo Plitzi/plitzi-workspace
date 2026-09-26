@@ -376,7 +376,11 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
     mobile: { 'grid-template-columns': 'minmax(0, 1fr)', gap: '16px' }
   },
   cardImage: {
-    desktop: { ...media('4 / 3'), 'border-radius': '14px', transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' }
+    desktop: {
+      ...media('4 / 3'),
+      'border-radius': '14px',
+      transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)'
+    }
   },
   cardBody: { desktop: column('11px', { 'align-items': 'flex-start' }) },
   cardLink: { desktop: { 'text-decoration': 'none', color: 'var(--fg)', display: 'block' } },
@@ -507,7 +511,11 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   },
   moreCard: { desktop: column('11px', { 'text-decoration': 'none', 'align-items': 'flex-start' }) },
   moreImage: {
-    desktop: { ...media('16 / 10'), 'border-radius': '16px', transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)' }
+    desktop: {
+      ...media('16 / 10'),
+      'border-radius': '16px',
+      transition: 'transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1)'
+    }
   },
   moreTitle: { desktop: displayText('19px', { 'line-height': '1.28', ...clamp(2) }) },
 

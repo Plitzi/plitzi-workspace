@@ -1,11 +1,11 @@
 import { randomInt } from 'node:crypto';
 
+import { newElementId } from './session.ts';
 import { FILLS, fitsInFrame, FONT_SIZES, holdsText, isAuthored, STROKES } from '../board/model.ts';
 import { STAMP_SIZE } from '../board/reactions.ts';
 import { estimatedCardHeight, estimatedTextBox } from '../board/sketch.ts';
 import { COLUMN_GAP, COLUMN_PADDING, layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
 import { FRAME_HEADER } from '../plugins/Board/geometry.ts';
-import { newElementId } from './session.ts';
 
 import type { Session } from './session.ts';
 import type { BoardElement, Fill, Layout, ShapeType, Stroke } from '../board/model.ts';

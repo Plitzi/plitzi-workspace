@@ -1,4 +1,3 @@
-import { ANCHORS, isConnectable } from '../../board/model.ts';
 import { endsOf } from './connectors.ts';
 import {
   createRenderer,
@@ -13,15 +12,16 @@ import {
 } from './draw.ts';
 import { anchorPoint, beyondAnchor, boundsOf, boxFrom, contains, toBoard, toScreen, unionOf } from './geometry.ts';
 import { CONNECT_OFFSET } from './picking.ts';
+import { ANCHORS, isConnectable } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
+import type { Renderer } from './draw.ts';
 import type { Effects } from './effects.ts';
 import type { Box, Camera } from './geometry.ts';
-import type { Renderer } from './draw.ts';
 import type { Palette } from './palette.ts';
-import type { BoardElement } from '../../board/model.ts';
 import type { Pictures } from './pictures.ts';
 import type { Gesture } from './types.ts';
+import type { BoardElement } from '../../board/model.ts';
 
 /**
  * What `next` adds over `before`, when all it does is add on top: `before` whole and unchanged — the same objects, in

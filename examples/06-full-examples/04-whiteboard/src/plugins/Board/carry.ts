@@ -1,7 +1,7 @@
-import { FILLS } from '../../board/model.ts';
 import { DEFAULT_BOX, STACK_BOX } from './core.ts';
 import { toBoard } from './geometry.ts';
 import { isOneOf } from './values.ts';
+import { FILLS } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
 import type { BoardElement, Fill, Point } from '../../board/model.ts';

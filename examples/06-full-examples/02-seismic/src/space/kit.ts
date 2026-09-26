@@ -10,7 +10,6 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import type { SectionKey } from './state.ts';
-
 import type { ClassRef, CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 /**

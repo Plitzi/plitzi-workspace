@@ -18,11 +18,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { ALERTS, REFRESH } from '../filters.ts';
-import fullscreenDeclaration from '../plugins/FullscreenToggle/declaration.ts';
-import notifierDeclaration from '../plugins/Notifier/declaration.ts';
 import { FULLSCREEN_ID, NOTIFIER_ID } from './ids.ts';
-import { resetMapView } from './map.ts';
-import { nav } from './nav.ts';
 import {
   BUTTON_RESET,
   PANEL,
@@ -34,6 +30,10 @@ import {
   sectionContent,
   sectionHeader
 } from './kit.ts';
+import { resetMapView } from './map.ts';
+import { nav } from './nav.ts';
+import fullscreenDeclaration from '../plugins/FullscreenToggle/declaration.ts';
+import notifierDeclaration from '../plugins/Notifier/declaration.ts';
 
 import type { FullscreenToggleAttributes } from '../plugins/FullscreenToggle/declaration.ts';
 import type { NotifierAttributes } from '../plugins/Notifier/declaration.ts';

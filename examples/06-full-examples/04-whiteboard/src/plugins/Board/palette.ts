@@ -1,5 +1,5 @@
-import { COLLAB_COLOURS } from '../../board/people.ts';
 import { FILLS, STROKES } from '../../board/model.ts';
+import { COLLAB_COLOURS } from '../../board/people.ts';
 
 import type { Fill, Stroke } from '../../board/model.ts';
 

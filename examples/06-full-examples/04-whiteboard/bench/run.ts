@@ -6,6 +6,7 @@ import { seedBoard } from './boards.ts';
 import { startCrowd } from './crowd.ts';
 import { measure, measureLoad } from './measure.ts';
 import { startServer } from './server.ts';
+import { isRecord } from '../src/board/model.ts';
 
 import type { Measurement } from './measure.ts';
 import type { Browser, CDPSession, Page } from '@playwright/test';
@@ -57,8 +58,6 @@ const percentile = (values: number[], at: number): number => {
 };
 
 const settle = (page: Page, ms = 600) => page.waitForTimeout(ms);
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 type Saved = { id: string; type: string; x: number; deleted: boolean };
 
@@ -260,7 +259,7 @@ const scenarios = async (browser: Browser, origin: string, size: number) => {
     'moving everything did not keep it',
     size,
     async () => (await firstX()) !== xBefore,
-    async () => `the first element is still at ${String(xBefore)}`
+    () => Promise.resolve(`the first element is still at ${String(xBefore)}`)
   );
   await record('undo move', size, page, cdp, async () => {
     await page.keyboard.press('ControlOrMeta+z');

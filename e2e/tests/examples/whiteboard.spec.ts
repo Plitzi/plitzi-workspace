@@ -1,3 +1,5 @@
+import { pressShortcut } from '@plitzi/sdk-authoring';
+
 import { describeTarget, expect, test } from '../../fixtures';
 
 import type { Page } from '@playwright/test';
@@ -134,13 +136,6 @@ const takeCounts = (page: Page): Promise<Counts> =>
     return taken;
   });
 
-/** The page's own shortcut key — ⌘ where its user agent says Mac, Ctrl anywhere else — which is the browser's being
- *  emulated, not the machine's running the suite: `ControlOrMeta` asks the latter. */
-const pressMod = async (page: Page, key: string): Promise<void> => {
-  const mac = await page.evaluate(() => /Mac|iPhone|iPad|iPod/.test(navigator.userAgent));
-  await page.keyboard.press(`${mac ? 'Meta' : 'Control'}+${key}`);
-};
-
 const board = (page: Page) => page.locator('canvas[aria-label^="Board"]');
 
 /** The middle of the board canvas, where a pointer lands on it. */
@@ -236,7 +231,7 @@ describeTarget('whiteboard', subject => {
       // The board takes the keys once it has been pointed at, as it has by anyone about to press them.
       await page.mouse.click(x, y);
       await page.keyboard.press('v');
-      await pressMod(page, 'a');
+      await pressShortcut(page, 'mod+a');
       await page.waitForTimeout(300);
       // A point on a box: where the pointer turns into the hand that moves it.
       let at: [number, number] | undefined;

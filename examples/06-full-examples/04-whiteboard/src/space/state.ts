@@ -1,7 +1,7 @@
 import { setState, when } from '@plitzi/sdk-authoring';
 
-import { COLLAB_COLOURS, GUEST_NAMES } from '../board/people.ts';
 import { CATEGORIES, entriesOf, isGroup } from './elements.ts';
+import { COLLAB_COLOURS, GUEST_NAMES } from '../board/people.ts';
 
 import type { StepSpec } from '@plitzi/sdk-authoring';
 

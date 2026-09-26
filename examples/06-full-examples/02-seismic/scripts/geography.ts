@@ -131,7 +131,7 @@ const closeThroughPole = (ring: Position[]): Position[] => {
 
 const splitAtAntimeridian = (polygon: Position[][]): Position[][][] => {
   const rings = polygon.filter(hasArea).map(unwrap);
-  const [outer] = rings;
+  const outer = rings.at(0);
   // Nothing left that encloses anything: a polygon that was only the pole's edge of the map draws nothing.
   if (!outer) {
     return [];
@@ -216,7 +216,7 @@ type PlateKind = 'convergent' | 'divergent' | 'transform';
  * CTF transform faults. The finer split is a geologist's; the three that remain are the ones that decide what kind
  * of earthquake a boundary makes.
  */
-const KIND_OF_CLASS: Record<string, PlateKind> = {
+const KIND_OF_CLASS: Partial<Record<string, PlateKind>> = {
   SUB: 'convergent',
   OCB: 'convergent',
   CCB: 'convergent',

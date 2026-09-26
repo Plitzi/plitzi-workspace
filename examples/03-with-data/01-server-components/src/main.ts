@@ -1,9 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
-
 import { offlineDataPath } from '@plitzi/example-space';
+import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 import type { SSRRscContext, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 

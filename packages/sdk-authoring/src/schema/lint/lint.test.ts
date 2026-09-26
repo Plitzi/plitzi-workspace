@@ -614,6 +614,27 @@ describe('lintSpace', () => {
       expect(warningsOf(documents)).toContain('state-toggled-in-branches');
     });
 
+    it('form-value-compared-to-blank', () => {
+      const guarded = (operator: '=' | '!=' | 'empty') =>
+        step(`check-${operator}`, 'globalCallback', 'setState', {
+          elementId: 'state',
+          params: { key: 'problem', type: 'text', value: 'Type a code' },
+          when: {
+            combinator: 'and',
+            rules: [{ combinator: 'or', rules: [{ field: 'sent.values.code', operator, value: '' }] }]
+          }
+        });
+      const flagged = withChange(({ schema }) => {
+        setFlow(schema, 'go', [onClick(), guarded('='), guarded('!=')]);
+      });
+      const fine = withChange(({ schema }) => {
+        setFlow(schema, 'go', [onClick(), guarded('empty')]);
+      });
+
+      expect(warningsOf(flagged).filter(code => code === 'form-value-compared-to-blank')).toHaveLength(2);
+      expect(warningsOf(fine)).not.toContain('form-value-compared-to-blank');
+    });
+
     it('unknown-global-callback', () => {
       const documents = withChange(({ schema }) => {
         setFlow(schema, 'go', [onClick(), step('teleport', 'globalCallback', 'teleport', { elementId: 'state' })]);

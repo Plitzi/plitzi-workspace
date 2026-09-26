@@ -21,12 +21,12 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { CHAT_ACTION } from '../actions.ts';
-import { COLLAB_COLOURS } from '../board/people.ts';
-import { REACTIONS } from '../board/reactions.ts';
 import { BOARD_PASS } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BELOW_HEADER, BUTTON_RESET, FLOAT, ICON_BUTTON, icon } from './kit.ts';
 import { boardAction } from './stylePanel.ts';
+import { COLLAB_COLOURS } from '../board/people.ts';
+import { REACTIONS } from '../board/reactions.ts';
 
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 

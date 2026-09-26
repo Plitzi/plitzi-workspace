@@ -8,7 +8,7 @@ Plitzi's templates are Twig, run by Plitzi's own interpreter. What a `{{ … }}`
 | --- | --- | --- |
 | a binding's `twigTemplate` transformer | the whole template: conditions, filters, `{% set %}`, loops, tests | `source` (the bound value), `sourceTo`, the globals, the variables by bare name, and every source around the element |
 | a flow step's params | the whole template | the trigger's payload and earlier steps by name, the globals, sources around the element |
-| an ATTRIBUTE (`href`, `src`, `content`…) | only `{{ name }}` and `{{ name|filter }}` tokens | the globals, the variables and the page's route params by bare name (`{{ apiUrl }}`, `{{ slug }}`), and every source around the element (`{{ list_games.item.slug }}`) |
+| an ATTRIBUTE (`href`, `src`, `content`…) | only `{{ name }}` tokens (a filter after the name is allowed) | the globals, the variables and the page's route params by bare name (`{{ apiUrl }}`, `{{ slug }}`), and every source around the element (`{{ list_games.item.slug }}`) |
 
 A **query parameter** is `navigation.queryParams.<name>` everywhere — never a bare name.
 

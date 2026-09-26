@@ -1,11 +1,11 @@
 import { randomInt } from 'node:crypto';
 
-import { byStacking, parseElement, supersedes } from '../board/model.ts';
 import { connect } from './connection.ts';
+import { byStacking, isRecord, parseElement, supersedes, textOf } from '../board/model.ts';
 
 import type { Connection, Heard } from './connection.ts';
-import type { ChatMessage, OpenedBoard } from '../board/store.ts';
 import type { BoardElement, Point } from '../board/model.ts';
+import type { ChatMessage, OpenedBoard } from '../board/store.ts';
 
 /**
  * An agent on one board: what it knows of the board, and how it acts on it — the way a page does.
@@ -25,8 +25,6 @@ export type Activity =
 type Member = { name: string; color: string; agent: boolean };
 
 export type Session = Awaited<ReturnType<typeof joinBoard>>;
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 /** An element's id, as the canvas makes them. */
 export const newElementId = (): string =>
@@ -146,12 +144,12 @@ export const joinBoard = async (
         }
       } else if (type === 'chat' && isRecord(data) && typeof data.text === 'string') {
         const line: ChatMessage = {
-          id: String(data.id ?? ''),
-          name: String(data.name ?? 'Someone'),
-          color: String(data.color ?? ''),
+          id: textOf(data.id),
+          name: textOf(data.name, 'Someone'),
+          color: textOf(data.color),
           text: data.text,
           at: Number(data.at ?? Date.now()),
-          by: String(data.by ?? ''),
+          by: textOf(data.by),
           ...(data.agent === true ? { agent: true } : {})
         };
         chat.push(line);
@@ -171,7 +169,7 @@ export const joinBoard = async (
     // The room: who is here, and what they say at their cursors.
     if (type === '$presence' && isRecord(data) && typeof data.name === 'string') {
       const known = members.has(from);
-      members.set(from, { name: data.name, color: String(data.color ?? ''), agent: data.agent === true });
+      members.set(from, { name: data.name, color: textOf(data.color), agent: data.agent === true });
       if (!known) {
         note({ kind: 'joined', name: data.name, at: Date.now() });
       }

@@ -50,7 +50,7 @@ export const CATEGORIES: readonly Category[] = [
   { id: 'kanban', label: 'Kanban', hint: '7' }
 ];
 
-export const useTool = (tool: Tool): StepSpec => setState({ key: 'tool', type: 'text', value: tool });
+export const setTool = (tool: Tool): StepSpec => setState({ key: 'tool', type: 'text', value: tool });
 
 /** The pen keeps the brush it had — unless it was the highlighter, which is its own entry. */
 const PEN_BRUSH = setState({
@@ -301,7 +301,7 @@ export const ELEMENTS: readonly ElementEntry[] = [
     description: 'To do · Doing · Done, where you point',
     keys: '',
     hint: '',
-    also: [useTool('select'), boardAction('insertKanban')]
+    also: [setTool('select'), boardAction('insertKanban')]
   }
 ];
 
@@ -320,7 +320,7 @@ export const pickSteps = (entry: ElementEntry): StepSpec[] => {
 
   return [
     ...(category && isGroup(category) ? [setState({ key: `${category.id}Pick`, type: 'text', value: entry.id })] : []),
-    ...(entry.tool ? [useTool(entry.tool)] : []),
+    ...(entry.tool ? [setTool(entry.tool)] : []),
     ...(entry.also ?? [])
   ];
 };

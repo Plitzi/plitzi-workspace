@@ -1,8 +1,7 @@
 import { useState } from 'react';
 
-import PlitziSdk from '@plitzi/plitzi-sdk';
-
 import { offlineData } from '@plitzi/example-space/browser';
+import PlitziSdk from '@plitzi/plitzi-sdk';
 
 import styles from './styles';
 
@@ -37,9 +36,7 @@ const App = () => {
 
       <main style={styles.main}>
         <aside style={styles.aside}>
-          <p style={styles.asideText}>
-            This panel is yours. The space renders beside it, in the same React tree.
-          </p>
+          <p style={styles.asideText}>This panel is yours. The space renders beside it, in the same React tree.</p>
         </aside>
 
         <section style={styles.canvas}>

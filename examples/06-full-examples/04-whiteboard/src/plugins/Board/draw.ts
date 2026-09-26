@@ -1,10 +1,10 @@
 import { getStroke } from 'perfect-freehand';
 import rough from 'roughjs';
 
-import { FONT_SIZES, LINE_HEIGHT, takesLabel } from '../../board/model.ts';
 import { FRAME_HEADER, handlePoint, HANDLES, toScreen } from './geometry.ts';
 import { penOf } from './pens.ts';
 import { outlineOf } from './shapes.ts';
+import { FONT_SIZES, LINE_HEIGHT, takesLabel } from '../../board/model.ts';
 
 import type { Box, Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';

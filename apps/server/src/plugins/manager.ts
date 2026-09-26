@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -14,9 +15,22 @@ const META_FILE = 'meta.json';
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const DEFAULT_CACHE_DIR = '.sdk-plugins';
 
-type Meta = { compiledAt: number; version?: string; inputs?: string[] };
+/** `digest`: the content of `inputs` when the bundle was built — see {@link PluginManager.contentChanged}. */
+type Meta = { compiledAt: number; version?: string; inputs?: string[]; digest?: string };
 
 type CacheEntry = { compiledAt: number; entry: PluginEntry; inputs?: string[]; checkedAt?: number };
+
+/** One hash over every input's path and content — a file gone counts as changed, like a file edited. */
+const digestOf = async (files: readonly string[]): Promise<string> => {
+  const hash = createHash('sha256');
+  for (const file of [...files].sort()) {
+    hash.update(file);
+    hash.update('\0');
+    hash.update(await fs.readFile(file).catch(() => Buffer.from('\0missing')));
+  }
+
+  return hash.digest('hex');
+};
 
 /**
  * How often a dev server re-asks whether a cached plugin is still current.
@@ -135,6 +149,39 @@ export class PluginManager {
     cached.checkedAt = now;
 
     return this.isStale({ compiledAt: cached.compiledAt, inputs: cached.inputs }, source);
+  }
+
+  /**
+   * Whether what a bundle on disk was built from reads differently now — asked once, when a process first finds the
+   * bundle, in production as much as in development.
+   *
+   * A version names a release, and a release is only as good as whoever bumps it: a deployment rebuilt from new source
+   * under the same version found last deployment's bundle in its cache folder and served it, with nothing anywhere
+   * saying so. The content decides instead. A bundle written before digests were recorded has none, and is built again
+   * once. What this server does not build from files — a download, a CDN, a component — is its version's business.
+   */
+  private async contentChanged(meta: Meta, source: PluginSource): Promise<boolean> {
+    const inputs = this.inputsOf(source, meta.inputs ?? []);
+    if (inputs.length === 0) {
+      return false;
+    }
+
+    return meta.digest !== (await digestOf(inputs));
+  }
+
+  /** The local files a bundle is built from: what the compiler reported, or the files it was copied from. */
+  private inputsOf(source: PluginSource, compiled: string[]): string[] {
+    if (isComponentSource(source) || source.action === 'download' || source.action === 'cdn') {
+      return [];
+    }
+
+    if (compiled.length > 0) {
+      return compiled;
+    }
+
+    return [source.js, source.css].filter(
+      (file): file is string => typeof file === 'string' && file !== '' && !/^https?:\/\//.test(file)
+    );
   }
 
   private async isStale(meta: Meta, source: PluginSource): Promise<boolean> {
@@ -294,7 +341,7 @@ export class PluginManager {
     if (meta) {
       const sourceVersion = source.version;
 
-      if (await this.isStale(meta, source)) {
+      if ((await this.isStale(meta, source)) || (await this.contentChanged(meta, source))) {
         serverLog.info('SSR', `Plugin "${key}" source changed since it was built, rebuilding…`);
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else if (sourceVersion && meta.version !== sourceVersion) {
@@ -350,8 +397,8 @@ export class PluginManager {
 
     try {
       let cssUrl: string | undefined;
-      // What the bundle was built from, for the dev-mode staleness check. Only a compiled plugin has any: a copied or
-      // downloaded file is its own input, and `isStale` falls back to it.
+      // What the bundle was built from: what a dev server watches, and what its content digest is taken over. Only a
+      // compiled plugin has a list; a copied file is its own input, and a downloaded one has none of this server's.
       let buildInputs: string[] = [];
 
       if (action === 'compile') {
@@ -404,7 +451,13 @@ export class PluginManager {
       }
 
       const compiledAt = Date.now();
-      await this.writeMeta(name, { compiledAt, version: source.version, inputs: buildInputs });
+      const inputs = this.inputsOf(source, buildInputs);
+      await this.writeMeta(name, {
+        compiledAt,
+        version: source.version,
+        inputs: buildInputs,
+        ...(inputs.length > 0 ? { digest: await digestOf(inputs) } : {})
+      });
 
       // Stamped after the build, so a rebuild changes the URL the page asks for and the `immutable` the assets are
       // served with becomes a promise this server can keep.

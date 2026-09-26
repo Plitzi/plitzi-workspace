@@ -4,12 +4,12 @@ import { RootElement, useChannel, useElement, usePlitziServiceContext } from '@p
 
 import './Board.css';
 
-import { FILLS, STROKES, STROKE_WIDTHS } from '../../board/model.ts';
-import { isCollaborator } from '../../board/people.ts';
 import { TOOLS, createBoardController } from './controller.ts';
 import declaration from './declaration';
 import { parseDemo, playDemo } from './demo.ts';
 import { choiceFrom } from './styling.ts';
+import { FILLS, STROKES, STROKE_WIDTHS } from '../../board/model.ts';
+import { isCollaborator } from '../../board/people.ts';
 
 import type {
   BoardController,

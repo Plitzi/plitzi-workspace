@@ -264,11 +264,15 @@ export const applyPalette = (map: MapLibreMap, palette: Palette): void => {
   const all = paints(palette);
   // `Object.keys` and `Object.entries` widen their keys to `string`: these are the layer ids of `Paints` and the paint
   // properties of each layer's own spec, by construction.
-  (Object.keys(all) as (keyof Paints)[]).forEach(layer =>
-    Object.entries(all[layer] ?? {}).forEach(([property, value]) =>
-      map.setPaintProperty(layer, property as keyof AllPaintProperties, value)
-    )
-  );
+  (Object.keys(all) as (keyof Paints)[]).forEach(layer => {
+    const paint: Partial<AllPaintProperties> = all[layer] ?? {};
+    (Object.keys(paint) as (keyof AllPaintProperties)[]).forEach(property => {
+      const value = paint[property];
+      if (value !== undefined) {
+        map.setPaintProperty(layer, property, value);
+      }
+    });
+  });
   map.setSky(sky(palette));
 };
 

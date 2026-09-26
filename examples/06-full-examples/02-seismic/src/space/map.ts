@@ -13,9 +13,9 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { DETAIL_ACTION } from '../actions.ts';
+import { NOTIFIER_ID } from './ids.ts';
 import notifierDeclaration from '../plugins/Notifier/declaration.ts';
 import declaration from '../plugins/SeismicMap/declaration.ts';
-import { NOTIFIER_ID } from './ids.ts';
 
 import type { SeismicMapAttributes } from '../plugins/SeismicMap/declaration.ts';
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';

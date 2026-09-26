@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { authorFlow, named, when, whenFailed, whenSucceeded } from './flows';
 
+import type { Rule } from './flows';
 import type { StepSpec } from './types';
 
 const step = (action: string): StepSpec => ({ type: 'globalCallback', action, on: 'state' });
@@ -62,8 +63,8 @@ describe('when', () => {
     expect(nodes.go.when).toMatchObject({ rules: [{ field: 'save.status' }] });
   });
 
-  const ruleA = { field: 'form.valid', operator: '=', value: true };
-  const ruleB = { field: 'state.ready', operator: '=', value: true };
+  const ruleA: Rule = { field: 'form.valid', operator: '=', value: true };
+  const ruleB: Rule = { field: 'state.ready', operator: '=', value: true };
 
   /**
    * A helper that returns its steps already guarded, and a caller adding a guard of its own: both must hold. This used

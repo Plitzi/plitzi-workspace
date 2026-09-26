@@ -224,8 +224,12 @@ export const LIMITS = {
 const isFontSize = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= LIMITS.fontSize.min && value <= LIMITS.fontSize.max;
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
+/** An object read from the wire — a message, a document — with its fields to look at. Not a list. */
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** A field read as text: itself when it is one, `fallback` when it is anything else — never `[object Object]`. */
+export const textOf = (value: unknown, fallback = ''): string => (typeof value === 'string' ? value : fallback);
 
 const isCoordinate = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= EXTENT;

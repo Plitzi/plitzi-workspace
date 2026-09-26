@@ -19,8 +19,8 @@ import {
 import { connect, drawing, loop, scribble, sticky } from '../../board/sketch.ts';
 import declaration from '../../plugins/Board/declaration.ts';
 import { newBoardFlow, primaryButton } from '../board.ts';
-import { quickPrivateBoard } from '../reach.ts';
 import { BUTTON_RESET, FLOAT, ICON_BUTTON, icon } from '../kit.ts';
+import { quickPrivateBoard } from '../reach.ts';
 
 import type { Tool } from '../../plugins/Board/controller.ts';
 import type { BoardAttributes } from '../../plugins/Board/declaration.ts';

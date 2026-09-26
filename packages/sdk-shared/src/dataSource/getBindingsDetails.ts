@@ -4,6 +4,7 @@ import { produce } from 'immer';
 
 import utility from './utility';
 import { checkboxParams } from './utility/checkboxParams';
+import { isTrue } from './utility/truthiness';
 
 import type { BindingCategory, Element, ElementBinding } from '../types';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -70,6 +71,16 @@ const getBindingsDetails = (
               sourceTo: toValue
             });
           });
+        }
+
+        /**
+         * Once the data has answered, visibility is a yes or a no, and every answer is one — an empty text included.
+         * Written only when truthy like the rest, an element shown once stayed shown when its condition came back
+         * empty, and a condition that printed `0` showed it: `isVisible` hides only on `false`. Before the data answers
+         * nothing is written, as before: a flag nobody has set leaves the element as it starts, which spaces rely on.
+         */
+        if (bkey === 'initialState' && toPath === 'visibility' && source && get(dataSource, source) !== undefined) {
+          resultValue = isTrue(resultValue);
         }
 
         if (typeof resultValue === 'boolean' || typeof resultValue === 'number' || resultValue) {

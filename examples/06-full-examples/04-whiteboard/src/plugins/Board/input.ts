@@ -1,8 +1,8 @@
-import { LIMITS, parseElement } from '../../board/model.ts';
 import { DEFAULT_BOX } from './core.ts';
 import { toBoard } from './geometry.ts';
 import { pictureIn, readPicture } from './pictures.ts';
 import { isDefined } from './values.ts';
+import { LIMITS, parseElement } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
 import type { Pictures } from './pictures.ts';

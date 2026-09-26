@@ -8,6 +8,7 @@
     "start": "node src/main.ts",
     "start:dev": "node --watch-path=./src src/main.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
     "test": "playwright test"
   },
   "dependencies": {

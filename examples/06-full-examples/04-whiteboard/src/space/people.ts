@@ -17,12 +17,12 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { COLLAB_COLOURS } from '../board/people.ts';
-import shareDeclaration from '../plugins/ShareCard/declaration.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
+import { COLLAB_COLOURS } from '../board/people.ts';
+import shareDeclaration from '../plugins/ShareCard/declaration.ts';
 
 import type { ShareCardAttributes } from '../plugins/ShareCard/declaration.ts';
 import type { CssProps, ElementSpec } from '@plitzi/sdk-authoring';

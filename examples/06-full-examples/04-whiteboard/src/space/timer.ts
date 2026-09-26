@@ -14,12 +14,12 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { TIMER_ACTION } from '../actions.ts';
-import countdownDeclaration from '../plugins/Countdown/declaration.ts';
 import { BOARD_PASS, ofBoard } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption, iconAction } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
+import countdownDeclaration from '../plugins/Countdown/declaration.ts';
 
 import type { CountdownAttributes } from '../plugins/Countdown/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';

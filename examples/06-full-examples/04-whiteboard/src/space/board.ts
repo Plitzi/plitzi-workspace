@@ -47,7 +47,6 @@ import {
   readOnlyOnly,
   unlockScreen
 } from './access.ts';
-import declaration from '../plugins/Board/declaration.ts';
 import { chatButton, chatPanel, hearChat } from './chat.ts';
 import { deleteButton, deletePanel } from './deleteBoard.ts';
 import { framesButton, framesPanel, minimapButton, presentationBanner } from './frames.ts';
@@ -67,6 +66,7 @@ import { boardAction, stylePanel } from './stylePanel.ts';
 import { timerButton, timerPanel, timerPill } from './timer.ts';
 import { toolbar, toolFlyouts } from './toolbar.ts';
 import { bottomTray, followBanner, reactionPicker, stampPicker } from './tray.ts';
+import declaration from '../plugins/Board/declaration.ts';
 
 import type { BoardAttributes } from '../plugins/Board/declaration.ts';
 import type { ElementSpec, PageSpec } from '@plitzi/sdk-authoring';

@@ -192,6 +192,26 @@ const App = ({
     }
   }, [debugModeProp, debugPreference, debugCookie]);
 
+  /**
+   * The render tracing, readable by a test while it is on: `inspectRenders` (`@plitzi/sdk-authoring/testing`) marks,
+   * lets the test act, and asks which elements rendered and what changed for each. Only under `debugMode`, where the
+   * elements are profiled at all — and taken away with it, so a published page carries no such global.
+   */
+  useEffect(() => {
+    if (!debugMode) {
+      return undefined;
+    }
+
+    window.plitziTracing = {
+      lastCommitId: tracingCollector.lastCommitId,
+      commitsSince: tracingCollector.commitsSince
+    };
+
+    return () => {
+      delete window.plitziTracing;
+    };
+  }, [debugMode]);
+
   // Tells the render profiler this app hydrated SSR output, so it can label the hydration commit (a pure client mount
   // looks identical at the React-phase level).
   useEffect(() => {

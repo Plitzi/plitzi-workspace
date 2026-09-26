@@ -388,6 +388,36 @@ describe('InteractionsManager — what a step reads', () => {
     expect(stillOpen).not.toHaveBeenCalled();
   });
 
+  /**
+   * A rule whose value is a path (`isBinding`) reads it from the same place as its field: the trigger's payload and the
+   * page's sources side by side — so a computed value can be compared with what was clicked.
+   */
+  it('compares a computed value with a path from the trigger, both read as the step runs', async () => {
+    const page = { computed: { tool: 'pen' } };
+    const matched = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      chain('el1', [
+        {
+          action: 'matched',
+          when: {
+            combinator: 'and',
+            rules: [{ field: 'computed.tool', operator: '=', value: 'trig.tool', isBinding: true }]
+          }
+        }
+      ]),
+      triggerDef,
+      { matched: { action: 'matched', title: 'Matched', type: 'callback', params: {}, callback: matched } },
+      () => ({ dataSource: page })
+    );
+
+    await manager.interactionTrigger('el1', 'click', { tool: 'pen' });
+    await manager.interactionTrigger('el1', 'click', { tool: 'laser' });
+
+    expect(matched).toHaveBeenCalledTimes(1);
+  });
+
   it('resolves a param template against the page as the step runs', async () => {
     const page = { state: { count: 1 } };
     const received = vi.fn();

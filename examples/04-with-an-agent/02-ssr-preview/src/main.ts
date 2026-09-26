@@ -2,10 +2,9 @@ import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { offlineDataPath } from '@plitzi/example-space';
 import { mcpExtensions } from '@plitzi/sdk-mcp';
 import { consoleLogger, createServer } from '@plitzi/sdk-server';
-
-import { offlineDataPath } from '@plitzi/example-space';
 
 import type { OfflineDataRaw, Schema, SSRPageAdapters, Style } from '@plitzi/sdk-shared';
 
@@ -28,7 +27,7 @@ const adapters: SSRPageAdapters = {
   // verified bearer; every caller getting write access to space 1 is fine for an example and nowhere else.
   getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent', canWrite: true }),
   getSchema: () => Promise.resolve(read().schema),
-  getStyle: () => Promise.resolve(read().style as Style),
+  getStyle: () => Promise.resolve(read().style),
   saveSchema: (_s, _e, schema: Schema) => {
     write({ ...read(), schema });
 

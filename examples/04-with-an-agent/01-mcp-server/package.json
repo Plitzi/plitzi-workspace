@@ -8,7 +8,8 @@
     "start": "node src/main.ts",
     "start:dev": "node --watch-path=./src src/main.ts",
     "inspector": "yarn dlx @modelcontextprotocol/inspector@latest",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",

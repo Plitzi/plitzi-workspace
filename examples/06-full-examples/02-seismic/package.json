@@ -8,7 +8,8 @@
     "start": "node src/main.ts",
     "start:dev": "node --watch-path=./src src/main.ts",
     "geography": "node scripts/geography.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@plitzi/sdk-authoring": "workspace:*",

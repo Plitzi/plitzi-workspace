@@ -47,7 +47,7 @@ const GUESSED = new Set([
 const RUNS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm', 'abcdefghijklmnopqrstuvwxyz', '01234567890'];
 
 const alongARun = (text: string): boolean =>
-  RUNS.some(run => run.includes(text) || [...run].reverse().join('').includes(text));
+  RUNS.some(run => run.includes(text) || Array.from(run).toReversed().join('').includes(text));
 
 /**
  * Why a password would not keep anybody out — or nothing, for one that would. Length and guessability only, as NIST

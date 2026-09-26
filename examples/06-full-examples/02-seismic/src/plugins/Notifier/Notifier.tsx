@@ -86,14 +86,17 @@ const Notifier = ({
     const release = unlockOnGesture();
     let status: PermissionStatus | undefined;
     const follow = (): void => setPermission(current());
-    // A person can allow or block the site from the browser's own settings while the page is open.
-    void navigator.permissions
-      ?.query({ name: 'notifications' })
-      .then(answer => {
-        status = answer;
-        status.addEventListener('change', follow);
-      })
-      .catch(() => undefined);
+    // A person can allow or block the site from the browser's own settings while the page is open. Asked only where
+    // the browser has the Permissions API at all — an older Safari does not.
+    if ('permissions' in navigator) {
+      void navigator.permissions
+        .query({ name: 'notifications' })
+        .then(answer => {
+          status = answer;
+          status.addEventListener('change', follow);
+        })
+        .catch(() => undefined);
+    }
 
     return () => {
       release();

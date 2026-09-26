@@ -1,7 +1,7 @@
-import { holdsText, isAuthored, takesLabel } from '../../board/model.ts';
 import { connectorBetween } from './connectors.ts';
 import { anchorPoint, boundsOf } from './geometry.ts';
 import { newId, newSeed } from './values.ts';
+import { holdsText, isAuthored, takesLabel } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
 import type { Box } from './geometry.ts';

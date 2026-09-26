@@ -141,3 +141,27 @@ give them a class that sets `position` — the element falls into the page's flo
 the look in the plugin's own stylesheet (imported CSS ships beside the bundle) and take colours from custom properties
 the space sets (`--seat-accent: var(--accent)` in `customCss`); a canvas or WebGL layer resolves them through a probe
 element with `getComputedStyle(probe).color`, again whenever `theme.resolved` changes (bind it as a prop).
+
+## Components that draw a lot
+
+A canvas with thousands of shapes on it — a whiteboard, a diagram, a map of points — is judged on a slower machine than
+yours: sixty frames a second here says nothing about a four-year-old laptop. What keeps one fast is doing work in
+proportion to what CHANGED, not to what is there:
+
+- **Two layers.** Paint what stands still on one canvas and leave it; clear and draw the one over it every frame, with
+  only what moves: the cursor, the selection, what is being dragged.
+- **Repaint the part that changed.** Something added, edited or removed repaints the area it was and is in, clipped,
+  with whatever reaches into it — not the whole board. A pan moves the picture already painted by whole device pixels
+  and paints the edges it uncovers.
+- **Draw a dragged group once.** Everything picked up moves by the same amount at every step: draw it to a canvas of its
+  own when the drag begins and copy that into place after.
+- **Cache per object, not per frame.** Treat elements as immutable and key what is derived from one — its bounds, its
+  shape, a resolved connector — on the object itself (a `WeakMap`), so nothing is worked out twice for the same thing.
+- **Hand the space outcomes, not motion.** A stroke finished, a selection changed: a trigger each. Firing one at every
+  pointer move runs a flow and renders the page at every pointer move.
+- **Measure with a bench, throttled.** A script that drives the real thing in a browser with the CPU slowed
+  (`Emulation.setCPUThrottlingRate`) and reports script time per frame, not only frames per second — and a test that
+  counts WORK (full repaints, strokes drawn during a drag), which holds on any machine where a timing does not.
+
+`examples/06-full-examples/04-whiteboard` does all of it; its README's Performance section and its `bench/` are the
+worked example.

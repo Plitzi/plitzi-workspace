@@ -1,4 +1,3 @@
-import { fitsInFrame, holdsText, LIMITS, takesLabel } from '../../board/model.ts';
 import { connectorBetween, detachOutside, endsOf, releasedFrom } from './connectors.ts';
 import { frameAt } from './containers.ts';
 import { DEFAULT_BOX, HANDLE_CURSORS } from './core.ts';
@@ -21,8 +20,8 @@ import {
   unionOf,
   zoomAt
 } from './geometry.ts';
-
 import { isOneOf } from './values.ts';
+import { fitsInFrame, holdsText, LIMITS, takesLabel } from '../../board/model.ts';
 
 import type { Carry } from './carry.ts';
 import type { Core } from './core.ts';
@@ -520,7 +519,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
       }
       case 'freehand': {
         const points = gesture.element.points ?? [];
-        const last = points[points.length - 1];
+        const last = points.at(-1);
         const next: Point = [point[0] - gesture.element.x, point[1] - gesture.element.y];
         if (!last || Math.hypot(next[0] - last[0], next[1] - last[1]) > 0.5 / state.camera.zoom) {
           gesture.element = { ...gesture.element, points: [...points, next] };

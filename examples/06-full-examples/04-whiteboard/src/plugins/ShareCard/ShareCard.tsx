@@ -1,7 +1,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import { encode } from 'uqr';
 
 import { RootElement, useElement, usePlitziServiceContext } from '@plitzi/plitzi-sdk';
-import { encode } from 'uqr';
 
 import './ShareCard.css';
 

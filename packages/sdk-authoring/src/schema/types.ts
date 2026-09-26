@@ -164,7 +164,8 @@ export interface ElementSpec {
    * `false` starts it hidden with no condition at all: a panel that a flow reveals (`toggleState`, `setState`)
    * rather than one the data does.
    *
-   * `{ source, template }` is a condition the value does not answer on its own — the template says `true` or `false`
+   * `{ source, template }` is a condition the value does not answer on its own — the template's value is read as a yes
+   * or a no (`false`, `0`, empty, an empty list or nothing is a no)
    * (`"{{ source == '' or source == list_games.item.genre }}"`). Like every condition, it starts hidden.
    */
   visible?: string | false | VisibleCondition;

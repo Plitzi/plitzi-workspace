@@ -6,8 +6,8 @@ import { COPY_DECLARATION } from './invite.ts';
 import { SHARE_DECLARATION } from './people.ts';
 import { computed, paintedState, transientState } from './state.ts';
 import { COUNTDOWN_DECLARATION } from './timer.ts';
-import { STACK_DECLARATION } from './tray.ts';
 import { fonts, notifications, variables } from './tokens.ts';
+import { STACK_DECLARATION } from './tray.ts';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 

@@ -322,7 +322,7 @@ const favoritesHint = (): ElementSpec =>
     class: hintRow,
     visible: {
       source: 'computed.favorites',
-      template: `{{ source|length == 0 and not (computed.librarySearch|trim) ? 'true' : 'false' }}`
+      template: "{{ source|length == 0 and not (computed.librarySearch|trim) ? 'true' : 'false' }}"
     },
     children: [icon('fa-regular fa-star'), text({ content: 'Star what you use most — it shows up here, first.' })]
   });

@@ -2,10 +2,9 @@ import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { offlineDataPath } from '@plitzi/example-space';
 import { createServer } from '@plitzi/sdk-mcp/server';
 import { consoleLogger } from '@plitzi/sdk-server/kernel';
-
-import { offlineDataPath } from '@plitzi/example-space';
 
 import type { OfflineDataRaw, Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
 
@@ -33,7 +32,7 @@ const adapters: SSRAdapters = {
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0, pluginNames: [] }),
   getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent', canWrite: true }),
   getSchema: () => Promise.resolve(read().schema),
-  getStyle: () => Promise.resolve(read().style as Style),
+  getStyle: () => Promise.resolve(read().style),
   saveSchema: (_spaceId, _environment, schema: Schema) => {
     write({ ...read(), schema });
 

@@ -2,7 +2,6 @@ import { randomInt } from 'node:crypto';
 
 import { ActionRefusal } from '@plitzi/sdk-server/actions';
 
-import { boundsOf, unionOf } from '../plugins/Board/geometry.ts';
 import { keepAsset } from './assets.ts';
 import { FEATURED } from './featured.ts';
 import { lockWith, passwordOpens, passwordProblem } from './locks.ts';
@@ -17,6 +16,7 @@ import {
   parseElement
 } from './model.ts';
 import { TEMPLATE_TITLES, templateElements } from './templates.ts';
+import { boundsOf, unionOf } from '../plugins/Board/geometry.ts';
 
 import type { AssetStore } from './assets.ts';
 import type { BoardLock, BoardSigner } from './locks.ts';

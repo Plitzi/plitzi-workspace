@@ -596,7 +596,8 @@ export const countSightings = (slug: string): number => sightings[slug] ?? 0;
 const seenBy: Record<string, Set<string>> = {};
 
 /** Whether this reader has already counted for this post. The question the post page asks as it loads. */
-export const hasSeenSighting = (slug: string, reader: string): boolean => Boolean(seenBy[slug]?.has(reader));
+export const hasSeenSighting = (slug: string, reader: string): boolean =>
+  Object.hasOwn(seenBy, slug) && seenBy[slug].has(reader);
 
 /**
  * One more, from a reader who has not said so before.
@@ -665,10 +666,7 @@ export const topics = (active = ''): TopicView[] => {
       isActive: name.toLowerCase() === chosen
     }));
 
-  return [
-    { name: 'All', count: String(posts.length), url: '/', isActive: !chosen },
-    ...entries
-  ];
+  return [{ name: 'All', count: String(posts.length), url: '/', isActive: !chosen }, ...entries];
 };
 
 /**

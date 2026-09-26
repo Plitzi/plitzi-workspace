@@ -133,7 +133,7 @@ export const scribble = (points: readonly Point[], stroke: Stroke = 'ink', seed 
   };
   const traced: Point[] = [];
   points.forEach((point, index) => {
-    const next = points[index + 1];
+    const next = points.at(index + 1);
     if (!next) {
       traced.push(point);
 

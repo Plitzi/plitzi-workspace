@@ -1,5 +1,5 @@
-import { fitsInFrame } from '../../board/model.ts';
 import { boundsOf, FRAME_HEADER } from './geometry.ts';
+import { fitsInFrame } from '../../board/model.ts';
 
 import type { BoardElement, Point } from '../../board/model.ts';
 

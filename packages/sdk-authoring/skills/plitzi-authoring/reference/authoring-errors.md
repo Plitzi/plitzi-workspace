@@ -59,4 +59,5 @@ A warning means the space renders, and renders something you probably did not me
 | `while-running` | `whileRunning` on a step that is not the trigger, or a value other than `skip`, `parallel`, `queue` | `[whileRunning('queue', onClick()), …]` |
 | `trigger-keys` | an `onKey` flow whose `keys` cannot fire: two keys in one shortcut, only modifiers, or a name that is not a key | `onKey('f')`, `onKey('shift+f')`, `onKey('mod+k, escape')` |
 | `state-toggled-in-branches` | two `setState` steps of one key, each under a `when` on that key — the second flips back what the first wrote | `toggleState({ key })`; for something shown by default, a key named for hiding it |
+| `form-value-compared-to-blank` | a `when` asking whether a submitted field (`….values.x`) `=` or `!=` `""` — a field nobody typed in is not sent, so it never matches | `operator: 'empty'` / `'notEmpty'` |
 | `overlay-never-opened` | a modal or dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |

@@ -1,7 +1,7 @@
+import { isOneOf, isPoint } from './values.ts';
 import { STROKES } from '../../board/model.ts';
 import { isCollaborator } from '../../board/people.ts';
 import { isReaction } from '../../board/reactions.ts';
-import { isOneOf, isPoint } from './values.ts';
 
 import type { BoardController } from './controller.ts';
 import type { BoardElement, Point, Stroke } from '../../board/model.ts';

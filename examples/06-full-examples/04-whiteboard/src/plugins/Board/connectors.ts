@@ -1,5 +1,5 @@
-import { isConnector } from '../../board/model.ts';
 import { detachEnd } from './geometry.ts';
+import { isConnector } from '../../board/model.ts';
 
 import type { Binding, BoardElement, Point } from '../../board/model.ts';
 

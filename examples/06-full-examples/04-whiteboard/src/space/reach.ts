@@ -15,11 +15,11 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { CREATE_ACTION, REACH_ACTION, READ_ONLY_ACTION } from '../actions.ts';
-import { DEFAULT_LIFETIME } from '../board/model.ts';
-import countdownDeclaration from '../plugins/Countdown/declaration.ts';
 import { BOARD_PASS, IS_OWNER, keepOwned } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BUTTON_RESET, caption, icon } from './kit.ts';
+import { DEFAULT_LIFETIME } from '../board/model.ts';
+import countdownDeclaration from '../plugins/Countdown/declaration.ts';
 
 import type { CountdownAttributes } from '../plugins/Countdown/declaration.ts';
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';

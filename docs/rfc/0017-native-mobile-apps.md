@@ -145,7 +145,7 @@ waiters to take orders.
 | Need | Plitzi primitive that already exists |
 |---|---|
 | Order "cart" | State: `appendState`, `removeState`, `toggleInState`, `moveState`, `clearState` |
-| Order total, item count | `settings.computed` (e.g. `{{ state.order|length }}`) |
+| Order total, item count | `settings.computed` (e.g. `{{ state.order\|length }}`) |
 | Send order to kitchen | `runServerAction` — already accepts **`idempotencyKey`**, so a double tap or retry never duplicates an order |
 | Tables, menu, dish status | Queries + `invalidateQueries` |
 | Waiter vs admin | The space's user auth, roles shared by both spaces |

@@ -7,7 +7,11 @@
 export { inspectDocument, inspectPage } from './inspect';
 export type { DocumentChecks, InspectOptions, PageEvaluator, PageReport } from './inspect';
 export { onScreen } from './onScreen';
+export { inspectRenders, summariseRenders } from './renders';
+export type { ElementRenders, RenderEvaluator, RenderOptions, RenderReport } from './renders';
 export type { OnScreenOptions } from './onScreen';
 export type { ProbeFindings, ProbeInput } from './probe';
+export { pressShortcut, shortcutKey } from './shortcut';
+export type { KeyboardDriver } from './shortcut';
 export { singlePageSpace, withElement } from './variants';
 export type { ElementPatch } from './variants';

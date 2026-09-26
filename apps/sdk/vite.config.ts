@@ -107,6 +107,36 @@ function renameCssPlugin(): Plugin {
   };
 }
 
+/** What `vite.vendor.config.ts` builds into the same `dist`: React and its kin, a separate build of their own. */
+const VENDOR_OUTPUT = /^plitzi-sdk(-dev)?-vendor\.js(\.map)?(\.gz)?$/;
+
+/**
+ * Empties `dist` of what this build made before — and only of that.
+ *
+ * `emptyOutDir` empties all of it, and the vendor bundles are built into the same folder by another config: a
+ * production build left a `dist` with no React, and every page served from it answered a script that 302'd to HTML.
+ * Run at the start of a production build only; a development build overwrites in place, as it always has.
+ */
+function cleanOwnOutputPlugin(): Plugin {
+  return {
+    name: 'plitzi-clean-own-output',
+    apply: 'build',
+
+    buildStart() {
+      const outDir = path.resolve(import.meta.dirname, 'dist');
+      if (!fs.existsSync(outDir)) {
+        return;
+      }
+
+      for (const entry of fs.readdirSync(outDir)) {
+        if (!VENDOR_OUTPUT.test(entry)) {
+          fs.rmSync(path.join(outDir, entry), { recursive: true, force: true });
+        }
+      }
+    }
+  };
+}
+
 /** Skips rewriting a declaration whose content is already on disk. Every build regenerates every `.d.ts`, unchanged
  *  ones included, and replacing hundreds of files at once is what makes the editors holding them open fall over.
  *  Inlined rather than shared: a vite config importing across packages breaks `composite` type-checking (TS6059). */
@@ -145,6 +175,7 @@ export default defineConfig(({ mode, command }) => {
         reactDomClient: devMode ? '/src/vendor-entry.ts' : '/plitzi-sdk-vendor.js',
         version: PACKAGE.version
       }),
+      command === 'build' && !devMode && cleanOwnOutputPlugin(),
       command === 'build' && ejsPlugin(devMode),
       command === 'build' && renameCssPlugin(),
       !isWatch &&
@@ -298,7 +329,7 @@ export default defineConfig(({ mode, command }) => {
         }
       },
       sourcemap: false,
-      emptyOutDir: !devMode
+      emptyOutDir: false
     },
     define: {
       /**

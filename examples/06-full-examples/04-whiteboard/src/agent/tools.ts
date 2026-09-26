@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
+import { describeBoard, describeElement } from './describe.ts';
+import { cardHeight, frameNamed, placeAll } from './place.ts';
+import { callAction, joinBoard, newElementId, parseLink } from './session.ts';
 import { isStamp, REACTIONS, STAMPS } from '../board/reactions.ts';
 import { TEMPLATES } from '../board/templates.ts';
 import { releasedFrom } from '../plugins/Board/connectors.ts';
 import { layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
 import { anchorPoint, boundsOf, nearestAnchor } from '../plugins/Board/geometry.ts';
 import { restyled } from '../plugins/Board/styling.ts';
-import { describeBoard, describeElement } from './describe.ts';
-import { cardHeight, frameNamed, placeAll } from './place.ts';
-import { callAction, joinBoard, newElementId, parseLink } from './session.ts';
 
 import type { Activity, Session } from './session.ts';
 import type { BoardElement, Point } from '../board/model.ts';

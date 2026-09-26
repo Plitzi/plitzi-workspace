@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-import { COLLAB_COLOURS } from '../board/people.ts';
 import { registerTools } from './tools.ts';
+import { COLLAB_COLOURS } from '../board/people.ts';
 
 /**
  * Pizarra for agents: an MCP server, over stdio, that lets an agent join a board as a collaborator.

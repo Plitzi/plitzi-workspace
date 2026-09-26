@@ -178,3 +178,25 @@ describe('the collector over instances that come and go', () => {
     expect(tree().here.mountedAt).toBeUndefined();
   });
 });
+
+describe('the collector read by a test', () => {
+  /** A test marks, acts, and asks: the renders its action caused, even before the frame that flushes them. */
+  it('answers the commits since a mark, flushed or not', async () => {
+    render('before', undefined, 'before', 1);
+    await flush();
+    const mark = tracingCollector.lastCommitId();
+
+    tracingCollector.recordProps('button', [{ key: 'attributes', prev: 'a', next: 'b' }]);
+    render('button', undefined, 'button', 2);
+
+    const since = tracingCollector.commitsSince(mark);
+    expect(since).toHaveLength(1);
+    expect(since[0].elements.map(element => element.elementId)).toEqual(['button']);
+    expect(since[0].elements[0].changedProps).toEqual([{ key: 'attributes', prev: 'a', next: 'b' }]);
+
+    await flush();
+
+    expect(tracingCollector.commitsSince(mark)).toHaveLength(1);
+    expect(tracingCollector.commitsSince(tracingCollector.lastCommitId())).toEqual([]);
+  });
+});

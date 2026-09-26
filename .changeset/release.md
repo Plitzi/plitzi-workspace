@@ -316,6 +316,41 @@
   flow of synchronous steps rendered once per step; React now batches them into one.
 - Measured on Pizarra with 300 notes and a marquee over all of them: from 27 frames over 50 ms (the worst 330 ms,
   React's development build) to 60 fps with one 88 ms frame when the selection panels mount (production build).
+- **A test can count what an interaction renders.** `inspectRenders(page, act, { max })` in
+  `@plitzi/sdk-authoring` answers every element that rendered, how often, what changed for it and which store paths
+  were written; over `max`, `problems` names the elements that rendered most. It reads the render tracing the SDK
+  already keeps under `debugMode`, now published as `window.plitziTracing` while it is on (`TracingReader` in
+  `@plitzi/sdk-shared/store/tracing`: `lastCommitId`, `commitsSince`). The skill's new `performance` reference says
+  what makes an element render, what a flow costs and where to look when something is slow.
+- **`pressShortcut(page, 'mod+z')`** presses a shortcut written as `onKey` writes it, with the keys the PAGE listens
+  for: `mod` from its user agent. A driver's "Control or Meta" asks the machine running the suite, so a Mac driving an
+  emulated desktop Chrome pressed ⌘ at a page listening for Ctrl.
+
+## Conditions, and what authoring catches
+
+- **Behaviour change: a visibility, once its data answers, is a yes or a no.** A value written to `visibility` by a
+  binding is now read the way `not` reads it — `false`, `0`, an empty text, an empty list are a no — and a no is
+  written too. Before, only a truthy value was written, so an element shown once stayed shown when its condition came
+  back empty, and a template that printed `0` showed it. A condition's template no longer needs `? 'true' : 'false'`:
+  `{{ source is defined and source is empty }}` is enough. A source that has not answered yet still leaves the element
+  as it starts, so a flag nobody has set keeps what it controls on screen, as spaces rely on.
+- **New warning `form-value-compared-to-blank`.** A `when` asking whether a submitted field (`….values.x`) `=` or
+  `!=` `""`: a field nobody typed in is not in `values` at all, so it never matches. The warning names
+  `operator: 'empty'` / `'notEmpty'`, which take a missing value and `""` alike.
+- A `when` with `isBinding` comparing a computed value with a path from the trigger is pinned by a test.
+
+## Builds and caches
+
+- **`apps/sdk`'s production build no longer deletes the vendor bundles.** `emptyOutDir` emptied `dist`, where
+  `vite.vendor.config.ts` builds React and its kin: a production build left pages whose script 302'd to HTML. The build
+  now empties what it made and leaves the vendor files.
+- **A cached plugin is rebuilt when its source changed, whatever its version says.** The plugin manager records a
+  content digest of every file a bundle was built from and compares it when a process first finds the bundle — in
+  production as in development. A deployment rebuilt from new source under the same version used to serve the
+  previous bundle. Bundles cached before this are built once more.
+- **The examples are linted** with the packages' rules (`examples/eslint.config.mjs`, a `lint` script in each), and
+  what the rules found is fixed — among it, index reads the types called defined, a hook-named step helper, and the
+  Permissions API assumed present. `docs/` and the skills' markdown are hand-wrapped and listed in `.prettierignore`.
 
 ## Kept state the first paint shows is drawn by the server
 
@@ -874,20 +909,20 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   arrows fixed to the anchors of what they connect (curved, following every move), labels in shapes, pads of sticky
   notes to drag from, a laser pointer, reactions, following a collaborator's view, groups, a toolbar authored in the
   space that the canvas lays beside the selection, pictures pasted from the clipboard, password-protected boards (on a
-  topic only whoever opened the board can name), votes, a shared timer, cursor chat and "bring everyone here". The
-  front page is a board to try before starting one — with scripted collaborators already drawing on it — templates,
-  and two large featured boards that are read-only (looked around together, then "Use as template"). Frames that hold
-  what is put in them — a column frame is a kanban lane that lays out its cards, with the drop shown as it is dragged —
-  task cards, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness,
-  edges, opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or private and
-  temporary boards (in Board settings, beside the title), boards their creator makes read-only for everyone else, an
-  elements library built from one registry (searchable, with favourites), texts resized by their handles, stamps,
-  elements locked in place, and sounds. It carries its own bench (`yarn bench`, `--cpu 4` for slower hardware): boards
-  of a thousand and four thousand elements opened, panned, zoomed, drawn on, selected, moved, pasted, deleted and
-  undone, and crowds of fifty collaborators on them. AI agents join as collaborators through an MCP server in the example (`src/agent`),
-  a client of the board's server like a browser. It runs on several replicas over Redis (`REDIS_URL`, `BOARD_SECRET`):
-  the channels, the boards, the pictures, and a write lock in the action `kv` shared by all of them. See
-  `docs/en/realtime.md`.
+  topic only whoever opened the board can name), votes, a shared timer, cursor chat and "bring everyone here". The front
+  page is a board to try before starting one — with scripted collaborators already drawing on it — templates, and two
+  large featured boards that are read-only (looked around together, then "Use as template"). Frames that hold what is
+  put in them — a column frame is a kanban lane that lays out its cards, with the drop shown as it is dragged — task
+  cards, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness, edges,
+  opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or private and temporary
+  boards (in Board settings, beside the title), boards their creator makes read-only for everyone else, an elements
+  library built from one registry (searchable, with favourites), texts resized by their handles, stamps, elements locked
+  in place, and sounds. The gallery previews a crowded board whole, coarsened on a grid. It carries its own bench
+  (`yarn bench`, `--cpu 4` for slower hardware): boards of a thousand and four thousand elements opened, panned, zoomed,
+  drawn on, selected, moved, pasted, deleted and undone, and crowds of fifty collaborators on them. AI agents join as
+  collaborators through an MCP server in the example (`src/agent`), a client of the board's server like a browser. It
+  runs on several replicas over Redis (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, and a write
+  lock in the action `kv` shared by all of them. See `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
 
 ## A render reads what a call wrote

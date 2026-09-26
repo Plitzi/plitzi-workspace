@@ -102,7 +102,13 @@ describe('GlobalSources — the computed source', () => {
    * the hundred and sixty stars reading the favourites, for the tool in hand changing. This pins that it does not.
    */
   it('keeps a value that came out the same, so what reads it does not render again', () => {
-    const store = createStore<Record<string, unknown>>({
+    type Page = {
+      schema: { settings: { computed: Record<string, string> }; variables: unknown[] };
+      pageDefinitions: Record<string, unknown>;
+      navigation: typeof navigation;
+      runtime: { state: { favourites: string[]; tool: string }; sources: Record<string, unknown> };
+    };
+    const store = createStore<Page>({
       schema: {
         settings: { computed: { picked: '{{ state.favourites|sort }}', tool: '{{ state.tool }}' } },
         variables: []

@@ -43,6 +43,20 @@ A `formControl`'s id names its wrapper: type into `locate('email').locator('inpu
 Select by `data-plitzi-el`, never by a generated class name: authoring derives `<type>-<hash>` for an element's own
 rules, and that name changes when the rules do.
 
+## Pressing a shortcut
+
+`pressShortcut(page, 'mod+z')` presses a shortcut written the way `onKey` writes it, with the keys the PAGE listens
+for: `mod` is ⌘ where the page's user agent is a Mac and Ctrl anywhere else. A driver's own "Control or Meta" asks the
+machine running the suite instead, so a suite on a Mac driving an emulated desktop Chrome presses ⌘ at a page waiting
+for Ctrl — the flow never runs and nothing says why. Point at the page first (a click on it) so it has the keys.
+
+## Counting what an interaction renders
+
+`inspectRenders(page, act, { max })` runs `act` and answers every element that rendered, how often and what changed
+for it; over `max`, `problems` says so. It reads the SDK's render tracing, which is on only under `debugMode` — render
+the space with it (the e2e harness: `renderSpace(page, space, { debugMode: true })`). What to do with the answer is in
+[performance](performance.md).
+
 ## Spaces written for a test
 
 Author them like any space — never as JSON: the validator is what tells a fixture that tests something from one that

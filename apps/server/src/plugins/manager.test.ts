@@ -158,6 +158,36 @@ describe('PluginManager staleness', () => {
  * With workers, one process invalidates a plugin — the files go — and the others are told to forget it. Forgetting
  * must leave the disk alone: the others share it, and the files may already be the rebuild.
  */
+describe('PluginManager across deployments', () => {
+  /**
+   * A new process — a deployment — finding last one's bundle in the cache folder. The version did not move; the code
+   * did. Trusting the version served the old plugin, in production, where nothing else would ever notice.
+   */
+  it('builds again when the source changed under the same version, in production too', async () => {
+    const { entry, component, cache } = await workspace();
+    const sources = { widget: { js: entry, action: 'compile' as const, version: '1.0.0' } };
+
+    await new PluginManager(sources, cache, 60_000, false).prepare('widget');
+    expect(await bundle(cache, 'widget')).toContain('first');
+
+    await fs.writeFile(component, 'export const widget = "second";\n');
+    await new PluginManager(sources, cache, 60_000, false).prepare('widget');
+
+    expect(await bundle(cache, 'widget')).toContain('second');
+  });
+
+  it('keeps the bundle a new process finds when nothing it was built from changed', async () => {
+    const { entry, cache } = await workspace();
+    const sources = { widget: { js: entry, action: 'compile' as const, version: '1.0.0' } };
+
+    await new PluginManager(sources, cache, 60_000, false).prepare('widget');
+    const built = await fs.stat(path.join(cache, 'widget', 'index.js'));
+    await new PluginManager(sources, cache, 60_000, false).prepare('widget');
+
+    expect((await fs.stat(path.join(cache, 'widget', 'index.js'))).mtimeMs).toBe(built.mtimeMs);
+  });
+});
+
 describe('PluginManager forget and invalidate', () => {
   const exists = (file: string) =>
     fs.access(file).then(

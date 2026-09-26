@@ -9,7 +9,8 @@
     "start:dev": "vite --port 4012",
     "build": "vite build",
     "preview": "vite preview --port 4012",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",

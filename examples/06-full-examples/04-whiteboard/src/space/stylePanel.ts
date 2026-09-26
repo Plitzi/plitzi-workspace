@@ -9,10 +9,10 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { FILLS, STROKES, STROKE_WIDTHS } from '../board/model.ts';
-import boardDeclaration from '../plugins/Board/declaration.ts';
 import { BOARD_ID } from './ids.ts';
 import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
+import { FILLS, STROKES, STROKE_WIDTHS } from '../board/model.ts';
+import boardDeclaration from '../plugins/Board/declaration.ts';
 
 import type { Fill, Stroke, StrokeWidth } from '../board/model.ts';
 import type { CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';

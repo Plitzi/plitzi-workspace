@@ -6,5 +6,6 @@ export { MAX_COMMITS, createTracingState } from './tracingStore';
 export { previewValue, diffProps } from './preview';
 export { tracingMiddleware } from './tracingMiddleware';
 export type { UseTracingReturn } from './useTracing';
+export type { TracingReader } from './tracingCollector';
 
 export { tracingStore, tracingCollector, useTracing };

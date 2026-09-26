@@ -11,10 +11,10 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import copyDeclaration from '../plugins/CopyText/declaration.ts';
 import { BELOW_HEADER, FLOAT, ICON_BUTTON } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
+import copyDeclaration from '../plugins/CopyText/declaration.ts';
 
 import type { CopyTextAttributes } from '../plugins/CopyText/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';

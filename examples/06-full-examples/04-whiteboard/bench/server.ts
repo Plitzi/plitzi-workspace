@@ -12,8 +12,8 @@ import type { ChildProcess } from 'node:child_process';
  * port of its own, with the in-memory store, so a run starts from nothing and leaves nothing behind.
  *
  * In a directory of its own, too: the page server keeps its compiled plugins in `.sdk-plugins` under the working
- * directory, and in production it trusts a versioned build it finds there — rightly, a published version does not
- * change. Started where the development server runs, the bench measured whatever that server last compiled.
+ * directory, and a run that shares one with the development server shares its builds. Each run compiles its own and
+ * leaves nothing behind.
  */
 
 const MAIN = fileURLToPath(new URL('../src/main.ts', import.meta.url));
@@ -52,7 +52,7 @@ export const startServer = async (port: number): Promise<BenchServer> => {
   });
   const forget = () => rmSync(cwd, { recursive: true, force: true });
   let errors = '';
-  child.stderr?.on('data', (chunk: Buffer) => {
+  child.stderr.on('data', (chunk: Buffer) => {
     errors = `${errors}${chunk.toString()}`.slice(-4000);
   });
 
@@ -61,7 +61,7 @@ export const startServer = async (port: number): Promise<BenchServer> => {
   } catch (error) {
     child.kill();
     forget();
-    throw new Error(`${error instanceof Error ? error.message : String(error)}\n${errors}`);
+    throw new Error(`${error instanceof Error ? error.message : String(error)}\n${errors}`, { cause: error });
   }
 
   return {

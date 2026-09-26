@@ -1,7 +1,7 @@
-import { ANCHORS, isConnectable, takesLabel } from '../../board/model.ts';
 import { endsOf } from './connectors.ts';
 import { CARD_CHECK, voteBadgeBox } from './draw.ts';
 import { beyondAnchor, boundsOf, handlePoint, HANDLES, hits, snapToAnchor, toScreen, unionOf } from './geometry.ts';
+import { ANCHORS, isConnectable, takesLabel } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
 import type { Handle } from './geometry.ts';

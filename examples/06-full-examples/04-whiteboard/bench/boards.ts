@@ -39,7 +39,7 @@ const cellOf = (index: number, columns: number): Draft[] => {
   );
   const words: Draft = { type: 'text', x: x + 10, y: y + 290, text: `Note ${index + 1}` };
 
-  return [note, box, round, arrow(note.id ?? '', box.id ?? ''), arrow(box.id ?? '', round.id ?? ''), stroke, words];
+  return [note, box, round, arrow(note.id, box.id ?? ''), arrow(box.id ?? '', round.id ?? ''), stroke, words];
 };
 
 /** `count` elements, in whole cells, over a square grid. */

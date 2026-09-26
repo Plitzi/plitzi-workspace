@@ -1,7 +1,7 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
-import type { ActionField } from '@plitzi/sdk-shared';
 import type { ActionLookups } from '@plitzi/sdk-server/actions';
+import type { ActionField } from '@plitzi/sdk-shared';
 
 /** The topics, as the space declares them and the actions announce on them — one spelling for both. */
 export const TOPICS = {

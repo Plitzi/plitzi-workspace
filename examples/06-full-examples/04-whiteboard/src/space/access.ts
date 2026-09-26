@@ -63,7 +63,7 @@ export const BOARD_OWNER = `{{ ${OWNER_OF(`${PROVIDER}.id`)} }}`;
 export const BOARD_PASS = { key: BOARD_KEY, owner: BOARD_OWNER };
 
 /** In a binding whose source is the board: whether this browser made it. */
-export const IS_OWNER = `${OWNER_OF('source.id')}`;
+export const IS_OWNER = OWNER_OF('source.id');
 
 /** A new board's owner key, kept with the others — the step that made it answered it as `owner`. */
 export const keepOwned = (step: string): StepSpec =>

@@ -40,7 +40,7 @@ const adapters = createCloudAdapters({
    * - A published environment WITH a `revision` serves exactly that version, fetched once and kept — for a
    *   deployment that rolls forward on its own schedule.
    */
-  environment: (process.env.PLITZI_ENVIRONMENT as 'main' | 'production') ?? 'main',
+  environment: process.env.PLITZI_ENVIRONMENT === 'production' ? 'production' : 'main',
   ...(process.env.PLITZI_REVISION ? { revision: Number(process.env.PLITZI_REVISION) } : {})
 });
 
