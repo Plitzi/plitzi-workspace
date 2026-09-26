@@ -205,10 +205,10 @@ export type BoardElement = {
   /** A column's: what lands in it is done — the team's Done — and what leaves it for a column that is not, open again. */
   completes?: boolean;
   /**
-   * Written during a session's writing step (`board/sessions.ts`), whose id this is: face down for everyone but its
-   * author until that step is over.
+   * Written during a session's writing step (`board/sessions.ts`): in which session, and by whom — the writer's own id,
+   * the one their votes count by, since a name is anyone's to take. Face down for everyone else until that step is over.
    */
-  veiled?: string;
+  veiled?: Veil;
   /** Who wrote a note or a card — a name, as the room knows them. */
   author?: string;
   /** A card's: the task is done. A comment's: it was dealt with. */
@@ -301,6 +301,11 @@ export const isAssetId = (value: unknown): value is string =>
 /** The id a visitor keeps across visits, which is what a vote is counted by. */
 export const isVoterId = (value: unknown): value is string =>
   typeof value === 'string' && /^[a-z0-9]{8,24}$/.test(value);
+
+/** Who wrote something face down, and in which session: see {@link BoardElement.veiled}. */
+export type Veil = { session: string; by: string };
+
+const isVeil = (value: unknown): value is Veil => isRecord(value) && isElementId(value.session) && isVoterId(value.by);
 
 const isPoint = (value: unknown): value is Point =>
   Array.isArray(value) && value.length === 2 && isCoordinate(value[0]) && isCoordinate(value[1]);
@@ -544,7 +549,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     (parent !== undefined && (!isElementId(parent) || parent === id || !fitsInFrame(type))) ||
     (layout !== undefined && (type !== 'frame' || !isOneOf(LAYOUTS, layout))) ||
     task === false ||
-    (veiled !== undefined && (!isElementId(veiled) || !holdsText(type))) ||
+    (veiled !== undefined && (!isVeil(veiled) || !holdsText(type))) ||
     (branchOf !== undefined && (type !== 'frame' || !isElementId(branchOf) || branchOf === id)) ||
     (completes !== undefined && (type !== 'frame' || typeof completes !== 'boolean')) ||
     (task !== undefined && type !== 'frame') ||
@@ -587,7 +592,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     ...(parent === undefined ? {} : { parent }),
     ...(layout === undefined ? {} : { layout }),
     ...(task ? { duty: task } : {}),
-    ...(typeof veiled === 'string' ? { veiled } : {}),
+    ...(isVeil(veiled) ? { veiled: { session: veiled.session, by: veiled.by } } : {}),
     ...(typeof branchOf === 'string' ? { branchOf } : {}),
     // Only a column's: a frame that stops being one stops deciding what is done.
     ...(completes === true && layout === 'column' ? { completes } : {}),

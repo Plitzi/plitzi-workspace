@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { describeBoard, describeElement } from './describe.ts';
 import { cardHeight, frameNamed, placeAll } from './place.ts';
-import { callAction, joinBoard, newElementId, parseLink } from './session.ts';
+import { callAction, joinBoard, newElementId } from './session.ts';
 import { DUTY_PRESETS, instructionOf } from '../board/duties.ts';
 import { markedDone, settleDone } from '../board/model.ts';
 import { isEmptyQuery, matchesQuery, parseQuery } from '../board/query.ts';
@@ -15,7 +15,7 @@ import { COLUMN_PADDING, layoutColumn, membersOf, moved, readingOrder } from '..
 import { anchorPoint, boundsOf, nearestAnchor } from '../plugins/Board/geometry.ts';
 import { restyled } from '../plugins/Board/styling.ts';
 
-import type { Activity, Session } from './session.ts';
+import type { Activity, Door, Session } from './session.ts';
 import type { BoardElement, Point } from '../board/model.ts';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
@@ -26,10 +26,15 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
  */
 
 export type AgentOptions = {
-  /** Where a bare board id is looked for, and new boards are made. */
-  server: string;
-  name: string;
-  color: string;
+  /** The server new boards are started on, and a bare board id is looked for on. */
+  home: Door;
+  /**
+   * The board a link names, and the door to reach it through. `elsewhere` is the server the link names when it is not
+   * the one this agent reaches — a hosted agent looks for the board on its own, and says where to go if it is not there.
+   */
+  locate: (link: string) => { door: Door; board: string; elsewhere?: string };
+  /** Who the people on a board see this agent as, unless it names itself as it joins. */
+  identity: () => { name: string; color: string };
 };
 
 const ELEMENT_TYPES = [
@@ -85,7 +90,8 @@ const describeActivity = (entry: Activity): string => {
   }
 };
 
-export const registerTools = (server: McpServer, options: AgentOptions): void => {
+/** The tools on `server`; what it answers is how to take this agent off its board when its client is gone. */
+export const registerTools = (server: McpServer, options: AgentOptions): { leave: () => void } => {
   let session: Session | undefined;
   let lastLooked = Date.now();
 
@@ -101,14 +107,26 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
     return session;
   };
 
-  const join = async (link: string, password?: string): Promise<Session> => {
-    session?.leave();
-    session = undefined;
-    const next = await joinBoard(parseLink(link, options.server), {
-      name: options.name,
-      color: options.color,
+  const join = async (link: string, password?: string, named?: string): Promise<Session> => {
+    const at = options.locate(link);
+    const { name, color } = options.identity();
+    // On the new board before off the old one: a link that leads nowhere leaves the agent where it was.
+    const next = await joinBoard(at, {
+      name: named?.trim() || name,
+      color,
       ...(password ? { password } : {})
+    }).catch((error: unknown) => {
+      if (!at.elsewhere) {
+        throw error;
+      }
+
+      throw new Error(
+        `That link is to ${at.elsewhere}, another Pizarra, and this agent is connected to ${at.door.publicOrigin}: it ` +
+          `joins its own boards. Ask the person to add ${at.elsewhere}/mcp as an MCP server too, and join from there.`,
+        { cause: error }
+      );
     });
+    session?.leave();
     session = next;
     lastLooked = Date.now();
     // In the middle of what is there, where people will see it arrive.
@@ -129,10 +147,17 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
         'password. Answers everything on the board, the people on it and the recent chat.',
       inputSchema: {
         link: z.string().describe('The board link, or its 10-character id'),
-        password: z.string().optional().describe('Only for a locked board')
+        password: z.string().optional().describe('Only for a locked board'),
+        name: z
+          .string()
+          .max(40)
+          .optional()
+          .describe(
+            'Your name on the board, if the one your app gives is not right — say what you are: "Claude", "OpenCode"'
+          )
       }
     },
-    async ({ link, password }) => text(describeBoard(await join(link, password)))
+    async ({ link, password, name }) => text(describeBoard(await join(link, password, name)))
   );
 
   server.registerTool(
@@ -150,7 +175,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
       }
     },
     async ({ title, template, visibility, hours }) => {
-      const created = await callAction(options.server, 'board-create', {
+      const created = await callAction(options.home, 'board-create', {
         title,
         template: template ?? 'blank',
         visibility: visibility ?? 'public',
@@ -987,4 +1012,11 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
       return text('Left the board.');
     }
   );
+
+  return {
+    leave: () => {
+      session?.leave();
+      session = undefined;
+    }
+  };
 };

@@ -5,13 +5,14 @@ import {
   declaredTrigger,
   defineElement,
   onClick,
+  setState,
   styles,
   text,
   toggleState,
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { BELOW_HEADER, FLOAT, ICON_BUTTON, panelMotion } from './kit.ts';
+import { BELOW_HEADER, BUTTON_RESET, FLOAT, ICON_BUTTON, PRESSED, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 import copyDeclaration from '../plugins/CopyText/declaration.ts';
@@ -56,7 +57,7 @@ const panel = styles('agentPanel', {
       top: BELOW_HEADER,
       right: '14px',
       'z-index': '6',
-      width: '340px',
+      width: '384px',
       padding: '16px',
       display: 'flex',
       'flex-direction': 'column',
@@ -113,7 +114,76 @@ export const agentButtonFor = (): ElementSpec =>
     flows: [[onClick(), ...closeOthers('agentOpen'), toggleState({ key: 'agentOpen' })]]
   });
 
-/** Two steps: give the agent Pizarra, once; then send it this board. */
+/**
+ * Where an agent comes from: the app it lives in decides how Pizarra is added to it. Every one of them is given the
+ * same thing — this Pizarra's agent, at `/mcp` on the address the page is at — and nothing to install or run.
+ */
+const APPS = [
+  {
+    id: 'claude-code',
+    label: 'Claude Code',
+    how: 'In a terminal — then start claude and send it the board.',
+    copy: 'claude mcp add --transport http pizarra {origin}/mcp'
+  },
+  {
+    id: 'opencode',
+    label: 'OpenCode',
+    how: 'In a terminal — then start opencode and send it the board.',
+    copy: 'opencode mcp add pizarra --url {origin}/mcp'
+  },
+  {
+    id: 'claude-app',
+    label: 'Claude app',
+    how: 'Settings → Connectors → Add custom connector, named Pizarra, at this address. Claude reaches it from the Internet: it has to be a public https address.',
+    copy: '{origin}/mcp'
+  },
+  {
+    id: 'other',
+    label: 'Other',
+    how: 'Any app that speaks MCP — Cursor, VS Code, Codex… — as a remote (HTTP) server at this address.',
+    copy: '{origin}/mcp'
+  }
+] as const;
+
+// Each as wide as its name, and the room left shared: "Claude Code" is longer than "Other".
+const apps = styles('agentApps', {
+  display: 'grid',
+  'grid-template-columns': 'repeat(4, auto)',
+  gap: '2px',
+  padding: '3px',
+  'border-radius': '10px',
+  'background-color': 'var(--surface-2)'
+});
+
+const app = styles('agentApp', {
+  css: {
+    ...BUTTON_RESET,
+    height: '30px',
+    padding: '0px 6px',
+    'border-radius': '8px',
+    'font-size': '12px',
+    'font-weight': '600',
+    'white-space': 'nowrap',
+    overflow: 'hidden',
+    'text-overflow': 'ellipsis',
+    color: 'var(--muted)',
+    transition: 'background-color 140ms ease, color 140ms ease, transform 140ms ease'
+  },
+  states: {
+    hover: { color: 'var(--ink)' },
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' },
+    active: PRESSED
+  },
+  variants: {
+    chosen: { color: 'var(--ink)', 'background-color': 'var(--surface)', 'box-shadow': '0 1px 3px var(--shadow)' }
+  }
+});
+
+const howTo = styles('agentHow', { display: 'flex', 'flex-direction': 'column', gap: '8px' });
+
+const chosenApp = (id: string) => ({ source: 'computed.agentApp', template: `{{ source == '${id}' }}` });
+
+/** Two steps: give the agent Pizarra, once, from the app it lives in; then send it this board. */
 export const agentPanel = (): ElementSpec =>
   container({
     id: 'agent-panel',
@@ -126,17 +196,41 @@ export const agentPanel = (): ElementSpec =>
       }),
       text({
         content:
-          'An agent joins like a person: its name among the avatars, a cursor you watch move, notes and cards it adds, lines in the chat. It answers when you talk to it.',
+          'It joins like a person: its name among the avatars, a cursor you watch move, notes and cards it adds, lines in the chat. It answers when you talk to it.',
         class: note
       }),
-      text({ content: '1 · Give your agent Pizarra — once, from this repository', class: step }),
-      copyText({
-        id: 'agent-command',
-        class: copyClass,
-        text: 'claude mcp add pizarra -- node examples/06-full-examples/04-whiteboard/src/agent/main.ts',
-        label: 'Copy',
-        flows: [copied('Command')]
+      text({ content: '1 · Add Pizarra to your agent — once', class: step }),
+      container({
+        class: apps,
+        children: APPS.map(entry =>
+          button({
+            id: `agent-app-${entry.id}`,
+            content: entry.label,
+            class: app,
+            bind: [
+              variantFrom(app, 'computed.agentApp', { template: `{{ source == '${entry.id}' ? 'chosen' : '' }}` })
+            ],
+            flows: [[onClick(), setState({ key: 'agentApp', type: 'text', value: entry.id })]]
+          })
+        )
       }),
+      ...APPS.map(entry =>
+        container({
+          id: `agent-how-${entry.id}`,
+          class: howTo,
+          visible: chosenApp(entry.id),
+          children: [
+            copyText({
+              id: `agent-command-${entry.id}`,
+              class: copyClass,
+              text: entry.copy,
+              label: 'Copy',
+              flows: [copied(entry.copy.startsWith('{origin}') ? 'Address' : 'Command')]
+            }),
+            text({ content: entry.how, class: note })
+          ]
+        })
+      ),
       text({ content: '2 · Send it this board', class: step }),
       copyText({
         id: 'agent-prompt',
@@ -146,7 +240,8 @@ export const agentPanel = (): ElementSpec =>
         flows: [copied('Message')]
       }),
       text({
-        content: 'Any MCP client works — Claude Desktop, Cursor… — with the same command as a local server.',
+        content:
+          'Added once, it can be invited to any board on this Pizarra. It shows up under its app’s name — Claude, OpenCode… — and leaves when you tell it to, or after half an hour of quiet.',
         class: note
       })
     ]

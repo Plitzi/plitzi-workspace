@@ -1,5 +1,7 @@
 import { isRecord } from './model.ts';
 
+import type { Veil } from './model.ts';
+
 /**
  * A session with a script: a retro, a brainstorm, a quick decision — steps the whole board goes through together, each
  * with its time. Anyone on the board runs it, or an agent does (`start_session`, `session_next`): the steps are the
@@ -80,22 +82,24 @@ export const stepOf = (session: BoardSession): ScriptStep => SCRIPTS[session.scr
 /** What a writing step turns face down: what people write their thoughts on. */
 const VEILED_TYPES: ReadonlySet<string> = new Set(['sticky', 'card', 'text']);
 
-/** The session an element made now is written in, face down — during a writing step, for what people write on. */
-export const veiledIn = (session: BoardSession | undefined, type: string): string | undefined =>
-  session && stepOf(session).kind === 'write' && VEILED_TYPES.has(type) ? session.id : undefined;
+/**
+ * How an element made now by `by` — a visitor's id — is written: face down in the session under way, during a writing
+ * step and for what people write on.
+ */
+export const veiledIn = (session: BoardSession | undefined, type: string, by: string): Veil | undefined =>
+  session && stepOf(session).kind === 'write' && VEILED_TYPES.has(type) ? { session: session.id, by } : undefined;
 
-/** Whether an element written during `session`'s writing step is still face down for the others. */
-export const isFaceDown = (
-  element: { veiled?: string; author?: string },
-  session: BoardSession | null | undefined,
-  me: string
-): boolean =>
+/**
+ * Whether an element written during `session`'s writing step is still face down for `me` — a visitor's id: for
+ * everyone but whoever wrote it, however alike their names.
+ */
+export const isFaceDown = (element: { veiled?: Veil }, session: BoardSession | null | undefined, me: string): boolean =>
   element.veiled !== undefined &&
   session !== null &&
   session !== undefined &&
-  element.veiled === session.id &&
+  element.veiled.session === session.id &&
   stepOf(session).kind === 'write' &&
-  element.author !== me;
+  element.veiled.by !== me;
 
 /** A session in a line: its script, its step and what the step is for. */
 export const describeSession = (session: BoardSession): string => {

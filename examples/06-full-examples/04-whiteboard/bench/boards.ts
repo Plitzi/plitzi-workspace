@@ -1,4 +1,4 @@
-import { callAction } from '../src/agent/session.ts';
+import { callAction, doorTo } from '../src/agent/session.ts';
 import { drawing, newId, scribble, sticky } from '../src/board/sketch.ts';
 
 import type { BoardElement } from '../src/board/model.ts';
@@ -58,7 +58,10 @@ export const seedBoard = async (
   origin: string,
   count: number
 ): Promise<{ id: string; owner: string; elements: number }> => {
-  const created = await callAction(origin, 'board-create', { title: `Bench — ${count} elements`, template: 'blank' });
+  const created = await callAction(doorTo(origin), 'board-create', {
+    title: `Bench — ${count} elements`,
+    template: 'blank'
+  });
   if (typeof created !== 'object' || created === null || !('id' in created) || typeof created.id !== 'string') {
     throw new Error('board-create answered no board');
   }
@@ -66,7 +69,7 @@ export const seedBoard = async (
   const owner = 'owner' in created && typeof created.owner === 'string' ? created.owner : '';
   const elements = benchElements(count);
   for (let from = 0; from < elements.length; from += COMMIT) {
-    await callAction(origin, 'board-apply', {
+    await callAction(doorTo(origin), 'board-apply', {
       board: created.id,
       ops: elements.slice(from, from + COMMIT),
       key: '',

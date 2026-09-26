@@ -8,7 +8,7 @@ export type CopyTextAttributes = Omit<CopyTextProps, 'className'>;
  * A text to copy — a command, a message — shown, with a button that puts it on the clipboard.
  *
  * An element because the clipboard is the browser's and needs a person's gesture, and because `{url}` in the text is
- * the page's own address, which only the browser knows. What is said once it is copied is the page's: `onCopied`.
+ * the page's own address — `{origin}` the site's — which only the browser knows. What is said once it is copied is the page's: `onCopied`.
  */
 const declaration = {
   type: 'copyText',
@@ -22,7 +22,8 @@ const declaration = {
       label: 'Copy Text',
       type: 'copyText',
       description:
-        'A text (`text`, where `{url}` is the page’s address) and a button (`label`) that copies it. Fires ' +
+        'A text (`text`, where `{url}` is the page’s address and `{origin}` the site’s) and a button (`label`) that ' +
+        'copies it. Fires ' +
         '`onCopied`. Colours come from `--copy-field`, `--copy-accent` and `--copy-on-accent`.',
       items: [],
       bindings: {},
@@ -52,7 +53,7 @@ const declaration = {
       style: { base: { default: {} } },
       bindingsAllowed: {
         attributes: [
-          { path: 'text', label: 'Text ({url} is the page’s address)' },
+          { path: 'text', label: 'Text ({url}: the page’s address, {origin}: the site’s)' },
           { path: 'label', label: 'Button label' }
         ],
         initialState: []

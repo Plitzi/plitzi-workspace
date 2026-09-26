@@ -38,12 +38,13 @@ adapter behind them, and the split between what must be validated and kept (a sh
 | [`src/board/locks.ts`](./src/board/locks.ts)                                                    | A board's password: a scrypt hash, and the key and secret topic opening it hands out, signed with the deployment's secret                                                                                                                                                                          |
 | [`src/board/assets.ts`](./src/board/assets.ts)                                                  | Pasted pictures: checked by their bytes, capped per picture and per board, kept in memory or in Redis                                                                                                                                                                                              |
 | [`src/board/templates.ts`](./src/board/templates.ts) · [`featured.ts`](./src/board/featured.ts) | What a new board starts as, and the two boards drawn at start                                                                                                                                                                                                                                      |
-| [`src/deployment.ts`](./src/deployment.ts)                                                      | One process or one replica of several: where the boards, the pictures and the channels live, and what keys are signed with                                                                                                                                                                         |
+| [`src/deployment.ts`](./src/deployment.ts)                                                      | One process or one replica of several: where the boards, the pictures and the channels live, what keys are signed with, and which replica holds each agent                                                                                                                                         |
 | [`src/tasks.ts`](./src/tasks.ts) · [`src/actions.ts`](./src/actions.ts)                         | The `board.*` tasks, and the actions that run them — each change ends with `realtime.publish`                                                                                                                                                                                                      |
 | [`src/space/`](./src/space)                                                                     | The front page (`home/`) and the board page: toolbar, style panel, people, chat, frames, reach, timer, password, keys                                                                                                                                                                              |
 | [`src/plugins/Board/`](./src/plugins/Board)                                                     | The canvas, one module per concern over a shared `core.ts`: `pointer.ts` (gestures), `render.ts` and `draw.ts` (a frame), `picking.ts`, `containers.ts` (frames and columns), `styling.ts`, `pens.ts` (brushes), `quick.ts`, `minimap.ts`, `remotes.ts`, `demo.ts`; `controller.ts` assembles them |
 | [`src/plugins/`](./src/plugins)                                                                 | The other elements: `StickyStack` (the tray's pile), `Countdown` (a shared clock), `ShareCard` (QR code and link), `CopyText` (a text and a button that copies it)                                                                                                                                 |
-| [`src/agent/`](./src/agent)                                                                     | The MCP server an agent joins a board through — a client of the board's server like a browser is                                                                                                                                                                                                   |
+| [`src/agent/`](./src/agent)                                                                     | The MCP server an agent joins a board through — served at `/mcp` by every Pizarra (`hosted.ts`), or over stdio from a checkout (`main.ts`); a client of the board's server like a browser is                                                                                                       |
+| [`scripts/`](./scripts)                                                                         | `start:replicas`: three replicas over one Redis behind a round-robin balancer with no affinity, to try the cluster on one machine                                                                                                                                                                  |
 | [`src/main.ts`](./src/main.ts)                                                                  | The server: `action` for the boards, `realtime` for the channels, a middleware for the pictures and the mark                                                                                                                                                                                       |
 
 ---
@@ -128,17 +129,39 @@ else is authored.
 
 ## Agents
 
-An agent joins a board the way a person does. [`src/agent`](./src/agent) is an MCP server, over stdio, that opens the
-board through `board-open`, connects to its channels on the same socket a page opens, announces itself on the room
-(`$presence` with `agent: true`), and commits through `board-apply`. Nothing on the server knows it is not a browser —
-so it works against any Pizarra, one process or replicas behind a balancer.
+Anyone on a board can bring their own agent onto it — Claude, OpenCode, anything that speaks MCP — with nothing to
+install and no access to this repository: every Pizarra serves its agent at **`/mcp`** (streamable HTTP,
+[`src/agent/hosted.ts`](./src/agent/hosted.ts)). The ✦ beside Share opens "Invite an AI agent", which gives the one
+thing to add for the app the agent lives in, with this Pizarra's address already in it, and the sentence to send it:
 
 ```bash
-claude mcp add pizarra -- node examples/06-full-examples/04-whiteboard/src/agent/main.ts
+claude mcp add --transport http pizarra https://<this pizarra>/mcp     # Claude Code
+opencode mcp add pizarra --url https://<this pizarra>/mcp              # OpenCode
+# Claude Desktop / claude.ai: Settings → Connectors → Add custom connector, at https://<this pizarra>/mcp
 ```
 
-Then give it a board link (the ✦ beside Share opens "Invite an AI agent", which copies both lines). On the board, people see it arrive — a ✦
-avatar, a cursor that glides to what it works on, its lines in the chat marked AI.
+Then "Join this Pizarra board and help us: <link>". On the board, people see it arrive — an avatar under its app's
+name (Claude Code, OpenCode…, or the one it gives itself), a cursor that glides to what it works on, its lines in the
+chat marked AI. It leaves when told to, or after half an hour nobody has asked it anything.
+
+It is a client of the board like a browser: it opens the board through `board-open`, connects to its channels,
+announces itself on the room (`$presence` with `agent: true`) and commits through `board-apply` — calling the replica
+that holds it from inside, with its client's address as the caller's, so its changes count against whoever asked.
+
+- **Only this Pizarra's boards.** A link to a board on another Pizarra is refused with the address of that one's
+  agent: a server that calls out to whatever address an agent is handed is not something to put on the Internet.
+- **Across replicas.** An agent is a session (`Mcp-Session-Id`) held by the replica its client reached first — it is on
+  a board, with a socket on its channels and what it has heard. That replica says so in Redis under its own address
+  (`REPLICA_URL`), and a request for the session that another replica takes is passed on to it and the answer passed
+  back: it works behind a balancer with no affinity. A session whose replica stopped answers 404, and the client
+  connects again.
+- **The Claude app** reaches the server from Anthropic's side: it needs a public https address. Claude Code and
+  OpenCode run on the person's machine and reach a local one too.
+
+For working on Pizarra itself the same agent runs over stdio from a checkout —
+`claude mcp add pizarra -- node examples/06-full-examples/04-whiteboard/src/agent/main.ts`, where `PIZARRA_URL` is
+where a bare id is looked for (`http://127.0.0.1:4016`) and `PIZARRA_AGENT_NAME` / `PIZARRA_AGENT_COLOR` who it is —
+and joins a board on any Pizarra it is given a link to.
 
 | Tool                                              | What it does                                                                                                                                                                                                                                                          |
 | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -154,19 +177,26 @@ avatar, a cursor that glides to what it works on, its lines in the chat marked A
 | `say` · `point_at` · `react` · `reply_to_comment` | The chat and the cursor; the laser; an emoji; a comment's thread                                                                                                                                                                                                      |
 | `wait_for_activity`                               | Listens: chat lines, words at cursors, changes, arrivals — what makes a conversation                                                                                                                                                                                  |
 
-`PIZARRA_URL` is where a bare id is looked for (`http://127.0.0.1:4016`), `PIZARRA_AGENT_NAME` and
-`PIZARRA_AGENT_COLOR` who it is on the board (`Claude`, `orchid`).
-
 ---
 
 ## Several replicas
 
 `deployment.ts` reads the environment. Without `REDIS_URL` everything is in this process's memory. With it, every
-replica shares one Redis for the three things they must agree on:
+replica shares one Redis for the things they must agree on. To try it on one machine, `start:replicas` runs three of
+them behind a round-robin balancer with no affinity ([`scripts/`](./scripts)) — open `http://127.0.0.1:4016` in as
+many browsers as there are people, and they land on different replicas; give agents `http://127.0.0.1:4016/mcp`, and
+their calls do too. Each replica's own port (4101, 4102, 4103) pins a browser to it:
 
 ```bash
-REDIS_URL=redis://127.0.0.1:6379 BOARD_SECRET=… PORT=4016 yarn workspace @plitzi/example-whiteboard start
-REDIS_URL=redis://127.0.0.1:6379 BOARD_SECRET=… PORT=4017 yarn workspace @plitzi/example-whiteboard start
+REDIS_URL=redis://127.0.0.1:6379 yarn workspace @plitzi/example-whiteboard start:replicas
+```
+
+Deployed, each replica is started with the same `REDIS_URL` and `BOARD_SECRET`, and its own `REPLICA_URL` — the
+address the other replicas reach it at (a pod's IP, a container's name) — plus `PIZARRA_PUBLIC_URL` when the proxy in
+front does not say which address people use:
+
+```bash
+REDIS_URL=redis://redis:6379 BOARD_SECRET=… REPLICA_URL=http://10.0.3.7:4016 HOST=0.0.0.0 yarn workspace @plitzi/example-whiteboard start
 ```
 
 - **The channels** — `createRedisPubSub`: a cursor moved by somebody connected to one replica is drawn on a page
@@ -176,11 +206,16 @@ REDIS_URL=redis://127.0.0.1:6379 BOARD_SECRET=… PORT=4017 yarn workspace @plit
   never lose one of them — the difference between 42 and 90 of 90 commits kept in the test below.
 - **The secret** — `BOARD_SECRET`, the same on every replica: a locked board's key and topic, handed out by one, are
   checked by whichever the next request reaches. A replica refuses to start without it.
+- **The agents** — which replica holds each agent's session, so a call for it reaching another is passed on
+  ([Agents](#agents)). Without `REPLICA_URL` a replica listening beyond loopback cannot be found by the others, and
+  says so as it starts: then the balancer has to pin `/mcp` to one replica by the `Mcp-Session-Id` header.
 
 Tested behind a round-robin balancer without affinity — every request and every socket to the next replica: three
 browsers on three replicas see each other; 90 commits raced in parallel across them are all kept; a picture uploaded
 through one is served by the others; a password set through one opens through another; chat lines and replies raced
-across them are all kept; an agent joins through the balancer and hears the people on it.
+across them are all kept; an agent joins through the balancer and hears the people on it. The browser suite keeps it
+so: `whiteboard-replicas` (run whenever a Redis answers) puts a person on each of two replicas and an agent on the
+balancer, and checks that each hears the others and that the agent's calls were spread over more than one replica.
 
 One thing needs **affinity**: the Server-Sent Events fallback. A stream's publishes are posted to `/_realtime` with
 the stream's token, which only the replica holding the stream knows. Pizarra runs on WebSockets, where a publish is a

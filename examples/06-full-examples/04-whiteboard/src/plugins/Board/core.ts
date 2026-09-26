@@ -862,7 +862,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   };
 
   const newElement = (type: ShapeType, [x, y]: Point): BoardElement => {
-    const veiled = veiledIn(state.props.session, type);
+    const veiled = veiledIn(state.props.session, type, state.props.voter);
     const { props } = state;
     const paper = type === 'sticky' || type === 'stack';
     const fill: Fill = !takesStyle(type, 'fill') ? 'none' : paper && props.fill === 'none' ? 'yellow' : props.fill;
@@ -898,7 +898,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   /** Writing on `element` begins — on its text, or on a card's description. */
   const startEditing = (element: BoardElement, field: EditField = 'text'): void => {
     // A locked element keeps its words as it keeps its place; one face down keeps them to whoever wrote them.
-    if (element.locked || isFaceDown(element, state.props.session, state.props.author)) {
+    if (element.locked || isFaceDown(element, state.props.session, state.props.voter)) {
       return;
     }
 

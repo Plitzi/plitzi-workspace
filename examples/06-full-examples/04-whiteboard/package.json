@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/main.ts",
     "start:dev": "node --watch-path=./src src/main.ts",
+    "start:replicas": "node scripts/replicas.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "yarn run -T eslint .",
     "bench": "node bench/run.ts"

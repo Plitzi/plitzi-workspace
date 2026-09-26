@@ -169,6 +169,8 @@ export const computed = {
   dutyDraftRole: "{{ state.dutyDraftRole ?? 'scribe' }}",
   dutyDraft: "{{ state.dutyDraft ?? '' }}",
   agentOpen: '{{ state.agentOpen ? true : false }}',
+  /** The app this person's agent lives in, for how the invite says to add Pizarra to it — kept, as it rarely changes. */
+  agentApp: "{{ state.agentApp ?? 'claude-code' }}",
   libraryOpen: '{{ state.libraryOpen ? true : false }}',
   librarySearch: "{{ state.librarySearch ?? '' }}",
   /** The board searched: the bar open, what is typed in it, what it finds and which is shown (from 1). */

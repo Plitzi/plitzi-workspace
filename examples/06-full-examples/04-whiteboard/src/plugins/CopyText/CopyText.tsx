@@ -9,7 +9,10 @@ import declaration from './declaration';
 import type { InteractionCallback } from '@plitzi/plitzi-sdk';
 
 export type CopyTextProps = {
-  /** What to copy, shown as it is. `{url}` in it is the address the page is at — which only the browser knows. */
+  /**
+   * What to copy, shown as it is. `{url}` in it is the address the page is at, and `{origin}` the site's — which only
+   * the browser knows: a server behind a proxy does not know the address people reach it by.
+   */
   text?: string;
   /** What the button says. */
   label?: string;
@@ -20,7 +23,7 @@ const TRIGGERS: Record<string, InteractionCallback> = declaration.triggers;
 
 /**
  * A line of text and a button that puts it on the clipboard — a command to paste, a sentence to send. Rendered on the
- * server with `{url}` left as it is, and completed in the browser the moment it mounts.
+ * server with `{url}` and `{origin}` left as they are, and completed in the browser the moment it mounts.
  */
 const CopyText = ({ text = '', label = 'Copy', className }: CopyTextProps) => {
   const { id } = useElement();
@@ -31,7 +34,7 @@ const CopyText = ({ text = '', label = 'Copy', className }: CopyTextProps) => {
   const [shown, setShown] = useState(text);
 
   useEffect(() => {
-    setShown(text.replaceAll('{url}', window.location.href));
+    setShown(text.replaceAll('{url}', window.location.href).replaceAll('{origin}', window.location.origin));
   }, [text]);
 
   const copy = useCallback(async () => {

@@ -1,5 +1,5 @@
 import { connect } from '../src/agent/connection.ts';
-import { callAction } from '../src/agent/session.ts';
+import { callAction, doorTo } from '../src/agent/session.ts';
 import { drawing } from '../src/board/sketch.ts';
 
 import type { Connection } from '../src/agent/connection.ts';
@@ -99,7 +99,7 @@ export const startCrowd = async (
         ]);
         const sentAt = Date.now();
         pending.set(element.id, { sentAt, heard: 0 });
-        callAction(origin, 'board-apply', { board, ops: [element], key: '' })
+        callAction(doorTo(origin), 'board-apply', { board, ops: [element], key: '' })
           .then(() => commits.push(Date.now() - sentAt))
           .catch(() => {
             refused += 1;

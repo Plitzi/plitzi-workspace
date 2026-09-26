@@ -67,6 +67,24 @@ const reachableUrl = (url: string): boolean => {
 
 const catApiReachable = (): boolean => reachableUrl('https://api.thecatapi.com/v1/images/search');
 
+/** The Redis Pizarra's replicas share: `REDIS_URL`, or the local docker one (a database of the suite's own). */
+const PIZARRA_REDIS = process.env.REDIS_URL || 'redis://127.0.0.1:63790/9';
+
+let redisUp: boolean | undefined;
+const redisReachable = (): boolean => {
+  if (redisUp === undefined) {
+    const url = new URL(PIZARRA_REDIS);
+    try {
+      execSync(`nc -z -w 2 ${url.hostname} ${url.port || '6379'}`, { stdio: 'ignore' });
+      redisUp = true;
+    } catch {
+      redisUp = false;
+    }
+  }
+
+  return redisUp;
+};
+
 export type TargetGate = {
   /** Whether this machine can run the target at all — asked, not declared, so there is no flag to remember. */
   open: () => boolean;
@@ -323,6 +341,18 @@ export const targets: Target[] = [
     command: 'PORT=5018 REDIS_URL= yarn workspace @plitzi/example-whiteboard start',
     origin: 'http://127.0.0.1:5018',
     what: 'Pizarra — a collaborative whiteboard over WebSocket, drawn on a canvas, with its own bench'
+  },
+  {
+    id: 'whiteboard-replicas',
+    workspace: '@plitzi/example-whiteboard',
+    // Three replicas (5021–5023) over one Redis, behind a round-robin balancer with no affinity at 5020.
+    command: `PORT=5020 REPLICA_PORT=5020 REDIS_URL=${PIZARRA_REDIS} yarn workspace @plitzi/example-whiteboard start:replicas`,
+    origin: 'http://127.0.0.1:5020',
+    what: 'Pizarra as three replicas behind a balancer with no affinity — people and agents spread across them',
+    gate: {
+      open: redisReachable,
+      hint: 'start a Redis on 127.0.0.1:63790 (the services compose of plitzi-sdk-server has one), or set REDIS_URL'
+    }
   },
   {
     id: 'builder',

@@ -443,7 +443,7 @@ export const createPainter = (
         use.drawElement(context, element, palette, {
           hideText: element.id === editing,
           faded: fade(element),
-          faceDown: isFaceDown(element, props.session, props.author),
+          faceDown: isFaceDown(element, props.session, props.voter),
           voter: props.voter,
           members: members.get(element.id) ?? 0,
           authors: props.authors,

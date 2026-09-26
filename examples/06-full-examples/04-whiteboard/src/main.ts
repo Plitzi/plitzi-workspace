@@ -6,6 +6,7 @@ import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from 
 import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
 
 import { lookups } from './actions.ts';
+import { AGENT_PATH, createAgentEndpoint } from './agent/hosted.ts';
 import { BRAND_PATH, BRAND_SVG } from './board/brand.ts';
 import { deploymentFrom } from './deployment.ts';
 import { PLUGINS, space } from './space/index.ts';
@@ -76,6 +77,17 @@ const serveAssets: SSRMiddleware = async (req, res, next) => {
   return undefined;
 };
 
+/**
+ * Pizarra's agent, at `/mcp`: what anyone on a board adds to their own agent — Claude, OpenCode, anything that speaks
+ * MCP — to bring it onto the board as a collaborator (`agent/hosted.ts`).
+ */
+const agents = createAgentEndpoint({
+  directory: deployment.agents,
+  host: HOST,
+  port: PORT,
+  ...(process.env.PIZARRA_PUBLIC_URL ? { publicUrl: process.env.PIZARRA_PUBLIC_URL } : {})
+});
+
 /** Authored at boot from `src/space`: saving a file and letting `start:dev` restart the process is the whole loop. */
 const offlineData = authorSpace(space, { plugins: PLUGINS });
 
@@ -86,43 +98,52 @@ const offlineData = authorSpace(space, { plugins: PLUGINS });
  * action `kv` — and `realtime` carries what changed to everyone looking. The one middleware serves the pictures pasted
  * onto them.
  */
-const server = createServer({
-  port: PORT,
-  devMode: process.env.NODE_ENV !== 'production',
-  logger: consoleLogger,
-  adapters: createJsonAdapters({
-    offlineData,
-    // `pluginNames` is how the render knows to load them. Without it the files are compiled by nobody.
-    deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames: Object.keys(plugins) }
-  }),
-  plugins,
-  middlewares: [serveAssets],
-  action: {
-    lookups,
-    tasks: createBoardTasks(deployment),
-    kv: deployment.kv,
-    // Nothing here runs on a clock.
-    jobs: false,
-    onRun: createRunLogger(consoleLogger),
-    onReject: createRejectLogger(consoleLogger)
-  },
-  /**
-   * How a message reaches every page on its topic: in memory for one process; for replicas, Redis — a cursor moved by
-   * somebody whose page is connected to one replica is drawn on a page connected to another.
-   */
-  realtime: {
-    pubsub: deployment.pubsub,
+const server = createServer(
+  {
+    port: PORT,
+    devMode: process.env.NODE_ENV !== 'production',
+    logger: consoleLogger,
+    adapters: createJsonAdapters({
+      offlineData,
+      // `pluginNames` is how the render knows to load them. Without it the files are compiled by nobody.
+      deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames: Object.keys(plugins) }
+    }),
+    plugins,
+    middlewares: [serveAssets],
+    action: {
+      lookups,
+      tasks: createBoardTasks(deployment),
+      kv: deployment.kv,
+      // Nothing here runs on a clock.
+      jobs: false,
+      onRun: createRunLogger(consoleLogger),
+      onReject: createRejectLogger(consoleLogger)
+    },
     /**
-     * A socket per page rather than a stream and a request per message: twenty cursor updates a second from every
-     * person on a board are frames on a connection that is already open, not twenty requests. A page falls back to
-     * the stream by itself where a socket cannot open (behind HTTP/2, or a proxy that drops upgrades).
+     * How a message reaches every page on its topic: in memory for one process; for replicas, Redis — a cursor moved by
+     * somebody whose page is connected to one replica is drawn on a page connected to another.
      */
-    transport: 'websocket'
+    realtime: {
+      pubsub: deployment.pubsub,
+      /**
+       * A socket per page rather than a stream and a request per message: twenty cursor updates a second from every
+       * person on a board are frames on a connection that is already open, not twenty requests. A page falls back to
+       * the stream by itself where a socket cannot open (behind HTTP/2, or a proxy that drops upgrades).
+       */
+      transport: 'websocket'
+    }
+  },
+  { preAuth: [agents.stage] }
+);
+
+server.listen(PORT, HOST);
+closeOnSignals(server, {
+  afterClose: async () => {
+    await agents.close();
+    await deployment.close();
   }
 });
 
-server.listen(PORT, HOST);
-closeOnSignals(server, { afterClose: deployment.close });
-
 console.log(`[whiteboard] the boards on http://127.0.0.1:${PORT}/ — ${deployment.describe}`);
 console.log('[whiteboard] open a board in two windows — every stroke, cursor and rename reaches the other');
+console.log(`[whiteboard] agents join at http://127.0.0.1:${PORT}${AGENT_PATH} — the ✦ on a board says how`);

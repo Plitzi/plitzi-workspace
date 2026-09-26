@@ -93,7 +93,7 @@ const build = (session: Session, spec: AddSpec, z: number): BoardElement => {
   // A stamp is its emoji, drawn to fill a square: never stretched, never coloured.
   const stamp = spec.type === 'stamp';
   // Written while a session asks everyone to write on their own — this agent included: face down until it moves on.
-  const veiled = veiledIn(session.session(), spec.type);
+  const veiled = veiledIn(session.session(), spec.type, session.visitor);
   const element: BoardElement = {
     id: newElementId(),
     type: spec.type,

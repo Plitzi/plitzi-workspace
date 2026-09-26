@@ -934,9 +934,13 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   in place, and sounds. The gallery previews a crowded board whole, coarsened on a grid. It carries its own bench
   (`yarn bench`, `--cpu 4` for slower hardware): boards of a thousand and four thousand elements opened, panned, zoomed,
   drawn on, selected, moved, pasted, deleted and undone, and crowds of fifty collaborators on them. AI agents join as
-  collaborators through an MCP server in the example (`src/agent`), a client of the board's server like a browser. It
-  runs on several replicas over Redis (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, and a write
-  lock in the action `kv` shared by all of them. See `docs/en/realtime.md`.
+  collaborators through the MCP server every Pizarra serves at `/mcp` (streamable HTTP, mounted as a `preAuth` pipeline
+  stage): anyone on a board adds it to Claude Code, OpenCode or the Claude app from the invite panel, with nothing to
+  install; it joins only that Pizarra's boards, and is a client of the board's server like a browser. It runs on several
+  replicas over Redis (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action
+  `kv` shared by all of them, and which replica holds each agent's session — a call reaching another is passed on to it
+  (`REPLICA_URL`), so no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine,
+  and the `whiteboard-replicas` browser test spreads people and an agent across them. See `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
 
 ## `onPointerDown`: the press, before it is a click

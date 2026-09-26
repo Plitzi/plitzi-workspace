@@ -52,15 +52,22 @@ export const parseLink = (link: string, fallbackOrigin: string): { origin: strin
   return { origin: url.origin, board: match[1] };
 };
 
+/**
+ * Where an agent reaches a board's server. `origin` is where it calls the actions and opens the channels; `publicOrigin`
+ * is the board's address as the people on it know it — the same for an agent on a person's own machine, and not for one
+ * the server hosts, which calls its own replica from inside. `headers` say who is asking: the server counts a caller's
+ * changes by address, and a hosted agent's are its client's, not the loopback's every hosted agent shares.
+ */
+export type Door = { origin: string; publicOrigin: string; headers?: Record<string, string> };
+
+/** A server reached as it is published: from outside, as anyone on its boards reaches it. */
+export const doorTo = (origin: string): Door => ({ origin, publicOrigin: origin });
+
 /** One call to a server action, as a page makes it: its answer, or what went wrong, in the server's words. */
-export const callAction = async (
-  origin: string,
-  actionId: string,
-  input: Record<string, unknown>
-): Promise<unknown> => {
-  const response = await fetch(new URL('/_action', origin), {
+export const callAction = async (door: Door, actionId: string, input: Record<string, unknown>): Promise<unknown> => {
+  const response = await fetch(new URL('/_action', door.origin), {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { ...door.headers, 'content-type': 'application/json' },
     body: JSON.stringify({ actionId, input })
   });
   const body: unknown = await response.json().catch(() => undefined);
@@ -82,11 +89,12 @@ const isOpened = (value: unknown): value is OpenedBoard =>
   isRecord(value) && typeof value.id === 'string' && typeof value.found === 'boolean' && Array.isArray(value.elements);
 
 export const joinBoard = async (
-  { origin, board }: { origin: string; board: string },
+  { door, board }: { door: Door; board: string },
   { name, color, password }: { name: string; color: string; password?: string }
 ) => {
+  const { origin } = door;
   // `board-open` answers an open board as it is, and a locked one once its password is right: one door for both.
-  const loaded = await callAction(origin, 'board-open', { id: board, password: password ?? '', key: '' });
+  const loaded = await callAction(door, 'board-open', { id: board, password: password ?? '', key: '' });
   if (!isOpened(loaded) || !loaded.found) {
     throw new Error('There is no board there — it may have been deleted, or its time ran out');
   }
@@ -114,6 +122,8 @@ export const joinBoard = async (
   const stampOf = (element: BoardElement): string => `${element.id}:${element.version}:${element.nonce}`;
   let gone = false;
   let cursor: Point = [0, 0];
+  /** Who this agent is on the board, as a page's visitor id: what it writes face down is its own by this, not its name. */
+  const visitor = Array.from({ length: 16 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[randomInt(36)]).join('');
 
   const note = (entry: Activity): void => {
     activity.push(entry);
@@ -273,7 +283,7 @@ export const joinBoard = async (
       nonce: randomInt(2 ** 31)
     }));
     stamped.forEach(element => own.add(stampOf(element)));
-    await callAction(origin, 'board-apply', { board, key: loaded.key, ops: stamped });
+    await callAction(door, 'board-apply', { board, key: loaded.key, ops: stamped });
     stamped.forEach(element => elements.set(element.id, element));
 
     return stamped;
@@ -281,8 +291,7 @@ export const joinBoard = async (
 
   return {
     board,
-    origin,
-    link: new URL(`/b/${board}`, origin).href,
+    link: new URL(`/b/${board}`, door.publicOrigin).href,
     key: loaded.key,
     readOnly: loaded.readOnly,
     get title() {
@@ -305,7 +314,8 @@ export const joinBoard = async (
     /** The session under way, if one is. */
     session: (): BoardSession | undefined => session,
     /** Whether what someone else wrote is still face down for this agent: its words are not out yet. */
-    faceDown: (element: BoardElement): boolean => isFaceDown(element, session, name),
+    faceDown: (element: BoardElement): boolean => isFaceDown(element, session, visitor),
+    visitor,
     topZ: (): number => Math.max(0, ...[...elements.values()].map(element => element.z)),
     members: (): Member[] => [...members.values()],
     chat: (): ChatMessage[] => chat.slice(-30),
@@ -333,7 +343,7 @@ export const joinBoard = async (
     },
     /** The board's session with a script: started with `script`, moved to its next step, or stopped. */
     runSession: async (command: 'start' | 'next' | 'stop', script?: string): Promise<void> => {
-      await callAction(origin, 'board-session', {
+      await callAction(door, 'board-session', {
         board,
         key: loaded.key,
         command,
@@ -343,13 +353,13 @@ export const joinBoard = async (
     },
     /** A line in the board's chat, kept with the board, marked as an agent's. */
     chatLine: async (text: string): Promise<void> => {
-      await callAction(origin, 'board-chat', { board, key: loaded.key, name, color, text, by: '', agent: 'true' });
+      await callAction(door, 'board-chat', { board, key: loaded.key, name, color, text, by: '', agent: 'true' });
     },
     react: async (emoji: string): Promise<void> => {
       await (await live()).publish(`room:${loaded.topic}`, 'reaction', { emoji, x: cursor[0], y: cursor[1] });
     },
     reply: async (element: string, text: string): Promise<void> => {
-      await callAction(origin, 'board-reply', { board, key: loaded.key, element, author: name, text });
+      await callAction(door, 'board-reply', { board, key: loaded.key, element, author: name, text });
     },
     /**
      * What happened since `since` — only what `worth` keeps, when it is given: as soon as there is anything, or when

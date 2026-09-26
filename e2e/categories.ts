@@ -46,7 +46,8 @@ const EXAMPLE_TARGETS = [
   'blog',
   'ceniza',
   'seismic',
-  'whiteboard'
+  'whiteboard',
+  'whiteboard-replicas'
 ];
 
 export const categories: Category[] = [

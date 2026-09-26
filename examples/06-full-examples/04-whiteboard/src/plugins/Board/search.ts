@@ -16,7 +16,7 @@ export const createSearch = (core: Core) => {
   const frameTitle = (id: string): string | undefined => core.current().get(id)?.text?.trim();
 
   /** Whether an element is what is searched for — everything is, while nothing is searched for. */
-  const faceDown = (element: BoardElement): boolean => isFaceDown(element, state.props.session, state.props.author);
+  const faceDown = (element: BoardElement): boolean => isFaceDown(element, state.props.session, state.props.voter);
 
   /** A note face down is nobody's but its author's to find: its words are not out yet. */
   const matches = (element: BoardElement): boolean =>
