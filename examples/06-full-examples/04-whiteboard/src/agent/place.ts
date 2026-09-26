@@ -1,8 +1,9 @@
 import { randomInt } from 'node:crypto';
 
 import { newElementId } from './session.ts';
-import { asFill, asStroke, fitsInFrame, FONT_SIZES, holdsText, isAuthored } from '../board/model.ts';
+import { asFill, asStroke, fitsInFrame, FONT_SIZES, holdsText, isAuthored, markedDone } from '../board/model.ts';
 import { STAMP_SIZE } from '../board/reactions.ts';
+import { veiledIn } from '../board/sessions.ts';
 import { estimatedCardHeight, estimatedTextBox } from '../board/sketch.ts';
 import { COLUMN_GAP, COLUMN_PADDING, layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
 import { FRAME_HEADER, overlaps } from '../plugins/Board/geometry.ts';
@@ -29,6 +30,8 @@ export type AddSpec = {
   /** A frame's id or title: put in it. */
   frame?: string;
   layout?: Layout;
+  /** A column's: what lands in it is done. */
+  completes?: boolean;
   done?: boolean;
 };
 
@@ -89,6 +92,8 @@ const build = (session: Session, spec: AddSpec, z: number): BoardElement => {
   const width = spec.width ?? size.width;
   // A stamp is its emoji, drawn to fill a square: never stretched, never coloured.
   const stamp = spec.type === 'stamp';
+  // Written while a session asks everyone to write on their own — this agent included: face down until it moves on.
+  const veiled = veiledIn(session.session(), spec.type);
   const element: BoardElement = {
     id: newElementId(),
     type: spec.type,
@@ -106,8 +111,10 @@ const build = (session: Session, spec: AddSpec, z: number): BoardElement => {
     deleted: false,
     ...(text === undefined ? {} : { text }),
     ...(spec.type === 'card' && spec.description?.trim() ? { description: spec.description } : {}),
+    ...(veiled ? { veiled } : {}),
     ...(isAuthored(spec.type) ? { author: session.name } : {}),
     ...(spec.type === 'frame' && spec.layout ? { layout: spec.layout } : {}),
+    ...(spec.type === 'frame' && spec.layout === 'column' && spec.completes ? { completes: true } : {}),
     ...(spec.done && (spec.type === 'card' || spec.type === 'comment') ? { done: true } : {})
   };
 
@@ -132,7 +139,9 @@ export const placeAll = (session: Session, specs: readonly AddSpec[]): BoardElem
     const frame = fitsInFrame(spec.type) ? frameNamed(session, spec.frame) : undefined;
     if (frame) {
       const members = byFrame.get(frame.id) ?? [];
-      members.push({ ...element, parent: frame.id });
+      // A card put in the team's Done is done, as one moved there is.
+      const settled = element.type === 'card' && frame.completes ? markedDone(element, true) : element;
+      members.push({ ...settled, parent: frame.id });
       byFrame.set(frame.id, members);
     } else if (spec.x === undefined || spec.y === undefined) {
       loose.push(element);

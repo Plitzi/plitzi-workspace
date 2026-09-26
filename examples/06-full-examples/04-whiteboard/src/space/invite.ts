@@ -11,7 +11,7 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { BELOW_HEADER, FLOAT, ICON_BUTTON } from './kit.ts';
+import { BELOW_HEADER, FLOAT, ICON_BUTTON, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 import copyDeclaration from '../plugins/CopyText/declaration.ts';
@@ -45,9 +45,12 @@ const copied = (what: string) => [
   })
 ];
 
+const PANEL_MOTION = panelMotion({ from: 'above', origin: 'top right' });
+
 const panel = styles('agentPanel', {
   css: {
     desktop: {
+      ...PANEL_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       top: BELOW_HEADER,
@@ -59,8 +62,9 @@ const panel = styles('agentPanel', {
       'flex-direction': 'column',
       gap: '10px'
     },
-    mobile: { right: '10px', left: '10px', width: 'auto' }
-  }
+    mobile: { ...PANEL_MOTION.mobile, right: '10px', left: '10px', width: 'auto' }
+  },
+  states: PANEL_MOTION.states
 });
 
 const head = styles('agentHead', { display: 'flex', 'align-items': 'center', gap: '10px' });

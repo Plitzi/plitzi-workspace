@@ -52,9 +52,9 @@ const kanban = (): BoardElement[] =>
       card('Record a 60-second demo')
     ]),
     ...column({ x: 0, y: -300, title: 'Doing', fill: 'blue' }, [card('Pricing page', { fill: 'green' })]),
-    ...column({ x: 320, y: -300, title: 'Done', fill: 'green' }, [
-      card('Start a board', { done: true }),
-      card('Invite the team', { done: true })
+    ...column({ x: 320, y: -300, title: 'Done', fill: 'green', completes: true }, [
+      card('Start a board'),
+      card('Invite the team')
     ]),
     comment(270, -250, 'Keep Doing to three cards at most?', 'Ana', [['Leo', 'Agreed — WIP limit of 3']])
   ]);

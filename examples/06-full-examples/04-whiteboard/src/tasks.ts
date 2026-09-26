@@ -16,6 +16,7 @@ import {
   sayOn,
   setReach,
   setReadOnly,
+  runSession,
   setTimer,
   uploadToBoard,
   voteOn
@@ -237,6 +238,23 @@ export const createBoardTasks = ({
     run: ({ board, seconds, key, owner }, ctx) => setTimer(on(ctx.kv), boardId(board), seconds, { key, owner })
   };
 
+  const boardSessionTask: ActionTask<{ board: string; command: string; script: string; host: string } & Passed> = {
+    namespace: 'board',
+    action: 'session',
+    title: 'Run A Session',
+    description: 'Starts a session with a script on a board, moves it to its next step, or stops it.',
+    params: {
+      board: boardParam,
+      command: text('start · next · stop'),
+      script: text('Script (retro, brainstorm, decide) — to start one'),
+      host: text('Who runs it'),
+      key: keyParam,
+      owner: ownerParam
+    },
+    run: ({ board, command, script, host, key, owner }, ctx) =>
+      runSession(on(ctx.kv), boardId(board), command, script, host, { key, owner })
+  };
+
   const boardUploadTask: ActionTask<{ board: string; data: string } & Passed> = {
     namespace: 'board',
     action: 'upload',
@@ -268,6 +286,7 @@ export const createBoardTasks = ({
     boardApplyTask,
     boardVoteTask,
     boardTimerTask,
+    boardSessionTask,
     boardUploadTask,
     boardReachTask,
     boardChatTask,

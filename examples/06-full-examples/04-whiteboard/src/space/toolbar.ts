@@ -11,7 +11,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { CATEGORIES, dragFlows, ELEMENTS, entriesOf, isGroup, pickSteps } from './elements.ts';
-import { FLOAT, ICON_BUTTON, icon } from './kit.ts';
+import { FLOAT, ICON_BUTTON, PRESSED, RISE, icon, panelMotion, riseAt } from './kit.ts';
 import { closeOthers, closePanels } from './panels.ts';
 
 import type { Category, ElementEntry, GroupId } from './elements.ts';
@@ -91,7 +91,8 @@ const toolButton = styles('toolButton', {
   css: { desktop: ICON_BUTTON, mobile: { width: '34px', height: '34px', 'font-size': '14px' } },
   states: {
     hover: { 'background-color': 'var(--surface-2)' },
-    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' }
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' },
+    active: PRESSED
   },
   variants: { active: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' } }
 });
@@ -260,11 +261,15 @@ const topOf = (id: string): number =>
 
 const BAR_HEIGHT = topOf(BAR[BAR.length - 1]) + BUTTON + PADDING;
 
+/** Out of the bar beside it on a desktop; up from the bar at the foot of a phone. */
+const FLYOUT_MOTION = panelMotion({ from: 'left' }, { from: 'below', rest: 'translateX(-50%)' });
+
 const flyoutClass = (category: Category) =>
   styles(`flyout-${category.id}`, {
     css: {
       desktop: {
         ...FLOAT,
+        ...FLYOUT_MOTION.desktop,
         position: 'absolute',
         top: `calc(50% - ${Math.round(BAR_HEIGHT / 2 - topOf(category.id) + PADDING)}px)`,
         left: '72px',
@@ -275,15 +280,24 @@ const flyoutClass = (category: Category) =>
         padding: '5px',
         'max-width': '200px'
       },
-      mobile: { top: 'auto', left: '50%', bottom: '66px', transform: 'translateX(-50%)', 'max-width': 'none' }
-    }
+      mobile: {
+        ...FLYOUT_MOTION.mobile,
+        top: 'auto',
+        left: '50%',
+        bottom: '66px',
+        transform: 'translateX(-50%)',
+        'max-width': 'none'
+      }
+    },
+    states: FLYOUT_MOTION.states
   });
 
 const flyoutItem = styles('flyoutItem', {
-  css: ICON_BUTTON,
+  css: { ...ICON_BUTTON, ...RISE },
   states: {
     hover: { 'background-color': 'var(--surface-2)' },
-    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' }
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' },
+    active: PRESSED
   },
   variants: { active: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' } }
 });
@@ -293,12 +307,12 @@ const flyout = (category: Category & { id: GroupId }): ElementSpec =>
     id: `${category.id}-menu`,
     class: flyoutClass(category),
     visible: `computed.${category.id}Open`,
-    children: entriesOf(category.id).map(entry =>
+    children: entriesOf(category.id).map((entry, index) =>
       button({
         id: `${category.id}-${entry.id}`,
         content: '',
         title: `${entry.label} — ${entry.description}${entry.hint ? ` · ${entry.hint}` : ''}`,
-        class: flyoutItem,
+        class: [flyoutItem, riseAt(index)],
         bind: [
           variantFrom(flyoutItem, `computed.${category.id}Pick`, {
             template: `{{ source == '${entry.id}' ? 'active' : '' }}`

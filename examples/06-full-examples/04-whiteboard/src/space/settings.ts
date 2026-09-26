@@ -1,7 +1,7 @@
 import { container, onClick, styles, text, toggleState } from '@plitzi/sdk-authoring';
 
 import { editOnly, passwordSection } from './access.ts';
-import { BELOW_HEADER, FLOAT, iconAction } from './kit.ts';
+import { BELOW_HEADER, FLOAT, iconAction, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { editingSection, reachSection } from './reach.ts';
 
@@ -12,9 +12,12 @@ import type { ElementSpec } from '@plitzi/sdk-authoring';
  * for its creator — and its password (`access.ts`). Share is for inviting people; what the board IS lives here.
  */
 
+const POPOVER_MOTION = panelMotion({ from: 'above', origin: 'top left' });
+
 const popover = styles('settingsPopover', {
   css: {
     desktop: {
+      ...POPOVER_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       top: BELOW_HEADER,
@@ -28,8 +31,9 @@ const popover = styles('settingsPopover', {
       'overflow-y': 'auto',
       padding: '14px'
     },
-    mobile: { left: '10px', right: '10px', width: 'auto' }
-  }
+    mobile: { ...POPOVER_MOTION.mobile, left: '10px', right: '10px', width: 'auto' }
+  },
+  states: POPOVER_MOTION.states
 });
 
 const title = styles('settingsTitle', { 'font-size': '14px', 'font-weight': '600', color: 'var(--ink)' });

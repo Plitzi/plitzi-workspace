@@ -26,6 +26,7 @@ type SettingsProps = {
   label?: string;
   placeholder?: string;
   autoComplete?: boolean;
+  autoFocus?: boolean;
   defaultValue?: string;
   options?: string[];
   required?: boolean;
@@ -59,6 +60,7 @@ const Settings = ({
   defaultValue = '',
   placeholder = '',
   autoComplete = true,
+  autoFocus = false,
   options,
   required = true,
   requiredMessage = '',
@@ -94,6 +96,11 @@ const Settings = ({
   );
 
   const handleChangeDefaultValue = useCallback((value: string) => onUpdate?.('defaultValue', value), [onUpdate]);
+
+  const handleChangeAutoFocus = useCallback(
+    (e: ChangeEvent) => onUpdate?.('autoFocus', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
 
   const handleChangeAutoComplete = useCallback(
     (e: ChangeEvent) => onUpdate?.('autoComplete', (e.target as HTMLInputElement).checked),
@@ -184,6 +191,7 @@ const Settings = ({
         <Checkbox checked={autoComplete} label="Auto Complete" onChange={handleChangeAutoComplete} size="xs" />
       )}
       {isTyped && <Checkbox checked={readOnly} label="Read Only" onChange={handleChangeReadOnly} size="xs" />}
+      <Checkbox checked={autoFocus} label="Focus When Shown" onChange={handleChangeAutoFocus} size="xs" />
       {subType === 'select' && (
         <TextArea value={optionsString} label="Options" onChange={handleChangeOptions} size="xs" />
       )}

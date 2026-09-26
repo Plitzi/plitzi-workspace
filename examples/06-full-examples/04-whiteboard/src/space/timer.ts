@@ -16,8 +16,9 @@ import {
 import { TIMER_ACTION } from '../actions.ts';
 import { BOARD_PASS, ofBoard } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
-import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption, iconAction } from './kit.ts';
+import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption, iconAction, panelMotion, PRESSED, RISE, riseAt } from './kit.ts';
 import { closeOthers } from './panels.ts';
+import { sessionStarts } from './session.ts';
 import { boardAction } from './stylePanel.ts';
 import countdownDeclaration from '../plugins/Countdown/declaration.ts';
 
@@ -72,17 +73,23 @@ const pill = styles('timerPill', {
   color: 'var(--ink)'
 });
 
+const POPOVER_MOTION = panelMotion({ from: 'above', origin: 'top right' });
+
 const popover = styles('timerPopover', {
-  ...FLOAT,
-  position: 'absolute',
-  top: BELOW_HEADER,
-  right: '120px',
-  'z-index': '6',
-  display: 'flex',
-  'flex-direction': 'column',
-  gap: '10px',
-  padding: '14px',
-  width: '220px'
+  css: {
+    ...POPOVER_MOTION.desktop,
+    ...FLOAT,
+    position: 'absolute',
+    top: BELOW_HEADER,
+    right: '120px',
+    'z-index': '6',
+    display: 'flex',
+    'flex-direction': 'column',
+    gap: '10px',
+    padding: '14px',
+    width: '220px'
+  },
+  states: POPOVER_MOTION.states
 });
 
 const presets = styles('timerPresets', {
@@ -99,9 +106,11 @@ const preset = styles('timerPreset', {
     'font-weight': '600',
     'font-size': '13px',
     'text-align': 'center',
-    'background-color': 'var(--surface-2)'
+    'background-color': 'var(--surface-2)',
+    transition: 'background-color 140ms ease, color 140ms ease, transform 140ms ease',
+    ...RISE
   },
-  states: { hover: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' } }
+  states: { hover: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' }, active: PRESSED }
 });
 
 /** The countdown everyone sees, at the top of the board — shown only while one runs (see `css.ts`). */
@@ -145,15 +154,21 @@ export const timerPanel = (): ElementSpec =>
       text({ content: 'Timer for everyone', class: caption }),
       container({
         class: presets,
-        children: PRESETS.map(entry =>
+        children: PRESETS.map((entry, index) =>
           button({
             id: `timer-${entry.seconds}`,
             content: entry.label,
-            class: preset,
+            class: [preset, riseAt(index)],
             flows: [[onClick(), ...setTimer(entry.seconds)]]
           })
         )
       }),
-      button({ id: 'timer-stop', content: 'Stop the timer', class: preset, flows: [[onClick(), ...setTimer(0)]] })
+      button({
+        id: 'timer-stop',
+        content: 'Stop the timer',
+        class: [preset, riseAt(PRESETS.length)],
+        flows: [[onClick(), ...setTimer(0)]]
+      }),
+      sessionStarts(PRESETS.length + 1)
     ]
   });

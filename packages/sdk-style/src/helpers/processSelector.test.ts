@@ -906,3 +906,43 @@ describe('processSelector / ancestor conditions', () => {
     );
   });
 });
+
+describe('processSelector / the hidden state', () => {
+  const cacheOf = (block: StyleBlock, name = 'panel'): string =>
+    processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
+
+  it('selects the class the SDK hides an element with, and starts the element from it as it appears', () => {
+    const cache = cacheOf({ default: { opacity: '1' }, states: { hidden: { opacity: '0' } } });
+
+    expect(cache).toBe('.panel{opacity:1;&.plitzi-component--hidden{opacity:0;}@starting-style{&{opacity:0;}}}');
+  });
+
+  it('writes it after every pseudo-class: an element on its way out is leaving, however it is pointed at', () => {
+    const cache = cacheOf({ default: {}, states: { hidden: { opacity: '0' }, hover: { opacity: '0.9' } } });
+
+    expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf('&.plitzi-component--hidden'));
+  });
+
+  it('dresses what is inside a hidden ancestor, and starts it from there as the ancestor appears', () => {
+    const cache = cacheOf({ default: {}, ancestors: { menu: { states: { hidden: { opacity: '0' } } } } }, 'item');
+
+    expect(cache).toBe(
+      '.item{:where(.menu.plitzi-component--hidden) &{opacity:0;}@starting-style{:where(.menu) &{opacity:0;}}}'
+    );
+  });
+
+  it('does the same under an ancestor variant', () => {
+    const cache = cacheOf(
+      {
+        default: {},
+        ancestors: { menu: { variants: { wide: { default: {}, states: { hidden: { opacity: '0' } } } } } }
+      },
+      'item'
+    );
+
+    expect(cache).toBe(
+      '.item{:where(.menu[data-variant="wide"].plitzi-component--hidden,.menu--wide.plitzi-component--hidden) &{opacity:0;}' +
+        '@starting-style{:where(.menu[data-variant="wide"],.menu--wide) &{opacity:0;}}}'
+    );
+  });
+});

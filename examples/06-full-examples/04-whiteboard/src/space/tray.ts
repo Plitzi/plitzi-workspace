@@ -14,7 +14,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { editOnly } from './access.ts';
-import { BUTTON_RESET, FLOAT, ICON_BUTTON, divide, icon } from './kit.ts';
+import { BUTTON_RESET, FLOAT, ICON_BUTTON, divide, icon, panelMotion, PRESSED, RISE, riseAt } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 import { REACTIONS, STAMPS } from '../board/reactions.ts';
@@ -65,14 +65,18 @@ const reactButton = styles('reactButton', {
   css: { ...ICON_BUTTON, 'font-size': '18px' },
   states: {
     hover: { 'background-color': 'var(--surface-2)' },
-    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' }
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' },
+    active: PRESSED
   },
   variants: { active: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' } }
 });
 
+const PICKER_MOTION = panelMotion({ from: 'below', rest: 'translateX(-50%)' });
+
 const picker = styles('reactionPicker', {
   css: {
     desktop: {
+      ...PICKER_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       bottom: '72px',
@@ -84,8 +88,9 @@ const picker = styles('reactionPicker', {
       padding: '5px',
       'border-radius': '999px'
     },
-    mobile: { display: 'none' }
-  }
+    mobile: { ...PICKER_MOTION.mobile, display: 'none' }
+  },
+  states: PICKER_MOTION.states
 });
 
 const reaction = styles('reaction', {
@@ -96,7 +101,8 @@ const reaction = styles('reaction', {
     'border-radius': '50%',
     'font-size': '21px',
     'line-height': '1',
-    transition: 'transform 120ms ease'
+    transition: 'transform 120ms ease',
+    ...RISE
   },
   states: {
     hover: { 'background-color': 'var(--surface-2)', transform: 'translateY(-3px) scale(1.15)' },
@@ -182,7 +188,7 @@ export const stampPicker = (): ElementSpec =>
         id: `stamp-${index}`,
         content: emoji,
         title: `Stamp ${emoji} where you point`,
-        class: reaction,
+        class: [reaction, riseAt(index)],
         flows: [[onClick(), boardAction('stamp', { emoji })]]
       })
     )
@@ -199,27 +205,33 @@ export const reactionPicker = (): ElementSpec =>
         id: `reaction-${index}`,
         content: emoji,
         title: `React ${emoji}`,
-        class: reaction,
+        class: [reaction, riseAt(index)],
         flows: [[onClick(), boardAction('react', { emoji })]]
       })
     )
   });
 
+const BANNER_MOTION = panelMotion({ from: 'above', rest: 'translateX(-50%)' });
+
 const banner = styles('followBanner', {
-  ...FLOAT,
-  position: 'absolute',
-  top: '70px',
-  left: '50%',
-  transform: 'translateX(-50%)',
-  'z-index': '4',
-  display: 'flex',
-  'align-items': 'center',
-  gap: '10px',
-  padding: '6px 6px 6px 14px',
-  'font-size': '13px',
-  'font-weight': '600',
-  border: '1px solid var(--accent)',
-  color: 'var(--accent)'
+  css: {
+    ...BANNER_MOTION.desktop,
+    ...FLOAT,
+    position: 'absolute',
+    top: '70px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    'z-index': '4',
+    display: 'flex',
+    'align-items': 'center',
+    gap: '10px',
+    padding: '6px 6px 6px 14px',
+    'font-size': '13px',
+    'font-weight': '600',
+    border: '1px solid var(--accent)',
+    color: 'var(--accent)'
+  },
+  states: BANNER_MOTION.states
 });
 
 const stopButton = styles('followStop', {

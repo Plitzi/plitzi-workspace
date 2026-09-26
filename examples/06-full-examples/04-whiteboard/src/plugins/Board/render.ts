@@ -25,6 +25,7 @@ import {
 } from './geometry.ts';
 import { CONNECT_OFFSET } from './picking.ts';
 import { ANCHORS, isConnectable } from '../../board/model.ts';
+import { isFaceDown } from '../../board/sessions.ts';
 
 import type { Core } from './core.ts';
 import type { Renderer } from './draw.ts';
@@ -32,6 +33,7 @@ import type { Effects } from './effects.ts';
 import type { Box, Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';
 import type { Pictures } from './pictures.ts';
+import type { Search } from './search.ts';
 import type { Gesture } from './types.ts';
 import type { BoardElement } from '../../board/model.ts';
 
@@ -135,6 +137,9 @@ const SETTLE_MS = 150;
  * One frame: the paper, every element in view, and over them what only this screen shows — selections (this person's
  * and the others'), handles, connection points, laser trails, reactions, the marquee and the others' cursors.
  */
+/** Whether an element is drawn dimmed: under the eraser, or not what the board is searched for. */
+type Fade = (element: BoardElement) => boolean;
+
 /**
  * The boxes a selection is outlined with: one round each group in it — its members are one thing, picked up and moved
  * as one, and a box round each of them was a tangle of lines — and one round everything else. `boxOf` is where each
@@ -154,7 +159,13 @@ const outlineBoxes = (elements: readonly BoardElement[], boxOf: (element: BoardE
   return [...alone, ...[...groups.values()].flatMap(boxes => unionOf(boxes) ?? [])];
 };
 
-export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Effects, pictures: Pictures) => {
+export const createPainter = (
+  core: Core,
+  layer: HTMLCanvasElement,
+  effects: Effects,
+  pictures: Pictures,
+  search: Search
+) => {
   const { context, state, remotes } = core;
   /**
    * The board itself — the paper and every element — painted onto a canvas of its own, under the one that takes the
@@ -255,14 +266,18 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     // Every change to the board comes through a frame: whether it can be undone is told from here.
     core.reportHistory();
     const elements = core.displayedStill(now);
-    const erased = gesture?.kind === 'erase' ? gesture.erased : undefined;
+    const erasing = gesture?.kind === 'erase' ? gesture.erased : undefined;
+    // Dimmed: what the eraser is over, and — while the board is searched — what the search does not find.
+    const fade: Fade = element => (erasing?.has(element.id) ?? false) || search.fades(element);
     const key = [
       camera.zoom,
       width,
       height,
       dpr,
       core.present(),
-      erased?.size ?? -1,
+      erasing?.size ?? -1,
+      state.search?.text ?? '',
+      props.session ? `${props.session.id}:${props.session.step}` : '',
       pictures.revision,
       props.voter,
       props.authors,
@@ -272,22 +287,22 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     const moved = painted !== undefined && (painted.x !== camera.x || painted.y !== camera.y);
     const panning = painted !== undefined && (painted.cameraX !== camera.x || painted.cameraY !== camera.y);
     if (painted?.palette !== palette || painted.key !== key) {
-      paintBoard(elements, erased);
+      paintBoard(elements, fade);
     } else if (painted.elements !== elements || painted.editing !== editing) {
       // What is being written is drawn without its words, under the editor: starting or stopping changes that one.
       const redrawn = new Set([painted.editing, editing].filter(id => id !== undefined));
       const added = moved || redrawn.size ? undefined : addedOnTop(painted.elements, elements);
       if (moved) {
-        paintBoard(elements, erased);
+        paintBoard(elements, fade);
       } else if (added === undefined) {
-        repaintChanged(painted.elements, elements, erased, redrawn);
+        repaintChanged(painted.elements, elements, fade, redrawn);
       } else if (added.length) {
         // Only what was put on top: everything under it is already on the board's canvas, exactly as it is.
         onBoard(layerContext);
-        drawElements(renderer, layerContext, added, erased, false);
+        drawElements(renderer, layerContext, added, fade, false);
       }
     } else if (moved && panning) {
-      at = scrollBoard(painted, elements, erased);
+      at = scrollBoard(painted, elements, fade);
       scrolledAt = now;
       // A picture a fraction of a pixel off the view: once the view stops, it is painted where it is exactly.
       if (at.x !== camera.x || at.y !== camera.y) {
@@ -297,7 +312,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
       at = { x: painted.x, y: painted.y };
       core.invalidate();
     } else if (moved) {
-      paintBoard(elements, erased);
+      paintBoard(elements, fade);
     }
 
     painted = { elements, palette, key, ...at, cameraX: camera.x, cameraY: camera.y, editing };
@@ -305,11 +320,11 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     // The canvas over the board holds only what moves: cleared, and drawn again, every frame.
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.clearRect(0, 0, core.canvas.width, core.canvas.height);
-    const inHand = drawCarried(core.displayedMoving(now), `${key}|${camera.x}|${camera.y}`, erased);
+    const inHand = drawCarried(core.displayedMoving(now), `${key}|${camera.x}|${camera.y}`, fade);
     const opened = openedNow();
     if (inHand.length || opened.length) {
       onBoard(context);
-      drawElements(moving, context, inHand, erased, true);
+      drawElements(moving, context, inHand, fade, true);
       for (const element of opened) {
         moving.drawOpened(context, element, palette, {
           writing: element.id === editing,
@@ -331,11 +346,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
    * step, or again when the view or what it looks like changed — then only moved. Answers the rest of `inHand`, to be
    * drawn as it is.
    */
-  const drawCarried = (
-    inHand: readonly BoardElement[],
-    key: string,
-    erased: ReadonlySet<string> | undefined
-  ): readonly BoardElement[] => {
+  const drawCarried = (inHand: readonly BoardElement[], key: string, fade: Fade): readonly BoardElement[] => {
     const { gesture } = state;
     const lead = gesture?.kind === 'move' ? gesture.originals[0] : undefined;
     const now = lead ? core.draft.get(lead.id) : undefined;
@@ -352,7 +363,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
 
     const [dx, dy] = [now.x - lead.x, now.y - lead.y];
     if (carried?.gesture !== gesture || carried.key !== key) {
-      carried = { gesture, key, dx, dy, ids: paintPiece(gesture, inHand, erased) };
+      carried = { gesture, key, dx, dy, ids: paintPiece(gesture, inHand, fade) };
     }
 
     const { dpr } = state.size;
@@ -371,7 +382,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
   const paintPiece = (
     gesture: Extract<Gesture, { kind: 'move' }>,
     inHand: readonly BoardElement[],
-    erased: ReadonlySet<string> | undefined
+    fade: Fade
   ): ReadonlySet<string> => {
     const picked = new Set(gesture.originals.map(element => element.id));
     const view = core.viewport();
@@ -395,7 +406,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     piece.width = core.canvas.width;
     piece.height = core.canvas.height;
     onBoard(pieceContext);
-    drawElements(pieceRenderer, pieceContext, whole, erased, true, view);
+    drawElements(pieceRenderer, pieceContext, whole, fade, true, view);
     const { dpr } = state.size;
     pieceContext.setTransform(dpr, 0, 0, dpr, 0, 0);
     const outlined = outlineBoxes(whole.filter(element => core.selection.has(element.id)));
@@ -421,7 +432,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     use: Renderer,
     context: CanvasRenderingContext2D,
     elements: readonly BoardElement[],
-    erased: ReadonlySet<string> | undefined,
+    fade: Fade,
     whole: boolean,
     view: Box = core.viewport()
   ): void => {
@@ -431,7 +442,8 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
       if (overlaps(boundsOf(element), view, 40)) {
         use.drawElement(context, element, palette, {
           hideText: element.id === editing,
-          faded: erased?.has(element.id) ?? false,
+          faded: fade(element),
+          faceDown: isFaceDown(element, props.session, props.author),
           voter: props.voter,
           members: members.get(element.id) ?? 0,
           authors: props.authors,
@@ -492,16 +504,16 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
   };
 
   /** The paper and every element that is not moving, onto the board's canvas. */
-  const paintBoard = (elements: readonly BoardElement[], erased: ReadonlySet<string> | undefined): void => {
+  const paintBoard = (elements: readonly BoardElement[], fade: Fade): void => {
     const { width, height } = state.size;
-    paintArea({ x: 0, y: 0, width, height }, elements, erased, true);
+    paintArea({ x: 0, y: 0, width, height }, elements, fade, true);
   };
 
   /** The board within `area` of the screen: its paper, its dots, and the elements that reach into it. */
   const paintArea = (
     area: Box,
     elements: readonly BoardElement[],
-    erased: ReadonlySet<string> | undefined,
+    fade: Fade,
     whole: boolean,
     camera: Camera = state.camera
   ): void => {
@@ -524,7 +536,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
 
     onBoard(context, camera);
     const [x, y] = toBoard(camera, area.x, area.y);
-    drawElements(renderer, context, elements, erased, whole, {
+    drawElements(renderer, context, elements, fade, whole, {
       x,
       y,
       width: area.width / camera.zoom,
@@ -541,12 +553,12 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
   const repaintChanged = (
     before: readonly BoardElement[],
     elements: readonly BoardElement[],
-    erased: ReadonlySet<string> | undefined,
+    fade: Fade,
     redrawn: ReadonlySet<string>
   ): void => {
     const found = changedArea(before, elements, redrawn);
     if (!found) {
-      paintBoard(elements, erased);
+      paintBoard(elements, fade);
 
       return;
     }
@@ -571,12 +583,12 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     }
 
     if ((x1 - x0) * (y1 - y0) > width * height * 0.6) {
-      paintBoard(elements, erased);
+      paintBoard(elements, fade);
 
       return;
     }
 
-    paintArea({ x: x0, y: y0, width: x1 - x0, height: y1 - y0 }, elements, erased, false);
+    paintArea({ x: x0, y: y0, width: x1 - x0, height: y1 - y0 }, elements, fade, false);
   };
 
   /**
@@ -590,7 +602,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
   const scrollBoard = (
     from: { x: number; y: number },
     elements: readonly BoardElement[],
-    erased: ReadonlySet<string> | undefined
+    fade: Fade
   ): { x: number; y: number } => {
     const { width, height, dpr } = state.size;
     const { camera } = state;
@@ -601,7 +613,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     }
 
     if (Math.abs(shiftX) >= layer.width || Math.abs(shiftY) >= layer.height) {
-      paintBoard(elements, erased);
+      paintBoard(elements, fade);
 
       return { x: camera.x, y: camera.y };
     }
@@ -615,11 +627,11 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     const view = { ...camera, ...at };
     const [left, top] = [shiftX / dpr, shiftY / dpr];
     if (left !== 0) {
-      paintArea({ x: left > 0 ? 0 : width + left, y: 0, width: Math.abs(left), height }, elements, erased, false, view);
+      paintArea({ x: left > 0 ? 0 : width + left, y: 0, width: Math.abs(left), height }, elements, fade, false, view);
     }
 
     if (top !== 0) {
-      paintArea({ x: 0, y: top > 0 ? 0 : height + top, width, height: Math.abs(top) }, elements, erased, false, view);
+      paintArea({ x: 0, y: top > 0 ? 0 : height + top, width, height: Math.abs(top) }, elements, fade, false, view);
     }
 
     return at;

@@ -142,6 +142,17 @@ export const ANCHORS = ['n', 'e', 's', 'w'] as const;
 
 export type Anchor = (typeof ANCHORS)[number];
 
+/**
+ * What an agent is asked to keep doing in a frame — a standing duty, not a request answered once: a scribe keeps its
+ * summary current, a guardian watches a rule, an organizer sorts what lands there. `agent` is the name of the agent that
+ * took it — none until one does; `paused`, held by the people on the board.
+ */
+export const DUTY_ROLES = ['scribe', 'guardian', 'organizer', 'custom'] as const;
+
+export type DutyRole = (typeof DUTY_ROLES)[number];
+
+export type Duty = { role: DutyRole; instruction: string; agent?: string; paused?: boolean };
+
 /** An answer in a comment's thread: who said it, what, and when. */
 export type Reply = { author: string; text: string; at: number };
 
@@ -187,6 +198,17 @@ export type BoardElement = {
   parent?: string;
   /** A frame's: how it places its members. Absent, they stay wherever they are put. */
   layout?: Layout;
+  /** A frame's: what an agent is asked to keep doing in it. */
+  duty?: Duty;
+  /** A frame's: the frame it is a branch of — a copy made to try another way, to be taken back or let go. */
+  branchOf?: string;
+  /** A column's: what lands in it is done — the team's Done — and what leaves it for a column that is not, open again. */
+  completes?: boolean;
+  /**
+   * Written during a session's writing step (`board/sessions.ts`), whose id this is: face down for everyone but its
+   * author until that step is over.
+   */
+  veiled?: string;
   /** Who wrote a note or a card — a name, as the room knows them. */
   author?: string;
   /** A card's: the task is done. A comment's: it was dealt with. */
@@ -245,6 +267,8 @@ export const LIMITS = {
   author: 32,
   /** Replies one comment may carry. */
   replies: 100,
+  /** A duty's instruction: a paragraph, not a document. */
+  duty: 600,
   /** A stamp's emoji, in UTF-16 units: enough for a flag or a family, never a sentence. */
   stamp: 16,
   /** A text's size, from the smallest still read to a headline across a board. */
@@ -312,6 +336,41 @@ export const isAuthored = (type: ShapeType): boolean => type === 'sticky' || typ
 /** Whether it can be ticked off: a card done, a comment resolved. */
 export const isTask = (type: ShapeType): boolean => type === 'card' || type === 'comment';
 
+/**
+ * What moving a card from one frame into another says of it: done, into a column that completes what lands in it;
+ * open again, out of one into anywhere that does not. A move between two alike says nothing (`undefined`) — a box
+ * ticked by hand is the person's.
+ */
+export const doneByMove = (from: BoardElement | undefined, to: BoardElement | undefined): boolean | undefined =>
+  to?.completes === true ? true : from?.completes === true ? false : undefined;
+
+/** A task marked done, or open — open is no mark at all. */
+export const markedDone = (task: BoardElement, done: boolean): BoardElement => {
+  const { done: _done, ...open } = task;
+
+  return done ? { ...open, done } : open;
+};
+
+/**
+ * A card in `changes` that moved from one frame into another, marked as its new column says — `parentOf` is where
+ * each was before. What the move says nothing of, or what is already so, is left as it is.
+ */
+export const settleDone = (
+  changes: readonly BoardElement[],
+  frameOf: (id: string | undefined) => BoardElement | undefined,
+  parentOf: (id: string) => string | undefined
+): BoardElement[] =>
+  changes.map(change => {
+    const before = parentOf(change.id);
+    if (change.type !== 'card' || change.deleted || change.parent === before) {
+      return change;
+    }
+
+    const done = doneByMove(frameOf(before), frameOf(change.parent));
+
+    return done === undefined || done === (change.done === true) ? change : markedDone(change, done);
+  });
+
 /** Whether it can be put in a frame: anything but another frame, and the lines, which run between things. */
 export const fitsInFrame = (type: ShapeType): boolean => type !== 'frame' && !LINEAR.has(type);
 
@@ -377,6 +436,33 @@ const isReply = (value: unknown): value is Reply =>
   typeof value.at === 'number' &&
   Number.isFinite(value.at);
 
+/** A frame's duty from outside: its role, its instruction within the limit, who took it and whether it is paused. */
+const parseDuty = (value: unknown): Duty | undefined | false => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (
+    !isRecord(value) ||
+    !isOneOf(DUTY_ROLES, value.role) ||
+    typeof value.instruction !== 'string' ||
+    value.instruction.length > LIMITS.duty ||
+    (value.agent !== undefined && (typeof value.agent !== 'string' || value.agent.length > LIMITS.author)) ||
+    (value.paused !== undefined && typeof value.paused !== 'boolean')
+  ) {
+    return false;
+  }
+
+  const agent = textOf(value.agent).trim();
+
+  return {
+    role: value.role,
+    instruction: value.instruction,
+    ...(agent ? { agent } : {}),
+    ...(value.paused === true ? { paused: true } : {})
+  };
+};
+
 const parseBinding = (value: unknown): Binding | undefined | false => {
   if (value === undefined) {
     return undefined;
@@ -418,6 +504,10 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     group,
     parent,
     layout,
+    duty,
+    branchOf,
+    completes,
+    veiled,
     author,
     done,
     dash,
@@ -434,6 +524,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     deleted
   } = value;
   const [line, paint] = [asStroke(stroke), asFill(fill)];
+  const task = parseDuty(duty);
   if (
     !isElementId(id) ||
     !isOneOf(SHAPE_TYPES, type) ||
@@ -452,6 +543,11 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     (group !== undefined && !isElementId(group)) ||
     (parent !== undefined && (!isElementId(parent) || parent === id || !fitsInFrame(type))) ||
     (layout !== undefined && (type !== 'frame' || !isOneOf(LAYOUTS, layout))) ||
+    task === false ||
+    (veiled !== undefined && (!isElementId(veiled) || !holdsText(type))) ||
+    (branchOf !== undefined && (type !== 'frame' || !isElementId(branchOf) || branchOf === id)) ||
+    (completes !== undefined && (type !== 'frame' || typeof completes !== 'boolean')) ||
+    (task !== undefined && type !== 'frame') ||
     (author !== undefined && (typeof author !== 'string' || !isAuthored(type))) ||
     (done !== undefined && (!isTask(type) || typeof done !== 'boolean')) ||
     (description !== undefined &&
@@ -490,6 +586,11 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     ...(group === undefined ? {} : { group }),
     ...(parent === undefined ? {} : { parent }),
     ...(layout === undefined ? {} : { layout }),
+    ...(task ? { duty: task } : {}),
+    ...(typeof veiled === 'string' ? { veiled } : {}),
+    ...(typeof branchOf === 'string' ? { branchOf } : {}),
+    // Only a column's: a frame that stops being one stops deciding what is done.
+    ...(completes === true && layout === 'column' ? { completes } : {}),
     ...(typeof author === 'string' && author.trim() ? { author: author.trim().slice(0, LIMITS.author) } : {}),
     ...(done === true ? { done } : {}),
     ...(typeof description === 'string' && description.trim() ? { description } : {}),

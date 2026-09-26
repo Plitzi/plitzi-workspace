@@ -18,7 +18,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { BOARD_PROVIDER } from './ids.ts';
-import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption } from './kit.ts';
+import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 import { COLLAB_COLOURS } from '../board/people.ts';
@@ -139,9 +139,12 @@ const me = (): ElementSpec =>
     flows: [[onClick(), ...closeOthers('meOpen'), toggleState({ key: 'meOpen' })]]
   });
 
+const POPOVER_MOTION = panelMotion({ from: 'above', origin: 'top right' });
+
 const popover = styles('popover', {
   css: {
     desktop: {
+      ...POPOVER_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       top: BELOW_HEADER,
@@ -156,8 +159,9 @@ const popover = styles('popover', {
       'flex-direction': 'column',
       gap: '12px'
     },
-    mobile: { right: '10px', left: '10px', width: 'auto' }
-  }
+    mobile: { ...POPOVER_MOTION.mobile, right: '10px', left: '10px', width: 'auto' }
+  },
+  states: POPOVER_MOTION.states
 });
 
 const popoverTitle = styles('popoverTitle', { 'font-size': '14px', 'font-weight': '600', color: 'var(--ink)' });

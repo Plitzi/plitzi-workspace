@@ -99,6 +99,9 @@ export const computed = {
   /** The selection is one frame: what may be made a column, and presented from. */
   selectionIsFrame: '{{ state.selectionIsFrame ? true : false }}',
   selectionIsColumn: '{{ state.selectionIsColumn ? true : false }}',
+  /** The column selected ticks off what lands in it. */
+  selectionCompletes: '{{ state.selectionCompletes ? true : false }}',
+  selectionIsBranch: '{{ state.selectionIsBranch ? true : false }}',
   /** Two or more things: what may be tidied into a grid. */
   canTidy: '{{ computed.selectionCount > 1 ? true : false }}',
   /** The board's frames, in the order they are gone through — what the frames panel lists. */
@@ -155,25 +158,46 @@ export const computed = {
     ])
   ),
   framesOpen: '{{ state.framesOpen ? true : false }}',
+  /** The session with a script under way, as the canvas told it — `active`, `label`, `step`, `kind`, `says`… */
+  sessionView: '{{ state.sessionView ?? {} }}',
+  sessionActive: '{{ state.sessionView and state.sessionView.active ? true : false }}',
+  /** The selected frame's duty for an agent, as the canvas said — and the one being written in its panel. */
+  dutyOpen: '{{ state.dutyOpen ? true : false }}',
+  hasDuty: '{{ state.hasDuty ? true : false }}',
+  dutyAgent: "{{ state.dutyAgent ?? '' }}",
+  dutyPaused: '{{ state.dutyPaused ? true : false }}',
+  dutyDraftRole: "{{ state.dutyDraftRole ?? 'scribe' }}",
+  dutyDraft: "{{ state.dutyDraft ?? '' }}",
   agentOpen: '{{ state.agentOpen ? true : false }}',
   libraryOpen: '{{ state.libraryOpen ? true : false }}',
   librarySearch: "{{ state.librarySearch ?? '' }}",
+  /** The board searched: the bar open, what is typed in it, what it finds and which is shown (from 1). */
+  searchOpen: '{{ state.searchOpen ? true : false }}',
+  searchQuery: "{{ state.searchQuery ?? '' }}",
+  searchCount: '{{ state.searchCount ?? 0 }}',
+  searchIndex: '{{ state.searchIndex ?? 0 }}',
+  /** The tags written on the board, most used first: `{ tag, count }`. */
+  tags: '{{ state.tags ?? [] }}',
+  /** The corner with the board's name folded away, to the way home — kept, and painted so from the first frame. */
+  headerFolded: '{{ state.headerFolded ? true : false }}',
   chatOpen: '{{ state.chatOpen ? true : false }}',
+  chatEmojisOpen: '{{ state.chatEmojisOpen ? true : false }}',
   /** Lines said in the chat while it was closed. */
   unread: '{{ state.unread ?? 0 }}',
   /** One of the popovers is open: what a click anywhere else closes. */
   popoverOpen:
-    '{{ computed.meOpen or computed.shareOpen or computed.timerOpen or computed.deleteOpen or computed.reactOpen or computed.shapesOpen or computed.linesOpen or computed.drawOpen or computed.notesOpen or computed.kanbanOpen or computed.framesOpen or computed.agentOpen or computed.libraryOpen or computed.settingsOpen or computed.stampOpen ? true : false }}',
+    '{{ computed.meOpen or computed.shareOpen or computed.timerOpen or computed.deleteOpen or computed.reactOpen or computed.shapesOpen or computed.linesOpen or computed.drawOpen or computed.notesOpen or computed.kanbanOpen or computed.framesOpen or computed.agentOpen or computed.libraryOpen or computed.settingsOpen or computed.stampOpen or computed.dutyOpen ? true : false }}',
   /** Whose view this page follows — a name, or empty. */
   following: "{{ state.following ?? '' }}"
 };
 
 /**
  * Kept, and drawn by the server: what the first paint shows of what this person chose — each group's last pick in the
- * toolbar, their name and colour in the avatar, the minimap on or off. The server renders with them from a cookie, so a
- * reload does not paint the defaults and swap these in. Nothing else: the cookie goes with every request.
+ * toolbar, their name and colour in the avatar, the minimap on or off, the corner folded or not. The server renders
+ * with them from a cookie, so a reload does not paint the defaults and swap these in. Nothing else: the cookie goes with
+ * every request.
  */
-export const paintedState = [...GROUPS.map(group => PICK_OF(group.id)), 'name', 'color', 'minimap'];
+export const paintedState = [...GROUPS.map(group => PICK_OF(group.id)), 'name', 'color', 'minimap', 'headerFolded'];
 
 /**
  * Kept across visits: who this person is, and the style they draw with. Not kept: where they were — a tool left in
@@ -204,16 +228,32 @@ export const transientState = [
   'selectionCanOpacity',
   'selectionIsFrame',
   'selectionIsColumn',
+  'selectionCompletes',
+  'selectionIsBranch',
   'shapesOpen',
   'linesOpen',
   'drawOpen',
   'notesOpen',
   'kanbanOpen',
   'framesOpen',
+  'sessionView',
+  'sessionHeard',
+  'dutyOpen',
+  'hasDuty',
+  'dutyAgent',
+  'dutyPaused',
+  'dutyDraftRole',
+  'dutyDraft',
   'agentOpen',
   'libraryOpen',
   'librarySearch',
+  'searchOpen',
+  'searchQuery',
+  'searchCount',
+  'searchIndex',
+  'tags',
   'chatOpen',
+  'chatEmojisOpen',
   'chat',
   'unread',
   // What the board holds and who presents are the board's, read again on every visit.

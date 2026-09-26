@@ -266,11 +266,33 @@ const card = styles('card', {
 container({ css: { color: 'var(--muted)' }, states: { hover: { color: 'var(--foreground)' } } });
 ```
 
-`states` takes the states the editor has tabs for — `hover`, `active`, `focus`, `disabled`, `checked`, `visited` — and
-each one, like `css`, may be written per breakpoint. An element's own `states` sit beside its own `css`, and are
+`states` takes the states the editor has tabs for — `hover`, `focus`, `focus-visible`, `focus-within`, `active`,
+`disabled`, `checked`, `visited` and `hidden` — and each one, like `css`, may be written per breakpoint. An element's own `states` sit beside its own `css`, and are
 refused next to a shared `class` for the same reason `css` is. An element type's defaults (`elements`) take the same
 `states` and `variants`, and `slots` for the type's other selectors — a modal's `rootContainer`, a form control's
 `input` — so every element of the type is dressed at once.
+
+`hidden` is not a pseudo-class: it is how an element looks while its `visible` says no — where it goes as it hides
+and where it comes from as it shows (it is also written as the element's `@starting-style`). With a transition on the
+class that includes `display` and `allow-discrete`, a panel moves in and out instead of blinking; the base's
+transition is the way in, the one in `hidden` the way out, so each can have its own pace:
+
+```ts
+const panel = styles('panel', {
+  css: { transition: 'opacity 220ms ease-out, transform 220ms ease-out, display 220ms allow-discrete' },
+  states: {
+    hidden: {
+      opacity: '0',
+      transform: 'translateY(-6px)',
+      transition: 'opacity 120ms ease-in, transform 120ms ease-in, display 120ms allow-discrete'
+    }
+  }
+});
+```
+
+What is inside follows it through `ancestors` — `{ [panel.name]: { states: { hidden: { … } } } }`. A container whose
+items mount only while it is shown (`loadStrategy: 'visible'`) is empty by the time it leaves; one that animates out
+takes `'lazy'`. A browser without `@starting-style` or discrete transitions shows and hides it at once, as before.
 
 Which variant an element wears can come from the data — a status pill that is amber while a job waits and green once
 it is done. `variantFrom` writes that binding, keyed by the class the element wears:

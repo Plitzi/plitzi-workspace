@@ -21,6 +21,31 @@ import {
 
 import type { CssProps } from '../types';
 
+// What a layer that does not say a longhand holds for it: the longhand's initial value. Not `initial` — a CSS-wide
+// keyword inside a list makes the whole declaration invalid, and a browser drops it: every layer's delays with it.
+const LAYER_INITIAL = new Map<string, string>([
+  ['transition-property', 'all'],
+  ['transition-duration', '0s'],
+  ['transition-timing-function', 'ease'],
+  ['transition-delay', '0s'],
+  ['transition-behavior', 'normal'],
+  ['animation-name', 'none'],
+  ['animation-duration', '0s'],
+  ['animation-timing-function', 'ease'],
+  ['animation-delay', '0s'],
+  ['animation-iteration-count', '1'],
+  ['animation-direction', 'normal'],
+  ['animation-fill-mode', 'none'],
+  ['animation-play-state', 'running'],
+  ['background-image', 'none'],
+  ['background-position', '0% 0%'],
+  ['background-size', 'auto'],
+  ['background-repeat', 'repeat'],
+  ['background-attachment', 'scroll'],
+  ['background-origin', 'padding-box'],
+  ['background-clip', 'border-box']
+]);
+
 // transition, animation and background are comma-separated LAYERS. Each layer expands on its own and the results
 // are re-joined per longhand, which is how CSS itself stores them (`transition-property: opacity, transform`) —
 // expanding the raw value as one flat token list would scramble the layers into each other.
@@ -41,7 +66,18 @@ const expandLayers = (value: string, out: CssProps, expandLayer: (layer: string,
 
   const keys = new Set(perLayer.flatMap(layer => Object.keys(layer)));
   for (const key of keys) {
-    out[key] = perLayer.map(layer => String(layer[key] ?? 'initial')).join(', ');
+    const initial = LAYER_INITIAL.get(key);
+    if (initial !== undefined) {
+      out[key] = perLayer.map(layer => String(layer[key] ?? initial)).join(', ');
+
+      continue;
+    }
+
+    // `background-color` is no list: only the last layer may carry one, and it is the element's.
+    const last = perLayer[perLayer.length - 1];
+    if (Object.hasOwn(last, key)) {
+      out[key] = last[key];
+    }
   }
 };
 
@@ -78,12 +114,15 @@ export const expandTextDecoration = (value: string, out: CssProps): void => {
   }
 };
 
-// One transition layer: property, then the first time is the duration and the second the delay (CSS order).
+// One transition layer: property, then the first time is the duration and the second the delay (CSS order), and
+// `allow-discrete` — what lets `display` transition, for an element that fades as it hides.
 const expandTransitionLayer = (layer: string, out: CssProps): void => {
   let foundDuration = false;
   for (const token of splitTokens(layer)) {
     if (isTimingFunction(token)) {
       out['transition-timing-function'] = token;
+    } else if (token === 'allow-discrete' || token === 'normal') {
+      out['transition-behavior'] = token;
     } else if (TIME_RE.test(token) || NUMBER_RE.test(token)) {
       if (foundDuration) {
         out['transition-delay'] = token;

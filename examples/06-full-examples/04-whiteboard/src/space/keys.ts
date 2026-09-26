@@ -1,8 +1,9 @@
 import { button, container, onClick, onKey, setState, styles, text, toggleState } from '@plitzi/sdk-authoring';
 
 import { setTool } from './elements.ts';
-import { FLOAT, ICON_BUTTON, caption } from './kit.ts';
+import { FLOAT, ICON_BUTTON, caption, FADES, panelMotion } from './kit.ts';
 import { closeOthers, closePanels } from './panels.ts';
+import { openSearch } from './search.ts';
 import { boardAction } from './stylePanel.ts';
 import { KEYED, toolKeys } from './toolbar.ts';
 
@@ -19,6 +20,7 @@ import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 export const shortcuts: StepSpec[][] = [
   ...toolKeys,
   [onKey('delete, backspace'), boardAction('deleteSelection')],
+  [onKey('mod+f'), ...openSearch],
   [onKey('mod+z'), boardAction('undo')],
   [onKey('mod+shift+z, mod+y'), boardAction('redo')],
   [onKey('mod+a'), boardAction('selectAll')],
@@ -85,15 +87,19 @@ const KEYS: readonly { keys: string[]; does: string }[] = [
   { keys: ['⇧', 'drag'], does: 'Square · straight · keep ratio' },
   { keys: ['⌘', 'drag'], does: 'Move without snapping to guides' },
   { keys: ['⌘', '⇧', 'E'], does: 'Export PNG' },
+  { keys: ['⌘', 'F'], does: 'Search — words, #tags, @people, is:open' },
   { keys: ['/'], does: 'Say something at your cursor' },
   { keys: ['⇧', 'V'], does: 'Vote for the selection' },
   { keys: ['⌘', 'V'], does: 'Paste a picture · text as a note' },
   { keys: ['Esc'], does: 'Deselect · stop following · close' }
 ];
 
+const KEYS_MOTION = panelMotion({ from: 'centre', rest: 'translate(-50%, -50%)' });
+
 const keysPanel = styles('keysPanel', {
   css: {
     desktop: {
+      ...KEYS_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       top: '50%',
@@ -108,16 +114,21 @@ const keysPanel = styles('keysPanel', {
       'flex-direction': 'column',
       gap: '12px'
     },
-    mobile: { width: 'calc(100vw - 24px)' }
-  }
+    mobile: { ...KEYS_MOTION.mobile, width: 'calc(100vw - 24px)' }
+  },
+  states: KEYS_MOTION.states
 });
 
 const keysBackdrop = styles('keysBackdrop', {
-  position: 'absolute',
-  inset: '0px',
-  'z-index': '8',
-  'pointer-events': 'auto',
-  'background-color': 'color-mix(in srgb, var(--paper) 55%, transparent)'
+  css: {
+    ...FADES.css,
+    position: 'absolute',
+    inset: '0px',
+    'z-index': '8',
+    'pointer-events': 'auto',
+    'background-color': 'color-mix(in srgb, var(--paper) 55%, transparent)'
+  },
+  states: FADES.states
 });
 
 const keysHead = styles('keysHead', {

@@ -79,6 +79,8 @@ type Saved = {
   text?: string;
   description?: string;
   parent?: string;
+  done?: boolean;
+  completes?: boolean;
   deleted?: boolean;
 };
 
@@ -389,5 +391,133 @@ describeTarget('whiteboard', subject => {
     await expect
       .poll(async () => (await savedElements(subject.origin, id)).map(saved => saved.stroke))
       .toEqual(['#ff00aa']);
+  });
+
+  /** A tag is a #word written in anything: ⌘F finds what carries it, dims the rest, and Enter goes to each in turn. */
+  test('the board is searched by tag, and what is found is gone through', async ({ page }) => {
+    const note = (index: number, x: number, text: string) =>
+      element(index, { type: 'sticky', x, y: 0, width: 200, height: 200, fill: 'yellow', text });
+    const id = await seedBoard(subject.origin, 'e2e — tags', [
+      note(0, 0, 'Crash on save #bug'),
+      note(1, 240, 'Dark mode #idea'),
+      note(2, 480, 'Slow export #bug')
+    ]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    const [x, y] = await middle(page);
+    await page.mouse.click(x, y + 200);
+    await pressShortcut(page, 'mod+f');
+    await page.keyboard.type('#bug');
+    const bar = page.locator('[data-plitzi-el="search-bar"]');
+    await expect(bar).toContainText('2 found');
+    await expect(bar).toContainText('#idea');
+    await page.keyboard.press('Enter');
+    await expect(bar).toContainText('1 of 2');
+  });
+
+  /** A session with a script: started from the timer's panel, everyone is at its step — and a note written in its
+   *  writing step is face down for the others, whatever it says. */
+  test('a session keeps what the others write face down until it moves on', async ({ page, browser }) => {
+    const id = await seedBoard(subject.origin, 'e2e — a session', []);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    await page.locator('[data-plitzi-el="timer-open"]').click();
+    await page.locator('[data-plitzi-el="session-retro"]').click();
+    const bar = page.locator('[data-plitzi-el="session-bar"]');
+    await expect(bar).toContainText('write');
+
+    const other = await (await browser.newContext()).newPage();
+    await other.goto(`${subject.origin}/b/${id}`);
+    await expect(other.locator('[data-plitzi-el="session-bar"]')).toContainText('write');
+    const [x, y] = await middle(other);
+    await other.mouse.click(x, y + 200);
+    await other.keyboard.press('6');
+    await other.mouse.click(x, y);
+    await other.keyboard.type('Secret idea');
+    await other.keyboard.press('Escape');
+    await expect
+      .poll(async () => (await savedElements(subject.origin, id)).map(saved => saved.text))
+      .toEqual(['Secret idea']);
+
+    // Face down here: searching for its words finds nothing.
+    await pressShortcut(page, 'mod+f');
+    await page.keyboard.type('Secret');
+    await expect(page.locator('[data-plitzi-el="search-bar"]')).toContainText('Nothing found');
+    await page.keyboard.press('Escape');
+
+    await page.locator('[data-plitzi-el="session-next"]').click();
+    await expect(bar).toContainText('reveal');
+    await pressShortcut(page, 'mod+f');
+    await page.keyboard.type('Secret');
+    await expect(page.locator('[data-plitzi-el="search-bar"]')).toContainText('1 found');
+  });
+
+  /** A frame's branch: a copy beside it with what it holds, taken back into its place with one click. */
+  /** A column made the team's Done ticks off what it holds, and what is moved into it — and what leaves it is open
+   *  again. */
+  test('a card moved into the Done column is ticked off, and open again moved out', async ({ page }) => {
+    const todo = element(0, { type: 'frame', layout: 'column', x: 0, y: 0, width: 300, height: 460, text: 'To do' });
+    const done = element(1, { type: 'frame', layout: 'column', x: 400, y: 0, width: 300, height: 460, text: 'Done' });
+    const card = (index: number, column: { id: string; x: number }, text: string) =>
+      element(index, { type: 'card', x: column.x + 16, y: 64, width: 268, height: 60, text, parent: column.id });
+    const moving = card(2, todo, 'Write the post');
+    const shipped = card(3, done, 'Start a board');
+    const id = await seedBoard(subject.origin, 'e2e — a Done column', [todo, done, moving, shipped]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    // Fitted at its own size: the board's middle, (350, 230), is the canvas's.
+    const [x, y] = await middle(page);
+    const at = (point: [number, number]): [number, number] => [x + point[0] - 350, y + point[1] - 230];
+    const saved = async (of: { id: string }) =>
+      (await savedElements(subject.origin, id)).find(entry => entry.id === of.id);
+
+    // Selected by its title bar, the Done column is made the one that completes: what it holds is done now.
+    await page.mouse.click(...at([550, 24]));
+    await page.locator('[data-plitzi-el="column-completes"]').click();
+    await expect.poll(async () => (await saved(done))?.completes).toBe(true);
+    await expect.poll(async () => (await saved(shipped))?.done).toBe(true);
+
+    await drag(page, at([150, 94]), at([550, 300]), 10);
+    await expect.poll(async () => (await saved(moving))?.parent).toBe(done.id);
+    expect((await saved(moving))?.done).toBe(true);
+
+    const there = await saved(moving);
+    if (!there) {
+      throw new Error('The card is gone');
+    }
+
+    await drag(page, at([there.x + 150, there.y + 20]), at([150, 300]), 10);
+    await expect.poll(async () => (await saved(moving))?.parent).toBe(todo.id);
+    expect((await saved(moving))?.done).toBeUndefined();
+  });
+
+  test('a frame is branched and the branch taken back', async ({ page }) => {
+    const frame = element(0, { type: 'frame', x: 0, y: 0, width: 400, height: 300, fill: 'none', text: 'Plan' });
+    const note = element(1, {
+      type: 'sticky',
+      x: 40,
+      y: 70,
+      width: 180,
+      height: 180,
+      fill: 'yellow',
+      text: 'Build it',
+      parent: frame.id
+    });
+    const id = await seedBoard(subject.origin, 'e2e — a branch', [frame, note]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    // The frame's title bar: 24 below its top, which the fitted view puts 150 above the middle.
+    const [x, y] = await middle(page);
+    await page.mouse.click(x - 100, y - 150 + 24);
+    await page.locator('[data-plitzi-el="branch-frame"]').click();
+    await expect
+      .poll(async () => (await savedElements(subject.origin, id)).filter(saved => saved.type === 'sticky').length)
+      .toBe(2);
+
+    // The branch is selected: taken back, the board is one frame and one note again.
+    await page.locator('[data-plitzi-el="merge-branch"]').click();
+    await expect
+      .poll(async () => (await savedElements(subject.origin, id)).map(saved => saved.type).sort())
+      .toEqual(['frame', 'sticky']);
   });
 });

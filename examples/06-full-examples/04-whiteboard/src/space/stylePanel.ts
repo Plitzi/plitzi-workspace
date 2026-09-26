@@ -14,7 +14,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { BOARD_ID } from './ids.ts';
-import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
+import { BUTTON_RESET, FLOAT, caption, icon, panelMotion } from './kit.ts';
 import { FILLS, STROKES, STROKE_WIDTHS } from '../board/model.ts';
 import boardDeclaration from '../plugins/Board/declaration.ts';
 
@@ -36,9 +36,12 @@ export const boardAction = (
   params: Record<string, unknown> = {}
 ): StepSpec => declaredCallback(boardDeclaration, action, { on: BOARD_ID, params });
 
+const PANEL_MOTION = panelMotion({ from: 'left', rest: 'translateY(-50%)' }, { from: 'above' });
+
 const panel = styles('stylePanel', {
   css: {
     desktop: {
+      ...PANEL_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       top: '50%',
@@ -56,6 +59,7 @@ const panel = styles('stylePanel', {
       'scrollbar-width': 'thin'
     },
     mobile: {
+      ...PANEL_MOTION.mobile,
       top: '64px',
       left: '10px',
       transform: 'none',
@@ -64,7 +68,8 @@ const panel = styles('stylePanel', {
       gap: '10px',
       'max-height': 'calc(100dvh - 160px)'
     }
-  }
+  },
+  states: PANEL_MOTION.states
 });
 
 const row = styles('styleRow', { display: 'flex', 'flex-wrap': 'wrap', gap: '6px' });

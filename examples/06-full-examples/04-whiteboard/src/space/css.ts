@@ -61,6 +61,18 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
 .timerPill[data-state='ending'] { color: var(--danger); animation: timer-pulse 1s ease-in-out infinite; }
 @keyframes timer-pulse { 50% { transform: translateX(-50%) scale(1.08); } }
 
+/* ── The chrome's motion (\`kit.ts\`) ─────────────────────────────────────────────────────────────────────────────────
+   What a panel holds rises in after it; the panels themselves move by their \`hidden\` state. */
+@keyframes wb-enter { from { opacity: 0; transform: translateY(6px) scale(0.92); } }
+@media (prefers-reduced-motion: reduce) {
+  .screen *, .screen *::before, .screen *::after {
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
 /* ── The front page's motion ───────────────────────────────────────────────────────────────────────────────────────
    The marker under the headline, and the scenes of "Better together" (\`home/together.ts\`). Still for a visitor who
    asked for less motion: every animated class there is named \`motion…\`. */

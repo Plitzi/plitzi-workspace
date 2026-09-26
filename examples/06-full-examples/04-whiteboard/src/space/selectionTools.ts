@@ -1,5 +1,6 @@
 import { container, onClick, styles, variantFrom } from '@plitzi/sdk-authoring';
 
+import { dutyButton } from './duty.ts';
 import { FLOAT, divide, iconAction, iconButton } from './kit.ts';
 import { boardAction } from './stylePanel.ts';
 
@@ -64,15 +65,47 @@ export const selectionTools = (): ElementSpec =>
                 ],
                 flow: [onClick(), boardAction('toggleColumn')]
               }),
-              // A column: another beside it, for the next stage of the board.
+              // A column: another beside it, for the next stage of the board — and whether it is the one that completes.
               container({
                 visible: 'computed.selectionIsColumn',
+                class: styles('columnTools', { display: 'contents' }),
                 children: [
                   iconAction({
                     id: 'add-column',
                     icon: 'fa-solid fa-plus',
                     title: 'Add a column beside it',
                     flow: [onClick(), boardAction('addColumn')]
+                  }),
+                  // The team's Done: a card moved into it is ticked off, and moved out of it, open again.
+                  iconAction({
+                    id: 'column-completes',
+                    icon: 'fa-solid fa-flag-checkered',
+                    title: 'Done column — a card moved here is ticked off',
+                    bind: [
+                      variantFrom(iconButton, 'computed.selectionCompletes', {
+                        template: "{{ source ? 'active' : '' }}"
+                      })
+                    ],
+                    flow: [onClick(), boardAction('toggleCompletes')]
+                  })
+                ]
+              }),
+              dutyButton(),
+              iconAction({
+                id: 'branch-frame',
+                icon: 'fa-solid fa-code-branch',
+                title: 'Branch — a copy beside it, to try another way',
+                flow: [onClick(), boardAction('branchFrame')]
+              }),
+              // A branch: taken back into its original's place — the way it tried is the way now.
+              container({
+                visible: 'computed.selectionIsBranch',
+                children: [
+                  iconAction({
+                    id: 'merge-branch',
+                    icon: 'fa-solid fa-code-merge',
+                    title: 'Use this branch — it replaces what the original holds',
+                    flow: [onClick(), boardAction('mergeBranch')]
                   })
                 ]
               }),

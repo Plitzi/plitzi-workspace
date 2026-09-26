@@ -17,7 +17,7 @@ import {
 import { DELETE_ACTION } from '../actions.ts';
 import { BOARD_PASS } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
-import { BELOW_HEADER, BUTTON_RESET, FLOAT, iconAction } from './kit.ts';
+import { BELOW_HEADER, BUTTON_RESET, FLOAT, iconAction, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
 
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
@@ -27,9 +27,12 @@ import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
  * where every page on it — this one included — is sent back to the boards (`board.ts`, the `feed` channel).
  */
 
+const POPOVER_MOTION = panelMotion({ from: 'above', origin: 'top left' });
+
 const popover = styles('deletePopover', {
   css: {
     desktop: {
+      ...POPOVER_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       top: BELOW_HEADER,
@@ -41,8 +44,9 @@ const popover = styles('deletePopover', {
       width: '284px',
       padding: '16px'
     },
-    mobile: { left: '10px', right: '10px', width: 'auto' }
-  }
+    mobile: { ...POPOVER_MOTION.mobile, left: '10px', right: '10px', width: 'auto' }
+  },
+  states: POPOVER_MOTION.states
 });
 
 const title = styles('deleteTitle', { 'font-weight': '700', 'font-size': '15px' });

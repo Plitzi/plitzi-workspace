@@ -42,6 +42,11 @@ export type FormControlProps = {
   label: string;
   placeholder: string;
   autoComplete: boolean;
+  /**
+   * Takes the focus as it appears — a search box opened by a shortcut is typed into at once. With the control's
+   * container shown only while wanted (`loadStrategy: 'visible'`), it appears each time it is opened.
+   */
+  autoFocus: boolean;
   disabled: boolean;
   options: { label: string; value: string }[];
   required: boolean;
@@ -87,6 +92,7 @@ const FormControl = ({
   label = 'Label',
   placeholder = '',
   autoComplete = true,
+  autoFocus = false,
   disabled = false,
   options = [],
   required = true,
@@ -101,6 +107,7 @@ const FormControl = ({
   const {
     id,
     rootId,
+    visible,
     definition: { styleSelectors }
   } = useElement();
   const {
@@ -143,6 +150,8 @@ const FormControl = ({
   // authoring one without remembering to blank it puts "Label" and a box on the page above a field nobody can
   // see. The control itself is `display: none` in a real render; only the builder shows a placeholder for it.
   const isHidden = subType === 'hidden';
+  // Every time it is shown — a search bar opened a second time takes the focus again — and never in the builder.
+  const focusWhenShown = autoFocus && previewMode && visible;
 
   useEffect(() => {
     if (!registerField || !unregisterField) {
@@ -247,6 +256,7 @@ const FormControl = ({
           className={styleSelectors.input}
           placeholder={placeholder}
           autoComplete={subType !== 'password' ? autoComplete : false}
+          autoFocus={focusWhenShown}
           required={required}
           maxLength={maxLength}
           disabled={disabled}
@@ -285,6 +295,7 @@ const FormControl = ({
           value={value}
           className={styleSelectors.input}
           placeholder={placeholder}
+          autoFocus={focusWhenShown}
           required={required}
           maxLength={maxLength}
           disabled={disabled}

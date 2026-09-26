@@ -54,6 +54,7 @@ const control = (
   className: '',
   placeholder: '',
   autoComplete: false,
+  autoFocus: false,
   disabled: false,
   options: [],
   required: true,

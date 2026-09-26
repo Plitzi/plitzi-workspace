@@ -7,6 +7,7 @@ import {
   container,
   declaredTrigger,
   defineElement,
+  fontAwesome,
   formControl,
   link,
   named,
@@ -21,6 +22,8 @@ import {
   styles,
   text,
   themeToggle,
+  toggleState,
+  variantFrom,
   when,
   whenFailed,
   whileRunning
@@ -49,17 +52,20 @@ import {
 } from './access.ts';
 import { chatButton, chatPanel, hearChat } from './chat.ts';
 import { deleteButton, deletePanel } from './deleteBoard.ts';
+import { dutyPanel } from './duty.ts';
 import { framesButton, framesPanel, minimapButton, presentationBanner } from './frames.ts';
 import { BOARD_ID, BOARD_PROVIDER } from './ids.ts';
 import { agentButtonFor, agentPanel } from './invite.ts';
 import { keysHelp, shortcuts } from './keys.ts';
-import { BUTTON_RESET, FLOAT, divide, icon, iconAction } from './kit.ts';
+import { BUTTON_RESET, FLOAT, ICON_BUTTON, PRESSED, divide, icon, iconAction } from './kit.ts';
 import { libraryPanel } from './library.ts';
 import { closePanels, popoverBackdrop } from './panels.ts';
 import { popovers, presence } from './people.ts';
 import { reachBadges } from './reach.ts';
 import { readOnlyBanner } from './readOnly.ts';
+import { searchBar, searchButton } from './search.ts';
 import { selectionTools } from './selectionTools.ts';
+import { SESSION, sessionBar } from './session.ts';
 import { settingsButton, settingsPanel } from './settings.ts';
 import { identity } from './state.ts';
 import { boardAction, stylePanel } from './stylePanel.ts';
@@ -226,6 +232,68 @@ const readOnlyTitle = styles('readOnlyTitle', {
   }
 });
 
+/**
+ * What folds away in the corner: all but the way home — the name, its settings, what the board is. Folded, the corner
+ * is a small mark and the board has its top edge back; the width goes as the columns of a grid do (`1fr` → `0fr`),
+ * so nothing is measured, and what folds leaves the keyboard's reach too (`visibility`, flipped at the far end).
+ */
+const FOLD = '320ms cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+const foldable = styles('topLeftFoldable', {
+  css: {
+    desktop: {
+      display: 'grid',
+      'grid-template-columns': '1fr',
+      transition: `grid-template-columns ${FOLD}, opacity 200ms ease, visibility ${FOLD}`
+    },
+    mobile: { display: 'contents' }
+  },
+  variants: {
+    folded: {
+      desktop: {
+        'grid-template-columns': '0fr',
+        opacity: '0',
+        visibility: 'hidden',
+        transition: `grid-template-columns ${FOLD}, opacity 140ms ease, visibility ${FOLD}`
+      },
+      mobile: {}
+    }
+  }
+});
+
+/** The folding row itself: clipped as it narrows, with room around it for a focus ring. */
+const foldableRow = styles('topLeftFoldableRow', {
+  css: {
+    desktop: {
+      display: 'flex',
+      'align-items': 'center',
+      gap: '2px',
+      'min-width': '0px',
+      overflow: 'hidden',
+      padding: '3px',
+      margin: '-3px'
+    },
+    mobile: { display: 'contents' }
+  }
+});
+
+const foldButton = styles('foldButton', {
+  css: { desktop: { ...ICON_BUTTON, width: '28px', color: 'var(--muted)' }, mobile: { display: 'none' } },
+  states: {
+    hover: { color: 'var(--ink)', 'background-color': 'var(--surface-2)' },
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' },
+    active: PRESSED
+  },
+  variants: { folded: {} }
+});
+
+const foldGlyph = styles('foldGlyph', {
+  css: { 'pointer-events': 'none', 'line-height': '1', transition: `transform ${FOLD}` },
+  ancestors: { [foldButton.name]: { variants: { folded: { transform: 'rotate(180deg)' } } } }
+});
+
+const FOLDED = { template: "{{ source ? 'folded' : '' }}" };
+
 const zoomLabel = styles('zoomLabel', {
   css: {
     ...BUTTON_RESET,
@@ -342,6 +410,7 @@ const canvas = (): ElementSpec =>
       { to: 'fillStyle', source: 'computed.fillStyle' },
       { to: 'opacity', source: 'computed.opacity' },
       { to: 'author', source: 'computed.name' },
+      bindTemplate('session', BOARD_PROVIDER, SESSION, { returns: 'value' }),
       { to: 'minimap', source: 'computed.minimap' },
       { to: 'authors', source: 'computed.showAuthors' },
       { to: 'sounds', source: 'computed.sounds' },
@@ -473,6 +542,14 @@ const canvas = (): ElementSpec =>
         setState({ key: 'selectionCanOpacity', type: 'boolean', value: '{{ picked.canOpacity }}' }),
         setState({ key: 'selectionIsFrame', type: 'boolean', value: '{{ picked.isFrame }}' }),
         setState({ key: 'selectionIsColumn', type: 'boolean', value: '{{ picked.isColumn }}' }),
+        setState({ key: 'selectionCompletes', type: 'boolean', value: '{{ picked.completes }}' }),
+        setState({ key: 'selectionIsBranch', type: 'boolean', value: '{{ picked.isBranch }}' }),
+        // A frame's duty, and the draft its panel starts from: what the frame has, or a scribe to begin with.
+        setState({ key: 'hasDuty', type: 'boolean', value: '{{ picked.hasDuty }}' }),
+        setState({ key: 'dutyAgent', type: 'text', value: '{{ picked.dutyAgent }}' }),
+        setState({ key: 'dutyPaused', type: 'boolean', value: '{{ picked.dutyPaused }}' }),
+        setState({ key: 'dutyDraftRole', type: 'text', value: "{{ picked.dutyRole ? picked.dutyRole : 'scribe' }}" }),
+        setState({ key: 'dutyDraft', type: 'text', value: '{{ picked.dutyInstruction }}' }),
         when(
           { field: 'picked.stroke', operator: '!=', value: '' },
           setState({ key: 'stroke', type: 'text', value: '{{ picked.stroke }}' })
@@ -511,6 +588,21 @@ const canvas = (): ElementSpec =>
       ],
       // Something carried to the board — off the library, off the pad — is under way: what is open makes way for it.
       [declaredTrigger(declaration, 'onCarry'), ...closePanels],
+      // The session the board goes through, as the canvas reads it: what the bar at the top shows.
+      [
+        named('stepped', declaredTrigger(declaration, 'onSessionChange')),
+        setState({ key: 'sessionView', type: 'json', value: '{{ stepped|json_encode }}' })
+      ],
+      // What the search finds, for the bar; the tags written on the board, for it to offer.
+      [
+        named('searched', declaredTrigger(declaration, 'onSearchChange')),
+        setState({ key: 'searchCount', type: 'number', value: '{{ searched.count }}' }),
+        setState({ key: 'searchIndex', type: 'number', value: '{{ searched.index }}' })
+      ],
+      [
+        named('tagged', declaredTrigger(declaration, 'onTagsChange')),
+        setState({ key: 'tags', type: 'json', value: '{{ tagged.tags|json_encode }}' })
+      ],
       [
         named('framed', declaredTrigger(declaration, 'onFramesChange')),
         setState({ key: 'frames', type: 'json', value: '{{ framed.frames|json_encode }}' })
@@ -664,11 +756,38 @@ const header = (): ElementSpec[] => [
         label: 'All boards',
         children: [icon('fa-solid fa-chevron-left'), text({ content: 'Pizarra', class: desktopOnly })]
       }),
-      text({ content: '', class: titleDivider }),
-      editOnly([title(), settingsButton(), deleteButton()]),
-      ...reachBadges(),
-      // A read-only board's name is read, not edited.
-      readOnlyOnly([text({ content: '', class: readOnlyTitle, bind: { content: `${BOARD_PROVIDER}.title` } })])
+      container({
+        class: foldable,
+        bind: [variantFrom(foldable, 'computed.headerFolded', FOLDED)],
+        children: [
+          container({
+            class: foldableRow,
+            children: [
+              text({ content: '', class: titleDivider }),
+              editOnly([title(), settingsButton(), deleteButton()]),
+              ...reachBadges(),
+              // A read-only board's name is read, not edited.
+              readOnlyOnly([text({ content: '', class: readOnlyTitle, bind: { content: `${BOARD_PROVIDER}.title` } })])
+            ]
+          })
+        ]
+      }),
+      button({
+        id: 'header-fold',
+        content: '',
+        title: 'Fold this bar away',
+        class: foldButton,
+        bind: [
+          variantFrom(foldButton, 'computed.headerFolded', FOLDED),
+          bindTemplate(
+            'title',
+            'computed.headerFolded',
+            "{{ source ? 'Show the board name and settings' : 'Fold this bar away' }}"
+          )
+        ],
+        flows: [[onClick(), ...closePanels, toggleState({ key: 'headerFolded' })]],
+        children: [fontAwesome({ icon: 'fa-solid fa-angles-left', class: foldGlyph })]
+      })
     ]
   }),
   container({
@@ -692,6 +811,7 @@ const header = (): ElementSpec[] => [
           })
         ]
       }),
+      searchButton(),
       editOnly([timerButton()]),
       chatButton(),
       container({
@@ -786,6 +906,9 @@ export const boardPage: PageSpec = {
                     ...header(),
                     editOnly([toolbar(), stylePanel(), ...toolFlyouts(), libraryPanel()]),
                     readOnlyBanner(),
+                    searchBar(),
+                    sessionBar(),
+                    dutyPanel(),
                     followBanner(),
                     presentationBanner(),
                     timerPill(),
@@ -838,6 +961,15 @@ export const boardPage: PageSpec = {
               when(
                 { field: 'heard.type', operator: '=', value: 'timer' },
                 setState({ key: 'timer', type: 'json', value: '{{ heard.data }}' })
+              ),
+              // A session started, moved on or over — the canvas turns notes over or back, the bar follows.
+              when(
+                { field: 'heard.type', operator: '=', value: 'session' },
+                setState({ key: 'sessionHeard', type: 'json', value: '{{ heard.data }}' })
+              ),
+              when(
+                { field: 'heard.type', operator: '=', value: 'session' },
+                boardAction('chime', { sound: "{{ heard.data.session ? 'timerStart' : 'timerStop' }}" })
               ),
               // A timer started — for everyone on the board, whoever started it.
               when(

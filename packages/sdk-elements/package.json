@@ -570,6 +570,10 @@
       "types": "./dist/elements/form/FormControl/inputs/Textarea.d.ts",
       "import": "./dist/elements/form/FormControl/inputs/Textarea.mjs"
     },
+    "./elements/form/FormControl/inputs/useFocusWhenShown": {
+      "types": "./dist/elements/form/FormControl/inputs/useFocusWhenShown.d.ts",
+      "import": "./dist/elements/form/FormControl/inputs/useFocusWhenShown.mjs"
+    },
     "./elements/index": {
       "types": "./dist/elements/index.d.ts",
       "import": "./dist/elements/index.mjs"

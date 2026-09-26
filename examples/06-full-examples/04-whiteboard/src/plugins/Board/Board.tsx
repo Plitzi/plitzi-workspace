@@ -10,6 +10,7 @@ import { parseDemo, playDemo } from './demo.ts';
 import { choiceFrom } from './styling.ts';
 import { asFill, asStroke, STROKE_WIDTHS } from '../../board/model.ts';
 import { isCollaborator } from '../../board/people.ts';
+import { parseSession, SCRIPTS, stepOf } from '../../board/sessions.ts';
 
 import type {
   BoardController,
@@ -45,6 +46,11 @@ export type BoardProps = {
   voter?: string;
   /** This person's name: what a note or a card they write says under it. */
   author?: string;
+  /**
+   * The session with a script the board is going through (`board/sessions.ts`), as the server keeps it: during its
+   * writing step, what the others write is face down, and what this person writes is kept face down for them.
+   */
+  session?: unknown;
   /** Show who wrote each note and card. */
   authors?: boolean | string;
   /** Make the board's small sounds — somebody arriving, a reaction, a line in the chat. */
@@ -140,6 +146,7 @@ const Board = ({
   assetBase = '',
   voter = '',
   author = '',
+  session,
   authors = true,
   sounds = true,
   mode = 'edit',
@@ -228,9 +235,16 @@ const Board = ({
             canOpacity: event.stylable.opacity,
             isFrame: event.frame,
             isColumn: event.column,
+            completes: event.completes,
             isTask: event.task,
             isDone: event.done,
-            isLocked: event.locked
+            isLocked: event.locked,
+            hasDuty: event.duty !== undefined,
+            dutyRole: event.duty?.role ?? '',
+            dutyInstruction: event.duty?.instruction ?? '',
+            dutyAgent: event.duty?.agent ?? '',
+            dutyPaused: event.duty?.paused === true,
+            isBranch: event.branch
           });
           break;
         case 'view':
@@ -271,6 +285,31 @@ const Board = ({
           break;
         case 'carry':
           trigger(declaration.triggers.onCarry.action, {});
+          break;
+        case 'search':
+          trigger(declaration.triggers.onSearchChange.action, {
+            query: event.query,
+            count: event.count,
+            index: event.index
+          });
+          break;
+        case 'session': {
+          const { session } = event;
+          const step = session ? stepOf(session) : undefined;
+          trigger(declaration.triggers.onSessionChange.action, {
+            active: session !== undefined,
+            label: session ? SCRIPTS[session.script].label : '',
+            step: session ? session.step + 1 : 0,
+            steps: session ? SCRIPTS[session.script].steps.length : 0,
+            kind: step?.kind ?? '',
+            says: step?.say ?? '',
+            endsAt: session?.endsAt ?? 0,
+            host: session?.host ?? ''
+          });
+          break;
+        }
+        case 'tags':
+          trigger(declaration.triggers.onTagsChange.action, { tags: event.tags });
           break;
         case 'frames':
           trigger(declaration.triggers.onFramesChange.action, { frames: event.frames, count: event.frames.length });
@@ -339,6 +378,7 @@ const Board = ({
       assetBase,
       voter,
       author,
+      session: parseSession(session),
       authors: authors === true || authors === 'true',
       sounds: sounds === true || sounds === 'true',
       extras: choiceFrom({ dash, sloppiness, brush, edges, fillStyle, opacity })
@@ -354,6 +394,7 @@ const Board = ({
     assetBase,
     voter,
     author,
+    session,
     authors,
     sounds,
     dash,
@@ -490,6 +531,15 @@ const Board = ({
         callback: (params: { sound?: unknown }) => controllerRef.current?.chime(params)
       },
       toggleColumn: call('toggleColumn', controller => controller.toggleColumn()),
+      toggleCompletes: call('toggleCompletes', controller => controller.toggleCompletes()),
+      setDuty: {
+        ...declaration.callbacks.setDuty,
+        callback: (params: { role?: unknown; instruction?: unknown }) => controllerRef.current?.setDuty(params)
+      },
+      clearDuty: call('clearDuty', controller => controller.clearDuty()),
+      branchFrame: call('branchFrame', controller => controller.branchFrame()),
+      mergeBranch: call('mergeBranch', controller => controller.mergeBranch()),
+      toggleDutyPause: call('toggleDutyPause', controller => controller.toggleDutyPause()),
       goToFrame: {
         ...declaration.callbacks.goToFrame,
         callback: (params: { id?: unknown }) => controllerRef.current?.goToFrame(params)
@@ -516,7 +566,16 @@ const Board = ({
       rollback: call('rollback', controller => controller.rollback()),
       carry: {
         ...declaration.callbacks.carry,
-        callback: (params: { fill?: unknown }) => controllerRef.current?.carry(params)
+        callback: (params: { tool?: unknown; fill?: unknown; kind?: unknown; drag?: unknown }) =>
+          controllerRef.current?.carry(params)
+      },
+      search: {
+        ...declaration.callbacks.search,
+        callback: (params: { query?: unknown }) => controllerRef.current?.search(params)
+      },
+      searchStep: {
+        ...declaration.callbacks.searchStep,
+        callback: (params: { direction?: unknown }) => controllerRef.current?.searchStep(params)
       },
       follow: {
         ...declaration.callbacks.follow,

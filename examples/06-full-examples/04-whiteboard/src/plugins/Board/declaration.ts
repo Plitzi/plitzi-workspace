@@ -63,9 +63,16 @@ const declaration = {
         canOpacity: '',
         isFrame: '',
         isColumn: '',
+        completes: '',
         isTask: '',
         isDone: '',
-        isLocked: ''
+        isLocked: '',
+        hasDuty: '',
+        dutyRole: '',
+        dutyInstruction: '',
+        dutyAgent: '',
+        dutyPaused: '',
+        isBranch: ''
       }
     },
     onViewChange: {
@@ -101,6 +108,34 @@ const declaration = {
     },
     /** Something carried to the board started to move: what is open over the board makes way for where it goes. */
     onCarry: { action: 'onCarry', title: 'On Carry', type: 'trigger', params: {}, preview: {} },
+    /** What the board is searched for, how many things it finds, and which of them is shown (from 1; 0 before any). */
+    onSearchChange: {
+      action: 'onSearchChange',
+      title: 'On Search Change',
+      type: 'trigger',
+      params: {},
+      preview: { query: '', count: '', index: '' }
+    },
+    /**
+     * The session with a script the board goes through, whenever it starts, moves on or ends: `active`, its script's
+     * `label`, the `step` it is at (from 1) of `steps`, that step's `kind` and what it `says`, when it `endsAt`, and who
+     * runs it (`host`).
+     */
+    onSessionChange: {
+      action: 'onSessionChange',
+      title: 'On Session Change',
+      type: 'trigger',
+      params: {},
+      preview: { active: '', label: '', step: '', steps: '', kind: '', says: '', endsAt: '', host: '' }
+    },
+    /** The tags written on the board (`#word` in what anything says), most used first, each with how often. */
+    onTagsChange: {
+      action: 'onTagsChange',
+      title: 'On Tags Change',
+      type: 'trigger',
+      params: {},
+      preview: { tags: '' }
+    },
     onFramesChange: {
       action: 'onFramesChange',
       title: 'On Frames Change',
@@ -192,12 +227,51 @@ const declaration = {
     },
     /** The one frame selected made a column — which lays out what is put in it, as a kanban lane — or free again. */
     toggleColumn: callback('toggleColumn', 'Toggle Column'),
+    toggleCompletes: callback('toggleCompletes', 'Toggle Column Completes'),
     /** A frame, eased into view. */
+    /**
+     * The one frame selected given a duty for an agent: a role (`scribe`, `guardian`, `organizer`, `custom`) and what to
+     * do there — its role's own words when left empty. An agent on the board takes it (`take_duty`) and keeps at it.
+     */
+    setDuty: {
+      action: 'setDuty',
+      title: 'Set Agent Duty',
+      type: 'callback',
+      params: {
+        role: { label: 'Role (scribe, guardian, organizer, custom)', defaultValue: 'scribe', type: 'text' },
+        instruction: { label: 'Instruction', defaultValue: '', type: 'text' }
+      }
+    },
+    /** A branch of the one frame selected: a copy of it and all it holds, beside it, to try another way. */
+    branchFrame: callback('branchFrame', 'Branch Frame'),
+    /** The one frame selected, a branch, taken back: what it holds replaces what its original held, and it goes. */
+    mergeBranch: callback('mergeBranch', 'Use This Branch'),
+    /** The one frame selected's duty taken away: whoever had it stops. */
+    clearDuty: callback('clearDuty', 'Clear Agent Duty'),
+    /** The one frame selected's duty held, or let go on: the agent waits while it is paused. */
+    toggleDutyPause: callback('toggleDutyPause', 'Pause Or Resume Agent Duty'),
     goToFrame: {
       action: 'goToFrame',
       title: 'Go To Frame',
       type: 'callback',
       params: { id: { label: 'Frame id', defaultValue: '', type: 'text' } }
+    },
+    /**
+     * Search the board — words, `#tag`, `@author`, `in:frame`, `type:card`, `color:red`, `is:done` / `is:open` — dimming
+     * whatever it does not find. An empty query ends the search.
+     */
+    search: {
+      action: 'search',
+      title: 'Search',
+      type: 'callback',
+      params: { query: { label: 'Query', defaultValue: '', type: 'text' } }
+    },
+    /** The next thing the search finds — or, with `direction: -1`, the one before — brought into view and selected. */
+    searchStep: {
+      action: 'searchStep',
+      title: 'Search Next',
+      type: 'callback',
+      params: { direction: { label: 'Direction (1 or -1)', defaultValue: '1', type: 'text' } }
     },
     /** The frames, one at a time, for everyone on the board: from the one selected, or the first. */
     present: callback('present', 'Present'),
@@ -364,6 +438,7 @@ const declaration = {
           { path: 'opacity', label: 'Opacity' },
           { path: 'scheme', label: 'Colour scheme' },
           { path: 'author', label: 'Author (whose name goes on notes and cards)' },
+          { path: 'session', label: 'Session with a script (as the server keeps it)' },
           { path: 'authors', label: 'Show who wrote notes and cards' },
           { path: 'sounds', label: 'Make sounds' },
           { path: 'minimap', label: 'Show the minimap' }

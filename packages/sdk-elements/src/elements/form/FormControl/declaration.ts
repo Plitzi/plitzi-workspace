@@ -100,6 +100,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       placeholder: '',
       defaultValue: '',
       autoComplete: true,
+      autoFocus: false,
       disabled: false,
       options: [],
       required: true,

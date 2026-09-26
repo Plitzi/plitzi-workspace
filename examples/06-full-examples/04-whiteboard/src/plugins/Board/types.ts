@@ -1,7 +1,8 @@
 import type { Box, Camera, Handle } from './geometry.ts';
 import type { Guides } from './snapping.ts';
 import type { StyleChoice } from './styling.ts';
-import type { BoardElement, Fill, Point, Reply, Stroke, StrokeWidth, StyleField } from '../../board/model.ts';
+import type { BoardElement, Duty, Fill, Point, Reply, Stroke, StrokeWidth, StyleField } from '../../board/model.ts';
+import type { BoardSession } from '../../board/sessions.ts';
 
 export const TOOLS = [
   'select',
@@ -75,11 +76,12 @@ export type ControllerProps = {
   authors: boolean;
   /** Whether the board makes its small sounds — this person's choice too. */
   sounds: boolean;
+  /** The session with a script the board is going through, if any: its writing step turns the others' notes over. */
+  session: BoardSession | undefined;
   /** The rest of the style new elements are drawn with — dash, sloppiness, edges, fill style, opacity. */
   extras: StyleChoice;
 };
 
-/** Where the text being typed sits on screen, for the field the component lays over the canvas. */
 /** Which of an element's words are being written: its text — a card's title — or a card's description. */
 export type EditField = 'text' | 'description';
 
@@ -98,6 +100,7 @@ export type EditorField = {
   color: string;
 };
 
+/** Where the text being typed sits on screen, for the field the component lays over the canvas. */
 export type TextEditor = {
   id: string;
   /** What the field holds as it opens, and what it shows while it holds nothing. */
@@ -173,11 +176,17 @@ export type ControllerEvent =
       /** The selection is one frame — what may be made a column, or a free area again — and whether it is a column. */
       frame: boolean;
       column: boolean;
+      /** The one column selected marks done what lands in it. */
+      completes: boolean;
       /** The selection is one card or comment — what can be ticked off — and whether it is. */
       task: boolean;
       done: boolean;
       /** Everything selected is locked — what the lock button then offers to let go. */
       locked: boolean;
+      /** The one frame selected's duty for an agent, if it has one. */
+      duty: Duty | undefined;
+      /** The one frame selected is a branch of another — what may be taken back into its place. */
+      branch: boolean;
     }
   | { type: 'selectionBox'; box: ScreenBox | undefined }
   | { type: 'view'; zoom: number }
@@ -205,6 +214,12 @@ export type ControllerEvent =
   | { type: 'history'; canUndo: boolean; canRedo: boolean }
   /** Something carried started to move: the page gets out of the way of where it will be put. */
   | { type: 'carry' }
+  /** What is searched for, how much it finds, and which of them is shown — `index` from 1, 0 before any. */
+  | { type: 'search'; query: string; count: number; index: number }
+  /** The session with a script the board goes through — started, moved on a step, or over. */
+  | { type: 'session'; session: BoardSession | undefined }
+  /** The tags written on the board, most used first. */
+  | { type: 'tags'; tags: { tag: string; count: number }[] }
   /** This person presents: the others are shown each frame they go to — and told when it is over (`index: -1`). */
   | { type: 'present'; message: PresentMessage }
   /** A presentation this page is in — its own, or somebody else's — moved on or ended (`presenter: ''`). */

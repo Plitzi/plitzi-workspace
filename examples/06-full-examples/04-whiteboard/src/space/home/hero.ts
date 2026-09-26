@@ -252,26 +252,6 @@ const litterStar = styles('motionHeroStar', {
   }
 });
 
-const eyebrow = styles('heroEyebrow', {
-  display: 'inline-flex',
-  'align-items': 'center',
-  gap: '8px',
-  padding: '6px 12px',
-  'border-radius': '999px',
-  'font-size': '12px',
-  'font-weight': '600',
-  color: 'var(--accent)',
-  'background-color': 'var(--accent-soft)'
-});
-
-const liveDot = styles('liveDot', {
-  width: '8px',
-  height: '8px',
-  'border-radius': '50%',
-  'background-color': 'var(--green)',
-  'box-shadow': '0 0 0 4px color-mix(in srgb, var(--green) 25%, transparent)'
-});
-
 const headline = styles('heroTitle', {
   css: {
     desktop: {
@@ -582,10 +562,6 @@ export const hero = (): ElementSpec =>
       container({
         class: pitch,
         children: [
-          container({
-            class: eyebrow,
-            children: [text({ content: '', class: liveDot }), text({ content: 'Live · free · no sign-up' })]
-          }),
           container({
             subType: 'h1',
             class: headline,

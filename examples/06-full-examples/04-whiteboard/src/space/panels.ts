@@ -24,7 +24,8 @@ export const PANELS = [
   'agentOpen',
   'libraryOpen',
   'settingsOpen',
-  'stampOpen'
+  'stampOpen',
+  'dutyOpen'
 ] as const;
 
 export const closePanels: StepSpec[] = PANELS.map(key => setState({ key, type: 'boolean', value: false }));

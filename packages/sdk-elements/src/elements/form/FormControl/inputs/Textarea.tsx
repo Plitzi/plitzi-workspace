@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useCallback, useRef } from 'react';
 
+import useFocusWhenShown from './useFocusWhenShown';
+
 import type { ChangeEvent, MouseEvent } from 'react';
 
 export type TextareaProps = {
@@ -9,6 +11,8 @@ export type TextareaProps = {
   name?: string;
   placeholder?: string;
   value?: string;
+  /** Takes the focus while true: as it becomes true, whether on mount or as the field is shown again. */
+  autoFocus?: boolean;
   required?: boolean;
   /** `0` for none. */
   maxLength?: number;
@@ -24,6 +28,7 @@ const Textarea = ({
   name = '',
   placeholder = '',
   value = '',
+  autoFocus = false,
   required = true,
   maxLength = 0,
   disabled = false,
@@ -32,6 +37,7 @@ const Textarea = ({
   onValidate
 }: TextareaProps) => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  useFocusWhenShown(inputRef, autoFocus);
 
   const handleClickInput = useCallback((e: MouseEvent) => {
     e.stopPropagation();

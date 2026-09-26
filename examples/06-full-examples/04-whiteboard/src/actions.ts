@@ -29,6 +29,8 @@ export const DELETE_ACTION = 'board-delete';
 export const APPLY_ACTION = 'board-apply';
 export const VOTE_ACTION = 'board-vote';
 export const TIMER_ACTION = 'board-timer';
+
+export const SESSION_ACTION = 'board-session';
 export const UPLOAD_ACTION = 'board-upload';
 export const REACH_ACTION = 'board-reach';
 export const CHAT_ACTION = 'board-chat';
@@ -282,6 +284,36 @@ const timer = defineAction({
   output: '{ "ok": true }'
 });
 
+/** A session with a script: started, moved on a step, or stopped — for everyone on the board at once. */
+const session = defineAction({
+  id: SESSION_ACTION,
+  name: 'Session',
+  description: 'Starts a session with a script on a board, moves it on a step, or stops it — and tells everyone on it.',
+  trigger: {
+    type: 'call',
+    access: 'public',
+    input: {
+      ...onBoard,
+      command: field('start · next · stop'),
+      script: field('Script, to start one', false),
+      host: field('Who runs it', false)
+    }
+  },
+  steps: [
+    { id: 'ran', task: 'board.session' },
+    {
+      id: 'announce',
+      task: 'realtime.publish',
+      params: {
+        topic: 'board:{{ ran.topic }}',
+        type: 'session',
+        data: '{ "board": {{ ran.board|json_encode }}, "session": {{ ran.session|json_encode }} }'
+      }
+    }
+  ],
+  output: '{ "ok": true }'
+});
+
 /**
  * A picture pasted onto a board: kept beside it, answered as an asset id. The element that shows it is committed
  * like any other, once the page has the id — so nobody sees an image the server did not accept.
@@ -402,6 +434,7 @@ const actions = [
   apply,
   vote,
   timer,
+  session,
   upload,
   reachAction,
   chat,

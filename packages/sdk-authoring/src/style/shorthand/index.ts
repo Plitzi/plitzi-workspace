@@ -132,7 +132,7 @@ const REMOVAL_PROBE = new Map<string, string>(
     outline: '0 solid red',
     'list-style': 'disc inside url(x)',
     'text-decoration': 'underline solid red',
-    transition: 'all 0s ease 0s',
+    transition: 'all 0s ease 0s allow-discrete',
     animation: 'a 0s ease 0s 1 normal forwards running',
     background: 'red url(x) no-repeat scroll 0 0 / auto padding-box border-box',
     font: 'italic small-caps bold 0px/0 a'

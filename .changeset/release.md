@@ -919,9 +919,15 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   page is a board to try before starting one — with scripted collaborators already drawing on it — templates, and two
   large featured boards that are read-only (looked around together, then "Use as template"). Frames that hold what is
   put in them — a column frame is a kanban lane that lays out its cards, with the drop shown as it is dragged — task
-  cards made in a column (a title and a description, the whole of it shown when a card is opened), smart guides that
+  cards made in a column (a title and a description, the whole of it shown when a card is opened) and a column that is
+  the team's Done (a card moved into it is ticked off, and open again moved out), panels that come out of the button
+  that opens them and leave quicker than they came, their items one after another, a corner that folds away to the
+  way home, smart guides that
   snap what is dragged to the edges and middles of what stays still, the others' cursors drawn a moment behind so they
-  move as smoothly as a hand whatever the network does, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness, edges,
+  move as smoothly as a hand whatever the network does, a search with tags (`#word` written in anything; ⌘F dims what
+  it does not find), duties an agent keeps doing in a frame, sessions with a script (a retro's private writing step
+  keeps the others' notes face down), branches of a frame to try another way and take back, agents that present a
+  board a frame at a time, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness, edges,
   opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or private and temporary
   boards (in Board settings, beside the title), boards their creator makes read-only for everyone else, an elements
   library built from one registry (searchable, with favourites), texts resized by their handles, stamps, elements locked
@@ -938,6 +944,26 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
 - Every element fires `onPointerDown` (authoring: `onPointerDown()`), beside `onClick`, `onHover` and the rest: the
   press itself, where a drag away from the element starts — a tile taken to a canvas, a handle pulled. Let go where it
   went down, it is a click too and `onClick` follows.
+
+## `formControl` takes the focus as it appears
+
+- `autoFocus: true` focuses a control each time it is shown — as it mounts, and again whenever it or anything around
+  it goes from hidden to shown, so a search box a shortcut opens is typed into at once however many times it opens.
+  Text inputs and textareas alike; never in the builder.
+
+## Elements move as they show and hide: the `hidden` style state
+
+- A class's `states` take `hidden`: how an element looks while its `visible` says no — where it goes as it hides and,
+  written as its `@starting-style` too, where it comes from as it shows. With a transition that includes
+  `display … allow-discrete`, a panel fades or slides instead of blinking, with a pace of its own each way (the base's
+  transition is the way in, the one in `hidden` the way out). `ancestors` take it too, for what is inside something
+  that hides. The builder's style editor has it as a tab, like `hover`. The SDK's hidden class is exported as
+  `HIDDEN_CLASS` (`@plitzi/sdk-shared/style/styleStates`).
+- `transition-behavior` is in the style vocabulary, and `transition` reads `allow-discrete` into it.
+- A layered `transition`, `animation` or `background` whose layers do not all say the same things expanded the missing
+  ones to `initial` — which is not allowed inside a list, so the browser dropped the whole declaration (a second layer
+  without a delay voided the first one's). They are now filled with each longhand's initial value, and
+  `background-color` is taken from the last layer only.
 
 ## `formControl` of `subType: 'color'`
 

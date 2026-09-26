@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
 
+import useFocusWhenShown from './useFocusWhenShown';
+
 export type InputProps = {
   className?: string;
   id?: string;
@@ -9,6 +11,8 @@ export type InputProps = {
   value?: string;
   type?: string;
   autoComplete?: boolean;
+  /** Takes the focus while true: as it becomes true, whether on mount or as the field is shown again. */
+  autoFocus?: boolean;
   required?: boolean;
   /** `0` for none. The one rule the browser enforces itself, and by the kindest means: it stops the typing. */
   maxLength?: number;
@@ -26,6 +30,7 @@ const Input = ({
   value = '',
   type = 'text',
   autoComplete = false,
+  autoFocus = false,
   required = true,
   maxLength = 0,
   disabled = false,
@@ -35,6 +40,7 @@ const Input = ({
 }: InputProps) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  useFocusWhenShown(inputRef, autoFocus);
 
   const handleClickShowPassword = useCallback(() => setIsPasswordVisible(state => !state), [setIsPasswordVisible]);
 

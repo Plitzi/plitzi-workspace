@@ -3,10 +3,15 @@ import { z } from 'zod';
 import { describeBoard, describeElement } from './describe.ts';
 import { cardHeight, frameNamed, placeAll } from './place.ts';
 import { callAction, joinBoard, newElementId, parseLink } from './session.ts';
+import { DUTY_PRESETS, instructionOf } from '../board/duties.ts';
+import { markedDone, settleDone } from '../board/model.ts';
+import { isEmptyQuery, matchesQuery, parseQuery } from '../board/query.ts';
 import { isStamp, REACTIONS, STAMPS } from '../board/reactions.ts';
+import { SCRIPT_IDS, SCRIPTS } from '../board/sessions.ts';
 import { TEMPLATES } from '../board/templates.ts';
+import { branchFrame, frameContents, mergeBranch } from '../plugins/Board/branches.ts';
 import { releasedFrom } from '../plugins/Board/connectors.ts';
-import { COLUMN_PADDING, layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
+import { COLUMN_PADDING, layoutColumn, membersOf, moved, readingOrder } from '../plugins/Board/containers.ts';
 import { anchorPoint, boundsOf, nearestAnchor } from '../plugins/Board/geometry.ts';
 import { restyled } from '../plugins/Board/styling.ts';
 
@@ -171,6 +176,42 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
   );
 
   server.registerTool(
+    'find_elements',
+    {
+      title: 'Find on the board',
+      description:
+        'Only what matches — cheaper than read_board on a big board. The query is what a person types in the ' +
+        "board's search: words (in its text, description or author), #tag (a hashtag written in it — tag things by " +
+        'writing #word in their text), @name (who wrote it), in:column (the frame it is in, by title — quote two ' +
+        'words: in:"to do"), is:open / is:done (cards, comments), is:locked, type:card / note / frame…, color:red. ' +
+        'Every part must match.',
+      inputSchema: {
+        query: z.string().min(1).max(400).describe('e.g. `#bug is:open in:doing` or `launch @ana`'),
+        limit: z.number().int().positive().max(500).optional().describe('At most this many (100)')
+      }
+    },
+    ({ query, limit }) => {
+      const board = onBoard();
+      const elements = board.elements();
+      const frames = new Map(elements.filter(element => element.type === 'frame').map(frame => [frame.id, frame]));
+      const parsed = parseQuery(query);
+      const found = isEmptyQuery(parsed)
+        ? []
+        : elements.filter(
+            element => !board.faceDown(element) && matchesQuery(element, parsed, id => frames.get(id)?.text?.trim())
+          );
+      const shown = found.slice(0, limit ?? 100);
+
+      return text(
+        found.length
+          ? `${found.length} found${shown.length < found.length ? `, the first ${shown.length}` : ''}:\n` +
+              shown.map(element => describeElement(element, frames, board.faceDown)).join('\n')
+          : `Nothing matches "${query}".`
+      );
+    }
+  );
+
+  server.registerTool(
     'add_elements',
     {
       title: 'Add to the board',
@@ -203,6 +244,10 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
               height: z.number().positive().optional(),
               color: z.string().optional(),
               layout: z.enum(['column']).optional().describe('Frames only: stack what is put in it'),
+              completes: z
+                .boolean()
+                .optional()
+                .describe('Columns only: the team’s Done — a card put or moved into it is ticked off'),
               done: z.boolean().optional().describe('Cards: already done')
             })
           )
@@ -242,7 +287,9 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
           .map(frame => [frame.id, frame])
       );
 
-      return text(`Added ${added.length}:\n${added.map(element => describeElement(element, frames)).join('\n')}`);
+      return text(
+        `Added ${added.length}:\n${added.map(element => describeElement(element, frames, board.faceDown)).join('\n')}`
+      );
     }
   );
 
@@ -317,8 +364,9 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
       title: 'Change things',
       description:
         'Change elements by id: their text, place, size, colour; a card’s description; tick a card done or resolve a ' +
-        'comment; move ' +
-        'something into a frame (by id or title — a column places it); make a frame a column; lock or unlock it. ' +
+        'comment; move something into a frame (by id or title — a column places it, and a card moved into a column ' +
+        'that completes is ticked off, out of one open again); make a frame a column, or a column the team’s Done ' +
+        '(`completes`); lock or unlock it. ' +
         'A locked element (read_board marks it) is not changed unless the same change unlocks it.',
       inputSchema: {
         changes: z
@@ -335,6 +383,10 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
               done: z.boolean().optional(),
               frame: z.string().optional().describe('Id or title of the frame to move it into; "" takes it out'),
               layout: z.enum(['column', 'free']).optional().describe('Frames only'),
+              completes: z
+                .boolean()
+                .optional()
+                .describe('Columns only: a card moved into it is ticked off, and moved out of it open again'),
               locked: z.boolean().optional().describe('Locked: nobody moves, resizes, restyles or removes it')
             })
           )
@@ -364,10 +416,15 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
           throw new Error(`${current.id} is a card: ${CARD_IN_COLUMN}`);
         }
 
+        if (change.completes !== undefined && current.type !== 'frame') {
+          throw new Error(`${current.id} is a ${current.type}: only a column completes what lands in it.`);
+        }
+
         const {
           done: _done,
           parent: _parent,
           layout: _layout,
+          completes: _completes,
           locked: _locked,
           description: _description,
           ...rest
@@ -382,6 +439,8 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
         };
         const done = change.done ?? current.done;
         const layout = change.layout === undefined ? current.layout : change.layout === 'column' ? 'column' : undefined;
+        // Only a column decides what is done: one that stops being a column stops.
+        const completes = layout === 'column' && (change.completes ?? current.completes) === true;
         const description = change.description ?? current.description;
         const parent = change.frame === undefined ? current.parent : frame?.id;
         const locked = change.locked ?? current.locked;
@@ -391,6 +450,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
           ...(description?.trim() ? { description } : {}),
           ...(locked ? { locked: true } : {}),
           ...(layout ? { layout } : {}),
+          ...(completes ? { completes } : {}),
           ...(parent ? { parent } : {})
         };
         // A colour is what the element is coloured by: a note's paper, a shape's fill, a text's ink.
@@ -405,9 +465,29 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
         next.set(element.id, element);
       }
 
-      // Columns something entered, left or changed in are laid out again, as a canvas would.
       const all = new Map(board.elements().map(element => [element.id, element]));
       next.forEach((element, id) => all.set(id, element));
+      // A card moved into a column that completes is done, out of one open again, as on a canvas — unless the same
+      // change said otherwise. A column made the Done makes done what it already holds.
+      const ticked = new Set(changes.flatMap(change => (change.done === undefined ? [] : [change.id])));
+      const moves = settleDone(
+        [...next.values()].filter(element => !ticked.has(element.id)),
+        id => (id === undefined ? undefined : all.get(id)),
+        id => board.element(id)?.parent
+      );
+      const madeDone = [...next.values()].flatMap(element =>
+        element.completes && !board.element(element.id)?.completes
+          ? membersOf([...all.values()], element.id).filter(
+              member => member.type === 'card' && !member.done && !member.locked && !ticked.has(member.id)
+            )
+          : []
+      );
+      for (const settled of [...moves, ...madeDone.map(card => markedDone(all.get(card.id) ?? card, true))]) {
+        next.set(settled.id, settled);
+        all.set(settled.id, settled);
+      }
+
+      // Columns something entered, left or changed in are laid out again, as a canvas would.
       const columns = new Set(
         [...next.values()].flatMap(element => [element.parent, board.element(element.id)?.parent].filter(Boolean))
       );
@@ -572,15 +652,324 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
       description:
         'Wait for the people on the board — a line in the chat, words at a cursor, changes, someone arriving — and ' +
         'answer what happened since you last looked. Use it to hold a conversation: say something, then listen.',
-      inputSchema: { seconds: z.number().min(0).max(120).optional().describe('How long to wait at most; default 30') }
+      inputSchema: {
+        seconds: z.number().min(0).max(120).optional().describe('How long to wait at most; default 30'),
+        frames: z
+          .array(z.string())
+          .max(20)
+          .optional()
+          .describe(
+            'Only changes inside these frames (ids or titles) — the ones you have a duty in — and what people say. ' +
+              'Each change is described, so you can act on it.'
+          )
+      }
     },
-    async ({ seconds = 30 }) => {
+    async ({ seconds = 30, frames }) => {
       const board = onBoard();
-      const since = lastLooked;
-      const heard = await board.activitySince(since, seconds * 1000);
-      lastLooked = Date.now();
+      const watched = new Set((frames ?? []).flatMap(name => frameNamed(board, name)?.id ?? []));
+      if (frames?.length && !watched.size) {
+        throw new Error(`No frame named ${frames.join(', ')} on the board — my_duties or read_board for the ids`);
+      }
 
-      return text(heard.length ? heard.map(describeActivity).join('\n') : `Nothing happened in ${seconds} seconds.`);
+      const inWatched = (id: string): boolean => {
+        const element = board.element(id);
+
+        return (
+          element !== undefined &&
+          (watched.has(element.id) || (element.parent !== undefined && watched.has(element.parent)))
+        );
+      };
+      const worth = (entry: Activity): boolean =>
+        !watched.size || entry.kind !== 'changed' || entry.ids.some(inWatched);
+      const since = lastLooked;
+      const heard = await board.activitySince(since, seconds * 1000, worth);
+      lastLooked = Date.now();
+      if (!heard.length) {
+        return text(`Nothing happened in ${seconds} seconds.`);
+      }
+
+      const frameMap = new Map(
+        board
+          .elements()
+          .filter(element => element.type === 'frame')
+          .map(frame => [frame.id, frame])
+      );
+      // In the frames watched, what changed is told element by element: that is what a duty acts on.
+      const lines = heard.flatMap(entry => {
+        if (!watched.size || entry.kind !== 'changed') {
+          return [describeActivity(entry)];
+        }
+
+        const changed = [...new Set(entry.ids)].filter(inWatched).flatMap(id => board.element(id) ?? []);
+
+        return [
+          `${changed.length} changed in your frames:`,
+          ...changed.map(element => describeElement(element, frameMap, board.faceDown))
+        ];
+      });
+
+      return text(lines.join('\n'));
+    }
+  );
+
+  /** Where the presentation this agent gives is — `undefined` while it gives none. */
+  let presenting: number | undefined;
+
+  server.registerTool(
+    'present_frame',
+    {
+      title: 'Present a frame',
+      description:
+        'Take everyone on the board to a frame, as a person presenting does — their screens ease there and say you ' +
+        'are presenting, which frame of how many. Left out, the next frame in reading order (the first, to begin). ' +
+        'Answers what is in the frame, so you can talk about it: give `say` to say it at your cursor and in the chat ' +
+        'at once. Walk the room through a board a frame at a time; end_presentation when done.',
+      inputSchema: {
+        frame: z.string().optional().describe('The frame, by id or title'),
+        say: z.string().max(400).optional().describe('What to say about it, as you show it')
+      }
+    },
+    async ({ frame: name, say }) => {
+      const board = onBoard();
+      const frames = readingOrder(board.elements().filter(element => element.type === 'frame'));
+      if (!frames.length) {
+        throw new Error('This board has no frames to present — read_board, and talk about it instead');
+      }
+
+      const named = name ? frameNamed(board, name) : undefined;
+      if (name && !named) {
+        throw new Error(
+          `No frame "${name}" — the frames are: ${frames.map(frame => `"${frame.text ?? ''}"`).join(', ')}`
+        );
+      }
+
+      const index = named
+        ? frames.findIndex(frame => frame.id === named.id)
+        : Math.min((presenting ?? -1) + 1, frames.length - 1);
+      const frame = frames[index];
+      const title = frame.text?.trim() || 'Frame';
+      presenting = index;
+      await board.present([frame.x, frame.y, frame.width, frame.height], index, frames.length, title);
+      await board.glide(centre(frame));
+      if (say) {
+        await Promise.all([board.sayAtCursor(say), board.chatLine(say)]);
+      }
+
+      const frameMap = new Map(frames.map(each => [each.id, each]));
+      const inside = frameContents(board.elements(), frame).slice(1);
+
+      return text(
+        [
+          `Presenting ${index + 1} of ${frames.length}: "${title}"${index + 1 < frames.length ? ` — next: "${frames[index + 1].text ?? ''}"` : ' — the last one'}.`,
+          inside.length ? 'In it:' : 'It is empty.',
+          ...inside.map(element => describeElement(element, frameMap, board.faceDown))
+        ].join('\n')
+      );
+    }
+  );
+
+  server.registerTool(
+    'end_presentation',
+    {
+      title: 'End the presentation',
+      description: 'Stop presenting: everyone is free to look around again.',
+      inputSchema: {}
+    },
+    async () => {
+      const board = onBoard();
+      presenting = undefined;
+      await board.present([0, 0, 0, 0], -1, 0, '');
+
+      return text('The presentation is over.');
+    }
+  );
+
+  server.registerTool(
+    'branch_frame',
+    {
+      title: 'Branch a frame',
+      description:
+        'Copy a frame with everything in it — notes, cards, the arrows between them — to its right, as a branch: a ' +
+        'place to try another way without touching the original. Asked for alternatives, make a branch for each and ' +
+        "change it; the people pick one with merge_branch (or delete the others). Answers the branch frame's id.",
+      inputSchema: {
+        frame: z.string().describe('The frame, by id or title'),
+        title: z.string().max(80).optional().describe('What this branch tries — e.g. "By team", "Cheaper option"')
+      }
+    },
+    async ({ frame: name, title }) => {
+      const board = onBoard();
+      const frame = frameNamed(board, name);
+      if (!frame) {
+        throw new Error(`No frame "${name}" on the board — read_board for the frames`);
+      }
+
+      const copies = branchFrame(board.elements(), frame, board.topZ(), title);
+      const [copy] = await board.commit(copies);
+      await board.glide(centre(copy));
+
+      return text(
+        `Branched ${frame.id} into ${copy.id} "${copy.text ?? ''}" with ${copies.length - 1} element(s): change it there.`
+      );
+    }
+  );
+
+  server.registerTool(
+    'merge_branch',
+    {
+      title: 'Take a branch back',
+      description:
+        'The branch that won replaces what its original frame held — the original keeps its place, title and duty — ' +
+        'and the branch frame goes. Only when the people on the board chose it.',
+      inputSchema: { branch: z.string().describe('The branch frame, by id or title') }
+    },
+    async ({ branch: name }) => {
+      const board = onBoard();
+      const branch = frameNamed(board, name);
+      if (!branch?.branchOf) {
+        throw new Error(`"${name}" is not a branch — read_board marks the frames that are`);
+      }
+
+      await board.commit(mergeBranch(board.elements(), branch));
+
+      return text(`Took ${branch.id} back into ${branch.branchOf}.`);
+    }
+  );
+
+  server.registerTool(
+    'start_session',
+    {
+      title: 'Run a session',
+      description:
+        'Take the board through a session with a script, for everyone at once — you facilitate: ' +
+        Object.entries(SCRIPTS)
+          .map(([id, script]) => `${id} (${script.steps.map(step => `${step.kind} ${step.minutes} min`).join(', ')})`)
+          .join('; ') +
+        ". In a write step everyone writes on their own and the others' notes stay face down; reveal shows them; vote " +
+        'is for the votes; discuss talks through the most voted. Say in the chat what each step is for, listen with ' +
+        'wait_for_activity, and move on with session_next when its time is up (read_board shows what is left).',
+      inputSchema: { script: z.enum(SCRIPT_IDS) }
+    },
+    async ({ script }) => {
+      const board = onBoard();
+      await board.runSession('start', script);
+
+      return text(`Started a ${SCRIPTS[script].label} session. Step 1: ${SCRIPTS[script].steps[0].say}`);
+    }
+  );
+
+  server.registerTool(
+    'session_next',
+    {
+      title: 'Next step',
+      description: "Move the board's session on to its next step — past the last, it is over.",
+      inputSchema: {}
+    },
+    async () => {
+      const board = onBoard();
+      const running = board.session();
+      if (!running) {
+        throw new Error('No session is under way — start_session starts one');
+      }
+
+      await board.runSession('next');
+      const { steps } = SCRIPTS[running.script];
+      if (running.step + 1 >= steps.length) {
+        return text('That was the last step: the session is over.');
+      }
+
+      const next = steps[running.step + 1];
+
+      return text(`Step ${running.step + 2} of ${steps.length} — ${next.kind}: ${next.say}`);
+    }
+  );
+
+  server.registerTool(
+    'stop_session',
+    { title: 'End the session', description: "End the board's session now, whatever step it is at.", inputSchema: {} },
+    async () => {
+      await onBoard().runSession('stop');
+
+      return text('The session is over.');
+    }
+  );
+
+  server.registerTool(
+    'my_duties',
+    {
+      title: 'Your duties',
+      description:
+        'The standing jobs the people on the board set for agents in their frames — a scribe keeps a summary current, ' +
+        'a guardian watches a rule, an organizer sorts what lands there — and which are yours or free to take. Take ' +
+        'one with take_duty, then keep at it: wait_for_activity with its frame, act, and say briefly what you did.',
+      inputSchema: {}
+    },
+    () => {
+      const board = onBoard();
+      const duties = board.elements().filter(element => element.type === 'frame' && element.duty && !element.deleted);
+      if (!duties.length) {
+        return text("No frame on this board has a duty for an agent. People set one from a frame's tools (the robot).");
+      }
+
+      return text(
+        duties
+          .map(frame => {
+            const duty = frame.duty;
+            if (!duty) {
+              return '';
+            }
+
+            const holder = duty.agent === board.name ? 'yours' : duty.agent ? `taken by ${duty.agent}` : 'free';
+
+            return `- ${frame.id} "${frame.text?.trim() || 'Frame'}" — ${DUTY_PRESETS[duty.role].label}, ${holder}${duty.paused ? ', PAUSED (wait until it is resumed)' : ''}: ${instructionOf(duty)}`;
+          })
+          .join('\n')
+      );
+    }
+  );
+
+  server.registerTool(
+    'take_duty',
+    {
+      title: 'Take a duty',
+      description:
+        "Take a frame's duty (see my_duties): its badge says you are on it, and the chat is told. `release: true` " +
+        'gives it back. A duty someone else took is theirs; a paused one waits.',
+      inputSchema: {
+        frame: z.string().describe('The frame, by id or title'),
+        release: z.boolean().optional()
+      }
+    },
+    async ({ frame: name, release }) => {
+      const board = onBoard();
+      const frame = frameNamed(board, name);
+      const duty = frame?.duty;
+      if (!frame || !duty) {
+        throw new Error(`No frame "${name}" with a duty — my_duties lists them`);
+      }
+
+      if (duty.agent && duty.agent !== board.name) {
+        throw new Error(`${frame.id} is ${duty.agent}'s duty. Leave it to them, or ask the people on the board.`);
+      }
+
+      if (duty.paused && !release) {
+        throw new Error(`The duty in "${frame.text ?? ''}" is paused: wait until the people on the board resume it.`);
+      }
+
+      const { agent: _agent, ...rest } = duty;
+      await board.commit([{ ...frame, duty: release ? rest : { ...rest, agent: board.name } }]);
+      const role = DUTY_PRESETS[duty.role].label;
+      await board.chatLine(
+        release
+          ? `✦ I have stepped down as ${role} in "${frame.text?.trim() || 'Frame'}".`
+          : `✦ I am on duty in "${frame.text?.trim() || 'Frame'}" as ${role}.`
+      );
+
+      return text(
+        release
+          ? `Released the duty in ${frame.id}.`
+          : `On duty in ${frame.id} as ${role}: ${instructionOf(duty)}\nNow: wait_for_activity with frames: ["${frame.id}"], and act on what changes.`
+      );
     }
   );
 

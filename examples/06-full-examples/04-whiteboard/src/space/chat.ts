@@ -23,7 +23,7 @@ import {
 import { CHAT_ACTION } from '../actions.ts';
 import { BOARD_PASS } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
-import { BELOW_HEADER, BUTTON_RESET, FLOAT, ICON_BUTTON, icon } from './kit.ts';
+import { BELOW_HEADER, BUTTON_RESET, FLOAT, ICON_BUTTON, PRESSED, RISE, icon, panelMotion, riseAt } from './kit.ts';
 import { boardAction } from './stylePanel.ts';
 import { COLLAB_COLOURS } from '../board/people.ts';
 import { REACTIONS } from '../board/reactions.ts';
@@ -88,7 +88,8 @@ const chatButtonClass = styles('chatButton', {
   css: ICON_BUTTON,
   states: {
     hover: { 'background-color': 'var(--surface-2)' },
-    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' }
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' },
+    active: PRESSED
   },
   variants: { active: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' } }
 });
@@ -100,7 +101,14 @@ export const chatButton = (): ElementSpec =>
     title: 'Chat — talk with everyone on the board',
     class: chatButtonClass,
     bind: [variantFrom(chatButtonClass, 'computed.chatOpen', { template: "{{ source ? 'active' : '' }}" })],
-    flows: [[onClick(), toggleState({ key: 'chatOpen' }), setState({ key: 'unread', type: 'number', value: 0 })]],
+    flows: [
+      [
+        onClick(),
+        toggleState({ key: 'chatOpen' }),
+        setState({ key: 'unread', type: 'number', value: 0 }),
+        setState({ key: 'chatEmojisOpen', type: 'boolean', value: false })
+      ]
+    ],
     children: [
       icon('fa-regular fa-comments'),
       text({
@@ -112,9 +120,12 @@ export const chatButton = (): ElementSpec =>
     ]
   });
 
+const PANEL_MOTION = panelMotion({ from: 'right' }, { from: 'below' });
+
 const panel = styles('chatPanel', {
   css: {
     desktop: {
+      ...PANEL_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       top: BELOW_HEADER,
@@ -127,8 +138,9 @@ const panel = styles('chatPanel', {
       width: '320px',
       overflow: 'hidden'
     },
-    mobile: { top: '64px', left: '10px', right: '10px', bottom: '10px', width: 'auto' }
-  }
+    mobile: { ...PANEL_MOTION.mobile, top: '64px', left: '10px', right: '10px', bottom: '10px', width: 'auto' }
+  },
+  states: PANEL_MOTION.states
 });
 
 const head = styles('chatHead', {
@@ -192,7 +204,12 @@ const words = styles('chatWords', {
 
 const empty = styles('chatEmpty', { 'font-size': '13px', color: 'var(--muted)', 'line-height': '1.5' });
 
-const composer = styles('chatComposer', { display: 'flex', gap: '8px', padding: '6px 12px 10px' });
+const composer = styles('chatComposer', {
+  display: 'flex',
+  gap: '6px',
+  padding: '10px 12px',
+  'border-top': '1px solid var(--edge)'
+});
 
 const field = styles('chatField', { flex: '1', 'min-width': '0px' });
 
@@ -250,17 +267,29 @@ const sayInChat = (text: string, name: string): StepSpec[] => [
   )
 ];
 
-const quick = styles('chatQuick', {
-  display: 'flex',
-  'flex-wrap': 'wrap',
-  gap: '2px',
-  padding: '6px 10px 0px',
-  'border-top': '1px solid var(--edge)'
+/** The emojis, a click from being said: a tray opened from the composer, not a row always taking the chat's room. */
+const EMOJIS_MOTION = panelMotion({ from: 'below', origin: 'bottom left' });
+
+const emojiTray = styles('chatEmojiTray', {
+  css: {
+    ...EMOJIS_MOTION.desktop,
+    ...FLOAT,
+    position: 'absolute',
+    left: '10px',
+    bottom: '56px',
+    'z-index': '1',
+    display: 'grid',
+    'grid-template-columns': 'repeat(6, 32px)',
+    gap: '2px',
+    padding: '6px'
+  },
+  states: EMOJIS_MOTION.states
 });
 
 const quickEmoji = styles('chatQuickEmoji', {
   css: {
     ...BUTTON_RESET,
+    ...RISE,
     width: '32px',
     height: '32px',
     'border-radius': '8px',
@@ -270,9 +299,22 @@ const quickEmoji = styles('chatQuickEmoji', {
   },
   states: {
     hover: { 'background-color': 'var(--surface-2)', transform: 'scale(1.12)' },
-    'focus-visible': { outline: '2px solid var(--accent)' }
+    'focus-visible': { outline: '2px solid var(--accent)' },
+    active: PRESSED
   }
 });
+
+const emojiToggle = styles('chatEmojiToggle', {
+  css: { ...ICON_BUTTON, width: '38px', height: '38px', 'border-radius': '10px', color: 'var(--muted)' },
+  states: {
+    hover: { color: 'var(--ink)', 'background-color': 'var(--surface-2)' },
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' },
+    active: PRESSED
+  },
+  variants: { active: { color: 'var(--accent)', 'background-color': 'var(--accent-soft)' } }
+});
+
+const closeEmojis = setState({ key: 'chatEmojisOpen', type: 'boolean', value: false });
 
 export const chatPanel = (): ElementSpec =>
   container({
@@ -289,7 +331,7 @@ export const chatPanel = (): ElementSpec =>
             content: '✕',
             title: 'Close',
             class: closeButton,
-            flows: [[onClick(), setState({ key: 'chatOpen', type: 'boolean', value: false })]]
+            flows: [[onClick(), setState({ key: 'chatOpen', type: 'boolean', value: false }), closeEmojis]]
           })
         ]
       }),
@@ -345,14 +387,16 @@ export const chatPanel = (): ElementSpec =>
         ]
       }),
       container({
-        class: quick,
+        id: 'chat-emojis',
+        class: emojiTray,
+        visible: 'computed.chatEmojisOpen',
         children: REACTIONS.map((emoji, index) =>
           button({
             id: `chat-emoji-${index}`,
             content: emoji,
             title: `Send ${emoji}`,
-            class: quickEmoji,
-            flows: [[onClick(), ...sayInChat(emoji, `sent_${index}`)]]
+            class: [quickEmoji, riseAt(index)],
+            flows: [[onClick(), closeEmojis, ...sayInChat(emoji, `sent_${index}`)]]
           })
         )
       }),
@@ -372,6 +416,15 @@ export const chatPanel = (): ElementSpec =>
           ]
         ],
         children: [
+          button({
+            id: 'chat-emoji-open',
+            content: '',
+            title: 'Send an emoji',
+            class: emojiToggle,
+            bind: [variantFrom(emojiToggle, 'computed.chatEmojisOpen', { template: "{{ source ? 'active' : '' }}" })],
+            flows: [[onClick(), toggleState({ key: 'chatEmojisOpen' })]],
+            children: [icon('fa-regular fa-face-smile')]
+          }),
           formControl({
             id: 'chat-text',
             name: 'text',

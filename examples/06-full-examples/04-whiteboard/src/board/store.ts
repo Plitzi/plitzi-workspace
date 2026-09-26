@@ -15,12 +15,14 @@ import {
   mergeElements,
   parseElement
 } from './model.ts';
+import { SCRIPT_IDS, SCRIPTS } from './sessions.ts';
 import { TEMPLATE_TITLES, templateElements } from './templates.ts';
 import { boundsOf, unionOf } from '../plugins/Board/geometry.ts';
 
 import type { AssetStore } from './assets.ts';
 import type { BoardLock, BoardSigner } from './locks.ts';
 import type { BoardElement, Point } from './model.ts';
+import type { BoardSession } from './sessions.ts';
 import type { Template } from './templates.ts';
 import type { ActionKvStore } from '@plitzi/sdk-server/actions';
 
@@ -46,6 +48,8 @@ export type StoredBoard = {
   elements: Record<string, BoardElement>;
   lock?: BoardLock;
   timer?: BoardTimer;
+  /** The session with a script the board is going through, if one is under way. */
+  session?: BoardSession;
   /** One of the boards visitors find already drawn: never the one evicted to make room. */
   featured?: boolean;
   /** Looked at together, never changed: whoever wants to change it makes a copy of their own. */
@@ -105,6 +109,7 @@ export type OpenedBoard = {
   /** What every change to a locked board carries. Empty for an open board, which needs none. */
   key: string;
   timer: BoardTimer | null;
+  session: BoardSession | null;
   unlisted: boolean;
   /** When a temporary board goes — `null` for one that stays. */
   expiresAt: number | null;
@@ -124,6 +129,7 @@ export const missingBoard = (id: string): OpenedBoard => ({
   topic: '',
   key: '',
   timer: null,
+  session: null,
   unlisted: false,
   expiresAt: null,
   chat: []
@@ -499,6 +505,7 @@ const opened = ({ keyFor, topicFor }: BoardSigner, board: StoredBoard, chat: Cha
   topic: topicFor(board.id, board.lock),
   key: board.lock ? keyFor(board.id, board.lock) : '',
   timer: runningTimer(board),
+  session: board.session ?? null,
   unlisted: board.unlisted === true,
   expiresAt: board.expiresAt ?? null,
   chat: chat.slice(-CHAT_SERVED)
@@ -860,6 +867,60 @@ export const setTimer = (
     await save(stores, timer ? { ...rest, timer } : rest);
 
     return { board: id, timer, topic: stores.signer.topicFor(id, board.lock) };
+  });
+
+/**
+ * A session with a script run on the board: started (`start`, with the script), moved on to its next step (`next` —
+ * past the last, it is over) or stopped. `host` is who runs it — a person's name, or an agent's.
+ */
+export const runSession = (
+  stores: BoardStores,
+  id: string,
+  command: unknown,
+  script: unknown,
+  host: unknown,
+  pass: Pass
+): Promise<{ board: string; session: BoardSession | null; topic: string }> =>
+  serially(stores.kv, async () => {
+    const board = await existing(stores.kv, id);
+    assertWritable(stores.signer, board, pass);
+    const now = Date.now();
+    const at = (session: Omit<BoardSession, 'endsAt'>): BoardSession => ({
+      ...session,
+      endsAt: now + SCRIPTS[session.script].steps[session.step].minutes * 60_000
+    });
+    const current = board.session;
+    let session: BoardSession | null;
+    if (command === 'start') {
+      const chosen = SCRIPT_IDS.find(name => name === script);
+      if (!chosen) {
+        throw new ActionRefusal(`A session runs one of the scripts: ${SCRIPT_IDS.join(', ')}`);
+      }
+
+      const runner = typeof host === 'string' && host.trim() ? host.trim().slice(0, LIMITS.author) : 'Someone';
+      session = at({
+        id: `s${randomInt(2 ** 40).toString(36)}${now.toString(36)}`,
+        script: chosen,
+        step: 0,
+        host: runner
+      });
+    } else if (command === 'next') {
+      if (!current) {
+        throw new ActionRefusal('No session is under way on this board');
+      }
+
+      session =
+        current.step + 1 < SCRIPTS[current.script].steps.length ? at({ ...current, step: current.step + 1 }) : null;
+    } else if (command === 'stop') {
+      session = null;
+    } else {
+      throw new ActionRefusal('A session is started, moved on (next) or stopped');
+    }
+
+    const { session: _previous, ...rest } = board;
+    await save(stores, session ? { ...rest, session } : rest);
+
+    return { board: id, session, topic: stores.signer.topicFor(id, board.lock) };
   });
 
 /** A picture for the board, kept beside it: answers the asset id the image element names. */

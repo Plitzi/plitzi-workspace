@@ -197,7 +197,7 @@ const sprint = (): BoardElement[] => {
         })
       )
       .map((entry, index) => (votes && index < 3 ? { ...entry, votes: voters(votes - index) } : entry));
-  const columns: { title: string; fill: Fill; cards: Draft[] }[] = [
+  const columns: { title: string; fill: Fill; cards: Draft[]; completes?: boolean }[] = [
     {
       title: 'Backlog',
       fill: 'none',
@@ -236,6 +236,7 @@ const sprint = (): BoardElement[] => {
     {
       title: 'Done',
       fill: 'green',
+      completes: true,
       cards: lane(
         [
           'Kanban columns that sort themselves',
@@ -268,7 +269,15 @@ const sprint = (): BoardElement[] => {
     caption(-1300, -700, 'Goal: make every board feel like a room full of people — and a few agents.'),
     ...columns.flatMap((entry, index) =>
       column(
-        { x: -1300 + index * 340, y: -620, width: 320, height: 900, title: entry.title, fill: entry.fill },
+        {
+          x: -1300 + index * 340,
+          y: -620,
+          width: 320,
+          height: 900,
+          title: entry.title,
+          fill: entry.fill,
+          completes: entry.completes === true
+        },
         entry.cards
       )
     ),

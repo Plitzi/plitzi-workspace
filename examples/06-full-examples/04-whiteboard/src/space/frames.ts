@@ -11,7 +11,7 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { BUTTON_RESET, FLOAT, caption, icon, iconAction, iconButton } from './kit.ts';
+import { BUTTON_RESET, FLOAT, caption, icon, iconAction, iconButton, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 
@@ -26,9 +26,12 @@ import type { ElementSpec } from '@plitzi/sdk-authoring';
  * presenting and where they are (`onPresentationChange`).
  */
 
+const PANEL_MOTION = panelMotion({ from: 'below', origin: 'bottom left' });
+
 const panel = styles('framesPanel', {
   css: {
     desktop: {
+      ...PANEL_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       bottom: '66px',
@@ -41,8 +44,9 @@ const panel = styles('framesPanel', {
       'max-height': 'min(420px, calc(100dvh - 160px))',
       padding: '14px'
     },
-    mobile: { display: 'none' }
-  }
+    mobile: { ...PANEL_MOTION.mobile, display: 'none' }
+  },
+  states: PANEL_MOTION.states
 });
 
 const head = styles('framesHead', { display: 'flex', 'align-items': 'center', 'justify-content': 'space-between' });
@@ -200,9 +204,12 @@ export const framesPanel = (): ElementSpec =>
     ]
   });
 
+const BANNER_MOTION = panelMotion({ from: 'below', rest: 'translateX(-50%)' });
+
 const banner = styles('presentBanner', {
   css: {
     desktop: {
+      ...BANNER_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       bottom: '76px',
@@ -218,8 +225,9 @@ const banner = styles('presentBanner', {
       'white-space': 'nowrap',
       border: '1px solid var(--accent)'
     },
-    mobile: { bottom: '70px', 'max-width': 'calc(100vw - 24px)' }
-  }
+    mobile: { ...BANNER_MOTION.mobile, bottom: '70px', 'max-width': 'calc(100vw - 24px)' }
+  },
+  states: BANNER_MOTION.states
 });
 
 const bannerStep = styles('presentStep', {

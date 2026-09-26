@@ -49,6 +49,7 @@ export type Draft = {
   group?: string;
   parent?: string;
   layout?: Layout;
+  completes?: boolean;
   author?: string;
   done?: boolean;
   dash?: Dash;
@@ -68,6 +69,7 @@ const OPTIONAL = [
   'group',
   'parent',
   'layout',
+  'completes',
   'author',
   'done',
   'description',
@@ -269,7 +271,8 @@ export const comment = (
 
 /**
  * A kanban lane: a column frame, and what is in it stacked top to bottom as the canvas stacks it — cards as wide as
- * the column, anything else centred. The column is as tall as it needs to be, and never shorter than `height`.
+ * the column, anything else centred. The column is as tall as it needs to be, and never shorter than `height`. One that
+ * `completes` is the team's Done: what is in it is done, and what is moved into it will be.
  */
 export const column = (
   {
@@ -278,13 +281,15 @@ export const column = (
     width = 300,
     height = 460,
     title,
-    fill = 'none'
-  }: { x: number; y: number; width?: number; height?: number; title: string; fill?: Fill },
+    fill = 'none',
+    completes = false
+  }: { x: number; y: number; width?: number; height?: number; title: string; fill?: Fill; completes?: boolean },
   items: readonly Draft[]
 ): Draft[] => {
   const id = newId();
   let top = y + FRAME_HEADER + COLUMN_PADDING;
-  const placed = items.map(item => {
+  const placed = items.map(entry => {
+    const item = completes && entry.type === 'card' ? { ...entry, done: true } : entry;
     const itemWidth = item.type === 'card' ? width - COLUMN_PADDING * 2 : (item.width ?? 200);
     const itemHeight = item.type === 'card' ? estimatedCardHeight({ ...item, width: itemWidth }) : (item.height ?? 200);
     const next: Draft = {
@@ -310,7 +315,8 @@ export const column = (
       height: Math.max(height, top - COLUMN_GAP + COLUMN_PADDING - y),
       text: title,
       fill,
-      layout: 'column'
+      layout: 'column',
+      ...(completes ? { completes } : {})
     },
     ...placed
   ];

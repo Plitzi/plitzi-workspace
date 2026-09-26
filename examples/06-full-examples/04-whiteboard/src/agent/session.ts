@@ -2,9 +2,11 @@ import { randomInt } from 'node:crypto';
 
 import { connect } from './connection.ts';
 import { byStacking, isRecord, parseElement, supersedes, textOf } from '../board/model.ts';
+import { describeSession, isFaceDown, parseSession } from '../board/sessions.ts';
 
 import type { Connection, Heard } from './connection.ts';
 import type { BoardElement, Point } from '../board/model.ts';
+import type { BoardSession } from '../board/sessions.ts';
 import type { ChatMessage, OpenedBoard } from '../board/store.ts';
 
 /**
@@ -19,7 +21,7 @@ import type { ChatMessage, OpenedBoard } from '../board/store.ts';
 export type Activity =
   | { kind: 'chat'; name: string; text: string; at: number }
   | { kind: 'said'; name: string; text: string; at: number }
-  | { kind: 'changed'; name: string; count: number; at: number }
+  | { kind: 'changed'; name: string; count: number; ids: string[]; at: number }
   | { kind: 'joined' | 'left'; name: string; at: number };
 
 type Member = { name: string; color: string; agent: boolean };
@@ -105,6 +107,8 @@ export const joinBoard = async (
   const activity: Activity[] = [];
   const waiters = new Set<() => void>();
   let title = loaded.title;
+  /** The session with a script the board goes through — its writing step keeps the others' notes face down. */
+  let session: BoardSession | undefined = parseSession(loaded.session);
   /** What this agent committed, as the server will announce it back: its own changes are not news to it. */
   const own = new Set<string>();
   const stampOf = (element: BoardElement): string => `${element.id}:${element.version}:${element.nonce}`;
@@ -129,18 +133,20 @@ export const joinBoard = async (
 
     if (topic.startsWith('board:')) {
       if (type === 'elements' && Array.isArray(data)) {
-        let changed = 0;
+        const changed: string[] = [];
         for (const element of data.map(parseElement)) {
           if (element && supersedes(element, elements.get(element.id))) {
             elements.set(element.id, element);
-            changed += own.delete(stampOf(element)) ? 0 : 1;
+            if (!own.delete(stampOf(element))) {
+              changed.push(element.id);
+            }
           } else if (element) {
             own.delete(stampOf(element));
           }
         }
 
-        if (changed) {
-          note({ kind: 'changed', name: 'the board', count: changed, at: Date.now() });
+        if (changed.length) {
+          note({ kind: 'changed', name: 'the board', count: changed.length, ids: changed, at: Date.now() });
         }
       } else if (type === 'chat' && isRecord(data) && typeof data.text === 'string') {
         const line: ChatMessage = {
@@ -158,6 +164,14 @@ export const joinBoard = async (
         }
       } else if (type === 'title' && isRecord(data) && typeof data.title === 'string') {
         title = data.title;
+      } else if (type === 'session' && isRecord(data)) {
+        session = parseSession(data.session);
+        note({
+          kind: 'chat',
+          name: 'The board',
+          text: session ? `Session: ${describeSession(session)}` : 'The session is over.',
+          at: Date.now()
+        });
       } else if (type === 'deleted') {
         gone = true;
         note({ kind: 'left', name: 'The board was deleted', at: Date.now() });
@@ -288,6 +302,10 @@ export const joinBoard = async (
 
       return found && !found.deleted ? found : undefined;
     },
+    /** The session under way, if one is. */
+    session: (): BoardSession | undefined => session,
+    /** Whether what someone else wrote is still face down for this agent: its words are not out yet. */
+    faceDown: (element: BoardElement): boolean => isFaceDown(element, session, name),
     topZ: (): number => Math.max(0, ...[...elements.values()].map(element => element.z)),
     members: (): Member[] => [...members.values()],
     chat: (): ChatMessage[] => chat.slice(-30),
@@ -301,6 +319,28 @@ export const joinBoard = async (
       // Said once more when its time is up, as empty: the words fade on the others' screens.
       setTimeout(() => void pointer(cursor), 5100);
     },
+    /**
+     * A presentation, as a page gives one: every page on the board eases to `view` and says who presents and where —
+     * `index` from 0 of `total`; an `index` of -1 ends it.
+     */
+    present: async (
+      view: [number, number, number, number],
+      index: number,
+      total: number,
+      title: string
+    ): Promise<void> => {
+      await (await live()).publish(`room:${loaded.topic}`, 'present', { view, index, total, title });
+    },
+    /** The board's session with a script: started with `script`, moved to its next step, or stopped. */
+    runSession: async (command: 'start' | 'next' | 'stop', script?: string): Promise<void> => {
+      await callAction(origin, 'board-session', {
+        board,
+        key: loaded.key,
+        command,
+        ...(script ? { script } : {}),
+        host: name
+      });
+    },
     /** A line in the board's chat, kept with the board, marked as an agent's. */
     chatLine: async (text: string): Promise<void> => {
       await callAction(origin, 'board-chat', { board, key: loaded.key, name, color, text, by: '', agent: 'true' });
@@ -311,19 +351,32 @@ export const joinBoard = async (
     reply: async (element: string, text: string): Promise<void> => {
       await callAction(origin, 'board-reply', { board, key: loaded.key, element, author: name, text });
     },
-    /** What happened since `since`: as soon as there is anything, or when `ms` have passed with nothing. */
-    activitySince: async (since: number, ms: number): Promise<Activity[]> => {
-      const fresh = (): Activity[] => activity.filter(entry => entry.at > since);
+    /**
+     * What happened since `since` — only what `worth` keeps, when it is given: as soon as there is anything, or when
+     * `ms` have passed with nothing.
+     */
+    activitySince: async (
+      since: number,
+      ms: number,
+      worth: (entry: Activity) => boolean = () => true
+    ): Promise<Activity[]> => {
+      const fresh = (): Activity[] => activity.filter(entry => entry.at > since && worth(entry));
       if (!fresh().length && ms > 0) {
         await new Promise<void>(resolve => {
-          const timeout = setTimeout(done, ms);
-          function done(): void {
+          const finish = (): void => {
             clearTimeout(timeout);
-            waiters.delete(done);
+            waiters.delete(heard);
             // A moment for whoever is typing at their cursor to finish the line.
             setTimeout(resolve, 1200);
-          }
-          waiters.add(done);
+          };
+          // Woken by something not worth handing over: waiting goes on for the rest of the time.
+          const heard = (): void => {
+            if (fresh().length) {
+              finish();
+            }
+          };
+          const timeout = setTimeout(finish, ms);
+          waiters.add(heard);
         });
       }
 

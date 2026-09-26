@@ -1,3 +1,4 @@
+import { branchFrame, mergeBranch } from './branches.ts';
 import { createCarry } from './carry.ts';
 import { cloneElements } from './clone.ts';
 import { releasedFrom } from './connectors.ts';
@@ -15,10 +16,21 @@ import { createPointer } from './pointer.ts';
 import { createQuick } from './quick.ts';
 import { isView } from './remotes.ts';
 import { createPainter } from './render.ts';
+import { createSearch } from './search.ts';
 import { isSound, REACTION_SOUNDS } from './sounds.ts';
 import { restyled } from './styling.ts';
-import { isDefined, isPoint, newId } from './values.ts';
-import { byStacking, fitsInFrame, isLinear, isTask, parseElement } from '../../board/model.ts';
+import { isDefined, isOneOf, isPoint, newId } from './values.ts';
+import {
+  byStacking,
+  DUTY_ROLES,
+  fitsInFrame,
+  isLinear,
+  isTask,
+  LIMITS,
+  markedDone,
+  parseElement,
+  textOf
+} from '../../board/model.ts';
 import { isReaction, isStamp, STAMP_SIZE } from '../../board/reactions.ts';
 
 import type { StyleChoice } from './styling.ts';
@@ -101,6 +113,25 @@ export const createBoardController = (
     );
   };
 
+  let reportedSession = '';
+
+  /** The session the board goes through, as the page shows it — told whenever it starts, moves on or ends. */
+  const reportSession = (): void => {
+    const { session } = state.props;
+    const key = session ? `${session.id}:${session.step}:${session.endsAt}` : '';
+    if (key !== reportedSession) {
+      reportedSession = key;
+      emit({ type: 'session', session });
+    }
+  };
+
+  /** The one frame selected, when that is the whole of what may be changed. */
+  const soleFrame = (): BoardElement | undefined => {
+    const chosen = core.changeable();
+
+    return chosen.length === 1 && chosen[0].type === 'frame' ? chosen[0] : undefined;
+  };
+
   const minimap = createMinimap(core);
   const { sounds } = core;
 
@@ -138,7 +169,8 @@ export const createBoardController = (
   let quietUntil = 0;
   /** When each name was last greeted with a chime. */
   const chimedFor = new Map<string, number>();
-  const painter = createPainter(core, boardCanvas, effects, pictures);
+  const search = createSearch(core);
+  const painter = createPainter(core, boardCanvas, effects, pictures, search);
   let reportedFrames = '';
   /** The board's frames, in the order they are gone through — what the page lists and a presentation shows. */
   const framesInOrder = (): BoardElement[] => readingOrder(scene.visible().filter(element => element.type === 'frame'));
@@ -159,6 +191,8 @@ export const createBoardController = (
     painter.paint();
     minimap.paint();
     reportFrames();
+    search.report();
+    search.reportTags();
   });
   const input = createInput(core, pictures, pointer, {
     copy: () => {
@@ -446,6 +480,7 @@ export const createBoardController = (
         core.aimCard(next.tool === 'card' && core.editable() ? state.lastPointer : undefined);
       }
 
+      reportSession();
       core.invalidate();
     },
 
@@ -834,16 +869,118 @@ export const createBoardController = (
     }),
     /** The one frame selected, made a column — which lays out what is in it — or a free area again. */
     toggleColumn: whenEditable(() => {
-      const frame = core.changeable().at(0);
-      if (frame?.type !== 'frame' || core.changeable().length !== 1) {
+      const frame = soleFrame();
+      if (!frame) {
         return;
       }
 
-      const { layout: _layout, ...free } = frame;
+      // A frame that stops being a column stops deciding what is done.
+      const { layout: _layout, completes: _completes, ...free } = frame;
       sounds.play('snap');
       core.commit([frame.layout === 'column' ? free : { ...free, layout: 'column' }]);
       core.reportSelection();
     }),
+    /**
+     * A column made the one that completes what lands in it — the team's Done — or an ordinary one again. Made so, what
+     * it already holds is done too: that is what being in it now means.
+     */
+    toggleCompletes: whenEditable(() => {
+      const column = soleFrame();
+      if (column?.layout !== 'column') {
+        return;
+      }
+
+      const { completes: _completes, ...plain } = column;
+      if (column.completes) {
+        sounds.play('snap');
+        core.commit([plain]);
+        core.reportSelection();
+
+        return;
+      }
+
+      const open = membersOf([...core.current().values()], column.id).filter(
+        member => member.type === 'card' && !member.done && !member.locked
+      );
+      sounds.play('done');
+      core.commit([{ ...plain, completes: true }, ...open.map(card => markedDone(card, true))]);
+      core.reportSelection();
+    }),
+    setDuty: whenEditable(({ role, instruction }: { role?: unknown; instruction?: unknown }) => {
+      const frame = soleFrame();
+      if (!frame || !isOneOf(DUTY_ROLES, role)) {
+        return;
+      }
+
+      // The same role asked again keeps whoever took it; another role is another job, for whoever takes it next.
+      const { duty } = frame;
+      const agent = duty?.role === role ? duty.agent : undefined;
+      sounds.play('place');
+      core.commit([
+        {
+          ...frame,
+          duty: {
+            role,
+            instruction: textOf(instruction).slice(0, LIMITS.duty),
+            ...(agent ? { agent } : {}),
+            ...(duty?.paused ? { paused: true } : {})
+          }
+        }
+      ]);
+      core.reportSelection();
+    }),
+    clearDuty: whenEditable(() => {
+      const frame = soleFrame();
+      if (!frame?.duty) {
+        return;
+      }
+
+      const { duty: _duty, ...rest } = frame;
+      sounds.play('remove');
+      core.commit([rest]);
+      core.reportSelection();
+    }),
+    toggleDutyPause: whenEditable(() => {
+      const frame = soleFrame();
+      if (!frame?.duty) {
+        return;
+      }
+
+      const { paused: _paused, ...duty } = frame.duty;
+      core.commit([{ ...frame, duty: frame.duty.paused ? duty : { ...duty, paused: true } }]);
+      core.reportSelection();
+    }),
+    branchFrame: whenEditable(() => {
+      const frame = soleFrame();
+      if (!frame) {
+        return;
+      }
+
+      const [copy, ...rest] = branchFrame(core.displayed(), frame, scene.topZ);
+      sounds.play('place');
+      core.commit([copy, ...rest]);
+      core.setSelection([copy.id]);
+      // The two side by side: a branch is made to be compared with what it came from.
+      const both = unionOf([boundsOf(frame), boundsOf(copy)]);
+      if (both) {
+        core.glideTo(fitCamera(both, state.size.width, state.size.height, 56));
+      }
+    }),
+    mergeBranch: whenEditable(() => {
+      const frame = soleFrame();
+      if (!frame?.branchOf) {
+        return;
+      }
+
+      const merged = mergeBranch(core.displayed(), frame);
+      sounds.play('snap');
+      core.commit(merged);
+      const original = core.current().get(frame.branchOf);
+      core.setSelection(original ? [original.id] : []);
+    }),
+    search: ({ query }: { query?: unknown }): void => search.find(textOf(query)),
+    searchStep: ({ direction }: { direction?: unknown }): void =>
+      search.step(direction === -1 || direction === '-1' ? -1 : 1),
     goToFrame: ({ id }: { id?: unknown }): void => {
       const frame = typeof id === 'string' ? core.current().get(id) : undefined;
       if (frame?.type === 'frame') {

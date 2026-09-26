@@ -380,6 +380,8 @@ An element read reports \`availableVariants\` (which variant each attached class
 \`initialState\`, so you can see a button **has** a \`primary\` variant and whether it uses it. If the user asks for a
 variant that does not exist yet, **create it (upsertDefinition variants) and apply it in the same batch**.
 - \`initialState.visibility\` (boolean) sets whether the element starts shown or hidden.
+- The \`hidden\` state of a class is how it looks while hidden — where it goes and where it comes from. With a
+  \`transition\` that includes \`display 200ms allow-discrete\`, it fades or slides in and out instead of blinking.
 
 **Ancestor conditions** — a class that changes inside an ANCESTOR (\`.toolbar .icon\`), or while that ancestor is
 hovered or in a variant (\`.card:hover .icon\`, a collapsed sidebar hiding its labels) is \`ancestors\` on that class,

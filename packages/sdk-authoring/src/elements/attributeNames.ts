@@ -61,6 +61,7 @@ export const elementAttributeNames = {
   form: ['actionUrl', 'errors', 'managedByInteractions', 'method', 'noValidate', 'values'],
   formControl: [
     'autoComplete',
+    'autoFocus',
     'defaultValue',
     'disabled',
     'formatMessage',

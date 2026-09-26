@@ -1,4 +1,6 @@
 /* eslint-disable quotes */
+import { stateSuffix } from '@plitzi/sdk-shared/style/styleStates';
+
 import { css, STYLE_STATES } from '../style';
 
 import type { CssProps } from '../style';
@@ -44,7 +46,8 @@ export interface CustomCssFold {
 
 type Segment = { kind: 'rule'; selector: string; body: string; text: string } | { kind: 'other'; text: string };
 
-const STATE_SET = new Set<string>(STYLE_STATES);
+// The states written as a pseudo-class — what `.card:hover` names. `.panel:hidden` is no CSS, and not the hidden state.
+const STATE_SET = new Set<string>(STYLE_STATES.filter(state => stateSuffix(state) === `:${state}`));
 
 const QUOTES = new Set(['"', "'"]);
 

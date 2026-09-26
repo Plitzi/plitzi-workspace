@@ -17,7 +17,7 @@ container([hero, grid])             // an array is the children
 | `id` | the ONE name this element answers to — its key in the document, a binding's source, a step's target. Unique across the WHOLE space |
 | `class` | a shared class: a `styles()` declaration or a name from the space's `classes`; a list for several. Exclusive with `css` |
 | `css` | rules of this element's own: one set, or one per breakpoint (`{ desktop, tablet, mobile }`) |
-| `states` | `hover`, `focus-visible`… beside the element's own `css` |
+| `states` | `hover`, `focus-visible`, `hidden`… beside the element's own `css` |
 | `variant` | a variant of the class it wears (when the class declares it) or of its type |
 | `slots` | a class for one of the element's OTHER selectors — a form control's `input` |
 | `bind` | where a value comes from |
@@ -103,6 +103,28 @@ container({ class: card, children: [ … ] });
   import it.
 - `ancestors: { [sidebar.name]: { variants: { collapsed: { display: 'none' } } } }` styles an element by the state or
   variant of an ancestor class — the way to react to a parent's hover or collapse without a flow.
+- **`hidden` is how an element looks while its `visible` says no** — where it goes as it hides, and where it comes
+  from as it shows. Give the class a transition that includes `display` with `allow-discrete`, and a panel fades or
+  slides instead of blinking; the transition on the base is the way in, the one in `hidden` the way out:
+
+  ```ts
+  const panel = styles('panel', {
+    css: {
+      transition: 'opacity 220ms cubic-bezier(0.2, 0.9, 0.3, 1.2), transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1.2), display 220ms allow-discrete'
+    },
+    states: {
+      hidden: {
+        opacity: '0',
+        transform: 'translateY(-6px) scale(0.98)',
+        transition: 'opacity 120ms ease-in, transform 120ms ease-in, display 120ms allow-discrete'
+      }
+    }
+  });
+  ```
+
+  What is inside follows its container with `ancestors: { [panel.name]: { states: { hidden: { … } } } }` — a
+  different `transition-delay` per item staggers them. A container whose children mount only while it shows
+  (`loadStrategy: 'visible'`) empties before it can leave: use `'lazy'` on one that animates out.
 - **`:hover` is part of the selector, not a rule in `customCss`.** `customCss` is for what no class can say:
   keyframes, pseudo-elements, a rule across two unrelated elements, the inside of a third-party widget.
 - Per element TYPE defaults go in `elements: { heading: { base, states, variants, slots } }` — a whole type at once.

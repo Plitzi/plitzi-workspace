@@ -1,4 +1,6 @@
+import { DUTY_PRESETS, instructionOf } from '../board/duties.ts';
 import { isConnector } from '../board/model.ts';
+import { describeSession } from '../board/sessions.ts';
 
 import type { Session } from './session.ts';
 import type { BoardElement } from '../board/model.ts';
@@ -30,8 +32,19 @@ const colourOf = (element: BoardElement): string =>
       ? ''
       : ` ${element.stroke}`;
 
-/** One element on one line: its id first, so the agent can name it back. */
-export const describeElement = (element: BoardElement, frames: Map<string, BoardElement>): string => {
+/**
+ * One element on one line: its id first, so the agent can name it back. One `faceDown` — written by someone else in a
+ * session's writing step — says who is writing it, and nothing of what.
+ */
+export const describeElement = (
+  element: BoardElement,
+  frames: Map<string, BoardElement>,
+  faceDown: (element: BoardElement) => boolean = () => false
+): string => {
+  if (faceDown(element)) {
+    return `- ${element.id} ${element.type} face down — ${element.author ?? 'someone'} is writing it (the session's writing step)`;
+  }
+
   const box = `at (${round(element.x)}, ${round(element.y)}) size ${round(element.width)}×${round(element.height)}`;
   const inside = element.parent && frames.has(element.parent) ? ` in "${frames.get(element.parent)?.text ?? ''}"` : '';
   const marks = [
@@ -41,6 +54,11 @@ export const describeElement = (element: BoardElement, frames: Map<string, Board
     element.author ? `by ${element.author}` : '',
     element.description ? `description: ${quoted(element.description, 400)}` : '',
     element.layout === 'column' ? 'column (stacks what is dropped in)' : '',
+    element.completes ? 'the team’s Done: a card moved into it is ticked off, out of it open again' : '',
+    element.branchOf ? `branch of ${element.branchOf} — merge_branch takes it back into its place` : '',
+    element.duty
+      ? `duty for an agent: ${DUTY_PRESETS[element.duty.role].label}${element.duty.paused ? ', paused' : ''}, ${element.duty.agent ? `taken by ${element.duty.agent}` : 'free'} — ${quoted(instructionOf(element.duty), 300)}`
+      : '',
     element.replies?.length
       ? `replies: ${element.replies.map(reply => `${reply.author}: "${reply.text}"`).join(' / ')}`
       : ''
@@ -50,6 +68,7 @@ export const describeElement = (element: BoardElement, frames: Map<string, Board
 };
 
 export const describeBoard = (session: Session): string => {
+  const running = session.session();
   const elements = session.elements();
   const byId = new Map(elements.map(element => [element.id, element]));
   const frames = new Map(elements.filter(element => element.type === 'frame').map(element => [element.id, element]));
@@ -70,12 +89,13 @@ export const describeBoard = (session: Session): string => {
     people.length
       ? `Here now: ${people.map(person => `${person.name}${person.agent ? ' (agent)' : ''}`).join(', ')}`
       : 'Nobody else is here right now.',
+    ...(running ? [`Session: ${describeSession(running)}`] : []),
     elements.length
       ? `Everything lies between (${round(Math.min(...xs))}, ${round(Math.min(...ys))}) and (${round(Math.max(...xs))}, ${round(Math.max(...ys))}). Board units; x grows right, y grows down.`
       : 'The board is empty.',
     '',
     `Elements (${things.length}${drawings ? `, plus ${drawings} pen strokes` : ''}):`,
-    ...things.map(element => describeElement(element, frames)),
+    ...things.map(element => describeElement(element, frames, session.faceDown)),
     ...(connectors.length
       ? [
           '',

@@ -5,6 +5,7 @@ import { FRAME_HEADER, handlePoint, HANDLES, toScreen } from './geometry.ts';
 import { fillColour, paperColour, strokeColour } from './palette.ts';
 import { penOf } from './pens.ts';
 import { outlineOf } from './shapes.ts';
+import { dutyBadge } from '../../board/duties.ts';
 import { FONT_SIZES, LINE_HEIGHT, takesLabel } from '../../board/model.ts';
 import { colourOfName } from '../../board/people.ts';
 
@@ -230,7 +231,28 @@ const drawStamp = (context: CanvasRenderingContext2D, element: BoardElement): vo
   );
 };
 
-/** A name at the foot of whatever someone wrote: who, in their own words' company, small and quiet. */
+/** In place of what someone is writing, face down: that they are, in the muted ink, in the middle of it. */
+const drawFaceDown = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
+  const label = `✎ ${element.author ?? 'Someone'} is writing…`;
+  context.save();
+  context.font = `italic 14px ${palette.ui}`;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  const [width, height] = [Math.max(element.width, 150), Math.max(element.height, 30)];
+  if (element.type === 'text') {
+    context.beginPath();
+    context.roundRect(0, 0, width, height, 8);
+    context.fillStyle = palette.surface;
+    context.fill();
+    context.strokeStyle = palette.edge;
+    context.stroke();
+  }
+
+  context.fillStyle = palette.muted;
+  context.fillText(label, width / 2, height / 2, width - 16);
+  context.restore();
+};
+
 /**
  * Who wrote something, signed: their initial in a disc of a colour of their own — the same on every screen — and their
  * name beside it, in `colour`. `y` is the signature's middle.
@@ -265,7 +287,7 @@ const drawSignature = (
 
 /**
  * A frame: its area, tinted when it has a fill; its title and how many things are in it, in its title bar; a mark for
- * a column, which places what is put in it. Drawn flat rather than rough — it is where the drawing is, not part of it.
+ * a column, which places what is put in it, and a tick for one that marks done what lands in it. Drawn flat rather than rough — it is where the drawing is, not part of it.
  */
 const drawFrame = (
   context: CanvasRenderingContext2D,
@@ -298,6 +320,19 @@ const drawFrame = (
     context.fillText('☰', 18, middle);
   }
 
+  if (element.duty) {
+    drawTitleBadge(
+      context,
+      dutyBadge(element.duty),
+      element.duty.paused ? palette.muted : palette.accent,
+      element.width,
+      middle,
+      palette
+    );
+  } else if (element.branchOf) {
+    drawTitleBadge(context, '⑂ Branch — try it here', palette.stroke.orange, element.width, middle, palette);
+  }
+
   // While the title is being written the field stands where it goes, and the count after it would sit under the words.
   if (hideText) {
     context.restore();
@@ -320,6 +355,55 @@ const drawFrame = (
   context.fill();
   context.fillStyle = palette.muted;
   context.fillText(count, countLeft + 7, middle + 0.5);
+  // A column that completes what lands in it wears the tick its cards take, beside the count.
+  if (element.completes) {
+    drawTick(context, countLeft + width + 6, middle - 10, 20, palette.stroke.green);
+  }
+
+  context.restore();
+};
+
+/** A tick in a disc of `colour`, `size` across, from its top left corner: what a column that marks done wears. */
+const drawTick = (context: CanvasRenderingContext2D, x: number, y: number, size: number, colour: string): void => {
+  const scale = size / 18;
+  context.save();
+  context.beginPath();
+  context.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+  context.fillStyle = colour;
+  context.fill();
+  context.strokeStyle = '#ffffff';
+  context.lineWidth = 2.2;
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.beginPath();
+  context.moveTo(x + 5 * scale, y + 9.5 * scale);
+  context.lineTo(x + 8 * scale, y + 12.5 * scale);
+  context.lineTo(x + 13 * scale, y + 6 * scale);
+  context.stroke();
+  context.restore();
+};
+
+/** What a frame is besides its title, at the right of its title bar: who works here, or that it is a branch. */
+const drawTitleBadge = (
+  context: CanvasRenderingContext2D,
+  label: string,
+  colour: string,
+  right: number,
+  middle: number,
+  palette: Palette
+): void => {
+  context.save();
+  context.font = `600 12px ${palette.ui}`;
+  const width = context.measureText(label).width + 20;
+  context.beginPath();
+  context.roundRect(right - 14 - width, middle - 12, width, 24, 12);
+  context.globalAlpha = 0.14;
+  context.fillStyle = colour;
+  context.fill();
+  context.globalAlpha = 1;
+  context.fillStyle = colour;
+  context.textBaseline = 'middle';
+  context.fillText(label, right - 14 - width + 10, middle + 0.5);
   context.restore();
 };
 
@@ -1009,6 +1093,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     palette: Palette,
     {
       hideText = false,
+      faceDown = false,
       faded = false,
       picture,
       voter,
@@ -1016,6 +1101,8 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       authors = true
     }: {
       hideText?: boolean;
+      /** Written in a session's writing step by someone else: its words are theirs until the step is over. */
+      faceDown?: boolean;
       faded?: boolean;
       picture?: CanvasImageSource;
       voter?: string;
@@ -1045,7 +1132,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       drawCard(context, element, palette, cardLayout(context, element, palette, 'lying'), {
         height: element.height,
         opened: false,
-        writing: hideText,
+        writing: hideText || faceDown,
         authors
       });
     }
@@ -1092,7 +1179,9 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     }
 
     const written = element.type === 'text' || element.type === 'sticky' || (takesLabel(element.type) && element.text);
-    if (written && !hideText) {
+    if (faceDown) {
+      drawFaceDown(context, element, palette);
+    } else if (written && !hideText) {
       drawText(context, element, palette);
     }
 

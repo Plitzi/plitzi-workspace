@@ -26,9 +26,11 @@ import {
   isLinear,
   isTask,
   LIMITS,
+  settleDone,
   takesLabel,
   takesStyle
 } from '../../board/model.ts';
+import { isFaceDown, veiledIn } from '../../board/sessions.ts';
 
 import type { CardLayout } from './draw.ts';
 import type { Box, Camera, Handle } from './geometry.ts';
@@ -47,6 +49,7 @@ import type {
 } from './types.ts';
 import type { Binding, BoardElement, Fill, Point, ShapeType, StyleField } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
+import type { Query } from '../../board/query.ts';
 
 /**
  * What every part of the canvas shares: the scene and what is drawn over it, the camera, the selection, and the few
@@ -155,6 +158,8 @@ export type CoreState = {
   pointed: string | undefined;
   /** Where what is dragged lined up with what stays still: the lines shown while it does. */
   guides: GuideLine[];
+  /** What the board is searched for, and which of what it finds was last shown — nothing while nothing is. */
+  search: { text: string; query: Query; at: number } | undefined;
 };
 
 export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (event: ControllerEvent) => void) => {
@@ -199,6 +204,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       author: '',
       authors: true,
       sounds: true,
+      session: undefined,
       extras: {}
     },
     palette: readPalette(host),
@@ -221,7 +227,8 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     chatting: undefined,
     dropTarget: undefined,
     pointed: undefined,
-    guides: []
+    guides: [],
+    search: undefined
   };
 
   /** Anything can change: the board is in `edit` mode. */
@@ -517,9 +524,12 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       stylable: byField(field => offering(field).length > 0),
       frame: sole?.type === 'frame',
       column: sole?.type === 'frame' && sole.layout === 'column',
+      completes: sole?.type === 'frame' && sole.completes === true,
       task: sole !== undefined && isTask(sole.type),
       done: sole?.done === true,
-      locked: chosen.length > 0 && chosen.every(element => element.locked === true)
+      locked: chosen.length > 0 && chosen.every(element => element.locked === true),
+      duty: sole?.type === 'frame' ? sole.duty : undefined,
+      branch: sole?.type === 'frame' && sole.branchOf !== undefined
     });
   };
 
@@ -721,6 +731,17 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       }
     }
 
+    // A card into a column that completes what lands in it is done — and heard to be; out of one, open again.
+    const frameOf = (id: string | undefined): BoardElement | undefined => (id === undefined ? undefined : all.get(id));
+    for (const marked of settleDone([...next.values()], frameOf, id => scene.element(id)?.parent)) {
+      if (marked !== next.get(marked.id)) {
+        put(marked);
+        if (marked.done) {
+          sounds.play('done');
+        }
+      }
+    }
+
     const columns = new Set<string>();
     for (const change of next.values()) {
       [change.parent, scene.element(change.id)?.parent, change.type === 'frame' ? change.id : undefined]
@@ -841,6 +862,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   };
 
   const newElement = (type: ShapeType, [x, y]: Point): BoardElement => {
+    const veiled = veiledIn(state.props.session, type);
     const { props } = state;
     const paper = type === 'sticky' || type === 'stack';
     const fill: Fill = !takesStyle(type, 'fill') ? 'none' : paper && props.fill === 'none' ? 'yellow' : props.fill;
@@ -863,7 +885,9 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
         deleted: false,
         ...(isLinear(type) ? { points: [[0, 0]] as Point[] } : {}),
         ...(holdsText(type) ? { text: '' } : {}),
-        ...(isAuthored(type) && props.author ? { author: props.author } : {})
+        ...(isAuthored(type) && props.author ? { author: props.author } : {}),
+        // Written while the session asks everyone to write on their own: face down for the others until it moves on.
+        ...(veiled ? { veiled } : {})
       },
       props.extras
     );
@@ -873,8 +897,8 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
 
   /** Writing on `element` begins — on its text, or on a card's description. */
   const startEditing = (element: BoardElement, field: EditField = 'text'): void => {
-    // A locked element keeps its words as it keeps its place.
-    if (element.locked) {
+    // A locked element keeps its words as it keeps its place; one face down keeps them to whoever wrote them.
+    if (element.locked || isFaceDown(element, state.props.session, state.props.author)) {
       return;
     }
 
@@ -995,16 +1019,21 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     startEditing(scene.element(card.id) ?? card);
   };
 
-  /** A kanban board — To do, Doing, Done: three columns side by side, centred on `point`, not yet kept. */
+  /**
+   * A kanban board — To do, Doing, Done: three columns side by side, centred on `point`, not yet kept. The last is the
+   * team's Done: a card moved into it is ticked off.
+   */
   const kanbanAt = ([x, y]: Point): BoardElement[] => {
     const { width, height } = DEFAULT_BOX.column;
+    const titles = ['To do', 'Doing', 'Done'];
 
-    return ['To do', 'Doing', 'Done'].map((title, index) => ({
+    return titles.map((title, index) => ({
       ...newElement('frame', [x - (width * 3 + KANBAN_GAP * 2) / 2 + index * (width + KANBAN_GAP), y - height / 2]),
       width,
       height,
       text: title,
       layout: 'column' as const,
+      ...(index === titles.length - 1 ? { completes: true } : {}),
       z: scene.topZ + 1 + index
     }));
   };

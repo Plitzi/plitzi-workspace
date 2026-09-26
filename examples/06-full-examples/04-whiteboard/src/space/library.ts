@@ -12,7 +12,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { CATEGORIES, dragFlows, ELEMENTS, entriesOf, pickSteps } from './elements.ts';
-import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
+import { BUTTON_RESET, FLOAT, caption, icon, panelMotion } from './kit.ts';
 import { closePanels } from './panels.ts';
 import { markOf } from './toolbar.ts';
 
@@ -73,9 +73,12 @@ const toggleFavorite = (entry: ElementEntry): StepSpec =>
     value: `{{ ${starred(entry)} ? computed.favorites|filter(id => id != '${entry.id}') : computed.favorites|merge(['${entry.id}']) }}`
   });
 
+const PANEL_MOTION = panelMotion({ from: 'left', rest: 'translateY(-50%)' }, { from: 'below' });
+
 const panel = styles('libraryPanel', {
   css: {
     desktop: {
+      ...PANEL_MOTION.desktop,
       ...FLOAT,
       position: 'absolute',
       top: '50%',
@@ -90,6 +93,7 @@ const panel = styles('libraryPanel', {
       padding: '14px'
     },
     mobile: {
+      ...PANEL_MOTION.mobile,
       top: 'auto',
       left: '12px',
       right: '12px',
@@ -98,7 +102,8 @@ const panel = styles('libraryPanel', {
       width: 'auto',
       'max-height': 'calc(100dvh - 180px)'
     }
-  }
+  },
+  states: PANEL_MOTION.states
 });
 
 const head = styles('libraryHead', { display: 'flex', 'flex-direction': 'column', gap: '10px' });
