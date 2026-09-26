@@ -17,8 +17,8 @@ import {
   whenFailed
 } from '@plitzi/sdk-authoring';
 
-import { AVAILABILITY_ACTION, BOOKING_ACTION, slotId } from '../actions';
-import { bookingTimes, faqs, photos, restaurant } from '../content';
+import { AVAILABILITY_ACTION, BOOKING_ACTION, slotId } from '../actions/index.ts';
+import { bookingTimes, faqs, photos, restaurant } from '../content.ts';
 import {
   arrow,
   closeMenuOnLoad,
@@ -36,7 +36,7 @@ import {
   section,
   sectionHead,
   shell
-} from '../layout';
+} from '../layout.ts';
 
 import type { ElementSpec, PageSpec, StepSpec } from '@plitzi/sdk-authoring';
 

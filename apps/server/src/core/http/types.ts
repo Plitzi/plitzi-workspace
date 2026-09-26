@@ -1,6 +1,8 @@
+import type { UpgradeRequest } from './socketResponse';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
 import type { ServerCaches } from '../../helpers/cache';
 import type { ActionsModule } from '../../modules/actions';
+import type { RealtimeModule } from '../../modules/realtime';
 import type { PluginManager } from '../../plugins/manager';
 import type {
   SSRPageServerConfig,
@@ -31,6 +33,11 @@ export interface BaseContext {
    * spend real work on behalf of a caller should hand this to whatever they call.
    */
   signal: AbortSignal;
+  /**
+   * Present when the request asks to switch protocols (a WebSocket). The stage that takes it performs the switch on
+   * the socket and marks it `taken`; any other answer is written to the socket as HTTP and closes it.
+   */
+  upgrade?: UpgradeRequest;
 }
 
 // The richer context an SSR server builds: the render template, caches and plugin manager that the page/RSC and
@@ -42,6 +49,8 @@ export interface SSRContext extends BaseContext {
   /** Built at boot when the deployment configured `action.lookups`, so its task registry is validated once and
    *  its guards are a single set for the process. Absent means this server runs no actions. */
   actions?: ActionsModule;
+  /** The realtime channels, built at boot unless the config turned them off. Absent means `/_realtime` is not served. */
+  realtime?: RealtimeModule;
   renderFn: SSRTemplateFn;
   caches: ServerCaches;
   pluginManager: PluginManager;

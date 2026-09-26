@@ -127,8 +127,11 @@ export const integer = (row: Row, column: string): number => {
   throw new Error(`Expected column "${column}" to be a number, got ${typeof value}`);
 };
 
+/** A column that may be NULL — or not selected at all, which an index into a `Record` does not admit to. */
+const absent = (row: Row, column: string): boolean => !Object.hasOwn(row, column) || row[column] === null;
+
 export const optionalInteger = (row: Row, column: string): number | undefined =>
-  row[column] === null || row[column] === undefined ? undefined : integer(row, column);
+  absent(row, column) ? undefined : integer(row, column);
 
 export const text = (row: Row, column: string): string => {
   const value = row[column];
@@ -140,7 +143,7 @@ export const text = (row: Row, column: string): string => {
 };
 
 export const optionalText = (row: Row, column: string): string | undefined =>
-  row[column] === null || row[column] === undefined ? undefined : text(row, column);
+  absent(row, column) ? undefined : text(row, column);
 
 /** `IN (?, ?, …)` for a list of ids, which SQLite has no array binding for. */
 export const placeholders = (values: readonly unknown[]): string => values.map(() => '?').join(', ');

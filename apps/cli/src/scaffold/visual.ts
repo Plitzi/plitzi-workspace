@@ -34,44 +34,38 @@ export default defineConfig({
 
 const authoredSpec = (): string => `import { expect, test } from '@playwright/test';
 
-import { authorSpace, locate } from '@plitzi/sdk-authoring';
+import { authorSpace, inspectPage } from '@plitzi/sdk-authoring';
 
-import { space } from '../src/space';
+import { declarations } from '../src/plugins/declarations.ts';
+import { space } from '../src/space.ts';
 
 /**
- * Everything this space NAMES is on screen, on every page it has.
+ * Every page renders whole: everything the space NAMES is on screen, images arrived, nothing scrolls sideways, and no
+ * text is drawn in the colour behind it.
  *
  * The strongest assertion available about a page you did not hand-write, and it costs no upkeep: an id an author
  * bothered to write down is an element somebody meant to point at, and \`authorSpace\` reports which those were.
  * Rename one and this fails at author time with a suggestion, rather than at test time with an empty locator.
  *
  * One test per page, so the second page you add is covered the moment it exists. What a bare visit cannot show is
- * left to tests of its own: a page behind a session or with a route param (\`post/{{slug}}\`), and an element that is
- * on screen only under a condition — a menu that opens on a tap, a confirmation after a submit.
+ * left to tests of its own: a page behind a session or with a route param (\`post/{{slug}}\`). What shows only under a
+ * condition, renders once per list row or has no box of its own, \`inspectPage\` sets aside by itself.
  */
-const { handles } = authorSpace(space);
+const { handles } = authorSpace(space, { plugins: declarations });
 
 const openable = Object.values(handles.pages).filter(
   pageHandle => pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0
 );
 
 for (const pageHandle of openable) {
-  test(\`\${pageHandle.path} renders every element it names\`, async ({ page }) => {
+  test(\`\${pageHandle.path} renders whole\`, async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
 
     await page.goto(pageHandle.path, { waitUntil: 'networkidle' });
-    const el = locate(page, handles);
 
-    // Skipped: what shows only under a condition, what renders once per list row (several times, or none while the
-    // list is empty — give those a test that knows the data), and a provider with no tag, which has no box to see.
-    const always = Object.values(pageHandle.elements).filter(
-      entry => entry.named && !entry.conditional && !entry.repeated && !entry.boxless
-    );
-    for (const handle of always) {
-      await expect(el(handle.id), \`\${handle.type} "\${handle.id}"\`).toBeVisible();
-    }
-
+    // Every problem at once, each naming the element and why — which ancestor hid it, what overflowed.
+    expect((await inspectPage(page, handles, { page: pageHandle.id })).problems).toEqual([]);
     expect(errors).toEqual([]);
   });
 }

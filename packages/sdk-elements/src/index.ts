@@ -36,7 +36,10 @@ export const defaultElements = {
   pagination: elements.Pagination,
   form: elements.Form,
   formControl: elements.FormControl,
-  apiContainer: elements.ApiContainer
+  apiContainer: elements.ApiContainer,
+  channel: elements.Channel
 };
 
 export { useRscData, elements, elementSettings, JsxManager };
+export { default as useChannel } from './realtime/useChannel';
+export type { ChannelHandle, UseChannelOptions } from './realtime/useChannel';

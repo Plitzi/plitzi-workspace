@@ -1,7 +1,10 @@
 import { cronFiresBetween, cronNextFire } from '@plitzi/sdk-shared/actions';
 
+import { createFailureStreak } from './failureStreak';
 import { DEFAULT_MAX_ATTEMPTS, scheduleJobId, schedulesFor } from './schedules';
+import { serverLog } from '../../../helpers/serverLog';
 
+import type { FailureStreak } from './failureStreak';
 import type { ActionLookups } from '../types';
 import type { ActionJobQueue, ActionSchedule, Environment } from '@plitzi/sdk-shared';
 
@@ -27,6 +30,8 @@ export type SchedulerOptions = {
   reconcileMs?: number;
   /** The spaces to reconcile, for a server that serves a known few. `listScheduledSpaces` wins over it. */
   spaces?: number[];
+  /** Every failed pass, in place of the default report — a warning, then an error once a pass has kept failing for a
+   *  minute (see `createFailureStreak`). */
   onError?: (error: unknown) => void;
 };
 
@@ -78,7 +83,7 @@ export const createScheduler = ({
   maxAttempts = DEFAULT_MAX_ATTEMPTS,
   reconcileMs = 15 * MINUTE_MS,
   spaces,
-  onError = error => console.error('[Actions] schedule sweep failed:', error)
+  onError
 }: SchedulerOptions): Scheduler => {
   let timer: NodeJS.Timeout | undefined;
   let reconcileTimer: NodeJS.Timeout | undefined;
@@ -152,8 +157,11 @@ export const createScheduler = ({
     }
   };
 
+  const sweepFailures = createFailureStreak('Actions', 'schedule sweep');
+  const reconcileFailures = createFailureStreak('Actions', 'schedule reconcile');
+
   /** One pass at a time per replica: a sweep that outlives its interval must not have a second one land on top. */
-  const guarded = async (pass: () => Promise<unknown>): Promise<void> => {
+  const guarded = async (pass: () => Promise<unknown>, failures: FailureStreak): Promise<void> => {
     if (running) {
       return;
     }
@@ -161,8 +169,9 @@ export const createScheduler = ({
     running = true;
     try {
       await pass();
+      failures.succeeded();
     } catch (error) {
-      onError(error);
+      (onError ?? failures.failed)(error);
     } finally {
       running = false;
     }
@@ -177,22 +186,23 @@ export const createScheduler = ({
       }
 
       // Jittered so a cluster that rolled all at once does not then query the store in lockstep forever.
-      timer = setInterval(() => void guarded(sweep), pollMs + Math.floor(Math.random() * 1000));
+      timer = setInterval(() => void guarded(sweep, sweepFailures), pollMs + Math.floor(Math.random() * 1000));
       timer.unref();
 
       if (!lookups.listScheduledSpaces && !spaces?.length) {
         // Said out loud, once, because the alternative is a schedule that never fires and no way to tell that
         // apart from an expression that does not match — an afternoon of looking at the wrong thing.
-        console.warn(
-          '[Actions] schedules are running but nothing says which spaces to watch. Name them as ' +
+        serverLog.warn(
+          'Actions',
+          'schedules are running but nothing says which spaces to watch. Name them as ' +
             '`action.jobs.spaces`, or answer `action.lookups.listScheduledSpaces`.'
         );
 
         return;
       }
 
-      void guarded(reconcileAll);
-      reconcileTimer = setInterval(() => void guarded(reconcileAll), reconcileMs);
+      void guarded(reconcileAll, reconcileFailures);
+      reconcileTimer = setInterval(() => void guarded(reconcileAll, reconcileFailures), reconcileMs);
       reconcileTimer.unref();
     },
     stop: () => {

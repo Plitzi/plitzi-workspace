@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { createContext, useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -8,6 +8,7 @@ import ElementContext from './ElementContext';
 import RootElement from './RootElement';
 
 import type { ElementContextValue } from './ElementContext';
+import type { ElementDefinition } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 type ServiceContext = {
@@ -189,6 +190,84 @@ describe('RootElement', () => {
 
       await waitFor(() => expect(interactionsManager.interactionTrigger).toHaveBeenCalledWith('el1', 'onLoad', {}));
       expect(registeredWhenFired).toEqual([true]);
+    });
+
+    describe('a click inside an element that is clickable too', () => {
+      const clickable = (id: string, propagateEvent: boolean): ElementDefinition => ({
+        rootId: 'root',
+        label: id,
+        type: 'container',
+        styleSelectors: { base: `${id}Cls` },
+        interactions: {
+          [`${id}-click`]: {
+            id: `${id}-click`,
+            title: 'On Click',
+            type: 'trigger',
+            action: 'onClick',
+            params: { propagateEvent },
+            preview: {},
+            elementId: id,
+            beforeNode: '',
+            afterNode: '',
+            flowId: `${id}-click`,
+            enabled: true
+          }
+        }
+      });
+
+      const renderNested = (innerPropagates: boolean, ownClick = vi.fn()) =>
+        render(
+          <StoreProvider value={{ runtime: { sources: {} } }}>
+            <ElementContext value={fullContext({ id: 'card', traceId: 'card', definition: clickable('card', false) })}>
+              <RootElement onClick={ownClick}>
+                <ElementContext
+                  value={fullContext({
+                    id: 'button',
+                    traceId: 'button',
+                    definition: clickable('button', innerPropagates)
+                  })}
+                >
+                  <RootElement>press</RootElement>
+                </ElementContext>
+              </RootElement>
+            </ElementContext>
+          </StoreProvider>
+        );
+
+      const clicked = () =>
+        interactionsManager.interactionTrigger.mock.calls
+          .filter(([, action]) => action === 'onClick')
+          .map(([id]) => id as string);
+
+      // "Propagate Event", off by default, is what the builder offers on every click trigger. It used to decide only
+      // `preventDefault`, so the card's flow ran after the button's on every click — the two opposite actions of a
+      // card with a delete button in it, one after the other.
+      it('runs only the inner flow when the inner trigger does not propagate', () => {
+        const { getByText } = renderNested(false);
+
+        fireEvent.click(getByText('press'));
+
+        expect(clicked()).toEqual(['button']);
+      });
+
+      it('runs both when the inner trigger propagates', () => {
+        const { getByText } = renderNested(true);
+
+        fireEvent.click(getByText('press'));
+
+        expect(clicked()).toEqual(['button', 'card']);
+      });
+
+      // The DOM event is not stopped: a component's own handler — a dropdown opening from a click inside it — still
+      // sees the click, and so does anything listening above the space.
+      it('leaves the event to the handler the outer element has of its own', () => {
+        const ownClick = vi.fn();
+        const { getByText } = renderNested(false, ownClick);
+
+        fireEvent.click(getByText('press'));
+
+        expect(ownClick).toHaveBeenCalledTimes(1);
+      });
     });
   });
 });

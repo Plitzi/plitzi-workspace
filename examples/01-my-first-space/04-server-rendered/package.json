@@ -5,9 +5,11 @@
   "description": "Server-render a Plitzi space over HTTP with @plitzi/sdk-server.",
   "type": "module",
   "scripts": {
-    "start": "node --import tsx src/main.ts",
-    "start:dev": "tsx watch --exclude \".sdk-plugins/**\" src/main.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "start": "node src/main.ts",
+    "start:dev": "node --watch-path=./src src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "yarn run -T eslint .",
+    "test": "playwright test"
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
@@ -16,8 +18,12 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@plitzi/sdk-authoring": "workspace:*",
     "@types/node": "^26.6.2",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

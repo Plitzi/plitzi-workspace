@@ -16,8 +16,6 @@ export type UndoableItem<TState = any, TDispatchAction = any> = {
   prevState: TState;
 };
 
-export type UndoableDispatch = ActionDispatch<[action: UndoableReducerActions]>;
-
 export type UndoableContextValue = {
   canUndo: boolean;
   canRedo: boolean;

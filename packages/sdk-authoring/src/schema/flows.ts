@@ -1,8 +1,9 @@
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
 import type { StepSpec } from './types';
 import type { Rule, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
+import type { ElementInteraction, WhileRunning } from '@plitzi/sdk-shared';
 
 /**
  * Public because a step's `when` is one: a project that exports a flow or an action — and so emits declarations for it
@@ -95,7 +96,8 @@ export const authorFlow = (
       afterNode: index === steps.length - 1 ? '' : ids[index + 1],
       flowId,
       enabled: step.enabled ?? true,
-      ...(step.when ? { when: step.when } : {})
+      ...(step.when ? { when: step.when } : {}),
+      ...(step.whileRunning ? { whileRunning: step.whileRunning } : {})
     };
 
     return flow;
@@ -124,7 +126,44 @@ export const named = (id: string, step: StepSpec): StepSpec => ({ ...step, id })
 export const when = (rules: Rule | Rule[], step: StepSpec, combinator: 'and' | 'or' = 'and'): StepSpec => {
   const group: RuleGroup = { combinator, rules: Array.isArray(rules) ? rules : [rules] };
 
-  return { ...step, when: group };
+  return { ...step, when: step.when ? both(step.when, group) : group };
+};
+
+/**
+ * Two conditions a step must BOTH meet — the one it already had and the one put around it.
+ *
+ * `when(a, when(b, step))` used to replace `b` with `a`: the step ran whenever `a` held, whatever `b` said, and nothing
+ * anywhere said so. A helper that returns its steps already guarded (a `when` inside) and a caller adding its own guard
+ * is the ordinary way to get there. Two `and` groups are one group of all their rules; otherwise each keeps its own.
+ */
+const both = (inner: RuleGroup, outer: RuleGroup): RuleGroup =>
+  inner.combinator === 'and' && outer.combinator === 'and' && inner.enabled !== false && outer.enabled !== false
+    ? { combinator: 'and', rules: [...outer.rules, ...inner.rules] }
+    : { combinator: 'and', rules: [outer, inner] };
+
+/**
+ * What a trigger does when it fires again while the flow it started still runs.
+ *
+ * `skip` is what happens without this: the new firing is ignored — which is what keeps a double click from submitting
+ * twice, and exactly wrong for a stream of events a flow must answer every one of. `queue` runs each firing after the
+ * last, in order; `parallel` runs them all at once.
+ *
+ * ```ts
+ * [whileRunning('queue', named('arrived', on('onArrival'))), addNotification({ … }), delay(8000), …]
+ * ```
+ */
+export const whileRunning = (mode: WhileRunning, trigger: StepSpec): StepSpec => {
+  if (trigger.type !== 'trigger') {
+    throw new Error(
+      `whileRunning('${mode}', …) wraps a flow's TRIGGER — it decides what firing the trigger again does — and was given a "${trigger.type}" step (${trigger.action}). Put it around the first step: \`[whileRunning('${mode}', onClick()), …]\`.`
+    );
+  }
+
+  if (!WHILE_RUNNING_MODES.includes(mode)) {
+    throw new Error(`whileRunning takes ${WHILE_RUNNING_MODES.map(item => `'${item}'`).join(', ')}, not '${mode}'.`);
+  }
+
+  return { ...trigger, whileRunning: mode };
 };
 
 /**
@@ -140,7 +179,9 @@ export const whenSucceeded = (stepId: string, step: StepSpec): StepSpec =>
  * Runs a step only if the named server action did NOT complete.
  *
  * Every outcome that is not `completed`, which is deliberate: a run can come back `failed`, `skipped` or
- * `aborted`, and to the page they are one event — it did not work, and the reason is in `{{<id>.reason}}`.
+ * `aborted`, and to the page they are one event — it did not work, and the reason is in `{{<id>.reason}}` — and, when
+ * the server or a step wrote one for the caller (`ActionRefusal`, `flow.fail` telling the caller), in
+ * `{{<id>.error}}`.
  * Matching only `failed` is how the other two end up silently doing nothing.
  */
 export const whenFailed = (stepId: string, step: StepSpec): StepSpec =>

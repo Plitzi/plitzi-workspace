@@ -1,3 +1,4 @@
+import type { StoreMethods } from '../../../core/server/fleet/channel';
 import type {
   ActionJob,
   ActionJobAttempt,
@@ -27,6 +28,23 @@ export type MemoryJobQueueOptions = {
 };
 
 const TERMINAL = new Set(['succeeded', 'failed', 'dead', 'cancelled']);
+
+/** Every method of the queue, for the copy a server's workers share (see `fleet/stores.ts`). */
+export const JOB_QUEUE_METHODS: StoreMethods<ActionJobQueue> = {
+  now: true,
+  enqueue: true,
+  claim: true,
+  heartbeat: true,
+  settle: true,
+  dueSchedules: true,
+  advanceSchedule: true,
+  putSchedules: true,
+  listJobs: true,
+  getJob: true,
+  listSchedules: true,
+  requeue: true,
+  cancel: true
+};
 
 /**
  * The default queue: one process's Maps.

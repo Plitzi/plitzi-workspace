@@ -1,5 +1,6 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import ErrorMessage from '@plitzi/plitzi-ui/ErrorMessage';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import Switch from '@plitzi/plitzi-ui/Switch';
@@ -10,6 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { templateProblem } from '@pmodules/Schema/helpers/templateProblem';
 
 import ParamBinding from './ParamBinding';
 import ParamElements from './ParamElements';
@@ -97,6 +99,7 @@ const NodeBodyParam = ({
   }, [options, params, processOptions]);
 
   const finalLabel = useMemo(() => (!label ? id : label), [label, id]);
+  const problem = useMemo(() => templateProblem(value), [value]);
   const fieldsKeys = useMemo<AutoComplete[]>(
     () =>
       Object.values(fields).reduce<AutoComplete[]>(
@@ -121,6 +124,7 @@ const NodeBodyParam = ({
             label={finalLabel}
             id={id}
             value={value as string}
+            error={problem}
             onChange={handleChangeInput}
           />
         )}
@@ -149,6 +153,7 @@ const NodeBodyParam = ({
             className="w-full"
             size="xs"
             value={value as string}
+            error={problem}
             onChange={handleChangeInput}
           />
         )}
@@ -161,6 +166,7 @@ const NodeBodyParam = ({
             mode="json"
             autoComplete={fieldsKeys}
             lineWrapping
+            error={Boolean(problem)}
             onChange={handleChangeInput}
           />
         )}
@@ -173,6 +179,7 @@ const NodeBodyParam = ({
             mode="text"
             autoComplete={fieldsKeys}
             lineWrapping
+            error={Boolean(problem)}
             onChange={handleChangeInput}
           />
         )}
@@ -184,6 +191,7 @@ const NodeBodyParam = ({
           </Button>
         )}
       </div>
+      {!isBinding && type.startsWith('codemirror') && problem && <ErrorMessage message={problem} error />}
     </div>
   );
 };

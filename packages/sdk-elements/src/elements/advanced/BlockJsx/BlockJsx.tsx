@@ -46,9 +46,10 @@ const BlockJsx = ({
 
     try {
       const propsParsed = JSON.parse(componentProps) as Record<string, unknown>;
+
       return { ...propsParsed, ...otherPropsFiltered };
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
 
     return undefined;

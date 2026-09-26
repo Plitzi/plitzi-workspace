@@ -1,6 +1,7 @@
-import { createMemoryJobQueue } from './memoryQueue';
+import { createMemoryJobQueue, JOB_QUEUE_METHODS } from './memoryQueue';
 import { createScheduler } from './scheduler';
 import { createJobWorker } from './worker';
+import { fleetStore } from '../../../core/server/fleet/link';
 
 import type { Scheduler } from './scheduler';
 import type { JobWorker } from './worker';
@@ -26,14 +27,15 @@ export type ActionJobs = {
  *
  * With no `queue` supplied this is one process's memory, which is right for a single replica and wrong the moment
  * there are two. That is a sentence rather than a silent behaviour because the failure is invisible: everything
- * works, and the nightly email goes out once per replica.
+ * works, and the nightly email goes out once per replica. The workers of one server are one replica: they share
+ * the primary's queue, and only one of them runs the scheduler and the jobs (`runsFleetJobs`).
  */
 export const createActionJobs = (
   config: ActionJobsConfig,
   module: ActionsModule,
   lookups: ActionLookups
 ): ActionJobs => {
-  const queue = config.queue ?? createMemoryJobQueue();
+  const queue = config.queue ?? fleetStore<ActionJobQueue>('actions.jobs', JOB_QUEUE_METHODS) ?? createMemoryJobQueue();
   const { produce = true, workers = 4 } = config;
 
   const scheduler = createScheduler({

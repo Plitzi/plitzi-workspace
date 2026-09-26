@@ -145,14 +145,10 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
   );
 
   if (action.type === 'notFound') {
-    // @todo: In the future this should navigate to page 404
-    // return <Navigate to="/not-found" replace />;
     return 'Not Found';
   }
 
   if (action.type === 'accessDenied') {
-    // @todo: In the future this should navigate to page 403
-    // return <Navigate to="/unauthorized" replace />;
     return 'Access Denied';
   }
 

@@ -225,7 +225,9 @@ const flowsOf = (element: Element): unknown => {
             isRecord(current.when) && Array.isArray(current.when.rules) && current.when.rules.length > 0
               ? current.when
               : null,
-          enabled: current.enabled
+          enabled: current.enabled,
+          // Absent and `skip` are the same order: a firing while the flow runs is ignored.
+          whileRunning: current.whileRunning ?? 'skip'
         });
         current = current.afterNode && Object.hasOwn(nodes, current.afterNode) ? nodes[current.afterNode] : undefined;
       }

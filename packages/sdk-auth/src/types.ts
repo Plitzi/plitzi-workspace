@@ -18,6 +18,7 @@ export type AuthProviderSettings = Pick<
   | 'refreshExpirationTimePath'
   | 'sessionHintCookie'
   | 'sessionExchangeUrl'
+  | 'mfaUrl'
   | 'sessionGate'
   | 'sessionRevalidateSeconds'
 >;

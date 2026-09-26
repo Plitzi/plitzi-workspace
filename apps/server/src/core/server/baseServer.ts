@@ -1,6 +1,11 @@
+import { serverLog } from '../../helpers/serverLog';
 import { buildTransport, protoLabel } from '../transports';
+import { channelName } from './fleet/link';
+import { relayCache, relayPlugins } from './fleet/relay';
+import { fleetRole, resolveWorkers } from './fleet/role';
 
 import type { Handler } from '../transports';
+import type { Fleet } from './fleet/supervisor';
 import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 
 /**
@@ -42,6 +47,11 @@ export interface HttpServerParts {
   onListen?: () => void;
   /** Awaited, so a server that holds work in flight — jobs, drains — can finish it before the sockets close. */
   onDestroy?: () => void | Promise<void>;
+  /** What a plugin invalidated in another process of the fleet leaves to do here: forget it, in memory only. */
+  forgetPlugins?: (name?: string, version?: string) => void;
+  /** What the primary does once, before it starts the workers — work each of them would otherwise repeat, or race
+   *  the others to do. */
+  beforeFork?: () => Promise<void>;
 }
 
 // The only thing every server shares: an HTTP transport and the listen/close lifecycle. It knows nothing about
@@ -63,11 +73,55 @@ export const createHttpServer = (
   // Undefined until listen() builds the transport, and `close()` has to cope with that — see below.
   let primary: ReturnType<typeof buildTransport>['primary'] | undefined;
   let h3: ReturnType<typeof buildTransport>['h3'];
+  // Set on a primary that started workers instead of binding.
+  let fleet: Fleet | undefined;
+  let closed = false;
+  // The fork between one process and several (fleet/role.ts), decided once. A single server is exactly what it was
+  // before workers existed; in a fleet, what one process is told about its caches reaches the others.
+  const plan = resolveWorkers(config.workers);
+  const role = fleetRole(plan);
+  const channel = role === 'single' ? undefined : channelName(label);
+  const cache = channel && parts.cache ? relayCache(parts.cache, `${channel}.cache`) : parts.cache;
+  const plugins =
+    channel && parts.forgetPlugins
+      ? relayPlugins(parts.plugins, parts.forgetPlugins, `${channel}.plugins`, label)
+      : parts.plugins;
 
   return {
-    cache: parts.cache,
-    plugins: parts.plugins,
+    cache,
+    plugins,
     listen(port: number, host = '0.0.0.0') {
+      // Said where the count is decided: each worker runs this same config, and would repeat it.
+      if (plan.requested !== undefined && role !== 'worker') {
+        serverLog.warn(
+          label,
+          `${plan.requested} workers asked for, ${plan.count} cores to run them on: starting ${plan.count}`
+        );
+      }
+
+      if (role === 'primary') {
+        // The primary serves nothing itself: it prepares what the workers share, starts them, and keeps them running.
+        // The supervisor is loaded only here, so a single server never loads it.
+        void (parts.beforeFork?.() ?? Promise.resolve())
+          .catch((error: unknown) => serverLog.error(label, 'preparing for the workers failed', error))
+          .then(async () => {
+            const { startFleet } = await import('./fleet/supervisor');
+            // Closed while it prepared: starting workers now would outlive the server that was asked to stop.
+            if (closed) {
+              return;
+            }
+
+            fleet = startFleet(plan.count, label);
+            serverLog.info(label, `${plan.count} workers on ${host}:${port}`);
+          })
+          .catch((error: unknown) => {
+            serverLog.error(label, 'the workers could not start', error);
+            process.exitCode = 1;
+          });
+
+        return;
+      }
+
       const handler = makeHandlerForPort(port);
       ({ primary, h3 } = buildTransport(config, handler, port, label));
 
@@ -78,7 +132,7 @@ export const createHttpServer = (
           return;
         }
 
-        console.error(bindFailure(error, port, label));
+        serverLog.error(label, bindFailure(error, port, label));
         // Set as well as exit: the code is what a supervisor reads, and it is already right if something the
         // deployment installed swallows the exit.
         process.exitCode = 1;
@@ -86,7 +140,7 @@ export const createHttpServer = (
       });
 
       primary.listen(port, host, () => {
-        console.log(`[${label}] ${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
+        serverLog.info(label, `${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
         parts.onListen?.();
       });
     },
@@ -94,6 +148,10 @@ export const createHttpServer = (
     // holds the caches and plugin manager onDestroy releases, and closing it must not depend on a socket
     // existing — that is what made an unstarted server throw on close instead of simply releasing its resources.
     async close() {
+      closed = true;
+      // The workers first: each finishes what it is serving before the primary lets go of what it holds.
+      await fleet?.stop();
+      fleet = undefined;
       await parts.onDestroy?.();
 
       const open = [primary, h3].filter(srv => srv !== undefined);

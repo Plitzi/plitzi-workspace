@@ -159,8 +159,6 @@ const Settings = ({
     [onUpdate]
   );
 
-  // const handleChangeValue = useCallback(e => {}, [value, subType]);
-
   const optionsString = useMemo(() => (Array.isArray(options) ? options.join('\n') : ''), [options]);
 
   return (
@@ -179,14 +177,8 @@ const Settings = ({
         <option value="checkbox">Checkbox</option>
         <option value="textarea">Long Text</option>
         <option value="hidden">Hidden</option>
-        {/* <option value="color">Color</option> */}
-        {/* <option value="switch">Switch</option> */}
       </Select>
       <TextArea value={defaultValue} label="Default Value" onChange={handleChangeDefaultValue} size="xs" />
-      {/* <div className="flex flex-col mt-4">
-          <label>Value</label>
-          <Input value={value} onChange={handleChangeValue} />
-        </div> */}
       {subType === 'text' && (
         <Checkbox checked={autoComplete} label="Auto Complete" onChange={handleChangeAutoComplete} size="xs" />
       )}

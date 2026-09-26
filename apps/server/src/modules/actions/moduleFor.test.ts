@@ -7,7 +7,7 @@ import type { SSRPageServerConfig } from '@plitzi/sdk-shared';
 const lookups = { getAction: () => Promise.resolve(undefined) };
 
 const configWith = (action: Record<string, unknown>): SSRPageServerConfig =>
-  ({ action: { lookups, ...action } }) as unknown as SSRPageServerConfig;
+  ({ adapters: {}, action: { lookups, ...action } }) as unknown as SSRPageServerConfig;
 
 /** The module is optional by contract; every test here supplies lookups, so an absent one is the test failing. */
 const moduleFrom = (action: Record<string, unknown>) => {

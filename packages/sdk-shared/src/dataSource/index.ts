@@ -1,6 +1,6 @@
 export * from './hooks';
 export * from './helpers';
-export { evaluateComputed } from './computed';
+export { evaluateComputed, liveSources } from './computed';
 export { default as getBindingsDetails } from './getBindingsDetails';
 export { default as resolveVariables } from './resolveVariables';
 export type { VariableScope } from './resolveVariables';

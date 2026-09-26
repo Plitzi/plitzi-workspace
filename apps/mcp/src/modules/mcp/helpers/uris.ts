@@ -11,11 +11,11 @@ export const cssPropertiesUri = 'plitzi://css-properties';
 
 // --- Cold-start bundle ---
 export const primerUri = (env: Env): string => `plitzi://primer/${env}`;
+export const changesUri = (env: Env): string => `plitzi://changes/${env}`;
 
 // --- Element schema ---
 export const pagesUri = (env: Env): string => `plitzi://schema/${env}/pages`;
 export const pageUri = (env: Env, ref: string): string => `plitzi://schema/${env}/pages/${ref}`;
-export const pageStylesUri = (env: Env, ref: string): string => `${pageUri(env, ref)}/styles`;
 
 /** The shared layout shells. One of them is read as a page is — `pages/{ref}` resolves either root. */
 export const layoutsUri = (env: Env): string => `plitzi://schema/${env}/layouts`;

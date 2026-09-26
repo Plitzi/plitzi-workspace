@@ -9,13 +9,15 @@ import NodeHeader from './NodeHeader';
 import WorkflowContext from '../WorkflowContext';
 import NodePreview from './NodePreview';
 import NodeWhen from './NodeWhen';
+import NodeWhileRunning from './NodeWhileRunning';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type {
   ElementInteraction,
   InteractionCallbackParam,
   InteractionCallbackParamValues,
-  InteractionCallbackType
+  InteractionCallbackType,
+  WhileRunning
 } from '@plitzi/sdk-shared';
 
 export type WorkflowNodeProps = {
@@ -32,6 +34,7 @@ export type WorkflowNodeProps = {
   triggerId?: string;
   params?: InteractionCallbackParamValues;
   when?: RuleGroup;
+  whileRunning?: WhileRunning;
   preview?: Record<string, unknown>;
   isOpened?: boolean;
   onOpened?: (id: string, isOpened: boolean) => void;
@@ -51,6 +54,7 @@ const WorkflowNode = ({
   triggerId = '',
   params,
   when,
+  whileRunning,
   preview,
   isOpened = false,
   onOpened,
@@ -193,6 +197,7 @@ const WorkflowNode = ({
         <NodeBody id={id} paramDefinitions={nodeParams} params={params} fields={fields} onChange={handleChange} />
       )}
       {isOpened && nodeDefinition && <NodeWhen when={when} fields={fields} onChange={handleChange} />}
+      {isOpened && type === 'trigger' && <NodeWhileRunning whileRunning={whileRunning} onChange={handleChange} />}
       {isOpened && nodeDefinition && (
         <NodePreview preview={preview} defaultPreview={defaultPreview} onChange={handleChange} />
       )}

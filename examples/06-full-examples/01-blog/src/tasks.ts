@@ -9,7 +9,7 @@ import {
   topics,
   updatePost,
   view
-} from './posts';
+} from './posts.ts';
 
 import type { ActionTask } from '@plitzi/sdk-server/actions';
 
@@ -56,7 +56,7 @@ export const listPostsTask: ActionTask<{
       page: toNumber(page, 1),
       perPage: toNumber(perPage, 4),
       featured: toBoolean(featured, false),
-      topic: topic ? String(topic) : ''
+      topic
     });
 
     // The chips travel with the answer, and they know which one is chosen — so the page renders a state rather

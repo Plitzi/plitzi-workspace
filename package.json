@@ -11,6 +11,8 @@
     "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
     "e2e:report": "playwright show-report e2e/.artifacts/report",
     "e2e:install": "playwright install chromium",
+    "bench": "yarn workspace @plitzi/bench bench",
+    "bench:report": "yarn workspace @plitzi/bench report",
     "lint": "turbo lint --parallel",
     "lint-style": "turbo lint-style --parallel",
     "lint-style:fix": "turbo lint-style:fix --parallel --concurrency=20",
@@ -35,7 +37,7 @@
     "ci:publish": "yarn workspaces foreach -A --no-private --topological-dev --exclude . exec yarn npm publish --tolerate-republish --access public && changeset tag"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.22",
+    "@plitzi/plitzi-ui": "^1.6.23",
     "@plitzi/sdk-shared": "workspace:*",
     "react-router": "^8.4.0"
   },
@@ -56,6 +58,7 @@
     "apps/*",
     "packages/*",
     "e2e",
+    "bench",
     "examples/shared-space",
     "examples/*/*"
   ]

@@ -18,6 +18,10 @@
       "types": "./dist/actions/index.d.ts",
       "import": "./dist/actions/index.mjs"
     },
+    "./actions/access": {
+      "types": "./dist/actions/access.d.ts",
+      "import": "./dist/actions/access.mjs"
+    },
     "./actions/cron": {
       "types": "./dist/actions/cron.d.ts",
       "import": "./dist/actions/cron.mjs"
@@ -222,6 +226,10 @@
       "types": "./dist/dataSource/utility/styleVariant.d.ts",
       "import": "./dist/dataSource/utility/styleVariant.mjs"
     },
+    "./dataSource/utility/truthiness": {
+      "types": "./dist/dataSource/utility/truthiness.d.ts",
+      "import": "./dist/dataSource/utility/truthiness.mjs"
+    },
     "./dataSource/utility/twigTemplate": {
       "types": "./dist/dataSource/utility/twigTemplate.d.ts",
       "import": "./dist/dataSource/utility/twigTemplate.mjs"
@@ -266,6 +274,10 @@
       "types": "./dist/helpers/index.d.ts",
       "import": "./dist/helpers/index.mjs"
     },
+    "./helpers/cookies": {
+      "types": "./dist/helpers/cookies.d.ts",
+      "import": "./dist/helpers/cookies.mjs"
+    },
     "./helpers/fetchManifest": {
       "types": "./dist/helpers/fetchManifest.d.ts",
       "import": "./dist/helpers/fetchManifest.mjs"
@@ -281,6 +293,14 @@
     "./helpers/index": {
       "types": "./dist/helpers/index.d.ts",
       "import": "./dist/helpers/index.mjs"
+    },
+    "./helpers/isDate": {
+      "types": "./dist/helpers/isDate.d.ts",
+      "import": "./dist/helpers/isDate.mjs"
+    },
+    "./helpers/keys": {
+      "types": "./dist/helpers/keys.d.ts",
+      "import": "./dist/helpers/keys.mjs"
     },
     "./helpers/reducerOrigin": {
       "types": "./dist/helpers/reducerOrigin.d.ts",
@@ -420,6 +440,10 @@
       "types": "./dist/helpers/twigWrapper/processTwig/processTwig.d.ts",
       "import": "./dist/helpers/twigWrapper/processTwig/processTwig.mjs"
     },
+    "./helpers/twigWrapper/processTwig/resolveStepParam": {
+      "types": "./dist/helpers/twigWrapper/processTwig/resolveStepParam.d.ts",
+      "import": "./dist/helpers/twigWrapper/processTwig/resolveStepParam.mjs"
+    },
     "./helpers/twigWrapper/templateRoots": {
       "types": "./dist/helpers/twigWrapper/templateRoots.d.ts",
       "import": "./dist/helpers/twigWrapper/templateRoots.mjs"
@@ -439,6 +463,25 @@
     "./helpers/utils": {
       "types": "./dist/helpers/utils.d.ts",
       "import": "./dist/helpers/utils.mjs"
+    },
+    "./history": {
+      "types": "./dist/history/index.d.ts",
+      "import": "./dist/history/index.mjs"
+    },
+    "./history/describe": {
+      "types": "./dist/history/describe.d.ts",
+      "import": "./dist/history/describe.mjs"
+    },
+    "./history/diff": {
+      "types": "./dist/history/diff.d.ts",
+      "import": "./dist/history/diff.mjs"
+    },
+    "./history/index": {
+      "types": "./dist/history/index.d.ts",
+      "import": "./dist/history/index.mjs"
+    },
+    "./history/types": {
+      "types": "./dist/history/types.d.ts"
     },
     "./hooks": {
       "types": "./dist/hooks/index.d.ts",
@@ -627,6 +670,10 @@
     "./network/graphql/builder/Mutations/Space/SpaceDeployMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceDeployMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceDeployMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/SpaceFixIssuesMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceFixIssuesMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceFixIssuesMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/SpaceMoveElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceMoveElementMutation.d.ts",
@@ -852,10 +899,6 @@
       "types": "./dist/network/graphql/builder/Queries/InitQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/InitQuery.mjs"
     },
-    "./network/graphql/builder/Queries/PluginsQuery": {
-      "types": "./dist/network/graphql/builder/Queries/PluginsQuery.d.ts",
-      "import": "./dist/network/graphql/builder/Queries/PluginsQuery.mjs"
-    },
     "./network/graphql/builder/Queries/Segment/SegmentQuery": {
       "types": "./dist/network/graphql/builder/Queries/Segment/SegmentQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Segment/SegmentQuery.mjs"
@@ -880,6 +923,10 @@
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceCdnsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceCdnsQuery.mjs"
     },
+    "./network/graphql/builder/Queries/Space/SpaceChangesQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceChangesQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceChangesQuery.mjs"
+    },
     "./network/graphql/builder/Queries/Space/SpaceCheckActionQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceCheckActionQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceCheckActionQuery.mjs"
@@ -895,6 +942,10 @@
     "./network/graphql/builder/Queries/Space/SpaceDeploymentsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceDeploymentsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceDeploymentsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceIssuesQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceIssuesQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceIssuesQuery.mjs"
     },
     "./network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceLatestRevisionQuery.d.ts",
@@ -992,6 +1043,26 @@
       "types": "./dist/queries/useQuery.d.ts",
       "import": "./dist/queries/useQuery.mjs"
     },
+    "./realtime": {
+      "types": "./dist/realtime/index.d.ts",
+      "import": "./dist/realtime/index.mjs"
+    },
+    "./realtime/client": {
+      "types": "./dist/realtime/client.d.ts",
+      "import": "./dist/realtime/client.mjs"
+    },
+    "./realtime/index": {
+      "types": "./dist/realtime/index.d.ts",
+      "import": "./dist/realtime/index.mjs"
+    },
+    "./realtime/presence": {
+      "types": "./dist/realtime/presence.d.ts",
+      "import": "./dist/realtime/presence.mjs"
+    },
+    "./realtime/topics": {
+      "types": "./dist/realtime/topics.d.ts",
+      "import": "./dist/realtime/topics.mjs"
+    },
     "./schema": {
       "types": "./dist/schema/index.d.ts",
       "import": "./dist/schema/index.mjs"
@@ -1036,6 +1107,10 @@
       "types": "./dist/server/actions/useActionsSync.d.ts",
       "import": "./dist/server/actions/useActionsSync.mjs"
     },
+    "./server/actions/useRealtimeSync": {
+      "types": "./dist/server/actions/useRealtimeSync.d.ts",
+      "import": "./dist/server/actions/useRealtimeSync.mjs"
+    },
     "./server/index": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.mjs"
@@ -1059,6 +1134,10 @@
     "./state/index": {
       "types": "./dist/state/index.d.ts",
       "import": "./dist/state/index.mjs"
+    },
+    "./state/paintedState": {
+      "types": "./dist/state/paintedState.d.ts",
+      "import": "./dist/state/paintedState.mjs"
     },
     "./state/runtimeStatePersist": {
       "types": "./dist/state/runtimeStatePersist.d.ts",
@@ -1148,6 +1227,10 @@
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
     },
+    "./style/runtimeStyle": {
+      "types": "./dist/style/runtimeStyle.d.ts",
+      "import": "./dist/style/runtimeStyle.mjs"
+    },
     "./style/styleConstants": {
       "types": "./dist/style/styleConstants.d.ts",
       "import": "./dist/style/styleConstants.mjs"
@@ -1236,11 +1319,15 @@
     "./types/PluginTypes": {
       "types": "./dist/types/PluginTypes.d.ts"
     },
+    "./types/RealtimeTypes": {
+      "types": "./dist/types/RealtimeTypes.d.ts"
+    },
     "./types/ResourceTypes": {
       "types": "./dist/types/ResourceTypes.d.ts"
     },
     "./types/SchemaTypes": {
-      "types": "./dist/types/SchemaTypes.d.ts"
+      "types": "./dist/types/SchemaTypes.d.ts",
+      "import": "./dist/types/SchemaTypes.mjs"
     },
     "./types/SdkTypes": {
       "types": "./dist/types/SdkTypes.d.ts"
@@ -1299,9 +1386,9 @@
     "build:prod": "vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "@plitzi/nexus": "^1.2.2",
-    "@plitzi/plitzi-ui": "^1.6.22",
+    "@modelcontextprotocol/sdk": "^1.30.1",
+    "@plitzi/nexus": "^1.3.1",
+    "@plitzi/plitzi-ui": "^1.6.23",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "graphql-tag": "^2.12.7",
@@ -1355,7 +1442,7 @@
     "terser": "^5.51.2",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.1",
-    "vite": "^8.3.0",
+    "vite": "^8.3.1",
     "vite-plugin-dts": "^5.1.1",
     "vite-plugin-react": "^4.0.1",
     "vitest": "^5.0.1",

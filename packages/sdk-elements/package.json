@@ -134,6 +134,10 @@
       "types": "./dist/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/Element/hooks/useInternalItems.mjs"
     },
+    "./Element/hooks/useKeyTriggers": {
+      "types": "./dist/Element/hooks/useKeyTriggers.d.ts",
+      "import": "./dist/Element/hooks/useKeyTriggers.mjs"
+    },
     "./Element/hooks/useLayoutChain": {
       "types": "./dist/Element/hooks/useLayoutChain.d.ts",
       "import": "./dist/Element/hooks/useLayoutChain.mjs"
@@ -774,6 +778,26 @@
       "types": "./dist/elements/provider/ApiContainer/index.d.ts",
       "import": "./dist/elements/provider/ApiContainer/index.mjs"
     },
+    "./elements/provider/Channel": {
+      "types": "./dist/elements/provider/Channel/index.d.ts",
+      "import": "./dist/elements/provider/Channel/index.mjs"
+    },
+    "./elements/provider/Channel/Channel": {
+      "types": "./dist/elements/provider/Channel/Channel.d.ts",
+      "import": "./dist/elements/provider/Channel/Channel.mjs"
+    },
+    "./elements/provider/Channel/Settings": {
+      "types": "./dist/elements/provider/Channel/Settings.d.ts",
+      "import": "./dist/elements/provider/Channel/Settings.mjs"
+    },
+    "./elements/provider/Channel/declaration": {
+      "types": "./dist/elements/provider/Channel/declaration.d.ts",
+      "import": "./dist/elements/provider/Channel/declaration.mjs"
+    },
+    "./elements/provider/Channel/index": {
+      "types": "./dist/elements/provider/Channel/index.d.ts",
+      "import": "./dist/elements/provider/Channel/index.mjs"
+    },
     "./elements/settings": {
       "types": "./dist/elements/settings.d.ts",
       "import": "./dist/elements/settings.mjs"
@@ -1013,6 +1037,10 @@
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
+    },
+    "./realtime/useChannel": {
+      "types": "./dist/realtime/useChannel.d.ts",
+      "import": "./dist/realtime/useChannel.mjs"
     }
   },
   "scripts": {
@@ -1028,8 +1056,8 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/nexus": "^1.2.2",
-    "@plitzi/plitzi-ui": "^1.6.22",
+    "@plitzi/nexus": "^1.3.1",
+    "@plitzi/plitzi-ui": "^1.6.23",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
@@ -1048,7 +1076,7 @@
     "eslint": "^9.39.5",
     "react": "^19.3.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.0",
+    "vite": "^8.3.1",
     "vitest": "^5.0.1"
   }
 }

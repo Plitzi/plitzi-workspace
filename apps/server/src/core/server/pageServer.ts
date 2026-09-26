@@ -1,9 +1,14 @@
 import { createHttpServer } from './baseServer';
+import { fleetStore } from './fleet/link';
+import { runsFleetJobs } from './fleet/role';
 import { buildCacheManager, createServerCaches, DEFAULT_TTL_MS, destroyServerCaches } from '../../helpers/cache';
 import normalizePlugins, { normalizePluginSource } from '../../helpers/normalizePlugins';
+import { reportReactBuild } from '../../helpers/reportReactBuild';
+import { configureServerLog, defaultLogLevel, isLogged, logLevelOf } from '../../helpers/serverLog';
 import { actionsModuleFor } from '../../modules/actions/moduleFor';
+import { realtimeModuleFor } from '../../modules/realtime';
 import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
-import { createMemoryDraftStore } from '../../modules/ssr/preview';
+import { createMemoryDraftStore, DRAFT_STORE_METHODS } from '../../modules/ssr/preview';
 import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
 import { makeHandler } from '../http/dispatcher';
@@ -12,7 +17,7 @@ import { buildPagePipeline } from '../services/registry';
 import type { BuildContext } from '../http/dispatcher';
 import type { PipelineExtensions, SSRContext } from '../http/types';
 import type { ResolvedServices } from '../services/resolve';
-import type { CacheManager, PluginRegistry, SSRPageServerConfig, SSRServer } from '@plitzi/sdk-shared';
+import type { CacheManager, DraftStore, PluginRegistry, SSRPageServerConfig, SSRServer } from '@plitzi/sdk-shared';
 
 /** The page-serving machinery: html/rsc caches, the render template and the plugin manager, driving the page
  *  pipeline. Which services it mounts is the CALLER's decision — {@link createServer} passes whatever the config
@@ -23,10 +28,26 @@ export const createPageServer = (
   extensions?: PipelineExtensions
 ): SSRServer => {
   const { cacheTtlMs: htmlTtlMs = DEFAULT_TTL_MS.html } = config;
+  // One threshold for everything this server says — its requests, its runs, and the server's own messages — decided
+  // here once, so no emitter needs to know it: the logger it calls already drops what is below it.
+  const logLevel = config.logLevel ?? defaultLogLevel(config.devMode);
+  const { logger } = config;
+  config.logLevel = logLevel;
+  if (logger) {
+    config.logger = event => {
+      if (isLogged(logLevel, logLevelOf(event))) {
+        logger(event);
+      }
+    };
+  }
+
+  configureServerLog({ level: logLevel, logger });
+  reportReactBuild(config.devMode);
   // Draft-preview tokens need a store shared between the /preview writer and the __pt render reader; default to
-  // an in-process one when the consumer injects none (single replica). Set on config so both paths see it.
+  // an in-process one when the consumer injects none — the primary's, when workers serve, since the draft is written
+  // through one of them and read back by whichever serves the render. Set on config so both paths see it.
   if (config.preview?.enabled && !config.draftStore) {
-    config.draftStore = createMemoryDraftStore();
+    config.draftStore = fleetStore<DraftStore>('ssr.drafts', DRAFT_STORE_METHODS) ?? createMemoryDraftStore();
   }
 
   const caches = createServerCaches(htmlTtlMs, config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc);
@@ -56,6 +77,7 @@ export const createPageServer = (
   // Resolved here rather than on first use so a malformed task set fails at BOOT, where someone is watching,
   // instead of on the first visitor's click. Shared with the RSC adapter, which needs the same one.
   const actions = actionsModuleFor(config);
+  const realtime = realtimeModuleFor(config);
 
   const stages = buildPagePipeline(services, extensions);
   const makeHandlerForPort = (port: number) => {
@@ -69,10 +91,15 @@ export const createPageServer = (
       renderFn,
       caches,
       pluginManager,
-      actions
+      actions,
+      realtime
     });
 
-    return makeHandler('SSR', buildContext, stages, config.compression);
+    return makeHandler('SSR', buildContext, stages, {
+      compression: config.compression,
+      // The one address that switches protocols: a page's realtime connection, when it asks for a WebSocket.
+      ...(realtime ? { upgrades: (path: string) => path === realtime.path } : {})
+    });
   };
 
   return createHttpServer(config, makeHandlerForPort, {
@@ -80,8 +107,17 @@ export const createPageServer = (
     cache,
     plugins,
     // Only once the transport is bound: a server that was built and never listened on must not be claiming jobs
-    // another replica could be running.
-    onListen: () => actions?.jobs?.start(),
+    // another replica could be running. With workers, only the one that carries the fleet's jobs starts them.
+    onListen: () => {
+      if (runsFleetJobs()) {
+        actions?.jobs?.start();
+      }
+    },
+    beforeFork: () => pluginManager.prepareAll(),
+    forgetPlugins: (name, version) => {
+      pluginManager.forget(name, version);
+      invalidatePluginComponentCache();
+    },
     onDestroy: async () => {
       // Awaited first, and before the sockets go: the jobs running here are finished rather than abandoned, so a
       // rolling deploy costs no retries. Nothing else is waited for — what is still pending stays in the shared

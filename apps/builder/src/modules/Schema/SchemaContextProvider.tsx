@@ -12,6 +12,7 @@ import SchemaReducer, { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
+import { schemaFromWire } from '@plitzi/sdk-shared/network/spaceEvents';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
@@ -82,7 +83,7 @@ const SchemaContextProvider = ({
     (newSchema: SchemaRaw, fromSubscriptions = false) =>
       dispatchSchema({
         type: SchemaActions.SCHEMA_UPDATE,
-        schema: { ...newSchema, flat: newSchema.flat.reduce((obj, item) => ({ ...obj, [item.id]: item }), {}) },
+        schema: schemaFromWire(newSchema),
         fromSubscriptions
       }),
     [dispatchSchema]

@@ -5,10 +5,11 @@
   "description": "A Plitzi MCP server an agent can read and edit a space through.",
   "type": "module",
   "scripts": {
-    "start": "node --import tsx src/main.ts",
-    "start:dev": "tsx watch --exclude \".sdk-plugins/**\" src/main.ts",
+    "start": "node src/main.ts",
+    "start:dev": "node --watch-path=./src src/main.ts",
     "inspector": "yarn dlx @modelcontextprotocol/inspector@latest",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "yarn run -T eslint ."
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
@@ -19,7 +20,9 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

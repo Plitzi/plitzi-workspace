@@ -1,4 +1,3 @@
-/* eslint-disable quotes -- messages quote their own strings, and read best in the other quotes */
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import * as authoring from '../index';

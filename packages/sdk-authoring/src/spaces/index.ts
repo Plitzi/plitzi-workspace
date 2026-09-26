@@ -47,19 +47,25 @@ export interface BlankSpaceSourceOptions {
   /** The name the copy carries. `permanentUrl` follows it, slugged. */
   name?: string;
   /**
-   * Add a `custom` element hosting a plugin the receiver supplies.
+   * Add a `custom` element hosting a plugin the receiver supplies — or several, one after another, given a list.
    *
    * Off by default, and it has to be: the platform authors a new space from this same declaration and hosts none
    * of anybody's plugins, so a `custom` element in it would render "Custom Component … Not Found" on every space
    * anyone ever signed up for. It is on for `plitzi create`, where the project being scaffolded carries the
    * component and registers it — which is the one fact about Plitzi a page of built-in elements cannot show.
    */
-  plugin?: PluginHostOptions;
+  plugin?: PluginHostOptions | readonly PluginHostOptions[];
 }
 
 export interface PluginHostOptions {
   renderType: string;
   id: string;
+  /**
+   * How the space hosts it. `custom` (the default) is a `custom` element naming the component by `renderType` — a
+   * component the page registers itself, as a project's own are. `element` is an element OF the plugin's type, the
+   * way the builder adds a plugin somebody dropped: the one shape a plugin loaded from its manifest renders as.
+   */
+  as?: 'custom' | 'element';
   /** Written on the `custom` element as attributes, which the component receives as props of the same names. */
   attributes: Record<string, unknown>;
   /**
@@ -70,9 +76,23 @@ export interface PluginHostOptions {
 }
 
 /** A value as TypeScript source, in this codebase's quotes: what a JSON dump would write, with single quotes. */
+/**
+ * A string literal, quoted the way Prettier quotes one: single quotes, unless the text holds more of them than of
+ * double quotes. The copy is somebody's source file, and one their formatter rewrites on the first save is noise in
+ * their first diff.
+ */
+const stringLiteral = (value: string): string => {
+  // \x22 and \x27 are the two quotes: spelled so, neither needs a quote of the other kind around it.
+  const singles = value.split('\x27').length - 1;
+  const doubles = value.split('\x22').length - 1;
+  const quote = singles > doubles ? '\x22' : '\x27';
+
+  return `${quote}${value.replace(/\\/g, '\\\\').replaceAll(quote, `\\${quote}`)}${quote}`;
+};
+
 const toSource = (value: unknown): string => {
   if (typeof value === 'string') {
-    return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+    return stringLiteral(value);
   }
 
   if (Array.isArray(value)) {
@@ -90,13 +110,40 @@ const toSource = (value: unknown): string => {
 
 export const blankSpaceSource = (options: BlankSpaceSourceOptions = {}): string => {
   const { name, plugin } = options;
-  const portable = toPortableSource(plugin ? withPluginHost(specSource, plugin) : specSource);
+  const plugins = plugin === undefined ? [] : Array.isArray(plugin) ? plugin : [plugin];
+  const portable = toPortableSource(plugins.length > 0 ? withPluginHost(specSource, plugins) : specSource);
 
   return name === undefined ? portable : renameSpace(portable, name);
 };
 
 /** The one line in the declaration a `custom` element is hung off — the hero, so it lands under its buttons. */
 const PLUGIN_ANCHOR = 'children: [heroEyebrow, heroTitle, heroLede, heroActions]';
+
+/** One plugin's host — a `custom(…)` or an `element(…)` call, inside its provider when it has one — at `pad`. */
+const hostSource = (plugin: PluginHostOptions, pad: string): string => {
+  const asElement = plugin.as === 'element';
+  const host = (inner: string): string =>
+    [
+      asElement ? `element('${plugin.renderType}', {` : 'custom({',
+      `  id: '${plugin.id}',`,
+      ...(asElement ? [] : [`  renderType: '${plugin.renderType}',`]),
+      ...Object.entries(plugin.attributes).map(([key, value]) => `  ${key}: ${toSource(value)},`),
+      ...(plugin.data ? [`  bind: ${toSource(plugin.data.bind)},`] : []),
+      "  css: { desktop: { 'margin-top': '24px' } }",
+      '})'
+    ].join(`\n${inner}`);
+
+  return plugin.data
+    ? [
+        'apiContainer({',
+        `  id: '${plugin.data.id}',`,
+        `  query: '${plugin.data.query}',`,
+        '  cache: true,',
+        `  children: [${host(`${pad}  `)}]`,
+        '})'
+      ].join(`\n${pad}`)
+    : host(pad);
+};
 
 /**
  * The copy, with a slot for a component the receiver writes.
@@ -109,7 +156,7 @@ const PLUGIN_ANCHOR = 'children: [heroEyebrow, heroTitle, heroLede, heroActions]
  * The anchor is a whole authored line, and a miss throws. It is the same bargain as the rename: a source
  * transform that silently does nothing hands back a plausible file with the interesting half missing.
  */
-const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOptions['plugin']>): string => {
+const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): string => {
   if (!source.includes(PLUGIN_ANCHOR)) {
     throw new Error(
       "blankSpaceSource: cannot host a plugin — the hero's children are not where they were. " +
@@ -117,51 +164,42 @@ const withPluginHost = (source: string, plugin: NonNullable<BlankSpaceSourceOpti
     );
   }
 
-  /** The `custom(…)` call, its lines indented by `pad`. */
-  const host = (pad: string): string =>
-    [
-      'custom({',
-      `  id: '${plugin.id}',`,
-      `  renderType: '${plugin.renderType}',`,
-      ...Object.entries(plugin.attributes).map(([key, value]) => `  ${key}: ${toSource(value)},`),
-      ...(plugin.data ? [`  bind: ${toSource(plugin.data.bind)},`] : []),
-      "  css: { desktop: { 'margin-top': '24px' } }",
-      '})'
-    ].join(`\n${pad}`);
-  const hosted = plugin.data
-    ? [
-        'apiContainer({',
-        `  id: '${plugin.data.id}',`,
-        `  query: '${plugin.data.query}',`,
-        '  cache: true,',
-        `  children: [${host('              ')}]`,
-        '})'
-      ].join('\n            ')
-    : host('            ');
-
+  const asElement = plugins.every(plugin => plugin.as === 'element');
+  const fed = plugins.flatMap(plugin => (plugin.data ? [plugin.data.query] : []));
   const element = `children: [
             heroEyebrow,
             heroTitle,
             heroLede,
             heroActions,
             /**
-             * A component of YOUR OWN, rendered by the space.
-             *
+             * ${plugins.length === 1 ? 'A component' : 'Components'} of YOUR OWN, rendered by the space.
+             *${
+               asElement
+                 ? `
+             * An element of a plugin's own type — what the builder adds when somebody drops the plugin on a page, and
+             * how a space that loads it from its manifest hosts it. Every attribute arrives in the component as a prop
+             * of the same name — written here, or bound to a source.`
+                 : `
              * \`renderType\` is the name it is registered under in \`src/main.ts\`; every other attribute arrives in
              * the component as a prop of the same name — written here, or bound to a source. See
-             * \`src/plugins/README.md\`.${
-               plugin.data
+             * \`src/plugins/README.md\`.`
+             }${
+               fed.length > 0
                  ? `
              *
-             * Its numbers come from \`public${plugin.data.query}\`, read by the provider around it like any API: data a
+             * Its numbers come from \`public${fed.join('`, `public')}\`, read by the provider around it like any API: data a
              * project with no backend serves itself, rather than figures written into the page.`
                  : ''
              }
              */
-            ${hosted}
+            ${plugins.map(plugin => hostSource(plugin, '            ')).join(',\n            ')}
           ]`;
 
-  const imports = plugin.data ? 'apiContainer, custom' : 'custom';
+  const imports = [
+    ...(fed.length > 0 ? ['apiContainer'] : []),
+    ...(plugins.some(plugin => plugin.as !== 'element') ? ['custom'] : []),
+    ...(plugins.some(plugin => plugin.as === 'element') ? ['element'] : [])
+  ].join(', ');
 
   return `import { ${imports} } from '../../elements';\n${source.replace(PLUGIN_ANCHOR, element)}`;
 };
@@ -176,7 +214,7 @@ const replaceLiteral = (source: string, field: string, from: string, to: string)
     );
   }
 
-  return source.replace(declaration, `${field}: '${to}'`);
+  return source.replace(declaration, `${field}: ${stringLiteral(to)}`);
 };
 
 /**
@@ -187,7 +225,7 @@ const replaceLiteral = (source: string, field: string, from: string, to: string)
  * `My Site` has to become `my-site` here — before the documents carry it, not after.
  */
 const renameSpace = (source: string, name: string): string => {
-  const renamed = replaceLiteral(source, 'name', blankSpaceSpec.name, name.replace(/'/g, "\\'"));
+  const renamed = replaceLiteral(source, 'name', blankSpaceSpec.name, name);
 
   return replaceLiteral(renamed, 'permanentUrl', blankSpaceSpec.permanentUrl, slugify(name, 'space'));
 };

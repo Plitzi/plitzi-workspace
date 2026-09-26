@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { offlineData } from './space';
+import { offlineData } from './space.ts';
 
 /**
  * Writes the space out as JSON.

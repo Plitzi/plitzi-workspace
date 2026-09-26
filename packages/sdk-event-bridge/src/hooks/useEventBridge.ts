@@ -6,10 +6,18 @@ import type { EventBridgeCallback, EventBridgeParams } from '../EventBridge';
 import type EventBridge from '../EventBridge';
 import type { EventBridgeEvent, EventBridgeModule } from '@plitzi/sdk-shared';
 
+/**
+ * The defaults, made ONCE. They are the effect's dependencies: written as `= {}` in the signature they were a new
+ * object on every render, so every caller that left them out — every element on the page, through `withElement` —
+ * unsubscribed and subscribed again on every render it went through, whatever had changed.
+ */
+const NO_CALLBACKS: Partial<Record<EventBridgeEvent, EventBridgeCallback>> = Object.freeze({});
+const NO_PARAMS: EventBridgeParams = Object.freeze({});
+
 const useEventBridge = (
   module: EventBridgeModule,
-  callbacks: Partial<Record<EventBridgeEvent, EventBridgeCallback>> = {},
-  params: EventBridgeParams = {},
+  callbacks: Partial<Record<EventBridgeEvent, EventBridgeCallback>> = NO_CALLBACKS,
+  params: EventBridgeParams = NO_PARAMS,
   context = EventBridgeContext,
   disabled: boolean = false
 ) => {

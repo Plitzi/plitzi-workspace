@@ -106,8 +106,11 @@ server.listen(3001, '127.0.0.1');
 
 ```bash
 yarn add @plitzi/sdk-server react react-dom
-yarn tsx server.ts     # http://127.0.0.1:3001/
+node server.ts     # http://127.0.0.1:3001/ — Node 22.18+ runs TypeScript itself
 ```
+
+No transpiler in front of it: Node strips the types. A loader such as `tsx` costs a page server more memory than the
+server itself — on a 128 MB host, the difference between starting and being killed on boot.
 
 Both pages render server-side, with the CSS the space declared. `authorSpace` refuses to hand back a space that
 would not render — a CSS property the style editor could not read back, a class nothing declares, a binding
@@ -158,7 +161,7 @@ serve it — worth running over anything that arrives as a file.
 |---|---|---|---|
 | `httpVersion` | `1 \| 2 \| 3` | `2` with `tls`, else `1` | HTTP protocol version. Falls back to the nearest available lower version. |
 | `tls` | `{ key, cert, minVersion? }` | — | TLS key and certificate. Required for versions 2 and 3; optional for version 1. |
-| `devMode` | `boolean` | `NODE_ENV !== 'production'` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). |
+| `devMode` | `boolean` | `false` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). Off, the process must run with `NODE_ENV=production` or React renders with its development build; the server says so once, at `error`. |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `loginPath` | `string \| false` | `'/auth/login'` | Path for the built-in login endpoint. Set to `false` to disable it entirely. |
@@ -174,10 +177,14 @@ serve it — worth running over anything that arrives as a file.
 | `streaming` | `boolean` | `false` | Stream HTML to the browser incrementally to reduce TTFB. See [Streaming](#streaming). |
 | `middlewares` | `SSRMiddleware[]` | — | Array of custom middleware functions executed before the SSR renderer on every request (see [Custom middlewares](#custom-middlewares)). |
 | `rsc` | `SSRRscConfig` | — | React Server Components endpoint configuration (see [RSC](#react-server-components-rsc)). |
+| `realtime` | `{ pubsub?, path?, transport?, allowedOrigins? } \| false` | in memory, at `/_realtime`, `sse` | Realtime channels the space declares. `transport` is what pages connect with: `sse` (a stream, publishes over `POST`) or `websocket` (one socket both ways, HTTP/1.1 only; pages fall back to the stream where a socket cannot open). `allowedOrigins` lists the other origins whose pages may open a socket. `pubsub` is how messages reach other processes — `createMemoryPubSub()` (the default, across workers) or `createRedisPubSub({ publisher, subscriber })` for several replicas. `false` serves no endpoint. See [`docs/en/realtime.md`](../../docs/en/realtime.md). |
 | `compression` | `SSRCompressionConfig \| false` | Brotli, then gzip | Response compression (see [Compression](#compression)). `false` never compresses. |
 | `health` | `SSRHealthConfig` | identity payload | The `/health` endpoint. `check` adds live state per probe and turns it into a readiness probe (see [Health](#health)). |
 | `adapters` | `SSRAdapters` | — | Required. Adapter callbacks for data fetching. |
+| `logLevel` | `'silent' \| 'error' \| 'warn' \| 'info' \| 'debug'` | `info` with `devMode`, else `error` | How much the server says, for the whole process (see [Logging](#logging)). |
+| `logger` | `ServerLogger` | the console | Where it says it: one structured `ServerLogEvent` stream. `consoleLogger` prints each as one line. |
 | `onListenError` | `(error, { port, host, label }) => void` | exits non-zero | What to do when the server cannot take its port. By default it prints what went wrong and what to do about it, then exits — a process whose server never bound is not running. Supply this to keep it alive and decide yourself. |
+| `workers` | `boolean \| number \| 'auto'` | `'auto'` under `NODE_ENV=production`, else `false` | How many processes serve the port: one per core, a number (lowered to the cores there are), or one. `SDK_SERVER_WORKERS` sets it when the config does not. See [Using every core](#using-every-core). |
 
 ### HTTP version behaviour
 
@@ -409,7 +416,8 @@ createServer({ compression: false, adapters });
 |---|---|---|---|
 | `encodings` | `('br' \| 'gzip')[]` | `['br', 'gzip']` | What this server offers, most preferred first; the first one the client accepts wins. `[]` disables compression. |
 | `threshold` | `number` | `1024` | Responses smaller than this many bytes go out uncompressed. |
-| `brotliQuality` | `number` | `4` | Brotli quality, 0–11. Past 4 the CPU cost outgrows the bytes saved on HTML. |
+| `brotliQuality` | `number` | `2` | Brotli quality, 0–11, for a body compressed on every request (a page rendered for that request alone). Measured on a quarter core, 4 cost a tenth of the pages a second to save half a kilobyte each. |
+| `keptBrotliQuality` | `number` | `6` | Brotli quality for a body compressed once and kept: a cached page, a static file such as the SDK bundle. Paid once; the bundle comes out 10% smaller than at 4, for the same memory. 9 needs ~40 MB more to compress the bundle, which a 128 MB server does not have. |
 | `gzipLevel` | `number` | `6` | Gzip level, 0–9. |
 
 A response that sets `Cache-Control: no-transform` is never compressed, whatever the settings say — that header is
@@ -1134,6 +1142,54 @@ A stage receives the `SSRContext` — the request, the config, and the render si
 **is** the decision to mount them: there is no config flag mirroring it, and a server that never passes them
 never loads them.
 
+## Using every core
+
+Node runs JavaScript on one thread, so one process renders on one core however many the machine has. With
+`workers`, the server runs one process per core and the connections are spread between them: more requests a second,
+and less time waiting behind another page's render.
+
+```ts
+createServer({ adapters, workers: 'auto' }); // one per core — the default under NODE_ENV=production
+createServer({ adapters, workers: 4 });      // at most four, and never more than the cores there are
+createServer({ adapters, workers: false });  // one process, exactly as before
+```
+
+`SDK_SERVER_WORKERS=auto|false|<n>` sets it from the environment. The cores are the ones the process may use: a
+container's CPU quota counts, so a pod limited to one CPU runs one process whatever the node has.
+
+**One process is the server as it always was.** Workers off, one asked for, or one core to run on: nothing is forked,
+nothing is wrapped, and every in-memory default is this process's own.
+
+**Several are still one server.** The process you started serves nothing itself; it starts the workers, restarts them
+and keeps what they must share:
+
+- The in-memory defaults — an action's `kv`, the job queue, draft previews, the sign-in rate limit — are kept once, by
+  that process, and every worker reaches the same copy. A counter counts every request once; a draft written through
+  one worker is read through another. A store you supply (Redis, a table) is used as it is.
+- The scheduler and the job consumers run in one worker only: a schedule fires once, and `jobs.workers` is the whole
+  server's concurrency.
+- `server.cache.invalidate()`, `server.plugins.register()` and `server.plugins.invalidate()` reach every worker,
+  whichever process calls them — a publish webhook lands on one of them.
+- Plugins are built once, before the workers start.
+
+Per worker: the rendered-page cache (each renders a page once), the plugin components, and the action caps
+(`action.concurrency`). A plugin registered with a `component` stays in the process that registered it — register
+those where the server is created.
+
+**When a worker dies** — a crash, an uncaught error, the OOM killer — it is replaced, and its replacement takes over the
+jobs it carried (a claimed job goes back to the queue when its lease lapses). Past one death per worker a minute the
+replacements wait, doubling from half a second up to thirty, so a request that crashes every worker it reaches cannot
+turn the server into a fork loop. A replacement that fails to start is retried the same way while the rest keep
+serving. Two exceptions: a worker that dies before any has served stops the server with a non-zero exit (a port in use
+would fail the same way every time), and a server that is killed outright takes its workers with it.
+
+`closeOnSignals(server)` stops them all on SIGTERM, each finishing what it is serving. The workers of one machine are
+one replica; several machines are several replicas, and what must hold across those still needs a shared store — see
+below.
+
+A process that starts servers of its own beside this one (an Express app on another port) should say `workers:
+false`: each worker runs the whole entry file again.
+
 ## Scheduled jobs across replicas
 
 Server actions with a `schedule` trigger, and jobs queued for later, run with no configuration — over an in-process
@@ -1291,12 +1347,41 @@ How it works:
 
 **Compression**: streaming responses use chunked transfer encoding and skip Brotli/gzip compression. A `Content-Length` header cannot be set before the body is complete, so compression is intentionally bypassed for streaming responses.
 
+## Logging
+
+One stream and one threshold, the usual hierarchy: `silent` < `error` < `warn` < `info` < `debug`. In production the
+server says only what went wrong — a failed request, a failed run, a server that could not start — and everything
+below it is one `logLevel` away:
+
+| Level | What it adds |
+|---|---|
+| `error` | Requests answered 5xx or that threw, runs that did not complete, anything the server could not do. |
+| `warn` | Refused actions (a bad webhook signature, a missing session), plugin manifests it could not fetch, HTTP/3 falling back. |
+| `info` | Every request line, every run, plugin builds, `listening on`. |
+| `debug` | The per-render phase breakdown of [Dev metrics](#dev-metrics). |
+
+```ts
+createServer({ adapters, logLevel: process.env.LOG_LEVEL === 'info' ? 'info' : 'error', logger: consoleLogger });
+```
+
+A request below the threshold is not even turned into an event, so a quiet server pays nothing per request. Everything goes to the `logger` —
+requests, MCP tool calls, runs, and the server's own messages as `kind: 'message'` events — and `logLevelOf(event)`
+tells a sink how severe each one is. The run and refusal loggers a deployment wires itself (`createRunLogger`,
+`createRejectLogger`) are held to the same threshold, and so is `serverLog`, the server's own voice, which a
+deployment's adapters can speak through too:
+
+```ts
+import { serverLog } from '@plitzi/sdk-server';
+
+serverLog.warn('Adapters', 'space 12 has no deployment, serving main');
+```
+
 ## Dev metrics
 
 When `devMode: true`, per-phase timing is instrumented on every render and reported in two ways:
 
 - A `Server-Timing` header is set on the response, visible in the browser's DevTools under **Network → Timing**.
-- A one-line summary is logged to stdout:
+- A one-line summary is logged at `debug` (see [Logging](#logging)):
 
 ```
 [SSR] GET / — schema=1ms rsc=0ms extPlugins=0ms plugins=0ms template=2ms react=16ms | total=19ms

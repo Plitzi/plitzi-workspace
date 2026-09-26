@@ -1,11 +1,12 @@
 import { elementIdConflict, isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
 import { fail, findRootByRef, indexAddElement, resolveRef } from '../../../helpers';
 
-import type { ElementInput, InitialStateInput } from './shared';
+import type { ElementInput, InitialStateInput, Position } from './shared';
 import type { OpResult, Space } from '../../../helpers';
 import type { Env } from '../../../types';
-import type { Element, ElementDefinition } from '@plitzi/sdk-shared';
+import type { DropPosition, Element, ElementDefinition } from '@plitzi/sdk-shared';
 
 // Shared mutation utilities for the element-schema handlers: stale-resource URI builders and the low-level tree
 // operations (create/place/detach) the upsert/move handlers reuse.
@@ -41,25 +42,8 @@ export const guardNewRef = (space: Space, ref: string, field: string): OpResult 
 // keep importing them from `../write` unchanged.
 export { folderUri, foldersUri, layoutsUri, pageUri, pagesUri, schemaVarsUri, settingsUri } from '../../../helpers';
 
-// Detach an element from its parent's item list. The child names its parent (definition.parentId), so this splices
-// the one owning list directly — O(items) — instead of scanning every element in the space (O(flat)), which turned
-// a batch of deletes/moves into O(batch × flat). A well-formed schema lists a child under exactly its parentId;
-// any stray reference elsewhere is already a schema inconsistency the post-apply validator rejects.
-export const removeFromParent = (space: Space, child: Element): void => {
-  const parent = child.definition.parentId ? space.schema.flat[child.definition.parentId] : undefined;
-  if (parent?.definition.items) {
-    parent.definition.items = parent.definition.items.filter(id => id !== child.id);
-  }
-};
-
-export const placeChild = (parent: Element, childId: string, index?: number): void => {
-  const items = parent.definition.items ?? (parent.definition.items = []);
-  if (index === undefined || index < 0 || index >= items.length) {
-    items.push(childId);
-  } else {
-    items.splice(index, 0, childId);
-  }
-};
+/** Where an op's `position` puts an element, in the vocabulary of the tree operations every writer shares. */
+export const DROP_POSITION: Record<Position, DropPosition> = { inside: 'inside', before: 'top', after: 'bottom' };
 
 // Write the two initial-state fields agents control (which variant each class uses + initial visibility) onto an
 // element, always preserving any other initialState keys (styleSelectors overrides, plugin-specific). `merge`
@@ -89,13 +73,18 @@ export const writeInitialState = (el: Element, input: InitialStateInput, merge: 
   el.definition.initialState = next;
 };
 
+/**
+ * Creates an element from its input, and its children inside it, through `FlatMap` — the same insertion the builder,
+ * the server and `authorSpace` make, so a tree the MCP writes is held to exactly their rules. False when the anchor
+ * cannot take it: before/after an element with no parent, or inside one that holds no items.
+ */
 export const createElement = (
   space: Space,
   page: Element,
   input: ElementInput,
-  parent: Element,
-  index: number | undefined
-): void => {
+  anchorId: string,
+  drop: DropPosition
+): boolean => {
   const { subType, ...props } = { subType: input.subType, ...input.props };
   const styleSelectors: Record<string, string> = { base: (input.style?.base ?? []).join(' ') };
   for (const [slot, classes] of Object.entries(input.style?.slots ?? {})) {
@@ -105,13 +94,11 @@ export const createElement = (
   // The name the agent chose IS the element's id: the key it addresses the element by here, the `flat` key, AND
   // the key the runtime wires with (a provider registers its source as `<type>_<id>`), so a binding written
   // against this name resolves to this element at runtime with no translation at all.
-  const id = input.ref;
   const el: Element = {
-    id,
+    id: input.ref,
     attributes: subType === undefined ? props : { subType, ...props },
     definition: {
       rootId: page.id,
-      parentId: parent.id,
       label: input.label ?? input.ref,
       type: input.type,
       items: [],
@@ -121,19 +108,18 @@ export const createElement = (
       ...(input.runtime === undefined ? {} : { runtime: input.runtime })
     }
   };
-  space.schema.flat[id] = el;
-  placeChild(parent, id, index);
+  if (!new FlatMap({ flat: space.schema.flat }).addElement(el, anchorId, drop)) {
+    return false;
+  }
+
   // Keep the page index in step with the new element in O(1), rather than dropping it and paying a full rebuild on
   // the next lookup — so a batch creating hundreds of elements stays linear.
   indexAddElement(space.schema, el, page.id);
-
   if (input.initialState) {
     writeInitialState(el, input.initialState, false);
   }
 
-  for (const child of input.children ?? []) {
-    createElement(space, page, child, el, undefined);
-  }
+  return (input.children ?? []).every(child => createElement(space, page, child, el.id, 'inside'));
 };
 
 /** The key an interaction node must store to reach a target element — which is simply that element's name, since

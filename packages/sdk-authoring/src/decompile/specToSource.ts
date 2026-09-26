@@ -69,6 +69,7 @@ export const SPACE_FIELDS = [
   'schemaVariables',
   'settings',
   'computed',
+  'channels',
   'customCss',
   'notifications',
   'rsc',

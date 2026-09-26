@@ -1,3 +1,4 @@
+import { serverLog } from '../../helpers/serverLog';
 import { handleAuthorizeStart, handleAuthorizeSubmit } from '../oauth/authorize';
 import { authorizationServerMetadata, protectedResourceMetadata } from '../oauth/metadata';
 import { handleRegister } from '../oauth/register';
@@ -78,7 +79,8 @@ const asRequest = (req: AuthedRequest): SSRRequest => {
     headers: req.headers,
     hostname: req.hostname,
     protocol: protocol === 'http' ? 'http' : 'https',
-    query: (req.query ?? {}) as Record<string, string>
+    query: (req.query ?? {}) as Record<string, string>,
+    ...(req.ip ? { ip: req.ip } : {})
   } as SSRRequest;
 };
 
@@ -112,7 +114,7 @@ export const createOAuthRouteHandlers = ({
         if (onError) {
           onError(error, { method, path });
         } else {
-          console.error(`[oauth] ${method} ${path} failed:`, error);
+          serverLog.error('oauth', `${method} ${path} failed`, error);
         }
 
         sendErrorJson(asHelpers(res), 500, 'server_error', 'The authorization server failed to answer.');

@@ -33,10 +33,13 @@ Plitzi es un **constructor de aplicaciones web** de código abierto pensado para
 ├─ apps/
 │  ├─ sdk/              # App del SDK Plitzi
 │  ├─ builder/          # Interfaz y lógica del builder
-│  ├─ server/           # Servidor SSR / RSC / MCP
+│  ├─ server/           # Servidor SSR / RSC
+│  ├─ mcp/              # Servidor MCP para agentes de IA
+│  ├─ cli/              # Crea un servidor que renderiza un space tuyo
+│  └─ desktop/          # Cliente de escritorio
 ├─ packages/
 │  ├─ sdk-auth/         # Autenticación
-│  ├─ sdk-collections/  # Colecciones
+│  ├─ sdk-authoring/    # Escribir un space en TypeScript; el linter de todos los escritores
 │  ├─ sdk-dev-tools/    # Utilidades de desarrollo
 │  ├─ sdk-elements/     # Elementos y componentes UI
 │  ├─ sdk-event-bridge/ # Puente de eventos

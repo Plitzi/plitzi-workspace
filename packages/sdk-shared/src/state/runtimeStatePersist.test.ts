@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createStore } from '@plitzi/nexus';
 
+import { paintedEntryFromCookies, paintedStateCookieName } from './paintedState';
 import { runtimeStatePersist } from './runtimeStatePersist';
 
 import type { CommonState } from '../types';
@@ -20,8 +21,8 @@ const KEY = 'plitzi_42_state';
 
 const kept = { workspace: { id: 3, name: 'Acme' } };
 
-const settings = (keepState: boolean, stateStorage?: 'localStorage' | 'sessionStorage') =>
-  ({ settings: { keepState, stateStorage } }) as unknown as Schema;
+const settings = (keepState: boolean, stateStorage?: 'localStorage' | 'sessionStorage', transientState?: string[]) =>
+  ({ settings: { keepState, stateStorage, transientState } }) as unknown as Schema;
 
 /** What the middleware writes: the persist envelope, filed under whoever wrote it. */
 const entry = (owner: string, state: unknown): string =>
@@ -217,6 +218,169 @@ describe('runtimeStatePersist', () => {
       store.setState('runtime.sources.auth', guest);
 
       expect(store.getState().runtime?.state).toBeUndefined();
+    });
+  });
+
+  /**
+   * State a space declares transient: a demo, a panel left open — things that must start fresh on every visit while the
+   * rest of the page keeps what it kept. Restoring lands late (after hydration, after auth), so "start fresh" also means
+   * a value set before the restore is not undone by it.
+   */
+  describe('transient keys', () => {
+    const transient = (hydrating = false) =>
+      build({
+        schema: settings(true, undefined, ['demo']),
+        render: hydrating ? { isHydrating: true, hydrated: false } : { isHydrating: false }
+      });
+
+    const stored = () => {
+      const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as { payload?: string };
+
+      return (JSON.parse(raw.payload ?? '{}') as { state?: Record<string, unknown> }).state?.['runtime.state'];
+    };
+
+    it('does not write them', () => {
+      const store = transient();
+      store.hydrate?.();
+      store.setState('runtime.state', { ...kept, demo: 'rose' });
+
+      expect(stored()).toEqual(kept);
+      expect(store.getState().runtime?.state).toEqual({ ...kept, demo: 'rose' });
+    });
+
+    it('does not bring back one kept before it was declared transient', () => {
+      localStorage.setItem(KEY, entry('', { ...kept, demo: 'rose' }));
+      const store = transient();
+      store.hydrate?.();
+
+      expect(store.getState().runtime?.state).toEqual(kept);
+    });
+
+    it('keeps a value set before the rest is restored', () => {
+      const store = transient(true);
+      store.setState('runtime.state', { demo: 'teal' });
+      store.hydrate?.();
+
+      store.setState('render.hydrated', true);
+
+      expect(store.getState().runtime?.state).toEqual({ ...kept, demo: 'teal' });
+    });
+
+    it('keeps everything else as before', () => {
+      localStorage.setItem(KEY, entry('', { ...kept, other: 1 }));
+      const store = transient();
+      store.hydrate?.();
+
+      expect(store.getState().runtime?.state).toEqual({ ...kept, other: 1 });
+    });
+  });
+
+  /**
+   * The keys a space declares its first paint depends on: kept in a cookie as well, which the server renders with. The
+   * page starts from those values (the SDK's `state`), so what matters here is that the cookie follows the state — and
+   * that nothing somebody else wrote is ever left painted.
+   */
+  describe('painted keys', () => {
+    const NAME = paintedStateCookieName(42, window.location.host);
+
+    const painted = (keepState = true) =>
+      ({ settings: { keepState, paintedState: ['toolPick', 'name'] } }) as unknown as Schema;
+
+    const cookie = () => paintedEntryFromCookies(document.cookie, NAME);
+
+    const writeCookie = (owner: string, values: Record<string, unknown>) => {
+      document.cookie = `${NAME}=${encodeURIComponent(JSON.stringify({ owner, values }))};path=/`;
+    };
+
+    beforeEach(() => {
+      document.cookie = `${NAME}=;path=/;max-age=0`;
+      localStorage.removeItem(KEY);
+    });
+
+    it('writes the declared keys, under whoever the state belongs to, and nothing else', () => {
+      const store = build({ schema: painted(), render: { isHydrating: false } });
+      store.hydrate?.();
+      store.setState('runtime.state', { toolPick: 'star', name: 'Ada', filter: 'open' });
+
+      expect(cookie()).toEqual({ owner: '', values: { toolPick: 'star', name: 'Ada' } });
+    });
+
+    it('rewrites it when a declared key changes', () => {
+      const store = build({ schema: painted(), render: { isHydrating: false } });
+      store.hydrate?.();
+      store.setState('runtime.state', { toolPick: 'star' });
+      store.setState('runtime.state.toolPick', 'hexagon');
+
+      expect(cookie()?.values).toEqual({ toolPick: 'hexagon' });
+    });
+
+    it('writes nothing while the render is still hydrating', () => {
+      const store = build({ schema: painted(), render: { isHydrating: true, hydrated: false } });
+      store.setState('runtime.state', { toolPick: 'star' });
+
+      expect(cookie()).toBeUndefined();
+
+      store.setState('render.hydrated', true);
+
+      expect(cookie()?.values).toEqual({ toolPick: 'star' });
+    });
+
+    it('writes nothing when the space does not keep state', () => {
+      const store = build({ schema: painted(false), render: { isHydrating: false } });
+      store.hydrate?.();
+      store.setState('runtime.state', { toolPick: 'star' });
+
+      expect(cookie()).toBeUndefined();
+    });
+
+    it('removes the cookie once no declared key holds a value', () => {
+      const store = build({ schema: painted(), render: { isHydrating: false } });
+      store.hydrate?.();
+      store.setState('runtime.state', { toolPick: 'star' });
+      store.setState('runtime.state', { filter: 'open' });
+
+      expect(cookie()).toBeUndefined();
+    });
+
+    /**
+     * The server cannot tell whose the cookie is — for a space with its own sign-in, only the browser settles that. So
+     * the page may START with somebody else's values; the first moment it knows, they go, with the cookie.
+     */
+    it('drops what the page started with from somebody else’s cookie', () => {
+      writeCookie('user:7', { toolPick: 'star' });
+      const store = build({
+        schema: painted(),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: signedIn(9) }, state: { toolPick: 'star', filter: 'open' } }
+      });
+      store.hydrate?.();
+      store.setState('schema', painted());
+
+      expect(store.getState().runtime?.state).toEqual({ filter: 'open' });
+      expect(cookie()).toBeUndefined();
+    });
+
+    it('does not bring the previous account’s painted values back when the account changes', () => {
+      writeCookie('user:7', { toolPick: 'star' });
+      const store = build({
+        schema: painted(),
+        render: { isHydrating: false },
+        runtime: { sources: { auth: signedIn(7) }, state: { toolPick: 'star', workspace: 3 } }
+      });
+      store.hydrate?.();
+
+      store.setState('runtime.sources.auth', signedIn(9));
+
+      expect(store.getState().runtime?.state).toEqual({ workspace: 3 });
+    });
+
+    it('removes the cookie rather than write one over the budget', () => {
+      writeCookie('', { toolPick: 'star' });
+      const store = build({ schema: painted(), render: { isHydrating: false } });
+      store.hydrate?.();
+      store.setState('runtime.state', { name: 'x'.repeat(4000) });
+
+      expect(cookie()).toBeUndefined();
     });
   });
 });

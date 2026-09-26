@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
+import os from 'node:os';
 
 import { net, shell } from 'electron';
 
@@ -20,6 +21,16 @@ import type { AddressInfo } from 'node:net';
  */
 
 const base64url = (buffer: Buffer): string => buffer.toString('base64url');
+
+/**
+ * What the account's device list calls this sign-in: the app, and the machine it runs on — two computers signed in
+ * are two rows somebody has to tell apart. macOS names a machine `Studio.local`; the suffix says nothing.
+ */
+const clientName = (): string => {
+  const host = os.hostname().replace(/\.local$/iu, '');
+
+  return host ? `Plitzi Desktop on ${host}` : 'Plitzi Desktop';
+};
 
 /** How long the window waits for somebody to finish in the browser before giving the port back. */
 const FLOW_TIMEOUT_MS = 5 * 60 * 1000;
@@ -147,7 +158,7 @@ const form = <T>(url: string, body: Record<string, string>): Promise<Answer<T>> 
 const register = async (apiUrl: string, redirectUri: string): Promise<Answer<string>> => {
   const answer = await post<ClientRegistration & { error_description?: string; error?: string }>(
     `${apiUrl}/register`,
-    JSON.stringify({ client_name: 'Plitzi Desktop', redirect_uris: [redirectUri] }),
+    JSON.stringify({ client_name: clientName(), software_id: 'plitzi-desktop', redirect_uris: [redirectUri] }),
     'application/json'
   );
 

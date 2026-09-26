@@ -3,6 +3,7 @@ import { triggerAccess } from '@plitzi/sdk-shared/actions';
 import { openStream, wantsStream } from './stream';
 import { resolveDebugAuthorization } from '../../../helpers/debugAuthorization';
 import { onAbort } from '../../../helpers/onAbort';
+import { serverLog } from '../../../helpers/serverLog';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
 import { reportReject } from '../runtime/report';
@@ -262,6 +263,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
           runId: result.runId,
           status: result.status,
           output: result.output,
+          ...(result.error === undefined ? {} : { error: result.error }),
           ...(outline ? { steps: result.steps } : {})
         }
       });
@@ -270,7 +272,13 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       return;
     }
 
-    const payload: Record<string, unknown> = { runId: result.runId, status: result.status, output: result.output };
+    const payload: Record<string, unknown> = {
+      runId: result.runId,
+      status: result.status,
+      output: result.output,
+      // The reason a step wrote for the caller (`ActionRefusal`); no other failure's message leaves the server.
+      ...(result.error === undefined ? {} : { error: result.error })
+    };
     if (outline) {
       payload.steps = result.steps;
     }
@@ -286,7 +294,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
     if (!(error instanceof ActionRunError)) {
       // A provider's own message can carry its URL or internal details, so the caller gets a flat failure and the
       // detail stays in the server's log.
-      console.error('[Actions] run failed:', error);
+      serverLog.error('Actions', 'run failed', error);
     }
 
     // A run that STARTED and then hit a ceiling took steps on the way there, and they are the only account of what it

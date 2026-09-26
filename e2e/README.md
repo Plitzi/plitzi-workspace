@@ -53,7 +53,7 @@ It is a setup project rather than a `globalSetup` for one reason: only the setup
 | `desktop` | `@plitzi/plitzi-desktop` | `theme` | the renderer's Vite server on 5180 |
 | `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions` | e2e server + auth server + action server + mail sink |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
-| `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (gated) |
+| `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (mocked backend unless a token is exported) |
 | `cross` | — more than one | `parity`, `agent`, `auth` | harness + both servers |
 | `examples` | — onboarding | one per example | the examples |
 
@@ -121,18 +121,28 @@ promise**, and that category is the promise being kept. Nothing else depends on 
 
 ## What a spec asserts
 
-Three layers, in the order a failure is most useful to read:
+Two layers, in the order a failure is most useful to read:
 
 1. **Content** — the text a reader was promised, through the accessibility tree.
-2. **Completeness** — every element the schema declares reached the DOM, counted per type. Derived from the space
-   itself, so it cannot drift from what it checks.
-3. **Substance** — [`helpers/visualHealth.ts`](./helpers/visualHealth.ts): images actually loaded, nothing
-   overflowing the viewport, no text painted in the colour of what is behind it, no content-bearing element
-   collapsed to zero area.
+2. **The page is whole** — `expectPageWhole(page, space)` from [`helpers/harness.ts`](./helpers/harness.ts), which is
+   `inspectPage` from `@plitzi/sdk-authoring`: every element the space owes on that page present and visible (by the id
+   the declaration gave it, so it cannot drift from what it checks), images actually loaded, nothing scrolling
+   sideways, no text painted in the colour of what is behind it. One assertion, and a failure prints every problem with
+   the element and the reason (`display:none on "panel"`). A page whose space is not in hand — an example's own server —
+   gets the page half through `expectVisuallyHealthy`.
 
-> Assert on classes (`.plitzi-component__heading`), never on `data-id`. Those attributes are **server-side only** —
-> they exist so hydration can find what the server rendered, and a client-side render emits none. A check written
-> against them can only ever pass against SSR, and looks like a broken renderer everywhere else.
+> Address an element by its handle — `el(page, space, QUERY_IDS.title)` — never by class or by `data-id`. Classes are
+> derived from the rules and change with them; `data-id` is **server-side only** (it exists so hydration can find what
+> the server rendered), so a check written against it can only ever pass against SSR. `data-plitzi-el` is in both.
+
+### Writing a space for a spec
+
+Every space in `spaces/` is **authored** with `@plitzi/sdk-authoring`, never written as JSON, so a fixture is held to
+the same validation as a real space: a binding to a source that does not exist, a flow on a trigger the element never
+fires, an attribute the element does not read — each is refused before the spec runs, rather than making it pass for
+the wrong reason. `singlePageSpace(body)` is a space with one page and nothing else; `withElement(space, id, patch)` is
+the same space with one thing different. A fixture that breaks a check on purpose (the runtime's answer to a document
+no author would write is the subject) names the break with `allow` — see `spaces/unaskedQueries.ts`.
 
 **No run touches the public internet.** The sample space points its logo at `cdn.plitzi.com` and the server
 template pulls Material Icons from Google Fonts; both are answered locally by a fixture. What a spec asserts is
@@ -206,8 +216,8 @@ are answered in [`mock/index.ts`](./mock/index.ts) through `page.routeWebSocket`
 and nothing else is pretended to work, because there is no server to publish anything.
 
 Nothing else is a flag. **A gate asks whether the thing is there** rather than reading a variable, so a target
-runs when it can and says what is missing when it cannot — the vendor bundle on disk, `MYSQL_URL` pointing
-somewhere, a builder token exported.
+runs when it can and says what is missing when it cannot — the vendor bundle on disk, a MySQL that answers, a
+builder token exported.
 
 **The builder always runs.** With nothing exported it boots against the mock, and the suite mints its own
 credentials for it ([`credentials.ts`](./credentials.ts), through the SDK's own `createTokens`) — a mocked run
@@ -283,7 +293,7 @@ moment you provide it and skips with the instruction otherwise — there is no f
 
 ```bash
 yarn workspace @plitzi/plitzi-sdk build-vendor:prod   # unlocks the no-build example
-MYSQL_URL=… yarn e2e                                  # unlocks the MySQL example
+DATABASE_URL=mysql://… yarn e2e                        # unlocks the MySQL example (127.0.0.1:33006 by default)
 export PLITZI_WEB_KEY=… PLITZI_USER_KEY=…             # unlocks the builder, live
 ```
 

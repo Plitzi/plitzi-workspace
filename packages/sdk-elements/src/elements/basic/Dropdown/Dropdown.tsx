@@ -77,6 +77,9 @@ const Dropdown = ({
     open: openPopup,
     disabled: !previewMode || disabled,
     closeOnClickPopup,
+    // With no background layer to catch it, a click outside the menu is caught at the window instead — which is what
+    // `closeOnClickBackground` always promised and, without the layer, never did.
+    closeOnClickOutside: closeOnClickBackground && !backgroundDisabled,
     placement: popupPlacement,
     offsetX: containerLeftOffset,
     offsetY: containerTopOffset,

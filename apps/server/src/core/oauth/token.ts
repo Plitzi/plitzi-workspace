@@ -1,7 +1,8 @@
+import { issueContextFor } from './issueContext';
 import { scopesOf } from './metadata';
 import { field, optionalField } from './params';
 import { randomId, verifyChallenge } from './pkce';
-import { dropAccess, dropCode, dropRefresh, getCode, getRefresh, putAccess, putRefresh } from './records';
+import { dropAccess, dropCode, dropRefresh, getAccess, getCode, getRefresh, putAccess, putRefresh } from './records';
 import { sendErrorJson, sendJson } from './respond';
 
 import type { OAuthParams } from './params';
@@ -52,7 +53,13 @@ const sendTokens = async (
   const body: Record<string, unknown> = {
     access_token: bearer,
     token_type: 'Bearer',
-    scope: scopeOf(config, grant.scope)
+    scope: scopeOf(config, grant.scope),
+    /**
+     * What the person chose on the grant screen — a space, the account. RFC 6749 §5.1 lets a token response carry
+     * parameters of its own, and this one is what a client that asked to CHOOSE needs back: without it, a native
+     * client granted "work in this space" would hold a credential and not know which space it was for.
+     */
+    target: grant.target.value
   };
 
   if (expiresInSeconds !== undefined) {
@@ -61,7 +68,7 @@ const sendTokens = async (
 
   if (ttl > 0) {
     const refreshToken = randomId();
-    await putRefresh(config.adapters.store, refreshToken, grant, ttl);
+    await putRefresh(config.adapters.store, refreshToken, { ...grant, credential }, ttl);
     body['refresh_token'] = refreshToken;
   }
 
@@ -130,7 +137,11 @@ const exchangeRefresh = async (config: OAuthConfig, res: SSRResponseHelpers, par
     return;
   }
 
-  const issued = await config.adapters.issueToken(record.user, record.target);
+  const issued = await config.adapters.issueToken(
+    record.user,
+    record.target,
+    await issueContextFor(config, record.clientId, { replaces: record.credential })
+  );
   if (!issued) {
     sendErrorJson(res, 400, 'invalid_grant', 'The account no longer has access to this resource.');
 
@@ -155,10 +166,20 @@ export const handleRevoke = async (
 ): Promise<void> => {
   const token = optionalField(params, 'token');
   if (token) {
+    const { store, revokeToken } = config.adapters;
+    const refresh = await getRefresh(store, token);
+    const access = await getAccess(store, token);
     // Dropped as both kinds rather than reading a `token_type_hint` the client may have got wrong: the two live
     // under different keys, so removing the one it is not costs a delete that matches nothing.
-    await dropRefresh(config.adapters.store, token);
-    await dropAccess(config.adapters.store, token);
+    await dropRefresh(store, token);
+    await dropAccess(store, token);
+
+    // And what the grant had issued, ended at its source: revoking only the renewal would leave the credential
+    // working — and the device listed — until it expired on its own.
+    const credential = refresh?.credential ?? (access ? (access.credential ?? token) : undefined);
+    if (credential && revokeToken) {
+      await revokeToken(credential);
+    }
   }
 
   res.setStatus(200);

@@ -6,11 +6,16 @@ import { registerRenderResources } from './renderGuide';
 import { readResource } from './router';
 import { cssProperties, cssShorthands } from '../catalogs';
 import { guideText } from '../helpers/guide';
+import { changesUri } from '../helpers/uris';
 
 import type { McpLog } from '../helpers';
 import type { Space } from '../helpers';
 import type { Env } from '../types';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { SSRChangePage, SSRChangeQuery } from '@plitzi/sdk-shared';
+
+/** A page an agent can read in one go: each change carries whole elements before and after. */
+const CHANGES_PAGE = 20;
 
 /** Register every resource on the MCP server: fixed listings plus templated per-item reads. The space is
  *  loaded lazily via getSpace, so listing resources never touches the store — only reading one does.
@@ -23,7 +28,8 @@ export const registerResources = (
   getSpace: () => Promise<Space>,
   env: Env,
   log: McpLog,
-  hasSpace: boolean
+  hasSpace: boolean,
+  readChanges?: (query: SSRChangeQuery) => Promise<SSRChangePage>
 ): void => {
   const emit = async (uri: string) => {
     const start = performance.now();
@@ -89,7 +95,7 @@ export const registerResources = (
     [
       'Primer',
       `plitzi://primer/${env}`,
-      'Read this FIRST. Cold-start bundle in one call: guide, types, css-properties and SUMMARIES of pages, ' +
+      'Read this FIRST. Cold-start bundle in one call: the guide’s quickstart, types, css-properties and SUMMARIES of pages, ' +
         'definitions and variables — summaries only, never full page/element trees, so it stays small even on a ' +
         'large space. Open a page or element on demand afterwards.'
     ],
@@ -105,6 +111,7 @@ export const registerResources = (
     ['Global styles', `plitzi://global-styles/${env}`, 'Element types that have a site-wide global style'],
     ['Id styles', `plitzi://id-styles/${env}`, 'DOM ids that have an id rule (#id) targeting a single element'],
     ['Style variables', `plitzi://style-variables/${env}`, 'Design tokens by category'],
+    ['Fonts', `plitzi://fonts/${env}`, 'The font families the space loads, with their source and fallback'],
     ['Schema variables', `plitzi://schema-variables/${env}`, 'Space-level values referenced via {{name}}'],
     ['Settings', `plitzi://settings/${env}`, 'Space-level settings: global customCss and state/auth configuration'],
     [
@@ -157,6 +164,43 @@ export const registerResources = (
       'Alias of plitzi://schema-variables/{env}'
     ]
   ];
+  // The history is not part of the space document, so it is read through its own adapter rather than `emit`.
+  if (readChanges) {
+    const emitChanges = async (uri: string, query: SSRChangeQuery) => {
+      const start = performance.now();
+      try {
+        const page = await readChanges(query);
+        log.resourceRead(uri, performance.now() - start);
+
+        return jsonContents(uri, { data: page });
+      } catch (error) {
+        log.resourceRead(uri, performance.now() - start, error);
+        throw error;
+      }
+    };
+
+    server.registerResource(
+      'Change history',
+      changesUri(env),
+      {
+        description:
+          'Read-only: the latest changes to this space, newest first — who made each (a person, an agent, the autofix), ' +
+          'from where, and every element, class or token it touched, whole, before and after',
+        mimeType: 'application/json'
+      },
+      () => emitChanges(changesUri(env), { limit: CHANGES_PAGE })
+    );
+    server.registerResource(
+      'Change history of one entity',
+      new ResourceTemplate(`${changesUri(env)}/{id}`, { list: undefined }),
+      {
+        description: 'Read-only: the changes that touched one element, class, token or font, newest first',
+        mimeType: 'application/json'
+      },
+      (uri: URL, { id }) => emitChanges(uri.href, { entityId: decodeURIComponent(String(id)), limit: CHANGES_PAGE })
+    );
+  }
+
   for (const [name, uri, description] of fixed) {
     server.registerResource(name, uri, { description, mimeType: 'application/json' }, () => emit(uri));
   }
@@ -192,6 +236,7 @@ export const registerResources = (
     ],
     ['Id style', `plitzi://id-styles/${env}/{targetId}`, 'The CSS of an id rule (#id) targeting a single element'],
     ['Style variables by category', `plitzi://style-variables/${env}/{category}`, 'Design tokens for one category'],
+    ['Font', `plitzi://fonts/${env}/{family}`, 'One font family the space loads: its source, fallback and files'],
     // Aliases under plitzi://schema/{env} (I3).
     [
       'Style definition (schema alias)',

@@ -2,8 +2,10 @@ import fetchManifest from './fetchManifest';
 import generateFacade from './generateFacade';
 import syntaxHighlight from './syntaxHighlight';
 
+export * from './cookies';
 export * from './fetchManifest';
 export * from './formatDate';
+export * from './isDate';
 export * from './generateFacade';
 export * from './reducerOrigin';
 export * from './ruleEvaluator';

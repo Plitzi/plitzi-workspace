@@ -22,6 +22,10 @@
       "types": "./dist/helpers/elementId.d.ts",
       "import": "./dist/helpers/elementId.mjs"
     },
+    "./helpers/elementTree": {
+      "types": "./dist/helpers/elementTree.d.ts",
+      "import": "./dist/helpers/elementTree.mjs"
+    },
     "./helpers/schemaValidator": {
       "types": "./dist/helpers/schemaValidator.d.ts",
       "import": "./dist/helpers/schemaValidator.mjs"
@@ -48,7 +52,7 @@
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.22",
+    "@plitzi/plitzi-ui": "^1.6.23",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "prop-types": "^15.8.1"
@@ -56,7 +60,7 @@
   "devDependencies": {
     "eslint": "^9.39.5",
     "typescript": "^6.0.3",
-    "vite": "^8.3.0",
+    "vite": "^8.3.1",
     "vitest": "^5.0.1"
   }
 }

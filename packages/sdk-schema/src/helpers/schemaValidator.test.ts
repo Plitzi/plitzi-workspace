@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 
-import { validateSchema } from './schemaValidator';
+import { REFERENCE_ERROR_CODES, isIntegrityError, validateSchema } from './schemaValidator';
 
 import type { Schema, Element } from '@plitzi/sdk-shared';
 
@@ -1133,5 +1133,85 @@ describe('schemaValidator / nested layouts', () => {
 
     expect(cycles).toHaveLength(1);
     expect(cycles[0].details).toEqual({ cycle: ['a', 'b', 'a'] });
+  });
+});
+
+describe('isIntegrityError', () => {
+  const page = (): Schema => {
+    const schema: Schema = {
+      ...EMPTY_SCHEMA.schema,
+      flat: {
+        'page-1': {
+          ...createElement('page-1', 'page'),
+          attributes: { default: true },
+          definition: { ...createElement('page-1', 'page').definition, items: ['provider', 'text-1'] }
+        },
+        provider: {
+          ...createElement('provider', 'apiContainer'),
+          definition: { ...createElement('provider', 'apiContainer').definition, parentId: 'page-1', items: [] }
+        },
+        'text-1': {
+          ...createElement('text-1', 'text'),
+          definition: { ...createElement('text-1', 'text').definition, parentId: 'page-1' }
+        }
+      },
+      pages: ['page-1']
+    };
+
+    return schema;
+  };
+
+  // Each of these is what deleting the element a reference named leaves behind — an edit, not a broken document.
+  it('reads every reference the validator reports as a reference, not as a broken tree', () => {
+    const schema = page();
+    schema.flat['text-1'].definition.bindings = {
+      attributes: [
+        { id: 'b1', to: 'content', source: 'apiContainer_ghost.data' },
+        { id: 'b2', to: 'content', source: 'form_provider.data' }
+      ]
+    };
+    schema.flat['text-1'].definition.interactions = {
+      click: {
+        id: 'click',
+        title: 'Click',
+        type: 'trigger',
+        action: 'onClick',
+        params: {},
+        preview: {},
+        elementId: 'text-1',
+        beforeNode: '',
+        afterNode: 'open',
+        flowId: 'click',
+        enabled: true
+      },
+      open: {
+        id: 'open',
+        title: 'Open',
+        type: 'callback',
+        action: 'openModal',
+        params: {},
+        preview: {},
+        elementId: 'ghost-modal',
+        beforeNode: 'click',
+        afterNode: '',
+        flowId: 'click',
+        enabled: true
+      }
+    };
+
+    const { errors } = validateSchema(schema, { sourceTypes: { apiContainer: 'apiContainer', form: 'apiContainer' } });
+
+    expect(new Set(errors.map(error => error.code))).toEqual(REFERENCE_ERROR_CODES);
+    expect(errors.some(isIntegrityError)).toBe(false);
+  });
+
+  it('reads a broken tree as a broken tree', () => {
+    const schema = page();
+    schema.flat['text-1'].definition.parentId = 'provider';
+
+    const { errors } = validateSchema(schema);
+
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.every(isIntegrityError)).toBe(true);
   });
 });

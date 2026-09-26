@@ -1,3 +1,5 @@
+import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+
 import type { AIElementDetail } from '../types';
 import type {
   ActionEntry,
@@ -261,8 +263,8 @@ export const indexAddLayout = (schema: Schema, layout: Element): void => {
   index.detailCache.clear();
 };
 
-/** A layout shell and its `descendants` were deleted. */
-export const indexRemoveLayout = (schema: Schema, layout: Element, descendants: Element[]): void => {
+/** A layout shell and the elements under it (`removed`) were deleted. */
+export const indexRemoveLayout = (schema: Schema, layout: Element, removed: Element[]): void => {
   const index = cachedIndex(schema);
   if (!index) {
     return;
@@ -275,7 +277,7 @@ export const indexRemoveLayout = (schema: Schema, layout: Element, descendants: 
   }
 
   index.pageOf.delete(layout.id);
-  for (const el of descendants) {
+  for (const el of removed) {
     index.pageOf.delete(el.id);
   }
 
@@ -458,29 +460,6 @@ export const routeParamNames = (schema: Schema): string[] => {
 /** Indexed lookup that reflects the runtime reality: a flat id may be dangling (rsc placeholders, stale items). */
 export const elementById = (schema: Schema, id: string): Element | undefined => schema.flat[id];
 
-/** All element ids belonging to a page subtree (excluding the page root). */
-const collectDescendants = (schema: Schema, rootId: string, acc: string[]): void => {
-  const el = elementById(schema, rootId);
-  if (!el) {
-    return;
-  }
-
-  const childIds = el.definition.items ?? [];
-  for (const childId of childIds) {
-    if (elementById(schema, childId)) {
-      acc.push(childId);
-      collectDescendants(schema, childId, acc);
-    }
-  }
-};
-
-export const descendantIds = (schema: Schema, pageRootId: string): string[] => {
-  const acc: string[] = [];
-  collectDescendants(schema, pageRootId, acc);
-
-  return acc;
-};
-
 /** Resolve a name to a concrete element within a page subtree (or the page root itself). The name is the element's
  *  key in `flat`; what this adds is the check that it really belongs to this page. */
 export const resolveRef = (schema: Schema, page: Element, ref: string): Element | undefined => {
@@ -506,7 +485,7 @@ export const pageRefOfElement = (schema: Schema, el: Element): string =>
   spaceIndex(schema).pageOf.get(el.id) ?? 'unknown';
 
 /** Total number of descendant elements under a subtree (excluding the root). */
-export const descendantCount = (schema: Schema, rootId: string): number => descendantIds(schema, rootId).length;
+export const descendantCount = (schema: Schema, rootId: string): number => descendants(schema.flat, rootId).length;
 
 export const emptySpaceMessage = 'Space data not available';
 

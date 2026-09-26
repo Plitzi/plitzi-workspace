@@ -20,6 +20,7 @@ import FontAwesome from './media/FontAwesome/Settings';
 import Image from './media/Image/Settings';
 import Video from './media/Video/Settings';
 import ApiContainer from './provider/ApiContainer/Settings';
+import Channel from './provider/Channel/Settings';
 import Container from './structure/Container/Settings';
 import DialogContainer from './structure/DialogContainer/Settings';
 import ListItem from './structure/List/ListItem/Settings';
@@ -68,7 +69,8 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   link: Link,
   form: Form,
   formControl: FormControl,
-  apiContainer: ApiContainer
+  apiContainer: ApiContainer,
+  channel: Channel
 };
 
 export { defaultElementsSettings };

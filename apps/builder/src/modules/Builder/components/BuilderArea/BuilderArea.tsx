@@ -28,8 +28,6 @@ import SpaceContainer from '@pmodules/Space/SpaceContainer';
 import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
 import BuilderAreaTracking from './BuilderAreaTracking';
-// eslint-disable-next-line
-// @ts-ignore
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 
 import type { ComponentPluginWithHOC, DisplayMode, SpaceFont } from '@plitzi/sdk-shared';
@@ -186,7 +184,6 @@ const BuilderArea = ({
           <ContainerFrame
             ref={ref}
             id={`i-builder-${baseElementId}`}
-            // zoom={zoom}
             css={css}
             assets={assetsWithFonts}
             className="absolute h-full w-full origin-top-left"

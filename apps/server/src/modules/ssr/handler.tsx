@@ -90,7 +90,7 @@ export const renderSSR = async (
       // moment it got popular enough to hit the cache would be metered backwards. What the meter is told is that
       // this one was cheap to serve, the same fact `X-Cache` puts on the wire.
       await meterPage(req, config, spaceId as number, environment, revision, true);
-      res.send(cached);
+      res.send(cached.html, { compressed: cached.compressed });
 
       return;
     }
@@ -151,7 +151,11 @@ export const renderSSR = async (
   }
 
   if (htmlCache && cacheKey && body !== undefined && cacheable) {
-    htmlCache.set(cacheKey, body);
+    const page = { html: body, compressed: {} };
+    htmlCache.set(cacheKey, page);
+    res.send(body, { compressed: page.compressed });
+
+    return;
   }
 
   res.send(body ?? '');

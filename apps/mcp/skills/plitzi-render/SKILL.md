@@ -52,12 +52,11 @@ Everything the widget needs travels in ONE call, as `operations`. Three ops carr
             "flex-direction": "column",
             "gap": "12px",
             "padding": "16px",
-            "min-width": "0",
             "color": "var(--color-text-primary, light-dark(#0f172a, #e8eaed))"
           }
         },
         "row": {
-          "desktop": { "display": "flex", "flex-wrap": "wrap", "gap": "12px", "min-width": "0" },
+          "desktop": { "display": "flex", "flex-wrap": "wrap", "gap": "12px" },
           "mobile": { "flex-direction": "column" }
         },
         "tile": {

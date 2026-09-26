@@ -1,9 +1,9 @@
 import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
 import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
-import { hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { createEmailSender } from './email';
-import { ActionRunError } from './errors';
+import { ActionRefusal, ActionRunError } from './errors';
 import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
 import { resolveLimits } from './limits';
@@ -12,6 +12,7 @@ import { namespaceKv } from './namespaceKv';
 import { precheckRun } from './precheck';
 import { createRedactor, projectUser } from './scope';
 import { onAbort } from '../../../helpers/onAbort';
+import { serverLog } from '../../../helpers/serverLog';
 
 import type {
   ActionKvAdapter,
@@ -26,8 +27,6 @@ import type {
 } from '../types';
 import type { ActionRunStep, ElementInteraction, InteractionNode, InteractionNodeStatus } from '@plitzi/sdk-shared';
 import type { RuleValue } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
-
-const MAX_TWIG_RESOLUTION_PASSES = 5;
 
 /** How often a run asks the shared store whether it has been cancelled. Once a second is far finer than the
  *  boundaries a flow actually has, and it keeps a long run to sixty reads a minute. */
@@ -108,9 +107,10 @@ const createCancelWatch = (store: ActionKvAdapter | undefined, runId: string): (
 /**
  * Resolves twig in a node's params against the flow scope.
  *
- * Multi-pass with a ceiling, exactly as the client engine does: a value can resolve to another template, and
- * without the ceiling a self-referencing pair spins forever. Unresolved tokens are left as-is and show up in the
- * trace, which is how an author sees that a step referenced something the flow never produced.
+ * With `resolveStepParam`, the resolver the browser's flows use too, so a param means the same on both sides: any
+ * template syntax is run, the expression's own type is kept, and a value that resolves to another template is read
+ * again up to a ceiling. Unresolved tokens are left as-is and show up in the trace, which is how an author sees that
+ * a step referenced something the flow never produced.
  */
 const resolveParams = (
   params: Record<string, unknown>,
@@ -122,14 +122,7 @@ const resolveParams = (
   }
 
   return Object.entries(params).reduce<Record<string, unknown>>((acum, [key, param]) => {
-    let value = param;
-    let passes = MAX_TWIG_RESOLUTION_PASSES;
-    while (typeof value === 'string' && hasValidToken(value) && passes > 0) {
-      value = processTwig(value, scope, false, true);
-      passes--;
-    }
-
-    acum[key] = value;
+    acum[key] = typeof param === 'string' ? resolveStepParam(param, scope).value : param;
 
     return acum;
   }, {});
@@ -344,7 +337,7 @@ export const createActionRunner = (
     try {
       await config.onRun?.(entry);
     } catch (error) {
-      console.error('[Actions] run record failed:', error);
+      serverLog.error('Actions', 'run record failed', error);
     }
   };
   const runAction = async (request: ActionRunRequest): Promise<ActionRunResult> => {
@@ -375,6 +368,7 @@ export const createActionRunner = (
     const releaseOuter = onAbort(request.signal, () => controller.abort());
 
     const scopedKv = namespaceKv(kv, request.spaceId);
+    const { realtime } = config;
     const lineage = [...(request.lineage ?? []), entry.id];
     /**
      * What a step runs with, for one abort signal and one outbound budget.
@@ -430,7 +424,13 @@ export const createActionRunner = (
         kv: scopedKv,
         dbDrivers: config.dbDrivers ?? [],
         email: emailSender,
-        emit: chunk => request.emit?.(redact(chunk))
+        emit: chunk => request.emit?.(redact(chunk)),
+        ...(realtime
+          ? {
+              publish: (topic: string, type: string, data: unknown) =>
+                realtime.publish({ spaceId: request.spaceId, environment: request.environment }, topic, type, data)
+            }
+          : {})
       });
     const buildContext = contextFor(controller.signal, createRunFetch(baseFetch, controller.signal, limits, lineage));
 
@@ -634,6 +634,8 @@ export const createActionRunner = (
 
     /** Set when the run ends in a way the CALLER has to hear as a status code rather than as a result. */
     let fatal: ActionRunError | undefined;
+    /** Set when a step refused with a reason written for the caller — the one failure a result may say the why of. */
+    let refusal: string | undefined;
 
     try {
       await Promise.race([runFlow(), deadline.promise]);
@@ -662,6 +664,10 @@ export const createActionRunner = (
         });
       } else {
         failure = error instanceof Error ? error.message : String(error);
+        if (error instanceof ActionRefusal) {
+          refusal = redact(error.message);
+        }
+
         trace.push({
           node: errorNode('error'),
           status: 'failed',
@@ -741,7 +747,14 @@ export const createActionRunner = (
      * A run that hit its deadline is no longer awaited, and whatever step ignored the abort may still push into
      * this array while the answer is being serialized. The caller gets what was true when it asked.
      */
-    return { runId, status, output: redact(output), trace: [...trace], steps: [...steps] };
+    return {
+      runId,
+      status,
+      output: redact(output),
+      trace: [...trace],
+      steps: [...steps],
+      ...(refusal === undefined ? {} : { error: refusal })
+    };
   };
 
   return { runAction };

@@ -6,6 +6,7 @@ import {
   normalizeRecoveryCode,
   randomCode,
   totpCode,
+  totpStep,
   totpUri,
   verifyTotp
 } from './totp';
@@ -42,6 +43,18 @@ describe('TOTP', () => {
     expect(verifyTotp(secret, totpCode(secret, now - 30_000), { at: now })).toBe(true);
     expect(verifyTotp(secret, totpCode(secret, now + 30_000), { at: now })).toBe(true);
     expect(verifyTotp(secret, totpCode(secret, now - 120_000), { at: now })).toBe(false);
+  });
+
+  /** What a verifier needs to refuse the same code twice: WHICH step it matched, not only that it matched one. */
+  it('says which time step a code belongs to', () => {
+    const secret = generateTotpSecret();
+    const now = 1_700_000_000_000;
+    const step = Math.floor(now / 30_000);
+
+    expect(totpStep(secret, totpCode(secret, now), { at: now })).toBe(step);
+    expect(totpStep(secret, totpCode(secret, now - 30_000), { at: now })).toBe(step - 1);
+    expect(totpStep(secret, totpCode(secret, now + 30_000), { at: now })).toBe(step + 1);
+    expect(totpStep(secret, totpCode(secret, now - 120_000), { at: now })).toBeUndefined();
   });
 
   it('refuses anything that is not six digits, without throwing', () => {

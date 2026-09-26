@@ -1,10 +1,19 @@
+import { BUILTIN_TRANSFORMERS, GLOBAL_SOURCES } from '@plitzi/sdk-authoring';
+
+// Generated from sdk-authoring, which the linter validates against, so what the guide teaches is what a save accepts.
+const GLOBALS = GLOBAL_SOURCES.map(source => `\`${source}\``).join(', ');
+const OTHER_TRANSFORMERS = Object.keys(BUILTIN_TRANSFORMERS)
+  .filter(action => action !== 'twigTemplate')
+  .map(action => `\`${action}\``)
+  .join(', ');
+
 // Shown in the MCP initialize result — the first thing an agent sees. Keep it short; the full reference is
 // plitzi://guide.
 export const serverInstructions =
   'Plitzi AI server: read-then-write editing of a Plitzi space. Reads follow a filesystem model — list cheap, ' +
   'read one item in detail on demand; never fetch a whole tree you do not need. Workflow: (1) read ' +
-  'plitzi://primer/{env} once — it bundles the guide, types, css-properties and page/definition/variable ' +
-  'summaries in a single call; (2) plitzi_search with include:"detail" to jump to elements — each hit then carries ' +
+  'plitzi://primer/{env} once — it bundles a quickstart of the guide, types, css-properties and page/definition/' +
+  'variable summaries in a single call; (2) plitzi_search with include:"detail" to jump to elements — each hit then carries ' +
   'its uri, stateVersion AND full style/resolvedStyle, so an edit needs no per-element read; open a page skeleton ' +
   'or element only when you need its tree/detail (the skeleton already lists the style classes of each node, and ' +
   'plitzi_read fetches many uris at once); (3) plitzi_apply with dryRun to preview a batch; (4) plitzi_apply to ' +
@@ -88,7 +97,7 @@ still \`display: flex\` + \`flex-direction\`/\`align-items\`/…, not a \`flex\`
 
 **Data bindings** (\`upsertBinding\`, category attributes|style|initialState): connect a \`source\` to a \`to\` field.
 A source \`<type>_<name>\` is scoped to the provider's **DESCENDANTS only** — bind inside the provider's subtree
-(module sources state/space/navigation/auth/collection are global). \`apiContainer.mockData\` is builder-only; set a
+(the global sources ${GLOBALS} are bindable anywhere). \`apiContainer.mockData\` is builder-only; set a
 real \`query\` for production. \`transformers: [{action, params}]\` post-process the value — use exact action names
 from \`plitzi://data-sources\`; \`twigTemplate\` formats it (the value is \`{{source}}\`, not \`{{value}}\`). \`when\` is
 a QueryBuilder RuleGroup gating the binding.
@@ -99,6 +108,8 @@ computed for you). Node types: \`callback\` (an element's own callback — \`ele
 (category/key/value/revertOnFinish) ≠ global \`setState\` (source \`state\`, key/type/value). To turn a step off use
 \`patchInteractionNode {enabled:false}\` — \`deleteInteraction\` removes it (destructive; confirm first). Any param
 **value** can be a binding token \`{{ source }}\` (e.g. notification \`content: "{{ list_<name>.item.name }}"\`).
+Steps read the page as it is when they run; a refiring trigger is ignored unless \`whileRunning: "queue"\`; keyboard
+shortcuts are the \`onKey\` trigger (\`keys: "shift+f, escape"\`).
 
 **CMS / API integrations** (\`upsertConnector\`): a **connector** is a manifest declaring a provider's base URL,
 endpoints, auth template and filter operators, executed by the **server** — so integrating Strapi, WordPress,
@@ -115,11 +126,11 @@ slugs prepend the path). A \`:name\` segment (\`"posts/:postId"\`) is a route pa
 source \`navigation.routeParams.name\` → build dynamic pages this way. To move between pages **prefer the \`Link\`
 element** (a container: \`mode\` "page"/"internal"/"external") over a \`navigate\` interaction.
 
-**Touched resources must be malformation-free.** Editing an element/definition also checks its CURRENT stored content
-and BLOCKS the save on any \`Pre-existing malformation in <resource>\` error (a broken transformer, malformed node,
-invalid CSS) — even parts you did not touch. These are NOT from your change (the message says so); fix them in the
+**Touched elements must be malformation-free.** Editing an element also checks its CURRENT stored content and BLOCKS
+the save on any \`Pre-existing malformation in element …\` error (a broken transformer, a malformed step, an attribute
+it never reads) — even parts you did not touch. These are NOT from your change (the message says so); fix them in the
 SAME batch and re-apply (the check runs on the result, so the fix unblocks it). \`Pre-existing issue\` warnings advise
-but do not block.
+but do not block. A broken tree your batch leaves ANYWHERE (an element orphaned by a delete) blocks it too.
 
 Read \`plitzi://guide\` before anything above is unclear.
 `;
@@ -155,6 +166,8 @@ Never download a whole tree you do not need.
   \`link\` navigates between pages, \`list\` repeats a template over a data array. \`plugin\` types are custom elements.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
 - \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
+- \`plitzi://schema/{env}/layouts\` — the shared **layout shells** (header/sidebar/footer) and the pages rendered
+  inside each. Read one like a page. See *Shared layouts* below.
 - \`plitzi://folders/{env}\` — page **folders** (the sidebar tree): ref, name, slug, parentId. \`/{ref}\` for one.
 - \`plitzi://schema/{env}/pages/{ref}\` — one page as a **skeleton tree**: each node is \`ref/type/label\` **plus the
   style classes it attaches** (\`base\`, and \`slots\` for non-base slots) — names only, no CSS. So you can map every
@@ -173,6 +186,7 @@ Never download a whole tree you do not need.
 - \`plitzi://global-styles/{env}\` — element **types** that have a site-wide global style. \`/{componentType}\` for one.
 - \`plitzi://id-styles/{env}\` — DOM **ids** that have an id rule (\`#id\`) targeting a single element. \`/{targetId}\` for one.
 - \`plitzi://style-variables/{env}\` — design tokens by category. \`/{category}\` for one.
+- \`plitzi://fonts/{env}\` — the font **families the space loads**, with their source and fallback. \`/{family}\` for one.
 - \`plitzi://schema-variables/{env}\` — space-level values referenced in props as \`{{name}}\`.
 - \`plitzi://settings/{env}\` — space-level settings: the global \`customCss\` and the state/auth (user-provider) config.
 - \`plitzi://interactions/{env}\` — interaction **actions** observed in this space (grouped by node type): the
@@ -186,6 +200,14 @@ Never download a whole tree you do not need.
   filter operators and its published fields. \`/{ref}\` opens one manifest in full. See *Connectors* below.
 - \`plitzi://actions/{env}\` — the **server actions this space has**: what starts each one, who may run it, and the
   input/output contract a caller is held to. \`/{ref}\` opens one flow in full. See *Server actions* below.
+- \`plitzi://actions/{env}/tasks\` — the **server tasks this deployment can run**, each with its params: the steps an
+  action may be built from.
+- \`plitzi://changes/{env}\` — the space's **change history**, read-only and newest first: who made each change (a
+  person in the builder, an agent, the autofix), when, and every element, class, token or font it touched, whole, before
+  and after. \`/{id}\` for the history of one of them — how you find what changed an element you are asked about, or
+  review what you or another agent just did.
+- \`plitzi://render/guide\`, \`plitzi://render/types\` — the manual and the type table for \`plitzi_render\` (offline
+  widgets, not this space).
 
 The style resources also answer under the \`plitzi://schema/{env}/…\` root as aliases — \`plitzi://schema/{env}/definitions/{ref}\`, \`plitzi://schema/{env}/style-variables/{category}\`, \`plitzi://schema/{env}/schema-variables\` — but prefer the ready-made \`uri\` from search / a write response over hand-building either form.
 
@@ -215,7 +237,7 @@ element read is the exception. Search also matches **pages** by name/slug (retur
 stateVersion) and returns any **style definitions** whose name matches the query, with full CSS, under \`definitions\`.
 When you do hold several refs to open (e.g. from a skeleton), read them together with \`plitzi_read\` rather than one at a time.
 
-## Tools (write)
+## Tools
 - \`plitzi_validate\` — check a batch, returns teachable errors/warnings. Writes nothing. Also reports **pre-existing
   malformations** in any resource the batch touches (see below).
 - \`plitzi_apply\` — validate → apply → persist atomically. Rejects the whole batch on any error or conflict. Pass
@@ -225,6 +247,11 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
 - \`plitzi_read\` — read many resource **uris in one batch** (pages, elements, definitions, variables). Pass the
   ready-made uris from search / a write response; each result is \`{ uri, stateVersion, data }\` or a teachable error,
   so one bad uri never fails the batch. Use it instead of N single reads whenever you already hold several refs.
+- \`plitzi_preview\` — render a page to HTML, optionally with unsaved \`operations\` applied, to check structure.
+- \`plitzi_screenshot\` — render a page to a PNG (desktop, mobile or \`both\`), optionally with unsaved \`operations\`:
+  the way to SEE overflow, misalignment and broken layout before you commit. Both need the SSR render service; where
+  it is missing they answer \`PREVIEW_UNAVAILABLE\`.
+- \`plitzi_render\` — a different job: show the user a self-contained widget built offline. It never touches the space.
 
 ## Readers: resources vs plitzi_search vs plitzi_read (do not confuse them)
 Three ways to read, each for a different moment — pick by what you have in hand:
@@ -268,6 +295,15 @@ reports it only when it is set.
 **Renaming** (\`patchElement\` with \`rename\`) moves the one key: the parent's child list, every binding source and
 every interaction target across the space that named the old one is repointed with it, so nothing comes unwired.
 You do not have to rewrite them.
+
+## Elements — create, move, delete
+- \`upsertElement\` creates an element (or replaces one by name) under \`parentRef\` — the page root when omitted — and
+  builds a whole subtree in one op through nested \`children\`. \`patchElement\` changes an existing one in place.
+- \`moveElement { pageRef, ref, toParentRef, position }\` moves or reorders one: \`position\` \`"inside"\` (the default)
+  nests it in \`toParentRef\`; \`"before"\`/\`"after"\` make it that element's sibling. Its subtree moves with it.
+- \`deleteElement { pageRef, ref }\` removes an element **and everything under it**. A binding or an interaction
+  elsewhere that named one of them is left pointing at nothing, and the save reports it — delete them in the same
+  batch. Destructive: confirm first.
 
 ## Styling (crosses both schemas)
 - **Mind the type's intrinsic default style.** A type renders with a base CSS *before* any class is attached — read
@@ -351,23 +387,42 @@ keyed by a class the ancestor wears: \`ancestors: { "toolbar": { "desktop": { �
 { "desktop": { … } } } }, "sidebar": { "variants": { "collapsed": … } } }\`.
 Any ancestor counts, not only the parent; the class's own states and variants win over these. Never customCss for it.
 
+## Variables, design tokens and fonts
+- **Schema variables** are space-wide values a prop reads as \`{{name}}\`: \`upsertVariable { name, variableType,
+  value, category?, subValues? }\` (\`variableType\` is the runtime type — \`text\`, \`number\`, … — not the op's
+  \`type\`), \`deleteVariable { name }\`.
+- **Design tokens** are CSS values a definition reads as \`var(--name)\`: \`upsertStyleVariable { category, name,
+  value }\` with \`category\` one of \`color\`, \`spacing\`, \`shadow\`, \`custom\` and \`name\` without the \`--\`. A
+  \`value\` may be one string or \`{ light, dark }\`, so a colour follows the theme. \`deleteStyleVariable\` removes one.
+  Reach for a token whenever a value repeats across classes — a hardcoded colour is a colour the theme cannot change.
+- **Fonts**: a \`font-family\` only renders in its face when the space loads that family. \`upsertFont { family,
+  source, fallback, weights? }\` declares one — \`source\` \`google\` needs nothing else, \`remote\` a \`stylesheet\` or
+  \`files\` URL, \`system\` loads nothing. \`deleteFont { family }\` stops loading it; rules that still name it render
+  in their fallback.
+
 ## Data bindings
 Connect a data **source** to an element field. A binding is \`{ to, source, transformers?, when?, enabled? }\` grouped
 by **category**: \`attributes\` (a prop), \`style\` (a style value), \`initialState\` (an initial-state key).
 - \`upsertBinding\` adds one, or replaces the binding already feeding the same \`to\` (or \`id\`).
 - \`patchBinding\` edits an existing one (matched by \`to\`/\`id\`); \`deleteBinding\` removes it.
-Discover valid source paths **and the transformer catalog** in \`plitzi://data-sources/{env}\`. Example — feed an API
-list into a list element:
+Discover valid source paths **and the transformer catalog** in \`plitzi://data-sources/{env}\`. Example — feed a
+provider's records into a list element:
 \`{ "type": "upsertBinding", "pageRef": "home", "ref": "myList", "category": "attributes",
-  "binding": { "to": "items", "source": "apiContainer_x.data" } }\`.
+  "binding": { "to": "items", "source": "apiContainer_products.records" } }\`.
+
+**What an \`apiContainer\` publishes** depends on where it reads. Through a connector (\`runtime: "server"\`) it is the
+fixed shape under *Connectors* — \`.records\` or \`.record\`, \`.pageInfo\`, … With a browser \`query\` it is the
+response: \`.data\` (the parsed body — an API answering \`{ "items": [...] }\` is read as
+\`apiContainer_<name>.data.items\`) and \`.status\` (the HTTP status). Both add \`.isLoading\`, \`.isEmpty\`,
+\`.hasError\` and \`.errorMessage\`.
 
 **Source scope — a source is visible to the provider's DESCENDANTS only.** An element source named
 \`<type>_<name>\` (e.g. \`apiContainer_products\`, \`list_food-list\`) is published by that element into the scope of
 its **subtree**, so **only elements INSIDE the provider can bind to it**. Binding a sibling or an unrelated element
-to it resolves to nothing at runtime. So to consume \`apiContainer_products.data\`, the bound element must live under
+to it resolves to nothing at runtime. So to consume \`apiContainer_products.records\`, the bound element must live under
 that apiContainer; inside a \`list\`, the repeated \`listItem\` and its children read the per-row source
-(\`list_<name>.item.<field>\`). Module sources (no \`<type>_<name>\` head — \`state\`, \`space\`, \`navigation\`,
-\`auth\`, \`collection\`) are global and bindable anywhere. Binding an element to an element source outside its
+(\`list_<name>.item.<field>\`). The global sources — ${GLOBALS} — have no \`<type>_<name>\` head and are
+bindable anywhere. Binding an element to an element source outside its
 provider's subtree is schema-valid but **broken at runtime** (the source is not in scope), so
 \`plitzi_validate\`/\`plitzi_apply\` treat it as an **error and reject the batch** — move the element under the
 provider, or bind a source that is in scope.
@@ -386,9 +441,8 @@ show a number with units:
 \`{ "type": "upsertBinding", "pageRef": "home", "ref": "food-item-time", "category": "attributes",
   "binding": { "to": "content", "source": "list_food-list.item.cookTimeMinutes",
     "transformers": [ { "action": "twigTemplate", "params": { "template": "{{source}} min de cocción" } } ] } }\`.
-Other transformers: \`dateConverter\` (format a date/timestamp), \`capitalize\`, \`stringToArray\` (split on a
-separator), \`arrayMap\` (remap the keys of each object in an array), \`staticValue\`. Transformer \`params\` values are
-strings. Each transformer also takes an optional \`enabled\` flag: set \`"enabled": false\` to keep it in the chain but
+The others: ${OTHER_TRANSFORMERS} — each one's purpose and params are in \`plitzi://data-sources/{env}\`.
+Transformer \`params\` values are strings. Each transformer also takes an optional \`enabled\` flag: set \`"enabled": false\` to keep it in the chain but
 skip it at runtime (defaults to true) — the value passes through untouched, and a disabled transformer is not
 validated.
 
@@ -402,6 +456,14 @@ and/or). The guard is validated structurally. Example — only bind when a flag 
 An interaction **flow** is a **trigger** (an event like \`onClick\`, \`onPageLoad\`) followed by the callbacks/utilities
 it runs, in order. You pass the steps **in order** and the stored beforeNode/afterNode/flowId links are computed for
 you — never wire them by hand. Each step also has an \`enabled\` flag (see disable vs delete below).
+
+**Each step reads the page as it is when it runs**: a \`when\` or a \`{{ state.x }}\` after a \`setState\` sees the new
+value, and one after a \`delay\` sees what changed meanwhile. To act on the value from BEFORE a write, put the reading
+step first. **A trigger fired again while its flow runs is ignored** (no double submit); set \`"whileRunning": "queue"\`
+on the trigger node for a stream of events that must each run in order (\`"parallel"\` runs them at once).
+**Keyboard shortcuts** are a trigger every element has: \`onKey\` with param \`keys\` — \`"f"\`, \`"shift+f"\`,
+\`"mod+k"\` (⌘ on a Mac, Ctrl elsewhere), \`"plus, ="\`, \`"escape"\`. Heard on the whole page while the element is
+mounted, ignored while someone types in a field; the flow reads the key pressed as \`{{ <trigger id>.key }}\`.
 
 **Node types & \`elementId\`** — a step names which element (or module) provides the callback it runs. Picking the
 **wrong node type for an action** makes the runtime resolve it against nothing, so the step **silently does nothing**:
@@ -417,8 +479,9 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
   \`setState\` has **no** \`type\` param (that belongs to the global one below). Beside it every element registers
   **\`toggleState\`** — the same write with **no \`value\`**: it stores the OPPOSITE of what is there
   (\`category\`, \`key\`, \`revertOnFinish\`). That is how expand/collapse is authored — **one step on one trigger**,
-  never two \`setState\` branches under complementary \`when\` conditions, which read the state as it was when the
-  flow STARTED and so are always one step behind. An element type may also register its own extra callbacks.
+  never two \`setState\` branches under complementary \`when\` conditions: every step reads the page as it is when it
+  runs, so the second sees what the first wrote and flips it back. An element type may also register its own extra
+  callbacks.
 - \`globalCallback\` — a callback provided by a **source module**, NOT by any element: \`addNotification\` (source
   \`space\`), \`setState\`/\`toggleState\`/\`clearState\` (\`state\`), \`navigate\` (\`navigation\`), \`login\`/\`logout\`/
   \`refreshDetails\` (\`auth\`), \`runServerAction\`/\`cancelServerAction\` (\`actions\`). Its \`elementId\` is the
@@ -493,26 +556,6 @@ server-rendered ignores its connector entirely.
 - \`plitzi://connectors/{env}\` — the connectors **this space already has**, each with its read/write endpoint names,
   its filter operators and its published fields. \`plitzi://connectors/{env}/{ref}\` opens one manifest in full.
 
-### Server actions
-Work a page cannot do in the browser — charge a card, send mail, read a system only the server reaches. An action
-is a stored flow the SERVER runs; a page names it and never learns what it does. Write one with
-\`upsertAction\` / \`patchAction\`, then call it from a page flow with the \`runServerAction\` step (mode
-\`await\` to use the result, \`detached\` to fire and carry on).
-
-Four rules worth knowing before you write:
-
-- **Steps are server tasks.** \`plitzi://actions/{env}/tasks\` lists what this deployment can run — a browser step
-  (\`setState\`, \`navigate\`) has nothing to act on here, and the reverse is true too: a task cannot run in a page
-  flow.
-- **The contracts.** \`input\` is coerced and anything undeclared is DROPPED. The OUTPUT is whatever the final
-  \`flow.output\` step names — there is no separate list to keep in step with it — and that step must be LAST,
-  since only the last one that runs is answered. Everything else a step produced stays on the server.
-- **Whether it runs lives on its TRIGGERS.** Each trigger step carries \`enabled\`, and the action is on when any
-  way into it is — there is no switch beside the flow. So "pause this action" means disabling its trigger step(s),
-  never deleting them.
-- **A step names the credential it uses**, and sees no other. \`credentials\` on the document says which ones the
-  action may ask for at all; the secret itself is never yours to see, exactly as with a connector.
-
 ### Credentials are NOT yours to write
 You never create, see or transmit a secret. Author the manifest with the token in place
 (\`"value": "Bearer {{credential.token}}"\`) and **leave \`connection.credential\` unset** unless the user hands you an
@@ -568,7 +611,8 @@ The provider element is \`apiContainer\`, and it needs **both halves**:
    other than \`list\`), \`filters\`, \`limit\`, \`singleRecord\`, \`pagination\`, \`pageParam\`.
 
 It then publishes one source **to its descendants only** (like any provider — bind *inside* its subtree):
-\`apiContainer_<name>.records\` (an array), \`.pageInfo\` (\`page\`, \`pageCount\`, \`total\`, \`hasNextPage\`…),
+\`apiContainer_<name>.records\` (an array of \`{ id, values }\` — a record's fields are under \`values\`, so a row
+reads \`list_<name>.item.values.<field>\`), \`.pageInfo\` (\`page\`, \`pageCount\`, \`total\`, \`hasNextPage\`…),
 \`.isEmpty\`, \`.hasError\`, \`.errorMessage\`, \`.isLoading\`. With \`singleRecord: true\` it publishes \`.record\`
 instead of \`.records\` — that is what a **detail page** uses. Bind an empty-state block's visibility to \`.isEmpty\`
 and an error block's to \`.hasError\`; they are ordinary bindings, no special mechanism.
@@ -585,7 +629,7 @@ and an error block's to \`.hasError\`; they are ordinary bindings, no special me
   { "type": "upsertBinding", "pageRef": "blog", "ref": "posts", "category": "attributes",
     "binding": { "to": "items", "source": "apiContainer_posts-api.records" } },
   { "type": "upsertBinding", "pageRef": "blog", "ref": "post-title", "category": "attributes",
-    "binding": { "to": "content", "source": "list_posts.item.title" } } ] }
+    "binding": { "to": "content", "source": "list_posts.item.values.title" } } ] }
 \`\`\`
 
 **A detail page** is the same provider with \`singleRecord\` and a filter resolved from the URL. Create the page with a
@@ -596,7 +640,7 @@ route param (\`"slug": "blog/:postSlug"\`), then filter on it — the filter \`v
     "props": { "connector": "strapi-blog", "resource": "articles", "singleRecord": true,
       "filters": [ { "field": "slug", "operator": "eq", "value": "{{routeParams.postSlug}}" } ] } } }
 \`\`\`
-Its children then bind to \`apiContainer_post-api.record.<field>\`. A filter whose template resolves to nothing
+Its children then bind to \`apiContainer_post-api.record.values.<field>\`. A filter whose template resolves to nothing
 returns **no records** rather than the whole collection — a URL that addressed one post never renders a different one.
 
 **Paging** is the \`pagination\` prop: \`"none"\`, \`"url"\` (the page number rides the query string, so pages are
@@ -612,6 +656,41 @@ credential and refuses any action the manifest does not declare. Writes exist **
 **Connectors need a server.** A space published without server rendering has nowhere to resolve one: it works in the
 builder and renders empty when published. If the user has no SSR deployment, say so rather than leaving them to
 discover it — the alternative is a browser-side \`query\`, which cannot keep a secret.
+
+## Server actions
+Work a page cannot do in the browser — charge a card, send mail, read a system only the server reaches. An action
+is a stored flow the SERVER runs; a page names it and never learns what it does. Write one with
+\`upsertAction\` / \`patchAction\`, then call it from a page flow with the \`runServerAction\` step (mode
+\`await\` to use the result, \`detached\` to fire and carry on).
+
+Four rules worth knowing before you write:
+
+- **Steps are server tasks.** \`plitzi://actions/{env}/tasks\` lists what this deployment can run — a browser step
+  (\`setState\`, \`navigate\`) has nothing to act on here, and the reverse is true too: a task cannot run in a page
+  flow.
+- **The contracts.** \`input\` is coerced and anything undeclared is DROPPED. The OUTPUT is whatever the final
+  \`flow.output\` step names — there is no separate list to keep in step with it — and that step must be LAST,
+  since only the last one that runs is answered. Everything else a step produced stays on the server.
+- **Whether it runs lives on its TRIGGERS.** Each trigger step carries \`enabled\`, and the action is on when any
+  way into it is — there is no switch beside the flow. So "pause this action" means disabling its trigger step(s),
+  never deleting them.
+- **A step names the credential it uses**, and sees no other. \`credentials\` on the document says which ones the
+  action may ask for at all; the secret itself is never yours to see, exactly as with a connector.
+
+\`deleteAction { ref }\` removes one; every \`runServerAction\` step that names it stops resolving, so confirm first.
+
+## Realtime channels
+Pages that see each other — cursors, presence, a shared board, a game. Three parts, all needed:
+
+1. **Declare** the topic pattern with \`patchSettings { channels: { "board:{id}": { access: { mode: "public" }, publish: "server" } } }\`.
+   \`publish: "server"\` is for what must be validated and saved first; \`"clients"\` (the default) for what pages send
+   directly — add \`presence: true\` for who-is-here.
+2. **Subscribe** with a \`channel\` element whose \`topic\` a pattern matches (\`board:{{ id }}\`, a route param).
+   Its descendants bind \`channel_<id>\`: \`connected\`, \`members\`, \`messages\`, \`last\`; flows use its \`onMessage\`,
+   \`onJoin\`, \`onLeave\` triggers and its \`publish\` / \`setPresence\` callbacks.
+3. **Announce from the server**: an action whose last step is the \`realtime.publish\` task — validate, save, then say so.
+
+A topic no pattern matches is refused by the server and reported by the linter (\`channel-topic\`).
 
 ## Shared layouts — the chrome a page does NOT contain
 A page's tree is usually **not the whole page**. The header, the sidebar and the footer normally live in a **layout
@@ -694,12 +773,19 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
 (merge — only the fields you pass change):
 - \`customCss\` — **raw global CSS** injected for the whole space. Use it only for genuinely site-wide rules
   (\`@keyframes\`, \`@font-face\`, resets). To style an element, write a **definition** and attach it — never customCss.
-- \`keepState\` / \`stateStorage\` — persist element state across reloads (\`localStorage\`/\`sessionStorage\`).
+- \`keepState\` / \`stateStorage\` — keep the runtime state (\`state.<key>\`, what \`setState\` writes) across reloads,
+  in \`localStorage\`/\`sessionStorage\`, filed under whoever is signed in. It is the space's setting — pages do not
+  take one. \`transientState\` lists the top-level keys never kept (a filter, a demo, a panel left open); do not
+  reset kept state from \`onPageLoad\` instead — it is restored later than that and undoes half of the reset.
+  \`paintedState\` lists the kept keys the FIRST PAINT shows (the tool a toolbar shows, a name in an avatar): they go
+  in a cookie too, so the server draws with them instead of the page swapping them in after load. Small values only.
 - **User provider / auth**: \`userProvider\` — \`basic\` for any HTTP+JSON backend, the name of a provider registered
   in the page, or \`""\` to disable auth — plus \`tokenStorage\`, the \`loginUrl\`/\`userUrl\`/\`refreshUrl\`/\`logoutUrl\`
   endpoints and the \`detailsPath\`/\`tokenPath\`/\`refreshTokenPath\`/\`expirationTimePath\` mapping that says where the
   values sit in their responses. \`sessionHintCookie\` is worth setting whenever the backend can: it names a readable
   cookie carrying only expiries, which is what lets a page answer "nobody is signed in" without a request.
+- \`channels\` — the realtime channels, by topic pattern (see **Realtime channels**). Merged pattern by pattern;
+  \`null\` removes one.
   Example — inject a keyframe globally:
   \`{ "type": "patchSettings", "customCss": "@keyframes spin { to { transform: rotate(360deg); } }" }\`.
 
@@ -714,15 +800,16 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   Example — recolor one definition without resending it: \`{ "type": "patchDefinition", "ref": "btn-x",
   "desktop": { "background-color": "#111" } }\`.
 - **Atomic batches**: if any operation fails, \`plitzi_apply\` persists nothing.
-- **Every resource you touch must be malformation-free — pre-existing errors block the save.** When your batch edits
-  an element (or a definition/global/id style), the validator also checks the resource's **current stored content**
-  for malformations — a broken transformer action, a malformed interaction node, invalid CSS — even in parts your
-  edit does not touch. Such a finding is reported as a \`Pre-existing malformation in <resource>: …\` **error**, and
+- **Every element you touch must be malformation-free — pre-existing errors block the save.** When your batch edits
+  an element, the result is read by the same linter every writer of a space is held to, and the element's **current
+  stored content** with it — a broken transformer action, a malformed step, an attribute it never reads — even in
+  parts your edit does not touch. Such a finding is reported as a \`Pre-existing malformation in element …\` **error**, and
   \`plitzi_apply\` rejects the batch until it is fixed. These are **not caused by your change** (the message says so)
   — do not be confused; fix them **in the same batch** and re-apply. Because the check runs on the resulting state,
   including the fix in your batch is exactly what unblocks the save. (Advisory issues — an unobserved source/action
   name that may still be a valid plugin, a binding target a plugin manifest does not list — come back as
-  \`Pre-existing issue …\` **warnings** and do not block.)
+  \`Pre-existing issue …\` **warnings** and do not block.) Elements you do not touch are not held against you — except
+  that a broken tree your batch leaves anywhere (an element orphaned by a delete) is refused.
 - **Optimistic concurrency — read before you write, and prove your read is current.** Editing a resource means you
   read it first, so you hold its \`stateVersion\`. **Always pass \`expectedResourceVersions\`** (URI → the stateVersion
   you read) for every resource your batch changes. If another agent edited it in the meantime, the live version no

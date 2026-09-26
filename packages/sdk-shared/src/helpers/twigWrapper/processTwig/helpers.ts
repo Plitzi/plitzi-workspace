@@ -43,9 +43,20 @@ export const serializeValue = (value: unknown): string => {
 };
 
 // When asRaw is requested, a JSON-shaped output is parsed back into typed data; anything else passes through.
+/**
+ * A rendered template as the value it reads as: `30` the number, `true`, an object from its JSON.
+ *
+ * Except a number that would not read back as the text it came from — `012345`, a code with a leading zero, or a
+ * 20-digit id past what a number can hold exactly. Those were handed on as `12345` and as the nearest double, which is
+ * a different second-factor code, PIN or id by the time anything sends it; they stay the text they were.
+ */
 export const finalizeRaw = (output: string): unknown => {
   try {
-    const parsed = JSON.parse(output) as string | object;
+    const parsed = JSON.parse(output) as string | number | object;
+    if (typeof parsed === 'number' && String(parsed) !== output.trim()) {
+      return output;
+    }
+
     return parsed || output;
   } catch {
     return output;

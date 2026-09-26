@@ -206,14 +206,15 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
 
 ### Ciclo de vida en runtime (`ApiContainer.tsx`)
 
-1. **Identidad** — `useElement()` da `id`, `id`, `runtime`. El nombre de fuente es `apiContainer_<id>`;
+1. **Identidad** — `useElement()` da `id` y `runtime`. El nombre de fuente es `apiContainer_<id>`;
    todo lo que bindean los hijos cuelga de ahí.
 2. **Obtención del dato**
    - **Server**: `useRscData()` lee su propia porción del store, `rsc.data.<elementId>` (payload del SSR o de un
      refresh `/_rsc`). Se suscribe solo a su clave: un refresh parcial de otro provider no lo re-renderiza.
      El dato ya viene resuelto por el servidor (manifest + credencial + filtros + routeParams + paginación +
      proyección).
-   - **Client**: `queryCompiled` resuelve la plantilla con `routeParams`/`queryParams` y `useApi` hace el fetch.
+   - **Client**: `queryCompiled` resuelve la plantilla con `routeParams`/`queryParams` y `useApi` hace el fetch. La
+     respuesta se publica como `data` (el body ya parseado) y `status` (el código HTTP).
 3. **El slice publicado (el contrato)**
 
    ```jsonc
@@ -228,6 +229,9 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
      "errorMessage": ""
    }
    ```
+
+   Los campos de un registro van bajo `values`: una fila de un listado lee `list_<id>.item.values.title` y una página
+   de detalle `apiContainer_<id>.record.values.title`.
 
    Se monta con un `StoreProvider` (`{ runtime: { sources: { apiContainer_<id>: slice } } }`) y
    `useRegisterSource` publica los `SourceField`s para el autocomplete de bindings. `isEmpty`/`hasError`/`isLoading`
@@ -329,7 +333,7 @@ HTML y el cliente solo hace *hydrate*.
    - `resource` — el tipo de contenido, p. ej. `posts`.
    - **Single record ON** — publica `record` en vez de `records`; el resolver fuerza `limit=1` y página 1.
    - Filtro: campo `id`, operador `eq`, valor `{{routeParams.id}}`. El Settings autocompleta el token porque lo
-     extrae del slug (`Settings.tsx:116-121`).
+     extrae del slug.
    - Paginación: `none`.
 3. Binds dentro de la página: título `{{apiContainer_<id>.record.values.title}}`, imagen
    `record.values.cover.url`, y el cuerpo en un **RichText** con `content` = `{{apiContainer_<id>.record.values.body}}`
@@ -350,7 +354,7 @@ HTML y el cliente solo hace *hydrate*.
    - Lee los atributos del elemento (connector, resource, singleRecord, filtros).
    - `getConnector` → manifest, `getCredential` → secreto (**nunca** salen del server).
    - Llama a `fetchConnectorRecords` pasándole `routeParams`.
-   - `resolveFilters` (`engine.ts:76`) renderiza el valor del filtro: `{{routeParams.id}}` → `'123'`; después la
+   - `resolveFilters` (`engine.ts`) renderiza el valor del filtro: `{{routeParams.id}}` → `'123'`; después la
      plantilla de operador produce `filters[id][$eq]=123`.
    - Fetch al CMS → normaliza → `singleRecord` publica `{ record, pageInfo, isEmpty, ... }` → `projectSlice` lo
      recorta a los caminos que bindeaste.
@@ -417,8 +421,8 @@ Panel lateral **Connectors** (aparece en `AppContainer.tsx` cuando el popup acti
 2. Settings (`ApiContainer/Settings.tsx`): **Data Source = Connector (server-side)**, elegir connector, el
    **endpoint** de lectura (solo aparece si el conector declara más de uno; por defecto `list`), `resource`
    (`posts`), `limit`, **Pagination = URL (indexable)**.
-3. Dentro, un **List** (source `controlled`) con una card por registro: heading bind
-   `{{apiContainer_<id>.records.item.title}}`, imagen a `cover.url`, etc.
+3. Dentro, un **List** (source `controlled`) bindeado a `{{apiContainer_<id>.records}}`, con una card por registro:
+   heading bindeado a `list_<listId>.item.values.title`, imagen a `item.values.cover.url`, etc.
 4. Añadir **Pagination** bind `{{apiContainer_<id>.pageInfo}}`, mode `pages`, target `url`. Al clicar navega a
    `?page=N`; el servidor resuelve esa ventana (SSR, indexable, botón atrás correcto).
 

@@ -122,18 +122,21 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="plitzi" class="plitzi-root-container"><%- locals.html || '' %></div>
     <% if (!locals.ssrOnly) { %>
+    <%# The payload is data, so it travels as JSON: parsing it as a JavaScript literal cost the browser several times
+        what JSON.parse does, on megabytes of it. Escaped by the server — no `<` reaches this block. %>
+    <script type="application/json" id="plitzi-ssr-data"><%- locals.offlineData || '{}' %></script>
     <script type="module">
       import { render } from '<%= locals.jsPath || '' %>';
       <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
-      <% if (activePlugins.length > 0) { %>
       <% for (const plugin of activePlugins) { %>
       import { default as <%= plugin.varName %> } from '<%= plugin.js %>';
       <% } %>
       const __plitziPlugins = { <%- activePlugins.map(p => `'${p.keyName}': {component: ${p.varName}, props: ${JSON.stringify(p.props)}, clientOnly: ${p.ssr === false}}`).join(', ') %> };
-      render('plitzi', <%- locals.offlineData || '{}' %>, __plitziPlugins, <%= locals.debugMode ? true : false %>, true);
-      <% } else { %>
-      render('plitzi', <%- locals.offlineData || '{}' %>, {}, <%= locals.debugMode ? true : false %>, true);
-      <% } %>
+      const __plitziData = document.getElementById('plitzi-ssr-data');
+      const __plitziParams = JSON.parse(__plitziData.textContent);
+      // Read once: the page would otherwise hold the space twice, as this text and as what it was parsed into.
+      __plitziData.remove();
+      render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true);
     </script>
     <% } %>
   </body>

@@ -3,7 +3,7 @@ import { produce } from 'immer';
 import { useCallback, use } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
 import type { ComponentDefinition, Element, Template } from '@plitzi/sdk-shared';
@@ -81,7 +81,7 @@ const useDragElement = ({ attributes, type, variables, manifest }: UseDragElemen
       // Carried as authored, not re-cloned: a manifest is a throwaway copy already, and cloning would rename every
       // element in it — `hero` arriving as `hero-2` in a space that has no `hero`. The document it lands in renames
       // only what actually collides there.
-      const elements = Object.fromEntries(FlatMap.childTree(flat, templateBaseElementId).map(id => [id, flat[id]]));
+      const elements = Object.fromEntries(descendants(flat, templateBaseElementId).map(id => [id, flat[id]]));
 
       e.dataTransfer.setData(
         'add##plitzi-template',

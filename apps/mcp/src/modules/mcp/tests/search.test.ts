@@ -8,12 +8,12 @@ import type { Space } from '../helpers';
 
 describe('mcp-ai search', () => {
   it('finds elements by attribute value and reports their page ref', () => {
-    const res = search({ query: 'box' }, buildSpace(), 'main');
+    const res = search({ query: 'section' }, buildSpace(), 'main');
     expect(res.results.some(r => r.ref === 'c1' && r.pageRef === 'home')).toBe(true);
   });
 
   it('returns a ready-to-read uri, pageUri, stateVersion and tree path per hit (I1/I6/R2)', () => {
-    const res = search({ query: 'box' }, buildSpace(), 'main');
+    const res = search({ query: 'section' }, buildSpace(), 'main');
     const hit = res.results.find(r => r.ref === 'c1');
     expect(hit?.uri).toBe('plitzi://schema/main/elements/c1');
     expect(hit?.pageUri).toBe('plitzi://schema/main/pages/home');
@@ -24,9 +24,9 @@ describe('mcp-ai search', () => {
   });
 
   it('omits detail unless include: "detail" is requested', () => {
-    expect(search({ query: 'box' }, buildSpace(), 'main').results[0].detail).toBeUndefined();
-    const withDetail = search({ query: 'box', include: 'detail' }, buildSpace(), 'main');
-    expect(withDetail.results[0].detail?.props).toEqual({ title: 'Box' });
+    expect(search({ query: 'section' }, buildSpace(), 'main').results[0].detail).toBeUndefined();
+    const withDetail = search({ query: 'section', include: 'detail' }, buildSpace(), 'main');
+    expect(withDetail.results[0].detail?.subType).toBe('section');
   });
 
   it('never returns page elements as hits', () => {
@@ -44,7 +44,7 @@ describe('mcp-ai search', () => {
   });
 
   it('omits the pages field when no page name/slug matches', () => {
-    expect(search({ query: 'box' }, buildSpace(), 'main').pages).toBeUndefined();
+    expect(search({ query: 'section' }, buildSpace(), 'main').pages).toBeUndefined();
   });
 });
 
@@ -59,7 +59,7 @@ describe('mcp-ai search pagination', () => {
       items.push(ref);
       flat[ref] = {
         id: ref,
-        attributes: { subType: 'div', title: 'Box' },
+        attributes: { subType: 'section' },
         definition: {
           rootId: 'home',
           parentId: 'home',
@@ -77,7 +77,7 @@ describe('mcp-ai search pagination', () => {
   };
 
   it('caps results at limit, reports total and hands back nextOffset while more remain', () => {
-    const res = search({ query: 'box', limit: 2 }, buildBusySpace(5), 'main');
+    const res = search({ query: 'section', limit: 2 }, buildBusySpace(5), 'main');
     expect(res.results).toHaveLength(2);
     expect(res.total).toBe(5);
     expect(res.offset).toBe(0);
@@ -86,7 +86,7 @@ describe('mcp-ai search pagination', () => {
   });
 
   it('returns the page at offset and omits nextOffset on the last page', () => {
-    const res = search({ query: 'box', limit: 2, offset: 4 }, buildBusySpace(5), 'main');
+    const res = search({ query: 'section', limit: 2, offset: 4 }, buildBusySpace(5), 'main');
     expect(res.results).toHaveLength(1);
     expect(res.total).toBe(5);
     expect(res.offset).toBe(4);
@@ -94,7 +94,7 @@ describe('mcp-ai search pagination', () => {
   });
 
   it('defaults to a page of 50 from offset 0', () => {
-    const res = search({ query: 'box' }, buildBusySpace(3), 'main');
+    const res = search({ query: 'section' }, buildBusySpace(3), 'main');
     expect(res.offset).toBe(0);
     expect(res.limit).toBe(50);
     expect(res.results).toHaveLength(3);
@@ -103,9 +103,9 @@ describe('mcp-ai search pagination', () => {
 
   it('paging with offset = nextOffset covers every hit exactly once', () => {
     const space = buildBusySpace(5);
-    const first = search({ query: 'box', limit: 2 }, space, 'main');
-    const second = search({ query: 'box', limit: 2, offset: first.nextOffset }, space, 'main');
-    const third = search({ query: 'box', limit: 2, offset: second.nextOffset }, space, 'main');
+    const first = search({ query: 'section', limit: 2 }, space, 'main');
+    const second = search({ query: 'section', limit: 2, offset: first.nextOffset }, space, 'main');
+    const third = search({ query: 'section', limit: 2, offset: second.nextOffset }, space, 'main');
     const refs = [...first.results, ...second.results, ...third.results].map(r => r.ref);
     expect(new Set(refs).size).toBe(5);
     expect(third.nextOffset).toBeUndefined();

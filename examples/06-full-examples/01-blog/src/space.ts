@@ -29,7 +29,7 @@ import {
   whenSucceeded
 } from '@plitzi/sdk-authoring';
 
-import { classes, customCss, elements, variables } from './theme';
+import { classes, customCss, elements, variables } from './theme.ts';
 
 import type { Attributes, ElementSpec, PageSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';

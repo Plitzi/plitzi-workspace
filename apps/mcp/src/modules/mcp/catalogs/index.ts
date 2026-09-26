@@ -20,7 +20,6 @@
 export {
   BUILTIN_ELEMENT_CALLBACKS,
   BUILTIN_GLOBAL_CALLBACKS,
-  BUILTIN_TRANSFORMERS,
   BUILTIN_UTILITIES,
   applyBuiltinCallback,
   applyElementCallback,
@@ -33,31 +32,14 @@ export {
   expandShorthandPatch,
   getElementCallback,
   getGlobalCallback,
-  getTransformer,
   getUtility,
   hiddenParams,
-  invalidParams,
   isCssProperty,
-  missingRequiredParams,
   reconcileParams,
-  shorthandLonghands,
   suggestCssProperty,
-  suggestTransformer,
   transformerCatalog
 } from '@plitzi/sdk-authoring';
-export type {
-  BuiltinElementCallback,
-  BuiltinGlobalCallback,
-  BuiltinParam,
-  BuiltinParamType,
-  BuiltinTransformer,
-  BuiltinUtility,
-  CssPatch,
-  ElementSemantics,
-  InvalidParam,
-  ParamSpec,
-  TransformerInfo
-} from '@plitzi/sdk-authoring';
+export type { BuiltinParam, CssPatch, ElementSemantics, ParamSpec, TransformerInfo } from '@plitzi/sdk-authoring';
 
 export * from './observed';
 export * from './registry';

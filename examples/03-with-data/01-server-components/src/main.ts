@@ -1,13 +1,14 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
-
 import { offlineDataPath } from '@plitzi/example-space';
+import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
 import type { SSRRscContext, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4004);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /** RSC data is keyed by the ELEMENT ID — which is the name the space gave the element, so there is nothing to look
@@ -59,7 +60,7 @@ const plugins = {
 
 const server = createServer({
   port: PORT,
-  devMode: true,
+  devMode: process.env.NODE_ENV !== 'production',
   // RSC turns itself on because `getRscData` exists — there is no separate flag to remember.
   adapters: {
     ...createJsonAdapters({
@@ -74,7 +75,7 @@ const server = createServer({
 
 const base = `http://127.0.0.1:${PORT}`;
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 console.log(`[example] pages + RSC on http://127.0.0.1:${PORT}/`);
 console.log(`[example] all slices:  curl '${base}/_rsc?location=%2F'`);
 console.log(`[example] one slice:   curl '${base}/_rsc?location=%2F&ids=${ids.server}'`);

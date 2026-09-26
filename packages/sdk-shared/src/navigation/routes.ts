@@ -132,6 +132,27 @@ function getPageFullPath(
   return { [parsePath(`/${path}`)]: pageId, [parsePath(`/${pageId}`)]: pageId };
 }
 
+/**
+ * Where a navigation to `target` goes: a page id resolves to that page's full path — its folders' slugs before its own,
+ * exactly what a link to it resolves to — and anything else (a path, a slug) is taken as the path it already is.
+ *
+ * The router's navigation and a link used to disagree about a page in a folder: the link went to `/account/security`,
+ * a flow's `navigate` to `/security`, and to the home page for a folder's index — whose own slug is empty.
+ */
+const navigationTarget = (pages: Record<string, Element>, pageFolders: PageFolder[], target: string): string => {
+  const page = pages[target] as Element | undefined;
+  if (!page) {
+    return target;
+  }
+
+  const { slug, default: isHome } = page.attributes as { slug?: unknown; default?: boolean };
+  if (typeof slug === 'string') {
+    return getPageFullPath(pages, pageFolders, target, true);
+  }
+
+  return isHome ? '/' : `/${target}`;
+};
+
 const isPageAuthored = (accessLevel?: NavigationAccessLevel, authenticated?: boolean, previewMode: boolean = true) => {
   if (!accessLevel || !previewMode || typeof authenticated === 'undefined') {
     return true;
@@ -310,4 +331,4 @@ const getRouteParams = (path: string) => {
 /** The params a page's slug declares, in either spelling a slug accepts: `post/{{slug}}` and `:spaceId/update`. */
 const getSlugParams = (slug: string): string[] => getRouteParams(parsePath(slug));
 
-export { getPageFullPath, getPaths, matchRoutePath, isPageAuthored, getRouteParams, getSlugParams };
+export { getPageFullPath, getPaths, matchRoutePath, isPageAuthored, getRouteParams, getSlugParams, navigationTarget };

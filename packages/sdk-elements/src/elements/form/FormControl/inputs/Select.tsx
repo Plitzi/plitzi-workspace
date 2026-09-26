@@ -44,12 +44,6 @@ const Select = ({
     }
 
     return options.map(option => {
-      // try {
-      //   option = JSON.parse(option) as unknown;
-      // } catch {
-      //   // Nothing here due that is not a valid JSON
-      // }
-
       if (typeof option === 'string') {
         return { value: option, label: option };
       }

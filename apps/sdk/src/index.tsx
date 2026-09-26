@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
 // This one it is important due that there its a circular import, so we need to import ComponentProvider in a specific order
-// eslint-disable-next-line import/order
-import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
@@ -16,11 +16,13 @@ import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import useChannel from '@plitzi/sdk-elements/realtime/useChannel';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
+import { styleCacheFromDocument } from '@plitzi/sdk-shared/style';
 
 import App from './App';
 import { getEnvironmentServer } from './config';
@@ -33,6 +35,7 @@ if (import.meta.env.PROD) {
 }
 
 import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
+import type { ChannelHandle } from '@plitzi/sdk-elements/realtime/useChannel';
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {
@@ -56,6 +59,9 @@ import type {
   ThemeScope,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
+import type { RealtimeMessage } from '@plitzi/sdk-shared';
+import type { PluginDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
 import type { ReactNode } from 'react';
 
 let stateManager: RuntimeStateInstance;
@@ -86,6 +92,28 @@ const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
     ...params,
     analytics: { endpoint: `${apiServer.replace(/\/+$/, '')}/v1/collect`, key: params.webKey }
   };
+};
+
+/**
+ * Puts back the stylesheet a server-rendered page left out of its payload (see `styleCacheTravelsInDocument`), read
+ * from the runtime `<style>` the server rendered under `root` — before hydration, so the first render in the browser
+ * draws the stylesheet the server drew.
+ */
+const withDocumentStyleCache = <P extends PlitziSdkProps>(params: P, root: HTMLElement | null | undefined): P => {
+  const { offlineData } = params;
+  if (!offlineData || !root) {
+    return params;
+  }
+
+  const cache = styleCacheFromDocument(root);
+  if (cache === undefined) {
+    // The server leaves the cache out only of a page it rendered it into, so the document was changed on the way.
+    console.error('[plitzi] The server-rendered stylesheet is missing from the page: it renders without its styles.');
+
+    return params;
+  }
+
+  return { ...params, offlineData: { ...offlineData, style: { ...offlineData.style, cache } } };
 };
 
 /**
@@ -125,7 +153,9 @@ export function render(
    * They are a record, not a prop: nothing on the page reads them, and they reach the dev-tools through the same
    * log every client-side run goes into. A server sends them only to a page it authorized for debugging.
    */
-  const { actionRuns, ...renderParams } = withDerivedAnalytics(params);
+  const { actionRuns, styleCacheInDocument, ...derivedParams } = withDerivedAnalytics(params);
+  const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
+  const renderParams = styleCacheInDocument ? withDocumentStyleCache(derivedParams, rootDOM) : derivedParams;
   /**
    * Two ways to authorize the dev tools, and the params win.
    *
@@ -181,7 +211,6 @@ export function render(
     );
   };
 
-  const rootDOM = typeof document !== 'undefined' ? document.getElementById(widgetContainer) : undefined;
   if (!rootDOM) {
     return undefined;
   }
@@ -232,6 +261,11 @@ export type PlitziSdkProps = {
   debugMode?: boolean;
   /** What the server ran to build this page, for the dev-tools. Only ever sent to a page allowed to debug them. */
   actionRuns?: ActionRunSummary[];
+  /**
+   * Set by the server that rendered this page: `offlineData.style.cache` was left out of the payload because the
+   * page's own stylesheet holds it, and `render()` reads it back from there before hydrating.
+   */
+  styleCacheInDocument?: boolean;
   isHydrating?: boolean;
   previewMode?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota, so the page says
@@ -324,7 +358,10 @@ export {
   // The other half of `useRscData`. An element whose data is resolved on the server could read the payload and had
   // no way to ask for a fresh one — so anything that has to keep up with a feed had to fetch it itself from the
   // browser, which is the whole thing a server-resolved element exists to avoid.
-  useRscRefresh
+  useRscRefresh,
+  // A realtime channel, for a plugin that moves at the speed of a cursor: the `channel` element's own connection,
+  // read without a flow per message.
+  useChannel
 };
 
 export type {
@@ -338,7 +375,11 @@ export type {
   PlitziServiceContextValue,
   OfflineDataRaw,
   InteractionCallback,
-  InteractionCallbackParamValues
+  InteractionCallbackParamValues,
+  PluginDeclaration,
+  ChannelHandle,
+  RealtimeMember,
+  RealtimeMessage
 };
 
 export const version = typeof VERSION !== 'undefined' ? VERSION : '';

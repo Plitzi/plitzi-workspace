@@ -39,11 +39,15 @@ yarn build:dev / build:prod # vite build
 apps/
   builder/          # Plitzi visual builder (main app)
   sdk/              # Plitzi SDK app
-  server/           # Server app
+  server/           # SSR/RSC server (@plitzi/sdk-server)
+  mcp/              # MCP server for AI agents (@plitzi/sdk-mcp)
+  cli/              # @plitzi/cli
+  desktop/          # Desktop client
+bench/              # Load + footprint benchmarks of the self-hosted servers under hardware limits (`yarn bench`)
 packages/
   sdk-shared/       # Shared ESLint + TSConfig base configs
   sdk-auth/
-  sdk-collections/
+  sdk-authoring/
   sdk-dev-tools/
   sdk-elements/
   sdk-event-bridge/

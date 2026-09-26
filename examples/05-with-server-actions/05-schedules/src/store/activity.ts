@@ -1,4 +1,4 @@
-import { integer, storeNow, text } from './database';
+import { integer, storeNow, text } from './database.ts';
 
 import type { DatabaseSync } from 'node:sqlite';
 

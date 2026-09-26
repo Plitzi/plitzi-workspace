@@ -24,6 +24,7 @@
 export { createAuth } from './core/auth/createAuth';
 export { createAuthApi } from './core/auth/api';
 export { createCsrf, csrfFailureMessage } from './core/auth/csrf';
+export { SESSION_ACTIVITY_RESOLUTION_SECONDS, activityDue } from './core/auth/sessionActivity';
 export { createAuthorizer, checkPermission, checkSpaceAccess, requirementFor } from './core/auth/authorize';
 export { createCarriers, presentedOrigin } from './core/auth/credentials';
 export {
@@ -38,6 +39,8 @@ export { createIdentity } from './core/auth/identity';
 export { generateToken, hashPassword, verifyPassword } from './core/auth/passwords';
 export { BUILT_IN_PROVIDERS, OAuthFailure, createSocialAuth, requestProfileJson } from './core/auth/oauth';
 export { createRedirectPolicy } from './core/auth/redirects';
+export { isDocumentNavigation, renewForNavigation } from './core/auth/renewal';
+export type { RenewalOptions } from './core/auth/renewal';
 export type { RedirectPolicyConfig } from './core/auth/redirects';
 export { applySessionOutcome, authPolicyRules, authRoutes } from './core/auth/routes';
 export {
@@ -46,11 +49,14 @@ export {
   clearSessionCookies,
   createSessionCookies,
   isLocalHost,
+  parseSessionHint,
   readFlowCookie,
   readRefreshToken,
+  readSessionHint,
   readSessionToken,
   sessionCookieParams,
   sessionHintValue,
+  sessionReturnTarget,
   writeFlowCookie,
   writeSessionCookies
 } from './core/auth/session';
@@ -63,6 +69,7 @@ export {
   normalizeRecoveryCode,
   randomCode,
   totpCode,
+  totpStep,
   totpUri,
   verifyTotp
 } from './core/auth/totp';
@@ -81,6 +88,7 @@ export type {
   MfaRecord,
   PasswordPolicy,
   SecurityEvent,
+  SessionApp,
   SessionClient,
   SessionContext,
   SessionSummary,
@@ -123,7 +131,7 @@ export type {
   StartedFlow
 } from './core/auth/oauth';
 export type { AuthRequest, AuthRoute } from './core/auth/routes';
-export type { CookieCarrier, CookieSink, SessionCookieParams, SessionCookies } from './core/auth/session';
+export type { CookieCarrier, CookieSink, SessionCookieParams, SessionCookies, SessionHint } from './core/auth/session';
 export type {
   SpaceTokenAdapters,
   SpaceTokenApi,

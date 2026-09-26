@@ -29,3 +29,33 @@ export interface CreateAnswers {
 
 /** Every file of the generated project, by the path it is written to. */
 export type ProjectFiles = Record<string, string>;
+
+/** One element, as somebody described it when it was created: the words the builder and an agent see. */
+export interface ElementAnswers {
+  /** Its name — `seat-picker` — from which its type and component are derived (see `pluginNames`). */
+  name: string;
+  /** What the builder calls it, and the label it renders until an attribute says otherwise. */
+  title: string;
+  /** What it is for, in a sentence: the builder shows it, and an agent reads it to choose the element. */
+  description: string;
+}
+
+/** What a plugin package is built from. */
+export interface PluginAnswers {
+  /** The package name. The element it is named after is the first of `elements`, and carries the same name. */
+  packageName: string;
+  /** Every element the package holds, the one it is named after first. */
+  elements: ElementAnswers[];
+  /** Who publishes it: the manifest's `owner` and the package's `author`. */
+  owner: string;
+  packageManager: PackageManager;
+  /** As for a project: decides only whether Yarn's age-gate exemption can be written. */
+  managerVersion?: string;
+  /**
+   * Whether the package is written inside a project that already exists.
+   *
+   * That project already says how it is installed — its `.yarnrc.yml`, its `pnpm-workspace.yaml` — and a second copy
+   * in a folder of it is not a setting but a second, conflicting project root. So those files are left to the project.
+   */
+  inProject: boolean;
+}

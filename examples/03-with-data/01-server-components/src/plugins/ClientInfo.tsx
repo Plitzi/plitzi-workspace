@@ -1,5 +1,6 @@
-import { RootElement } from '@plitzi/plitzi-sdk';
 import { useEffect, useState } from 'react';
+
+import { RootElement } from '@plitzi/plitzi-sdk';
 
 import { card, label, row, title } from './styles';
 

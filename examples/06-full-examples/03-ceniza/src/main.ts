@@ -2,10 +2,12 @@ import { authorSpace } from '@plitzi/sdk-authoring';
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createRunLogger } from '@plitzi/sdk-server/actions';
 
-import { lookups } from './actions';
-import { space } from './space';
+import { lookups } from './actions/index.ts';
+import { space } from './space.ts';
 
 const PORT = Number(process.env.PORT ?? 4015);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 
 /**
  * The space, held in this project.
@@ -34,5 +36,5 @@ const server = createServer({
   action: { lookups, email: { allowPrivateHosts: true }, onRun: createRunLogger(consoleLogger) }
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 console.log(`pages on http://127.0.0.1:${PORT}/`);

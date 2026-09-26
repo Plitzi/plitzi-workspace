@@ -1,4 +1,4 @@
-import { use, useEffect, useId, useState, useSyncExternalStore } from 'react';
+import { use, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 
 import { StoreContext, useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 
@@ -85,6 +85,14 @@ const ThemeProvider = ({
   // one. The id comes from `useId` so the dev-tools registry names it the same on the server and in the browser.
   const [ownStore] = useState(() => (scoped ? createThemeStore(`theme${scopeId}`) : undefined));
   const store = ownStore ?? defaultThemeStore;
+  /**
+   * The mode the surface STARTED in, and whether that was a remembered choice.
+   *
+   * The cookie records what the visitor chose, not what the surface happened to open with. Written for the starting
+   * mode too, a space's default became every first visitor's "choice" — and a space that later changed its default
+   * never reached anybody who had been there before.
+   */
+  const startedAt = useRef<{ mode: Theme; remembered: boolean }>({ mode: defaultTheme, remembered: false });
 
   /**
    * What was chosen, read before the first paint — and in a LAYOUT effect rather than during the render.
@@ -106,9 +114,11 @@ const ThemeProvider = ({
    */
   useIsomorphicLayoutEffect(() => {
     const chosen = scoped ? undefined : readThemeCookie(cookieName);
+    const starting = theme ?? chosen ?? defaultTheme;
+    startedAt.current = { mode: starting, remembered: chosen !== undefined };
     store.batch(() => {
       setMachineScheme(machineScheme(), store);
-      setThemeMode(theme ?? chosen ?? defaultTheme, store);
+      setThemeMode(starting, store);
     });
   }, [defaultTheme, theme, cookieName, scoped, store]);
 
@@ -145,7 +155,11 @@ const ThemeProvider = ({
 
     const apply = () => {
       const { mode } = store.getState();
-      writeThemeCookie(mode, cookieName);
+      if (startedAt.current.remembered || mode !== startedAt.current.mode) {
+        writeThemeCookie(mode, cookieName);
+        startedAt.current.remembered = true;
+      }
+
       applyThemeClass(mode, document.documentElement);
     };
     apply();

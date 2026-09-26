@@ -34,8 +34,6 @@ los enlaces entre ellos son rutas absolutas).
 | **plitzi-sdk-server** | API REST, GraphQL, el kernel de auth y el RBAC, Prisma/MySQL, MongoDB, Redis y el gateway de desarrollo | Persistencia, permisos, tokens, cualquier cosa que devuelva 401/403 |
 | **plitzi-ui** | El design system con el que está construido el builder | Componentes de UI compartidos |
 | **nexus** | El store de estado (`@plitzi/nexus`), en su propio repositorio | Interioridades del store, reactividad, rendimiento |
-| **plitzi-cli** | Herramientas de línea de comandos | Scaffolding y flujos locales |
-| **plitzi-plugin-template** | Punto de partida para un plugin de terceros | Escribir o depurar un plugin |
 | **plitzi-platform** | Cluster (k3s + ArgoCD) y Terraform | Despliegues, configuración del cluster, secretos |
 
 ## Dentro del monorepo
@@ -46,6 +44,8 @@ apps/
   sdk/       @plitzi/plitzi-sdk       el runtime que renderiza un space
   server/    @plitzi/sdk-server       servidor de páginas: SSR, RSC, plugins, conectores
   mcp/       @plitzi/sdk-mcp          la superficie de IA, construida sobre apps/server
+  cli/       @plitzi/cli              crea un proyecto o un paquete de plugin; añade elementos a un proyecto
+  desktop/   @plitzi/plitzi-desktop   el cliente de escritorio
 packages/
   sdk-*                               librerías compartidas, consumidas por las apps y entre sí
 ```
@@ -58,6 +58,7 @@ Los paquetes se retienen mejor agrupados por **para qué sirven** que en orden a
 | Grupo | Paquetes | De qué se ocupa |
 |---|---|---|
 | El space en sí | `sdk-schema`, `sdk-style`, `sdk-elements` | Qué *es* un space: su árbol, sus estilos, sus componentes |
+| Escribir uno | `sdk-authoring` | Un space en TypeScript, y el linter con el que el builder, el servidor y el MCP juzgan un space |
 | Comportamiento en runtime | `sdk-interactions`, `sdk-variables`, `sdk-navigation`, `sdk-auth` | Qué *hace* un space ya renderizado |
 | Fontanería | `sdk-shared`, `sdk-plugins`, `sdk-event-bridge`, `sdk-dev-tools` | Tipos y utilidades, sistema de plugins, mensajería entre frames, depuración |
 
@@ -177,7 +178,7 @@ Antes de abrir un PR: `yarn typecheck`, `yarn lint` y tests para el comportamien
 | Publicar un cambio | [Publicaciones](./releases.md) |
 | Conectar un CMS externo | [Conectores y elementos de contenido](./connectors.md) |
 | La API del servidor de páginas | [apps/server/README.md](../../apps/server/README.md) |
-| La superficie de IA | [apps/mcp/README.md](../../apps/mcp/README.md) |
+| La superficie de IA | [AI agents and the MCP server](../en/mcp.md) · [apps/mcp/README.md](../../apps/mcp/README.md) |
 
 Empieza por las guías, en este orden: [Conectores y elementos de contenido](./connectors.md) para saber cómo
 llegan los datos a un space y cómo se presentan, [Server actions](../en/server-actions.md) (en inglés) para el

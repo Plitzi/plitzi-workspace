@@ -1,7 +1,7 @@
 import { compressBody, DEFAULT_COMPRESSION, selectEncoding } from './compress';
 
 import type { ContentEncoding, ResolvedCompression } from './compress';
-import type { SSRResponseHelpers } from '@plitzi/sdk-shared';
+import type { CompressedBodies, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 export type RawResponse = {
   headersSent: boolean;
@@ -22,6 +22,34 @@ export type RawResponse = {
   writableFinished?: boolean;
 };
 
+/**
+ * `compressBody`, remembered in `store` when the caller keeps one: the same body in the same encoding is compressed
+ * once. What comes back uncompressed (identity, or a body under the threshold) is never stored — there is nothing to
+ * reuse, and a stored copy would only be the body again.
+ */
+const compressOnce = (
+  body: string,
+  encoding: ContentEncoding,
+  compression: ResolvedCompression,
+  store: CompressedBodies | undefined
+): Buffer | string => {
+  if (!store || encoding === 'identity') {
+    return compressBody(body, encoding, compression);
+  }
+
+  const kept = store[encoding];
+  if (kept) {
+    return kept;
+  }
+
+  const compressed = compressBody(body, encoding, compression, true);
+  if (typeof compressed !== 'string') {
+    store[encoding] = compressed;
+  }
+
+  return compressed;
+};
+
 export const buildResponseHelpers = (
   raw: RawResponse,
   acceptEncoding?: string,
@@ -40,7 +68,31 @@ export const buildResponseHelpers = (
    */
   const transformable = (): boolean => !String(raw.getHeaders()['cache-control']).includes('no-transform');
 
-  const writeSend = (body: string | Buffer) => {
+  /** A stored form this request can take as it is, without the body it was made from. */
+  const storedFor = (store: CompressedBodies | undefined): Buffer | undefined =>
+    encoding === 'identity' || !transformable() ? undefined : store?.[encoding];
+
+  const writeBody = (payload: string | Buffer, encoded: boolean) => {
+    if (encoded) {
+      raw.setHeader('Content-Encoding', encoding);
+      raw.setHeader('Vary', 'Accept-Encoding');
+    }
+    raw.setHeader('Content-Length', Buffer.byteLength(payload).toString());
+    if (!raw.headersSent) {
+      raw.writeHead(statusCode);
+    }
+    raw.end(payload);
+  };
+
+  const writeSend = (content: string | Buffer | (() => string), store?: CompressedBodies) => {
+    const stored = typeof content === 'function' ? storedFor(store) : undefined;
+    if (stored) {
+      writeBody(stored, true);
+
+      return;
+    }
+
+    const body = typeof content === 'function' ? content() : content;
     /**
      * A Buffer goes out untouched.
      *
@@ -49,17 +101,9 @@ export const buildResponseHelpers = (
      * corrupts any font, image or archive served through it. What a Buffer holds is also compressed already
      * (woff2, png), so re-encoding it would cost CPU to make it bigger.
      */
-    const compressed = typeof body === 'string' && transformable() ? compressBody(body, encoding, compression) : body;
-    const isCompressed = compressed !== body;
-    if (isCompressed) {
-      raw.setHeader('Content-Encoding', encoding);
-      raw.setHeader('Vary', 'Accept-Encoding');
-    }
-    raw.setHeader('Content-Length', Buffer.byteLength(compressed).toString());
-    if (!raw.headersSent) {
-      raw.writeHead(statusCode);
-    }
-    raw.end(compressed);
+    const compressed =
+      typeof body === 'string' && transformable() ? compressOnce(body, encoding, compression, store) : body;
+    writeBody(compressed, compressed !== body);
   };
 
   return {
@@ -75,8 +119,8 @@ export const buildResponseHelpers = (
     setStatus(code) {
       statusCode = code;
     },
-    send(body) {
-      writeSend(body);
+    send(body, options) {
+      writeSend(body, options?.compressed);
     },
     write(chunk) {
       if (!raw.headersSent) {

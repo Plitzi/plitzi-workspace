@@ -1,4 +1,5 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
+import { parseKeys } from '@plitzi/sdk-shared/helpers/keys';
 
 import { typeTriggerDefinitions } from './catalog';
 
@@ -27,7 +28,7 @@ export type ElementTriggerName = keyof typeof interactionBasicTriggers;
  */
 // Asked rather than indexed: the argument may name no built-in trigger at all — a plugin type is free to publish
 // its own — and each record's type says every key is there.
-const declaredTrigger = (trigger: string): InteractionCallback | undefined => {
+const builtinTrigger = (trigger: string): InteractionCallback | undefined => {
   if (Object.hasOwn(interactionBasicTriggers, trigger)) {
     return interactionBasicTriggers[trigger];
   }
@@ -36,7 +37,7 @@ const declaredTrigger = (trigger: string): InteractionCallback | undefined => {
 };
 
 export const on = (trigger: ElementTriggerName | (string & {}), params: Record<string, unknown> = {}): StepSpec => {
-  const declared = declaredTrigger(trigger);
+  const declared = builtinTrigger(trigger);
 
   return {
     type: 'trigger',
@@ -59,6 +60,25 @@ export const onSubmit = (): StepSpec => on('onSubmit');
 export const onClick = (params: { propagateEvent?: boolean } = {}): StepSpec => on('onClick', params);
 
 export const onLoad = (): StepSpec => on('onLoad');
+
+/**
+ * A keyboard shortcut, heard on the whole page for as long as the element is mounted: `onKey('f')`,
+ * `onKey('shift+f')`, `onKey('mod+k')` (⌘ on a Mac, Ctrl elsewhere), several at once with commas (`onKey('plus, =')`).
+ *
+ * Put it on the element whose flows it drives, or on the page for a shortcut of the page's. A press while somebody
+ * types in a field is the field's, unless Ctrl, ⌘ or Alt is held or the key is Escape — and the field keeps its own
+ * editing even then (⌘A, ⌘Z, ⌘C/⌘V, moving by word). `{{ <this step's id>.key }}` is the key pressed, canonical (`shift+f`) — for one flow answering several shortcuts.
+ */
+export const onKey = (keys: string): StepSpec => {
+  const { problems } = parseKeys(keys);
+  if (problems.length || !keys.trim()) {
+    throw new Error(
+      `onKey('${keys}') is not a shortcut: ${problems.join('; ') || 'it is empty'}. Write one or several, with commas: 'f', 'shift+f', 'mod+k', 'escape, q'.`
+    );
+  }
+
+  return on('onKey', { keys });
+};
 
 /**
  * A page has this second load event in addition to {@link onLoad}.
@@ -117,6 +137,21 @@ export const resetForm = (target: string): StepSpec => ({
 });
 
 /**
+ * Writes one value into a form's control, by the control's `name` — what fills a form with what is already known
+ * (the account's username on a profile page) without a binding on the control, which would be rewritten each time its
+ * source changed, under the person typing.
+ *
+ * A form callback, so `target` is the FORM's id. `value` is a template: `'{{ auth.details.username }}'`.
+ */
+export const setFieldValue = (target: string, name: string, value: string): StepSpec => ({
+  type: 'callback',
+  action: 'setFieldValue',
+  title: 'Set Field Value',
+  on: target,
+  params: { name, value }
+});
+
+/**
  * Asks an `apiContainer` to fetch again, by id.
  *
  * The step every flow that CHANGES what a list is showing needs: a container reads its query once, so a row deleted
@@ -147,6 +182,29 @@ export const openModal = (target: string, metadata?: string): StepSpec => ({
   title: 'Open Modal',
   on: target,
   params: metadata === undefined ? {} : { metadata }
+});
+
+/**
+ * Says something on a `channel`, by id: every page on its topic hears it — `onMessage`, and the channel's source.
+ *
+ * `data` is what they receive: a template (`'{{ state.draft }}'`) or JSON text. `type` is yours to name — `chat`,
+ * `wave`, `move` — and a flow on `onMessage` tells them apart with `when({ field: '<step>.type', … })`.
+ */
+export const publishOn = (target: string, type: string, data: unknown = null): StepSpec => ({
+  type: 'callback',
+  action: 'publish',
+  title: 'Publish',
+  on: target,
+  params: { type, data: typeof data === 'string' ? data : JSON.stringify(data) }
+});
+
+/** Announces this page on a `channel` with presence — a name, a colour: what the other members see of it. */
+export const announceOn = (target: string, state: unknown): StepSpec => ({
+  type: 'callback',
+  action: 'setPresence',
+  title: 'Set Presence',
+  on: target,
+  params: { data: typeof state === 'string' ? state : JSON.stringify(state) }
 });
 
 /** Closes a `modalContainer`, by id — from a button inside it or anywhere else. */
@@ -193,3 +251,55 @@ export const toggleElement = (
   ...(target === undefined ? {} : { on: target }),
   params
 });
+
+/** What a declaration offers the two builders below: its events and its actions, keyed by name. */
+interface DeclaresInteractions {
+  triggers?: Readonly<Record<string, InteractionCallback>>;
+  callbacks?: Readonly<Record<string, InteractionCallback>>;
+}
+
+type TriggerName<D extends DeclaresInteractions> = keyof NonNullable<D['triggers']> & string;
+
+type CallbackName<D extends DeclaresInteractions> = keyof NonNullable<D['callbacks']> & string;
+
+/**
+ * A flow's first step, on one of the triggers a declaration says its element fires — typed from the declaration.
+ *
+ * For an element this SDK does not ship: a plugin fires its own events, and `on('onQuakeSelect')` accepts any string
+ * because it cannot know them. Handed the plugin's `declaration.ts`, a trigger it does not declare is a compile error,
+ * and the step carries the declared title and `preview` — what the builder shows a reader of the flow.
+ */
+export const declaredTrigger = <D extends DeclaresInteractions>(declaration: D, trigger: TriggerName<D>): StepSpec => {
+  const declared = declaration.triggers?.[trigger];
+
+  return {
+    type: 'trigger',
+    action: declared?.action ?? trigger,
+    title: declared?.title ?? trigger,
+    ...(declared?.preview ? { preview: declared.preview as Record<string, unknown> } : {}),
+    params: {}
+  };
+};
+
+/**
+ * A step that runs one of the actions a declaration says its element answers to — on the element named by `on`.
+ *
+ * The built-in elements have a builder per action (`openModal`, `reloadApi`); a plugin's actions are its own, and
+ * without this they were written as a literal step, where naming the wrong action, or forgetting `on`, is a button
+ * that does nothing. Typed from the declaration, so only an action it declares can be named.
+ */
+export const declaredCallback = <D extends DeclaresInteractions>(
+  declaration: D,
+  callback: CallbackName<D>,
+  target: { on: string; params?: Record<string, unknown> }
+): StepSpec => {
+  const declared = declaration.callbacks?.[callback];
+
+  return {
+    type: 'callback',
+    action: declared?.action ?? callback,
+    title: declared?.title ?? callback,
+    on: target.on,
+    params: target.params ?? {}
+  };
+};

@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
+import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
+
 import { apiContainer, button, container, heading, text } from '../elements';
 import { authorSpace } from '../index';
 import { blankSpaceSpec } from '../spaces';
@@ -33,7 +35,7 @@ const rich: SpaceSpec = {
     modalContainer: { slots: { rootContainer: { 'background-color': 'white' } } }
   },
   classes: { unused: { color: 'red' } },
-  settings: { keepState: true, stateStorage: 'localStorage' },
+  settings: { keepState: true, stateStorage: 'localStorage', transientState: ['tourStep'] },
   customCss: '.card .title { outline: 1px solid; }',
   pageFolders: [{ id: 'docs', name: 'Docs' }],
   layouts: [
@@ -54,14 +56,20 @@ const rich: SpaceSpec = {
       layout: { id: 'shell', slot: 'slot' },
       css: { 'min-height': '100vh' },
       body: [
-        apiContainer({ id: 'posts', endpoint: '/posts' }),
-        heading('Hello', { subType: 'h1', bind: { content: 'posts.title' }, variant: 'title' }),
+        // What reads the provider sits inside it: its source reaches its descendants only.
+        apiContainer({
+          id: 'posts',
+          endpoint: '/posts',
+          children: [
+            heading('Hello', { subType: 'h1', bind: { content: 'posts.title' }, variant: 'title' }),
+            text('maybe', {
+              visible: '!posts.loading',
+              bind: [{ to: 'className', source: 'state.theme', transformers: [{ action: 'not', params: {} }] }]
+            })
+          ]
+        }),
         container({ class: card, children: [text('a')] }),
         container({ class: card, visible: false }),
-        text('maybe', {
-          visible: '!posts.loading',
-          bind: [{ to: 'className', source: 'state.theme', transformers: [{ action: 'not', params: {} }] }]
-        }),
         button('Go', {
           id: 'go',
           flows: [
@@ -74,7 +82,7 @@ const rich: SpaceSpec = {
         })
       ]
     },
-    { id: 'guide', name: 'Guide', slug: 'guide', folder: 'docs', keepState: true, body: [] }
+    { id: 'guide', name: 'Guide', slug: 'guide', folder: 'docs', body: [] }
   ]
 };
 
@@ -105,21 +113,21 @@ describe('specFromSpace', () => {
     const body = spec.pages[0].body;
 
     expect(body[0].id).toBe('posts');
-    expect(body[1].id).toBeUndefined();
-    expect(body[1].bind).toEqual({ content: 'posts.title' });
+    expect(body[0].children?.[0].id).toBeUndefined();
+    expect(body[0].children?.[0].bind).toEqual({ content: 'posts.title' });
   });
 
   it('keeps every id when asked, for a space people keep working in', () => {
     const { spec } = specFromSpace(authorSpace(rich), { keepIds: true });
 
-    expect(spec.pages[0].body[1].id).toBe('heading-1');
+    expect(spec.pages[0].body[0].children?.[0].id).toBe('heading-1');
   });
 
   it('writes a selector one element uses into that element, and keeps a shared one as a class', () => {
     const { spec } = specFromSpace(authorSpace(rich));
 
     expect(spec.pages[0].css).toEqual({ 'min-height': '100vh' });
-    expect(spec.pages[0].body[2].class).toBe('card');
+    expect(spec.pages[0].body[1].class).toBe('card');
     expect(spec.classes?.card).toMatchObject({ states: { hover: { 'background-color': 'var(--accent)' } } });
     expect(spec.classes?.unused).toEqual({ color: 'red' });
   });
@@ -157,8 +165,8 @@ describe('specFromSpace', () => {
   it('reads visibility back into the field, both the condition and the starting state', () => {
     const { spec } = specFromSpace(authorSpace(rich));
 
-    expect(spec.pages[0].body[3].visible).toBe(false);
-    expect(spec.pages[0].body[4].visible).toBe('!posts.loading');
+    expect(spec.pages[0].body[2].visible).toBe(false);
+    expect(spec.pages[0].body[0].children?.[1].visible).toBe('!posts.loading');
   });
 
   it('refuses a document that names no space unless told which one it is', () => {
@@ -328,6 +336,27 @@ describe('specFromSpace / what it repairs', () => {
     );
   });
 
+  // Older documents carry `keepState` on a page, which the runtime never read — it keeps state per space. Reading one
+  // back drops it and says so, rather than handing the author a field that promises something nothing does.
+  it('drops a page keepState, which nothing reads', () => {
+    const documents = authorSpace({
+      name: 'Old',
+      permanentUrl: 'old',
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [] }]
+    });
+    documents.schema.flat.home.attributes = {
+      ...documents.schema.flat.home.attributes,
+      keepState: true,
+      stateStorage: 'localStorage'
+    };
+    const { spec: read, corrections: repairs } = specFromSpace(documents);
+
+    expect(read.pages[0]).not.toHaveProperty('keepState');
+    expect(repairs.map(repair => repair.message)).toEqual(
+      expect.arrayContaining([expect.stringContaining('page attribute "keepState"')])
+    );
+  });
+
   it('turns a navbar into a list laid out in a row, and its items into list items', () => {
     const nav = spec.pages[0].body[0];
 
@@ -359,6 +388,56 @@ describe('specFromSpace / what it repairs', () => {
 
   it('authors what it read into a space the validator accepts', () => {
     expect(authorSpace(spec).warnings.filter(warning => warning.code !== 'tablet-rule-skips-mobile')).toEqual([]);
+  });
+});
+
+describe('specFromSpace / element keys from before the id was the name', () => {
+  /**
+   * `documents` as a builder kept them before an element's id was its name: `flat` keyed by ObjectIds and the name
+   * beside each in `idRef`. Every other one starts with a letter, which is a valid id and still not the name.
+   */
+  const keyedByObjectId = (documents: SpaceDocuments): SpaceDocuments => {
+    const schema = structuredClone(documents.schema);
+    const names = Object.keys(schema.flat);
+    const keys = Object.fromEntries(
+      names.map((name, index) => [
+        name,
+        `${index % 2 ? 'a' : '6'}55221a12565b83ac5060e${String(index).padStart(2, '0')}`
+      ])
+    );
+    repointIds(schema.flat, keys, schema.pages);
+    names.forEach(name => Object.assign(schema.flat[keys[name]], { idRef: name }));
+
+    return { ...documents, schema };
+  };
+
+  it('reads them back under their names, with everything that pointed at them', () => {
+    const current = authorSpace(rich);
+    const { spec, corrections } = specFromSpace(keyedByObjectId(current));
+
+    expect(spec).toEqual(specFromSpace(current).spec);
+    expect(corrections).toHaveLength(Object.keys(current.schema.flat).length);
+    expect(new Set(corrections.map(correction => correction.code))).toEqual(new Set(['legacy-element-id']));
+  });
+
+  it('names one that carries no name after its type', () => {
+    const documents = authorSpace({
+      name: 'Old',
+      permanentUrl: 'old',
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [heading({ id: 'intro', content: 'Hi' })] }]
+    });
+    repointIds(documents.schema.flat, { intro: '6552289be0053d3e506eafe5' }, documents.schema.pages);
+    const { spec, corrections } = specFromSpace(documents, { keepIds: true });
+
+    expect(spec.pages[0].body[0].id).toBe('heading-1');
+    expect(corrections).toEqual([expect.objectContaining({ code: 'legacy-element-id', at: 'heading-1' })]);
+  });
+
+  it('refuses a space with no pages, which there is no code to write for', () => {
+    const documents = authorSpace(rich);
+    documents.schema.pages = [];
+
+    expect(() => specFromSpace(documents)).toThrow(/has no pages/);
   });
 });
 

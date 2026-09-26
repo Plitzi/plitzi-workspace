@@ -1,10 +1,6 @@
-import { applyOperations } from './apply/dispatch';
 import { environment, operations } from './operations';
-import { cloneSpace } from '../helpers';
-import { expandOperations } from './shared/expandOperations';
+import { draftBatch } from './shared/draftBatch';
 import { defineTool } from './shared/tool';
-import { validateOperations } from './shared/validator';
-import { auditResources } from './shared/validator/audit';
 
 import type { Space } from '../helpers';
 import type { Env, ValidateInput, ValidationResult } from '../types';
@@ -12,34 +8,13 @@ import type { Env, ValidateInput, ValidationResult } from '../types';
 export const validateShape = { environment, operations };
 
 export const validate = (input: ValidateInput, space: Space): ValidationResult => {
-  const expansion = expandOperations(input.operations);
-  if (expansion.errors.length > 0) {
-    return { valid: false, errors: expansion.errors, warnings: [] };
-  }
+  // Exactly what plitzi_apply would do, on a throwaway copy — so what this answers is what apply would block on,
+  // including a PRE-EXISTING malformation in anything the batch touches.
+  const result = draftBatch(space, (input.environment ?? 'main') as Env, input.operations);
 
-  const ops = expansion.operations;
-  const validation = validateOperations(space, ops);
-  if (!validation.valid) {
-    return validation;
-  }
-
-  // Mirror apply: run the batch on a throwaway draft and audit every touched resource for PRE-EXISTING malformations,
-  // so plitzi_validate surfaces exactly what plitzi_apply would block on (a broken transformer / invalid CSS / bad
-  // node already living in a touched element or definition), without persisting.
-  const env = (input.environment ?? 'main') as Env;
-  const draft = cloneSpace(space);
-  const outcome = applyOperations(draft, env, ops);
-  if (outcome.errors.length > 0) {
-    return { valid: false, errors: outcome.errors, warnings: validation.warnings };
-  }
-
-  const audit = auditResources(draft, ops);
-
-  return {
-    valid: audit.errors.length === 0,
-    errors: audit.errors,
-    warnings: [...validation.warnings, ...audit.warnings]
-  };
+  return result.ok
+    ? { valid: true, errors: [], warnings: result.warnings }
+    : { valid: false, errors: result.errors, warnings: result.warnings };
 };
 
 export const validateTool = defineTool({

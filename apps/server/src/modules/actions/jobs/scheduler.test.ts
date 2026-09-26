@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createMemoryJobQueue } from './memoryQueue';
 import { createScheduler } from './scheduler';
 import { schedulesFor } from './schedules';
+import { serverLog } from '../../../helpers/serverLog';
 
 import type { ActionEntry, ActionJobQueue, ElementInteraction } from '@plitzi/sdk-shared';
 
@@ -33,6 +34,12 @@ const scheduled = (cron: string, enabled = true, id = 'digest'): ActionEntry => 
 });
 
 const MIDNIGHT = Date.parse('2026-03-01T00:00:00Z');
+
+// A test that fails half-way must not leave its spies or its clock to the next one.
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 /** A cluster: one queue, and as many schedulers over it as a test wants. */
 const cluster = (entries: ActionEntry[]) => {
@@ -189,6 +196,38 @@ describe('createScheduler', () => {
 
     const [after] = await world.queue.listSchedules([1]);
     expect(after.nextRunAt).toBe(before.nextRunAt);
+  });
+
+  // A store that drops its connections for a moment fails one sweep, and the next works: nothing to raise an alarm
+  // about. See `createFailureStreak`.
+  it('reports a sweep that failed once as a warning, and sweeps again', async () => {
+    // The sweep interval carries up to a second of jitter, so time is advanced rather than waited for.
+    vi.useFakeTimers();
+    const warn = vi.spyOn(serverLog, 'warn').mockImplementation(() => {});
+    const error = vi.spyOn(serverLog, 'error').mockImplementation(() => {});
+    const memory = createMemoryJobQueue();
+    const dueSchedules = vi
+      .fn<ActionJobQueue['dueSchedules']>()
+      .mockRejectedValueOnce(new Error('interrupted due to server monitor timeout'))
+      .mockImplementation(limit => memory.dueSchedules(limit));
+    const scheduler = createScheduler({
+      queue: { ...memory, dueSchedules },
+      lookups: { getAction: () => Promise.resolve(undefined), listActions: () => Promise.resolve([]) },
+      spaces: [1],
+      pollMs: 5
+    });
+
+    scheduler.start();
+    await vi.advanceTimersByTimeAsync(2_100);
+    scheduler.stop();
+
+    expect(dueSchedules.mock.calls.length).toBeGreaterThan(1);
+    expect(warn).toHaveBeenCalledWith(
+      'Actions',
+      'schedule sweep failed, trying again',
+      'interrupted due to server monitor timeout'
+    );
+    expect(error).not.toHaveBeenCalled();
   });
 
   it('says so, once, when nothing tells it which spaces to watch', () => {

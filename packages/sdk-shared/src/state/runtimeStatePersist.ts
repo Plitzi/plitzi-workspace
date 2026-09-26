@@ -1,5 +1,15 @@
 import { persistMiddleware } from '@plitzi/nexus';
 
+import {
+  clearPaintedEntry,
+  paintedKeys,
+  paintedStateCookieName,
+  pickPainted,
+  readPaintedEntry,
+  writePaintedEntry
+} from './paintedState';
+import { pConsole } from '../devTools/utils/PlitziConsole';
+
 import type { CommonState } from '../types';
 import type { PathOf, PersistStorage, StoreMiddleware } from '@plitzi/nexus';
 
@@ -89,6 +99,26 @@ const ownedStorage = (storage: Storage, owner: string): PersistStorage => ({
   removeItem: key => storage.removeItem(key)
 });
 
+/** The one path this module keeps. */
+const KEPT_PATH = 'runtime.state';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const omitKeys = (from: Record<string, unknown>, keys: ReadonlySet<string>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(from).filter(([key]) => !keys.has(key)));
+
+const pickKeys = (from: unknown, keys: ReadonlySet<string>): Record<string, unknown> =>
+  isRecord(from) ? Object.fromEntries(Object.entries(from).filter(([key]) => keys.has(key))) : {};
+
+/** `schema` is typed required but seeded after mount, so it is read defensively. */
+const schemaSettings = (state: CommonState): CommonState['schema']['settings'] | undefined =>
+  (state.schema as CommonState['schema'] | undefined)?.settings;
+
+/** The keys a space declared never to keep. */
+const transientKeys = (settings: Pick<CommonState['schema']['settings'], 'transientState'> | undefined): Set<string> =>
+  new Set((settings?.transientState ?? []).filter((key): key is string => typeof key === 'string' && key !== ''));
+
 const browserStorage = (kind: 'local' | 'session'): Storage | undefined => {
   try {
     return kind === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
@@ -98,9 +128,79 @@ const browserStorage = (kind: 'local' | 'session'): Storage | undefined => {
   }
 };
 
+/**
+ * Keeps the cookie of `settings.paintedState` (see `paintedState.ts`) in step with `runtime.state`.
+ *
+ * Under the same gates as the restore — after hydration, with `keepState` on, once auth has said who this is — and for
+ * the same reason as the owner on a kept entry: the first time those hold, an entry somebody else wrote is removed, and
+ * the values the page rendered with from it are dropped. After that, a change to a declared key rewrites the entry;
+ * nothing else touches the cookie.
+ */
+const paintedSync = <TState extends CommonState>(
+  api: { getState: () => TState; setState: (path: PathOf<TState>, value: never) => void },
+  webId: number
+): (() => void) => {
+  const name = paintedStateCookieName(webId, typeof window === 'undefined' ? undefined : window.location.host);
+  let checked = false;
+  let written: string | undefined;
+
+  return () => {
+    const state = api.getState();
+    if (typeof document === 'undefined' || (state.render?.isHydrating && !state.render.hydrated)) {
+      return;
+    }
+
+    const settings = schemaSettings(state);
+    const keys = paintedKeys(settings);
+    const current = stateOwner(state);
+    if (!settings?.keepState || keys.size === 0 || current === undefined) {
+      return;
+    }
+
+    const owner = ownerKey(current);
+    const kept = state.runtime?.state;
+    if (!checked) {
+      checked = true;
+      const entry = readPaintedEntry(name);
+      if (entry && entry.owner !== owner) {
+        clearPaintedEntry(name);
+        if (isRecord(kept) && [...keys].some(key => key in kept)) {
+          // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
+          // Its commit comes back through here, and finds the entry gone.
+          api.setState('runtime.state' as PathOf<TState>, omitKeys(kept, keys) as never);
+
+          return;
+        }
+      }
+
+      written = entry?.owner === owner ? JSON.stringify(pickPainted(entry.values, keys)) : undefined;
+    }
+
+    const values = pickPainted(kept, keys);
+    const serialized = JSON.stringify(values);
+    if (serialized === written) {
+      return;
+    }
+
+    written = serialized;
+    if (Object.keys(values).length === 0) {
+      clearPaintedEntry(name);
+
+      return;
+    }
+
+    if (writePaintedEntry(name, { owner, values }) === 'too-large') {
+      pConsole.warning(
+        'store',
+        `settings.paintedState holds more than a cookie can carry — the first paint uses the space's defaults for ${[...keys].join(', ')}. Declare only what the first paint shows.`,
+        { storeName: 'runtime', path: 'runtime.state', prev: undefined, next: values }
+      );
+    }
+  };
+};
+
 // Persists `runtime.state` to local/session storage (keyed per web), gated reactively by `schema.settings`: while
-// `keepState` is off the storage resolver returns `false` and persist skips entirely. `schema` is typed required but
-// seeded after mount, so it's read defensively. Mounted in each app's root StoreProvider; the persist middleware
+// `keepState` is off the storage resolver returns `false` and persist skips entirely. Mounted in each app's root StoreProvider; the persist middleware
 // self-hydrates on its first commit once storage becomes resolvable (i.e. once `keepState` is turned on).
 //
 // Nothing is restored while a render is still hydrating, and that gate is the whole reason this resolver reads
@@ -122,16 +222,30 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
   const persist = persistMiddleware<TState>({
     key: `plitzi_${webId}_state`,
     // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
-    paths: ['runtime.state'] as PathOf<TState>[],
+    paths: [KEPT_PATH] as PathOf<TState>[],
+    /**
+     * The space's transient keys stay out of what is written — and out of what is read back, so an entry kept before a
+     * key was declared transient does not bring it back — while the values they hold now survive the restore, which
+     * lands late (after hydration, once auth settles) and would otherwise put `runtime.state` back whole over them.
+     */
+    partializePath: (_path, value, state) =>
+      isRecord(value) ? omitKeys(value, transientKeys(schemaSettings(state))) : value,
+    mergePath: (_path, persisted, current, state) => {
+      const transient = transientKeys(schemaSettings(state));
+
+      return transient.size > 0 && isRecord(persisted)
+        ? { ...omitKeys(persisted, transient), ...pickKeys(current, transient) }
+        : persisted;
+    },
     storage: (state: CommonState) => {
-      const { schema, render } = state;
+      const { render } = state;
       // Only a render that came from SSR waits: a client-only one (the builder, an embed) has no markup to match and
       // restores as soon as the setting says to.
       if (render?.isHydrating && !render.hydrated) {
         return false;
       }
 
-      const settings = (schema as CommonState['schema'] | undefined)?.settings;
+      const settings = schemaSettings(state);
       const owner = stateOwner(state);
       if (!settings?.keepState || owner === undefined) {
         return false;
@@ -147,6 +261,7 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
     const handlers = persist(api);
     const initial = api.getState().runtime?.state;
     let owner = stateOwner(api.getState());
+    const painted = paintedSync(api, webId);
 
     return {
       ...handlers,
@@ -172,11 +287,14 @@ export const runtimeStatePersist = <TState extends CommonState>(webId: number): 
         }
 
         if (previous?.kind === 'account' && next !== undefined && ownerKey(next) !== ownerKey(previous)) {
+          // Without the painted keys: what the page STARTED with may have come from the previous account's cookie.
+          const fresh = isRecord(initial) ? omitKeys(initial, paintedKeys(schemaSettings(api.getState()))) : initial;
           // `runtime.state` is valid for any CommonState; TS can't prove it through the generic `TState`, so cast.
-          api.setState('runtime.state' as PathOf<TState>, initial as never);
+          api.setState('runtime.state' as PathOf<TState>, fresh as never);
         }
 
         handlers?.onChange?.(change);
+        painted();
       }
     };
   };

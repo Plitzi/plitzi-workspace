@@ -10,12 +10,12 @@ import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
-import { isAbsoluteUrl } from '@plitzi/sdk-shared/navigation';
+import { isAbsoluteUrl, navigationTarget } from '@plitzi/sdk-shared/navigation';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import refreshRsc from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
-import type { CommonState, Element, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
+import type { CommonState, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
 
@@ -72,6 +72,8 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   const { queryParams, hostname, origin, location } = useNavigation({ server, routerLocation });
   const pageDefinitionsRef = useRef(pageDefinitions);
   pageDefinitionsRef.current = pageDefinitions;
+  const pageFoldersRef = useRef(pageFolders);
+  pageFoldersRef.current = pageFolders;
   const { authenticated } = use(AuthContext);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const routerNavigate = renderMode !== 'widget' ? useNavigate() : undefined;
@@ -122,19 +124,10 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
    * A caller may name a page id, a slug or a path, and the three are resolved here so that everything downstream —
    * the router, and the prefetch below — is talking about the same URL.
    */
-  const resolveTarget = useCallback((url: string) => {
-    const page: Element | undefined = get(pageDefinitionsRef, `current.${url}`, undefined);
-    if (!page) {
-      return url;
-    }
-
-    const { slug, default: isHome } = page.attributes as { slug?: string; default?: boolean };
-    if (typeof slug === 'string') {
-      return slug.startsWith('/') ? slug : `/${slug}`;
-    }
-
-    return isHome ? '/' : `/${url}`;
-  }, []);
+  const resolveTarget = useCallback(
+    (url: string) => navigationTarget(pageDefinitionsRef.current, pageFoldersRef.current, url),
+    []
+  );
 
   const handleNavigate = useCallback(
     (url: string, isExternal: boolean = false) => {
@@ -202,8 +195,6 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   );
 
   if (action.type === 'notFound') {
-    // @todo: In the future this should navigate to page 404
-    // return <Navigate to="/not-found" replace />;
     if (ssrResult) {
       ssrResult.status = 404;
     }
@@ -212,8 +203,6 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   }
 
   if (action.type === 'accessDenied') {
-    // @todo: In the future this should navigate to page 403
-    // return <Navigate to="/unauthorized" replace />;
     if (ssrResult) {
       ssrResult.status = 403;
     }

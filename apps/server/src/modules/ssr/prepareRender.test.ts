@@ -36,7 +36,9 @@ const offlineData = (
   rsc: SchemaRsc | undefined = { enabled: true },
   homeRuntime: 'server' | 'client' = 'client',
   fonts: SpaceFont[] = [],
-  spaceDebugMode = false
+  spaceDebugMode = false,
+  defaultTheme?: 'dark' | 'light' | 'system',
+  settings: Record<string, unknown> = {}
 ): OfflineDataRaw =>
   ({
     schema: {
@@ -58,11 +60,16 @@ const offlineData = (
       pageFolders: [],
       definition: { name: 'test', permanentUrl: 'test' },
       variables: [],
-      settings: { customCss: '', ...(spaceDebugMode ? { debugMode: true } : {}) },
+      settings: { customCss: '', ...(spaceDebugMode ? { debugMode: true } : {}), ...settings },
       rsc
     },
     plugins: [],
-    style: { cache: '', variables: [], fonts }
+    style: {
+      cache: '',
+      variables: [],
+      fonts,
+      ...(defaultTheme ? { theme: { default: defaultTheme, schemes: ['light', 'dark'] } } : {})
+    }
   }) as unknown as OfflineDataRaw;
 
 const request = (path: string, query: Record<string, string> = {}, cookie?: string): SSRRequest =>
@@ -99,6 +106,10 @@ type Options = {
   /** What the space declares, and where this deployment serves uploaded files from. */
   fonts?: SpaceFont[];
   fontsConfig?: SSRFontsConfig;
+  /** The theme the space's style says a visitor starts in. */
+  defaultTheme?: 'dark' | 'light' | 'system';
+  /** The space's own settings, over the fixture's. */
+  settings?: Record<string, unknown>;
 };
 
 const render = async (
@@ -114,11 +125,15 @@ const render = async (
     query,
     degrade,
     fonts,
-    fontsConfig
+    fontsConfig,
+    defaultTheme,
+    settings
   }: Options = {}
 ) => {
   const getRscData = vi.fn().mockResolvedValue({ serverData: { resolved: true } });
-  const getOfflineData = vi.fn().mockResolvedValue(offlineData(rsc, homeRuntime, fonts, spaceDebugMode));
+  const getOfflineData = vi
+    .fn()
+    .mockResolvedValue(offlineData(rsc, homeRuntime, fonts, spaceDebugMode, defaultTheme, settings));
   const metrics = new RequestMetrics();
   const config = {
     environment: 'production',
@@ -429,5 +444,79 @@ describe('prepareRender / the theme the visitor already chose', () => {
       expect(templateParams.themeClass).toBeUndefined();
       expect(componentProps.theme).toBeUndefined();
     }
+  });
+
+  /**
+   * A space that says it is dark by default IS dark on a first visit — painted so by the server, not corrected after.
+   * `style.theme.default` was stored, edited in the builder and written by authoring, and nothing rendered with it.
+   */
+  it('starts a first visit in the theme the space declares as its default', async () => {
+    const { templateParams, componentProps } = await render('/', { defaultTheme: 'dark' });
+
+    expect(templateParams.themeClass).toBe('dark');
+    expect(componentProps.theme).toBe('dark');
+  });
+
+  it('lets a choice the visitor made win over the default of the space', async () => {
+    const { templateParams } = await render('/', { cookie: 'theme=light', defaultTheme: 'dark' });
+
+    expect(templateParams.themeClass).toBe('light');
+  });
+
+  it('leaves a space whose default is system to the machine', async () => {
+    const { templateParams, componentProps } = await render('/', { defaultTheme: 'system' });
+
+    expect(templateParams.themeClass).toBeUndefined();
+    expect(componentProps.theme).toBeUndefined();
+  });
+});
+
+/**
+ * The theme's reasoning, for the space's own kept state: web storage is the browser's alone, so what a visitor kept that
+ * the first paint shows would be swapped in after hydration. The keys a space declares are read from a cookie instead,
+ * drawn with, and handed to the page as its starting state.
+ */
+describe('prepareRender / the kept state the first paint shows', () => {
+  const cookie = (values: Record<string, unknown>, owner = '') =>
+    `plitzi_0_painted=${encodeURIComponent(JSON.stringify({ owner, values }))}`;
+  const keeping = { keepState: true, paintedState: ['toolPick', 'name'] };
+
+  it('renders with the declared keys, and hands the browser the same values', async () => {
+    const { componentProps, templateParams } = await render('/', {
+      cookie: cookie({ toolPick: 'star', name: 'Ada' }),
+      settings: keeping
+    });
+
+    expect(componentProps.state).toEqual({ toolPick: 'star', name: 'Ada' });
+    expect(templateParams.offlineData).toContain('"state":{"toolPick":"star","name":"Ada"}');
+  });
+
+  // The cookie is the visitor's to edit: a key the space does not declare is not the server's to render with.
+  it('renders with nothing the space does not declare', async () => {
+    const { componentProps } = await render('/', {
+      cookie: cookie({ toolPick: 'star', admin: true }),
+      settings: keeping
+    });
+
+    expect(componentProps.state).toEqual({ toolPick: 'star' });
+  });
+
+  it('reads nothing for a space that does not keep state', async () => {
+    const { componentProps, templateParams } = await render('/', {
+      cookie: cookie({ toolPick: 'star' }),
+      settings: { paintedState: ['toolPick'] }
+    });
+
+    expect(componentProps.state).toBeUndefined();
+    expect(templateParams.offlineData).not.toContain('"state":');
+  });
+
+  it('reads nothing for a space that declares no keys', async () => {
+    const { componentProps } = await render('/', {
+      cookie: cookie({ toolPick: 'star' }),
+      settings: { keepState: true }
+    });
+
+    expect(componentProps.state).toBeUndefined();
   });
 });

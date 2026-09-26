@@ -141,6 +141,8 @@ export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>
 export const position = z
   .enum(['inside', 'before', 'after'])
   .describe('Placement relative to the anchor: "inside" nests it as a child (default), "before"/"after" as a sibling');
+
+export type Position = z.infer<typeof position>;
 export const scalar = z.union([z.string(), z.number(), z.boolean()]);
 
 // --- Data bindings ---
@@ -181,6 +183,10 @@ export const interactionNode = z.object({
   params: z.record(z.string(), z.unknown()).optional(),
   enabled: z.boolean().optional(),
   when: ruleGroup.optional().describe('QueryBuilder RuleGroup gating this step (validated structurally)'),
+  whileRunning: z
+    .enum(['skip', 'parallel', 'queue'])
+    .optional()
+    .describe('Trigger only: a refiring while this flow runs'),
   elementId: z
     .string()
     .optional()

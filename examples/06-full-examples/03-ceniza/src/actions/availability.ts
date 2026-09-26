@@ -1,7 +1,7 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
-import { bookingTimes } from '../content';
-import { FEW_SEATS, SEATS_PER_SLOT, setUpDay, slotId, slotState } from './rules';
+import { bookingTimes } from '../content.ts';
+import { FEW_SEATS, SEATS_PER_SLOT, setUpDay, slotId, slotState } from './rules.ts';
 
 export const AVAILABILITY_ACTION = 'consultar-disponibilidad';
 

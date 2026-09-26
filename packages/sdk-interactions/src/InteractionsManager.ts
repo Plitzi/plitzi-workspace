@@ -3,6 +3,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
+import { KEY_TRIGGER } from '@plitzi/sdk-shared/helpers/keys';
 
 import { flowTrigger } from './InteractionsHelper';
 
@@ -13,10 +14,28 @@ import type {
   InteractionCallback,
   QueryParams,
   RouteParams,
-  Subscriptor
+  Subscriptor,
+  WhileRunning
 } from '@plitzi/sdk-shared';
 
 type InteractionUpdateListener = (timestamp: number) => void;
+
+/**
+ * Whether a key press is for this trigger.
+ *
+ * One press fires the key trigger ONCE, listing every shortcut it matched — fired once per flow instead, the second
+ * would find the first still running and be dropped. So each flow on it runs only when its own `keys` is on the list.
+ * Every other trigger answers whatever fires it.
+ */
+const answersPress = (node: ElementInteraction, payload: Record<string, unknown>): boolean => {
+  if (node.action !== KEY_TRIGGER) {
+    return true;
+  }
+
+  const { shortcuts } = payload;
+
+  return Array.isArray(shortcuts) && shortcuts.includes(node.params.keys);
+};
 
 class InteractionsManager {
   eventBridge: InstanceType<typeof EventBridge>;
@@ -26,7 +45,11 @@ class InteractionsManager {
   subscriptors: Record<string, Subscriptor>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   callbacksAvailables: Record<string, Record<string, InteractionCallback<any>>>;
-  interactionsRunning: Record<string, boolean>;
+  /**
+   * The flows running now, by element and trigger node — what `whileRunning` decides against. Per FLOW rather than per
+   * event: two flows on one click are two things, and one still running says nothing about the other.
+   */
+  private flowsRunning = new Map<string, Promise<void>>();
   lastUpdate: number;
   private listeners = new Set<InteractionUpdateListener>();
 
@@ -37,7 +60,6 @@ class InteractionsManager {
 
     this.subscriptors = {};
     this.callbacksAvailables = {};
-    this.interactionsRunning = {};
 
     this.interactionsData = { currentPageId, ...routeParams, ...queryParams };
     this.lastUpdate = Date.now();
@@ -46,44 +68,76 @@ class InteractionsManager {
   eventBridgeCallback =
     (interactions?: Record<string, ElementInteraction>) =>
     async (subscriptorId: string, eventName: string, params: Record<string, unknown>) => {
-      if (
-        !interactions ||
-        !eventName ||
-        !subscriptorId ||
-        get(this.interactionsRunning, `${subscriptorId}.${eventName}`)
-      ) {
+      if (!interactions || !eventName || !subscriptorId) {
         return;
       }
 
-      set(this.interactionsRunning, `${subscriptorId}.${eventName}`, true);
+      /**
+       * Past the commit before a flow starts.
+       *
+       * The page's sources — `state`, `navigation`, the actions — register their callbacks from effects React runs
+       * AFTER the effects of the elements under them. A trigger fired while the page mounts (a plugin saying what it
+       * found, an element's first answer) ran a flow whose `setState` did not exist yet, and the step failed with
+       * nothing to show for it. One microtask is enough: the whole commit's effects have run by then.
+       *
+       * The element must still be the one that fired: unmounted meanwhile, or mounted again (React's development
+       * double mount), its flow is not run for a subscription that is gone.
+       */
+      const subscription = this.subscriptors[subscriptorId] as Subscriptor | undefined;
+      await Promise.resolve();
+      if (!subscription || this.subscriptors[subscriptorId] !== subscription) {
+        return;
+      }
 
-      try {
-        const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
-        let dataSource: Record<string, unknown> | undefined;
-        if (typeof getAdditionalParams === 'function') {
-          ({ dataSource } = getAdditionalParams());
-        }
+      const getAdditionalParams = get(this.subscriptors, `${subscriptorId}.getAdditionalParams`, undefined);
+      // Read again before every step rather than once here: a step sees the page as it is when it runs.
+      const readGlobals = (): Record<string, unknown> => ({
+        ...this.interactionsData,
+        ...(typeof getAdditionalParams === 'function' ? getAdditionalParams().dataSource : undefined)
+      });
 
-        const triggersToRun = Object.values(interactions).filter(
-          (node: ElementInteraction) => node.type === 'trigger' && node.action === eventName && node.enabled
-        );
+      const triggersToRun = Object.values(interactions).filter(
+        (node: ElementInteraction) =>
+          node.type === 'trigger' && node.action === eventName && node.enabled && answersPress(node, params)
+      );
 
-        await Promise.all(
-          triggersToRun.map(trigger =>
+      await Promise.all(
+        triggersToRun.map(trigger =>
+          this.runFlow(`${subscriptorId}.${trigger.id}`, trigger.whileRunning ?? 'skip', () =>
             flowTrigger(
               trigger,
               interactions,
               this.getCallbacksAvailables(),
               { [trigger.id]: params },
-              { ...this.interactionsData, ...dataSource },
+              readGlobals,
               subscriptorId
             )
           )
-        );
-      } finally {
-        set(this.interactionsRunning, `${subscriptorId}.${eventName}`, false);
-      }
+        )
+      );
     };
+
+  /** One firing of one flow, as its trigger's `whileRunning` says — see {@link WhileRunning}. */
+  private runFlow(key: string, whileRunning: WhileRunning, run: () => Promise<void>): Promise<void> {
+    const running = this.flowsRunning.get(key);
+    if (whileRunning === 'parallel') {
+      return run();
+    }
+
+    if (running && whileRunning === 'skip') {
+      return Promise.resolve();
+    }
+
+    // Queued behind the run in progress, if any; a run that failed does not stop the ones waiting for it.
+    const next = (running ? running.then(run, run) : run()).finally(() => {
+      if (this.flowsRunning.get(key) === next) {
+        this.flowsRunning.delete(key);
+      }
+    });
+    this.flowsRunning.set(key, next);
+
+    return next;
+  }
 
   // `id` is the element's id — the one name it answers to, and the only key an interaction is wired by. A caller
   // registered at all: its callbacks would be unreachable (nothing can name them) and its triggers would fire
@@ -100,6 +154,45 @@ class InteractionsManager {
     }
 
     set(this.subscriptors, id, { id, triggers, getAdditionalParams });
+    this.wire(id, interactions, triggers, callbacks);
+    this.touch();
+
+    return true;
+  }
+
+  /**
+   * What a subscribed element wires, replaced — its subscription kept.
+   *
+   * An element re-renders with new callbacks all the time, often right after firing a trigger (a form marks itself
+   * submitted). Its subscription is the same one for as long as it is mounted, so a flow that trigger started still
+   * runs: only an element unmounted meanwhile loses it (see `eventBridgeCallback`).
+   */
+  update<TParams extends Record<string, unknown> = Record<string, unknown>>(
+    id: string,
+    interactions: Record<string, ElementInteraction> = {},
+    triggers: Record<string, InteractionCallback<TParams>> = {},
+    callbacks: Record<string, InteractionCallback<TParams>> = {},
+    getAdditionalParams?: Subscriptor<TParams>['getAdditionalParams']
+  ) {
+    const subscription = this.subscriptors[id] as Subscriptor<TParams> | undefined;
+    if (!subscription) {
+      return false;
+    }
+
+    subscription.triggers = triggers;
+    subscription.getAdditionalParams = getAdditionalParams;
+    this.wire(id, interactions, triggers, callbacks);
+    this.touch();
+
+    return true;
+  }
+
+  private wire<TParams extends Record<string, unknown>>(
+    id: string,
+    interactions: Record<string, ElementInteraction>,
+    triggers: Record<string, InteractionCallback<TParams>>,
+    callbacks: Record<string, InteractionCallback<TParams>>
+  ) {
     const callbackKeys = Object.keys(callbacks);
     if (callbackKeys.length > 0) {
       this.callbacksAvailables[id] = callbackKeys.reduce<Record<string, InteractionCallback<TParams>>>(
@@ -125,6 +218,8 @@ class InteractionsManager {
         },
         {}
       );
+    } else {
+      delete this.callbacksAvailables[id];
     }
 
     if (Object.keys(triggers).length > 0) {
@@ -134,11 +229,9 @@ class InteractionsManager {
         this.eventBridgeCallback(interactions) as EventBridgeCallback,
         { override: true }
       );
+    } else {
+      this.eventBridge.off('interaction', id as EventBridgeEvent);
     }
-
-    this.touch();
-
-    return true;
   }
 
   unsubscribe(id: string) {

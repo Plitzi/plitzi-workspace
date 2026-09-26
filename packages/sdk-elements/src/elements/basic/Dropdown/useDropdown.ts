@@ -12,6 +12,11 @@ export type UseDropdownProps = {
   disabled?: boolean;
   loading?: boolean;
   closeOnClickPopup?: boolean;
+  /**
+   * Close when the pointer goes down anywhere outside the trigger and the popup. What a menu is expected to do; off by
+   * default here because a caller that renders its own backdrop closes from that instead.
+   */
+  closeOnClickOutside?: boolean;
   placement?: 'left' | 'right' | 'top' | 'bottom';
   myWindow?: Window | null;
   offsetX?: number;
@@ -36,6 +41,7 @@ const useDropdown = ({
   disabled = false,
   loading = false,
   closeOnClickPopup = true,
+  closeOnClickOutside = false,
   offsetX = 0,
   offsetY = 0,
   myWindow,
@@ -57,7 +63,10 @@ const useDropdown = ({
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
-      if (disabled || loading) {
+      // The popup renders inside the trigger's element, so its clicks bubble here — and a click on a control in an
+      // open menu is not a click on the button that opened it. Toggling on it closed every menu with
+      // `closeOnClickPopup: false` the moment anything in it was pressed.
+      if (disabled || loading || (e.target instanceof Node && popupRef?.current?.contains(e.target))) {
         return;
       }
 
@@ -72,7 +81,7 @@ const useDropdown = ({
       onChange?.(!open, true);
       setOpen(state => !state);
     },
-    [disabled, loading, onChange, open, openProp]
+    [disabled, loading, onChange, open, openProp, popupRef]
   );
 
   const handleClickPopup = useCallback(
@@ -127,6 +136,29 @@ const useDropdown = ({
     },
     [onChange, open, openProp]
   );
+
+  useEffect(() => {
+    if (!open || disabled || !closeOnClickOutside || !windowInstance) {
+      return undefined;
+    }
+
+    const handlePointerDown = (e: PointerEvent): void => {
+      const target = e.target instanceof Node ? e.target : null;
+      if (!target || ref?.current?.contains(target) || popupRef?.current?.contains(target)) {
+        return;
+      }
+
+      onChange?.(false, openProp === undefined);
+      if (openProp === undefined) {
+        setOpen(false);
+      }
+    };
+
+    // Captured, so an element under the pointer that stops the event (a map, a canvas) cannot keep the menu open.
+    windowInstance.addEventListener('pointerdown', handlePointerDown, true);
+
+    return () => windowInstance.removeEventListener('pointerdown', handlePointerDown, true);
+  }, [open, disabled, closeOnClickOutside, windowInstance, ref, popupRef, onChange, openProp]);
 
   useEffect(() => {
     if (!open || disabled) {

@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, use, useMemo, useRef } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import { evaluateComputed, resolveVariables } from '@plitzi/sdk-shared/dataSource';
@@ -159,20 +159,26 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
    * every binding that shows it. Evaluated here, over the globals above, so they change when what they read changes.
    */
   const [definitions] = useCommonStore('schema.settings.computed');
-  const computedValue = useStableValue(
-    useMemo(
-      () =>
-        evaluateComputed(definitions ?? {}, {
+  // The evaluation before this one, so what did not change keeps its object: written during render, like
+  // `useStableValue`, and only with what the render produced.
+  const previousComputed = useRef<Record<string, unknown> | undefined>(undefined);
+  const computedValue = useMemo(
+    () =>
+      evaluateComputed(
+        definitions ?? {},
+        {
           variables: variablesValue,
           navigation: navigationValue,
           auth: authValue,
           state: state ?? {},
           host: host ?? {},
           theme: themeValue
-        }),
-      [definitions, variablesValue, navigationValue, authValue, state, host, themeValue]
-    )
+        },
+        previousComputed.current
+      ),
+    [definitions, variablesValue, navigationValue, authValue, state, host, themeValue]
   );
+  previousComputed.current = computedValue;
   const computedFields = useCallback(
     () => getPathsFromObeject(computedValue).map(path => ({ path, name: `computed.${path}` })),
     [computedValue]

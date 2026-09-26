@@ -2,25 +2,17 @@ import { execute, selectRows } from './query';
 
 import type { Tables } from './config';
 import type { Queryable } from './query';
-
-/** One signed-in device, as somebody looking at their own account should see it. Never the credential itself. */
-export interface SessionSummary {
-  id: number;
-  userAgent?: string;
-  ip?: string;
-  /** Unix seconds. */
-  createdAt: number;
-  expiresAt: number;
-  /** This is the session asking. A device list without it invites someone to revoke the one they are using. */
-  current: boolean;
-}
+import type { SessionSummary } from '../../core/auth/api';
 
 interface SessionRow {
   id: number;
   token: string;
   user_agent: string | null;
   ip: string | null;
+  app_name: string | null;
+  app_id: string | null;
   created_at: Date;
+  last_active_at: number | null;
   expires_at: number;
 }
 
@@ -35,7 +27,7 @@ export const createSessionStore = (db: Queryable, t: Tables) => {
   const list = async (accountId: number, currentToken?: string): Promise<SessionSummary[]> => {
     const rows = await selectRows<SessionRow>(
       db,
-      `SELECT id, token, user_agent, ip, created_at, expires_at
+      `SELECT id, token, user_agent, ip, app_name, app_id, created_at, last_active_at, expires_at
          FROM ${t.session}
         WHERE account_id = ?
         ORDER BY created_at DESC`,
@@ -46,7 +38,9 @@ export const createSessionStore = (db: Queryable, t: Tables) => {
       id: row.id,
       ...(row.user_agent ? { userAgent: row.user_agent } : {}),
       ...(row.ip ? { ip: row.ip } : {}),
+      ...(row.app_name ? { app: { name: row.app_name, ...(row.app_id ? { softwareId: row.app_id } : {}) } } : {}),
       createdAt: Math.floor(row.created_at.getTime() / 1000),
+      ...(row.last_active_at ? { lastActiveAt: row.last_active_at } : {}),
       expiresAt: row.expires_at,
       current: currentToken !== undefined && row.token === currentToken
     }));

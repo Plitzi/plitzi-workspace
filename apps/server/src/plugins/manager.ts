@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -5,6 +6,8 @@ import { compilePlugin } from './compile';
 import { copyPlugin } from './copy';
 import { detectAction, isComponentSource } from './detect';
 import { assertPluginSources } from './validate';
+import { writeFileAtomic } from '../helpers/atomicFile';
+import { serverLog } from '../helpers/serverLog';
 
 import type { PluginEntry, PluginSource } from '@plitzi/sdk-shared';
 
@@ -12,9 +15,22 @@ const META_FILE = 'meta.json';
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const DEFAULT_CACHE_DIR = '.sdk-plugins';
 
-type Meta = { compiledAt: number; version?: string; inputs?: string[] };
+/** `digest`: the content of `inputs` when the bundle was built — see {@link PluginManager.contentChanged}. */
+type Meta = { compiledAt: number; version?: string; inputs?: string[]; digest?: string };
 
 type CacheEntry = { compiledAt: number; entry: PluginEntry; inputs?: string[]; checkedAt?: number };
+
+/** One hash over every input's path and content — a file gone counts as changed, like a file edited. */
+const digestOf = async (files: readonly string[]): Promise<string> => {
+  const hash = createHash('sha256');
+  for (const file of [...files].sort()) {
+    hash.update(file);
+    hash.update('\0');
+    hash.update(await fs.readFile(file).catch(() => Buffer.from('\0missing')));
+  }
+
+  return hash.digest('hex');
+};
 
 /**
  * How often a dev server re-asks whether a cached plugin is still current.
@@ -135,6 +151,39 @@ export class PluginManager {
     return this.isStale({ compiledAt: cached.compiledAt, inputs: cached.inputs }, source);
   }
 
+  /**
+   * Whether what a bundle on disk was built from reads differently now — asked once, when a process first finds the
+   * bundle, in production as much as in development.
+   *
+   * A version names a release, and a release is only as good as whoever bumps it: a deployment rebuilt from new source
+   * under the same version found last deployment's bundle in its cache folder and served it, with nothing anywhere
+   * saying so. The content decides instead. A bundle written before digests were recorded has none, and is built again
+   * once. What this server does not build from files — a download, a CDN, a component — is its version's business.
+   */
+  private async contentChanged(meta: Meta, source: PluginSource): Promise<boolean> {
+    const inputs = this.inputsOf(source, meta.inputs ?? []);
+    if (inputs.length === 0) {
+      return false;
+    }
+
+    return meta.digest !== (await digestOf(inputs));
+  }
+
+  /** The local files a bundle is built from: what the compiler reported, or the files it was copied from. */
+  private inputsOf(source: PluginSource, compiled: string[]): string[] {
+    if (isComponentSource(source) || source.action === 'download' || source.action === 'cdn') {
+      return [];
+    }
+
+    if (compiled.length > 0) {
+      return compiled;
+    }
+
+    return [source.js, source.css].filter(
+      (file): file is string => typeof file === 'string' && file !== '' && !/^https?:\/\//.test(file)
+    );
+  }
+
   private async isStale(meta: Meta, source: PluginSource): Promise<boolean> {
     // A remote bundle and an inline component are not files this server compiles, so neither can be behind one.
     // Tested for a SCHEME rather than with `isWebUrl`, which also answers true to anything starting with `/` —
@@ -144,14 +193,24 @@ export class PluginManager {
     }
 
     const watched = meta.inputs?.length ? meta.inputs : [source.js];
-    // A source that cannot be stat'd is not evidence of anything: the build below reports a missing file far
-    // better than a cache miss would, and a file that has been DELETED is a change the build is about to report too.
+    // Registered under an entry the bundle was not built from: the plugin moved — `Widget.ts` became
+    // `Widget/index.ts` — and nothing about the old files' timestamps can say so. Compared by REAL path, which is what
+    // the build records: an entry reached through a symlink (a temp dir, a Yarn portal) is still the same file.
+    if (meta.inputs?.length) {
+      const entry = await fs.realpath(source.js).catch(() => path.resolve(source.js));
+      if (!meta.inputs.includes(entry)) {
+        return true;
+      }
+    }
+
+    // A file that is gone is a change: the bundle was built from it. Counting it as "unchanged" kept serving the
+    // bundle of a component that no longer existed; rebuilding either succeeds without it or says what is missing.
     const timestamps = await Promise.all(
       watched.map(file =>
         fs
           .stat(file)
           .then(stats => stats.mtimeMs)
-          .catch(() => 0)
+          .catch(() => Number.POSITIVE_INFINITY)
       )
     );
 
@@ -217,6 +276,14 @@ export class PluginManager {
     return s.startsWith('/') || s.startsWith('http://') || s.startsWith('https://');
   }
 
+  /**
+   * Builds every registered plugin now rather than on first use. A primary does it before starting its workers, so
+   * the workers find each one built — instead of all of them compiling the same plugin into the same folder at once.
+   */
+  async prepareAll(): Promise<void> {
+    await Promise.all(Object.keys(this.plugins).map(key => this.prepare(key)));
+  }
+
   async prepare(name: string): Promise<PluginEntry | null> {
     const key = this.resolveKey(name) ?? name;
 
@@ -260,12 +327,12 @@ export class PluginManager {
 
         // Dropped rather than rebuilt here, so the rebuild goes through the in-flight map at the end of this method
         // and two renders arriving together share one build instead of writing the same directory twice.
-        console.log(`[SSR] Plugin "${key}" source changed since it was built, rebuilding…`);
+        serverLog.info('SSR', `Plugin "${key}" source changed since it was built, rebuilding…`);
         this.mem.delete(key);
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else {
         // File was deleted from disk — drop memory cache and rebuild
-        console.warn(`[SSR] Plugin "${key}" cache invalidated: output file missing, rebuilding…`);
+        serverLog.warn('SSR', `Plugin "${key}" cache invalidated: output file missing, rebuilding…`);
         this.mem.delete(key);
       }
     }
@@ -274,13 +341,14 @@ export class PluginManager {
     if (meta) {
       const sourceVersion = source.version;
 
-      if (await this.isStale(meta, source)) {
-        console.log(`[SSR] Plugin "${key}" source changed since it was built, rebuilding…`);
+      if ((await this.isStale(meta, source)) || (await this.contentChanged(meta, source))) {
+        serverLog.info('SSR', `Plugin "${key}" source changed since it was built, rebuilding…`);
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else if (sourceVersion && meta.version !== sourceVersion) {
         // Version changed — nuke disk cache so build() starts clean
-        console.log(
-          `[SSR] Plugin "${key}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`
+        serverLog.info(
+          'SSR',
+          `Plugin "${key}" version changed (${meta.version ?? 'none'} → ${sourceVersion}), rebuilding…`
         );
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else if (sourceVersion || !this.isExpired(meta.compiledAt)) {
@@ -325,12 +393,12 @@ export class PluginManager {
       return this.toEntry(name, false, undefined, source.props);
     }
 
-    console.log(`[SSR] Plugin "${name}" building (${action}: ${jsPath})…`);
+    serverLog.info('SSR', `Plugin "${name}" building (${action}: ${jsPath})…`);
 
     try {
       let cssUrl: string | undefined;
-      // What the bundle was built from, for the dev-mode staleness check. Only a compiled plugin has any: a copied or
-      // downloaded file is its own input, and `isStale` falls back to it.
+      // What the bundle was built from: what a dev server watches, and what its content digest is taken over. Only a
+      // compiled plugin has a list; a copied file is its own input, and a downloaded one has none of this server's.
       let buildInputs: string[] = [];
 
       if (action === 'compile') {
@@ -352,7 +420,7 @@ export class PluginManager {
           throw new Error(`HTTP ${jsRes.status} downloading ${jsPath}`);
         }
 
-        await fs.writeFile(path.join(dir, 'index.js'), await jsRes.text());
+        await writeFileAtomic(path.join(dir, 'index.js'), await jsRes.text());
         if (cssPath) {
           const isRemote = cssPath.startsWith('http://') || cssPath.startsWith('https://');
           if (isRemote) {
@@ -361,7 +429,7 @@ export class PluginManager {
               throw new Error(`HTTP ${cssRes.status} downloading ${cssPath}`);
             }
 
-            await fs.writeFile(path.join(dir, 'index.css'), await cssRes.text());
+            await writeFileAtomic(path.join(dir, 'index.css'), await cssRes.text());
           } else if (this.isWebUrl(cssPath)) {
             cssUrl = cssPath; // absolute local path — serve as-is
           } else {
@@ -383,7 +451,13 @@ export class PluginManager {
       }
 
       const compiledAt = Date.now();
-      await this.writeMeta(name, { compiledAt, version: source.version, inputs: buildInputs });
+      const inputs = this.inputsOf(source, buildInputs);
+      await this.writeMeta(name, {
+        compiledAt,
+        version: source.version,
+        inputs: buildInputs,
+        ...(inputs.length > 0 ? { digest: await digestOf(inputs) } : {})
+      });
 
       // Stamped after the build, so a rebuild changes the URL the page asks for and the `immutable` the assets are
       // served with becomes a promise this server can keep.
@@ -393,10 +467,10 @@ export class PluginManager {
 
       const entry = this.toEntry(name, true, cssUrl, source.props, compiledAt);
       this.mem.set(name, { compiledAt, entry, inputs: buildInputs });
-      console.log(`[SSR] Plugin "${name}" ready → ${entry.js}`);
+      serverLog.info('SSR', `Plugin "${name}" ready → ${entry.js}`);
       return entry;
     } catch (err) {
-      console.error(`[SSR] Plugin "${name}" build failed (js: ${source.js ?? 'none'}):`, err);
+      serverLog.error('SSR', `Plugin "${name}" build failed (js: ${source.js ?? 'none'})`, err);
       this.failed.add(name);
       return null;
     }
@@ -424,17 +498,21 @@ export class PluginManager {
     return out;
   }
 
-  async invalidate(name?: string, version?: string): Promise<void> {
+  /**
+   * Drops what this process remembers of a plugin — its entry, its failure, which version its name means — and
+   * leaves the disk alone. What an invalidation elsewhere in the fleet does here: that process removes the files,
+   * and each of the others only has to stop pointing at them.
+   */
+  forget(name?: string, version?: string): void {
     if (!name) {
       this.mem.clear();
       this.failed.clear();
       this.nameIndex.clear();
-      await fs.rm(this.outputDir, { recursive: true, force: true });
+
       return;
     }
 
     if (version) {
-      // Invalidate one specific version
       const key = `${name}@${version}`;
       this.mem.delete(key);
       this.failed.delete(key);
@@ -442,22 +520,13 @@ export class PluginManager {
         this.nameIndex.delete(name);
       }
 
-      await fs.rm(this.pluginDir(key), { recursive: true, force: true });
-
       return;
     }
 
-    // Invalidate all versions: exact name + every name@* variant
+    // Every version: the exact name and every name@* variant
     const prefix = `${name}@`;
-    const keysToEvict = new Set<string>();
-    keysToEvict.add(name);
-    for (const key of Object.keys(this.plugins)) {
-      if (key.startsWith(prefix)) {
-        keysToEvict.add(key);
-      }
-    }
-
-    for (const key of this.mem.keys()) {
+    const keysToEvict = new Set<string>([name]);
+    for (const key of [...Object.keys(this.plugins), ...this.mem.keys()]) {
       if (key.startsWith(prefix)) {
         keysToEvict.add(key);
       }
@@ -467,9 +536,25 @@ export class PluginManager {
       this.mem.delete(key);
       this.failed.delete(key);
     }
-    this.nameIndex.delete(name);
 
-    // Remove matching dirs from disk
+    this.nameIndex.delete(name);
+  }
+
+  async invalidate(name?: string, version?: string): Promise<void> {
+    this.forget(name, version);
+    if (!name) {
+      await fs.rm(this.outputDir, { recursive: true, force: true });
+
+      return;
+    }
+
+    if (version) {
+      await fs.rm(this.pluginDir(`${name}@${version}`), { recursive: true, force: true });
+
+      return;
+    }
+
+    const prefix = `${name}@`;
     try {
       const entries = await fs.readdir(this.outputDir);
       await Promise.all(
@@ -498,7 +583,7 @@ export class PluginManager {
   }
 
   private async writeMeta(name: string, meta: Meta): Promise<void> {
-    await fs.writeFile(path.join(this.pluginDir(name), META_FILE), JSON.stringify(meta), 'utf-8');
+    await writeFileAtomic(path.join(this.pluginDir(name), META_FILE), JSON.stringify(meta));
   }
 
   private async fileExists(p: string): Promise<boolean> {

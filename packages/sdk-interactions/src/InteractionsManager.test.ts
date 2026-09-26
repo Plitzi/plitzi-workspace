@@ -1,4 +1,3 @@
-import { get } from '@plitzi/plitzi-ui/helpers';
 import { describe, it, expect, vi } from 'vitest';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
@@ -59,7 +58,8 @@ describe('InteractionsManager re-entrancy guard', () => {
     await manager.interactionTrigger('el1', 'click', {});
 
     expect(boom).toHaveBeenCalledTimes(2);
-    expect(get(manager.interactionsRunning, 'el1.click')).toBeFalsy();
+    await manager.interactionTrigger('el1', 'click', {});
+    expect(boom).toHaveBeenCalledTimes(3);
   });
 
   it('keeps running healthy flows after a previous flow failed', async () => {
@@ -278,8 +278,8 @@ describe('a param that is not a string', () => {
       loop: '{% for n in [1, 2] %}{{ n }}{% endfor %}'
     });
 
-    // Typed the way a token is: a template that renders a number hands on the number.
-    expect(spy.mock.calls[0]?.[0]).toMatchObject({ flag: 1, loop: 12 });
+    // The expression's own value, and the text the loop makes — never a type guessed from what the text looks like.
+    expect(spy.mock.calls[0]?.[0]).toMatchObject({ flag: '1', loop: '12' });
   });
 
   // What a visitor typed is data: resolved once as the value of a token, it is not evaluated again.
@@ -293,5 +293,492 @@ describe('a param that is not a string', () => {
     await manager.interactionTrigger('el1', 'click', { body: 'see {% if x %}this{% endif %}' });
 
     expect(spy.mock.calls[0]?.[0]).toMatchObject({ echo: 'see {% if x %}this{% endif %}' });
+  });
+});
+
+/**
+ * A step sees the page as it is when it runs. The sources are read again before every step, so a condition after a
+ * write reads the written value, and one after a wait reads whatever changed meanwhile — not the page as it was when
+ * the trigger fired.
+ */
+describe('InteractionsManager — what a step reads', () => {
+  const chain = (elementId: string, steps: Partial<ElementInteraction>[]): Record<string, ElementInteraction> => {
+    const ids = ['trig', ...steps.map((_, index) => `s${index}`)];
+
+    return Object.fromEntries(
+      ids.map((id, index) => [
+        id,
+        {
+          id,
+          title: id,
+          type: index === 0 ? 'trigger' : 'callback',
+          action: index === 0 ? 'click' : '',
+          params: {},
+          preview: {},
+          elementId,
+          beforeNode: ids[index - 1] ?? '',
+          afterNode: ids[index + 1] ?? '',
+          flowId: 'flow1',
+          enabled: true,
+          ...(index === 0 ? {} : steps[index - 1])
+        } satisfies ElementInteraction
+      ])
+    );
+  };
+
+  const onState = (open: boolean) => ({
+    combinator: 'and' as const,
+    rules: [{ field: 'state.open', operator: '=' as const, value: open }]
+  });
+
+  it('reads what an earlier step of the same flow wrote', async () => {
+    const page = { state: { open: false } };
+    const opened = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      chain('el1', [{ action: 'open' }, { action: 'opened', when: onState(true) }]),
+      triggerDef,
+      {
+        open: {
+          action: 'open',
+          title: 'Open',
+          type: 'callback',
+          params: {},
+          callback: () => (page.state = { open: true })
+        },
+        opened: { action: 'opened', title: 'Opened', type: 'callback', params: {}, callback: opened }
+      },
+      () => ({ dataSource: page })
+    );
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(opened).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads what changed outside the flow while it waited', async () => {
+    const page = { state: { open: true } };
+    const stillOpen = vi.fn();
+    let release = (): void => undefined;
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      chain('el1', [{ action: 'wait' }, { action: 'stillOpen', when: onState(true) }]),
+      triggerDef,
+      {
+        wait: {
+          action: 'wait',
+          title: 'Wait',
+          type: 'callback',
+          params: {},
+          callback: () => new Promise<void>(resolve => (release = resolve))
+        },
+        stillOpen: { action: 'stillOpen', title: 'Still open', type: 'callback', params: {}, callback: stillOpen }
+      },
+      () => ({ dataSource: page })
+    );
+
+    const running = manager.interactionTrigger('el1', 'click', {});
+    await Promise.resolve();
+    page.state = { open: false };
+    release();
+    await running;
+
+    expect(stillOpen).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A rule whose value is a path (`isBinding`) reads it from the same place as its field: the trigger's payload and the
+   * page's sources side by side — so a computed value can be compared with what was clicked.
+   */
+  it('compares a computed value with a path from the trigger, both read as the step runs', async () => {
+    const page = { computed: { tool: 'pen' } };
+    const matched = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      chain('el1', [
+        {
+          action: 'matched',
+          when: {
+            combinator: 'and',
+            rules: [{ field: 'computed.tool', operator: '=', value: 'trig.tool', isBinding: true }]
+          }
+        }
+      ]),
+      triggerDef,
+      { matched: { action: 'matched', title: 'Matched', type: 'callback', params: {}, callback: matched } },
+      () => ({ dataSource: page })
+    );
+
+    await manager.interactionTrigger('el1', 'click', { tool: 'pen' });
+    await manager.interactionTrigger('el1', 'click', { tool: 'laser' });
+
+    expect(matched).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves a param template against the page as the step runs', async () => {
+    const page = { state: { count: 1 } };
+    const received = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      chain('el1', [{ action: 'bump' }, { action: 'show', params: { value: '{{ state.count }}' } }]),
+      triggerDef,
+      {
+        bump: {
+          action: 'bump',
+          title: 'Bump',
+          type: 'callback',
+          params: {},
+          callback: () => (page.state = { count: 2 })
+        },
+        show: { action: 'show', title: 'Show', type: 'callback', params: {}, callback: received }
+      },
+      () => ({ dataSource: page })
+    );
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(received).toHaveBeenCalledWith(expect.objectContaining({ value: 2 }), expect.anything());
+  });
+});
+
+/** One key press fires `onKey` once, with the shortcuts it matched; each flow on it runs only for its own. */
+describe('InteractionsManager — keyboard shortcuts', () => {
+  const keyFlow = (id: string, keys: string, action: string): Record<string, ElementInteraction> => ({
+    [`${id}-t`]: {
+      id: `${id}-t`,
+      title: 'On Key',
+      type: 'trigger',
+      action: 'onKey',
+      params: { keys },
+      preview: {},
+      elementId: 'el1',
+      beforeNode: '',
+      afterNode: `${id}-s`,
+      flowId: `${id}-t`,
+      enabled: true
+    },
+    [`${id}-s`]: {
+      id: `${id}-s`,
+      title: action,
+      type: 'callback',
+      action,
+      params: {},
+      preview: {},
+      elementId: 'el1',
+      beforeNode: `${id}-t`,
+      afterNode: '',
+      flowId: `${id}-t`,
+      enabled: true
+    }
+  });
+
+  const setup = () => {
+    const zoom = vi.fn();
+    const close = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      { ...keyFlow('a', 'plus, =', 'zoom'), ...keyFlow('b', 'escape', 'close') },
+      { onKey: { action: 'onKey', title: 'On Key', type: 'trigger', params: {} } },
+      {
+        zoom: { action: 'zoom', title: 'Zoom', type: 'callback', params: {}, callback: zoom },
+        close: { action: 'close', title: 'Close', type: 'callback', params: {}, callback: close }
+      }
+    );
+
+    return { manager, zoom, close };
+  };
+
+  it('runs only the flows whose keys the press matched', async () => {
+    const { manager, zoom, close } = setup();
+
+    await manager.interactionTrigger('el1', 'onKey', { key: '+', shortcuts: ['plus, ='] });
+
+    expect(zoom).toHaveBeenCalledTimes(1);
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('runs every flow one press matched, in one go', async () => {
+    const { manager, zoom, close } = setup();
+
+    await manager.interactionTrigger('el1', 'onKey', { key: 'escape', shortcuts: ['plus, =', 'escape'] });
+
+    expect(zoom).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * A trigger firing while its flow still runs: ignored (`skip`, the default), run alongside (`parallel`), or run after
+ * it (`queue`). Each firing here opens a step that waits until the test lets it finish.
+ */
+describe('InteractionsManager — whileRunning', () => {
+  const setup = (whileRunning?: 'skip' | 'parallel' | 'queue') => {
+    const started: number[] = [];
+    const finished: number[] = [];
+    const gates: (() => void)[] = [];
+    const manager = new InteractionsManager('page1');
+    const interactions = makeInteractions('el1', 'click', 'wait');
+    interactions.trig = { ...interactions.trig, ...(whileRunning ? { whileRunning } : {}) };
+    manager.subscribe('el1', interactions, triggerDef, {
+      wait: {
+        action: 'wait',
+        title: 'Wait',
+        type: 'callback',
+        params: {},
+        callback: async () => {
+          const run = started.length + 1;
+          started.push(run);
+          await new Promise<void>(resolve => gates.push(resolve));
+          finished.push(run);
+        }
+      }
+    });
+    const settle = async () => {
+      for (let turn = 0; turn < 10; turn++) {
+        await Promise.resolve();
+      }
+    };
+
+    return { manager, started, finished, gates, settle };
+  };
+
+  it('skips a firing while the flow runs, by default', async () => {
+    const { manager, started, gates, settle } = setup();
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+
+    expect(started).toEqual([1]);
+    gates.forEach(open => open());
+    await settle();
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+    expect(started).toEqual([1, 2]);
+  });
+
+  it('runs every firing at once in parallel', async () => {
+    const { manager, started, settle } = setup('parallel');
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+
+    expect(started).toEqual([1, 2, 3]);
+  });
+
+  it('runs every firing one after another in a queue', async () => {
+    const { manager, started, finished, gates, settle } = setup('queue');
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+    expect(started).toEqual([1]);
+
+    gates[0]();
+    await settle();
+    expect(finished).toEqual([1]);
+    expect(started).toEqual([1, 2]);
+
+    gates[1]();
+    await settle();
+    gates[2]();
+    await settle();
+    expect(finished).toEqual([1, 2, 3]);
+  });
+});
+
+/**
+ * A trigger fired while the page mounts: the sources a flow calls register AFTER the element that fired, in the same
+ * commit. The flow starts once they have.
+ */
+describe('InteractionsManager — a trigger fired while the page mounts', () => {
+  const firesOn = (elementId: string): Record<string, ElementInteraction> => ({
+    trig: {
+      id: 'trig',
+      title: 'Found',
+      type: 'trigger',
+      action: 'found',
+      params: {},
+      preview: {},
+      elementId,
+      beforeNode: '',
+      afterNode: 'write',
+      flowId: 'trig',
+      enabled: true
+    },
+    write: {
+      id: 'write',
+      title: 'Write',
+      type: 'globalCallback',
+      action: 'write',
+      params: {},
+      preview: {},
+      elementId: 'store',
+      beforeNode: 'trig',
+      afterNode: '',
+      flowId: 'trig',
+      enabled: true
+    }
+  });
+  const foundTrigger = { found: { action: 'found', title: 'Found', type: 'trigger' as const, params: {} } };
+
+  it('runs the flow against a source that registered right after the trigger fired', async () => {
+    const write = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe('plugin', firesOn('plugin'), foundTrigger);
+
+    const fired = manager.interactionTrigger('plugin', 'found', {});
+    manager.subscribe(
+      'store',
+      {},
+      {},
+      {
+        write: { action: 'write', title: 'Write', type: 'globalCallback', params: {}, callback: write }
+      }
+    );
+    await fired;
+
+    expect(write).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not run the flow of an element gone before it started', async () => {
+    const write = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'store',
+      {},
+      {},
+      {
+        write: { action: 'write', title: 'Write', type: 'globalCallback', params: {}, callback: write }
+      }
+    );
+    manager.subscribe('plugin', firesOn('plugin'), foundTrigger);
+
+    const fired = manager.interactionTrigger('plugin', 'found', {});
+    // Unmounted and mounted again in the same tick — React's development double mount.
+    manager.unsubscribe('plugin');
+    manager.subscribe('plugin', firesOn('plugin'), foundTrigger);
+    await fired;
+
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('runs the flow of an element that re-rendered right after firing', async () => {
+    const write = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'store',
+      {},
+      {},
+      {
+        write: { action: 'write', title: 'Write', type: 'globalCallback', params: {}, callback: write }
+      }
+    );
+    manager.subscribe('plugin', firesOn('plugin'), foundTrigger);
+
+    const fired = manager.interactionTrigger('plugin', 'found', {});
+    // A form marks itself submitted as it fires: new callbacks, the same element.
+    manager.update('plugin', firesOn('plugin'), { ...foundTrigger });
+    await fired;
+
+    expect(write).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not update an element that is not subscribed', () => {
+    const manager = new InteractionsManager('page1');
+
+    expect(manager.update('plugin', firesOn('plugin'), foundTrigger)).toBe(false);
+    expect(manager.subscriptors.plugin).toBeUndefined();
+  });
+});
+
+/**
+ * A step that does not wait is not waited on: consecutive synchronous steps run without giving the event loop a turn,
+ * so the store changes they make are one change and React renders once — a flow of twenty `setState` steps used to
+ * render the page twenty times. A step that returns a promise is still waited for, and the flow resumes after it.
+ */
+describe('a flow runs its synchronous steps without a turn between them', () => {
+  const chain = (actions: string[]): Record<string, ElementInteraction> => {
+    const ids = actions.map((_, index) => `s${index}`);
+
+    return {
+      trig: {
+        id: 'trig',
+        title: 'Trigger',
+        type: 'trigger',
+        action: 'click',
+        params: {},
+        preview: {},
+        elementId: 'el1',
+        beforeNode: '',
+        afterNode: ids[0],
+        flowId: 'flow1',
+        enabled: true
+      },
+      ...Object.fromEntries(
+        actions.map((action, index) => [
+          ids[index],
+          {
+            id: ids[index],
+            title: action,
+            type: 'callback',
+            action,
+            params: {},
+            preview: {},
+            elementId: 'el1',
+            beforeNode: index === 0 ? 'trig' : ids[index - 1],
+            afterNode: ids[index + 1] ?? '',
+            flowId: 'flow1',
+            enabled: true
+          } satisfies ElementInteraction
+        ])
+      )
+    };
+  };
+
+  it('runs two synchronous steps before anything queued in between', async () => {
+    const seen: string[] = [];
+    const manager = new InteractionsManager('page1');
+    manager.subscribe('el1', chain(['first', 'second']), triggerDef, {
+      first: {
+        action: 'first',
+        title: 'First',
+        type: 'callback',
+        params: {},
+        callback: () => {
+          queueMicrotask(() => seen.push('a turn'));
+          seen.push('first');
+        }
+      },
+      second: { action: 'second', title: 'Second', type: 'callback', params: {}, callback: () => seen.push('second') }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(seen).toEqual(['first', 'second', 'a turn']);
+  });
+
+  it('waits for a step that waits, and hands the next one what it answered', async () => {
+    const manager = new InteractionsManager('page1');
+    const read = vi.fn();
+    manager.subscribe('el1', chain(['slow', 'after']), triggerDef, {
+      slow: {
+        action: 'slow',
+        title: 'Slow',
+        type: 'callback',
+        params: {},
+        callback: () => new Promise(resolve => setTimeout(() => resolve('late'), 5))
+      },
+      after: { action: 'after', title: 'After', type: 'callback', params: {}, callback: read }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(read).toHaveBeenCalledWith(expect.objectContaining({ s0: 'late' }), expect.anything());
   });
 });

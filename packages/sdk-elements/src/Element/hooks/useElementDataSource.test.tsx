@@ -1,7 +1,8 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { createElement } from 'react';
 import { describe, it, expect } from 'vitest';
 
+import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import useElementDataSource from './useElementDataSource';
@@ -70,7 +71,8 @@ describe('useElementDataSource (subscribes to referenced `runtime.sources.*`)', 
     });
 
     expect(result.current.list_spaces).toEqual({ item: { id: 7 } });
-    expect(result.current.theme).toEqual({ mode: 'dark', resolved: 'dark' });
+    // The path the template reads, not the whole source it sits in.
+    expect(result.current.theme).toEqual({ resolved: 'dark' });
   });
 
   /** `{{source}}` is the bound value: a key for it in this map, even an undefined one, would shadow it in the template. */
@@ -81,6 +83,54 @@ describe('useElementDataSource (subscribes to referenced `runtime.sources.*`)', 
 
     expect(Object.hasOwn(result.current, 'source')).toBe(false);
     expect(Object.hasOwn(result.current, 'theme')).toBe(false);
+  });
+
+  /**
+   * Subscribed by path, not by source: every element on a page reads some computed value, and subscribed to the whole
+   * of `computed` each one rendered again whenever any computed value changed.
+   */
+  it('renders again only when a path it reads changes', () => {
+    const binding: ElementBinding[] = [{ id: 'b3', source: 'computed.tool', to: 'label', enabled: true }];
+    const store = createStore<{ runtime: { sources: Record<string, unknown> } }>({
+      runtime: { sources: { computed: { tool: 'pen', count: 1 } } }
+    });
+    let renders = 0;
+    const { result } = renderHook(
+      () => {
+        renders += 1;
+
+        return useElementDataSource({ bindings: { attributes: binding } });
+      },
+      { wrapper: ({ children }: { children: ReactNode }) => <StoreProvider store={store}>{children}</StoreProvider> }
+    );
+    const before = renders;
+
+    act(() => store.setState('runtime.sources.computed', { tool: 'pen', count: 2 }));
+
+    expect(renders).toBe(before);
+    expect(result.current.computed).toEqual({ tool: 'pen' });
+
+    act(() => store.setState('runtime.sources.computed', { tool: 'laser', count: 2 }));
+
+    expect(result.current.computed).toEqual({ tool: 'laser' });
+  });
+
+  /** A binding shown only while a rule holds is told when what the rule reads changes. */
+  it('reads the fields its `when` compares', () => {
+    const binding: ElementBinding[] = [
+      {
+        id: 'b4',
+        source: 'variables.title',
+        to: 'text',
+        enabled: true,
+        when: { combinator: 'and', rules: [{ field: 'state.open', operator: '=', value: true }] }
+      }
+    ];
+    const { result } = renderHook(() => useElementDataSource({ bindings: { attributes: binding } }), {
+      wrapper: makeWrapper({ runtime: { sources: { variables: { title: 'Hi' }, state: { open: true, other: 1 } } } })
+    });
+
+    expect(result.current.state).toEqual({ open: true });
   });
 
   it('returns an empty map when nothing is referenced', () => {

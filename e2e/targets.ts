@@ -17,27 +17,55 @@ import path from 'node:path';
 import { targetsForRun } from './categories';
 import { builderCredentials } from './credentials';
 
-/** The prebuilt bundle the no-build example loads straight from a script tag. */
-const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
-
-/** Whether the public API the render example fetches can be reached from this machine.
+/** Whether the MySQL the mysql example connects to answers — the one IT reads, not a variable of the suite's own.
  *
- *  That example's whole subject is a server-side call to a third party, so there is nothing to assert about it
- *  offline — and a suite that goes red on a train is one people learn to ignore. Asked once, like every other
- *  gate, and answered by the same request the example makes. */
-let catApiUp: boolean | undefined;
-const catApiReachable = (): boolean => {
-  if (catApiUp === undefined) {
+ *  The example takes `DATABASE_URL`, or `MYSQL_HOST`/`MYSQL_PORT` with 127.0.0.1:33006 (a local docker MySQL) as the
+ *  default, and makes its own database. The gate used to ask for a `MYSQL_URL` nothing read: the example was skipped on
+ *  a machine whose docker was up, and exporting the variable opened it without changing where it connected. */
+let mysqlUp: boolean | undefined;
+const mysqlReachable = (): boolean => {
+  if (mysqlUp === undefined) {
+    const url = process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL) : undefined;
+    const host = url?.hostname ?? process.env.MYSQL_HOST ?? '127.0.0.1';
+    const port = url?.port || process.env.MYSQL_PORT || '33006';
     try {
-      execSync('curl -sfI --max-time 3 https://api.thecatapi.com/v1/images/search', { stdio: 'ignore' });
-      catApiUp = true;
+      execSync(`nc -z -w 2 ${host} ${port}`, { stdio: 'ignore' });
+      mysqlUp = true;
     } catch {
-      catApiUp = false;
+      mysqlUp = false;
     }
   }
 
-  return catApiUp;
+  return mysqlUp;
 };
+
+/** The prebuilt bundle the no-build example loads straight from a script tag. */
+const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
+
+/** Whether a public URL an example fetches can be reached from this machine.
+ *
+ *  An example whose subject is data from a third party has nothing to assert offline — and a suite that goes red on a
+ *  train is one people learn to ignore. Asked once per URL, like every other gate, with the request the example makes. */
+const reachable = new Map<string, boolean>();
+const reachableUrl = (url: string): boolean => {
+  const known = reachable.get(url);
+  if (known !== undefined) {
+    return known;
+  }
+
+  let up = true;
+  try {
+    execSync(`curl -sfI --max-time 3 ${url}`, { stdio: 'ignore' });
+  } catch {
+    up = false;
+  }
+
+  reachable.set(url, up);
+
+  return up;
+};
+
+const catApiReachable = (): boolean => reachableUrl('https://api.thecatapi.com/v1/images/search');
 
 export type TargetGate = {
   /** Whether this machine can run the target at all — asked, not declared, so there is no flag to remember. */
@@ -122,6 +150,20 @@ export const targets: Target[] = [
     what: 'The same published site with the space’s own dev-tools setting on — the outline, and never a step’s data'
   },
   {
+    id: 'workers-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:workers',
+    origin: 'http://127.0.0.1:5207',
+    what: 'The sample space served by two processes on one port, as production uses a machine with several cores'
+  },
+  {
+    id: 'plugin-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:plugin',
+    origin: 'http://127.0.0.1:5208',
+    what: 'A plugin as `plitzi create --plugin` writes it, built and published, loaded by a page from its manifest'
+  },
+  {
     id: 'mail-sink',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:mail',
@@ -200,7 +242,10 @@ export const targets: Target[] = [
     command: 'PORT=5008 yarn workspace @plitzi/example-with-users-mysql start',
     origin: 'http://127.0.0.1:5008',
     what: 'The same sessions, over a MySQL account store',
-    gate: { open: () => !!process.env.MYSQL_URL, hint: 'point MYSQL_URL at a reachable database' }
+    gate: {
+      open: mysqlReachable,
+      hint: 'start a MySQL on 127.0.0.1:33006 (the services compose of plitzi-sdk-server has one), or set DATABASE_URL'
+    }
   },
   {
     id: 'server-actions',
@@ -259,6 +304,25 @@ export const targets: Target[] = [
     command: 'PORT=5016 CENIZA_SMTP_PORT=5204 yarn workspace @plitzi/example-ceniza start',
     origin: 'http://127.0.0.1:5016',
     what: 'A whole restaurant website — live availability, bookings with a confirmation email, a journal, no server code'
+  },
+  {
+    id: 'seismic',
+    workspace: '@plitzi/example-seismic',
+    command: 'PORT=5019 yarn workspace @plitzi/example-seismic start',
+    origin: 'http://127.0.0.1:5019',
+    what: 'Tremor — every earthquake the USGS publishes, on a globe, with a display authored around it',
+    gate: {
+      open: () => reachableUrl('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson'),
+      hint: 'this example reads the USGS earthquake feed — connect to the internet'
+    }
+  },
+  {
+    id: 'whiteboard',
+    workspace: '@plitzi/example-whiteboard',
+    // In memory: every run starts from the featured boards and nothing else.
+    command: 'PORT=5018 REDIS_URL= yarn workspace @plitzi/example-whiteboard start',
+    origin: 'http://127.0.0.1:5018',
+    what: 'Pizarra — a collaborative whiteboard over WebSocket, drawn on a canvas, with its own bench'
   },
   {
     id: 'builder',

@@ -397,6 +397,59 @@ describe('BasicAuthProvider failures', () => {
   });
 });
 
+/**
+ * An answer belongs to the session it was asked for. The account screen asks who is there while its "sign out" is
+ * pressed; answered after the sign-out, that identity carried the old cookie, came back `ok`, and signed the person
+ * straight back in — the router then read a session on the guest's own page and answered "Access Denied".
+ */
+describe('answers that arrive after the session changed', () => {
+  const deferred = () => {
+    let resolve: (response: Response) => void = () => undefined;
+    const promise = new Promise<Response>(settle => {
+      resolve = settle;
+    });
+
+    return { promise, resolve };
+  };
+
+  it('does not sign back in on an identity asked for before the sign-out', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-3600));
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    await provider.init();
+    expect(provider.getState()).toBe('authenticated');
+
+    const identity = deferred();
+    mockFetch.mockReturnValueOnce(identity.promise).mockResolvedValueOnce(jsonResponse({}));
+    const revalidating = provider.revalidate(true);
+    await provider.logout();
+    expect(provider.getState()).toBe('guest');
+
+    identity.resolve(jsonResponse(session(inSeconds(3600))));
+    await revalidating;
+
+    expect(provider.getState()).toBe('guest');
+    expect(provider.user).toBeUndefined();
+  });
+
+  it('does not end a new sign-in on a refusal meant for the one before it', async () => {
+    const provider = new BasicAuthProvider({ ...plitziApi });
+    storeSession(inSeconds(3600), inSeconds(-3600));
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    await provider.init();
+
+    const identity = deferred();
+    mockFetch.mockReturnValueOnce(identity.promise).mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+    const revalidating = provider.revalidate(true);
+    await provider.login({ username: 'ada', password: 'pw' });
+
+    identity.resolve(jsonResponse({ error: 'revoked' }, 401));
+    await revalidating;
+
+    expect(provider.getState()).toBe('authenticated');
+  });
+});
+
 // The interaction offers a `token` mode, and the provider has to honour it. A rewrite that mapped only
 // username/password turned every token sign-in into `{ username: '', password: '' }` — the backend answered 400
 // saying credentials were required, for a flow that was never meant to send any.
@@ -502,6 +555,52 @@ describe('a space that declared no endpoint', () => {
     await provider.refresh();
     await provider.revalidate(true);
 
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * An account with a second factor: the password buys a challenge, and the code completes it. Read as a session with
+ * nobody in it, the challenge ended as `inactive` — "this account cannot be used" — for an account that was fine.
+ */
+describe('BasicAuthProvider second factor', () => {
+  const withMfa = { ...plitziApi, mfaUrl: 'https://api.example.com/auth/mfa/complete' };
+
+  it('answers the challenge a right password bought, and announces no lost session', async () => {
+    const provider = new BasicAuthProvider(withMfa);
+    const events: string[] = [];
+    provider.on(event => events.push(event.type));
+    mockFetch.mockResolvedValueOnce(jsonResponse({ success: false, mfaRequired: true, mfaToken: 'challenge-1' }));
+
+    const outcome = await provider.login({ username: 'ada', password: 'pw' });
+
+    expect(outcome).toEqual({ ok: false, reason: 'mfa', mfaToken: 'challenge-1' });
+    expect(provider.getState()).toBe('guest');
+    expect(events).not.toContain('expired');
+  });
+
+  it('completes it with the code, and keeps the whole grant it answers with', async () => {
+    const provider = new BasicAuthProvider(withMfa);
+    mockFetch.mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    const outcome = await provider.login({ mode: 'mfa', mfaToken: 'challenge-1', code: ' 123456 ' });
+
+    expect(outcome).toMatchObject({ ok: true, accessToken: 'token', refreshToken: 'refresh' });
+    expect(provider.getState()).toBe('authenticated');
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe(withMfa.mfaUrl);
+    expect(JSON.parse(init?.body as string)).toEqual({ mfaToken: 'challenge-1', code: '123456' });
+  });
+
+  it('refuses to complete without somewhere to send it, or a challenge to send', async () => {
+    expect(await new BasicAuthProvider(plitziApi).login({ mode: 'mfa', mfaToken: 'challenge-1', code: '1' })).toEqual({
+      ok: false,
+      reason: 'missing'
+    });
+    expect(await new BasicAuthProvider(withMfa).login({ mode: 'mfa', mfaToken: '', code: '1' })).toEqual({
+      ok: false,
+      reason: 'missing'
+    });
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });

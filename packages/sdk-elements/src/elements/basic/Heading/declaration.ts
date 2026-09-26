@@ -62,7 +62,8 @@ const declaration = elementDeclaration<HeadingAttributes>()({
                 'margin-bottom': '25px',
                 'font-size': '38px',
                 'font-weight': 700,
-                'line-height': '44px'
+                // A ratio landing on the same pixels at this size: a class that resizes the text keeps the proportion.
+                'line-height': '1.158'
               }
             }
           }
@@ -77,7 +78,7 @@ const declaration = elementDeclaration<HeadingAttributes>()({
                 'margin-bottom': '25px',
                 'font-size': '32px',
                 'font-weight': 700,
-                'line-height': '36px'
+                'line-height': '1.125'
               }
             }
           }
@@ -92,7 +93,7 @@ const declaration = elementDeclaration<HeadingAttributes>()({
                 'margin-bottom': '25px',
                 'font-size': '24px',
                 'font-weight': 700,
-                'line-height': '30px'
+                'line-height': '1.25'
               }
             }
           }
@@ -107,7 +108,7 @@ const declaration = elementDeclaration<HeadingAttributes>()({
                 'margin-bottom': '25px',
                 'font-size': '18px',
                 'font-weight': 700,
-                'line-height': '24px'
+                'line-height': '1.333'
               }
             }
           }
@@ -122,7 +123,7 @@ const declaration = elementDeclaration<HeadingAttributes>()({
                 'margin-bottom': '25px',
                 'font-size': '14px',
                 'font-weight': 700,
-                'line-height': '20px'
+                'line-height': '1.429'
               }
             }
           }
@@ -137,7 +138,7 @@ const declaration = elementDeclaration<HeadingAttributes>()({
                 'margin-bottom': '25px',
                 'font-size': '12px',
                 'font-weight': 700,
-                'line-height': '18px'
+                'line-height': '1.5'
               }
             }
           }

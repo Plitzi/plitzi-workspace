@@ -23,16 +23,25 @@ const useInteractions = <TParams extends Record<string, unknown> = Record<string
 }: UseInteractionsProps<TParams>) => {
   const { interactionsManager } = use(InteractionsContext);
 
+  // One subscription for as long as the element is mounted: a flow its trigger started survives a re-render.
   useEffect(() => {
     if (!id) {
       return;
     }
 
-    interactionsManager.subscribe<TParams>(id, interactions, triggers, callbacks, getAdditionalParams);
+    interactionsManager.subscribe(id);
 
     return () => {
       interactionsManager.unsubscribe(id);
     };
+  }, [id, interactionsManager]);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    interactionsManager.update<TParams>(id, interactions, triggers, callbacks, getAdditionalParams);
   }, [id, interactions, triggers, callbacks, getAdditionalParams, interactionsManager]);
 };
 

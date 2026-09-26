@@ -45,11 +45,15 @@ export const createPreview = async (
   caches: ServerCaches
 ): Promise<PreviewResult> => {
   const env = (body.env ?? 'main') as Environment;
-  const revision = 0;
+  const revision = env === 'main' ? 0 : (body.revision ?? 0);
 
   const offlineData = await config.adapters.getOfflineData(body.spaceId, env, revision);
   if (!offlineData) {
-    return { ok: false, error: 'NO_DATA', message: `No offline data for space ${body.spaceId} (${env}).` };
+    return {
+      ok: false,
+      error: 'NO_DATA',
+      message: `No offline data for space ${body.spaceId} (${env}${revision ? ` revision ${revision}` : ''}).`
+    };
   }
 
   let draftOffline = offlineData;
@@ -104,7 +108,7 @@ export const createPreview = async (
   let token: string | undefined;
   if (config.draftStore) {
     token = randomUUID();
-    await config.draftStore.put(token, draftOffline, { ttlMs, reusable });
+    await config.draftStore.put(token, draftOffline, { ttlMs, reusable, spaceId: body.spaceId });
   }
 
   return {

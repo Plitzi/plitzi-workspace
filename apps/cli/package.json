@@ -2,13 +2,18 @@
   "name": "@plitzi/cli",
   "version": "0.37.2",
   "license": "AGPL-3.0",
-  "description": "Command line for Plitzi: scaffold a server that renders a space you own.",
+  "description": "Command line for Plitzi: scaffold a project that renders a space, a plugin package, or an element of your own.",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "type": "module",
   "bin": {
     "plitzi": "./dist/index.js"
+  },
+  "exports": {
+    "./skills/*": "./skills/*",
+    "./package.json": "./package.json"
   },
   "repository": {
     "type": "https",
@@ -18,14 +23,16 @@
   "dependencies": {
     "@plitzi/sdk-authoring": "workspace:*",
     "chalk": "^6.0.0",
-    "commander": "^15.0.0"
+    "commander": "^15.0.0",
+    "esbuild": "^0.28.2",
+    "fflate": "^0.8.3"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.0",
+    "vite": "^8.3.1",
     "vitest": "^5.0.1"
   },
   "scripts": {

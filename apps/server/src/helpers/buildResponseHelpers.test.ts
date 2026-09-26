@@ -109,4 +109,58 @@ describe('sending bytes', () => {
 
     expect(headers['content-length']).toBe(String(binary.byteLength));
   });
+
+  /** A cached page is the same body every time; compressing it on every hit was nearly all the CPU a hit cost. */
+  it('compresses a kept body once per encoding, and sends the kept bytes after that', () => {
+    const compressed = {};
+    const first = rawResponse();
+    buildResponseHelpers(first.raw, 'gzip').send(body, { compressed });
+
+    const kept = (compressed as { gzip?: Buffer }).gzip;
+    expect(kept).toBeInstanceOf(Buffer);
+
+    const second = rawResponse();
+    buildResponseHelpers(second.raw, 'gzip').send(body, { compressed });
+
+    expect(second.state.body).toBe(kept);
+    expect(second.headers['content-encoding']).toBe('gzip');
+    expect(gunzipSync(second.state.body as Buffer).toString()).toBe(body);
+  });
+
+  it('keeps nothing for a body it did not compress', () => {
+    const compressed = {};
+    buildResponseHelpers(rawResponse().raw, undefined).send(body, { compressed });
+    buildResponseHelpers(rawResponse().raw, 'gzip').send('small', { compressed });
+
+    expect(compressed).toEqual({});
+  });
+});
+
+describe('sending a body read on demand', () => {
+  it('reads it once, and sends the stored form without reading it again', () => {
+    const store = {};
+    let reads = 0;
+    const read = () => {
+      reads += 1;
+
+      return body;
+    };
+
+    buildResponseHelpers(rawResponse().raw, 'gzip').send(read, { compressed: store });
+    const second = rawResponse();
+    buildResponseHelpers(second.raw, 'gzip').send(read, { compressed: store });
+
+    expect(reads).toBe(1);
+    expect(second.headers['content-encoding']).toBe('gzip');
+    expect(gunzipSync(second.state.body as Buffer).toString()).toBe(body);
+  });
+
+  it('reads it for a client that takes no compression, and sends it as it is', () => {
+    const { raw, headers, state } = rawResponse();
+
+    buildResponseHelpers(raw, undefined).send(() => body, { compressed: { gzip: Buffer.from('stale') } });
+
+    expect(headers['content-encoding']).toBeUndefined();
+    expect(state.body).toBe(body);
+  });
 });

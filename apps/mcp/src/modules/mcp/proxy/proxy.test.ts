@@ -237,7 +237,7 @@ describe('a rendered widget', () => {
                 nodeType: 'callback',
                 action: 'setState',
                 elementId: 'shot',
-                params: { category: 'attribute', key: 'content', value: 'A photo' }
+                params: { category: 'attribute', key: 'alt', value: 'A photo' }
               },
               {
                 title: 'Leave',
@@ -298,6 +298,14 @@ describe('the endpoint guard', () => {
 
     for (const address of ['8.8.8.8', '1.1.1.1', '2606:4700::1111']) {
       expect(isPrivateAddress(address)).toBe(false);
+    }
+  });
+
+  /** How a URL parser writes `[::ffff:127.0.0.1]`, and what a dual-stack socket connects straight to loopback. */
+  it('refuses private IPv4 addresses written as IPv6', async () => {
+    for (const raw of ['http://[::ffff:127.0.0.1]/', 'http://[::ffff:169.254.169.254]/', 'http://[64:ff9b::a00:1]/']) {
+      const { hostname } = new URL(raw);
+      expect(await isPublicHost(hostname), `${raw} (${hostname}) was allowed`).toBe(false);
     }
   });
 

@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
-import { processTwig, hasValidToken, templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig, hasValidToken, templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';
@@ -18,40 +18,24 @@ import type { ReactNode } from 'react';
 
 type TwigValues = Record<string, unknown>;
 
-export const getProps = (
-  element: Element,
-  internalProps: InternalPropsSTG1,
-  dataSource = {} as Record<string, unknown>,
-  state = {} as Record<string, unknown>
-) => {
-  let style: Record<string, string> | undefined = undefined;
-  let { attributes, definition } = element;
-  const { rootId, plitziElementLayout } = internalProps;
-  // Attribute injection, for example custom element (concat custom props + settings)
-  if (internalProps.attributes) {
-    attributes = { ...attributes, ...internalProps.attributes };
-  }
-
-  const authored = attributes;
-  // Data Sources
-  if (Object.keys(dataSource).length > 0) {
-    const bindingData = getBindingsDetails(dataSource as Record<string, RuleValue>, { ...element, attributes }, style);
-    ({ attributes, definition, style } = bindingData);
-  }
-
-  /**
-   * Attribute templates: `{{ list_rows.item.slug }}` in a link's `href`, `{{ state.name }}` in a text's `content`.
-   *
-   * Resolved against the same sources a binding reads — every one the attribute names, subscribed by
-   * `useElementInternal` — with the route and query params and the variables flattened beside them, as they always
-   * were: a route param is `{{ slug }}`, a variable `{{ apiUrl }}`. Until the sources were here an attribute saw only
-   * that flattened half, and a card linking to `/games/{{ list_games.item.slug }}` linked to that text, literally.
-   *
-   * `navigation` is the source with `origin` read off the store, spelled the way a binding's template spells it.
-   *
-   * Only what was AUTHORED is a template. A value a binding put there is data — a visitor's comment, a product name —
-   * and data that happens to contain `{{ auth.accessToken }}` must print those characters, not evaluate them.
-   */
+/**
+ * The attribute templates, resolved: `{{ list_rows.item.slug }}` in a link's `href`, `{{ state.name }}` in a text's
+ * `content`.
+ *
+ * Resolved against the same sources a binding reads — every one the attribute names, subscribed by
+ * `useElementInternal` — with the route and query params and the variables flattened beside them, as they always
+ * were: a route param is `{{ slug }}`, a variable `{{ apiUrl }}`. `navigation` is the source with `origin` read off
+ * the store, spelled the way a binding's template spells it.
+ *
+ * Only what was AUTHORED is a template — the caller names those keys. A value a binding put there is data — a
+ * visitor's comment, a product name — and data that happens to contain `{{ auth.accessToken }}` must print those
+ * characters, not evaluate them.
+ */
+const interpolateAttributes = (
+  attributes: Element['attributes'],
+  templated: string[],
+  dataSource: Record<string, unknown>
+): Element['attributes'] => {
   const {
     queryParams = {},
     routeParams = {},
@@ -73,17 +57,55 @@ export const getProps = (
     ...sources,
     navigation: { ...navigation, routeParams, queryParams, origin }
   };
-  if (Object.keys(data).length > 0) {
-    const interpolated: Element['attributes'] = {};
-    for (const key of Object.keys(attributes)) {
-      const value = attributes[key];
-      interpolated[key] =
-        typeof value === 'string' && value === authored[key] && hasValidToken(value)
-          ? processTwig(value, data, true)
-          : value;
-    }
+  const interpolated: Element['attributes'] = { ...attributes };
+  for (const key of templated) {
+    interpolated[key] = processTwig(attributes[key] as string, data, true);
+  }
 
-    attributes = interpolated;
+  return interpolated;
+};
+
+const hasBindings = (bindings: Element['definition']['bindings']): boolean =>
+  !!bindings && Object.values(bindings).some(list => Array.isArray(list) && list.length > 0);
+
+export const getProps = (
+  element: Element,
+  internalProps: InternalPropsSTG1,
+  dataSource = {} as Record<string, unknown>,
+  state = {} as Record<string, unknown>
+) => {
+  let style: Record<string, string> | undefined = undefined;
+  let { attributes, definition } = element;
+  const { rootId, plitziElementLayout } = internalProps;
+  // Attribute injection, for example custom element (concat custom props + settings)
+  if (internalProps.attributes) {
+    attributes = { ...attributes, ...internalProps.attributes };
+  }
+
+  const authored = attributes;
+  // Data Sources. Most elements bind nothing, and resolving no bindings is only the empty style it hands back.
+  if (Object.keys(dataSource).length > 0) {
+    if (hasBindings(definition.bindings)) {
+      const bindingData = getBindingsDetails(
+        dataSource as Record<string, RuleValue>,
+        { ...element, attributes },
+        style
+      );
+      ({ attributes, definition, style } = bindingData);
+    } else {
+      style = {};
+    }
+  }
+
+  // Only what was authored with a template is interpolated, so an element with none — nearly every one — builds no
+  // template data and copies no attributes: that was work on every element of every render, for nothing.
+  const templated = Object.keys(attributes).filter(key => {
+    const value = attributes[key];
+
+    return typeof value === 'string' && value === authored[key] && hasValidToken(value);
+  });
+  if (templated.length > 0) {
+    attributes = interpolateAttributes(attributes, templated, dataSource);
   }
 
   // State
@@ -116,10 +138,10 @@ export const getProps = (
 const templatesIn = (attributes: Record<string, unknown> | undefined): string[] =>
   Object.values(attributes ?? {}).filter((value): value is string => typeof value === 'string' && hasValidToken(value));
 
-/** Every source an attribute's templates name, and the variables — which a template reads by their bare name. */
+/** Every source path an attribute's templates read, and the variables — which a template reads by their bare name. */
 const templateSources = (templates: string[]): string[] => [
   'variables',
-  ...new Set(templates.flatMap(template => templateRootNames(template)))
+  ...new Set(templates.flatMap(template => templatePaths(template)))
 ];
 
 export type UseElementInternalProps = {
@@ -171,18 +193,24 @@ const useElementInternal = ({
     [element, internalProps, dataSource, routeParams, queryParams, origin, state, setElementState]
   );
 
+  const customProps = useMemo(
+    () =>
+      omitKeys(internalPropsParsed, [
+        'id',
+        'rootId',
+        'plitziElementLayout',
+        'attributes',
+        'definition',
+        'style',
+        'elementState',
+        'setElementState'
+      ]),
+    [internalPropsParsed]
+  );
+
   return {
     internalProps: internalPropsParsed,
-    customProps: omitKeys(internalPropsParsed, [
-      'id',
-      'rootId',
-      'plitziElementLayout',
-      'attributes',
-      'definition',
-      'style',
-      'elementState',
-      'setElementState'
-    ]),
+    customProps,
     children: useInternalItems({
       id,
       definition: internalPropsParsed.definition,

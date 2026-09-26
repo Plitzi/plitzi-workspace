@@ -1,8 +1,8 @@
 import { consoleLogger } from '@plitzi/sdk-server';
 import { createActionsModule, createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
 
-import { lookups, settlePayout } from './action';
-import { exampleKv } from './kv';
+import { lookups, settlePayout } from './action.ts';
+import { exampleKv } from './kv.ts';
 
 /**
  * A trigger this deployment mounts itself.

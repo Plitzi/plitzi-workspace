@@ -1,5 +1,5 @@
 import type { CssProps } from '@plitzi/sdk-authoring';
-import type { ElementRuntime, Environment } from '@plitzi/sdk-shared';
+import type { ElementRuntime, Environment, WhileRunning } from '@plitzi/sdk-shared';
 
 export type Env = Environment;
 
@@ -151,6 +151,8 @@ export interface AIInteractionNode {
   params?: Record<string, unknown>;
   enabled?: boolean;
   when?: unknown;
+  /** On a trigger: what firing it again does while its flow still runs. `skip` when absent. */
+  whileRunning?: WhileRunning;
   /** Source element the callback targets (globalCallback/utility). Defaults to this element on write. */
   elementId?: string;
   preview?: Record<string, unknown>;
@@ -249,8 +251,13 @@ export interface AISchemaVariable {
  *  configuration. Every field is optional — a patch changes only the keys it sends. */
 export interface AISettings {
   customCss?: string;
+  /** Keep `runtime.state` — what `setState` writes — across reloads, filed under whoever is signed in. */
   keepState?: boolean;
   stateStorage?: 'localStorage' | 'sessionStorage';
+  /** Top-level state keys never kept, even with `keepState` on. */
+  transientState?: string[];
+  /** Kept keys the first paint shows, kept in a cookie too so the server renders with them. Small values only. */
+  paintedState?: string[];
   /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
   userProvider?: 'basic' | 'custom' | '' | (string & {});
   tokenStorage?: 'localStorage' | 'sessionStorage' | '';

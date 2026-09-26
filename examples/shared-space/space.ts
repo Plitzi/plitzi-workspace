@@ -83,7 +83,8 @@ export const sampleSpace: SpaceSpec = {
         'justify-content': 'space-between',
         padding: '100px',
         position: 'relative',
-        'min-width': '100vw',
+        // The width it is GIVEN, not the window's: embedded beside a host's sidebar, 100vw overflowed it by the sidebar.
+        'min-width': '100%',
         'min-height': '100vh',
         'background-image':
           'radial-gradient(circle at 50% 50%, var(--background-inner) -30%, var(--background-outer) 100%)',
@@ -114,8 +115,8 @@ export const sampleSpace: SpaceSpec = {
     },
 
     logoFrame: {
-      desktop: { width: '75vw', height: '75vh', position: 'absolute' },
-      mobile: { width: '90vw', height: '40vh' }
+      desktop: { width: '75%', height: '75vh', position: 'absolute' },
+      mobile: { width: '90%', height: '40vh' }
     },
     logo: { desktop: { width: '100%', height: '100%', opacity: '0.45' } },
     headline: { desktop: { 'z-index': '1', color: 'white', 'margin-bottom': '40px' } },
@@ -181,7 +182,10 @@ export const sampleSpace: SpaceSpec = {
           class: 'headline',
           children: [heading({ id: 'mainHeading', content: 'Welcome To Plitzi', subType: 'h1', variant: 'lg' })]
         }),
+        // Named, because it is what a deployment WITHOUT the three components renders empty: a suite checking the page
+        // there sets the section aside by this name rather than by a number that moves when a section is added.
         container({
+          id: 'rsc-section',
           class: 'rscSection',
           children: [
             rscElement('serverInfo', 'rsc-server', 'server'),

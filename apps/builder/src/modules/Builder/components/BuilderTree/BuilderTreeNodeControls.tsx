@@ -81,10 +81,9 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
       }
 
       builderSetElementVisibility(id, !isVisible);
-      // setHovered(null);
     },
     [builderSetElementVisibility, id, isVisible]
-  ); // setHovered
+  );
 
   const handleClickDelete = useCallback(
     async (e: MouseEvent) => {

@@ -6,7 +6,8 @@ export {
   isPageAuthored,
   matchRoutePath,
   getRouteParams,
-  getSlugParams
+  getSlugParams,
+  navigationTarget
 } from './routes';
 
 export type { PathMatch, PathPattern } from './matchPath';

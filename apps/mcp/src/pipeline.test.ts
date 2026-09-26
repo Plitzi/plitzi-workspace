@@ -208,3 +208,31 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
     expect(after.body).not.toContain('Session title');
   });
 });
+
+/**
+ * The page server that hosts this endpoint is the one the public reaches — every path of every published site goes to
+ * it. A deployment that turned preview on and left the secret out was not running an internal endpoint with one less
+ * layer; it was running a public one.
+ */
+describe('the draft-preview endpoint with no secret configured', () => {
+  const OPEN_PORT = PORT + 1;
+  const server: SSRServer = createServer(
+    { httpVersion: 1, adapters, health: { payload: { ok: true } }, preview: { enabled: true } },
+    mcpExtensions()
+  );
+  server.listen(OPEN_PORT, '127.0.0.1');
+
+  afterAll(() => server.close());
+
+  it('refuses every request rather than serving anyone', async () => {
+    const res = await httpRequest(
+      OPEN_PORT,
+      'POST',
+      '/__preview',
+      { 'Content-Type': 'application/json' },
+      '{"spaceId":1}'
+    );
+
+    expect(res.status).toBe(403);
+  });
+});

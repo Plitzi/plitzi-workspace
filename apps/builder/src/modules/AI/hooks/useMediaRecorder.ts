@@ -58,32 +58,8 @@ const useMediaRecorder = ({
     return undefined;
   }, []);
 
-  // const processBlob = async blob => {
-  //   if (!blob) return;
-
-  //   try {
-  //     if (blob.size === 0) {
-  //       throw new Error('Error: The audio blob is empty');
-  //     }
-
-  //     const audioSrcFromBlob = URL.createObjectURL(blob);
-  //     setAudioSrc(audioSrcFromBlob);
-
-  //     const audioBuffer = await blob.arrayBuffer();
-  //     const audioContext = new AudioContext();
-  //     const buffer = await audioContext.decodeAudioData(audioBuffer);
-  //     setBufferFromRecordedBlob(buffer);
-
-  //     setError(null);
-  //   } catch (error) {
-  //     console.error('Error processing the audio blob:', error);
-  //     setError(error instanceof Error ? error : new Error('Error processing the audio blob'));
-  //   }
-  // };
-
   const mediaDataAvailable = useCallback(
     (event: BlobEvent) => {
-      // processBlob(event.data);
       chunksRef.current.push(event.data);
       if (typeof onUpdate === 'function') {
         onUpdate(chunksRef.current, event.data);

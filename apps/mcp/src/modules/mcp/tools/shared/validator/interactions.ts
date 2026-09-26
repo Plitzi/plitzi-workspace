@@ -1,26 +1,16 @@
 import { checkObservedName, warnOnce } from './context';
-import {
-  getElementCallback,
-  getGlobalCallback,
-  getUtility,
-  hiddenParams,
-  invalidParams,
-  missingRequiredParams,
-  reconcileParams
-} from '../../../catalogs';
+import { getElementCallback, getGlobalCallback, getUtility, hiddenParams, reconcileParams } from '../../../catalogs';
 import { NULLISH_ELEMENT_IDS } from '../../../helpers';
 
 import type { ValidationCtx } from './context';
-import type { BuiltinParamType, ParamSpec } from '../../../catalogs';
+import type { ParamSpec } from '../../../catalogs';
 import type { InteractionNodeInput } from '../../operations/schema/shared';
 
-// Interaction-node validation. The MCP knows three built-in vocabularies — globalCallbacks (source modules),
-// element callbacks (registered by every element) and utilities — each with its OWN param schema. The single most
-// common mistake is picking the WRONG node type for an action (so the runtime resolves it against nothing and the
-// step silently no-ops), or leaking one setState's params onto the other. This module tells them apart by node
-// type and validates each node against the matching schema. Most checks WARN (an unlisted action may be a valid
-// plugin/element-specific callback); a setState `key` that is not a real attribute of a DEFAULT (sdk-elements)
-// type is a hard ERROR, since we own the full attribute set of those types.
+// Interaction-node checks on the MCP's own input — a node as the agent wrote it, before apply normalizes it. What a
+// stored step MEANS (params of the right type, a target that exists and answers, a key the element has) is read from
+// the resulting draft by `lintSpace` (see lintDraft), the linter every door into a space shares. What stays here is
+// what only the input shows: an action given the wrong `nodeType`, an `elementId` apply will override, params apply
+// will drop, and a key on a PLUGIN type, whose attributes only this deployment's manifest knows.
 
 // setState and toggleState each exist as BOTH a globalCallback (source `state`, writing runtime.state.*) and an
 // element callback (category/key/... → the element's own attribute/state). Each is disambiguated by node type, so
@@ -29,23 +19,6 @@ import type { InteractionNodeInput } from '../../operations/schema/shared';
 // The two element actions that name a field of the target element, and so can have that name checked against the
 // element's type. They differ only in whether a `value` is authored beside the key.
 const ELEMENT_FIELD_ACTIONS = new Set(['setState', 'toggleState']);
-
-const describeType = (type: BuiltinParamType): string => {
-  switch (type) {
-    case 'boolean':
-      return 'a boolean';
-    case 'number':
-      return 'a number';
-    case 'select':
-      return 'one of its allowed values';
-    case 'scalar':
-      return 'a string, number or boolean';
-    case 'json':
-      return 'any JSON value — text, a number, a boolean, an object or a list';
-    default:
-      return 'a string';
-  }
-};
 
 const checkParams = (
   label: string,
@@ -65,15 +38,6 @@ const checkParams = (
   }
 
   const effective = reconcileParams(params, spec, true);
-  const missing = missingRequiredParams(params, effective, spec);
-  if (missing.length > 0) {
-    warnOnce(
-      ctx,
-      `${label} "${action}" at ${base} is missing required param(s) ${missing.map(k => `"${k}"`).join(', ')} — the ` +
-        'step is malformed without them (see plitzi://interactions for what each does).'
-    );
-  }
-
   const hidden = hiddenParams(params, effective, spec);
   if (hidden.length > 0) {
     warnOnce(
@@ -82,20 +46,6 @@ const checkParams = (
         'current params (they only apply when a companion param is set — see plitzi://interactions). Set the ' +
         'companion param or drop them.'
     );
-  }
-
-  // Value-type check: for a CLOSED (strict) built-in catalog we own the exact type of every param, so a value of the
-  // wrong type — a boolean stored as the string "true", a number as a string, a leftover null, a select value not in
-  // its options — is a hard ERROR (unlike unknown/hidden keys, which stay warnings for plugin tolerance). This is
-  // what catches a node the agent "half-fixed": one param corrected, others still malformed.
-  for (const { key, expected, got, options } of invalidParams(params, effective, spec)) {
-    const detail = options ? ` Allowed values: ${options.join(', ')}.` : '';
-    ctx.errors.push({
-      path: `${base}.params.${key}`,
-      message: `${label} "${action}" at ${base}: param "${key}" must be ${describeType(expected)} but got ${got}.${detail}`,
-      hint: `Set "${key}" to ${describeType(expected)}.`,
-      ...(options ? { validValues: options } : {})
-    });
   }
 };
 
@@ -130,10 +80,10 @@ const checkGlobalCallback = (node: InteractionNodeInput, base: string, ctx: Vali
   }
 };
 
-// The element `setState`/`toggleState` name an attribute or state key of the TARGET element. We can validate the key
-// against that element's type: strict (ERROR) for a default (custom:false) type — we own its full attribute/selector
-// set — and lenient (WARNING) for a plugin/unknown type. `category="attribute"` → key ∈ the type's attributes;
-// `category="state"` → key is `visibility` or `styleSelectors.<selector>`.
+// The element `setState`/`toggleState` name an attribute or state key of the TARGET element. A built-in type is held
+// to its declaration by the lint of the draft (`callback-key-unknown`); a plugin type only by its manifest, which is
+// a best-effort snapshot — so this warns. `category="attribute"` → key ∈ the type's attributes; `category="state"` →
+// key is `visibility` or `styleSelectors.<selector>`.
 const checkElementFieldKey = (node: InteractionNodeInput, base: string, ctx: ValidationCtx, hostRef: string): void => {
   const key = node.params?.key;
   if (typeof key !== 'string' || key === '') {
@@ -143,7 +93,7 @@ const checkElementFieldKey = (node: InteractionNodeInput, base: string, ctx: Val
   const targetRef = typeof node.elementId === 'string' && node.elementId !== '' ? node.elementId : hostRef;
   const type = ctx.elementType(targetRef);
   const meta = type ? ctx.typeMeta.get(type) : undefined;
-  if (!meta) {
+  if (!meta?.custom) {
     return;
   }
 
@@ -158,58 +108,14 @@ const checkElementFieldKey = (node: InteractionNodeInput, base: string, ctx: Val
 
   const kind = state ? 'state' : 'attribute';
   const valid = [...validKeys].sort();
-  const detail = `Element ${node.action} at ${base} names ${kind} "${key}" on type "${type}", which has no such ${kind} key`;
-  if (!meta.custom) {
-    ctx.errors.push({ path: base, message: detail, hint: `Use one of: ${valid.join(', ')}`, validValues: valid });
-  } else {
-    warnOnce(ctx, `${detail} (${valid.join(', ')}). It may still be valid — verify against plitzi://types.`);
-  }
-};
-
-/**
- * The step names another element to act on — and that element does not exist.
- *
- * This is the failure with NO symptom: the runtime resolves a callback as `callbacksAvailables[elementId][action]`,
- * so a dangling target finds nothing and the step does nothing, while the flow, the render and the apply all
- * report success. Nothing else in the pipeline catches it — the field-key check below needs the element's type to
- * say anything, so an unresolvable ref used to make it return in silence.
- *
- * A `widget` batch is the whole world (plitzi_render seeds an empty space), so a target that is neither in it nor
- * created by it is certainly wrong: a hard error. A space may carry legacy flows pointing at elements deleted long
- * ago, and the post-apply audit re-checks the stored interactions of every element the batch touches — erroring
- * there would block edits on debris the agent did not write, so in `space` mode this warns.
- */
-const checkCallbackTarget = (node: InteractionNodeInput, base: string, ctx: ValidationCtx): void => {
-  const target = node.elementId;
-  if (target === undefined || target === '' || NULLISH_ELEMENT_IDS.has(target) || ctx.elementExists(target)) {
-    return;
-  }
-
-  const detail =
-    `Element callback "${node.action}" at ${base} targets elementId "${target}", which is not an element in ` +
-    'this widget';
-  if (ctx.mode === 'widget') {
-    ctx.errors.push({
-      path: `${base}.elementId`,
-      message: detail,
-      hint:
-        'The runtime looks the callback up on that element, so the step silently does nothing. Use the ref of an ' +
-        'element the batch authors, or omit elementId to act on the flow host.'
-    });
-
-    return;
-  }
-
   warnOnce(
     ctx,
-    `Element callback "${node.action}" at ${base} targets elementId "${target}", which is not an element in this ` +
-      'space — the step resolves to nothing and does nothing. Point it at a real element ref, or omit elementId to ' +
-      'act on the flow host.'
+    `Element ${node.action} at ${base} names ${kind} "${key}" on type "${type}", which has no such ${kind} key ` +
+      `(${valid.join(', ')}). It may still be valid — verify against plitzi://types.`
   );
 };
 
 const checkElementCallback = (node: InteractionNodeInput, base: string, ctx: ValidationCtx, hostRef: string): void => {
-  checkCallbackTarget(node, base, ctx);
   const builtin = getElementCallback(node.action);
   if (!builtin) {
     if (getUtility(node.action)) {

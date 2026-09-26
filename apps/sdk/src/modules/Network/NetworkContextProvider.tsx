@@ -107,7 +107,6 @@ const NetworkContextProvider = ({
       }
 
       let result: ApolloClient.MutateResult<SdkMutationsMap[T]> | undefined;
-      // let abortHandler;
       try {
         result = await client?.mutate<SdkMutationsMap[T]>({
           mutation: SdkMutations[mutationKey],
@@ -115,14 +114,6 @@ const NetworkContextProvider = ({
           context: {
             fetchOptions: {
               customFetch: false,
-              // onProgress: ev => {
-              //   setProgress(ev.loaded / ev.total);
-              // },
-              // onProgress: undefined,
-              // onAbortPossible: abortHandlerInternal => {
-              //   abortHandler = abortHandlerInternal;
-              // },
-              // onAbortPossible: undefined,
               ...uploadOptions
             }
           }

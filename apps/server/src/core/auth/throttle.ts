@@ -5,13 +5,16 @@
  * oracle. Nobody sets an option they have not read about, so the effect of "there is no sensible default" was that
  * the common deployment shipped without any — which is not a neutral outcome, it is the bad one.
  *
- * It counts in memory, and that is an honest limitation rather than a hidden one: several processes each keep
- * their own window, so a four-process cluster tolerates four times the attempts. Four times a small number is
- * still a small number, and it beats infinity. A deployment that wants one counter for the fleet supplies
- * `rateLimit` and puts it in Redis.
+ * It counts in memory, and that is an honest limitation rather than a hidden one: several replicas each keep
+ * their own window, so four replicas tolerate four times the attempts. Four times a small number is still a small
+ * number, and it beats infinity. A deployment that wants one counter for all of them supplies `rateLimit` and puts
+ * it in Redis. The workers of one server are one replica: they count in the primary (`fleetRateLimit`).
  */
 
+import { fleetStore } from '../server/fleet/link';
+
 import type { ThrottleAttempt, ThrottledAction } from './api';
+import type { StoreMethods } from '../server/fleet/channel';
 
 /** Attempts allowed per window, per key, per action. */
 const LIMITS: Record<ThrottledAction, { attempts: number; windowSeconds: number }> = {
@@ -83,4 +86,25 @@ export const createMemoryRateLimit = (): ((attempt: ThrottleAttempt) => Promise<
 
     return Promise.resolve({ allowed: true });
   };
+};
+
+type RateLimitStore = { check: ReturnType<typeof createMemoryRateLimit> };
+
+/** Every method of the store, for the copy a fleet's workers share (see `fleet/stores.ts`). */
+export const RATE_LIMIT_METHODS: StoreMethods<RateLimitStore> = { check: true };
+
+/**
+ * In a worker of a fleet, the primary's {@link createMemoryRateLimit}, so an attacker spreading attempts over
+ * connections meets one counter rather than one per worker. Nothing anywhere else.
+ */
+export const fleetRateLimit = ():
+  ((attempt: ThrottleAttempt) => Promise<{ allowed: boolean; retryAfter?: number }>) | undefined => {
+  const shared = fleetStore<RateLimitStore>('auth.rateLimit', RATE_LIMIT_METHODS);
+  if (!shared) {
+    return undefined;
+  }
+
+  // Only what the count reads crosses to the primary: the carrier holds the request, which cannot be cloned.
+  return attempt =>
+    shared.check({ action: attempt.action, key: attempt.key, ...(attempt.succeeded ? { succeeded: true } : {}) });
 };

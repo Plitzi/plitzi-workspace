@@ -6,16 +6,18 @@ import {
   hashPassword as defaultHashPassword,
   verifyPassword as defaultVerifyPassword
 } from './passwords';
-import { createMemoryRateLimit } from './throttle';
+import { createMemoryRateLimit, fleetRateLimit } from './throttle';
 import { authFailureMessage } from './tokens';
 import {
   generateRecoveryCodes,
   generateTotpSecret,
   normalizeRecoveryCode,
   randomCode,
-  totpUri,
-  verifyTotp
+  totpStep,
+  totpUri
 } from './totp';
+import { serverLog } from '../../helpers/serverLog';
+import { forwardedIp } from '../requestParser';
 
 import type { CredentialCarrier } from './credentials';
 import type { Csrf } from './csrf';
@@ -58,6 +60,17 @@ export interface AccountAccess {
 export interface SessionClient {
   userAgent?: string;
   ip?: string;
+  /**
+   * The application holding it, when it is not a browser: a native client names itself when it registers
+   * (`Plitzi CLI on carlos-mbp`, software `plitzi-cli`). A user agent says which browser; this says which app.
+   */
+  app?: SessionApp;
+}
+
+export interface SessionApp {
+  name: string;
+  /** A stable name for the software, the same on every machine — what a list picks an icon by. */
+  softwareId?: string;
 }
 
 /**
@@ -71,7 +84,10 @@ export interface SessionSummary {
   id: number;
   userAgent?: string;
   ip?: string;
+  app?: SessionApp;
   createdAt: number;
+  /** When it was last used, where the store keeps it; a session never seen since it was made has none. */
+  lastActiveAt?: number;
   expiresAt: number;
   /** The session asking. A device list without it invites someone to revoke the one they are using. */
   current: boolean;
@@ -83,6 +99,12 @@ export interface MfaRecord {
   /** Unix seconds the enrolment was proven with a real code. Absent means started and never finished. */
   confirmedAt?: number;
   recoveryCodes?: string[];
+  /**
+   * The time step of the last code that was accepted. A code of that step or an earlier one is refused: a code is valid
+   * for its whole window, and one watched over a shoulder or lifted from a phishing page would otherwise sign a second
+   * person in within that window (RFC 6238 §5.2).
+   */
+  lastUsedStep?: number;
 }
 
 /** Something worth writing down. Fed to an audit log, a webhook, a SIEM — whatever the deployment has. */
@@ -138,11 +160,24 @@ export interface SessionContext {
   client?: SessionClient;
 }
 
-/** The user agent, off whatever carried the request. Nothing else here reads headers, so it is done once. */
+/**
+ * The user agent and the address, off whatever carried the request — what lets somebody tell their devices apart.
+ * Nothing else here reads headers, so it is done once. The address is the host's when it resolved one, the proxies'
+ * otherwise; it names a session in a list and decides nothing.
+ */
 const clientOf = (carrier?: CredentialCarrier): SessionClient | undefined => {
-  const userAgent = carrier?.headers['user-agent'];
+  if (!carrier) {
+    return undefined;
+  }
 
-  return typeof userAgent === 'string' && userAgent ? { userAgent } : undefined;
+  const userAgent = carrier.headers['user-agent'];
+  const ip = carrier.ip || forwardedIp(carrier.headers);
+  const client: SessionClient = {
+    ...(typeof userAgent === 'string' && userAgent ? { userAgent } : {}),
+    ...(ip ? { ip } : {})
+  };
+
+  return client.userAgent || client.ip ? client : undefined;
 };
 
 /**
@@ -183,6 +218,15 @@ export interface AccountAdapters {
    * session, which deleting the account's sessions does.
    */
   deleteAccount?: (userId: number) => Promise<void>;
+  /**
+   * What would be lost if this account were deleted now, in sentences its owner can act on — "“Studio” has 3 spaces;
+   * delete them or make somebody else an owner". Any at all and the deletion is refused, with the list.
+   *
+   * The account is what holds things a deployment cannot simply drop: a workspace nobody else owns, the spaces in it,
+   * a plan still being paid for. Deleting it anyway leaves them orphaned — unreachable by anyone, and possibly still
+   * billed. Optional, for a deployment whose accounts own nothing.
+   */
+  deletionBlockers?: (userId: number) => Promise<string[]>;
   /** Page through accounts, for an administrator. `total` is the count before the page was taken. */
   listAccounts?: (query: AccountQuery) => Promise<{ accounts: AccountRecord[]; total: number }>;
   /** Replace an account's global roles with exactly these. */
@@ -328,7 +372,7 @@ export interface AuthApiConfig {
    * A refusal is a 429 with `retryAfter`, raised before any password is checked so it costs no hash.
    */
   rateLimit?: (attempt: ThrottleAttempt) => Promise<boolean | { allowed: boolean; retryAfter?: number }>;
-  /** Where a failed delivery is reported. Defaults to `console.error`; it is never thrown — see `deliver`. */
+  /** Where a failed delivery is reported. Defaults to the server log at `error`; it is never thrown — see `deliver`. */
   onMailError?: (error: unknown, message: { to: string; template: string }) => void;
   /**
    * Every act worth recording, as it happens.
@@ -466,7 +510,7 @@ export const createAuthApi = ({
     adminPermission = 'userManage',
     impersonationPermission,
     password: policy = {},
-    rateLimit = createMemoryRateLimit(),
+    rateLimit = fleetRateLimit() ?? createMemoryRateLimit(),
     onMailError,
     onEvent,
     mfaIssuer,
@@ -482,7 +526,7 @@ export const createAuthApi = ({
     try {
       onEvent({ ...event, at: Math.floor(Date.now() / 1000) });
     } catch (error: unknown) {
-      console.error('[auth] security event handler threw:', error);
+      serverLog.error('auth', 'security event handler threw', error);
     }
   };
 
@@ -522,7 +566,7 @@ export const createAuthApi = ({
     try {
       await adapters.sendMail?.(message);
     } catch (error: unknown) {
-      const report = onMailError ?? ((cause: unknown) => console.error('[auth] could not send mail:', cause));
+      const report = onMailError ?? ((cause: unknown) => serverLog.error('auth', 'could not send mail', cause));
       report(error, { to: message.to, template: message.template });
     }
   };
@@ -817,6 +861,9 @@ export const createAuthApi = ({
        */
       const mfa = capabilities.mfa ? await adapters.loadMfa?.(account.id) : undefined;
       if (mfa?.confirmedAt) {
+        // The password was proved, so what this counter guards against did not happen: counted as a failure, an
+        // account with a second factor was locked out by signing in often. The codes have a counter of their own.
+        throttleSucceeded({ action: 'login', key: username, carrier });
         record({ type: 'login.mfa-required', userId: account.id, carrier });
 
         return {
@@ -869,16 +916,23 @@ export const createAuthApi = ({
       const stored = mfa.recoveryCodes ?? [];
       const supplied = digestRecoveryCode(code);
       const usedRecovery = stored.includes(supplied);
+      const step = usedRecovery ? undefined : totpStep(mfa.secret, code);
+      const replayed = step !== undefined && mfa.lastUsedStep !== undefined && step <= mfa.lastUsedStep;
 
-      if (!usedRecovery && !verifyTotp(mfa.secret, code)) {
-        record({ type: 'mfa.failed', userId, carrier });
+      if (!usedRecovery && (step === undefined || replayed)) {
+        record({ type: 'mfa.failed', userId, carrier, ...(replayed ? { detail: { replayed: true } } : {}) });
 
         return refuse(401, 'Invalid code');
       }
 
-      if (usedRecovery) {
-        await adapters.saveMfa?.(userId, { ...mfa, recoveryCodes: stored.filter(entry => entry !== supplied) });
-      }
+      // Spent before the session exists: a code is good for one sign-in, and a failure to record that must not
+      // leave it good for another.
+      await adapters.saveMfa?.(
+        userId,
+        usedRecovery
+          ? { ...mfa, recoveryCodes: stored.filter(entry => entry !== supplied) }
+          : { ...mfa, lastUsedStep: step }
+      );
 
       const session = await issue(userId, { client: clientOf(carrier) });
       throttleSucceeded({ action: 'mfa', key: String(userId), carrier });
@@ -1069,19 +1123,22 @@ export const createAuthApi = ({
           return refuse(409, 'A second factor is already set up');
         }
 
-        if (!verifyTotp(mfa.secret, code)) {
+        const step = totpStep(mfa.secret, code);
+        if (step === undefined) {
           record({ type: 'mfa.failed', userId: actor.id });
 
           return refuse(401, 'Invalid code');
         }
 
         // Shown once and stored hashed, which is what makes them worth having: a deployment that could print them
-        // again is a deployment where reading the database is enough to bypass the second factor.
+        // again is a deployment where reading the database is enough to bypass the second factor. The code that
+        // proved the enrolment is spent like any other: it does not also sign somebody in.
         const plain = generateRecoveryCodes();
         await adapters.saveMfa?.(actor.id, {
           ...mfa,
           confirmedAt: Math.floor(Date.now() / 1000),
-          recoveryCodes: plain.map(digestRecoveryCode)
+          recoveryCodes: plain.map(digestRecoveryCode),
+          lastUsedStep: step
         });
         record({ type: 'mfa.enabled', userId: actor.id });
 
@@ -1555,6 +1612,16 @@ export const createAuthApi = ({
         if (!password || !(await verifyPassword(password, account.passwordHash))) {
           return refuse(401, 'Invalid credentials');
         }
+      }
+
+      // After the password, so a borrowed session learns nothing about what the account owns without it.
+      const blockers = (await adapters.deletionBlockers?.(actor.id)) ?? [];
+      if (blockers.length > 0) {
+        return {
+          ok: false,
+          status: 409,
+          body: { error: 'This account still owns things that would be lost with it', blockers }
+        };
       }
 
       await adapters.deleteAccount(actor.id);

@@ -187,4 +187,47 @@ describe('saveSession', () => {
 
     expect((calls[0].params[5] as string).length).toBe(255);
   });
+
+  /** A browser is named by its user agent; an application by what it registered as — the CLI, the desktop app. */
+  it('records the application holding it, when it is not a browser', async () => {
+    const { db, calls } = fakeDb();
+    await createAccountStore(db, tables).saveSession(1, session, {
+      client: { ip: '203.0.113.7', app: { name: 'Plitzi CLI on carlos-mbp', softwareId: 'plitzi-cli' } }
+    });
+
+    expect(calls[0].sql).toContain('app_name, app_id');
+    expect(calls[0].params.slice(-3)).toEqual(['203.0.113.7', 'Plitzi CLI on carlos-mbp', 'plitzi-cli']);
+  });
+});
+
+describe('when a session was last used', () => {
+  const row = (lastActiveAt: number | null) => [
+    {
+      id: 3,
+      username: 'ada',
+      email: 'ada@example.test',
+      password_hash: null,
+      status: 'active',
+      verified: 1,
+      session_id: 41,
+      session_expires_at: 1800000000,
+      session_last_active_at: lastActiveAt
+    }
+  ];
+
+  it('is recorded on the lookup the request already makes, once it is due', async () => {
+    const { db, calls } = fakeDb([row(null), []]);
+    await createAccountStore(db, tables).findAccountByToken('t-1');
+
+    const touch = calls.find(call => call.sql.startsWith('UPDATE `plitzi_session` SET last_active_at'));
+    expect(touch?.params[1]).toBe(41);
+  });
+
+  /** Recording it on every request would be a write on the hottest read there is. */
+  it('is not written again within its resolution', async () => {
+    const { db, calls } = fakeDb([row(Math.floor(Date.now() / 1000) - 10), []]);
+    await createAccountStore(db, tables).findAccountByToken('t-1');
+
+    expect(calls.some(call => call.sql.includes('last_active_at = ?'))).toBe(false);
+  });
 });

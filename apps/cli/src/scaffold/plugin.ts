@@ -161,27 +161,32 @@ const readme = ({ mode }: CreateAnswers): string => `# Plugins
 
 Components of your own, rendered by the space.
 
-A plugin is a React component and a \`renderType\` it is registered under. The space hosts it with a \`custom\`
-element naming that same \`renderType\` — see \`custom({ renderType: 'statCard', … })\` in \`src/space.ts\` — and the
-element's attributes arrive as the component's props.
+Every folder here is one, registered under its name in camelCase: \`StatCard\` is the \`renderType\` \`statCard\`. The
+space hosts it with a \`custom\` element naming that type — see \`custom({ renderType: 'statCard', … })\` in
+\`src/space.ts\` — and the element's attributes arrive as the component's props.
 
 ${
   mode === 'server'
-    ? `\`src/main.ts\` registers this one with \`action: 'compile'\`, which is what makes it **server-rendered**: the
+    ? `\`src/main.ts\` registers each one with \`action: 'compile'\`, which is what makes it **server-rendered**: the
 server builds the entry with esbuild, keeps React external so the plugin runs on the one copy the page already
 has, serves the bundle to the browser AND imports it into the render — so the component's markup is in the HTML
 before any JavaScript arrives. A plugin registered any other way renders only after hydration, which is a hole in
 the document for anyone reading the page before then.`
-    : `\`src/main.ts\` registers this one as the third argument to \`render()\`. There is no server here, so the
-component is part of this project's own bundle and Vite hot-replaces it like any other module.`
+    : `\`src/main.ts\` hands them to \`render()\`. There is no server here, so each one is part of this project's own
+bundle and Vite hot-replaces it like any other module.`
 }
 
 ## Adding another
 
-1. \`src/plugins/YourThing/YourThing.tsx\` — a component whose props are the attributes you want to author.
-2. \`src/plugins/YourThing/index.ts\` — \`export default\`, so the registration has one thing to point at.
-3. Register it in \`src/main.ts\` under a \`renderType\`.
-4. Put a \`custom({ renderType: 'yourThing', … })\` in \`src/space.ts\`.
+\`\`\`bash
+npx @plitzi/cli add plugin seat-picker
+\`\`\`
+
+It asks what to call it and writes \`src/plugins/SeatPicker/\`: the component, the panel the builder edits it with, and
+the \`index.ts\` that hands both over. Then put a \`custom({ renderType: 'seatPicker', … })\` in \`src/space.ts\`.
+
+By hand it is the same three files: \`YourThing/YourThing.tsx\` — a component whose props are the attributes you want
+to author — and \`YourThing/index.ts\` with an \`export default\`.
 
 ## Three things that bite
 
@@ -198,8 +203,32 @@ break the plugin, it blanks the page. Put live values in an effect.
 invisible on one of them. Use \`currentColor\` and the space's own \`var(--…)\` variables.
 `;
 
+const declarationName = (component: string): string => `${component.charAt(0).toLowerCase()}${component.slice(1)}`;
+
+/**
+ * `src/plugins/declarations.ts`: the declaration of every plugin that has one, which `authorSpace` holds the space to —
+ * a flow on an event a plugin never fires, or an attribute it does not read, is refused instead of written. Written
+ * from the folders' names alone, so the CLI can tell a list it wrote from one somebody changed, and add to the first.
+ */
+export const projectDeclarations = (components: string[]): string => {
+  const names = components.map(declarationName);
+  const list = `export const declarations: PluginDeclarationData[] = [${names.join(', ')}];`;
+
+  return `${components.map(component => `import ${declarationName(component)} from './${component}/declaration.ts';`).join('\n')}${components.length ? '\n\n' : ''}import type { PluginDeclarationData } from '@plitzi/sdk-authoring';
+
+/**
+ * Every plugin's declaration, handed to \`authorSpace\` wherever the space is authored: its flows on a plugin's events,
+ * its steps to a plugin's actions and its attributes are checked like a built-in element's. \`plitzi add plugin\`
+ * writes this list; a plugin written by hand is added with its \`declaration.ts\`.
+ */
+${list.length <= 120 ? list : `export const declarations: PluginDeclarationData[] = [\n${names.map(name => `  ${name}`).join(',\n')}\n];`}
+`;
+};
+
 export const pluginFiles = (answers: CreateAnswers): ProjectFiles => ({
   'src/plugins/StatCard/StatCard.tsx': component(),
   'src/plugins/StatCard/index.ts': barrel(),
-  'src/plugins/README.md': readme(answers)
+  'src/plugins/README.md': readme(answers),
+  // Only where the space is authored here: a space kept in Plitzi is checked by the builder instead.
+  ...(answers.source === 'local' ? { 'src/plugins/declarations.ts': projectDeclarations([]) } : {})
 });

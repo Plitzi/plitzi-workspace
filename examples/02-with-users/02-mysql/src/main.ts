@@ -2,12 +2,14 @@ import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-ser
 import { createAuth } from '@plitzi/sdk-server/auth';
 import { createMysqlStore } from '@plitzi/sdk-server/mysql';
 
-import { seed } from './seed';
+import { seed } from './seed.ts';
 // The same two pages as the sessions example. What changes here is not what gets rendered — it is where the people
 // come from, and copying two hundred lines of page definition across would bury the one difference that matters.
-import { offlineData } from '../../01-sessions/src/space';
+import { offlineData } from '../../01-sessions/src/space.ts';
 
 const PORT = Number(process.env.PORT ?? 4008);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 const COOKIE = 'example_mysql_session';
 
 /**
@@ -80,13 +82,13 @@ const auth = createAuth({
 
 const server = createServer({
   port: PORT,
-  devMode: true,
+  devMode: process.env.NODE_ENV !== 'production',
   logger: consoleLogger,
   adapters: createJsonAdapters({ offlineData: offlineData({ sessionHintCookie: `${COOKIE}_hint` }) }),
   auth
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 
 // The pool outlives the process otherwise: node will not exit while a MySQL connection is open, so ^C hangs.
 const shutdown = (): void => {

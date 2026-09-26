@@ -28,7 +28,7 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
 
   it('execute validates raw args against the shape, then runs the typed tool', () => {
     const searchTool = tools.find(t => t.name === 'plitzi_search');
-    const result = searchTool?.execute({ query: 'box' }, ctx()) as SearchResponse;
+    const result = searchTool?.execute({ query: 'section' }, ctx()) as SearchResponse;
     expect(result.results.some(r => r.ref === 'c1')).toBe(true);
   });
 
@@ -42,7 +42,7 @@ describe('mcp-ai draft store (preview tokens)', () => {
   it('returns the stashed draft exactly once, then nothing', () => {
     const store = createMemoryDraftStore();
     const data = { schema: buildSpace().schema, style: buildSpace().style };
-    void store.put('tok', data, { ttlMs: 60000 });
+    void store.put('tok', data, { ttlMs: 60000, spaceId: 1 });
     expect(store.take('tok')).toMatchObject({ data, reusable: false });
     expect(store.take('tok')).toBeUndefined();
   });
@@ -51,14 +51,14 @@ describe('mcp-ai draft store (preview tokens)', () => {
   it('keeps a reusable draft for as long as its session lasts', () => {
     const store = createMemoryDraftStore();
     const data = { schema: buildSpace().schema, style: buildSpace().style };
-    void store.put('tok', data, { ttlMs: 60000, reusable: true });
+    void store.put('tok', data, { ttlMs: 60000, reusable: true, spaceId: 1 });
     expect(store.take('tok')).toMatchObject({ data, reusable: true });
     expect(store.take('tok')).toMatchObject({ data, reusable: true });
   });
 
   it('drops an expired token', () => {
     const store = createMemoryDraftStore();
-    void store.put('tok', { schema: buildSpace().schema, style: buildSpace().style }, { ttlMs: -1 });
+    void store.put('tok', { schema: buildSpace().schema, style: buildSpace().style }, { ttlMs: -1, spaceId: 1 });
     expect(store.take('tok')).toBeUndefined();
   });
 });

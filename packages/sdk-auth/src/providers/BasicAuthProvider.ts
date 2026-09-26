@@ -5,7 +5,7 @@ import { authFailureFromResponse } from '@plitzi/sdk-shared/auth';
 import AuthProvider from '../AuthProvider';
 
 import type { AuthProviderProps } from '../AuthProvider';
-import type { AuthFailureReason, AuthResult, Schema, TokenResult } from '@plitzi/sdk-shared';
+import type { AuthFailureReason, AuthResult, MfaChallenge, Schema, TokenResult } from '@plitzi/sdk-shared';
 
 export type BasicAuthProviderProps = AuthProviderProps & {
   loginUrl?: string;
@@ -13,6 +13,7 @@ export type BasicAuthProviderProps = AuthProviderProps & {
   refreshUrl?: string;
   logoutUrl?: string;
   sessionExchangeUrl?: Schema['settings']['sessionExchangeUrl'];
+  mfaUrl?: Schema['settings']['mfaUrl'];
   detailsPath?: Schema['settings']['detailsPath'];
   tokenPath?: Schema['settings']['tokenPath'];
   refreshTokenPath?: Schema['settings']['refreshTokenPath'];
@@ -83,6 +84,7 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
     refreshUrl = '',
     logoutUrl = '',
     sessionExchangeUrl = '',
+    mfaUrl = '',
     detailsPath = 'details',
     tokenPath = 'access_token',
     refreshTokenPath = 'refresh_token',
@@ -97,6 +99,7 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
       refreshUrl,
       logoutUrl,
       sessionExchangeUrl,
+      mfaUrl,
       detailsPath,
       tokenPath,
       refreshTokenPath,
@@ -123,11 +126,26 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
    * taken on trust: an unusable token is refused here rather than becoming a session that fails on its first real
    * request. `mode: 'normal'` (the default) posts the credentials.
    */
-  protected async requestLogin(params: Record<string, unknown>): Promise<AuthResult<U>> {
+  protected async requestLogin(params: Record<string, unknown>): Promise<AuthResult<U> | MfaChallenge> {
     // A token is a handle rather than a typed secret, so whitespace from a copy-paste is noise.
     const token = credential(params.token).trim();
     if (params.mode === 'token') {
       return token ? this.adoptToken(token) : { ok: false, reason: 'missing' };
+    }
+
+    // The second half of a sign-in that owed a factor: the challenge the password bought, and the code.
+    if (params.mode === 'mfa') {
+      const mfaToken = credential(params.mfaToken).trim();
+      if (!this.options.mfaUrl || !mfaToken) {
+        return { ok: false, reason: 'missing' };
+      }
+
+      return this.toResult(
+        await this.request<Record<string, unknown>>(this.options.mfaUrl, {
+          method: 'POST',
+          body: JSON.stringify({ mfaToken, code: credential(params.code).trim() })
+        })
+      );
     }
 
     if (!this.options.loginUrl) {
@@ -141,7 +159,7 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
       body: JSON.stringify({ username: credential(params.username), password: credential(params.password) })
     });
 
-    return this.toResult(res);
+    return this.challengeOf(res) ?? this.toResult(res);
   }
 
   /** Confirms a token by asking who it belongs to, and only then reports it as a session. */
@@ -254,6 +272,18 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
       status: res.status,
       reason: res.ok ? undefined : (authFailureFromResponse(res.status, data) ?? 'network')
     };
+  }
+
+  /**
+   * A right password on an account with a second factor: a challenge, not a session with nobody in it. Read as the
+   * latter it ended as `inactive`, and told somebody with a perfectly good account that it could not be used.
+   */
+  private challengeOf(res: Response<Record<string, unknown>>): MfaChallenge | undefined {
+    const mfaToken = valueAt(res.data, 'mfaToken');
+
+    return !res.reason && valueAt(res.data, 'mfaRequired') === true && typeof mfaToken === 'string' && mfaToken
+      ? { ok: false, reason: 'mfa', mfaToken }
+      : undefined;
   }
 
   private toResult(res: Response<Record<string, unknown>>): AuthResult<U> {

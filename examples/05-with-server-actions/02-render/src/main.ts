@@ -1,9 +1,11 @@
 import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 
-import { lookups } from './actions';
-import { offlineData } from './space';
+import { lookups } from './actions.ts';
+import { offlineData } from './space.ts';
 
 const PORT = Number(process.env.PORT ?? 4011);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 
 const space = offlineData();
 
@@ -15,7 +17,7 @@ const space = offlineData();
  * from these lookups rather than written out again by the deployment.
  */
 const server = createServer({
-  devMode: true,
+  devMode: process.env.NODE_ENV !== 'production',
   logger: consoleLogger,
   adapters: createJsonAdapters({ offlineData: space, deployment: { spaceId: 1, environment: 'main', revision: 0 } }),
   /**
@@ -35,7 +37,7 @@ const server = createServer({
   }
 });
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 
 console.log(`[example] cats on http://127.0.0.1:${PORT}/`);
 console.log(`[example] fewer cats: http://127.0.0.1:${PORT}/?limit=3`);

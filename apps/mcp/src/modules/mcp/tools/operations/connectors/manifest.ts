@@ -112,5 +112,3 @@ export const connectorConnection = z
       .describe('Send every field instead of only the bound paths. Costs payload size; only for dynamic templates')
   })
   .describe('Settings that apply to every call this connector makes');
-
-export type ConnectorConnectionInput = z.infer<typeof connectorConnection>;

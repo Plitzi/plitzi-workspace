@@ -166,12 +166,38 @@ describe('the copy handed to a project', () => {
     expect(plain).not.toContain('custom(');
     expect(hosted).toContain("renderType: 'statCard'");
     expect(hosted).toContain("id: 'stat-card'");
-    // Attributes, which the component receives as props — written as source a person reads, quotes escaped.
-    expect(hosted).toContain("label: 'Today\\'s'");
+    // Attributes, which the component receives as props — written as source a person reads, quoted the way the
+    // project's Prettier would: an apostrophe in the text takes double quotes rather than an escape.
+    expect(hosted).toContain('label: "Today\'s"');
     expect(hosted).toContain('series: [1, 2]');
     // Prepended as its own line, then folded into the package import by the rewrite below.
     expect(hosted).toMatch(/^import \{[^}]*\bcustom\b[^}]*\} from '@plitzi\/sdk-authoring';$/m);
     expect(hosted).not.toMatch(/from '\.\./);
+  });
+
+  /** How a published space hosts a plugin it loads from a manifest, and how the builder adds one: by its own type. */
+  it('hosts a plugin as an element of its own type when asked', () => {
+    const hosted = blankSpaceSource({
+      plugin: { id: 'seat-picker', renderType: 'seatPicker', as: 'element', attributes: { start: 3 } }
+    });
+
+    expect(hosted).toContain("element('seatPicker', {");
+    expect(hosted).not.toContain('custom(');
+    expect(hosted).not.toContain('renderType');
+    expect(hosted).toMatch(/^import \{[^}]*\belement\b[^}]*\} from '@plitzi\/sdk-authoring';$/m);
+  });
+
+  it('hosts every plugin of a list, one after another', () => {
+    const hosted = blankSpaceSource({
+      plugin: [
+        { id: 'seat-picker', renderType: 'seatPicker', as: 'element', attributes: {} },
+        { id: 'legend', renderType: 'legend', as: 'element', attributes: { label: 'Key' } }
+      ]
+    });
+
+    expect(hosted).toContain("element('seatPicker', {");
+    expect(hosted).toContain("element('legend', {");
+    expect(hosted.indexOf("element('seatPicker'")).toBeLessThan(hosted.indexOf("element('legend'"));
   });
 
   it('feeds the plugin from a data file when asked, through a provider and a binding', () => {

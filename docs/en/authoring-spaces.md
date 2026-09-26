@@ -182,6 +182,21 @@ const { chart } = elementsFromManifest<{ chart: { kind?: string } }>(manifest);
 `defineElement` takes a declaration or a plugin's `pluginSchema` entry — they are the same shape, which is why a
 plugin type costs nothing extra to author.
 
+Hand the same declaration to `authorSpace` and the plugin is checked like a built-in element — authored as its own
+type, or hosted by `custom({ renderType })`:
+
+```ts
+authorSpace(space, { plugins: [declaration] });
+
+speciesStatus({ id: 'status', flows: [[declaredTrigger(declaration, 'onPick'), setState({ … })]] });
+button({ flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'status' })]] });
+```
+
+A flow on an event it never fires, a step sent to an action it does not answer and an attribute it does not read are
+refused, naming what it does declare. `declaredTrigger` and `declaredCallback` build those steps from the declaration,
+so a name it does not have is a compile error. `pluginTypes: ['speciesStatus']` is the lighter form: it says the type
+exists and checks nothing about how the space uses it.
+
 ---
 
 ## 4. Style
@@ -379,7 +394,7 @@ a visible wrapper with a hidden child still takes a slot in its parent's `gap`.
 
 An **empty state** is "the answer arrived and is empty", which is not what `!items` says: before the answer,
 `!undefined` is true, and "Nothing here yet" shows on every load. Ask for both —
-`{{ items is defined and items is empty ? 'true' : 'false' }}` — or bind to the provider's `isEmpty` together with
+`{{ items is defined and items is empty }}` — or bind to the provider's `isEmpty` together with
 `not isLoading`.
 
 The `!` is the `not` transformer, which is available to any binding (`transformers: [{ action: 'not', params: {} }]`).
@@ -444,6 +459,82 @@ to contain braces reaches the step as typed. An attribute is the one place that 
 `{{ name|filter }}` tokens only, because attributes carry prose.
 A root that is a step of the same flow is that step's result and is left alone.
 
+### Keyboard shortcuts
+
+`onKey(keys)` starts a flow from the keyboard. It is a trigger every element has, heard on the whole page for as long
+as the element is mounted — nobody focuses a map before pressing `+`:
+
+```ts
+seismicMap({
+  id: 'map',
+  flows: [
+    [onKey('plus, ='), declaredCallback(declaration, 'zoomIn', { on: 'map' })],
+    [onKey('minus'), declaredCallback(declaration, 'zoomOut', { on: 'map' })],
+    [onKey('escape'), setState({ key: 'selectedId', type: 'text', value: '' })]
+  ]
+});
+```
+
+`keys` is one shortcut or several with commas: a character (`'f'`, `'?'`, `'+'`), a key's name (`escape`, `space`,
+`arrowup` or `up`, `enter`, `f1`…) and modifiers before it (`shift+f`, `alt+1`, `mod+k` — ⌘ on a Mac, Ctrl
+elsewhere). Shift counts for a letter and not for a symbol, which is typed with whatever the keyboard needs. A press
+while somebody types in a field is the field's, unless Ctrl, ⌘ or Alt is held or the key is Escape — and even then
+the field keeps its own editing (⌘A, ⌘Z, ⌘C/⌘V, moving and deleting by word), so `mod+a` bound to "select all
+shapes" never steals "select this text"; a press that matches is the shortcut's alone, so an arrow bound to a flow no longer scrolls the page. `{{ <step>.key }}` is the key
+pressed, for one flow answering several. A shortcut that cannot fire — two keys, only modifiers, a name that is not a
+key — is refused where it is written, and `lintSpace` reports one written in the builder (`trigger-keys`).
+
+### What a step reads
+
+**Each step reads the page as it is when that step runs** — not as it was when the trigger fired. A `when` or a
+`{{ state.x }}` after a `setState` sees the new value; one after a `delay`, a server action or anything else that
+waits sees whatever changed meanwhile, including what the person using the page did. `computed` values are evaluated
+again for each step, over the state as it is then.
+
+That is what makes a flow that waits say what it means:
+
+```ts
+// Delete, with five seconds to take it back: the Undo button beside it only clears `pendingDelete`.
+button({
+  id: 'delete',
+  content: 'Delete',
+  flows: [
+    [
+      onClick(),
+      setState({ key: 'pendingDelete', type: 'text', value: '{{ list_rows.item.id }}' }),
+      delay(5000),
+      // Read after the wait: if Undo was pressed meanwhile, `pendingDelete` is empty and nothing is deleted.
+      when(
+        { field: 'state.pendingDelete', operator: '=', value: 'list_rows.item.id', isBinding: true },
+        runServerAction({ actionId: 'row-delete', input: { id: '{{ list_rows.item.id }}' } })
+      )
+    ]
+  ]
+});
+```
+
+`isBinding: true` compares the field with another path rather than with a literal.
+
+While a flow runs, the same trigger on the same element does not start it again — a second click on Delete during
+those five seconds is ignored, which is what keeps a double click from submitting twice. That is the trigger's
+`whileRunning`, and `skip` is its default; the other two answers are for a trigger that must never lose a firing:
+
+```ts
+flows: [[whileRunning('queue', named('arrived', on('onArrival'))), addNotification({ … }), …]]
+```
+
+| `whileRunning` | A firing while the flow runs |
+| --- | --- |
+| `skip` (default) | is ignored — a button that submits |
+| `queue` | runs after the one in progress, in order — a stream of events, each announced |
+| `parallel` | runs at once, beside it — independent firings that do not touch the same state |
+
+It is per flow: two flows on the same click are two things, and one still running says nothing about the other.
+
+To act on the value from BEFORE a write, put the step that reads it first. Two branches under opposite `when`
+guards cannot toggle a value — the second sees what the first wrote and flips it back; `toggleState` does it in one
+step.
+
 ### Cached requests
 
 An `apiContainer` that reads from the browser asks for its data every time it is shown, unless its author opts
@@ -501,6 +592,32 @@ the last one is still in flight. `0`, the default, never does.
 A refused request (`4xx`/`5xx`) is shown but never kept. Server-driven providers (`runtime: 'server'`) are not
 part of this: their data arrives with the page. The dev-tools' Store tab lists what the cache holds under
 "Queries", with how long each answer has left and a button to expire it.
+
+### State that outlives a visit
+
+`settings: { keepState: true }` keeps `runtime.state` — what `setState` writes — across reloads, in the browser's
+storage and under whoever is signed in. `transientState` lists the keys never kept: a filter, a panel left open.
+
+Web storage is the browser's alone, so what was kept comes back after hydration: the server paints the space's
+defaults, and the page swaps in what the visitor chose a moment later. For what the first paint SHOWS — the tool a
+toolbar shows as last picked, a name in an avatar — list the keys in `paintedState`:
+
+```ts
+settings: { keepState: true, paintedState: ['toolPick', 'name'], transientState: ['panelOpen'] }
+```
+
+They are kept in a cookie as well. The server renders with them and hands the page the same values as its starting
+state, so nothing is swapped; the HTML cache is keyed by that cookie. Small values only — it travels with every
+request, and past a few kilobytes it is not written (the dev-tools say so). Never a secret, and never a key that is
+also transient. The cookie carries its owner like the kept state does: written by another account, the page drops
+what it rendered with it as soon as auth has settled.
+
+### Pages that see each other
+
+When "every few seconds" is too slow — cursors, presence, a shared board — the space declares `channels` and a page
+subscribes with a `channel` element; a server action announces what it saved with `realtime.publish`. A topic no
+declared pattern matches is refused here, naming the patterns (`channel-topic` in `lintSpace`). See
+[Realtime channels](./realtime.md).
 
 ---
 

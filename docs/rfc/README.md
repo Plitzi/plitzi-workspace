@@ -29,8 +29,8 @@ lost, it simply stops being read as a plan.
 
 | # | Title | Status | Scope |
 |---|---|---|---|
-| [0001](./0001-native-mobile-renderer.md) | Native mobile renderer (React Native) | Proposal | `plitzi-sdk` render packages |
-| [0002](./0002-ai-schema-comprehension-and-improvement.md) | AI schema comprehension and improvement | Proposal | `sdk-schema`, `sdk-elements`, MCP/AI toolset |
+| [0016](./0016-space-templates.md) | Space templates | Implemented | `plitzi-sdk-server`, `sdk-mcp` preview |
+| [0017](./0017-native-mobile-apps.md) | Native mobile apps (Android / iOS) | Proposal | new `mobile/` project, `sdk-authoring`, servers |
 
 ## Conventions
 

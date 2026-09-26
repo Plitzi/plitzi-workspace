@@ -13,9 +13,11 @@ import type {
 } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
+import type { SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
 import type { FontHead, Style } from './StyleTypes';
+import type { SpaceChange } from '../history/types';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
 
@@ -39,8 +41,16 @@ export type SSRRequest = {
   query: Record<string, string>;
   /** Raw request body. Populated only for endpoints that consume it (e.g. the login/logout handlers). */
   body?: string;
+  /**
+   * The client's address, when the host resolved one — through the proxies it sits behind. Forgeable by a direct
+   * client like every forwarded header, so it names things (a session in a device list) and never decides anything.
+   */
+  ip?: string;
   ctx: SSRContext;
 };
+
+/** A body's compressed forms, by content encoding — filled as they are first asked for. */
+export type CompressedBodies = Partial<Record<'br' | 'gzip', Buffer>>;
 
 export type SSRResponseHelpers = {
   status: number;
@@ -53,8 +63,16 @@ export type SSRResponseHelpers = {
   /**
    * A `Buffer` is sent byte for byte and never compressed: it is how a binary reaches the wire — a font file, an
    * image — and what it holds is usually compressed already. A string keeps the encoding negotiation.
+   *
+   * `compressed` is where this body's compressed forms are kept, for a body that is sent again unchanged — a cached
+   * page, a static file. The first send of each encoding compresses and stores it; every later one sends the stored
+   * bytes. Without it a cache hit recompressed the same page on every request, which was nearly all the CPU a cached
+   * page cost.
+   *
+   * A function is a body read only when it is needed: when the stored form for this request's encoding is missing, or
+   * the client takes no compression. A static file is then read from disk once per encoding, not on every request.
    */
-  send: (body: string | Buffer) => void;
+  send: (body: string | Buffer | (() => string), options?: { compressed?: CompressedBodies }) => void;
   write: (chunk: string | Buffer) => void;
   end: () => void;
 };
@@ -201,6 +219,16 @@ export type SSRGrant = {
   userId?: number;
   canWrite: boolean;
 };
+
+/** A page of a space's change history, newest first; `nextBefore` reads further back, null at the end. */
+export type SSRChangePage = { changes: SpaceChange[]; nextBefore: number | null };
+
+/** What to read of the history: older than `before`, only the changes that touched `entityId`, `limit` at a time. */
+export type SSRChangeQuery = { before?: number; entityId?: string; limit: number };
+
+/** Who a write is made for and which request made it, for a consumer that records its changes. Every document one
+ *  request writes shares its `batch`: one `plitzi_apply`, read back as one change. */
+export type SSRWriteContext = { userId?: number; batch: string };
 
 /**
  * A session, as the thing that issued it describes it. Deliberately free of transport: whoever mints one says what
@@ -360,12 +388,15 @@ export type SSRAdapters = {
   /** Remove one action by its identifier. Omitted alongside `saveAction` for a read-only deployment. */
   deleteAction?: (spaceId: number, actionId: string) => Promise<void>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
-  saveSchema?: (spaceId: number, environment: Environment, schema: Schema) => Promise<void>;
+  saveSchema?: (spaceId: number, environment: Environment, schema: Schema, write: SSRWriteContext) => Promise<void>;
   /** Persist the style document mutated by the MCP `apply` tool — store it as given. `style.cache` arrives already
    *  compiled: the renderer serves that string and nothing else, so recomputing it is not a detail to delegate, and
    *  asking every deployment to remember it was one bug each of them could write alone. When omitted, `apply`
    *  reports `persisted: false`. */
-  saveStyle?: (spaceId: number, environment: Environment, style: Style) => Promise<void>;
+  saveStyle?: (spaceId: number, environment: Environment, style: Style, write: SSRWriteContext) => Promise<void>;
+  /** The space's change history, read-only: what every writer saved, and for whom. When omitted, the MCP offers no
+   *  history resource. */
+  getChanges?: (spaceId: number, environment: Environment, query: SSRChangeQuery) => Promise<SSRChangePage>;
   /** Who this request carries, if anyone. The adapter reads the credential and resolves it; the cookie it arrived
    *  in was written by the server, from {@link SSRAuthCookie}. */
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;
@@ -681,8 +712,18 @@ export type SSRCompressionConfig = {
   encodings?: ('br' | 'gzip')[];
   /** Responses smaller than this many bytes go out uncompressed. Default 1024. */
   threshold?: number;
-  /** Brotli quality, 0–11. Default 4 — past that the CPU cost outgrows the bytes saved on HTML. */
+  /**
+   * Brotli quality, 0–11, for a body compressed on every request — a page rendered for this request alone. Default 2:
+   * measured on a quarter core, going to 4 cost a tenth of the pages a second to save half a kilobyte on each.
+   */
   brotliQuality?: number;
+  /**
+   * Brotli quality, 0–11, for a body compressed once and kept — a cached page, a static file such as the SDK bundle.
+   * Default 6: paid once, and every later response is that much smaller (the SDK bundle 10% under quality 4), for
+   * the same memory as 4. 9 needs ~40 MB more to compress the bundle, which a 128 MB server does not have; 10 and
+   * 11 cost seconds, which the request that fills the cache would wait for.
+   */
+  keptBrotliQuality?: number;
   /** Gzip level, 0–9. Default 6. */
   gzipLevel?: number;
 };
@@ -709,6 +750,13 @@ export type SSRRscConfig = {
 };
 
 /** What every log event carries, whatever layer it came from. */
+/**
+ * How much a server says, from least to most: each level includes every one above it. `error` is what a production
+ * server shows unless told otherwise — something went wrong — and `warn`, `info` (every request answered, every
+ * plugin built) and `debug` are asked for. `silent` says nothing at all.
+ */
+export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
+
 type ServerLogEventBase = {
   /** Wall-clock duration of the work the event describes, in milliseconds. */
   durationMs: number;
@@ -810,8 +858,25 @@ export type ActionRejectLogEvent = ServerLogEventBase & {
  *  are stripped from paths, tool arguments are reduced to their shape and a run to its steps. Two fields are NOT
  *  anonymous and a consumer shipping these events must handle them accordingly: `clientIp` on a request event, and
  *  the request path, which is kept verbatim because it is what makes the log usable. */
+/** Anything else the server has to say — a plugin rebuilt, a manifest that would not load — at its own level. */
+export type ServerMessageLogEvent = {
+  kind: 'message';
+  level: LogLevel;
+  /** What is speaking: `SSR`, `RSC`, `Actions`, `auth`… — what a line used to start with in brackets. */
+  scope: string;
+  message: string;
+  ok: boolean;
+  error?: string;
+  timestamp: string;
+};
+
 export type ServerLogEvent =
-  ServerRequestLogEvent | McpToolLogEvent | McpResourceLogEvent | ActionRunLogEvent | ActionRejectLogEvent;
+  | ServerRequestLogEvent
+  | McpToolLogEvent
+  | McpResourceLogEvent
+  | ActionRunLogEvent
+  | ActionRejectLogEvent
+  | ServerMessageLogEvent;
 
 /** The sink a consumer provides to receive every {@link ServerLogEvent} (see `SSRServerConfig.logger`). */
 export type ServerLogger = (event: ServerLogEvent) => void;
@@ -866,13 +931,24 @@ export type SSRServerConfig = {
   rsc?: SSRRscConfig;
   /** Write endpoint for server-driven providers. Absent means the server serves reads only. */
   action?: SSRActionConfig;
+  /** Realtime channels the spaces declare — see {@link SSRRealtimeConfig}. On, in memory, when absent. */
+  realtime?: SSRRealtimeConfig;
   /** Connector manifest and credential lookups — see {@link ConnectorLookupsConfig}. They serve the RSC read path
    *  and the `/_action` write endpoint alike; without them neither can reach a connector. */
   connectors?: ConnectorLookupsConfig;
   /** Receives a {@link ServerLogEvent} for every HTTP request this server answers — whatever stage answered it
    *  and whatever the outcome — plus every MCP tool call and resource read inside those requests. Without it the
-   *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). */
+   *  server reports nothing per request (the MCP events still reach the console when `MCP_DEBUG=1`). Everything
+   *  else the server has to say — a failure, a plugin rebuilt — comes here too as a `message` event, and goes to the
+   *  console when there is no logger. */
   logger?: ServerLogger;
+  /**
+   * The least severe thing worth saying — see {@link LogLevel}. `error` by default, `info` with `devMode`: a server
+   * in production reports what went wrong and nothing else, unless asked. A request that was answered is `info`, one
+   * that failed `error`; a refused action is `warn`. Below the level nothing is built, so a quiet server pays nothing
+   * per request for the log it is not keeping.
+   */
+  logLevel?: LogLevel | 'silent';
   /**
    * How responses are compressed. Omit for Brotli where the client takes it and gzip otherwise; `false` never
    * compresses, which is what to use when a proxy or CDN in front already does it.
@@ -887,6 +963,32 @@ export type SSRServerConfig = {
    * supervisor that retries, a test that asserts the failure. Handling it here replaces the exit entirely.
    */
   onListenError?: (error: NodeJS.ErrnoException, context: { port: number; host: string; label: string }) => void;
+  /**
+   * How many processes serve this port. Node runs JavaScript on one thread, so one process renders on one core however
+   * many the machine has; each worker is a whole server of its own, and the connections are spread between them —
+   * more requests a second, and less time waiting behind another render.
+   *
+   * `true` / `'auto'`: one per core the process may actually use (a container's CPU quota included). `false`: one
+   * process. A number: that many, lowered to the cores there are (more only take turns on the same cores). Default: on
+   * under `NODE_ENV=production`, off otherwise — a development server and a test runner stay one process. The
+   * `SDK_SERVER_WORKERS` environment variable sets it when this does not.
+   *
+   * The workers are one server — one replica — and behave as one:
+   *
+   * - The stores kept in memory by default (an action's `kv`, the job queue, draft previews, the sign-in rate
+   *   limit) are the primary's, and each worker reaches them over the cluster channel. A store the deployment
+   *   supplies (Redis, a table) is used as it is.
+   * - The scheduler and the job consumers run in one worker only, so a schedule fires once and `jobs.workers` is the
+   *   whole server's concurrency; if that worker dies, its replacement takes them over.
+   * - `server.cache.invalidate()`, `server.plugins.register()` and `server.plugins.invalidate()` reach every worker,
+   *   whichever process calls them.
+   *
+   * Per worker: the rendered-page cache (each renders a page once), the plugin components, and the action run caps
+   * (`action.concurrency`: `perSpace`, `perProcess`, `renderPerProcess`), which a cluster of replicas already counts
+   * per replica. A plugin registered with a `component` stays in the process that registered it — register those
+   * where the server is created.
+   */
+  workers?: boolean | number | 'auto';
   adapters: SSRAdapters;
   /** Which request-handling services this server mounts: `ssr` on by default, `rsc` whenever
    *  `adapters.getRscData` exists. Stages a companion package contributes are deliberately NOT flags here —
@@ -1011,8 +1113,13 @@ export type OAuthAdapters = {
    * first visit.
    */
   identify: (req: SSRRequest) => Promise<OAuthUser | undefined>;
-  /** What this user may grant access to. An empty list ends the flow with `access_denied`. */
-  grantTargets: (user: OAuthUser) => Promise<OAuthGrantTarget[]>;
+  /**
+   * What this user may grant access to. An empty list ends the flow with `access_denied`.
+   *
+   * `request.scope` is what the client asked for, so one deployment can offer different choices to different
+   * clients — a native client signing in as the person, and the same client asking which space to work in.
+   */
+  grantTargets: (user: OAuthUser, request: { scope?: string }) => Promise<OAuthGrantTarget[]>;
   /**
    * End whatever session {@link OAuthAdapters.identify} was reading, so the person can connect as somebody else.
    *
@@ -1024,12 +1131,45 @@ export type OAuthAdapters = {
    * that does not mean abandoning the connection and starting over from the host.
    */
   signOut?: (req: SSRRequest, res: SSRResponseHelpers) => void | Promise<void>;
-  /** Mint the bearer the client will send on every MCP request. Return undefined to deny the grant. */
+  /** Mint the bearer the client will send on every request. Return undefined to deny the grant. */
   issueToken: (
     user: OAuthUser,
-    target: OAuthGrantTarget
+    target: OAuthGrantTarget,
+    context: OAuthIssueContext
   ) => Promise<{ token: string; expiresInSeconds?: number } | undefined>;
+  /**
+   * End a credential {@link OAuthAdapters.issueToken} minted, when its grant is revoked (RFC 7009).
+   *
+   * Optional, for a credential that ends on its own. Without it, revoking a grant stops it being RENEWED, and what
+   * was already issued keeps working until it expires — which a person who just signed a device out reads as the
+   * sign-out not having happened, because the device is still there in their list.
+   */
+  revokeToken?: (credential: string) => Promise<void>;
   store: OAuthStore;
+};
+
+/**
+ * Who a credential is being issued to, beyond the person: which application, from where, and — on a renewal — which
+ * credential it takes the place of.
+ *
+ * This is what lets a deployment tell its user WHICH of their devices a credential lives on. The application names
+ * itself when it registers (RFC 7591 `client_name`, `software_id`); the request is the one the credential is being
+ * issued on — at consent, the person's browser, which for a loopback client is the same machine.
+ */
+export type OAuthIssueContext = {
+  client: {
+    clientId: string;
+    /** What the application registered as: `Plitzi CLI on carlos-mbp`, `Claude`. */
+    name: string;
+    /** RFC 7591 `software_id`, when it sent one: a stable name for the SOFTWARE, the same on every machine. */
+    softwareId?: string;
+  };
+  request?: { userAgent?: string; ip?: string };
+  /**
+   * The credential this grant last issued, on a renewal. A deployment that keeps a row per credential updates that
+   * row rather than adding one, so a device renewing every hour stays one device.
+   */
+  replaces?: string;
 };
 
 /** A connection a visitor may take WITHOUT signing in, for a server whose public surface needs no identity — the
@@ -1093,6 +1233,21 @@ export type OAuthConsentView = {
   canSwitchUser?: boolean;
   /** A message to show the user. */
   error?: string;
+  /**
+   * Who is asking, and where the grant goes if the person says yes.
+   *
+   * Anybody can register a client, call it anything and send somebody this screen on the deployment's own domain, so
+   * the name alone proves nothing. The host the code is sent back to is the one fact the requester cannot choose
+   * freely, and it is what tells "the app I just opened" apart from a stranger's server.
+   */
+  client: {
+    /** What the client registered itself as. Chosen by the client, so it is shown as a claim. */
+    name: string;
+    /** The host of the `redirect_uri` the grant is delivered to. */
+    redirectHost: string;
+    /** The grant goes back to an app listening on this computer (RFC 8252 loopback), not to a server. */
+    loopback: boolean;
+  };
   branding: OAuthBranding;
 };
 
@@ -1143,6 +1298,15 @@ export type OAuthConfig = {
    * holds, and wrapping it costs a store read on every request and gives a second thing to revoke.
    */
   directTokens?: boolean;
+  /**
+   * Accept only loopback `redirect_uri`s (`http://127.0.0.1:<port>/…`, RFC 8252 §7.3), at registration and again at
+   * `/authorize`.
+   *
+   * Turn it on when every client is a native app on the person's own machine — a CLI, a desktop app — and above all
+   * with {@link directTokens}, where the grant IS the person's session. Registration is open to anybody, so with https
+   * redirects allowed a stranger's server can register, send somebody the link, and collect what they approve.
+   */
+  loopbackRedirectsOnly?: boolean;
 };
 
 /** A short-TTL, one-shot store for unsaved draft offline-data behind a preview token. The SDK ships an
@@ -1160,12 +1324,16 @@ export type OAuthConfig = {
 export type DraftPutOptions = {
   ttlMs: number;
   reusable?: boolean;
+  /** The space the draft was made from. It is only ever rendered for that space. */
+  spaceId: number;
 };
 
 /** A stashed draft, and whether the read that resolved it left it there. */
 export type DraftEntry = {
   data: OfflineDataRaw;
   reusable: boolean;
+  /** The space the draft was made from — see {@link DraftPutOptions.spaceId}. */
+  spaceId: number;
 };
 
 export type DraftStore = {
@@ -1189,7 +1357,12 @@ export type SSRPreviewConfig = {
   enabled?: boolean;
   /** Internal endpoint path that mints a preview token. Default '/__preview'. */
   path?: string;
-  /** Shared secret required in the `x-preview-secret` header; requests without it are rejected. */
+  /**
+   * Shared secret required in the `x-preview-secret` header; requests without it are rejected.
+   *
+   * Required for the endpoint to answer at all: the page server that hosts it is the one the public reaches, so an
+   * enabled endpoint with no secret refuses every request rather than serving anyone.
+   */
   secret?: string;
   /** One-shot token time-to-live in milliseconds. Default 60000. */
   ttlMs?: number;

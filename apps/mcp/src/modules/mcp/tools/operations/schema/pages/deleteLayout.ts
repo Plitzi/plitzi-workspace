@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-import { descendantIds, empty, fail, findLayoutByRef, indexRemoveLayout, pagesUsingLayout } from '../../../../helpers';
+import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+
+import { empty, fail, findLayoutByRef, indexRemoveLayout, pagesUsingLayout } from '../../../../helpers';
 import { layoutsUri, pageUri } from '../write';
 
 import type { OpResult, Space } from '../../../../helpers';
@@ -37,13 +39,13 @@ export const deleteLayout = (space: Space, env: Env, op: DeleteLayout): OpResult
     );
   }
 
-  const descendantElementIds = descendantIds(space.schema, layout.id);
-  const descendants = descendantElementIds.map(id => space.schema.flat[id]);
-  for (const id of [...descendantElementIds, layout.id]) {
+  const removedIds = descendants(space.schema.flat, layout.id);
+  const removed = removedIds.map(id => space.schema.flat[id]);
+  for (const id of [...removedIds, layout.id]) {
     Reflect.deleteProperty(space.schema.flat, id);
   }
 
-  indexRemoveLayout(space.schema, layout, descendants);
+  indexRemoveLayout(space.schema, layout, removed);
 
   return { ...empty(), deleted: 1, staleResources: [pageUri(env, op.ref), layoutsUri(env)] };
 };

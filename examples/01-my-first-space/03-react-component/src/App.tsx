@@ -1,8 +1,7 @@
 import { useState } from 'react';
 
-import PlitziSdk from '@plitzi/plitzi-sdk';
-
 import { offlineData } from '@plitzi/example-space/browser';
+import PlitziSdk from '@plitzi/plitzi-sdk';
 
 import styles from './styles';
 
@@ -37,14 +36,12 @@ const App = () => {
 
       <main style={styles.main}>
         <aside style={styles.aside}>
-          <p style={styles.asideText}>
-            This panel is yours. The space renders beside it, in the same React tree.
-          </p>
+          <p style={styles.asideText}>This panel is yours. The space renders beside it, in the same React tree.</p>
         </aside>
 
         <section style={styles.canvas}>
-          {/* `renderMode="raw"` renders into this tree. The default is an iframe — the safe choice for a space
-              dropped into an unknown page, but pointless when the page is yours and already styled. */}
+          {/* `renderMode="raw"` (the default, said here so it reads) renders into this tree. `iframe` isolates the
+              space completely — the choice for a page you do not control, pointless when the page is yours. */}
           {/* `debugMode` is this page authorizing the dev tools — the badge, and shift+alt+D for the panel. */}
           {visible && (
             <PlitziSdk offlineMode offlineData={offlineData} environment={environment} renderMode="raw" debugMode />

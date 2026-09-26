@@ -34,7 +34,9 @@ export const parseRequest = (raw: IncomingMessage): SSRRequest => {
 
   const method = (headers[':method'] ?? raw.method ?? 'GET').toUpperCase();
 
-  return { method, path, search, url: rawUrl, hostname, protocol, headers, query, ctx: {} };
+  const ip = forwardedIp(headers) || unmapIpv4(raw.socket.remoteAddress ?? '');
+
+  return { method, path, search, url: rawUrl, hostname, protocol, headers, query, ...(ip ? { ip } : {}), ctx: {} };
 };
 
 // Same guard as HOSTNAME_RE, keeping the port — an origin built from a forged Host header must stay inert in the
@@ -61,16 +63,16 @@ const unmapIpv4 = (address: string): string =>
  *  peer it accepted in `cf-connecting-ip`, the ingress in `x-real-ip`, and `x-forwarded-for` lists the chain with
  *  the original client first. All three are plain headers a direct client can forge, so this is log/diagnostic
  *  material — never an authorisation input. Falls back to the socket peer, which no client controls. */
-export const clientIp = (raw: IncomingMessage, req: SSRRequest): string => {
-  const forwardedFor = headerValue(req.headers['x-forwarded-for']).split(',')[0] ?? '';
-  const address =
-    headerValue(req.headers['cf-connecting-ip']) ||
-    headerValue(req.headers['x-real-ip']) ||
-    forwardedFor.trim() ||
-    raw.socket.remoteAddress ||
-    '';
+export const clientIp = (raw: IncomingMessage, req: SSRRequest): string =>
+  forwardedIp(req.headers) || unmapIpv4(raw.socket.remoteAddress ?? '');
 
-  return unmapIpv4(address);
+/** The proxies' account of the client address, without the socket — for a caller that has headers and nothing else. */
+export const forwardedIp = (headers: Record<string, string | string[] | undefined>): string => {
+  const forwardedFor = headerValue(headers['x-forwarded-for']).split(',')[0] ?? '';
+
+  return unmapIpv4(
+    headerValue(headers['cf-connecting-ip']) || headerValue(headers['x-real-ip']) || forwardedFor.trim()
+  );
 };
 
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB — login/logout payloads are tiny; cap guards against abuse.

@@ -93,18 +93,6 @@ export default defineConfig(({ mode, command }) => {
         tsconfigPath: './tsconfig.app.json',
         beforeWriteFile: skipUnchangedDts
       }),
-      // {
-      //   name: 'trace-import-chain',
-      //   enforce: 'pre',
-      //   resolveId(source, importer) {
-      //     if (source.includes('plitzi')) {
-      //       console.log('\n---');
-      //       console.log('IMPORT:', source);
-      //       console.log('FROM  :', importer);
-      //     }
-      //     return null;
-      //   }
-      // },
       {
         name: 'externalize-and-log',
         enforce: 'pre',

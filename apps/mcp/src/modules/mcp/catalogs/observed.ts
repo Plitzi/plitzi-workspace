@@ -2,6 +2,7 @@ import {
   BUILTIN_ELEMENT_CALLBACKS,
   BUILTIN_GLOBAL_CALLBACKS,
   BUILTIN_UTILITIES,
+  GLOBAL_SOURCES,
   transformerCatalog
 } from '@plitzi/sdk-authoring';
 
@@ -137,8 +138,8 @@ const DATA_SOURCE_SCOPE_NOTE =
   'that element to its DESCENDANTS ONLY — the provider wraps its subtree in the source’s scope, so only elements ' +
   'INSIDE the provider can bind to it. Binding a sibling or unrelated element to it is schema-valid but broken at ' +
   'runtime (the source is not in scope), and validate/apply REJECT it as an error. To consume `apiContainer_x.data`, ' +
-  'the bound element must live under that apiContainer. Module sources (no `<type>_<id>` head — e.g. ' +
-  'state/space/navigation/auth/collection) are global and bindable anywhere.';
+  'the bound element must live under that apiContainer. The global sources (no `<type>_<id>` head — ' +
+  `${GLOBAL_SOURCES.join(', ')}) are bindable anywhere.`;
 
 const TRANSFORMERS_NOTE =
   'Built-in transformers that post-process a binding value before it reaches the field: `source → t₁ → t₂ → field`. ' +

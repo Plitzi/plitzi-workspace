@@ -34,11 +34,10 @@ export const runCommand = (manager: PackageManager, script: string): string =>
 /**
  * Yarn's own file, and the only per-manager file the scaffold writes.
  *
- * Yarn 4 installs Plug'n'Play by default, and a server-mode project cannot start that way: `node --import tsx`
- * dies on its first import with "Some options passed to require() aren't supported by PnP yet (conditions)" —
- * tsx's resolver calls into Node's with conditions PnP does not implement. `node-modules` is the layout npm and
- * pnpm already give it, so pinning it is what makes all three managers produce a project that runs, rather than
- * two that do and one that fails the moment somebody types `yarn start`.
+ * Yarn 4 installs Plug'n'Play by default, and this project is run straight from `node_modules`: its server by Node
+ * itself, its plugins by the page server's bundler. `node-modules` is the layout npm and pnpm already give it, so
+ * pinning it is what makes all three managers produce a project that runs, rather than two that do and one that
+ * fails the moment somebody types `yarn start`.
  */
 const YARN_LINKER = 'nodeLinker: node-modules\n';
 

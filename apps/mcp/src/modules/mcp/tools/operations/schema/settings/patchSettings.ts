@@ -1,17 +1,29 @@
 import { z } from 'zod';
 
-import { empty } from '../../../../helpers';
+import { channelProblems } from '@plitzi/sdk-shared/realtime';
+
+import { empty, fail } from '../../../../helpers';
 import { settingsUri } from '../write';
 
 import type { Space } from '../../../../helpers';
 import type { OpResult } from '../../../../helpers';
 import type { Env } from '../../../../types';
-import type { Schema } from '@plitzi/sdk-shared';
+import type { ChannelDeclaration, Schema } from '@plitzi/sdk-shared';
 
 // Open on purpose: `basic` covers any HTTP+JSON backend by configuration, and anything else is the name of a
 // provider someone registered in the page. An enum here would refuse valid names it cannot know.
 const userProvider = z.string();
 const storage = z.enum(['localStorage', 'sessionStorage', '']);
+
+// The shape only: what each field MEANS — a role that names no permission, a pattern the server cannot read — is
+// `channelProblems`'s, the same check authoring and the linter make. `maxMessageBytes` and `messagesPerSecond` are
+// left out, as the font manifest leaves out its tuning: their defaults fit what an agent builds, and every field
+// here is carried by four tools.
+const channel = z.object({
+  access: z.object({ mode: z.enum(['public', 'session', 'role']), permissions: z.array(z.string()).optional() }),
+  publish: z.enum(['clients', 'server']).optional(),
+  presence: z.boolean().optional()
+});
 
 // Every field optional and merged onto the existing settings — a patch touches only the keys it sends. `customCss`
 // is arbitrary global CSS injected for the whole space (NOT the structured, per-element style schema): reach for it
@@ -20,8 +32,10 @@ export const patchSettingsOp = z
   .object({
     type: z.literal('patchSettings'),
     customCss: z.string().optional().describe('Raw global CSS for the whole space (keyframes, @font-face, resets)'),
-    keepState: z.boolean().optional().describe('Persist element state across reloads'),
+    keepState: z.boolean().optional().describe('Keep runtime state (setState keys) across reloads'),
     stateStorage: z.enum(['localStorage', 'sessionStorage']).optional(),
+    transientState: z.array(z.string()).optional().describe('Top-level state keys never kept'),
+    paintedState: z.array(z.string()).optional().describe('Kept keys the first paint shows'),
     userProvider: userProvider
       .optional()
       .describe('Auth provider: "basic" for an HTTP+JSON backend, a registered name, or "" to disable auth'),
@@ -49,22 +63,53 @@ export const patchSettingsOp = z
       .enum(['optimistic', 'strict'])
       .optional()
       .describe('Render from the stored session and confirm behind it (default), or wait for the confirmation'),
-    sessionRevalidateSeconds: z.number().optional()
+    sessionRevalidateSeconds: z.number().optional(),
+    channels: z
+      .record(z.string(), channel.nullable())
+      .optional()
+      .describe('Realtime channels by topic pattern (`board:{id}`); null removes one. See the guide')
   })
   .describe(
-    'Merge space-level settings: the global CSS (customCss) and the state/auth (user-provider) configuration. ' +
-      'Only the fields you pass change; the rest are preserved. Use customCss for site-wide CSS, never to style ' +
-      'one element (attach a definition for that).'
+    'Merge space-level settings — global CSS, kept state, auth, realtime channels. Only the fields sent change. ' +
+      'customCss is for site-wide CSS, never to style one element (attach a definition for that).'
   );
 
 export type PatchSettings = z.infer<typeof patchSettingsOp>;
 
+/** The space's channels with the patch merged in, pattern by pattern — `null` takes one out. */
+const mergeChannels = (
+  current: Schema['settings']['channels'],
+  patch: NonNullable<PatchSettings['channels']>
+): NonNullable<Schema['settings']['channels']> => {
+  const merged = { ...current, ...patch };
+
+  return Object.fromEntries(
+    Object.entries(merged).filter((entry): entry is [string, ChannelDeclaration] => entry[1] !== null)
+  );
+};
+
 export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResult => {
-  const { type, ...patch } = op;
+  const { type, channels, ...patch } = op;
+  // The same check authoring and the linter make: a pattern the server could not read opens nothing, silently.
+  for (const [pattern, declaration] of Object.entries(channels ?? {})) {
+    const [problem] = declaration === null ? [] : channelProblems(pattern, declaration);
+    if (problem) {
+      return fail(
+        `channels["${pattern}"]`,
+        `Channel "${pattern}": ${problem}.`,
+        'Fix the pattern or declaration and send it again'
+      );
+    }
+  }
+
   // zod omits absent optional keys, so Object.entries yields only the fields the agent actually sent.
   const next = { ...space.schema.settings } as Schema['settings'] & Record<string, unknown>;
   for (const [key, value] of Object.entries(patch)) {
     next[key] = value;
+  }
+
+  if (channels) {
+    next.channels = mergeChannels(space.schema.settings.channels, channels);
   }
 
   space.schema.settings = next;

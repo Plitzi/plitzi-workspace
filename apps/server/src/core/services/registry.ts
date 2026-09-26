@@ -1,10 +1,11 @@
 import { actionStage } from './action';
+import { realtimeStage } from './realtime';
 import { rscStage } from './rsc';
 import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
 import { fontAssetsStage } from '../http/stages/fontAssets';
 import { healthStage } from '../http/stages/health';
-import { middlewaresStage } from '../http/stages/middlewares';
+import { createMiddlewaresStage } from '../http/stages/middlewares';
 import { pluginAssetsStage } from '../http/stages/pluginAssets';
 import { configStaticStage, publicDirStage, sdkAssetsStage, wellKnownStage } from '../http/stages/static';
 
@@ -31,7 +32,7 @@ export const buildPagePipeline = (
 
   stages.push(...(extensions.preAuth ?? []));
 
-  stages.push(middlewaresStage);
+  stages.push(createMiddlewaresStage());
 
   if (services.rsc) {
     stages.push(rscStage);
@@ -39,6 +40,7 @@ export const buildPagePipeline = (
 
   // Sits with the data services and after the auth middleware chain: a write may depend on who the visitor is.
   stages.push(actionStage);
+  stages.push(realtimeStage);
 
   stages.push(...(extensions.data ?? []));
 

@@ -5,6 +5,10 @@ render as written. The message names the element (`Element "text" (price) at sho
 instead. **Do what the message says.** Never cast past a check, silence it, or move the logic into a plugin to avoid
 it — the check exists because that declaration renders something other than what it says.
 
+The one exception is a TEST fixture whose subject is the break itself — how the runtime copes with a document no author
+would write. It names that break, and only that one: `authorSpace(spec, { allow: [{ code, element, why }] })`. See
+[testing](testing.md#spaces-written-for-a-test). A space anybody visits never has an `allow`.
+
 ## Refused
 
 | The message says | What was wrong | Write instead |
@@ -17,12 +21,17 @@ it — the check exists because that declaration renders something other than wh
 | `the template … cannot be read as written` | a template with an operator, filter or function that does not exist, or broken syntax | see [templates](templates.md) for what exists; `matches` never does |
 | `reads "x", which nothing here answers to` | a name in a template that is not a source, a variable or a route param | the full source name (`list_rows.item`), `navigation.queryParams.x` for a query param, `source` for the bound value |
 | `is not around it` | a source read by an element that is not inside the element publishing it | move the element inside it, or share the value through `state` |
+| `lands on "x", which a "text" never reads` | a binding onto an attribute the element does not have — the value arrives and nothing shows it | one it lists (`content`); to follow data with a class, bind `styleSelectors.base` in `initialState` |
+| `no element answers to the name "x"` | a binding whose source names an element that does not exist | the id of the element that publishes it |
 | `renders text — and "items" holds a list` | a text template feeding a list | `bindTemplate('items', src, '{{ … }}', { returns: 'value' })` |
+| `which a "x" never fires` / `never answers to it` | a flow on an event, or a step to an action, the element does not have | the element that fires it (the message names it); for a plugin, a name its declaration has — `declaredTrigger` / `declaredCallback` make a wrong one a compile error |
 | `does not start with its trigger` | a flow whose first step is not the event that runs it | `[onClick(), setState(…)]` |
 | `step "x" has the param "y"` / `"type" is "string"` | a step param that does not exist or a value outside its options | the params and values it lists |
+| `step "setState" sets "x" on "y", which a "z" never reads` | an element `setState`/`toggleState` writing a field the element does not have | an attribute it lists, or for `category: 'state'` `visibility` / `styleSelectors.<selector>` |
 | `names the page "x", and no page has that id` | a link or `navigate` to a page id that does not exist | an existing page id, or a path with its slash (`'/about'`) |
 | `a full URL, in page mode` | a URL, `mailto:` or `tel:` in a link left in page mode | `mode: 'external'` |
 | `is a controlled list with no items` | a list with nothing to render | `items: [ … ]` or `bind: { items: 'provider.data.rows' }` |
+| `` has items, but its `source` is "none" `` | a list whose items nothing reads — it renders its children once | `source: 'controlled'` |
 | `answers at /x for the same visitors as page` | two pages at one address | another slug — or `accessLevel` `'public'` on one and `'authenticated'` on the other |
 | `is not one CSS value` | an empty CSS value, or one with `;` or `{}` | one value per property; leave a property out instead of writing it empty |
 | `computed … declared after it` / `does not compute` | a computed value read before it is declared, or never declared | declare it in `computed`, above the one that reads it |
@@ -38,8 +47,17 @@ A warning means the space renders, and renders something you probably did not me
 | `tablet-rule-skips-mobile` | a tablet rule phones never get | write it under `compact` |
 | `default-content-beside-children` | a button prints "Button" beside its children | `content: ''` |
 | `overlay-starts-open` | a modal or dialog is open when the page loads | `visible: false`, opened by `openModal` |
-| `provider-without-source` | an `apiContainer` asks nothing | give it a `query` (or `action`, `resource`) |
-| `unknown-element-type` | a type no built-in element has | the built-in it suggests; a plugin's type goes in `authorSpace(space, { pluginTypes: ['name'] })` |
+| `provider-without-source` | an `apiContainer` asks nothing | give it a `query` (or `action`, `connector`, `resource`) |
+| `unknown-element-type` | a type no built-in element has | the built-in it suggests; a plugin's DECLARATION goes in `authorSpace(space, { plugins: [declaration] })`, which also checks its events, actions and attributes |
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
 | `FORM_SUBMIT_UNMANAGED` | a form the browser would submit itself | `managedByInteractions: true` |
 | `STYLE_WITHOUT_TAG` | style on a provider that renders no element | `subType: 'div'` on the provider, or style its parent |
+| `server-data-without-rsc` | a `runtime: 'server'` provider with a `connector` or `action` in a space that does not turn server data on — it renders its mock data | `rsc: { enabled: true }` on the space |
+| `route-param-undeclared` | `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty | add `:x` to the slug, or read `navigation.queryParams.x` |
+| `form-control-unnamed` | a control in a form with no `name` — its value never reaches `values` | `formControl({ name: 'email', … })` |
+| `form-control-name-taken` | two controls in one form with one name — one overwrites the other | a name each |
+| `while-running` | `whileRunning` on a step that is not the trigger, or a value other than `skip`, `parallel`, `queue` | `[whileRunning('queue', onClick()), …]` |
+| `trigger-keys` | an `onKey` flow whose `keys` cannot fire: two keys in one shortcut, only modifiers, or a name that is not a key | `onKey('f')`, `onKey('shift+f')`, `onKey('mod+k, escape')` |
+| `state-toggled-in-branches` | two `setState` steps of one key, each under a `when` on that key — the second flips back what the first wrote | `toggleState({ key })`; for something shown by default, a key named for hiding it |
+| `form-value-compared-to-blank` | a `when` asking whether a submitted field (`….values.x`) `=` or `!=` `""` — a field nobody typed in is not sent, so it never matches | `operator: 'empty'` / `'notEmpty'` |
+| `overlay-never-opened` | a modal or dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |

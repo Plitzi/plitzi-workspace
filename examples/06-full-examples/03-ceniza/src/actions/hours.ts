@@ -1,7 +1,7 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
-import { openingHours } from '../content';
-import { literal, setUpClock } from './rules';
+import { openingHours } from '../content.ts';
+import { literal, setUpClock } from './rules.ts';
 
 export const HOURS_ACTION = 'consultar-horario';
 

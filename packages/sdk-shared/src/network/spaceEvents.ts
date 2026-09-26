@@ -7,6 +7,7 @@ import type {
   DropPosition,
   Element,
   PageFolder,
+  Schema,
   SchemaRaw,
   SchemaVariable,
   SpaceFont,
@@ -39,6 +40,15 @@ const elements = z.array(element);
 
 // `flat` as a list is the wire shape of a schema. The builder re-indexes it on arrival, so the keyed map an MCP
 // write works with is not interchangeable here — and that swap is exactly what this catches.
+/** A schema as the channel carries it: `flat` as a list. What every publisher of a whole schema sends. */
+export const schemaToWire = (schema: Schema): SchemaRaw => ({ ...schema, flat: Object.values(schema.flat) });
+
+/** A schema off the channel, keyed again by element id: what a receiver stores. */
+export const schemaFromWire = (raw: SchemaRaw): Schema => ({
+  ...raw,
+  flat: Object.fromEntries(raw.flat.map(item => [item.id, item]))
+});
+
 const schemaRaw = z.custom<SchemaRaw>(value => isRecord(value) && Array.isArray(value.flat), {
   message: 'expected a schema whose `flat` is a list of elements'
 });
@@ -104,6 +114,13 @@ const removeSelectorVariablePayload = z.object({
 });
 const stylePayload = z.object({ category: variableCategory, name: z.string(), value: styleVariableValue });
 
+/** A plugin as a space lists it: the type it registers, where its code is, and how the space configured it. */
+const plugin = z.object({
+  type: z.string(),
+  resource: z.string(),
+  settings: z.custom<Record<string, unknown>>(isRecord, { message: 'expected a plugin settings object' })
+});
+
 export const spaceEventSchemas = {
   SPACE_UPDATED: z.object({ schema: schemaRaw }),
   // Not a whole Style: a style edit publishes the parts a live builder has to re-apply, plus the compiled cache,
@@ -148,6 +165,14 @@ export const spaceEventSchemas = {
     initialItems: elements.optional(),
     variables: z.array(schemaVariable).optional()
   }),
+  /**
+   * A plugin installed — or installed again at a new address, which is how a new version arrives: from the builder,
+   * or from `plitzi upload plugin` with no builder open. An open builder loads it without a reload.
+   */
+  SPACE_ADD_PLUGIN: z.object({ plugin }),
+  /** Its address or its settings changed. */
+  SPACE_UPDATE_PLUGIN: z.object({ plugin }),
+  SPACE_REMOVE_PLUGIN: z.object({ pluginType: z.string() }),
   SPACE_UPDATE_SETTINGS: z.object({ path: z.string(), value: z.union([z.string(), z.number(), z.boolean()]) }),
 
   STYLE_ADD_SELECTOR: z.object({

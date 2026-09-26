@@ -7,6 +7,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
+import { publishedSession } from './helpers/publishedSession';
 import useAuth from './hooks/useAuth';
 import useSessionQueryReset from './hooks/useSessionQueryReset';
 
@@ -33,7 +34,8 @@ const TEMPLATED = [
   'expirationTimePath',
   'refreshExpirationTimePath',
   'sessionHintCookie',
-  'sessionExchangeUrl'
+  'sessionExchangeUrl',
+  'mfaUrl'
 ] as const;
 
 /** Same person, whoever handed them over: the fields a page binds to, compared by value. */
@@ -122,13 +124,13 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
    * to recompute the auth data source, write a new `runtime.sources.auth`, and re-render everything bound to it: a
    * second pass over the page in which nothing about the session had actually changed.
    */
-  const providerUser = manager.getProvider()?.user;
-  const details = providerUser ?? bootstrapUser ?? peekedUser;
-  const accessToken = providerUser
-    ? manager.getProvider()?.token?.accessToken
-    : bootstrapUser
-      ? bootstrapToken
-      : peekedToken;
+  const provider = manager.getProvider();
+  const { user: details, accessToken } = publishedSession({
+    state,
+    provider: { user: provider?.user, accessToken: provider?.token?.accessToken },
+    bootstrap: { user: bootstrapUser, accessToken: bootstrapToken },
+    peeked: { user: peekedUser, accessToken: peekedToken }
+  });
 
   const userRef = useRef<AuthContextValue['user']>(undefined);
   const user = useMemo(() => {

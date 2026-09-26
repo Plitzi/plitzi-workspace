@@ -1,4 +1,4 @@
-import { triggerAccess, triggerInput } from '@plitzi/sdk-shared/actions';
+import { accessRefusal, triggerAccess, triggerInput } from '@plitzi/sdk-shared/actions';
 
 import { ActionRunError } from './errors';
 import { applyFields } from './scope';
@@ -24,23 +24,16 @@ const authorize = (access: ActionAccess | undefined, kind: ActionTriggerType, us
     return;
   }
 
-  if (!access) {
-    throw new ActionRunError('forbidden', 'This trigger declares no access rule');
-  }
-
-  if (access.mode === 'public') {
-    return;
-  }
-
-  if (!user) {
+  const refusal = accessRefusal(access, user);
+  if (refusal === 'unauthenticated') {
     throw new ActionRunError('unauthenticated', 'This action requires a signed-in visitor');
   }
 
-  if (access.mode === 'role') {
-    const held = new Set(user.permissions);
-    if (access.permissions.some(permission => !held.has(permission))) {
-      throw new ActionRunError('forbidden', 'This action requires permissions the caller does not hold');
-    }
+  if (refusal) {
+    throw new ActionRunError(
+      'forbidden',
+      access ? 'This action requires permissions the caller does not hold' : 'This trigger declares no access rule'
+    );
   }
 };
 

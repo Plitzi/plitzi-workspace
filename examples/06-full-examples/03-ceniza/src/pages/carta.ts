@@ -10,11 +10,11 @@ import {
   toggleState
 } from '@plitzi/sdk-authoring';
 
-import { menu, photo, photos, restaurant } from '../content';
-import { arrow, closeMenuOnLoad, eyebrow, label, linkTo, pageHero, section, shell } from '../layout';
-import { tags } from './inicio';
+import { menu, photo, photos, restaurant } from '../content.ts';
+import { arrow, closeMenuOnLoad, eyebrow, label, linkTo, pageHero, section, shell } from '../layout.ts';
+import { tags } from './inicio.ts';
 
-import type { Dish, MenuSection } from '../content';
+import type { Dish, MenuSection } from '../content.ts';
 import type { ElementSpec, PageSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 const VEGETARIAN = 'cartaVegetariano';
