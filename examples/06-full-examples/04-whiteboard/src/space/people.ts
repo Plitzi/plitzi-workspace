@@ -21,6 +21,7 @@ import { COLLAB_COLOURS } from '../board/people.ts';
 import shareDeclaration from '../plugins/ShareCard/declaration.ts';
 import { BUTTON_RESET, FLOAT, caption } from './kit.ts';
 import { editOnly, passwordSection } from './access.ts';
+import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 
 import type { ShareCardAttributes } from '../plugins/ShareCard/declaration.ts';
@@ -133,7 +134,7 @@ const me = (): ElementSpec =>
       bindTemplate('content', 'computed.name', '{{ source|first|upper }}'),
       variantFrom(meAvatar, 'computed.color')
     ],
-    flows: [[onClick(), setState({ key: 'shareOpen', type: 'boolean', value: false }), toggleState({ key: 'meOpen' })]]
+    flows: [[onClick(), ...closeOthers('meOpen'), toggleState({ key: 'meOpen' })]]
   });
 
 const popover = styles('popover', {
@@ -302,7 +303,7 @@ export const presence = (): ElementSpec[] => [
     id: 'share',
     content: 'Share',
     class: shareButton,
-    flows: [[onClick(), setState({ key: 'meOpen', type: 'boolean', value: false }), toggleState({ key: 'shareOpen' })]]
+    flows: [[onClick(), ...closeOthers('shareOpen'), toggleState({ key: 'shareOpen' })]]
   })
 ];
 

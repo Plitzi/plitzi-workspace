@@ -18,6 +18,7 @@ import countdownDeclaration from '../plugins/Countdown/declaration.ts';
 import { BOARD_KEY, ofBoard } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BUTTON_RESET, FLOAT, caption, iconAction } from './kit.ts';
+import { closeOthers } from './panels.ts';
 
 import type { CountdownAttributes } from '../plugins/Countdown/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';
@@ -127,7 +128,7 @@ export const timerButton = (): ElementSpec =>
     id: 'timer-open',
     icon: 'fa-regular fa-clock',
     title: 'Timer — for everyone on the board',
-    flow: [onClick(), setState({ key: 'shareOpen', type: 'boolean', value: false }), toggleState({ key: 'timerOpen' })]
+    flow: [onClick(), ...closeOthers('timerOpen'), toggleState({ key: 'timerOpen' })]
   });
 
 export const timerPanel = (): ElementSpec =>

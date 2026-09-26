@@ -3,6 +3,7 @@ import {
   applyToBoard,
   copyBoard,
   createBoard,
+  deleteBoard,
   listBoards,
   loadBoard,
   lockBoard,
@@ -116,6 +117,15 @@ export const boardLockTask: ActionTask<{ board: string; password: string; key: s
   run: ({ board, password, key }, ctx) => lockBoard(ctx.kv, boardId(board), password, key)
 };
 
+export const boardDeleteTask: ActionTask<{ board: string; key: string }> = {
+  namespace: 'board',
+  action: 'delete',
+  title: 'Delete Board',
+  description: 'Removes a board — never a read-only one — with its pictures.',
+  params: { board: boardParam, key: keyParam },
+  run: ({ board, key }, ctx) => deleteBoard(ctx.kv, boardId(board), key)
+};
+
 export const boardApplyTask: ActionTask<{ board: string; ops: unknown; key: string }> = {
   namespace: 'board',
   action: 'apply',
@@ -170,6 +180,7 @@ export const boardTasks = [
   boardCopyTask,
   boardRenameTask,
   boardLockTask,
+  boardDeleteTask,
   boardApplyTask,
   boardVoteTask,
   boardTimerTask,

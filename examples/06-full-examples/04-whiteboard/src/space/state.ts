@@ -66,6 +66,10 @@ export const computed = {
   shareOpen: '{{ state.shareOpen ? true : false }}',
   meOpen: '{{ state.meOpen ? true : false }}',
   keysOpen: '{{ state.keysOpen ? true : false }}',
+  deleteOpen: '{{ state.deleteOpen ? true : false }}',
+  /** One of the popovers is open: what a click anywhere else closes. */
+  popoverOpen:
+    '{{ computed.meOpen or computed.shareOpen or computed.timerOpen or computed.deleteOpen ? true : false }}',
   /** Whose view this page follows — a name, or empty. */
   following: "{{ state.following ?? '' }}"
 };
@@ -89,6 +93,7 @@ export const transientState = [
   'titleDraft',
   'following',
   'timerOpen',
+  'deleteOpen',
   // What opening a locked board answered, and the last timer heard: this visit's, never kept. The KEY that opened it
   // (`unlock`) is kept, so the board opens by itself next time.
   'opened',

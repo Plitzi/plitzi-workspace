@@ -37,9 +37,11 @@ import {
 } from '../actions.ts';
 import { BOARD_KEY, BOARD_SHOWN, editOnly, ofBoard, readOnlyOnly, unlockScreen } from './access.ts';
 import declaration from '../plugins/Board/declaration.ts';
+import { deleteButton, deletePanel } from './deleteBoard.ts';
 import { BOARD_ID, BOARD_PROVIDER } from './ids.ts';
 import { keysHelp, shortcuts } from './keys.ts';
 import { BUTTON_RESET, FLOAT, divide, icon, iconAction } from './kit.ts';
+import { popoverBackdrop } from './panels.ts';
 import { popovers, presence } from './people.ts';
 import { readOnlyBanner } from './readOnly.ts';
 import { identity } from './state.ts';
@@ -159,7 +161,7 @@ const titleDivider = styles('titleDivider', {
 
 /** On a phone the corner is the way home and nothing else: the people and Share need the width more. */
 const titleField = styles('titleField', {
-  css: { desktop: { width: '220px' }, mobile: { display: 'none' } }
+  css: { desktop: { width: '180px' }, mobile: { display: 'none' } }
 });
 
 /** The title reads as the board's name until it is pointed at: a box only on hover, and in the accent while typed in. */
@@ -539,7 +541,7 @@ const header = (): ElementSpec[] => [
         children: [icon('fa-solid fa-chevron-left'), text({ content: 'Pizarra' })]
       }),
       text({ content: '', class: titleDivider }),
-      editOnly([title()]),
+      editOnly([title(), deleteButton()]),
       // A read-only board's name is read, not edited.
       readOnlyOnly([text({ content: '', class: readOnlyTitle, bind: { content: `${BOARD_PROVIDER}.title` } })])
     ]
@@ -623,7 +625,9 @@ export const boardPage: PageSpec = {
                     bottomTray(),
                     zoomBar(),
                     helpCorner(),
+                    popoverBackdrop(),
                     ...popovers(),
+                    deletePanel(),
                     ...keysHelp()
                   ]
                 })
@@ -652,7 +656,21 @@ export const boardPage: PageSpec = {
                 { field: 'heard.type', operator: '=', value: 'locked' },
                 setState({ key: 'opened', type: 'json', value: 'null' })
               ),
-              when({ field: 'heard.type', operator: '=', value: 'locked' }, reloadApi(BOARD_PROVIDER))
+              when({ field: 'heard.type', operator: '=', value: 'locked' }, reloadApi(BOARD_PROVIDER)),
+              // The board is gone: nobody stays on nothing. Everyone is told, and sent back to the boards.
+              when(
+                { field: 'heard.type', operator: '=', value: 'deleted' },
+                addNotification({
+                  content: 'This board was deleted — back to all boards',
+                  appearance: 'info',
+                  placement: 'top-center',
+                  autoDismissTimeout: 5000
+                })
+              ),
+              when(
+                { field: 'heard.type', operator: '=', value: 'deleted' },
+                navigate({ urlType: 'internal', url: '/' })
+              )
             ]
           ]
         }),

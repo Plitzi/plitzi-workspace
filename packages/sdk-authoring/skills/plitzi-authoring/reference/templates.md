@@ -88,8 +88,9 @@ A lookup across two sources — a row joined to the stats around it:
 
 - **An empty list is false**, like an absent one. To tell "arrived and empty" from "not arrived":
   `{{ items is defined and items is empty }}`.
-- **`json_encode` of a string is the string**, unquoted. Do not build JSON by interpolating text a visitor typed —
-  pass objects as step params instead.
+- **`json_encode` prints JSON for any value** — a string quoted and escaped, nothing as `null` — so a JSON document
+  is built by encoding each value, never by putting `"{{ text }}"` in quotes yourself:
+  `'{ "board": {{ id|json_encode }}, "timer": {{ timer|json_encode }} }'`.
 - **Numbers**: `number_format(decimals, point, thousands)`; `round(precision)`.
 - **A template that renders a number hands on a number** in step params (`'1'` → `1`).
 

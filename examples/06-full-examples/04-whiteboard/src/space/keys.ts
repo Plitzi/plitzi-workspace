@@ -1,6 +1,7 @@
 import { button, container, onClick, onKey, setState, styles, text, toggleState } from '@plitzi/sdk-authoring';
 
 import { FLOAT, ICON_BUTTON, caption } from './kit.ts';
+import { closePanels } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 import { TOOLS, toolKeys, useTool } from './toolbar.ts';
 
@@ -13,12 +14,6 @@ import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
  * A press while somebody types — the title, their name, a sticky — is the field's, unless ⌘/Ctrl is held; the
  * canvas itself ignores ⌘Z while its own text field has the focus, where it is the field's undo.
  */
-
-const closePanels: StepSpec[] = [
-  setState({ key: 'shareOpen', type: 'boolean', value: false }),
-  setState({ key: 'meOpen', type: 'boolean', value: false }),
-  setState({ key: 'keysOpen', type: 'boolean', value: false })
-];
 
 export const shortcuts: StepSpec[][] = [
   ...toolKeys,

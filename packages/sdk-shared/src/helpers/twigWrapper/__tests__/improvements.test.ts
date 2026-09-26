@@ -127,6 +127,14 @@ describe('processTwig — previously uncovered filters', () => {
     expect(processTwig('{{ n | object_as_json }}', { n: 42 })).toBe('42');
   });
 
+  it('json_encode prints JSON for every value, so a document built around it stays JSON', () => {
+    const doc = '{ "board": {{ id | json_encode }}, "timer": {{ timer | json_encode }} }';
+    expect(JSON.parse(processTwig(doc, { id: 'b1', timer: null }))).toEqual({ board: 'b1', timer: null });
+    expect(processTwig('{{ missing | json_encode }}', {})).toBe('null');
+    expect(processTwig('{{ name | json_encode }}', { name: 'say "hi"\n' })).toBe('"say \\"hi\\"\\n"');
+    expect(processTwig('{{ n | to_json }}-{{ b | to_json }}', { n: 0, b: false })).toBe('0-false');
+  });
+
   it('unknown filter is skipped, not thrown', () => {
     expect(() => processTwig('{{ name | no_such_filter }}', { name: 'x' })).not.toThrow();
     expect(processTwig('{{ name | no_such_filter }}', { name: 'x' })).toBe('x');

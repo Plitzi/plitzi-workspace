@@ -449,6 +449,24 @@ export const lockBoard = (
     };
   });
 
+/**
+ * A board gone, with its preview, its place in the gallery and its pictures. Answers the topic it went by, which is
+ * where everyone still on it is told — and sent back to the boards.
+ */
+export const deleteBoard = (kv: ActionKvStore, id: string, key: unknown): Promise<{ id: string; topic: string }> =>
+  serially(async () => {
+    const board = await existing(kv, id);
+    assertWritable(board, key);
+    await Promise.all([kv.delete(boardKey(id)), kv.delete(previewKey(id))]);
+    await kv.set(
+      INDEX_KEY,
+      (await readIndex(kv)).filter(entry => entry.id !== id)
+    );
+    forgetBoardAssets(id);
+
+    return { id, topic: topicFor(id, board.lock) };
+  });
+
 /** A commit arrives as the flow sent it: the elements themselves, or their JSON. */
 const elementsOf = (ops: unknown): BoardElement[] => {
   let value = ops;

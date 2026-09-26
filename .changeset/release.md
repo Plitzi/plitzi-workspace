@@ -813,6 +813,13 @@
   configured, what a call saved was missing from every render. Both now share one module.
 - The runner, the guards and the module's own `kv` share one default store instead of a Map apiece.
 
+## `json_encode` prints JSON for every value
+
+- `json_encode` and `to_json` encoded objects only: `null` printed as nothing and a string printed bare, so a JSON
+  document built around them — a server action's `output`, a `realtime.publish` step's `data` — stopped being JSON the
+  moment a value was `null` or text, and the step failed at the end with the work already done. They now do what Twig
+  does: a string is quoted and escaped, `null` and an unset value are `null`. `object_as_json` is unchanged.
+
 ## Keyboard shortcuts leave a text field its own editing
 
 - With ⌘/Ctrl held a press in a field still reaches `onKey` (so `mod+k` opens a palette from a search box), but the

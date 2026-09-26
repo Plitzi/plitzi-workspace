@@ -25,6 +25,7 @@ export const CREATE_ACTION = 'board-create';
 export const COPY_ACTION = 'board-copy';
 export const RENAME_ACTION = 'board-rename';
 export const LOCK_ACTION = 'board-lock';
+export const DELETE_ACTION = 'board-delete';
 export const APPLY_ACTION = 'board-apply';
 export const VOTE_ACTION = 'board-vote';
 export const TIMER_ACTION = 'board-timer';
@@ -150,6 +151,24 @@ const lock = defineAction({
     '{ "id": "{{ locked.id }}", "locked": {{ locked.locked }}, "key": "{{ locked.key }}", "topic": "{{ locked.topic }}" }'
 });
 
+/** A board removed: everyone on it is told on its topic — and goes back to the boards — and the gallery reads again. */
+const remove = defineAction({
+  id: DELETE_ACTION,
+  name: 'Delete board',
+  description: 'Removes a board for everyone, and tells everyone on it.',
+  trigger: { type: 'call', access: 'public', input: onBoard },
+  steps: [
+    { id: 'deleted', task: 'board.delete' },
+    {
+      id: 'announce',
+      task: 'realtime.publish',
+      params: { topic: 'board:{{ deleted.topic }}', type: 'deleted', data: '{ "id": {{ deleted.id|json_encode }} }' }
+    },
+    listed('{{ deleted.id }}')
+  ],
+  output: '{ "id": {{ deleted.id|json_encode }} }'
+});
+
 /**
  * Every change anyone makes to a board, in the order it is kept.
  *
@@ -215,7 +234,7 @@ const timer = defineAction({
       params: {
         topic: 'board:{{ timed.topic }}',
         type: 'timer',
-        data: '{ "board": "{{ timed.board }}", "timer": {{ timed.timer|json_encode }} }'
+        data: '{ "board": {{ timed.board|json_encode }}, "timer": {{ timed.timer|json_encode }} }'
       }
     }
   ],
@@ -235,7 +254,7 @@ const upload = defineAction({
   output: '{ "asset": "{{ uploaded.asset }}" }'
 });
 
-const actions = [list, load, open, create, copy, rename, lock, apply, vote, timer, upload];
+const actions = [list, load, open, create, copy, rename, lock, remove, apply, vote, timer, upload];
 
 /** How the server reaches an action. One live version, so the revision a page was published at is ignored. */
 export const lookups: ActionLookups = {
