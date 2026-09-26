@@ -6,25 +6,33 @@ import {
   defineElement,
   named,
   onClick,
+  setState,
   styles,
-  text
+  text,
+  toggleState,
+  variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { REACTIONS } from '../board/reactions.ts';
+import { REACTIONS, STAMPS } from '../board/reactions.ts';
 import stackDeclaration from '../plugins/StickyStack/declaration.ts';
 import { editOnly } from './access.ts';
-import { BUTTON_RESET, FLOAT, divide } from './kit.ts';
+import { BUTTON_RESET, FLOAT, ICON_BUTTON, divide, icon } from './kit.ts';
+import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 
 import type { StickyStackAttributes } from '../plugins/StickyStack/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';
 
 /**
- * The tray at the foot of the board: pads of sticky notes to drag onto it, and reactions to send to everyone on it.
+ * The tray at the foot of the board: what a room does together, rather than what a drawing is made of — a pile of
+ * sticky notes, stamps that stay on the board, the laser, cursor chat, and reactions that float away.
  *
- * A note is taken off a pad (`onPick`) and handed to the canvas (`carry`), which carries it until it is put down —
- * two elements, one flow between them. A reaction is the canvas's `react`: it floats up where this person points, on
- * every screen.
+ * A single note is the toolbar's sticky tool; what only the tray offers is the pile, taken off it (`onPick`) and handed
+ * to the canvas (`carry`), which carries it until it is put down — two elements, one flow between them.
+ *
+ * The reactions are one button until they are wanted: it opens a row of them over the tray (`reactionPicker`), which
+ * stays open while somebody cheers and closes like every popover — on a click elsewhere, or Escape. Each is the
+ * canvas's `react`: it floats up where this person points, on every screen.
  */
 
 const stickyStack = defineElement<StickyStackAttributes>(stackDeclaration);
@@ -43,7 +51,7 @@ const tray = styles('tray', {
       display: 'flex',
       'align-items': 'center',
       gap: '10px',
-      padding: '10px 14px 8px'
+      padding: '6px 8px 6px 14px'
     },
     // A phone's foot is the toolbar's: its sticky tool is how a note is made there.
     mobile: { display: 'none' }
@@ -53,21 +61,46 @@ const tray = styles('tray', {
 /** The pads' papers, and the class `css.ts` points them from. */
 const stack = styles('stickyStack', { display: 'flex', 'padding-top': '6px' });
 
-const reactions = styles('reactions', { display: 'flex', gap: '2px' });
+const reactButton = styles('reactButton', {
+  css: { ...ICON_BUTTON, 'font-size': '18px' },
+  states: {
+    hover: { 'background-color': 'var(--surface-2)' },
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' }
+  },
+  variants: { active: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' } }
+});
+
+const picker = styles('reactionPicker', {
+  css: {
+    desktop: {
+      ...FLOAT,
+      position: 'absolute',
+      bottom: '72px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      'z-index': '6',
+      display: 'flex',
+      gap: '2px',
+      padding: '5px',
+      'border-radius': '999px'
+    },
+    mobile: { display: 'none' }
+  }
+});
 
 const reaction = styles('reaction', {
   css: {
     ...BUTTON_RESET,
-    width: '34px',
-    height: '34px',
-    'border-radius': '8px',
-    'font-size': '19px',
+    width: '38px',
+    height: '38px',
+    'border-radius': '50%',
+    'font-size': '21px',
     'line-height': '1',
     transition: 'transform 120ms ease'
   },
   states: {
-    hover: { 'background-color': 'var(--surface-2)', transform: 'translateY(-2px) scale(1.12)' },
-    active: { transform: 'scale(0.92)' },
+    hover: { 'background-color': 'var(--surface-2)', transform: 'translateY(-3px) scale(1.15)' },
+    active: { transform: 'scale(0.9)' },
     'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '1px' }
   }
 });
@@ -77,11 +110,12 @@ export const bottomTray = (): ElementSpec =>
     id: 'tray',
     class: tray,
     children: [
-      // Notes to take are for a board that can change; reactions are for anyone looking.
+      // A pile to take notes from is for a board that can change; reactions are for anyone looking.
       editOnly([
         stickyStack({
           id: 'sticky-stack',
           class: stack,
+          colors: '',
           flows: [
             [
               named('picked', declaredTrigger(stackDeclaration, 'onPick')),
@@ -89,21 +123,83 @@ export const bottomTray = (): ElementSpec =>
             ]
           ]
         }),
-        divide()
+        button({
+          id: 'stamp-open',
+          content: '',
+          title: 'Stamps — a mark that stays on the board',
+          class: reactButton,
+          bind: [variantFrom(reactButton, 'computed.stampOpen', { template: "{{ source ? 'active' : '' }}" })],
+          flows: [[onClick(), ...closeOthers('stampOpen'), toggleState({ key: 'stampOpen' })]],
+          children: [icon('fa-solid fa-stamp')]
+        })
       ]),
-      container({
-        class: reactions,
-        children: REACTIONS.map((emoji, index) =>
-          button({
-            id: `reaction-${index}`,
-            content: emoji,
-            title: `React ${emoji} — everyone on the board sees it`,
-            class: reaction,
-            flows: [[onClick(), boardAction('react', { emoji })]]
-          })
-        )
+      button({
+        id: 'tray-laser',
+        content: '',
+        title: 'Laser pointer — K',
+        class: reactButton,
+        bind: [variantFrom(reactButton, 'computed.tool', { template: "{{ source == 'laser' ? 'active' : '' }}" })],
+        flows: [
+          [
+            onClick(),
+            setState({ key: 'tool', type: 'text', value: "{{ computed.tool == 'laser' ? 'select' : 'laser' }}" })
+          ]
+        ],
+        children: [icon('fa-solid fa-wand-magic-sparkles')]
+      }),
+      button({
+        id: 'tray-chat',
+        content: '',
+        title: 'Say something at your cursor — /',
+        class: reactButton,
+        flows: [[onClick(), boardAction('chat')]],
+        children: [icon('fa-regular fa-message')]
+      }),
+      divide(),
+      button({
+        id: 'react-open',
+        content: '',
+        title: 'React — everyone on the board sees it',
+        class: reactButton,
+        bind: [variantFrom(reactButton, 'computed.reactOpen', { template: "{{ source ? 'active' : '' }}" })],
+        flows: [[onClick(), ...closeOthers('reactOpen'), toggleState({ key: 'reactOpen' })]],
+        children: [icon('fa-regular fa-face-smile')]
       })
     ]
+  });
+
+/** The stamps, over the tray while its button is on: each click puts one down, so a row of verdicts is a few clicks. */
+export const stampPicker = (): ElementSpec =>
+  container({
+    id: 'stamp-picker',
+    class: picker,
+    visible: 'computed.stampOpen',
+    children: STAMPS.map((emoji, index) =>
+      button({
+        id: `stamp-${index}`,
+        content: emoji,
+        title: `Stamp ${emoji} where you point`,
+        class: reaction,
+        flows: [[onClick(), boardAction('stamp', { emoji })]]
+      })
+    )
+  });
+
+/** The reactions, over the tray while its button is on. */
+export const reactionPicker = (): ElementSpec =>
+  container({
+    id: 'reaction-picker',
+    class: picker,
+    visible: 'computed.reactOpen',
+    children: REACTIONS.map((emoji, index) =>
+      button({
+        id: `reaction-${index}`,
+        content: emoji,
+        title: `React ${emoji}`,
+        class: reaction,
+        flows: [[onClick(), boardAction('react', { emoji })]]
+      })
+    )
   });
 
 const banner = styles('followBanner', {

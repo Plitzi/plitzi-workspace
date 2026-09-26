@@ -3,12 +3,29 @@ import { container, onClick, setState, styles } from '@plitzi/sdk-authoring';
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 /**
- * The board's popovers — you, share, the timer, deleting — and how they close: Escape (`keys.ts`), or a click
+ * The board's popovers — you, share, the timer, deleting, the reactions, the shapes, the frames — and how they close: Escape (`keys.ts`), or a click
  * anywhere outside them. The click lands on a layer spread under the open popover and over everything else, so it
  * closes the popover and does nothing more: a click meant to dismiss never draws on the board behind.
  */
 
-export const PANELS = ['shareOpen', 'meOpen', 'keysOpen', 'timerOpen', 'deleteOpen'] as const;
+export const PANELS = [
+  'shareOpen',
+  'meOpen',
+  'keysOpen',
+  'timerOpen',
+  'deleteOpen',
+  'reactOpen',
+  'shapesOpen',
+  'linesOpen',
+  'drawOpen',
+  'notesOpen',
+  'kanbanOpen',
+  'framesOpen',
+  'agentOpen',
+  'libraryOpen',
+  'settingsOpen',
+  'stampOpen'
+] as const;
 
 export const closePanels: StepSpec[] = PANELS.map(key => setState({ key, type: 'boolean', value: false }));
 

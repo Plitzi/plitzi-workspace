@@ -1,4 +1,4 @@
-import type { BoardElement, Point } from '../../board/model.ts';
+import type { Point } from '../../board/model.ts';
 
 const ID_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
@@ -6,8 +6,6 @@ export const newId = (): string =>
   Array.from(crypto.getRandomValues(new Uint8Array(12)), byte => ID_ALPHABET[byte % ID_ALPHABET.length]).join('');
 
 export const newSeed = (): number => Math.floor(Math.random() * 2 ** 31);
-
-export const byZ = (a: BoardElement, b: BoardElement): number => a.z - b.z || (a.id < b.id ? -1 : 1);
 
 export const isOneOf = <T extends string | number>(values: readonly T[], value: unknown): value is T =>
   values.some(entry => entry === value);

@@ -26,19 +26,37 @@ export const RANDOM_COLOUR = `{{ ${list(COLLAB_COLOURS)}|random }}`;
 export const RANDOM_VISITOR = `{{ ${Array.from({ length: 16 }, () => "('abcdefghijklmnopqrstuvwxyz0123456789'|random)").join(' ~ ')} }}`;
 
 /** The tools that draw, by what what they draw is styled with: the style panel offers that, and nothing else. */
-const STROKED_TOOLS = ['rectangle', 'ellipse', 'diamond', 'arrow', 'line', 'freehand', 'text'];
+const SHAPE_TOOLS = ['rectangle', 'ellipse', 'diamond', 'triangle', 'hexagon', 'cylinder', 'star'];
 
-const FILLED_TOOLS = ['rectangle', 'ellipse', 'diamond', 'sticky'];
+const FRAME_TOOLS = ['frame', 'column'];
+
+const STROKED_TOOLS = [...SHAPE_TOOLS, 'arrow', 'line', 'freehand', 'text'];
+
+const FILLED_TOOLS = [...SHAPE_TOOLS, ...FRAME_TOOLS, 'sticky', 'card'];
+
+const DASHED_TOOLS = [...SHAPE_TOOLS, 'arrow', 'line'];
+
+const CORNERED_TOOLS = ['rectangle', 'diamond', 'triangle', 'hexagon'];
+
+const SEE_THROUGH_TOOLS = [...STROKED_TOOLS, 'sticky', 'card'];
 
 /**
- * One section of the style panel: shown for what the selection can take — or, with nothing selected, for what the
- * tool in hand draws.
+ * Whether one section of the style panel has something to style — the selection, when there is one; the tool in hand,
+ * when there is not. An expression, for templates that go on to say more.
  */
-const offers = (canKey: string, tools: readonly string[]): string =>
-  `{{ computed.selectionCount > 0 ? (state.${canKey} ? true : false) : (computed.tool in ${list(tools)}) }}`;
+const offering = (canKey: string, tools: readonly string[]): string =>
+  `(computed.selectionCount > 0 ? (state.${canKey} ? true : false) : (computed.tool in ${list(tools)}))`;
+
+const offers = (canKey: string, tools: readonly string[]): string => `{{ ${offering(canKey, tools)} }}`;
 
 export const computed = {
   tool: "{{ state.tool ?? 'select' }}",
+  dash: "{{ state.dash ?? 'solid' }}",
+  sloppiness: "{{ state.sloppiness ?? 'artist' }}",
+  brush: "{{ state.brush ?? 'pizarra' }}",
+  edges: "{{ state.edges ?? 'sharp' }}",
+  fillStyle: "{{ state.fillStyle ?? 'hachure' }}",
+  opacity: '{{ state.opacity ?? 100 }}',
   stroke: "{{ state.stroke ?? 'ink' }}",
   fill: "{{ state.fill ?? 'none' }}",
   strokeWidth: '{{ state.strokeWidth ?? 2 }}',
@@ -51,8 +69,46 @@ export const computed = {
   showStroke: offers('selectionCanStroke', STROKED_TOOLS),
   showFill: offers('selectionCanFill', FILLED_TOOLS),
   showWidth: offers('selectionCanWidth', STROKED_TOOLS),
-  /** The style panel is open while it has something to offer — and only then. */
-  styleOpen: '{{ computed.showStroke or computed.showFill or computed.showWidth ? true : false }}',
+  showDash: offers('selectionCanDash', DASHED_TOOLS),
+  showSloppiness: offers('selectionCanSloppiness', DASHED_TOOLS),
+  showEdges: offers('selectionCanEdges', CORNERED_TOOLS),
+  showBrush: offers('selectionCanBrush', ['freehand']),
+  /** The selection is one card or comment: what can be ticked done, or resolved. */
+  selectionIsTask: '{{ state.selectionIsTask ? true : false }}',
+  selectionIsDone: '{{ state.selectionIsDone ? true : false }}',
+  /** How a fill is drawn matters only once there is a fill. */
+  showFillStyle: `{{ ${offering('selectionCanFillStyle', SHAPE_TOOLS)} and computed.fill != 'none' ? true : false }}`,
+  showOpacity: offers('selectionCanOpacity', SEE_THROUGH_TOOLS),
+  /** Layers are about what is there: something must be selected. */
+  showLayers: '{{ computed.selectionCount > 0 ? true : false }}',
+  /**
+   * The style panel is open while something is selected and it has something to offer that — the choice of shape
+   * first, when the shapes are open. What a new shape is drawn with is the last style chosen.
+   */
+  styleOpen:
+    '{{ not (state.shapesOpen or state.linesOpen or state.drawOpen or state.notesOpen or state.kanbanOpen) and computed.selectionCount > 0 and (computed.showStroke or computed.showFill or computed.showWidth or computed.showOpacity or computed.showLayers) ? true : false }}',
+  /** The selection is one frame: what may be made a column, and presented from. */
+  selectionIsFrame: '{{ state.selectionIsFrame ? true : false }}',
+  selectionIsColumn: '{{ state.selectionIsColumn ? true : false }}',
+  /** Two or more things: what may be tidied into a grid. */
+  canTidy: '{{ computed.selectionCount > 1 ? true : false }}',
+  /** The board's frames, in the order they are gone through — what the frames panel lists. */
+  frames: '{{ state.frames ?? [] }}',
+  /** The elements this person starred in the library, by entry id: shown first there. Kept across visits. */
+  favorites: '{{ state.favorites ?? [] }}',
+  hasFrames: '{{ state.frames|length > 0 ? true : false }}',
+  /** A presentation this page is in: who gives it (`You`, a name, or empty), where it is, and the frame's title. */
+  presenter: "{{ state.presentation.presenter ?? '' }}",
+  presentingMine: '{{ state.presentation.mine and computed.presenter ? true : false }}',
+  presentingOther: '{{ not state.presentation.mine and computed.presenter ? true : false }}',
+  presentationStep:
+    "{{ computed.presenter ? state.presentation.position ~ ' / ' ~ state.presentation.total ~ ' · ' ~ state.presentation.title : '' }}",
+  /** The whole board in a corner — on until this person closes it. */
+  minimap: '{{ state.minimap ?? true }}',
+  /** The board's small sounds — on until this person turns them off. */
+  sounds: '{{ state.sounds ?? true }}',
+  /** Who wrote each note and card, shown — on until this person turns it off. */
+  showAuthors: '{{ state.showAuthors ?? true }}',
   name: "{{ state.name ?? '' }}",
   color: "{{ state.color ?? 'indigo' }}",
   /** Whether this person has been given a name and a colour yet — on a first visit, neither. */
@@ -67,9 +123,30 @@ export const computed = {
   meOpen: '{{ state.meOpen ? true : false }}',
   keysOpen: '{{ state.keysOpen ? true : false }}',
   deleteOpen: '{{ state.deleteOpen ? true : false }}',
+  settingsOpen: '{{ state.settingsOpen ? true : false }}',
+  stampOpen: '{{ state.stampOpen ? true : false }}',
+  reactOpen: '{{ state.reactOpen ? true : false }}',
+  shapesOpen: '{{ state.shapesOpen ? true : false }}',
+  linesOpen: '{{ state.linesOpen ? true : false }}',
+  drawOpen: '{{ state.drawOpen ? true : false }}',
+  notesOpen: '{{ state.notesOpen ? true : false }}',
+  kanbanOpen: '{{ state.kanbanOpen ? true : false }}',
+  /** What each group of the toolbar shows: the last thing picked from it. */
+  shapesPick: "{{ state.shapesPick ?? 'rectangle' }}",
+  linesPick: "{{ state.linesPick ?? 'arrow' }}",
+  drawPick: "{{ state.drawPick ?? 'pen' }}",
+  notesPick: "{{ state.notesPick ?? 'sticky' }}",
+  kanbanPick: "{{ state.kanbanPick ?? 'column' }}",
+  framesOpen: '{{ state.framesOpen ? true : false }}',
+  agentOpen: '{{ state.agentOpen ? true : false }}',
+  libraryOpen: '{{ state.libraryOpen ? true : false }}',
+  librarySearch: "{{ state.librarySearch ?? '' }}",
+  chatOpen: '{{ state.chatOpen ? true : false }}',
+  /** Lines said in the chat while it was closed. */
+  unread: '{{ state.unread ?? 0 }}',
   /** One of the popovers is open: what a click anywhere else closes. */
   popoverOpen:
-    '{{ computed.meOpen or computed.shareOpen or computed.timerOpen or computed.deleteOpen ? true : false }}',
+    '{{ computed.meOpen or computed.shareOpen or computed.timerOpen or computed.deleteOpen or computed.reactOpen or computed.shapesOpen or computed.linesOpen or computed.drawOpen or computed.notesOpen or computed.kanbanOpen or computed.framesOpen or computed.agentOpen or computed.libraryOpen or computed.settingsOpen or computed.stampOpen ? true : false }}',
   /** Whose view this page follows — a name, or empty. */
   following: "{{ state.following ?? '' }}"
 };
@@ -87,6 +164,31 @@ export const transientState = [
   'selectionCanStroke',
   'selectionCanFill',
   'selectionCanWidth',
+  'selectionCanDash',
+  'selectionCanSloppiness',
+  'selectionCanBrush',
+  'selectionIsTask',
+  'selectionIsDone',
+  'selectionCanEdges',
+  'selectionCanFillStyle',
+  'selectionCanOpacity',
+  'selectionIsFrame',
+  'selectionIsColumn',
+  'shapesOpen',
+  'linesOpen',
+  'drawOpen',
+  'notesOpen',
+  'kanbanOpen',
+  'framesOpen',
+  'agentOpen',
+  'libraryOpen',
+  'librarySearch',
+  'chatOpen',
+  'chat',
+  'unread',
+  // What the board holds and who presents are the board's, read again on every visit.
+  'frames',
+  'presentation',
   'shareOpen',
   'meOpen',
   'keysOpen',
@@ -94,6 +196,9 @@ export const transientState = [
   'following',
   'timerOpen',
   'deleteOpen',
+  'settingsOpen',
+  'stampOpen',
+  'reactOpen',
   // What opening a locked board answered, and the last timer heard: this visit's, never kept. The KEY that opened it
   // (`unlock`) is kept, so the board opens by itself next time.
   'opened',

@@ -46,9 +46,25 @@ const declaration = {
         stroke: '',
         fill: '',
         strokeWidth: '',
+        dash: '',
+        sloppiness: '',
+        brush: '',
+        edges: '',
+        fillStyle: '',
+        opacity: '',
         canStroke: '',
         canFill: '',
-        canWidth: ''
+        canWidth: '',
+        canDash: '',
+        canSloppiness: '',
+        canBrush: '',
+        canEdges: '',
+        canFillStyle: '',
+        canOpacity: '',
+        isFrame: '',
+        isColumn: '',
+        isTask: '',
+        isDone: ''
       }
     },
     onViewChange: {
@@ -73,6 +89,27 @@ const declaration = {
     },
     /** A vote asked for on an element — its badge clicked, or `vote` called. */
     onVote: { action: 'onVote', title: 'On Vote', type: 'trigger', params: {}, preview: { id: '' } },
+    /** The board's frames, in the order they are gone through: `frames` (`id`, `title`, `count`) and `count`. */
+    onFramesChange: {
+      action: 'onFramesChange',
+      title: 'On Frames Change',
+      type: 'trigger',
+      params: {},
+      preview: { frames: '', count: '' }
+    },
+    /**
+     * A presentation moved on or ended: who gives it (`You` for this page, `''` once it is over), where it is
+     * (`position` of `total`) and the frame's `title`.
+     */
+    onPresentationChange: {
+      action: 'onPresentationChange',
+      title: 'On Presentation Change',
+      type: 'trigger',
+      params: {},
+      preview: { presenter: '', index: '', position: '', total: '', title: '', mine: '' }
+    },
+    /** An answer written in a comment's thread, for the page to keep: `id` is the comment, `text` the answer. */
+    onReply: { action: 'onReply', title: 'On Reply', type: 'trigger', params: {}, preview: { id: '', text: '' } },
     /** Somebody brought everyone on the board to their view. */
     onSummoned: { action: 'onSummoned', title: 'On Summoned', type: 'trigger', params: {}, preview: { name: '' } },
     /** Whose view this page follows now — a name, or `''` once it stopped (the person touched the board). */
@@ -104,7 +141,64 @@ const declaration = {
       params: {
         stroke: { label: 'Stroke colour', defaultValue: '', type: 'text' },
         fill: { label: 'Fill colour', defaultValue: '', type: 'text' },
-        strokeWidth: { label: 'Stroke width (1 | 2 | 4)', defaultValue: '', type: 'text' }
+        strokeWidth: { label: 'Stroke width (1 | 2 | 4)', defaultValue: '', type: 'text' },
+        dash: { label: 'Outline (solid | dashed | dotted)', defaultValue: '', type: 'text' },
+        sloppiness: { label: 'Sloppiness (architect | artist | cartoonist)', defaultValue: '', type: 'text' },
+        brush: {
+          label: 'Brush (pizarra | brush | fountain | marker | highlighter | pencil | chalk | neon)',
+          defaultValue: '',
+          type: 'text'
+        },
+        edges: { label: 'Edges (sharp | round)', defaultValue: '', type: 'text' },
+        fillStyle: { label: 'Fill style (hachure | cross | solid)', defaultValue: '', type: 'text' },
+        opacity: { label: 'Opacity (10 … 100)', defaultValue: '', type: 'text' }
+      }
+    },
+    bringForward: callback('bringForward', 'Bring Forward'),
+    sendBackward: callback('sendBackward', 'Send Backward'),
+    /** What is selected, in a tidy grid. */
+    tidy: callback('tidy', 'Tidy Up'),
+    /** Three kanban columns — To do, Doing, Done — where this person points. */
+    insertKanban: callback('insertKanban', 'Insert Kanban'),
+    /** Another column beside the one frame selected. */
+    addColumn: callback('addColumn', 'Add Column'),
+    /** The one card selected ticked done, or the one comment resolved — or back. */
+    toggleDone: callback('toggleDone', 'Toggle Done'),
+    /** A small sound, for something the page heard or did: a line in the chat, a timer started or stopped, a copy. */
+    chime: {
+      action: 'chime',
+      title: 'Chime',
+      type: 'callback',
+      params: {
+        sound: {
+          label: 'Sound — one of SOUNDS in sounds.ts: message, sent, timerStart, timerStop, lock, copy…',
+          defaultValue: 'message',
+          type: 'text'
+        }
+      }
+    },
+    /** The one frame selected made a column — which lays out what is put in it, as a kanban lane — or free again. */
+    toggleColumn: callback('toggleColumn', 'Toggle Column'),
+    /** A frame, eased into view. */
+    goToFrame: {
+      action: 'goToFrame',
+      title: 'Go To Frame',
+      type: 'callback',
+      params: { id: { label: 'Frame id', defaultValue: '', type: 'text' } }
+    },
+    /** The frames, one at a time, for everyone on the board: from the one selected, or the first. */
+    present: callback('present', 'Present'),
+    /** The page fills the screen — or stops filling it. */
+    toggleFullscreen: callback('toggleFullscreen', 'Toggle Fullscreen'),
+    stopPresenting: callback('stopPresenting', 'Stop Presenting'),
+    /** An arrow key: the next or previous frame while presenting, the selection nudged otherwise (`far`: by ten). */
+    step: {
+      action: 'step',
+      title: 'Step',
+      type: 'callback',
+      params: {
+        direction: { label: 'Direction (left | right | up | down)', defaultValue: 'right', type: 'text' },
+        far: { label: 'Ten at a time', defaultValue: '', type: 'text' }
       }
     },
     zoomIn: callback('zoomIn', 'Zoom In'),
@@ -155,6 +249,13 @@ const declaration = {
     chat: callback('chat', 'Cursor Chat'),
     /** Brings everyone on the board to this person's view. */
     summon: callback('summon', 'Bring Everyone Here'),
+    /** A stamp put on the board where this person points: an emoji that stays, as a text. */
+    stamp: {
+      action: 'stamp',
+      title: 'Stamp',
+      type: 'callback',
+      params: { emoji: { label: 'Emoji', defaultValue: '👍', type: 'text' } }
+    },
     /** A reaction floating up where this person points, for everyone on the board. */
     react: {
       action: 'react',
@@ -176,14 +277,15 @@ const declaration = {
       stroke: 'ink',
       fill: 'none',
       strokeWidth: 2,
-      scheme: 'light'
+      scheme: 'light',
+      minimap: false
     },
     definition: {
       label: 'Board',
       type: 'board',
       description:
-        'An infinite whiteboard in a hand-drawn stroke: pan, zoom, shapes, arrows, lines, freehand, text and sticky ' +
-        'notes. Bind `elements` to the board as the server keeps it; `topic` is the channel the server announces ' +
+        'An infinite whiteboard in a hand-drawn stroke: pan, zoom, shapes, arrows, lines, freehand, text, sticky ' +
+        'notes, cards, and frames that hold what is put in them — a column frame lays it out, as a kanban lane. Bind `elements` to the board as the server keeps it; `topic` is the channel the server announces ' +
         'saved elements on and `roomTopic` the one cursors, live drags, lasers and reactions travel on. It fires ' +
         '`onCommit` with the changed elements for the page to keep, and `onToolChange`, `onSelectionChange`, ' +
         '`onViewChange`, `onResync` and `onFollowChange`. Arrows and lines fix to the anchors of what they are drawn ' +
@@ -234,7 +336,17 @@ const declaration = {
           { path: 'stroke', label: 'Stroke colour' },
           { path: 'fill', label: 'Fill colour' },
           { path: 'strokeWidth', label: 'Stroke width' },
-          { path: 'scheme', label: 'Colour scheme' }
+          { path: 'dash', label: 'Outline' },
+          { path: 'sloppiness', label: 'Sloppiness' },
+          { path: 'brush', label: 'Brush' },
+          { path: 'edges', label: 'Edges' },
+          { path: 'fillStyle', label: 'Fill style' },
+          { path: 'opacity', label: 'Opacity' },
+          { path: 'scheme', label: 'Colour scheme' },
+          { path: 'author', label: 'Author (whose name goes on notes and cards)' },
+          { path: 'authors', label: 'Show who wrote notes and cards' },
+          { path: 'sounds', label: 'Make sounds' },
+          { path: 'minimap', label: 'Show the minimap' }
         ],
         initialState: []
       }

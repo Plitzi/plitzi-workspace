@@ -172,7 +172,7 @@
   it: it used to end with "or with --yes to take the defaults", and agents took that exit instead of asking. `--yes`
   now only answers for a person at a terminal; a script passes the flags.
 - Every project gets `tsx`, so `npm run author` works on a fresh checkout, and `npm run shot -- /path --width 390
-  --scheme dark` takes a full-page screenshot.
+--scheme dark` takes a full-page screenshot.
 - The generated visual test skips list rows and providers with no tag.
 - The example plugin takes its props as attributes; in a client project its numbers come from `public/data/stats.json`
   through a provider — the offline-data pattern.
@@ -241,7 +241,6 @@
   `SpaceChange` vocabulary; builder query `SpaceChanges` (`TSpaceChanges`, `TSnapshotMarker`).
 - `@plitzi/sdk-mcp`: `saveSchema`/`saveStyle` receive an `SSRWriteContext` (the member, one batch per tool call), and an
   optional `getChanges` adapter serves `plitzi://changes/{env}` and `plitzi://changes/{env}/{id}`.
-
 
 ## Kept state: what is never kept, and where keeping is decided
 
@@ -348,7 +347,6 @@
 - `bench/` (private): load and footprint benchmarks of the self-hosted servers under hardware profiles, with
   baselines — `yarn bench`, see its README.
 
-
 ## Self-hosted servers run compiled, without a transpiler
 
 - **`plitzi create` (server mode) runs on Node alone.** `start` is `node src/main.ts` — Node 22.18+ strips the types
@@ -373,7 +371,6 @@
 - `bench/`: the memory probe is compiled to JavaScript before a run (loaded as TypeScript, it put Node's type stripper
   into every server measured, ~10 MB counted as the server's); `--repeat N` starts a target cold N times and keeps
   each phase's median run, since on Apple silicon a container runs on a fast or a slow core for its whole life.
-
 
 ## A page server on every core
 
@@ -493,7 +490,7 @@
   as digests, each good once.
 - **Signing in then asks for the code** on its own page (`/two-factor` in the auth space), which takes a recovery code
   as well. `sdk-auth`: a login answered with `mfaRequired` is a **`MfaChallenge`** (`{ ok: false, reason: 'mfa',
-  mfaToken }`), not a session — the provider read it as one and ended signed out. The space names where the code is
+mfaToken }`), not a session — the provider read it as one and ended signed out. The space names where the code is
   sent with **`mfaUrl`**; the `auth.login` step's mode **`'mfa'`** sends `{ mfaToken, code }` there.
 - **Fixed: an AI connector ended from the account console came back.** Ending it — one connector, "sign out everywhere
   else", or the space's own credentials — deleted its row, and the host's next renewal put the row back. A renewal of
@@ -528,7 +525,7 @@
   Metadata and the exact `Origin`: CORS keeps another site from reading, but a plain form POST needs no preflight.
   Platform origins pass, and so do the origins the request's space credential declares. Bearer requests carry no
   victim's cookie and are never asked. `sdk-server`: **`createOriginGuardMiddleware(csrf, { allowedFor, exempt,
-  errorKey })`** and `csrf.crossSite(carrier, alsoAllowed?)`; `plitzi-sdk-server` runs it on both roles and refuses
+errorKey })`** and `csrf.crossSite(carrier, alsoAllowed?)`; `plitzi-sdk-server` runs it on both roles and refuses
   to start with CSRF switched off.
 - **Analytics beacons are sent as text** (`text/plain`), which the collector reads as JSON. A beacon always goes with
   credentials, and a JSON one is preflighted: from a customer's domain it would have been refused with the rule above.
@@ -552,10 +549,10 @@
     still the lists the CLI wrote;
   - any other project is asked for the folder (`--dir`) and told how to register it for `render()`,
     `<PlitziSdk.Plugin>` and a page server.
-  A name that would make a built-in element's type (`button`, `form`) is refused.
+    A name that would make a built-in element's type (`button`, `form`) is refused.
 - **`plitzi create [directory] --plugin`** writes a plugin package: its elements, a Vite preview that renders them
   inside a space, and a visual test of each. A package holds as many elements as it needs (`--elements
-  legend,price-tag`, or asked): the first is published as the plugin, the rest as its `plugins`. It builds nothing
+legend,price-tag`, or asked): the first is published as the plugin, the rest as its `plugins`. It builds nothing
   itself — no bundler config, no build dependency — since `plitzi pack plugin` is the one place a plugin is built.
   It ships its source (a page server compiles an element from it) and exports `elements` for a project registering
   them itself. `--name`, `--title`, `--description` and `--owner` answer what it otherwise asks; inside a repository it
@@ -802,7 +799,15 @@
   space that the canvas lays beside the selection, pictures pasted from the clipboard, password-protected boards (on a
   topic only whoever opened the board can name), votes, a shared timer, cursor chat and "bring everyone here". The
   front page is a board to try before starting one — with scripted collaborators already drawing on it — templates,
-  and two large featured boards that are read-only (looked around together, then "Use as template"). See
+  and two large featured boards that are read-only (looked around together, then "Use as template"). Frames that hold
+  what is put in them — a column frame is a kanban lane that lays out its cards, with the drop shown as it is dragged —
+  task cards, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness,
+  edges, opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or private and
+  temporary boards (in Board settings, beside the title), boards their creator makes read-only for everyone else, an
+  elements library built from one registry (searchable, with favourites), texts resized by their handles, stamps, and
+  sounds. AI agents join as collaborators through an MCP server in the example (`src/agent`),
+  a client of the board's server like a browser. It runs on several replicas over Redis (`REDIS_URL`, `BOARD_SECRET`):
+  the channels, the boards, the pictures, and a write lock in the action `kv` shared by all of them. See
   `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
 

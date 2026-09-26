@@ -63,3 +63,179 @@
 .board__chat::placeholder {
   color: rgba(255, 255, 255, 0.7);
 }
+
+/* The whole board in a corner: over the canvas, above the corner's buttons. Its colours are the canvas's. */
+.board__minimap {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 2;
+  width: 208px;
+  height: 140px;
+  border: 1px solid var(--board-edge, rgba(0, 0, 0, 0.14));
+  border-radius: 12px;
+  background: var(--board-surface, #ffffff);
+  box-shadow: 0 8px 28px -12px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* A phone's corner is the toolbar's. */
+@media (max-width: 640px) {
+  .board__minimap {
+    display: none;
+  }
+}
+
+/* A comment's thread, beside its pin: what was said, the answers, and a field to answer in. */
+.board__thread {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 280px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--board-edge, rgba(0, 0, 0, 0.14));
+  border-radius: 14px;
+  background: var(--board-surface, #ffffff);
+  color: var(--board-ink, #1e1e1e);
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.4);
+  font: 14px/1.45 var(--board-ui-font, system-ui, sans-serif);
+}
+
+.board__thread[data-done='true'] .board__thread-text {
+  color: var(--board-muted, #6b6b6b);
+}
+
+.board__thread-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--board-accent, #4c6ef5);
+}
+
+.board__thread-resolve {
+  border: 0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  background: transparent;
+  color: inherit;
+  font: 600 12px var(--board-ui-font, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.board__thread-resolve:hover {
+  background: color-mix(in srgb, var(--board-accent, #4c6ef5) 12%, transparent);
+}
+
+.board__thread p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.board__thread-reply {
+  padding-top: 8px;
+  border-top: 1px solid var(--board-edge, rgba(0, 0, 0, 0.14));
+}
+
+.board__thread-reply strong {
+  font-size: 12px;
+}
+
+.board__thread-form {
+  display: flex;
+  gap: 6px;
+}
+
+.board__thread-form input {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--board-edge, rgba(0, 0, 0, 0.14));
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.board__thread-form input:focus {
+  border-color: var(--board-accent, #4c6ef5);
+}
+
+.board__thread-form button {
+  width: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--board-accent, #4c6ef5);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* A comment being written: beside its pin, posted on purpose. */
+.board__composer {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--board-accent, #4c6ef5);
+  border-radius: 14px;
+  background: var(--board-surface, #ffffff);
+  color: var(--board-ink, #1e1e1e);
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.4);
+  font: 14px/1.45 var(--board-ui-font, system-ui, sans-serif);
+}
+
+.board__composer strong {
+  font-size: 12px;
+  color: var(--board-accent, #4c6ef5);
+}
+
+.board__composer textarea {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  field-sizing: content;
+}
+
+.board__composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.board__composer-actions span {
+  flex: 1;
+  font-size: 11px;
+  color: var(--board-muted, #6b6b6b);
+}
+
+.board__composer-actions button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: 600 12px var(--board-ui-font, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.board__composer-actions .board__composer-post {
+  background: var(--board-accent, #4c6ef5);
+  color: #ffffff;
+}

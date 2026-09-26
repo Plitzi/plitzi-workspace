@@ -13,17 +13,20 @@ export type CountdownAttributes = Omit<CountdownProps, 'className'>;
 const declaration = {
   type: 'countdown',
   triggers: {
-    onEnd: { action: 'onEnd', title: 'On End', type: 'trigger', params: {}, preview: {} }
+    onEnd: { action: 'onEnd', title: 'On End', type: 'trigger', params: {}, preview: {} },
+    /** One of its last `tickSeconds`, as it begins: `left` is how many remain. */
+    onTick: { action: 'onTick', title: 'On Tick', type: 'trigger', params: {}, preview: { left: '' } }
   },
   callbacks: {},
   content: {
-    attributes: { endsAt: 0 },
+    attributes: { endsAt: 0, warnSeconds: 10, tickSeconds: 0 },
     definition: {
       label: 'Countdown',
       type: 'countdown',
       description:
-        'Minutes and seconds until `endsAt` (milliseconds since the epoch), ticking; empty when it is 0 or past. ' +
-        'Fires `onEnd` once when it reaches zero while shown. The last ten seconds carry `data-state="ending"`.',
+        'Hours, minutes and seconds until `endsAt` (milliseconds since the epoch), ticking; empty when it is 0 or past. ' +
+        'Fires `onEnd` once when it reaches zero while shown. The last `warnSeconds` (ten by default) carry ' +
+        '`data-state="ending"`; each of the last `tickSeconds` fires `onTick`.',
       items: [],
       bindings: {},
       styleSelectors: { base: '' },
@@ -50,7 +53,14 @@ const declaration = {
       name: 'Countdown',
       displayMode: 'desktop',
       style: { base: { default: {} } },
-      bindingsAllowed: { attributes: [{ path: 'endsAt', label: 'Ends at (ms)' }], initialState: [] }
+      bindingsAllowed: {
+        attributes: [
+          { path: 'endsAt', label: 'Ends at (ms)' },
+          { path: 'warnSeconds', label: 'Seconds before the end it warns' },
+          { path: 'tickSeconds', label: 'Last seconds it ticks' }
+        ],
+        initialState: []
+      }
     },
     settings: {}
   }

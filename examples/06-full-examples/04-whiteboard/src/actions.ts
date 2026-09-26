@@ -30,11 +30,22 @@ export const APPLY_ACTION = 'board-apply';
 export const VOTE_ACTION = 'board-vote';
 export const TIMER_ACTION = 'board-timer';
 export const UPLOAD_ACTION = 'board-upload';
+export const REACH_ACTION = 'board-reach';
+export const CHAT_ACTION = 'board-chat';
+export const REPLY_ACTION = 'board-reply';
+export const READ_ONLY_ACTION = 'board-readonly';
 
 const field = (label: string, required = true): ActionField => ({ type: 'text', required, label });
 
-/** Every change to a board takes the board and — for a locked one — the key opening it answered. */
-const onBoard = { board: field('Board id'), key: field('Key (a locked board’s)', false) };
+/**
+ * Every change to a board takes the board, the key opening it answered — for a locked one — and, from whoever made it,
+ * the owner key that lets a change through while it is read-only for everyone else.
+ */
+const onBoard = {
+  board: field('Board id'),
+  key: field('Key (a locked board’s)', false),
+  owner: field('Owner key (its creator’s)', false)
+};
 
 /** Tells the gallery a board changed, so it reads the list again. */
 const listed = (board: string) => ({
@@ -90,7 +101,12 @@ const create = defineAction({
   trigger: {
     type: 'call',
     access: 'public',
-    input: { title: field('Title', false), template: field('Template', false) }
+    input: {
+      title: field('Title', false),
+      template: field('Template', false),
+      visibility: field('Visibility (public | private)', false),
+      hours: field('Lasts (hours)', false)
+    }
   },
   steps: [
     { id: 'board', task: 'board.create' },
@@ -254,7 +270,119 @@ const upload = defineAction({
   output: '{ "asset": "{{ uploaded.asset }}" }'
 });
 
-const actions = [list, load, open, create, copy, rename, lock, remove, apply, vote, timer, upload];
+/**
+ * Who may find a board and how long it lasts. Everyone on it is told (`reach`) and reads it again; the gallery reads
+ * its list again too — a board made private leaves it.
+ */
+const reachAction = defineAction({
+  id: REACH_ACTION,
+  name: 'Board reach',
+  description: 'Makes a board public or private, and temporary or lasting.',
+  trigger: {
+    type: 'call',
+    access: 'public',
+    input: { ...onBoard, visibility: field('Visibility (public | private)'), hours: field('Lasts (hours, or keep)') }
+  },
+  steps: [
+    { id: 'reached', task: 'board.reach' },
+    {
+      id: 'announce',
+      task: 'realtime.publish',
+      params: { topic: 'board:{{ reached.topic }}', type: 'reach', data: '{{ reached|json_encode }}' }
+    },
+    listed('{{ input.board }}')
+  ],
+  output: '{{ reached|json_encode }}'
+});
+
+/** A line of the board's chat: kept with the last ones, and carried to everyone on the board. */
+const chat = defineAction({
+  id: CHAT_ACTION,
+  name: 'Board chat',
+  description: 'Keeps a line of the board’s chat and tells everyone on it.',
+  trigger: {
+    type: 'call',
+    access: 'public',
+    input: {
+      ...onBoard,
+      name: field('Name'),
+      color: field('Colour', false),
+      text: field('What was said'),
+      by: field('Who (the id their browser keeps)', false),
+      agent: field('Said by an agent', false)
+    }
+  },
+  steps: [
+    { id: 'said', task: 'board.chat' },
+    {
+      id: 'announce',
+      task: 'realtime.publish',
+      params: { topic: 'board:{{ said.topic }}', type: 'chat', data: '{{ said.message|json_encode }}' }
+    }
+  ],
+  output: '{{ said.message|json_encode }}'
+});
+
+/** An answer in a comment's thread: kept on the server, the comment announced with its thread. */
+const reply = defineAction({
+  id: REPLY_ACTION,
+  name: 'Reply',
+  description: 'Adds an answer to a comment’s thread and announces the comment.',
+  trigger: {
+    type: 'call',
+    access: 'public',
+    input: { ...onBoard, element: field('Comment id'), author: field('Who answers'), text: field('The answer') }
+  },
+  steps: [
+    { id: 'answered', task: 'board.reply' },
+    {
+      id: 'announce',
+      task: 'realtime.publish',
+      params: { topic: 'board:{{ answered.topic }}', type: 'elements', data: '{{ answered.settled|json_encode }}' }
+    }
+  ],
+  output: '{ "ok": true }'
+});
+
+/**
+ * A board made read-only for everyone but its creator, or opened again. Everyone on it is told (`readOnly`), and their
+ * canvas stops — or starts — taking changes; the gallery reads its list again, where a read-only board is marked.
+ */
+const readOnly = defineAction({
+  id: READ_ONLY_ACTION,
+  name: 'Read-only board',
+  description: 'Makes a board read-only for everyone but whoever made it, or opens it again.',
+  trigger: { type: 'call', access: 'public', input: { ...onBoard, readOnly: field('Read-only (true | false)') } },
+  steps: [
+    { id: 'set', task: 'board.readonly' },
+    {
+      id: 'announce',
+      task: 'realtime.publish',
+      params: { topic: 'board:{{ set.topic }}', type: 'readOnly', data: '{{ set|json_encode }}' }
+    },
+    listed('{{ input.board }}')
+  ],
+  output: '{{ set|json_encode }}'
+});
+
+const actions = [
+  list,
+  load,
+  open,
+  create,
+  copy,
+  rename,
+  lock,
+  remove,
+  apply,
+  vote,
+  timer,
+  upload,
+  reachAction,
+  chat,
+  reply,
+  readOnly
+];
 
 /** How the server reaches an action. One live version, so the revision a page was published at is ignored. */
 export const lookups: ActionLookups = {

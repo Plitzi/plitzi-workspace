@@ -255,6 +255,13 @@ createServer({ /* … */, realtime: false });                             // no 
 Each process holds one adapter subscription per topic, however many pages share it; topics are namespaced by space and
 environment before they reach the adapter.
 
+**Behind a balancer.** A WebSocket needs nothing more: a page's publishes are frames on its own socket, whichever
+replica holds it. The Server-Sent Events transport needs **affinity** on the realtime path: a stream's publishes are
+`POST`s carrying the stream's token, which only the replica holding the stream knows — sent to another replica, they
+are answered `401 not_connected`. A page that falls back from a socket to the stream behind a balancer without
+affinity cannot publish. The whiteboard example runs on WebSockets across three replicas behind a round-robin
+balancer; see its README.
+
 ---
 
 ## 8. Patterns

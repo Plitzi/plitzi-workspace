@@ -46,10 +46,42 @@ export const BOARD_SHOWN = `{{ source.found and (not source.locked or (${OPENED}
 /** In a flow: the key a locked board's changes carry, or nothing for an open board. */
 export const BOARD_KEY = `{{ state.opened and state.opened.id == ${PROVIDER}.id ? state.opened.key : '' }}`;
 
-/** Whether the board shown can be changed — every featured board is one to look around, not to draw on. */
-const EDITABLE = { source: BOARD_PROVIDER, template: "{{ source.readOnly ? 'false' : 'true' }}" };
+/**
+ * The boards this browser made, and the owner key each was given: `state.owned`, an object by board id — kept, so
+ * whoever made a board is still its creator tomorrow. The key is what lets a change through while the board is
+ * read-only for everyone else, and the only thing that makes it so.
+ */
+const OWNER_OF = (id: string): string => `(state.owned ? state.owned[${id}] : '')`;
 
-const READ_ONLY = { source: BOARD_PROVIDER, template: "{{ source.readOnly ? 'true' : 'false' }}" };
+/** In a flow: the owner key of the board shown, or nothing for a board this browser did not make. */
+export const BOARD_OWNER = `{{ ${OWNER_OF(`${PROVIDER}.id`)} }}`;
+
+/** What every change to the board carries: the key opening it answered, and — its creator's — the owner key. */
+export const BOARD_PASS = { key: BOARD_KEY, owner: BOARD_OWNER };
+
+/** In a binding whose source is the board: whether this browser made it. */
+export const IS_OWNER = `${OWNER_OF('source.id')}`;
+
+/** A new board's owner key, kept with the others — the step that made it answered it as `owner`. */
+export const keepOwned = (step: string): StepSpec =>
+  when(
+    { field: `${step}.status`, operator: '=', value: 'completed' },
+    setState({
+      key: 'owned',
+      type: 'json',
+      value: `{{ (state.owned ? state.owned : {})|merge({ (${step}.output.id): ${step}.output.owner }) }}`
+    })
+  );
+
+/**
+ * Whether the board shown can be changed here: any board that is not read-only — and a read-only one by whoever made
+ * it read-only. Every featured board is one to look around, not to draw on: nobody holds its owner key.
+ */
+export const CAN_EDIT = `not source.readOnly or ${IS_OWNER}`;
+
+const EDITABLE = { source: BOARD_PROVIDER, template: `{{ ${CAN_EDIT} ? 'true' : 'false' }}` };
+
+const READ_ONLY = { source: BOARD_PROVIDER, template: `{{ ${CAN_EDIT} ? 'false' : 'true' }}` };
 
 /** Leaves its children to the layout around it: a wrapper that only decides whether they are there. */
 const contents = styles('contents', { display: 'contents' });
@@ -274,7 +306,7 @@ export const passwordSection = (): ElementSpec[] => [
           'locked',
           runServerAction({
             actionId: LOCK_ACTION,
-            input: { board: `{{ ${PROVIDER}.id }}`, password: '{{ setting.values.password }}', key: BOARD_KEY },
+            input: { board: `{{ ${PROVIDER}.id }}`, password: '{{ setting.values.password }}', ...BOARD_PASS },
             invalidateQueries: 'none'
           })
         ),

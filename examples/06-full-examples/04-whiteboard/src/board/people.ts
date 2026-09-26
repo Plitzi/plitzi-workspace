@@ -28,7 +28,12 @@ export const GUEST_NAMES = [
 ] as const;
 
 /** What a member announces on the room — the only shape the canvas reads from presence. */
-export type Collaborator = { name: string; color: string };
+export type Collaborator = {
+  name: string;
+  color: string;
+  /** An AI agent on the board (`src/agent`), marked as one wherever it appears. */
+  agent?: boolean;
+};
 
 export const isCollaborator = (value: unknown): value is Collaborator =>
   typeof value === 'object' &&

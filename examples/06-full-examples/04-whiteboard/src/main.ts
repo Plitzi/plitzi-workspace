@@ -2,13 +2,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
-import { consoleLogger, createJsonAdapters, createMemoryPubSub, createServer } from '@plitzi/sdk-server';
+import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
 
 import { lookups } from './actions.ts';
-import { readAsset } from './board/assets.ts';
+import { BRAND_PATH, BRAND_SVG } from './board/brand.ts';
+import { deploymentFrom } from './deployment.ts';
 import { PLUGINS, space } from './space/index.ts';
-import { boardTasks } from './tasks.ts';
+import { createBoardTasks } from './tasks.ts';
 
 import type { SSRMiddleware } from '@plitzi/sdk-shared';
 
@@ -17,16 +18,21 @@ const PORT = Number(process.env.PORT ?? 4016);
 const HOST = process.env.HOST ?? '127.0.0.1';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
+/** One process in memory, or one replica of several over Redis — decided by the environment (`deployment.ts`). */
+const deployment = deploymentFrom(process.env);
+
 /**
  * The elements this space ships itself: the canvas; the share card — a QR code and the clipboard, which are the
- * browser's to offer; and the sticky pads, which hand a note over the moment the pointer goes down. Two halves, and forgetting either is quiet: a plugin the server has no component for resolves
- * to nothing, on a page that renders perfectly.
+ * browser's to offer; the sticky pile, which hands a pile over the moment the pointer goes down; the countdown; and a
+ * text to copy. Two halves, and forgetting either is quiet: a plugin the server has no component for resolves to
+ * nothing, on a page that renders perfectly.
  */
 const plugins = {
   board: { js: path.resolve(here, 'plugins/Board/index.ts'), action: 'compile' as const },
   shareCard: { js: path.resolve(here, 'plugins/ShareCard/index.ts'), action: 'compile' as const },
   stickyStack: { js: path.resolve(here, 'plugins/StickyStack/index.ts'), action: 'compile' as const },
-  countdown: { js: path.resolve(here, 'plugins/Countdown/index.ts'), action: 'compile' as const }
+  countdown: { js: path.resolve(here, 'plugins/Countdown/index.ts'), action: 'compile' as const },
+  copyText: { js: path.resolve(here, 'plugins/CopyText/index.ts'), action: 'compile' as const }
 };
 
 /** `/board-assets/<board>/<asset>`: the picture an image element names, as its board keeps it. */
@@ -37,13 +43,23 @@ const ASSET_PATH = /^\/board-assets\/([a-z0-9]{10})\/([A-Za-z0-9_-]{16,32})$/;
  * checked to be, and headers that keep a browser from reading them as anything else. Cached for good: an asset never
  * changes — a new picture is a new id.
  */
-const serveAssets: SSRMiddleware = (req, res, next) => {
+const serveAssets: SSRMiddleware = async (req, res, next) => {
+  // The mark, beside the pictures: one file that never changes but with the example itself.
+  if (req.method === 'GET' && req.path === BRAND_PATH) {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(BRAND_SVG);
+
+    return undefined;
+  }
+
   const match = req.method === 'GET' ? ASSET_PATH.exec(req.path) : null;
   if (!match) {
     return next();
   }
 
-  const asset = readAsset(match[1], match[2]);
+  const asset = await deployment.assets.read(match[1], match[2]);
   if (!asset) {
     res.setStatus(404);
     res.send('');
@@ -83,20 +99,19 @@ const server = createServer({
   middlewares: [serveAssets],
   action: {
     lookups,
-    tasks: boardTasks,
+    tasks: createBoardTasks(deployment),
+    kv: deployment.kv,
     // Nothing here runs on a clock.
     jobs: false,
     onRun: createRunLogger(consoleLogger),
     onReject: createRejectLogger(consoleLogger)
   },
   /**
-   * How a message reaches every page on its topic. In memory — the default, written out to show where the choice
-   * is made — which is exactly right for one process and its workers. A deployment with a second replica hands it an
-   * adapter they share instead: `createRedisPubSub({ publisher, subscriber })` over two Redis connections, or one
-   * object of the same two methods over NATS, Postgres `LISTEN`, anything that fans a message out.
+   * How a message reaches every page on its topic: in memory for one process; for replicas, Redis — a cursor moved by
+   * somebody whose page is connected to one replica is drawn on a page connected to another.
    */
   realtime: {
-    pubsub: createMemoryPubSub(),
+    pubsub: deployment.pubsub,
     /**
      * A socket per page rather than a stream and a request per message: twenty cursor updates a second from every
      * person on a board are frames on a connection that is already open, not twenty requests. A page falls back to
@@ -107,6 +122,7 @@ const server = createServer({
 });
 
 server.listen(PORT, HOST);
+closeOnSignals(server, { afterClose: deployment.close });
 
-console.log(`[whiteboard] the boards on http://127.0.0.1:${PORT}/`);
+console.log(`[whiteboard] the boards on http://127.0.0.1:${PORT}/ — ${deployment.describe}`);
 console.log('[whiteboard] open a board in two windows — every stroke, cursor and rename reaches the other');

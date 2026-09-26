@@ -10,7 +10,10 @@ import type { InteractionCallback } from '@plitzi/plitzi-sdk';
 import type { KeyboardEvent, PointerEvent } from 'react';
 
 export type StickyStackProps = {
-  /** The pads, as paper colour names, comma-separated. One is plenty: a note is recoloured once it is down. */
+  /**
+   * The pads, as paper colour names, comma-separated — none where a note is made some other way (a sticky tool) and
+   * only the pile is wanted. The first colour, or yellow, is the pile's paper.
+   */
   colors?: string;
   /** Also offer a whole pile, to put on the board for everyone to take notes from. */
   pile?: boolean | string;

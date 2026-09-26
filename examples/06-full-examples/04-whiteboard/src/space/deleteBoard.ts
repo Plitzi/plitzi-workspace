@@ -15,9 +15,9 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { DELETE_ACTION } from '../actions.ts';
-import { BOARD_KEY } from './access.ts';
+import { BOARD_PASS } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
-import { BUTTON_RESET, FLOAT, iconAction } from './kit.ts';
+import { BELOW_HEADER, BUTTON_RESET, FLOAT, iconAction } from './kit.ts';
 import { closeOthers } from './panels.ts';
 
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
@@ -32,7 +32,7 @@ const popover = styles('deletePopover', {
     desktop: {
       ...FLOAT,
       position: 'absolute',
-      top: '58px',
+      top: BELOW_HEADER,
       left: '14px',
       'z-index': '6',
       display: 'flex',
@@ -90,7 +90,7 @@ const deleteFlow: StepSpec[] = [
     'removed',
     runServerAction({
       actionId: DELETE_ACTION,
-      input: { board: `{{ apiContainer_${BOARD_PROVIDER}.id }}`, key: BOARD_KEY },
+      input: { board: `{{ apiContainer_${BOARD_PROVIDER}.id }}`, ...BOARD_PASS },
       invalidateQueries: 'none'
     })
   ),

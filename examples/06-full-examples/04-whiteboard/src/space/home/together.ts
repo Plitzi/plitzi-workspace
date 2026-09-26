@@ -26,7 +26,7 @@ const blockLead = styles('togetherLead', { margin: '4px 0px 0px', 'font-size': '
 
 const grid = styles('togetherGrid', {
   css: {
-    desktop: { display: 'grid', 'grid-template-columns': 'repeat(4, minmax(0px, 1fr))', gap: '14px' },
+    desktop: { display: 'grid', 'grid-template-columns': 'repeat(3, minmax(0px, 1fr))', gap: '14px' },
     tablet: { 'grid-template-columns': 'repeat(2, minmax(0px, 1fr))' },
     mobile: { 'grid-template-columns': 'minmax(0px, 1fr)' }
   }
@@ -260,6 +260,96 @@ const laser = (): ElementSpec =>
     })
   ]);
 
+// ── A kanban that sorts itself: a card slides into the next column ─────────────────────────────────────────────────
+
+const lane = (name: string, left: string, lit: boolean): ElementSpec =>
+  text({
+    content: '',
+    class: styles(name, {
+      ...at({ left, top: '18px' }),
+      width: '34%',
+      height: '114px',
+      'border-radius': '10px',
+      border: '1.5px solid var(--edge)',
+      'background-color': 'var(--surface)',
+      ...(lit ? { animation: 'wb-lit 5s ease-in-out infinite' } : {})
+    })
+  });
+
+const laneTitle = (content: string, left: string): ElementSpec =>
+  text({
+    content,
+    class: styles(`togetherLaneTitle-${content.replace(/\W/g, '')}`, {
+      ...at({ left, top: '24px' }),
+      'font-size': '10px',
+      'font-weight': '700',
+      color: 'var(--muted)'
+    })
+  });
+
+const miniCard = (name: string, place: CssProps, motion?: string): ElementSpec =>
+  text({
+    content: '',
+    class: styles(name, {
+      ...at(place),
+      width: '28%',
+      height: '20px',
+      'border-radius': '6px',
+      'background-color': 'var(--surface)',
+      border: '1px solid var(--edge)',
+      'box-shadow': '0 2px 4px -2px var(--shadow)',
+      'border-left': '4px solid var(--collab-teal)',
+      ...(motion ? { animation: motion } : {})
+    })
+  });
+
+const kanban = (): ElementSpec =>
+  scene('Kanban columns', 'Drop a card in a column: it takes its place. Drag it out, it goes back.', [
+    lane('togetherLaneA', '10%', false),
+    lane('motionLaneB', '56%', true),
+    laneTitle('TO DO', '13%'),
+    laneTitle('DONE', '59%'),
+    miniCard('togetherCardStill', { left: '13%', top: '66px' }),
+    miniCard('motionCardSlide', { left: '13%', top: '40px' }, 'wb-slide 5s ease-in-out infinite')
+  ]);
+
+// ── An agent on the board: its cursor arrives, it says what it does, a card appears ────────────────────────────────
+
+const agents = (): ElementSpec =>
+  scene('AI agents join in', 'Invite an agent: it shows up by name, reads the board, adds to it, and talks.', [
+    text({
+      content: 'Plan the launch',
+      class: styles('motionAgentCard', {
+        ...NOTE,
+        ...at({ left: '44%', top: '46px' }),
+        'background-color': 'var(--sticky-violet)',
+        animation: 'wb-pop 6s ease-out infinite'
+      })
+    }),
+    cursor(
+      '✦ Claude',
+      'orchid',
+      styles('motionAgentHand', {
+        ...at({ left: 'calc(44% + 54px)', top: '84px' }),
+        animation: 'wb-hand 6s ease-in-out infinite'
+      })
+    ),
+    text({
+      content: 'On it — adding cards',
+      class: styles('motionAgentSays', {
+        ...at({ left: '8%', top: '20px' }),
+        padding: '5px 9px',
+        'border-radius': '4px 12px 12px 12px',
+        'font-size': '11px',
+        'font-weight': '600',
+        color: '#ffffff',
+        'background-color': 'var(--collab-orchid)',
+        'transform-origin': 'top left',
+        animation: 'wb-bubble 6s ease-out infinite'
+      })
+    })
+  ]);
+
 export const together = (): ElementSpec =>
   container({
     class: block,
@@ -273,6 +363,6 @@ export const together = (): ElementSpec =>
           })
         ]
       }),
-      container({ class: grid, children: [cursors(), piles(), reactions(), laser()] })
+      container({ class: grid, children: [cursors(), agents(), kanban(), piles(), reactions(), laser()] })
     ]
   });

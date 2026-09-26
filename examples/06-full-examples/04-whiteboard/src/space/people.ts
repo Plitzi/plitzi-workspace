@@ -19,8 +19,8 @@ import {
 
 import { COLLAB_COLOURS } from '../board/people.ts';
 import shareDeclaration from '../plugins/ShareCard/declaration.ts';
-import { BUTTON_RESET, FLOAT, caption } from './kit.ts';
-import { editOnly, passwordSection } from './access.ts';
+import { BOARD_PROVIDER } from './ids.ts';
+import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
 
@@ -80,6 +80,7 @@ const meAvatar = styles('meAvatar', {
 const peopleRow = styles('people', {
   display: 'flex',
   'align-items': 'center',
+  // Room for the first avatar's overlap, which the others' negative margins make.
   'padding-left': '6px',
   margin: '0px',
   'list-style-type': 'none'
@@ -114,7 +115,8 @@ const others = (): ElementSpec =>
             title: 'Follow — see what they see',
             class: avatar,
             bind: [
-              bindTemplate('content', 'people.item.state.name', '{{ source|first|upper }}'),
+              // An agent is a star — a person, their initial.
+              bindTemplate('content', 'people.item.state', "{{ source.agent ? '✦' : source.name|first|upper }}"),
               variantFrom(avatar, 'people.item.state.color')
             ],
             flows: [[onClick(), boardAction('follow', { from: '{{ list_people.item.from }}' })]]
@@ -142,10 +144,13 @@ const popover = styles('popover', {
     desktop: {
       ...FLOAT,
       position: 'absolute',
-      top: '58px',
+      top: BELOW_HEADER,
       right: '14px',
       'z-index': '6',
       width: '284px',
+      // Scrolls rather than run off a short screen: the code alone is most of its height.
+      'max-height': 'calc(100dvh - 90px)',
+      'overflow-y': 'auto',
       padding: '14px',
       display: 'flex',
       'flex-direction': 'column',
@@ -214,6 +219,75 @@ const colourChoice = (colour: string): ElementSpec =>
     ]
   });
 
+const switchRow = styles('switchRow', {
+  css: {
+    ...BUTTON_RESET,
+    display: 'flex',
+    'align-items': 'center',
+    'justify-content': 'space-between',
+    gap: '10px',
+    width: '100%',
+    'font-size': '13px',
+    color: 'var(--ink)',
+    'text-align': 'left'
+  },
+  states: { 'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '2px', 'border-radius': '6px' } }
+});
+
+/** A switch: its track in the accent when on, and its knob at that end. */
+const track = styles('switchTrack', {
+  css: {
+    position: 'relative',
+    display: 'block',
+    width: '34px',
+    height: '20px',
+    'flex-shrink': '0',
+    'border-radius': '999px',
+    'background-color': 'var(--edge)',
+    transition: 'background-color 140ms ease'
+  },
+  variants: { on: { 'background-color': 'var(--accent)' } }
+});
+
+const knob = styles('switchKnob', {
+  css: {
+    position: 'absolute',
+    top: '3px',
+    left: '3px',
+    width: '14px',
+    height: '14px',
+    'border-radius': '50%',
+    'background-color': '#ffffff',
+    'box-shadow': '0 1px 2px rgba(0, 0, 0, 0.3)',
+    transition: 'transform 140ms ease'
+  },
+  variants: { on: { transform: 'translateX(14px)' } }
+});
+
+/** On or off, for this person's own screen — kept across visits, like their name. */
+const preference = (id: string, label: string, key: string): ElementSpec =>
+  button({
+    id,
+    content: '',
+    title: label,
+    class: switchRow,
+    flows: [[onClick(), setState({ key, type: 'boolean', value: `{{ not computed.${key} }}` })]],
+    children: [
+      text({ content: label }),
+      container({
+        class: track,
+        bind: [variantFrom(track, `computed.${key}`, { template: "{{ source ? 'on' : '' }}" })],
+        children: [
+          text({
+            content: '',
+            class: knob,
+            bind: [variantFrom(knob, `computed.${key}`, { template: "{{ source ? 'on' : '' }}" })]
+          })
+        ]
+      })
+    ]
+  });
+
 const mePanel = (): ElementSpec =>
   container({
     id: 'me-panel',
@@ -241,7 +315,10 @@ const mePanel = (): ElementSpec =>
         ]
       }),
       text({ content: 'Your colour', class: caption }),
-      container({ class: swatches, children: COLLAB_COLOURS.map(colourChoice) })
+      container({ class: swatches, children: COLLAB_COLOURS.map(colourChoice) }),
+      text({ content: 'On your screen', class: caption }),
+      preference('show-authors', 'Show who wrote notes and cards', 'showAuthors'),
+      preference('sounds', 'Sounds — arrivals, chat, reactions, the timer', 'sounds')
     ]
   });
 
@@ -254,7 +331,15 @@ const sharePanel = (): ElementSpec =>
       text({ content: 'Invite people', class: popoverTitle }),
       text({
         content: 'Anyone with the link can draw on this board — no account. Scan it with a phone to draw from there.',
-        class: popoverNote
+        class: popoverNote,
+        // Read-only, the link is to look around together: saying "draw" would promise what the board refuses.
+        bind: [
+          bindTemplate(
+            'content',
+            BOARD_PROVIDER,
+            "{{ source.readOnly ? 'Anyone with the link can look around, point and react — no account. Only whoever made it can draw.' : 'Anyone with the link can draw on this board — no account. Scan it with a phone to draw from there.' }}"
+          )
+        ]
       }),
       shareCard({
         id: 'share-card',
@@ -262,6 +347,7 @@ const sharePanel = (): ElementSpec =>
         flows: [
           [
             declaredTrigger(shareDeclaration, 'onCopied'),
+            boardAction('chime', { sound: 'copy' }),
             addNotification({
               content: 'Link copied',
               appearance: 'success',
@@ -270,9 +356,7 @@ const sharePanel = (): ElementSpec =>
             })
           ]
         ]
-      }),
-      // Who may get in: anyone with the link, or only whoever also has the password. A read-only board has no say.
-      editOnly(passwordSection())
+      })
     ]
   });
 
@@ -296,15 +380,27 @@ const shareButton = styles('shareButton', {
   }
 });
 
-export const presence = (): ElementSpec[] => [
-  others(),
-  me(),
-  button({
-    id: 'share',
-    content: 'Share',
-    class: shareButton,
-    flows: [[onClick(), ...closeOthers('shareOpen'), toggleState({ key: 'shareOpen' })]]
-  })
-];
+/** The people and Share: solid shapes, grouped, with room between them and around them. */
+const peopleGroup = styles('peopleGroup', {
+  display: 'flex',
+  'align-items': 'center',
+  gap: '8px',
+  margin: '0px 6px 0px 4px'
+});
+
+export const presence = (): ElementSpec =>
+  container({
+    class: peopleGroup,
+    children: [
+      others(),
+      me(),
+      button({
+        id: 'share',
+        content: 'Share',
+        class: shareButton,
+        flows: [[onClick(), ...closeOthers('shareOpen'), toggleState({ key: 'shareOpen' })]]
+      })
+    ]
+  });
 
 export const popovers = (): ElementSpec[] => [mePanel(), sharePanel()];

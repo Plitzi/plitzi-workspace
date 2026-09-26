@@ -19,6 +19,7 @@ import {
 import { connect, drawing, loop, scribble, sticky } from '../../board/sketch.ts';
 import declaration from '../../plugins/Board/declaration.ts';
 import { newBoardFlow, primaryButton } from '../board.ts';
+import { quickPrivateBoard } from '../reach.ts';
 import { BUTTON_RESET, FLOAT, ICON_BUTTON, icon } from '../kit.ts';
 
 import type { Tool } from '../../plugins/Board/controller.ts';
@@ -476,6 +477,7 @@ export const hero = (): ElementSpec =>
                 flows: [newBoardFlow],
                 children: [icon('fa-solid fa-plus')]
               }),
+              quickPrivateBoard(),
               join()
             ]
           }),
@@ -485,8 +487,10 @@ export const hero = (): ElementSpec =>
               ['fa-solid fa-arrow-pointer', 'Live cursors'],
               ['fa-regular fa-note-sticky', 'Sticky piles'],
               ['fa-regular fa-image', 'Paste images'],
-              ['fa-solid fa-lock', 'Password boards'],
-              ['fa-regular fa-clock', 'Shared timer']
+              ['fa-solid fa-table-columns', 'Kanban columns'],
+              ['fa-regular fa-comment', 'Comments & chat'],
+              ['fa-solid fa-robot', 'AI agents join in'],
+              ['fa-solid fa-lock', 'Private & temporary']
             ].map(([glyph, label]) => container({ class: perk, children: [icon(glyph), text({ content: label })] }))
           })
         ]

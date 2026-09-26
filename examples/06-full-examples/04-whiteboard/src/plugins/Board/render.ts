@@ -1,12 +1,22 @@
 import { ANCHORS, isConnectable } from '../../board/model.ts';
 import { endsOf } from './connectors.ts';
-import { createRenderer, drawCursor, drawDots, drawHandles, drawMarquee, drawOutline, drawPoints } from './draw.ts';
+import {
+  createRenderer,
+  drawCursor,
+  drawDots,
+  drawDropTarget,
+  drawHandles,
+  drawMarquee,
+  drawOutline,
+  drawPoints
+} from './draw.ts';
 import { anchorPoint, beyondAnchor, boundsOf, boxFrom, toScreen, unionOf } from './geometry.ts';
 import { CONNECT_OFFSET } from './picking.ts';
 
 import type { Core } from './core.ts';
 import type { Effects } from './effects.ts';
 import type { Box } from './geometry.ts';
+import type { BoardElement } from '../../board/model.ts';
 import type { Pictures } from './pictures.ts';
 
 const overlaps = (a: Box, b: Box, margin: number): boolean =>
@@ -23,6 +33,28 @@ export const createPainter = (core: Core, effects: Effects, pictures: Pictures) 
   const { context, state, remotes } = core;
   const renderer = createRenderer(core.canvas);
   let reportedBox = '';
+  let reportedThread = '';
+
+  /** The one comment selected, with where its thread opens on screen — told to the page only when it changes. */
+  const reportThread = (comment: BoardElement | undefined): void => {
+    const [left, top] = comment ? toScreen(state.camera, comment.x + comment.width, comment.y) : [0, 0];
+    const thread = comment
+      ? {
+          id: comment.id,
+          author: comment.author ?? 'Someone',
+          text: comment.text ?? '',
+          done: comment.done === true,
+          replies: comment.replies ?? [],
+          left: Math.round(left + 10),
+          top: Math.round(top)
+        }
+      : undefined;
+    const key = JSON.stringify(thread ?? null);
+    if (key !== reportedThread) {
+      reportedThread = key;
+      core.emit({ type: 'thread', thread });
+    }
+  };
 
   const colourOf = (from: string): string =>
     state.palette.collab[state.members.get(from)?.color ?? ''] ?? state.palette.accent;
@@ -71,12 +103,27 @@ export const createPainter = (core: Core, effects: Effects, pictures: Pictures) 
       -camera.x * camera.zoom * dpr,
       -camera.y * camera.zoom * dpr
     );
+    const members = new Map<string, number>();
+    for (const element of elements) {
+      if (element.parent) {
+        members.set(element.parent, (members.get(element.parent) ?? 0) + 1);
+      }
+    }
+
     for (const element of elements) {
       if (overlaps(boundsOf(element), view, 40)) {
         renderer.drawElement(context, element, palette, {
           hideText: element.id === editing,
           faded: erased?.has(element.id) ?? false,
           voter: props.voter,
+          members: members.get(element.id) ?? 0,
+          authors: props.authors,
+          // A comment selected opens its thread beside it (`thread`), not its bubble.
+          // A comment being written or selected has its composer or thread beside it instead of its bubble.
+          open:
+            element.type === 'comment'
+              ? element.id === state.pointed && element.id !== editing && !core.selection.has(element.id)
+              : element.id === editing || element.id === state.pointed || core.selection.has(element.id),
           ...(element.type === 'image' ? { picture: pictures.of(element, props.assetBase) } : {})
         });
       }
@@ -89,6 +136,12 @@ export const createPainter = (core: Core, effects: Effects, pictures: Pictures) 
     }
 
     const byId = new Map(elements.map(element => [element.id, element]));
+    // Where what is dragged would land: the frame lit, and in a column the gap it would take.
+    const drop = state.dropTarget ? byId.get(state.dropTarget.frame) : undefined;
+    if (drop && state.dropTarget) {
+      drawDropTarget(context, camera, boundsOf(drop), palette.accent, state.dropTarget.line);
+    }
+
     for (const [from, remote] of remotes.entries()) {
       for (const id of remote.selection) {
         const element = byId.get(id);
@@ -96,6 +149,13 @@ export const createPainter = (core: Core, effects: Effects, pictures: Pictures) 
           drawOutline(context, camera, boundsOf(element), colourOf(from), false);
         }
       }
+    }
+
+    // A frame's title bar pointed at: the frame outlined, so it reads as something to take hold of.
+    const pointedFrame = state.pointed ? byId.get(state.pointed) : undefined;
+    // Only where it can be taken: a board that is looked around is not offered anything to pick up.
+    if (pointedFrame?.type === 'frame' && core.editable() && !core.selection.has(pointedFrame.id)) {
+      drawOutline(context, camera, boundsOf(pointedFrame), palette.accent, false);
     }
 
     const chosen = core.selected();
@@ -141,12 +201,17 @@ export const createPainter = (core: Core, effects: Effects, pictures: Pictures) 
       const member = state.members.get(from);
       const cursor = member ? remotes.cursorOf(remote, now) : undefined;
       if (member && cursor) {
-        drawCursor(context, camera, cursor.at, member.name, colourOf(from), palette.ui, cursor.saying);
+        const label = member.agent === true ? `✦ ${member.name}` : member.name;
+        drawCursor(context, camera, cursor.at, label, colourOf(from), palette.ui, cursor.saying);
       }
     }
 
     // The selection's tools stand aside while it is being moved, resized or typed into — they would cover the work.
     reportBox(box && selecting && !gesture && !state.pinch ? box : undefined);
+    const [sole] = chosen;
+    reportThread(
+      chosen.length === 1 && sole.type === 'comment' && !editing && !gesture && core.editable() ? sole : undefined
+    );
   };
 
   return { paint };

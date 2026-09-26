@@ -20,6 +20,7 @@ import {
 import { CREATE_ACTION } from '../../actions.ts';
 import { templateElements } from '../../board/templates.ts';
 import declaration from '../../plugins/Board/declaration.ts';
+import { keepOwned } from '../access.ts';
 import { GALLERY_PROVIDER } from '../ids.ts';
 import { BUTTON_RESET, icon } from '../kit.ts';
 
@@ -110,15 +111,18 @@ const cardMeta = styles('cardMeta', { 'font-size': '12px', color: 'var(--muted)'
 
 const TEMPLATE_CARDS: readonly { template: Template; title: string; note: string }[] = [
   { template: 'blank', title: 'Blank board', note: 'Just paper' },
-  { template: 'brainstorm', title: 'Brainstorm', note: 'A question and a pile of notes' },
+  { template: 'kanban', title: 'Kanban', note: 'Columns that sort their cards' },
+  { template: 'brainstorm', title: 'Brainstorm', note: 'A question, a pile, a parking lot' },
   { template: 'retro', title: 'Retro', note: 'Went well · improve · actions' },
-  { template: 'flowchart', title: 'Flowchart', note: 'Connected, and it stays connected' },
-  { template: 'kanban', title: 'Kanban', note: 'To do · doing · done' }
+  { template: 'flowchart', title: 'Flowchart', note: 'Steps, decisions, a database' },
+  { template: 'mindmap', title: 'Mind map', note: 'Click a point to grow a branch' },
+  { template: 'roadmap', title: 'Roadmap', note: 'Quarters, cards — and present it' },
+  { template: 'meeting', title: 'Weekly sync', note: 'Agenda to tick, notes, actions' }
 ];
 
 const templateGrid = styles('templateGrid', {
   css: {
-    desktop: { display: 'grid', 'grid-template-columns': 'repeat(5, minmax(0px, 1fr))', gap: '14px' },
+    desktop: { display: 'grid', 'grid-template-columns': 'repeat(4, minmax(0px, 1fr))', gap: '14px' },
     tablet: { 'grid-template-columns': 'repeat(3, minmax(0px, 1fr))' },
     mobile: { 'grid-template-columns': 'repeat(2, minmax(0px, 1fr))' }
   }
@@ -156,6 +160,7 @@ const templateCardFor = (entry: (typeof TEMPLATE_CARDS)[number]): ElementSpec =>
             invalidateQueries: 'none'
           })
         ),
+        keepOwned(`made_${entry.template}`),
         navigate({ urlType: 'internal', url: `/b/{{ made_${entry.template}.output.id }}` })
       ]
     ],
@@ -318,7 +323,7 @@ export const featured = (): ElementSpec =>
               heading({ content: 'Walk into a finished board', subType: 'h2', class: blockTitle }),
               text({
                 content:
-                  'Two big boards to look around — with whoever else is in there right now. Like one? Use it as a template.',
+                  'Boards a team has lived in — hundreds of elements, every kind there is. Walk around with whoever is in there right now; like one? Use it as a template.',
                 class: blockLead
               })
             ]

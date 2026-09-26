@@ -80,13 +80,20 @@ export const createEffects = () => {
     for (const entry of reactions) {
       const age = (now - entry.at) / REACTION_MS;
       const [x, y] = toScreen(camera, ...entry.point);
-      // A pop, a rise, and a fade over the last third.
+      // A pop, a rise, and a quick fade at the very end — full colour for nearly all of it, with a shadow that keeps it
+      // readable over any drawing.
       const scale = Math.min(1, age * 8) * (1 + 0.15 * Math.sin(Math.min(1, age * 8) * Math.PI));
       context.save();
-      context.globalAlpha = age < 0.66 ? 1 : Math.max(0, (1 - age) / 0.34);
-      context.font = `${Math.round(34 * scale)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      context.globalAlpha = age < 0.82 ? 1 : Math.max(0, (1 - age) / 0.18);
+      context.shadowColor = 'rgba(0, 0, 0, 0.28)';
+      context.shadowBlur = 8;
+      context.shadowOffsetY = 2;
+      context.font = `${Math.round(40 * scale)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
       context.textAlign = 'center';
       context.textBaseline = 'middle';
+      // Opaque, whatever was drawn last: a colour emoji is painted with the fill's alpha, and the board's faint grid
+      // colour left it a ghost of itself.
+      context.fillStyle = '#000000';
       context.fillText(entry.emoji, x + entry.drift * age * 40, y - age * 90);
       context.restore();
     }

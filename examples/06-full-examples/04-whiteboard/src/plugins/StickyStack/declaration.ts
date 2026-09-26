@@ -23,7 +23,8 @@ const declaration = {
       label: 'Sticky Stack',
       type: 'stickyStack',
       description:
-        'A pad of sticky notes per paper colour (`colors`, comma-separated) and, with `pile`, a whole pile to put on ' +
+        'A pad of sticky notes per paper colour (`colors`, comma-separated; empty offers none) and, with `pile`, a ' +
+        'whole pile to put on ' +
         'the board. Pressing one fires `onPick` with its `fill` and `kind` (`sticky` or `stack`). Colours come ' +
         'from `--stack-<colour>`.',
       items: [],

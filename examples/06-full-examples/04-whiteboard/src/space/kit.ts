@@ -24,6 +24,12 @@ export const BUTTON_RESET: CssProps = {
 };
 
 /** What floats over the board: a card that lets nothing through, above a canvas that takes every other pointer. */
+/**
+ * Where a popover opened from the header starts: under the header's bars (14px from the top, 46px tall) with a gap —
+ * the same line for every one of them, the chat's included.
+ */
+export const BELOW_HEADER = '70px';
+
 export const FLOAT: CssProps = {
   'pointer-events': 'auto',
   'background-color': 'var(--surface)',

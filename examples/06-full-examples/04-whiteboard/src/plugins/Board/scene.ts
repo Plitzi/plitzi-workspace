@@ -1,4 +1,4 @@
-import { supersedes } from '../../board/model.ts';
+import { byStacking, supersedes } from '../../board/model.ts';
 
 import type { BoardElement } from '../../board/model.ts';
 
@@ -15,8 +15,6 @@ type HistoryEntry = Map<string, { before: BoardElement | undefined; after: Board
 const HISTORY_LIMIT = 200;
 
 const nonce = (): number => Math.floor(Math.random() * 2 ** 31);
-
-const byZ = (a: BoardElement, b: BoardElement): number => a.z - b.z || (a.id < b.id ? -1 : 1);
 
 export type Scene = ReturnType<typeof createScene>;
 
@@ -78,7 +76,7 @@ export const createScene = () => {
     visible: (): BoardElement[] =>
       all()
         .filter(entry => !entry.deleted)
-        .sort(byZ),
+        .sort(byStacking),
     get revision() {
       return revision;
     },

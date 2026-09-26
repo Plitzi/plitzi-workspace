@@ -4,6 +4,7 @@ import {
   channel,
   container,
   delay,
+  image,
   list,
   on,
   onPageLoad,
@@ -16,11 +17,13 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { LIST_ACTION } from '../../actions.ts';
+import { BRAND_PATH } from '../../board/brand.ts';
 import { COLLAB_COLOURS } from '../../board/people.ts';
 import { GALLERY_PROVIDER } from '../ids.ts';
-import { BUTTON_RESET, icon } from '../kit.ts';
+import { BUTTON_RESET } from '../kit.ts';
 import { identity } from '../state.ts';
 import { featured, recent, templates } from './catalogue.ts';
+import { features } from './features.ts';
 import { hero } from './hero.ts';
 import { together } from './together.ts';
 
@@ -78,16 +81,11 @@ const brand = styles('brand', {
 });
 
 const brandMark = styles('brandMark', {
-  display: 'inline-flex',
-  'align-items': 'center',
-  'justify-content': 'center',
+  display: 'block',
   width: '40px',
   height: '40px',
-  'border-radius': '12px',
-  'background-color': 'var(--accent)',
-  color: 'var(--on-accent)',
-  'font-size': '17px',
-  transform: 'rotate(-6deg)'
+  transform: 'rotate(-6deg)',
+  filter: 'drop-shadow(0 6px 10px rgba(109, 93, 252, 0.35))'
 });
 
 const barEnd = styles('barEnd', { display: 'flex', 'align-items': 'center', gap: '14px' });
@@ -245,10 +243,7 @@ export const galleryPage: PageSpec = {
                   children: [
                     container({
                       class: brand,
-                      children: [
-                        container({ class: brandMark, children: [icon('fa-solid fa-pencil')] }),
-                        text({ content: 'Pizarra' })
-                      ]
+                      children: [image({ src: BRAND_PATH, alt: '', class: brandMark }), text({ content: 'Pizarra' })]
                     }),
                     container({
                       class: barEnd,
@@ -258,6 +253,7 @@ export const galleryPage: PageSpec = {
                 }),
                 hero(),
                 together(),
+                features(),
                 templates(),
                 featured(),
                 recent()

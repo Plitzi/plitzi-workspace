@@ -1,6 +1,24 @@
 import { randomInt } from 'node:crypto';
 
-import type { Anchor, BoardElement, Fill, Point, ShapeType, Stroke, StrokeWidth } from './model.ts';
+import { fitsInFrame } from './model.ts';
+
+import type {
+  Anchor,
+  BoardElement,
+  Brush,
+  Dash,
+  Edges,
+  Fill,
+  FillStyle,
+  Layout,
+  Opacity,
+  Point,
+  Reply,
+  ShapeType,
+  Sloppiness,
+  Stroke,
+  StrokeWidth
+} from './model.ts';
 
 /**
  * Drawing a board in code: what the templates and the featured boards are written with. Nothing here is more than a
@@ -28,7 +46,38 @@ export type Draft = {
   end?: { id: string; anchor: Anchor };
   strokeWidth?: StrokeWidth;
   group?: string;
+  parent?: string;
+  layout?: Layout;
+  author?: string;
+  done?: boolean;
+  dash?: Dash;
+  sloppiness?: Sloppiness;
+  edges?: Edges;
+  fillStyle?: FillStyle;
+  opacity?: Opacity;
+  brush?: Brush;
+  fontSize?: number;
+  replies?: Reply[];
+  votes?: string[];
 };
+
+/** The fields a draft may carry beyond its box, copied as they are — only those it names. */
+const OPTIONAL = [
+  'group',
+  'parent',
+  'layout',
+  'author',
+  'done',
+  'dash',
+  'sloppiness',
+  'edges',
+  'fillStyle',
+  'opacity',
+  'brush',
+  'fontSize',
+  'replies',
+  'votes'
+] as const;
 
 /** A template's elements, stacked in the order written and stamped as the first version of each. */
 export const drawing = (drafts: readonly Draft[]): BoardElement[] =>
@@ -51,7 +100,7 @@ export const drawing = (drafts: readonly Draft[]): BoardElement[] =>
     ...(draft.text === undefined ? {} : { text: draft.text }),
     ...(draft.start ? { start: draft.start } : {}),
     ...(draft.end ? { end: draft.end } : {}),
-    ...(draft.group ? { group: draft.group } : {})
+    ...Object.fromEntries(OPTIONAL.flatMap(key => (draft[key] === undefined ? [] : [[key, draft[key]]])))
   }));
 
 /**
@@ -124,3 +173,138 @@ export const connect = (from: string, fromAnchor: Anchor, to: string, toAnchor: 
   start: { id: from, anchor: fromAnchor },
   end: { id: to, anchor: toAnchor }
 });
+
+/** A frame's title bar, and the room a column leaves around and between what it holds — as the canvas lays them. */
+const FRAME_HEADER = 48;
+
+const COLUMN_PADDING = 14;
+
+const COLUMN_GAP = 12;
+
+/**
+ * How tall a card is with these words at this width, as the canvas measures it: its lines, wrapped, and the row for
+ * who wrote it. An estimate — Node has no canvas to measure with — close enough that a column drawn here needs no
+ * laying out again when it is first shown.
+ */
+export const estimatedCardHeight = (text: string, width: number, author: boolean): number => {
+  const perLine = Math.max(8, Math.floor((width - 56) / 8.2));
+  const lines = text
+    .split('\n')
+    .reduce((total, paragraph) => total + Math.max(1, Math.ceil(paragraph.length / perLine)), 0);
+
+  return Math.max(46, 28 + lines * 20 + (author ? 26 : 0));
+};
+
+/** A task card: its words, a colour strip, who wrote it, and whether it is done. */
+export const card = (
+  text: string,
+  {
+    fill = 'none',
+    done = false,
+    author,
+    width = 260
+  }: { fill?: Fill; done?: boolean; author?: string; width?: number } = {}
+): Draft => ({
+  type: 'card',
+  x: 0,
+  y: 0,
+  width,
+  height: estimatedCardHeight(text, width, author !== undefined),
+  text,
+  fill,
+  ...(done ? { done } : {}),
+  ...(author ? { author } : {})
+});
+
+/** Feedback pinned to a place, with its thread. */
+export const comment = (
+  x: number,
+  y: number,
+  text: string,
+  author: string,
+  replies: [string, string][] = []
+): Draft => ({
+  type: 'comment',
+  x,
+  y,
+  width: 32,
+  height: 32,
+  text,
+  author,
+  ...(replies.length
+    ? { replies: replies.map(([by, said], index) => ({ author: by, text: said, at: index + 1 })) }
+    : {})
+});
+
+/**
+ * A kanban lane: a column frame, and what is in it stacked top to bottom as the canvas stacks it — cards as wide as
+ * the column, anything else centred. The column is as tall as it needs to be, and never shorter than `height`.
+ */
+export const column = (
+  {
+    x,
+    y,
+    width = 300,
+    height = 460,
+    title,
+    fill = 'none'
+  }: { x: number; y: number; width?: number; height?: number; title: string; fill?: Fill },
+  items: readonly Draft[]
+): Draft[] => {
+  const id = newId();
+  let top = y + FRAME_HEADER + COLUMN_PADDING;
+  const placed = items.map(item => {
+    const itemWidth = item.type === 'card' ? width - COLUMN_PADDING * 2 : (item.width ?? 200);
+    const itemHeight =
+      item.type === 'card'
+        ? estimatedCardHeight(item.text ?? '', itemWidth, item.author !== undefined)
+        : (item.height ?? 200);
+    const next: Draft = {
+      ...item,
+      x: item.type === 'card' ? x + COLUMN_PADDING : x + (width - itemWidth) / 2,
+      y: top,
+      width: itemWidth,
+      height: itemHeight,
+      parent: id
+    };
+    top += itemHeight + COLUMN_GAP;
+
+    return next;
+  });
+
+  return [
+    {
+      id,
+      type: 'frame',
+      x,
+      y,
+      width,
+      height: Math.max(height, top - COLUMN_GAP + COLUMN_PADDING - y),
+      text: title,
+      fill,
+      layout: 'column'
+    },
+    ...placed
+  ];
+};
+
+/** A free frame — a section of a board — and what is in it, placed where it is written. */
+export const section = (
+  {
+    x,
+    y,
+    width,
+    height,
+    title,
+    fill = 'none'
+  }: { x: number; y: number; width: number; height: number; title: string; fill?: Fill },
+  items: readonly Draft[]
+): Draft[] => {
+  const id = newId();
+
+  // Only what can be in a frame is: a line runs between things, and lies over the frame without belonging to it.
+  return [
+    { id, type: 'frame', x, y, width, height, text: title, fill },
+    ...items.map(item => (fitsInFrame(item.type) ? { ...item, parent: id } : item))
+  ];
+};

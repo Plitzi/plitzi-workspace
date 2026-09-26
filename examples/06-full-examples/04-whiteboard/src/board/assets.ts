@@ -1,11 +1,16 @@
 import { randomBytes } from 'node:crypto';
 
+import type { Redis } from 'ioredis';
+
 /**
- * The pictures pasted onto boards: kept in this process's memory, beside the boards they belong to, and served by the
- * example's own route (`main.ts`). A board forgotten takes its pictures with it.
+ * The pictures pasted onto boards, kept beside the boards they belong to and served by the example's own route
+ * (`main.ts`). A board forgotten takes its pictures with it.
  *
  * Only what a browser shows as an image gets in, decided by the bytes rather than by what the upload claimed: an SVG
  * or an HTML file named `.png` would be a script served from this origin.
+ *
+ * Where they are kept is the deployment's: this process's memory for one server, Redis for several — a picture
+ * uploaded through one replica is asked for from whichever one the next page load reaches.
  */
 
 type Kind = { mime: string; matches: (bytes: Buffer) => boolean };
@@ -32,9 +37,16 @@ const MAX_BOARD_ASSETS = 40;
 
 const MAX_BOARD_BYTES = 16 * 1024 * 1024;
 
-type Asset = { mime: string; bytes: Buffer };
+export type Asset = { mime: string; bytes: Buffer };
 
-const boards = new Map<string, Map<string, Asset>>();
+/** Where a deployment keeps the pictures. `add` answers `false` when the board already holds its share. */
+export type AssetStore = {
+  add: (board: string, id: string, asset: Asset) => Promise<boolean>;
+  read: (board: string, id: string) => Promise<Asset | undefined>;
+  /** A board copied brings its pictures: the same bytes, under the same ids, kept beside the copy. */
+  copy: (from: string, to: string, ids: readonly string[]) => Promise<void>;
+  forget: (board: string) => Promise<void>;
+};
 
 const DATA_URL = /^data:(image\/[a-z]+);base64,([A-Za-z0-9+/=]+)$/;
 
@@ -42,7 +54,7 @@ const DATA_URL = /^data:(image\/[a-z]+);base64,([A-Za-z0-9+/=]+)$/;
  * Keeps a picture sent as a data URL, and answers its id. Refused — with what to do about it — when it is not an
  * image, is too big, or the board already holds its share.
  */
-export const keepAsset = (board: string, data: unknown): string => {
+export const keepAsset = async (store: AssetStore, board: string, data: unknown): Promise<string> => {
   const match = typeof data === 'string' ? DATA_URL.exec(data) : null;
   if (!match) {
     throw new Error('A picture arrives as a data URL: `data:image/png;base64,…`');
@@ -58,39 +70,115 @@ export const keepAsset = (board: string, data: unknown): string => {
     throw new Error(`A picture is at most ${Math.round(MAX_ASSET_BYTES / 1024)} KB — try a smaller one`);
   }
 
-  const assets = boards.get(board) ?? new Map<string, Asset>();
-  const total = [...assets.values()].reduce((sum, asset) => sum + asset.bytes.length, 0);
-  if (assets.size >= MAX_BOARD_ASSETS || total + bytes.length > MAX_BOARD_BYTES) {
+  const id = randomBytes(16).toString('base64url');
+  if (!(await store.add(board, id, { mime: kind.mime, bytes }))) {
     throw new Error('This board holds as many pictures as it can');
   }
-
-  const id = randomBytes(16).toString('base64url');
-  assets.set(id, { mime: kind.mime, bytes });
-  boards.set(board, assets);
 
   return id;
 };
 
-export const readAsset = (board: string, id: string): Asset | undefined => boards.get(board)?.get(id);
+const fits = (count: number, total: number, adding: number): boolean =>
+  count < MAX_BOARD_ASSETS && total + adding <= MAX_BOARD_BYTES;
 
-/** A board copied brings its pictures: the same bytes, under the same ids, kept beside the copy. */
-export const copyAssets = (from: string, to: string, ids: readonly string[]): void => {
-  const source = boards.get(from);
-  if (!source) {
-    return;
-  }
+/** One process's pictures, in its memory: right for one server, and gone with it. */
+export const createMemoryAssets = (): AssetStore => {
+  const boards = new Map<string, Map<string, Asset>>();
 
-  const target = boards.get(to) ?? new Map<string, Asset>();
-  for (const id of ids) {
-    const asset = source.get(id);
-    if (asset) {
-      target.set(id, asset);
+  return {
+    add: (board, id, asset) => {
+      const assets = boards.get(board) ?? new Map<string, Asset>();
+      const total = [...assets.values()].reduce((sum, kept) => sum + kept.bytes.length, 0);
+      if (!fits(assets.size, total, asset.bytes.length)) {
+        return Promise.resolve(false);
+      }
+
+      assets.set(id, asset);
+      boards.set(board, assets);
+
+      return Promise.resolve(true);
+    },
+    read: (board, id) => Promise.resolve(boards.get(board)?.get(id)),
+    copy: (from, to, ids) => {
+      const source = boards.get(from);
+      if (source) {
+        const target = boards.get(to) ?? new Map<string, Asset>();
+        for (const id of ids) {
+          const asset = source.get(id);
+          if (asset) {
+            target.set(id, asset);
+          }
+        }
+
+        boards.set(to, target);
+      }
+
+      return Promise.resolve();
+    },
+    forget: board => {
+      boards.delete(board);
+
+      return Promise.resolve();
     }
-  }
-
-  boards.set(to, target);
+  };
 };
 
-export const forgetBoardAssets = (board: string): void => {
-  boards.delete(board);
+/**
+ * Pictures in Redis, for replicas that share it: per board, one hash of the bytes — each value its type, a newline,
+ * and the picture — and one of their sizes, so the board's share is counted without reading every picture back.
+ *
+ * The share is checked, then written: two uploads to one board through two replicas in the same instant can both
+ * pass it. A picture over a soft ceiling is what that costs, which is not worth a lock.
+ */
+export const createRedisAssets = (redis: Redis, prefix = 'pizarra:'): AssetStore => {
+  const bytesKey = (board: string): string => `${prefix}assets:${board}`;
+  const sizesKey = (board: string): string => `${prefix}asset-sizes:${board}`;
+
+  const read = async (board: string, id: string): Promise<Asset | undefined> => {
+    const stored = await redis.hgetBuffer(bytesKey(board), id);
+    const newline = stored ? stored.indexOf(0x0a) : -1;
+
+    return stored && newline > 0
+      ? { mime: stored.subarray(0, newline).toString('latin1'), bytes: stored.subarray(newline + 1) }
+      : undefined;
+  };
+
+  const write = async (board: string, id: string, { mime, bytes }: Asset): Promise<void> => {
+    await redis
+      .multi()
+      .hset(bytesKey(board), id, Buffer.concat([Buffer.from(`${mime}\n`, 'latin1'), bytes]))
+      .hset(sizesKey(board), id, bytes.length)
+      .exec();
+  };
+
+  return {
+    add: async (board, id, asset) => {
+      const sizes = (await redis.hvals(sizesKey(board))).map(Number);
+      if (
+        !fits(
+          sizes.length,
+          sizes.reduce((sum, size) => sum + size, 0),
+          asset.bytes.length
+        )
+      ) {
+        return false;
+      }
+
+      await write(board, id, asset);
+
+      return true;
+    },
+    read,
+    copy: async (from, to, ids) => {
+      for (const id of ids) {
+        const asset = await read(from, id);
+        if (asset) {
+          await write(to, id, asset);
+        }
+      }
+    },
+    forget: async board => {
+      await redis.del(bytesKey(board), sizesKey(board));
+    }
+  };
 };

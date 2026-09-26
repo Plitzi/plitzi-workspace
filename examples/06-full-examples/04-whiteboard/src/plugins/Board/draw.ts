@@ -2,7 +2,9 @@ import { getStroke } from 'perfect-freehand';
 import rough from 'roughjs';
 
 import { takesLabel } from '../../board/model.ts';
-import { handlePoint, HANDLES, toScreen } from './geometry.ts';
+import { FRAME_HEADER, handlePoint, HANDLES, toScreen } from './geometry.ts';
+import { penOf } from './pens.ts';
+import { outlineOf } from './shapes.ts';
 
 import type { Box, Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';
@@ -32,6 +34,266 @@ export const HANDLE_SIZE = 8;
 const STACK_OFFSET = 5;
 
 export const STACK_STRIP = 30;
+
+/** A card: its width, its inset, where its words start — past the box that ticks it done — and their size. */
+export const CARD_WIDTH = 260;
+
+export const CARD_PADDING = 14;
+
+export const CARD_TEXT_LEFT = 42;
+
+const CARD_FONT = 16;
+
+/** The row at a card's foot that says who wrote it. */
+const CARD_AUTHOR_ROW = 26;
+
+/** Where a card's done box is, in its own coordinates: what a click on it ticks. */
+export const CARD_CHECK = { x: 14, y: 14, size: 18 };
+
+const FRAME_FONT = 18;
+
+/** A comment: the pin it is on the board, and the bubble that opens beside it — where its words start, how wide. */
+export const COMMENT_PIN = 32;
+
+export const COMMENT_BUBBLE = { left: COMMENT_PIN + 10, top: -4, width: 260, padding: 12, author: 20 };
+
+const COMMENT_FONT = 14;
+
+/**
+ * A comment: a pin in the accent — grey once it was dealt with — with the first letter of who left it; open, a bubble
+ * beside it with their name and what they said.
+ */
+const drawComment = (
+  context: CanvasRenderingContext2D,
+  element: BoardElement,
+  palette: Palette,
+  lines: string[],
+  lineHeight: number,
+  open: boolean,
+  hideText: boolean
+): void => {
+  const colour = element.done ? palette.muted : palette.accent;
+  const radius = COMMENT_PIN / 2;
+  context.save();
+  context.shadowColor = 'rgba(0, 0, 0, 0.22)';
+  context.shadowBlur = 8;
+  context.shadowOffsetY = 2;
+  context.fillStyle = colour;
+  context.beginPath();
+  // A round bubble with its tail at the bottom left: the point is where the comment is about.
+  context.moveTo(0, COMMENT_PIN);
+  context.lineTo(0, radius);
+  context.arc(radius, radius, radius, Math.PI, Math.PI / 2, false);
+  context.closePath();
+  context.fill();
+  context.shadowColor = 'transparent';
+  context.strokeStyle = '#ffffff';
+  context.lineWidth = 2;
+  context.stroke();
+  context.fillStyle = '#ffffff';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.font = `700 14px ${palette.ui}`;
+  context.fillText(element.done ? '✓' : (element.author?.[0] ?? '?').toUpperCase(), radius, radius + 1);
+  // A thread: how many answers, on the pin's shoulder.
+  const answers = element.replies?.length ?? 0;
+  if (answers) {
+    context.fillStyle = palette.surface;
+    context.beginPath();
+    context.arc(COMMENT_PIN - 2, 2, 8, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = colour;
+    context.font = `700 10px ${palette.ui}`;
+    context.fillText(answers > 9 ? '9+' : String(answers), COMMENT_PIN - 2, 2.5);
+  }
+  if (open) {
+    const { left, top, width, padding, author } = COMMENT_BUBBLE;
+    const height = padding * 2 + author + Math.max(1, lines.length) * lineHeight;
+    context.shadowColor = 'rgba(0, 0, 0, 0.18)';
+    context.shadowBlur = 16;
+    context.shadowOffsetY = 4;
+    context.fillStyle = palette.surface;
+    context.beginPath();
+    context.roundRect(left, top, width, height, 12);
+    context.fill();
+    context.shadowColor = 'transparent';
+    context.strokeStyle = palette.edge;
+    context.lineWidth = 1;
+    context.stroke();
+    context.textAlign = 'left';
+    context.textBaseline = 'top';
+    context.font = `700 12px ${palette.ui}`;
+    context.fillStyle = colour;
+    const replies = element.replies?.length ?? 0;
+    context.fillText(
+      `${element.author ?? 'Someone'}${element.done ? ' · resolved' : ''}${replies ? ` · ${replies} ${replies === 1 ? 'reply' : 'replies'}` : ''}`,
+      left + padding,
+      top + padding
+    );
+    if (!hideText) {
+      context.font = `${COMMENT_FONT}px ${palette.ui}`;
+      context.fillStyle = element.done ? palette.muted : palette.stroke.ink;
+      lines.forEach((line, index) =>
+        context.fillText(line, left + padding, top + padding + author + index * lineHeight)
+      );
+    }
+  }
+
+  context.restore();
+};
+
+/** A name at the foot of whatever someone wrote: who, in their own words' company, small and quiet. */
+const drawAuthor = (
+  context: CanvasRenderingContext2D,
+  author: string,
+  x: number,
+  y: number,
+  palette: Palette,
+  colour: string
+): void => {
+  context.save();
+  context.font = `600 12px ${palette.ui}`;
+  context.textBaseline = 'middle';
+  context.fillStyle = colour;
+  context.globalAlpha = 0.7;
+  context.fillText(author, x, y);
+  context.restore();
+};
+
+/**
+ * A frame: its area, tinted when it has a fill; its title and how many things are in it, in its title bar; a mark for
+ * a column, which places what is put in it. Drawn flat rather than rough — it is where the drawing is, not part of it.
+ */
+const drawFrame = (
+  context: CanvasRenderingContext2D,
+  element: BoardElement,
+  palette: Palette,
+  members: number,
+  hideText: boolean
+): void => {
+  context.save();
+  context.beginPath();
+  context.roundRect(0, 0, element.width, element.height, 14);
+  context.fillStyle = element.fill === 'none' ? palette.surface : palette.sticky[element.fill];
+  context.globalAlpha = element.fill === 'none' ? 0.55 : 0.45;
+  context.fill();
+  context.globalAlpha = 1;
+  context.strokeStyle = palette.edge;
+  context.lineWidth = 1.5;
+  context.stroke();
+  context.beginPath();
+  context.moveTo(0, FRAME_HEADER);
+  context.lineTo(element.width, FRAME_HEADER);
+  context.globalAlpha = 0.6;
+  context.stroke();
+  context.globalAlpha = 1;
+  context.textBaseline = 'middle';
+  const middle = FRAME_HEADER / 2;
+  let left = 18;
+  if (element.layout === 'column') {
+    context.font = `600 14px ${palette.ui}`;
+    context.fillStyle = palette.muted;
+    context.fillText('☰', left, middle);
+    left += 24;
+  }
+
+  const title = element.text?.trim() || 'Frame';
+  context.font = `600 ${FRAME_FONT}px ${palette.ui}`;
+  context.fillStyle = palette.stroke.ink;
+  if (!hideText) {
+    context.fillText(title, left, middle);
+  }
+
+  const countLeft = left + (hideText ? 0 : context.measureText(title).width + 10);
+  const count = String(members);
+  context.font = `600 12px ${palette.ui}`;
+  const width = context.measureText(count).width + 14;
+  context.fillStyle = palette.dots;
+  context.beginPath();
+  context.roundRect(countLeft, middle - 10, width, 20, 10);
+  context.fill();
+  context.fillStyle = palette.muted;
+  context.fillText(count, countLeft + 7, middle + 0.5);
+  context.restore();
+};
+
+/** A card: printed, with a strip in its colour, a box that ticks it done, its words, and who wrote it. */
+const drawCard = (
+  context: CanvasRenderingContext2D,
+  element: BoardElement,
+  palette: Palette,
+  lines: string[],
+  lineHeight: number,
+  hideText: boolean,
+  authors: boolean
+): void => {
+  const { width, height } = element;
+  context.save();
+  context.shadowColor = 'rgba(0, 0, 0, 0.14)';
+  context.shadowBlur = 10;
+  context.shadowOffsetY = 3;
+  context.beginPath();
+  context.roundRect(0, 0, width, height, 10);
+  context.fillStyle = palette.surface;
+  context.fill();
+  context.shadowColor = 'transparent';
+  context.strokeStyle = palette.edge;
+  context.lineWidth = 1;
+  context.stroke();
+  if (element.fill !== 'none') {
+    context.save();
+    context.clip();
+    context.fillStyle = palette.fill[element.fill];
+    context.fillRect(0, 0, 6, height);
+    context.restore();
+  }
+
+  const { x, y, size } = CARD_CHECK;
+  context.beginPath();
+  context.roundRect(x, y, size, size, 5);
+  context.lineWidth = 1.5;
+  context.strokeStyle = element.done ? palette.accent : palette.muted;
+  context.fillStyle = element.done ? palette.accent : 'transparent';
+  context.fill();
+  context.stroke();
+  if (element.done) {
+    context.strokeStyle = '#ffffff';
+    context.lineWidth = 2.2;
+    context.lineCap = 'round';
+    context.beginPath();
+    context.moveTo(x + 4.5, y + 9.5);
+    context.lineTo(x + 7.8, y + 12.8);
+    context.lineTo(x + 13.5, y + 5.5);
+    context.stroke();
+  }
+
+  if (!hideText) {
+    context.font = `${CARD_FONT}px ${palette.ui}`;
+    context.textBaseline = 'top';
+    context.fillStyle = element.done ? palette.muted : palette.stroke.ink;
+    lines.forEach((line, index) => {
+      const top = CARD_PADDING + index * lineHeight + (lineHeight - CARD_FONT) / 2;
+      context.fillText(line, CARD_TEXT_LEFT, top);
+      if (element.done && line) {
+        const lineWidth = context.measureText(line).width;
+        context.fillRect(CARD_TEXT_LEFT, top + CARD_FONT * 0.55, lineWidth, 1.5);
+      }
+    });
+  }
+
+  if (element.author && authors) {
+    drawAuthor(
+      context,
+      `Author: ${element.author}`,
+      CARD_TEXT_LEFT,
+      height - CARD_AUTHOR_ROW / 2 - 4,
+      palette,
+      palette.muted
+    );
+  }
+
+  context.restore();
+};
 
 /** The pile under the top paper, the paper, and the strip that says what it is — in element coordinates. */
 const drawStack = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
@@ -128,14 +390,52 @@ export const voteBadgeBox = (element: BoardElement): { x: number; y: number; wid
 });
 
 export const fontSizeOf = (element: BoardElement): number => {
+  if (element.fontSize !== undefined) {
+    return element.fontSize;
+  }
+
   if (element.type === 'sticky') {
     return STICKY_FONT;
+  }
+
+  if (element.type === 'card') {
+    return CARD_FONT;
+  }
+
+  if (element.type === 'frame') {
+    return FRAME_FONT;
+  }
+
+  if (element.type === 'comment') {
+    return COMMENT_FONT;
   }
 
   return takesLabel(element.type) ? LABEL_FONT : FONT_SIZES[element.strokeWidth];
 };
 
-export const fontOf = (element: BoardElement, palette: Palette): string => `${fontSizeOf(element)}px ${palette.font}`;
+/** What is written in the hand-drawn face — everything but a card and a frame's title, which are set in the interface's. */
+export const faceOf = (element: BoardElement, palette: Palette): string =>
+  element.type === 'card' || element.type === 'frame' || element.type === 'comment' ? palette.ui : palette.font;
+
+export const fontOf = (element: BoardElement, palette: Palette): string =>
+  `${element.type === 'frame' ? '600 ' : ''}${fontSizeOf(element)}px ${faceOf(element, palette)}`;
+
+/** How wide a written element's lines may run before they wrap — `undefined` for one whose lines are as typed. */
+const wrapWidth = (element: BoardElement): number | undefined => {
+  if (element.type === 'sticky') {
+    return element.width - STICKY_PADDING * 2;
+  }
+
+  if (element.type === 'card') {
+    return element.width - CARD_TEXT_LEFT - CARD_PADDING;
+  }
+
+  if (element.type === 'comment') {
+    return COMMENT_BUBBLE.width - COMMENT_BUBBLE.padding * 2;
+  }
+
+  return takesLabel(element.type) ? element.width - LABEL_PADDING * 2 : undefined;
+};
 
 /** A sticky's words wrapped to its width; a text's lines as typed. */
 export const layoutText = (
@@ -146,11 +446,11 @@ export const layoutText = (
   context.font = fontOf(element, palette);
   const lineHeight = fontSizeOf(element) * LINE_HEIGHT;
   const paragraphs = (element.text ?? '').split('\n');
-  if (element.type !== 'sticky' && !takesLabel(element.type)) {
+  const width = wrapWidth(element);
+  if (width === undefined) {
     return { lines: paragraphs, lineHeight };
   }
 
-  const width = element.width - (element.type === 'sticky' ? STICKY_PADDING : LABEL_PADDING) * 2;
   const lines = paragraphs.flatMap(paragraph => {
     const wrapped: string[] = [];
     let line = '';
@@ -182,6 +482,68 @@ export const measureText = (
     width: Math.max(8, ...lines.map(line => context.measureText(line).width)),
     height: Math.max(lineHeight, lines.length * lineHeight)
   };
+};
+
+/** A card's height: its words, wrapped, and the row for who wrote it — never less than one line's worth. */
+export const measureCard = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): number => {
+  const { lines, lineHeight } = layoutText(context, element, palette);
+  const words = Math.max(1, lines.length) * lineHeight;
+
+  return Math.max(
+    CARD_CHECK.size + CARD_PADDING * 2,
+    CARD_PADDING * 2 + words + (element.author ? CARD_AUTHOR_ROW : 0)
+  );
+};
+
+/** How much a hand shows, as rough.js's roughness: the artist's is the default, a little more than rough's own. */
+const ROUGHNESS: Record<'architect' | 'artist' | 'cartoonist', number> = { architect: 0, artist: 1.1, cartoonist: 2.2 };
+
+/** A closed outline with its corners rounded — an SVG path, so rough.js draws it and a clip follows it exactly. */
+const roundedPath = (corners: readonly Point[], radius: number): string => {
+  const at = (from: Point, to: Point): Point => {
+    const length = Math.hypot(to[0] - from[0], to[1] - from[1]) || 1;
+    const reach = Math.min(radius, length / 2) / length;
+
+    return [from[0] + (to[0] - from[0]) * reach, from[1] + (to[1] - from[1]) * reach];
+  };
+
+  return `${corners
+    .map((corner, index) => {
+      const before = at(corner, corners[(index - 1 + corners.length) % corners.length]);
+      const after = at(corner, corners[(index + 1) % corners.length]);
+
+      return `${index ? 'L' : 'M'} ${before[0]} ${before[1]} Q ${corner[0]} ${corner[1]} ${after[0]} ${after[1]}`;
+    })
+    .join(' ')} Z`;
+};
+
+/** A small tile of ink with holes in it, seeded so every screen draws the same grain: a pencil's, or chalk's. */
+const grainTile = (colour: string, coarse: boolean): HTMLCanvasElement => {
+  const tile = document.createElement('canvas');
+  tile.width = 48;
+  tile.height = 48;
+  const context = tile.getContext('2d');
+  if (!context) {
+    return tile;
+  }
+
+  context.fillStyle = colour;
+  context.fillRect(0, 0, 48, 48);
+  let seed = coarse ? 7 : 3;
+  const random = (): number => {
+    seed = (seed * 16807) % 2147483647;
+
+    return seed / 2147483647;
+  };
+  // Chalk leaves the paper showing through in soft flecks; a pencil, in a fine tooth.
+  context.globalCompositeOperation = 'destination-out';
+  for (let index = 0; index < (coarse ? 150 : 220); index += 1) {
+    const size = coarse ? 1 + random() * 1.6 : 0.7 + random() * 0.7;
+    context.globalAlpha = coarse ? 0.5 + random() * 0.5 : 1;
+    context.fillRect(random() * 48, random() * 48, size, size);
+  }
+
+  return tile;
 };
 
 /** The outline perfect-freehand answers, as a smooth closed path. */
@@ -225,6 +587,11 @@ const shapeKey = (element: BoardElement, palette: Palette): string =>
     element.seed,
     element.points?.length ?? 0,
     element.points?.at(-1)?.join(',') ?? '',
+    element.dash ?? '',
+    element.sloppiness ?? '',
+    element.brush ?? '',
+    element.edges ?? '',
+    element.fillStyle ?? '',
     palette.key
   ].join('|');
 
@@ -262,41 +629,70 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     const stroke = palette.stroke[element.stroke];
     if (element.type === 'freehand') {
       const outline = getStroke(element.points ?? [], {
-        size: 3 + element.strokeWidth * 3,
-        thinning: 0.6,
-        smoothing: 0.5,
-        streamline: 0.45,
-        simulatePressure: true,
+        ...penOf(element),
         last: true
       });
 
       return { path: outlinePath(outline) };
     }
 
+    const dash =
+      element.dash === 'dashed'
+        ? [element.strokeWidth * 4 + 6, element.strokeWidth * 3 + 5]
+        : element.dash === 'dotted'
+          ? [1, element.strokeWidth * 3 + 4]
+          : undefined;
+    const roughness = element.type === 'sticky' ? 0.6 : ROUGHNESS[element.sloppiness ?? 'artist'];
     const options: Options = {
       seed: element.seed,
       stroke,
       strokeWidth: element.strokeWidth,
-      roughness: element.type === 'sticky' ? 0.6 : 1.1,
-      bowing: 1,
-      ...(element.type === 'sticky' ? { fill: palette.sticky[element.fill], fillStyle: 'solid' } : {})
+      roughness,
+      bowing: roughness ? 1 : 0,
+      ...(element.type === 'sticky' ? { fill: palette.sticky[element.fill], fillStyle: 'solid' } : {}),
+      // One pass, not rough's two: a dash drawn twice, a little apart, reads as two dashes.
+      ...(dash ? { strokeLineDash: dash, disableMultiStroke: true } : {})
     };
     const { width, height } = element;
     const hatch: Options = {
       ...options,
       stroke: 'none',
       fill: palette.fill[element.fill],
-      fillStyle: 'hachure',
+      fillStyle: element.fillStyle === 'solid' ? 'solid' : element.fillStyle === 'cross' ? 'cross-hatch' : 'hachure',
       hachureGap: 6 + element.strokeWidth * 2,
       fillWeight: Math.max(1, element.strokeWidth / 1.5)
     };
     const hatched = element.fill !== 'none';
-    const diamond: [number, number][] = [
-      [width / 2, 0],
-      [width, height / 2],
-      [width / 2, height],
-      [0, height / 2]
-    ];
+    const outline = outlineOf(element.type, width, height);
+    const corners: Point[] | undefined =
+      outline ??
+      (element.type === 'rectangle'
+        ? [
+            [0, 0],
+            [width, 0],
+            [width, height],
+            [0, height]
+          ]
+        : undefined);
+    if (corners && element.edges === 'round') {
+      const path = roundedPath(corners, Math.min(32, Math.min(width, height) * (outline ? 0.14 : 0.2)));
+
+      return {
+        drawables: [generator.path(path, options)],
+        ...(hatched ? { fill: { drawable: generator.path(path, hatch), clip: new Path2D(path) } } : {})
+      };
+    }
+
+    if (outline) {
+      const clip = new Path2D();
+      outline.forEach(([px, py], index) => (index ? clip.lineTo(px, py) : clip.moveTo(px, py)));
+      clip.closePath();
+
+      return {
+        drawables: [generator.polygon(outline, options)],
+        ...(hatched ? { fill: { drawable: generator.polygon(outline, hatch), clip } } : {})
+      };
+    }
 
     switch (element.type) {
       case 'ellipse': {
@@ -310,14 +706,15 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
             : {})
         };
       }
-      case 'diamond': {
-        const clip = new Path2D();
-        diamond.forEach(([px, py], index) => (index ? clip.lineTo(px, py) : clip.moveTo(px, py)));
-        clip.closePath();
+      // A drum: its sides, the rim at its top drawn whole, the curve of its base.
+      case 'cylinder': {
+        const rim = Math.min(height * 0.16, 28);
+        const body = `M 0 ${rim} L 0 ${height - rim} A ${width / 2} ${rim} 0 0 0 ${width} ${height - rim} L ${width} ${rim}`;
+        const clip = new Path2D(`${body} A ${width / 2} ${rim} 0 0 0 0 ${rim} Z`);
 
         return {
-          drawables: [generator.polygon(diamond, options)],
-          ...(hatched ? { fill: { drawable: generator.polygon(diamond, hatch), clip } } : {})
+          drawables: [generator.path(body, options), generator.ellipse(width / 2, rim, width, rim * 2, options)],
+          ...(hatched ? { fill: { drawable: generator.rectangle(0, 0, width, height, hatch), clip } } : {})
         };
       }
       // A connector bent between anchors is many points: drawn as ONE smooth curve through them, not as a wobble per
@@ -331,9 +728,12 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
           drawables: [pathThrough(points, options), ...arrowHead(points, options, element.strokeWidth)]
         };
       }
-      // A pile and a picture are drawn whole by their own functions (`drawStack`, `drawPicture`): no outline here.
+      // Drawn whole by their own functions (`drawStack`, `drawPicture`, `drawFrame`, `drawCard`): no outline here.
       case 'stack':
       case 'image':
+      case 'frame':
+      case 'card':
+      case 'comment':
         return { drawables: [] };
       case 'sticky':
         return {
@@ -348,6 +748,27 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
           ...(hatched ? { fill: { drawable: generator.rectangle(0, 0, width, height, hatch), clip } } : {})
         };
       }
+    }
+  };
+
+  const grains = new Map<string, CanvasPattern | null>();
+
+  /** How a pen stroke is filled, by its brush: flat ink, see-through, grainy, or glowing. */
+  const inkFor = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
+    const colour = palette.stroke[element.stroke];
+    context.fillStyle = colour;
+    if (element.brush === 'highlighter') {
+      context.globalAlpha *= 0.38;
+    } else if (element.brush === 'pencil' || element.brush === 'chalk') {
+      const key = `${element.brush}:${colour}`;
+      if (!grains.has(key)) {
+        grains.set(key, context.createPattern(grainTile(colour, element.brush === 'chalk'), 'repeat'));
+      }
+
+      context.fillStyle = grains.get(key) ?? colour;
+    } else if (element.brush === 'neon') {
+      context.shadowColor = colour;
+      context.shadowBlur = 16;
     }
   };
 
@@ -393,14 +814,26 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       hideText = false,
       faded = false,
       picture,
-      voter
-    }: { hideText?: boolean; faded?: boolean; picture?: CanvasImageSource; voter?: string } = {}
+      voter,
+      members = 0,
+      open = false,
+      authors = true
+    }: {
+      hideText?: boolean;
+      faded?: boolean;
+      picture?: CanvasImageSource;
+      voter?: string;
+      /** A frame's: how many things are in it. */
+      members?: number;
+      /** A comment's bubble is open, a note's author shown: it is pointed at, selected, or being written. */
+      open?: boolean;
+      /** Who wrote notes and cards is shown. */
+      authors?: boolean;
+    } = {}
   ): void => {
     context.save();
     context.translate(element.x, element.y);
-    if (faded) {
-      context.globalAlpha = 0.25;
-    }
+    context.globalAlpha = (faded ? 0.25 : 1) * ((element.opacity ?? 100) / 100);
 
     if (element.type === 'stack') {
       drawStack(context, element, palette);
@@ -408,6 +841,20 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
 
     if (element.type === 'image') {
       drawPicture(context, element, palette, picture);
+    }
+
+    if (element.type === 'frame') {
+      drawFrame(context, element, palette, members, hideText);
+    }
+
+    if (element.type === 'card') {
+      const { lines, lineHeight } = layoutText(context, element, palette);
+      drawCard(context, element, palette, lines, lineHeight, hideText, authors);
+    }
+
+    if (element.type === 'comment') {
+      const { lines, lineHeight } = layoutText(context, element, palette);
+      drawComment(context, element, palette, lines, lineHeight, open, hideText);
     }
 
     if (element.type === 'sticky') {
@@ -419,11 +866,18 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       context.shadowColor = 'transparent';
     }
 
-    if (element.type !== 'text') {
+    if (!['text', 'frame', 'card', 'comment'].includes(element.type)) {
       const shape = shapeOf(element, palette);
       if ('path' in shape) {
-        context.fillStyle = palette.stroke[element.stroke];
+        inkFor(context, element, palette);
         context.fill(shape.path);
+        if (element.brush === 'neon') {
+          // The tube's bright core, over its glow.
+          context.shadowColor = 'transparent';
+          context.globalAlpha *= 0.55;
+          context.fillStyle = '#ffffff';
+          context.fill(shape.path);
+        }
       } else {
         if (shape.fill) {
           context.save();
@@ -439,6 +893,18 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     const written = element.type === 'text' || element.type === 'sticky' || (takesLabel(element.type) && element.text);
     if (written && !hideText) {
       drawText(context, element, palette);
+    }
+
+    // Who wrote a note is a signature, not part of it: shown while the note is pointed at or selected.
+    if (element.type === 'sticky' && element.author && open && authors) {
+      drawAuthor(
+        context,
+        `Author: ${element.author}`,
+        STICKY_PADDING,
+        element.height - 16,
+        palette,
+        palette.stroke.ink
+      );
     }
 
     if (element.votes?.length) {
@@ -517,6 +983,44 @@ export const drawHandles = (context: CanvasRenderingContext2D, camera: Camera, b
     context.rect(x + offsetX - HANDLE_SIZE / 2, y + offsetY - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
     context.fill();
     context.stroke();
+  }
+
+  context.restore();
+};
+
+/** A frame something would be let go into: lit in the accent — and in a column, the gap it would take, as a bar. */
+export const drawDropTarget = (
+  context: CanvasRenderingContext2D,
+  camera: Camera,
+  box: Box,
+  colour: string,
+  line?: number
+): void => {
+  const [x, y] = toScreen(camera, box.x, box.y);
+  const [width, height] = [box.width * camera.zoom, box.height * camera.zoom];
+  context.save();
+  context.fillStyle = colour;
+  context.globalAlpha = 0.07;
+  context.beginPath();
+  context.roundRect(x, y, width, height, 14 * camera.zoom);
+  context.fill();
+  context.globalAlpha = 1;
+  context.strokeStyle = colour;
+  context.lineWidth = 2;
+  context.setLineDash([7, 5]);
+  context.stroke();
+  if (line !== undefined) {
+    const [, lineY] = toScreen(camera, box.x, line);
+    context.setLineDash([]);
+    context.lineWidth = 3;
+    context.lineCap = 'round';
+    context.beginPath();
+    context.moveTo(x + 14, lineY);
+    context.lineTo(x + width - 14, lineY);
+    context.stroke();
+    context.beginPath();
+    context.arc(x + 14, lineY, 4, 0, Math.PI * 2);
+    context.fill();
   }
 
   context.restore();

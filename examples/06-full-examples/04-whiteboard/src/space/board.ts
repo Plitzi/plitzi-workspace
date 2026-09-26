@@ -32,24 +32,41 @@ import {
   LOAD_ACTION,
   OPEN_ACTION,
   RENAME_ACTION,
+  REPLY_ACTION,
   UPLOAD_ACTION,
   VOTE_ACTION
 } from '../actions.ts';
-import { BOARD_KEY, BOARD_SHOWN, editOnly, ofBoard, readOnlyOnly, unlockScreen } from './access.ts';
+import {
+  BOARD_KEY,
+  BOARD_PASS,
+  BOARD_SHOWN,
+  CAN_EDIT,
+  editOnly,
+  keepOwned,
+  ofBoard,
+  readOnlyOnly,
+  unlockScreen
+} from './access.ts';
 import declaration from '../plugins/Board/declaration.ts';
+import { chatButton, chatPanel, hearChat } from './chat.ts';
 import { deleteButton, deletePanel } from './deleteBoard.ts';
+import { framesButton, framesPanel, minimapButton, presentationBanner } from './frames.ts';
 import { BOARD_ID, BOARD_PROVIDER } from './ids.ts';
+import { agentButtonFor, agentPanel } from './invite.ts';
 import { keysHelp, shortcuts } from './keys.ts';
 import { BUTTON_RESET, FLOAT, divide, icon, iconAction } from './kit.ts';
+import { libraryPanel } from './library.ts';
 import { popoverBackdrop } from './panels.ts';
 import { popovers, presence } from './people.ts';
+import { reachBadges } from './reach.ts';
 import { readOnlyBanner } from './readOnly.ts';
+import { selectionTools } from './selectionTools.ts';
+import { settingsButton, settingsPanel } from './settings.ts';
 import { identity } from './state.ts';
 import { boardAction, stylePanel } from './stylePanel.ts';
-import { selectionTools } from './selectionTools.ts';
 import { timerButton, timerPanel, timerPill } from './timer.ts';
-import { toolbar } from './toolbar.ts';
-import { bottomTray, followBanner } from './tray.ts';
+import { toolbar, toolFlyouts } from './toolbar.ts';
+import { bottomTray, followBanner, reactionPicker, stampPicker } from './tray.ts';
 
 import type { BoardAttributes } from '../plugins/Board/declaration.ts';
 import type { ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
@@ -124,15 +141,19 @@ const topLeft = corner(
   { top: '10px', left: '10px', 'max-width': 'calc(100vw - 150px)' }
 );
 
-const topRight = corner(
-  'topRight',
-  { top: '14px', right: '14px', gap: '8px', 'padding-right': '8px' },
-  { top: '10px', right: '10px' }
-);
+/**
+ * Two kinds of thing in one bar, spaced as each reads: the icon buttons side by side like every other bar's — their
+ * boxes are their space — then, past a divider, the people and Share, solid shapes that need room of their own.
+ */
+const topRight = corner('topRight', { top: '14px', right: '14px', gap: '2px' }, { top: '10px', right: '10px' });
 
 const bottomLeft = corner('bottomLeft', { bottom: '14px', left: '14px' }, { display: 'none' });
 
-const bottomRight = corner('bottomRight', { bottom: '14px', right: '14px' }, { display: 'none' });
+/**
+ * What a phone does without: an image file and a keyboard's shortcuts are a desktop's, and the corner has room for
+ * the people, the chat and Share before it has room for the rest.
+ */
+const desktopOnly = styles('desktopOnly', { css: { desktop: { display: 'contents' }, mobile: { display: 'none' } } });
 
 const homeLink = styles('homeLink', {
   css: {
@@ -259,10 +280,26 @@ export const primaryButton = styles('primaryButton', {
   }
 });
 
+/** What everyone on a board is told when its creator makes it read-only, or opens it again — the creator included. */
+const READ_ONLY_NOTICE = [
+  'heard.data.readOnly',
+  "? (state.owned and state.owned[heard.data.id] ? '👁 Read-only for everyone else — only you can change it'",
+  ": '👁 The board is read-only now — look around, point and react')",
+  ": '✏️ Everyone can draw on this board again'"
+].join(' ');
+
 /** Starting a board is asking the server for one, then going to it: the id is the server's to make up. */
 export const newBoardFlow = [
   onClick(),
-  named('created', runServerAction({ actionId: CREATE_ACTION, input: { title: '' }, invalidateQueries: 'none' })),
+  named(
+    'created',
+    runServerAction({
+      actionId: CREATE_ACTION,
+      input: { title: '' },
+      invalidateQueries: 'none'
+    })
+  ),
+  keepOwned('created'),
   navigate({ urlType: 'internal', url: '/b/{{ created.output.id }}' })
 ];
 
@@ -276,7 +313,7 @@ const canvas = (): ElementSpec =>
     bind: [
       { to: 'boardId', source: `${BOARD_PROVIDER}.id` },
       // A read-only board is looked around together: cursors, laser and reactions, and nothing that changes it.
-      bindTemplate('mode', BOARD_PROVIDER, "{{ source.readOnly ? 'read' : 'edit' }}"),
+      bindTemplate('mode', BOARD_PROVIDER, `{{ ${CAN_EDIT} ? 'edit' : 'read' }}`),
       // The board as it is shown: its own elements — or, locked, the ones opening it answered.
       bindTemplate('elements', BOARD_PROVIDER, `{{ ${ofBoard('elements', '[]')} }}`, { returns: 'value' }),
       { to: 'title', source: `${BOARD_PROVIDER}.title` },
@@ -288,6 +325,16 @@ const canvas = (): ElementSpec =>
       { to: 'stroke', source: 'computed.stroke' },
       { to: 'fill', source: 'computed.fill' },
       { to: 'strokeWidth', source: 'computed.strokeWidth' },
+      { to: 'dash', source: 'computed.dash' },
+      { to: 'sloppiness', source: 'computed.sloppiness' },
+      { to: 'brush', source: 'computed.brush' },
+      { to: 'edges', source: 'computed.edges' },
+      { to: 'fillStyle', source: 'computed.fillStyle' },
+      { to: 'opacity', source: 'computed.opacity' },
+      { to: 'author', source: 'computed.name' },
+      { to: 'minimap', source: 'computed.minimap' },
+      { to: 'authors', source: 'computed.showAuthors' },
+      { to: 'sounds', source: 'computed.sounds' },
       { to: 'scheme', source: 'theme.resolved' }
     ],
     flows: [
@@ -299,7 +346,7 @@ const canvas = (): ElementSpec =>
         whileRunning('queue', named('commit', declaredTrigger(declaration, 'onCommit'))),
         runServerAction({
           actionId: APPLY_ACTION,
-          input: { board: THIS_BOARD, ops: '{{ commit.ops }}', key: BOARD_KEY },
+          input: { board: THIS_BOARD, ops: '{{ commit.ops }}', ...BOARD_PASS },
           // The answer is the channel's to deliver; nothing the page asked for changed.
           invalidateQueries: 'none'
         })
@@ -328,7 +375,7 @@ const canvas = (): ElementSpec =>
           'uploaded',
           runServerAction({
             actionId: UPLOAD_ACTION,
-            input: { board: THIS_BOARD, data: '{{ pasted.data }}', key: BOARD_KEY },
+            input: { board: THIS_BOARD, data: '{{ pasted.data }}', ...BOARD_PASS },
             invalidateQueries: 'none'
           })
         ),
@@ -352,9 +399,36 @@ const canvas = (): ElementSpec =>
         whileRunning('queue', named('voted', declaredTrigger(declaration, 'onVote'))),
         runServerAction({
           actionId: VOTE_ACTION,
-          input: { board: THIS_BOARD, element: '{{ voted.id }}', voter: '{{ computed.visitor }}', key: BOARD_KEY },
+          input: { board: THIS_BOARD, element: '{{ voted.id }}', voter: '{{ computed.visitor }}', ...BOARD_PASS },
           invalidateQueries: 'none'
         })
+      ],
+      // An answer in a comment's thread: kept on the server, which announces the comment with it to everyone.
+      [
+        whileRunning('queue', named('replied', declaredTrigger(declaration, 'onReply'))),
+        named(
+          'answered',
+          runServerAction({
+            actionId: REPLY_ACTION,
+            input: {
+              board: THIS_BOARD,
+              ...BOARD_PASS,
+              element: '{{ replied.id }}',
+              author: '{{ computed.name }}',
+              text: '{{ replied.text }}'
+            },
+            invalidateQueries: 'none'
+          })
+        ),
+        whenFailed(
+          'answered',
+          addNotification({
+            content: '{{ answered.error ? answered.error : "That answer could not be kept" }}',
+            appearance: 'danger',
+            placement: 'bottom-center',
+            autoDismissTimeout: 5000
+          })
+        )
       ],
       [
         named('summoned', declaredTrigger(declaration, 'onSummoned')),
@@ -378,6 +452,16 @@ const canvas = (): ElementSpec =>
         setState({ key: 'selectionCanStroke', type: 'boolean', value: '{{ picked.canStroke }}' }),
         setState({ key: 'selectionCanFill', type: 'boolean', value: '{{ picked.canFill }}' }),
         setState({ key: 'selectionCanWidth', type: 'boolean', value: '{{ picked.canWidth }}' }),
+        setState({ key: 'selectionCanDash', type: 'boolean', value: '{{ picked.canDash }}' }),
+        setState({ key: 'selectionCanSloppiness', type: 'boolean', value: '{{ picked.canSloppiness }}' }),
+        setState({ key: 'selectionCanBrush', type: 'boolean', value: '{{ picked.canBrush }}' }),
+        setState({ key: 'selectionIsTask', type: 'boolean', value: '{{ picked.isTask }}' }),
+        setState({ key: 'selectionIsDone', type: 'boolean', value: '{{ picked.isDone }}' }),
+        setState({ key: 'selectionCanEdges', type: 'boolean', value: '{{ picked.canEdges }}' }),
+        setState({ key: 'selectionCanFillStyle', type: 'boolean', value: '{{ picked.canFillStyle }}' }),
+        setState({ key: 'selectionCanOpacity', type: 'boolean', value: '{{ picked.canOpacity }}' }),
+        setState({ key: 'selectionIsFrame', type: 'boolean', value: '{{ picked.isFrame }}' }),
+        setState({ key: 'selectionIsColumn', type: 'boolean', value: '{{ picked.isColumn }}' }),
         when(
           { field: 'picked.stroke', operator: '!=', value: '' },
           setState({ key: 'stroke', type: 'text', value: '{{ picked.stroke }}' })
@@ -389,7 +473,37 @@ const canvas = (): ElementSpec =>
         when(
           { field: 'picked.strokeWidth', operator: '!=', value: '' },
           setState({ key: 'strokeWidth', type: 'number', value: '{{ picked.strokeWidth }}' })
+        ),
+        ...(['dash', 'sloppiness', 'brush', 'edges', 'fillStyle'] as const).map(field =>
+          when(
+            [
+              { field: 'picked.count', operator: '>', value: 0 },
+              { field: `picked.${field}`, operator: '!=', value: '' }
+            ],
+            setState({ key: field, type: 'text', value: `{{ picked.${field} }}` })
+          )
+        ),
+        when(
+          [
+            { field: 'picked.count', operator: '>', value: 0 },
+            { field: 'picked.opacity', operator: '!=', value: '' }
+          ],
+          setState({ key: 'opacity', type: 'number', value: '{{ picked.opacity }}' })
         )
+      ],
+      // The board's frames, listed for the frames panel; a presentation, for the banner that says where it is.
+      [
+        named('framed', declaredTrigger(declaration, 'onFramesChange')),
+        setState({ key: 'frames', type: 'json', value: '{{ framed.frames|json_encode }}' })
+      ],
+      [
+        named('presented', declaredTrigger(declaration, 'onPresentationChange')),
+        setState({
+          key: 'presentation',
+          type: 'json',
+          value:
+            '{ "presenter": {{ presented.presenter|json_encode }}, "position": {{ presented.position|json_encode }}, "total": {{ presented.total|json_encode }}, "title": {{ presented.title|json_encode }}, "mine": {{ presented.mine|json_encode }} }'
+        })
       ],
       // Following somebody is the canvas's; the banner that says so is the page's.
       [
@@ -451,7 +565,7 @@ const title = (): ElementSpec =>
           ],
           runServerAction({
             actionId: RENAME_ACTION,
-            input: { board: THIS_BOARD, title: '{{ state.titleDraft }}', key: BOARD_KEY },
+            input: { board: THIS_BOARD, title: '{{ state.titleDraft }}', ...BOARD_PASS },
             invalidateQueries: 'none'
           })
         )
@@ -502,28 +616,17 @@ const zoomBar = (): ElementSpec =>
       iconAction({
         id: 'zoom-fit',
         icon: 'fa-solid fa-expand',
-        title: 'Zoom to fit — F',
+        title: 'Zoom to fit — ⇧F',
         flow: [onClick(), boardAction('zoomToFit')]
-      })
-    ]
-  });
-
-const helpCorner = (): ElementSpec =>
-  container({
-    id: 'help-corner',
-    class: bottomRight,
-    children: [
-      iconAction({
-        id: 'export',
-        icon: 'fa-solid fa-download',
-        title: 'Export as PNG — ⌘⇧E',
-        flow: [onClick(), boardAction('exportPng')]
       }),
+      divide(),
+      framesButton(),
+      minimapButton(),
       iconAction({
-        id: 'keys-open',
-        icon: 'fa-regular fa-keyboard',
-        title: 'Keyboard shortcuts — ?',
-        flow: [onClick(), setState({ key: 'keysOpen', type: 'boolean', value: true })]
+        id: 'fullscreen',
+        icon: 'fa-solid fa-maximize',
+        title: 'Full screen — Esc leaves it',
+        flow: [onClick(), boardAction('toggleFullscreen')]
       })
     ]
   });
@@ -538,10 +641,11 @@ const header = (): ElementSpec[] => [
         mode: 'internal',
         class: homeLink,
         label: 'All boards',
-        children: [icon('fa-solid fa-chevron-left'), text({ content: 'Pizarra' })]
+        children: [icon('fa-solid fa-chevron-left'), text({ content: 'Pizarra', class: desktopOnly })]
       }),
       text({ content: '', class: titleDivider }),
-      editOnly([title(), deleteButton()]),
+      editOnly([title(), settingsButton(), deleteButton()]),
+      ...reachBadges(),
       // A read-only board's name is read, not edited.
       readOnlyOnly([text({ content: '', class: readOnlyTitle, bind: { content: `${BOARD_PROVIDER}.title` } })])
     ]
@@ -550,14 +654,49 @@ const header = (): ElementSpec[] => [
     id: 'top-right',
     class: topRight,
     children: [
-      editOnly([timerButton()]),
-      iconAction({
-        id: 'summon',
-        icon: 'fa-solid fa-bullhorn',
-        title: 'Bring everyone here — show them what you see',
-        flow: [onClick(), boardAction('summon')]
+      container({
+        class: desktopOnly,
+        children: [
+          iconAction({
+            id: 'export',
+            icon: 'fa-solid fa-download',
+            title: 'Export as PNG — ⌘⇧E',
+            flow: [onClick(), boardAction('exportPng')]
+          }),
+          iconAction({
+            id: 'keys-open',
+            icon: 'fa-regular fa-keyboard',
+            title: 'Keyboard shortcuts — ?',
+            flow: [onClick(), setState({ key: 'keysOpen', type: 'boolean', value: true })]
+          })
+        ]
       }),
-      ...presence(),
+      editOnly([timerButton()]),
+      chatButton(),
+      container({
+        class: desktopOnly,
+        children: [
+          iconAction({
+            id: 'summon',
+            icon: 'fa-solid fa-bullhorn',
+            title: 'Bring everyone here — show them what you see',
+            // The others are moved, and told who moved them; whoever pressed it sees nothing move, so they are told too.
+            flow: [
+              onClick(),
+              boardAction('summon'),
+              addNotification({
+                content: 'Everyone on the board now sees what you see',
+                appearance: 'success',
+                placement: 'top-center',
+                autoDismissTimeout: 3000
+              })
+            ]
+          })
+        ]
+      }),
+      agentButtonFor(),
+      divide(),
+      presence(),
       themeToggle({ id: 'theme', subType: 'switch', class: themeSwitch })
     ]
   })
@@ -567,7 +706,9 @@ const notFound = (): ElementSpec =>
   container({
     id: 'board-missing',
     class: lost,
-    visible: { source: `${BOARD_PROVIDER}.found`, template: "{{ source ? 'false' : 'true' }}" },
+    // Only for a board asked for and not there: leaving for the front page reads the board again with no id, and a
+    // page on its way out must not say the board is gone.
+    visible: { source: BOARD_PROVIDER, template: "{{ source.found or not source.id ? 'false' : 'true' }}" },
     children: [
       text({ content: 'Nothing on this board', class: lostTitle }),
       text({
@@ -617,17 +758,23 @@ export const boardPage: PageSpec = {
                   class: chrome,
                   children: [
                     ...header(),
-                    editOnly([toolbar(), stylePanel()]),
+                    editOnly([toolbar(), stylePanel(), ...toolFlyouts(), libraryPanel()]),
                     readOnlyBanner(),
                     followBanner(),
+                    presentationBanner(),
                     timerPill(),
                     timerPanel(),
                     bottomTray(),
                     zoomBar(),
-                    helpCorner(),
                     popoverBackdrop(),
+                    reactionPicker(),
+                    editOnly([stampPicker()]),
+                    framesPanel(),
+                    chatPanel(),
+                    agentPanel(),
                     ...popovers(),
                     deletePanel(),
+                    settingsPanel(),
                     ...keysHelp()
                   ]
                 })
@@ -647,15 +794,37 @@ export const boardPage: PageSpec = {
             [
               named('heard', on('onMessage')),
               when({ field: 'heard.type', operator: '=', value: 'title' }, reloadApi(BOARD_PROVIDER)),
+              // Made private, public, temporary: read the board again — the badges say what it is now.
+              when({ field: 'heard.type', operator: '=', value: 'reach' }, reloadApi(BOARD_PROVIDER)),
+              // Made read-only by whoever made it, or opened again: read it again — the canvas and the tools follow.
+              when({ field: 'heard.type', operator: '=', value: 'readOnly' }, reloadApi(BOARD_PROVIDER)),
+              when({ field: 'heard.type', operator: '=', value: 'readOnly' }, boardAction('chime', { sound: 'lock' })),
+              when(
+                { field: 'heard.type', operator: '=', value: 'readOnly' },
+                addNotification({
+                  content: `{{ ${READ_ONLY_NOTICE} }}`,
+                  appearance: 'info',
+                  placement: 'top-center',
+                  autoDismissTimeout: 5000
+                })
+              ),
+              ...hearChat('heard').map(step => when({ field: 'heard.type', operator: '=', value: 'chat' }, step)),
               when(
                 { field: 'heard.type', operator: '=', value: 'timer' },
                 setState({ key: 'timer', type: 'json', value: '{{ heard.data }}' })
+              ),
+              // A timer started — for everyone on the board, whoever started it.
+              when(
+                { field: 'heard.type', operator: '=', value: 'timer' },
+                boardAction('chime', { sound: "{{ heard.data.timer ? 'timerStart' : 'timerStop' }}" })
               ),
               // The password changed: what was opened no longer is. Read the board again — and be asked, like anyone.
               when(
                 { field: 'heard.type', operator: '=', value: 'locked' },
                 setState({ key: 'opened', type: 'json', value: 'null' })
               ),
+              when({ field: 'heard.type', operator: '=', value: 'locked' }, boardAction('chime', { sound: 'lock' })),
+              when({ field: 'heard.type', operator: '=', value: 'deleted' }, boardAction('chime', { sound: 'remove' })),
               when({ field: 'heard.type', operator: '=', value: 'locked' }, reloadApi(BOARD_PROVIDER)),
               // The board is gone: nobody stays on nothing. Everyone is told, and sent back to the boards.
               when(

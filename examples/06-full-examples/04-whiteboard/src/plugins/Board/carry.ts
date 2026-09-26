@@ -37,6 +37,7 @@ export const createCarry = (core: Core) => {
 
     draft.delete(state.carrying.element.id);
     state.carrying = undefined;
+    state.dropTarget = undefined;
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
     canvas.style.cursor = core.restCursor();
@@ -53,6 +54,7 @@ export const createCarry = (core: Core) => {
     }
 
     const placed = carriedAt(carried, point);
+    core.sounds.play('place');
     core.commit([placed]);
     core.setSelection([placed.id]);
     // A note is written on the moment it lands; a pile is there to be taken from.
@@ -80,8 +82,10 @@ export const createCarry = (core: Core) => {
       const point = onBoard(event);
       state.lastPointer = point;
       draft.set(carrying.element.id, carriedAt(carrying.element, point));
+      core.aimDrop(point, new Set([carrying.element.id]));
     } else {
       draft.delete(carrying.element.id);
+      core.aimDrop(undefined, new Set());
     }
 
     core.reportPointer(false);

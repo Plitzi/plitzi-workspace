@@ -1,4 +1,5 @@
-import { connect, drawing, loop, newId, scribble, sticky } from './sketch.ts';
+import { SHOWCASE } from './showcase.ts';
+import { card, column, comment, connect, drawing, loop, newId, scribble, section, sticky } from './sketch.ts';
 
 import type { BoardElement, Fill } from './model.ts';
 import type { Draft } from './sketch.ts';
@@ -19,55 +20,42 @@ const heading = (x: number, y: number, text: string): Draft => ({ type: 'text', 
 
 const caption = (x: number, y: number, text: string): Draft => ({ type: 'text', x, y, text, strokeWidth: 1 });
 
-/** A region of a board: an outlined box with its name at the top, and everything in it grouped with it. */
-const region = (
-  group: string,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  title: string,
-  fill: Fill
-): Draft[] => [
-  { type: 'rectangle', x, y, width, height, fill, group },
-  { type: 'text', x: x + 24, y: y + 18, text: title, group }
-];
-
 const launchPlan = (): BoardElement[] => {
   const idea = newId();
   const insights = [newId(), newId(), newId(), newId()];
   const [start, beta, feedback, launch, iterate, party] = [newId(), newId(), newId(), newId(), newId(), newId()];
-  const lanes: { title: string; fill: Fill; notes: { text: string; fill: Fill }[] }[] = [
+  const lanes: { title: string; fill: Fill; notes: { text: string; fill: Fill; done?: boolean }[] }[] = [
     {
       title: 'Now',
       fill: 'green',
       notes: [
-        { text: 'Live cursors for everyone', fill: 'green' },
-        { text: 'Arrows that stick to shapes', fill: 'yellow' }
+        { text: 'AI agents join a board as collaborators', fill: 'violet' },
+        { text: 'Kanban columns that sort their cards', fill: 'green' }
       ]
     },
     {
       title: 'Next',
       fill: 'blue',
       notes: [
-        { text: 'Paste images from the clipboard', fill: 'blue' },
-        { text: 'Password-protected boards', fill: 'violet' }
+        { text: 'Present a board, frame by frame', fill: 'blue' },
+        { text: 'Private boards that expire', fill: 'orange' }
       ]
     },
     {
       title: 'Later',
       fill: 'orange',
       notes: [
-        { text: 'Comment threads on any note', fill: 'orange' },
-        { text: 'Export to PDF', fill: 'yellow' }
+        { text: 'Export to PDF', fill: 'yellow' },
+        { text: 'Boards across regions', fill: 'red' }
       ]
     },
     {
       title: 'Done',
       fill: 'violet',
       notes: [
-        { text: 'Hand-drawn look ✏️', fill: 'violet' },
-        { text: 'Templates to start from', fill: 'red' }
+        { text: 'Hand-drawn look ✏️', fill: 'violet', done: true },
+        { text: 'Comment threads', fill: 'blue', done: true },
+        { text: 'Live cursors for everyone', fill: 'green', done: true }
       ]
     }
   ];
@@ -112,17 +100,18 @@ const launchPlan = (): BoardElement[] => {
     loop(-900, -760, 200, 200, 'red', 11),
     caption(-660, -800, 'loudest ask'),
 
-    // What: a roadmap in four lanes, each a group with its notes, and a pile to take more from.
+    // What: a roadmap in four kanban columns — drag a card to another and it takes its place there — and a pile.
     heading(-500, -820, 'Roadmap'),
-    ...lanes.flatMap((lane, index): Draft[] => {
-      const group = newId();
-      const x = -500 + index * 330;
-
-      return [
-        ...region(group, x, -740, 300, 760, lane.title, lane.fill),
-        ...lane.notes.map((note, row) => ({ ...sticky(x + 50, -660 + row * 240, note.text, note.fill), group }))
-      ];
-    }),
+    ...lanes.flatMap((lane, index): Draft[] =>
+      column(
+        { x: -500 + index * 330, y: -740, width: 300, height: 760, title: lane.title, fill: lane.fill },
+        lane.notes.map(entry => card(entry.text, { fill: entry.fill, done: entry.done === true, author: 'Ana' }))
+      )
+    ),
+    comment(-230, -790, 'Should agents move to Now?', 'Leo', [
+      ['Ana', 'Yes — they are the launch'],
+      ['Sam', 'Moved it ✅']
+    ]),
     { type: 'stack', x: -170, y: 80, width: 200, height: 200, fill: 'yellow' },
     caption(60, 150, '← take a note, add your idea'),
     scribble(
@@ -189,7 +178,6 @@ const architecture = (): BoardElement[] => {
     { length: 12 },
     newId
   );
-  const [client, edge, services, data] = [newId(), newId(), newId(), newId()];
 
   return drawing([
     heading(-1300, -900, 'System architecture'),
@@ -207,75 +195,64 @@ const architecture = (): BoardElement[] => {
       'How a board travels from a browser to the database and back — every arrow is fixed to its boxes.'
     ),
 
-    // Four regions, left to right, each a group: move one and its boxes and arrows come along.
-    ...region(client, -1300, -700, 420, 900, 'Clients', 'blue'),
-    { id: web, type: 'rectangle', x: -1220, y: -560, width: 260, height: 110, text: 'Web app', group: client },
-    { id: mobile, type: 'rectangle', x: -1220, y: -320, width: 260, height: 110, text: 'Mobile app', group: client },
-
-    ...region(edge, -760, -700, 380, 900, 'Edge', 'green'),
-    { id: cdn, type: 'rectangle', x: -700, y: -600, width: 260, height: 100, text: 'CDN (assets)', group: edge },
-    { id: balancer, type: 'diamond', x: -700, y: -400, width: 260, height: 180, text: 'Load balancer', group: edge },
-
-    ...region(services, -260, -700, 780, 900, 'Services', 'violet'),
-    {
-      id: gateway,
-      type: 'rectangle',
-      x: -200,
-      y: -400,
-      width: 240,
-      height: 120,
-      fill: 'violet',
-      text: 'API gateway',
-      group: services
-    },
-    { id: auth, type: 'rectangle', x: 200, y: -620, width: 240, height: 100, text: 'Auth', group: services },
-    { id: boards, type: 'rectangle', x: 200, y: -460, width: 240, height: 100, text: 'Boards', group: services },
-    {
-      id: realtime,
-      type: 'rectangle',
-      x: 200,
-      y: -300,
-      width: 240,
-      height: 100,
-      text: 'Realtime hub',
-      group: services
-    },
-    { id: search, type: 'rectangle', x: 200, y: -140, width: 240, height: 100, text: 'Search', group: services },
-
-    ...region(data, 640, -700, 460, 900, 'Data', 'orange'),
-    {
-      id: postgres,
-      type: 'ellipse',
-      x: 740,
-      y: -600,
-      width: 260,
-      height: 130,
-      fill: 'blue',
-      text: 'Postgres',
-      group: data
-    },
-    {
-      id: redis,
-      type: 'ellipse',
-      x: 740,
-      y: -380,
-      width: 260,
-      height: 130,
-      fill: 'red',
-      text: 'Redis pub/sub',
-      group: data
-    },
-    {
-      id: files,
-      type: 'ellipse',
-      x: 740,
-      y: -160,
-      width: 260,
-      height: 130,
-      fill: 'green',
-      text: 'Object storage',
-      group: data
-    },
+    // Four sections, left to right, each a frame: move one and its boxes and arrows come along.
+    ...section({ x: -1300, y: -700, width: 420, height: 900, title: 'Clients', fill: 'blue' }, [
+      { id: web, type: 'rectangle', x: -1220, y: -560, width: 260, height: 110, edges: 'round', text: 'Web app' },
+      { id: mobile, type: 'rectangle', x: -1220, y: -320, width: 260, height: 110, edges: 'round', text: 'Mobile app' }
+    ]),
+    ...section({ x: -760, y: -700, width: 380, height: 900, title: 'Edge', fill: 'green' }, [
+      { id: cdn, type: 'rectangle', x: -700, y: -600, width: 260, height: 100, text: 'CDN (assets)' },
+      { id: balancer, type: 'diamond', x: -700, y: -400, width: 260, height: 180, text: 'Load balancer' }
+    ]),
+    ...section({ x: -260, y: -700, width: 780, height: 900, title: 'Services', fill: 'violet' }, [
+      {
+        id: gateway,
+        type: 'hexagon',
+        x: -210,
+        y: -410,
+        width: 260,
+        height: 140,
+        fill: 'violet',
+        fillStyle: 'solid',
+        text: 'API gateway'
+      },
+      { id: auth, type: 'rectangle', x: 200, y: -620, width: 240, height: 100, sloppiness: 'architect', text: 'Auth' },
+      {
+        id: boards,
+        type: 'rectangle',
+        x: 200,
+        y: -460,
+        width: 240,
+        height: 100,
+        sloppiness: 'architect',
+        text: 'Boards'
+      },
+      {
+        id: realtime,
+        type: 'rectangle',
+        x: 200,
+        y: -300,
+        width: 240,
+        height: 100,
+        sloppiness: 'architect',
+        text: 'Realtime hub'
+      },
+      {
+        id: search,
+        type: 'rectangle',
+        x: 200,
+        y: -140,
+        width: 240,
+        height: 100,
+        sloppiness: 'architect',
+        text: 'Search'
+      }
+    ]),
+    ...section({ x: 640, y: -700, width: 460, height: 900, title: 'Data', fill: 'orange' }, [
+      { id: postgres, type: 'cylinder', x: 770, y: -620, width: 200, height: 150, fill: 'blue', text: 'Postgres' },
+      { id: redis, type: 'cylinder', x: 770, y: -400, width: 200, height: 150, fill: 'red', text: 'Redis pub/sub' },
+      { id: files, type: 'cylinder', x: 770, y: -180, width: 200, height: 150, fill: 'green', text: 'Object storage' }
+    ]),
 
     connect(web, 'e', cdn, 'w'),
     connect(web, 'e', balancer, 'w'),
@@ -286,11 +263,13 @@ const architecture = (): BoardElement[] => {
     connect(gateway, 'e', realtime, 'w'),
     connect(gateway, 'e', search, 'w'),
     connect(boards, 'e', postgres, 'w'),
-    connect(realtime, 'e', redis, 'w'),
+    // The async road: dashed.
+    { ...connect(realtime, 'e', redis, 'w'), dash: 'dashed' },
     connect(boards, 'e', files, 'w'),
 
     loop(200, -300, 240, 100, 'red', 23),
     caption(460, -345, 'new!'),
+    comment(452, -250, 'Does the hub scale out?', 'Leo', [['Ana', 'Yes — Redis fans every message to every replica']]),
 
     // The notes a team leaves on a diagram: questions, decisions, what is left to do.
     sticky(-1300, 280, 'Why Redis? Every replica hears every board — pub/sub across the fleet', 'yellow'),
@@ -303,6 +282,7 @@ const architecture = (): BoardElement[] => {
 };
 
 export const FEATURED: readonly Featured[] = [
+  ...SHOWCASE,
   { id: 'launchplan', title: 'Launch plan — Pizarra 2.0', elements: launchPlan },
   { id: 'systemmaps', title: 'System architecture', elements: architecture }
 ];

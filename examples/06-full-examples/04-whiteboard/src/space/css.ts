@@ -15,6 +15,9 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
   --board-paper: var(--paper);
   --board-dots: var(--dots);
   --board-accent: var(--accent);
+  --board-surface: var(--surface);
+  --board-edge: var(--edge);
+  --board-muted: var(--muted);
   --board-ink: var(--ink);
   --board-red: var(--red);
   --board-orange: var(--orange);
@@ -48,6 +51,9 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
   --stack-violet: var(--sticky-violet);
   --stack-focus: var(--accent);
 }
+
+/* A board in its last hour says so in the danger colour. */
+.boardLeft[data-state='ending'] { color: var(--danger); }
 
 /* The timer's pill says nothing while no timer runs, and so is not there at all; its last ten seconds pulse. */
 .timerPill[data-state='idle'] { display: none; }
@@ -92,9 +98,33 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
   16%, 70% { transform: scale(1); opacity: 1; }
   80%, 100% { transform: scale(0.9); opacity: 0; }
 }
+@keyframes wb-slide {
+  0%, 18% { transform: translate(0, 0) rotate(0deg); }
+  30% { transform: translate(40%, -12px) rotate(3deg); }
+  55%, 80% { transform: translate(162%, 0) rotate(0deg); }
+  92%, 100% { transform: translate(0, 0); opacity: 1; }
+}
+@keyframes wb-lit {
+  0%, 25% { border-color: var(--edge); background-color: var(--surface); }
+  32%, 52% { border-color: var(--accent); background-color: var(--accent-soft); }
+  60%, 100% { border-color: var(--edge); background-color: var(--surface); }
+}
+@keyframes wb-pop {
+  0%, 30% { transform: scale(0.4); opacity: 0; }
+  38% { transform: scale(1.08); opacity: 1; }
+  44%, 88% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
 @keyframes wb-orbit { from { transform: rotate(0deg) translateX(48px); } to { transform: rotate(360deg) translateX(48px); } }
 @media (prefers-reduced-motion: reduce) {
   [class*='motion'], .heroHighlight { animation: none !important; opacity: 1 !important; }
+}
+
+/* The texts to copy: the field and the button in the space's colours. */
+.copyText {
+  --copy-field: var(--surface-2);
+  --copy-accent: var(--accent);
+  --copy-on-accent: var(--on-accent);
 }
 
 /* The share card's QR code stays dark on light in both schemes: a code is read by contrast. */
@@ -110,12 +140,15 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
    The box is the form control's \`input\` slot (\`titleInput\`, \`nameInput\`, \`joinBox\`, …); the \`<input>\` inside it is
    not a selector a class reaches, and only has to take the box's type and get out of its way — with a border of its
    own it would draw a second box inside the first. */
-.titleInput input, .nameInput input, .joinBox input, .searchBox input, .passwordBox input {
+.titleInput input, .nameInput input, .joinBox input, .searchBox input, .passwordBox input, .chatFieldBox input {
   width: 100%; min-width: 0; padding: 0; border: 0; outline: none; background: transparent; box-shadow: none;
   color: var(--ink); font: inherit; font-size: 14px; text-overflow: ellipsis;
 }
 .titleInput input::placeholder, .nameInput input::placeholder, .joinBox input::placeholder,
-.searchBox input::placeholder, .passwordBox input::placeholder { color: var(--muted); }
+.searchBox input::placeholder, .passwordBox input::placeholder, .chatFieldBox input::placeholder { color: var(--muted); }
+
+/* Nobody else on the board: no row of avatars — an empty one would still take a gap in the corner. */
+.people:empty { display: none; }
 
 /* The theme switch: the icon alone, in the ink colour. */
 .themeSwitch svg, .galleryTheme svg { width: 18px; height: 18px; }

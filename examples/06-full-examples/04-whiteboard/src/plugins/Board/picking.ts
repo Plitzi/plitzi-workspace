@@ -1,6 +1,6 @@
 import { ANCHORS, isConnectable, takesLabel } from '../../board/model.ts';
 import { endsOf } from './connectors.ts';
-import { voteBadgeBox } from './draw.ts';
+import { CARD_CHECK, voteBadgeBox } from './draw.ts';
 import { beyondAnchor, boundsOf, handlePoint, HANDLES, hits, snapToAnchor, toScreen, unionOf } from './geometry.ts';
 
 import type { Core } from './core.ts';
@@ -31,19 +31,6 @@ export const createPicking = (core: Core) => {
   const zoom = (): number => state.camera.zoom;
   const selecting = (): boolean => state.props.tool === 'select';
 
-  const topmostAt = (point: Point): BoardElement | undefined =>
-    core
-      .displayed()
-      .reverse()
-      .find(element => hits(element, point, 6 / zoom()));
-
-  /** The element whose vote badge is under a point — only elements with votes show one. */
-  const voteAt = (point: Point): string | undefined =>
-    core
-      .displayed()
-      .reverse()
-      .find(element => (element.votes?.length ?? 0) > 0 && inside(point, voteBadgeBox(element)))?.id;
-
   /** The topmost shape a point is inside — its whole area, not just its outline or its fill. */
   const shapeAround = (point: Point): BoardElement | undefined =>
     core
@@ -54,6 +41,34 @@ export const createPicking = (core: Core) => {
           takesLabel(element.type) &&
           hits({ ...element, fill: element.fill === 'none' ? 'red' : element.fill }, point, 0)
       );
+
+  /**
+   * What a press takes: whatever is drawn under the point — an outline, a note, a picture — and, failing that, the
+   * shape the point is inside. A shape with no fill is picked up anywhere in it, not only on its outline; what lies in
+   * it still comes first, so a note inside a hollow box is the note.
+   */
+  const topmostAt = (point: Point): BoardElement | undefined =>
+    core
+      .displayed()
+      .reverse()
+      .find(element => hits(element, point, 6 / zoom())) ?? shapeAround(point);
+
+  /** The element whose vote badge is under a point — only elements with votes show one. */
+  const voteAt = (point: Point): string | undefined =>
+    core
+      .displayed()
+      .reverse()
+      .find(element => (element.votes?.length ?? 0) > 0 && inside(point, voteBadgeBox(element)))?.id;
+
+  /** The card whose done box is under a point — a little larger than drawn, so it is easy to hit. */
+  const checkAt = (point: Point): BoardElement | undefined => {
+    const hit = core.editable() && selecting() ? topmostAt(point) : undefined;
+    const { x, y, size } = CARD_CHECK;
+
+    return hit?.type === 'card' && inside(point, { x: hit.x + x, y: hit.y + y, width: size, height: size }, 4 / zoom())
+      ? hit
+      : undefined;
+  };
 
   /** The anchor a point snaps to — on the topmost element near it, never on `exclude` or on a line. */
   const snapAt = (point: Point, exclude?: string, toward?: Point): Binding | undefined => {
@@ -137,7 +152,7 @@ export const createPicking = (core: Core) => {
       )?.id;
   };
 
-  return { topmostAt, voteAt, shapeAround, snapAt, handleAt, endpointAt, connectionAt, hoveredAt };
+  return { topmostAt, checkAt, voteAt, shapeAround, snapAt, handleAt, endpointAt, connectionAt, hoveredAt };
 };
 
 export type Picking = ReturnType<typeof createPicking>;

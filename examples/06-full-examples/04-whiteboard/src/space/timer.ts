@@ -15,10 +15,11 @@ import {
 
 import { TIMER_ACTION } from '../actions.ts';
 import countdownDeclaration from '../plugins/Countdown/declaration.ts';
-import { BOARD_KEY, ofBoard } from './access.ts';
+import { BOARD_PASS, ofBoard } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
-import { BUTTON_RESET, FLOAT, caption, iconAction } from './kit.ts';
+import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption, iconAction } from './kit.ts';
 import { closeOthers } from './panels.ts';
+import { boardAction } from './stylePanel.ts';
 
 import type { CountdownAttributes } from '../plugins/Countdown/declaration.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';
@@ -44,7 +45,7 @@ const PRESETS: readonly { label: string; seconds: number }[] = [
 const setTimer = (seconds: number) => [
   runServerAction({
     actionId: TIMER_ACTION,
-    input: { board: `{{ apiContainer_${BOARD_PROVIDER}.id }}`, seconds: String(seconds), key: BOARD_KEY },
+    input: { board: `{{ apiContainer_${BOARD_PROVIDER}.id }}`, seconds: String(seconds), ...BOARD_PASS },
     invalidateQueries: 'none'
   }),
   setState({ key: 'timerOpen', type: 'boolean', value: false })
@@ -74,7 +75,7 @@ const pill = styles('timerPill', {
 const popover = styles('timerPopover', {
   ...FLOAT,
   position: 'absolute',
-  top: '58px',
+  top: BELOW_HEADER,
   right: '120px',
   'z-index': '6',
   display: 'flex',
@@ -109,10 +110,14 @@ export const timerPill = (): ElementSpec =>
     id: 'timer-pill',
     runtime: 'client',
     class: pill,
+    // The room hears its last five seconds, as a clock on the wall would be heard.
+    tickSeconds: 5,
     bind: [bindTemplate('endsAt', BOARD_PROVIDER, ENDS_AT, { returns: 'value' })],
     flows: [
+      [declaredTrigger(countdownDeclaration, 'onTick'), boardAction('chime', { sound: 'tick' })],
       [
         declaredTrigger(countdownDeclaration, 'onEnd'),
+        boardAction('chime', { sound: 'timer' }),
         addNotification({
           content: '⏰ Time’s up!',
           appearance: 'info',

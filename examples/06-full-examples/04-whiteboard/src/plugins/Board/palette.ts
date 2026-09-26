@@ -21,6 +21,10 @@ export type Palette = {
   paper: string;
   dots: string;
   accent: string;
+  /** What a card is printed on, its edge, and the quiet text on it — who wrote it. */
+  surface: string;
+  edge: string;
+  muted: string;
   /** The hand-drawn face, as a canvas font family. */
   font: string;
   /** The interface's face: the names on the cursors. */
@@ -47,6 +51,9 @@ export const readPalette = (element: HTMLElement): Palette => {
     paper: read(style, '--board-paper', '#ffffff'),
     dots: read(style, '--board-dots', 'rgba(0, 0, 0, 0.12)'),
     accent: read(style, '--board-accent', '#4c6ef5'),
+    surface: read(style, '--board-surface', '#ffffff'),
+    edge: read(style, '--board-edge', 'rgba(0, 0, 0, 0.14)'),
+    muted: read(style, '--board-muted', '#6b6b6b'),
     font: read(style, '--board-font', 'cursive'),
     ui: read(style, '--board-ui-font', 'system-ui, sans-serif'),
     laser: read(style, '--board-laser', '#ff3b30')

@@ -1,9 +1,10 @@
 import { button, container, onClick, onKey, setState, styles, text, toggleState } from '@plitzi/sdk-authoring';
 
+import { useTool } from './elements.ts';
 import { FLOAT, ICON_BUTTON, caption } from './kit.ts';
-import { closePanels } from './panels.ts';
+import { closeOthers, closePanels } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
-import { TOOLS, toolKeys, useTool } from './toolbar.ts';
+import { KEYED, toolKeys } from './toolbar.ts';
 
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
@@ -26,28 +27,44 @@ export const shortcuts: StepSpec[][] = [
   [onKey('mod+shift+g'), boardAction('ungroup')],
   [onKey(']'), boardAction('bringToFront')],
   [onKey('['), boardAction('sendToBack')],
+  [onKey('mod+]'), boardAction('bringForward')],
+  [onKey('mod+['), boardAction('sendBackward')],
+  // The arrows nudge the selection — ten at a time with Shift — and, while presenting, go from frame to frame.
+  ...(['left', 'right', 'up', 'down'] as const).flatMap(direction => [
+    [onKey(direction), boardAction('step', { direction })],
+    [onKey(`shift+${direction}`), boardAction('step', { direction, far: true })]
+  ]),
   [onKey('plus, ='), boardAction('zoomIn')],
   [onKey('minus'), boardAction('zoomOut')],
-  [onKey('f'), boardAction('zoomToFit')],
+  [onKey('shift+f'), boardAction('zoomToFit')],
   [onKey('mod+0'), boardAction('zoomReset')],
   [onKey('mod+shift+e'), boardAction('exportPng')],
   // Cursor chat: say something where you point, for everyone on the board.
   [onKey('/'), boardAction('chat')],
   [onKey('shift+v'), boardAction('vote')],
+  [onKey('i'), ...closeOthers('libraryOpen'), toggleState({ key: 'libraryOpen' })],
   [onKey('?'), setState({ key: 'shareOpen', type: 'boolean', value: false }), toggleState({ key: 'keysOpen' })],
-  [onKey('escape'), ...closePanels, boardAction('deselect'), boardAction('unfollow'), useTool('select')]
+  [
+    onKey('escape'),
+    ...closePanels,
+    boardAction('stopPresenting'),
+    boardAction('deselect'),
+    boardAction('unfollow'),
+    useTool('select')
+  ]
 ];
 
 /** What the help lists: the keys as a person reads them. */
 const KEYS: readonly { keys: string[]; does: string }[] = [
-  ...TOOLS.map(entry => ({
+  ...KEYED.map(entry => ({
     keys: entry.keys.split(', ').map(key => key.toUpperCase()),
     does: entry.label.split(' — ')[0]
   })),
+  { keys: ['I'], does: 'All elements' },
   { keys: ['Space', 'drag'], does: 'Pan' },
   { keys: ['⌘', 'scroll'], does: 'Zoom' },
   { keys: ['+', '−'], does: 'Zoom in · out' },
-  { keys: ['F'], does: 'Zoom to fit' },
+  { keys: ['⇧', 'F'], does: 'Zoom to fit' },
   { keys: ['⌘', '0'], does: 'Zoom to 100%' },
   { keys: ['⌘', 'Z'], does: 'Undo' },
   { keys: ['⌘', '⇧', 'Z'], does: 'Redo' },
@@ -57,13 +74,17 @@ const KEYS: readonly { keys: string[]; does: string }[] = [
   { keys: ['double-click'], does: 'Into a group · edit text · label a shape' },
   { keys: ['drag', '●'], does: 'Connect from a shape’s point' },
   { keys: ['⌘', 'A'], does: 'Select all' },
-  { keys: ['[', ']'], does: 'Send back · bring forward' },
+  { keys: ['[', ']'], does: 'Send to back · bring to front' },
+  { keys: ['⌘', '[', ']'], does: 'Send backward · bring forward' },
+  { keys: ['←', '→', '↑', '↓'], does: 'Nudge — ⇧ ten · next frame when presenting' },
+  { keys: ['click', '●'], does: 'Add one like it, connected' },
+  { keys: ['⌘', 'C', 'V'], does: 'Copy · paste — between boards too' },
   { keys: ['⌫'], does: 'Delete' },
   { keys: ['⇧', 'drag'], does: 'Square · straight · keep ratio' },
   { keys: ['⌘', '⇧', 'E'], does: 'Export PNG' },
   { keys: ['/'], does: 'Say something at your cursor' },
   { keys: ['⇧', 'V'], does: 'Vote for the selection' },
-  { keys: ['⌘', 'V'], does: 'Paste a picture' },
+  { keys: ['⌘', 'V'], does: 'Paste a picture · text as a note' },
   { keys: ['Esc'], does: 'Deselect · stop following · close' }
 ];
 

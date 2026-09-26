@@ -1,4 +1,6 @@
-import { ANCHORS, isConnectable, isLinear } from '../../board/model.ts';
+import { ANCHORS, LIMITS, isConnectable, isLinear } from '../../board/model.ts';
+import { inkRadius } from './pens.ts';
+import { insidePolygon, outlineOf, rayExit } from './shapes.ts';
 
 import type { Anchor, Binding, BoardElement, Point } from '../../board/model.ts';
 
@@ -6,6 +8,9 @@ import type { Anchor, Binding, BoardElement, Point } from '../../board/model.ts'
 export type Camera = { x: number; y: number; zoom: number };
 
 export type Box = { x: number; y: number; width: number; height: number };
+
+/** A frame's title bar, in board units: where it is picked up — the rest of it is where things are put. */
+export const FRAME_HEADER = 48;
 
 export const MIN_ZOOM = 0.1;
 
@@ -61,12 +66,14 @@ export const boundsOf = (element: BoardElement): Box => {
     return { x: element.x, y: element.y, width: element.width, height: element.height };
   }
 
+  // Out to where the ink reaches, not only the line through the points: a wide stroke is outlined around its ink.
+  const reach = inkRadius(element);
   const xs = element.points.map(([px]) => element.x + px);
   const ys = element.points.map(([, py]) => element.y + py);
-  const x = Math.min(...xs);
-  const y = Math.min(...ys);
+  const x = Math.min(...xs) - reach;
+  const y = Math.min(...ys) - reach;
 
-  return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
+  return { x, y, width: Math.max(...xs) + reach - x, height: Math.max(...ys) + reach - y };
 };
 
 export const unionOf = (boxes: readonly Box[]): Box | undefined => {
@@ -102,15 +109,32 @@ const nearPolyline = (point: Point, points: readonly Point[], tolerance: number)
 
 /** Whether a board point touches an element: its outline, or anywhere inside it once it is filled. */
 export const hits = (element: BoardElement, point: Point, tolerance: number): boolean => {
-  const reach = tolerance + element.strokeWidth;
   if (isLinear(element.type)) {
-    return nearPolyline(point, absolutePoints(element), reach);
+    return nearPolyline(point, absolutePoints(element), tolerance + inkRadius(element));
   }
+
+  const reach = tolerance + element.strokeWidth;
 
   const [px, py] = point;
   const { x, y, width, height } = element;
-  // Paper and pictures are solid whatever their fill: a note, a pile or a photo is picked up anywhere on it.
-  const solid = element.fill !== 'none' || ['text', 'sticky', 'stack', 'image'].includes(element.type);
+  if (element.type === 'frame') {
+    // By its title bar or its edge: inside it is the board, where things are put, selected and drawn.
+    const across = px >= x - reach && px <= x + width + reach;
+    const header = across && py >= y - reach && py <= y + FRAME_HEADER;
+    const within = across && py >= y - reach && py <= y + height + reach;
+    const edge =
+      within &&
+      (Math.abs(px - x) <= reach ||
+        Math.abs(px - x - width) <= reach ||
+        Math.abs(py - y) <= reach ||
+        Math.abs(py - y - height) <= reach);
+
+    return header || edge;
+  }
+
+  // Paper, cards and pictures are solid whatever their fill: each is picked up anywhere on it.
+  const solid =
+    element.fill !== 'none' || ['text', 'sticky', 'stack', 'image', 'card', 'comment'].includes(element.type);
 
   if (element.type === 'ellipse') {
     const rx = Math.max(width / 2, 1);
@@ -120,17 +144,11 @@ export const hits = (element: BoardElement, point: Point, tolerance: number): bo
     return solid ? distance <= 1 + reach / Math.min(rx, ry) : Math.abs(distance - 1) * Math.min(rx, ry) <= reach;
   }
 
-  if (element.type === 'diamond') {
-    const corners: Point[] = [
-      [x + width / 2, y],
-      [x + width, y + height / 2],
-      [x + width / 2, y + height],
-      [x, y + height / 2],
-      [x + width / 2, y]
-    ];
-    const inside = Math.abs(px - x - width / 2) / (width / 2 || 1) + Math.abs(py - y - height / 2) / (height / 2 || 1);
+  const outline = outlineOf(element.type, width, height);
+  if (outline) {
+    const corners: Point[] = [...outline, outline[0]].map(([cx, cy]) => [x + cx, y + cy]);
 
-    return (solid && inside <= 1) || nearPolyline(point, corners, reach);
+    return (solid && insidePolygon([px - x, py - y], outline)) || nearPolyline(point, corners, reach);
   }
 
   const inside = px >= x - reach && px <= x + width + reach && py >= y - reach && py <= y + height + reach;
@@ -164,9 +182,29 @@ export const anchorOf = (box: Box, handle: Handle): Point =>
  * An element scaled about an anchor. A line's points scale with its box; text keeps its size and only moves, because
  * a font size dragged to 3.7 times is not a size anybody chose.
  */
-export const scaleElement = (element: BoardElement, [ax, ay]: Point, scaleX: number, scaleY: number): BoardElement => {
+/** `size` is the element's font size as drawn — what a text's resize scales. */
+export const scaleElement = (
+  element: BoardElement,
+  [ax, ay]: Point,
+  scaleX: number,
+  scaleY: number,
+  size: number
+): BoardElement => {
+  // A text is resized by its size: the words grow or shrink as one, by whichever way the handle went furthest.
   if (element.type === 'text') {
-    return { ...element, x: ax + (element.x - ax) * scaleX, y: ay + (element.y - ay) * scaleY };
+    const factor =
+      Math.abs(Math.abs(scaleX) - 1) > Math.abs(Math.abs(scaleY) - 1) ? Math.abs(scaleX) : Math.abs(scaleY);
+    const fontSize = Math.min(LIMITS.fontSize.max, Math.max(LIMITS.fontSize.min, Math.round(size * factor)));
+    const applied = fontSize / size;
+
+    return {
+      ...element,
+      x: ax + (element.x - ax) * applied,
+      y: ay + (element.y - ay) * applied,
+      width: element.width * applied,
+      height: element.height * applied,
+      fontSize
+    };
   }
 
   const x = ax + (element.x - ax) * scaleX;
@@ -231,9 +269,21 @@ const ANCHOR_GAP = 6;
 /** How many segments a curved connector is drawn, hit and bounded as. */
 const CURVE_STEPS = 24;
 
-/** The middle of one side of an element's box — which is also where an ellipse or a diamond meets it. */
+/**
+ * Where a side's connector meets an element: the middle of that side of its box — which is where an ellipse or a
+ * diamond meets it too — or, for a convex shape that does not reach its box there (a triangle's sides, a hexagon's),
+ * the point of its outline straight out from its middle that way.
+ */
 export const anchorPoint = (element: BoardElement, anchor: Anchor): Point => {
   const { x, y, width, height } = boundsOf(element);
+  // Only a convex outline is met from its middle: a star's notches would take a connector in between its arms, so a
+  // star is met at its box, like a rectangle.
+  const outline = element.type === 'star' ? undefined : outlineOf(element.type, width, height);
+  const exit = outline ? rayExit([width / 2, height / 2], NORMALS[anchor], outline) : undefined;
+  if (exit) {
+    return [x + exit[0], y + exit[1]];
+  }
+
   const points: Record<Anchor, Point> = {
     n: [x + width / 2, y],
     e: [x + width, y + height / 2],

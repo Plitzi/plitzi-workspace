@@ -1,5 +1,6 @@
 import type { Box, Camera, Handle } from './geometry.ts';
-import type { BoardElement, Fill, Point, Stroke, StrokeWidth } from '../../board/model.ts';
+import type { StyleChoice } from './styling.ts';
+import type { BoardElement, Fill, Point, Reply, Stroke, StrokeWidth, StyleField } from '../../board/model.ts';
 
 export const TOOLS = [
   'select',
@@ -7,11 +8,20 @@ export const TOOLS = [
   'rectangle',
   'ellipse',
   'diamond',
+  'triangle',
+  'hexagon',
+  'cylinder',
+  'star',
   'arrow',
   'line',
   'freehand',
   'text',
   'sticky',
+  'card',
+  'frame',
+  /** A frame made a column as it is drawn: a kanban lane. */
+  'column',
+  'comment',
   'eraser',
   'laser'
 ] as const;
@@ -36,6 +46,14 @@ export type ControllerProps = {
   assetBase: string;
   /** The id this visitor keeps, which their votes are counted by. */
   voter: string;
+  /** This person's name: what a note or a card they write says under it. */
+  author: string;
+  /** Whether who wrote each note and card is shown — this person's choice, for their own screen. */
+  authors: boolean;
+  /** Whether the board makes its small sounds — this person's choice too. */
+  sounds: boolean;
+  /** The rest of the style new elements are drawn with — dash, sloppiness, edges, fill style, opacity. */
+  extras: StyleChoice;
 };
 
 /** Where the text being typed sits on screen, for the field the component lays over the canvas. */
@@ -52,6 +70,8 @@ export type TextEditor = {
   padding: number;
   /** A sticky wraps at its width; a text grows with what is typed. */
   wraps: boolean;
+  /** A comment's: typed into a composer that is posted on purpose, not kept when the field is left. */
+  composer: boolean;
   /** A shape's label is centred in it, both ways; everything else starts at the top left. */
   align: 'left' | 'center';
   paddingTop: number;
@@ -78,7 +98,7 @@ export type PointerMessage = {
 };
 
 /** What the selection can be restyled with: the style panel shows these, and only these. */
-export type Stylable = { stroke: boolean; fill: boolean; strokeWidth: boolean };
+export type Stylable = Record<StyleField, boolean>;
 
 export type ControllerEvent =
   | { type: 'commit'; ops: BoardElement[] }
@@ -90,10 +110,15 @@ export type ControllerEvent =
       grouped: boolean;
       /** Everything selected is ONE group — grouping it again would change nothing. */
       oneGroup: boolean;
-      stroke: string;
-      fill: string;
-      strokeWidth: string;
+      /** Each field's value the whole selection shares — `''` where it disagrees. */
+      style: Record<StyleField, string>;
       stylable: Stylable;
+      /** The selection is one frame — what may be made a column, or a free area again — and whether it is a column. */
+      frame: boolean;
+      column: boolean;
+      /** The selection is one card or comment — what can be ticked off — and whether it is. */
+      task: boolean;
+      done: boolean;
     }
   | { type: 'selectionBox'; box: ScreenBox | undefined }
   | { type: 'view'; zoom: number }
@@ -112,19 +137,48 @@ export type ControllerEvent =
   /** Everyone asked to come and look where this person looks. */
   | { type: 'summon'; view: View }
   /** Somebody brought everyone to their view — this page included. */
-  | { type: 'summoned'; name: string };
+  | { type: 'summoned'; name: string }
+  /** A comment selected — its thread, and where on screen it opens — or none any more. */
+  | { type: 'thread'; thread: Thread | undefined }
+  /** The board's frames changed — what the page lists to go to, in the order a presentation shows them. */
+  | { type: 'frames'; frames: FrameEntry[] }
+  /** This person presents: the others are shown each frame they go to — and told when it is over (`index: -1`). */
+  | { type: 'present'; message: PresentMessage }
+  /** A presentation this page is in — its own, or somebody else's — moved on or ended (`presenter: ''`). */
+  | { type: 'presentation'; presenter: string; index: number; total: number; title: string; mine: boolean };
+
+/** A comment's thread as the page shows it, beside its pin. */
+export type Thread = {
+  id: string;
+  author: string;
+  text: string;
+  done: boolean;
+  replies: Reply[];
+  left: number;
+  top: number;
+};
+
+/** A frame as the page lists it. */
+export type FrameEntry = { id: string; title: string; count: number };
+
+/** What a presenter says to the room at each step: where to look, and where in the presentation that is. */
+export type PresentMessage = { view: View; index: number; total: number; title: string };
 
 export type Gesture =
   | { kind: 'pan'; start: Point; camera: Camera }
-  | { kind: 'move'; origin: Point; originals: BoardElement[] }
+  /**
+   * What is selected, and what rides along — the members of a frame being moved. `loose` are the ones that may land
+   * in another frame when let go: the selected things that are not frames.
+   */
+  | { kind: 'move'; origin: Point; originals: BoardElement[]; loose: string[] }
   | { kind: 'resize'; handle: Handle; anchor: Point; box: Box; originals: BoardElement[] }
   | { kind: 'marquee'; origin: Point; current: Point; base: Set<string> }
-  | { kind: 'box'; origin: Point; element: BoardElement }
+  | { kind: 'box'; origin: Point; element: BoardElement; column?: boolean }
   /**
    * A connector being drawn. `facing` is the shape it was started INSIDE: its anchor is not chosen yet — it is the
    * side facing wherever the other end is, and follows it until the pointer is let go.
    */
-  | { kind: 'linear'; origin: Point; element: BoardElement; facing?: string }
+  | { kind: 'linear'; origin: Point; element: BoardElement; facing?: string; quick?: boolean }
   | { kind: 'freehand'; element: BoardElement }
   | { kind: 'erase'; erased: Set<string> }
   /** One end of the selected connector, dragged to a new place — or to another element's anchor. */

@@ -9,6 +9,11 @@ export const SHAPE_TYPES = [
   'rectangle',
   'ellipse',
   'diamond',
+  'triangle',
+  'hexagon',
+  /** A database, as every diagram draws one. */
+  'cylinder',
+  'star',
   'arrow',
   'line',
   'freehand',
@@ -17,7 +22,16 @@ export const SHAPE_TYPES = [
   /** A pile of sticky notes on the board: anyone drags a fresh note off it, in its paper. */
   'stack',
   /** A picture someone pasted or dropped: the image itself is an asset the server keeps beside the board. */
-  'image'
+  'image',
+  /**
+   * A titled area that holds what is put in it: its members move with it, and — laid out as a column — it stacks them
+   * itself, which is a kanban column. Always drawn under everything else.
+   */
+  'frame',
+  /** A task: a line of text on a card, a colour strip, who wrote it, and whether it is done. */
+  'card',
+  /** Feedback pinned to a place: what someone thinks of what is there, who said it, and whether it was dealt with. */
+  'comment'
 ] as const;
 
 export type ShapeType = (typeof SHAPE_TYPES)[number];
@@ -32,11 +46,52 @@ export const FILLS = ['none', 'red', 'orange', 'yellow', 'green', 'blue', 'viole
 
 export const STROKE_WIDTHS = [1, 2, 4] as const;
 
+/** How an outline is drawn when it is not one solid line. */
+export const DASHES = ['dashed', 'dotted'] as const;
+
+/**
+ * How much a hand shows in a line — Excalidraw's "sloppiness": an architect's clean one, the artist's wobble (the
+ * default, and so never stored), a cartoonist's loose one.
+ */
+export const SLOPPINESS = ['architect', 'cartoonist'] as const;
+
+/**
+ * What the pen draws with, besides Pizarra's own ink (the default, never stored): a Japanese brush that swells and
+ * tapers, a fountain pen, a flat marker, a see-through highlighter, a grainy pencil, chalk, and a glowing neon tube.
+ */
+export const BRUSHES = ['brush', 'fountain', 'marker', 'highlighter', 'pencil', 'chalk', 'neon'] as const;
+
+/** A shape's corners, when they are not sharp. */
+export const EDGES = ['round'] as const;
+
+/** How a fill is drawn, when it is not the hatching every shape gets by default. */
+export const FILL_STYLES = ['cross', 'solid'] as const;
+
+/** How opaque an element is, in percent: 100 is never stored. */
+export const OPACITIES = [10, 20, 30, 40, 50, 60, 70, 80, 90] as const;
+
+/** How a frame places what is put in it: a column arranges its members top to bottom, the way a kanban lane does. */
+export const LAYOUTS = ['column'] as const;
+
 export type Stroke = (typeof STROKES)[number];
 
 export type Fill = (typeof FILLS)[number];
 
 export type StrokeWidth = (typeof STROKE_WIDTHS)[number];
+
+export type Dash = (typeof DASHES)[number];
+
+export type Sloppiness = (typeof SLOPPINESS)[number];
+
+export type Brush = (typeof BRUSHES)[number];
+
+export type Edges = (typeof EDGES)[number];
+
+export type FillStyle = (typeof FILL_STYLES)[number];
+
+export type Opacity = (typeof OPACITIES)[number];
+
+export type Layout = (typeof LAYOUTS)[number];
 
 export type Point = [number, number];
 
@@ -47,6 +102,9 @@ export type Point = [number, number];
 export const ANCHORS = ['n', 'e', 's', 'w'] as const;
 
 export type Anchor = (typeof ANCHORS)[number];
+
+/** An answer in a comment's thread: who said it, what, and when. */
+export type Reply = { author: string; text: string; at: number };
 
 /** One end of a line, fixed to another element: it follows that element wherever it is moved or resized. */
 export type Binding = { id: string; anchor: Anchor };
@@ -84,6 +142,36 @@ export type BoardElement = {
    * inside it. One level: grouping groups makes one group of everything.
    */
   group?: string;
+  /** The frame it was put in: it moves with the frame, and a column frame decides where it sits. */
+  parent?: string;
+  /** A frame's: how it places its members. Absent, they stay wherever they are put. */
+  layout?: Layout;
+  /** Who wrote a note or a card — a name, as the room knows them. */
+  author?: string;
+  /** A card's: the task is done. A comment's: it was dealt with. */
+  done?: boolean;
+  /**
+   * A comment's thread, oldest first. Written by the server alone (`board.reply`), as votes are: a commit carries the
+   * comment, and the replies on it are whatever the server holds — so two people answering at once are both kept.
+   */
+  replies?: Reply[];
+  /** An outline drawn in dashes or dots rather than one line. */
+  dash?: Dash;
+  /** How much of a hand shows in its lines — the artist's when absent. */
+  sloppiness?: Sloppiness;
+  /** A pen stroke's brush — Pizarra's own ink when absent. */
+  brush?: Brush;
+  /** Round corners — sharp when absent. */
+  edges?: Edges;
+  /** Cross-hatched or solid — hatched when absent. */
+  fillStyle?: FillStyle;
+  /** See-through, in percent — opaque when absent. */
+  opacity?: Opacity;
+  /**
+   * A text's size, in board units, once it has been resized by its handles — what its stroke width says (S, M, L)
+   * when absent. Only a text has one: every other element's words are sized by what holds them.
+   */
+  fontSize?: number;
   /**
    * Last write wins, per element: a higher `version` replaces a lower one, and two edits of the same version — two
    * people moving the same shape in the same instant — are settled by the lower `nonce`, the same answer everywhere.
@@ -106,8 +194,17 @@ export const LIMITS = {
   /** Elements one board may hold, the removed ones included. */
   elements: 5000,
   /** Votes one element may carry. */
-  votes: 500
+  votes: 500,
+  /** An author's name: what a cursor's label shows, no longer. */
+  author: 32,
+  /** Replies one comment may carry. */
+  replies: 100,
+  /** A text's size, from the smallest still read to a headline across a board. */
+  fontSize: { min: 8, max: 480 }
 } as const;
+
+const isFontSize = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= LIMITS.fontSize.min && value <= LIMITS.fontSize.max;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -134,16 +231,16 @@ const isPoint = (value: unknown): value is Point =>
 
 const LINEAR = new Set<ShapeType>(['arrow', 'line', 'freehand']);
 
-const WITH_TEXT = new Set<ShapeType>(['text', 'sticky']);
+const WITH_TEXT = new Set<ShapeType>(['text', 'sticky', 'card', 'frame', 'comment']);
 
-const LABELLED = new Set<ShapeType>(['rectangle', 'ellipse', 'diamond']);
+const LABELLED = new Set<ShapeType>(['rectangle', 'ellipse', 'diamond', 'triangle', 'hexagon', 'cylinder', 'star']);
 
 /** The lines that can be fixed at their ends. A pen stroke is drawn, not connected. */
 const CONNECTORS = new Set<ShapeType>(['arrow', 'line']);
 
 export const isLinear = (type: ShapeType): boolean => LINEAR.has(type);
 
-/** Whether text IS the element — a text, a sticky — rather than something written on it. */
+/** Whether text IS the element — a text, a sticky, a card, a frame's title — rather than something written on it. */
 export const holdsText = (type: ShapeType): boolean => WITH_TEXT.has(type);
 
 /** Whether a label can be written in its middle. */
@@ -151,29 +248,81 @@ export const takesLabel = (type: ShapeType): boolean => LABELLED.has(type);
 
 export const isConnector = (type: ShapeType): boolean => CONNECTORS.has(type);
 
-/** Whether a connector may be fixed to it: anything with a box — never another line. */
-export const isConnectable = (type: ShapeType): boolean => !LINEAR.has(type);
+/**
+ * Whether a connector may be fixed to it: anything with a box — never another line, and never a frame, which is
+ * where things are put rather than something to point at.
+ */
+export const isConnectable = (type: ShapeType): boolean => !LINEAR.has(type) && type !== 'frame' && type !== 'comment';
 
-export type StyleField = 'stroke' | 'fill' | 'strokeWidth';
+/** Whether it is written by someone, whose name it keeps: a note, a card, a comment. */
+export const isAuthored = (type: ShapeType): boolean => type === 'sticky' || type === 'card' || type === 'comment';
+
+/** Whether it can be ticked off: a card done, a comment resolved. */
+export const isTask = (type: ShapeType): boolean => type === 'card' || type === 'comment';
+
+/** Whether it can be put in a frame: anything but another frame, and the lines, which run between things. */
+export const fitsInFrame = (type: ShapeType): boolean => type !== 'frame' && !LINEAR.has(type);
+
+export type StyleField =
+  'stroke' | 'fill' | 'strokeWidth' | 'dash' | 'sloppiness' | 'edges' | 'fillStyle' | 'opacity' | 'brush';
 
 /**
  * What each kind of element is restyled with — what the style panel offers for it, and all a restyle changes. A text's
  * stroke is its colour and its width its size; a note is its paper; a picture is what it is.
  */
+const SHAPE_STYLES: readonly StyleField[] = [
+  'stroke',
+  'fill',
+  'fillStyle',
+  'strokeWidth',
+  'dash',
+  'sloppiness',
+  'opacity'
+];
+
+/** A shape with corners, which may be rounded. */
+const CORNERED: readonly StyleField[] = [...SHAPE_STYLES, 'edges'];
+
+const LINE_STYLES: readonly StyleField[] = ['stroke', 'strokeWidth', 'dash', 'sloppiness', 'opacity'];
+
 const STYLES: Record<ShapeType, readonly StyleField[]> = {
-  rectangle: ['stroke', 'fill', 'strokeWidth'],
-  ellipse: ['stroke', 'fill', 'strokeWidth'],
-  diamond: ['stroke', 'fill', 'strokeWidth'],
-  arrow: ['stroke', 'strokeWidth'],
-  line: ['stroke', 'strokeWidth'],
-  freehand: ['stroke', 'strokeWidth'],
-  text: ['stroke', 'strokeWidth'],
-  sticky: ['fill'],
+  rectangle: CORNERED,
+  ellipse: SHAPE_STYLES,
+  diamond: CORNERED,
+  triangle: CORNERED,
+  hexagon: CORNERED,
+  cylinder: SHAPE_STYLES,
+  star: SHAPE_STYLES,
+  arrow: LINE_STYLES,
+  line: LINE_STYLES,
+  freehand: ['stroke', 'strokeWidth', 'brush', 'opacity'],
+  text: ['stroke', 'strokeWidth', 'opacity'],
+  sticky: ['fill', 'opacity'],
   stack: ['fill'],
-  image: []
+  image: ['opacity'],
+  // A frame's tint, and a card's strip.
+  frame: ['fill'],
+  card: ['fill', 'opacity'],
+  comment: []
 };
 
 export const takesStyle = (type: ShapeType, field: StyleField): boolean => STYLES[type].includes(field);
+
+/**
+ * The order elements are drawn in, bottom to top: frames first, whatever their `z` — a frame is where things are put,
+ * and one drawn later would cover what is in it — then everything else by `z`.
+ */
+export const byStacking = (a: BoardElement, b: BoardElement): number =>
+  Number(a.type !== 'frame') - Number(b.type !== 'frame') || a.z - b.z || (a.id < b.id ? -1 : 1);
+
+const isReply = (value: unknown): value is Reply =>
+  isRecord(value) &&
+  typeof value.author === 'string' &&
+  value.author.length <= LIMITS.author &&
+  typeof value.text === 'string' &&
+  value.text.length <= LIMITS.text &&
+  typeof value.at === 'number' &&
+  Number.isFinite(value.at);
 
 const parseBinding = (value: unknown): Binding | undefined | false => {
   if (value === undefined) {
@@ -213,6 +362,18 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     seed,
     z,
     group,
+    parent,
+    layout,
+    author,
+    done,
+    dash,
+    sloppiness,
+    brush,
+    replies,
+    edges,
+    fillStyle,
+    opacity,
+    fontSize,
     version,
     nonce,
     deleted
@@ -233,6 +394,19 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     !Number.isInteger(nonce) ||
     typeof deleted !== 'boolean' ||
     (group !== undefined && !isElementId(group)) ||
+    (parent !== undefined && (!isElementId(parent) || parent === id || !fitsInFrame(type))) ||
+    (layout !== undefined && (type !== 'frame' || !isOneOf(LAYOUTS, layout))) ||
+    (author !== undefined && (typeof author !== 'string' || !isAuthored(type))) ||
+    (done !== undefined && (!isTask(type) || typeof done !== 'boolean')) ||
+    (replies !== undefined &&
+      (type !== 'comment' || !Array.isArray(replies) || replies.length > LIMITS.replies || !replies.every(isReply))) ||
+    (dash !== undefined && (!isOneOf(DASHES, dash) || !takesStyle(type, 'dash'))) ||
+    (sloppiness !== undefined && (!isOneOf(SLOPPINESS, sloppiness) || !takesStyle(type, 'sloppiness'))) ||
+    (edges !== undefined && (!isOneOf(EDGES, edges) || !takesStyle(type, 'edges'))) ||
+    (brush !== undefined && (!isOneOf(BRUSHES, brush) || !takesStyle(type, 'brush'))) ||
+    (fillStyle !== undefined && (!isOneOf(FILL_STYLES, fillStyle) || !takesStyle(type, 'fillStyle'))) ||
+    (opacity !== undefined && (!isOneOf(OPACITIES, opacity) || !takesStyle(type, 'opacity'))) ||
+    (fontSize !== undefined && (type !== 'text' || !isFontSize(fontSize))) ||
     (type === 'image' && !isAssetId(asset)) ||
     (votes !== undefined && !(Array.isArray(votes) && votes.length <= LIMITS.votes && votes.every(isVoterId)))
   ) {
@@ -255,6 +429,20 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     nonce: Number(nonce),
     deleted,
     ...(group === undefined ? {} : { group }),
+    ...(parent === undefined ? {} : { parent }),
+    ...(layout === undefined ? {} : { layout }),
+    ...(typeof author === 'string' && author.trim() ? { author: author.trim().slice(0, LIMITS.author) } : {}),
+    ...(done === true ? { done } : {}),
+    ...(dash === undefined ? {} : { dash }),
+    ...(sloppiness === undefined ? {} : { sloppiness }),
+    ...(edges === undefined ? {} : { edges }),
+    ...(brush === undefined ? {} : { brush }),
+    ...(Array.isArray(replies) && replies.length
+      ? { replies: replies.filter(isReply).map(({ author, text, at }) => ({ author, text, at })) }
+      : {}),
+    ...(fillStyle === undefined ? {} : { fillStyle }),
+    ...(opacity === undefined ? {} : { opacity }),
+    ...(isFontSize(fontSize) ? { fontSize: Math.round(fontSize) } : {}),
     ...(type === 'image' && isAssetId(asset) ? { asset } : {}),
     ...(Array.isArray(votes) && votes.length ? { votes: [...new Set(votes.filter(isVoterId))] } : {})
   };
@@ -317,6 +505,12 @@ export const mergeElements = (
 
 /** Board ids are what a link carries: short, unambiguous when read aloud, and not guessable in bulk. */
 export const isBoardId = (value: unknown): value is string => typeof value === 'string' && /^[a-z0-9]{10}$/.test(value);
+
+/** How long a board lasts, in hours — `0` is for good. */
+export const LIFETIMES = [0, 1, 5, 24, 168] as const;
+
+/** What a board made temporary lasts when nobody said how long: a day — a session, and nothing left behind. */
+export const DEFAULT_LIFETIME = 24;
 
 export const TITLE_LIMIT = 80;
 

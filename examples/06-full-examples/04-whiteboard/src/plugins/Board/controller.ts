@@ -1,22 +1,29 @@
-import { FILLS, isLinear, parseElement, STROKES, STROKE_WIDTHS, takesStyle } from '../../board/model.ts';
-import { isReaction } from '../../board/reactions.ts';
+import { byStacking, fitsInFrame, isLinear, isTask, parseElement } from '../../board/model.ts';
+import { isReaction, isStamp, STAMP_SIZE } from '../../board/reactions.ts';
 import { createCarry } from './carry.ts';
+import { cloneElements } from './clone.ts';
 import { releasedFrom } from './connectors.ts';
-import { createCore } from './core.ts';
+import { membersOf, readingOrder } from './containers.ts';
+import { createCore, DEFAULT_BOX } from './core.ts';
 import { createEffects } from './effects.ts';
 import { exportPng } from './exporter.ts';
-import { toScreen, zoomAt } from './geometry.ts';
+import { boundsOf, fitCamera, toScreen, unionOf, zoomAt } from './geometry.ts';
 import { createInput } from './input.ts';
+import { createMinimap } from './minimap.ts';
 import { readPalette } from './palette.ts';
 import { createPicking } from './picking.ts';
 import { createPictures } from './pictures.ts';
 import { createPointer } from './pointer.ts';
+import { createQuick } from './quick.ts';
 import { createPainter } from './render.ts';
+import { isSound, REACTION_SOUNDS } from './sounds.ts';
+import { restyled } from './styling.ts';
 import { isView } from './remotes.ts';
-import { byZ, isDefined, isOneOf, isPoint, newId } from './values.ts';
+import { isDefined, isPoint, newId } from './values.ts';
 
-import type { ControllerEvent, ControllerProps } from './types.ts';
-import type { Binding, BoardElement, Point } from '../../board/model.ts';
+import type { StyleChoice } from './styling.ts';
+import type { ControllerEvent, ControllerProps, FrameEntry } from './types.ts';
+import type { BoardElement, Point } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 
 export { TOOLS } from './types.ts';
@@ -24,10 +31,13 @@ export type {
   BoardMode,
   ControllerEvent,
   ControllerProps,
+  FrameEntry,
+  PresentMessage,
   PointerMessage,
   ScreenBox,
   Stylable,
   TextEditor,
+  Thread,
   Tool,
   View
 } from './types.ts';
@@ -50,9 +60,103 @@ export const createBoardController = (
   const pictures = createPictures(() => core.invalidate());
   const picking = createPicking(core);
   const carry = createCarry(core);
-  const pointer = createPointer(core, picking, carry, effects);
-  const input = createInput(core, pictures, pointer);
-  core.paintWith(createPainter(core, effects, pictures).paint);
+  const quick = createQuick(core);
+  const pointer = createPointer(core, picking, carry, effects, quick);
+  /** Elements with what rides along with them: the members of any frame among them. */
+  const withRiders = (chosen: readonly BoardElement[]): BoardElement[] => {
+    const ids = new Set(chosen.map(element => element.id));
+
+    return [
+      ...chosen,
+      ...core.displayed().filter(element => element.parent && ids.has(element.parent) && !ids.has(element.id))
+    ];
+  };
+
+  /** The selection removed — and the arrows fixed to it let go where they are drawn, not removed with it. */
+  const removeSelection = (): void => {
+    const removed = core.selected();
+    if (removed.length) {
+      sounds.play('remove');
+    }
+
+    core.commit([
+      ...removed.map(element => ({ ...element, deleted: true })),
+      ...releasedFrom(core.displayed(), new Set(removed.map(element => element.id)))
+    ]);
+    core.setSelection([]);
+  };
+
+  const minimap = createMinimap(core);
+  const { sounds } = core;
+
+  /**
+   * What the others did that is worth hearing, among what the server just confirmed: a comment left, an answer, a
+   * vote, a task ticked off. This page's own — already heard as it happened — is told apart by its pending edit, its
+   * vote, its name on the answer.
+   */
+  const reviewSounds = (incoming: readonly BoardElement[]): void => {
+    for (const element of incoming) {
+      const known = scene.element(element.id);
+      const mine = known !== undefined && known.version === element.version && known.nonce === element.nonce;
+      if (mine) {
+        continue;
+      }
+
+      const replies = element.replies ?? [];
+      const votes = element.votes ?? [];
+      if (!known && element.type === 'comment' && !element.deleted) {
+        sounds.play('comment');
+      } else if (
+        known &&
+        replies.length > (known.replies?.length ?? 0) &&
+        replies.at(-1)?.author !== state.props.author
+      ) {
+        sounds.play('reply');
+      } else if (known && votes.length > (known.votes?.length ?? 0) && !votes.includes(state.props.voter)) {
+        sounds.play('vote');
+      } else if (known && element.done && !known.done) {
+        sounds.play(element.type === 'comment' ? 'resolve' : 'done');
+      }
+    }
+  };
+  /** Until when a board just opened stays quiet about the people it finds there. */
+  let quietUntil = 0;
+  /** When each name was last greeted with a chime. */
+  const chimedFor = new Map<string, number>();
+  const painter = createPainter(core, effects, pictures);
+  let reportedFrames = '';
+  /** The board's frames, in the order they are gone through — what the page lists and a presentation shows. */
+  const framesInOrder = (): BoardElement[] => readingOrder(scene.visible().filter(element => element.type === 'frame'));
+  const reportFrames = (): void => {
+    const visible = scene.visible();
+    const frames: FrameEntry[] = framesInOrder().map(frame => ({
+      id: frame.id,
+      title: frame.text?.trim() || 'Frame',
+      count: membersOf(visible, frame.id).length
+    }));
+    const key = JSON.stringify(frames);
+    if (key !== reportedFrames) {
+      reportedFrames = key;
+      emit({ type: 'frames', frames });
+    }
+  };
+  core.paintWith(() => {
+    painter.paint();
+    minimap.paint();
+    reportFrames();
+  });
+  const input = createInput(core, pictures, pointer, {
+    copy: () => {
+      const copied = withRiders(core.selected());
+      if (copied.length) {
+        sounds.play('copy');
+      }
+
+      return copied;
+    },
+    paste: (elements, at) => paste(elements, at),
+    remove: () => removeSelection()
+  });
 
   canvas.addEventListener('pointerdown', pointer.onPointerDown);
   canvas.addEventListener('pointermove', pointer.onPointerMove);
@@ -66,6 +170,8 @@ export const createBoardController = (
   window.addEventListener('paste', input.onPaste);
   window.addEventListener('keydown', input.onKeyDown);
   window.addEventListener('keyup', input.onKeyUp);
+  window.addEventListener('copy', input.onCopy);
+  window.addEventListener('cut', input.onCut);
 
   const resizeObserver = new ResizeObserver(() => {
     const rect = host.getBoundingClientRect();
@@ -87,11 +193,16 @@ export const createBoardController = (
   // ── What the page asks of it ─────────────────────────────────────────────────────────────────────────────────────
 
   /** Only on a board that can change, and while nobody types: ⌘Z in a text field is the field's own undo. */
-  const whenEditable = (action: () => void) => (): void => {
-    if (core.editable() && !state.editing) {
-      action();
-    }
-  };
+  /** Where the last stamp was aimed and where it ended: the next one, aimed at the same place, goes beside it. */
+  let stamping: { aim: Point; right: number } | undefined;
+
+  const whenEditable =
+    <Args extends unknown[]>(action: (...args: Args) => void) =>
+    (...args: Args): void => {
+      if (core.editable() && !state.editing) {
+        action(...args);
+      }
+    };
 
   const zoomBy = (factor: number): void => {
     core.stopFollowing();
@@ -99,80 +210,195 @@ export const createBoardController = (
   };
 
   /** The selection restyled — each element with only what it takes: a note keeps no outline, a picture nothing. */
-  const restyle = ({ stroke, fill, strokeWidth }: { stroke?: unknown; fill?: unknown; strokeWidth?: unknown }) => {
+  const restyle = (choice: StyleChoice): void => {
     if (!core.editable()) {
       return;
     }
 
-    const width = Number(strokeWidth);
     const chosen = core.selected();
     const changes = chosen.map(element => {
-      let next = element;
-      if (isOneOf(STROKES, stroke) && takesStyle(element.type, 'stroke')) {
-        next = { ...next, stroke };
-      }
+      const next = restyled(element, choice);
 
-      // Paper is never nothing: a note or a pile keeps its colour when "no fill" is picked for a mixed selection.
-      const paper = element.type === 'sticky' || element.type === 'stack';
-      if (isOneOf(FILLS, fill) && takesStyle(element.type, 'fill') && !(paper && fill === 'none')) {
-        next = { ...next, fill };
-      }
-
-      if (isOneOf(STROKE_WIDTHS, width) && takesStyle(element.type, 'strokeWidth')) {
-        next = core.measured({ ...next, strokeWidth: width });
-      }
-
-      return next;
+      return next.strokeWidth === element.strokeWidth ? next : core.measured(next);
     });
-    core.commit(changes.filter((next, index) => next !== chosen[index]));
+    const changed = changes.filter((next, index) => JSON.stringify(next) !== JSON.stringify(chosen[index]));
+    if (changed.length) {
+      sounds.play('style');
+    }
+
+    core.commit(changed);
     core.reportSelection();
   };
 
   const restack = (toFront: boolean): void => {
-    const chosen = core.selected().sort(byZ);
+    const chosen = core.selected().sort(byStacking);
     const start = toFront ? scene.topZ + 1 : scene.bottomZ - chosen.length;
+    sounds.play('layer');
     core.commit(chosen.map((element, index) => ({ ...element, z: start + index })));
   };
 
-  const duplicate = (): void => {
-    const top = scene.topZ;
-    // A copy of a group is a group of its own: the copies must not be picked up with the originals.
-    const groups = new Map<string, string>();
-    const chosen = core.selected().sort(byZ);
-    // A connector copied with what it connects connects the copies; copied alone, it lets go.
-    const ids = new Map(chosen.map(element => [element.id, newId()]));
-    const rebind = (binding: Binding | undefined): Binding | undefined => {
-      const id = binding ? ids.get(binding.id) : undefined;
+  /**
+   * One step up or down the stack: the selection swaps places with the next thing it overlaps that way — the layer
+   * it is actually over or under — rather than with something across the board.
+   */
+  const shift = (up: boolean): void => {
+    const chosen = core.selected();
+    const ids = new Set(chosen.map(element => element.id));
+    const box = unionOf(chosen.map(boundsOf));
+    if (!box) {
+      return;
+    }
 
-      return binding && id ? { ...binding, id } : undefined;
+    const overlapping = (other: BoardElement): boolean => {
+      const b = boundsOf(other);
+
+      return b.x < box.x + box.width && b.x + b.width > box.x && b.y < box.y + box.height && b.y + b.height > box.y;
     };
-    const copies = chosen.map((element, index) => {
-      const group = element.group === undefined ? undefined : (groups.get(element.group) ?? newId());
-      if (element.group !== undefined && group !== undefined) {
-        groups.set(element.group, group);
+    const [top, bottom] = [
+      Math.max(...chosen.map(element => element.z)),
+      Math.min(...chosen.map(element => element.z))
+    ];
+    const others = core
+      .displayed()
+      .filter(element => !ids.has(element.id) && element.type !== 'frame' && overlapping(element));
+    const neighbour = up
+      ? others.filter(element => element.z > top).sort(byStacking)[0]
+      : others
+          .filter(element => element.z < bottom)
+          .sort(byStacking)
+          .at(-1);
+    if (!neighbour) {
+      return;
+    }
+
+    const offset = up ? neighbour.z - bottom + 1 : neighbour.z - top - 1;
+    sounds.play('layer');
+    core.commit(chosen.map(element => ({ ...element, z: element.z + offset })));
+  };
+
+  /** The selection copied beside itself — a frame with what is in it. */
+  const duplicate = (): void => {
+    const chosen = core.selected();
+    const copies = cloneElements(withRiders(chosen), { dx: 16, dy: 16, topZ: scene.topZ, keepFrame: true });
+    sounds.play('place');
+    core.commit(copies);
+    core.setSelection(copies.slice(0, chosen.length).map(copy => copy.id));
+  };
+
+  /** Elements from the clipboard — this board's or another's — centred where this person points, all of them new. */
+  const paste = (elements: readonly BoardElement[], at: Point | undefined): void => {
+    const box = unionOf(elements.map(boundsOf));
+    if (!box || !core.editable()) {
+      return;
+    }
+
+    const [cx, cy] = at ?? core.aim();
+    const copies = cloneElements(elements, {
+      dx: cx - (box.x + box.width / 2),
+      dy: cy - (box.y + box.height / 2),
+      topZ: scene.topZ,
+      keepFrame: false
+    });
+    sounds.play('place');
+    core.commit(copies);
+    core.setSelection(copies.map(copy => copy.id));
+  };
+
+  /** What is selected, in a tidy grid — reading order kept, each in the middle of its cell. */
+  const tidy = (): void => {
+    const chosen = core.selected().filter(element => fitsInFrame(element.type));
+    if (chosen.length < 2) {
+      return;
+    }
+
+    const cellWidth = Math.max(...chosen.map(element => element.width));
+    const cellHeight = Math.max(...chosen.map(element => element.height));
+    const columns = Math.ceil(Math.sqrt(chosen.length));
+    const [left, top] = [Math.min(...chosen.map(element => element.x)), Math.min(...chosen.map(element => element.y))];
+    sounds.play('tidy');
+    const ordered = [...chosen].sort(
+      (a, b) => Math.round((a.y - top) / cellHeight) - Math.round((b.y - top) / cellHeight) || a.x - b.x
+    );
+    core.commit(
+      ordered.map((element, index) => ({
+        ...element,
+        x: left + (index % columns) * (cellWidth + 24) + (cellWidth - element.width) / 2,
+        y: top + Math.floor(index / columns) * (cellHeight + 24) + (cellHeight - element.height) / 2
+      }))
+    );
+  };
+
+  /** A frame, whole in view — eased there, so where it is on the board is seen on the way. */
+  const showFrame = (frame: BoardElement): void => {
+    core.stopFollowing();
+    core.glideTo(fitCamera(boundsOf(frame), state.size.width, state.size.height, 56));
+  };
+
+  /** Where this person is in the presentation they give — `undefined` while they give none. */
+  let presenting: number | undefined;
+
+  const presentAt = (index: number): void => {
+    const frames = framesInOrder();
+    const frame = frames[index] as BoardElement | undefined;
+    if (!frame) {
+      return;
+    }
+
+    sounds.play(presenting === undefined ? 'presentStart' : 'present');
+    presenting = index;
+    showFrame(frame);
+    const title = frame.text?.trim() || 'Frame';
+    emit({
+      type: 'present',
+      message: { view: core.viewOf(boundsOf(frame)), index, total: frames.length, title }
+    });
+    emit({ type: 'presentation', presenter: 'You', index, total: frames.length, title, mine: true });
+  };
+
+  const stopPresenting = (): void => {
+    if (presenting === undefined) {
+      return;
+    }
+
+    sounds.play('presentEnd');
+    presenting = undefined;
+    emit({ type: 'present', message: { view: core.viewOf(core.viewport()), index: -1, total: 0, title: '' } });
+    emit({ type: 'presentation', presenter: '', index: -1, total: 0, title: '', mine: true });
+  };
+
+  /** An arrow key: the next or previous frame while presenting; otherwise the selection nudged — ten with Shift. */
+  const step = ({ direction, far }: { direction?: unknown; far?: unknown }): void => {
+    if (presenting !== undefined) {
+      if (direction === 'right' || direction === 'down') {
+        presentAt(Math.min(presenting + 1, framesInOrder().length - 1));
+      } else if (direction === 'left' || direction === 'up') {
+        presentAt(Math.max(presenting - 1, 0));
       }
 
-      const { start: _start, end: _end, ...rest } = element;
-      const [start, end] = [rebind(element.start), rebind(element.end)];
+      return;
+    }
 
-      return {
-        ...rest,
-        id: ids.get(element.id) ?? newId(),
-        x: element.x + 16,
-        y: element.y + 16,
-        z: top + 1 + index,
-        version: 0,
-        ...(group === undefined ? {} : { group }),
-        ...(start ? { start } : {}),
-        ...(end ? { end } : {})
-      };
-    });
-    core.commit(copies);
-    core.setSelection(copies.map(element => element.id));
+    const distance = far === true || far === 'true' ? 10 : 1;
+    const offsets: Record<string, [number, number]> = {
+      left: [-distance, 0],
+      right: [distance, 0],
+      up: [0, -distance],
+      down: [0, distance]
+    };
+    const offset = typeof direction === 'string' ? offsets[direction] : undefined;
+    const chosen = core.selected();
+    if (!offset || !chosen.length || !core.editable() || state.editing) {
+      return;
+    }
+
+    core.commit(
+      withRiders(chosen).map(element => ({ ...element, x: element.x + offset[0], y: element.y + offset[1] }))
+    );
   };
 
   return {
     setProps: (next: ControllerProps): void => {
+      sounds.setEnabled(next.sounds);
       const toolChanged = next.tool !== state.props.tool;
       const modeChanged = next.mode !== state.props.mode;
       state.props = next;
@@ -205,6 +431,10 @@ export const createBoardController = (
         if (state.size.width) {
           core.fit();
         }
+
+        // Nothing is selected on a board just shown — said, so the page's panels do not keep the last board's.
+        core.reportSelection();
+        quietUntil = Date.now() + 3000;
       } else {
         scene.confirm(parsed);
         if (!core.present()) {
@@ -221,7 +451,9 @@ export const createBoardController = (
         return;
       }
 
-      scene.confirm(elements.map(parseElement).filter(isDefined));
+      const parsed = elements.map(parseElement).filter(isDefined);
+      reviewSounds(parsed);
+      scene.confirm(parsed);
       core.invalidate();
     },
 
@@ -249,6 +481,25 @@ export const createBoardController = (
     },
 
     setMembers: (next: Map<string, Collaborator>): void => {
+      // Somebody new: a chime — but not for whoever was already here, whom the room names as a board opens, nor twice
+      // for one person, whose page may reconnect under a new name as it opens its channels.
+      const now = Date.now();
+      const arrived = [...next.entries()].filter(([from, member]) => {
+        const fresh = !state.members.has(from) && now - (chimedFor.get(member.name) ?? 0) > 10_000;
+        if (fresh) {
+          chimedFor.set(member.name, now);
+        }
+
+        return fresh;
+      });
+      if (now > quietUntil && arrived.length) {
+        sounds.play('join');
+      } else if (
+        [...state.members.values()].some(member => ![...next.values()].some(kept => kept.name === member.name))
+      ) {
+        sounds.play('leave');
+      }
+
       state.members = next;
       remotes.keepOnly(from => next.has(from));
       // Somebody followed who left: there is nothing to follow.
@@ -269,18 +520,19 @@ export const createBoardController = (
       }
     },
 
-    finishEditing: core.finishEditing,
-    undo: whenEditable(() => core.send(scene.undo())),
-    redo: whenEditable(() => core.send(scene.redo())),
-    deleteSelection: whenEditable(() => {
-      // The arrows fixed to what goes stay, let go where they are drawn.
-      const removed = core.selected();
-      core.commit([
-        ...removed.map(element => ({ ...element, deleted: true })),
-        ...releasedFrom(core.displayed(), new Set(removed.map(element => element.id)))
-      ]);
-      core.setSelection([]);
+    finishEditing: (): void => core.finishEditing(),
+    /** A comment posted — its button, or Enter. */
+    postEditing: (): void => core.finishEditing(true),
+    cancelEditing: core.cancelEditing,
+    undo: whenEditable(() => {
+      sounds.play('undo');
+      core.send(scene.undo());
     }),
+    redo: whenEditable(() => {
+      sounds.play('undo');
+      core.send(scene.redo());
+    }),
+    deleteSelection: whenEditable(removeSelection),
     selectAll: whenEditable(() => core.setSelection(scene.visible().map(element => element.id))),
     duplicate: whenEditable(duplicate),
     /** One group of everything selected — groups inside it included: there is one level. */
@@ -291,11 +543,13 @@ export const createBoardController = (
       }
 
       const group = newId();
+      sounds.play('group');
       state.insideGroup = undefined;
       core.commit(chosen.map(element => ({ ...element, group })));
       core.reportSelection();
     }),
     ungroup: whenEditable(() => {
+      sounds.play('undo');
       state.insideGroup = undefined;
       // `group` is left out of each element — present with `undefined` in it, it would still be sent as a key.
       core.commit(
@@ -322,6 +576,7 @@ export const createBoardController = (
       }
 
       state.following = from;
+      sounds.play('follow');
       emit({ type: 'follow', name: state.members.get(from)?.name ?? '' });
       const view = remotes.viewOf(from);
       if (view) {
@@ -338,6 +593,7 @@ export const createBoardController = (
 
       const point = core.aim();
       effects.react(emoji, point);
+      sounds.play(REACTION_SOUNDS[emoji]);
       emit({ type: 'reaction', reaction: { emoji, x: Math.round(point[0]), y: Math.round(point[1]) } });
       core.invalidate();
     },
@@ -350,6 +606,7 @@ export const createBoardController = (
       }
 
       pictures.place(element.id, asset);
+      sounds.play('place');
       draft.delete(element.id);
       core.commit([{ ...element, asset }]);
       core.setSelection([element.id]);
@@ -368,6 +625,7 @@ export const createBoardController = (
     vote: whenEditable(() => {
       const chosen = core.selected();
       if (chosen.length === 1 && !isLinear(chosen[0].type)) {
+        sounds.play('vote');
         emit({ type: 'vote', id: chosen[0].id });
       }
     }),
@@ -404,6 +662,7 @@ export const createBoardController = (
 
     /** Everyone on the board, brought to what this person is looking at. */
     summon: (): void => {
+      sounds.play('summon');
       emit({ type: 'summon', view: core.viewOf(core.viewport()) });
     },
 
@@ -415,6 +674,7 @@ export const createBoardController = (
 
       core.stopFollowing();
       core.showView(view);
+      sounds.play('summon');
       emit({ type: 'summoned', name: state.members.get(from)?.name ?? 'Someone' });
     },
 
@@ -430,9 +690,152 @@ export const createBoardController = (
       ) {
         const at: Point = [Number(data.x), Number(data.y)];
         effects.react(data.emoji, at);
+        sounds.play(REACTION_SOUNDS[data.emoji]);
         core.invalidate();
       }
     },
+    tidy: whenEditable(tidy),
+    /** A kanban board where this person points: three columns, ready for cards. */
+    /**
+     * A stamp put down where this person points: a text holding the emoji, centred there. Stamped again without the
+     * pointer moving, the next goes beside the last — a row of verdicts, not a pile of them.
+     */
+    stamp: whenEditable(({ emoji }: { emoji?: unknown }) => {
+      if (!isStamp(emoji)) {
+        return;
+      }
+
+      const [x, y] = core.aim();
+      const text = core.measured({ ...core.newElement('text', [x, y]), text: emoji, fontSize: STAMP_SIZE });
+      const again = stamping && stamping.aim[0] === x && stamping.aim[1] === y;
+      const left = again && stamping ? stamping.right + STAMP_SIZE * 0.15 : x - text.width / 2;
+      stamping = { aim: [x, y], right: left + text.width };
+      sounds.play('place');
+      core.commit([{ ...text, x: left, y: y - text.height / 2 }]);
+    }),
+    insertKanban: whenEditable(() => {
+      const [x, y] = core.aim();
+      const { width, height } = DEFAULT_BOX.column;
+      const columns = ['To do', 'Doing', 'Done'].map((title, index) => ({
+        ...core.newElement('frame', [x - (width * 3 + 40) / 2 + index * (width + 20), y - height / 2]),
+        width,
+        height,
+        text: title,
+        layout: 'column' as const,
+        z: scene.topZ + 1 + index
+      }));
+      sounds.play('place');
+      core.commit(columns);
+      core.setSelection(columns.map(column => column.id));
+    }),
+    /** Another column beside the one selected — the same size, its title ready to be typed. */
+    addColumn: whenEditable(() => {
+      const [lane] = core.selected();
+      if (core.selected().length !== 1 || lane.type !== 'frame') {
+        return;
+      }
+
+      const next = {
+        ...core.newElement('frame', [lane.x + lane.width + 20, lane.y]),
+        width: lane.width,
+        height: lane.height,
+        fill: lane.fill,
+        text: '',
+        layout: 'column' as const
+      };
+      // The frames to its right, in the same row, move along to make room — with everything in them.
+      const shift = lane.width + 20;
+      const beside = core
+        .displayed()
+        .filter(
+          frame =>
+            frame.type === 'frame' &&
+            frame.id !== lane.id &&
+            frame.x >= lane.x + lane.width &&
+            frame.y < lane.y + lane.height &&
+            frame.y + frame.height > lane.y
+        );
+      const moved = withRiders(beside).map(element => ({ ...element, x: element.x + shift }));
+      sounds.play('place');
+      core.commit([...moved, next]);
+      core.setSelection([next.id]);
+      core.startEditing(scene.element(next.id) ?? next);
+    }),
+    /** The one card selected ticked done — or the one comment resolved — or back. */
+    toggleDone: whenEditable(() => {
+      const chosen = core.selected();
+      const [task] = chosen;
+      if (chosen.length !== 1 || !isTask(task.type)) {
+        return;
+      }
+
+      const { done: _done, ...rest } = task;
+      core.commit([task.done ? rest : { ...rest, done: true }]);
+      sounds.play(task.done ? 'undone' : task.type === 'comment' ? 'resolve' : 'done');
+      core.reportSelection();
+    }),
+    /** The one frame selected, made a column — which lays out what is in it — or a free area again. */
+    toggleColumn: whenEditable(() => {
+      const [frame] = core.selected();
+      if (frame?.type !== 'frame' || core.selected().length !== 1) {
+        return;
+      }
+
+      const { layout: _layout, ...free } = frame;
+      sounds.play('snap');
+      core.commit([frame.layout === 'column' ? free : { ...free, layout: 'column' }]);
+      core.reportSelection();
+    }),
+    goToFrame: ({ id }: { id?: unknown }): void => {
+      const frame = typeof id === 'string' ? core.current().get(id) : undefined;
+      if (frame?.type === 'frame') {
+        showFrame(frame);
+      }
+    },
+    /** A presentation of the board's frames, from the first — or from the one selected — for everyone on the board. */
+    present: (): void => {
+      const frames = framesInOrder();
+      const [chosen] = core.selected();
+      const from = frames.findIndex(frame => frame.id === chosen?.id || frame.id === chosen?.parent);
+      core.setSelection([]);
+      presentAt(Math.max(from, 0));
+    },
+    stopPresenting,
+    step,
+    /** Somebody presents: this page shows where they are, and says who it is and how far along. */
+    remotePresent: (from: string, data: unknown): void => {
+      if (typeof data !== 'object' || data === null) {
+        return;
+      }
+
+      const index = 'index' in data && typeof data.index === 'number' ? data.index : -1;
+      const total = 'total' in data && typeof data.total === 'number' ? data.total : 0;
+      const title = 'title' in data && typeof data.title === 'string' ? data.title.slice(0, 80) : '';
+      const view = 'view' in data && isView(data.view) ? data.view : undefined;
+      const presenter = index < 0 ? '' : (state.members.get(from)?.name ?? 'Someone');
+      if (index < 0) {
+        sounds.play('presentEnd');
+      }
+
+      if (view && index >= 0) {
+        sounds.play(index === 0 ? 'presentStart' : 'present');
+        core.stopFollowing();
+        const [x, y, width, height] = view;
+        core.glideTo(fitCamera({ x, y, width, height }, state.size.width, state.size.height, 56));
+      }
+
+      emit({ type: 'presentation', presenter, index, total, title, mine: false });
+    },
+    /** A cue the page asks for — a line in the chat, the timer running out. */
+    chime: ({ sound }: { sound?: unknown }): void => {
+      if (isSound(sound)) {
+        sounds.play(sound);
+      }
+    },
+    /** The minimap's canvas, or none: drawn with the board, and a click or drag on it moves the view there. */
+    attachMinimap: minimap.attach,
+    bringForward: whenEditable(() => shift(true)),
+    sendBackward: whenEditable(() => shift(false)),
     bringToFront: whenEditable(() => restack(true)),
     sendToBack: whenEditable(() => restack(false)),
     applyStyle: restyle,
@@ -440,7 +843,10 @@ export const createBoardController = (
     zoomOut: (): void => zoomBy(1 / 1.25),
     zoomReset: (): void => core.setCamera(zoomAt(state.camera, state.size.width / 2, state.size.height / 2, 1)),
     zoomToFit: core.fit,
-    exportPng: (): void => exportPng(scene.visible(), state.palette, state.props.title),
+    exportPng: (): void => {
+      sounds.play('camera');
+      exportPng(scene.visible(), state.palette, state.props.title);
+    },
     rollback: (): void => {
       scene.rollback();
       draft.clear();
@@ -464,6 +870,10 @@ export const createBoardController = (
       window.removeEventListener('paste', input.onPaste);
       window.removeEventListener('keydown', input.onKeyDown);
       window.removeEventListener('keyup', input.onKeyUp);
+      window.removeEventListener('copy', input.onCopy);
+      window.removeEventListener('cut', input.onCut);
+      minimap.attach(undefined);
+      sounds.close();
     }
   };
 };

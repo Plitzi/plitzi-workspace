@@ -12,7 +12,7 @@ import {
 import { FILLS, STROKES, STROKE_WIDTHS } from '../board/model.ts';
 import boardDeclaration from '../plugins/Board/declaration.ts';
 import { BOARD_ID } from './ids.ts';
-import { BUTTON_RESET, FLOAT, caption } from './kit.ts';
+import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
 
 import type { Fill, Stroke, StrokeWidth } from '../board/model.ts';
 import type { CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
@@ -37,17 +37,29 @@ const panel = styles('stylePanel', {
     desktop: {
       ...FLOAT,
       position: 'absolute',
-      top: '70px',
-      left: '14px',
+      top: '50%',
+      left: '72px',
+      transform: 'translateY(-50%)',
       'z-index': '3',
       display: 'flex',
       'flex-direction': 'column',
       gap: '12px',
       padding: '12px',
       // Seven fills in one row: 7 × 24px swatches and their gaps, inside the padding.
-      width: '238px'
+      width: '238px',
+      'max-height': 'calc(100dvh - 150px)',
+      'overflow-y': 'auto',
+      'scrollbar-width': 'thin'
     },
-    mobile: { top: '64px', left: '10px', width: '230px', padding: '10px', gap: '10px' }
+    mobile: {
+      top: '64px',
+      left: '10px',
+      transform: 'none',
+      width: '230px',
+      padding: '10px',
+      gap: '10px',
+      'max-height': 'calc(100dvh - 160px)'
+    }
   }
 });
 
@@ -164,35 +176,189 @@ const FILL_LABELS: Record<Fill, string> = {
   violet: 'Violet'
 };
 
+/** A picture of what an option draws, made of CSS: a line in its dash, a square with its corners, a fill's pattern. */
+const preview = (name: string, css: CssProps) =>
+  styles(`stylePreview-${name}`, { display: 'block', 'pointer-events': 'none', ...css });
+
+const LINE: CssProps = { width: '22px', height: '0px', 'border-top-width': '2px', 'border-top-color': 'currentColor' };
+
+const SQUARE: CssProps = { width: '16px', height: '16px', border: '2px solid currentColor' };
+
+const HATCH = 'currentColor 0px, currentColor 1.5px, transparent 1.5px, transparent 5px';
+
+type Option = { value: string; label: string; mark: ElementSpec };
+
+const glyphMark = styles('styleGlyph', { 'font-size': '17px', 'line-height': '1', 'pointer-events': 'none' });
+
+const glyph = (content: string): ElementSpec => text({ content, class: glyphMark });
+
+/**
+ * A choice among a few, for one field: each button writes the page's state (what the next shape is drawn with) and
+ * restyles the selection (`applyStyle`) — the same two steps as a colour.
+ */
+const choices = (field: string, state: 'text' | 'number', options: readonly Option[]): ElementSpec =>
+  container({
+    class: row,
+    children: options.map(option =>
+      button({
+        id: `${field}-${option.value}`,
+        content: '',
+        title: option.label,
+        class: widthButton,
+        bind: [
+          variantFrom(widthButton, `computed.${field}`, {
+            template: `{{ source == '${option.value}' ? 'chosen' : '' }}`
+          })
+        ],
+        flows: [
+          [
+            onClick(),
+            setState({ key: field, type: state, value: state === 'number' ? Number(option.value) : option.value }),
+            boardAction('applyStyle', { [field]: option.value })
+          ]
+        ],
+        children: [option.mark]
+      })
+    )
+  });
+
+const DASH_OPTIONS: readonly Option[] = [
+  {
+    value: 'solid',
+    label: 'Solid',
+    mark: text({ content: '', class: preview('solid', { ...LINE, 'border-top-style': 'solid' }) })
+  },
+  {
+    value: 'dashed',
+    label: 'Dashed',
+    mark: text({ content: '', class: preview('dashed', { ...LINE, 'border-top-style': 'dashed' }) })
+  },
+  {
+    value: 'dotted',
+    label: 'Dotted',
+    mark: text({ content: '', class: preview('dotted', { ...LINE, 'border-top-style': 'dotted' }) })
+  }
+];
+
+const SLOPPINESS_OPTIONS: readonly Option[] = [
+  { value: 'architect', label: 'Architect — clean lines', mark: glyph('—') },
+  { value: 'artist', label: 'Artist — a hand’s wobble', mark: glyph('∼') },
+  { value: 'cartoonist', label: 'Cartoonist — loose and lively', mark: glyph('≈') }
+];
+
+const BRUSH_OPTIONS: readonly Option[] = [
+  { value: 'pizarra', label: 'Pizarra — our own ink', icon: 'fa-solid fa-pen' },
+  { value: 'brush', label: 'Japanese brush — swells and tapers', icon: 'fa-solid fa-paintbrush' },
+  { value: 'fountain', label: 'Fountain pen', icon: 'fa-solid fa-pen-fancy' },
+  { value: 'marker', label: 'Marker — even and bold', icon: 'fa-solid fa-marker' },
+  { value: 'highlighter', label: 'Highlighter — see-through', icon: 'fa-solid fa-highlighter' },
+  { value: 'pencil', label: 'Pencil — fine grain', icon: 'fa-solid fa-pencil' },
+  { value: 'chalk', label: 'Chalk — dusty', icon: 'fa-solid fa-chalkboard' },
+  { value: 'neon', label: 'Neon — it glows', icon: 'fa-solid fa-bolt' }
+].map(({ value, label, icon: name }) => ({ value, label, mark: icon(name) }));
+
+const EDGE_OPTIONS: readonly Option[] = [
+  { value: 'sharp', label: 'Sharp corners', mark: text({ content: '', class: preview('sharp', SQUARE) }) },
+  {
+    value: 'round',
+    label: 'Round corners',
+    mark: text({ content: '', class: preview('round', { ...SQUARE, 'border-radius': '6px' }) })
+  }
+];
+
+const FILL_STYLE_OPTIONS: readonly Option[] = [
+  {
+    value: 'hachure',
+    label: 'Hachure',
+    mark: text({
+      content: '',
+      class: preview('hachure', { ...SQUARE, 'background-image': `repeating-linear-gradient(135deg, ${HATCH})` })
+    })
+  },
+  {
+    value: 'cross',
+    label: 'Cross-hatch',
+    mark: text({
+      content: '',
+      class: preview('cross', {
+        ...SQUARE,
+        'background-image': `repeating-linear-gradient(135deg, ${HATCH}), repeating-linear-gradient(45deg, ${HATCH})`
+      })
+    })
+  },
+  {
+    value: 'solid',
+    label: 'Solid',
+    mark: text({ content: '', class: preview('solidFill', { ...SQUARE, 'background-color': 'currentColor' }) })
+  }
+];
+
+const OPACITY_OPTIONS: readonly Option[] = [20, 40, 60, 80, 100].map(value => ({
+  value: String(value),
+  label: `Opacity ${value}%`,
+  mark: text({
+    content: String(value),
+    class: styles('opacityMark', { 'font-size': '11px', 'font-weight': '600', 'pointer-events': 'none' })
+  })
+}));
+
+/** A section of the panel: its name, and what it offers — shown only for what is selected, or the tool in hand. */
+const section = (label: string, shown: string, children: ElementSpec[]): ElementSpec =>
+  container({ class: group, visible: shown, children: [text({ content: label, class: caption }), ...children] });
+
+const layers = (): ElementSpec =>
+  container({
+    class: row,
+    children: [
+      { id: 'layer-back', icon: 'fa-solid fa-angles-down', title: 'Send to back — [', action: 'sendToBack' as const },
+      {
+        id: 'layer-backward',
+        icon: 'fa-solid fa-angle-down',
+        title: 'Send backward — ⌘[',
+        action: 'sendBackward' as const
+      },
+      {
+        id: 'layer-forward',
+        icon: 'fa-solid fa-angle-up',
+        title: 'Bring forward — ⌘]',
+        action: 'bringForward' as const
+      },
+      { id: 'layer-front', icon: 'fa-solid fa-angles-up', title: 'Bring to front — ]', action: 'bringToFront' as const }
+    ].map(entry =>
+      button({
+        id: entry.id,
+        content: '',
+        title: entry.title,
+        class: widthButton,
+        flows: [[onClick(), boardAction(entry.action)]],
+        children: [icon(entry.icon)]
+      })
+    )
+  });
+
+/**
+ * Excalidraw's properties, section by section: stroke, background, fill style, width, stroke style, sloppiness, edges,
+ * opacity and layers — each shown only where what is selected (or the tool in hand) takes it.
+ */
 export const stylePanel = (): ElementSpec =>
   container({
     id: 'style-panel',
     class: panel,
     visible: 'computed.styleOpen',
     children: [
-      container({
-        class: group,
-        visible: 'computed.showStroke',
-        children: [
-          text({ content: 'Stroke', class: caption }),
-          container({ class: row, children: STROKES.map(name => swatch('stroke', name, STROKE_LABELS[name])) })
-        ]
-      }),
-      container({
-        class: group,
-        visible: 'computed.showFill',
-        children: [
-          text({ content: 'Fill', class: caption }),
-          container({ class: row, children: FILLS.map(name => swatch('fill', name, FILL_LABELS[name])) })
-        ]
-      }),
-      container({
-        class: group,
-        visible: 'computed.showWidth',
-        children: [
-          text({ content: 'Width', class: caption }),
-          container({ class: row, children: STROKE_WIDTHS.map(width) })
-        ]
-      })
+      section('Stroke', 'computed.showStroke', [
+        container({ class: row, children: STROKES.map(name => swatch('stroke', name, STROKE_LABELS[name])) })
+      ]),
+      section('Background', 'computed.showFill', [
+        container({ class: row, children: FILLS.map(name => swatch('fill', name, FILL_LABELS[name])) })
+      ]),
+      section('Fill', 'computed.showFillStyle', [choices('fillStyle', 'text', FILL_STYLE_OPTIONS)]),
+      section('Stroke width', 'computed.showWidth', [container({ class: row, children: STROKE_WIDTHS.map(width) })]),
+      section('Stroke style', 'computed.showDash', [choices('dash', 'text', DASH_OPTIONS)]),
+      section('Brush', 'computed.showBrush', [choices('brush', 'text', BRUSH_OPTIONS)]),
+      section('Sloppiness', 'computed.showSloppiness', [choices('sloppiness', 'text', SLOPPINESS_OPTIONS)]),
+      section('Edges', 'computed.showEdges', [choices('edges', 'text', EDGE_OPTIONS)]),
+      section('Opacity', 'computed.showOpacity', [choices('opacity', 'number', OPACITY_OPTIONS)]),
+      section('Layers', 'computed.showLayers', [layers()])
     ]
   });

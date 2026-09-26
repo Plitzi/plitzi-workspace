@@ -1,7 +1,8 @@
-import { holdsText, LIMITS, takesLabel } from '../../board/model.ts';
+import { fitsInFrame, holdsText, LIMITS, takesLabel } from '../../board/model.ts';
 import { connectorBetween, detachOutside, endsOf, releasedFrom } from './connectors.ts';
+import { frameAt } from './containers.ts';
 import { DEFAULT_BOX, HANDLE_CURSORS } from './core.ts';
-import { fontSizeOf, STACK_STRIP } from './draw.ts';
+import { CARD_WIDTH, COMMENT_PIN, fontSizeOf, STACK_STRIP } from './draw.ts';
 import {
   anchorOf,
   anchorPoint,
@@ -11,7 +12,6 @@ import {
   contains,
   handlePoint,
   hits,
-  isDeepInside,
   nearestAnchor,
   resolveConnector,
   scaleElement,
@@ -20,19 +20,43 @@ import {
   unionOf,
   zoomAt
 } from './geometry.ts';
-import { SNAP_REACH } from './picking.ts';
+
+import { isOneOf } from './values.ts';
 
 import type { Carry } from './carry.ts';
 import type { Core } from './core.ts';
 import type { Effects } from './effects.ts';
 import type { Picking } from './picking.ts';
-import type { BoardElement, Point } from '../../board/model.ts';
+import type { Quick } from './quick.ts';
+import type { BoardElement, Point, ShapeType } from '../../board/model.ts';
 
-/**
- * The pointer on the canvas: a press starts a gesture — by the tool in hand and what is under it — every move shapes
- * it as a draft over the scene, and letting go commits what it made. Two fingers pinch; the wheel scrolls and zooms.
- */
-export const createPointer = (core: Core, picking: Picking, carry: Carry, effects: Effects) => {
+/** A comment's pin: the same size wherever it is put. */
+const PIN_BOX = { width: COMMENT_PIN, height: COMMENT_PIN };
+
+/** The tools that draw a box: dragged to a size, or clicked for their usual one. */
+const BOX_TOOLS = [
+  'rectangle',
+  'ellipse',
+  'diamond',
+  'triangle',
+  'hexagon',
+  'cylinder',
+  'star',
+  'sticky',
+  'card',
+  'frame'
+] as const satisfies readonly ShapeType[];
+
+/** The size a box tool makes on a click. */
+const usualBox = (type: ShapeType): { width: number; height: number } => {
+  if (type === 'sticky' || type === 'card' || type === 'frame') {
+    return DEFAULT_BOX[type];
+  }
+
+  return DEFAULT_BOX.shape;
+};
+
+export const createPointer = (core: Core, picking: Picking, carry: Carry, effects: Effects, quick: Quick) => {
   const { canvas, state, draft, selection, scene } = core;
   const pointers = new Map<number, Point>();
 
@@ -63,6 +87,16 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
 
   /** A press with the select tool: a badge, a pile, a connector's end, a connection point, a handle, or an element. */
   const pressToSelect = (event: PointerEvent, screen: Point, point: Point): void => {
+    // A card's box ticks it done — or not — and moves nothing.
+    const card = picking.checkAt(point);
+    if (card) {
+      const { done: _done, ...rest } = card;
+      core.sounds.play(card.done ? 'undone' : 'done');
+      core.commit([card.done ? rest : { ...rest, done: true }]);
+
+      return;
+    }
+
     // A vote badge is a button on the element: a click on it votes, and moves nothing.
     const badge = picking.voteAt(point);
     if (badge) {
@@ -93,7 +127,13 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
     if (from) {
       const origin = anchorPoint(core.current().get(from.id) ?? core.newElement('arrow', point), from.anchor);
       core.setSelection([]);
-      state.gesture = { kind: 'linear', origin, element: { ...core.newElement('arrow', origin), start: from } };
+      // Let go without a drag, it is a click on the point: a new one of the same, connected that way (`quick.ts`).
+      state.gesture = {
+        kind: 'linear',
+        origin,
+        element: { ...core.newElement('arrow', origin), start: from },
+        quick: true
+      };
 
       return;
     }
@@ -137,10 +177,20 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
       core.setSelection([hit.id]);
     }
 
-    // A connector moved without the shapes it is fixed to lets go of them, and stays where it is put.
+    // A frame carries what is in it. A connector moved without the shapes it is fixed to lets go of them, and stays
+    // where it is put.
     const moving = core.selected();
     const ids = new Set(moving.map(element => element.id));
-    state.gesture = { kind: 'move', origin: point, originals: moving.map(element => detachOutside(element, ids)) };
+    const riders = core
+      .displayed()
+      .filter(element => element.parent && ids.has(element.parent) && !ids.has(element.id));
+    riders.forEach(element => ids.add(element.id));
+    state.gesture = {
+      kind: 'move',
+      origin: point,
+      originals: [...moving, ...riders].map(element => detachOutside(element, ids)),
+      loose: moving.filter(element => fitsInFrame(element.type)).map(element => element.id)
+    };
   };
 
   const onPointerDown = (event: PointerEvent): void => {
@@ -198,6 +248,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         pressToSelect(event, screen, point);
         break;
       case 'laser':
+        core.sounds.play('laser');
         state.gesture = { kind: 'laser' };
         effects.trail('me', point);
         break;
@@ -217,14 +268,14 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
       }
       case 'arrow':
       case 'line': {
-        // Started on a shape: fixed to its nearest anchor from the first moment.
+        // Started on a shape: fixed to it from the first moment, and leaving it by the side that faces wherever the
+        // other end is — which follows the pointer until it is let go, so the arrow never cuts back across the shape.
         core.setSelection([]);
         const start = picking.snapAt(point);
         const target = start ? core.current().get(start.id) : undefined;
         const origin = start && target ? anchorPoint(target, start.anchor) : point;
         const element = core.newElement(tool, origin);
-        const facing =
-          start && target && isDeepInside(target, point, SNAP_REACH / state.camera.zoom) ? start.id : undefined;
+        const facing = start && target ? start.id : undefined;
         state.gesture = {
           kind: 'linear',
           origin,
@@ -237,12 +288,29 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         core.setSelection([]);
         state.gesture = { kind: 'freehand', element: core.newElement('freehand', point) };
         break;
-      case 'rectangle':
-      case 'ellipse':
-      case 'diamond':
-      case 'sticky':
+      case 'comment': {
+        // Pinned by its tail: the bottom-left of the pin is the point clicked, what the comment is about.
+        const element = { ...core.newElement('comment', [point[0], point[1] - COMMENT_PIN]), ...PIN_BOX };
         core.setSelection([]);
-        state.gesture = { kind: 'box', origin: point, element: core.newElement(tool, point) };
+        core.startEditing(element);
+        core.switchTool('select');
+        break;
+      }
+      case 'column':
+        core.setSelection([]);
+        state.gesture = {
+          kind: 'box',
+          origin: point,
+          element: { ...core.newElement('frame', point), layout: 'column' },
+          column: true
+        };
+        break;
+      default:
+        if (isOneOf(BOX_TOOLS, tool)) {
+          core.setSelection([]);
+          state.gesture = { kind: 'box', origin: point, element: core.newElement(tool, point) };
+        }
+
         break;
     }
 
@@ -255,6 +323,13 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
     const shown = selecting ? picking.hoveredAt(point) : undefined;
     if (shown !== state.hovered) {
       state.hovered = shown;
+      core.invalidate();
+    }
+
+    // A comment pointed at opens its bubble, for anyone looking around — a read-only board's too.
+    const pointed = picking.topmostAt(point)?.id;
+    if (pointed !== state.pointed) {
+      state.pointed = pointed;
       core.invalidate();
     }
 
@@ -333,6 +408,13 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
           draft.set(original.id, { ...original, x: original.x + dx, y: original.y + dy });
         }
 
+        // Where it would land, shown as it is dragged: the frame under the pointer, the gap in a column.
+        const first = gesture.loose.length ? scene.element(gesture.loose[0]) : undefined;
+        core.aimDrop(
+          gesture.loose.length ? point : undefined,
+          new Set(gesture.originals.map(element => element.id)),
+          first?.parent
+        );
         break;
       }
       case 'resize': {
@@ -350,7 +432,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         scaleX = Math.sign(scaleX || 1) * Math.max(Math.abs(scaleX), 4 / Math.max(box.width, 1));
         scaleY = Math.sign(scaleY || 1) * Math.max(Math.abs(scaleY), 4 / Math.max(box.height, 1));
         for (const original of gesture.originals) {
-          draft.set(original.id, scaleElement(original, anchor, scaleX, scaleY));
+          draft.set(original.id, scaleElement(original, anchor, scaleX, scaleY, fontSizeOf(original)));
         }
 
         break;
@@ -459,8 +541,10 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
 
   const endGesture = (cancelled: boolean): void => {
     const ended = state.gesture;
+    const target = state.dropTarget;
     state.gesture = undefined;
     state.snapping = undefined;
+    state.dropTarget = undefined;
     const drafted = [...draft.values()];
     if (!state.editing) {
       draft.clear();
@@ -476,7 +560,46 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
 
     const { zoom } = state.camera;
     switch (ended.kind) {
-      case 'move':
+      case 'move': {
+        const loose = new Set(ended.loose);
+        const point = state.lastPointer;
+        const moved = drafted
+          .filter(element => {
+            const original = scene.element(element.id);
+
+            return original && (original.x !== element.x || original.y !== element.y);
+          })
+          .map((element, index) => {
+            if (!loose.has(element.id) || !point) {
+              return element;
+            }
+
+            // Into the frame it was let go over — out of its own when let go outside every frame. Into a column, at
+            // the pointer: that is where the gap was shown, and the column lays out by where things are.
+            if (!target) {
+              const { parent: _parent, ...free } = element;
+
+              return element.parent && !core.frameContains(element.parent, point) ? free : element;
+            }
+
+            // Back to the column it came from: where it was, as it was.
+            if (target.home) {
+              return scene.element(element.id) ?? element;
+            }
+
+            const placed = { ...element, parent: target.frame };
+
+            return target.line === undefined ? placed : { ...placed, y: point[1] - element.height / 2 + index * 0.01 };
+          });
+        // What went back where it was is no change at all. Into a frame — a column above all — it clicks into place.
+        const kept = moved.filter(element => element !== scene.element(element.id));
+        if (target && !target.home) {
+          core.sounds.play('snap');
+        }
+
+        core.commit(kept);
+        break;
+      }
       case 'resize': {
         const moved = drafted.filter(element => {
           const original = scene.element(element.id);
@@ -489,20 +612,26 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
               original.height !== element.height)
           );
         });
-        core.commit(moved);
+        // A text is committed with the box its new size takes, measured, not the one scaled to approximate it.
+        core.commit(moved.map(core.measured));
         break;
       }
       case 'box': {
         const { element } = ended;
         const tiny = element.width * zoom < 4 && element.height * zoom < 4;
-        const size = DEFAULT_BOX[element.type === 'sticky' ? 'sticky' : 'shape'];
-        const placed = tiny
+        const size = ended.column ? DEFAULT_BOX.column : usualBox(element.type);
+        const sized = tiny
           ? { ...element, x: ended.origin[0] - size.width / 2, y: ended.origin[1] - size.height / 2, ...size }
           : element;
+        // A card is as tall as its words, whatever was dragged: only its width is chosen.
+        const placed =
+          element.type === 'card' ? core.measured({ ...sized, width: Math.max(sized.width, CARD_WIDTH / 2) }) : sized;
         core.commit([placed]);
+        core.sounds.play('place');
         core.setSelection([placed.id]);
         core.switchTool('select');
-        if (placed.type === 'sticky') {
+        // Written on the moment it is made: a note, a card, a frame's title.
+        if (holdsText(placed.type)) {
           core.startEditing(scene.element(placed.id) ?? placed);
         }
 
@@ -513,7 +642,14 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         const drawn = drafted.find(element => element.id === ended.element.id) ?? ended.element;
         const shown = core.current();
         const { start, end } = endsOf(shown.get(drawn.id) ?? drawn);
-        if (Math.hypot(end[0] - start[0], end[1] - start[1]) * zoom >= 4) {
+        const clicked = Math.hypot(end[0] - start[0], end[1] - start[1]) * zoom < 4;
+        if (clicked && ended.quick && drawn.start) {
+          quick.grow(drawn.start);
+        } else if (!clicked) {
+          if (drawn.start || drawn.end) {
+            core.sounds.play('connect');
+          }
+
           core.commit([resolveConnector(drawn, id => shown.get(id))]);
           core.setSelection([drawn.id]);
           core.switchTool('select');
@@ -524,6 +660,10 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
       case 'endpoint': {
         const moved = drafted.find(element => element.id === ended.element.id);
         if (moved) {
+          if (moved.start || moved.end) {
+            core.sounds.play('connect');
+          }
+
           const shown = core.current();
           core.commit([resolveConnector(moved, id => shown.get(id))]);
         }
@@ -534,6 +674,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         // Exactly the points that were drawn: the stroke on release is the one on screen a moment before.
         const points = capPoints(ended.element.points ?? [], LIMITS.points);
         const stroke = points.length > 1 ? points : [[0, 0] as Point, [0.5, 0.5] as Point];
+        core.sounds.play('draw');
         const xs = stroke.map(([px]) => px);
         const ys = stroke.map(([, py]) => py);
         core.commit([
@@ -551,6 +692,10 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
           .map(id => scene.element(id))
           .filter((element): element is BoardElement => element !== undefined && !element.deleted)
           .map(element => ({ ...element, deleted: true }));
+        if (erased.length) {
+          core.sounds.play('remove');
+        }
+
         core.commit([...erased, ...releasedFrom(core.displayed(), ended.erased)]);
         core.setSelection([...selection].filter(id => !ended.erased.has(id)));
         break;
@@ -558,6 +703,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
       case 'peel':
         // Dragged off, the note lands and is ready for typing; a click without a drag was a click on the pile.
         if (ended.moved) {
+          core.sounds.play('place');
           core.commit([ended.element]);
           core.setSelection([ended.element.id]);
           core.startEditing(scene.element(ended.element.id) ?? ended.element);
@@ -566,8 +712,17 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         }
 
         break;
+      case 'marquee': {
+        // A click — no drag — on the empty inside of a frame picks the frame: its title bar is not the only handle.
+        const still = Math.hypot(ended.current[0] - ended.origin[0], ended.current[1] - ended.origin[1]) * zoom < 4;
+        const frame = still && !ended.base.size ? frameAt(core.displayed(), ended.origin) : undefined;
+        if (frame) {
+          core.setSelection([frame.id]);
+        }
+
+        break;
+      }
       case 'pan':
-      case 'marquee':
       case 'laser':
         break;
     }

@@ -9,12 +9,15 @@ import { isCollaborator } from '../../board/people.ts';
 import { TOOLS, createBoardController } from './controller.ts';
 import declaration from './declaration';
 import { parseDemo, playDemo } from './demo.ts';
+import { choiceFrom } from './styling.ts';
 
 import type {
   BoardController,
   BoardMode,
   ControllerEvent,
   PointerMessage,
+  PresentMessage,
+  Thread,
   ScreenBox,
   TextEditor,
   Tool
@@ -23,7 +26,7 @@ import type { Demo } from './demo.ts';
 import type { BoardElement, Fill, Stroke, StrokeWidth } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 import type { InteractionCallback, RealtimeMessage } from '@plitzi/plitzi-sdk';
-import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react';
+import type { ChangeEvent, CSSProperties, FormEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 export type BoardProps = {
   /** Which board this is: a new id starts the canvas over, the same id merges what it is given. */
@@ -40,6 +43,12 @@ export type BoardProps = {
   assetBase?: string;
   /** The id this visitor keeps: their votes are counted by it, and lit on the badges. */
   voter?: string;
+  /** This person's name: what a note or a card they write says under it. */
+  author?: string;
+  /** Show who wrote each note and card. */
+  authors?: boolean | string;
+  /** Make the board's small sounds — somebody arriving, a reaction, a line in the chat. */
+  sounds?: boolean | string;
   /**
    * `edit`; `read` — looked around together (cursors, laser, reactions, chat, following) and changed by nobody; or
    * `view` — a still preview that fits the drawing, takes no pointer and connects to nothing.
@@ -54,8 +63,18 @@ export type BoardProps = {
   stroke?: string;
   fill?: string;
   strokeWidth?: number | string;
+  /** The rest of the style new elements are drawn with: `solid | dashed | dotted`, `architect | artist | cartoonist`, `sharp | round`, `hachure | cross | solid`, and a percentage. */
+  dash?: string;
+  sloppiness?: string;
+  /** The pen's brush: `pizarra | brush | fountain | marker | highlighter | pencil | chalk | neon`. */
+  brush?: string;
+  edges?: string;
+  fillStyle?: string;
+  opacity?: number | string;
   /** The page's colour scheme. Its value is not read — its CHANGE is when the canvas reads its colours again. */
   scheme?: string;
+  /** Shows the whole board in a corner, with where everyone is. */
+  minimap?: boolean | string;
   className?: string;
   /** The selection's tools, authored by the space: laid beside whatever is selected, and hidden while nothing is. */
   children?: ReactNode;
@@ -117,12 +136,22 @@ const Board = ({
   title = '',
   assetBase = '',
   voter = '',
+  author = '',
+  authors = true,
+  sounds = true,
   mode = 'edit',
   tool = 'select',
   stroke = 'ink',
   fill = 'none',
   strokeWidth = 2,
+  dash = 'solid',
+  sloppiness = 'artist',
+  brush = 'pizarra',
+  edges = 'sharp',
+  fillStyle = 'hachure',
+  opacity = 100,
   scheme = '',
+  minimap = false,
   demo,
   className,
   children
@@ -139,6 +168,7 @@ const Board = ({
   const [editor, setEditor] = useState<TextEditor | undefined>(undefined);
   const [selectionBox, setSelectionBox] = useState<ScreenBox | undefined>(undefined);
   const [chatAt, setChatAt] = useState<{ left: number; top: number } | undefined>(undefined);
+  const [thread, setThread] = useState<Thread | undefined>(undefined);
   const live = mode !== 'view' && previewMode;
 
   const trigger = useCallback(
@@ -154,6 +184,7 @@ const Board = ({
   const roomRef = useRef<((message: PointerMessage) => void) | undefined>(undefined);
   const reactRef = useRef<((reaction: { emoji: string; x: number; y: number }) => void) | undefined>(undefined);
   const summonRef = useRef<((view: [number, number, number, number]) => void) | undefined>(undefined);
+  const presentRef = useRef<((message: PresentMessage) => void) | undefined>(undefined);
   const flushPointer = useCallback(() => {
     timer.current = undefined;
     const message = pending.current;
@@ -181,12 +212,20 @@ const Board = ({
             count: event.count,
             grouped: event.grouped,
             oneGroup: event.oneGroup,
-            stroke: event.stroke,
-            fill: event.fill,
-            strokeWidth: event.strokeWidth,
+            ...event.style,
             canStroke: event.stylable.stroke,
             canFill: event.stylable.fill,
-            canWidth: event.stylable.strokeWidth
+            canWidth: event.stylable.strokeWidth,
+            canDash: event.stylable.dash,
+            canSloppiness: event.stylable.sloppiness,
+            canBrush: event.stylable.brush,
+            canEdges: event.stylable.edges,
+            canFillStyle: event.stylable.fillStyle,
+            canOpacity: event.stylable.opacity,
+            isFrame: event.frame,
+            isColumn: event.column,
+            isTask: event.task,
+            isDone: event.done
           });
           break;
         case 'view':
@@ -197,6 +236,9 @@ const Board = ({
           break;
         case 'selectionBox':
           setSelectionBox(event.box);
+          break;
+        case 'thread':
+          setThread(event.thread);
           break;
         case 'follow':
           trigger(declaration.triggers.onFollowChange.action, { name: event.name });
@@ -218,6 +260,22 @@ const Board = ({
           break;
         case 'summoned':
           trigger(declaration.triggers.onSummoned.action, { name: event.name });
+          break;
+        case 'frames':
+          trigger(declaration.triggers.onFramesChange.action, { frames: event.frames, count: event.frames.length });
+          break;
+        case 'present':
+          presentRef.current?.(event.message);
+          break;
+        case 'presentation':
+          trigger(declaration.triggers.onPresentationChange.action, {
+            presenter: event.presenter,
+            index: event.index,
+            position: event.index + 1,
+            total: event.total,
+            title: event.title,
+            mine: event.mine
+          });
           break;
         case 'pointer':
           pending.current = event.message;
@@ -267,9 +325,32 @@ const Board = ({
       mode: live ? mode : ('view' as const),
       title,
       assetBase,
-      voter
+      voter,
+      author,
+      authors: authors === true || authors === 'true',
+      sounds: sounds === true || sounds === 'true',
+      extras: choiceFrom({ dash, sloppiness, brush, edges, fillStyle, opacity })
     };
-  }, [tool, stroke, fill, strokeWidth, live, mode, title, assetBase, voter]);
+  }, [
+    tool,
+    stroke,
+    fill,
+    strokeWidth,
+    live,
+    mode,
+    title,
+    assetBase,
+    voter,
+    author,
+    authors,
+    sounds,
+    dash,
+    sloppiness,
+    brush,
+    edges,
+    fillStyle,
+    opacity
+  ]);
   useEffect(() => controllerRef.current?.setProps(props), [props]);
 
   // Read again once the new scheme's custom properties are in place — the frame after the change, not during it.
@@ -299,6 +380,8 @@ const Board = ({
       controllerRef.current?.remoteReaction(message.data);
     } else if (message.type === 'summon') {
       controllerRef.current?.remoteSummon(message.from, message.data);
+    } else if (message.type === 'present') {
+      controllerRef.current?.remotePresent(message.from, message.data);
     }
   }, []);
 
@@ -309,6 +392,7 @@ const Board = ({
     roomRef.current = message => void room.publish('pointer', message);
     reactRef.current = reaction => void room.publish('reaction', reaction);
     summonRef.current = view => void room.publish('summon', { view });
+    presentRef.current = message => void room.publish('present', message);
   }, [room]);
 
   // Who is in the room — and only a room: a board with none may be showing its played collaborators instead.
@@ -375,13 +459,41 @@ const Board = ({
       duplicate: call('duplicate', controller => controller.duplicate()),
       deselect: call('deselect', controller => controller.deselect()),
       bringToFront: call('bringToFront', controller => controller.bringToFront()),
+      bringForward: call('bringForward', controller => controller.bringForward()),
+      sendBackward: call('sendBackward', controller => controller.sendBackward()),
       sendToBack: call('sendToBack', controller => controller.sendToBack()),
       group: call('group', controller => controller.group()),
       ungroup: call('ungroup', controller => controller.ungroup()),
       applyStyle: {
         ...declaration.callbacks.applyStyle,
-        callback: (params: { stroke?: unknown; fill?: unknown; strokeWidth?: unknown }) =>
-          controllerRef.current?.applyStyle(params)
+        callback: (params: Record<string, unknown>) => controllerRef.current?.applyStyle(choiceFrom(params))
+      },
+      tidy: call('tidy', controller => controller.tidy()),
+      insertKanban: call('insertKanban', controller => controller.insertKanban()),
+      addColumn: call('addColumn', controller => controller.addColumn()),
+      toggleDone: call('toggleDone', controller => controller.toggleDone()),
+      chime: {
+        ...declaration.callbacks.chime,
+        callback: (params: { sound?: unknown }) => controllerRef.current?.chime(params)
+      },
+      toggleColumn: call('toggleColumn', controller => controller.toggleColumn()),
+      goToFrame: {
+        ...declaration.callbacks.goToFrame,
+        callback: (params: { id?: unknown }) => controllerRef.current?.goToFrame(params)
+      },
+      present: call('present', controller => controller.present()),
+      // The whole page, not the canvas: the toolbar and the people come along.
+      toggleFullscreen: {
+        ...declaration.callbacks.toggleFullscreen,
+        callback: () =>
+          void (
+            document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()
+          ).catch(() => undefined)
+      },
+      stopPresenting: call('stopPresenting', controller => controller.stopPresenting()),
+      step: {
+        ...declaration.callbacks.step,
+        callback: (params: { direction?: unknown; far?: unknown }) => controllerRef.current?.step(params)
       },
       zoomIn: call('zoomIn', controller => controller.zoomIn()),
       zoomOut: call('zoomOut', controller => controller.zoomOut()),
@@ -398,6 +510,10 @@ const Board = ({
         callback: (params: { from?: unknown }) => controllerRef.current?.follow(params)
       },
       unfollow: call('unfollow', controller => controller.unfollow()),
+      stamp: {
+        ...declaration.callbacks.stamp,
+        callback: (params: { emoji?: unknown }) => controllerRef.current?.stamp(params)
+      },
       react: {
         ...declaration.callbacks.react,
         callback: (params: { emoji?: unknown }) => controllerRef.current?.react(params)
@@ -415,6 +531,17 @@ const Board = ({
       summon: call('summon', controller => controller.summon())
     };
   }, []);
+
+  // ── The minimap ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  const showMinimap = live && (minimap === true || minimap === 'true');
+  // Kept as state, not attached from the ref: the canvas can mount before the controller exists.
+  const [minimapCanvas, setMinimapCanvas] = useState<HTMLCanvasElement | null>(null);
+  useEffect(() => {
+    controllerRef.current?.attachMinimap(minimapCanvas ?? undefined);
+
+    return () => controllerRef.current?.attachMinimap(undefined);
+  }, [minimapCanvas]);
 
   // ── The text being typed ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -440,6 +567,24 @@ const Board = ({
 
   const onTextDone = useCallback(() => controllerRef.current?.finishEditing(), []);
 
+  // A comment's composer: Enter posts, ⇧Enter is a new line, Escape drops it — and leaving it keeps it waiting.
+  const onComposerKey = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      controllerRef.current?.postEditing();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      controllerRef.current?.cancelEditing();
+    }
+  }, []);
+
+  const onPost = useCallback(() => controllerRef.current?.postEditing(), []);
+
+  const onCancel = useCallback(() => controllerRef.current?.cancelEditing(), []);
+
+  /** A button in the composer is pressed without taking the focus from what is being written. */
+  const keepFocus = useCallback((event: MouseEvent<HTMLButtonElement>) => event.preventDefault(), []);
+
   // ── Cursor chat ──────────────────────────────────────────────────────────────────────────────────────────────────
 
   const chatRef = useRef<HTMLInputElement>(null);
@@ -462,6 +607,30 @@ const Board = ({
   }, []);
 
   const onChatDone = useCallback(() => controllerRef.current?.closeChat(), []);
+
+  // ── A comment's thread ───────────────────────────────────────────────────────────────────────────────────────────
+
+  const threadId = thread?.id;
+  const onReply = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const field = event.currentTarget.elements.namedItem('reply');
+      const said = field instanceof HTMLInputElement ? field.value.trim() : '';
+      if (threadId && said && field instanceof HTMLInputElement) {
+        trigger(declaration.triggers.onReply.action, { id: threadId, text: said });
+        controllerRef.current?.chime({ sound: 'reply' });
+        field.value = '';
+      }
+    },
+    [threadId, trigger]
+  );
+
+  const onResolve = useCallback(() => controllerRef.current?.toggleDone(), []);
+
+  const threadStyle = useMemo<CSSProperties | undefined>(
+    () => thread && { left: thread.left, top: thread.top },
+    [thread]
+  );
 
   const chatStyle = useMemo<CSSProperties | undefined>(
     () => chatAt && { left: chatAt.left + 16, top: chatAt.top + 18 },
@@ -506,7 +675,29 @@ const Board = ({
       interactionCallbacks={callbacks}
     >
       <canvas ref={canvasRef} className="board__canvas" aria-label={title ? `Board: ${title}` : 'Board'} />
-      {editor && editorStyle && (
+      {editor?.composer && (
+        <div className="board__composer" style={{ left: editor.left, top: editor.top, width: editor.width }}>
+          <strong>Comment</strong>
+          <textarea
+            ref={textRef}
+            defaultValue={editor.text}
+            placeholder="Add a comment…"
+            aria-label="Your comment"
+            onChange={onType}
+            onKeyDown={onComposerKey}
+          />
+          <div className="board__composer-actions">
+            <span>Enter to post · Esc to cancel</span>
+            <button type="button" onMouseDown={keepFocus} onClick={onCancel}>
+              Cancel
+            </button>
+            <button type="button" className="board__composer-post" onMouseDown={keepFocus} onClick={onPost}>
+              Post
+            </button>
+          </div>
+        </div>
+      )}
+      {editor && !editor.composer && editorStyle && (
         <textarea
           ref={textRef}
           className="board__editor"
@@ -531,6 +722,30 @@ const Board = ({
           onBlur={onChatDone}
         />
       )}
+      {thread && threadStyle && (
+        <div className="board__thread" style={threadStyle} data-done={thread.done ? 'true' : 'false'}>
+          <div className="board__thread-head">
+            <strong>{thread.author}</strong>
+            <button type="button" className="board__thread-resolve" onClick={onResolve}>
+              {thread.done ? 'Reopen' : '✓ Resolve'}
+            </button>
+          </div>
+          <p className="board__thread-text">{thread.text}</p>
+          {thread.replies.map(reply => (
+            <div key={`${reply.at}-${reply.author}`} className="board__thread-reply">
+              <strong>{reply.author}</strong>
+              <p>{reply.text}</p>
+            </div>
+          ))}
+          <form className="board__thread-form" onSubmit={onReply}>
+            <input name="reply" placeholder="Reply…" aria-label="Reply to this comment" maxLength={1000} />
+            <button type="submit" aria-label="Send the reply">
+              ↑
+            </button>
+          </form>
+        </div>
+      )}
+      {showMinimap && <canvas ref={setMinimapCanvas} className="board__minimap" aria-label="The whole board" />}
       {children && live && mode === 'edit' && toolsStyle && (
         <div className="board__tools" data-placement={below ? 'below' : 'above'} style={toolsStyle}>
           {children}

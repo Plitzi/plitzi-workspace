@@ -1,5 +1,6 @@
 import {
   addNotification,
+  bindTemplate,
   button,
   container,
   named,
@@ -15,7 +16,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { COPY_ACTION } from '../actions.ts';
-import { BOARD_KEY, readOnlyOnly } from './access.ts';
+import { BOARD_KEY, keepOwned, readOnlyOnly } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BUTTON_RESET, FLOAT, ICON_BUTTON, icon } from './kit.ts';
 
@@ -90,8 +91,23 @@ export const readOnlyBanner = (): ElementSpec =>
           class: label,
           children: [
             icon('fa-regular fa-eye'),
-            text({ content: 'Read-only example' }),
-            text({ content: '— look around together', class: hint })
+            text({
+              content: 'Read-only',
+              bind: [
+                bindTemplate('content', BOARD_PROVIDER, "{{ source.featured ? 'Read-only example' : 'Read-only' }}")
+              ]
+            }),
+            text({
+              content: '— look around together',
+              class: hint,
+              bind: [
+                bindTemplate(
+                  'content',
+                  BOARD_PROVIDER,
+                  "{{ source.featured ? '— look around together' : '— only whoever made it can change it' }}"
+                )
+              ]
+            })
           ]
         }),
         button({
@@ -133,6 +149,7 @@ export const readOnlyBanner = (): ElementSpec =>
                   autoDismissTimeout: 5000
                 })
               ),
+              keepOwned('copied'),
               when(
                 { field: 'copied.status', operator: '=', value: 'completed' },
                 navigate({ urlType: 'internal', url: '/b/{{ copied.output.id }}' })
