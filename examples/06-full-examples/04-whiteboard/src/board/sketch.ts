@@ -1,6 +1,6 @@
 import { randomInt } from 'node:crypto';
 
-import { fitsInFrame } from './model.ts';
+import { FONT_SIZES, fitsInFrame, LINE_HEIGHT } from './model.ts';
 
 import type {
   Anchor,
@@ -57,6 +57,7 @@ export type Draft = {
   opacity?: Opacity;
   brush?: Brush;
   fontSize?: number;
+  locked?: boolean;
   replies?: Reply[];
   votes?: string[];
 };
@@ -75,9 +76,24 @@ const OPTIONAL = [
   'opacity',
   'brush',
   'fontSize',
+  'locked',
   'replies',
   'votes'
 ] as const;
+
+/**
+ * A text's box as the canvas would measure it, where there is no canvas to ask — a template, an agent's words: every
+ * line as wide as the hand-drawn face sets that many letters, a line's height at a time. A text drawn beyond its box
+ * cannot be clicked where it shows, and a screen that repaints part of the board leaves it cut.
+ */
+export const estimatedTextBox = (text: string, fontSize: number): { width: number; height: number } => {
+  const lines = text.split('\n');
+
+  return {
+    width: Math.max(8, ...lines.map(line => Math.ceil(line.length * fontSize * 0.55))),
+    height: Math.ceil(lines.length * fontSize * LINE_HEIGHT)
+  };
+};
 
 /** A template's elements, stacked in the order written and stamped as the first version of each. */
 export const drawing = (drafts: readonly Draft[]): BoardElement[] =>
@@ -86,8 +102,9 @@ export const drawing = (drafts: readonly Draft[]): BoardElement[] =>
     type: draft.type,
     x: draft.x,
     y: draft.y,
-    width: draft.width ?? 0,
-    height: draft.height ?? 0,
+    ...(draft.type === 'text' && (draft.width === undefined || draft.height === undefined)
+      ? estimatedTextBox(draft.text ?? '', draft.fontSize ?? FONT_SIZES[draft.strokeWidth ?? 2])
+      : { width: draft.width ?? 0, height: draft.height ?? 0 }),
     stroke: draft.stroke ?? 'ink',
     fill: draft.fill ?? 'none',
     strokeWidth: draft.strokeWidth ?? 2,

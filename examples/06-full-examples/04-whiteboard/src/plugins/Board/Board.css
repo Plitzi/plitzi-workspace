@@ -18,6 +18,11 @@
   pointer-events: none;
 }
 
+/* The board itself, under the canvas that takes the pointer: painted only when the board changes. */
+.board__canvas--board {
+  pointer-events: none;
+}
+
 /* The field text is typed into, laid exactly over where the canvas will draw it. */
 .board__editor {
   position: absolute;

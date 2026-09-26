@@ -31,7 +31,12 @@ export const SHAPE_TYPES = [
   /** A task: a line of text on a card, a colour strip, who wrote it, and whether it is done. */
   'card',
   /** Feedback pinned to a place: what someone thinks of what is there, who said it, and whether it was dealt with. */
-  'comment'
+  'comment',
+  /**
+   * A mark that stays: one emoji (its `text`), drawn to fill its square box — so the box is the mark, and a selection
+   * outlines the emoji rather than the line height of a font it is not drawn in.
+   */
+  'stamp'
 ] as const;
 
 export type ShapeType = (typeof SHAPE_TYPES)[number];
@@ -78,6 +83,12 @@ export type Stroke = (typeof STROKES)[number];
 export type Fill = (typeof FILLS)[number];
 
 export type StrokeWidth = (typeof STROKE_WIDTHS)[number];
+
+/** A text's size, by the stroke width it is written with — until it is resized, when it keeps a `fontSize` of its own. */
+export const FONT_SIZES: Record<StrokeWidth, number> = { 1: 20, 2: 28, 4: 44 };
+
+/** A line of text is this many times its size tall. */
+export const LINE_HEIGHT = 1.25;
 
 export type Dash = (typeof DASHES)[number];
 
@@ -168,6 +179,11 @@ export type BoardElement = {
   /** See-through, in percent — opaque when absent. */
   opacity?: Opacity;
   /**
+   * Held where it is: selected to be unlocked, but not moved, resized, restyled, written in or deleted — and left out of
+   * a marquee and of selecting everything, so a background laid out once is not dragged along by accident.
+   */
+  locked?: boolean;
+  /**
    * A text's size, in board units, once it has been resized by its handles — what its stroke width says (S, M, L)
    * when absent. Only a text has one: every other element's words are sized by what holds them.
    */
@@ -199,6 +215,8 @@ export const LIMITS = {
   author: 32,
   /** Replies one comment may carry. */
   replies: 100,
+  /** A stamp's emoji, in UTF-16 units: enough for a flag or a family, never a sentence. */
+  stamp: 16,
   /** A text's size, from the smallest still read to a headline across a board. */
   fontSize: { min: 8, max: 480 }
 } as const;
@@ -303,7 +321,8 @@ const STYLES: Record<ShapeType, readonly StyleField[]> = {
   // A frame's tint, and a card's strip.
   frame: ['fill'],
   card: ['fill', 'opacity'],
-  comment: []
+  comment: [],
+  stamp: ['opacity']
 };
 
 export const takesStyle = (type: ShapeType, field: StyleField): boolean => STYLES[type].includes(field);
@@ -374,6 +393,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     fillStyle,
     opacity,
     fontSize,
+    locked,
     version,
     nonce,
     deleted
@@ -407,6 +427,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     (fillStyle !== undefined && (!isOneOf(FILL_STYLES, fillStyle) || !takesStyle(type, 'fillStyle'))) ||
     (opacity !== undefined && (!isOneOf(OPACITIES, opacity) || !takesStyle(type, 'opacity'))) ||
     (fontSize !== undefined && (type !== 'text' || !isFontSize(fontSize))) ||
+    (locked !== undefined && typeof locked !== 'boolean') ||
     (type === 'image' && !isAssetId(asset)) ||
     (votes !== undefined && !(Array.isArray(votes) && votes.length <= LIMITS.votes && votes.every(isVoterId)))
   ) {
@@ -443,6 +464,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     ...(fillStyle === undefined ? {} : { fillStyle }),
     ...(opacity === undefined ? {} : { opacity }),
     ...(isFontSize(fontSize) ? { fontSize: Math.round(fontSize) } : {}),
+    ...(locked === true ? { locked } : {}),
     ...(type === 'image' && isAssetId(asset) ? { asset } : {}),
     ...(Array.isArray(votes) && votes.length ? { votes: [...new Set(votes.filter(isVoterId))] } : {})
   };
@@ -455,7 +477,12 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     element.points = points.map(([px, py]) => [px, py]);
   }
 
-  if (holdsText(type) || (takesLabel(type) && text !== undefined)) {
+  // A stamp's text is its emoji: one grapheme, or the few code points a composed one is written with.
+  if (type === 'stamp' && (typeof text !== 'string' || !text || text.length > LIMITS.stamp)) {
+    return undefined;
+  }
+
+  if (holdsText(type) || type === 'stamp' || (takesLabel(type) && text !== undefined)) {
     if (typeof text !== 'string' || text.length > LIMITS.text) {
       return undefined;
     }

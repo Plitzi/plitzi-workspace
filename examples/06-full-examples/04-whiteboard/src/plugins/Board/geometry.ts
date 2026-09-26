@@ -61,19 +61,68 @@ export const boxFrom = ([ax, ay]: Point, [bx, by]: Point): Box => ({
 export const absolutePoints = (element: BoardElement): Point[] =>
   (element.points ?? []).map(([px, py]) => [element.x + px, element.y + py]);
 
+/**
+ * Worked out once per element: an element is never changed in place — every edit is a new version, a new object —
+ * so its box is the same for as long as the object is. Every frame, every hit test and every marquee step asks for the
+ * box of every element on the board, and a stroke's is a walk over all its points.
+ */
+const boxes = new WeakMap<BoardElement, Box>();
+
 export const boundsOf = (element: BoardElement): Box => {
+  const known = boxes.get(element);
+  if (known) {
+    return known;
+  }
+
+  const box = measureBounds(element);
+  boxes.set(element, box);
+
+  return box;
+};
+
+/**
+ * An element moved by `dx`, `dy`, with its box moved with it: a drag makes a new copy of everything it carries at every
+ * step, and measuring each copy again — a stroke point by point — was most of what a big drag cost.
+ */
+export const movedBy = (element: BoardElement, dx: number, dy: number): BoardElement => {
+  const moved = { ...element, x: element.x + dx, y: element.y + dy };
+  const box = boundsOf(element);
+  boxes.set(moved, { ...box, x: box.x + dx, y: box.y + dy });
+  const prior = shiftOf(element);
+  shifts.set(moved, { from: prior.from, dx: prior.dx + dx, dy: prior.dy + dy });
+
+  return moved;
+};
+
+/** An element as a copy of another moved: the one it was first copied from, and how far it has moved since. */
+export type Shift = { from: BoardElement; dx: number; dy: number };
+
+const shifts = new WeakMap<BoardElement, Shift>();
+
+/** How an element came to be: moved from another by {@link movedBy}, or — `dx`, `dy` of 0 — itself. */
+export const shiftOf = (element: BoardElement): Shift => shifts.get(element) ?? { from: element, dx: 0, dy: 0 };
+
+const measureBounds = (element: BoardElement): Box => {
   if (!isLinear(element.type) || !element.points?.length) {
     return { x: element.x, y: element.y, width: element.width, height: element.height };
   }
 
   // Out to where the ink reaches, not only the line through the points: a wide stroke is outlined around its ink.
   const reach = inkRadius(element);
-  const xs = element.points.map(([px]) => element.x + px);
-  const ys = element.points.map(([, py]) => element.y + py);
-  const x = Math.min(...xs) - reach;
-  const y = Math.min(...ys) - reach;
+  let [left, top, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const [px, py] of element.points) {
+    left = Math.min(left, element.x + px);
+    top = Math.min(top, element.y + py);
+    right = Math.max(right, element.x + px);
+    bottom = Math.max(bottom, element.y + py);
+  }
 
-  return { x, y, width: Math.max(...xs) + reach - x, height: Math.max(...ys) + reach - y };
+  return {
+    x: left - reach,
+    y: top - reach,
+    width: right + reach - (left - reach),
+    height: bottom + reach - (top - reach)
+  };
 };
 
 export const unionOf = (boxes: readonly Box[]): Box | undefined => {
@@ -132,9 +181,9 @@ export const hits = (element: BoardElement, point: Point, tolerance: number): bo
     return header || edge;
   }
 
-  // Paper, cards and pictures are solid whatever their fill: each is picked up anywhere on it.
+  // Paper, cards, pictures and stamps are solid whatever their fill: each is picked up anywhere on it.
   const solid =
-    element.fill !== 'none' || ['text', 'sticky', 'stack', 'image', 'card', 'comment'].includes(element.type);
+    element.fill !== 'none' || ['text', 'sticky', 'stack', 'image', 'card', 'comment', 'stamp'].includes(element.type);
 
   if (element.type === 'ellipse') {
     const rx = Math.max(width / 2, 1);
@@ -207,6 +256,17 @@ export const scaleElement = (
     };
   }
 
+  // A stamp stays square — its emoji fills it, and a stretched box would only be empty on two sides: the same scale
+  // both ways, the largest the handle asked for, each way keeping the direction it was dragged in.
+  if (element.type === 'stamp') {
+    const factor = Math.max(Math.abs(scaleX), Math.abs(scaleY));
+
+    return {
+      ...element,
+      ...scaledBox(element, [ax, ay], Math.sign(scaleX || 1) * factor, Math.sign(scaleY || 1) * factor)
+    };
+  }
+
   const x = ax + (element.x - ax) * scaleX;
   const y = ay + (element.y - ay) * scaleY;
   if (isLinear(element.type) && element.points) {
@@ -222,17 +282,17 @@ export const scaleElement = (
     };
   }
 
-  // A box flipped by dragging a corner past its anchor is the same box, drawn from its other corner.
+  return { ...element, ...scaledBox(element, [ax, ay], scaleX, scaleY) };
+};
+
+/** A box scaled about an anchor. Flipped by dragging a corner past it, it is the same box, drawn from its other corner. */
+const scaledBox = (element: Box, [ax, ay]: Point, scaleX: number, scaleY: number): Box => {
+  const x = ax + (element.x - ax) * scaleX;
+  const y = ay + (element.y - ay) * scaleY;
   const right = x + element.width * scaleX;
   const bottom = y + element.height * scaleY;
 
-  return {
-    ...element,
-    x: Math.min(x, right),
-    y: Math.min(y, bottom),
-    width: Math.abs(right - x),
-    height: Math.abs(bottom - y)
-  };
+  return { x: Math.min(x, right), y: Math.min(y, bottom), width: Math.abs(right - x), height: Math.abs(bottom - y) };
 };
 
 /**

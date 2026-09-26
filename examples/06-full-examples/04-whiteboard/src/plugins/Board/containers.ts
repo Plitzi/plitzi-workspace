@@ -34,11 +34,9 @@ export const frameAt = (
   point: Point,
   excluding: ReadonlySet<string> = new Set()
 ): BoardElement | undefined =>
-  [...elements]
-    .reverse()
-    .find(
-      element => element.type === 'frame' && !element.deleted && !excluding.has(element.id) && inside(point, element)
-    );
+  elements.findLast(
+    element => element.type === 'frame' && !element.deleted && !excluding.has(element.id) && inside(point, element)
+  );
 
 /** The frame an element made at a place goes in: the one its middle lands in. */
 export const frameUnder = (elements: readonly BoardElement[], element: BoardElement): BoardElement | undefined =>

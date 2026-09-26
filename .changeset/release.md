@@ -281,6 +281,10 @@
   (`{{ { "id": run.id }|json_encode }}`) reached its task as the template text — an action's `output` built that way
   failed with "not valid JSON". Both sides now run any template syntax, keep the value's type, and read a value that
   is itself a template again up to the same ceiling.
+- **Fixed: a value with a quote or a line break broke a param written as a JSON document.**
+  `{ "city": "{{ values.city }}" }` gave the step its raw text instead of the document when a visitor typed `Say "hi"`
+  or pressed Enter. A value printed inside one of the document's string literals is now escaped for it; a value
+  printed outside them is printed as before — it IS the JSON value there.
 - **`when` around a step that already has a `when` adds to it.** It used to replace the inner condition, so the step
   ran whenever the outer one held and nothing said so. Two `and` groups become one; otherwise both are kept, nested.
 - The schedules example's first-paint test assumed the digest was less than a day away, and failed at weekends.
@@ -297,6 +301,19 @@
 - **A flow reads a space's computed values once per change, not once per step.** `liveSources` evaluated every
   computed value before every step and every `when`; it now keeps the last evaluation and reuses it over the same
   snapshots of the state and the global sources.
+- **An element subscribes to the paths it reads, not to the sources they are in.** A binding on `computed.tool`
+  rendered its element again whenever any computed value changed — on a board, the tool in hand changing was the
+  whole page drawn again. Bindings, `when` rules and attribute templates now subscribe to each path they name
+  (`templatePaths` in `@plitzi/sdk-shared/helpers/twigWrapper`). **Fixed** on the way: a binding whose template also
+  read another source (`{{ theme.resolved }}` beside the bound value) and a binding shown while a `when` held were
+  never told those changed.
+- **A computed value that comes out the same keeps its object.** Every computed value is evaluated again whenever the
+  state changes, and a list or a record came out a new object each time, so every element reading one rendered again
+  for a change to something else: on Pizarra, the elements library's hundred and sixty stars reading the favourites.
+  `evaluateComputed` takes the previous evaluation and keeps each value that is deep-equal to it, and the whole when
+  none changed. Switching tools there rendered 1,375 elements; it renders 19. Drawing a shape: 2,833 → 129.
+- **A step that finishes synchronously hands over to the next at once.** Every step used to wait a microtask, so a
+  flow of synchronous steps rendered once per step; React now batches them into one.
 - Measured on Pizarra with 300 notes and a marquee over all of them: from 27 frames over 50 ms (the worst 330 ms,
   React's development build) to 60 fps with one 88 ms frame when the selection panels mount (production build).
 
@@ -864,8 +881,10 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   task cards, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness,
   edges, opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or private and
   temporary boards (in Board settings, beside the title), boards their creator makes read-only for everyone else, an
-  elements library built from one registry (searchable, with favourites), texts resized by their handles, stamps, and
-  sounds. AI agents join as collaborators through an MCP server in the example (`src/agent`),
+  elements library built from one registry (searchable, with favourites), texts resized by their handles, stamps,
+  elements locked in place, and sounds. It carries its own bench (`yarn bench`, `--cpu 4` for slower hardware): boards
+  of a thousand and four thousand elements opened, panned, zoomed, drawn on, selected, moved, pasted, deleted and
+  undone, and crowds of fifty collaborators on them. AI agents join as collaborators through an MCP server in the example (`src/agent`),
   a client of the board's server like a browser. It runs on several replicas over Redis (`REDIS_URL`, `BOARD_SECRET`):
   the channels, the boards, the pictures, and a write lock in the action `kv` shared by all of them. See
   `docs/en/realtime.md`.

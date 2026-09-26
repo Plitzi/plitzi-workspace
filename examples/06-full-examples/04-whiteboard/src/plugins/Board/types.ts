@@ -119,6 +119,8 @@ export type ControllerEvent =
       /** The selection is one card or comment — what can be ticked off — and whether it is. */
       task: boolean;
       done: boolean;
+      /** Everything selected is locked — what the lock button then offers to let go. */
+      locked: boolean;
     }
   | { type: 'selectionBox'; box: ScreenBox | undefined }
   | { type: 'view'; zoom: number }
@@ -142,6 +144,8 @@ export type ControllerEvent =
   | { type: 'thread'; thread: Thread | undefined }
   /** The board's frames changed — what the page lists to go to, in the order a presentation shows them. */
   | { type: 'frames'; frames: FrameEntry[] }
+  /** Whether there is anything to undo, or to redo — told when either changes. */
+  | { type: 'history'; canUndo: boolean; canRedo: boolean }
   /** This person presents: the others are shown each frame they go to — and told when it is over (`index: -1`). */
   | { type: 'present'; message: PresentMessage }
   /** A presentation this page is in — its own, or somebody else's — moved on or ended (`presenter: ''`). */
@@ -170,7 +174,7 @@ export type Gesture =
    * What is selected, and what rides along — the members of a frame being moved. `loose` are the ones that may land
    * in another frame when let go: the selected things that are not frames.
    */
-  | { kind: 'move'; origin: Point; originals: BoardElement[]; loose: string[] }
+  | { kind: 'move'; origin: Point; originals: BoardElement[]; ids: ReadonlySet<string>; loose: string[] }
   | { kind: 'resize'; handle: Handle; anchor: Point; box: Box; originals: BoardElement[] }
   | { kind: 'marquee'; origin: Point; current: Point; base: Set<string> }
   | { kind: 'box'; origin: Point; element: BoardElement; column?: boolean }

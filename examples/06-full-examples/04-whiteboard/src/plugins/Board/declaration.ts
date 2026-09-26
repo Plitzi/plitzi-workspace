@@ -64,7 +64,8 @@ const declaration = {
         isFrame: '',
         isColumn: '',
         isTask: '',
-        isDone: ''
+        isDone: '',
+        isLocked: ''
       }
     },
     onViewChange: {
@@ -90,6 +91,14 @@ const declaration = {
     /** A vote asked for on an element — its badge clicked, or `vote` called. */
     onVote: { action: 'onVote', title: 'On Vote', type: 'trigger', params: {}, preview: { id: '' } },
     /** The board's frames, in the order they are gone through: `frames` (`id`, `title`, `count`) and `count`. */
+    /** Whether there is anything to undo, or to redo: what the page's undo and redo are enabled by. */
+    onHistoryChange: {
+      action: 'onHistoryChange',
+      title: 'On History Change',
+      type: 'trigger',
+      params: {},
+      preview: { canUndo: '', canRedo: '' }
+    },
     onFramesChange: {
       action: 'onFramesChange',
       title: 'On Frames Change',
@@ -164,6 +173,8 @@ const declaration = {
     addColumn: callback('addColumn', 'Add Column'),
     /** The one card selected ticked done, or the one comment resolved — or back. */
     toggleDone: callback('toggleDone', 'Toggle Done'),
+    /** The selection locked in place, or — all of it locked — let go. */
+    toggleLock: callback('toggleLock', 'Lock / Unlock'),
     /** A small sound, for something the page heard or did: a line in the chat, a timer started or stopped, a copy. */
     chime: {
       action: 'chime',

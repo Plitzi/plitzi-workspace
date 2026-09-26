@@ -105,13 +105,16 @@ const reaction = styles('reaction', {
   }
 });
 
+/**
+ * The tray is for a board that can change: a read-only one — a template, a board its owner closed — is looked at, and
+ * its banner says so and offers the laser instead. The keys (K, /) still answer whoever knows them.
+ */
 export const bottomTray = (): ElementSpec =>
-  container({
-    id: 'tray',
-    class: tray,
-    children: [
-      // A pile to take notes from is for a board that can change; reactions are for anyone looking.
-      editOnly([
+  editOnly([
+    container({
+      id: 'tray',
+      class: tray,
+      children: [
         stickyStack({
           id: 'sticky-stack',
           class: stack,
@@ -131,42 +134,42 @@ export const bottomTray = (): ElementSpec =>
           bind: [variantFrom(reactButton, 'computed.stampOpen', { template: "{{ source ? 'active' : '' }}" })],
           flows: [[onClick(), ...closeOthers('stampOpen'), toggleState({ key: 'stampOpen' })]],
           children: [icon('fa-solid fa-stamp')]
+        }),
+        button({
+          id: 'tray-laser',
+          content: '',
+          title: 'Laser pointer — K',
+          class: reactButton,
+          bind: [variantFrom(reactButton, 'computed.tool', { template: "{{ source == 'laser' ? 'active' : '' }}" })],
+          flows: [
+            [
+              onClick(),
+              setState({ key: 'tool', type: 'text', value: "{{ computed.tool == 'laser' ? 'select' : 'laser' }}" })
+            ]
+          ],
+          children: [icon('fa-solid fa-wand-magic-sparkles')]
+        }),
+        button({
+          id: 'tray-chat',
+          content: '',
+          title: 'Say something at your cursor — /',
+          class: reactButton,
+          flows: [[onClick(), boardAction('chat')]],
+          children: [icon('fa-regular fa-message')]
+        }),
+        divide(),
+        button({
+          id: 'react-open',
+          content: '',
+          title: 'React — everyone on the board sees it',
+          class: reactButton,
+          bind: [variantFrom(reactButton, 'computed.reactOpen', { template: "{{ source ? 'active' : '' }}" })],
+          flows: [[onClick(), ...closeOthers('reactOpen'), toggleState({ key: 'reactOpen' })]],
+          children: [icon('fa-regular fa-face-smile')]
         })
-      ]),
-      button({
-        id: 'tray-laser',
-        content: '',
-        title: 'Laser pointer — K',
-        class: reactButton,
-        bind: [variantFrom(reactButton, 'computed.tool', { template: "{{ source == 'laser' ? 'active' : '' }}" })],
-        flows: [
-          [
-            onClick(),
-            setState({ key: 'tool', type: 'text', value: "{{ computed.tool == 'laser' ? 'select' : 'laser' }}" })
-          ]
-        ],
-        children: [icon('fa-solid fa-wand-magic-sparkles')]
-      }),
-      button({
-        id: 'tray-chat',
-        content: '',
-        title: 'Say something at your cursor — /',
-        class: reactButton,
-        flows: [[onClick(), boardAction('chat')]],
-        children: [icon('fa-regular fa-message')]
-      }),
-      divide(),
-      button({
-        id: 'react-open',
-        content: '',
-        title: 'React — everyone on the board sees it',
-        class: reactButton,
-        bind: [variantFrom(reactButton, 'computed.reactOpen', { template: "{{ source ? 'active' : '' }}" })],
-        flows: [[onClick(), ...closeOthers('reactOpen'), toggleState({ key: 'reactOpen' })]],
-        children: [icon('fa-regular fa-face-smile')]
-      })
-    ]
-  });
+      ]
+    })
+  ]);
 
 /** The stamps, over the tray while its button is on: each click puts one down, so a row of verdicts is a few clicks. */
 export const stampPicker = (): ElementSpec =>

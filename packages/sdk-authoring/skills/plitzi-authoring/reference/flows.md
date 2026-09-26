@@ -57,8 +57,13 @@ Name the trigger (`named('changed', onChange())`) and read its payload as `{{ ch
 A step's params are templates, evaluated in full (conditions, loops, filters). A source in them is named in full:
 a row's button posts `{ jobId: '{{ list_jobRows.item.id }}' }` — the row that was clicked; the short name is refused.
 
-**Pass objects, not JSON text.** `input: { title: '{{ form.values.title }}' }`, never `input: '{"title": …}'` — a
-value with a quotation mark or a newline makes the text unparseable, and unparseable input posts `{}`.
+**Pass objects, not JSON text.** `input: { title: '{{ form.values.title }}' }` rather than `input: '{"title": …}'`:
+each value keeps its own type, and nothing depends on the quoting. (JSON text works — a value inside one of its strings
+is escaped for it — but an object says the same without the punctuation.)
+
+**A field left empty is not in `values`.** A form sends what was typed, and a field nobody typed in sends nothing —
+so `when({ field: 'sent.values.code', operator: '=', value: '' }, …)` never holds for it. Ask
+`operator: 'empty'` / `'notEmpty'`, which treat missing and `''` alike.
 
 ## Writes and what they refresh
 

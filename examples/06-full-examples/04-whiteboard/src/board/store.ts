@@ -2,6 +2,7 @@ import { randomInt } from 'node:crypto';
 
 import { ActionRefusal } from '@plitzi/sdk-server/actions';
 
+import { boundsOf, unionOf } from '../plugins/Board/geometry.ts';
 import { keepAsset } from './assets.ts';
 import { FEATURED } from './featured.ts';
 import { lockWith, passwordOpens, passwordProblem } from './locks.ts';
@@ -134,7 +135,11 @@ const MAX_BOARDS = 200;
 /** How many the gallery shows: the ones touched last. */
 const GALLERY_BOARDS = 24;
 
-const PREVIEW_ELEMENTS = 140;
+/** How many elements a preview holds besides the frames: a crowded board is shown in coarser pieces to stay under it. */
+const PREVIEW_ELEMENTS = 300;
+
+/** The finest grid a crowded board is coarsened on: this many cells across its longer side — a thumbnail's detail. */
+const PREVIEW_CELLS = 96;
 
 const PREVIEW_POINTS = 120;
 
@@ -306,8 +311,57 @@ const thin = (points: Point[]): Point[] => {
 const live = (board: StoredBoard): BoardElement[] => Object.values(board.elements).filter(element => !element.deleted);
 
 /**
+ * One element for what a grid cell holds: the one on top, over the box of all of them — the patch of colour they make
+ * at a thumbnail's size, without the words of one of them standing for the rest. A line stays the line it is.
+ */
+const standIn = (members: readonly BoardElement[]): BoardElement => {
+  const top = members[members.length - 1];
+  if (members.length === 1 || isLinear(top.type)) {
+    return top;
+  }
+
+  const { text: _text, ...shape } = top;
+
+  return { ...shape, ...unionOf(members.map(boundsOf)) };
+};
+
+/**
+ * A crowded board in at most `budget` elements, all over it: its elements gathered by where they stand on a grid —
+ * made coarser until few enough cells are taken — one for each cell. Keeping only the elements drawn last showed a
+ * corner of a big board and none of the rest: a mural of a thousand pieces was its last letter.
+ */
+const coarsened = (elements: readonly BoardElement[], budget: number): BoardElement[] => {
+  if (elements.length <= budget) {
+    return [...elements];
+  }
+
+  const extent = unionOf(elements.map(boundsOf));
+  if (!extent) {
+    return [];
+  }
+
+  let size = Math.max(extent.width, extent.height, 1) / PREVIEW_CELLS;
+  for (;;) {
+    const cells = new Map<string, BoardElement[]>();
+    for (const element of elements) {
+      const box = boundsOf(element);
+      const key = `${Math.floor((box.x + box.width / 2 - extent.x) / size)}:${Math.floor((box.y + box.height / 2 - extent.y) / size)}`;
+      const members = cells.get(key) ?? [];
+      members.push(element);
+      cells.set(key, members);
+    }
+
+    if (cells.size <= budget) {
+      return [...cells.values()].map(standIn).sort(byStacking);
+    }
+
+    size *= 1.5;
+  }
+};
+
+/**
  * What the gallery may show of a board: nothing at all of a locked one; of the rest, every frame — the shape of the
- * board — and the elements drawn last on top of them, lines thinned.
+ * board — and what is on them, coarsened on a crowded board, lines thinned.
  */
 const preview = (board: StoredBoard): BoardElement[] => {
   if (board.lock) {
@@ -316,8 +370,12 @@ const preview = (board: StoredBoard): BoardElement[] => {
 
   const shown = live(board).sort(byStacking);
   const frames = shown.filter(element => element.type === 'frame');
+  const rest = coarsened(
+    shown.filter(element => element.type !== 'frame'),
+    PREVIEW_ELEMENTS
+  );
 
-  return [...frames, ...shown.filter(element => element.type !== 'frame').slice(-PREVIEW_ELEMENTS)].map(element =>
+  return [...frames, ...rest].map(element =>
     isLinear(element.type) && element.points ? { ...element, points: thin(element.points) } : element
   );
 };

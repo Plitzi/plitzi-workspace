@@ -5,17 +5,19 @@ import {
   isConnector,
   isLinear,
   isTask,
+  LIMITS,
   takesLabel,
   takesStyle
 } from '../../board/model.ts';
 import { frameAt, frameUnder, insertionAt, layoutColumn, membersOf as inFrame, moved } from './containers.ts';
 import { CARD_WIDTH, measureCard, measureText, STICKY_SIZE } from './draw.ts';
 import { editorFor } from './editor.ts';
-import { boundsOf, clampZoom, fitCamera, resolveConnector, unionOf } from './geometry.ts';
+import { boundsOf, clampZoom, fitCamera, movedBy, resolveConnector, shiftOf, unionOf } from './geometry.ts';
 import { readPalette } from './palette.ts';
 import { createSounds } from './sounds.ts';
 import { byField, restyled, styleOf } from './styling.ts';
 import { createRemotes } from './remotes.ts';
+import { RevisionedMap, RevisionedSet } from './revisioned.ts';
 import { createScene } from './scene.ts';
 import { newId, newSeed } from './values.ts';
 
@@ -41,6 +43,14 @@ export const DEFAULT_BOX: Record<'sticky' | 'shape' | 'card' | 'frame' | 'column
     frame: { width: 480, height: 360 },
     column: { width: 300, height: 460 }
   };
+
+/**
+ * The most elements a drag shows the others as it goes: a few notes moved are drawn moving on every screen, a hundred
+ * are only a cursor until they land — copying and sending all of them at every pointer move is what a big drag cost.
+ * Counted here, at every move, because it costs nothing; the draft's SIZE — a few long strokes — is weighed where the
+ * message is sent (`DRAFT_BYTES` in `Board.tsx`), once per send.
+ */
+const SHARED_DRAFT = 40;
 
 /** A pile on the board: a note's size, with its strip below and the notes under it showing. */
 export const STACK_BOX = { width: 222, height: 252 };
@@ -128,9 +138,9 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   // Named once narrowed: the functions below close over it, which a narrowing does not reach.
   const context: CanvasRenderingContext2D = context2d;
   const scene = createScene();
-  const selection = new Set<string>();
+  const selection = new RevisionedSet<string>();
   /** This person's gesture, drawn over the scene until it ends and is committed. */
-  const draft = new Map<string, BoardElement>();
+  const draft = new RevisionedMap<string, BoardElement>();
   let frame = 0;
   let paint: () => void = () => undefined;
   let reportedZoom = 0;
@@ -195,7 +205,29 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
 
   // ── What is drawn ───────────────────────────────────────────────────────────────────────────────────────────────
 
-  const displayed = (now = Date.now()): BoardElement[] => {
+  /**
+   * The board as it is drawn, worked out once for each change to what it is drawn from — the scene, this person's
+   * draft, the others' drafts. Asked for many times a frame (the painter, the selection, every hit test), it used to
+   * build and sort the whole board each time: on a board of four thousand elements, every cursor another person moved
+   * was the board worked out again several times over. Read-only, so nothing a caller does can change what the next
+   * one is handed.
+   */
+  let shown: { key: string; list: readonly BoardElement[]; byId: ReadonlyMap<string, BoardElement> } | undefined;
+
+  const displayed = (now = Date.now()): readonly BoardElement[] => {
+    remotes.expireDrafts(now);
+    const key = `${scene.revision}:${draft.revision}:${remotes.draftRevision}`;
+    if (shown?.key === key) {
+      return shown.list;
+    }
+
+    const list = drawnBoard(now);
+    shown = { key, list, byId: new Map(list.map(element => [element.id, element])) };
+
+    return list;
+  };
+
+  const drawnBoard = (now: number): BoardElement[] => {
     const elements = new Map(scene.visible().map(element => [element.id, element]));
     const versionOf = (id: string): number => scene.element(id)?.version ?? 0;
     for (const element of [...remotes.drafts(now, versionOf), ...draft.values()]) {
@@ -209,14 +241,144 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     // Every connector drawn from where its elements are NOW — a shape being dragged pulls its arrows along with it.
     return [...elements.values()]
       .map(element =>
-        isConnector(element.type) && (element.start || element.end)
-          ? resolveConnector(element, id => elements.get(id))
-          : element
+        isConnector(element.type) && (element.start || element.end) ? connectorAsDrawn(element, elements) : element
       )
       .sort(byStacking);
   };
 
-  const current = (): Map<string, BoardElement> => new Map(displayed().map(element => [element.id, element]));
+  /**
+   * A connector as drawn, kept for as long as it and both of its ends are the objects they were: the elements never
+   * change in place, so the same three objects are the same line. A drag used to redraw every arrow on the board at
+   * every step — a thousand of them on a busy one — to move the few attached to what was dragged.
+   */
+  type Drawn = {
+    connector: BoardElement;
+    start: BoardElement | undefined;
+    end: BoardElement | undefined;
+    drawn: BoardElement;
+  };
+  // Kept by the connector a drag copies from: the copy of every step finds what the one before it was drawn as.
+  const connectors = new WeakMap<BoardElement, Drawn>();
+  const connectorAsDrawn = (connector: BoardElement, elements: ReadonlyMap<string, BoardElement>): BoardElement => {
+    const start = connector.start ? elements.get(connector.start.id) : undefined;
+    const end = connector.end ? elements.get(connector.end.id) : undefined;
+    const base = shiftOf(connector).from;
+    const known = connectors.get(base);
+    if (known?.connector === connector && known.start === start && known.end === end) {
+      return known.drawn;
+    }
+
+    const offset = known && sameShift(known, { connector, start, end, drawn: known.drawn });
+    const drawn =
+      known && offset
+        ? movedBy(known.drawn, offset[0], offset[1])
+        : resolveConnector(connector, id => elements.get(id));
+    connectors.set(base, { connector, start, end, drawn });
+
+    return drawn;
+  };
+
+  /**
+   * How far a connector moved whole since it was last drawn, if it did: both its ends — and, where one is loose, the
+   * connector itself, which that end is drawn from — moved by the same amount since. Dragging a hundred shapes joined
+   * by arrows moves the arrows as they are, instead of working each curve out again at every step.
+   */
+  const sameShift = (before: Drawn, now: Drawn): Point | undefined => {
+    const loose = !now.connector.start || !now.connector.end;
+    const pairs: [BoardElement | undefined, BoardElement | undefined][] = [
+      [before.start, now.start],
+      [before.end, now.end],
+      ...(loose ? [[before.connector, now.connector] satisfies [BoardElement, BoardElement]] : [])
+    ];
+    let offset: Point | undefined;
+    for (const [then, current] of pairs) {
+      if (!then || !current) {
+        if (then !== current) {
+          return undefined;
+        }
+
+        continue;
+      }
+
+      const [a, b] = [shiftOf(then), shiftOf(current)];
+      if (a.from !== b.from) {
+        return undefined;
+      }
+
+      const step: Point = [b.dx - a.dx, b.dy - a.dy];
+      if (offset && (offset[0] !== step[0] || offset[1] !== step[1])) {
+        return undefined;
+      }
+
+      offset = step;
+    }
+
+    return offset;
+  };
+
+  /** The connectors fixed to each element, by its id — worked out once per change to the board. */
+  let fixed: { revision: number; byEnd: Map<string, string[]> } | undefined;
+  const connectorsTo = (id: string): readonly string[] => {
+    if (fixed?.revision !== scene.revision) {
+      const byEnd = new Map<string, string[]>();
+      for (const element of scene.visible()) {
+        for (const end of [element.start?.id, element.end?.id]) {
+          if (end) {
+            byEnd.set(end, [...(byEnd.get(end) ?? []), element.id]);
+          }
+        }
+      }
+
+      fixed = { revision: scene.revision, byEnd };
+    }
+
+    return fixed.byEnd.get(id) ?? [];
+  };
+
+  /** What is moving under somebody's hand: this person's draft, the others', and the arrows fixed to any of them. */
+  const movingIds = (): Set<string> => {
+    const ids = new Set([...draft.keys(), ...remotes.draftIds()]);
+    for (const id of [...ids]) {
+      for (const connector of connectorsTo(id)) {
+        ids.add(connector);
+      }
+    }
+
+    return ids;
+  };
+
+  /**
+   * The board without what is moving — the part that can be painted once and left, while what moves is drawn over it
+   * every step. Worked out again only when the board changes or when WHAT moves changes: a drag begun, a drag ended,
+   * never a step of one.
+   */
+  let still: { key: string; list: readonly BoardElement[] } | undefined;
+  const displayedStill = (now = Date.now()): readonly BoardElement[] => {
+    const all = displayed(now);
+    const key = `${scene.revision}:${draft.membership}:${remotes.draftIds().join(',')}`;
+    if (still?.key === key) {
+      return still.list;
+    }
+
+    const moving = movingIds();
+    const list = moving.size ? all.filter(element => !moving.has(element.id)) : all;
+    still = { key, list };
+
+    return list;
+  };
+
+  /** What moves this frame, as it is drawn now: over the board, in its stacking order. */
+  const displayedMoving = (now = Date.now()): readonly BoardElement[] => {
+    const moving = movingIds();
+
+    return moving.size ? displayed(now).filter(element => moving.has(element.id)) : [];
+  };
+
+  const current = (): ReadonlyMap<string, BoardElement> => {
+    displayed();
+
+    return shown?.byId ?? new Map();
+  };
 
   /** What is selected, as it is drawn: a connector with its ends where its elements are. */
   const selected = (): BoardElement[] => {
@@ -224,6 +386,9 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
 
     return [...selection].map(id => shown.get(id)).filter((element): element is BoardElement => element !== undefined);
   };
+
+  /** What of the selection may be changed: everything but what is locked. What every edit of the selection acts on. */
+  const changeable = (): BoardElement[] => selected().filter(element => element.locked !== true);
 
   /** The one connector selected, when that is the whole selection: its ends are what the handles move. */
   const soleConnector = (): BoardElement | undefined => {
@@ -263,10 +428,22 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     }
   };
 
+  /** Told only when it changes: whether an undo, or a redo, would do anything. */
+  let reportedHistory = '';
+  const reportHistory = (): void => {
+    const key = `${scene.canUndo()}:${scene.canRedo()}`;
+    if (key !== reportedHistory) {
+      reportedHistory = key;
+      emit({ type: 'history', canUndo: scene.canUndo(), canRedo: scene.canRedo() });
+    }
+  };
+
   const reportSelection = (): void => {
     const chosen = selected();
     const sole = chosen.length === 1 ? chosen[0] : undefined;
-    const offering = (field: StyleField): BoardElement[] => chosen.filter(element => takesStyle(element.type, field));
+    // The style panel offers what a restyle would change, and a restyle leaves what is locked as it is.
+    const offering = (field: StyleField): BoardElement[] =>
+      changeable().filter(element => takesStyle(element.type, field));
     emit({
       type: 'selection',
       count: chosen.length,
@@ -280,7 +457,8 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       frame: sole?.type === 'frame',
       column: sole?.type === 'frame' && sole.layout === 'column',
       task: sole !== undefined && isTask(sole.type),
-      done: sole?.done === true
+      done: sole?.done === true,
+      locked: chosen.length > 0 && chosen.every(element => element.locked === true)
     });
   };
 
@@ -301,7 +479,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       final,
       message: {
         ...(lastPointer ? { x: Math.round(lastPointer[0]), y: Math.round(lastPointer[1]) } : {}),
-        draft: draft.size && !final ? [...draft.values()].map(predicted) : null,
+        draft: draft.size && draft.size <= SHARED_DRAFT && !final ? [...draft.values()].map(predicted) : null,
         selection: [...selection].slice(0, 50),
         view: viewOf(viewport()),
         ...(gesture?.kind === 'laser' ? { laser: true } : {}),
@@ -437,8 +615,9 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
    */
   const settle = (changes: readonly BoardElement[]): BoardElement[] => {
     const next = new Map(changes.map(change => [change.id, change]));
-    // Everything as it will be, kept current as the pass adds to it: one read of the scene, however big the change.
-    const all = current();
+    // Everything as it will be, kept current as the pass adds to it: one read of the scene, however big the change —
+    // copied, since the board as drawn is shared with everything else that asks for it this frame.
+    const all = new Map(current());
     const put = (element: BoardElement): void => {
       next.set(element.id, element);
       all.set(element.id, element);
@@ -488,15 +667,25 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
    * free area the dragged things are already in — and, in a column, the gap they would go into.
    */
   const aimDrop = (point: Point | undefined, excluding: ReadonlySet<string>, from?: string): void => {
-    const shown = displayed().filter(element => !excluding.has(element.id));
-    const frame = point ? frameAt(shown, point, excluding) : undefined;
+    const frame = point ? frameAt(displayed(), point, excluding) : undefined;
     const column = frame?.layout === 'column';
     const home = from ? current().get(from) : undefined;
     // Out of a column and over no frame: a kanban card is not left loose on the board — its column is shown, which
     // is where it goes back to.
     const next =
       point && frame && (column || frame.id !== from)
-        ? { frame: frame.id, ...(column ? { line: insertionAt(frame, inFrame(shown, frame.id), point[1]) } : {}) }
+        ? {
+            frame: frame.id,
+            ...(column
+              ? {
+                  line: insertionAt(
+                    frame,
+                    inFrame(displayed(), frame.id).filter(element => !excluding.has(element.id)),
+                    point[1]
+                  )
+                }
+              : {})
+          }
         : point && !frame && home?.layout === 'column'
           ? { frame: home.id, home: true }
           : undefined;
@@ -515,20 +704,26 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     );
   };
 
-  const commit = (changes: readonly BoardElement[]): void => {
-    const ops = scene.commit(settle(changes));
-    if (ops.length) {
-      emit({ type: 'commit', ops });
+  /**
+   * Ops to the server in commits it takes: at most `LIMITS.ops` elements each. Moving, deleting or pasting more than
+   * that at once — everything on a busy board — was one commit the server refused whole, and the canvas rolled the
+   * change back: select all, delete, and nothing happened. The page sends them in order (its flow queues), and a
+   * refusal of any still rolls back every edit not confirmed, so the screen ends as the others see it.
+   */
+  const publish = (ops: readonly BoardElement[]): void => {
+    for (let from = 0; from < ops.length; from += LIMITS.ops) {
+      emit({ type: 'commit', ops: ops.slice(from, from + LIMITS.ops) });
     }
+  };
 
+  const commit = (changes: readonly BoardElement[]): void => {
+    publish(scene.commit(settle(changes)));
     invalidate();
   };
 
   /** Ops the scene already applied — an undo, a redo — sent, and the selection cleared of what they removed. */
   const send = (ops: BoardElement[]): void => {
-    if (ops.length) {
-      emit({ type: 'commit', ops });
-    }
+    publish(ops);
 
     for (const id of selection) {
       if (scene.element(id)?.deleted ?? true) {
@@ -580,6 +775,11 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   // ── Typing ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
   const startEditing = (element: BoardElement): void => {
+    // A locked element keeps its words as it keeps its place.
+    if (element.locked) {
+      return;
+    }
+
     // A comment left waiting with words in it is posted, not lost, when something else is written.
     if (state.editing && state.editing !== element.id) {
       finishEditing(true);
@@ -694,13 +894,17 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     present,
     restCursor,
     displayed,
+    displayedStill,
+    displayedMoving,
     current,
     selected,
+    changeable,
     soleConnector,
     viewport,
     viewOf,
     aim,
     reportSelection,
+    reportHistory,
     reportPointer,
     reportEditor,
     setCamera,

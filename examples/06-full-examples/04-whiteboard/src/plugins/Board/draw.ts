@@ -1,21 +1,18 @@
 import { getStroke } from 'perfect-freehand';
 import rough from 'roughjs';
 
-import { takesLabel } from '../../board/model.ts';
+import { FONT_SIZES, LINE_HEIGHT, takesLabel } from '../../board/model.ts';
 import { FRAME_HEADER, handlePoint, HANDLES, toScreen } from './geometry.ts';
 import { penOf } from './pens.ts';
 import { outlineOf } from './shapes.ts';
 
 import type { Box, Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';
-import type { BoardElement, Point, StrokeWidth } from '../../board/model.ts';
+import type { BoardElement, Point } from '../../board/model.ts';
 import type { RoughCanvas } from 'roughjs/bin/canvas';
 import type { Drawable, Options } from 'roughjs/bin/core';
 
 /** Text's size follows the stroke width a person picked: fine, medium, bold — the same three choices as a line. */
-const FONT_SIZES: Record<StrokeWidth, number> = { 1: 20, 2: 28, 4: 44 };
-
-const LINE_HEIGHT = 1.25;
 
 export const STICKY_PADDING = 16;
 
@@ -59,19 +56,8 @@ export const COMMENT_BUBBLE = { left: COMMENT_PIN + 10, top: -4, width: 260, pad
 
 const COMMENT_FONT = 14;
 
-/**
- * A comment: a pin in the accent — grey once it was dealt with — with the first letter of who left it; open, a bubble
- * beside it with their name and what they said.
- */
-const drawComment = (
-  context: CanvasRenderingContext2D,
-  element: BoardElement,
-  palette: Palette,
-  lines: string[],
-  lineHeight: number,
-  open: boolean,
-  hideText: boolean
-): void => {
+/** A comment on the board: a pin in the accent — grey once it was dealt with — with the first letter of who left it. */
+const drawCommentPin = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
   const colour = element.done ? palette.muted : palette.accent;
   const radius = COMMENT_PIN / 2;
   context.save();
@@ -106,40 +92,106 @@ const drawComment = (
     context.font = `700 10px ${palette.ui}`;
     context.fillText(answers > 9 ? '9+' : String(answers), COMMENT_PIN - 2, 2.5);
   }
-  if (open) {
-    const { left, top, width, padding, author } = COMMENT_BUBBLE;
-    const height = padding * 2 + author + Math.max(1, lines.length) * lineHeight;
-    context.shadowColor = 'rgba(0, 0, 0, 0.18)';
-    context.shadowBlur = 16;
-    context.shadowOffsetY = 4;
-    context.fillStyle = palette.surface;
-    context.beginPath();
-    context.roundRect(left, top, width, height, 12);
-    context.fill();
-    context.shadowColor = 'transparent';
-    context.strokeStyle = palette.edge;
-    context.lineWidth = 1;
-    context.stroke();
-    context.textAlign = 'left';
-    context.textBaseline = 'top';
-    context.font = `700 12px ${palette.ui}`;
-    context.fillStyle = colour;
-    const replies = element.replies?.length ?? 0;
-    context.fillText(
-      `${element.author ?? 'Someone'}${element.done ? ' · resolved' : ''}${replies ? ` · ${replies} ${replies === 1 ? 'reply' : 'replies'}` : ''}`,
-      left + padding,
-      top + padding
-    );
-    if (!hideText) {
-      context.font = `${COMMENT_FONT}px ${palette.ui}`;
-      context.fillStyle = element.done ? palette.muted : palette.stroke.ink;
-      lines.forEach((line, index) =>
-        context.fillText(line, left + padding, top + padding + author + index * lineHeight)
-      );
-    }
+  context.restore();
+};
+
+/** A comment opened: the bubble beside its pin, with who left it and what they said. */
+const drawCommentBubble = (
+  context: CanvasRenderingContext2D,
+  element: BoardElement,
+  palette: Palette,
+  lines: string[],
+  lineHeight: number,
+  hideText: boolean
+): void => {
+  const colour = element.done ? palette.muted : palette.accent;
+  context.save();
+  const { left, top, width, padding, author } = COMMENT_BUBBLE;
+  const height = padding * 2 + author + Math.max(1, lines.length) * lineHeight;
+  context.shadowColor = 'rgba(0, 0, 0, 0.18)';
+  context.shadowBlur = 16;
+  context.shadowOffsetY = 4;
+  context.fillStyle = palette.surface;
+  context.beginPath();
+  context.roundRect(left, top, width, height, 12);
+  context.fill();
+  context.shadowColor = 'transparent';
+  context.strokeStyle = palette.edge;
+  context.lineWidth = 1;
+  context.stroke();
+  context.textAlign = 'left';
+  context.textBaseline = 'top';
+  context.font = `700 12px ${palette.ui}`;
+  context.fillStyle = colour;
+  const replies = element.replies?.length ?? 0;
+  context.fillText(
+    `${element.author ?? 'Someone'}${element.done ? ' · resolved' : ''}${replies ? ` · ${replies} ${replies === 1 ? 'reply' : 'replies'}` : ''}`,
+    left + padding,
+    top + padding
+  );
+  if (!hideText) {
+    context.font = `${COMMENT_FONT}px ${palette.ui}`;
+    context.fillStyle = element.done ? palette.muted : palette.stroke.ink;
+    lines.forEach((line, index) => context.fillText(line, left + padding, top + padding + author + index * lineHeight));
+  }
+  context.restore();
+};
+
+/** A padlock on the corner of a locked element that is selected: why it does not move. */
+export const drawLock = (context: CanvasRenderingContext2D, camera: Camera, box: Box, colour: string): void => {
+  const [right, top] = toScreen(camera, box.x + box.width, box.y);
+  const x = right + 4;
+  const y = top - 20;
+  context.save();
+  context.fillStyle = colour;
+  context.beginPath();
+  context.roundRect(x, y + 7, 14, 11, 2);
+  context.fill();
+  context.strokeStyle = colour;
+  context.lineWidth = 2;
+  context.beginPath();
+  context.arc(x + 7, y + 7, 4.5, Math.PI, 0);
+  context.stroke();
+  context.restore();
+};
+
+/** The faces an emoji is drawn in — the platform's own colour emoji before anything else. */
+export const EMOJI_FONT = 'system-ui, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+
+/** The size an emoji is measured at, once: its ink scales from there to whatever box it fills. */
+const EMOJI_PROBE = 100;
+
+const inkOf = new Map<string, { left: number; ascent: number; width: number; height: number }>();
+
+/**
+ * A stamp: its emoji filling its box, by the emoji's INK — what the font actually draws, measured once per emoji —
+ * rather than by a line of text in a face the emoji is not drawn in, whose box was wider and taller than the mark.
+ */
+const drawStamp = (context: CanvasRenderingContext2D, element: BoardElement): void => {
+  const emoji = element.text ?? '';
+  context.font = `${EMOJI_PROBE}px ${EMOJI_FONT}`;
+  context.textAlign = 'left';
+  context.textBaseline = 'alphabetic';
+  let ink = inkOf.get(emoji);
+  if (!ink) {
+    const metrics = context.measureText(emoji);
+    ink = {
+      left: metrics.actualBoundingBoxLeft,
+      ascent: metrics.actualBoundingBoxAscent,
+      width: Math.max(1, metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight),
+      height: Math.max(1, metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent)
+    };
+    inkOf.set(emoji, ink);
   }
 
-  context.restore();
+  const scale = Math.min(element.width / ink.width, element.height / ink.height);
+  context.font = `${EMOJI_PROBE * scale}px ${EMOJI_FONT}`;
+  context.fillStyle = '#000000';
+  context.fillText(
+    emoji,
+    (element.width - ink.width * scale) / 2 + ink.left * scale,
+    (element.height - ink.height * scale) / 2 + ink.ascent * scale
+  );
 };
 
 /** A name at the foot of whatever someone wrote: who, in their own words' company, small and quiet. */
@@ -816,7 +868,6 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       picture,
       voter,
       members = 0,
-      open = false,
       authors = true
     }: {
       hideText?: boolean;
@@ -825,9 +876,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       voter?: string;
       /** A frame's: how many things are in it. */
       members?: number;
-      /** A comment's bubble is open, a note's author shown: it is pointed at, selected, or being written. */
-      open?: boolean;
-      /** Who wrote notes and cards is shown. */
+      /** Who wrote cards is shown. */
       authors?: boolean;
     } = {}
   ): void => {
@@ -853,8 +902,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     }
 
     if (element.type === 'comment') {
-      const { lines, lineHeight } = layoutText(context, element, palette);
-      drawComment(context, element, palette, lines, lineHeight, open, hideText);
+      drawCommentPin(context, element, palette);
     }
 
     if (element.type === 'sticky') {
@@ -866,7 +914,11 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       context.shadowColor = 'transparent';
     }
 
-    if (!['text', 'frame', 'card', 'comment'].includes(element.type)) {
+    if (element.type === 'stamp') {
+      drawStamp(context, element);
+    }
+
+    if (!['text', 'frame', 'card', 'comment', 'stamp'].includes(element.type)) {
       const shape = shapeOf(element, palette);
       if ('path' in shape) {
         inkFor(context, element, palette);
@@ -895,8 +947,34 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       drawText(context, element, palette);
     }
 
+    if (element.votes?.length) {
+      drawVotes(context, element, palette, voter !== undefined && element.votes.includes(voter));
+    }
+
+    context.restore();
+  };
+
+  /**
+   * What an element shows while it is pointed at, selected or being written, over the element itself: a comment's
+   * bubble, a note's author. Apart from the element, so it can be drawn over a board that was painted without it —
+   * pointing at a note does not paint the board again.
+   */
+  const drawOpened = (
+    context: CanvasRenderingContext2D,
+    element: BoardElement,
+    palette: Palette,
+    { hideText = false, authors = true }: { hideText?: boolean; authors?: boolean } = {}
+  ): void => {
+    context.save();
+    context.translate(element.x, element.y);
+    context.globalAlpha = (element.opacity ?? 100) / 100;
+    if (element.type === 'comment') {
+      const { lines, lineHeight } = layoutText(context, element, palette);
+      drawCommentBubble(context, element, palette, lines, lineHeight, hideText);
+    }
+
     // Who wrote a note is a signature, not part of it: shown while the note is pointed at or selected.
-    if (element.type === 'sticky' && element.author && open && authors) {
+    if (element.type === 'sticky' && element.author && authors) {
       drawAuthor(
         context,
         `Author: ${element.author}`,
@@ -907,15 +985,12 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       );
     }
 
-    if (element.votes?.length) {
-      drawVotes(context, element, palette, voter !== undefined && element.votes.includes(voter));
-    }
-
     context.restore();
   };
 
   return {
     drawElement,
+    drawOpened,
     /** Drawings of elements that are gone: kept, they would pin every deleted stroke in memory. */
     prune: (alive: ReadonlySet<string>): void => {
       for (const id of cache.keys()) {
@@ -928,43 +1003,58 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
 };
 
 /** The paper's dots, in screen space: thinned out as the board zooms away, so they never become a grey wash. */
-export const drawDots = (
-  context: CanvasRenderingContext2D,
-  camera: Camera,
-  width: number,
-  height: number,
-  colour: string
-): void => {
+export const drawDots = (context: CanvasRenderingContext2D, camera: Camera, area: Box, colour: string): void => {
   let spacing = 24 * camera.zoom;
   while (spacing < 12) {
     spacing *= 2;
   }
 
-  const offsetX = -((camera.x * camera.zoom) % spacing);
-  const offsetY = -((camera.y * camera.zoom) % spacing);
   const size = Math.max(1, Math.min(2, camera.zoom * 1.5));
+  // The dot at or just before the area's edge, wherever the board is scrolled to — a dot straddling the edge is half in.
+  const first = (edge: number, scroll: number): number => {
+    const phase = (((edge + scroll * camera.zoom) % spacing) + spacing) % spacing;
+
+    return edge - phase;
+  };
   context.fillStyle = colour;
-  for (let x = offsetX; x < width; x += spacing) {
-    for (let y = offsetY; y < height; y += spacing) {
+  for (let x = first(area.x - size, camera.x); x < area.x + area.width + size; x += spacing) {
+    for (let y = first(area.y - size, camera.y); y < area.y + area.height + size; y += spacing) {
       context.fillRect(x - size / 2, y - size / 2, size, size);
     }
   }
 };
 
-/** An outline around an element, in screen space: a steady line however far the board is zoomed. */
-export const drawOutline = (
+/**
+ * Outlines around elements, in screen space — a steady line however far the board is zoomed. Many at once — a
+ * selection of a thousand, everybody else's — as one path and one stroke, and only those in `view`: what a marquee over
+ * a busy board draws at every step.
+ */
+export const drawOutlines = (
   context: CanvasRenderingContext2D,
   camera: Camera,
-  box: Box,
+  boxes: Iterable<Box>,
+  view: Box,
   colour: string,
   dashed: boolean
 ): void => {
-  const [x, y] = toScreen(camera, box.x, box.y);
   context.save();
   context.strokeStyle = colour;
   context.lineWidth = 1.5;
   context.setLineDash(dashed ? [5, 4] : []);
-  context.strokeRect(x - 6, y - 6, box.width * camera.zoom + 12, box.height * camera.zoom + 12);
+  context.beginPath();
+  for (const box of boxes) {
+    if (
+      box.x < view.x + view.width &&
+      box.x + box.width > view.x &&
+      box.y < view.y + view.height &&
+      box.y + box.height > view.y
+    ) {
+      const [x, y] = toScreen(camera, box.x, box.y);
+      context.rect(x - 6, y - 6, box.width * camera.zoom + 12, box.height * camera.zoom + 12);
+    }
+  }
+
+  context.stroke();
   context.restore();
 };
 

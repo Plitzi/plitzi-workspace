@@ -44,7 +44,8 @@ const EXAMPLE_TARGETS = [
   'server-actions-no-server',
   'server-actions-schedules',
   'blog',
-  'ceniza'
+  'ceniza',
+  'whiteboard'
 ];
 
 export const categories: Category[] = [

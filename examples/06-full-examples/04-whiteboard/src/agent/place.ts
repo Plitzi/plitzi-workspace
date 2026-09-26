@@ -1,7 +1,8 @@
 import { randomInt } from 'node:crypto';
 
-import { FILLS, fitsInFrame, holdsText, isAuthored, STROKES } from '../board/model.ts';
-import { estimatedCardHeight } from '../board/sketch.ts';
+import { FILLS, fitsInFrame, FONT_SIZES, holdsText, isAuthored, STROKES } from '../board/model.ts';
+import { STAMP_SIZE } from '../board/reactions.ts';
+import { estimatedCardHeight, estimatedTextBox } from '../board/sketch.ts';
 import { COLUMN_GAP, COLUMN_PADDING, layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
 import { FRAME_HEADER } from '../plugins/Board/geometry.ts';
 import { newElementId } from './session.ts';
@@ -34,6 +35,7 @@ const SIZES: Partial<Record<ShapeType, { width: number; height: number }>> = {
   card: { width: 260, height: 60 },
   frame: { width: 480, height: 400 },
   comment: { width: 32, height: 32 },
+  stamp: { width: STAMP_SIZE, height: STAMP_SIZE },
   stack: { width: 222, height: 252 }
 };
 
@@ -43,22 +45,14 @@ const SHAPE_SIZE = { width: 170, height: 110 };
 export const cardHeight = (element: BoardElement): number =>
   estimatedCardHeight(element.text ?? '', element.width, element.author !== undefined);
 
-/** A text's box, as the canvas would measure it in the hand-drawn face. */
-const textBox = (text: string): { width: number; height: number } => {
-  const lines = text.split('\n');
-
-  return {
-    width: Math.max(40, ...lines.map(line => line.length * 15)),
-    height: lines.length * 35
-  };
-};
-
 const measured = (element: BoardElement): BoardElement => {
   if (element.type === 'card') {
     return { ...element, height: cardHeight(element) };
   }
 
-  return element.type === 'text' ? { ...element, ...textBox(element.text ?? '') } : element;
+  return element.type === 'text'
+    ? { ...element, ...estimatedTextBox(element.text ?? '', element.fontSize ?? FONT_SIZES[element.strokeWidth]) }
+    : element;
 };
 
 const fillOf = (type: ShapeType, color: string | undefined): Fill => {
@@ -90,15 +84,18 @@ export const frameNamed = (session: Session, name: string | undefined): BoardEle
 const build = (session: Session, spec: AddSpec, z: number): BoardElement => {
   const size = SIZES[spec.type] ?? SHAPE_SIZE;
   const text = spec.text ?? (holdsText(spec.type) ? '' : undefined);
+  const width = spec.width ?? size.width;
+  // A stamp is its emoji, drawn to fill a square: never stretched, never coloured.
+  const stamp = spec.type === 'stamp';
   const element: BoardElement = {
     id: newElementId(),
     type: spec.type,
     x: spec.x ?? 0,
     y: spec.y ?? 0,
-    width: spec.width ?? size.width,
-    height: spec.height ?? size.height,
+    width,
+    height: stamp ? width : (spec.height ?? size.height),
     stroke: strokeOf(spec.type === 'text' || !SIZES[spec.type] ? spec.color : undefined),
-    fill: spec.type === 'text' ? 'none' : fillOf(spec.type, spec.color),
+    fill: spec.type === 'text' || stamp ? 'none' : fillOf(spec.type, spec.color),
     strokeWidth: 2,
     seed: randomInt(2 ** 31),
     z,

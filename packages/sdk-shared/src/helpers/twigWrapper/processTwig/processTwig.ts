@@ -52,6 +52,43 @@ export const processTwig = (
   }
 };
 
+/** Text that opens a JSON object or array: what the author of a param meant as a document. */
+const opensDocument = (text: string): boolean => {
+  const trimmed = text.trimStart();
+
+  return trimmed.startsWith('{') || trimmed.startsWith('[');
+};
+
+/**
+ * A param the author wrote as a JSON document, rendered as one — every value printed inside a string literal escaped
+ * for it — and answered as the document it makes; `undefined` when it does not make one, and it is text after all.
+ */
+const renderDocument = (template: string, variables: Record<string, unknown>): unknown => {
+  const entry = resolveTokens(template);
+  // A template of plain names keeps only the tree with its sources: the same nodes, for evaluating.
+  const nodes = entry ? (entry.nodes ?? entry.nodesWithSource) : null;
+  if (!nodes) {
+    return undefined;
+  }
+
+  try {
+    const context = 'variables' in variables ? flattenContext(variables) : variables;
+    const { output, variables: updatedContext, hasSet } = evaluate(nodes, context, false, true);
+    if (!opensDocument(output)) {
+      return undefined;
+    }
+
+    const document: unknown = JSON.parse(output);
+    if (hasSet) {
+      Object.assign(variables, updatedContext);
+    }
+
+    return document;
+  } catch {
+    return undefined;
+  }
+};
+
 /**
  * A template's VALUE, where it has one: `{{ rows|filter(r => r.open) }}` is the filtered array, `{{ count > 0 }}` a
  * boolean, `{{ total }}` the number it holds.
@@ -114,8 +151,10 @@ const jsonDocument = (text: string): unknown => {
  *
  * Two readings of JSON stay, because in both the author wrote JSON on purpose: a param that is nothing but a JSON
  * filter (`{{ saved|json_encode }}`) is the value it encodes, and text around the tokens that makes a JSON object or
- * array (`{ "id": "{{ id }}" }`, an `input` written as a document) is that document. Any other text is text. A value
- * that is not there reads as an empty string, as it renders.
+ * array (`{ "id": "{{ id }}" }`, an `input` written as a document) is that document. A value printed inside one of
+ * the document's string literals is escaped for it: a visitor's `Say "hi"` or a note on two lines used to break the
+ * document, and the step was handed its raw text instead. Any other text is text. A value that is not there reads as
+ * an empty string, as it renders.
  */
 export const processTwigParam = (template: string, variables: Record<string, unknown> = {}): unknown => {
   if (typeof template !== 'string') {
@@ -126,6 +165,12 @@ export const processTwigParam = (template: string, variables: Record<string, unk
   const nodes = entry ? (entry.nodes ?? entry.nodesWithSource) : null;
   const meaningful = nodes?.filter(node => node.type !== 'text' || node.value.trim() !== '');
   if (meaningful?.length !== 1 || meaningful[0].type !== 'variable') {
+    // Only text with a quote in it can hold a string literal a value lands in; any other goes straight to the text.
+    const document = template.includes('"') ? renderDocument(template, variables) : undefined;
+    if (document !== undefined) {
+      return document;
+    }
+
     const output = processTwig(template, variables);
 
     return typeof output === 'string' ? jsonDocument(output) : output;

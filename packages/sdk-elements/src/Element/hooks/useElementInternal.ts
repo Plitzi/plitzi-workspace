@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
-import { processTwig, hasValidToken, templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwig, hasValidToken, templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';
@@ -138,10 +138,10 @@ export const getProps = (
 const templatesIn = (attributes: Record<string, unknown> | undefined): string[] =>
   Object.values(attributes ?? {}).filter((value): value is string => typeof value === 'string' && hasValidToken(value));
 
-/** Every source an attribute's templates name, and the variables — which a template reads by their bare name. */
+/** Every source path an attribute's templates read, and the variables — which a template reads by their bare name. */
 const templateSources = (templates: string[]): string[] => [
   'variables',
-  ...new Set(templates.flatMap(template => templateRootNames(template)))
+  ...new Set(templates.flatMap(template => templatePaths(template)))
 ];
 
 export type UseElementInternalProps = {

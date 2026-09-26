@@ -300,6 +300,14 @@ export const targets: Target[] = [
     what: 'A whole restaurant website — live availability, bookings with a confirmation email, a journal, no server code'
   },
   {
+    id: 'whiteboard',
+    workspace: '@plitzi/example-whiteboard',
+    // In memory: every run starts from the featured boards and nothing else.
+    command: 'PORT=5018 REDIS_URL= yarn workspace @plitzi/example-whiteboard start',
+    origin: 'http://127.0.0.1:5018',
+    what: 'Pizarra — a collaborative whiteboard over WebSocket, drawn on a canvas, with its own bench'
+  },
+  {
     id: 'builder',
     workspace: '@plitzi/plitzi-builder',
     /** Plain HTTP on a port of its own, so the same command works on a laptop and on a CI runner that has no

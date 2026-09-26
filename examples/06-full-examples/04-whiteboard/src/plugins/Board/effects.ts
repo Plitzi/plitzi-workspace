@@ -1,3 +1,4 @@
+import { EMOJI_FONT } from './draw.ts';
 import { toScreen } from './geometry.ts';
 
 import type { Camera } from './geometry.ts';
@@ -88,7 +89,7 @@ export const createEffects = () => {
       context.shadowColor = 'rgba(0, 0, 0, 0.28)';
       context.shadowBlur = 8;
       context.shadowOffsetY = 2;
-      context.font = `${Math.round(40 * scale)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      context.font = `${Math.round(40 * scale)}px ${EMOJI_FONT}`;
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       // Opaque, whatever was drawn last: a colour emoji is painted with the fill's alpha, and the board's faint grid

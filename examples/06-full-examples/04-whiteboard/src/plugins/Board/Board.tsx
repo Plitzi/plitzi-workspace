@@ -90,7 +90,10 @@ const TOOLS_GAP = 12;
 
 const TOOLS_ROOM = 64;
 
-/** A draft bigger than this travels as a cursor alone: the others see the drag land when it is committed. */
+/**
+ * A draft bigger than this travels as a cursor alone: the others see the drag land when it is committed. How MANY
+ * elements a draft may carry is decided before it gets here (`SHARED_DRAFT` in `core.ts`).
+ */
 const DRAFT_BYTES = 6000;
 
 const isOneOf = <T extends string | number>(values: readonly T[], value: unknown): value is T =>
@@ -164,6 +167,7 @@ const Board = ({
   const { interactionsManager } = use(InteractionsContext);
   const hostRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const boardCanvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<BoardController | undefined>(undefined);
   const [editor, setEditor] = useState<TextEditor | undefined>(undefined);
   const [selectionBox, setSelectionBox] = useState<ScreenBox | undefined>(undefined);
@@ -225,7 +229,8 @@ const Board = ({
             isFrame: event.frame,
             isColumn: event.column,
             isTask: event.task,
-            isDone: event.done
+            isDone: event.done,
+            isLocked: event.locked
           });
           break;
         case 'view':
@@ -260,6 +265,9 @@ const Board = ({
           break;
         case 'summoned':
           trigger(declaration.triggers.onSummoned.action, { name: event.name });
+          break;
+        case 'history':
+          trigger(declaration.triggers.onHistoryChange.action, { canUndo: event.canUndo, canRedo: event.canRedo });
           break;
         case 'frames':
           trigger(declaration.triggers.onFramesChange.action, { frames: event.frames, count: event.frames.length });
@@ -299,12 +307,13 @@ const Board = ({
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    const boardCanvas = boardCanvasRef.current;
     const host = hostRef.current;
-    if (!canvas || !host) {
+    if (!canvas || !boardCanvas || !host) {
       return undefined;
     }
 
-    const controller = createBoardController(canvas, host, event => onEventRef.current(event));
+    const controller = createBoardController(canvas, boardCanvas, host, event => onEventRef.current(event));
     controllerRef.current = controller;
 
     return () => {
@@ -472,6 +481,7 @@ const Board = ({
       insertKanban: call('insertKanban', controller => controller.insertKanban()),
       addColumn: call('addColumn', controller => controller.addColumn()),
       toggleDone: call('toggleDone', controller => controller.toggleDone()),
+      toggleLock: call('toggleLock', controller => controller.toggleLock()),
       chime: {
         ...declaration.callbacks.chime,
         callback: (params: { sound?: unknown }) => controllerRef.current?.chime(params)
@@ -674,6 +684,7 @@ const Board = ({
       interactionTriggers={TRIGGERS}
       interactionCallbacks={callbacks}
     >
+      <canvas ref={boardCanvasRef} className="board__canvas board__canvas--board" aria-hidden />
       <canvas ref={canvasRef} className="board__canvas" aria-label={title ? `Board: ${title}` : 'Board'} />
       {editor?.composer && (
         <div className="board__composer" style={{ left: editor.left, top: editor.top, width: editor.width }}>

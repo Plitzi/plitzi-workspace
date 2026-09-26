@@ -463,6 +463,7 @@ const canvas = (): ElementSpec =>
         setState({ key: 'selectionCanBrush', type: 'boolean', value: '{{ picked.canBrush }}' }),
         setState({ key: 'selectionIsTask', type: 'boolean', value: '{{ picked.isTask }}' }),
         setState({ key: 'selectionIsDone', type: 'boolean', value: '{{ picked.isDone }}' }),
+        setState({ key: 'selectionIsLocked', type: 'boolean', value: '{{ picked.isLocked }}' }),
         setState({ key: 'selectionCanEdges', type: 'boolean', value: '{{ picked.canEdges }}' }),
         setState({ key: 'selectionCanFillStyle', type: 'boolean', value: '{{ picked.canFillStyle }}' }),
         setState({ key: 'selectionCanOpacity', type: 'boolean', value: '{{ picked.canOpacity }}' }),
@@ -498,6 +499,12 @@ const canvas = (): ElementSpec =>
         )
       ],
       // The board's frames, listed for the frames panel; a presentation, for the banner that says where it is.
+      // What undo and redo are enabled by: nothing to undo — a board just opened — is nothing to press.
+      [
+        named('history', declaredTrigger(declaration, 'onHistoryChange')),
+        setState({ key: 'canUndo', type: 'boolean', value: '{{ history.canUndo }}' }),
+        setState({ key: 'canRedo', type: 'boolean', value: '{{ history.canRedo }}' })
+      ],
       [
         named('framed', declaredTrigger(declaration, 'onFramesChange')),
         setState({ key: 'frames', type: 'json', value: '{{ framed.frames|json_encode }}' })
@@ -589,12 +596,14 @@ const zoomBar = (): ElementSpec =>
           id: 'undo',
           icon: 'fa-solid fa-rotate-left',
           title: 'Undo — ⌘Z',
+          bind: [{ to: 'disabled', source: 'computed.nothingToUndo' }],
           flow: [onClick(), boardAction('undo')]
         }),
         iconAction({
           id: 'redo',
           icon: 'fa-solid fa-rotate-right',
           title: 'Redo — ⌘⇧Z',
+          bind: [{ to: 'disabled', source: 'computed.nothingToRedo' }],
           flow: [onClick(), boardAction('redo')]
         }),
         divide()

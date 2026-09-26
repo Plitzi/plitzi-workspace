@@ -35,7 +35,7 @@ export const createPicking = (core: Core) => {
   const shapeAround = (point: Point): BoardElement | undefined =>
     core
       .displayed()
-      .reverse()
+      .toReversed()
       .find(
         element =>
           takesLabel(element.type) &&
@@ -50,14 +50,14 @@ export const createPicking = (core: Core) => {
   const topmostAt = (point: Point): BoardElement | undefined =>
     core
       .displayed()
-      .reverse()
+      .toReversed()
       .find(element => hits(element, point, 6 / zoom())) ?? shapeAround(point);
 
   /** The element whose vote badge is under a point — only elements with votes show one. */
   const voteAt = (point: Point): string | undefined =>
     core
       .displayed()
-      .reverse()
+      .toReversed()
       .find(element => (element.votes?.length ?? 0) > 0 && inside(point, voteBadgeBox(element)))?.id;
 
   /** The card whose done box is under a point — a little larger than drawn, so it is easy to hit. */
@@ -73,7 +73,7 @@ export const createPicking = (core: Core) => {
   /** The anchor a point snaps to — on the topmost element near it, never on `exclude` or on a line. */
   const snapAt = (point: Point, exclude?: string, toward?: Point): Binding | undefined => {
     const reach = SNAP_REACH / zoom();
-    for (const element of core.displayed().reverse()) {
+    for (const element of core.displayed().toReversed()) {
       if (element.id === exclude || !isConnectable(element.type)) {
         continue;
       }
@@ -145,7 +145,7 @@ export const createPicking = (core: Core) => {
 
     return core
       .displayed()
-      .reverse()
+      .toReversed()
       .find(
         element =>
           isConnectable(element.type) && element.id !== state.editing && inside(point, boundsOf(element), reach)

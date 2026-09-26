@@ -92,7 +92,8 @@ export const createInput = (core: Core, pictures: Pictures, pointer: PointerHand
       try {
         const value: unknown = JSON.parse(text.slice(CLIPBOARD_MARK.length));
 
-        return Array.isArray(value) ? value.slice(0, LIMITS.ops).map(parseElement).filter(isDefined) : [];
+        // As many as a board can hold: the commit is split for the server wherever it is bigger than one it takes.
+        return Array.isArray(value) ? value.slice(0, LIMITS.elements).map(parseElement).filter(isDefined) : [];
       } catch {
         return [];
       }

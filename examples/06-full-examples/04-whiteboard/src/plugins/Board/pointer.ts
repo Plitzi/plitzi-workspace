@@ -12,6 +12,7 @@ import {
   contains,
   handlePoint,
   hits,
+  movedBy,
   nearestAnchor,
   resolveConnector,
   scaleElement,
@@ -68,7 +69,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
 
   const erase = (erased: Set<string>, point: Point): void => {
     for (const element of core.displayed()) {
-      if (!erased.has(element.id) && hits(element, point, 8 / state.camera.zoom)) {
+      if (!erased.has(element.id) && element.locked !== true && hits(element, point, 8 / state.camera.zoom)) {
         erased.add(element.id);
       }
     }
@@ -139,7 +140,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
     }
 
     const handle = picking.handleAt(...screen);
-    const chosen = core.selected();
+    const chosen = core.changeable();
     const box = unionOf(chosen.map(boundsOf));
     if (handle && box) {
       const ids = new Set(chosen.map(element => element.id));
@@ -179,16 +180,18 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
 
     // A frame carries what is in it. A connector moved without the shapes it is fixed to lets go of them, and stays
     // where it is put.
-    const moving = core.selected();
+    const moving = core.changeable();
     const ids = new Set(moving.map(element => element.id));
     const riders = core
       .displayed()
-      .filter(element => element.parent && ids.has(element.parent) && !ids.has(element.id));
+      // What is locked in a frame stays where it is when the frame moves: that is what locking it says.
+      .filter(element => element.parent && ids.has(element.parent) && !ids.has(element.id) && element.locked !== true);
     riders.forEach(element => ids.add(element.id));
     state.gesture = {
       kind: 'move',
       origin: point,
       originals: [...moving, ...riders].map(element => detachOutside(element, ids)),
+      ids,
       loose: moving.filter(element => fitsInFrame(element.type)).map(element => element.id)
     };
   };
@@ -405,16 +408,12 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         const dx = point[0] - gesture.origin[0];
         const dy = point[1] - gesture.origin[1];
         for (const original of gesture.originals) {
-          draft.set(original.id, { ...original, x: original.x + dx, y: original.y + dy });
+          draft.set(original.id, movedBy(original, dx, dy));
         }
 
         // Where it would land, shown as it is dragged: the frame under the pointer, the gap in a column.
         const first = gesture.loose.length ? scene.element(gesture.loose[0]) : undefined;
-        core.aimDrop(
-          gesture.loose.length ? point : undefined,
-          new Set(gesture.originals.map(element => element.id)),
-          first?.parent
-        );
+        core.aimDrop(gesture.loose.length ? point : undefined, gesture.ids, first?.parent);
         break;
       }
       case 'resize': {
@@ -442,7 +441,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         const area = boxFrom(gesture.origin, point);
         const inside = core
           .displayed()
-          .filter(element => contains(area, boundsOf(element)))
+          .filter(element => element.locked !== true && contains(area, boundsOf(element)))
           .map(element => element.id);
         core.setSelection([...gesture.base, ...inside]);
         break;

@@ -4095,6 +4095,7 @@ __metadata:
   resolution: "@plitzi/example-whiteboard@workspace:examples/06-full-examples/04-whiteboard"
   dependencies:
     "@modelcontextprotocol/sdk": "npm:^1.30.1"
+    "@playwright/test": "npm:^1.63.0"
     "@plitzi/sdk-authoring": "workspace:*"
     "@plitzi/sdk-elements": "workspace:*"
     "@plitzi/sdk-server": "workspace:*"

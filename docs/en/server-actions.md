@@ -106,6 +106,9 @@ Two things worth knowing:
   nobody can read. The editor warns.
 - **Its JSON is the shape.** An unquoted token keeps its type (`{{ quote.value }}` → a number); a quoted one is
   text. There is no separate declaration to coerce one into the other.
+- **A quoted token is escaped for its string.** `"{{ input.note }}"` stays one JSON string whatever the value holds —
+  a quote a visitor typed, a line break — so a document never breaks on the text it carries. Only the values inside
+  quotes are escaped: an unquoted `{{ rows }}` prints the JSON of the list, as before.
 
 Everything the flow produced and did not name stays on the server. That is the mechanism that keeps an API's
 internal fields, draft rows and tokens out of the page.

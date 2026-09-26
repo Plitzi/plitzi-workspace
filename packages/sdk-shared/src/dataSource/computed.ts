@@ -1,3 +1,5 @@
+import deepEqual from '@plitzi/plitzi-ui/utils/deepEqual';
+
 import { processTwigValue } from '../helpers/twigWrapper';
 
 /**
@@ -5,17 +7,29 @@ import { processTwigValue } from '../helpers/twigWrapper';
  *
  * In declaration order, each one seeing the values before it as `computed.<name>` — so `level` can be written over
  * `xp` without repeating it. A value that reads one declared after it reads nothing; authoring refuses that.
+ *
+ * Given the `previous` evaluation, a value that comes out the same keeps the object it was, and so does the whole
+ * when none changed. They are all evaluated again whenever the state changes, and a list or a record evaluates to a new
+ * object every time: every element reading one — a star on each of a hundred and sixty library items reading the
+ * favourites — rendered again for the tool in hand changing, because what it read was no longer the same object.
  */
 export const evaluateComputed = (
   definitions: Record<string, string>,
-  globals: Record<string, unknown>
+  globals: Record<string, unknown>,
+  previous?: Record<string, unknown>
 ): Record<string, unknown> => {
   const computed: Record<string, unknown> = {};
+  let unchanged = previous !== undefined && Object.keys(previous).length === Object.keys(definitions).length;
   for (const [name, template] of Object.entries(definitions)) {
-    computed[name] = processTwigValue(template, { ...globals, computed: { ...computed } });
+    const value = processTwigValue(template, { ...globals, computed: { ...computed } });
+    const before = previous?.[name];
+    const same =
+      previous !== undefined && Object.hasOwn(previous, name) && (before === value || deepEqual(before, value));
+    computed[name] = same ? before : value;
+    unchanged &&= same;
   }
 
-  return computed;
+  return unchanged && previous ? previous : computed;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
@@ -79,10 +93,11 @@ const computedOver = (
     return lastEvaluation.computed;
   }
 
-  const computed = evaluateComputed(definitions, {
-    ...Object.fromEntries(COMPUTED_GLOBALS.map((name, index) => [name, globals[index]])),
-    state
-  });
+  const computed = evaluateComputed(
+    definitions,
+    { ...Object.fromEntries(COMPUTED_GLOBALS.map((name, index) => [name, globals[index]])), state },
+    lastEvaluation?.definitions === definitions ? lastEvaluation.computed : undefined
+  );
   lastEvaluation = { definitions, state, globals, computed };
 
   return computed;

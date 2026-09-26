@@ -81,6 +81,10 @@ export const computed = {
   /** The selection is one card or comment: what can be ticked done, or resolved. */
   selectionIsTask: '{{ state.selectionIsTask ? true : false }}',
   selectionIsDone: '{{ state.selectionIsDone ? true : false }}',
+  selectionIsLocked: '{{ state.selectionIsLocked ? true : false }}',
+  /** Nothing to undo, or to redo — until the canvas says otherwise: a board just opened has no history. */
+  nothingToUndo: '{{ state.canUndo ? false : true }}',
+  nothingToRedo: '{{ state.canRedo ? false : true }}',
   /** How a fill is drawn matters only once there is a fill. */
   showFillStyle: `{{ ${offering('selectionCanFillStyle', SHAPE_TOOLS)} and computed.fill != 'none' ? true : false }}`,
   showOpacity: offers('selectionCanOpacity', SEE_THROUGH_TOOLS),
@@ -192,6 +196,9 @@ export const transientState = [
   'selectionCanBrush',
   'selectionIsTask',
   'selectionIsDone',
+  'selectionIsLocked',
+  'canUndo',
+  'canRedo',
   'selectionCanEdges',
   'selectionCanFillStyle',
   'selectionCanOpacity',

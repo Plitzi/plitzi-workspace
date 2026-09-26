@@ -70,21 +70,37 @@ export const createScene = () => {
     return stamp(targets);
   };
 
+  /**
+   * What the board holds, worked out once per revision: a busy board is thousands of elements, and every frame, every
+   * new element's stacking and every hit test asked for them again.
+   */
+  let known: { revision: number; visible: readonly BoardElement[]; topZ: number; bottomZ: number } | undefined;
+  const settled = () => {
+    if (known?.revision !== revision) {
+      const entries = all();
+      known = {
+        revision,
+        visible: entries.filter(entry => !entry.deleted).sort(byStacking),
+        topZ: entries.reduce((top, entry) => Math.max(top, entry.z), 0),
+        bottomZ: entries.reduce((bottom, entry) => Math.min(bottom, entry.z), 0)
+      };
+    }
+
+    return known;
+  };
+
   return {
     element,
     /** What is on the board, bottom to top. */
-    visible: (): BoardElement[] =>
-      all()
-        .filter(entry => !entry.deleted)
-        .sort(byStacking),
+    visible: (): readonly BoardElement[] => settled().visible,
     get revision() {
       return revision;
     },
     get topZ(): number {
-      return all().reduce((top, entry) => Math.max(top, entry.z), 0);
+      return settled().topZ;
     },
     get bottomZ(): number {
-      return all().reduce((bottom, entry) => Math.min(bottom, entry.z), 0);
+      return settled().bottomZ;
     },
     canUndo: (): boolean => undoStack.length > 0,
     canRedo: (): boolean => redoStack.length > 0,
@@ -95,11 +111,13 @@ export const createScene = () => {
      */
     confirm: (elements: readonly BoardElement[]): void => {
       for (const incoming of elements) {
+        const edit = pending.get(incoming.id);
         if (supersedes(incoming, confirmed.get(incoming.id))) {
-          confirmed.set(incoming.id, incoming);
+          // This screen's own edit, answered back unchanged, stays the object it was: everything the canvas keeps for
+          // an element — its box, its drawing — is kept by object, and the answer would have made it all again.
+          confirmed.set(incoming.id, edit && JSON.stringify(edit) === JSON.stringify(incoming) ? edit : incoming);
         }
 
-        const edit = pending.get(incoming.id);
         if (edit && !supersedes(edit, confirmed.get(incoming.id))) {
           pending.delete(incoming.id);
         }

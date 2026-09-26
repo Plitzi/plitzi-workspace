@@ -91,7 +91,26 @@ const isRuleValue = (value: unknown): value is RuleValue =>
 const ruleValues = (values: Record<string, unknown>): Record<string, RuleValue> =>
   Object.fromEntries(Object.entries(values).filter((entry): entry is [string, RuleValue] => isRuleValue(entry[1])));
 
-const processNode = async (
+type NodeOutcome = {
+  status: InteractionNodeStatus;
+  result: unknown;
+  postCallbacks: PostCallbackNode[];
+  whenParams?: Record<string, RuleValue>;
+};
+
+const isThenable = (value: unknown): value is PromiseLike<unknown> =>
+  typeof value === 'object' && value !== null && 'then' in value && typeof value.then === 'function';
+
+/**
+ * One step. Answered as it happens: at once for a step that is synchronous — a `setState`, a toggle, a notification —
+ * and as a promise only for one that waits on something, a request or a delay.
+ *
+ * The difference is the page's frame rate. Awaited, every step gave the event loop a turn, and React rendered after
+ * each one: a flow of twenty `setState` steps rendered the page twenty times. Run through without a turn, consecutive
+ * steps that write the store are one change, and React renders once. What a step that waits comes back to is the page
+ * as it is then, as it always was.
+ */
+const processNode = (
   node: ElementInteraction,
   callbacksAvailables: Record<string, InteractionCallback> = {},
   flowParams: Record<string, unknown> = {},
@@ -99,88 +118,19 @@ const processNode = async (
   // The element this flow fired on. Threaded through so a step that starts something asynchronous — a detached
   // server action — can report back to it when it finishes, long after this flow returned.
   context: InteractionCallbackContext = {}
-): Promise<{
-  status: InteractionNodeStatus;
-  result: unknown;
-  postCallbacks: PostCallbackNode[];
-  whenParams?: Record<string, RuleValue>;
-}> => {
-  let result: unknown = {};
+): NodeOutcome | Promise<NodeOutcome> => {
   const postCallbacks: PostCallbackNode[] = [];
   const { id, action, enabled, params, elementId, type, when } = node;
   if (!action || !enabled) {
-    return { status: 'disabled', result, postCallbacks };
+    return { status: 'disabled', result: {}, postCallbacks };
   }
 
   const whenParams = ruleValues({ ...globalParams, ...flowParams, [id]: params });
   if (when && !QueryBuilderEvaluator(when, whenParams)) {
-    return { status: 'skipped', result, postCallbacks, whenParams };
+    return { status: 'skipped', result: {}, postCallbacks, whenParams };
   }
 
-  const paramsToCallback = {
-    ...flowParams,
-    ...globalParams,
-    ...processParams(type, params, flowParams, globalParams, action)
-  };
-  try {
-    switch (type) {
-      case 'callback':
-      case 'globalCallback': {
-        if (!elementId) {
-          pConsole.warning(
-            'interactions',
-            <span>
-              Step <b>{action}</b> names no element, so there is nothing to run it on
-            </span>,
-            { node }
-          );
-
-          return { status: 'failed', result, postCallbacks, whenParams };
-        }
-
-        const receptorCallback = get(callbacksAvailables, `${elementId}.${action}`) as InteractionCallback | undefined;
-        if (!receptorCallback) {
-          // The step is wired to something that does not exist, and the only symptom is a control that appears to do
-          // nothing at all — so say which name was looked for and what was actually registered there.
-          pConsole.warning(
-            'interactions',
-            <span>
-              Nothing is registered as <b>{`${elementId}.${action}`}</b>, so this step did nothing
-            </span>,
-            { node, available: Object.keys(get(callbacksAvailables, elementId, {})) }
-          );
-
-          return { status: 'failed', result, postCallbacks, whenParams };
-        }
-
-        const { callback, postCallback } = receptorCallback;
-        if (callback) {
-          result = await callback(paramsToCallback, context);
-        }
-
-        if (postCallback) {
-          postCallbacks.push({ id, callback: postCallback, params: { ...paramsToCallback, [id]: result } });
-        }
-
-        break;
-      }
-
-      case 'utility': {
-        const { callback, postCallback } = get(utility, action, {}) as InteractionCallback;
-        if (callback) {
-          result = await callback(paramsToCallback, context);
-        }
-
-        if (postCallback) {
-          postCallbacks.push({ id, callback: postCallback, params: { ...paramsToCallback, [id]: result } });
-        }
-
-        break;
-      }
-
-      default:
-    }
-  } catch (e: unknown) {
+  const failed = (e: unknown): NodeOutcome => {
     pConsole.danger(
       'interactions',
       <span>
@@ -189,10 +139,71 @@ const processNode = async (
       { error: e instanceof Error ? e.message : String(e), node }
     );
 
-    return { status: 'failed', result, postCallbacks, whenParams };
+    return { status: 'failed', result: {}, postCallbacks, whenParams };
+  };
+
+  let receptor: InteractionCallback | undefined;
+  switch (type) {
+    case 'callback':
+    case 'globalCallback': {
+      if (!elementId) {
+        pConsole.warning(
+          'interactions',
+          <span>
+            Step <b>{action}</b> names no element, so there is nothing to run it on
+          </span>,
+          { node }
+        );
+
+        return { status: 'failed', result: {}, postCallbacks, whenParams };
+      }
+
+      receptor = get(callbacksAvailables, `${elementId}.${action}`) as InteractionCallback | undefined;
+      if (!receptor) {
+        // The step is wired to something that does not exist, and the only symptom is a control that appears to do
+        // nothing at all — so say which name was looked for and what was actually registered there.
+        pConsole.warning(
+          'interactions',
+          <span>
+            Nothing is registered as <b>{`${elementId}.${action}`}</b>, so this step did nothing
+          </span>,
+          { node, available: Object.keys(get(callbacksAvailables, elementId, {})) }
+        );
+
+        return { status: 'failed', result: {}, postCallbacks, whenParams };
+      }
+
+      break;
+    }
+
+    case 'utility':
+      receptor = get(utility, action, {}) as InteractionCallback;
+      break;
+
+    default:
+      return { status: 'success', result: {}, postCallbacks, whenParams };
   }
 
-  return { status: 'success', result, postCallbacks, whenParams };
+  try {
+    const paramsToCallback = {
+      ...flowParams,
+      ...globalParams,
+      ...processParams(type, params, flowParams, globalParams, action)
+    };
+    const { callback, postCallback } = receptor;
+    const done = (result: unknown): NodeOutcome => {
+      if (postCallback) {
+        postCallbacks.push({ id, callback: postCallback, params: { ...paramsToCallback, [id]: result } });
+      }
+
+      return { status: 'success', result, postCallbacks, whenParams };
+    };
+    const answer: unknown = callback ? callback(paramsToCallback, context) : {};
+
+    return isThenable(answer) ? Promise.resolve(answer).then(done, failed) : done(answer);
+  } catch (e: unknown) {
+    return failed(e);
+  }
 };
 
 const processPostCallbacks = async (postCallbacks: PostCallbackNode[] = []) => {
@@ -228,48 +239,37 @@ const flowCallbacks = async (
   executionResults: Record<string, InteractionNode> = {},
   context: InteractionCallbackContext = {}
 ) => {
-  if (!parentNode) {
-    return executionResults;
+  let previous = parentNode;
+  let params: Record<string, unknown> = flowParams;
+  while (previous) {
+    const node = get(nodes, previous.afterNode) as ElementInteraction | undefined;
+    if (!node) {
+      if (postCallbacksTotal.length > 0) {
+        await processPostCallbacks(postCallbacksTotal);
+      }
+
+      return executionResults;
+    }
+
+    const startTime = pConsole.getTime().valueOf();
+    // Waited on only when the step waits: see `processNode`.
+    const pending = processNode(node, callbacksAvailables, params, readGlobals(), context);
+    const { status, result, postCallbacks, whenParams } = isThenable(pending) ? await pending : pending;
+    executionResults[node.id] = {
+      node,
+      status,
+      result,
+      postCallbacks,
+      whenParams,
+      startTime,
+      endTime: pConsole.getTime().valueOf()
+    };
+    postCallbacksTotal.push(...postCallbacks);
+    params = { ...params, [node.id]: result };
+    previous = node;
   }
 
-  const node = get(nodes, parentNode.afterNode) as ElementInteraction | undefined;
-  if (!node && postCallbacksTotal.length > 0) {
-    await processPostCallbacks(postCallbacksTotal);
-  }
-
-  if (!node) {
-    return executionResults;
-  }
-
-  const startTime = pConsole.getTime().valueOf();
-  const { status, result, postCallbacks, whenParams } = await processNode(
-    node,
-    callbacksAvailables,
-    flowParams,
-    readGlobals(),
-    context
-  );
-  executionResults[node.id] = {
-    node,
-    status,
-    result,
-    postCallbacks,
-    whenParams,
-    startTime,
-    endTime: pConsole.getTime().valueOf()
-  };
-  postCallbacksTotal.push(...postCallbacks);
-
-  return flowCallbacks(
-    node,
-    nodes,
-    callbacksAvailables,
-    { ...flowParams, [node.id]: result },
-    readGlobals,
-    postCallbacksTotal,
-    executionResults,
-    context
-  );
+  return executionResults;
 };
 
 const storeLog = (

@@ -750,7 +750,7 @@ const mural = (): BoardElement[] => {
         sticky(left, top + pixel * 7 + 220, `${count} elements, drawn and hit-tested every frame`, 'violet'),
         sticky(left + 240, top + pixel * 7 + 220, 'Each drawn once, then reused while it moves', 'blue'),
         sticky(left + 480, top + pixel * 7 + 220, 'The minimap draws all of it, small', 'green'),
-        sticky(left + 720, top + pixel * 7 + 220, 'The front page previews the frames and the last 140', 'yellow'),
+        sticky(left + 720, top + pixel * 7 + 220, 'The front page shows all of it in 300 coarser pieces', 'yellow'),
         sticky(
           left + 960,
           top + pixel * 7 + 220,

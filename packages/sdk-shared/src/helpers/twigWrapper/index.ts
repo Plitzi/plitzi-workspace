@@ -3,7 +3,7 @@ export { MAX_PARAM_PASSES, resolveStepParam } from './processTwig/resolveStepPar
 export { hasTemplateSyntax } from './tokens/hasTemplateSyntax';
 export { hasValidToken } from './tokens/hasValidToken';
 export { inspectTemplate } from './inspectTemplate';
-export { templateRootNames } from './templateRoots';
+export { templatePaths, templateRootNames } from './templateRoots';
 export { filters } from './filters/filters';
 export type { ASTNode, Expression } from './AST';
 export type { TemplateInspection } from './inspectTemplate';

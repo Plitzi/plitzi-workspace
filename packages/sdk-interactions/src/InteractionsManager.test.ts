@@ -666,3 +666,89 @@ describe('InteractionsManager — a trigger fired while the page mounts', () => 
     expect(manager.subscriptors.plugin).toBeUndefined();
   });
 });
+
+/**
+ * A step that does not wait is not waited on: consecutive synchronous steps run without giving the event loop a turn,
+ * so the store changes they make are one change and React renders once — a flow of twenty `setState` steps used to
+ * render the page twenty times. A step that returns a promise is still waited for, and the flow resumes after it.
+ */
+describe('a flow runs its synchronous steps without a turn between them', () => {
+  const chain = (actions: string[]): Record<string, ElementInteraction> => {
+    const ids = actions.map((_, index) => `s${index}`);
+
+    return {
+      trig: {
+        id: 'trig',
+        title: 'Trigger',
+        type: 'trigger',
+        action: 'click',
+        params: {},
+        preview: {},
+        elementId: 'el1',
+        beforeNode: '',
+        afterNode: ids[0],
+        flowId: 'flow1',
+        enabled: true
+      },
+      ...Object.fromEntries(
+        actions.map((action, index) => [
+          ids[index],
+          {
+            id: ids[index],
+            title: action,
+            type: 'callback',
+            action,
+            params: {},
+            preview: {},
+            elementId: 'el1',
+            beforeNode: index === 0 ? 'trig' : ids[index - 1],
+            afterNode: ids[index + 1] ?? '',
+            flowId: 'flow1',
+            enabled: true
+          } satisfies ElementInteraction
+        ])
+      )
+    };
+  };
+
+  it('runs two synchronous steps before anything queued in between', async () => {
+    const seen: string[] = [];
+    const manager = new InteractionsManager('page1');
+    manager.subscribe('el1', chain(['first', 'second']), triggerDef, {
+      first: {
+        action: 'first',
+        title: 'First',
+        type: 'callback',
+        params: {},
+        callback: () => {
+          queueMicrotask(() => seen.push('a turn'));
+          seen.push('first');
+        }
+      },
+      second: { action: 'second', title: 'Second', type: 'callback', params: {}, callback: () => seen.push('second') }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(seen).toEqual(['first', 'second', 'a turn']);
+  });
+
+  it('waits for a step that waits, and hands the next one what it answered', async () => {
+    const manager = new InteractionsManager('page1');
+    const read = vi.fn();
+    manager.subscribe('el1', chain(['slow', 'after']), triggerDef, {
+      slow: {
+        action: 'slow',
+        title: 'Slow',
+        type: 'callback',
+        params: {},
+        callback: () => new Promise(resolve => setTimeout(() => resolve('late'), 5))
+      },
+      after: { action: 'after', title: 'After', type: 'callback', params: {}, callback: read }
+    });
+
+    await manager.interactionTrigger('el1', 'click', {});
+
+    expect(read).toHaveBeenCalledWith(expect.objectContaining({ s0: 'late' }), expect.anything());
+  });
+});

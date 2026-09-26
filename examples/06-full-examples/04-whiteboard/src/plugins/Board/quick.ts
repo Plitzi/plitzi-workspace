@@ -67,6 +67,8 @@ export const createQuick = (core: Core) => {
       version: 0,
       nonce: 0,
       ...(holdsText(source.type) ? { text: '' } : {}),
+      // A stamp's text is not written on it, it is the stamp: another like it is the same emoji.
+      ...(source.type === 'stamp' ? { text: source.text } : {}),
       ...(isAuthored(source.type) && author ? { author } : {})
     });
     const end: Binding = { id: grown.id, anchor: OPPOSITE[from.anchor] };

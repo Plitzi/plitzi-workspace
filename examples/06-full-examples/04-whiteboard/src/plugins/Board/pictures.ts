@@ -1,3 +1,5 @@
+import { RevisionedMap } from './revisioned.ts';
+
 import type { BoardElement } from '../../board/model.ts';
 
 /**
@@ -76,10 +78,14 @@ export type Pictures = ReturnType<typeof createPictures>;
 
 /** Every picture this page draws: by asset once the server has it, by element while it is still on its way. */
 export const createPictures = (onLoad: () => void) => {
-  const loaded = new Map<string, HTMLImageElement | 'loading' | 'failed'>();
-  const pending = new Map<string, HTMLImageElement>();
+  const loaded = new RevisionedMap<string, HTMLImageElement | 'loading' | 'failed'>();
+  const pending = new RevisionedMap<string, HTMLImageElement>();
 
   return {
+    /** Counts every change to what is shown for a picture: the painter repaints the board when it moves. */
+    get revision(): number {
+      return loaded.revision + pending.revision;
+    },
     /** What to draw for an image element, loading it the first time it is asked for. */
     of: (element: BoardElement, base: string): HTMLImageElement | undefined => {
       const own = pending.get(element.id);

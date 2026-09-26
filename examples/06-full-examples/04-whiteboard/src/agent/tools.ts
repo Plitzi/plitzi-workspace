@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { REACTIONS } from '../board/reactions.ts';
+import { isStamp, REACTIONS, STAMPS } from '../board/reactions.ts';
 import { TEMPLATES } from '../board/templates.ts';
 import { releasedFrom } from '../plugins/Board/connectors.ts';
 import { layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
@@ -39,10 +39,16 @@ const ELEMENT_TYPES = [
   'triangle',
   'hexagon',
   'cylinder',
-  'star'
+  'star',
+  'stamp'
 ] as const;
 
 const COLOURS = 'yellow, red, orange, green, blue, violet (notes, cards, frames, fills); ink for text and outlines';
+
+/** Someone locked it so it stays as it is: changed only by whoever unlocks it first — as on the canvas. */
+const lockedProblem = (element: BoardElement): string =>
+  `${element.id} is locked, so it stays as it is. Leave it, or unlock it first: update_elements with ` +
+  `{ id: "${element.id}", locked: false } — and only if the people here asked for it to change.`;
 
 const text = (value: string) => ({ content: [{ type: 'text' as const, text: value }] });
 
@@ -164,7 +170,8 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
       description:
         'Put things on the board, all at once: sticky notes, cards (tasks, with a done box), text, frames (sections — ' +
         'a frame with layout "column" is a kanban lane that stacks what is put in it), comments, and shapes with a ' +
-        'label. Give `frame` (its id or title) to put something in a frame; give x/y only to place it exactly — ' +
+        `label, and stamps (an emoji put on the board: its text is one of ${STAMPS.join(' ')}). Give \`frame\` ` +
+        '(its id or title) to put something in a frame; give x/y only to place it exactly — ' +
         `left out, it is placed in free space for you. Colours: ${COLOURS}. Answers each new element's id.`,
       inputSchema: {
         elements: z
@@ -188,6 +195,11 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
     },
     async ({ elements }) => {
       const board = onBoard();
+      const unstamped = elements.findIndex(element => element.type === 'stamp' && !isStamp(element.text));
+      if (unstamped !== -1) {
+        throw new Error(`Element ${unstamped + 1} is a stamp: its text must be one of ${STAMPS.join(' ')}`);
+      }
+
       const placed = placeAll(board, elements);
       const first = placed[0];
       await board.glide(centre(first));
@@ -276,7 +288,8 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
       title: 'Change things',
       description:
         'Change elements by id: their text, place, size, colour; tick a card done or resolve a comment; move ' +
-        'something into a frame (by id or title — a column places it); make a frame a column.',
+        'something into a frame (by id or title — a column places it); make a frame a column; lock or unlock it. ' +
+        'A locked element (read_board marks it) is not changed unless the same change unlocks it.',
       inputSchema: {
         changes: z
           .array(
@@ -290,7 +303,8 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
               color: z.string().optional(),
               done: z.boolean().optional(),
               frame: z.string().optional().describe('Id or title of the frame to move it into; "" takes it out'),
-              layout: z.enum(['column', 'free']).optional().describe('Frames only')
+              layout: z.enum(['column', 'free']).optional().describe('Frames only'),
+              locked: z.boolean().optional().describe('Locked: nobody moves, resizes, restyles or removes it')
             })
           )
           .min(1)
@@ -306,7 +320,11 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
           throw new Error(`No element ${change.id} on the board — read_board for the ids`);
         }
 
-        const { done: _done, parent: _parent, layout: _layout, ...rest } = current;
+        if (current.locked && change.locked !== false) {
+          throw new Error(lockedProblem(current));
+        }
+
+        const { done: _done, parent: _parent, layout: _layout, locked: _locked, ...rest } = current;
         let element: BoardElement = {
           ...rest,
           ...(change.text === undefined ? {} : { text: change.text }),
@@ -319,9 +337,11 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
         const layout = change.layout === undefined ? current.layout : change.layout === 'column' ? 'column' : undefined;
         const frame = change.frame === undefined ? undefined : frameNamed(board, change.frame);
         const parent = change.frame === undefined ? current.parent : frame?.id;
+        const locked = change.locked ?? current.locked;
         element = {
           ...element,
           ...(done ? { done: true } : {}),
+          ...(locked ? { locked: true } : {}),
           ...(layout ? { layout } : {}),
           ...(parent ? { parent } : {})
         };
@@ -370,7 +390,9 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
     'delete_elements',
     {
       title: 'Remove things',
-      description: 'Remove elements by id. Arrows fixed to them stay, let go where they are.',
+      description:
+        'Remove elements by id. Arrows fixed to them stay, let go where they are. A locked element is not removed: ' +
+        'unlock it first, and only if the people here asked for it.',
       inputSchema: { ids: z.array(z.string()).min(1).max(200) }
     },
     async ({ ids }) => {
@@ -380,6 +402,11 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
         .filter((element): element is BoardElement => element !== undefined);
       if (!removed.length) {
         throw new Error('None of those ids is on the board — read_board for the ids');
+      }
+
+      const locked = removed.find(element => element.locked);
+      if (locked) {
+        throw new Error(lockedProblem(locked));
       }
 
       await board.glide(centre(removed[0]));

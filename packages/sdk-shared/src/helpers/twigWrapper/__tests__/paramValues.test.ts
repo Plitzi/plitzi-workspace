@@ -35,6 +35,37 @@ describe('processTwigParam', () => {
     expect(processTwigParam('{{ size }}px', { size: 4 })).toBe('4px');
   });
 
+  it('escapes what lands inside a JSON string, so whatever a visitor typed keeps the document one', () => {
+    const typed = { city: 'Say "hi"\nto C:\\ and me' };
+    expect(processTwigParam('{"city":"{{ values.city }}","kg":{{ kg }}}', { values: typed, kg: 3 })).toEqual({
+      city: typed.city,
+      kg: 3
+    });
+    expect(processTwigParam('{ "note": "said \\"{{ word }}\\" twice" }', { word: 'a"b' })).toEqual({
+      note: 'said "a"b" twice'
+    });
+    expect(
+      processTwigParam('{% if bad %}{"ok": false, "message": "{{ bad }}"}{% else %}{"ok": true}{% endif %}', {
+        bad: 'The "5pm" slot is gone'
+      })
+    ).toEqual({ ok: false, message: 'The "5pm" slot is gone' });
+    expect(
+      processTwigParam('[{% for n in names %}"{{ n }}"{% if not loop.last %},{% endif %}{% endfor %}]', {
+        names: ['a"', 'b\\']
+      })
+    ).toEqual(['a"', 'b\\']);
+  });
+
+  it('prints a value outside the strings as the JSON value it is', () => {
+    expect(
+      processTwigParam('{"rows": {{ rows }}, "label": "{{ label }}"}', { rows: [{ a: '"' }], label: 'x' })
+    ).toEqual({ rows: [{ a: '"' }], label: 'x' });
+  });
+
+  it('leaves prose with quotes as text', () => {
+    expect(processTwigParam('She said "{{ word }}"', { word: 'a"b' })).toBe('She said "a"b"');
+  });
+
   it('renders tags as the text they make', () => {
     expect(processTwigParam('{% if on %}yes{% endif %}', { on: true })).toBe('yes');
   });

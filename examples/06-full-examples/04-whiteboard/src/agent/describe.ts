@@ -28,6 +28,7 @@ export const describeElement = (element: BoardElement, frames: Map<string, Board
   const box = `at (${round(element.x)}, ${round(element.y)}) size ${round(element.width)}×${round(element.height)}`;
   const inside = element.parent && frames.has(element.parent) ? ` in "${frames.get(element.parent)?.text ?? ''}"` : '';
   const marks = [
+    element.locked ? 'locked' : '',
     element.done ? (element.type === 'comment' ? 'resolved' : 'done') : '',
     element.votes?.length ? `${element.votes.length} votes` : '',
     element.author ? `by ${element.author}` : '',

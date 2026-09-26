@@ -89,10 +89,15 @@ A lookup across two sources — a row joined to the stats around it:
 - **An empty list is false**, like an absent one. To tell "arrived and empty" from "not arrived":
   `{{ items is defined and items is empty }}`.
 - **`json_encode` prints JSON for any value** — a string quoted and escaped, nothing as `null` — so a JSON document
-  is built by encoding each value, never by putting `"{{ text }}"` in quotes yourself:
-  `'{ "board": {{ id|json_encode }}, "timer": {{ timer|json_encode }} }'`.
+  is built by encoding each value: `'{ "board": {{ id|json_encode }}, "timer": {{ timer|json_encode }} }'`. In a flow
+  step's params and an action's output, `"{{ text }}"` in quotes is safe too — a value inside a string literal of a
+  param written as a JSON document is escaped for it. Anywhere else (an attribute, a binding's template) it is not:
+  encode.
 - **Numbers**: `number_format(decimals, point, thousands)`; `round(precision)`.
-- **A template that renders a number hands on a number** in step params (`'1'` → `1`).
+- **A step param that is one `{{ expression }}` is that value, with its type**: a number stays a number, and a
+  string stays a string however it looks — a password typed `1234` arrives as `"1234"`. Nothing is guessed from the
+  text: to convert, declare the type where the value lands (`setState`'s `type`, the action's input field). Text around
+  the tokens is text, unless it makes a JSON object or array — then it is that document (see `json_encode` above).
 
 ## Dates
 

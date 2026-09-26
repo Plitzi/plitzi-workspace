@@ -49,8 +49,14 @@ export type {
  * around it hands it props, forwards what the channels hear, and turns what it `emit`s into the element's events.
  * This file puts the parts together and answers the page; each part is its own module over the shared `core`.
  */
+/**
+ * `canvas` takes the pointer and draws what moves — cursors, selections, the laser; `boardCanvas`, under it, holds the
+ * board itself and is painted only when the board changed. Two canvases the browser composites, rather than one the
+ * board is copied onto every frame.
+ */
 export const createBoardController = (
   canvas: HTMLCanvasElement,
+  boardCanvas: HTMLCanvasElement,
   host: HTMLElement,
   emit: (event: ControllerEvent) => void
 ) => {
@@ -74,7 +80,7 @@ export const createBoardController = (
 
   /** The selection removed — and the arrows fixed to it let go where they are drawn, not removed with it. */
   const removeSelection = (): void => {
-    const removed = core.selected();
+    const removed = core.changeable();
     if (removed.length) {
       sounds.play('remove');
     }
@@ -123,7 +129,7 @@ export const createBoardController = (
   let quietUntil = 0;
   /** When each name was last greeted with a chime. */
   const chimedFor = new Map<string, number>();
-  const painter = createPainter(core, effects, pictures);
+  const painter = createPainter(core, boardCanvas, effects, pictures);
   let reportedFrames = '';
   /** The board's frames, in the order they are gone through — what the page lists and a presentation shows. */
   const framesInOrder = (): BoardElement[] => readingOrder(scene.visible().filter(element => element.type === 'frame'));
@@ -177,10 +183,19 @@ export const createBoardController = (
     const rect = host.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     state.size = { width: rect.width, height: rect.height, dpr };
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
+    const [width, height] = [Math.round(rect.width * dpr), Math.round(rect.height * dpr)];
+    for (const each of [canvas, boardCanvas]) {
+      // Only when it changed: setting a canvas's size clears it even to the size it had, and the board's canvas is
+      // repainted only when what it shows changes — a size that did not would leave it blank.
+      if (each.width !== width || each.height !== height) {
+        each.width = width;
+        each.height = height;
+      }
+
+      each.style.width = `${rect.width}px`;
+      each.style.height = `${rect.height}px`;
+    }
+
     if (state.fitPending && rect.width && rect.height) {
       state.fitPending = false;
       core.fit();
@@ -192,9 +207,10 @@ export const createBoardController = (
 
   // ── What the page asks of it ─────────────────────────────────────────────────────────────────────────────────────
 
-  /** Only on a board that can change, and while nobody types: ⌘Z in a text field is the field's own undo. */
   /** Where the last stamp was aimed and where it ended: the next one, aimed at the same place, goes beside it. */
   let stamping: { aim: Point; right: number } | undefined;
+
+  /** Only on a board that can change, and while nobody types: ⌘Z in a text field is the field's own undo. */
 
   const whenEditable =
     <Args extends unknown[]>(action: (...args: Args) => void) =>
@@ -215,7 +231,7 @@ export const createBoardController = (
       return;
     }
 
-    const chosen = core.selected();
+    const chosen = core.changeable();
     const changes = chosen.map(element => {
       const next = restyled(element, choice);
 
@@ -231,7 +247,7 @@ export const createBoardController = (
   };
 
   const restack = (toFront: boolean): void => {
-    const chosen = core.selected().sort(byStacking);
+    const chosen = core.changeable().sort(byStacking);
     const start = toFront ? scene.topZ + 1 : scene.bottomZ - chosen.length;
     sounds.play('layer');
     core.commit(chosen.map((element, index) => ({ ...element, z: start + index })));
@@ -242,7 +258,7 @@ export const createBoardController = (
    * it is actually over or under — rather than with something across the board.
    */
   const shift = (up: boolean): void => {
-    const chosen = core.selected();
+    const chosen = core.changeable();
     const ids = new Set(chosen.map(element => element.id));
     const box = unionOf(chosen.map(boundsOf));
     if (!box) {
@@ -306,7 +322,7 @@ export const createBoardController = (
 
   /** What is selected, in a tidy grid — reading order kept, each in the middle of its cell. */
   const tidy = (): void => {
-    const chosen = core.selected().filter(element => fitsInFrame(element.type));
+    const chosen = core.changeable().filter(element => fitsInFrame(element.type));
     if (chosen.length < 2) {
       return;
     }
@@ -386,7 +402,7 @@ export const createBoardController = (
       down: [0, distance]
     };
     const offset = typeof direction === 'string' ? offsets[direction] : undefined;
-    const chosen = core.selected();
+    const chosen = core.changeable();
     if (!offset || !chosen.length || !core.editable() || state.editing) {
       return;
     }
@@ -533,11 +549,14 @@ export const createBoardController = (
       core.send(scene.redo());
     }),
     deleteSelection: whenEditable(removeSelection),
-    selectAll: whenEditable(() => core.setSelection(scene.visible().map(element => element.id))),
+    // What is locked stays out: selecting everything is how a board is moved or cleared, and a locked element is not.
+    selectAll: whenEditable(() =>
+      core.setSelection(scene.visible().flatMap(element => (element.locked ? [] : [element.id])))
+    ),
     duplicate: whenEditable(duplicate),
     /** One group of everything selected — groups inside it included: there is one level. */
     group: whenEditable(() => {
-      const chosen = core.selected();
+      const chosen = core.changeable();
       if (chosen.length < 2) {
         return;
       }
@@ -554,7 +573,7 @@ export const createBoardController = (
       // `group` is left out of each element — present with `undefined` in it, it would still be sent as a key.
       core.commit(
         core
-          .selected()
+          .changeable()
           .filter(element => element.group !== undefined)
           .map(({ group, ...element }) => element)
       );
@@ -706,12 +725,18 @@ export const createBoardController = (
       }
 
       const [x, y] = core.aim();
-      const text = core.measured({ ...core.newElement('text', [x, y]), text: emoji, fontSize: STAMP_SIZE });
       const again = stamping && stamping.aim[0] === x && stamping.aim[1] === y;
-      const left = again && stamping ? stamping.right + STAMP_SIZE * 0.15 : x - text.width / 2;
-      stamping = { aim: [x, y], right: left + text.width };
+      const left = again && stamping ? stamping.right + STAMP_SIZE * 0.15 : x - STAMP_SIZE / 2;
+      stamping = { aim: [x, y], right: left + STAMP_SIZE };
       sounds.play('place');
-      core.commit([{ ...text, x: left, y: y - text.height / 2 }]);
+      core.commit([
+        {
+          ...core.newElement('stamp', [left, y - STAMP_SIZE / 2]),
+          width: STAMP_SIZE,
+          height: STAMP_SIZE,
+          text: emoji
+        }
+      ]);
     }),
     insertKanban: whenEditable(() => {
       const [x, y] = core.aim();
@@ -763,7 +788,7 @@ export const createBoardController = (
     }),
     /** The one card selected ticked done — or the one comment resolved — or back. */
     toggleDone: whenEditable(() => {
-      const chosen = core.selected();
+      const chosen = core.changeable();
       const [task] = chosen;
       if (chosen.length !== 1 || !isTask(task.type)) {
         return;
@@ -774,10 +799,31 @@ export const createBoardController = (
       sounds.play(task.done ? 'undone' : task.type === 'comment' ? 'resolve' : 'done');
       core.reportSelection();
     }),
+    /**
+     * The selection locked in place — or, all of it locked already, let go. The one edit a locked element takes, so it
+     * acts on the whole selection rather than on what may change.
+     */
+    toggleLock: whenEditable(() => {
+      const chosen = core.selected();
+      if (!chosen.length) {
+        return;
+      }
+
+      const unlock = chosen.every(element => element.locked === true);
+      core.commit(
+        chosen.map(element => {
+          const { locked: _locked, ...rest } = element;
+
+          return unlock ? rest : { ...rest, locked: true };
+        })
+      );
+      sounds.play('lock');
+      core.reportSelection();
+    }),
     /** The one frame selected, made a column — which lays out what is in it — or a free area again. */
     toggleColumn: whenEditable(() => {
-      const [frame] = core.selected();
-      if (frame?.type !== 'frame' || core.selected().length !== 1) {
+      const [frame] = core.changeable();
+      if (frame?.type !== 'frame' || core.changeable().length !== 1) {
         return;
       }
 
