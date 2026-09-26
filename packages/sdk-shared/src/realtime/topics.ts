@@ -38,6 +38,66 @@ export const matchChannel = (
   return pattern === undefined ? undefined : { pattern, declaration: declarations[pattern] };
 };
 
+/** A pattern as a space declares one: a topic's characters, with `{name}` for each part a page fills in. */
+const PATTERN = /^(?=.)[A-Za-z0-9:_.-]*(\{[A-Za-z0-9_]+\}[A-Za-z0-9:_.-]*)*$/;
+
+const ACCESS_MODES = new Set(['public', 'session', 'role']);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * What is wrong with one channel of a space, each as a sentence that says how to write it — empty when nothing is.
+ *
+ * One check for every writer: authoring refuses the first, `lintSpace` reports them all for what the builder and an
+ * agent write, and the server never has to guess what a malformed declaration meant. Read as `unknown`, because a
+ * space from JSON or from an agent has no type to hold it.
+ */
+export const channelProblems = (pattern: string, declaration: unknown): string[] => {
+  const problems: string[] = [];
+  if (!PATTERN.test(pattern)) {
+    problems.push('a pattern is letters, digits and `:_.-`, with `{name}` for the part a page fills in — `board:{id}`');
+  }
+
+  if (!isRecord(declaration)) {
+    return [...problems, 'a channel is an object: `{ access: { mode: "public" } }`'];
+  }
+
+  const { access, publish, presence, maxMessageBytes, messagesPerSecond } = declaration;
+  const mode = isRecord(access) ? access.mode : undefined;
+  if (typeof mode !== 'string' || !ACCESS_MODES.has(mode)) {
+    problems.push('`access` is { mode: "public" }, { mode: "session" } or { mode: "role", permissions: […] }');
+  } else if (
+    mode === 'role' &&
+    !(
+      isRecord(access) &&
+      Array.isArray(access.permissions) &&
+      access.permissions.every(entry => typeof entry === 'string')
+    )
+  ) {
+    problems.push('`access: { mode: "role" }` names the permissions it needs: `permissions: ["boardEdit"]`');
+  }
+
+  if (publish !== undefined && publish !== 'clients' && publish !== 'server') {
+    problems.push('`publish` is "clients" (pages send) or "server" (only a flow\'s realtime.publish)');
+  }
+
+  if (presence !== undefined && typeof presence !== 'boolean') {
+    problems.push('`presence` is true or false');
+  }
+
+  for (const [name, value] of [
+    ['maxMessageBytes', maxMessageBytes],
+    ['messagesPerSecond', messagesPerSecond]
+  ] as const) {
+    if (value !== undefined && (typeof value !== 'number' || !Number.isInteger(value) || value <= 0)) {
+      problems.push(`\`${name}\` is a whole number above zero`);
+    }
+  }
+
+  return problems;
+};
+
 /** Channel limits, with the defaults a declaration leaves out. */
 export const channelLimits = (
   declaration: ChannelDeclaration

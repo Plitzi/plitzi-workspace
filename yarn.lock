@@ -4612,6 +4612,7 @@ __metadata:
     "@types/node": "npm:^26.6.2"
     "@types/nodemailer": "npm:^8.0.2"
     "@types/react": "npm:^19.3.0"
+    "@types/ws": "npm:^8.18.1"
     "@vitejs/plugin-react": "npm:^6.1.1"
     "@vitest/coverage-v8": "npm:^5.0.1"
     ejs: "npm:^6.0.1"
@@ -4629,6 +4630,7 @@ __metadata:
     vite: "npm:^8.3.1"
     vite-plugin-dts: "npm:^5.1.1"
     vitest: "npm:^5.0.1"
+    ws: "npm:^8.21.1"
   peerDependencies:
     mongodb: ^6 || ^7
     mysql2: ^3
@@ -6043,6 +6045,15 @@ __metadata:
   dependencies:
     "@types/webidl-conversions": "npm:*"
   checksum: 10c0/b7b53ae7b5290a0c26e2a5c6a2353af925fe9fc7ab0bbf642e8b76f65b39f638b471dadfda8da441aed3ca32cafd33b1a03459117c9ec85fd91b1e6c0e93044e
+  languageName: node
+  linkType: hard
+
+"@types/ws@npm:^8.18.1":
+  version: 8.18.1
+  resolution: "@types/ws@npm:8.18.1"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/61aff1129143fcc4312f083bc9e9e168aa3026b7dd6e70796276dcfb2c8211c4292603f9c4864fae702f2ed86e4abd4d38aa421831c2fd7f856c931a481afbab
   languageName: node
   linkType: hard
 

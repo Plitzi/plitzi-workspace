@@ -45,6 +45,11 @@ export type BoardElement = {
   /** Stacking order: higher is on top. Brought forward by writing a higher one. */
   z: number;
   /**
+   * The group it belongs to: elements sharing one are picked up, moved and stacked as one — a box with what was put
+   * inside it. One level: grouping groups makes one group of everything.
+   */
+  group?: string;
+  /**
    * Last write wins, per element: a higher `version` replaces a lower one, and two edits of the same version — two
    * people moving the same shape in the same instant — are settled by the lower `nonce`, the same answer everywhere.
    */
@@ -99,8 +104,25 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     return undefined;
   }
 
-  const { id, type, x, y, width, height, points, text, stroke, fill, strokeWidth, seed, z, version, nonce, deleted } =
-    value;
+  const {
+    id,
+    type,
+    x,
+    y,
+    width,
+    height,
+    points,
+    text,
+    stroke,
+    fill,
+    strokeWidth,
+    seed,
+    z,
+    group,
+    version,
+    nonce,
+    deleted
+  } = value;
   if (
     !isElementId(id) ||
     !isOneOf(SHAPE_TYPES, type) ||
@@ -115,7 +137,8 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     !isCoordinate(z) ||
     !Number.isInteger(version) ||
     !Number.isInteger(nonce) ||
-    typeof deleted !== 'boolean'
+    typeof deleted !== 'boolean' ||
+    (group !== undefined && !isElementId(group))
   ) {
     return undefined;
   }
@@ -134,7 +157,8 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     z,
     version: Number(version),
     nonce: Number(nonce),
-    deleted
+    deleted,
+    ...(group === undefined ? {} : { group })
   };
 
   if (isLinear(type)) {

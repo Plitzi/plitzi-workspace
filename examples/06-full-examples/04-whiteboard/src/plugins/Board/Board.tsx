@@ -9,11 +9,11 @@ import { isCollaborator } from '../../board/people.ts';
 import { TOOLS, createBoardController } from './controller.ts';
 import declaration from './declaration';
 
-import type { BoardController, ControllerEvent, PointerMessage, TextEditor, Tool } from './controller.ts';
+import type { BoardController, ControllerEvent, PointerMessage, ScreenBox, TextEditor, Tool } from './controller.ts';
 import type { BoardElement, Fill, Stroke, StrokeWidth } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 import type { InteractionCallback, RealtimeMessage } from '@plitzi/plitzi-sdk';
-import type { ChangeEvent, CSSProperties, KeyboardEvent } from 'react';
+import type { ChangeEvent, CSSProperties, KeyboardEvent, ReactNode } from 'react';
 
 export type BoardProps = {
   /** Which board this is: a new id starts the canvas over, the same id merges what it is given. */
@@ -35,12 +35,19 @@ export type BoardProps = {
   /** The page's colour scheme. Its value is not read — its CHANGE is when the canvas reads its colours again. */
   scheme?: string;
   className?: string;
+  /** The selection's tools, authored by the space: laid beside whatever is selected, and hidden while nothing is. */
+  children?: ReactNode;
 };
 
 const TRIGGERS: Record<string, InteractionCallback> = declaration.triggers;
 
 /** How often this page tells the room where its pointer is: often enough to look live, well under the channel's cap. */
 const POINTER_MS = 50;
+
+/** How far the selection's tools stand from what is selected, and how close to the top they may go before flipping below. */
+const TOOLS_GAP = 12;
+
+const TOOLS_ROOM = 64;
 
 /** A draft bigger than this travels as a cursor alone: the others see the drag land when it is committed. */
 const DRAFT_BYTES = 6000;
@@ -92,7 +99,8 @@ const Board = ({
   fill = 'none',
   strokeWidth = 2,
   scheme = '',
-  className
+  className,
+  children
 }: BoardProps) => {
   const { id } = useElement();
   const {
@@ -104,6 +112,7 @@ const Board = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<BoardController | undefined>(undefined);
   const [editor, setEditor] = useState<TextEditor | undefined>(undefined);
+  const [selectionBox, setSelectionBox] = useState<ScreenBox | undefined>(undefined);
   const live = mode === 'edit' && previewMode;
 
   const trigger = useCallback(
@@ -142,6 +151,8 @@ const Board = ({
         case 'selection':
           trigger(declaration.triggers.onSelectionChange.action, {
             count: event.count,
+            grouped: event.grouped,
+            oneGroup: event.oneGroup,
             stroke: event.stroke,
             fill: event.fill,
             strokeWidth: event.strokeWidth
@@ -152,6 +163,9 @@ const Board = ({
           break;
         case 'editor':
           setEditor(event.editor);
+          break;
+        case 'selectionBox':
+          setSelectionBox(event.box);
           break;
         case 'pointer':
           pending.current = event.message;
@@ -287,6 +301,8 @@ const Board = ({
       deselect: call('deselect', controller => controller.deselect()),
       bringToFront: call('bringToFront', controller => controller.bringToFront()),
       sendToBack: call('sendToBack', controller => controller.sendToBack()),
+      group: call('group', controller => controller.group()),
+      ungroup: call('ungroup', controller => controller.ungroup()),
       applyStyle: {
         ...declaration.callbacks.applyStyle,
         callback: (params: { stroke?: unknown; fill?: unknown; strokeWidth?: unknown }) =>
@@ -341,6 +357,17 @@ const Board = ({
     [editor]
   );
 
+  // Above the selection, centred on it — or below it when above would run off the top of the board.
+  const below = selectionBox !== undefined && selectionBox.top < TOOLS_ROOM;
+  const toolsStyle = useMemo<CSSProperties | undefined>(
+    () =>
+      selectionBox && {
+        left: selectionBox.left + selectionBox.width / 2,
+        top: below ? selectionBox.top + selectionBox.height + TOOLS_GAP : selectionBox.top - TOOLS_GAP
+      },
+    [below, selectionBox]
+  );
+
   return (
     <RootElement
       ref={hostRef}
@@ -361,6 +388,11 @@ const Board = ({
           onKeyDown={onTextKey}
           onBlur={onTextDone}
         />
+      )}
+      {children && live && toolsStyle && (
+        <div className="board__tools" data-placement={below ? 'below' : 'above'} style={toolsStyle}>
+          {children}
+        </div>
       )}
     </RootElement>
   );

@@ -2,6 +2,7 @@ import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
+import { channelProblems } from '@plitzi/sdk-shared/realtime';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
@@ -684,32 +685,9 @@ class SpaceAuthor {
     }
 
     for (const [pattern, declaration] of Object.entries(this.spec.channels ?? {})) {
-      const where = `Channel "${pattern}"`;
-      if (!/^[A-Za-z0-9:_.-]*(\{[A-Za-z0-9_]+\}[A-Za-z0-9:_.-]*)*$/.test(pattern) || !pattern) {
-        throw new Error(
-          `${where}: a pattern is letters, digits and \`:_.-\`, with \`{name}\` for the part a page fills in — \`board:{id}\`.`
-        );
-      }
-
-      if (!['public', 'session', 'role'].includes(declaration.access.mode)) {
-        throw new Error(
-          `${where}: \`access\` is { mode: 'public' }, { mode: 'session' } or { mode: 'role', permissions: […] }.`
-        );
-      }
-
-      // Read as what it may really be: a space written in plain JavaScript, or read from JSON, has no type to hold it.
-      const publish: unknown = declaration.publish;
-      if (publish !== undefined && publish !== 'clients' && publish !== 'server') {
-        throw new Error(
-          `${where}: \`publish\` is 'clients' (pages send) or 'server' (only a flow's realtime.publish).`
-        );
-      }
-
-      for (const limit of ['maxMessageBytes', 'messagesPerSecond'] as const) {
-        const value = declaration[limit];
-        if (value !== undefined && (!Number.isInteger(value) || value <= 0)) {
-          throw new Error(`${where}: \`${limit}\` is a whole number above zero.`);
-        }
+      const [problem] = channelProblems(pattern, declaration);
+      if (problem) {
+        throw new Error(`Channel "${pattern}": ${problem}.`);
       }
     }
   }

@@ -1,3 +1,4 @@
+import type { UpgradeRequest } from './socketResponse';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
 import type { ServerCaches } from '../../helpers/cache';
 import type { ActionsModule } from '../../modules/actions';
@@ -32,6 +33,11 @@ export interface BaseContext {
    * spend real work on behalf of a caller should hand this to whatever they call.
    */
   signal: AbortSignal;
+  /**
+   * Present when the request asks to switch protocols (a WebSocket). The stage that takes it performs the switch on
+   * the socket and marks it `taken`; any other answer is written to the socket as HTTP and closes it.
+   */
+  upgrade?: UpgradeRequest;
 }
 
 // The richer context an SSR server builds: the render template, caches and plugin manager that the page/RSC and

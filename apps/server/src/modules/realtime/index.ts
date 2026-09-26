@@ -6,10 +6,11 @@ import { createMemoryPubSub } from './memoryPubSub';
 
 import type { ChannelResolver } from './declarations';
 import type { RealtimeHub } from './hub';
-import type { SSRServerConfig } from '@plitzi/sdk-shared';
+import type { RealtimeTransport, SSRServerConfig } from '@plitzi/sdk-shared';
 
 export { createMemoryPubSub } from './memoryPubSub';
 export { handleRealtimePublish, handleRealtimeSubscribe } from './handlers';
+export { handleRealtimeSocket } from './socket';
 
 /** A type a flow publishes: its own vocabulary — the `$` types are the channel's. */
 const SERVER_TYPE = /^[A-Za-z0-9_.:-]{1,64}$/;
@@ -17,6 +18,10 @@ const SERVER_TYPE = /^[A-Za-z0-9_.:-]{1,64}$/;
 export type RealtimeModule = {
   hub: RealtimeHub;
   path: string;
+  /** What pages are told to connect with. Both are served whatever this says. */
+  transport: RealtimeTransport;
+  /** Origins besides the server's own whose pages may open a socket. */
+  allowedOrigins: readonly string[];
   resolveChannels: ChannelResolver;
   /**
    * Publishes from the server — what a flow's `realtime.publish` does. Checked against the space's channels like a
@@ -52,6 +57,8 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
   const module: RealtimeModule = {
     hub,
     path: config.realtime?.path ?? '/_realtime',
+    transport: config.realtime?.transport ?? 'sse',
+    allowedOrigins: config.realtime?.allowedOrigins ?? [],
     resolveChannels,
     publish: async (space, topic, type, data) => {
       const channels = await resolveChannels(space.spaceId, space.environment);

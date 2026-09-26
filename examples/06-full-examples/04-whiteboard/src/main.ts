@@ -57,7 +57,15 @@ const server = createServer({
    * adapter they share instead: `createRedisPubSub({ publisher, subscriber })` over two Redis connections, or one
    * object of the same two methods over NATS, Postgres `LISTEN`, anything that fans a message out.
    */
-  realtime: { pubsub: createMemoryPubSub() }
+  realtime: {
+    pubsub: createMemoryPubSub(),
+    /**
+     * A socket per page rather than a stream and a request per message: twenty cursor updates a second from every
+     * person on a board are frames on a connection that is already open, not twenty requests. A page falls back to
+     * the stream by itself where a socket cannot open (behind HTTP/2, or a proxy that drops upgrades).
+     */
+    transport: 'websocket'
+  }
 });
 
 server.listen(PORT, HOST);

@@ -52,6 +52,10 @@ export const space: SpaceSpec = {
 letters, digits and `:_-.`, at most 128 characters; a `{name}` segment never contains a `:`. It is stored in the
 schema as `settings.channels`.
 
+An agent declares them over MCP with `patchSettings { channels: { … } }`, merged pattern by pattern (`null` removes
+one). Every writer is held to the same check — `channelProblems` in `@plitzi/sdk-shared/realtime` — which authoring
+refuses on, `lintSpace` reports (`channel-declaration`) and the MCP answers with.
+
 ---
 
 ## 3. On a page: the `channel` element
@@ -155,12 +159,49 @@ refused for a topic the space does not declare.
 
 ## 6. The wire
 
+A page connects one of two ways, and the server serves both at the same address. The deployment says which pages
+use:
+
+```ts
+createServer({ /* … */, realtime: { transport: 'websocket' } });   // 'sse' when absent
+```
+
+|               | Server-Sent Events (`sse`)                     | WebSocket (`websocket`)                              |
+| ------------- | ---------------------------------------------- | ---------------------------------------------------- |
+| Receiving     | one stream                                     | one socket                                           |
+| Publishing    | a `POST` per message, with the stream's secret | a frame on the same socket, answered by an `ack`     |
+| Works through | anything that passes HTTP, HTTP/2 included     | HTTP/1.1 — node has no WebSockets over HTTP/2        |
+| Reach for it  | pages that mostly listen                       | pages that send many small messages: cursors, a game |
+
+A page told to use a socket falls back to the stream by itself, for good, the first time one closes before it was
+ready — behind HTTP/2, a proxy that drops upgrades, or a refusal (which a browser does not let a page read; the stream
+then says which it was). Both carry the same topics, rules, limits and messages.
+
+**A socket checks where the page is.** A browser opens a WebSocket to any address from any site, carrying that
+address's cookies, and CORS does not apply to it. So a socket whose page is on another origin is refused (`403`,
+`foreign`), unless the deployment lists that origin: `realtime: { allowedOrigins: ['https://app.example.com'] }`.
+Without this, another site could open a `session` channel with a visitor's session and read it.
+
+### Server-Sent Events
+
 - `GET /_realtime?topics=board:7f3a,room:7f3a` — Server-Sent Events, 1 to 8 topics. Each topic is authorised on its
   own: the first event, `ready`, names the connection, gives it a secret for publishing, and lists what was `refused`
   and why (`undeclared`, `unauthenticated`, `forbidden`). All refused is a `403`.
 - `POST /_realtime` `{ token, topic, type, data }` — a publish. `204`, or `401` (not this server's connection — it
   restarted), `403` (`not_subscribed`, `server_only`), `422` (a `$` type, a bad topic), `413` (too big), `429` (too
   fast).
+
+### WebSocket
+
+- `GET /_realtime?topics=…` with `Upgrade: websocket` — refused in HTTP exactly as the stream is (`403`, `404`, `422`)
+  before anything switches. Once open, the first frame is `{ "event": "ready", "data": { connection, topics, refused } }`
+  — no secret: the socket is the credential.
+- A publish is a frame `{ id, topic, type, data }`; the server answers `{ "event": "ack", "data": { id, ok, status,
+reason? } }` with the status and reason the `POST` would have had. Messages arrive as `{ "event": "message", data }`.
+- The server pings every 25 seconds and closes a socket that did not answer the last one, or one that stopped reading
+  (over 1 MB waiting).
+
+### What subscribers receive
 
 What every subscriber receives is stamped by the server, never taken from the sender:
 

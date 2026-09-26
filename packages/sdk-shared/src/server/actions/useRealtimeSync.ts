@@ -9,7 +9,7 @@ import type { ServerSSR } from '../../types';
  * offline widget) leaves every `channel` closed rather than reconnecting forever to a 404.
  */
 const useRealtimeSync = (ssr?: ServerSSR) => {
-  useCommonStoreSync(['realtime.endpoint'], [ssr?.realtimePath]);
+  useCommonStoreSync(['realtime.endpoint', 'realtime.transport'], [ssr?.realtimePath, ssr?.realtimeTransport]);
 };
 
 export default useRealtimeSync;

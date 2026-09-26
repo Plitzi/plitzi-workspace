@@ -47,6 +47,42 @@ describe('mcp-ai settings (space-level customCss + auth config)', () => {
     expect(res.errors.some(e => e.message.includes('no dots'))).toBe(true);
   });
 
+  it('declares realtime channels pattern by pattern, and takes one out with null', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'patchSettings',
+            channels: {
+              'board:{id}': { access: { mode: 'public' }, publish: 'server' },
+              'room:{id}': { access: { mode: 'public' }, presence: true }
+            }
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    await apply(
+      { operations: [{ type: 'patchSettings', channels: { 'board:{id}': null } }] },
+      cap.saved(),
+      cap.persisters
+    );
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as { channels?: object };
+    expect(settings.channels).toEqual({ 'room:{id}': { access: { mode: 'public' }, presence: true } });
+  });
+
+  // The pattern is what the server matches topics against: one it cannot read opens nothing, silently.
+  it('refuses a channel the server could not serve, saying how to write it', () => {
+    const res = validate(
+      { operations: [{ type: 'patchSettings', channels: { 'board {id}': { access: { mode: 'public' } } } }] },
+      buildSpace()
+    );
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('`board:{id}`'))).toBe(true);
+  });
+
   it('exposes settings in the cold-start primer', async () => {
     const cap = capturing(buildSpace());
     await apply({ operations: [{ type: 'patchSettings', customCss: '.z{}' }] }, buildSpace(), cap.persisters);

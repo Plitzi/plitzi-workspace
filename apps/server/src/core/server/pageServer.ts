@@ -95,7 +95,11 @@ export const createPageServer = (
       realtime
     });
 
-    return makeHandler('SSR', buildContext, stages, config.compression);
+    return makeHandler('SSR', buildContext, stages, {
+      compression: config.compression,
+      // The one address that switches protocols: a page's realtime connection, when it asks for a WebSocket.
+      ...(realtime ? { upgrades: (path: string) => path === realtime.path } : {})
+    });
   };
 
   return createHttpServer(config, makeHandlerForPort, {

@@ -2,7 +2,7 @@ import type { BoardProps } from './Board';
 import type { PluginDeclaration } from '@plitzi/plitzi-sdk';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
-export type BoardAttributes = Omit<BoardProps, 'className'>;
+export type BoardAttributes = Omit<BoardProps, 'className' | 'children'>;
 
 const callback = (action: string, title: string) => ({ action, title, type: 'callback', params: {} }) as const;
 
@@ -36,7 +36,7 @@ const declaration = {
       title: 'On Selection Change',
       type: 'trigger',
       params: {},
-      preview: { count: '', stroke: '', fill: '', strokeWidth: '' }
+      preview: { count: '', grouped: '', oneGroup: '', stroke: '', fill: '', strokeWidth: '' }
     },
     onViewChange: {
       action: 'onViewChange',
@@ -60,6 +60,9 @@ const declaration = {
     deselect: callback('deselect', 'Deselect'),
     bringToFront: callback('bringToFront', 'Bring To Front'),
     sendToBack: callback('sendToBack', 'Send To Back'),
+    /** One group of what is selected: picked up, moved and stacked as one from then on. */
+    group: callback('group', 'Group'),
+    ungroup: callback('ungroup', 'Ungroup'),
     /** Restyles the selection. Only the params given change: a colour picked leaves the width alone. */
     applyStyle: {
       action: 'applyStyle',
@@ -103,7 +106,8 @@ const declaration = {
         'notes. Bind `elements` to the board as the server keeps it; `topic` is the channel the server announces ' +
         'saved elements on and `roomTopic` the one cursors and live drags travel on. It fires `onCommit` with the ' +
         'changed elements for the page to keep, and `onToolChange`, `onSelectionChange`, `onViewChange` and ' +
-        '`onResync`. `mode: view` draws a still preview. Colours come from the `--board-*` custom properties.',
+        "`onResync`. Its children are the selection's tools: shown beside whatever is selected, hidden while it is " +
+        'dragged or typed into. `mode: view` draws a still preview. Colours come from the `--board-*` custom properties.',
       items: [],
       bindings: {},
       styleSelectors: { base: '' },
@@ -115,6 +119,7 @@ const declaration = {
       canDragDrop: true,
       canMove: true,
       canTemplate: true,
+      // The selection's tools: any element the space authors to stand beside what is selected.
       itemsAllowed: [],
       itemsNotAllowed: []
     },

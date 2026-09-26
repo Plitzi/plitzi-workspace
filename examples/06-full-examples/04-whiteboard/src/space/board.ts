@@ -33,6 +33,7 @@ import { BUTTON_RESET, FLOAT, divide, icon, iconAction } from './kit.ts';
 import { popovers, presence } from './people.ts';
 import { RANDOM_COLOUR, RANDOM_NAME } from './state.ts';
 import { boardAction, stylePanel } from './stylePanel.ts';
+import { selectionTools } from './selectionTools.ts';
 import { toolbar } from './toolbar.ts';
 
 import type { BoardAttributes } from '../plugins/Board/declaration.ts';
@@ -137,6 +138,23 @@ const titleDivider = styles('titleDivider', {
 /** On a phone the corner is the way home and nothing else: the people and Share need the width more. */
 const titleField = styles('titleField', {
   css: { desktop: { width: '220px' }, mobile: { display: 'none' } }
+});
+
+/** The title reads as the board's name until it is pointed at: a box only on hover, and in the accent while typed in. */
+const titleInput = styles('titleInput', {
+  css: {
+    display: 'flex',
+    'align-items': 'center',
+    height: '34px',
+    padding: '0px 10px',
+    border: '1px solid transparent',
+    'border-radius': '8px',
+    'font-weight': '600'
+  },
+  states: {
+    hover: { 'background-color': 'var(--surface-2)' },
+    'focus-within': { 'border-color': 'var(--accent)', 'background-color': 'var(--surface)' }
+  }
 });
 
 const zoomLabel = styles('zoomLabel', {
@@ -268,6 +286,8 @@ const canvas = (): ElementSpec =>
       [
         named('picked', declaredTrigger(declaration, 'onSelectionChange')),
         setState({ key: 'selectionCount', type: 'number', value: '{{ picked.count }}' }),
+        setState({ key: 'selectionGrouped', type: 'boolean', value: '{{ picked.grouped }}' }),
+        setState({ key: 'selectionOneGroup', type: 'boolean', value: '{{ picked.oneGroup }}' }),
         when(
           { field: 'picked.stroke', operator: '!=', value: '' },
           setState({ key: 'stroke', type: 'text', value: '{{ picked.stroke }}' })
@@ -287,7 +307,9 @@ const canvas = (): ElementSpec =>
       ],
       // Back after a drop: read the board again, and the canvas merges whatever it missed.
       [declaredTrigger(declaration, 'onResync'), reloadApi(BOARD_PROVIDER)]
-    ]
+    ],
+    // The selection's tools: the canvas places them beside whatever is selected.
+    children: [selectionTools()]
   });
 
 const title = (): ElementSpec =>
@@ -299,6 +321,7 @@ const title = (): ElementSpec =>
     required: false,
     autoComplete: false,
     class: titleField,
+    slots: { input: titleInput },
     bind: { defaultValue: `${BOARD_PROVIDER}.title` },
     flows: [
       [named('typed', on('onChange')), setState({ key: 'titleDraft', type: 'text', value: '{{ typed.value }}' })],

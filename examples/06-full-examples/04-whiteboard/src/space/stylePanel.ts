@@ -12,7 +12,7 @@ import {
 import { FILLS, STROKES, STROKE_WIDTHS } from '../board/model.ts';
 import boardDeclaration from '../plugins/Board/declaration.ts';
 import { BOARD_ID } from './ids.ts';
-import { BUTTON_RESET, FLOAT, caption, iconAction } from './kit.ts';
+import { BUTTON_RESET, FLOAT, caption } from './kit.ts';
 
 import type { Fill, Stroke, StrokeWidth } from '../board/model.ts';
 import type { CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
@@ -21,7 +21,8 @@ import type { CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
  * The style panel: what the next shape is drawn with, and — with something selected — what it is restyled to.
  *
  * One click does both, as two steps: the choice is written to the page's state, which the canvas draws new shapes
- * with, and sent to the canvas as `applyStyle`, which restyles the selection. The other way round, the canvas says
+ * with, and sent to the canvas as `applyStyle`, which restyles the selection. Arranging the selection is the tools
+ * beside it (`selectionTools.ts`), not this panel. The other way round, the canvas says
  * what a selection is drawn with (`onSelectionChange`) and the page writes it here, so the panel always shows the
  * style of what is in hand.
  */
@@ -163,8 +164,6 @@ const FILL_LABELS: Record<Fill, string> = {
   violet: 'Violet'
 };
 
-const actions = styles('styleActions', { display: 'flex', gap: '2px', 'justify-content': 'space-between' });
-
 export const stylePanel = (): ElementSpec =>
   container({
     id: 'style-panel',
@@ -190,44 +189,6 @@ export const stylePanel = (): ElementSpec =>
         children: [
           text({ content: 'Width', class: caption }),
           container({ class: row, children: STROKE_WIDTHS.map(width) })
-        ]
-      }),
-      // What only a selection can do: shown once there is one.
-      container({
-        id: 'selection-actions',
-        class: group,
-        visible: { source: 'computed.selectionCount', template: "{{ source > 0 ? 'true' : 'false' }}" },
-        children: [
-          text({ content: 'Arrange', class: caption }),
-          container({
-            class: actions,
-            children: [
-              iconAction({
-                id: 'to-back',
-                icon: 'fa-solid fa-arrow-down-short-wide',
-                title: 'Send to back — [',
-                flow: [onClick(), boardAction('sendToBack')]
-              }),
-              iconAction({
-                id: 'to-front',
-                icon: 'fa-solid fa-arrow-up-short-wide',
-                title: 'Bring to front — ]',
-                flow: [onClick(), boardAction('bringToFront')]
-              }),
-              iconAction({
-                id: 'duplicate',
-                icon: 'fa-regular fa-clone',
-                title: 'Duplicate — ⌘D',
-                flow: [onClick(), boardAction('duplicate')]
-              }),
-              iconAction({
-                id: 'delete',
-                icon: 'fa-regular fa-trash-can',
-                title: 'Delete — ⌫',
-                flow: [onClick(), boardAction('deleteSelection')]
-              })
-            ]
-          })
         ]
       })
     ]

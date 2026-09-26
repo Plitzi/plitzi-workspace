@@ -7,6 +7,7 @@ import { serverLog } from '../helpers/serverLog';
 import type { RawResponse } from '../helpers/buildResponseHelpers';
 import type { SSRServerConfig } from '@plitzi/sdk-shared';
 import type { IncomingMessage, RequestListener } from 'node:http';
+import type { Duplex } from 'node:stream';
 
 export type CloseableServer = {
   close: (cb?: (err?: Error) => void) => unknown;
@@ -16,7 +17,11 @@ export type CloseableServer = {
   on: (event: 'error', listener: (error: NodeJS.ErrnoException) => void) => unknown;
 };
 
-export type Handler = (req: IncomingMessage, res: RawResponse) => void;
+/** A request asking to switch protocols: node hands over the socket, and the bytes it read past the headers. */
+export type UpgradeHandler = (req: IncomingMessage, socket: Duplex, head: Buffer) => void;
+
+/** What a server answers requests with — and, when it takes any, upgrades (`upgrade`). */
+export type Handler = ((req: IncomingMessage, res: RawResponse) => void) & { upgrade?: UpgradeHandler };
 
 type H3Module = { createServer: (opts: object, handler: Handler) => CloseableServer };
 
@@ -38,6 +43,18 @@ export const protoLabel = (version: number, hasTls: boolean): string => {
   }
 
   return hasTls ? 'HTTPS/1.1' : 'HTTP/1.1';
+};
+
+/**
+ * Upgrades reach HTTP/1.1 servers only. Over HTTP/2 a browser has no way to ask for one — node does not speak the
+ * extended CONNECT that WebSockets over h2 need — so a client there stays on what plain requests can do.
+ */
+const withUpgrades = <S extends http.Server | https.Server>(server: S, handler: Handler): S => {
+  if (handler.upgrade) {
+    server.on('upgrade', handler.upgrade);
+  }
+
+  return server;
 };
 
 export const buildTransport = (
@@ -79,12 +96,12 @@ export const buildTransport = (
       );
     } else {
       // Browsers don't support h2c; fall back to HTTP/1.1 for dev without TLS
-      primary = http.createServer(handler as RequestListener);
+      primary = withUpgrades(http.createServer(handler as RequestListener), handler);
     }
   } else if (config.tls) {
-    primary = https.createServer(tlsOptions(config, label), handler as RequestListener);
+    primary = withUpgrades(https.createServer(tlsOptions(config, label), handler as RequestListener), handler);
   } else {
-    primary = http.createServer(handler as RequestListener);
+    primary = withUpgrades(http.createServer(handler as RequestListener), handler);
   }
 
   return { primary, h3 };

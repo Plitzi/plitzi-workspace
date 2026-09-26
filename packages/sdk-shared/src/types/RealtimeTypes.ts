@@ -62,6 +62,15 @@ export type PubSubAdapter = {
   subscribe: (topic: string, listener: (message: string) => void) => Promise<() => Promise<void>>;
 };
 
+/**
+ * How a page connects: a Server-Sent Events stream it publishes to with requests, or one WebSocket both ways.
+ *
+ * The stream works through anything that passes HTTP; the socket sends a message as a frame instead of a request,
+ * which is what a page publishing a cursor twenty times a second wants. A page told to use the socket falls back to
+ * the stream on its own where one cannot open (behind HTTP/2, a proxy that drops upgrades).
+ */
+export type RealtimeTransport = 'sse' | 'websocket';
+
 /** A server's realtime channels. On by default; `false` turns the endpoint off. */
 export type SSRRealtimeConfig =
   | {
@@ -69,5 +78,12 @@ export type SSRRealtimeConfig =
       pubsub?: PubSubAdapter;
       /** Where pages connect. `/_realtime` when absent. */
       path?: string;
+      /** How pages connect. `sse` when absent; both are always served, this is what pages are told to use. */
+      transport?: RealtimeTransport;
+      /**
+       * Origins, besides the server's own, whose pages may open a WebSocket here (`https://app.example.com`). A
+       * socket carries the visitor's cookies from any site, so every other origin is refused.
+       */
+      allowedOrigins?: string[];
     }
   | false;

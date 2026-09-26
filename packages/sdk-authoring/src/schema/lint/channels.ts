@@ -1,4 +1,4 @@
-import { matchChannel } from '@plitzi/sdk-shared/realtime';
+import { channelProblems, matchChannel } from '@plitzi/sdk-shared/realtime';
 
 import type { LintContext } from './context';
 
@@ -12,6 +12,13 @@ const SAMPLE_SEGMENT = 'x';
 export const lintChannels = (ctx: LintContext): void => {
   const declared = ctx.schema.settings.channels;
   const patterns = Object.keys(declared ?? {});
+  // The declarations themselves, as the builder or an agent wrote them: one the server could not read opens nothing.
+  for (const pattern of patterns) {
+    for (const problem of channelProblems(pattern, declared?.[pattern])) {
+      ctx.error('channel-declaration', `Channel "${pattern}": ${problem}.`);
+    }
+  }
+
   for (const element of Object.values(ctx.flat)) {
     if (element.definition.type !== 'channel') {
       continue;

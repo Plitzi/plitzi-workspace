@@ -133,7 +133,8 @@ export const prepareRender = async (
     rscPath,
     rscData,
     actionPath: resolveActionEndpoint(config),
-    realtimePath: realtimeModuleFor(config)?.path
+    realtimePath: realtimeModuleFor(config)?.path,
+    realtimeTransport: realtimeModuleFor(config)?.transport
   });
 
   if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {

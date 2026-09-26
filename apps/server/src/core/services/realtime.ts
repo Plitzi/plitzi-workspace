@@ -1,10 +1,11 @@
-import { handleRealtimePublish, handleRealtimeSubscribe } from '../../modules/realtime';
+import { handleRealtimePublish, handleRealtimeSocket, handleRealtimeSubscribe } from '../../modules/realtime';
 import { readRawBody } from '../requestParser';
 
 import type { SSRContext, Stage } from '../http/types';
 
 /**
- * `/_realtime`: a page subscribing (GET, a stream that stays open) and publishing (POST).
+ * `/_realtime`: a page subscribing (GET, a stream that stays open) and publishing (POST) — or asking to switch the
+ * same GET to a WebSocket, which does both.
  *
  * After the auth middleware, like the action endpoint: who may open a channel depends on who is asking.
  */
@@ -12,6 +13,21 @@ export const realtimeStage: Stage<SSRContext> = async ctx => {
   const { realtime, req } = ctx;
   if (!realtime || req.path !== realtime.path) {
     return false;
+  }
+
+  if (ctx.upgrade) {
+    ctx.operation = 'realtime:socket';
+    await handleRealtimeSocket({
+      req,
+      res: ctx.res,
+      raw: ctx.raw,
+      upgrade: ctx.upgrade,
+      hub: realtime.hub,
+      resolveChannels: realtime.resolveChannels,
+      allowedOrigins: realtime.allowedOrigins
+    });
+
+    return true;
   }
 
   if (req.method === 'GET') {

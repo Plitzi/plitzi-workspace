@@ -32,3 +32,15 @@
   field-sizing: content;
   z-index: 1;
 }
+
+/* The selection's tools: placed by the canvas, drawn by the space. Centred on the selection, above it or below. */
+.board__tools {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+}
+
+.board__tools[data-placement='below'] {
+  transform: translate(-50%, 0);
+}

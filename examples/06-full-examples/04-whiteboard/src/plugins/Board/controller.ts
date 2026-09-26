@@ -77,13 +77,27 @@ export type TextEditor = {
   wraps: boolean;
 };
 
+/** Where the selection is on screen, for the tools the component lays beside it. */
+export type ScreenBox = { left: number; top: number; width: number; height: number };
+
 /** What this page says to the room while its pointer moves: where it is, what it is dragging, what it selected. */
 export type PointerMessage = { x: number; y: number; draft: BoardElement[] | null; selection: string[] };
 
 export type ControllerEvent =
   | { type: 'commit'; ops: BoardElement[] }
   | { type: 'tool'; tool: Tool }
-  | { type: 'selection'; count: number; stroke: string; fill: string; strokeWidth: string }
+  | {
+      type: 'selection';
+      count: number;
+      /** Something selected is in a group. */
+      grouped: boolean;
+      /** Everything selected is ONE group — grouping it again would change nothing. */
+      oneGroup: boolean;
+      stroke: string;
+      fill: string;
+      strokeWidth: string;
+    }
+  | { type: 'selectionBox'; box: ScreenBox | undefined }
   | { type: 'view'; zoom: number }
   | { type: 'editor'; editor: TextEditor | undefined }
   | { type: 'pointer'; message: PointerMessage; final: boolean };
@@ -199,6 +213,12 @@ export const createBoardController = (
   let frame = 0;
   let lastPointer: Point | undefined;
   let reportedZoom = 0;
+  let reportedBox = '';
+  /**
+   * The group this person double-clicked into: its members are picked one at a time until the selection leaves it.
+   * Everywhere else a click on a member picks up the whole group.
+   */
+  let insideGroup: string | undefined;
 
   // ── Drawing ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -325,7 +345,27 @@ export const createBoardController = (
         drawCursor(context, camera, remote.cursor, member.name, colourOf(from), palette.ui);
       }
     }
+
+    // The selection's tools stand aside while it is being moved, resized or typed into — they would cover the work.
+    reportBox(box && props.tool === 'select' && !editing && !gesture && !pinch ? box : undefined);
   };
+
+  function reportBox(box: Box | undefined): void {
+    const [left, top] = box ? toScreen(camera, box.x, box.y) : [0, 0];
+    const screen = box
+      ? {
+          left: Math.round(left),
+          top: Math.round(top),
+          width: Math.round(box.width * camera.zoom),
+          height: Math.round(box.height * camera.zoom)
+        }
+      : undefined;
+    const key = JSON.stringify(screen ?? null);
+    if (key !== reportedBox) {
+      reportedBox = key;
+      emit({ type: 'selectionBox', box: screen });
+    }
+  }
 
   const invalidate = (): void => {
     if (!frame) {
@@ -366,6 +406,11 @@ export const createBoardController = (
     emit({
       type: 'selection',
       count: chosen.length,
+      grouped: chosen.some(element => element.group !== undefined),
+      oneGroup:
+        chosen.length > 0 &&
+        chosen[0].group !== undefined &&
+        chosen.every(element => element.group === chosen[0].group),
       stroke: shared(chosen, element => element.stroke),
       fill: shared(
         chosen.filter(element => !isLinear(element.type) && element.type !== 'text'),
@@ -375,9 +420,35 @@ export const createBoardController = (
     });
   };
 
+  const groupOf = (id: string): string | undefined => (draft.get(id) ?? scene.element(id))?.group;
+
+  const membersOf = (group: string): string[] =>
+    scene
+      .visible()
+      .filter(element => element.group === group)
+      .map(element => element.id);
+
+  /** What picking these picks: each whole group — the entered one aside, whose members are picked alone. */
+  const widened = (ids: Iterable<string>): Set<string> => {
+    const chosen = new Set(ids);
+    for (const id of [...chosen]) {
+      const group = groupOf(id);
+      if (group && group !== insideGroup) {
+        membersOf(group).forEach(member => chosen.add(member));
+      }
+    }
+
+    return chosen;
+  };
+
   const setSelection = (ids: Iterable<string>): void => {
+    const chosen = [...ids];
+    if (insideGroup && !chosen.some(id => groupOf(id) === insideGroup)) {
+      insideGroup = undefined;
+    }
+
     selection.clear();
-    for (const id of ids) {
+    for (const id of widened(chosen)) {
       selection.add(id);
     }
 
@@ -654,12 +725,9 @@ export const createBoardController = (
 
         if (event.shiftKey) {
           const next = new Set(selection);
-          if (next.has(hit.id)) {
-            next.delete(hit.id);
-          } else {
-            next.add(hit.id);
-          }
-
+          const picked = hit.group && hit.group !== insideGroup ? membersOf(hit.group) : [hit.id];
+          const removing = next.has(hit.id);
+          picked.forEach(id => (removing ? next.delete(id) : next.add(id)));
           setSelection(next);
           break;
         }
@@ -952,6 +1020,14 @@ export const createBoardController = (
 
     const point = toBoard(camera, ...screenOf(event));
     const hit = topmostAt(point);
+    // Into a group: the member under the pointer, alone. A second double-click on a text in it edits the text.
+    if (hit?.group && hit.group !== insideGroup) {
+      insideGroup = hit.group;
+      setSelection([hit.id]);
+
+      return;
+    }
+
     if (hit && holdsText(hit.type)) {
       startEditing(hit);
 
@@ -1243,18 +1319,50 @@ export const createBoardController = (
     selectAll: unlessEditing(() => setSelection(scene.visible().map(element => element.id))),
     duplicate: unlessEditing(() => {
       const top = scene.topZ;
+      // A copy of a group is a group of its own: the copies must not be picked up with the originals.
+      const groups = new Map<string, string>();
       const copies = selected()
         .sort(byZ)
-        .map((element, index) => ({
-          ...element,
-          id: newId(),
-          x: element.x + 16,
-          y: element.y + 16,
-          z: top + 1 + index,
-          version: 0
-        }));
+        .map((element, index) => {
+          const group = element.group === undefined ? undefined : (groups.get(element.group) ?? newId());
+          if (element.group !== undefined && group !== undefined) {
+            groups.set(element.group, group);
+          }
+
+          return {
+            ...element,
+            id: newId(),
+            x: element.x + 16,
+            y: element.y + 16,
+            z: top + 1 + index,
+            version: 0,
+            ...(group === undefined ? {} : { group })
+          };
+        });
       commit(copies);
       setSelection(copies.map(element => element.id));
+    }),
+    /** One group of everything selected — groups inside it included: there is one level. */
+    group: unlessEditing(() => {
+      const chosen = selected();
+      if (chosen.length < 2) {
+        return;
+      }
+
+      const group = newId();
+      insideGroup = undefined;
+      commit(chosen.map(element => ({ ...element, group })));
+      reportSelection();
+    }),
+    ungroup: unlessEditing(() => {
+      insideGroup = undefined;
+      // `group` is left out of each element — present with `undefined` in it, it would still be sent as a key.
+      commit(
+        selected()
+          .filter(element => element.group !== undefined)
+          .map(({ group, ...element }) => element)
+      );
+      reportSelection();
     }),
     deselect: (): void => {
       finishEditing();

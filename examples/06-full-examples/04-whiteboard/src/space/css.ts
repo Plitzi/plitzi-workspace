@@ -47,21 +47,13 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
 }
 
 /* ── Fields ────────────────────────────────────────────────────────────────────────────────────────────────────────
-   A form control's inner input is not a selector a class reaches, so the two on the board are dressed here: the title
-   reads as the board's name until it is clicked, and the name field as a field. */
-.titleField .plitzi__formControl-input, .titleField input {
-  width: 100%; height: 34px; padding: 0 10px; border: 1px solid transparent; border-radius: 8px;
-  background: transparent; color: var(--ink); font: 600 14px var(--ui); outline: none;
-  text-overflow: ellipsis;
+   The box is the form control's \`input\` slot (\`titleInput\`, \`nameInput\`); the \`<input>\` inside it is not a selector a
+   class reaches, and only has to take the box's type and get out of its way. */
+.titleInput input, .nameInput input {
+  width: 100%; min-width: 0; padding: 0; border: 0; outline: none; background: transparent;
+  color: var(--ink); font: inherit; font-size: 14px; text-overflow: ellipsis;
 }
-.titleField input:hover { background: var(--surface-2); }
-.titleField input:focus { background: var(--surface); border-color: var(--accent); }
-.nameField input {
-  width: 100%; height: 36px; padding: 0 10px; box-sizing: border-box; border: 1px solid var(--edge);
-  border-radius: 8px; background: var(--surface-2); color: var(--ink); font: 500 14px var(--ui); outline: none;
-}
-.nameField input:focus { border-color: var(--accent); background: var(--surface); }
-.titleField input::placeholder, .nameField input::placeholder { color: var(--muted); }
+.titleInput input::placeholder, .nameInput input::placeholder { color: var(--muted); }
 
 /* The theme switch: the icon alone, in the ink colour. */
 .themeSwitch svg, .galleryTheme svg { width: 18px; height: 18px; }

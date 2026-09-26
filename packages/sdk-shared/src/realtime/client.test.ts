@@ -69,7 +69,7 @@ afterEach(() => stops.splice(0).forEach(stop => stop()));
 describe('createRealtimeClient', () => {
   it('opens ONE connection for the topics a page listens to, and delivers each message to its topic', async () => {
     const server = fakeServer();
-    const client = createRealtimeClient('/_realtime', server.fetchImpl);
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
     const board: RealtimeMessage[] = [];
     const chat: RealtimeMessage[] = [];
     stops.push(client.subscribe('board:1', entry => board.push(entry)));
@@ -91,7 +91,7 @@ describe('createRealtimeClient', () => {
 
   it('publishes with the connection’s secret once it is open', async () => {
     const server = fakeServer();
-    const client = createRealtimeClient('/_realtime', server.fetchImpl);
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
     stops.push(client.subscribe('board:1', () => undefined));
     const sent = client.publish('board:1', 'cursor', { x: 1 });
     await wait();
@@ -103,7 +103,7 @@ describe('createRealtimeClient', () => {
 
   it('holds a publish on a topic just listened to until the connection that includes it is open', async () => {
     const server = fakeServer();
-    const client = createRealtimeClient('/_realtime', server.fetchImpl);
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
     stops.push(client.subscribe('boards', () => undefined));
     await wait();
     server.streams[0].push('ready', { connection: 'first', token: 'old', topics: ['boards'], refused: [] });
@@ -120,7 +120,7 @@ describe('createRealtimeClient', () => {
 
   it('reconnects after the stream drops, and not after a refusal', async () => {
     const dropped = fakeServer();
-    const client = createRealtimeClient('/_realtime', dropped.fetchImpl);
+    const client = createRealtimeClient('/_realtime', { fetchImpl: dropped.fetchImpl });
     stops.push(client.subscribe('board:1', () => undefined));
     await wait();
     dropped.streams[0].end();
@@ -129,7 +129,7 @@ describe('createRealtimeClient', () => {
     expect(dropped.streams.length).toBe(2);
 
     const refused = fakeServer(() => 403);
-    const other = createRealtimeClient('/_realtime', refused.fetchImpl);
+    const other = createRealtimeClient('/_realtime', { fetchImpl: refused.fetchImpl });
     stops.push(other.subscribe('chat:1', () => undefined));
     await wait(700);
 
@@ -138,10 +138,100 @@ describe('createRealtimeClient', () => {
   });
 });
 
+/** A socket the test drives: what the page sent, and the frames the server answers with. */
+const fakeSockets = () => {
+  const opened: FakeSocket[] = [];
+
+  class FakeSocket {
+    static readonly OPEN = 1;
+    readonly OPEN = 1;
+    readyState = 0;
+    sent: Record<string, unknown>[] = [];
+    onmessage: ((event: { data: string }) => void) | null = null;
+    onclose: (() => void) | null = null;
+
+    readonly url: string;
+
+    constructor(url: string) {
+      this.url = url;
+      opened.push(this);
+    }
+
+    send(frame: string) {
+      this.sent.push(JSON.parse(frame) as Record<string, unknown>);
+    }
+
+    close() {
+      this.readyState = 3;
+    }
+
+    /** The server's side: accept, send, drop. */
+    open() {
+      this.readyState = 1;
+    }
+
+    push(event: string, data: unknown) {
+      this.onmessage?.({ data: JSON.stringify({ event, data }) });
+    }
+
+    drop() {
+      this.readyState = 3;
+      this.onclose?.();
+    }
+  }
+
+  // The client reads the page's address to build the socket's.
+  globalThis.location = { href: 'https://board.example/b/1' } as Location;
+
+  return { opened, WebSocketImpl: FakeSocket as unknown as typeof WebSocket };
+};
+
+describe('createRealtimeClient over a WebSocket', () => {
+  it('opens one socket on the page’s host, publishes as frames and settles each on its ack', async () => {
+    const sockets = fakeSockets();
+    const client = createRealtimeClient('/_realtime', { transport: 'websocket', WebSocketImpl: sockets.WebSocketImpl });
+    const heard: RealtimeMessage[] = [];
+    stops.push(client.subscribe('room:1', entry => heard.push(entry)));
+    await wait();
+
+    const [socket] = sockets.opened;
+    expect(decodeURIComponent(socket.url)).toBe('wss://board.example/_realtime?topics=room:1');
+
+    socket.open();
+    socket.push('ready', { connection: 'me', topics: ['room:1'], refused: [] });
+    socket.push('message', message({ topic: 'room:1' }));
+    expect(client.transport).toBe('websocket');
+    expect(heard).toHaveLength(1);
+
+    const sent = client.publish('room:1', 'pointer', { x: 1 });
+    await wait(10);
+    expect(socket.sent).toEqual([{ id: 1, topic: 'room:1', type: 'pointer', data: { x: 1 } }]);
+    socket.push('ack', { id: 1, ok: true, status: 204 });
+    expect(await sent).toBe(true);
+  });
+
+  it('moves to the stream for good when a socket closes before it was ever ready', async () => {
+    const sockets = fakeSockets();
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', {
+      transport: 'websocket',
+      WebSocketImpl: sockets.WebSocketImpl,
+      fetchImpl: server.fetchImpl
+    });
+    stops.push(client.subscribe('room:1', () => undefined));
+    await wait();
+    sockets.opened[0].drop();
+    await wait(10);
+
+    expect(server.streams).toHaveLength(1);
+    expect(client.transport).toBe('sse');
+  });
+});
+
 describe('trackPresence', () => {
   it('keeps who announced themselves, drops who left, and answers a newcomer with its own state', async () => {
     const server = fakeServer();
-    const client = createRealtimeClient('/_realtime', server.fetchImpl);
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
     let members: RealtimeMember[] = [];
     const tracker = trackPresence(client, 'board:1', next => {
       members = next;
@@ -173,7 +263,7 @@ describe('trackPresence', () => {
 
   it('is one member per page: a tracker started late knows everyone, and the last one to stop leaves', async () => {
     const server = fakeServer();
-    const client = createRealtimeClient('/_realtime', server.fetchImpl);
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
     const first = trackPresence(client, 'board:1', () => undefined);
     await wait();
     server.streams[0].push('ready', { connection: 'me', token: 'secret', topics: ['board:1'], refused: [] });

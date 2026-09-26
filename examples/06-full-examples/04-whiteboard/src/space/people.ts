@@ -135,7 +135,7 @@ const popover = styles('popover', {
       top: '58px',
       right: '14px',
       'z-index': '6',
-      width: '260px',
+      width: '284px',
       padding: '14px',
       display: 'flex',
       'flex-direction': 'column',
@@ -150,6 +150,23 @@ const popoverTitle = styles('popoverTitle', { 'font-size': '14px', 'font-weight'
 const popoverNote = styles('popoverNote', { 'font-size': '12px', color: 'var(--muted)', 'line-height': '1.45' });
 
 const nameField = styles('nameField', { width: '100%' });
+
+/**
+ * The field's box, on the form control's `input` slot — the container the SDK draws a box on. Styled there, and the
+ * `<input>` inside left bare (`css.ts`): a border on each is two boxes.
+ */
+const nameInput = styles('nameInput', {
+  css: {
+    display: 'flex',
+    'align-items': 'center',
+    height: '36px',
+    padding: '0px 10px',
+    border: '1px solid var(--edge)',
+    'border-radius': '8px',
+    'background-color': 'var(--surface-2)'
+  },
+  states: { 'focus-within': { 'border-color': 'var(--accent)', 'background-color': 'var(--surface)' } }
+});
 
 const swatches = styles('colourRow', { display: 'flex', 'flex-wrap': 'wrap', gap: '8px' });
 
@@ -203,6 +220,7 @@ const mePanel = (): ElementSpec =>
         required: false,
         autoComplete: false,
         class: nameField,
+        slots: { input: nameInput },
         bind: { defaultValue: 'computed.name' },
         // Every keystroke: the others see the name change on the cursor as it is typed.
         flows: [

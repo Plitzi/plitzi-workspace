@@ -50,7 +50,11 @@ const widgetOperations = [
 // Raised from 187k for `whileRunning` on a flow's trigger — what a trigger fired again while its flow runs does
 // (skip, parallel, queue): a runtime behaviour of flows, not a panel setting, and ~0.7k with the node shape it sits
 // on carried where it already was and its description cut to one line.
-const TOOLS_BUDGET_BYTES = 188_000;
+//
+// Raised from 188k for realtime `channels` on `patchSettings`: a capability of its own (pages that see each other),
+// ~2.2k across the four tools that carry the op union — with the size and rate limits left out of the agent's schema
+// and the meaning checked by `channelProblems` rather than spelled out as unions.
+const TOOLS_BUDGET_BYTES = 190_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

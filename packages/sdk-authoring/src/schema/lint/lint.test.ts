@@ -525,6 +525,24 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('trigger-never-fired');
     });
 
+    it('channel-declaration', () => {
+      const withChannels = (channels: Record<string, unknown>) =>
+        errorsOf(
+          withChange(({ schema }) => {
+            // Malformed on purpose: what a hand-edited document or an agent may write, which no type would allow.
+            schema.settings.channels = channels as NonNullable<typeof schema.settings.channels>;
+          })
+        );
+
+      expect(withChannels({ 'room:{id}': { access: { mode: 'public' } } })).not.toContain('channel-declaration');
+      expect(withChannels({ 'room {id}': { access: { mode: 'public' } } })).toContain('channel-declaration');
+      expect(withChannels({ 'room:{id}': { access: { mode: 'anyone' } } })).toContain('channel-declaration');
+      expect(withChannels({ 'room:{id}': { access: { mode: 'role' } } })).toContain('channel-declaration');
+      expect(withChannels({ 'room:{id}': { access: { mode: 'public' }, messagesPerSecond: 0 } })).toContain(
+        'channel-declaration'
+      );
+    });
+
     it('channel-topic', () => {
       const undeclared = withChange(({ schema }) => {
         addElement(schema, { id: 'room', type: 'channel', attributes: { topic: 'board:{{ id }}' } });

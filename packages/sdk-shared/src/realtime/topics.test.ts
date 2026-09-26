@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { channelLimits, isValidTopic, matchChannel } from './topics';
+import { channelLimits, channelProblems, isValidTopic, matchChannel } from './topics';
 
 import type { ChannelDeclarations } from '../types/RealtimeTypes';
 
@@ -37,5 +37,30 @@ describe('matchChannel', () => {
 describe('channelLimits', () => {
   it('fills in what a declaration leaves out', () => {
     expect(channelLimits({ access: { mode: 'public' } })).toEqual({ maxMessageBytes: 4096, messagesPerSecond: 30 });
+  });
+});
+
+describe('channelProblems', () => {
+  it('accepts what the server can serve', () => {
+    expect(channelProblems('board:{id}', { access: { mode: 'public' }, publish: 'server', presence: true })).toEqual(
+      []
+    );
+    expect(channelProblems('lobby', { access: { mode: 'role', permissions: ['boardEdit'] } })).toEqual([]);
+  });
+
+  it('names each thing that is wrong, and how to write it', () => {
+    expect(channelProblems('board {id}', { access: { mode: 'public' } })).toHaveLength(1);
+    expect(channelProblems('', { access: { mode: 'public' } })).toHaveLength(1);
+    expect(channelProblems('board:{id}', 'public')).toEqual([
+      'a channel is an object: `{ access: { mode: "public" } }`'
+    ]);
+    expect(
+      channelProblems('board:{id}', {
+        access: { mode: 'role' },
+        publish: 'everyone',
+        presence: 'yes',
+        messagesPerSecond: 0.5
+      })
+    ).toHaveLength(4);
   });
 });

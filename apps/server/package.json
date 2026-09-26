@@ -68,7 +68,8 @@
     "ejs": "^6.0.1",
     "esbuild": "^0.28.2",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^10.0.10"
+    "nodemailer": "^10.0.10",
+    "ws": "^8.21.1"
   },
   "peerDependencies": {
     "mongodb": "^6 || ^7",
@@ -90,6 +91,7 @@
     "@types/node": "^26.6.2",
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.1.1",
     "@vitest/coverage-v8": "^5.0.1",
     "eslint": "^9.39.5",

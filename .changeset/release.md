@@ -785,7 +785,17 @@
   of a cursor. Authoring: `channel(...)`, `publishOn`, `announceOn`, and `channels` on the space.
 - A page is one connection and one member per topic, however many elements and plugins listen; a publish waits for
   the connection that includes its topic, so one made right after a navigation is not refused.
-- New full example: `examples/06-full-examples/04-whiteboard` (Pizarra) — a collaborative whiteboard. See
+- Two transports at the same address: Server-Sent Events plus a `POST` per publish (`sse`, the default), or one
+  WebSocket both ways (`realtime: { transport: 'websocket' }`), where a publish is a frame answered by an `ack`. A
+  page falls back to the stream on its own where a socket cannot open (HTTP/2, a proxy that drops upgrades). A socket
+  from another origin is refused unless listed in `realtime.allowedOrigins` — CORS does not protect a WebSocket.
+- Upgrades go through the same pipeline as any request (space, auth, then the realtime stage); an upgrade on any other
+  path is a `404`. `makeHandler(label, buildContext, stages, { compression, upgrades })` takes an options object.
+- Channel declarations are checked in one place, `channelProblems` (`@plitzi/sdk-shared/realtime`): authoring refuses,
+  `lintSpace` reports `channel-declaration`, and the MCP's `patchSettings` takes `channels` (merged per pattern, `null`
+  removes one) and answers with the same sentence. The agent's guide has a "Realtime channels" section.
+- New full example: `examples/06-full-examples/04-whiteboard` (Pizarra) — a collaborative whiteboard over WebSocket:
+  groups, a toolbar authored in the space that the canvas lays beside the selection, stacking. See
   `docs/en/realtime.md`.
 
 ## A render reads what a call wrote

@@ -25,6 +25,10 @@ export const computed = {
   strokeWidth: '{{ state.strokeWidth ?? 2 }}',
   zoom: '{{ state.zoom ?? 100 }}',
   selectionCount: '{{ state.selectionCount ?? 0 }}',
+  /** Whether anything selected belongs to a group — what shows "ungroup". */
+  selectionGrouped: '{{ state.selectionGrouped ? true : false }}',
+  /** Two or more things that are not already one group: what shows "group". */
+  canGroup: '{{ computed.selectionCount > 1 and not state.selectionOneGroup ? true : false }}',
   /** The style panel is open while something is selected or a drawing tool is in hand — and only then. */
   styleOpen: `{{ computed.selectionCount > 0 or computed.tool in ${list(DRAWING_TOOLS)} ? true : false }}`,
   name: "{{ state.name ?? '' }}",
@@ -43,4 +47,14 @@ export const computed = {
  * Kept across visits: who this person is, and the style they draw with. Not kept: where they were — a tool left in
  * hand, a selection count, a panel open on arrival are all things that belong to the last visit, not this one.
  */
-export const transientState = ['tool', 'zoom', 'selectionCount', 'shareOpen', 'meOpen', 'keysOpen', 'titleDraft'];
+export const transientState = [
+  'tool',
+  'zoom',
+  'selectionCount',
+  'selectionGrouped',
+  'selectionOneGroup',
+  'shareOpen',
+  'meOpen',
+  'keysOpen',
+  'titleDraft'
+];

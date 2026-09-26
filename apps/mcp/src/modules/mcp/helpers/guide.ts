@@ -679,6 +679,19 @@ Four rules worth knowing before you write:
 
 \`deleteAction { ref }\` removes one; every \`runServerAction\` step that names it stops resolving, so confirm first.
 
+## Realtime channels
+Pages that see each other — cursors, presence, a shared board, a game. Three parts, all needed:
+
+1. **Declare** the topic pattern with \`patchSettings { channels: { "board:{id}": { access: { mode: "public" }, publish: "server" } } }\`.
+   \`publish: "server"\` is for what must be validated and saved first; \`"clients"\` (the default) for what pages send
+   directly — add \`presence: true\` for who-is-here.
+2. **Subscribe** with a \`channel\` element whose \`topic\` a pattern matches (\`board:{{ id }}\`, a route param).
+   Its descendants bind \`channel_<id>\`: \`connected\`, \`members\`, \`messages\`, \`last\`; flows use its \`onMessage\`,
+   \`onJoin\`, \`onLeave\` triggers and its \`publish\` / \`setPresence\` callbacks.
+3. **Announce from the server**: an action whose last step is the \`realtime.publish\` task — validate, save, then say so.
+
+A topic no pattern matches is refused by the server and reported by the linter (\`channel-topic\`).
+
 ## Shared layouts — the chrome a page does NOT contain
 A page's tree is usually **not the whole page**. The header, the sidebar and the footer normally live in a **layout
 container**: a shell several pages are rendered inside, so the navigation is authored once instead of once per page.
@@ -769,6 +782,8 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   endpoints and the \`detailsPath\`/\`tokenPath\`/\`refreshTokenPath\`/\`expirationTimePath\` mapping that says where the
   values sit in their responses. \`sessionHintCookie\` is worth setting whenever the backend can: it names a readable
   cookie carrying only expiries, which is what lets a page answer "nobody is signed in" without a request.
+- \`channels\` — the realtime channels, by topic pattern (see **Realtime channels**). Merged pattern by pattern;
+  \`null\` removes one.
   Example — inject a keyframe globally:
   \`{ "type": "patchSettings", "customCss": "@keyframes spin { to { transform: rotate(360deg); } }" }\`.
 

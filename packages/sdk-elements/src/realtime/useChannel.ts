@@ -32,9 +32,10 @@ export type ChannelHandle = {
  */
 const useChannel = (topic: string | undefined, { presence, onMessage }: UseChannelOptions = {}): ChannelHandle => {
   const [endpoint] = useCommonStore('realtime.endpoint');
+  const [transport] = useCommonStore('realtime.transport');
   const client = useMemo(
-    () => (endpoint && typeof window !== 'undefined' ? realtimeClientFor(endpoint) : undefined),
-    [endpoint]
+    () => (endpoint && typeof window !== 'undefined' ? realtimeClientFor(endpoint, transport) : undefined),
+    [endpoint, transport]
   );
   const [connected, setConnected] = useState(false);
   const [members, setMembers] = useState<RealtimeMember[]>([]);
