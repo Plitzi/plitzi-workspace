@@ -1,6 +1,7 @@
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
 import type { ServerCaches } from '../../helpers/cache';
 import type { ActionsModule } from '../../modules/actions';
+import type { RealtimeModule } from '../../modules/realtime';
 import type { PluginManager } from '../../plugins/manager';
 import type {
   SSRPageServerConfig,
@@ -42,6 +43,8 @@ export interface SSRContext extends BaseContext {
   /** Built at boot when the deployment configured `action.lookups`, so its task registry is validated once and
    *  its guards are a single set for the process. Absent means this server runs no actions. */
   actions?: ActionsModule;
+  /** The realtime channels, built at boot unless the config turned them off. Absent means `/_realtime` is not served. */
+  realtime?: RealtimeModule;
   renderFn: SSRTemplateFn;
   caches: ServerCaches;
   pluginManager: PluginManager;

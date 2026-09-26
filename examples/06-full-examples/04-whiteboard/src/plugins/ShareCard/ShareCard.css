@@ -1,0 +1,71 @@
+/* Structure only: the colours are `--share-*`, which the space sets. */
+.share-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.share-card__code {
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 220px;
+  align-self: center;
+}
+
+.share-card__code svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  shape-rendering: crispEdges;
+}
+
+/* A QR code is read by contrast: dark on light in both schemes, whatever the card around it is. */
+.share-card__paper {
+  fill: var(--share-paper, #ffffff);
+}
+
+.share-card__ink {
+  fill: var(--share-ink, #111111);
+}
+
+.share-card__address {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--share-field, rgba(0, 0, 0, 0.05));
+  font: inherit;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.share-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.share-card__button {
+  flex: 1;
+  appearance: none;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--share-accent, #4c6ef5);
+  color: var(--share-on-accent, #ffffff);
+}
+
+.share-card__button--quiet {
+  background: var(--share-field, rgba(0, 0, 0, 0.05));
+  color: inherit;
+}
+
+.share-card__button:focus-visible {
+  outline: 2px solid var(--share-accent, #4c6ef5);
+  outline-offset: 2px;
+}

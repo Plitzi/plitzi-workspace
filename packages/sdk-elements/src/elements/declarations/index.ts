@@ -31,6 +31,7 @@ import FontAwesomeDeclaration from '../media/FontAwesome/declaration';
 import ImageDeclaration from '../media/Image/declaration';
 import VideoDeclaration from '../media/Video/declaration';
 import ApiContainerDeclaration from '../provider/ApiContainer/declaration';
+import ChannelDeclaration from '../provider/Channel/declaration';
 import ContainerDeclaration from '../structure/Container/declaration';
 import DialogContainerDeclaration from '../structure/DialogContainer/declaration';
 import ListDeclaration from '../structure/List/declaration';
@@ -47,6 +48,7 @@ export const elementDeclarations = {
   BlockHtml: BlockHtmlDeclaration,
   BlockJsx: BlockJsxDeclaration,
   Button: ButtonDeclaration,
+  Channel: ChannelDeclaration,
   Container: ContainerDeclaration,
   Custom: CustomDeclaration,
   DialogContainer: DialogContainerDeclaration,
@@ -87,6 +89,7 @@ export {
   BlockHtmlDeclaration,
   BlockJsxDeclaration,
   ButtonDeclaration,
+  ChannelDeclaration,
   ContainerDeclaration,
   CustomDeclaration,
   DialogContainerDeclaration,

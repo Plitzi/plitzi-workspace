@@ -163,3 +163,23 @@ export const keyPressCombo = (press: KeyPress): string => {
 
   return canonical(modifiers, key);
 };
+
+/** What a text field does itself with ⌘ or Ctrl held: select all, undo, redo, copy, cut, paste. */
+const FIELD_LETTERS = new Set(['a', 'z', 'y', 'c', 'x', 'v']);
+
+/** What moves the caret or deletes by word and line — with any modifier, on every platform. */
+const FIELD_KEYS = new Set(['arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'home', 'end', 'backspace', 'delete']);
+
+/**
+ * Whether a press, made in a text field, is the field's own editing — so a shortcut must not take it.
+ *
+ * With ⌘, Ctrl or Alt held a press in a field is otherwise a shortcut's, which is what lets `mod+k` open a palette
+ * from a search box. But `mod+a` in a title field is "select this text", not "select everything on the board", and
+ * `alt+backspace` deletes a word: a shortcut that took those would break typing wherever the page has one.
+ */
+export const isFieldEditing = (combo: string): boolean => {
+  const parts = combo.split('+');
+  const key = combo.endsWith('++') ? '+' : parts[parts.length - 1];
+
+  return FIELD_KEYS.has(key) || (FIELD_LETTERS.has(key) && (combo.includes('ctrl+') || combo.includes('meta+')));
+};

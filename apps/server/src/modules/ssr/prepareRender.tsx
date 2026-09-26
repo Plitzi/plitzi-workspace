@@ -17,6 +17,7 @@ import { hydrationPayload } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { readCookie } from '../../helpers/readCookie';
 import { resolveDebugMode } from '../../helpers/resolveDebugMode';
+import { realtimeModuleFor } from '../realtime';
 import { matchRscPage } from '../rsc/matchRscPage';
 
 import type { ComponentProps } from './Component';
@@ -128,7 +129,12 @@ export const prepareRender = async (
 
   const pageSeo = resolvePageSeo(schema, pageMatch?.pageId);
 
-  const server = buildServerInfo(req, config, { rscPath, rscData, actionPath: resolveActionEndpoint(config) });
+  const server = buildServerInfo(req, config, {
+    rscPath,
+    rscData,
+    actionPath: resolveActionEndpoint(config),
+    realtimePath: realtimeModuleFor(config)?.path
+  });
 
   if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {
     offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));

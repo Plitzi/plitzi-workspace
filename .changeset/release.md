@@ -767,3 +767,36 @@
   registered — and did nothing, silently. `onLoad` and `onPageLoad` had each worked around it on their own.
 - An element unmounted — or mounted again, as React does twice in development — before its flow starts does not run
   it for the subscription that is gone.
+
+## Realtime channels
+
+- A space declares `channels` — topic patterns (`board:{id}`) with an access rule, who may send (`clients` or only
+  the `server`), `presence`, `maxMessageBytes` and `messagesPerSecond`. An undeclared topic is refused by the server,
+  by `authorSpace` and by `lintSpace` (`channel-topic`).
+- `sdk-server` serves `/_realtime`: one Server-Sent Events connection per page for every topic it listens to, and a
+  `POST` to publish. Every message is authorised, size- and rate-checked, and stamped by the server (`from`, `user`,
+  `at`); presence (`$presence`, `$join`, `$leave`) is kept by the connections, nothing stored.
+- Transport is a `PubSubAdapter` the deployment picks: `createServer({ realtime: { pubsub } })`. `createMemoryPubSub`
+  (the default, across a server's workers) and `createRedisPubSub({ publisher, subscriber })` ship; anything else is
+  one object of two methods. `realtime: false` turns the endpoint off.
+- A server action announces what it did with the `realtime.publish` task (`ctx.publish` for a deployment's own task).
+- On the page: the `channel` element (source `channel_<id>`: `connected`, `me`, `members`, `messages`, `last`;
+  `onMessage`, `onJoin`, `onLeave`; `publish`, `setPresence`), and `useChannel` for a plugin that moves at the speed
+  of a cursor. Authoring: `channel(...)`, `publishOn`, `announceOn`, and `channels` on the space.
+- A page is one connection and one member per topic, however many elements and plugins listen; a publish waits for
+  the connection that includes its topic, so one made right after a navigation is not refused.
+- New full example: `examples/06-full-examples/04-whiteboard` (Pizarra) — a collaborative whiteboard. See
+  `docs/en/realtime.md`.
+
+## A render reads what a call wrote
+
+- `createServer` built the actions module for `render` elements on a different config object than the one the
+  endpoint used — two modules, so two in-memory `kv` stores and two sets of single-flight guards. With no `kv`
+  configured, what a call saved was missing from every render. Both now share one module.
+- The runner, the guards and the module's own `kv` share one default store instead of a Map apiece.
+
+## Keyboard shortcuts leave a text field its own editing
+
+- With ⌘/Ctrl held a press in a field still reaches `onKey` (so `mod+k` opens a palette from a search box), but the
+  field keeps ⌘A, ⌘Z/⌘⇧Z/⌘Y, ⌘C/⌘X/⌘V and moving or deleting by word and line (`isFieldEditing`): a space binding
+  `mod+a` to "select all shapes" no longer steals "select this text".

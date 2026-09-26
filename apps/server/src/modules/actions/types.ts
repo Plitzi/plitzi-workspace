@@ -148,6 +148,21 @@ export type ActionTaskContext = {
   email: ActionEmailSender;
   /** Pushes a `data` frame to a streaming caller. A no-op when nobody negotiated a stream. */
   emit: (chunk: unknown) => void;
+  /**
+   * Publishes on one of this space's realtime channels, as the server — `undefined` when the server has none. What
+   * the `realtime.publish` task sends through.
+   */
+  publish?: (topic: string, type: string, data: unknown) => Promise<void>;
+};
+
+/** How the actions module reaches the server's realtime channels. Set by `createServer`, never by a deployment. */
+export type ActionRealtime = {
+  publish: (
+    space: { spaceId: number; environment: string },
+    topic: string,
+    type: string,
+    data: unknown
+  ) => Promise<void>;
 };
 
 /**
@@ -236,6 +251,8 @@ export type ActionsConfig = {
    */
   idempotency?: { replayTtlMs?: number };
   fetchImpl?: typeof fetch;
+  /** The server's realtime channels, for the `realtime.publish` task. Set by `createServer`. */
+  realtime?: ActionRealtime;
 };
 
 /**

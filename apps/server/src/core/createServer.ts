@@ -77,23 +77,21 @@ const withConnectorRsc = <
     return config;
   }
 
-  // The same module the endpoint runs on, so a `render` element and a call share one guard set and one task
-  // registry. `actionsModuleFor` memoizes on this very config object.
-  const module = actionsModuleFor(config as SSRServerConfig);
+  const resolved: T = { ...config, adapters: { ...config.adapters } };
+  // The same module the endpoint runs on, so a `render` element and a call share one guard set, one task registry
+  // and one `kv`. `actionsModuleFor` memoizes on the config OBJECT — so it is asked about the object the page server
+  // is handed, never the one this was spread from: asked about that one, it built a second module, and a board a
+  // call had just saved read as missing from every render.
+  const module = actionsModuleFor(resolved as SSRServerConfig);
   const actions =
     module && config.action?.lookups ? { lookups: config.action.lookups as ActionLookups, module } : undefined;
+  resolved.adapters.getRscData = connectorRscData(
+    config.connectors as ConnectorLookups | undefined,
+    actions,
+    config.rsc?.elementTimeoutMs
+  );
 
-  return {
-    ...config,
-    adapters: {
-      ...config.adapters,
-      getRscData: connectorRscData(
-        config.connectors as ConnectorLookups | undefined,
-        actions,
-        config.rsc?.elementTimeoutMs
-      )
-    }
-  };
+  return resolved;
 };
 
 /** The renewal stage in front of whatever else gates itself, when there is anywhere to renew. */

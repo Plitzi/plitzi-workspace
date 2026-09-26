@@ -1,4 +1,5 @@
 import { createActionsModule } from './index';
+import { realtimeModuleFor } from '../realtime';
 
 import type { ActionsModule } from './index';
 import type { ActionLookups, ActionsConfig } from './types';
@@ -41,7 +42,8 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     idempotency: config.action?.idempotency,
     dbDrivers: config.action?.dbDrivers as ActionsConfig['dbDrivers'],
     email: config.action?.email,
-    onRun: config.action?.onRun
+    onRun: config.action?.onRun,
+    realtime: realtimeModuleFor(config)
   });
   modules.set(config, module);
 

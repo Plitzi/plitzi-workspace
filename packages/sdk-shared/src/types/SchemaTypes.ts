@@ -1,4 +1,5 @@
 import type { InteractionCallbackParamValues, InteractionCallbackType } from './InteractionTypes';
+import type { ChannelDeclarations } from './RealtimeTypes';
 import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -208,6 +209,11 @@ export type Schema = {
      * `{{ expression }}` gives its value (a number, a list); anything else gives text.
      */
     computed?: Record<string, string>;
+    /**
+     * The realtime channels the space offers, by topic pattern: `{ 'board:{id}': { access: { mode: 'public' } } }`.
+     * A page subscribes to and publishes on a topic one of them matches, and on nothing else.
+     */
+    channels?: ChannelDeclarations;
   };
   rsc?: SchemaRsc;
   pages: Element['id'][];

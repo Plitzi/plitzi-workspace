@@ -35,6 +35,7 @@ export const SPACE_SPEC_KEYS = [
   'customCss',
   'notifications',
   'computed',
+  'channels',
   'settings',
   'rsc',
   'mode',

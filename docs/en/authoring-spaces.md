@@ -478,8 +478,9 @@ seismicMap({
 `keys` is one shortcut or several with commas: a character (`'f'`, `'?'`, `'+'`), a key's name (`escape`, `space`,
 `arrowup` or `up`, `enter`, `f1`…) and modifiers before it (`shift+f`, `alt+1`, `mod+k` — ⌘ on a Mac, Ctrl
 elsewhere). Shift counts for a letter and not for a symbol, which is typed with whatever the keyboard needs. A press
-while somebody types in a field is the field's, unless Ctrl, ⌘ or Alt is held or the key is Escape; a press that
-matches is the shortcut's alone, so an arrow bound to a flow no longer scrolls the page. `{{ <step>.key }}` is the key
+while somebody types in a field is the field's, unless Ctrl, ⌘ or Alt is held or the key is Escape — and even then
+the field keeps its own editing (⌘A, ⌘Z, ⌘C/⌘V, moving and deleting by word), so `mod+a` bound to "select all
+shapes" never steals "select this text"; a press that matches is the shortcut's alone, so an arrow bound to a flow no longer scrolls the page. `{{ <step>.key }}` is the key
 pressed, for one flow answering several. A shortcut that cannot fire — two keys, only modifiers, a name that is not a
 key — is refused where it is written, and `lintSpace` reports one written in the builder (`trigger-keys`).
 
@@ -591,6 +592,13 @@ the last one is still in flight. `0`, the default, never does.
 A refused request (`4xx`/`5xx`) is shown but never kept. Server-driven providers (`runtime: 'server'`) are not
 part of this: their data arrives with the page. The dev-tools' Store tab lists what the cache holds under
 "Queries", with how long each answer has left and a button to expire it.
+
+### Pages that see each other
+
+When "every few seconds" is too slow — cursors, presence, a shared board — the space declares `channels` and a page
+subscribes with a `channel` element; a server action announces what it saved with `realtime.publish`. A topic no
+declared pattern matches is refused here, naming the patterns (`channel-topic` in `lintSpace`). See
+[Realtime channels](./realtime.md).
 
 ---
 

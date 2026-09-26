@@ -75,6 +75,23 @@ const stop = state.subscribe(next => save(next));      // called after every cha
 `state` is the current value, `setState` replaces it (or takes an updater), `setStateByKey` writes one key,
 `clearState` empties it, `subscribe` listens. Bindings on `state.*` re-render at once.
 
+## Talking to other pages
+
+A plugin that moves at the speed of a cursor reads a realtime channel through `useChannel` rather than through flows —
+messages arrive through a callback and re-render nothing:
+
+```tsx
+import { useChannel } from '@plitzi/plitzi-sdk';
+
+const room = useChannel(roomTopic, { onMessage: message => move(message.from, message.data) });
+room.publish('pointer', { x, y });   // throttle it: ~20 a second, the latest position each time
+room.members;                        // who is here, with the state each announced
+```
+
+Take the topic as a prop (`bindTemplate('roomTopic', 'board.id', 'room:{{ source }}')`) so the space names its
+channels, and trust a message you act on only when `message.from === 'server'`. The page has one connection and is one
+member per topic, however many elements and plugins listen.
+
 ## Registering
 
 A project `plitzi create` wrote registers every folder of `src/plugins` by itself, under the folder's name in

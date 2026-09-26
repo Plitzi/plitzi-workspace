@@ -111,6 +111,25 @@ without a word.
 - A `dropdown`'s label is a child and its `dropdownPopup` sits inside it; a `tabContainer`'s header and body are held
   inside it too. Outside, they are refused.
 
+## Realtime channels
+
+Pages that see each other — cursors, presence, a shared board — need a channel. Declare its topic pattern on the space,
+then subscribe with a `channel` element; a topic no pattern matches is refused, naming the patterns:
+
+```ts
+channels: {
+  'board:{id}': { access: { mode: 'public' }, publish: 'server' },           // only `realtime.publish` speaks
+  'room:{id}': { access: { mode: 'public' }, presence: true }                // pages speak directly
+}
+
+channel({ id: 'room', topic: 'room:{{ id }}', keep: 0, bind: { presence: 'computed.me' }, children: [...] })
+```
+
+Its descendants bind `room.members`, `room.connected`, `room.last`; flows use `on('onMessage')` (`type`, `data`,
+`from`), `onJoin`/`onLeave`, `publishOn('room', 'reaction', data)` and `announceOn('room', state)`. State everyone must
+agree on goes through a server action whose last step is `realtime.publish` — validated and saved first, announced
+after. `docs/en/realtime.md` is the whole of it.
+
 ## Lists as state
 
 `toggleInState({ key: 'picks', value })` keeps a list; `when({ field: 'state.picks', operator: 'contains', value })`

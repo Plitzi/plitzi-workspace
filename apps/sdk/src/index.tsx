@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
 // This one it is important due that there its a circular import, so we need to import ComponentProvider in a specific order
-// eslint-disable-next-line import/order
-import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
+import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
@@ -16,6 +16,7 @@ import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
 import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
+import useChannel from '@plitzi/sdk-elements/realtime/useChannel';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -34,6 +35,7 @@ if (import.meta.env.PROD) {
 }
 
 import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
+import type { ChannelHandle } from '@plitzi/sdk-elements/realtime/useChannel';
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
 import type {
@@ -57,7 +59,9 @@ import type {
   ThemeScope,
   PlitziServiceContextValue as BasePlitziServiceContextValue
 } from '@plitzi/sdk-shared';
+import type { RealtimeMessage } from '@plitzi/sdk-shared';
 import type { PluginDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
 import type { ReactNode } from 'react';
 
 let stateManager: RuntimeStateInstance;
@@ -354,7 +358,10 @@ export {
   // The other half of `useRscData`. An element whose data is resolved on the server could read the payload and had
   // no way to ask for a fresh one — so anything that has to keep up with a feed had to fetch it itself from the
   // browser, which is the whole thing a server-resolved element exists to avoid.
-  useRscRefresh
+  useRscRefresh,
+  // A realtime channel, for a plugin that moves at the speed of a cursor: the `channel` element's own connection,
+  // read without a flow per message.
+  useChannel
 };
 
 export type {
@@ -369,7 +376,10 @@ export type {
   OfflineDataRaw,
   InteractionCallback,
   InteractionCallbackParamValues,
-  PluginDeclaration
+  PluginDeclaration,
+  ChannelHandle,
+  RealtimeMember,
+  RealtimeMessage
 };
 
 export const version = typeof VERSION !== 'undefined' ? VERSION : '';

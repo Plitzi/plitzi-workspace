@@ -525,6 +525,24 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('trigger-never-fired');
     });
 
+    it('channel-topic', () => {
+      const undeclared = withChange(({ schema }) => {
+        addElement(schema, { id: 'room', type: 'channel', attributes: { topic: 'board:{{ id }}' } });
+      });
+      const declared = withChange(({ schema }) => {
+        schema.settings.channels = { 'board:{id}': { access: { mode: 'public' } } };
+        addElement(schema, { id: 'room', type: 'channel', attributes: { topic: 'board:{{ id }}' } });
+      });
+      const empty = withChange(({ schema }) => {
+        schema.settings.channels = { 'board:{id}': { access: { mode: 'public' } } };
+        addElement(schema, { id: 'room', type: 'channel', attributes: { topic: '' } });
+      });
+
+      expect(errorsOf(undeclared)).toContain('channel-topic');
+      expect(errorsOf(declared)).not.toContain('channel-topic');
+      expect(errorsOf(empty)).toContain('channel-topic');
+    });
+
     it('while-running', () => {
       const onStep = withChange(({ schema }) => {
         setFlow(schema, 'go', [

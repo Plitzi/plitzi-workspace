@@ -1,3 +1,4 @@
+import { lintChannels } from './channels';
 import { LintContext } from './context';
 import { lintElements } from './elements';
 import { lintFlows } from './flows';
@@ -36,6 +37,7 @@ export const lintSpace = (
   lintPages(ctx);
   lintComputed(ctx);
   lintElements(ctx);
+  lintChannels(ctx);
   lintFlows(ctx);
   lintStyle(ctx);
 

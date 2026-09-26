@@ -177,6 +177,7 @@ serve it — worth running over anything that arrives as a file.
 | `streaming` | `boolean` | `false` | Stream HTML to the browser incrementally to reduce TTFB. See [Streaming](#streaming). |
 | `middlewares` | `SSRMiddleware[]` | — | Array of custom middleware functions executed before the SSR renderer on every request (see [Custom middlewares](#custom-middlewares)). |
 | `rsc` | `SSRRscConfig` | — | React Server Components endpoint configuration (see [RSC](#react-server-components-rsc)). |
+| `realtime` | `{ pubsub?, path? } \| false` | in memory, at `/_realtime` | Realtime channels the space declares: one Server-Sent Events connection per page, publishes over `POST`. `pubsub` is how messages reach other processes — `createMemoryPubSub()` (the default, across workers) or `createRedisPubSub({ publisher, subscriber })` for several replicas. `false` serves no endpoint. See [`docs/en/realtime.md`](../../docs/en/realtime.md). |
 | `compression` | `SSRCompressionConfig \| false` | Brotli, then gzip | Response compression (see [Compression](#compression)). `false` never compresses. |
 | `health` | `SSRHealthConfig` | identity payload | The `/health` endpoint. `check` adds live state per probe and turns it into a readiness probe (see [Health](#health)). |
 | `adapters` | `SSRAdapters` | — | Required. Adapter callbacks for data fetching. |

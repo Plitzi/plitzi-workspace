@@ -170,6 +170,7 @@ class SpaceAuthor {
     this.assertAncestorClasses();
 
     this.assertComputedOnce();
+    this.assertChannels();
     this.assertTransientState();
     const pageFolders = this.buildPageFolders();
     layouts.forEach(layout => this.addLayout(layout));
@@ -205,7 +206,8 @@ class SpaceAuthor {
       settings: {
         ...this.spec.settings,
         customCss: [this.spec.customCss ?? '', notificationsCss(this.spec.notifications)].filter(Boolean).join('\n\n'),
-        ...(this.spec.computed ? { computed: this.spec.computed } : {})
+        ...(this.spec.computed ? { computed: this.spec.computed } : {}),
+        ...(this.spec.channels ? { channels: this.spec.channels } : {})
       },
       ...(this.spec.rsc ? { rsc: this.spec.rsc } : {}),
       pages,
@@ -667,6 +669,48 @@ class SpaceAuthor {
       throw new Error(
         '`settings.computed` is written through `computed` at the top of the space, not inside `settings`.'
       );
+    }
+  }
+
+  /**
+   * The channels a space offers, checked where they are written: a pattern a page could never match, or a channel
+   * with no access rule, is a channel nobody can use — refused with what to write instead.
+   */
+  private assertChannels(): void {
+    if (this.spec.settings?.channels !== undefined) {
+      throw new Error(
+        '`settings.channels` is written through `channels` at the top of the space, not inside `settings`.'
+      );
+    }
+
+    for (const [pattern, declaration] of Object.entries(this.spec.channels ?? {})) {
+      const where = `Channel "${pattern}"`;
+      if (!/^[A-Za-z0-9:_.-]*(\{[A-Za-z0-9_]+\}[A-Za-z0-9:_.-]*)*$/.test(pattern) || !pattern) {
+        throw new Error(
+          `${where}: a pattern is letters, digits and \`:_.-\`, with \`{name}\` for the part a page fills in — \`board:{id}\`.`
+        );
+      }
+
+      if (!['public', 'session', 'role'].includes(declaration.access.mode)) {
+        throw new Error(
+          `${where}: \`access\` is { mode: 'public' }, { mode: 'session' } or { mode: 'role', permissions: […] }.`
+        );
+      }
+
+      // Read as what it may really be: a space written in plain JavaScript, or read from JSON, has no type to hold it.
+      const publish: unknown = declaration.publish;
+      if (publish !== undefined && publish !== 'clients' && publish !== 'server') {
+        throw new Error(
+          `${where}: \`publish\` is 'clients' (pages send) or 'server' (only a flow's realtime.publish).`
+        );
+      }
+
+      for (const limit of ['maxMessageBytes', 'messagesPerSecond'] as const) {
+        const value = declaration[limit];
+        if (value !== undefined && (!Number.isInteger(value) || value <= 0)) {
+          throw new Error(`${where}: \`${limit}\` is a whole number above zero.`);
+        }
+      }
     }
   }
 

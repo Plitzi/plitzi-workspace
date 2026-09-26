@@ -66,8 +66,8 @@ export const onLoad = (): StepSpec => on('onLoad');
  * `onKey('shift+f')`, `onKey('mod+k')` (⌘ on a Mac, Ctrl elsewhere), several at once with commas (`onKey('plus, =')`).
  *
  * Put it on the element whose flows it drives, or on the page for a shortcut of the page's. A press while somebody
- * types in a field is the field's, unless Ctrl, ⌘ or Alt is held or the key is Escape. `{{ <this step's id>.key }}`
- * is the key pressed, canonical (`shift+f`) — for one flow answering several shortcuts.
+ * types in a field is the field's, unless Ctrl, ⌘ or Alt is held or the key is Escape — and the field keeps its own
+ * editing even then (⌘A, ⌘Z, ⌘C/⌘V, moving by word). `{{ <this step's id>.key }}` is the key pressed, canonical (`shift+f`) — for one flow answering several shortcuts.
  */
 export const onKey = (keys: string): StepSpec => {
   const { problems } = parseKeys(keys);
@@ -182,6 +182,29 @@ export const openModal = (target: string, metadata?: string): StepSpec => ({
   title: 'Open Modal',
   on: target,
   params: metadata === undefined ? {} : { metadata }
+});
+
+/**
+ * Says something on a `channel`, by id: every page on its topic hears it — `onMessage`, and the channel's source.
+ *
+ * `data` is what they receive: a template (`'{{ state.draft }}'`) or JSON text. `type` is yours to name — `chat`,
+ * `wave`, `move` — and a flow on `onMessage` tells them apart with `when({ field: '<step>.type', … })`.
+ */
+export const publishOn = (target: string, type: string, data: unknown = null): StepSpec => ({
+  type: 'callback',
+  action: 'publish',
+  title: 'Publish',
+  on: target,
+  params: { type, data: typeof data === 'string' ? data : JSON.stringify(data) }
+});
+
+/** Announces this page on a `channel` with presence — a name, a colour: what the other members see of it. */
+export const announceOn = (target: string, state: unknown): StepSpec => ({
+  type: 'callback',
+  action: 'setPresence',
+  title: 'Set Presence',
+  on: target,
+  params: { data: typeof state === 'string' ? state : JSON.stringify(state) }
 });
 
 /** Closes a `modalContainer`, by id — from a button inside it or anywhere else. */

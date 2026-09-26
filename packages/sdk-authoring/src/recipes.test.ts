@@ -6,6 +6,7 @@ import {
   authorSpace,
   bindTemplate,
   button,
+  channel,
   declaredCallback,
   declaredTrigger,
   defineElement,
@@ -16,10 +17,12 @@ import {
   list,
   modalContainer,
   named,
+  on,
   onClick,
   onKey,
   onSubmit,
   openModal,
+  publishOn,
   runServerAction,
   setState,
   text,
@@ -203,6 +206,50 @@ describe('the skill’s recipes', () => {
     expect(warnings).toEqual([]);
     expect(trigger?.whileRunning).toBe('queue');
     expect(() => whileRunning('queue', delay(1000))).toThrow('wraps a flow');
+  });
+
+  it('a realtime channel authors with no warning, and a channel nobody can use is refused where it is written', () => {
+    const { schema, warnings } = authorSpace({
+      name: 'Board',
+      permanentUrl: 'board',
+      channels: { 'board:{id}': { access: { mode: 'public' }, presence: true } },
+      pages: [
+        {
+          id: 'board',
+          name: 'Board',
+          slug: 'b/{{id}}',
+          isDefault: true,
+          body: [
+            channel({
+              id: 'room',
+              topic: 'board:{{ id }}',
+              flows: [
+                [
+                  whileRunning('queue', named('heard', on('onMessage'))),
+                  setState({ key: 'last', type: 'text', value: '{{ heard.type }}' })
+                ]
+              ],
+              children: [text('', { bind: { content: 'room.members.length' } })]
+            }),
+            button({
+              content: 'Wave',
+              flows: [[onClick(), publishOn('room', 'wave', { from: '{{ state.name }}' })]]
+            })
+          ]
+        }
+      ]
+    });
+
+    expect(warnings).toEqual([]);
+    expect(schema.settings.channels?.['board:{id}'].presence).toBe(true);
+    expect(() =>
+      authorSpace({
+        name: 'X',
+        permanentUrl: 'x',
+        channels: { 'board {id}': { access: { mode: 'public' } } },
+        pages: []
+      })
+    ).toThrow('a pattern is letters, digits');
   });
 
   it('the undo window in the docs authors with no warning', () => {

@@ -376,6 +376,7 @@ export const createActionRunner = (
     const releaseOuter = onAbort(request.signal, () => controller.abort());
 
     const scopedKv = namespaceKv(kv, request.spaceId);
+    const { realtime } = config;
     const lineage = [...(request.lineage ?? []), entry.id];
     /**
      * What a step runs with, for one abort signal and one outbound budget.
@@ -431,7 +432,13 @@ export const createActionRunner = (
         kv: scopedKv,
         dbDrivers: config.dbDrivers ?? [],
         email: emailSender,
-        emit: chunk => request.emit?.(redact(chunk))
+        emit: chunk => request.emit?.(redact(chunk)),
+        ...(realtime
+          ? {
+              publish: (topic: string, type: string, data: unknown) =>
+                realtime.publish({ spaceId: request.spaceId, environment: request.environment }, topic, type, data)
+            }
+          : {})
       });
     const buildContext = contextFor(controller.signal, createRunFetch(baseFetch, controller.signal, limits, lineage));
 

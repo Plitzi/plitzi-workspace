@@ -9,6 +9,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
+import useRealtimeSync from '@plitzi/sdk-shared/server/actions/useRealtimeSync';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver, markStyleCache } from '@plitzi/sdk-shared/style';
@@ -50,6 +51,7 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);
+  useRealtimeSync(server?.ssr);
 
   /**
    * What the space's declared families cost the document, resolved once for all three surfaces.

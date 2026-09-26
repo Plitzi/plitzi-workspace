@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { keyPressCombo, parseKeys } from './keys';
+import { isFieldEditing, keyPressCombo, parseKeys } from './keys';
 
 import type { KeyPress } from './keys';
 
@@ -76,5 +76,25 @@ describe('keyPressCombo', () => {
     expect(shortcuts).toContain(keyPressCombo(press('F', { shiftKey: true })));
     expect(shortcuts).toContain(keyPressCombo(press('+', { shiftKey: true })));
     expect(shortcuts).toContain(keyPressCombo(press('k', { metaKey: true, code: 'KeyK' })));
+  });
+});
+
+describe('isFieldEditing', () => {
+  it('leaves a field its own select all, undo, redo, copy, cut and paste', () => {
+    for (const combo of ['meta+a', 'ctrl+z', 'meta+shift+z', 'ctrl+y', 'meta+c', 'meta+x', 'ctrl+v']) {
+      expect(isFieldEditing(combo), combo).toBe(true);
+    }
+  });
+
+  it('leaves it moving and deleting by word and line', () => {
+    for (const combo of ['alt+arrowleft', 'meta+arrowright', 'shift+home', 'alt+backspace', 'meta+delete']) {
+      expect(isFieldEditing(combo), combo).toBe(true);
+    }
+  });
+
+  it('lets every other shortcut through', () => {
+    for (const combo of ['meta+k', 'ctrl+shift+e', 'alt+a', 'escape', 'meta+0']) {
+      expect(isFieldEditing(combo), combo).toBe(false);
+    }
   });
 });

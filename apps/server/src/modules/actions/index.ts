@@ -43,16 +43,16 @@ export type ActionsModule = ActionRunner & {
  * The workers of one server are one replica, so with no `kv` configured they share the primary's: a flow's counter,
  * a webhook's rate limit, a run's single-flight key, a cancel and a replayed answer then mean the same whichever
  * worker the request lands on — the path a deployment with its own shared store already takes. One process keeps
- * its own maps, as it always did.
+ * its own map.
  */
 const withFleetKv = (config: ActionsConfig): ActionsConfig => {
   if (config.kv) {
     return config;
   }
 
-  const shared = fleetStore<ActionKvAdapter>('actions.kv', KV_METHODS);
-
-  return shared ? { ...config, kv: shared } : config;
+  // One store either way, made HERE: the runner, the guards and the module's own `kv` are handed the same adapter —
+  // left to default each, they made a Map apiece, and a key a flow wrote was not the key a guard or a webhook read.
+  return { ...config, kv: fleetStore<ActionKvAdapter>('actions.kv', KV_METHODS) ?? createMemoryKv() };
 };
 
 export const createActionsModule = (given: ActionsConfig): ActionsModule => {

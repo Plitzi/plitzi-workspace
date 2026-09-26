@@ -6,6 +6,7 @@ import normalizePlugins, { normalizePluginSource } from '../../helpers/normalize
 import { reportReactBuild } from '../../helpers/reportReactBuild';
 import { configureServerLog, defaultLogLevel, isLogged, logLevelOf } from '../../helpers/serverLog';
 import { actionsModuleFor } from '../../modules/actions/moduleFor';
+import { realtimeModuleFor } from '../../modules/realtime';
 import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
 import { createMemoryDraftStore, DRAFT_STORE_METHODS } from '../../modules/ssr/preview';
 import { compileTemplate } from '../../modules/ssr/template';
@@ -76,6 +77,7 @@ export const createPageServer = (
   // Resolved here rather than on first use so a malformed task set fails at BOOT, where someone is watching,
   // instead of on the first visitor's click. Shared with the RSC adapter, which needs the same one.
   const actions = actionsModuleFor(config);
+  const realtime = realtimeModuleFor(config);
 
   const stages = buildPagePipeline(services, extensions);
   const makeHandlerForPort = (port: number) => {
@@ -89,7 +91,8 @@ export const createPageServer = (
       renderFn,
       caches,
       pluginManager,
-      actions
+      actions,
+      realtime
     });
 
     return makeHandler('SSR', buildContext, stages, config.compression);

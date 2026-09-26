@@ -193,7 +193,8 @@ export const SCHEMA_SETTINGS = [
   'sessionGate',
   'sessionRevalidateSeconds',
   'debugMode',
-  'computed'
+  'computed',
+  'channels'
 ] as const satisfies readonly (keyof Schema['settings'])[];
 
 const SETTING_NAMES = new Set<string>(SCHEMA_SETTINGS);
@@ -395,8 +396,8 @@ class SpecReader {
 
     const classes = this.classesSpec(style.mode);
     // `customCss` is read above — what is left of it once the rules a class can hold have moved into their classes.
-    // `computed` too: a space declares it at its top, where authoring reads it, and not inside `settings`.
-    const { computed, ...settings } = this.readSettings(
+    // `computed` and `channels` too: a space declares them at its top, where authoring reads them, not in `settings`.
+    const { computed, channels, ...settings } = this.readSettings(
       Object.fromEntries(Object.entries(schema.settings).filter(([key]) => key !== 'customCss'))
     );
     const customCss = [ownCss, ...this.keptCss].filter(Boolean).join('\n\n');
@@ -413,6 +414,7 @@ class SpecReader {
       ...(schema.variables.length > 0 ? { schemaVariables: this.readSchemaVariables(schema.variables) } : {}),
       ...(isEmpty(settings) ? {} : { settings }),
       ...(computed && !isEmpty(computed) ? { computed } : {}),
+      ...(channels && !isEmpty(channels) ? { channels } : {}),
       ...(customCss ? { customCss } : {}),
       ...(schema.rsc ? { rsc: schema.rsc } : {}),
       ...(pageFolders.length > 0 ? { pageFolders } : {}),

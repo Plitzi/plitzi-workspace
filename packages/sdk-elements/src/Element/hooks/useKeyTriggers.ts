@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { KEY_TRIGGER, keyPressCombo, parseKeys } from '@plitzi/sdk-shared/helpers/keys';
+import { isFieldEditing, KEY_TRIGGER, keyPressCombo, parseKeys } from '@plitzi/sdk-shared/helpers/keys';
 
 import type { InteractionsManager } from '@plitzi/sdk-interactions';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
@@ -25,7 +25,8 @@ export type UseKeyTriggersProps = {
  * The element's keyboard shortcuts: its `onKey` flows, heard on the window for as long as it is mounted.
  *
  * On the window rather than the element, because a shortcut is for the page — nobody focuses a map before pressing
- * `+`. A press while typing in a field is the field's, unless it holds Ctrl, ⌘ or Alt or is Escape. A press that
+ * `+`. A press while typing in a field is the field's, unless it holds Ctrl, ⌘ or Alt or is Escape — and even then
+ * the field keeps its own editing (⌘A, ⌘Z, ⌘C/⌘V, moving by word: `isFieldEditing`). A press that
  * matches is the shortcut's alone: the browser's own use of the key (an arrow scrolling the page) does not happen.
  */
 const useKeyTriggers = ({ id, interactions, previewMode, interactionsManager }: UseKeyTriggersProps): void => {
@@ -58,7 +59,7 @@ const useKeyTriggers = ({ id, interactions, previewMode, interactionsManager }: 
 
       const key = keyPressCombo(event);
       const held = event.ctrlKey || event.metaKey || event.altKey;
-      if (isTyping(event.target) && !held && key !== 'escape') {
+      if (isTyping(event.target) && ((!held && key !== 'escape') || isFieldEditing(key))) {
         return;
       }
 

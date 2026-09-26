@@ -62,6 +62,8 @@ export type CommonState = {
   // Where this origin runs server actions, seeded at the root from what the rendering server published. Top-level
   // beside `rsc` and for the same reason: nothing but the root owns it, and every depth reads it.
   actions?: ActionsState;
+  /** Where this origin's realtime channels answer — absent in a render with no server, where no channel opens. */
+  realtime?: { endpoint?: string };
   // How THIS render is happening. Seeded once at the root of whichever surface is mounting (the SDK, the builder) and
   // read from the store by everything below, instead of being threaded through every provider as five props.
   render?: RenderSettings;

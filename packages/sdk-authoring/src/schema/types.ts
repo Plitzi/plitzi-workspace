@@ -5,6 +5,7 @@ import type { AncestorSpec, ClassList, CssSpec, StatesSpec, StyleDeclaration, St
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   BindingCategory,
+  ChannelDeclarations,
   ElementBinding,
   ElementInteraction,
   ElementLoadStrategy,
@@ -336,6 +337,20 @@ export interface SpaceSpec {
    * element's source (a list row, a provider) is not readable here: bind that on the element.
    */
   computed?: Record<string, string>;
+  /**
+   * The realtime channels the space offers, by topic pattern — what a `channel` element's `topic` must match:
+   *
+   * ```ts
+   * channels: {
+   *   'board:{id}': { access: { mode: 'public' }, presence: true },
+   *   'scores:{id}': { access: { mode: 'session' }, publish: 'server' }
+   * }
+   * ```
+   *
+   * `{id}` is the part a page fills in (`board:{{ id }}`); each board is its own topic. `publish: 'server'` is a
+   * channel only a flow's `realtime.publish` sends on. See `docs/en/realtime.md`.
+   */
+  channels?: ChannelDeclarations;
   /**
    * Everything else the schema's settings carry — where sign-in posts to, which cookie hints at a session, how
    * state is kept. `customCss` above is the one field of that same object every space sets, and it stays named on

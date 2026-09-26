@@ -151,8 +151,8 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | [validation.md](reference/validation.md) | How `authorSpace` checks, the loop that wastes no attempts, and what it cannot see |
 | [authoring-errors.md](reference/authoring-errors.md) | What `authorSpace` refuses or warns about, and what to write instead |
 | [templates.md](reference/templates.md) | Any `{{ … }}` or `{% … %}`: where it runs, naming sources, filters, tests, dates |
-| [flows.md](reference/flows.md) | Clicks, submits, page loads, server actions, modals, state |
-| [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, registering |
+| [flows.md](reference/flows.md) | Clicks, submits, page loads, server actions, realtime channels, modals, state |
+| [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, channels, registering |
 | [structure.md](reference/structure.md) | A space bigger than one screen: files, helpers, naming, keeping it short |
 | [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame |
 | [templates-and-export.md](reference/templates-and-export.md) | Publishing a template; turning an exported JSON into code |

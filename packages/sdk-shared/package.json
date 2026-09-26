@@ -18,6 +18,10 @@
       "types": "./dist/actions/index.d.ts",
       "import": "./dist/actions/index.mjs"
     },
+    "./actions/access": {
+      "types": "./dist/actions/access.d.ts",
+      "import": "./dist/actions/access.mjs"
+    },
     "./actions/cron": {
       "types": "./dist/actions/cron.d.ts",
       "import": "./dist/actions/cron.mjs"
@@ -1027,6 +1031,26 @@
       "types": "./dist/queries/useQuery.d.ts",
       "import": "./dist/queries/useQuery.mjs"
     },
+    "./realtime": {
+      "types": "./dist/realtime/index.d.ts",
+      "import": "./dist/realtime/index.mjs"
+    },
+    "./realtime/client": {
+      "types": "./dist/realtime/client.d.ts",
+      "import": "./dist/realtime/client.mjs"
+    },
+    "./realtime/index": {
+      "types": "./dist/realtime/index.d.ts",
+      "import": "./dist/realtime/index.mjs"
+    },
+    "./realtime/presence": {
+      "types": "./dist/realtime/presence.d.ts",
+      "import": "./dist/realtime/presence.mjs"
+    },
+    "./realtime/topics": {
+      "types": "./dist/realtime/topics.d.ts",
+      "import": "./dist/realtime/topics.mjs"
+    },
     "./schema": {
       "types": "./dist/schema/index.d.ts",
       "import": "./dist/schema/index.mjs"
@@ -1070,6 +1094,10 @@
     "./server/actions/useActionsSync": {
       "types": "./dist/server/actions/useActionsSync.d.ts",
       "import": "./dist/server/actions/useActionsSync.mjs"
+    },
+    "./server/actions/useRealtimeSync": {
+      "types": "./dist/server/actions/useRealtimeSync.d.ts",
+      "import": "./dist/server/actions/useRealtimeSync.mjs"
     },
     "./server/index": {
       "types": "./dist/server/index.d.ts",
@@ -1274,6 +1302,9 @@
     },
     "./types/PluginTypes": {
       "types": "./dist/types/PluginTypes.d.ts"
+    },
+    "./types/RealtimeTypes": {
+      "types": "./dist/types/RealtimeTypes.d.ts"
     },
     "./types/ResourceTypes": {
       "types": "./dist/types/ResourceTypes.d.ts"

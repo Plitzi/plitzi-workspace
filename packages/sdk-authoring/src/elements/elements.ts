@@ -21,6 +21,7 @@ export const apiContainer = defineElement(elementDeclarations.ApiContainer);
 export const blockHtml = defineElement(elementDeclarations.BlockHtml);
 export const blockJsx = defineElement(elementDeclarations.BlockJsx);
 export const button = defineElement(elementDeclarations.Button);
+export const channel = defineElement(elementDeclarations.Channel);
 export const container = defineElement(elementDeclarations.Container);
 export const custom = defineElement(elementDeclarations.Custom);
 export const dialogContainer = defineElement(elementDeclarations.DialogContainer);

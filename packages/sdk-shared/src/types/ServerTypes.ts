@@ -13,6 +13,7 @@ import type {
 } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
+import type { SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
 import type { FontHead, Style } from './StyleTypes';
@@ -930,6 +931,8 @@ export type SSRServerConfig = {
   rsc?: SSRRscConfig;
   /** Write endpoint for server-driven providers. Absent means the server serves reads only. */
   action?: SSRActionConfig;
+  /** Realtime channels the spaces declare — see {@link SSRRealtimeConfig}. On, in memory, when absent. */
+  realtime?: SSRRealtimeConfig;
   /** Connector manifest and credential lookups — see {@link ConnectorLookupsConfig}. They serve the RSC read path
    *  and the `/_action` write endpoint alike; without them neither can reach a connector. */
   connectors?: ConnectorLookupsConfig;

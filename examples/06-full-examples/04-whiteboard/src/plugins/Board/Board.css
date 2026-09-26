@@ -1,0 +1,34 @@
+/* The canvas fills its element. Where the element sits and how big it is are the space's to decide — a position
+   set here would override the class the space gives it. */
+.board__host {
+  overflow: hidden;
+}
+
+.board__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  /* The canvas answers every touch itself — pan, pinch, draw — so the browser must not scroll or zoom the page. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.board__host[data-mode='view'] .board__canvas {
+  pointer-events: none;
+}
+
+/* The field text is typed into, laid exactly over where the canvas will draw it. */
+.board__editor {
+  position: absolute;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  line-height: 1.25;
+  box-sizing: border-box;
+  field-sizing: content;
+  z-index: 1;
+}

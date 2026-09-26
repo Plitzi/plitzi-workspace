@@ -54,8 +54,8 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
    * A keyboard shortcut, heard while the element is on the page — on the page itself, the whole page's.
    *
    * Not a DOM event of the element: it listens on the window, so the element need not have focus, and it is ignored
-   * while somebody types in a field unless Ctrl, ⌘ or Alt is held, or the key is Escape. `keys` is one shortcut or
-   * several with commas — `'f'`, `'shift+f'`, `'mod+k'` (⌘ on a Mac, Ctrl elsewhere), `'escape, q'`.
+   * while somebody types in a field unless Ctrl, ⌘ or Alt is held, or the key is Escape — and the field keeps its own
+   * editing even then (⌘A, ⌘Z, ⌘C/⌘V, moving by word). `keys` is one shortcut or several with commas — `'f'`, `'shift+f'`, `'mod+k'` (⌘ on a Mac, Ctrl elsewhere), `'escape, q'`.
    */
   onKey: {
     action: 'onKey',

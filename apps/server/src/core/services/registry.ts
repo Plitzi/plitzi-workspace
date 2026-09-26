@@ -1,4 +1,5 @@
 import { actionStage } from './action';
+import { realtimeStage } from './realtime';
 import { rscStage } from './rsc';
 import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
@@ -39,6 +40,7 @@ export const buildPagePipeline = (
 
   // Sits with the data services and after the auth middleware chain: a write may depend on who the visitor is.
   stages.push(actionStage);
+  stages.push(realtimeStage);
 
   stages.push(...(extensions.data ?? []));
 
