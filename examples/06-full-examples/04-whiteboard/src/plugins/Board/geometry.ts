@@ -138,6 +138,13 @@ export const unionOf = (boxes: readonly Box[]): Box | undefined => {
   return { x, y, width: right - x, height: bottom - y };
 };
 
+/** Whether two boxes share any area — or come within `margin` of it. */
+export const overlaps = (a: Box, b: Box, margin = 0): boolean =>
+  a.x - margin < b.x + b.width &&
+  a.x + a.width + margin > b.x &&
+  a.y - margin < b.y + b.height &&
+  a.y + a.height + margin > b.y;
+
 export const contains = (outer: Box, inner: Box): boolean =>
   inner.x >= outer.x &&
   inner.y >= outer.y &&

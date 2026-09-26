@@ -78,18 +78,27 @@ export const createBoardController = (
     ];
   };
 
-  /** The selection removed — and the arrows fixed to it let go where they are drawn, not removed with it. */
+  /**
+   * The selection removed — and the arrows fixed to it let go where they are drawn, not removed with it. What is locked
+   * stays, and stays selected: a Delete that took nothing and dropped the selection read as "cancelled".
+   */
   const removeSelection = (): void => {
     const removed = core.changeable();
-    if (removed.length) {
-      sounds.play('remove');
+    if (!removed.length) {
+      return;
     }
 
+    sounds.play('remove');
     core.commit([
       ...removed.map(element => ({ ...element, deleted: true })),
       ...releasedFrom(core.displayed(), new Set(removed.map(element => element.id)))
     ]);
-    core.setSelection([]);
+    core.setSelection(
+      core
+        .selected()
+        .filter(element => element.locked === true)
+        .map(element => element.id)
+    );
   };
 
   const minimap = createMinimap(core);
@@ -164,6 +173,13 @@ export const createBoardController = (
     remove: () => removeSelection()
   });
 
+  /** Every colour read again, and everything drawn again: in a new scheme, or in a face that has just arrived. */
+  const repaint = (): void => {
+    state.palette = readPalette(host);
+    core.reportEditor();
+    core.invalidate();
+  };
+
   canvas.addEventListener('pointerdown', pointer.onPointerDown);
   canvas.addEventListener('pointermove', pointer.onPointerMove);
   canvas.addEventListener('pointerup', pointer.onPointerUp);
@@ -178,6 +194,9 @@ export const createBoardController = (
   window.addEventListener('keyup', input.onKeyUp);
   window.addEventListener('copy', input.onCopy);
   window.addEventListener('cut', input.onCut);
+  // A board drawn before its hand-drawn face loaded is in the fallback: the face arriving draws it again, whole —
+  // painted only where it changes, it would be left half in one face and half in the other.
+  document.fonts.addEventListener('loadingdone', repaint);
 
   const resizeObserver = new ResizeObserver(() => {
     const rect = host.getBoundingClientRect();
@@ -423,15 +442,15 @@ export const createBoardController = (
         core.setSelection([]);
       }
 
+      if (toolChanged) {
+        core.aimCard(next.tool === 'card' && core.editable() ? state.lastPointer : undefined);
+      }
+
       core.invalidate();
     },
 
     /** The scheme changed: every colour is read again, and every drawing made in the old ones is stale. */
-    repaint: (): void => {
-      state.palette = readPalette(host);
-      core.reportEditor();
-      core.invalidate();
-    },
+    repaint,
 
     /** The board as the server holds it. Another board starts over; the same board is merged into. */
     load: (id: string, elements: readonly unknown[]): void => {
@@ -443,6 +462,7 @@ export const createBoardController = (
         draft.clear();
         remotes.clear();
         state.editing = undefined;
+        state.editingField = 'text';
         state.fitPending = !state.size.width;
         if (state.size.width) {
           core.fit();
@@ -485,10 +505,6 @@ export const createBoardController = (
       }
 
       const heard = remotes.hear(from, data);
-      if (heard.laserAt) {
-        effects.trail(from, heard.laserAt);
-      }
-
       if (heard.view && state.following === from) {
         core.showView(heard.view);
       }
@@ -526,16 +542,23 @@ export const createBoardController = (
       core.invalidate();
     },
 
-    /** What is being typed, as it is typed — drawn nowhere but the field, and sent to the room as a draft. */
+    /**
+     * What is being typed, as it is typed — shown by the field, and sent to the room as a draft. An opened card is drawn
+     * around it, as tall as its description is so far.
+     */
     typeText: (text: string): void => {
       const element = state.editing ? draft.get(state.editing) : undefined;
       if (element) {
-        draft.set(element.id, core.measured({ ...element, text }));
+        const typed = state.editingField === 'description' ? { ...element, description: text } : { ...element, text };
+        draft.set(element.id, core.measured(typed));
         core.reportPointer(false);
         core.reportEditor();
+        core.invalidate();
       }
     },
 
+    /** Tab on a card: its other field. */
+    editField: core.switchField,
     finishEditing: (): void => core.finishEditing(),
     /** A comment posted — its button, or Enter. */
     postEditing: (): void => core.finishEditing(true),
@@ -918,6 +941,7 @@ export const createBoardController = (
       window.removeEventListener('keyup', input.onKeyUp);
       window.removeEventListener('copy', input.onCopy);
       window.removeEventListener('cut', input.onCut);
+      document.fonts.removeEventListener('loadingdone', repaint);
       minimap.attach(undefined);
       sounds.close();
     }

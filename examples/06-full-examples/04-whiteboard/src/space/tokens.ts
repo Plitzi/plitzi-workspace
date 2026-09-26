@@ -26,6 +26,8 @@ export const variables: SpaceSpec['variables'] = {
     danger: scheme('#d9383f', '#ff7178'),
     /** The laser: the one colour on the board that means "look here". */
     laser: scheme('#ff2d55', '#ff4d6d'),
+    /** The lines that show what a dragged thing lined up with: apart from every ink a drawing is in. */
+    guide: scheme('#f24e1e', '#ff7a50'),
     /** Strokes: saturated enough to read as lines, in both schemes. */
     red: scheme('#e03131', '#ff6b6b'),
     orange: scheme('#e8590c', '#ff922b'),

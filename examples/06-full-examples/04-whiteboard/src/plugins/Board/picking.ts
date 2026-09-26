@@ -1,5 +1,5 @@
 import { endsOf } from './connectors.ts';
-import { CARD_CHECK, voteBadgeBox } from './draw.ts';
+import { CARD_CHECK, CARD_TEXT_LEFT, DESCRIPTION_LINE, voteBadgeBox } from './draw.ts';
 import { beyondAnchor, boundsOf, handlePoint, HANDLES, hits, snapToAnchor, toScreen, unionOf } from './geometry.ts';
 import { ANCHORS, isConnectable, takesLabel } from '../../board/model.ts';
 
@@ -42,16 +42,43 @@ export const createPicking = (core: Core) => {
           hits({ ...element, fill: element.fill === 'none' ? 'red' : element.fill }, point, 0)
       );
 
+  /** The opened card, when a point is on it: it lies over whatever is under it. */
+  const openedAt = (point: Point): BoardElement | undefined => {
+    const opened = core.openedCard();
+
+    return opened && inside(point, opened.box) ? opened.element : undefined;
+  };
+
   /**
    * What a press takes: whatever is drawn under the point — an outline, a note, a picture — and, failing that, the
    * shape the point is inside. A shape with no fill is picked up anywhere in it, not only on its outline; what lies in
    * it still comes first, so a note inside a hollow box is the note.
    */
   const topmostAt = (point: Point): BoardElement | undefined =>
+    openedAt(point) ??
     core
       .displayed()
       .toReversed()
-      .find(element => hits(element, point, 6 / zoom())) ?? shapeAround(point);
+      .find(element => hits(element, point, 6 / zoom())) ??
+    shapeAround(point);
+
+  /** The opened card whose description a point is on: a press there writes it, for whoever can. */
+  const descriptionAt = (point: Point): BoardElement | undefined => {
+    const opened = core.editable() && selecting() ? core.openedCard() : undefined;
+    if (!opened || opened.element.locked) {
+      return undefined;
+    }
+
+    const { element, layout } = opened;
+    const area = {
+      x: element.x + CARD_TEXT_LEFT - 6,
+      y: element.y + layout.descriptionTop - 4,
+      width: element.width - CARD_TEXT_LEFT,
+      height: Math.max(1, layout.description.length) * DESCRIPTION_LINE + 8
+    };
+
+    return inside(point, area) ? element : undefined;
+  };
 
   /** The element whose vote badge is under a point — only elements with votes show one. */
   const voteAt = (point: Point): string | undefined =>
@@ -88,7 +115,7 @@ export const createPicking = (core: Core) => {
   };
 
   const handleAt = (screenX: number, screenY: number): Handle | undefined => {
-    const box = unionOf(core.selected().map(boundsOf));
+    const box = unionOf(core.resizable().map(boundsOf));
     // A lone connector is resized by its ends, not by its box.
     if (!box || !selecting() || core.soleConnector()) {
       return undefined;
@@ -142,17 +169,37 @@ export const createPicking = (core: Core) => {
    */
   const hoveredAt = (point: Point): string | undefined => {
     const reach = (CONNECT_OFFSET + GRAB_RADIUS) / zoom();
+    // An opened card is being read or written, not connected — and what it covers is out of reach.
+    if (openedAt(point)) {
+      return undefined;
+    }
+
+    const opened = core.openedCard()?.element.id;
 
     return core
       .displayed()
       .toReversed()
       .find(
         element =>
-          isConnectable(element.type) && element.id !== state.editing && inside(point, boundsOf(element), reach)
+          isConnectable(element.type) &&
+          element.id !== state.editing &&
+          element.id !== opened &&
+          inside(point, boundsOf(element), reach)
       )?.id;
   };
 
-  return { topmostAt, checkAt, voteAt, shapeAround, snapAt, handleAt, endpointAt, connectionAt, hoveredAt };
+  return {
+    topmostAt,
+    descriptionAt,
+    checkAt,
+    voteAt,
+    shapeAround,
+    snapAt,
+    handleAt,
+    endpointAt,
+    connectionAt,
+    hoveredAt
+  };
 };
 
 export type Picking = ReturnType<typeof createPicking>;

@@ -31,6 +31,8 @@ export type Palette = {
   ui: string;
   /** This page's laser, bright enough to follow on any drawing. */
   laser: string;
+  /** Where something dragged lined up with what stays still. */
+  guide: string;
 };
 
 const read = (style: CSSStyleDeclaration, name: string, fallback: string): string =>
@@ -56,7 +58,8 @@ export const readPalette = (element: HTMLElement): Palette => {
     muted: read(style, '--board-muted', '#6b6b6b'),
     font: read(style, '--board-font', 'cursive'),
     ui: read(style, '--board-ui-font', 'system-ui, sans-serif'),
-    laser: read(style, '--board-laser', '#ff3b30')
+    laser: read(style, '--board-laser', '#ff3b30'),
+    guide: read(style, '--board-guide', '#f24e1e')
   };
 
   return { ...palette, key: JSON.stringify(palette) };

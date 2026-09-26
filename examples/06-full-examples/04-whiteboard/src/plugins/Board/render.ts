@@ -4,13 +4,25 @@ import {
   drawCursor,
   drawDots,
   drawDropTarget,
+  drawGuides,
   drawHandles,
+  drawHint,
   drawLock,
   drawMarquee,
   drawOutlines,
   drawPoints
 } from './draw.ts';
-import { anchorPoint, beyondAnchor, boundsOf, boxFrom, contains, toBoard, toScreen, unionOf } from './geometry.ts';
+import {
+  anchorPoint,
+  beyondAnchor,
+  boundsOf,
+  boxFrom,
+  contains,
+  overlaps,
+  toBoard,
+  toScreen,
+  unionOf
+} from './geometry.ts';
 import { CONNECT_OFFSET } from './picking.ts';
 import { ANCHORS, isConnectable } from '../../board/model.ts';
 
@@ -119,12 +131,6 @@ const DRAWN_MARGIN = 40;
  */
 const SETTLE_MS = 150;
 
-const overlaps = (a: Box, b: Box, margin: number): boolean =>
-  a.x - margin < b.x + b.width &&
-  a.x + a.width + margin > b.x &&
-  a.y - margin < b.y + b.height &&
-  a.y + a.height + margin > b.y;
-
 /**
  * One frame: the paper, every element in view, and over them what only this screen shows — selections (this person's
  * and the others'), handles, connection points, laser trails, reactions, the marquee and the others' cursors.
@@ -179,7 +185,6 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
       }
     | undefined;
   let scrolledAt = 0;
-  let reportedBox = '';
   let reportedThread = '';
 
   /** The one comment selected, with where its thread opens on screen — told to the page only when it changes. */
@@ -206,22 +211,19 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
   const colourOf = (from: string): string =>
     state.palette.collab[state.members.get(from)?.color ?? ''] ?? state.palette.accent;
 
-  /** Where the selection is on screen, told to the page only when it changes. */
+  /** Where the selection is on screen — told to the page by `core`, which says so only when it changes. */
   const reportBox = (box: Box | undefined): void => {
     const [left, top] = box ? toScreen(state.camera, box.x, box.y) : [0, 0];
-    const screen = box
-      ? {
-          left: Math.round(left),
-          top: Math.round(top),
-          width: Math.round(box.width * state.camera.zoom),
-          height: Math.round(box.height * state.camera.zoom)
-        }
-      : undefined;
-    const key = JSON.stringify(screen ?? null);
-    if (key !== reportedBox) {
-      reportedBox = key;
-      core.emit({ type: 'selectionBox', box: screen });
-    }
+    core.reportSelectionBox(
+      box
+        ? {
+            left: Math.round(left),
+            top: Math.round(top),
+            width: Math.round(box.width * state.camera.zoom),
+            height: Math.round(box.height * state.camera.zoom)
+          }
+        : undefined
+    );
   };
 
   const paint = (): void => {
@@ -291,7 +293,11 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
       onBoard(context);
       drawElements(moving, context, inHand, erased, true);
       for (const element of opened) {
-        moving.drawOpened(context, element, palette, { hideText: element.id === editing, authors: props.authors });
+        moving.drawOpened(context, element, palette, {
+          ...(element.id === editing ? { writing: state.editingField } : {}),
+          authors: props.authors,
+          invite: core.editable() && element.locked !== true
+        });
       }
     }
 
@@ -438,30 +444,34 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
 
   /**
    * What is open right now — pointed at, being written, or in a small selection — as it is drawn. A comment selected or
-   * being written has its thread or its composer beside it instead of its bubble.
+   * being written has its thread or its composer beside it instead of its bubble. The opened card comes last: it is
+   * drawn over what lies under it.
    */
   const openedNow = (): BoardElement[] => {
     const { editing } = state;
     const shown = core.current();
+    const card = core.openedCard();
     const candidates = new Set([
       ...(state.pointed ? [state.pointed] : []),
       ...(editing ? [editing] : []),
       ...(core.selection.size <= OPEN_SELECTION ? core.selection : [])
     ]);
 
-    return [...candidates].flatMap(id => {
+    const open = [...candidates].flatMap(id => {
       const element = shown.get(id);
       if (!element) {
         return [];
       }
 
-      const open =
+      const opens =
         element.type === 'comment'
           ? id === state.pointed && id !== editing && !core.selection.has(id)
           : element.type === 'sticky';
 
-      return open ? [element] : [];
+      return opens ? [element] : [];
     });
+
+    return card ? [...open, card.element] : open;
   };
 
   /** The paper and every element that is not moving, onto the board's canvas. */
@@ -608,6 +618,13 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
       drawDropTarget(context, camera, boundsOf(drop), palette.accent, state.dropTarget.line);
     }
 
+    // The card tool out of a column: a card is a task on a kanban, and the tool says where it goes instead of making one.
+    if (props.tool === 'card' && core.editable() && !gesture && !state.dropTarget && state.lastPointer) {
+      const columns = core.displayed().some(element => element.layout === 'column');
+      const hint = columns ? 'Cards go in a column' : 'Draw a column first: cards go in one';
+      drawHint(context, camera, state.lastPointer, hint, palette);
+    }
+
     const view = core.viewport();
     for (const [from, remote] of remotes.entries()) {
       const boxes = [...remote.selection].flatMap(id => {
@@ -628,7 +645,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     const chosen = core.selected();
     // What is dragged in one piece has its outline in the piece.
     const outlined = carried ? chosen.filter(element => !carried?.ids.has(element.id)) : chosen;
-    drawOutlines(context, camera, outlined.map(boundsOf), view, palette.accent, true);
+    drawOutlines(context, camera, outlined.map(core.shownBox), view, palette.accent, true);
 
     const selecting = props.tool === 'select' && !editing;
     for (const element of chosen) {
@@ -643,7 +660,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
       drawPoints(context, camera, [start, end], palette.accent);
     } else if (selecting && (!gesture || gesture.kind === 'resize')) {
       // Handles only on what they could resize: a locked element is held where it is, and says so.
-      const resizable = unionOf(core.changeable().map(boundsOf));
+      const resizable = unionOf(core.resizable().map(boundsOf));
       if (resizable) {
         drawHandles(context, camera, resizable, palette.accent);
       }
@@ -664,9 +681,18 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
       drawPoints(context, camera, points, palette.accent, snapping ? anchorPoint(target, snapping.anchor) : undefined);
     }
 
-    // A laser trail and a reaction fade on their own clock: keep drawing while any is left.
+    // The others' lasers, where their cursors have got to. A trail and a reaction fade on their own clock: keep drawing
+    // while any is left.
+    for (const { from, at } of remotes.takeLasers()) {
+      effects.trail(from, at);
+    }
+
     if (effects.draw(context, camera, key => (key === 'me' ? palette.laser : colourOf(key)), now)) {
       core.invalidate();
+    }
+
+    if (state.guides.length) {
+      drawGuides(context, camera, state.guides, palette.guide);
     }
 
     if (gesture?.kind === 'marquee') {
@@ -687,7 +713,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     }
 
     // The selection's tools stand aside while it is being moved, resized or typed into — they would cover the work.
-    reportBox(selecting && !gesture && !state.pinch ? unionOf(chosen.map(boundsOf)) : undefined);
+    reportBox(selecting && !gesture && !state.pinch ? unionOf(chosen.map(core.shownBox)) : undefined);
     const [sole] = chosen;
     reportThread(
       chosen.length === 1 && sole.type === 'comment' && !editing && !gesture && core.editable() ? sole : undefined

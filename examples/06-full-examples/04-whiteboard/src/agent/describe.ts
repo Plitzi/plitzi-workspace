@@ -10,10 +10,17 @@ import type { BoardElement } from '../board/model.ts';
 
 const round = (value: number): number => Math.round(value);
 
-const words = (element: BoardElement): string => {
-  const text = (element.text ?? '').replace(/\s+/g, ' ').trim();
+/** Words on one line, in quotes, cut short past `limit`. */
+const quoted = (value: string | undefined, limit = 160): string => {
+  const text = (value ?? '').replace(/\s+/g, ' ').trim();
 
-  return text ? ` "${text.length > 160 ? `${text.slice(0, 157)}…` : text}"` : '';
+  return text ? `"${text.length > limit ? `${text.slice(0, limit - 3)}…` : text}"` : '';
+};
+
+const words = (element: BoardElement): string => {
+  const text = quoted(element.text);
+
+  return text ? ` ${text}` : '';
 };
 
 const colourOf = (element: BoardElement): string =>
@@ -32,6 +39,7 @@ export const describeElement = (element: BoardElement, frames: Map<string, Board
     element.done ? (element.type === 'comment' ? 'resolved' : 'done') : '',
     element.votes?.length ? `${element.votes.length} votes` : '',
     element.author ? `by ${element.author}` : '',
+    element.description ? `description: ${quoted(element.description, 400)}` : '',
     element.layout === 'column' ? 'column (stacks what is dropped in)' : '',
     element.replies?.length
       ? `replies: ${element.replies.map(reply => `${reply.author}: "${reply.text}"`).join(' / ')}`

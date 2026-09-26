@@ -5,7 +5,7 @@ import { FILLS, fitsInFrame, FONT_SIZES, holdsText, isAuthored, STROKES } from '
 import { STAMP_SIZE } from '../board/reactions.ts';
 import { estimatedCardHeight, estimatedTextBox } from '../board/sketch.ts';
 import { COLUMN_GAP, COLUMN_PADDING, layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
-import { FRAME_HEADER } from '../plugins/Board/geometry.ts';
+import { FRAME_HEADER, overlaps } from '../plugins/Board/geometry.ts';
 
 import type { Session } from './session.ts';
 import type { BoardElement, Fill, Layout, ShapeType, Stroke } from '../board/model.ts';
@@ -24,6 +24,8 @@ export type AddSpec = {
   width?: number;
   height?: number;
   color?: string;
+  /** A card's: what it is about, beyond its title. */
+  description?: string;
   /** A frame's id or title: put in it. */
   frame?: string;
   layout?: Layout;
@@ -41,9 +43,8 @@ const SIZES: Partial<Record<ShapeType, { width: number; height: number }>> = {
 
 const SHAPE_SIZE = { width: 170, height: 110 };
 
-/** A card's height, as the canvas would measure it: its words wrapped at its width, and the row for its author. */
-export const cardHeight = (element: BoardElement): number =>
-  estimatedCardHeight(element.text ?? '', element.width, element.author !== undefined);
+/** A card's height, as the canvas would measure it lying in its column. */
+export const cardHeight = (element: BoardElement): number => estimatedCardHeight(element);
 
 const measured = (element: BoardElement): BoardElement => {
   if (element.type === 'card') {
@@ -103,6 +104,7 @@ const build = (session: Session, spec: AddSpec, z: number): BoardElement => {
     nonce: 0,
     deleted: false,
     ...(text === undefined ? {} : { text }),
+    ...(spec.type === 'card' && spec.description?.trim() ? { description: spec.description } : {}),
     ...(isAuthored(spec.type) ? { author: session.name } : {}),
     ...(spec.type === 'frame' && spec.layout ? { layout: spec.layout } : {}),
     ...(spec.done && (spec.type === 'card' || spec.type === 'comment') ? { done: true } : {})
@@ -110,12 +112,6 @@ const build = (session: Session, spec: AddSpec, z: number): BoardElement => {
 
   return measured(element);
 };
-
-const overlaps = (a: BoardElement, b: BoardElement, margin: number): boolean =>
-  a.x < b.x + b.width + margin &&
-  a.x + a.width + margin > b.x &&
-  a.y < b.y + b.height + margin &&
-  a.y + a.height + margin > b.y;
 
 /**
  * Elements for specs, placed, with whatever else placing them moved: in a column frame, the column laid out again;

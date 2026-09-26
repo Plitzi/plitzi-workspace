@@ -1,4 +1,5 @@
 import type { Box, Camera, Handle } from './geometry.ts';
+import type { Guides } from './snapping.ts';
 import type { StyleChoice } from './styling.ts';
 import type { BoardElement, Fill, Point, Reply, Stroke, StrokeWidth, StyleField } from '../../board/model.ts';
 
@@ -57,8 +58,15 @@ export type ControllerProps = {
 };
 
 /** Where the text being typed sits on screen, for the field the component lays over the canvas. */
+/** Which of an element's words are being written: its text — a card's title — or a card's description. */
+export type EditField = 'text' | 'description';
+
 export type TextEditor = {
   id: string;
+  field: EditField;
+  /** A card's other field, which Tab moves to. */
+  otherField?: EditField;
+  /** What the field holds as it opens. */
   text: string;
   left: number;
   top: number;
@@ -66,6 +74,9 @@ export type TextEditor = {
   minHeight: number;
   fontSize: number;
   font: string;
+  weight: number;
+  /** Times the font size, as the canvas spaces the lines it draws. */
+  lineHeight: number;
   color: string;
   padding: number;
   /** A sticky wraps at its width; a text grows with what is typed. */
@@ -88,6 +99,11 @@ export type PointerMessage = {
   /** Where the pointer is — absent while it is off the canvas, when only the view changed. */
   x?: number;
   y?: number;
+  /**
+   * When it was so, by the sender's clock: the others draw the cursor a moment behind, in step with when each place
+   * was reached rather than when its message happened to arrive.
+   */
+  sentAt: number;
   draft: BoardElement[] | null;
   selection: string[];
   view: View;
@@ -172,9 +188,18 @@ export type Gesture =
   | { kind: 'pan'; start: Point; camera: Camera }
   /**
    * What is selected, and what rides along — the members of a frame being moved. `loose` are the ones that may land
-   * in another frame when let go: the selected things that are not frames.
+   * in another frame when let go: the selected things that are not frames. `box` is what was picked up, where it was,
+   * and `guides` where what stays still lines up — what its edges snap to.
    */
-  | { kind: 'move'; origin: Point; originals: BoardElement[]; ids: ReadonlySet<string>; loose: string[] }
+  | {
+      kind: 'move';
+      origin: Point;
+      originals: BoardElement[];
+      ids: ReadonlySet<string>;
+      loose: string[];
+      box: Box;
+      guides: Guides;
+    }
   | { kind: 'resize'; handle: Handle; anchor: Point; box: Box; originals: BoardElement[] }
   | { kind: 'marquee'; origin: Point; current: Point; base: Set<string> }
   | { kind: 'box'; origin: Point; element: BoardElement; column?: boolean }

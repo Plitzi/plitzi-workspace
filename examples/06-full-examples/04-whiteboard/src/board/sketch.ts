@@ -39,6 +39,7 @@ export type Draft = {
   width?: number;
   height?: number;
   text?: string;
+  description?: string;
   stroke?: Stroke;
   fill?: Fill;
   points?: Point[];
@@ -69,6 +70,7 @@ const OPTIONAL = [
   'layout',
   'author',
   'done',
+  'description',
   'dash',
   'sloppiness',
   'edges',
@@ -199,36 +201,48 @@ const COLUMN_PADDING = 14;
 const COLUMN_GAP = 12;
 
 /**
- * How tall a card is with these words at this width, as the canvas measures it: its lines, wrapped, and the row for
- * who wrote it. An estimate — Node has no canvas to measure with — close enough that a column drawn here needs no
- * laying out again when it is first shown.
+ * How tall a card is as the canvas measures it lying in its column: its title's lines, wrapped at its width, a line of
+ * its description and the row for who wrote it. An estimate — Node has no canvas to measure with — close enough that
+ * a column drawn here needs no laying out again when it is first shown.
  */
-export const estimatedCardHeight = (text: string, width: number, author: boolean): number => {
+export const estimatedCardHeight = ({
+  text = '',
+  description,
+  author,
+  width
+}: {
+  text?: string;
+  description?: string;
+  author?: string;
+  width: number;
+}): number => {
   const perLine = Math.max(8, Math.floor((width - 56) / 8.2));
   const lines = text
     .split('\n')
     .reduce((total, paragraph) => total + Math.max(1, Math.ceil(paragraph.length / perLine)), 0);
 
-  return Math.max(46, 28 + lines * 20 + (author ? 26 : 0));
+  return Math.max(46, 28 + lines * 20 + (description?.trim() ? 26 : 0) + (author ? 26 : 0));
 };
 
-/** A task card: its words, a colour strip, who wrote it, and whether it is done. */
+/** A task card: its title, what it is about, a colour strip, who wrote it, and whether it is done. */
 export const card = (
   text: string,
   {
+    description,
     fill = 'none',
     done = false,
     author,
     width = 260
-  }: { fill?: Fill; done?: boolean; author?: string; width?: number } = {}
+  }: { description?: string; fill?: Fill; done?: boolean; author?: string; width?: number } = {}
 ): Draft => ({
   type: 'card',
   x: 0,
   y: 0,
   width,
-  height: estimatedCardHeight(text, width, author !== undefined),
+  height: estimatedCardHeight({ text, description, author, width }),
   text,
   fill,
+  ...(description ? { description } : {}),
   ...(done ? { done } : {}),
   ...(author ? { author } : {})
 });
@@ -272,10 +286,7 @@ export const column = (
   let top = y + FRAME_HEADER + COLUMN_PADDING;
   const placed = items.map(item => {
     const itemWidth = item.type === 'card' ? width - COLUMN_PADDING * 2 : (item.width ?? 200);
-    const itemHeight =
-      item.type === 'card'
-        ? estimatedCardHeight(item.text ?? '', itemWidth, item.author !== undefined)
-        : (item.height ?? 200);
+    const itemHeight = item.type === 'card' ? estimatedCardHeight({ ...item, width: itemWidth }) : (item.height ?? 200);
     const next: Draft = {
       ...item,
       x: item.type === 'card' ? x + COLUMN_PADDING : x + (width - itemWidth) / 2,

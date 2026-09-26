@@ -1,5 +1,5 @@
 import { connectorBetween } from './connectors.ts';
-import { anchorPoint, boundsOf } from './geometry.ts';
+import { anchorPoint, boundsOf, overlaps } from './geometry.ts';
 import { newId, newSeed } from './values.ts';
 import { holdsText, isAuthored, takesLabel } from '../../board/model.ts';
 
@@ -19,9 +19,6 @@ const GAP = 90;
 const OUTWARD: Record<Anchor, [number, number]> = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
 
 const OPPOSITE: Record<Anchor, Anchor> = { n: 's', e: 'w', s: 'n', w: 'e' };
-
-const overlaps = (a: Box, b: Box): boolean =>
-  a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 
 export const createQuick = (core: Core) => {
   const grow = (from: Binding): void => {

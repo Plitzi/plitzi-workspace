@@ -255,6 +255,7 @@ export const playDemo = (controller: BoardController, demo: Demo): (() => void) 
         controller.remotePointer(one.from, {
           x: one.cursor[0],
           y: one.cursor[1],
+          sentAt: now,
           draft: drafts.length ? drafts : null,
           selection: one.grabbed ? [one.grabbed.element.id] : [],
           ...(one.laser ? { laser: true } : {}),

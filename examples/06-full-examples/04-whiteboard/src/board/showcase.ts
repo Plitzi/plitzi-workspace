@@ -437,10 +437,16 @@ const journey = (): BoardElement[] => {
       sticky(left - 460, -290, 'Runs a team of 8, half remote', 'violet'),
       sticky(left - 250, -290, 'Lives in calls and chat', 'blue'),
       {
-        ...card('Goal: one place where the team thinks together', { fill: 'violet' }),
+        type: 'rectangle',
         x: left - 460,
         y: -60,
-        width: 400
+        width: 400,
+        height: 70,
+        edges: 'round',
+        fill: 'violet',
+        fillStyle: 'solid',
+        sloppiness: 'architect',
+        text: 'Goal: one place where the team thinks together'
       }
     ]),
     ...stages.flatMap((stage, index) => {
@@ -452,7 +458,7 @@ const journey = (): BoardElement[] => {
           { type: 'hexagon', x: x + 20, y: -480, width: 400, height: 90, sloppiness: 'architect', text: stage.doing },
           sticky(x + 20, -370, stage.thinking, 'blue'),
           sticky(x + 220, -370, stage.pain, 'red'),
-          { ...card(stage.idea, { fill: 'green', author: by(index) }), x: x + 20, y: -150, width: 400 }
+          { ...sticky(x + 20, -150, stage.idea, 'green'), width: 400, height: 150, author: by(index) }
         ]
       );
     }),
@@ -759,10 +765,16 @@ const mural = (): BoardElement[] => {
         ),
         sticky(left + 1200, top + pixel * 7 + 220, 'One JSON value in the kv, merged element by element', 'red'),
         {
-          ...card('Try it: select a letter with a drag, and move it — everyone sees it move', { fill: 'violet' }),
+          type: 'rectangle',
           x: left,
           y: top + pixel * 7 + 450,
-          width: 520
+          width: 520,
+          height: 70,
+          edges: 'round',
+          fill: 'violet',
+          fillStyle: 'solid',
+          sloppiness: 'architect',
+          text: 'Try it: select a letter with a drag, and move it — everyone sees it move'
         },
         comment(left + 1480, top + pixel * 7 + 200, 'How long did this take?', 'Mia', [
           ['Kai', 'Ten minutes, thirty people, one timer'],

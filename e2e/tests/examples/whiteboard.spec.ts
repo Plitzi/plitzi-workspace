@@ -38,32 +38,30 @@ const action = async (origin: string, actionId: string, input: Record<string, un
   return body.output;
 };
 
-/** A board of `count` boxes on a grid, committed the way a page commits — through `board-apply`. */
-const seedBoard = async (origin: string, count: number): Promise<string> => {
-  const created = (await action(origin, 'board-create', { title: `e2e — ${count} boxes`, template: 'blank' })) as {
-    id: string;
-    owner: string;
-  };
-  const boxes = Array.from({ length: count }, (_, index) => ({
-    id: `e2ebox${String(index).padStart(6, '0')}`,
-    type: 'rectangle',
-    x: (index % 35) * 90,
-    y: Math.floor(index / 35) * 90,
-    width: 60,
-    height: 60,
-    stroke: 'ink',
-    fill: 'blue',
-    strokeWidth: 2,
-    seed: index + 1,
-    z: index + 1,
-    version: 1,
-    nonce: index + 1,
-    deleted: false
-  }));
-  for (let from = 0; from < boxes.length; from += 500) {
+/** An element as a page commits it, from its box and whatever else it says. */
+const element = (
+  index: number,
+  fields: { type: string; x: number; y: number; width: number; height: number } & Record<string, unknown>
+) => ({
+  id: `e2ebox${String(index).padStart(6, '0')}`,
+  stroke: 'ink',
+  fill: 'blue',
+  strokeWidth: 2,
+  seed: index + 1,
+  z: index + 1,
+  version: 1,
+  nonce: index + 1,
+  deleted: false,
+  ...fields
+});
+
+/** A blank board with `elements` on it, committed the way a page commits — through `board-apply`. */
+const seedBoard = async (origin: string, title: string, elements: readonly object[]): Promise<string> => {
+  const created = (await action(origin, 'board-create', { title, template: 'blank' })) as { id: string; owner: string };
+  for (let from = 0; from < elements.length; from += 500) {
     await action(origin, 'board-apply', {
       board: created.id,
-      ops: boxes.slice(from, from + 500),
+      ops: elements.slice(from, from + 500),
       key: '',
       owner: created.owner
     });
@@ -72,7 +70,16 @@ const seedBoard = async (origin: string, count: number): Promise<string> => {
   return created.id;
 };
 
-type Saved = { id: string; type: string; x: number; deleted?: boolean };
+type Saved = {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  text?: string;
+  description?: string;
+  parent?: string;
+  deleted?: boolean;
+};
 
 const savedElements = async (origin: string, board: string): Promise<Saved[]> => {
   const response = await fetch(new URL(`/_rsc?location=/b/${board}&ids=board`, origin));
@@ -189,7 +196,16 @@ describeTarget('whiteboard', subject => {
     let id = '';
 
     test.beforeAll(async () => {
-      id = await seedBoard(subject.origin, ELEMENTS);
+      const boxes = Array.from({ length: ELEMENTS }, (_, index) =>
+        element(index, {
+          type: 'rectangle',
+          x: (index % 35) * 90,
+          y: Math.floor(index / 35) * 90,
+          width: 60,
+          height: 60
+        })
+      );
+      id = await seedBoard(subject.origin, `e2e — ${ELEMENTS} boxes`, boxes);
     });
 
     test.beforeEach(async ({ page }) => {
@@ -276,5 +292,55 @@ describeTarget('whiteboard', subject => {
       // The minimap draws where the view is, not every element again: a handful of fills a frame, not seven hundred.
       expect(counts.fills).toBeLessThan(ELEMENTS);
     });
+  });
+
+  /** A card is a task on a kanban: the card tool makes one in a column, and out of one makes nothing. Opened, its
+   *  description is written on it, and Tab goes between its title and its description. The board opens fitted, at
+   *  most at its own size, so the column is in the middle of the canvas. */
+  test('a card is made in a column, with its title and its description', async ({ page }) => {
+    const column = element(0, { type: 'frame', layout: 'column', x: 0, y: 0, width: 300, height: 460, text: 'To do' });
+    const id = await seedBoard(subject.origin, 'e2e — a column', [column]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    const [x, y] = await middle(page);
+    await page.mouse.move(x, y);
+    await page.keyboard.press('c');
+    await page.mouse.click(x + 400, y);
+    await page.waitForTimeout(300);
+    await page.mouse.click(x, y);
+    await page.keyboard.type('Write the post');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('One page, with the demo at the top');
+    await page.keyboard.press('Escape');
+
+    await expect
+      .poll(async () =>
+        (await savedElements(subject.origin, id))
+          .filter(saved => saved.type === 'card')
+          .map(({ text, description, parent }) => ({ text, description, parent }))
+      )
+      .toEqual([{ text: 'Write the post', description: 'One page, with the demo at the top', parent: column.id }]);
+  });
+
+  /** What is dragged lines up with what stays still: an edge let go a few pixels off another lands on it — and with
+   *  ⌘ / Ctrl held it lands where it was let go. */
+  test('a shape dragged near an edge snaps to it, unless ⌘ is held', async ({ page }) => {
+    const still = element(0, { type: 'rectangle', x: 0, y: 0, width: 100, height: 100 });
+    const moved = element(1, { type: 'rectangle', x: 300, y: 40, width: 100, height: 100 });
+    const id = await seedBoard(subject.origin, 'e2e — two boxes', [still, moved]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    // Fitted at its own size around both: the moved box's middle is 150 right and 20 below the canvas's.
+    const [x, y] = await middle(page);
+    const yOf = async () => (await savedElements(subject.origin, id)).find(saved => saved.id === moved.id)?.y;
+
+    // 37 up puts its top 3 below the other's: it lands level with it.
+    await drag(page, [x + 150, y + 20], [x + 150, y - 17], 8);
+    await expect.poll(yOf).toBe(0);
+
+    await page.keyboard.down('ControlOrMeta');
+    await drag(page, [x + 150, y], [x + 150, y + 3], 4);
+    await page.keyboard.up('ControlOrMeta');
+    await expect.poll(yOf).toBe(3);
   });
 });

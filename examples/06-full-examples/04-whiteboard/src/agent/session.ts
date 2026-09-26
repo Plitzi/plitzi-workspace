@@ -226,6 +226,7 @@ export const joinBoard = async (
     ).publish(`room:${loaded.topic}`, 'pointer', {
       x: Math.round(at[0]),
       y: Math.round(at[1]),
+      sentAt: Date.now(),
       draft: null,
       selection: [],
       view: viewAround(at),

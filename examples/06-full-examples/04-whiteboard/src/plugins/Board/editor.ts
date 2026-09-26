@@ -1,24 +1,30 @@
 import {
   CARD_PADDING,
   CARD_TEXT_LEFT,
+  cardLayout,
   COMMENT_BUBBLE,
+  DESCRIPTION_FONT,
+  DESCRIPTION_LINE,
   faceOf,
   fontSizeOf,
+  frameTitleLeft,
   LABEL_PADDING,
   layoutText,
-  STICKY_PADDING
+  STICKY_PADDING,
+  weightOf
 } from './draw.ts';
 import { FRAME_HEADER, toScreen } from './geometry.ts';
-import { takesLabel } from '../../board/model.ts';
+import { LINE_HEIGHT, takesLabel } from '../../board/model.ts';
 
 import type { Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';
-import type { TextEditor } from './types.ts';
+import type { EditField, TextEditor } from './types.ts';
 import type { BoardElement } from '../../board/model.ts';
 
 /** Where the field typing into `element` goes on screen, so what is typed sits where it will be drawn. */
 export const editorFor = (
   element: BoardElement,
+  field: EditField,
   camera: Camera,
   palette: Palette,
   context: CanvasRenderingContext2D
@@ -27,21 +33,48 @@ export const editorFor = (
   const sticky = element.type === 'sticky';
   const common = {
     id: element.id,
+    field: 'text' as const,
     text: element.text ?? '',
     left,
     top,
     fontSize: fontSizeOf(element) * camera.zoom,
     font: faceOf(element, palette),
+    weight: weightOf(element),
+    lineHeight: LINE_HEIGHT,
     color: palette.stroke[element.stroke],
     composer: element.type === 'comment'
   };
-  // A card's words start past its done box and wrap at its width; a frame's title sits in its title bar.
+  // A card's words start past its done box and wrap at its width — its description under its title, on it opened.
+  if (element.type === 'card' && field === 'description') {
+    const { descriptionTop } = cardLayout(context, element, palette, { opened: true, invite: true });
+
+    return {
+      ...common,
+      field,
+      otherField: 'text',
+      text: element.description ?? '',
+      left: left + (CARD_TEXT_LEFT - 2) * camera.zoom,
+      top: top + descriptionTop * camera.zoom,
+      width: (element.width - CARD_TEXT_LEFT - CARD_PADDING + 4) * camera.zoom,
+      minHeight: DESCRIPTION_LINE * camera.zoom,
+      fontSize: DESCRIPTION_FONT * camera.zoom,
+      weight: 400,
+      lineHeight: DESCRIPTION_LINE / DESCRIPTION_FONT,
+      color: palette.muted,
+      padding: 0,
+      paddingTop: 0,
+      wraps: true,
+      align: 'left'
+    };
+  }
+
   if (element.type === 'card') {
     return {
       ...common,
+      otherField: 'description',
       left: left + (CARD_TEXT_LEFT - 2) * camera.zoom,
       width: (element.width - CARD_TEXT_LEFT - CARD_PADDING + 4) * camera.zoom,
-      minHeight: fontSizeOf(element) * 1.25 * camera.zoom,
+      minHeight: fontSizeOf(element) * LINE_HEIGHT * camera.zoom,
       padding: 0,
       paddingTop: CARD_PADDING * camera.zoom,
       wraps: true,
@@ -67,13 +100,14 @@ export const editorFor = (
 
   if (element.type === 'frame') {
     const size = fontSizeOf(element) * camera.zoom;
+    const titleLeft = frameTitleLeft(element);
 
     return {
       ...common,
-      left: left + 16 * camera.zoom,
-      top: top + ((FRAME_HEADER - fontSizeOf(element) * 1.25) / 2) * camera.zoom,
-      width: Math.min(element.width - 32, 360) * camera.zoom,
-      minHeight: size * 1.25,
+      left: left + titleLeft * camera.zoom,
+      top: top + ((FRAME_HEADER - fontSizeOf(element) * LINE_HEIGHT) / 2) * camera.zoom,
+      width: Math.min(element.width - titleLeft - 16, 360) * camera.zoom,
+      minHeight: size * LINE_HEIGHT,
       padding: 0,
       paddingTop: 0,
       wraps: false,
@@ -99,7 +133,7 @@ export const editorFor = (
   return {
     ...common,
     width: sticky ? element.width * camera.zoom : Math.max(element.width, 40) * camera.zoom + 24,
-    minHeight: (sticky ? element.height : fontSizeOf(element) * 1.25) * camera.zoom,
+    minHeight: (sticky ? element.height : fontSizeOf(element) * LINE_HEIGHT) * camera.zoom,
     padding: sticky ? STICKY_PADDING * camera.zoom : 0,
     paddingTop: sticky ? STICKY_PADDING * camera.zoom : 0,
     wraps: sticky,

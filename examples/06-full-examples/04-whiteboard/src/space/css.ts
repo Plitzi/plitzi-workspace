@@ -37,6 +37,7 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
   --board-sticky-blue: var(--sticky-blue);
   --board-sticky-violet: var(--sticky-violet);
   --board-laser: var(--laser);
+  --board-guide: var(--guide);
   --board-font: var(--hand);
   --board-ui-font: var(--ui);
 }

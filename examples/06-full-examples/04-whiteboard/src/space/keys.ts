@@ -83,6 +83,7 @@ const KEYS: readonly { keys: string[]; does: string }[] = [
   { keys: ['⌘', 'C', 'V'], does: 'Copy · paste — between boards too' },
   { keys: ['⌫'], does: 'Delete' },
   { keys: ['⇧', 'drag'], does: 'Square · straight · keep ratio' },
+  { keys: ['⌘', 'drag'], does: 'Move without snapping to guides' },
   { keys: ['⌘', '⇧', 'E'], does: 'Export PNG' },
   { keys: ['/'], does: 'Say something at your cursor' },
   { keys: ['⇧', 'V'], does: 'Vote for the selection' },

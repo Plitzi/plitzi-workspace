@@ -32,14 +32,23 @@ const note = (x: number, y: number, text: string): Draft => ({ type: 'text', x, 
 const kanban = (): BoardElement[] =>
   drawing([
     title(-640, -420, 'Team board'),
-    note(-640, -360, 'Drag cards between columns · tick the box when it is done · C for a new card'),
+    note(
+      -640,
+      -360,
+      'Drag cards between columns · click one to open it · tick the box when it is done · C, then a column, for a new card'
+    ),
     ...column({ x: -640, y: -300, title: 'Backlog' }, [
       card('Research how teams plan today', { fill: 'violet' }),
-      card('Interview five customers'),
+      card('Interview five customers', {
+        description: 'Ask how they plan a week today and what they gave up on. Record the calls, with permission.'
+      }),
       card('Sketch the onboarding', { fill: 'blue' })
     ]),
     ...column({ x: -320, y: -300, title: 'To do', fill: 'yellow' }, [
-      card('Write the launch post', { fill: 'orange' }),
+      card('Write the launch post', {
+        fill: 'orange',
+        description: 'One page: the problem, the board, and the 60-second demo at the top.'
+      }),
       card('Record a 60-second demo')
     ]),
     ...column({ x: 0, y: -300, title: 'Doing', fill: 'blue' }, [card('Pricing page', { fill: 'green' })]),

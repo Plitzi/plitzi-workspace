@@ -917,7 +917,9 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   page is a board to try before starting one — with scripted collaborators already drawing on it — templates, and two
   large featured boards that are read-only (looked around together, then "Use as template"). Frames that hold what is
   put in them — a column frame is a kanban lane that lays out its cards, with the drop shown as it is dragged — task
-  cards, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness, edges,
+  cards made in a column (a title and a description, the whole of it shown when a card is opened), smart guides that
+  snap what is dragged to the edges and middles of what stays still, the others' cursors drawn a moment behind so they
+  move as smoothly as a hand whatever the network does, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness, edges,
   opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or private and temporary
   boards (in Board settings, beside the title), boards their creator makes read-only for everyone else, an elements
   library built from one registry (searchable, with favourites), texts resized by their handles, stamps, elements locked

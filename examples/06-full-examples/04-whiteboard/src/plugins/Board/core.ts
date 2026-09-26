@@ -1,5 +1,5 @@
-import { frameAt, frameUnder, insertionAt, layoutColumn, membersOf as inFrame, moved } from './containers.ts';
-import { CARD_WIDTH, measureCard, measureText, STICKY_SIZE } from './draw.ts';
+import { columnAt, frameAt, frameUnder, insertionAt, layoutColumn, membersOf as inFrame, moved } from './containers.ts';
+import { cardLayout, measureCard, measureText, STICKY_SIZE } from './draw.ts';
 import { editorFor } from './editor.ts';
 import { boundsOf, clampZoom, fitCamera, movedBy, resolveConnector, shiftOf, unionOf } from './geometry.ts';
 import { readPalette } from './palette.ts';
@@ -21,9 +21,21 @@ import {
   takesStyle
 } from '../../board/model.ts';
 
+import type { CardLayout } from './draw.ts';
 import type { Box, Camera, Handle } from './geometry.ts';
 import type { Palette } from './palette.ts';
-import type { Carrying, ControllerEvent, ControllerProps, Gesture, Pinch, Tool, View } from './types.ts';
+import type { GuideLine } from './snapping.ts';
+import type {
+  Carrying,
+  ControllerEvent,
+  ControllerProps,
+  EditField,
+  Gesture,
+  Pinch,
+  ScreenBox,
+  Tool,
+  View
+} from './types.ts';
 import type { Binding, BoardElement, Fill, Point, ShapeType, StyleField } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 
@@ -35,14 +47,12 @@ import type { Collaborator } from '../../board/people.ts';
  * state lives in `state`, read where it is used, so no module keeps a stale copy of another's.
  */
 
-export const DEFAULT_BOX: Record<'sticky' | 'shape' | 'card' | 'frame' | 'column', { width: number; height: number }> =
-  {
-    sticky: { width: STICKY_SIZE, height: STICKY_SIZE },
-    shape: { width: 140, height: 90 },
-    card: { width: CARD_WIDTH, height: 60 },
-    frame: { width: 480, height: 360 },
-    column: { width: 300, height: 460 }
-  };
+export const DEFAULT_BOX: Record<'sticky' | 'shape' | 'frame' | 'column', { width: number; height: number }> = {
+  sticky: { width: STICKY_SIZE, height: STICKY_SIZE },
+  shape: { width: 140, height: 90 },
+  frame: { width: 480, height: 360 },
+  column: { width: 300, height: 460 }
+};
 
 /**
  * The most elements a drag shows the others as it goes: a few notes moved are drawn moving on every screen, a hundred
@@ -101,8 +111,9 @@ export type CoreState = {
   boardId: string | undefined;
   gesture: Gesture | undefined;
   pinch: Pinch | undefined;
-  /** The element being typed into. */
+  /** The element being typed into, and which of its fields. */
   editing: string | undefined;
+  editingField: EditField;
   spaceHeld: boolean;
   fitPending: boolean;
   lastPointer: Point | undefined;
@@ -127,6 +138,8 @@ export type CoreState = {
   dropTarget: { frame: string; line?: number; home?: boolean } | undefined;
   /** What the pointer is over, whatever it is: a comment there opens its bubble. */
   pointed: string | undefined;
+  /** Where what is dragged lined up with what stays still: the lines shown while it does. */
+  guides: GuideLine[];
 };
 
 export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (event: ControllerEvent) => void) => {
@@ -181,6 +194,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     gesture: undefined,
     pinch: undefined,
     editing: undefined,
+    editingField: 'text',
     spaceHeld: false,
     fitPending: true,
     lastPointer: undefined,
@@ -191,7 +205,8 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     following: undefined,
     chatting: undefined,
     dropTarget: undefined,
-    pointed: undefined
+    pointed: undefined,
+    guides: []
   };
 
   /** Anything can change: the board is in `edit` mode. */
@@ -215,7 +230,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   let shown: { key: string; list: readonly BoardElement[]; byId: ReadonlyMap<string, BoardElement> } | undefined;
 
   const displayed = (now = Date.now()): readonly BoardElement[] => {
-    remotes.expireDrafts(now);
+    remotes.advance(now);
     const key = `${scene.revision}:${draft.revision}:${remotes.draftRevision}`;
     if (shown?.key === key) {
       return shown.list;
@@ -397,6 +412,35 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     return chosen.length === 1 && isConnector(chosen[0].type) ? chosen[0] : undefined;
   };
 
+  /** What of the selection its handles resize: never a card — its column sets its width, and its words its height. */
+  const resizable = (): BoardElement[] => changeable().filter(element => element.type !== 'card');
+
+  /**
+   * The card opened right now — the one selected alone, or being written on — drawn whole over what lies under it,
+   * and taken by a press anywhere on it. Not while something is moved: it opens again where it is put.
+   */
+  const openedCard = (): { element: BoardElement; layout: CardLayout; box: Box } | undefined => {
+    const id = state.editing ?? (selection.size === 1 ? [...selection][0] : undefined);
+    const element = id === undefined ? undefined : current().get(id);
+    if (element?.type !== 'card' || state.gesture?.kind === 'move') {
+      return undefined;
+    }
+
+    const layout = cardLayout(context, element, state.palette, {
+      opened: true,
+      invite: editable() && element.locked !== true
+    });
+
+    return { element, layout, box: { ...boundsOf(element), height: Math.max(element.height, layout.height) } };
+  };
+
+  /** The box an element takes on screen: its own — or, for the opened card, all of it. */
+  const shownBox = (element: BoardElement): Box => {
+    const opened = openedCard();
+
+    return opened?.element.id === element.id ? opened.box : boundsOf(element);
+  };
+
   const viewport = (): Box => ({
     x: state.camera.x,
     y: state.camera.y,
@@ -479,6 +523,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       final,
       message: {
         ...(lastPointer ? { x: Math.round(lastPointer[0]), y: Math.round(lastPointer[1]) } : {}),
+        sentAt: Date.now(),
         draft: draft.size && draft.size <= SHARED_DRAFT && !final ? [...draft.values()].map(predicted) : null,
         selection: [...selection].slice(0, 50),
         view: viewOf(viewport()),
@@ -492,7 +537,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     const element = state.editing ? (draft.get(state.editing) ?? scene.element(state.editing)) : undefined;
     emit({
       type: 'editor',
-      editor: element ? editorFor(element, state.camera, state.palette, context) : undefined
+      editor: element ? editorFor(element, state.editingField, state.camera, state.palette, context) : undefined
     });
   };
 
@@ -581,6 +626,20 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     return chosen;
   };
 
+  /**
+   * Where the selection's tools stand on screen, told to the page only when it changes. Worked out as a frame is painted
+   * — except that an empty selection says so at once, with the selection itself: waiting for the frame, the tools stood
+   * one frame longer with the content of no selection — the parts a locked one hides back on show, then gone.
+   */
+  let reportedBox = '';
+  const reportSelectionBox = (box: ScreenBox | undefined): void => {
+    const key = JSON.stringify(box ?? null);
+    if (key !== reportedBox) {
+      reportedBox = key;
+      emit({ type: 'selectionBox', box });
+    }
+  };
+
   const setSelection = (ids: Iterable<string>): void => {
     const chosen = [...ids];
     if (state.insideGroup && !chosen.some(id => groupOf(id) === state.insideGroup)) {
@@ -590,6 +649,10 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     selection.clear();
     for (const id of widened(chosen)) {
       selection.add(id);
+    }
+
+    if (selection.size === 0) {
+      reportSelectionBox(undefined);
     }
 
     reportSelection();
@@ -689,6 +752,23 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
         : point && !frame && home?.layout === 'column'
           ? { frame: home.id, home: true }
           : undefined;
+    setDropTarget(next);
+  };
+
+  /**
+   * Where the card tool would put a card if pressed at `point`, shown as a drop is: the column there, and the gap in it.
+   * Nowhere, out of a column.
+   */
+  const aimCard = (point: Point | undefined): void => {
+    const column = point ? columnAt(displayed(), point) : undefined;
+    setDropTarget(
+      column && point
+        ? { frame: column.id, line: insertionAt(column, inFrame(displayed(), column.id), point[1]) }
+        : undefined
+    );
+  };
+
+  const setDropTarget = (next: CoreState['dropTarget']): void => {
     if (JSON.stringify(next) !== JSON.stringify(state.dropTarget)) {
       state.dropTarget = next;
       invalidate();
@@ -774,7 +854,8 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
 
   // ── Typing ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
-  const startEditing = (element: BoardElement): void => {
+  /** Writing on `element` begins — on its text, or on a card's description. */
+  const startEditing = (element: BoardElement, field: EditField = 'text'): void => {
     // A locked element keeps its words as it keeps its place.
     if (element.locked) {
       return;
@@ -786,7 +867,20 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     }
 
     state.editing = element.id;
+    state.editingField = element.type === 'card' ? field : 'text';
     draft.set(element.id, element);
+    reportEditor();
+    invalidate();
+  };
+
+  /** A card's other field, from its title to its description or back: what was typed in either waits in the draft. */
+  const switchField = (field: EditField): void => {
+    const element = state.editing ? draft.get(state.editing) : undefined;
+    if (element?.type !== 'card' || field === state.editingField) {
+      return;
+    }
+
+    state.editingField = field;
     reportEditor();
     invalidate();
   };
@@ -799,6 +893,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     }
 
     state.editing = undefined;
+    state.editingField = 'text';
     draft.delete(id);
     emit({ type: 'editor', editor: undefined });
     invalidate();
@@ -826,6 +921,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     }
 
     state.editing = undefined;
+    state.editingField = 'text';
     draft.delete(id);
     emit({ type: 'editor', editor: undefined });
     if (!element) {
@@ -862,8 +958,11 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       return;
     }
 
-    if (!saved || saved.text !== element.text) {
-      commit([measured(element)]);
+    // A description emptied is no description: the key goes, as a label's does.
+    const { description, ...undescribed } = element;
+    const written: BoardElement = description?.trim() ? element : undescribed;
+    if (!saved || saved.text !== written.text || saved.description !== written.description) {
+      commit([measured(written)]);
       // Something new written down: a comment's bubble, or a text put on the board.
       if (!saved && (element.type === 'comment' || element.type === 'text')) {
         sounds.play(element.type === 'comment' ? 'comment' : 'place');
@@ -900,10 +999,14 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     selected,
     changeable,
     soleConnector,
+    resizable,
+    openedCard,
+    shownBox,
     viewport,
     viewOf,
     aim,
     reportSelection,
+    reportSelectionBox,
     reportHistory,
     reportPointer,
     reportEditor,
@@ -920,8 +1023,10 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     newElement,
     measured,
     aimDrop,
+    aimCard,
     frameContains,
     startEditing,
+    switchField,
     finishEditing,
     cancelEditing
   };

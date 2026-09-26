@@ -227,10 +227,12 @@ export const createMinimap = (core: Core) => {
         context.strokeRect(...box({ x: vx, y: vy, width: vw, height: vh }));
       }
 
-      if (remote.cursor) {
+      // Where the cursor was last heard: at this size, a moment's smoothing would not show.
+      const newest = remote.path.at(-1);
+      if (newest) {
         context.fillStyle = colour;
         context.beginPath();
-        context.arc(...at(...remote.cursor), 3.5, 0, Math.PI * 2);
+        context.arc(...at(...newest.at), 3.5, 0, Math.PI * 2);
         context.fill();
       }
     }

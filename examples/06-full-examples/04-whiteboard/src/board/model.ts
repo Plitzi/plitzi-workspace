@@ -28,7 +28,10 @@ export const SHAPE_TYPES = [
    * itself, which is a kanban column. Always drawn under everything else.
    */
   'frame',
-  /** A task: a line of text on a card, a colour strip, who wrote it, and whether it is done. */
+  /**
+   * A task, and it lives in a kanban column: its title, what it is about in more words, a colour strip, who wrote it,
+   * and whether it is done.
+   */
   'card',
   /** Feedback pinned to a place: what someone thinks of what is there, who said it, and whether it was dealt with. */
   'comment',
@@ -132,8 +135,10 @@ export type BoardElement = {
   /** A line's or an arrow's ends, when they are fixed to other elements rather than to a place on the board. */
   start?: Binding;
   end?: Binding;
-  /** What is written: a text or a sticky's content, or the label in the middle of a shape. */
+  /** What is written: a text or a sticky's content, or the label in the middle of a shape. A card's title. */
   text?: string;
+  /** A card's: what the task is about, in more words than its title — shown whole when the card is opened. */
+  description?: string;
   /** An image's picture, as the id of the asset the server keeps — never the bytes themselves. */
   asset?: string;
   /**
@@ -375,6 +380,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     height,
     points,
     text,
+    description,
     start,
     end,
     asset,
@@ -422,6 +428,8 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     (layout !== undefined && (type !== 'frame' || !isOneOf(LAYOUTS, layout))) ||
     (author !== undefined && (typeof author !== 'string' || !isAuthored(type))) ||
     (done !== undefined && (!isTask(type) || typeof done !== 'boolean')) ||
+    (description !== undefined &&
+      (type !== 'card' || typeof description !== 'string' || description.length > LIMITS.text)) ||
     (replies !== undefined &&
       (type !== 'comment' || !Array.isArray(replies) || replies.length > LIMITS.replies || !replies.every(isReply))) ||
     (dash !== undefined && (!isOneOf(DASHES, dash) || !takesStyle(type, 'dash'))) ||
@@ -458,6 +466,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     ...(layout === undefined ? {} : { layout }),
     ...(typeof author === 'string' && author.trim() ? { author: author.trim().slice(0, LIMITS.author) } : {}),
     ...(done === true ? { done } : {}),
+    ...(typeof description === 'string' && description.trim() ? { description } : {}),
     ...(dash === undefined ? {} : { dash }),
     ...(sloppiness === undefined ? {} : { sloppiness }),
     ...(edges === undefined ? {} : { edges }),

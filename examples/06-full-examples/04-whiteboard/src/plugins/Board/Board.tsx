@@ -556,24 +556,35 @@ const Board = ({
   // ── The text being typed ───────────────────────────────────────────────────────────────────────────────────────
 
   const textRef = useRef<HTMLTextAreaElement>(null);
-  const editingId = editor?.id;
+  // A field of its own for each one written: a card's title and its description are two, one after the other.
+  const editingKey = editor ? `${editor.id}:${editor.field}` : undefined;
   useEffect(() => {
-    if (editingId) {
-      textRef.current?.focus();
+    const field = textRef.current;
+    // The canvas has put the field where the words are: nothing is scrolled to it, and typing goes on after them.
+    if (editingKey && field) {
+      field.focus({ preventScroll: true });
+      field.setSelectionRange(field.value.length, field.value.length);
     }
-  }, [editingId]);
+  }, [editingKey]);
 
   const onType = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
     controllerRef.current?.typeText(event.target.value);
   }, []);
 
-  const onTextKey = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Escape and ⌘↵ are "done": everything else is the field's.
-    if (event.key === 'Escape' || (event.key === 'Enter' && (event.metaKey || event.ctrlKey))) {
-      event.preventDefault();
-      textRef.current?.blur();
-    }
-  }, []);
+  const otherField = editor?.otherField;
+  const onTextKey = useCallback(
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      // Escape and ⌘↵ are "done"; Tab is a card's other field: everything else is the field's.
+      if (event.key === 'Escape' || (event.key === 'Enter' && (event.metaKey || event.ctrlKey))) {
+        event.preventDefault();
+        textRef.current?.blur();
+      } else if (event.key === 'Tab' && otherField) {
+        event.preventDefault();
+        controllerRef.current?.editField(otherField);
+      }
+    },
+    [otherField]
+  );
 
   const onTextDone = useCallback(() => controllerRef.current?.finishEditing(), []);
 
@@ -656,6 +667,8 @@ const Board = ({
         minHeight: editor.minHeight,
         fontSize: editor.fontSize,
         fontFamily: editor.font,
+        fontWeight: editor.weight,
+        lineHeight: editor.lineHeight,
         color: editor.color,
         padding: editor.padding,
         paddingTop: editor.paddingTop,
@@ -710,6 +723,7 @@ const Board = ({
       )}
       {editor && !editor.composer && editorStyle && (
         <textarea
+          key={editingKey}
           ref={textRef}
           className="board__editor"
           style={editorStyle}

@@ -6,7 +6,7 @@ import { callAction, joinBoard, newElementId, parseLink } from './session.ts';
 import { isStamp, REACTIONS, STAMPS } from '../board/reactions.ts';
 import { TEMPLATES } from '../board/templates.ts';
 import { releasedFrom } from '../plugins/Board/connectors.ts';
-import { layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
+import { COLUMN_PADDING, layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
 import { anchorPoint, boundsOf, nearestAnchor } from '../plugins/Board/geometry.ts';
 import { restyled } from '../plugins/Board/styling.ts';
 
@@ -44,6 +44,11 @@ const ELEMENT_TYPES = [
 ] as const;
 
 const COLOURS = 'yellow, red, orange, green, blue, violet (notes, cards, frames, fills); ink for text and outlines';
+
+/** A card is a task on a kanban: it lives in a column, as the canvas's card tool makes it. */
+const CARD_IN_COLUMN =
+  'a card is a task on a kanban and goes in a column: give `frame` the id or title of a column (a frame with ' +
+  'layout "column" — add one first if the board has none), or use a sticky note for a loose one.';
 
 /** Someone locked it so it stays as it is: changed only by whoever unlocks it first — as on the canvas. */
 const lockedProblem = (element: BoardElement): string =>
@@ -168,8 +173,9 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
     {
       title: 'Add to the board',
       description:
-        'Put things on the board, all at once: sticky notes, cards (tasks, with a done box), text, frames (sections — ' +
-        'a frame with layout "column" is a kanban lane that stacks what is put in it), comments, and shapes with a ' +
+        'Put things on the board, all at once: sticky notes, cards (tasks, with a done box and a description — a card ' +
+        'goes in a column), text, frames (sections — a frame with layout "column" is a kanban lane that stacks what ' +
+        'is put in it), comments, and shapes with a ' +
         `label, and stamps (an emoji put on the board: its text is one of ${STAMPS.join(' ')}). Give \`frame\` ` +
         '(its id or title) to put something in a frame; give x/y only to place it exactly — ' +
         `left out, it is placed in free space for you. Colours: ${COLOURS}. Answers each new element's id.`,
@@ -178,8 +184,17 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
           .array(
             z.object({
               type: z.enum(ELEMENT_TYPES),
-              text: z.string().max(4000).optional().describe('What it says — a frame’s title, a shape’s label'),
-              frame: z.string().optional().describe('Id or title of the frame to put it in'),
+              text: z
+                .string()
+                .max(4000)
+                .optional()
+                .describe('What it says — a card’s or a frame’s title, a shape’s label'),
+              description: z
+                .string()
+                .max(4000)
+                .optional()
+                .describe('Cards: what the task is about, beyond its title — shown when the card is opened'),
+              frame: z.string().optional().describe('Id or title of the frame to put it in — a column, for a card'),
               x: z.number().optional(),
               y: z.number().optional(),
               width: z.number().positive().optional(),
@@ -198,6 +213,18 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
       const unstamped = elements.findIndex(element => element.type === 'stamp' && !isStamp(element.text));
       if (unstamped !== -1) {
         throw new Error(`Element ${unstamped + 1} is a stamp: its text must be one of ${STAMPS.join(' ')}`);
+      }
+
+      const loose = elements.findIndex(
+        element => element.type === 'card' && frameNamed(board, element.frame)?.layout !== 'column'
+      );
+      if (loose !== -1) {
+        throw new Error(`Element ${loose + 1} is a card: ${CARD_IN_COLUMN}`);
+      }
+
+      const described = elements.findIndex(element => element.description !== undefined && element.type !== 'card');
+      if (described !== -1) {
+        throw new Error(`Element ${described + 1} is a ${elements[described].type}: only a card has a description.`);
       }
 
       const placed = placeAll(board, elements);
@@ -287,7 +314,8 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
     {
       title: 'Change things',
       description:
-        'Change elements by id: their text, place, size, colour; tick a card done or resolve a comment; move ' +
+        'Change elements by id: their text, place, size, colour; a card’s description; tick a card done or resolve a ' +
+        'comment; move ' +
         'something into a frame (by id or title — a column places it); make a frame a column; lock or unlock it. ' +
         'A locked element (read_board marks it) is not changed unless the same change unlocks it.',
       inputSchema: {
@@ -296,6 +324,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
             z.object({
               id: z.string(),
               text: z.string().max(4000).optional(),
+              description: z.string().max(4000).optional().describe('Cards only: "" removes it'),
               x: z.number().optional(),
               y: z.number().optional(),
               width: z.number().positive().optional(),
@@ -324,7 +353,23 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
           throw new Error(lockedProblem(current));
         }
 
-        const { done: _done, parent: _parent, layout: _layout, locked: _locked, ...rest } = current;
+        if (change.description !== undefined && current.type !== 'card') {
+          throw new Error(`${current.id} is a ${current.type}: only a card has a description.`);
+        }
+
+        const frame = change.frame === undefined ? undefined : frameNamed(board, change.frame);
+        if (current.type === 'card' && change.frame !== undefined && frame?.layout !== 'column') {
+          throw new Error(`${current.id} is a card: ${CARD_IN_COLUMN}`);
+        }
+
+        const {
+          done: _done,
+          parent: _parent,
+          layout: _layout,
+          locked: _locked,
+          description: _description,
+          ...rest
+        } = current;
         let element: BoardElement = {
           ...rest,
           ...(change.text === undefined ? {} : { text: change.text }),
@@ -335,12 +380,13 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
         };
         const done = change.done ?? current.done;
         const layout = change.layout === undefined ? current.layout : change.layout === 'column' ? 'column' : undefined;
-        const frame = change.frame === undefined ? undefined : frameNamed(board, change.frame);
+        const description = change.description ?? current.description;
         const parent = change.frame === undefined ? current.parent : frame?.id;
         const locked = change.locked ?? current.locked;
         element = {
           ...element,
           ...(done ? { done: true } : {}),
+          ...(description?.trim() ? { description } : {}),
           ...(locked ? { locked: true } : {}),
           ...(layout ? { layout } : {}),
           ...(parent ? { parent } : {})
@@ -366,7 +412,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): void =>
       for (const id of columns) {
         const column = id ? all.get(id) : undefined;
         if (column?.layout === 'column') {
-          const width = column.width - 28;
+          const width = column.width - COLUMN_PADDING * 2;
           for (const laid of layoutColumn(column, membersOf([...all.values()], column.id), element =>
             element.type === 'card' ? { ...element, width, height: cardHeight({ ...element, width }) } : element
           )) {
