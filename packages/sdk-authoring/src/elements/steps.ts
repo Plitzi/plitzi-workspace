@@ -59,6 +59,9 @@ export const onSubmit = (): StepSpec => on('onSubmit');
 
 export const onClick = (params: { propagateEvent?: boolean } = {}): StepSpec => on('onClick', params);
 
+/** The press, before it is a click — where a drag away from the element starts. A click still follows it. */
+export const onPointerDown = (params: { propagateEvent?: boolean } = {}): StepSpec => on('onPointerDown', params);
+
 export const onLoad = (): StepSpec => on('onLoad');
 
 /**

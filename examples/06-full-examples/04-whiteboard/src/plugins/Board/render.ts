@@ -294,9 +294,8 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
       drawElements(moving, context, inHand, erased, true);
       for (const element of opened) {
         moving.drawOpened(context, element, palette, {
-          ...(element.id === editing ? { writing: state.editingField } : {}),
-          authors: props.authors,
-          invite: core.editable() && element.locked !== true
+          writing: element.id === editing,
+          authors: props.authors
         });
       }
     }

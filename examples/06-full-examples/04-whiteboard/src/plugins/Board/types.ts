@@ -30,6 +30,28 @@ export const TOOLS = [
 export type Tool = (typeof TOOLS)[number];
 
 /**
+ * The tools that put one thing down — what can also be dragged onto the board from wherever the tool is offered, and
+ * lands where it is let go. The others draw with a gesture (a line, a stroke), or do not make anything.
+ */
+export const PLACED_TOOLS = [
+  'rectangle',
+  'ellipse',
+  'diamond',
+  'triangle',
+  'hexagon',
+  'cylinder',
+  'star',
+  'text',
+  'sticky',
+  'card',
+  'frame',
+  'column',
+  'comment'
+] as const satisfies readonly Tool[];
+
+export type PlacedTool = (typeof PLACED_TOOLS)[number];
+
+/**
  * - `edit`: everything.
  * - `read`: looking around together — panning, zooming, the laser, reactions, chat, following — and changing nothing.
  * - `view`: a still preview that fits the drawing, takes no pointer and says nothing to the room.
@@ -61,17 +83,36 @@ export type ControllerProps = {
 /** Which of an element's words are being written: its text — a card's title — or a card's description. */
 export type EditField = 'text' | 'description';
 
-export type TextEditor = {
-  id: string;
-  field: EditField;
-  /** A card's other field, which Tab moves to. */
-  otherField?: EditField;
-  /** What the field holds as it opens. */
+/** A card's description: the second field of its editor, under its title, where the opened card shows it. */
+export type EditorField = {
   text: string;
+  placeholder: string;
   left: number;
   top: number;
   width: number;
   minHeight: number;
+  /** Past this it scrolls: the card drawn around it grows only so far. */
+  maxHeight: number;
+  fontSize: number;
+  lineHeight: number;
+  color: string;
+};
+
+export type TextEditor = {
+  id: string;
+  /** What the field holds as it opens, and what it shows while it holds nothing. */
+  text: string;
+  placeholder?: string;
+  /** A card's: its description, a field of its own — the card is edited as a form of two. */
+  description?: EditorField;
+  /** The field the focus goes to as it opens: where a card was double-clicked. */
+  focus: EditField;
+  left: number;
+  top: number;
+  width: number;
+  minHeight: number;
+  /** A card's fields scroll past this; every other field grows with what is typed. */
+  maxHeight?: number;
   fontSize: number;
   font: string;
   weight: number;
@@ -162,6 +203,8 @@ export type ControllerEvent =
   | { type: 'frames'; frames: FrameEntry[] }
   /** Whether there is anything to undo, or to redo — told when either changes. */
   | { type: 'history'; canUndo: boolean; canRedo: boolean }
+  /** Something carried started to move: the page gets out of the way of where it will be put. */
+  | { type: 'carry' }
   /** This person presents: the others are shown each frame they go to — and told when it is over (`index: -1`). */
   | { type: 'present'; message: PresentMessage }
   /** A presentation this page is in — its own, or somebody else's — moved on or ended (`presenter: ''`). */
@@ -220,4 +263,16 @@ export type Gesture =
 export type Pinch = { distance: number; center: Point; camera: Camera };
 
 /** A sticky or a pile taken off the tray, following the pointer until it is put down. */
-export type Carrying = { element: BoardElement; from?: Point; moved: boolean; over: boolean };
+/**
+ * What is carried to the board, following the pointer: the element as it will land, the tool it is made with, where
+ * the pointer took it, whether it has been dragged and whether it is over the board. `drag` is one taken by a press
+ * that may only have been a click — let go without dragging, nothing is carried and the click does what clicks do.
+ */
+export type Carrying = {
+  element: BoardElement;
+  tool: PlacedTool | 'stack';
+  from?: Point;
+  moved: boolean;
+  over: boolean;
+  drag: boolean;
+};

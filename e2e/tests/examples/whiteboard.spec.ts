@@ -343,4 +343,23 @@ describeTarget('whiteboard', subject => {
     await page.keyboard.up('ControlOrMeta');
     await expect.poll(yOf).toBe(3);
   });
+
+  /** The library is a place to take elements from, as the pad is: a tile dragged onto the board lands where it is let
+   *  go, and one let go over the library itself goes back. A click still puts the tool in hand. */
+  test('an element dragged off the library lands where it is let go', async ({ page }) => {
+    const id = await seedBoard(subject.origin, 'e2e — the library', []);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    const [x, y] = await middle(page);
+    await page.mouse.move(x, y);
+    await page.keyboard.press('i');
+    const tile = page.locator('[data-plitzi-el="library-rectangle"]');
+    const box = await tile.boundingBox();
+    expect(box, 'the rectangle in the library').not.toBeNull();
+    await drag(page, [(box?.x ?? 0) + 20, (box?.y ?? 0) + 20], [x + 250, y], 12);
+
+    await expect
+      .poll(async () => (await savedElements(subject.origin, id)).map(saved => saved.type))
+      .toEqual(['rectangle']);
+  });
 });

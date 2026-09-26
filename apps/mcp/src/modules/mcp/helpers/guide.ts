@@ -687,7 +687,8 @@ Pages that see each other — cursors, presence, a shared board, a game. Three p
    directly — add \`presence: true\` for who-is-here.
 2. **Subscribe** with a \`channel\` element whose \`topic\` a pattern matches (\`board:{{ id }}\`, a route param).
    Its descendants bind \`channel_<id>\`: \`connected\`, \`members\`, \`messages\`, \`last\`; flows use its \`onMessage\`,
-   \`onJoin\`, \`onLeave\` triggers and its \`publish\` / \`setPresence\` callbacks.
+   \`onJoin\`, \`onLeave\` triggers (\`from\`, \`user\` and the \`state\` the member announced — \`onJoin\` only for who
+   came after this page) and its \`publish\` / \`setPresence\` callbacks.
 3. **Announce from the server**: an action whose last step is the \`realtime.publish\` task — validate, save, then say so.
 
 A topic no pattern matches is refused by the server and reported by the linter (\`channel-topic\`).

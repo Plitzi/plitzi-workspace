@@ -1,9 +1,11 @@
 import {
+  CARD_LINES,
   CARD_PADDING,
   CARD_TEXT_LEFT,
   cardLayout,
   COMMENT_BUBBLE,
   DESCRIPTION_FONT,
+  DESCRIPTION_INVITE,
   DESCRIPTION_LINE,
   faceOf,
   fontSizeOf,
@@ -11,6 +13,7 @@ import {
   LABEL_PADDING,
   layoutText,
   STICKY_PADDING,
+  TITLE_INVITE,
   weightOf
 } from './draw.ts';
 import { FRAME_HEADER, toScreen } from './geometry.ts';
@@ -24,7 +27,7 @@ import type { BoardElement } from '../../board/model.ts';
 /** Where the field typing into `element` goes on screen, so what is typed sits where it will be drawn. */
 export const editorFor = (
   element: BoardElement,
-  field: EditField,
+  focus: EditField,
   camera: Camera,
   palette: Palette,
   context: CanvasRenderingContext2D
@@ -33,7 +36,7 @@ export const editorFor = (
   const sticky = element.type === 'sticky';
   const common = {
     id: element.id,
-    field: 'text' as const,
+    focus,
     text: element.text ?? '',
     left,
     top,
@@ -44,41 +47,39 @@ export const editorFor = (
     color: palette.stroke[element.stroke],
     composer: element.type === 'comment'
   };
-  // A card's words start past its done box and wrap at its width — its description under its title, on it opened.
-  if (element.type === 'card' && field === 'description') {
-    const { descriptionTop } = cardLayout(context, element, palette, { opened: true, invite: true });
+  // A card is a form of two fields — its title, its description under it — laid where the opened card has them, past
+  // its done box, wrapping at its width.
+  if (element.type === 'card') {
+    const { descriptionTop, lineHeight } = cardLayout(context, element, palette, 'writing');
+    const [fieldLeft, fieldWidth] = [
+      left + (CARD_TEXT_LEFT - 2) * camera.zoom,
+      (element.width - CARD_TEXT_LEFT - CARD_PADDING + 4) * camera.zoom
+    ];
 
     return {
       ...common,
-      field,
-      otherField: 'text',
-      text: element.description ?? '',
-      left: left + (CARD_TEXT_LEFT - 2) * camera.zoom,
-      top: top + descriptionTop * camera.zoom,
-      width: (element.width - CARD_TEXT_LEFT - CARD_PADDING + 4) * camera.zoom,
-      minHeight: DESCRIPTION_LINE * camera.zoom,
-      fontSize: DESCRIPTION_FONT * camera.zoom,
-      weight: 400,
-      lineHeight: DESCRIPTION_LINE / DESCRIPTION_FONT,
-      color: palette.muted,
+      placeholder: TITLE_INVITE,
+      left: fieldLeft,
+      top: top + CARD_PADDING * camera.zoom,
+      width: fieldWidth,
+      minHeight: lineHeight * camera.zoom,
+      maxHeight: CARD_LINES.writing.title * lineHeight * camera.zoom,
       padding: 0,
       paddingTop: 0,
       wraps: true,
-      align: 'left'
-    };
-  }
-
-  if (element.type === 'card') {
-    return {
-      ...common,
-      otherField: 'description',
-      left: left + (CARD_TEXT_LEFT - 2) * camera.zoom,
-      width: (element.width - CARD_TEXT_LEFT - CARD_PADDING + 4) * camera.zoom,
-      minHeight: fontSizeOf(element) * LINE_HEIGHT * camera.zoom,
-      padding: 0,
-      paddingTop: CARD_PADDING * camera.zoom,
-      wraps: true,
-      align: 'left'
+      align: 'left',
+      description: {
+        text: element.description ?? '',
+        placeholder: DESCRIPTION_INVITE,
+        left: fieldLeft,
+        top: top + descriptionTop * camera.zoom,
+        width: fieldWidth,
+        minHeight: DESCRIPTION_LINE * camera.zoom,
+        maxHeight: CARD_LINES.writing.description * DESCRIPTION_LINE * camera.zoom,
+        fontSize: DESCRIPTION_FONT * camera.zoom,
+        lineHeight: DESCRIPTION_LINE / DESCRIPTION_FONT,
+        color: palette.muted
+      }
     };
   }
 

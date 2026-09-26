@@ -19,6 +19,7 @@ import useChannel from '../../../realtime/useChannel';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback, RealtimeMessage } from '@plitzi/sdk-shared';
+import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
 import type { ReactNode, RefObject } from 'react';
 
 export type ChannelProps = {
@@ -66,18 +67,6 @@ const Channel = ({ ref, className, children, topic = '', presence, keep = 20, su
   // Its own messages are the flows' business; the members' comings and goings are `onJoin`/`onLeave`.
   const onMessage = useCallback(
     (message: RealtimeMessage) => {
-      if (message.type === JOIN_TYPE) {
-        void interactionsManager.interactionTrigger(id, 'onJoin', { from: message.from });
-
-        return;
-      }
-
-      if (message.type === LEAVE_TYPE) {
-        void interactionsManager.interactionTrigger(id, 'onLeave', { from: message.from });
-
-        return;
-      }
-
       if (CHANNEL_TYPES.has(message.type)) {
         return;
       }
@@ -91,10 +80,24 @@ const Channel = ({ ref, className, children, topic = '', presence, keep = 20, su
     [id, interactionsManager, limit]
   );
 
+  // Who came and went, with who they said they were: a flow greets them by name.
+  const onJoin = useCallback(
+    ({ from, user, state }: RealtimeMember) =>
+      void interactionsManager.interactionTrigger(id, 'onJoin', { from, user: user ?? '', state }),
+    [id, interactionsManager]
+  );
+  const onLeave = useCallback(
+    ({ from, user, state }: RealtimeMember) =>
+      void interactionsManager.interactionTrigger(id, 'onLeave', { from, user: user ?? '', state }),
+    [id, interactionsManager]
+  );
+
   // The builder is editing a document, not attending a meeting: nothing connects there.
   const channel = useChannel(previewMode && topic ? topic : undefined, {
     presence: presence === undefined || presence === '' ? undefined : valueOf(presence),
-    onMessage
+    onMessage,
+    onJoin,
+    onLeave
   });
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(

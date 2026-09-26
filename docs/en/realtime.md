@@ -67,7 +67,7 @@ to its source.
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Attributes            | `topic` — usually a template: `room:{{ id }}` (a route param) · `presence` — the state this page announces (an object from a binding, or JSON) · `keep` — how many messages its source holds (20) |
 | Source `channel_<id>` | `connected`, `me` (this page's name on the channel), `members` (`from`, `user`, `state`, `me`), `messages` (the last `keep`), `last`                                                              |
-| Triggers              | `onMessage` (`type`, `data`, `from`, `user`, `at`), `onJoin`, `onLeave` (`from`)                                                                                                                  |
+| Triggers              | `onMessage` (`type`, `data`, `from`, `user`, `at`), `onJoin`, `onLeave` (`from`, `user`, `state`) |
 | Callbacks             | `publish({ type, data })`, `setPresence({ data })`                                                                                                                                                |
 
 ```ts
@@ -90,7 +90,12 @@ channel({
 ```
 
 `onMessage` fires for the channel's own vocabulary only; `$presence`, `$join` and `$leave` are the element's to keep
-(`members`) and arrive as `onJoin`/`onLeave`. Nothing connects in the builder, or anywhere the page has no server.
+(`members`) and arrive as `onJoin`/`onLeave`. `onJoin` fires for somebody who came AFTER this page, once they have
+announced who they are — with the `state` they announced, so a flow can greet them by name
+(`{{ arrived.state.name }} joined`); those already there when the page opened are its `members`, not arrivals.
+`onLeave` fires when somebody goes — the server says so, or they have not been heard for a minute — with the `state`
+they last announced. A page that never announces anything is not a member, and neither arrives nor leaves. Nothing
+connects in the builder, or anywhere the page has no server.
 
 ### Server announcements, read by a flow
 

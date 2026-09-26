@@ -5,6 +5,7 @@ import {
   named,
   on,
   onClick,
+  onPointerDown,
   setState,
   styles,
   text,
@@ -14,7 +15,10 @@ import {
 import { CATEGORIES, ELEMENTS, entriesOf, pickSteps } from './elements.ts';
 import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
 import { closePanels } from './panels.ts';
+import { boardAction } from './stylePanel.ts';
 import { markOf } from './toolbar.ts';
+import { PLACED_TOOLS } from '../plugins/Board/types.ts';
+import { isOneOf } from '../plugins/Board/values.ts';
 
 import type { Category, ElementEntry } from './elements.ts';
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
@@ -277,13 +281,22 @@ const starButton = (entry: ElementEntry, id: string): ElementSpec =>
     ]
   });
 
+/**
+ * An entry's tile: a click puts its tool in hand; one that puts something down can be dragged onto the board as well,
+ * and lands where it is let go — as a note is taken off the pad.
+ */
 const pickTile = (entry: ElementEntry, id: string): ElementSpec =>
   button({
     id,
     content: '',
     title: `${entry.label} — ${entry.description}`,
     class: tile,
-    flows: [[onClick(), ...closePanels, ...pickSteps(entry)]],
+    flows: [
+      [onClick(), ...closePanels, ...pickSteps(entry)],
+      ...(isOneOf(PLACED_TOOLS, entry.tool)
+        ? [[onPointerDown(), boardAction('carry', { tool: entry.tool, drag: true })]]
+        : [])
+    ],
     children: [
       container({ class: tileMark, children: [markOf(entry)] }),
       container({

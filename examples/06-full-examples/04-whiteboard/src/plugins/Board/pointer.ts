@@ -1,7 +1,7 @@
 import { connectorBetween, detachOutside, endsOf, releasedFrom } from './connectors.ts';
-import { columnAt, COLUMN_PADDING, frameAt } from './containers.ts';
+import { columnAt, frameAt } from './containers.ts';
 import { DEFAULT_BOX, HANDLE_CURSORS } from './core.ts';
-import { COMMENT_PIN, fontSizeOf, STACK_STRIP } from './draw.ts';
+import { fontSizeOf, STACK_STRIP } from './draw.ts';
 import {
   anchorOf,
   anchorPoint,
@@ -32,8 +32,8 @@ import type { Picking } from './picking.ts';
 import type { Quick } from './quick.ts';
 import type { BoardElement, Point, ShapeType } from '../../board/model.ts';
 
-/** A comment's pin: the same size wherever it is put. */
-const PIN_BOX = { width: COMMENT_PIN, height: COMMENT_PIN };
+/** How far, in pixels, a press may wander and still be a click rather than a drag: what snaps only once dragged. */
+const CLICK_SLOP = 4;
 
 /** The tools that draw a box: dragged to a size, or clicked for their usual one. */
 const BOX_TOOLS = [
@@ -87,22 +87,6 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
   };
 
   /** A press with the select tool: a badge, a pile, a connector's end, a connection point, a handle, or an element. */
-  /** A card made in `column` where it was pressed — as wide as the column, in the gap there — and written on at once. */
-  const addCard = (column: BoardElement, point: Point): void => {
-    const made = core.measured({
-      ...core.newElement('card', point),
-      width: column.width - COLUMN_PADDING * 2,
-      parent: column.id
-    });
-    // Its middle at the press: the column puts it in the gap there.
-    const card = { ...made, x: column.x + COLUMN_PADDING, y: point[1] - made.height / 2 };
-    core.commit([card]);
-    core.sounds.play('place');
-    core.setSelection([card.id]);
-    core.switchTool('select');
-    core.startEditing(scene.element(card.id) ?? card);
-  };
-
   const pressToSelect = (event: PointerEvent, screen: Point, point: Point): void => {
     // A card's box ticks it done — or not — and moves nothing.
     const card = picking.checkAt(point);
@@ -110,14 +94,6 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
       const { done: _done, ...rest } = card;
       core.sounds.play(card.done ? 'undone' : 'done');
       core.commit([card.done ? rest : { ...rest, done: true }]);
-
-      return;
-    }
-
-    // An opened card's description is a field: a press there writes it.
-    const described = picking.descriptionAt(point);
-    if (described) {
-      core.startEditing(described, 'description');
 
       return;
     }
@@ -242,6 +218,11 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
     // The canvas decides where focus goes: the browser's default would move it to the page after this handler — out
     // of a text field just opened here — and whatever had it before (the title) is let go, so its blur still saves.
     event.preventDefault();
+    // A press on the card being written on, beside its fields, is still on the card: it stays open.
+    if (state.editing && picking.openedAt(toBoard(state.camera, ...screenOf(event)))) {
+      return;
+    }
+
     if (document.activeElement instanceof HTMLElement && document.activeElement !== document.body) {
       document.activeElement.blur();
     }
@@ -299,14 +280,9 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         state.gesture = { kind: 'erase', erased };
         break;
       }
-      case 'text': {
-        // Placed so the click lands inside the first line rather than on its top edge.
-        const element = core.newElement('text', point);
-        core.setSelection([]);
-        core.startEditing({ ...element, y: element.y - fontSizeOf(element) * 0.6 });
-        core.switchTool('select');
+      case 'text':
+        core.startText(point);
         break;
-      }
       case 'arrow':
       case 'line': {
         // Started on a shape: fixed to it from the first moment, and leaving it by the side that faces wherever the
@@ -329,19 +305,14 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         core.setSelection([]);
         state.gesture = { kind: 'freehand', element: core.newElement('freehand', point) };
         break;
-      case 'comment': {
-        // Pinned by its tail: the bottom-left of the pin is the point clicked, what the comment is about.
-        const element = { ...core.newElement('comment', [point[0], point[1] - COMMENT_PIN]), ...PIN_BOX };
-        core.setSelection([]);
-        core.startEditing(element);
-        core.switchTool('select');
+      case 'comment':
+        core.startComment(point);
         break;
-      }
       case 'card': {
         // A task on a kanban: made in the column pressed, and nowhere else — out of one, the tool says so and waits.
         const column = columnAt(core.displayed(), point);
         if (column) {
-          addCard(column, point);
+          core.addCard(column, point);
         }
 
         break;
@@ -395,15 +366,16 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
     const handle = selecting ? picking.handleAt(...screen) : undefined;
     const grab = selecting && (picking.endpointAt(...screen) ?? picking.connectionAt(...screen));
     const over = selecting && !handle ? picking.topmostAt(point) : undefined;
-    const writes = selecting && !handle && picking.descriptionAt(point) !== undefined;
+    // A card's done box and a vote badge are buttons on the element: pressed, not picked up.
+    const presses = over !== undefined && (picking.checkAt(point) !== undefined || picking.voteAt(point) !== undefined);
     canvas.style.cursor = state.spaceHeld
       ? 'grab'
       : handle
         ? HANDLE_CURSORS[handle]
         : grab
           ? 'crosshair'
-          : writes
-            ? 'text'
+          : presses
+            ? 'pointer'
             : over
               ? 'move'
               : carding && !state.dropTarget
@@ -471,10 +443,12 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
         core.aimDrop(gesture.loose.length ? point : undefined, gesture.ids, first?.parent);
         let dx = point[0] - gesture.origin[0];
         let dy = point[1] - gesture.origin[1];
-        // Its edges meet what they come near — unless a column places it, or ⌘ / Ctrl is held to put it anywhere.
+        // Its edges meet what they come near once it is dragged — a click moves nothing — unless a column places it,
+        // or ⌘ / Ctrl is held to put it anywhere.
         const { box } = gesture;
+        const dragged = Math.hypot(dx, dy) * state.camera.zoom >= CLICK_SLOP;
         const snap =
-          state.dropTarget?.line === undefined && !event.metaKey && !event.ctrlKey
+          dragged && state.dropTarget?.line === undefined && !event.metaKey && !event.ctrlKey
             ? snapBox({ ...box, x: box.x + dx, y: box.y + dy }, gesture.guides, SNAP_DISTANCE / state.camera.zoom)
             : undefined;
         dx += snap?.dx ?? 0;
@@ -633,6 +607,7 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
       case 'move': {
         const loose = new Set(ended.loose);
         const point = state.lastPointer;
+
         const moved = drafted
           .filter(element => {
             const original = scene.element(element.id);
@@ -817,13 +792,15 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
     }
 
     const point = toBoard(state.camera, ...screenOf(event));
-    // The press that began this double-click is writing an opened card's description already.
-    if (picking.descriptionAt(point)) {
+    // Inside a shape is inside it, filled or not: a click there lands on its outline only, a double-click labels it.
+    const hit = picking.topmostAt(point) ?? picking.shapeAround(point);
+    // A card opens to be written on, with the focus in the field double-clicked: its title or its description.
+    if (hit?.type === 'card') {
+      core.startEditing(hit, picking.cardFieldAt(hit, point));
+
       return;
     }
 
-    // Inside a shape is inside it, filled or not: a click there lands on its outline only, a double-click labels it.
-    const hit = picking.topmostAt(point) ?? picking.shapeAround(point);
     // Into a group: the member under the pointer, alone. A second double-click on a text in it edits the text.
     if (hit?.group && hit.group !== state.insideGroup) {
       state.insideGroup = hit.group;

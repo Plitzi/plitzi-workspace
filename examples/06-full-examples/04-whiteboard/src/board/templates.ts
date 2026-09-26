@@ -35,7 +35,7 @@ const kanban = (): BoardElement[] =>
     note(
       -640,
       -360,
-      'Drag cards between columns · click one to open it · tick the box when it is done · C, then a column, for a new card'
+      'Drag cards between columns · double-click one to write on it · tick the box when it is done · C, then a column, for a new card'
     ),
     ...column({ x: -640, y: -300, title: 'Backlog' }, [
       card('Research how teams plan today', { fill: 'violet' }),

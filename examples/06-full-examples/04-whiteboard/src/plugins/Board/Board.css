@@ -40,6 +40,30 @@
   z-index: 1;
 }
 
+/* A card being written on is a form of two fields over it: its title and its description, each in a well of its own
+   — drawn by a shadow, so the words sit exactly where the card draws them. */
+.board__card-editor {
+  display: contents;
+}
+
+.board__editor--field {
+  overflow-y: auto;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--board-muted) 10%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--board-muted) 10%, transparent);
+}
+
+.board__editor--field:focus {
+  background: color-mix(in srgb, var(--board-accent) 10%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--board-accent) 10%, transparent);
+}
+
+.board__editor--field::placeholder {
+  color: var(--board-muted);
+  font-style: italic;
+  opacity: 1;
+}
+
 /* The selection's tools: placed by the canvas, drawn by the space. Centred on the selection, above it or below. */
 .board__tools {
   position: absolute;

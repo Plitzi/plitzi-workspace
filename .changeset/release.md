@@ -897,7 +897,9 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
 - A server action announces what it did with the `realtime.publish` task (`ctx.publish` for a deployment's own task).
 - On the page: the `channel` element (source `channel_<id>`: `connected`, `me`, `members`, `messages`, `last`;
   `onMessage`, `onJoin`, `onLeave`; `publish`, `setPresence`), and `useChannel` for a plugin that moves at the speed
-  of a cursor. Authoring: `channel(...)`, `publishOn`, `announceOn`, and `channels` on the space.
+  of a cursor. `onJoin` is somebody who came after the page, once they announced who they are, and `onLeave` somebody
+  who went — both with `from`, `user` and the `state` they announced, so a flow says who (`useChannel`'s `onJoin` /
+  `onLeave`, `trackPresence`'s `onArrive` / `onDepart`). Authoring: `channel(...)`, `publishOn`, `announceOn`, and `channels` on the space.
 - A page is one connection and one member per topic, however many elements and plugins listen; a publish waits for
   the connection that includes its topic, so one made right after a navigation is not refused.
 - Two transports at the same address: Server-Sent Events plus a `POST` per publish (`sse`, the default), or one
@@ -930,6 +932,12 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   runs on several replicas over Redis (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, and a write
   lock in the action `kv` shared by all of them. See `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
+
+## `onPointerDown`: the press, before it is a click
+
+- Every element fires `onPointerDown` (authoring: `onPointerDown()`), beside `onClick`, `onHover` and the rest: the
+  press itself, where a drag away from the element starts — a tile taken to a canvas, a handle pulled. Let go where it
+  went down, it is a click too and `onClick` follows.
 
 ## A render reads what a call wrote
 

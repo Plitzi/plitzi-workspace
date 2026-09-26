@@ -1,10 +1,11 @@
 import { endsOf } from './connectors.ts';
-import { CARD_CHECK, CARD_TEXT_LEFT, DESCRIPTION_LINE, voteBadgeBox } from './draw.ts';
+import { CARD_CHECK, cardLayout, voteBadgeBox } from './draw.ts';
 import { beyondAnchor, boundsOf, handlePoint, HANDLES, hits, snapToAnchor, toScreen, unionOf } from './geometry.ts';
 import { ANCHORS, isConnectable, takesLabel } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
 import type { Handle } from './geometry.ts';
+import type { EditField } from './types.ts';
 import type { Binding, BoardElement, Point } from '../../board/model.ts';
 
 /**
@@ -62,22 +63,14 @@ export const createPicking = (core: Core) => {
       .find(element => hits(element, point, 6 / zoom())) ??
     shapeAround(point);
 
-  /** The opened card whose description a point is on: a press there writes it, for whoever can. */
-  const descriptionAt = (point: Point): BoardElement | undefined => {
-    const opened = core.editable() && selecting() ? core.openedCard() : undefined;
-    if (!opened || opened.element.locked) {
-      return undefined;
-    }
+  /**
+   * Which of a card's fields a point is on, as the card lies on the board: its description's line, or else its title —
+   * where a double-click puts the focus as it opens the card to be written on.
+   */
+  const cardFieldAt = (card: BoardElement, point: Point): EditField => {
+    const { descriptionTop, description } = cardLayout(core.context, card, state.palette, 'lying');
 
-    const { element, layout } = opened;
-    const area = {
-      x: element.x + CARD_TEXT_LEFT - 6,
-      y: element.y + layout.descriptionTop - 4,
-      width: element.width - CARD_TEXT_LEFT,
-      height: Math.max(1, layout.description.length) * DESCRIPTION_LINE + 8
-    };
-
-    return inside(point, area) ? element : undefined;
+    return description.length && point[1] >= card.y + descriptionTop - 4 ? 'description' : 'text';
   };
 
   /** The element whose vote badge is under a point — only elements with votes show one. */
@@ -190,7 +183,8 @@ export const createPicking = (core: Core) => {
 
   return {
     topmostAt,
-    descriptionAt,
+    cardFieldAt,
+    openedAt,
     checkAt,
     voteAt,
     shapeAround,

@@ -26,7 +26,7 @@ import type { Demo } from './demo.ts';
 import type { BoardElement, Fill, Stroke, StrokeWidth } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 import type { InteractionCallback, RealtimeMessage } from '@plitzi/plitzi-sdk';
-import type { ChangeEvent, CSSProperties, FormEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
+import type { ChangeEvent, CSSProperties, FocusEvent, FormEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 export type BoardProps = {
   /** Which board this is: a new id starts the canvas over, the same id merges what it is given. */
@@ -268,6 +268,9 @@ const Board = ({
           break;
         case 'history':
           trigger(declaration.triggers.onHistoryChange.action, { canUndo: event.canUndo, canRedo: event.canRedo });
+          break;
+        case 'carry':
+          trigger(declaration.triggers.onCarry.action, {});
           break;
         case 'frames':
           trigger(declaration.triggers.onFramesChange.action, { frames: event.frames, count: event.frames.length });
@@ -556,37 +559,58 @@ const Board = ({
   // ── The text being typed ───────────────────────────────────────────────────────────────────────────────────────
 
   const textRef = useRef<HTMLTextAreaElement>(null);
-  // A field of its own for each one written: a card's title and its description are two, one after the other.
-  const editingKey = editor ? `${editor.id}:${editor.field}` : undefined;
+  const describeRef = useRef<HTMLTextAreaElement>(null);
+  const editingId = editor?.id;
+  const focusField = editor?.focus;
   useEffect(() => {
-    const field = textRef.current;
+    const field = focusField === 'description' ? describeRef.current : textRef.current;
     // The canvas has put the field where the words are: nothing is scrolled to it, and typing goes on after them.
-    if (editingKey && field) {
+    if (editingId && field) {
       field.focus({ preventScroll: true });
       field.setSelectionRange(field.value.length, field.value.length);
     }
-  }, [editingKey]);
+  }, [editingId, focusField]);
 
   const onType = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
     controllerRef.current?.typeText(event.target.value);
   }, []);
 
-  const otherField = editor?.otherField;
-  const onTextKey = useCallback(
+  const onDescribe = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
+    controllerRef.current?.typeText(event.target.value, 'description');
+  }, []);
+
+  const onTextKey = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Escape and ⌘↵ are "done": everything else is the field's.
+    if (event.key === 'Escape' || (event.key === 'Enter' && (event.metaKey || event.ctrlKey))) {
+      event.preventDefault();
+      event.currentTarget.blur();
+    }
+  }, []);
+
+  // A card's title: Enter goes on to its description, as Tab does — a title is one line of words, not paragraphs.
+  const onTitleKey = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
-      // Escape and ⌘↵ are "done"; Tab is a card's other field: everything else is the field's.
-      if (event.key === 'Escape' || (event.key === 'Enter' && (event.metaKey || event.ctrlKey))) {
+      if (event.key === 'Enter' && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
         event.preventDefault();
-        textRef.current?.blur();
-      } else if (event.key === 'Tab' && otherField) {
-        event.preventDefault();
-        controllerRef.current?.editField(otherField);
+        describeRef.current?.focus();
+
+        return;
       }
+
+      onTextKey(event);
     },
-    [otherField]
+    [onTextKey]
   );
 
   const onTextDone = useCallback(() => controllerRef.current?.finishEditing(), []);
+
+  /** A card is written on until the focus leaves both its fields — from one to the other, it is still being written. */
+  const onCardLeave = useCallback((event: FocusEvent<HTMLDivElement>) => {
+    const next = event.relatedTarget;
+    if (!(next instanceof Node && event.currentTarget.contains(next))) {
+      controllerRef.current?.finishEditing();
+    }
+  }, []);
 
   // A comment's composer: Enter posts, ⇧Enter is a new line, Escape drops it — and leaving it keeps it waiting.
   const onComposerKey = useCallback((event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -665,6 +689,7 @@ const Board = ({
         top: editor.top,
         width: editor.width,
         minHeight: editor.minHeight,
+        maxHeight: editor.maxHeight,
         fontSize: editor.fontSize,
         fontFamily: editor.font,
         fontWeight: editor.weight,
@@ -676,6 +701,26 @@ const Board = ({
         whiteSpace: editor.wraps ? 'pre-wrap' : 'pre'
       },
     [editor]
+  );
+
+  const description = editor?.description;
+  const descriptionStyle = useMemo<CSSProperties | undefined>(
+    () =>
+      editor &&
+      description && {
+        left: description.left,
+        top: description.top,
+        width: description.width,
+        minHeight: description.minHeight,
+        maxHeight: description.maxHeight,
+        fontSize: description.fontSize,
+        fontFamily: editor.font,
+        lineHeight: description.lineHeight,
+        color: description.color,
+        padding: 0,
+        whiteSpace: 'pre-wrap'
+      },
+    [editor, description]
   );
 
   // Above the selection, centred on it — or below it when above would run off the top of the board.
@@ -721,9 +766,9 @@ const Board = ({
           </div>
         </div>
       )}
-      {editor && !editor.composer && editorStyle && (
+      {editor && !editor.composer && !description && editorStyle && (
         <textarea
-          key={editingKey}
+          key={editor.id}
           ref={textRef}
           className="board__editor"
           style={editorStyle}
@@ -733,6 +778,32 @@ const Board = ({
           onKeyDown={onTextKey}
           onBlur={onTextDone}
         />
+      )}
+      {editor && description && editorStyle && descriptionStyle && (
+        <div key={editor.id} className="board__card-editor" onBlur={onCardLeave}>
+          <textarea
+            ref={textRef}
+            className="board__editor board__editor--field"
+            style={editorStyle}
+            defaultValue={editor.text}
+            placeholder={editor.placeholder}
+            aria-label="Card title"
+            spellCheck={false}
+            onChange={onType}
+            onKeyDown={onTitleKey}
+          />
+          <textarea
+            ref={describeRef}
+            className="board__editor board__editor--field"
+            style={descriptionStyle}
+            defaultValue={description.text}
+            placeholder={description.placeholder}
+            aria-label="Card description"
+            spellCheck={false}
+            onChange={onDescribe}
+            onKeyDown={onTextKey}
+          />
+        </div>
       )}
       {chatStyle && (
         <input

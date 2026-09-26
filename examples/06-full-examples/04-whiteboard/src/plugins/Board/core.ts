@@ -1,5 +1,14 @@
-import { columnAt, frameAt, frameUnder, insertionAt, layoutColumn, membersOf as inFrame, moved } from './containers.ts';
-import { cardLayout, measureCard, measureText, STICKY_SIZE } from './draw.ts';
+import {
+  COLUMN_PADDING,
+  columnAt,
+  frameAt,
+  frameUnder,
+  insertionAt,
+  layoutColumn,
+  membersOf as inFrame,
+  moved
+} from './containers.ts';
+import { cardLayout, COMMENT_PIN, fontSizeOf, measureCard, measureText, STICKY_SIZE } from './draw.ts';
 import { editorFor } from './editor.ts';
 import { boundsOf, clampZoom, fitCamera, movedBy, resolveConnector, shiftOf, unionOf } from './geometry.ts';
 import { readPalette } from './palette.ts';
@@ -46,6 +55,9 @@ import type { Collaborator } from '../../board/people.ts';
  * The pointer, the renderer, the carried sticky and the page's API are each their own module over this one. Mutable
  * state lives in `state`, read where it is used, so no module keeps a stale copy of another's.
  */
+
+/** A comment's pin: the same size wherever it is put. */
+export const COMMENT_PIN_BOX = { width: COMMENT_PIN, height: COMMENT_PIN };
 
 export const DEFAULT_BOX: Record<'sticky' | 'shape' | 'frame' | 'column', { width: number; height: number }> = {
   sticky: { width: STICKY_SIZE, height: STICKY_SIZE },
@@ -111,7 +123,7 @@ export type CoreState = {
   boardId: string | undefined;
   gesture: Gesture | undefined;
   pinch: Pinch | undefined;
-  /** The element being typed into, and which of its fields. */
+  /** The element being typed into, and the field the focus went to as it opened — a card has two. */
   editing: string | undefined;
   editingField: EditField;
   spaceHeld: boolean;
@@ -416,20 +428,18 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   const resizable = (): BoardElement[] => changeable().filter(element => element.type !== 'card');
 
   /**
-   * The card opened right now — the one selected alone, or being written on — drawn whole over what lies under it,
-   * and taken by a press anywhere on it. Not while something is moved: it opens again where it is put.
+   * The card opened right now, drawn whole over what lies under it and taken by a press anywhere on it: the one being
+   * written on — its editor is a form of two fields, and opening it is what editing it looks like — or, on a board that
+   * is only looked at, the one pointed at, for its description to be read.
    */
   const openedCard = (): { element: BoardElement; layout: CardLayout; box: Box } | undefined => {
-    const id = state.editing ?? (selection.size === 1 ? [...selection][0] : undefined);
+    const id = state.editing ?? (editable() ? undefined : state.pointed);
     const element = id === undefined ? undefined : current().get(id);
-    if (element?.type !== 'card' || state.gesture?.kind === 'move') {
+    if (element?.type !== 'card' || (!state.editing && !element.description)) {
       return undefined;
     }
 
-    const layout = cardLayout(context, element, state.palette, {
-      opened: true,
-      invite: editable() && element.locked !== true
-    });
+    const layout = cardLayout(context, element, state.palette, state.editing === id ? 'writing' : 'opened');
 
     return { element, layout, box: { ...boundsOf(element), height: Math.max(element.height, layout.height) } };
   };
@@ -873,18 +883,6 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     invalidate();
   };
 
-  /** A card's other field, from its title to its description or back: what was typed in either waits in the draft. */
-  const switchField = (field: EditField): void => {
-    const element = state.editing ? draft.get(state.editing) : undefined;
-    if (element?.type !== 'card' || field === state.editingField) {
-      return;
-    }
-
-    state.editingField = field;
-    reportEditor();
-    invalidate();
-  };
-
   /** What is being typed, dropped: a new element never made, an edited one as it was. */
   const cancelEditing = (): void => {
     const id = state.editing;
@@ -972,6 +970,39 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     setSelection([id]);
   };
 
+  // ── Making one where it is put ──────────────────────────────────────────────────────────────────────────────────
+
+  /** A card made in `column` at `point` — as wide as the column, in the gap there — and written on at once. */
+  const addCard = (column: BoardElement, point: Point): void => {
+    const made = measured({
+      ...newElement('card', point),
+      width: column.width - COLUMN_PADDING * 2,
+      parent: column.id
+    });
+    // Its middle at the point: the column puts it in the gap there.
+    const card = { ...made, x: column.x + COLUMN_PADDING, y: point[1] - made.height / 2 };
+    commit([card]);
+    sounds.play('place');
+    setSelection([card.id]);
+    switchTool('select');
+    startEditing(scene.element(card.id) ?? card);
+  };
+
+  /** A text begun at `point`, placed so the point lands inside its first line rather than on its top edge. */
+  const startText = (point: Point): void => {
+    const element = newElement('text', point);
+    setSelection([]);
+    startEditing({ ...element, y: element.y - fontSizeOf(element) * 0.6 });
+    switchTool('select');
+  };
+
+  /** A comment begun, pinned by its tail: the bottom-left of the pin is `point`, what the comment is about. */
+  const startComment = (point: Point): void => {
+    setSelection([]);
+    startEditing({ ...newElement('comment', [point[0], point[1] - COMMENT_PIN]), ...COMMENT_PIN_BOX });
+    switchTool('select');
+  };
+
   return {
     canvas,
     host,
@@ -1026,8 +1057,10 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     aimCard,
     frameContains,
     startEditing,
-    switchField,
     finishEditing,
+    addCard,
+    startText,
+    startComment,
     cancelEditing
   };
 };

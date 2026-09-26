@@ -4,13 +4,15 @@
 button({
   id: 'cta',
   content: 'Get a quote',
-  flows: [[
-    onClick(),
-    named('quote', runServerAction({ actionId: 'shipping-quote', input: { city: 'Berlin' }, mode: 'await' })),
-    whenSucceeded('quote', setState({ key: 'quote', type: 'text', value: '{{ quote.output.summary }}' })),
-    whenFailed('quote', addNotification({ content: 'Could not reach the courier', appearance: 'danger' }))
-  ]]
-})
+  flows: [
+    [
+      onClick(),
+      named('quote', runServerAction({ actionId: 'shipping-quote', input: { city: 'Berlin' }, mode: 'await' })),
+      whenSucceeded('quote', setState({ key: 'quote', type: 'text', value: '{{ quote.output.summary }}' })),
+      whenFailed('quote', addNotification({ content: 'Could not reach the courier', appearance: 'danger' }))
+    ]
+  ]
+});
 ```
 
 A flow is a list: a trigger, then steps in order. "Only if" is on the step (`when`, `whenSucceeded`, `whenFailed`),
@@ -22,7 +24,7 @@ never a nested tree. Use the step builders — they fill in where a step runs an
 - **Which `setState`.** `setState({ key })` writes `runtime.state.<key>` and is read as `state.<key>`; never put
   `state.` in the key. `updateElement(…)` changes one element's own attribute or state.
 - **Flip in one step.** `toggleState({ key })` for app state, `toggleElement({ category: 'state', key: 'visibility' },
-  'panel')` to show/hide an element. Never two branches under opposite `when` guards — the second reads what the
+'panel')` to show/hide an element. Never two branches under opposite `when` guards — the second reads what the
   first just wrote and flips it back. A key never set toggles to `true`, so for something shown by default name the
   key for hiding it (`sidebarCollapsed`).
 - **A trigger fired again while its flow runs is IGNORED** (`skip`, the default — no double submit). For a stream of
@@ -39,15 +41,15 @@ never a nested tree. Use the step builders — they fill in where a step runs an
 
 Name the trigger (`named('changed', onChange())`) and read its payload as `{{ changed.<field> }}`:
 
-| Trigger | Payload |
-| --- | --- |
-| `onChange` (formControl) | `value` (a boolean for a checkbox), `name` |
-| `onSubmit` (form) | `values` (by control `name`), `actionUrl`, `method` |
-| `onPageLoad` (page) | `pageId`, `routeParams`, `queryParams` |
-| `onApiSuccess` / `onApiError` (apiContainer) | `url`, `method`, `status`, `data` |
+| Trigger                                                                                                | Payload                                                 |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `onChange` (formControl)                                                                               | `value` (a boolean for a checkbox), `name`              |
+| `onSubmit` (form)                                                                                      | `values` (by control `name`), `actionUrl`, `method`     |
+| `onPageLoad` (page)                                                                                    | `pageId`, `routeParams`, `queryParams`                  |
+| `onApiSuccess` / `onApiError` (apiContainer)                                                           | `url`, `method`, `status`, `data`                       |
 | `onModalOpen` / `onModalClose`, `onDialogOpen` / `onDialogClose` / `onDialogAccept` / `onDialogReject` | `metadata` — what `openModal` / `openDialog` was handed |
-| `onPageChange` (pagination) | `page` |
-| `onThemeChange` (themeToggle) | `theme` |
+| `onPageChange` (pagination)                                                                            | `page`                                                  |
+| `onThemeChange` (themeToggle)                                                                          | `theme`                                                 |
 
 ## Reading what came before
 
@@ -73,7 +75,8 @@ everything. Say what it should refresh — `invalidateQueries: 'elements', inval
 
 ## Triggers belong to the element that fires them
 
-Every element fires `onClick`, `onLoad`, `onHover`, `onMouseEnter`/`onMouseLeave`, `onFocus`/`onBlur` and the ends of a
+Every element fires `onClick`, `onPointerDown` (the press, before it is a click — where a drag away from it starts),
+`onLoad`, `onHover`, `onMouseEnter`/`onMouseLeave`, `onFocus`/`onBlur` and the ends of a
 server action it started (`onFlowEnd`, `onFlowError`, `onFlowProgress`). A `page` fires `onPageLoad`, a `form`
 `onSubmit`, a `formControl` `onChange`, an `apiContainer` `onApiSuccess`/`onApiError` (each answer, either runtime,
 each refresh), a `modalContainer` `onModalOpen`/`onModalClose`, a `pagination` `onPageChange`. A flow on an element
@@ -93,9 +96,14 @@ where it is written.
 form({
   id: 'signup',
   managedByInteractions: true,
-  flows: [[named('submitted', onSubmit()), setState({ key: 'email', type: 'text', value: '{{ submitted.values.email }}' })]],
-  children: [formControl({ id: 'email', name: 'email', label: 'Email', subType: 'email' }), button({ content: 'Sign up', subType: 'submit' })]
-})
+  flows: [
+    [named('submitted', onSubmit()), setState({ key: 'email', type: 'text', value: '{{ submitted.values.email }}' })]
+  ],
+  children: [
+    formControl({ id: 'email', name: 'email', label: 'Email', subType: 'email' }),
+    button({ content: 'Sign up', subType: 'submit' })
+  ]
+});
 ```
 
 A `formControl` is `required` by default: an optional field says `required: false`, or an empty one stops the submit
@@ -131,7 +139,8 @@ channel({ id: 'room', topic: 'room:{{ id }}', keep: 0, bind: { presence: 'comput
 ```
 
 Its descendants bind `room.members`, `room.connected`, `room.last`; flows use `on('onMessage')` (`type`, `data`,
-`from`), `onJoin`/`onLeave`, `publishOn('room', 'reaction', data)` and `announceOn('room', state)`. State everyone must
+`from`), `onJoin`/`onLeave` (`from`, `user` and the `state` the member announced — `onJoin` only for who came after
+this page), `publishOn('room', 'reaction', data)` and `announceOn('room', state)`. State everyone must
 agree on goes through a server action whose last step is `realtime.publish` — validated and saved first, announced
 after. `docs/en/realtime.md` is the whole of it.
 

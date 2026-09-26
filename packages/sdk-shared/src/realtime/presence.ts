@@ -23,12 +23,23 @@ export type PresenceTracker = {
   stop: () => void;
 };
 
-type Listeners = { onChange: (members: RealtimeMember[]) => void; onMessage?: (message: RealtimeMessage) => void };
+/** What a tracker is told: who is here, every message on the topic, and who came and went. */
+export type PresenceListeners = {
+  onChange: (members: RealtimeMember[]) => void;
+  onMessage?: (message: RealtimeMessage) => void;
+  /**
+   * Somebody who joined after this page, once they have said who they are — their first `$presence`. Those already
+   * here when this page came are not arrivals: they answer its `$join` with theirs, and it is they who were here first.
+   */
+  onArrive?: (member: RealtimeMember) => void;
+  /** Somebody who was here went — the server said so, or they stopped being heard — as they last said they were. */
+  onDepart?: (member: RealtimeMember) => void;
+};
 
 type SharedPresence = {
   members: () => RealtimeMember[];
   set: (state: unknown) => void;
-  listeners: Set<Listeners>;
+  listeners: Set<PresenceListeners>;
   teardown: () => void;
 };
 
@@ -42,7 +53,9 @@ const registry = new WeakMap<RealtimeClient, Map<string, SharedPresence>>();
 
 const createShared = (client: RealtimeClient, topic: string, release: () => void): SharedPresence => {
   const others = new Map<string, { member: RealtimeMember; heardAt: number }>();
-  const listeners = new Set<Listeners>();
+  /** Who joined after this page and has not yet said who they are. */
+  const joining = new Set<string>();
+  const listeners = new Set<PresenceListeners>();
   let own: unknown;
   let announced = false;
 
@@ -53,6 +66,24 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
   const changed = (): void => {
     const current = members();
     listeners.forEach(listener => listener.onChange(current));
+  };
+
+  /** Members gone — said to have left, or unheard for too long — told to whoever listens, as they last were. */
+  const depart = (gone: readonly string[]): void => {
+    const departed = gone.flatMap(from => {
+      const entry = others.get(from);
+      others.delete(from);
+
+      return entry ? [entry.member] : [];
+    });
+    if (!departed.length) {
+      return;
+    }
+
+    changed();
+    for (const member of departed) {
+      listeners.forEach(listener => listener.onDepart?.(member));
+    }
   };
 
   const announce = (): void => {
@@ -69,16 +100,23 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
     }
 
     if (message.type === PRESENCE_TYPE) {
-      others.set(message.from, {
-        member: { from: message.from, ...(message.user ? { user: message.user } : {}), state: message.data, me: false },
-        heardAt: Date.now()
-      });
+      const member = {
+        from: message.from,
+        ...(message.user ? { user: message.user } : {}),
+        state: message.data,
+        me: false
+      };
+      const arrived = !others.has(message.from) && joining.delete(message.from);
+      others.set(message.from, { member, heardAt: Date.now() });
       changed();
-    } else if (message.type === LEAVE_TYPE) {
-      if (others.delete(message.from)) {
-        changed();
+      if (arrived) {
+        listeners.forEach(listener => listener.onArrive?.(member));
       }
+    } else if (message.type === LEAVE_TYPE) {
+      joining.delete(message.from);
+      depart([message.from]);
     } else if (message.type === JOIN_TYPE) {
+      joining.add(message.from);
       announce();
     }
 
@@ -96,17 +134,7 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
   const heartbeat = setInterval(() => {
     announce();
     const now = Date.now();
-    let expired = false;
-    for (const [from, entry] of others) {
-      if (now - entry.heardAt > EXPIRE_MS) {
-        others.delete(from);
-        expired = true;
-      }
-    }
-
-    if (expired) {
-      changed();
-    }
+    depart([...others].filter(([, entry]) => now - entry.heardAt > EXPIRE_MS).map(([from]) => from));
   }, HEARTBEAT_MS);
 
   return {
@@ -137,22 +165,16 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
  * Every tracker of one topic on one client is a view of the same member: `set` from any of them is the page's state,
  * and a tracker started late begins with everyone already known.
  */
-export const trackPresence = (
-  client: RealtimeClient,
-  topic: string,
-  onChange: (members: RealtimeMember[]) => void,
-  onMessage?: (message: RealtimeMessage) => void
-): PresenceTracker => {
+export const trackPresence = (client: RealtimeClient, topic: string, listener: PresenceListeners): PresenceTracker => {
   const topics = registry.get(client) ?? new Map<string, SharedPresence>();
   registry.set(client, topics);
   const shared = topics.get(topic) ?? createShared(client, topic, () => topics.delete(topic));
   topics.set(topic, shared);
 
-  const listener: Listeners = { onChange, ...(onMessage ? { onMessage } : {}) };
   shared.listeners.add(listener);
   const known = shared.members();
   if (known.length) {
-    onChange(known);
+    listener.onChange(known);
   }
 
   return {

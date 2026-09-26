@@ -9,7 +9,6 @@ import { FONT_SIZES, LINE_HEIGHT, takesLabel } from '../../board/model.ts';
 import type { Box, Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';
 import type { GuideLine } from './snapping.ts';
-import type { EditField } from './types.ts';
 import type { BoardElement, Point } from '../../board/model.ts';
 import type { RoughCanvas } from 'roughjs/bin/canvas';
 import type { Drawable, Options } from 'roughjs/bin/core';
@@ -49,11 +48,30 @@ export const DESCRIPTION_FONT = 14;
 
 export const DESCRIPTION_LINE = 20;
 
-/** Between a card's title and its description. */
-const DESCRIPTION_GAP = 6;
+/** How a card is shown: lying in its column, opened to be read, or opened to be written on. */
+export type CardView = 'lying' | 'opened' | 'writing';
 
-/** What an opened card with no description shows where one would go, to whoever can write it. */
-const DESCRIPTION_INVITE = 'Add a description…';
+/**
+ * The most lines of its title and its description a card shows, by how it is shown. Past them the words end in an
+ * ellipsis — or, being written on, the field scrolls: a title pasted as a page or a long description never makes a
+ * card taller than a screen.
+ */
+export const CARD_LINES: Record<CardView, { title: number; description: number }> = {
+  lying: { title: 3, description: 1 },
+  opened: { title: 6, description: 12 },
+  writing: { title: 4, description: 10 }
+};
+
+/** Between a card's title and its description — wider being written on, where each is a field of its own. */
+const DESCRIPTION_GAP: Record<CardView, number> = { lying: 6, opened: 6, writing: 16 };
+
+/** What a card's fields show while they hold nothing, as it is written on. */
+export const TITLE_INVITE = 'Add a title…';
+
+export const DESCRIPTION_INVITE = 'Add a description…';
+
+/** A card nobody titled, as it lies on the board. */
+const UNTITLED = 'Untitled';
 
 /** Where a card's done box is, in its own coordinates: what a click on it ticks. */
 export const CARD_CHECK = { x: 14, y: 14, size: 18 };
@@ -287,9 +305,9 @@ const drawFrame = (
 };
 
 /**
- * Where everything on a card goes: its title wrapped at its width; then its description — its first line, cut short,
- * on a card lying in its column, all of it on one opened; then who wrote it. What draws a card, measures it and places
- * the field that writes on it all read this, so none of them can disagree about where a line is.
+ * Where everything on a card goes: its title wrapped at its width, then its description, then who wrote it — as many
+ * lines of each as the way it is shown allows (`CARD_LINES`). What draws a card, measures it and places the fields
+ * that write on it all read this, so none of them can disagree about where a line is.
  */
 export type CardLayout = {
   title: string[];
@@ -297,8 +315,6 @@ export type CardLayout = {
   /** The description's lines as shown — none when there is nothing to show — and where the first one starts. */
   description: string[];
   descriptionTop: number;
-  /** What shows is the invitation to write a description, not one. */
-  invite: boolean;
   height: number;
 };
 
@@ -306,27 +322,28 @@ export const cardLayout = (
   context: CanvasRenderingContext2D,
   element: BoardElement,
   palette: Palette,
-  { opened = false, invite = false }: { opened?: boolean; invite?: boolean } = {}
+  view: CardView = 'lying'
 ): CardLayout => {
-  const { lines: title, lineHeight } = layoutText(context, element, palette);
-  const words = Math.max(1, title.length) * lineHeight;
   const width = element.width - CARD_TEXT_LEFT - CARD_PADDING;
+  const most = CARD_LINES[view];
+  const { lines, lineHeight } = layoutText(context, element, palette);
+  const title = clampLines(context, lines, most.title, width, view !== 'writing');
+  const words = Math.max(1, title.length) * lineHeight;
   context.font = `${DESCRIPTION_FONT}px ${palette.ui}`;
   const written = element.description?.trim() ? wrapLines(context, element.description, width) : [];
-  const inviting = opened && invite && !written.length;
-  const description = inviting
-    ? [DESCRIPTION_INVITE]
-    : opened || !written.length
-      ? written
-      : [firstLineOf(context, written, width)];
-  const rows = description.length ? DESCRIPTION_GAP + description.length * DESCRIPTION_LINE : 0;
+  // Being written on, an empty description is a field still: it takes its line.
+  const description =
+    view === 'writing' && !written.length
+      ? ['']
+      : clampLines(context, written, most.description, width, view !== 'writing');
+  const gap = DESCRIPTION_GAP[view];
+  const rows = description.length ? gap + description.length * DESCRIPTION_LINE : 0;
 
   return {
     title,
     lineHeight,
     description,
-    descriptionTop: CARD_PADDING + words + DESCRIPTION_GAP,
-    invite: inviting,
+    descriptionTop: CARD_PADDING + words + gap,
     height: Math.max(
       CARD_CHECK.size + CARD_PADDING * 2,
       CARD_PADDING * 2 + words + rows + (element.author ? CARD_AUTHOR_ROW : 0)
@@ -334,32 +351,40 @@ export const cardLayout = (
   };
 };
 
-/** The first of some lines, with an ellipsis when there is more after it — cut back until the ellipsis fits too. */
-const firstLineOf = (context: CanvasRenderingContext2D, lines: readonly string[], width: number): string => {
-  const [first] = lines;
-  if (lines.length === 1) {
-    return first;
+/**
+ * At most `max` of some lines. Past them, the last one shown ends in an ellipsis — cut back until it fits too — unless
+ * they are only counted: under the fields of a card being written on, which scroll instead.
+ */
+const clampLines = (
+  context: CanvasRenderingContext2D,
+  lines: readonly string[],
+  max: number,
+  width: number,
+  ellipsis: boolean
+): string[] => {
+  if (lines.length <= max || !ellipsis) {
+    return lines.slice(0, max);
   }
 
-  let cut = first;
+  let cut = lines[max - 1];
   while (cut && context.measureText(`${cut}…`).width > width) {
     cut = cut.slice(0, -1);
   }
 
-  return `${cut.trimEnd()}…`;
+  return [...lines.slice(0, max - 1), `${cut.trimEnd()}…`];
 };
 
 /**
  * A card: printed, with a strip in its colour, a box that ticks it done, its title, its description and who wrote it.
- * Opened, it is drawn raised over what lies under it, as tall as all it says. `writing` is the field being typed into,
- * which the field over it shows instead.
+ * Opened, it is drawn raised over what lies under it, as tall as all it says. Being written on, it is outlined in the
+ * accent and its words are left to the fields over it.
  */
 const drawCard = (
   context: CanvasRenderingContext2D,
   element: BoardElement,
   palette: Palette,
   layout: CardLayout,
-  { height, opened, writing, authors }: { height: number; opened: boolean; writing?: EditField; authors: boolean }
+  { height, opened, writing, authors }: { height: number; opened: boolean; writing: boolean; authors: boolean }
 ): void => {
   const { width } = element;
   context.save();
@@ -382,6 +407,14 @@ const drawCard = (
     context.restore();
   }
 
+  if (opened && writing) {
+    context.beginPath();
+    context.roundRect(0, 0, width, height, 10);
+    context.strokeStyle = palette.accent;
+    context.lineWidth = 2;
+    context.stroke();
+  }
+
   const { x, y, size } = CARD_CHECK;
   context.beginPath();
   context.roundRect(x, y, size, size, 5);
@@ -402,7 +435,11 @@ const drawCard = (
   }
 
   context.textBaseline = 'top';
-  if (writing !== 'text') {
+  if (!writing && !element.text?.trim()) {
+    context.font = `italic ${CARD_FONT}px ${palette.ui}`;
+    context.fillStyle = palette.muted;
+    context.fillText(UNTITLED, CARD_TEXT_LEFT, CARD_PADDING + (layout.lineHeight - CARD_FONT) / 2);
+  } else if (!writing) {
     const { title, lineHeight } = layout;
     context.font = `${CARD_FONT}px ${palette.ui}`;
     context.fillStyle = element.done ? palette.muted : palette.stroke.ink;
@@ -416,8 +453,8 @@ const drawCard = (
     });
   }
 
-  if (writing !== 'description') {
-    context.font = `${layout.invite ? 'italic ' : ''}${DESCRIPTION_FONT}px ${palette.ui}`;
+  if (!writing) {
+    context.font = `${DESCRIPTION_FONT}px ${palette.ui}`;
     context.fillStyle = palette.muted;
     layout.description.forEach((line, index) => {
       const top = layout.descriptionTop + index * DESCRIPTION_LINE + (DESCRIPTION_LINE - DESCRIPTION_FONT) / 2;
@@ -632,7 +669,7 @@ export const measureText = (
 
 /** A card's height as it lies in its column: its title, wrapped, a line of its description and who wrote it. */
 export const measureCard = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): number =>
-  cardLayout(context, element, palette).height;
+  cardLayout(context, element, palette, 'lying').height;
 
 /** How much a hand shows, as rough.js's roughness: the artist's is the default, a little more than rough's own. */
 const ROUGHNESS: Record<'architect' | 'artist' | 'cartoonist', number> = { architect: 0, artist: 1.1, cartoonist: 2.2 };
@@ -984,10 +1021,10 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     }
 
     if (element.type === 'card') {
-      drawCard(context, element, palette, cardLayout(context, element, palette), {
+      drawCard(context, element, palette, cardLayout(context, element, palette, 'lying'), {
         height: element.height,
         opened: false,
-        ...(hideText ? { writing: 'text' } : {}),
+        writing: hideText,
         authors
       });
     }
@@ -1055,15 +1092,12 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     element: BoardElement,
     palette: Palette,
     {
-      writing,
-      authors = true,
-      invite = false
+      writing = false,
+      authors = true
     }: {
-      /** The field being typed into, which the field over it shows instead. */
-      writing?: EditField;
+      /** Its words are being typed: the fields over it show them instead. */
+      writing?: boolean;
       authors?: boolean;
-      /** Where a card's description would go is offered to be written: this person can. */
-      invite?: boolean;
     } = {}
   ): void => {
     context.save();
@@ -1071,15 +1105,15 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     context.globalAlpha = (element.opacity ?? 100) / 100;
     if (element.type === 'comment') {
       const { lines, lineHeight } = layoutText(context, element, palette);
-      drawCommentBubble(context, element, palette, lines, lineHeight, writing !== undefined);
+      drawCommentBubble(context, element, palette, lines, lineHeight, writing);
     }
 
     if (element.type === 'card') {
-      const layout = cardLayout(context, element, palette, { opened: true, invite });
+      const layout = cardLayout(context, element, palette, writing ? 'writing' : 'opened');
       drawCard(context, element, palette, layout, {
         height: Math.max(element.height, layout.height),
         opened: true,
-        ...(writing ? { writing } : {}),
+        writing,
         authors
       });
     }

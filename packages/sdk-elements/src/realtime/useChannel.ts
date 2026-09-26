@@ -11,6 +11,10 @@ export type UseChannelOptions = {
   presence?: unknown;
   /** Each message, as it arrives. Read through a ref: a new function each render does not reconnect anything. */
   onMessage?: (message: RealtimeMessage) => void;
+  /** Somebody who came after this page, once they said who they are — read through a ref, as `onMessage` is. */
+  onJoin?: (member: RealtimeMember) => void;
+  /** Somebody who went, as they last said they were. */
+  onLeave?: (member: RealtimeMember) => void;
 };
 
 export type ChannelHandle = {
@@ -30,7 +34,10 @@ export type ChannelHandle = {
  * re-render the component sixty times a second. Closed — no connection, no members — where the page has no server to
  * connect to (the builder, an embed), and on the server.
  */
-const useChannel = (topic: string | undefined, { presence, onMessage }: UseChannelOptions = {}): ChannelHandle => {
+const useChannel = (
+  topic: string | undefined,
+  { presence, onMessage, onJoin, onLeave }: UseChannelOptions = {}
+): ChannelHandle => {
   const [endpoint] = useCommonStore('realtime.endpoint');
   const [transport] = useCommonStore('realtime.transport');
   const client = useMemo(
@@ -40,9 +47,9 @@ const useChannel = (topic: string | undefined, { presence, onMessage }: UseChann
   const [connected, setConnected] = useState(false);
   const [members, setMembers] = useState<RealtimeMember[]>([]);
   const tracker = useRef<PresenceTracker | undefined>(undefined);
-  const listener = useRef(onMessage);
+  const listeners = useRef({ onMessage, onJoin, onLeave });
   useEffect(() => {
-    listener.current = onMessage;
+    listeners.current = { onMessage, onJoin, onLeave };
   });
 
   useEffect(() => {
@@ -50,7 +57,12 @@ const useChannel = (topic: string | undefined, { presence, onMessage }: UseChann
       return undefined;
     }
 
-    const current = trackPresence(client, topic, setMembers, message => listener.current?.(message));
+    const current = trackPresence(client, topic, {
+      onChange: setMembers,
+      onMessage: message => listeners.current.onMessage?.(message),
+      onArrive: member => listeners.current.onJoin?.(member),
+      onDepart: member => listeners.current.onLeave?.(member)
+    });
     tracker.current = current;
     setConnected(client.status === 'open');
     const stopStatus = client.onStatus(status => setConnected(status === 'open'));

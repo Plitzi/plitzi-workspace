@@ -15,6 +15,17 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
+  /**
+   * The press itself, before it is a click: where something dragged away from the element starts — a tile taken to a
+   * canvas, a handle pulled. Let go where it went down, it is a click as well, and `onClick` fires after it.
+   */
+  onPointerDown: {
+    action: 'onPointerDown',
+    title: 'On Pointer Down',
+    type: 'trigger',
+    preview: { propagateEvent: '' },
+    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
+  },
   onMouseEnter: {
     action: 'onMouseEnter',
     title: 'On Mouse Enter',
@@ -107,4 +118,12 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
   }
 };
 
-export const nativeEventsList = ['onClick', 'onHover', 'onFocus', 'onBlur', 'onMouseEnter', 'onMouseLeave'];
+export const nativeEventsList = [
+  'onClick',
+  'onPointerDown',
+  'onHover',
+  'onFocus',
+  'onBlur',
+  'onMouseEnter',
+  'onMouseLeave'
+];

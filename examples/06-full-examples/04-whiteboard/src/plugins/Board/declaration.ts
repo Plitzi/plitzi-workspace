@@ -99,6 +99,8 @@ const declaration = {
       params: {},
       preview: { canUndo: '', canRedo: '' }
     },
+    /** Something carried to the board started to move: what is open over the board makes way for where it goes. */
+    onCarry: { action: 'onCarry', title: 'On Carry', type: 'trigger', params: {}, preview: {} },
     onFramesChange: {
       action: 'onFramesChange',
       title: 'On Frames Change',
@@ -222,13 +224,20 @@ const declaration = {
      * gone from this screen, as it never reached any other.
      */
     rollback: callback('rollback', 'Roll Back Unconfirmed'),
-    /** A sticky taken off a pad: it follows the pointer until it is put down on the board. */
+    /**
+     * Something taken to the board — a sticky off a pad, a pile (`kind: 'stack'`), any element that one tool puts down
+     * (`tool`) — that follows the pointer until it is put down. `drag`: taken by a press that may be a click, carried
+     * only if it is dragged.
+     */
     carry: {
       action: 'carry',
-      title: 'Carry A Sticky',
+      title: 'Carry To The Board',
       type: 'callback',
       params: {
-        fill: { label: 'Paper (yellow | red | orange | green | blue | violet)', defaultValue: 'yellow', type: 'text' }
+        tool: { label: 'Tool (sticky, rectangle, text, card, column…)', defaultValue: 'sticky', type: 'text' },
+        fill: { label: 'Paper (yellow | red | orange | green | blue | violet)', defaultValue: 'yellow', type: 'text' },
+        kind: { label: 'Kind (stack: a pile of notes)', defaultValue: '', type: 'text' },
+        drag: { label: 'Only when dragged', defaultValue: false, type: 'boolean' }
       }
     },
     /** Show what a member of the room shows, and keep showing it until this person touches the board. */

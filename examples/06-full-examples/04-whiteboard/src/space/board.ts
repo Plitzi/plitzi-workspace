@@ -55,7 +55,7 @@ import { agentButtonFor, agentPanel } from './invite.ts';
 import { keysHelp, shortcuts } from './keys.ts';
 import { BUTTON_RESET, FLOAT, divide, icon, iconAction } from './kit.ts';
 import { libraryPanel } from './library.ts';
-import { popoverBackdrop } from './panels.ts';
+import { closePanels, popoverBackdrop } from './panels.ts';
 import { popovers, presence } from './people.ts';
 import { reachBadges } from './reach.ts';
 import { readOnlyBanner } from './readOnly.ts';
@@ -69,7 +69,7 @@ import { bottomTray, followBanner, reactionPicker, stampPicker } from './tray.ts
 import declaration from '../plugins/Board/declaration.ts';
 
 import type { BoardAttributes } from '../plugins/Board/declaration.ts';
-import type { ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
+import type { ElementSpec, PageSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 /**
  * One board: `/b/{id}`.
@@ -85,6 +85,10 @@ const boardCanvas = defineElement<BoardAttributes>(declaration);
 export const BOARD_DECLARATION = declaration;
 
 const PROVIDER = `apiContainer_${BOARD_PROVIDER}`;
+
+/** A member arriving or leaving, told for a moment at the foot of the board. */
+const cameOrWent = (content: string): StepSpec =>
+  addNotification({ content, appearance: 'info', placement: 'bottom-center', autoDismissTimeout: 3000 });
 
 /** The flows' name for the board being shown: the provider's answer, so it is the board that was actually loaded. */
 const THIS_BOARD = `{{ ${PROVIDER}.id }}`;
@@ -505,6 +509,8 @@ const canvas = (): ElementSpec =>
         setState({ key: 'canUndo', type: 'boolean', value: '{{ history.canUndo }}' }),
         setState({ key: 'canRedo', type: 'boolean', value: '{{ history.canRedo }}' })
       ],
+      // Something carried to the board — off the library, off the pad — is under way: what is open makes way for it.
+      [declaredTrigger(declaration, 'onCarry'), ...closePanels],
       [
         named('framed', declaredTrigger(declaration, 'onFramesChange')),
         setState({ key: 'frames', type: 'json', value: '{{ framed.frames|json_encode }}' })
@@ -760,6 +766,11 @@ export const boardPage: PageSpec = {
           // Who this page is to the others: its name and colour, announced again whenever either changes. Its topic is
           // the board's — with, for a locked one, the secret opening it answered: before that, there is none to open.
           bind: [{ to: 'presence', source: 'computed.me' }, bindTemplate('topic', BOARD_PROVIDER, TOPIC('room'))],
+          // Somebody coming or going is said, by the name they announced — the canvas chimes, this says who.
+          flows: [
+            [named('arrived', on('onJoin')), cameOrWent('{{ arrived.state.name ?? "Someone" }} joined the board')],
+            [named('departed', on('onLeave')), cameOrWent('{{ departed.state.name ?? "Someone" }} left the board')]
+          ],
           children: [
             container({
               id: 'workspace',

@@ -22,7 +22,7 @@ import { byStacking, fitsInFrame, isLinear, isTask, parseElement } from '../../b
 import { isReaction, isStamp, STAMP_SIZE } from '../../board/reactions.ts';
 
 import type { StyleChoice } from './styling.ts';
-import type { ControllerEvent, ControllerProps, FrameEntry } from './types.ts';
+import type { ControllerEvent, ControllerProps, EditField, FrameEntry } from './types.ts';
 import type { BoardElement, Point } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 
@@ -543,13 +543,13 @@ export const createBoardController = (
     },
 
     /**
-     * What is being typed, as it is typed — shown by the field, and sent to the room as a draft. An opened card is drawn
-     * around it, as tall as its description is so far.
+     * What is being typed into `field`, as it is typed — shown by the field, and sent to the room as a draft. A card
+     * being written on is drawn around its two fields, as tall as its description is so far.
      */
-    typeText: (text: string): void => {
+    typeText: (text: string, field: EditField = 'text'): void => {
       const element = state.editing ? draft.get(state.editing) : undefined;
       if (element) {
-        const typed = state.editingField === 'description' ? { ...element, description: text } : { ...element, text };
+        const typed = field === 'description' ? { ...element, description: text } : { ...element, text };
         draft.set(element.id, core.measured(typed));
         core.reportPointer(false);
         core.reportEditor();
@@ -557,8 +557,6 @@ export const createBoardController = (
       }
     },
 
-    /** Tab on a card: its other field. */
-    editField: core.switchField,
     finishEditing: (): void => core.finishEditing(),
     /** A comment posted — its button, or Enter. */
     postEditing: (): void => core.finishEditing(true),

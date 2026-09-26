@@ -11,5 +11,5 @@ export {
 } from './topics';
 
 export type { RealtimeClient, RealtimeClientOptions, RealtimeStatus } from './client';
-export type { PresenceTracker, RealtimeMember } from './presence';
+export type { PresenceListeners, PresenceTracker, RealtimeMember } from './presence';
 export type { ChannelMatch } from './topics';

@@ -233,8 +233,10 @@ describe('trackPresence', () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
     let members: RealtimeMember[] = [];
-    const tracker = trackPresence(client, 'board:1', next => {
-      members = next;
+    const tracker = trackPresence(client, 'board:1', {
+      onChange: next => {
+        members = next;
+      }
     });
     stops.push(tracker.stop);
     await wait();
@@ -261,18 +263,51 @@ describe('trackPresence', () => {
     expect(members.map(member => member.from)).toEqual(['me']);
   });
 
+  it('tells who arrived after this page, once they said who they are, and who left, as they were', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    const arrived: unknown[] = [];
+    const departed: unknown[] = [];
+    const tracker = trackPresence(client, 'board:1', {
+      onChange: () => undefined,
+      onArrive: member => arrived.push(member.state),
+      onDepart: member => departed.push(member.state)
+    });
+    stops.push(tracker.stop);
+    await wait();
+    server.streams[0].push('ready', { connection: 'me', token: 'secret', topics: ['board:1'], refused: [] });
+    tracker.set({ name: 'Ana' });
+    // Already here: Bob answers this page's arrival with who he is. That is not Bob arriving.
+    server.streams[0].push('message', message({ type: '$presence', from: 'bob', data: { name: 'Bob' } }));
+    // Carla comes after: her `$join`, then who she is — she arrives then, and only once however often she says it.
+    server.streams[0].push('message', message({ type: '$join', from: 'carla' }));
+    await wait(10);
+    expect(arrived).toEqual([]);
+    server.streams[0].push('message', message({ type: '$presence', from: 'carla', data: { name: 'Carla' } }));
+    server.streams[0].push('message', message({ type: '$presence', from: 'carla', data: { name: 'Carla' } }));
+    await wait(10);
+    expect(arrived).toEqual([{ name: 'Carla' }]);
+
+    server.streams[0].push('message', message({ type: '$leave', from: 'bob' }));
+    server.streams[0].push('message', message({ type: '$leave', from: 'nobody' }));
+    await wait(10);
+    expect(departed).toEqual([{ name: 'Bob' }]);
+  });
+
   it('is one member per page: a tracker started late knows everyone, and the last one to stop leaves', async () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
-    const first = trackPresence(client, 'board:1', () => undefined);
+    const first = trackPresence(client, 'board:1', { onChange: () => undefined });
     await wait();
     server.streams[0].push('ready', { connection: 'me', token: 'secret', topics: ['board:1'], refused: [] });
     server.streams[0].push('message', message({ type: '$presence', from: 'bob', data: { name: 'Bob' } }));
     await wait(10);
 
     let late: RealtimeMember[] = [];
-    const second = trackPresence(client, 'board:1', next => {
-      late = next;
+    const second = trackPresence(client, 'board:1', {
+      onChange: next => {
+        late = next;
+      }
     });
     expect(late.map(member => member.from)).toEqual(['bob']);
 

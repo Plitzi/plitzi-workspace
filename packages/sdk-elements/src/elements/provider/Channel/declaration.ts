@@ -21,8 +21,20 @@ const declaration = elementDeclaration<ChannelAttributes>()({
       params: {},
       preview: { type: '', data: '', from: '', user: '', at: '' }
     },
-    onJoin: { action: 'onJoin', title: 'On Join', type: 'trigger', params: {}, preview: { from: '' } },
-    onLeave: { action: 'onLeave', title: 'On Leave', type: 'trigger', params: {}, preview: { from: '' } }
+    onJoin: {
+      action: 'onJoin',
+      title: 'On Join',
+      type: 'trigger',
+      params: {},
+      preview: { from: '', user: '', state: {} }
+    },
+    onLeave: {
+      action: 'onLeave',
+      title: 'On Leave',
+      type: 'trigger',
+      params: {},
+      preview: { from: '', user: '', state: {} }
+    }
   },
   callbacks: {
     publish: {
@@ -56,8 +68,9 @@ const declaration = elementDeclaration<ChannelAttributes>()({
         'A realtime channel: every page on the same `topic` hears what any of them publishes, within milliseconds. ' +
         'The topic must match a channel the space declares in its settings (`channels`), e.g. `board:{{ id }}` ' +
         'under `board:{id}`. ITS DESCENDANTS bind to its source `channel_<id>`: `connected`, `members` (with the ' +
-        'state each announced), `messages` (the last `keep`) and `last`. It fires `onMessage`, `onJoin` and ' +
-        '`onLeave`, and answers `publish({ type, data })` and `setPresence({ data })`; `presence` is the state this ' +
+        'state each announced), `messages` (the last `keep`) and `last`. It fires `onMessage`; `onJoin` when ' +
+        'somebody who came after this page has announced who they are, and `onLeave` when somebody goes — each with ' +
+        '`from`, `user` and the `state` they announced; and answers `publish({ type, data })` and `setPresence({ data })`; `presence` is the state this ' +
         'page announces (a name, a colour). Closed in the builder and anywhere without a server.',
       items: [],
       bindings: {},
