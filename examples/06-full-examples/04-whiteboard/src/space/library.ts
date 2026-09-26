@@ -46,7 +46,7 @@ const anyMatches = (entries: readonly ElementEntry[]): string => entries.map(mat
 
 const shownWhen = (entries: readonly ElementEntry[]) => ({
   source: 'computed.librarySearch',
-  template: `{{ not ${QUERY} or ${anyMatches(entries)} ? 'true' : 'false' }}`
+  template: `{{ not ${QUERY} or ${anyMatches(entries)} }}`
 });
 
 /**
@@ -58,12 +58,12 @@ const starred = (entry: ElementEntry): string => `'${entry.id}' in computed.favo
 /** A favourite's tile, in the section at the top: starred, and — while searching — what is searched for. */
 const favoriteShown = (entry: ElementEntry) => ({
   source: 'computed.librarySearch',
-  template: `{{ ${starred(entry)} and (not ${QUERY} or ${matches(entry)}) ? 'true' : 'false' }}`
+  template: `{{ ${starred(entry)} and (not ${QUERY} or ${matches(entry)}) }}`
 });
 
 const favoritesShown = {
   source: 'computed.librarySearch',
-  template: `{{ ${ELEMENTS.map(entry => `(${starred(entry)} and (not ${QUERY} or ${matches(entry)}))`).join(' or ')} ? 'true' : 'false' }}`
+  template: `{{ ${ELEMENTS.map(entry => `(${starred(entry)} and (not ${QUERY} or ${matches(entry)}))`).join(' or ')} }}`
 };
 
 const toggleFavorite = (entry: ElementEntry): StepSpec =>
@@ -266,12 +266,12 @@ const starButton = (entry: ElementEntry, id: string): ElementSpec =>
     children: [
       container({
         class: starMark,
-        visible: { source: 'computed.favorites', template: `{{ '${entry.id}' in source ? 'true' : 'false' }}` },
+        visible: { source: 'computed.favorites', template: `{{ '${entry.id}' in source }}` },
         children: [icon('fa-solid fa-star')]
       }),
       container({
         class: starMark,
-        visible: { source: 'computed.favorites', template: `{{ '${entry.id}' in source ? 'false' : 'true' }}` },
+        visible: { source: 'computed.favorites', template: `{{ '${entry.id}' not in source }}` },
         children: [icon('fa-regular fa-star')]
       })
     ]
@@ -322,7 +322,7 @@ const favoritesHint = (): ElementSpec =>
     class: hintRow,
     visible: {
       source: 'computed.favorites',
-      template: "{{ source|length == 0 and not (computed.librarySearch|trim) ? 'true' : 'false' }}"
+      template: '{{ source|length == 0 and not (computed.librarySearch|trim) }}'
     },
     children: [icon('fa-regular fa-star'), text({ content: 'Star what you use most — it shows up here, first.' })]
   });
@@ -390,7 +390,7 @@ export const libraryPanel = (): ElementSpec =>
             class: empty,
             visible: {
               source: 'computed.librarySearch',
-              template: `{{ ${QUERY} and not (${anyMatches(ELEMENTS)}) ? 'true' : 'false' }}`
+              template: `{{ ${QUERY} and not (${anyMatches(ELEMENTS)}) }}`
             },
             children: [text({ content: 'Nothing by that name — try a shape, a note or a line.' })]
           })

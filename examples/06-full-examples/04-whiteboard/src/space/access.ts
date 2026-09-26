@@ -44,7 +44,7 @@ export const ofBoard = (field: string, fallback: string): string =>
   `(source.locked ? (${OPENED} ? state.opened.${field} : ${fallback}) : source.${field})`;
 
 /** Whether the board can be shown: it exists, and it is open or has been opened. */
-export const BOARD_SHOWN = `{{ source.found and (not source.locked or (${OPENED})) ? 'true' : 'false' }}`;
+export const BOARD_SHOWN = `{{ source.found and (not source.locked or (${OPENED})) }}`;
 
 /** In a flow: the key a locked board's changes carry, or nothing for an open board. */
 export const BOARD_KEY = `{{ state.opened and state.opened.id == ${PROVIDER}.id ? state.opened.key : '' }}`;
@@ -82,9 +82,9 @@ export const keepOwned = (step: string): StepSpec =>
  */
 export const CAN_EDIT = `not source.readOnly or ${IS_OWNER}`;
 
-const EDITABLE = { source: BOARD_PROVIDER, template: `{{ ${CAN_EDIT} ? 'true' : 'false' }}` };
+const EDITABLE = { source: BOARD_PROVIDER, template: `{{ ${CAN_EDIT} }}` };
 
-const READ_ONLY = { source: BOARD_PROVIDER, template: `{{ ${CAN_EDIT} ? 'false' : 'true' }}` };
+const READ_ONLY = { source: BOARD_PROVIDER, template: `{{ not (${CAN_EDIT}) }}` };
 
 /** Leaves its children to the layout around it: a wrapper that only decides whether they are there. */
 const contents = styles('contents', { display: 'contents' });
@@ -220,7 +220,7 @@ export const unlockScreen = (): ElementSpec =>
     class: screen,
     visible: {
       source: BOARD_PROVIDER,
-      template: `{{ source.found and source.locked and not (${OPENED}) ? 'true' : 'false' }}`
+      template: `{{ source.found and source.locked and not (${OPENED}) }}`
     },
     flows: [
       [
@@ -380,7 +380,7 @@ export const passwordSection = (): ElementSpec[] => [
   text({ content: 'Password', class: caption }),
   container({
     class: styles('lockStatusRow', { display: 'contents' }),
-    visible: { source: BOARD_PROVIDER, template: "{{ source.locked ? 'true' : 'false' }}" },
+    visible: { source: BOARD_PROVIDER, template: '{{ source.locked }}' },
     children: [
       container({
         id: 'lock-status-on',
@@ -394,7 +394,7 @@ export const passwordSection = (): ElementSpec[] => [
   }),
   container({
     class: styles('lockStatusRowOff', { display: 'contents' }),
-    visible: { source: BOARD_PROVIDER, template: "{{ source.locked ? 'false' : 'true' }}" },
+    visible: { source: BOARD_PROVIDER, template: '{{ not source.locked }}' },
     children: [
       container({
         id: 'lock-status-off',
@@ -435,7 +435,7 @@ export const passwordSection = (): ElementSpec[] => [
   }),
   container({
     class: styles('lockRemoveRow', { display: 'contents' }),
-    visible: { source: BOARD_PROVIDER, template: "{{ source.locked ? 'true' : 'false' }}" },
+    visible: { source: BOARD_PROVIDER, template: '{{ source.locked }}' },
     children: [
       button({
         id: 'lock-remove',

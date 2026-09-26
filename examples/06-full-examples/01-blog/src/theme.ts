@@ -394,7 +394,12 @@ export const classes: NonNullable<SpaceSpec['classes']> = {
   pager: { desktop: row('6px', { 'padding-top': '6px', color: 'var(--fg-muted)' }) },
 
   // ── Sidebar ─────────────────────────────────────────────────────────────────────────────────────────────────
-  sidebar: { desktop: column('34px', { position: 'sticky', top: '96px' }), tablet: { position: 'static' } },
+  // In one column — tablet and phone alike — the sidebar follows the post rather than sticking beside it.
+  sidebar: {
+    desktop: column('34px', { position: 'sticky', top: '96px' }),
+    tablet: { position: 'static' },
+    mobile: { position: 'static' }
+  },
   panel: { desktop: column('14px', { 'align-items': 'flex-start' }) },
   panelTitle: {
     desktop: eyebrow({ 'padding-bottom': '12px', 'border-bottom': '1px solid var(--line)', width: '100%' })

@@ -8,7 +8,7 @@
     "start": "node src/main.ts",
     "start:dev": "node --watch-path=./src src/main.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "yarn run -T eslint ."
   },
   "dependencies": {
     "@plitzi/sdk-authoring": "workspace:*"

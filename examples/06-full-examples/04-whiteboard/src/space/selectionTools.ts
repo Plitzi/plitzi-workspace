@@ -34,7 +34,7 @@ export const selectionTools = (): ElementSpec =>
       // What would change the selection, hidden while all of it is locked — letting it go is all there is to do then.
       container({
         class: group,
-        visible: { source: 'computed.selectionIsLocked', template: "{{ source ? 'false' : 'true' }}" },
+        visible: '!computed.selectionIsLocked',
         children: [
           iconAction({
             id: 'to-front',
@@ -162,7 +162,7 @@ export const selectionTools = (): ElementSpec =>
       }),
       container({
         class: group,
-        visible: { source: 'computed.selectionIsLocked', template: "{{ source ? 'false' : 'true' }}" },
+        visible: '!computed.selectionIsLocked',
         children: [
           iconAction({
             id: 'delete',

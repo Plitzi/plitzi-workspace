@@ -192,10 +192,7 @@ const groupButton = (category: Category & { id: GroupId }): ElementSpec =>
           class: pickMark,
           visible: {
             source: `computed.${category.id}Pick`,
-            template:
-              index === 0
-                ? `{{ source == '${entry.id}' or not source ? 'true' : 'false' }}`
-                : `{{ source == '${entry.id}' ? 'true' : 'false' }}`
+            template: index === 0 ? `{{ source == '${entry.id}' or not source }}` : `{{ source == '${entry.id}' }}`
           },
           children: [markOf(entry)]
         })

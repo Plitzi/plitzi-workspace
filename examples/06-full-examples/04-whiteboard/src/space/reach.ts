@@ -136,7 +136,7 @@ export const reachSection = (): ElementSpec[] => [
   }),
   container({
     class: note,
-    visible: { source: BOARD_PROVIDER, template: "{{ source.expiresAt ? 'true' : 'false' }}" },
+    visible: { source: BOARD_PROVIDER, template: '{{ source.expiresAt }}' },
     children: [
       text({ content: 'Gone for everyone in ' }),
       countdown({
@@ -157,7 +157,7 @@ export const reachSection = (): ElementSpec[] => [
 export const editingSection = (): ElementSpec =>
   container({
     class: styles('editingSection', { display: 'contents' }),
-    visible: { source: BOARD_PROVIDER, template: `{{ ${IS_OWNER} ? 'true' : 'false' }}` },
+    visible: { source: BOARD_PROVIDER, template: `{{ ${IS_OWNER} }}` },
     children: [
       text({ content: 'Who can change it', class: caption }),
       container({
@@ -254,23 +254,23 @@ export const reachBadges = (): ElementSpec[] => [
   // Behind a password: said beside the title, so whoever is on it knows the link alone does not let anybody in.
   container({
     class: badge,
-    visible: { source: BOARD_PROVIDER, template: "{{ source.locked ? 'true' : 'false' }}" },
+    visible: { source: BOARD_PROVIDER, template: '{{ source.locked }}' },
     children: [icon('fa-solid fa-lock'), text({ content: 'Password' })]
   }),
   // Its creator, on a board read-only for the others: a reminder that they are the only one drawing.
   container({
     class: badge,
-    visible: { source: BOARD_PROVIDER, template: `{{ source.readOnly and ${IS_OWNER} ? 'true' : 'false' }}` },
+    visible: { source: BOARD_PROVIDER, template: `{{ source.readOnly and ${IS_OWNER} }}` },
     children: [icon('fa-regular fa-eye'), text({ content: 'Only you edit' })]
   }),
   container({
     class: badge,
-    visible: { source: BOARD_PROVIDER, template: "{{ source.unlisted ? 'true' : 'false' }}" },
+    visible: { source: BOARD_PROVIDER, template: '{{ source.unlisted }}' },
     children: [icon('fa-regular fa-eye-slash'), text({ content: 'Private' })]
   }),
   container({
     class: temporaryBadge,
-    visible: { source: BOARD_PROVIDER, template: "{{ source.expiresAt ? 'true' : 'false' }}" },
+    visible: { source: BOARD_PROVIDER, template: '{{ source.expiresAt }}' },
     children: [
       icon('fa-regular fa-hourglass-half'),
       countdown({

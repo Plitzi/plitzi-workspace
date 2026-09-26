@@ -214,7 +214,7 @@ const colourChoice = (colour: string): ElementSpec =>
       text({
         content: '✓',
         class: chosenMark,
-        visible: { source: 'computed.color', template: `{{ source == '${colour}' ? 'true' : 'false' }}` }
+        visible: { source: 'computed.color', template: `{{ source == '${colour}' }}` }
       })
     ]
   });

@@ -167,7 +167,7 @@ export const framesPanel = (): ElementSpec =>
       text({
         content: 'No frames yet. Draw one with the frame tool (F) around a part of the board — or make it a column.',
         class: empty,
-        visible: { source: 'computed.hasFrames', template: "{{ source ? 'false' : 'true' }}" }
+        visible: '!computed.hasFrames'
       }),
       list({
         id: 'frames',
@@ -254,7 +254,7 @@ export const presentationBanner = (): ElementSpec =>
   container({
     id: 'presentation',
     class: banner,
-    visible: { source: 'computed.presenter', template: "{{ source ? 'true' : 'false' }}" },
+    visible: 'computed.presenter',
     children: [
       icon('fa-solid fa-display'),
       text({

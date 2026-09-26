@@ -328,7 +328,7 @@ export const log = (): ElementSpec =>
             class: emptyNotice,
             visible: {
               source: 'feed.records',
-              template: `{{ source is defined and (${matching})|length == 0 ? 'true' : 'false' }}`
+              template: `{{ source is defined and (${matching})|length == 0 }}`
             }
           })
         ],

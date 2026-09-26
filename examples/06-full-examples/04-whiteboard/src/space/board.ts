@@ -723,7 +723,7 @@ const notFound = (): ElementSpec =>
     class: lost,
     // Only for a board asked for and not there: leaving for the front page reads the board again with no id, and a
     // page on its way out must not say the board is gone.
-    visible: { source: BOARD_PROVIDER, template: "{{ source.found or not source.id ? 'false' : 'true' }}" },
+    visible: { source: BOARD_PROVIDER, template: '{{ source.id and not source.found }}' },
     children: [
       text({ content: 'Nothing on this board', class: lostTitle }),
       text({

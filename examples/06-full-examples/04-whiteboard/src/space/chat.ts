@@ -106,7 +106,7 @@ export const chatButton = (): ElementSpec =>
       text({
         content: '',
         class: unreadBadge,
-        visible: { source: 'computed.unread', template: "{{ source > 0 ? 'true' : 'false' }}" },
+        visible: { source: 'computed.unread', template: '{{ source > 0 }}' },
         bind: [bindTemplate('content', 'computed.unread', "{{ source > 9 ? '9+' : source }}")]
       })
     ]
@@ -304,7 +304,7 @@ export const chatPanel = (): ElementSpec =>
                 class: empty,
                 visible: {
                   source: BOARD_PROVIDER,
-                  template: `{{ ${CHAT_LINES.replaceAll(PROVIDER, 'source')}|length > 0 ? 'false' : 'true' }}`
+                  template: `{{ ${CHAT_LINES.replaceAll(PROVIDER, 'source')}|length == 0 }}`
                 }
               }),
               list({
@@ -331,7 +331,7 @@ export const chatPanel = (): ElementSpec =>
                           text({
                             content: 'AI',
                             class: agentMark,
-                            visible: { source: 'chat.item.agent', template: "{{ source ? 'true' : 'false' }}" }
+                            visible: 'chat.item.agent'
                           })
                         ]
                       }),
@@ -364,8 +364,9 @@ export const chatPanel = (): ElementSpec =>
         flows: [
           [
             named('asked', onSubmit()),
+            // `notEmpty`, not `!= ''`: a composer nobody typed in sends no `text` at all.
             ...sayInChat('{{ asked.values.text }}', 'said').map(step =>
-              when({ field: 'asked.values.text', operator: '!=', value: '' }, step)
+              when({ field: 'asked.values.text', operator: 'notEmpty', value: '' }, step)
             ),
             when({ field: 'said.status', operator: '=', value: 'completed' }, resetForm('chat-form'))
           ]

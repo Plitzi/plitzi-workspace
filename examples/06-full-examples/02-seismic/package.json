@@ -9,7 +9,7 @@
     "start:dev": "node --watch-path=./src src/main.ts",
     "geography": "node scripts/geography.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "yarn run -T eslint ."
   },
   "dependencies": {
     "@plitzi/sdk-authoring": "workspace:*",

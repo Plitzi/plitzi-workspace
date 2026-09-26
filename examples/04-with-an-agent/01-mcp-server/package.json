@@ -9,7 +9,7 @@
     "start:dev": "node --watch-path=./src src/main.ts",
     "inspector": "yarn dlx @modelcontextprotocol/inspector@latest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "yarn run -T eslint ."
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",

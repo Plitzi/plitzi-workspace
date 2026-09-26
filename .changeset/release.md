@@ -338,6 +338,10 @@
   `!=` `""`: a field nobody typed in is not in `values` at all, so it never matches. The warning names
   `operator: 'empty'` / `'notEmpty'`, which take a missing value and `""` alike.
 - A `when` with `isBinding` comparing a computed value with a path from the trigger is pinned by a test.
+- The examples write their conditions without `? 'true' : 'false'` — a flag is `visible: 'computed.presenter'`, its
+  inverse `'!computed.hasFrames'`, a condition its own expression — and author with no warning: Pizarra's chat no
+  longer sends an empty line (`notEmpty`, which the new warning found), and the blog's sidebar stops sticking on
+  phones (`tablet-rule-skips-mobile`).
 
 ## Builds and caches
 

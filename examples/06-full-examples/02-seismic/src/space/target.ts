@@ -268,7 +268,7 @@ const analysisBlock = (): ElementSpec[] => [
     id: 'target-reading',
     content: 'Reading the USGS catalogue…',
     class: pending,
-    visible: { source: 'computed.detailShown', template: "{{ source ? 'false' : 'true' }}" }
+    visible: '!computed.detailShown'
   })
 ];
 

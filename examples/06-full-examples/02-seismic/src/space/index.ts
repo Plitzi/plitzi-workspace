@@ -239,7 +239,7 @@ const hudPanels = (): ElementSpec =>
         class: outage,
         visible: {
           source: 'feed.isEmpty',
-          template: "{{ source and not apiContainer_feed.hasError ? 'true' : 'false' }}"
+          template: '{{ source and not apiContainer_feed.hasError }}'
         }
       })
     ]

@@ -239,7 +239,7 @@ const isLockedStrongest = "{{ source == list_strongestPick.item.id ? 'locked' : 
  * as every other panel: the strongest SHALLOW event when the reader filtered to shallow ones, and nothing at all when
  * nothing passes — never a card pointing at an event the map is not showing.
  */
-const noneShown = `{{ source is defined and (source|filter(q => ${shown('q')})|length) == 0 ? 'true' : 'false' }}`;
+const noneShown = `{{ source is defined and (source|filter(q => ${shown('q')})|length) == 0 }}`;
 
 const emptyCard = styles('emptyCard', {
   'font-family': 'var(--mono)',

@@ -436,7 +436,7 @@ export const recent = (): ElementSpec =>
         class: empty,
         visible: {
           source: `${GALLERY_PROVIDER}.boards`,
-          template: `{{ (${MATCHING})|length == 0 ? 'true' : 'false' }}`
+          template: `{{ (${MATCHING})|length == 0 }}`
         },
         children: [
           text({ content: 'Nothing here yet', class: emptyTitle }),

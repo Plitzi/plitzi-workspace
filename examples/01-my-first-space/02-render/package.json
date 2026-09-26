@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview --port 4001",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "lint": "yarn run -T eslint ."
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",

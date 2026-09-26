@@ -241,7 +241,7 @@ export const followBanner = (): ElementSpec =>
   container({
     id: 'follow-banner',
     class: banner,
-    visible: { source: 'computed.following', template: "{{ source ? 'true' : 'false' }}" },
+    visible: 'computed.following',
     children: [
       text({ content: '', bind: [bindTemplate('content', 'computed.following', 'Following {{ source }}')] }),
       button({ id: 'follow-stop', content: 'Stop', class: stopButton, flows: [[onClick(), boardAction('unfollow')]] })
