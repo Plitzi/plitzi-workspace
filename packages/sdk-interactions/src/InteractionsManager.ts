@@ -154,6 +154,45 @@ class InteractionsManager {
     }
 
     set(this.subscriptors, id, { id, triggers, getAdditionalParams });
+    this.wire(id, interactions, triggers, callbacks);
+    this.touch();
+
+    return true;
+  }
+
+  /**
+   * What a subscribed element wires, replaced — its subscription kept.
+   *
+   * An element re-renders with new callbacks all the time, often right after firing a trigger (a form marks itself
+   * submitted). Its subscription is the same one for as long as it is mounted, so a flow that trigger started still
+   * runs: only an element unmounted meanwhile loses it (see `eventBridgeCallback`).
+   */
+  update<TParams extends Record<string, unknown> = Record<string, unknown>>(
+    id: string,
+    interactions: Record<string, ElementInteraction> = {},
+    triggers: Record<string, InteractionCallback<TParams>> = {},
+    callbacks: Record<string, InteractionCallback<TParams>> = {},
+    getAdditionalParams?: Subscriptor<TParams>['getAdditionalParams']
+  ) {
+    const subscription = this.subscriptors[id] as Subscriptor<TParams> | undefined;
+    if (!subscription) {
+      return false;
+    }
+
+    subscription.triggers = triggers;
+    subscription.getAdditionalParams = getAdditionalParams;
+    this.wire(id, interactions, triggers, callbacks);
+    this.touch();
+
+    return true;
+  }
+
+  private wire<TParams extends Record<string, unknown>>(
+    id: string,
+    interactions: Record<string, ElementInteraction>,
+    triggers: Record<string, InteractionCallback<TParams>>,
+    callbacks: Record<string, InteractionCallback<TParams>>
+  ) {
     const callbackKeys = Object.keys(callbacks);
     if (callbackKeys.length > 0) {
       this.callbacksAvailables[id] = callbackKeys.reduce<Record<string, InteractionCallback<TParams>>>(
@@ -179,6 +218,8 @@ class InteractionsManager {
         },
         {}
       );
+    } else {
+      delete this.callbacksAvailables[id];
     }
 
     if (Object.keys(triggers).length > 0) {
@@ -188,11 +229,9 @@ class InteractionsManager {
         this.eventBridgeCallback(interactions) as EventBridgeCallback,
         { override: true }
       );
+    } else {
+      this.eventBridge.off('interaction', id as EventBridgeEvent);
     }
-
-    this.touch();
-
-    return true;
   }
 
   unsubscribe(id: string) {

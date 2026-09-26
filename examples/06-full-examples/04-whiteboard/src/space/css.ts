@@ -11,7 +11,7 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
 /* ── The canvas's palette ──────────────────────────────────────────────────────────────────────────────────────────
    The board ships no colours: it paints with these, pointed here at the space's tokens. A theme switch changes the
    tokens, the canvas reads them again, and every drawing recolours with the page. */
-.boardCanvas, .thumbCanvas {
+.boardCanvas, .thumbCanvas, .sandboxBoard {
   --board-paper: var(--paper);
   --board-dots: var(--dots);
   --board-accent: var(--accent);
@@ -48,6 +48,11 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
   --stack-violet: var(--sticky-violet);
   --stack-focus: var(--accent);
 }
+
+/* The timer's pill says nothing while no timer runs, and so is not there at all; its last ten seconds pulse. */
+.timerPill[data-state='idle'] { display: none; }
+.timerPill[data-state='ending'] { color: var(--danger); animation: timer-pulse 1s ease-in-out infinite; }
+@keyframes timer-pulse { 50% { transform: translateX(-50%) scale(1.08); } }
 
 /* The share card's QR code stays dark on light in both schemes: a code is read by contrast. */
 .shareCard {

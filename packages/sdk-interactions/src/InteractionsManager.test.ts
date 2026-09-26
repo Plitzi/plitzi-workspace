@@ -637,4 +637,32 @@ describe('InteractionsManager — a trigger fired while the page mounts', () => 
 
     expect(write).not.toHaveBeenCalled();
   });
+
+  it('runs the flow of an element that re-rendered right after firing', async () => {
+    const write = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'store',
+      {},
+      {},
+      {
+        write: { action: 'write', title: 'Write', type: 'globalCallback', params: {}, callback: write }
+      }
+    );
+    manager.subscribe('plugin', firesOn('plugin'), foundTrigger);
+
+    const fired = manager.interactionTrigger('plugin', 'found', {});
+    // A form marks itself submitted as it fires: new callbacks, the same element.
+    manager.update('plugin', firesOn('plugin'), { ...foundTrigger });
+    await fired;
+
+    expect(write).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not update an element that is not subscribed', () => {
+    const manager = new InteractionsManager('page1');
+
+    expect(manager.update('plugin', firesOn('plugin'), foundTrigger)).toBe(false);
+    expect(manager.subscriptors.plugin).toBeUndefined();
+  });
 });

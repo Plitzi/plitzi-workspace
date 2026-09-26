@@ -5,7 +5,20 @@
  * added here is drawn, validated and merged by the same definition.
  */
 
-export const SHAPE_TYPES = ['rectangle', 'ellipse', 'diamond', 'arrow', 'line', 'freehand', 'text', 'sticky'] as const;
+export const SHAPE_TYPES = [
+  'rectangle',
+  'ellipse',
+  'diamond',
+  'arrow',
+  'line',
+  'freehand',
+  'text',
+  'sticky',
+  /** A pile of sticky notes on the board: anyone drags a fresh note off it, in its paper. */
+  'stack',
+  /** A picture someone pasted or dropped: the image itself is an asset the server keeps beside the board. */
+  'image'
+] as const;
 
 export type ShapeType = (typeof SHAPE_TYPES)[number];
 
@@ -52,6 +65,13 @@ export type BoardElement = {
   end?: Binding;
   /** What is written: a text or a sticky's content, or the label in the middle of a shape. */
   text?: string;
+  /** An image's picture, as the id of the asset the server keeps — never the bytes themselves. */
+  asset?: string;
+  /**
+   * Who voted for it, by the id each visitor keeps. Written by the server alone (`board.vote`): a commit carries the
+   * element's shape, and the votes on it are whatever the server holds, so two people voting at once both count.
+   */
+  votes?: string[];
   stroke: Stroke;
   fill: Fill;
   strokeWidth: StrokeWidth;
@@ -84,7 +104,9 @@ export const LIMITS = {
   /** Elements one commit may carry — a paste, an undo of a big delete. */
   ops: 500,
   /** Elements one board may hold, the removed ones included. */
-  elements: 5000
+  elements: 5000,
+  /** Votes one element may carry. */
+  votes: 500
 } as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -98,6 +120,14 @@ const isOneOf = <T extends string | number>(values: readonly T[], value: unknown
 
 export const isElementId = (value: unknown): value is string =>
   typeof value === 'string' && /^[A-Za-z0-9_-]{6,32}$/.test(value);
+
+/** An asset's id: long and random, because knowing it is what lets anyone fetch the picture. */
+export const isAssetId = (value: unknown): value is string =>
+  typeof value === 'string' && /^[A-Za-z0-9_-]{16,32}$/.test(value);
+
+/** The id a visitor keeps across visits, which is what a vote is counted by. */
+export const isVoterId = (value: unknown): value is string =>
+  typeof value === 'string' && /^[a-z0-9]{8,24}$/.test(value);
 
 const isPoint = (value: unknown): value is Point =>
   Array.isArray(value) && value.length === 2 && isCoordinate(value[0]) && isCoordinate(value[1]);
@@ -154,6 +184,8 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     text,
     start,
     end,
+    asset,
+    votes,
     stroke,
     fill,
     strokeWidth,
@@ -179,7 +211,9 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     !Number.isInteger(version) ||
     !Number.isInteger(nonce) ||
     typeof deleted !== 'boolean' ||
-    (group !== undefined && !isElementId(group))
+    (group !== undefined && !isElementId(group)) ||
+    (type === 'image' && !isAssetId(asset)) ||
+    (votes !== undefined && !(Array.isArray(votes) && votes.length <= LIMITS.votes && votes.every(isVoterId)))
   ) {
     return undefined;
   }
@@ -199,7 +233,9 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     version: Number(version),
     nonce: Number(nonce),
     deleted,
-    ...(group === undefined ? {} : { group })
+    ...(group === undefined ? {} : { group }),
+    ...(type === 'image' && isAssetId(asset) ? { asset } : {}),
+    ...(Array.isArray(votes) && votes.length ? { votes: [...new Set(votes.filter(isVoterId))] } : {})
   };
 
   if (isLinear(type)) {

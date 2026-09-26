@@ -766,7 +766,9 @@
   under them, so a plugin firing an event from its first effect used to run a flow whose steps found nothing
   registered — and did nothing, silently. `onLoad` and `onPageLoad` had each worked around it on their own.
 - An element unmounted — or mounted again, as React does twice in development — before its flow starts does not run
-  it for the subscription that is gone.
+  it for the subscription that is gone. An element that only re-rendered keeps its subscription: `useInteractions`
+  subscribes once per mount and hands new callbacks to `InteractionsManager.update`, so a form marking itself
+  submitted as it fires `onSubmit` still runs the flow.
 
 ## Realtime channels
 
@@ -797,7 +799,11 @@
 - New full example: `examples/06-full-examples/04-whiteboard` (Pizarra) — a collaborative whiteboard over WebSocket:
   arrows fixed to the anchors of what they connect (curved, following every move), labels in shapes, pads of sticky
   notes to drag from, a laser pointer, reactions, following a collaborator's view, groups, a toolbar authored in the
-  space that the canvas lays beside the selection. See `docs/en/realtime.md`.
+  space that the canvas lays beside the selection, pictures pasted from the clipboard, password-protected boards (on a
+  topic only whoever opened the board can name), votes, a shared timer, cursor chat and "bring everyone here". The
+  front page is a board to try before starting one, templates and two large featured boards. See
+  `docs/en/realtime.md`.
+- `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
 
 ## A render reads what a call wrote
 

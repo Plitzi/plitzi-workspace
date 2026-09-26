@@ -28,6 +28,105 @@ export const STICKY_SIZE = 200;
 
 export const HANDLE_SIZE = 8;
 
+/** A pile's papers lie a little askew over each other; its strip at the foot is where it is picked up and moved. */
+const STACK_OFFSET = 5;
+
+export const STACK_STRIP = 30;
+
+/** The pile under the top paper, the paper, and the strip that says what it is — in element coordinates. */
+const drawStack = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
+  const paper = palette.sticky[element.fill];
+  const width = element.width - STACK_OFFSET * 2;
+  const height = element.height - STACK_STRIP - STACK_OFFSET * 2;
+  context.save();
+  context.shadowColor = 'rgba(0, 0, 0, 0.16)';
+  context.shadowBlur = 8;
+  context.shadowOffsetY = 3;
+  context.fillStyle = paper;
+  for (const offset of [STACK_OFFSET * 2, STACK_OFFSET]) {
+    context.fillRect(offset, offset, width, height);
+  }
+
+  context.restore();
+  context.save();
+  context.fillStyle = paper;
+  context.fillRect(0, 0, width, height);
+  context.fillStyle = palette.stroke.ink;
+  context.globalAlpha = 0.45;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.font = `22px ${palette.font}`;
+  context.fillText('Drag a note off ↘', width / 2, height / 2);
+  context.globalAlpha = 1;
+  // The strip: a handle to move the whole pile by.
+  const top = element.height - STACK_STRIP + 4;
+  context.fillStyle = palette.dots;
+  context.beginPath();
+  context.roundRect(0, top, element.width, STACK_STRIP - 6, 8);
+  context.fill();
+  context.fillStyle = palette.stroke.ink;
+  context.globalAlpha = 0.6;
+  context.font = `600 12px ${palette.ui}`;
+  context.fillText('⠿  sticky pile', element.width / 2, top + (STACK_STRIP - 6) / 2);
+  context.restore();
+};
+
+/** A picture, or where it will be while it loads. */
+const drawPicture = (
+  context: CanvasRenderingContext2D,
+  element: BoardElement,
+  palette: Palette,
+  picture: CanvasImageSource | undefined
+): void => {
+  context.save();
+  if (picture) {
+    context.shadowColor = 'rgba(0, 0, 0, 0.18)';
+    context.shadowBlur = 10;
+    context.shadowOffsetY = 3;
+    context.drawImage(picture, 0, 0, element.width, element.height);
+  } else {
+    context.fillStyle = palette.dots;
+    context.fillRect(0, 0, element.width, element.height);
+    context.fillStyle = palette.stroke.ink;
+    context.globalAlpha = 0.5;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.font = `600 13px ${palette.ui}`;
+    context.fillText('Loading picture…', element.width / 2, element.height / 2);
+  }
+
+  context.restore();
+};
+
+/** The votes on an element, at its foot: a thumb and a count — lit when one of them is this visitor's. */
+const drawVotes = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette, mine: boolean): void => {
+  const label = `👍 ${element.votes?.length ?? 0}`;
+  context.save();
+  context.font = `600 13px ${palette.ui}`;
+  const width = context.measureText(label).width + 16;
+  const x = element.width - width - 8;
+  const y = element.height - 30;
+  context.fillStyle = mine ? palette.accent : '#ffffff';
+  context.strokeStyle = palette.accent;
+  context.lineWidth = 1.5;
+  context.beginPath();
+  context.roundRect(x, y, width, 22, 11);
+  context.fill();
+  context.stroke();
+  context.fillStyle = mine ? '#ffffff' : palette.accent;
+  context.textBaseline = 'middle';
+  context.fillText(label, x + 8, y + 11);
+  context.restore();
+};
+
+/** Where a vote badge is on an element, in its own coordinates: what a click on it toggles. */
+export const voteBadgeBox = (element: BoardElement): { x: number; y: number; width: number; height: number } => ({
+  x: element.x + element.width - 70,
+  y: element.y + element.height - 32,
+  width: 66,
+  height: 26
+});
+
 export const fontSizeOf = (element: BoardElement): number => {
   if (element.type === 'sticky') {
     return STICKY_FONT;
@@ -136,6 +235,12 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
   const generator = roughCanvas.generator;
   const cache = new Map<string, { key: string; shape: Shape }>();
 
+  /** Two points as a line; more as a curve through all of them, with less wobble than a straight stroke gets. */
+  const pathThrough = (points: Point[], options: Options): Drawable =>
+    points.length > 2
+      ? generator.curve(points, { ...options, roughness: Math.min(options.roughness ?? 1, 0.55), bowing: 0.4 })
+      : generator.linearPath(points, options);
+
   const arrowHead = (points: Point[], options: Options, width: number): Drawable[] => {
     const tip = points[points.length - 1];
     const from = [...points].reverse().find(([px, py]) => Math.hypot(px - tip[0], py - tip[1]) > 1) ?? points[0];
@@ -215,15 +320,21 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
           ...(hatched ? { fill: { drawable: generator.polygon(diamond, hatch), clip } } : {})
         };
       }
+      // A connector bent between anchors is many points: drawn as ONE smooth curve through them, not as a wobble per
+      // segment — which is what made a bent arrow look jagged.
       case 'line':
-        return { drawables: [generator.linearPath(element.points ?? [], options)] };
+        return { drawables: [pathThrough(element.points ?? [], options)] };
       case 'arrow': {
         const points = element.points ?? [];
 
         return {
-          drawables: [generator.linearPath(points, options), ...arrowHead(points, options, element.strokeWidth)]
+          drawables: [pathThrough(points, options), ...arrowHead(points, options, element.strokeWidth)]
         };
       }
+      // A pile and a picture are drawn whole by their own functions (`drawStack`, `drawPicture`): no outline here.
+      case 'stack':
+      case 'image':
+        return { drawables: [] };
       case 'sticky':
         return {
           drawables: [generator.rectangle(0, 0, width, height, { ...options, stroke: palette.sticky[element.fill] })]
@@ -278,12 +389,25 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     context: CanvasRenderingContext2D,
     element: BoardElement,
     palette: Palette,
-    { hideText = false, faded = false }: { hideText?: boolean; faded?: boolean } = {}
+    {
+      hideText = false,
+      faded = false,
+      picture,
+      voter
+    }: { hideText?: boolean; faded?: boolean; picture?: CanvasImageSource; voter?: string } = {}
   ): void => {
     context.save();
     context.translate(element.x, element.y);
     if (faded) {
       context.globalAlpha = 0.25;
+    }
+
+    if (element.type === 'stack') {
+      drawStack(context, element, palette);
+    }
+
+    if (element.type === 'image') {
+      drawPicture(context, element, palette, picture);
     }
 
     if (element.type === 'sticky') {
@@ -315,6 +439,10 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     const written = element.type === 'text' || element.type === 'sticky' || (takesLabel(element.type) && element.text);
     if (written && !hideText) {
       drawText(context, element, palette);
+    }
+
+    if (element.votes?.length) {
+      drawVotes(context, element, palette, voter !== undefined && element.votes.includes(voter));
     }
 
     context.restore();
@@ -414,7 +542,8 @@ export const drawCursor = (
   [boardX, boardY]: Point,
   name: string,
   colour: string,
-  font: string
+  font: string,
+  message?: string
 ): void => {
   const [x, y] = toScreen(camera, boardX, boardY);
   context.save();
@@ -436,6 +565,29 @@ export const drawCursor = (
 
   context.font = `600 12px ${font}`;
   const label = name.slice(0, 24);
+  if (message) {
+    // Cursor chat: the words where the person is pointing, their name above them — a bubble, not a label.
+    context.font = `500 14px ${font}`;
+    const lines = wrapLine(context, message, 240).slice(0, 4);
+    const width =
+      Math.max(context.measureText(label).width, ...lines.map(line => context.measureText(line).width)) + 20;
+    const height = 26 + lines.length * 18;
+    context.beginPath();
+    context.roundRect(14, 20, width, height, 12);
+    context.fill();
+    context.fillStyle = '#ffffff';
+    context.textBaseline = 'top';
+    context.font = `700 11px ${font}`;
+    context.globalAlpha = 0.85;
+    context.fillText(label, 24, 27);
+    context.globalAlpha = 1;
+    context.font = `500 14px ${font}`;
+    lines.forEach((line, index) => context.fillText(line, 24, 42 + index * 18));
+    context.restore();
+
+    return;
+  }
+
   const width = context.measureText(label).width + 12;
   context.beginPath();
   context.roundRect(12, 20, width, 20, 6);
@@ -444,6 +596,23 @@ export const drawCursor = (
   context.textBaseline = 'middle';
   context.fillText(label, 18, 30);
   context.restore();
+};
+
+/** Words wrapped to a width, in the context's current font. */
+const wrapLine = (context: CanvasRenderingContext2D, text: string, width: number): string[] => {
+  const lines: string[] = [];
+  let line = '';
+  for (const word of text.split(/\s+/)) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (line && context.measureText(candidate).width > width) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  }
+
+  return line ? [...lines, line] : lines;
 };
 
 /**

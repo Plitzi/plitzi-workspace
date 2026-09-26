@@ -44,3 +44,22 @@
 .board__tools[data-placement='below'] {
   transform: translate(-50%, 0);
 }
+
+/* Cursor chat: a bubble where the person points, in the colours the space gives the board. */
+.board__chat {
+  position: absolute;
+  z-index: 3;
+  width: 240px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 12px;
+  outline: none;
+  background: var(--board-accent, #4c6ef5);
+  color: #ffffff;
+  font: 500 14px var(--board-ui-font, system-ui, sans-serif);
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.45);
+}
+
+.board__chat::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}

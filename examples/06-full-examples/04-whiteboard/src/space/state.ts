@@ -1,4 +1,8 @@
+import { setState, when } from '@plitzi/sdk-authoring';
+
 import { COLLAB_COLOURS, GUEST_NAMES } from '../board/people.ts';
+
+import type { StepSpec } from '@plitzi/sdk-authoring';
 
 /**
  * The page's state: what the person chose, and the values the panels derive from it.
@@ -14,6 +18,12 @@ const list = (values: readonly string[]): string => `[${values.map(value => `'${
 export const RANDOM_NAME = `{{ ${list(GUEST_NAMES)}|random }}`;
 
 export const RANDOM_COLOUR = `{{ ${list(COLLAB_COLOURS)}|random }}`;
+
+/**
+ * The id this visitor keeps, which their votes are counted by: sixteen random characters, drawn once and kept — a
+ * vote is one per person, not one per visit.
+ */
+export const RANDOM_VISITOR = `{{ ${Array.from({ length: 16 }, () => "('abcdefghijklmnopqrstuvwxyz0123456789'|random)").join(' ~ ')} }}`;
 
 /** The tools that draw: while one is in hand, the style panel is what it will draw with. */
 const DRAWING_TOOLS = ['rectangle', 'ellipse', 'diamond', 'arrow', 'line', 'freehand', 'text', 'sticky'];
@@ -36,6 +46,9 @@ export const computed = {
   /** Whether this person has been given a name and a colour yet — on a first visit, neither. */
   hasName: '{{ state.name ? true : false }}',
   hasColour: '{{ state.color ? true : false }}',
+  hasVisitor: '{{ state.visitor ? true : false }}',
+  visitor: "{{ state.visitor ?? '' }}",
+  timerOpen: '{{ state.timerOpen ? true : false }}',
   /** What this page announces on the board's room: the only thing the others know about it. */
   me: "{{ { 'name': computed.name, 'color': computed.color } }}",
   shareOpen: '{{ state.shareOpen ? true : false }}',
@@ -59,5 +72,26 @@ export const transientState = [
   'meOpen',
   'keysOpen',
   'titleDraft',
-  'following'
+  'following',
+  'timerOpen',
+  // What opening a locked board answered, and the last timer heard: this visit's, never kept. The KEY that opened it
+  // (`unlock`) is kept, so the board opens by itself next time.
+  'opened',
+  'timer'
+];
+
+/** A visitor gets a name, a colour and an id to vote by — the same the boards give them, kept across both. */
+export const identity: StepSpec[] = [
+  when(
+    { field: 'computed.hasName', operator: '=', value: false },
+    setState({ key: 'name', type: 'text', value: RANDOM_NAME })
+  ),
+  when(
+    { field: 'computed.hasColour', operator: '=', value: false },
+    setState({ key: 'color', type: 'text', value: RANDOM_COLOUR })
+  ),
+  when(
+    { field: 'computed.hasVisitor', operator: '=', value: false },
+    setState({ key: 'visitor', type: 'text', value: RANDOM_VISITOR })
+  )
 ];

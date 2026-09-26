@@ -14,17 +14,18 @@ export type StickyStackAttributes = Omit<StickyStackProps, 'className'>;
 const declaration = {
   type: 'stickyStack',
   triggers: {
-    onPick: { action: 'onPick', title: 'On Pick', type: 'trigger', params: {}, preview: { fill: '' } }
+    onPick: { action: 'onPick', title: 'On Pick', type: 'trigger', params: {}, preview: { fill: '', kind: '' } }
   },
   callbacks: {},
   content: {
-    attributes: { colors: 'yellow,red,orange,green,blue,violet' },
+    attributes: { colors: 'yellow', pile: true },
     definition: {
       label: 'Sticky Stack',
       type: 'stickyStack',
       description:
-        'A pad of sticky notes per paper colour (`colors`, comma-separated). Pressing a pad takes a note off it and ' +
-        'fires `onPick` with its `fill`. Colours come from `--stack-<colour>`.',
+        'A pad of sticky notes per paper colour (`colors`, comma-separated) and, with `pile`, a whole pile to put on ' +
+        'the board. Pressing one fires `onPick` with its `fill` and `kind` (`sticky` or `stack`). Colours come ' +
+        'from `--stack-<colour>`.',
       items: [],
       bindings: {},
       styleSelectors: { base: '' },
@@ -51,7 +52,13 @@ const declaration = {
       name: 'Sticky Stack',
       displayMode: 'desktop',
       style: { base: { default: {} } },
-      bindingsAllowed: { attributes: [{ path: 'colors', label: 'Paper colours' }], initialState: [] }
+      bindingsAllowed: {
+        attributes: [
+          { path: 'colors', label: 'Paper colours' },
+          { path: 'pile', label: 'Offer a pile' }
+        ],
+        initialState: []
+      }
     },
     settings: {}
   }

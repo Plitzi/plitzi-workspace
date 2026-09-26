@@ -23,8 +23,10 @@ import {
   LABEL_PADDING,
   layoutText,
   measureText,
+  STACK_STRIP,
   STICKY_PADDING,
   STICKY_SIZE,
+  voteBadgeBox,
   createRenderer
 } from './draw.ts';
 import { createEffects } from './effects.ts';
@@ -54,6 +56,7 @@ import {
   zoomAt
 } from './geometry.ts';
 import { readPalette } from './palette.ts';
+import { createPictures, pictureIn, readPicture } from './pictures.ts';
 import { createScene } from './scene.ts';
 
 import type { Box, Camera, Handle } from './geometry.ts';
@@ -85,6 +88,10 @@ export type ControllerProps = {
   strokeWidth: StrokeWidth;
   mode: 'edit' | 'view';
   title: string;
+  /** Where the board's pictures are served from: `/board-assets/<board>`. */
+  assetBase: string;
+  /** The id this visitor keeps, which their votes are counted by. */
+  voter: string;
 };
 
 /** Where the text being typed sits on screen, for the field the component lays over the canvas. */
@@ -120,6 +127,8 @@ export type PointerMessage = {
   view: [number, number, number, number];
   /** The pointer is a laser right now: the others draw its trail. */
   laser?: boolean;
+  /** What this person is saying at their cursor — `''` once they closed it. */
+  chat?: string;
 };
 
 export type ControllerEvent =
@@ -143,7 +152,17 @@ export type ControllerEvent =
   /** Who this page follows now — their name, or `''` once it stopped. */
   | { type: 'follow'; name: string }
   /** A reaction this person sent, for the room. */
-  | { type: 'reaction'; reaction: { emoji: string; x: number; y: number } };
+  | { type: 'reaction'; reaction: { emoji: string; x: number; y: number } }
+  /** A picture pasted or dropped, shown already, for the page to upload: `id` is the element waiting for it. */
+  | { type: 'image'; id: string; data: string }
+  /** A vote asked for — a click on an element's badge, or the selection's vote button. */
+  | { type: 'vote'; id: string }
+  /** The chat field at the cursor: open (where, on screen), or closed. */
+  | { type: 'chat'; at: { left: number; top: number } | undefined }
+  /** Everyone asked to come and look where this person looks. */
+  | { type: 'summon'; view: [number, number, number, number] }
+  /** Somebody brought everyone to their view — this page included. */
+  | { type: 'summoned'; name: string };
 
 type Gesture =
   | { kind: 'pan'; start: Point; camera: Camera }
@@ -160,7 +179,9 @@ type Gesture =
   | { kind: 'erase'; erased: Set<string> }
   /** One end of the selected connector, dragged to a new place — or to another element's anchor. */
   | { kind: 'endpoint'; which: 'start' | 'end'; element: BoardElement }
-  | { kind: 'laser' };
+  | { kind: 'laser' }
+  /** A fresh note being drawn off a pile: it follows the pointer once it has moved; a click selects the pile. */
+  | { kind: 'peel'; stack: BoardElement; origin: Point; moved: boolean; element: BoardElement };
 
 type Remote = {
   cursor?: Point;
@@ -171,7 +192,13 @@ type Remote = {
   selection: string[];
   /** What the member is looking at, for following them. */
   view?: [number, number, number, number];
+  /** What they are saying at their cursor, and when they stopped — it lingers a moment after. */
+  chat?: string;
+  chatEndedAt?: number;
 };
+
+/** How long cursor chat stays on another screen once its writer closed it. */
+const CHAT_LINGER_MS = 3500;
 
 const REMOTE_DRAFT_GRACE_MS = 1500;
 
@@ -193,6 +220,9 @@ const DEFAULT_BOX: Record<'sticky' | 'shape', { width: number; height: number }>
   sticky: { width: STICKY_SIZE, height: STICKY_SIZE },
   shape: { width: 140, height: 90 }
 };
+
+/** A pile on the board: a note's size, with its strip below and the notes under it showing. */
+const STACK_BOX = { width: 222, height: 252 };
 
 const ID_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
@@ -269,7 +299,16 @@ export const createBoardController = (
   const remotes = new Map<string, Remote>();
   const pointers = new Map<number, Point>();
   let members = new Map<string, Collaborator>();
-  let props: ControllerProps = { tool: 'select', stroke: 'ink', fill: 'none', strokeWidth: 2, mode: 'edit', title: '' };
+  let props: ControllerProps = {
+    tool: 'select',
+    stroke: 'ink',
+    fill: 'none',
+    strokeWidth: 2,
+    mode: 'edit',
+    title: '',
+    assetBase: '',
+    voter: ''
+  };
   let palette: Palette = readPalette(host);
   let camera: Camera = { x: 0, y: 0, zoom: 1 };
   let size = { width: 0, height: 0, dpr: 1 };
@@ -297,6 +336,9 @@ export const createBoardController = (
   let carrying: { element: BoardElement; from?: Point; moved: boolean; over: boolean } | undefined;
   /** The member whose view this page follows. */
   let following: string | undefined;
+  const pictures = createPictures(() => invalidate());
+  /** What this person is typing at their cursor, while the chat field is open. */
+  let chatting: string | undefined;
 
   // ── Drawing ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -544,7 +586,9 @@ export const createBoardController = (
       if (overlaps(boundsOf(element), view, 40)) {
         renderer.drawElement(context, element, palette, {
           hideText: element.id === editing,
-          faded: erased?.has(element.id) ?? false
+          faded: erased?.has(element.id) ?? false,
+          voter: props.voter,
+          ...(element.type === 'image' ? { picture: pictures.of(element, props.assetBase) } : {})
         });
       }
     }
@@ -605,7 +649,11 @@ export const createBoardController = (
     for (const [from, remote] of remotes) {
       const member = members.get(from);
       if (remote.cursor && member && now - remote.heardAt < CURSOR_IDLE_MS) {
-        drawCursor(context, camera, remote.cursor, member.name, colourOf(from), palette.ui);
+        const saying =
+          remote.chat && (remote.chatEndedAt === undefined || now - remote.chatEndedAt < CHAT_LINGER_MS)
+            ? remote.chat
+            : undefined;
+        drawCursor(context, camera, remote.cursor, member.name, colourOf(from), palette.ui, saying);
       }
     }
 
@@ -787,7 +835,8 @@ export const createBoardController = (
         draft: draft.size && !final ? [...draft.values()].map(predicted) : null,
         selection: [...selection].slice(0, 50),
         view: [Math.round(view.x), Math.round(view.y), Math.round(view.width), Math.round(view.height)],
-        ...(gesture?.kind === 'laser' ? { laser: true } : {})
+        ...(gesture?.kind === 'laser' ? { laser: true } : {}),
+        ...(chatting === undefined ? {} : { chat: chatting })
       }
     });
   }
@@ -879,6 +928,22 @@ export const createBoardController = (
     displayed()
       .reverse()
       .find(element => hits(element, point, 6 / camera.zoom));
+
+  /** The element whose vote badge is under a point — only elements with votes show one. */
+  const voteAt = (point: Point): string | undefined =>
+    displayed()
+      .reverse()
+      .find(element => {
+        if (!element.votes?.length) {
+          return false;
+        }
+
+        const box = voteBadgeBox(element);
+
+        return (
+          point[0] >= box.x && point[0] <= box.x + box.width && point[1] >= box.y && point[1] <= box.y + box.height
+        );
+      })?.id;
 
   /** The topmost shape a point is inside — its whole area, not just its outline or its fill. */
   const shapeAround = (point: Point): BoardElement | undefined =>
@@ -1044,6 +1109,21 @@ export const createBoardController = (
 
     switch (props.tool) {
       case 'select': {
+        // A vote badge is a button on the element: a click on it votes, and moves nothing.
+        const badge = voteAt(point);
+        if (badge) {
+          emit({ type: 'vote', id: badge });
+          break;
+        }
+
+        // A pile gives a note to whoever drags from its paper; its strip moves the pile itself.
+        const pile = event.shiftKey ? undefined : topmostAt(point);
+        if (pile?.type === 'stack' && point[1] < pile.y + pile.height - STACK_STRIP) {
+          const note: BoardElement = { ...newElement('sticky', point), ...DEFAULT_BOX.sticky, fill: pile.fill };
+          gesture = { kind: 'peel', stack: pile, origin: point, moved: false, element: note };
+          break;
+        }
+
         const end = endpointAt(...screen);
         const connector = soleConnector();
         if (end && connector) {
@@ -1312,6 +1392,21 @@ export const createBoardController = (
       case 'laser':
         effects.trail('me', point);
         break;
+      case 'peel': {
+        gesture.moved ||= Math.hypot(point[0] - gesture.origin[0], point[1] - gesture.origin[1]) * camera.zoom > 4;
+        if (gesture.moved) {
+          const { width, height } = gesture.element;
+          gesture.element = {
+            ...gesture.element,
+            x: point[0] - width / 2,
+            y: point[1] - height / 2,
+            z: scene.topZ + 1
+          };
+          draft.set(gesture.element.id, gesture.element);
+        }
+
+        break;
+      }
       case 'freehand': {
         const points = gesture.element.points ?? [];
         const last = points[points.length - 1];
@@ -1428,6 +1523,17 @@ export const createBoardController = (
         setSelection([...selection].filter(id => !ended.erased.has(id)));
         break;
       }
+      case 'peel':
+        // Dragged off, the note lands and is ready for typing; a click without a drag was a click on the pile.
+        if (ended.moved) {
+          commit([ended.element]);
+          setSelection([ended.element.id]);
+          startEditing(scene.element(ended.element.id) ?? ended.element);
+        } else {
+          setSelection([ended.stack.id]);
+        }
+
+        break;
       case 'pan':
       case 'marquee':
       case 'laser':
@@ -1562,7 +1668,10 @@ export const createBoardController = (
     const placed = carriedAt(carried, point);
     commit([placed]);
     setSelection([placed.id]);
-    startEditing(scene.element(placed.id) ?? placed);
+    // A note is written on the moment it lands; a pile is there to be taken from.
+    if (placed.type === 'sticky') {
+      startEditing(scene.element(placed.id) ?? placed);
+    }
   }
 
   /** Followed on the whole window: the pad the sticky was taken from is outside the canvas. */
@@ -1609,7 +1718,53 @@ export const createBoardController = (
     }
   }
 
+  // ── Pictures pasted or dropped ───────────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * A picture onto the board: shown at once from this page's copy, sized to sit comfortably in view, and handed to the
+   * page to upload. It is committed only once the server has kept it (`placeImage`), so nobody else ever sees an
+   * image that is not there.
+   */
+  const addPicture = async (file: File, at?: Point): Promise<void> => {
+    const picture = await readPicture(file);
+    const fit = Math.min(1, 480 / picture.width, 360 / picture.height);
+    const [width, height] = [picture.width * fit, picture.height * fit];
+    const view = viewport();
+    const [cx, cy] = at ?? lastPointer ?? [view.x + view.width / 2, view.y + view.height / 2];
+    const element: BoardElement = { ...newElement('image', [cx - width / 2, cy - height / 2]), width, height };
+    pictures.hold(element.id, picture.image);
+    draft.set(element.id, element);
+    invalidate();
+    emit({ type: 'image', id: element.id, data: picture.data });
+  };
+
+  const onPaste = (event: ClipboardEvent): void => {
+    const file =
+      props.mode === 'edit' && !typing(event.target) ? pictureIn(event.clipboardData?.items ?? []) : undefined;
+    if (file) {
+      event.preventDefault();
+      void addPicture(file);
+    }
+  };
+
+  const onDragOver = (event: DragEvent): void => {
+    if (props.mode === 'edit' && event.dataTransfer?.types.includes('Files')) {
+      event.preventDefault();
+    }
+  };
+
+  const onDrop = (event: DragEvent): void => {
+    const file = props.mode === 'edit' ? pictureIn(event.dataTransfer?.files ?? []) : undefined;
+    if (file) {
+      event.preventDefault();
+      void addPicture(file, toBoard(camera, ...screenOf(event)));
+    }
+  };
+
   canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('dragover', onDragOver);
+  canvas.addEventListener('drop', onDrop);
+  window.addEventListener('paste', onPaste);
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerup', onPointerUp);
   canvas.addEventListener('pointercancel', onPointerUp);
@@ -1795,6 +1950,16 @@ export const createBoardController = (
         }
       }
 
+      if ('chat' in data && typeof data.chat === 'string') {
+        if (data.chat) {
+          remote.chat = data.chat.slice(0, 160);
+          remote.chatEndedAt = undefined;
+        } else if (remote.chat && remote.chatEndedAt === undefined) {
+          remote.chatEndedAt = Date.now();
+          setTimeout(invalidate, CHAT_LINGER_MS + 50);
+        }
+      }
+
       if ('view' in data && Array.isArray(data.view) && data.view.length === 4 && data.view.every(isFiniteNumber)) {
         remote.view = [data.view[0], data.view[1], data.view[2], data.view[3]];
         if (following === from) {
@@ -1927,11 +2092,16 @@ export const createBoardController = (
     },
 
     /** A sticky taken off the pad, in `fill`'s paper: dragged onto the board, or clicked and then placed. */
-    carry: ({ fill }: { fill?: unknown }): void => {
+    carry: ({ fill, kind }: { fill?: unknown; kind?: unknown }): void => {
       endCarry();
       const paper: Fill = isOneOf(FILLS, fill) && fill !== 'none' ? fill : 'yellow';
+      // A note, or a whole pile of them for everyone to take from.
+      const element =
+        kind === 'stack'
+          ? { ...newElement('stack', [0, 0]), ...STACK_BOX, fill: paper }
+          : { ...newElement('sticky', [0, 0]), ...DEFAULT_BOX.sticky, fill: paper };
       carrying = {
-        element: { ...newElement('sticky', [0, 0]), ...DEFAULT_BOX.sticky, fill: paper },
+        element,
         moved: false,
         over: false
       };
@@ -1967,6 +2137,84 @@ export const createBoardController = (
       effects.react(emoji, point);
       emit({ type: 'reaction', reaction: { emoji, x: Math.round(point[0]), y: Math.round(point[1]) } });
       invalidate();
+    },
+
+    /** The server kept the picture: the element that shows it is committed, naming the asset. */
+    placeImage: ({ id, asset }: { id?: unknown; asset?: unknown }): void => {
+      const element = typeof id === 'string' ? draft.get(id) : undefined;
+      if (!element || typeof asset !== 'string' || !asset) {
+        return;
+      }
+
+      pictures.place(element.id, asset);
+      draft.delete(element.id);
+      commit([{ ...element, asset }]);
+      setSelection([element.id]);
+    },
+
+    /** The server refused the picture: it goes, from this screen as from every other. */
+    cancelImage: ({ id }: { id?: unknown }): void => {
+      if (typeof id === 'string') {
+        pictures.drop(id);
+        draft.delete(id);
+        invalidate();
+      }
+    },
+
+    /** A vote for the one element selected, or back from it. */
+    vote: unlessEditing(() => {
+      const chosen = selected();
+      if (chosen.length === 1 && !isLinear(chosen[0].type)) {
+        emit({ type: 'vote', id: chosen[0].id });
+      }
+    }),
+
+    /** Opens the chat field where this person points: what they type shows at their cursor, on every screen. */
+    chat: unlessEditing(() => {
+      const view = viewport();
+      const [x, y] = toScreen(camera, ...(lastPointer ?? [view.x + view.width / 2, view.y + view.height / 2]));
+      chatting = '';
+      emit({ type: 'chat', at: { left: x, top: y } });
+    }),
+
+    typeChat: (text: string): void => {
+      if (chatting !== undefined) {
+        chatting = text.slice(0, 160);
+        reportPointer(false);
+      }
+    },
+
+    closeChat: (): void => {
+      if (chatting === undefined) {
+        return;
+      }
+
+      // Said once more as empty: the others let the words fade rather than cutting them off.
+      chatting = '';
+      reportPointer(true);
+      chatting = undefined;
+      emit({ type: 'chat', at: undefined });
+    },
+
+    /** Everyone on the board, brought to what this person is looking at. */
+    summon: (): void => {
+      const view = viewport();
+      emit({
+        type: 'summon',
+        view: [Math.round(view.x), Math.round(view.y), Math.round(view.width), Math.round(view.height)]
+      });
+    },
+
+    remoteSummon: (from: string, data: unknown): void => {
+      const view =
+        typeof data === 'object' && data !== null && 'view' in data && Array.isArray(data.view) ? data.view : [];
+      if (view.length !== 4 || !view.every(isFiniteNumber)) {
+        return;
+      }
+
+      stopFollowing();
+      showView([view[0], view[1], view[2], view[3]]);
+      emit({ type: 'summoned', name: members.get(from)?.name ?? 'Someone' });
     },
 
     remoteReaction: (data: unknown): void => {
@@ -2011,6 +2259,9 @@ export const createBoardController = (
       canvas.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('paste', onPaste);
+      canvas.removeEventListener('dragover', onDragOver);
+      canvas.removeEventListener('drop', onDrop);
     }
   };
 };

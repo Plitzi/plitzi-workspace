@@ -64,6 +64,13 @@ export const selectionTools = (): ElementSpec =>
           })
         ]
       }),
+      // A vote for what is selected — shown on it as a badge everyone sees, and toggled by clicking the badge too.
+      iconAction({
+        id: 'vote',
+        icon: 'fa-regular fa-thumbs-up',
+        title: 'Vote — ⇧V',
+        flow: [onClick(), boardAction('vote')]
+      }),
       iconAction({
         id: 'duplicate',
         icon: 'fa-regular fa-clone',

@@ -24,6 +24,12 @@ export const lintChannels = (ctx: LintContext): void => {
       continue;
     }
 
+    // A topic written by a binding is decided on the page — the board a route names, a secret an action answered —
+    // and there is nothing here to check it against. The server still refuses it if no channel covers it.
+    if (element.definition.bindings?.attributes?.some(binding => binding.to === 'topic')) {
+      continue;
+    }
+
     const where = ctx.describe(element.id);
     const topic = typeof element.attributes.topic === 'string' ? element.attributes.topic.trim() : '';
     if (!topic) {

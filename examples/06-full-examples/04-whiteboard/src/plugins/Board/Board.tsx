@@ -26,6 +26,10 @@ export type BoardProps = {
   roomTopic?: string;
   /** The board's name: what an exported image is called. */
   title?: string;
+  /** Where the board's pictures are served from: `/board-assets/<board>`. */
+  assetBase?: string;
+  /** The id this visitor keeps: their votes are counted by it, and lit on the badges. */
+  voter?: string;
   /** `edit`, or `view` — a still preview that fits the drawing, takes no pointer and connects to nothing. */
   mode?: 'edit' | 'view';
   tool?: string;
@@ -93,6 +97,8 @@ const Board = ({
   topic = '',
   roomTopic = '',
   title = '',
+  assetBase = '',
+  voter = '',
   mode = 'edit',
   tool = 'select',
   stroke = 'ink',
@@ -113,6 +119,7 @@ const Board = ({
   const controllerRef = useRef<BoardController | undefined>(undefined);
   const [editor, setEditor] = useState<TextEditor | undefined>(undefined);
   const [selectionBox, setSelectionBox] = useState<ScreenBox | undefined>(undefined);
+  const [chatAt, setChatAt] = useState<{ left: number; top: number } | undefined>(undefined);
   const live = mode === 'edit' && previewMode;
 
   const trigger = useCallback(
@@ -127,6 +134,7 @@ const Board = ({
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const roomRef = useRef<((message: PointerMessage) => void) | undefined>(undefined);
   const reactRef = useRef<((reaction: { emoji: string; x: number; y: number }) => void) | undefined>(undefined);
+  const summonRef = useRef<((view: [number, number, number, number]) => void) | undefined>(undefined);
   const flushPointer = useCallback(() => {
     timer.current = undefined;
     const message = pending.current;
@@ -174,6 +182,21 @@ const Board = ({
         case 'reaction':
           reactRef.current?.(event.reaction);
           break;
+        case 'image':
+          trigger(declaration.triggers.onImagePaste.action, { id: event.id, data: event.data });
+          break;
+        case 'vote':
+          trigger(declaration.triggers.onVote.action, { id: event.id });
+          break;
+        case 'chat':
+          setChatAt(event.at);
+          break;
+        case 'summon':
+          summonRef.current?.(event.view);
+          break;
+        case 'summoned':
+          trigger(declaration.triggers.onSummoned.action, { name: event.name });
+          break;
         case 'pointer':
           pending.current = event.message;
           if (event.final) {
@@ -220,9 +243,11 @@ const Board = ({
       fill: isOneOf<Fill>(FILLS, fill) ? fill : 'none',
       strokeWidth: isOneOf<StrokeWidth>(STROKE_WIDTHS, width) ? width : 2,
       mode: live ? ('edit' as const) : ('view' as const),
-      title
+      title,
+      assetBase,
+      voter
     };
-  }, [tool, stroke, fill, strokeWidth, live, title]);
+  }, [tool, stroke, fill, strokeWidth, live, title, assetBase, voter]);
   useEffect(() => controllerRef.current?.setProps(props), [props]);
 
   // Read again once the new scheme's custom properties are in place — the frame after the change, not during it.
@@ -250,6 +275,8 @@ const Board = ({
       controllerRef.current?.remotePointer(message.from, message.data);
     } else if (message.type === 'reaction') {
       controllerRef.current?.remoteReaction(message.data);
+    } else if (message.type === 'summon') {
+      controllerRef.current?.remoteSummon(message.from, message.data);
     }
   }, []);
 
@@ -259,6 +286,7 @@ const Board = ({
   useEffect(() => {
     roomRef.current = message => void room.publish('pointer', message);
     reactRef.current = reaction => void room.publish('reaction', reaction);
+    summonRef.current = view => void room.publish('summon', { view });
   }, [room]);
 
   useEffect(() => {
@@ -336,7 +364,18 @@ const Board = ({
       react: {
         ...declaration.callbacks.react,
         callback: (params: { emoji?: unknown }) => controllerRef.current?.react(params)
-      }
+      },
+      placeImage: {
+        ...declaration.callbacks.placeImage,
+        callback: (params: { id?: unknown; asset?: unknown }) => controllerRef.current?.placeImage(params)
+      },
+      cancelImage: {
+        ...declaration.callbacks.cancelImage,
+        callback: (params: { id?: unknown }) => controllerRef.current?.cancelImage(params)
+      },
+      vote: call('vote', controller => controller.vote()),
+      chat: call('chat', controller => controller.chat()),
+      summon: call('summon', controller => controller.summon())
     };
   }, []);
 
@@ -363,6 +402,34 @@ const Board = ({
   }, []);
 
   const onTextDone = useCallback(() => controllerRef.current?.finishEditing(), []);
+
+  // ── Cursor chat ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+  const chatRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (chatAt) {
+      chatRef.current?.focus();
+    }
+  }, [chatAt]);
+
+  const onChatType = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    controllerRef.current?.typeChat(event.target.value);
+  }, []);
+
+  const onChatKey = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
+    // Enter says it and closes; Escape closes. Either way the words linger a moment on the other screens.
+    if (event.key === 'Enter' || event.key === 'Escape') {
+      event.preventDefault();
+      chatRef.current?.blur();
+    }
+  }, []);
+
+  const onChatDone = useCallback(() => controllerRef.current?.closeChat(), []);
+
+  const chatStyle = useMemo<CSSProperties | undefined>(
+    () => chatAt && { left: chatAt.left + 16, top: chatAt.top + 18 },
+    [chatAt]
+  );
 
   const editorStyle = useMemo<CSSProperties | undefined>(
     () =>
@@ -412,6 +479,19 @@ const Board = ({
           onChange={onType}
           onKeyDown={onTextKey}
           onBlur={onTextDone}
+        />
+      )}
+      {chatStyle && (
+        <input
+          ref={chatRef}
+          className="board__chat"
+          style={chatStyle}
+          maxLength={160}
+          placeholder="Say something…"
+          aria-label="Say something at your cursor"
+          onChange={onChatType}
+          onKeyDown={onChatKey}
+          onBlur={onChatDone}
         />
       )}
       {children && live && toolsStyle && (

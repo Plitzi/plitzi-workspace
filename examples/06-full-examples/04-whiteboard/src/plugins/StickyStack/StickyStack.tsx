@@ -10,8 +10,10 @@ import type { InteractionCallback } from '@plitzi/plitzi-sdk';
 import type { KeyboardEvent, PointerEvent } from 'react';
 
 export type StickyStackProps = {
-  /** The pads, as paper colour names, comma-separated. */
+  /** The pads, as paper colour names, comma-separated. One is plenty: a note is recoloured once it is down. */
   colors?: string;
+  /** Also offer a whole pile, to put on the board for everyone to take notes from. */
+  pile?: boolean | string;
   className?: string;
 };
 
@@ -30,7 +32,7 @@ const NAMES: Record<string, string> = {
  * The pads. Each is a button: pressed with a pointer it hands the note over at once, so a drag carries it straight
  * onto the board; pressed with Enter or Space it hands it over the same way, and the board places it on the next click.
  */
-const StickyStack = ({ colors = 'yellow,red,orange,green,blue,violet', className }: StickyStackProps) => {
+const StickyStack = ({ colors = 'yellow', pile = true, className }: StickyStackProps) => {
   const { id } = useElement();
   const {
     contexts: { InteractionsContext }
@@ -46,7 +48,8 @@ const StickyStack = ({ colors = 'yellow,red,orange,green,blue,violet', className
   );
 
   const pick = useCallback(
-    (fill: string) => void interactionsManager.interactionTrigger(id, declaration.triggers.onPick.action, { fill }),
+    (fill: string, kind: string) =>
+      void interactionsManager.interactionTrigger(id, declaration.triggers.onPick.action, { fill, kind }),
     [id, interactionsManager]
   );
 
@@ -58,7 +61,7 @@ const StickyStack = ({ colors = 'yellow,red,orange,green,blue,violet', className
 
       // No focus, no text selection: the pointer is about to carry a note, not press a button.
       event.preventDefault();
-      pick(event.currentTarget.value);
+      pick(event.currentTarget.value, event.currentTarget.dataset.kind ?? 'sticky');
     },
     [pick]
   );
@@ -67,7 +70,7 @@ const StickyStack = ({ colors = 'yellow,red,orange,green,blue,violet', className
     (event: KeyboardEvent<HTMLButtonElement>) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        pick(event.currentTarget.value);
+        pick(event.currentTarget.value, event.currentTarget.dataset.kind ?? 'sticky');
       }
     },
     [pick]
@@ -86,12 +89,30 @@ const StickyStack = ({ colors = 'yellow,red,orange,green,blue,violet', className
           value={colour}
           className="sticky-stack__pad"
           data-paper={colour}
+          data-kind="sticky"
           title={`${NAMES[colour]} sticky — drag it onto the board`}
           aria-label={`${NAMES[colour]} sticky note`}
           onPointerDown={onPointerDown}
           onKeyDown={onKeyDown}
         />
       ))}
+      {(pile === true || pile === 'true') && (
+        <button
+          type="button"
+          value={pads[0] ?? 'yellow'}
+          className="sticky-stack__pad sticky-stack__pile"
+          data-paper={pads[0] ?? 'yellow'}
+          data-kind="stack"
+          title="A pile of notes — put it on the board for everyone to take from"
+          aria-label="Pile of sticky notes"
+          onPointerDown={onPointerDown}
+          onKeyDown={onKeyDown}
+        >
+          <span className="sticky-stack__count" aria-hidden="true">
+            ∞
+          </span>
+        </button>
+      )}
     </RootElement>
   );
 };

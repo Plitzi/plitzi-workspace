@@ -559,6 +559,15 @@ describe('lintSpace', () => {
       expect(errorsOf(undeclared)).toContain('channel-topic');
       expect(errorsOf(declared)).not.toContain('channel-topic');
       expect(errorsOf(empty)).toContain('channel-topic');
+
+      // A bound topic is the page's to decide: nothing here can check it, and nothing is reported.
+      const bound = withChange(({ schema }) => {
+        addElement(schema, { id: 'room', type: 'channel', attributes: { topic: '' } });
+        schema.flat.room.definition.bindings = {
+          attributes: [{ id: 'topic-binding', to: 'topic', source: 'state.topic' }]
+        };
+      });
+      expect(errorsOf(bound)).not.toContain('channel-topic');
     });
 
     it('while-running', () => {

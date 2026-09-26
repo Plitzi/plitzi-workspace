@@ -50,6 +50,18 @@ const declaration = {
      * board again. The canvas merges whatever it is given — it only knows it may have missed something.
      */
     onResync: { action: 'onResync', title: 'On Resync', type: 'trigger', params: {}, preview: {} },
+    /** A picture pasted or dropped, to upload: `id` is the element waiting for it, `data` the picture itself. */
+    onImagePaste: {
+      action: 'onImagePaste',
+      title: 'On Image Paste',
+      type: 'trigger',
+      params: {},
+      preview: { id: '', data: '' }
+    },
+    /** A vote asked for on an element — its badge clicked, or `vote` called. */
+    onVote: { action: 'onVote', title: 'On Vote', type: 'trigger', params: {}, preview: { id: '' } },
+    /** Somebody brought everyone on the board to their view. */
+    onSummoned: { action: 'onSummoned', title: 'On Summoned', type: 'trigger', params: {}, preview: { name: '' } },
     /** Whose view this page follows now — a name, or `''` once it stopped (the person touched the board). */
     onFollowChange: {
       action: 'onFollowChange',
@@ -109,6 +121,27 @@ const declaration = {
       params: { from: { label: 'Member (their `from` on the room)', defaultValue: '', type: 'text' } }
     },
     unfollow: callback('unfollow', 'Stop Following'),
+    /** The server kept a pasted picture: its element is committed, naming the asset. */
+    placeImage: {
+      action: 'placeImage',
+      title: 'Place Image',
+      type: 'callback',
+      params: {
+        id: { label: 'Element (from On Image Paste)', defaultValue: '', type: 'text' },
+        asset: { label: 'Asset id (from the upload)', defaultValue: '', type: 'text' }
+      }
+    },
+    cancelImage: {
+      action: 'cancelImage',
+      title: 'Cancel Image',
+      type: 'callback',
+      params: { id: { label: 'Element (from On Image Paste)', defaultValue: '', type: 'text' } }
+    },
+    vote: callback('vote', 'Vote For Selection'),
+    /** Opens the chat field at the cursor: what is typed shows next to it on every screen. */
+    chat: callback('chat', 'Cursor Chat'),
+    /** Brings everyone on the board to this person's view. */
+    summon: callback('summon', 'Bring Everyone Here'),
     /** A reaction floating up where this person points, for everyone on the board. */
     react: {
       action: 'react',
@@ -123,6 +156,8 @@ const declaration = {
       topic: '',
       roomTopic: '',
       title: '',
+      assetBase: '',
+      voter: '',
       mode: 'edit',
       tool: 'select',
       stroke: 'ink',
@@ -176,6 +211,8 @@ const declaration = {
           { path: 'topic', label: 'Board topic' },
           { path: 'roomTopic', label: 'Room topic' },
           { path: 'title', label: 'Title (the exported file’s name)' },
+          { path: 'assetBase', label: 'Where pictures are served from' },
+          { path: 'voter', label: 'Voter (the id this visitor keeps)' },
           { path: 'mode', label: 'Mode (edit | view)' },
           { path: 'tool', label: 'Tool' },
           { path: 'stroke', label: 'Stroke colour' },

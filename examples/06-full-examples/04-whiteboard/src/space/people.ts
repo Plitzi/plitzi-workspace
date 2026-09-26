@@ -20,6 +20,7 @@ import {
 import { COLLAB_COLOURS } from '../board/people.ts';
 import shareDeclaration from '../plugins/ShareCard/declaration.ts';
 import { BUTTON_RESET, FLOAT, caption } from './kit.ts';
+import { passwordSection } from './access.ts';
 import { boardAction } from './stylePanel.ts';
 
 import type { ShareCardAttributes } from '../plugins/ShareCard/declaration.ts';
@@ -268,7 +269,9 @@ const sharePanel = (): ElementSpec =>
             })
           ]
         ]
-      })
+      }),
+      // Who may get in: anyone with the link, or only whoever also has the password.
+      ...passwordSection()
     ]
   });
 

@@ -36,6 +36,9 @@ export const shortcuts: StepSpec[][] = [
   [onKey('f'), boardAction('zoomToFit')],
   [onKey('mod+0'), boardAction('zoomReset')],
   [onKey('mod+shift+e'), boardAction('exportPng')],
+  // Cursor chat: say something where you point, for everyone on the board.
+  [onKey('/'), boardAction('chat')],
+  [onKey('shift+v'), boardAction('vote')],
   [onKey('?'), setState({ key: 'shareOpen', type: 'boolean', value: false }), toggleState({ key: 'keysOpen' })],
   [onKey('escape'), ...closePanels, boardAction('deselect'), boardAction('unfollow'), useTool('select')]
 ];
@@ -63,6 +66,9 @@ const KEYS: readonly { keys: string[]; does: string }[] = [
   { keys: ['⌫'], does: 'Delete' },
   { keys: ['⇧', 'drag'], does: 'Square · straight · keep ratio' },
   { keys: ['⌘', '⇧', 'E'], does: 'Export PNG' },
+  { keys: ['/'], does: 'Say something at your cursor' },
+  { keys: ['⇧', 'V'], does: 'Vote for the selection' },
+  { keys: ['⌘', 'V'], does: 'Paste a picture' },
   { keys: ['Esc'], does: 'Deselect · stop following · close' }
 ];
 

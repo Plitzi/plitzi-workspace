@@ -109,7 +109,8 @@ export const hits = (element: BoardElement, point: Point, tolerance: number): bo
 
   const [px, py] = point;
   const { x, y, width, height } = element;
-  const solid = element.fill !== 'none' || element.type === 'text' || element.type === 'sticky';
+  // Paper and pictures are solid whatever their fill: a note, a pile or a photo is picked up anywhere on it.
+  const solid = element.fill !== 'none' || ['text', 'sticky', 'stack', 'image'].includes(element.type);
 
   if (element.type === 'ellipse') {
     const rx = Math.max(width / 2, 1);

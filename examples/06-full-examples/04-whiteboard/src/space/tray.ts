@@ -82,7 +82,7 @@ export const bottomTray = (): ElementSpec =>
         flows: [
           [
             named('picked', declaredTrigger(stackDeclaration, 'onPick')),
-            boardAction('carry', { fill: '{{ picked.fill }}' })
+            boardAction('carry', { fill: '{{ picked.fill }}', kind: '{{ picked.kind }}' })
           ]
         ]
       }),

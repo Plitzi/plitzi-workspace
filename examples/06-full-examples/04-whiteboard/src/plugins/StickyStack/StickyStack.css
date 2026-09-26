@@ -1,15 +1,17 @@
 /* Structure and motion only: each pad's paper is `--stack-<colour>`, which the space points at its tokens. */
 .sticky-stack {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 14px;
+  /* Room for the papers peeking out under each pad, so the row sits centred with whatever is beside it. */
+  padding: 0 6px 6px 0;
 }
 
 /* A pad: the top note, and two more peeking out under it — a pile you can see is more than one. */
 .sticky-stack__pad {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 0;
   border-radius: 3px;
@@ -62,4 +64,27 @@
 }
 .sticky-stack__pad[data-paper='violet'] {
   --pad: var(--stack-violet, #e5dbff);
+}
+
+/* The pile: more papers under it than a pad, and a mark that there is always another. */
+.sticky-stack__pile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    2px 3px 0 -1px var(--pad),
+    2px 3px 0 0 rgba(0, 0, 0, 0.1),
+    4px 6px 0 -1px var(--pad),
+    4px 6px 0 0 rgba(0, 0, 0, 0.1),
+    6px 9px 0 -1px var(--pad),
+    6px 9px 0 0 rgba(0, 0, 0, 0.1),
+    0 8px 16px -6px rgba(0, 0, 0, 0.35);
+}
+
+.sticky-stack__count {
+  font:
+    700 13px system-ui,
+    sans-serif;
+  color: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
 }

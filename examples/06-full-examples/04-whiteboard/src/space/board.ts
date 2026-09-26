@@ -22,18 +22,29 @@ import {
   text,
   themeToggle,
   when,
+  whenFailed,
   whileRunning
 } from '@plitzi/sdk-authoring';
 
-import { APPLY_ACTION, CREATE_ACTION, LOAD_ACTION, RENAME_ACTION } from '../actions.ts';
+import {
+  APPLY_ACTION,
+  CREATE_ACTION,
+  LOAD_ACTION,
+  OPEN_ACTION,
+  RENAME_ACTION,
+  UPLOAD_ACTION,
+  VOTE_ACTION
+} from '../actions.ts';
+import { BOARD_KEY, BOARD_SHOWN, ofBoard, unlockScreen } from './access.ts';
 import declaration from '../plugins/Board/declaration.ts';
 import { BOARD_ID, BOARD_PROVIDER } from './ids.ts';
 import { keysHelp, shortcuts } from './keys.ts';
 import { BUTTON_RESET, FLOAT, divide, icon, iconAction } from './kit.ts';
 import { popovers, presence } from './people.ts';
-import { RANDOM_COLOUR, RANDOM_NAME } from './state.ts';
+import { identity } from './state.ts';
 import { boardAction, stylePanel } from './stylePanel.ts';
 import { selectionTools } from './selectionTools.ts';
+import { timerButton, timerPanel, timerPill } from './timer.ts';
 import { toolbar } from './toolbar.ts';
 import { bottomTray, followBanner } from './tray.ts';
 
@@ -53,8 +64,17 @@ const boardCanvas = defineElement<BoardAttributes>(declaration);
 
 export const BOARD_DECLARATION = declaration;
 
+const PROVIDER = `apiContainer_${BOARD_PROVIDER}`;
+
 /** The flows' name for the board being shown: the provider's answer, so it is the board that was actually loaded. */
-const THIS_BOARD = `{{ apiContainer_${BOARD_PROVIDER}.id }}`;
+const THIS_BOARD = `{{ ${PROVIDER}.id }}`;
+
+/**
+ * A channel's topic for the board shown — `board:<topic>`, `room:<topic>` — or none while a locked board is not yet
+ * opened: a channel with no topic opens nothing.
+ */
+const TOPIC = (channel: 'board' | 'room'): string =>
+  `{{ ${ofBoard('topic', "''")} ? '${channel}:' ~ ${ofBoard('topic', "''")} : '' }}`;
 
 export const screen = styles('screen', {
   position: 'relative',
@@ -238,10 +258,13 @@ const canvas = (): ElementSpec =>
     mode: 'edit',
     bind: [
       { to: 'boardId', source: `${BOARD_PROVIDER}.id` },
-      { to: 'elements', source: `${BOARD_PROVIDER}.elements` },
+      // The board as it is shown: its own elements — or, locked, the ones opening it answered.
+      bindTemplate('elements', BOARD_PROVIDER, `{{ ${ofBoard('elements', '[]')} }}`, { returns: 'value' }),
       { to: 'title', source: `${BOARD_PROVIDER}.title` },
-      bindTemplate('topic', `${BOARD_PROVIDER}.id`, 'board:{{ source }}'),
-      bindTemplate('roomTopic', `${BOARD_PROVIDER}.id`, 'room:{{ source }}'),
+      bindTemplate('topic', BOARD_PROVIDER, TOPIC('board')),
+      bindTemplate('roomTopic', BOARD_PROVIDER, TOPIC('room')),
+      bindTemplate('assetBase', `${BOARD_PROVIDER}.id`, '/board-assets/{{ source }}'),
+      { to: 'voter', source: 'computed.visitor' },
       { to: 'tool', source: 'computed.tool' },
       { to: 'stroke', source: 'computed.stroke' },
       { to: 'fill', source: 'computed.fill' },
@@ -257,7 +280,7 @@ const canvas = (): ElementSpec =>
         whileRunning('queue', named('commit', declaredTrigger(declaration, 'onCommit'))),
         runServerAction({
           actionId: APPLY_ACTION,
-          input: { board: THIS_BOARD, ops: '{{ commit.ops }}' },
+          input: { board: THIS_BOARD, ops: '{{ commit.ops }}', key: BOARD_KEY },
           // The answer is the channel's to deliver; nothing the page asked for changed.
           invalidateQueries: 'none'
         })
@@ -269,15 +292,59 @@ const canvas = (): ElementSpec =>
       [
         named('failed', onFlowError()),
         when({ field: 'failed.actionId', operator: '=', value: APPLY_ACTION }, boardAction('rollback')),
+        addNotification({
+          content: '{{ failed.error ? failed.error : "That could not be saved" }}',
+          appearance: 'danger',
+          placement: 'bottom-center',
+          autoDismissTimeout: 5000
+        })
+      ],
+      /**
+       * A picture pasted or dropped: uploaded — one at a time, in order — and only then put on the board for everyone.
+       * Refused, it goes from this screen too, and the reason is said.
+       */
+      [
+        whileRunning('queue', named('pasted', declaredTrigger(declaration, 'onImagePaste'))),
+        named(
+          'uploaded',
+          runServerAction({
+            actionId: UPLOAD_ACTION,
+            input: { board: THIS_BOARD, data: '{{ pasted.data }}', key: BOARD_KEY },
+            invalidateQueries: 'none'
+          })
+        ),
         when(
-          { field: 'failed.actionId', operator: '=', value: APPLY_ACTION },
+          { field: 'uploaded.status', operator: '=', value: 'completed' },
+          boardAction('placeImage', { id: '{{ pasted.id }}', asset: '{{ uploaded.output.asset }}' })
+        ),
+        whenFailed('uploaded', boardAction('cancelImage', { id: '{{ pasted.id }}' })),
+        whenFailed(
+          'uploaded',
           addNotification({
-            content: '{{ failed.error ? failed.error : "That change could not be saved" }}',
+            content: '{{ uploaded.error ? uploaded.error : "That picture could not be added" }}',
             appearance: 'danger',
             placement: 'bottom-center',
             autoDismissTimeout: 5000
           })
         )
+      ],
+      // A vote — a badge clicked, or the selection's button — kept by the server, one at a time, and announced.
+      [
+        whileRunning('queue', named('voted', declaredTrigger(declaration, 'onVote'))),
+        runServerAction({
+          actionId: VOTE_ACTION,
+          input: { board: THIS_BOARD, element: '{{ voted.id }}', voter: '{{ computed.visitor }}', key: BOARD_KEY },
+          invalidateQueries: 'none'
+        })
+      ],
+      [
+        named('summoned', declaredTrigger(declaration, 'onSummoned')),
+        addNotification({
+          content: '{{ summoned.name }} brought everyone here',
+          appearance: 'info',
+          placement: 'top-center',
+          autoDismissTimeout: 3500
+        })
       ],
       [
         named('switched', declaredTrigger(declaration, 'onToolChange')),
@@ -311,8 +378,26 @@ const canvas = (): ElementSpec =>
         named('viewed', declaredTrigger(declaration, 'onViewChange')),
         setState({ key: 'zoom', type: 'number', value: '{{ viewed.zoom }}' })
       ],
-      // Back after a drop: read the board again, and the canvas merges whatever it missed.
-      [declaredTrigger(declaration, 'onResync'), reloadApi(BOARD_PROVIDER)]
+      // Back after a drop: read the board again — open it again, if it is locked — and the canvas merges what it missed.
+      [
+        declaredTrigger(declaration, 'onResync'),
+        when({ field: `${PROVIDER}.locked`, operator: '!=', value: true }, reloadApi(BOARD_PROVIDER)),
+        when(
+          { field: `${PROVIDER}.locked`, operator: '=', value: true },
+          named(
+            'reread',
+            runServerAction({
+              actionId: OPEN_ACTION,
+              input: { id: THIS_BOARD, key: BOARD_KEY },
+              invalidateQueries: 'none'
+            })
+          )
+        ),
+        when(
+          { field: 'reread.status', operator: '=', value: 'completed' },
+          setState({ key: 'opened', type: 'json', value: '{{ reread.output }}' })
+        )
+      ]
     ],
     // The selection's tools: the canvas places them beside whatever is selected.
     children: [selectionTools()]
@@ -344,7 +429,7 @@ const title = (): ElementSpec =>
           ],
           runServerAction({
             actionId: RENAME_ACTION,
-            input: { board: THIS_BOARD, title: '{{ state.titleDraft }}' },
+            input: { board: THIS_BOARD, title: '{{ state.titleDraft }}', key: BOARD_KEY },
             invalidateQueries: 'none'
           })
         )
@@ -438,7 +523,17 @@ const header = (): ElementSpec[] => [
   container({
     id: 'top-right',
     class: topRight,
-    children: [...presence(), themeToggle({ id: 'theme', subType: 'switch', class: themeSwitch })]
+    children: [
+      timerButton(),
+      iconAction({
+        id: 'summon',
+        icon: 'fa-solid fa-bullhorn',
+        title: 'Bring everyone here — show them what you see',
+        flow: [onClick(), boardAction('summon')]
+      }),
+      ...presence(),
+      themeToggle({ id: 'theme', subType: 'switch', class: themeSwitch })
+    ]
   })
 ];
 
@@ -466,19 +561,7 @@ export const boardPage: PageSpec = {
   seoDescription: 'A whiteboard anyone with the link can draw on, together, live.',
   class: screen,
   /** Somebody new gets a name and a colour, at random; after that they are theirs, and kept. */
-  flows: [
-    [
-      onPageLoad(),
-      when(
-        { field: 'computed.hasName', operator: '=', value: false },
-        setState({ key: 'name', type: 'text', value: RANDOM_NAME })
-      ),
-      when(
-        { field: 'computed.hasColour', operator: '=', value: false },
-        setState({ key: 'color', type: 'text', value: RANDOM_COLOUR })
-      )
-    ]
-  ],
+  flows: [[onPageLoad(), ...identity]],
   body: [
     apiContainer({
       id: BOARD_PROVIDER,
@@ -491,15 +574,15 @@ export const boardPage: PageSpec = {
       children: [
         channel({
           id: 'room',
-          topic: 'room:{{ id }}',
           keep: 0,
-          // Who this page is to the others: its name and colour, announced again whenever either changes.
-          bind: { presence: 'computed.me' },
+          // Who this page is to the others: its name and colour, announced again whenever either changes. Its topic is
+          // the board's — with, for a locked one, the secret opening it answered: before that, there is none to open.
+          bind: [{ to: 'presence', source: 'computed.me' }, bindTemplate('topic', BOARD_PROVIDER, TOPIC('room'))],
           children: [
             container({
               id: 'workspace',
               class: stage,
-              visible: `${BOARD_PROVIDER}.found`,
+              visible: { source: BOARD_PROVIDER, template: BOARD_SHOWN },
               flows: shortcuts,
               children: [
                 canvas(),
@@ -510,6 +593,8 @@ export const boardPage: PageSpec = {
                     ...header(),
                     toolbar(),
                     followBanner(),
+                    timerPill(),
+                    timerPanel(),
                     stylePanel(),
                     bottomTray(),
                     zoomBar(),
@@ -528,15 +613,26 @@ export const boardPage: PageSpec = {
          */
         channel({
           id: 'feed',
-          topic: 'board:{{ id }}',
           keep: 0,
+          bind: [bindTemplate('topic', BOARD_PROVIDER, TOPIC('board'))],
           flows: [
             [
               named('heard', on('onMessage')),
-              when({ field: 'heard.type', operator: '=', value: 'title' }, reloadApi(BOARD_PROVIDER))
+              when({ field: 'heard.type', operator: '=', value: 'title' }, reloadApi(BOARD_PROVIDER)),
+              when(
+                { field: 'heard.type', operator: '=', value: 'timer' },
+                setState({ key: 'timer', type: 'json', value: '{{ heard.data }}' })
+              ),
+              // The password changed: what was opened no longer is. Read the board again — and be asked, like anyone.
+              when(
+                { field: 'heard.type', operator: '=', value: 'locked' },
+                setState({ key: 'opened', type: 'json', value: 'null' })
+              ),
+              when({ field: 'heard.type', operator: '=', value: 'locked' }, reloadApi(BOARD_PROVIDER))
             ]
           ]
         }),
+        unlockScreen(),
         notFound()
       ]
     })
