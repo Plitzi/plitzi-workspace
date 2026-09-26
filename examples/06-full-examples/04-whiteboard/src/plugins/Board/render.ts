@@ -135,6 +135,25 @@ const SETTLE_MS = 150;
  * One frame: the paper, every element in view, and over them what only this screen shows — selections (this person's
  * and the others'), handles, connection points, laser trails, reactions, the marquee and the others' cursors.
  */
+/**
+ * The boxes a selection is outlined with: one round each group in it — its members are one thing, picked up and moved
+ * as one, and a box round each of them was a tangle of lines — and one round everything else. `boxOf` is where each
+ * element is drawn.
+ */
+const outlineBoxes = (elements: readonly BoardElement[], boxOf: (element: BoardElement) => Box = boundsOf): Box[] => {
+  const groups = new Map<string, Box[]>();
+  const alone: Box[] = [];
+  for (const element of elements) {
+    if (element.group) {
+      groups.set(element.group, [...(groups.get(element.group) ?? []), boxOf(element)]);
+    } else {
+      alone.push(boxOf(element));
+    }
+  }
+
+  return [...alone, ...[...groups.values()].flatMap(boxes => unionOf(boxes) ?? [])];
+};
+
 export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Effects, pictures: Pictures) => {
   const { context, state, remotes } = core;
   /**
@@ -208,8 +227,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     }
   };
 
-  const colourOf = (from: string): string =>
-    state.palette.collab[state.members.get(from)?.color ?? ''] ?? state.palette.accent;
+  const colourOf = core.memberColour;
 
   /** Where the selection is on screen — told to the page by `core`, which says so only when it changes. */
   const reportBox = (box: Box | undefined): void => {
@@ -380,7 +398,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     drawElements(pieceRenderer, pieceContext, whole, erased, true, view);
     const { dpr } = state.size;
     pieceContext.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const outlined = whole.filter(element => core.selection.has(element.id)).map(boundsOf);
+    const outlined = outlineBoxes(whole.filter(element => core.selection.has(element.id)));
     drawOutlines(pieceContext, state.camera, outlined, view, state.palette.accent, true);
 
     return new Set(whole.map(element => element.id));
@@ -626,12 +644,12 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
 
     const view = core.viewport();
     for (const [from, remote] of remotes.entries()) {
-      const boxes = [...remote.selection].flatMap(id => {
+      const chosen = [...remote.selection].flatMap(id => {
         const element = byId.get(id);
 
-        return element ? [boundsOf(element)] : [];
+        return element ? [element] : [];
       });
-      drawOutlines(context, camera, boxes, view, colourOf(from), false);
+      drawOutlines(context, camera, outlineBoxes(chosen), view, colourOf(from), false);
     }
 
     // A frame's title bar pointed at: the frame outlined, so it reads as something to take hold of.
@@ -644,7 +662,7 @@ export const createPainter = (core: Core, layer: HTMLCanvasElement, effects: Eff
     const chosen = core.selected();
     // What is dragged in one piece has its outline in the piece.
     const outlined = carried ? chosen.filter(element => !carried?.ids.has(element.id)) : chosen;
-    drawOutlines(context, camera, outlined.map(core.shownBox), view, palette.accent, true);
+    drawOutlines(context, camera, outlineBoxes(outlined, core.shownBox), view, palette.accent, true);
 
     const selecting = props.tool === 'select' && !editing;
     for (const element of chosen) {

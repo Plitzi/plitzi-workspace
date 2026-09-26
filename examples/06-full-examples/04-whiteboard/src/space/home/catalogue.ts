@@ -4,7 +4,6 @@ import {
   container,
   defineElement,
   formControl,
-  heading,
   link,
   list,
   named,
@@ -23,6 +22,16 @@ import declaration from '../../plugins/Board/declaration.ts';
 import { keepOwned } from '../access.ts';
 import { GALLERY_PROVIDER } from '../ids.ts';
 import { BUTTON_RESET, icon } from '../kit.ts';
+import {
+  cardBody,
+  cardLine,
+  cardName,
+  HOME_CARD,
+  HOME_CARD_STATES,
+  sectionBlock,
+  sectionHead,
+  sectionLead
+} from './section.ts';
 
 import type { Template } from '../../board/templates.ts';
 import type { BoardAttributes } from '../../plugins/Board/declaration.ts';
@@ -37,8 +46,6 @@ const thumbnail = defineElement<BoardAttributes>(declaration);
 
 export const thumbCanvas = styles('thumbCanvas', { position: 'absolute', inset: '0px' });
 
-const block = styles('homeBlock', { display: 'flex', 'flex-direction': 'column', gap: '18px' });
-
 const blockHead = styles('blockHead', {
   display: 'flex',
   'align-items': 'flex-end',
@@ -47,38 +54,11 @@ const blockHead = styles('blockHead', {
   'flex-wrap': 'wrap'
 });
 
-const blockTitle = styles('blockTitle', {
-  margin: '0px',
-  'font-family': 'var(--hand)',
-  'font-size': '32px',
-  'font-weight': '700',
-  'line-height': '1.1'
-});
-
-const blockLead = styles('blockLead', { margin: '4px 0px 0px', 'font-size': '14px', color: 'var(--muted)' });
-
 const CARD: CssProps = {
   ...BUTTON_RESET,
-  display: 'flex',
-  'flex-direction': 'column',
-  overflow: 'hidden',
-  'border-radius': '16px',
-  border: '1px solid var(--edge)',
-  'background-color': 'var(--surface)',
-  color: 'var(--ink)',
+  ...HOME_CARD,
   'text-align': 'left',
-  'text-decoration': 'none',
-  'box-shadow': '0 1px 2px var(--shadow)',
-  transition: 'transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease'
-};
-
-const CARD_STATES = {
-  hover: {
-    transform: 'translateY(-4px) rotate(-0.4deg)',
-    'box-shadow': '0 22px 40px -22px var(--shadow)',
-    'border-color': 'var(--accent)'
-  },
-  'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '3px' }
+  'text-decoration': 'none'
 };
 
 const frame = (name: string, height: string) =>
@@ -89,23 +69,6 @@ const frame = (name: string, height: string) =>
     'background-color': 'var(--paper)',
     'border-bottom': '1px solid var(--edge)'
   });
-
-const cardBody = styles('cardBody', {
-  display: 'flex',
-  'flex-direction': 'column',
-  gap: '4px',
-  padding: '12px 16px 16px'
-});
-
-const cardTitle = styles('cardTitle', {
-  'font-weight': '600',
-  'font-size': '15px',
-  overflow: 'hidden',
-  'text-overflow': 'ellipsis',
-  'white-space': 'nowrap'
-});
-
-const cardMeta = styles('cardMeta', { 'font-size': '12px', color: 'var(--muted)' });
 
 // ── Templates ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -128,7 +91,7 @@ const templateGrid = styles('templateGrid', {
   }
 });
 
-const templateCard = styles('templateCard', { css: CARD, states: CARD_STATES });
+const templateCard = styles('templateCard', { css: CARD, states: HOME_CARD_STATES });
 
 const templateFrame = frame('templateFrame', '130px');
 
@@ -183,25 +146,20 @@ const templateCardFor = (entry: (typeof TEMPLATE_CARDS)[number]): ElementSpec =>
       }),
       container({
         class: cardBody,
-        children: [text({ content: entry.title, class: cardTitle }), text({ content: entry.note, class: cardMeta })]
+        children: [text({ content: entry.title, class: cardName }), text({ content: entry.note, class: cardLine })]
       })
     ]
   });
 
 export const templates = (): ElementSpec =>
   container({
-    class: block,
+    class: sectionBlock,
     children: [
-      container({
-        class: blockHead,
-        children: [
-          container({
-            children: [
-              heading({ content: 'Start from a template', subType: 'h2', class: blockTitle }),
-              text({ content: 'Every one is an ordinary board: change anything.', class: blockLead })
-            ]
-          })
-        ]
+      sectionHead({
+        tone: 'amber',
+        eyebrow: 'Templates',
+        title: 'Start from a template',
+        lead: 'Every one is an ordinary board: change anything.'
       }),
       container({ class: templateGrid, children: TEMPLATE_CARDS.map(templateCardFor) })
     ]
@@ -209,7 +167,7 @@ export const templates = (): ElementSpec =>
 
 // ── Boards ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-const boardCard = styles('boardCard', { css: CARD, states: CARD_STATES });
+const boardCard = styles('boardCard', { css: CARD, states: HOME_CARD_STATES });
 
 const lockedFrame = styles('lockedFrame', {
   position: 'absolute',
@@ -227,18 +185,23 @@ const lockedFrame = styles('lockedFrame', {
 
 const lockedLabel = styles('lockedLabel', { 'font-size': '12px', 'font-weight': '600' });
 
+/** Over the picture, in glass: what a featured board is, said quietly. */
 const badge = styles('featuredBadge', {
   position: 'absolute',
   top: '12px',
   right: '12px',
-  padding: '4px 10px',
+  display: 'inline-flex',
+  'align-items': 'center',
+  gap: '6px',
+  padding: '5px 10px',
   'border-radius': '999px',
   'font-size': '11px',
-  'font-weight': '700',
-  'letter-spacing': '0.04em',
-  'text-transform': 'uppercase',
-  color: 'var(--on-accent)',
-  'background-color': 'var(--accent)'
+  'font-weight': '600',
+  color: 'var(--ink)',
+  'background-color': 'color-mix(in srgb, var(--surface) 82%, transparent)',
+  border: '1px solid var(--edge)',
+  'backdrop-filter': 'blur(8px)',
+  'box-shadow': '0 4px 12px -6px var(--shadow)'
 });
 
 /** One board as a card, for a list whose id is `list`: its preview — or its lock — its name, and what is on it. */
@@ -278,10 +241,10 @@ const card = (listId: string, frameClass: ReturnType<typeof frame>, featured: bo
           container({
             class: cardBody,
             children: [
-              text({ content: '', class: cardTitle, bind: { content: `${listId}.item.title` } }),
+              text({ content: '', class: cardName, bind: { content: `${listId}.item.title` } }),
               text({
                 content: '',
-                class: cardMeta,
+                class: cardLine,
                 bind: [
                   bindTemplate(
                     'content',
@@ -313,22 +276,13 @@ const featuredGrid = styles('featuredGrid', {
 
 export const featured = (): ElementSpec =>
   container({
-    class: block,
+    class: sectionBlock,
     children: [
-      container({
-        class: blockHead,
-        children: [
-          container({
-            children: [
-              heading({ content: 'Walk into a finished board', subType: 'h2', class: blockTitle }),
-              text({
-                content:
-                  'Boards a team has lived in — hundreds of elements, every kind there is. Walk around with whoever is in there right now; like one? Use it as a template.',
-                class: blockLead
-              })
-            ]
-          })
-        ]
+      sectionHead({
+        tone: 'coral',
+        eyebrow: 'Showcase',
+        title: 'Walk into a finished board',
+        lead: 'Boards a team has lived in — hundreds of elements, every kind there is. Walk around with whoever is in there right now; like one? Use it as a template.'
       }),
       list({
         id: 'featured',
@@ -388,26 +342,26 @@ const MATCHING = "source|filter(board => (state.search ?? '')|trim|lower in boar
 
 export const recent = (): ElementSpec =>
   container({
-    class: block,
+    class: sectionBlock,
     children: [
       container({
         class: blockHead,
         children: [
-          container({
-            children: [
-              heading({ content: 'Boards drawn lately', subType: 'h2', class: blockTitle }),
-              text({
-                content: '',
-                class: blockLead,
-                bind: [
-                  bindTemplate(
-                    'content',
-                    `${GALLERY_PROVIDER}.boards`,
-                    "{{ source|length }} {{ (source|length) == 1 ? 'board' : 'boards' }} — updated live as people draw"
-                  )
-                ]
-              })
-            ]
+          sectionHead({
+            tone: 'sky',
+            eyebrow: 'Right now',
+            title: 'Boards drawn lately',
+            lead: text({
+              content: '',
+              class: sectionLead,
+              bind: [
+                bindTemplate(
+                  'content',
+                  `${GALLERY_PROVIDER}.boards`,
+                  "{{ source|length }} {{ (source|length) == 1 ? 'board' : 'boards' }} — updated live as people draw"
+                )
+              ]
+            })
           }),
           formControl({
             id: 'search',

@@ -43,7 +43,9 @@ const ELEMENT_TYPES = [
   'stamp'
 ] as const;
 
-const COLOURS = 'yellow, red, orange, green, blue, violet (notes, cards, frames, fills); ink for text and outlines';
+const COLOURS =
+  'yellow, red, orange, green, blue, violet (notes, cards, frames, fills); ink for text and outlines — named ones follow ' +
+  'the light and dark schemes; any other as #rrggbb, drawn as it is in both';
 
 /** A card is a task on a kanban: it lives in a column, as the canvas's card tool makes it. */
 const CARD_IN_COLUMN =

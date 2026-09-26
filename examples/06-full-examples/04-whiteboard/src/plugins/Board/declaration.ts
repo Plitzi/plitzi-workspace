@@ -236,7 +236,7 @@ const declaration = {
       params: {
         tool: { label: 'Tool (sticky, rectangle, text, card, column…)', defaultValue: 'sticky', type: 'text' },
         fill: { label: 'Paper (yellow | red | orange | green | blue | violet)', defaultValue: 'yellow', type: 'text' },
-        kind: { label: 'Kind (stack: a pile of notes)', defaultValue: '', type: 'text' },
+        kind: { label: 'Kind (stack: a pile of notes · kanban: a whole board)', defaultValue: '', type: 'text' },
         drag: { label: 'Only when dragged', defaultValue: false, type: 'boolean' }
       }
     },

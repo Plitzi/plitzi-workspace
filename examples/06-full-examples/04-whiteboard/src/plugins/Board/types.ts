@@ -263,14 +263,18 @@ export type Gesture =
 export type Pinch = { distance: number; center: Point; camera: Camera };
 
 /** A sticky or a pile taken off the tray, following the pointer until it is put down. */
+/** What can be carried to the board: what one tool puts down, a pile of notes, or a whole kanban board. */
+export type Carried = PlacedTool | 'stack' | 'kanban';
+
 /**
- * What is carried to the board, following the pointer: the element as it will land, the tool it is made with, where
- * the pointer took it, whether it has been dragged and whether it is over the board. `drag` is one taken by a press
- * that may only have been a click — let go without dragging, nothing is carried and the click does what clicks do.
+ * What is carried to the board, following the pointer: the elements as they will land — centred on the point they are
+ * carried at — what they are, where the pointer took them, whether they have been dragged and whether they are over
+ * the board. `drag` is taken by a press that may only have been a click — let go without dragging, nothing is carried
+ * and the click does what clicks do.
  */
 export type Carrying = {
-  element: BoardElement;
-  tool: PlacedTool | 'stack';
+  elements: BoardElement[];
+  what: Carried;
   from?: Point;
   moved: boolean;
   over: boolean;

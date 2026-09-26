@@ -23,6 +23,7 @@ import { GALLERY_PROVIDER } from '../ids.ts';
 import { BUTTON_RESET } from '../kit.ts';
 import { identity } from '../state.ts';
 import { featured, recent, templates } from './catalogue.ts';
+import { callToAction } from './cta.ts';
 import { features } from './features.ts';
 import { hero } from './hero.ts';
 import { together } from './together.ts';
@@ -31,7 +32,8 @@ import type { CssProps, ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 
 /**
  * The front page — where people arrive, so it shows what this is by letting them do it: a canvas to scribble on
- * before anything else, templates drawn small, the featured boards to walk into, and who else is here right now.
+ * before anything else, the boards being drawn right now, templates drawn small, the featured boards to walk into,
+ * and who else is here with you.
  *
  * It stays current by itself. Every commit anywhere is announced on the `boards` topic and the page reads the list
  * again — at most once every second and a half, however busy the boards are — and the `lobby` channel says who is
@@ -252,11 +254,13 @@ export const galleryPage: PageSpec = {
                   ]
                 }),
                 hero(),
+                // Who is drawing right now comes first: it is what people come back for, and it shows the place is alive.
+                recent(),
                 together(),
                 features(),
                 templates(),
                 featured(),
-                recent()
+                callToAction()
               ]
             }),
             text({ content: 'Boards live in this server’s memory — a restart clears them.', class: footnote })

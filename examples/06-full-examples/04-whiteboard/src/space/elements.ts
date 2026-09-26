@@ -1,6 +1,8 @@
-import { setState } from '@plitzi/sdk-authoring';
+import { onPointerDown, setState } from '@plitzi/sdk-authoring';
 
 import { boardAction } from './stylePanel.ts';
+import { PLACED_TOOLS } from '../plugins/Board/types.ts';
+import { isOneOf } from '../plugins/Board/values.ts';
 
 import type { Tool } from '../plugins/Board/controller.ts';
 import type { StepSpec } from '@plitzi/sdk-authoring';
@@ -39,6 +41,8 @@ export type ElementEntry = {
   keys: string;
   hint: string;
   also?: StepSpec[];
+  /** What dragging its control onto the board carries there — by default, what its tool puts down. */
+  carry?: { kind: 'kanban' };
 };
 
 export const CATEGORIES: readonly Category[] = [
@@ -301,9 +305,20 @@ export const ELEMENTS: readonly ElementEntry[] = [
     description: 'To do · Doing · Done, where you point',
     keys: '',
     hint: '',
-    also: [setTool('select'), boardAction('insertKanban')]
+    also: [setTool('select'), boardAction('insertKanban')],
+    carry: { kind: 'kanban' }
   }
 ];
+
+/**
+ * What makes an entry's control a place to take the element from, as the pad is: pressed and dragged onto the board,
+ * what its tool puts down lands where it is let go. A click still picks it. Nothing, for a tool that draws a gesture.
+ */
+export const dragFlows = (entry: ElementEntry): StepSpec[][] => {
+  const carried = entry.carry ?? (isOneOf(PLACED_TOOLS, entry.tool) ? { tool: entry.tool } : undefined);
+
+  return carried ? [[onPointerDown(), boardAction('carry', { ...carried, drag: true })]] : [];
+};
 
 /** A category the bar shows as one button that opens the rest. */
 export const isGroup = (category: Category): category is Category & { id: GroupId } => category.id !== 'basics';

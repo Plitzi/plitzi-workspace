@@ -1,6 +1,7 @@
-import { container, heading, styles, text } from '@plitzi/sdk-authoring';
+import { container, styles, text } from '@plitzi/sdk-authoring';
 
 import { icon } from '../kit.ts';
+import { cardBody, cardLine, cardName, HOME_CARD, HOME_CARD_STATES, sectionBlock, sectionHead } from './section.ts';
 
 import type { CssProps, ElementSpec } from '@plitzi/sdk-authoring';
 
@@ -12,18 +13,6 @@ import type { CssProps, ElementSpec } from '@plitzi/sdk-authoring';
  * visitor who asked for less motion gets every one of them still.
  */
 
-const block = styles('togetherBlock', { display: 'flex', 'flex-direction': 'column', gap: '18px' });
-
-const blockTitle = styles('togetherTitle', {
-  margin: '0px',
-  'font-family': 'var(--hand)',
-  'font-size': '32px',
-  'font-weight': '700',
-  'line-height': '1.1'
-});
-
-const blockLead = styles('togetherLead', { margin: '4px 0px 0px', 'font-size': '14px', color: 'var(--muted)' });
-
 const grid = styles('togetherGrid', {
   css: {
     desktop: { display: 'grid', 'grid-template-columns': 'repeat(3, minmax(0px, 1fr))', gap: '14px' },
@@ -32,19 +21,7 @@ const grid = styles('togetherGrid', {
   }
 });
 
-const card = styles('togetherCard', {
-  css: {
-    display: 'flex',
-    'flex-direction': 'column',
-    overflow: 'hidden',
-    'border-radius': '16px',
-    border: '1px solid var(--edge)',
-    'background-color': 'var(--surface)',
-    'box-shadow': '0 1px 2px var(--shadow)',
-    transition: 'transform 180ms ease, box-shadow 180ms ease'
-  },
-  states: { hover: { transform: 'translateY(-3px)', 'box-shadow': '0 22px 40px -24px var(--shadow)' } }
-});
+const card = styles('togetherCard', { css: HOME_CARD, states: HOME_CARD_STATES });
 
 const stage = styles('togetherStage', {
   position: 'relative',
@@ -55,17 +32,6 @@ const stage = styles('togetherStage', {
   'background-image': 'radial-gradient(var(--dots) 1px, transparent 1px)',
   'background-size': '16px 16px'
 });
-
-const body = styles('togetherBody', {
-  display: 'flex',
-  'flex-direction': 'column',
-  gap: '4px',
-  padding: '12px 16px 16px'
-});
-
-const cardTitle = styles('togetherCardTitle', { 'font-weight': '600', 'font-size': '15px' });
-
-const cardText = styles('togetherCardText', { 'font-size': '13px', 'line-height': '1.45', color: 'var(--muted)' });
 
 const at = (place: CssProps): CssProps => ({ position: 'absolute', ...place });
 
@@ -114,8 +80,8 @@ const scene = (title: string, note: string, children: ElementSpec[]): ElementSpe
     children: [
       container({ class: stage, children }),
       container({
-        class: body,
-        children: [text({ content: title, class: cardTitle }), text({ content: note, class: cardText })]
+        class: cardBody,
+        children: [text({ content: title, class: cardName }), text({ content: note, class: cardLine })]
       })
     ]
   });
@@ -352,16 +318,13 @@ const agents = (): ElementSpec =>
 
 export const together = (): ElementSpec =>
   container({
-    class: block,
+    class: sectionBlock,
     children: [
-      container({
-        children: [
-          heading({ content: 'Better together', subType: 'h2', class: blockTitle }),
-          text({
-            content: 'Everything anyone does shows on every screen, as it happens — no refresh, no “send”.',
-            class: blockLead
-          })
-        ]
+      sectionHead({
+        tone: 'orchid',
+        eyebrow: 'Live',
+        title: 'Better together',
+        lead: 'Everything anyone does shows on every screen, as it happens — no refresh, no “send”.'
       }),
       container({ class: grid, children: [cursors(), agents(), kanban(), piles(), reactions(), laser()] })
     ]

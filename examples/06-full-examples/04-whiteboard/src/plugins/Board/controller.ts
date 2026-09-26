@@ -2,7 +2,7 @@ import { createCarry } from './carry.ts';
 import { cloneElements } from './clone.ts';
 import { releasedFrom } from './connectors.ts';
 import { membersOf, readingOrder } from './containers.ts';
-import { createCore, DEFAULT_BOX } from './core.ts';
+import { createCore } from './core.ts';
 import { createEffects } from './effects.ts';
 import { exportPng } from './exporter.ts';
 import { boundsOf, fitCamera, toScreen, unionOf, zoomAt } from './geometry.ts';
@@ -760,16 +760,7 @@ export const createBoardController = (
       ]);
     }),
     insertKanban: whenEditable(() => {
-      const [x, y] = core.aim();
-      const { width, height } = DEFAULT_BOX.column;
-      const columns = ['To do', 'Doing', 'Done'].map((title, index) => ({
-        ...core.newElement('frame', [x - (width * 3 + 40) / 2 + index * (width + 20), y - height / 2]),
-        width,
-        height,
-        text: title,
-        layout: 'column' as const,
-        z: scene.topZ + 1 + index
-      }));
+      const columns = core.kanbanAt(core.aim());
       sounds.play('place');
       core.commit(columns);
       core.setSelection(columns.map(column => column.id));

@@ -177,6 +177,7 @@ const Settings = ({
         <option value="checkbox">Checkbox</option>
         <option value="textarea">Long Text</option>
         <option value="hidden">Hidden</option>
+        <option value="color">Color</option>
       </Select>
       <TextArea value={defaultValue} label="Default Value" onChange={handleChangeDefaultValue} size="xs" />
       {subType === 'text' && (

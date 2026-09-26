@@ -8,7 +8,7 @@ import { TOOLS, createBoardController } from './controller.ts';
 import declaration from './declaration';
 import { parseDemo, playDemo } from './demo.ts';
 import { choiceFrom } from './styling.ts';
-import { FILLS, STROKES, STROKE_WIDTHS } from '../../board/model.ts';
+import { asFill, asStroke, STROKE_WIDTHS } from '../../board/model.ts';
 import { isCollaborator } from '../../board/people.ts';
 
 import type {
@@ -23,7 +23,7 @@ import type {
   Tool
 } from './controller.ts';
 import type { Demo } from './demo.ts';
-import type { BoardElement, Fill, Stroke, StrokeWidth } from '../../board/model.ts';
+import type { BoardElement, StrokeWidth } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 import type { InteractionCallback, RealtimeMessage } from '@plitzi/plitzi-sdk';
 import type { ChangeEvent, CSSProperties, FocusEvent, FormEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
@@ -331,8 +331,8 @@ const Board = ({
 
     return {
       tool: isOneOf<Tool>(TOOLS, tool) ? tool : 'select',
-      stroke: isOneOf<Stroke>(STROKES, stroke) ? stroke : 'ink',
-      fill: isOneOf<Fill>(FILLS, fill) ? fill : 'none',
+      stroke: asStroke(stroke) ?? 'ink',
+      fill: asFill(fill) ?? 'none',
       strokeWidth: isOneOf<StrokeWidth>(STROKE_WIDTHS, width) ? width : 2,
       mode: live ? mode : ('view' as const),
       title,

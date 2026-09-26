@@ -1,7 +1,9 @@
-import { container, heading, styles, text } from '@plitzi/sdk-authoring';
+import { container, styles, text } from '@plitzi/sdk-authoring';
 
 import { icon } from '../kit.ts';
+import { cardLine, cardName, HOME_CARD, HOME_CARD_STATES, sectionBlock, sectionHead } from './section.ts';
 
+import type { CollabColour } from '../../board/people.ts';
 import type { ElementSpec } from '@plitzi/sdk-authoring';
 
 /**
@@ -72,18 +74,6 @@ const FEATURES: readonly { glyph: string; title: string; line: string }[] = [
   }
 ];
 
-const block = styles('featuresBlock', { display: 'flex', 'flex-direction': 'column', gap: '18px' });
-
-const blockTitle = styles('featuresTitle', {
-  margin: '0px',
-  'font-family': 'var(--hand)',
-  'font-size': '32px',
-  'font-weight': '700',
-  'line-height': '1.1'
-});
-
-const blockLead = styles('featuresLead', { margin: '4px 0px 0px', 'font-size': '14px', color: 'var(--muted)' });
-
 const grid = styles('featuresGrid', {
   css: {
     desktop: { display: 'grid', 'grid-template-columns': 'repeat(4, minmax(0px, 1fr))', gap: '12px' },
@@ -93,54 +83,47 @@ const grid = styles('featuresGrid', {
 });
 
 const item = styles('featureItem', {
-  css: {
-    display: 'flex',
-    'flex-direction': 'column',
-    gap: '6px',
-    padding: '16px',
-    'border-radius': '14px',
-    border: '1px solid var(--edge)',
-    'background-color': 'var(--surface)',
-    transition: 'border-color 160ms ease, transform 160ms ease'
-  },
-  states: { hover: { 'border-color': 'var(--accent)', transform: 'translateY(-2px)' } }
+  css: { ...HOME_CARD, gap: '8px', padding: '18px' },
+  states: HOME_CARD_STATES
 });
 
-const mark = styles('featureMark', {
-  display: 'inline-flex',
-  'align-items': 'center',
-  'justify-content': 'center',
-  width: '34px',
-  height: '34px',
-  'border-radius': '10px',
-  'font-size': '15px',
-  color: 'var(--accent)',
-  'background-color': 'var(--accent-soft)'
-});
+/** The colours the features' marks go round, so a grid of twelve reads as twelve things. */
+const TONES: readonly CollabColour[] = ['indigo', 'teal', 'orchid', 'amber', 'sky', 'rose', 'lime', 'coral'];
 
-const title = styles('featureTitle', { 'font-weight': '600', 'font-size': '15px' });
-
-const line = styles('featureLine', { 'font-size': '13px', 'line-height': '1.45', color: 'var(--muted)' });
+/** A feature's mark: its icon on a tile of its colour. */
+const markIn = (tone: CollabColour) =>
+  styles(`featureMark-${tone}`, {
+    display: 'inline-flex',
+    'align-items': 'center',
+    'justify-content': 'center',
+    width: '38px',
+    height: '38px',
+    'margin-bottom': '4px',
+    'border-radius': '11px',
+    'font-size': '16px',
+    color: `var(--collab-${tone})`,
+    'background-color': `color-mix(in srgb, var(--collab-${tone}) 14%, transparent)`
+  });
 
 export const features = (): ElementSpec =>
   container({
-    class: block,
+    class: sectionBlock,
     children: [
-      container({
-        children: [
-          heading({ content: 'Everything on one board', subType: 'h2', class: blockTitle }),
-          text({ content: 'No plan to pick, no account to make: every board has all of it.', class: blockLead })
-        ]
+      sectionHead({
+        tone: 'teal',
+        eyebrow: 'Features',
+        title: 'Everything on one board',
+        lead: 'No plan to pick, no account to make: every board has all of it.'
       }),
       container({
         class: grid,
-        children: FEATURES.map(feature =>
+        children: FEATURES.map((feature, index) =>
           container({
             class: item,
             children: [
-              container({ class: mark, children: [icon(feature.glyph)] }),
-              text({ content: feature.title, class: title }),
-              text({ content: feature.line, class: line })
+              container({ class: markIn(TONES[index % TONES.length]), children: [icon(feature.glyph)] }),
+              text({ content: feature.title, class: cardName }),
+              text({ content: feature.line, class: cardLine })
             ]
           })
         )

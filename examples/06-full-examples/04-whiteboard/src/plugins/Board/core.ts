@@ -56,6 +56,9 @@ import type { Collaborator } from '../../board/people.ts';
  * state lives in `state`, read where it is used, so no module keeps a stale copy of another's.
  */
 
+/** Between the columns of a kanban board put down whole. */
+const KANBAN_GAP = 20;
+
 /** A comment's pin: the same size wherever it is put. */
 export const COMMENT_PIN_BOX = { width: COMMENT_PIN, height: COMMENT_PIN };
 
@@ -423,6 +426,10 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
 
     return chosen.length === 1 && isConnector(chosen[0].type) ? chosen[0] : undefined;
   };
+
+  /** A member's colour on this page — the one they announced — or the accent for someone not heard from. */
+  const memberColour = (from: string): string =>
+    state.palette.collab[state.members.get(from)?.color ?? ''] ?? state.palette.accent;
 
   /** What of the selection its handles resize: never a card — its column sets its width, and its words its height. */
   const resizable = (): BoardElement[] => changeable().filter(element => element.type !== 'card');
@@ -988,6 +995,20 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     startEditing(scene.element(card.id) ?? card);
   };
 
+  /** A kanban board — To do, Doing, Done: three columns side by side, centred on `point`, not yet kept. */
+  const kanbanAt = ([x, y]: Point): BoardElement[] => {
+    const { width, height } = DEFAULT_BOX.column;
+
+    return ['To do', 'Doing', 'Done'].map((title, index) => ({
+      ...newElement('frame', [x - (width * 3 + KANBAN_GAP * 2) / 2 + index * (width + KANBAN_GAP), y - height / 2]),
+      width,
+      height,
+      text: title,
+      layout: 'column' as const,
+      z: scene.topZ + 1 + index
+    }));
+  };
+
   /** A text begun at `point`, placed so the point lands inside its first line rather than on its top edge. */
   const startText = (point: Point): void => {
     const element = newElement('text', point);
@@ -1031,6 +1052,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     changeable,
     soleConnector,
     resizable,
+    memberColour,
     openedCard,
     shownBox,
     viewport,
@@ -1059,6 +1081,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     startEditing,
     finishEditing,
     addCard,
+    kanbanAt,
     startText,
     startComment,
     cancelEditing

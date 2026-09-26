@@ -5,20 +5,16 @@ import {
   named,
   on,
   onClick,
-  onPointerDown,
   setState,
   styles,
   text,
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { CATEGORIES, ELEMENTS, entriesOf, pickSteps } from './elements.ts';
+import { CATEGORIES, dragFlows, ELEMENTS, entriesOf, pickSteps } from './elements.ts';
 import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
 import { closePanels } from './panels.ts';
-import { boardAction } from './stylePanel.ts';
 import { markOf } from './toolbar.ts';
-import { PLACED_TOOLS } from '../plugins/Board/types.ts';
-import { isOneOf } from '../plugins/Board/values.ts';
 
 import type { Category, ElementEntry } from './elements.ts';
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
@@ -291,12 +287,7 @@ const pickTile = (entry: ElementEntry, id: string): ElementSpec =>
     content: '',
     title: `${entry.label} — ${entry.description}`,
     class: tile,
-    flows: [
-      [onClick(), ...closePanels, ...pickSteps(entry)],
-      ...(isOneOf(PLACED_TOOLS, entry.tool)
-        ? [[onPointerDown(), boardAction('carry', { tool: entry.tool, drag: true })]]
-        : [])
-    ],
+    flows: [[onClick(), ...closePanels, ...pickSteps(entry)], ...dragFlows(entry)],
     children: [
       container({ class: tileMark, children: [markOf(entry)] }),
       container({

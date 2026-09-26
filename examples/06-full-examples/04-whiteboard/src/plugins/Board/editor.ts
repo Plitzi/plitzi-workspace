@@ -17,6 +17,7 @@ import {
   weightOf
 } from './draw.ts';
 import { FRAME_HEADER, toScreen } from './geometry.ts';
+import { strokeColour } from './palette.ts';
 import { LINE_HEIGHT, takesLabel } from '../../board/model.ts';
 
 import type { Camera } from './geometry.ts';
@@ -44,7 +45,7 @@ export const editorFor = (
     font: faceOf(element, palette),
     weight: weightOf(element),
     lineHeight: LINE_HEIGHT,
-    color: palette.stroke[element.stroke],
+    color: strokeColour(palette, element.stroke),
     composer: element.type === 'comment'
   };
   // A card is a form of two fields — its title, its description under it — laid where the opened card has them, past

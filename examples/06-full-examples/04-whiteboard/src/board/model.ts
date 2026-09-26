@@ -45,8 +45,9 @@ export const SHAPE_TYPES = [
 export type ShapeType = (typeof SHAPE_TYPES)[number];
 
 /**
- * The colours, by NAME. A board stores `ink`, never `#16201c`: the canvas resolves each name from the page's own custom
- * properties, so the same drawing is dark ink on paper in the light scheme and chalk on slate in the dark one.
+ * The colours, by NAME. A board stores `ink`, not `#16201c`: the canvas resolves each name from the page's own custom
+ * properties, so the same drawing is dark ink on paper in the light scheme and chalk on slate in the dark one. A colour
+ * somebody picks themselves is stored as it was picked — `#rrggbb` — and drawn as it is in either scheme.
  */
 export const STROKES = ['ink', 'red', 'orange', 'green', 'blue', 'violet'] as const;
 
@@ -81,9 +82,33 @@ export const OPACITIES = [10, 20, 30, 40, 50, 60, 70, 80, 90] as const;
 /** How a frame places what is put in it: a column arranges its members top to bottom, the way a kanban lane does. */
 export const LAYOUTS = ['column'] as const;
 
-export type Stroke = (typeof STROKES)[number];
+/** A colour picked rather than named: `#rrggbb`, lowercase. */
+export type CustomColour = `#${string}`;
 
-export type Fill = (typeof FILLS)[number];
+export type StrokeName = (typeof STROKES)[number];
+
+export type FillName = (typeof FILLS)[number];
+
+export type Stroke = StrokeName | CustomColour;
+
+export type Fill = FillName | CustomColour;
+
+export const isCustomColour = (value: unknown): value is CustomColour =>
+  typeof value === 'string' && /^#[0-9a-f]{6}$/.test(value);
+
+/** A picked colour however it was written — `#1E90FF` or `#1e90ff` — as it is kept, or nothing. */
+const customColourOf = (value: unknown): CustomColour | undefined => {
+  const lower = typeof value === 'string' ? value.toLowerCase() : undefined;
+
+  return isCustomColour(lower) ? lower : undefined;
+};
+
+/** A line's colour from outside — a name, or a picked `#rrggbb` — as it is kept; nothing when it is neither. */
+export const asStroke = (value: unknown): Stroke | undefined =>
+  STROKES.find(name => name === value) ?? customColourOf(value);
+
+/** A fill from outside — a name, `none`, or a picked `#rrggbb` — as it is kept; nothing when it is neither. */
+export const asFill = (value: unknown): Fill | undefined => FILLS.find(name => name === value) ?? customColourOf(value);
 
 export type StrokeWidth = (typeof STROKE_WIDTHS)[number];
 
@@ -408,6 +433,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     nonce,
     deleted
   } = value;
+  const [line, paint] = [asStroke(stroke), asFill(fill)];
   if (
     !isElementId(id) ||
     !isOneOf(SHAPE_TYPES, type) ||
@@ -415,8 +441,8 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     !isCoordinate(y) ||
     !isCoordinate(width) ||
     !isCoordinate(height) ||
-    !isOneOf(STROKES, stroke) ||
-    !isOneOf(FILLS, fill) ||
+    line === undefined ||
+    paint === undefined ||
     !isOneOf(STROKE_WIDTHS, strokeWidth) ||
     !Number.isInteger(seed) ||
     !isCoordinate(z) ||
@@ -453,8 +479,8 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     y,
     width: Math.abs(width),
     height: Math.abs(height),
-    stroke,
-    fill,
+    stroke: line,
+    fill: paint,
     strokeWidth,
     seed: Number(seed),
     z,

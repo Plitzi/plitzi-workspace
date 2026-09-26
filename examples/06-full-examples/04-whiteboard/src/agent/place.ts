@@ -1,7 +1,7 @@
 import { randomInt } from 'node:crypto';
 
 import { newElementId } from './session.ts';
-import { FILLS, fitsInFrame, FONT_SIZES, holdsText, isAuthored, STROKES } from '../board/model.ts';
+import { asFill, asStroke, fitsInFrame, FONT_SIZES, holdsText, isAuthored } from '../board/model.ts';
 import { STAMP_SIZE } from '../board/reactions.ts';
 import { estimatedCardHeight, estimatedTextBox } from '../board/sketch.ts';
 import { COLUMN_GAP, COLUMN_PADDING, layoutColumn, membersOf, moved } from '../plugins/Board/containers.ts';
@@ -56,16 +56,17 @@ const measured = (element: BoardElement): BoardElement => {
     : element;
 };
 
+/** A colour an agent asked for — a name, or its own `#rrggbb` — as a fill: a note's paper is never none. */
 const fillOf = (type: ShapeType, color: string | undefined): Fill => {
-  const named = FILLS.find(fill => fill === color);
+  const fill = asFill(color);
   if (type === 'sticky' || type === 'stack') {
-    return named && named !== 'none' ? named : 'yellow';
+    return fill && fill !== 'none' ? fill : 'yellow';
   }
 
-  return named ?? 'none';
+  return fill ?? 'none';
 };
 
-const strokeOf = (color: string | undefined): Stroke => STROKES.find(stroke => stroke === color) ?? 'ink';
+const strokeOf = (color: string | undefined): Stroke => asStroke(color) ?? 'ink';
 
 /** The frame an agent named, by id or by title. */
 export const frameNamed = (session: Session, name: string | undefined): BoardElement | undefined => {

@@ -1,7 +1,7 @@
-import { FILLS, STROKES } from '../../board/model.ts';
+import { FILLS, isCustomColour, STROKES } from '../../board/model.ts';
 import { COLLAB_COLOURS } from '../../board/people.ts';
 
-import type { Fill, Stroke } from '../../board/model.ts';
+import type { Fill, FillName, Stroke, StrokeName } from '../../board/model.ts';
 
 /**
  * The colours the canvas paints with, read from the page.
@@ -13,10 +13,10 @@ import type { Fill, Stroke } from '../../board/model.ts';
 export type Palette = {
   /** What changes whenever any colour does: the drawings cached under the old palette are stale. */
   key: string;
-  stroke: Record<Stroke, string>;
-  fill: Record<Fill, string>;
+  stroke: Record<StrokeName, string>;
+  fill: Record<FillName, string>;
   /** A sticky note's paper, by the same names as the fills. */
-  sticky: Record<Fill, string>;
+  sticky: Record<FillName, string>;
   collab: Record<string, string>;
   paper: string;
   dots: string;
@@ -41,6 +41,17 @@ const read = (style: CSSStyleDeclaration, name: string, fallback: string): strin
 // `fromEntries` answers a string-keyed record; every key of `keys` is in it, which the type cannot follow.
 const table = <K extends string>(keys: readonly K[], value: (key: K) => string): Record<K, string> =>
   Object.fromEntries(keys.map(key => [key, value(key)])) as Record<K, string>;
+
+/** An element's line on this page: a named colour as this scheme has it, a picked one as it was picked. */
+export const strokeColour = (palette: Palette, stroke: Stroke): string =>
+  isCustomColour(stroke) ? stroke : palette.stroke[stroke];
+
+/** An element's fill on this page — `none` is transparent. */
+export const fillColour = (palette: Palette, fill: Fill): string => (isCustomColour(fill) ? fill : palette.fill[fill]);
+
+/** A note's paper, or a frame's tint, on this page. */
+export const paperColour = (palette: Palette, fill: Fill): string =>
+  isCustomColour(fill) ? fill : palette.sticky[fill];
 
 export const readPalette = (element: HTMLElement): Palette => {
   const style = getComputedStyle(element);

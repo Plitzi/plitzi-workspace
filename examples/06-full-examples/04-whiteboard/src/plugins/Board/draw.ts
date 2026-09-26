@@ -2,9 +2,11 @@ import { getStroke } from 'perfect-freehand';
 import rough from 'roughjs';
 
 import { FRAME_HEADER, handlePoint, HANDLES, toScreen } from './geometry.ts';
+import { fillColour, paperColour, strokeColour } from './palette.ts';
 import { penOf } from './pens.ts';
 import { outlineOf } from './shapes.ts';
 import { FONT_SIZES, LINE_HEIGHT, takesLabel } from '../../board/model.ts';
+import { colourOfName } from '../../board/people.ts';
 
 import type { Box, Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';
@@ -35,6 +37,8 @@ export const STACK_STRIP = 30;
 
 /** A card: its inset, where its words start — past the box that ticks it done — and their size. */
 export const CARD_PADDING = 14;
+
+const CARD_RADIUS = 12;
 
 export const CARD_TEXT_LEFT = 42;
 
@@ -227,7 +231,11 @@ const drawStamp = (context: CanvasRenderingContext2D, element: BoardElement): vo
 };
 
 /** A name at the foot of whatever someone wrote: who, in their own words' company, small and quiet. */
-const drawAuthor = (
+/**
+ * Who wrote something, signed: their initial in a disc of a colour of their own — the same on every screen — and their
+ * name beside it, in `colour`. `y` is the signature's middle.
+ */
+const drawSignature = (
   context: CanvasRenderingContext2D,
   author: string,
   x: number,
@@ -235,12 +243,23 @@ const drawAuthor = (
   palette: Palette,
   colour: string
 ): void => {
+  const radius = 8;
   context.save();
-  context.font = `600 12px ${palette.ui}`;
+  context.beginPath();
+  context.arc(x + radius, y, radius, 0, Math.PI * 2);
+  context.fillStyle = palette.collab[colourOfName(author)];
+  context.fill();
   context.textBaseline = 'middle';
+  context.textAlign = 'center';
+  context.font = `700 9px ${palette.ui}`;
+  context.fillStyle = '#ffffff';
+  const initial = author.codePointAt(0);
+  context.fillText(initial === undefined ? '' : String.fromCodePoint(initial).toUpperCase(), x + radius, y + 0.5);
+  context.textAlign = 'left';
+  context.font = `600 12px ${palette.ui}`;
   context.fillStyle = colour;
-  context.globalAlpha = 0.7;
-  context.fillText(author, x, y);
+  context.globalAlpha *= 0.8;
+  context.fillText(author, x + radius * 2 + 6, y);
   context.restore();
 };
 
@@ -258,7 +277,7 @@ const drawFrame = (
   context.save();
   context.beginPath();
   context.roundRect(0, 0, element.width, element.height, 14);
-  context.fillStyle = element.fill === 'none' ? palette.surface : palette.sticky[element.fill];
+  context.fillStyle = element.fill === 'none' ? palette.surface : paperColour(palette, element.fill);
   context.globalAlpha = element.fill === 'none' ? 0.55 : 0.45;
   context.fill();
   context.globalAlpha = 1;
@@ -388,41 +407,47 @@ const drawCard = (
 ): void => {
   const { width } = element;
   context.save();
-  context.shadowColor = opened ? 'rgba(0, 0, 0, 0.24)' : 'rgba(0, 0, 0, 0.14)';
-  context.shadowBlur = opened ? 24 : 10;
-  context.shadowOffsetY = opened ? 8 : 3;
+  // Lifted a little off its column; opened, well above what it lies over.
+  context.shadowColor = opened ? 'rgba(0, 0, 0, 0.22)' : 'rgba(0, 0, 0, 0.09)';
+  context.shadowBlur = opened ? 28 : 12;
+  context.shadowOffsetY = opened ? 10 : 4;
   context.beginPath();
-  context.roundRect(0, 0, width, height, 10);
+  context.roundRect(0, 0, width, height, CARD_RADIUS);
   context.fillStyle = palette.surface;
   context.fill();
   context.shadowColor = 'transparent';
   context.strokeStyle = palette.edge;
   context.lineWidth = 1;
   context.stroke();
+  // Its colour, as a strip down its edge, inset from the corners.
   if (element.fill !== 'none') {
-    context.save();
-    context.clip();
-    context.fillStyle = palette.fill[element.fill];
-    context.fillRect(0, 0, 6, height);
-    context.restore();
+    context.beginPath();
+    context.roundRect(0, CARD_RADIUS / 2, 4, height - CARD_RADIUS, [0, 3, 3, 0]);
+    context.fillStyle = fillColour(palette, element.fill);
+    context.fill();
   }
 
   if (opened && writing) {
     context.beginPath();
-    context.roundRect(0, 0, width, height, 10);
+    context.roundRect(0, 0, width, height, CARD_RADIUS);
     context.strokeStyle = palette.accent;
     context.lineWidth = 2;
     context.stroke();
   }
 
   const { x, y, size } = CARD_CHECK;
+  const tick = palette.stroke.green;
   context.beginPath();
-  context.roundRect(x, y, size, size, 5);
+  context.roundRect(x, y, size, size, 6);
   context.lineWidth = 1.5;
-  context.strokeStyle = element.done ? palette.accent : palette.muted;
-  context.fillStyle = element.done ? palette.accent : 'transparent';
+  context.strokeStyle = element.done ? tick : palette.muted;
+  context.fillStyle = element.done ? tick : 'transparent';
   context.fill();
+  // An open box is drawn quieter than a ticked one: the tick is what should catch the eye.
+  context.save();
+  context.globalAlpha *= element.done ? 1 : 0.55;
   context.stroke();
+  context.restore();
   if (element.done) {
     context.strokeStyle = '#ffffff';
     context.lineWidth = 2.2;
@@ -441,7 +466,7 @@ const drawCard = (
     context.fillText(UNTITLED, CARD_TEXT_LEFT, CARD_PADDING + (layout.lineHeight - CARD_FONT) / 2);
   } else if (!writing) {
     const { title, lineHeight } = layout;
-    context.font = `${CARD_FONT}px ${palette.ui}`;
+    context.font = fontOf(element, palette);
     context.fillStyle = element.done ? palette.muted : palette.stroke.ink;
     title.forEach((line, index) => {
       const top = CARD_PADDING + index * lineHeight + (lineHeight - CARD_FONT) / 2;
@@ -463,14 +488,7 @@ const drawCard = (
   }
 
   if (element.author && authors) {
-    drawAuthor(
-      context,
-      `Author: ${element.author}`,
-      CARD_TEXT_LEFT,
-      height - CARD_AUTHOR_ROW / 2 - 4,
-      palette,
-      palette.muted
-    );
+    drawSignature(context, element.author, CARD_TEXT_LEFT, height - CARD_AUTHOR_ROW / 2 - 4, palette, palette.muted);
   }
 
   context.restore();
@@ -478,7 +496,7 @@ const drawCard = (
 
 /** The pile under the top paper, the paper, and the strip that says what it is — in element coordinates. */
 const drawStack = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
-  const paper = palette.sticky[element.fill];
+  const paper = paperColour(palette, element.fill);
   const width = element.width - STACK_OFFSET * 2;
   const height = element.height - STACK_STRIP - STACK_OFFSET * 2;
   context.save();
@@ -598,8 +616,9 @@ export const fontSizeOf = (element: BoardElement): number => {
 export const faceOf = (element: BoardElement, palette: Palette): string =>
   element.type === 'card' || element.type === 'frame' || element.type === 'comment' ? palette.ui : palette.font;
 
-/** A frame's title is set bold; everything else at the face's own weight. */
-export const weightOf = (element: BoardElement): number => (element.type === 'frame' ? 600 : 400);
+/** A frame's title is set bold, a card's a little heavier than body text; everything else at the face's own weight. */
+export const weightOf = (element: BoardElement): number =>
+  element.type === 'frame' ? 600 : element.type === 'card' ? 500 : 400;
 
 export const fontOf = (element: BoardElement, palette: Palette): string =>
   `${weightOf(element)} ${fontSizeOf(element)}px ${faceOf(element, palette)}`;
@@ -802,7 +821,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
   };
 
   const build = (element: BoardElement, palette: Palette): Shape => {
-    const stroke = palette.stroke[element.stroke];
+    const stroke = strokeColour(palette, element.stroke);
     if (element.type === 'freehand') {
       const outline = getStroke(element.points ?? [], {
         ...penOf(element),
@@ -825,7 +844,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       strokeWidth: element.strokeWidth,
       roughness,
       bowing: roughness ? 1 : 0,
-      ...(element.type === 'sticky' ? { fill: palette.sticky[element.fill], fillStyle: 'solid' } : {}),
+      ...(element.type === 'sticky' ? { fill: paperColour(palette, element.fill), fillStyle: 'solid' } : {}),
       // One pass, not rough's two: a dash drawn twice, a little apart, reads as two dashes.
       ...(dash ? { strokeLineDash: dash, disableMultiStroke: true } : {})
     };
@@ -833,7 +852,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     const hatch: Options = {
       ...options,
       stroke: 'none',
-      fill: palette.fill[element.fill],
+      fill: fillColour(palette, element.fill),
       fillStyle: element.fillStyle === 'solid' ? 'solid' : element.fillStyle === 'cross' ? 'cross-hatch' : 'hachure',
       hachureGap: 6 + element.strokeWidth * 2,
       fillWeight: Math.max(1, element.strokeWidth / 1.5)
@@ -913,7 +932,9 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
         return { drawables: [] };
       case 'sticky':
         return {
-          drawables: [generator.rectangle(0, 0, width, height, { ...options, stroke: palette.sticky[element.fill] })]
+          drawables: [
+            generator.rectangle(0, 0, width, height, { ...options, stroke: paperColour(palette, element.fill) })
+          ]
         };
       default: {
         const clip = new Path2D();
@@ -931,7 +952,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
 
   /** How a pen stroke is filled, by its brush: flat ink, see-through, grainy, or glowing. */
   const inkFor = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
-    const colour = palette.stroke[element.stroke];
+    const colour = strokeColour(palette, element.stroke);
     context.fillStyle = colour;
     if (element.brush === 'highlighter') {
       context.globalAlpha *= 0.38;
@@ -964,7 +985,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
   const drawText = (context: CanvasRenderingContext2D, element: BoardElement, palette: Palette): void => {
     const { lines, lineHeight } = layoutText(context, element, palette);
     const lift = (lineHeight - fontSizeOf(element)) / 2;
-    context.fillStyle = palette.stroke[element.stroke];
+    context.fillStyle = strokeColour(palette, element.stroke);
     context.textBaseline = 'top';
     if (takesLabel(element.type)) {
       // A label sits in the middle of its shape, both ways.
@@ -1037,7 +1058,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       context.shadowColor = 'rgba(0, 0, 0, 0.18)';
       context.shadowBlur = 12;
       context.shadowOffsetY = 4;
-      context.fillStyle = palette.sticky[element.fill];
+      context.fillStyle = paperColour(palette, element.fill);
       context.fillRect(0, 0, element.width, element.height);
       context.shadowColor = 'transparent';
     }
@@ -1120,14 +1141,7 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
 
     // Who wrote a note is a signature, not part of it: shown while the note is pointed at or selected.
     if (element.type === 'sticky' && element.author && authors) {
-      drawAuthor(
-        context,
-        `Author: ${element.author}`,
-        STICKY_PADDING,
-        element.height - 16,
-        palette,
-        palette.stroke.ink
-      );
+      drawSignature(context, element.author, STICKY_PADDING, element.height - 18, palette, palette.stroke.ink);
     }
 
     context.restore();

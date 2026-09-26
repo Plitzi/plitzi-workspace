@@ -939,6 +939,11 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   press itself, where a drag away from the element starts — a tile taken to a canvas, a handle pulled. Let go where it
   went down, it is a click too and `onClick` follows.
 
+## `formControl` of `subType: 'color'`
+
+- A form control can be the browser's own colour picker: `subType: 'color'`, its value `#rrggbb`. Its `onChange` fires
+  as the colour is picked, like any other control's.
+
 ## A render reads what a call wrote
 
 - `createServer` built the actions module for `render` elements on a different config object than the one the

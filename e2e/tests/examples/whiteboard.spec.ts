@@ -73,6 +73,7 @@ const seedBoard = async (origin: string, title: string, elements: readonly objec
 type Saved = {
   id: string;
   type: string;
+  stroke?: string;
   x: number;
   y: number;
   text?: string;
@@ -361,5 +362,32 @@ describeTarget('whiteboard', subject => {
     await expect
       .poll(async () => (await savedElements(subject.origin, id)).map(saved => saved.type))
       .toEqual(['rectangle']);
+
+    // A whole kanban board is taken the same way: its three columns land where it is let go.
+    await page.keyboard.press('i');
+    const kanban = page.locator('[data-plitzi-el="library-kanban-board"]');
+    await kanban.scrollIntoViewIfNeeded();
+    const tile2 = await kanban.boundingBox();
+    expect(tile2, 'the kanban board in the library').not.toBeNull();
+    await drag(page, [(tile2?.x ?? 0) + 20, (tile2?.y ?? 0) + 20], [x, y + 100], 12);
+    await expect
+      .poll(async () => (await savedElements(subject.origin, id)).filter(saved => saved.type === 'frame').length)
+      .toBe(3);
+  });
+
+  /** Besides the named colours, any one: the style panel's last swatch is the browser's picker, and what is picked is
+   *  kept as it was picked. */
+  test('a shape takes a colour of its own from the picker', async ({ page }) => {
+    const box = element(0, { type: 'rectangle', x: 0, y: 0, width: 160, height: 100 });
+    const id = await seedBoard(subject.origin, 'e2e — a colour of its own', [box]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    const [x, y] = await middle(page);
+    await page.mouse.click(x - 80, y);
+    await page.locator('[data-plitzi-el="stroke-custom"] input').fill('#FF00AA');
+
+    await expect
+      .poll(async () => (await savedElements(subject.origin, id)).map(saved => saved.stroke))
+      .toEqual(['#ff00aa']);
   });
 });

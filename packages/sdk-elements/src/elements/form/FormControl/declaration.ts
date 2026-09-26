@@ -79,7 +79,8 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       'switch',
       'select',
       'textarea',
-      'hidden'
+      'hidden',
+      'color'
     ])
   },
   triggers: {

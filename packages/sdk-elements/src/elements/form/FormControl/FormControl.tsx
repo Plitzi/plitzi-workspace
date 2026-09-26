@@ -35,7 +35,9 @@ export type FormControlProps = {
     | 'switch'
     | 'select'
     | 'textarea'
-    | 'hidden';
+    | 'hidden'
+    /** The browser's own colour picker: its value is `#rrggbb`. */
+    | 'color';
   name: string;
   label: string;
   placeholder: string;
@@ -236,7 +238,7 @@ const FormControl = ({
           disabled={disabled}
         />
       )} */}
-      {['text', 'number', 'email', 'password', 'date', 'time'].includes(subType) && (
+      {['text', 'number', 'email', 'password', 'date', 'time', 'color'].includes(subType) && (
         <Input
           id={`${rootId}_${id}`}
           name={name}
@@ -291,21 +293,6 @@ const FormControl = ({
           onValidate={handleValidate}
         />
       )}
-      {/* {subType === 'color' && (
-        <ColorPicker
-          {...inputProps}
-          ref={ref}
-          id={`${rootId}_${id}`}
-          name={name}
-          onChange={onChange}
-          value={value}
-          size={size}
-          className={inputClassName}
-          placeholder={placeholder}
-          hasError={!!errorMessage}
-          disabled={disabled}
-        />
-      )} */}
       {error && <div className={clsx('form-control__error-message', styleSelectors.error)}>{error}</div>}
     </RootElement>
   );

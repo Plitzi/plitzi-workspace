@@ -10,7 +10,7 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
-import { CATEGORIES, ELEMENTS, entriesOf, isGroup, pickSteps } from './elements.ts';
+import { CATEGORIES, dragFlows, ELEMENTS, entriesOf, isGroup, pickSteps } from './elements.ts';
 import { FLOAT, ICON_BUTTON, icon } from './kit.ts';
 import { closeOthers, closePanels } from './panels.ts';
 
@@ -156,7 +156,7 @@ const soloButton = (entry: ElementEntry): ElementSpec =>
     bind: entry.tool
       ? [variantFrom(toolButton, 'computed.tool', { template: `{{ source == '${entry.tool}' ? 'active' : '' }}` })]
       : [],
-    flows: [[onClick(), ...closePanels, ...pickSteps(entry)]],
+    flows: [[onClick(), ...closePanels, ...pickSteps(entry)], ...dragFlows(entry)],
     children: [markOf(entry), text({ content: entry.hint, class: keyHint })]
   });
 
@@ -305,7 +305,8 @@ const flyout = (category: Category & { id: GroupId }): ElementSpec =>
           })
         ],
         flows: [
-          [onClick(), ...pickSteps(entry), setState({ key: `${category.id}Open`, type: 'boolean', value: false })]
+          [onClick(), ...pickSteps(entry), setState({ key: `${category.id}Open`, type: 'boolean', value: false })],
+          ...dragFlows(entry)
         ],
         children: [markOf(entry)]
       })

@@ -116,6 +116,10 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
   44%, 88% { transform: scale(1); opacity: 1; }
   100% { transform: scale(1); opacity: 0; }
 }
+@keyframes wb-float {
+  0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
+  50% { transform: translateY(-10px) rotate(calc(var(--tilt, 0deg) + 3deg)); }
+}
 @keyframes wb-orbit { from { transform: rotate(0deg) translateX(48px); } to { transform: rotate(360deg) translateX(48px); } }
 @media (prefers-reduced-motion: reduce) {
   [class*='motion'], .heroHighlight { animation: none !important; opacity: 1 !important; }

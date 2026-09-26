@@ -1,12 +1,12 @@
 import { COLUMN_PADDING, columnAt } from './containers.ts';
 import { COMMENT_PIN_BOX, DEFAULT_BOX, STACK_BOX } from './core.ts';
-import { toBoard } from './geometry.ts';
+import { boundsOf, toBoard, unionOf } from './geometry.ts';
 import { PLACED_TOOLS } from './types.ts';
 import { isOneOf } from './values.ts';
-import { FILLS, holdsText } from '../../board/model.ts';
+import { asFill, holdsText } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
-import type { Carrying, PlacedTool } from './types.ts';
+import type { Carried, Carrying, PlacedTool } from './types.ts';
 import type { BoardElement, Fill, Point } from '../../board/model.ts';
 
 /** How far a carried thing must be dragged before letting go places it — less is a click. */
@@ -17,20 +17,25 @@ const TEXT_PREVIEW = 'Text';
 
 /**
  * Something taken to the board from outside the canvas — a note or a whole pile off the tray, any element off the
- * library — followed on the whole window. Dragged onto the board it lands where it is let go; a pad clicked keeps it
- * in hand until a click on the board. It is over the board only where the board is what the pointer is on: let go
- * over a panel or the toolbar, it goes back.
+ * toolbar or the library, a whole kanban board — followed on the whole window. Dragged onto the board it lands where
+ * it is let go; a pad clicked keeps it in hand until a click on the board. It is over the board only where the board
+ * is what the pointer is on: let go over a panel or the toolbar, it goes back.
  */
 export const createCarry = (core: Core) => {
   const { state, canvas, draft } = core;
 
-  /** Where a carried element would land: centred under the pointer, so it is put down where it is seen. */
-  const carriedAt = (element: BoardElement, [x, y]: Point): BoardElement => ({
-    ...element,
-    x: x - element.width / 2,
-    y: y - element.height / 2,
-    z: core.scene.topZ + 1
-  });
+  /** Where carried elements would land: all of them centred under the pointer, so they are put down where seen. */
+  const carriedAt = (elements: readonly BoardElement[], [x, y]: Point): BoardElement[] => {
+    const box = unionOf(elements.map(boundsOf));
+    const [dx, dy] = box ? [x - (box.x + box.width / 2), y - (box.y + box.height / 2)] : [x, y];
+
+    return elements.map((element, index) => ({
+      ...element,
+      x: element.x + dx,
+      y: element.y + dy,
+      z: core.scene.topZ + 1 + index
+    }));
+  };
 
   const onBoard = (event: PointerEvent): Point => {
     const rect = canvas.getBoundingClientRect();
@@ -61,12 +66,27 @@ export const createCarry = (core: Core) => {
     }
   };
 
+  /** What is carried, as it is made: one element, a pile, or the three columns of a kanban board. */
+  const elementsFor = (what: Carried, paper: Fill): BoardElement[] => {
+    if (what === 'stack') {
+      return [{ ...core.newElement('stack', [0, 0]), ...STACK_BOX, fill: paper }];
+    }
+
+    return what === 'kanban' ? core.kanbanAt([0, 0]) : [elementFor(what, paper)];
+  };
+
+  const forget = (carrying: Carrying): void => {
+    for (const element of carrying.elements) {
+      draft.delete(element.id);
+    }
+  };
+
   const end = (): void => {
     if (!state.carrying) {
       return;
     }
 
-    draft.delete(state.carrying.element.id);
+    forget(state.carrying);
     state.carrying = undefined;
     state.dropTarget = undefined;
     window.removeEventListener('pointermove', onMove);
@@ -77,8 +97,8 @@ export const createCarry = (core: Core) => {
   };
 
   /**
-   * Down on the board, as its tool would have made it there: kept and selected — and a note, a frame, a card, a text
-   * or a comment open for writing, the next thing anyone does with one. A card lands only in a column.
+   * Down on the board, as it would have been made there: kept and selected — and a note, a frame, a card, a text or a
+   * comment open for writing, the next thing anyone does with one. A card lands only in a column.
    */
   const putDown = (point: Point): void => {
     const carried = state.carrying;
@@ -87,7 +107,7 @@ export const createCarry = (core: Core) => {
       return;
     }
 
-    switch (carried.tool) {
+    switch (carried.what) {
       case 'card': {
         const column = columnAt(core.displayed(), point);
         if (column) {
@@ -105,12 +125,13 @@ export const createCarry = (core: Core) => {
 
         return;
       default: {
-        const placed = carriedAt(carried.element, point);
+        const placed = carriedAt(carried.elements, point);
         core.sounds.play('place');
-        core.commit([placed]);
-        core.setSelection([placed.id]);
-        if (holdsText(placed.type)) {
-          core.startEditing(core.scene.element(placed.id) ?? placed);
+        core.commit(placed);
+        core.setSelection(placed.map(element => element.id));
+        const [only] = placed;
+        if (placed.length === 1 && holdsText(only.type)) {
+          core.startEditing(core.scene.element(only.id) ?? only);
         }
       }
     }
@@ -134,14 +155,20 @@ export const createCarry = (core: Core) => {
     if (carrying.over && carrying.moved) {
       const point = onBoard(event);
       state.lastPointer = point;
-      draft.set(carrying.element.id, carriedAt(carrying.element, point));
-      if (carrying.tool === 'card') {
+      for (const element of carriedAt(carrying.elements, point)) {
+        draft.set(element.id, element);
+      }
+
+      // Where it would go: a card's column and the gap in it; a note's frame. Columns are put in nothing.
+      if (carrying.what === 'card') {
         core.aimCard(point);
+      } else if (carrying.what === 'kanban') {
+        core.aimDrop(undefined, new Set());
       } else {
-        core.aimDrop(point, new Set([carrying.element.id]));
+        core.aimDrop(point, new Set(carrying.elements.map(element => element.id)));
       }
     } else {
-      draft.delete(carrying.element.id);
+      forget(carrying);
       core.aimDrop(undefined, new Set());
     }
 
@@ -168,8 +195,9 @@ export const createCarry = (core: Core) => {
   }
 
   /**
-   * What `tool` puts down — a note in `fill`'s paper when it is the pad's, or a pile of them (`kind: 'stack'`) — taken
-   * to the board. `drag`: taken by a press, which is only carried if it is dragged.
+   * What `tool` puts down — a note in `fill`'s paper when none is named, as the pad's are — or a pile of notes
+   * (`kind: 'stack'`), or a whole kanban board (`kind: 'kanban'`), taken to the board. `drag`: taken by a press, and
+   * only carried if it is dragged. A tool that puts nothing down — a line, the eraser — carries nothing.
    */
   const start = ({
     fill,
@@ -187,25 +215,27 @@ export const createCarry = (core: Core) => {
       return;
     }
 
-    const paper: Fill = isOneOf(FILLS, fill) && fill !== 'none' ? fill : 'yellow';
-    const placed: PlacedTool = isOneOf(PLACED_TOOLS, tool) ? tool : 'sticky';
-    const carrying: Carrying =
-      kind === 'stack'
-        ? {
-            element: { ...core.newElement('stack', [0, 0]), ...STACK_BOX, fill: paper },
-            tool: 'stack',
-            moved: false,
-            over: false,
-            drag: false
-          }
-        : {
-            element: elementFor(placed, paper),
-            tool: placed,
-            moved: false,
-            over: false,
-            drag: drag === true || drag === 'true'
-          };
-    state.carrying = carrying;
+    const picked = asFill(fill);
+    const paper: Fill = picked && picked !== 'none' ? picked : 'yellow';
+    const what: Carried | undefined =
+      kind === 'stack' || kind === 'kanban'
+        ? kind
+        : tool === undefined
+          ? 'sticky'
+          : isOneOf(PLACED_TOOLS, tool)
+            ? tool
+            : undefined;
+    if (!what) {
+      return;
+    }
+
+    state.carrying = {
+      elements: elementsFor(what, paper),
+      what,
+      moved: false,
+      over: false,
+      drag: drag === true || drag === 'true'
+    };
     core.setSelection([]);
     canvas.style.cursor = 'grabbing';
     window.addEventListener('pointermove', onMove);

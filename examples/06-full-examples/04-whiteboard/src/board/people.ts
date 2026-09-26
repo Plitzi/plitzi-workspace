@@ -8,6 +8,16 @@ export const COLLAB_COLOURS = ['coral', 'amber', 'lime', 'teal', 'sky', 'indigo'
 
 export type CollabColour = (typeof COLLAB_COLOURS)[number];
 
+/** A colour of a name's own, the same on every screen: what signs a card or a note, whoever is here to see it. */
+export const colourOfName = (name: string): CollabColour => {
+  let hash = 7;
+  for (let index = 0; index < name.length; index += 1) {
+    hash = (hash * 31 + name.charCodeAt(index)) >>> 0;
+  }
+
+  return COLLAB_COLOURS[hash % COLLAB_COLOURS.length];
+};
+
 export const GUEST_NAMES = [
   'Otter',
   'Heron',

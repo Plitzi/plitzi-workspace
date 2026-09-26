@@ -1,5 +1,5 @@
-import { isOneOf, isPoint } from './values.ts';
-import { STROKES } from '../../board/model.ts';
+import { isPoint } from './values.ts';
+import { asStroke } from '../../board/model.ts';
 import { isCollaborator } from '../../board/people.ts';
 import { isReaction } from '../../board/reactions.ts';
 
@@ -45,7 +45,7 @@ const isStep = (value: unknown): value is DemoStep => {
     ('drop' in value && value.drop === true) ||
     ('say' in value && typeof value.say === 'string') ||
     ('react' in value && isReaction(value.react)) ||
-    ('pen' in value && (value.pen === '' || isOneOf(STROKES, value.pen))) ||
+    ('pen' in value && (value.pen === '' || asStroke(value.pen) !== undefined)) ||
     ('laser' in value && typeof value.laser === 'boolean')
   );
 };

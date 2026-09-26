@@ -22,6 +22,7 @@ import { newBoardFlow, primaryButton } from '../board.ts';
 import { BUTTON_RESET, FLOAT, ICON_BUTTON, icon } from '../kit.ts';
 import { quickPrivateBoard } from '../reach.ts';
 
+import type { CollabColour } from '../../board/people.ts';
 import type { Tool } from '../../plugins/Board/controller.ts';
 import type { BoardAttributes } from '../../plugins/Board/declaration.ts';
 import type { Demo } from '../../plugins/Board/demo.ts';
@@ -144,18 +145,111 @@ const section = styles('hero', {
       display: 'grid',
       'grid-template-columns': 'minmax(0px, 1fr) minmax(0px, 1.15fr)',
       'align-items': 'center',
-      gap: '48px',
-      'padding-top': '24px'
+      gap: '56px',
+      padding: '40px 0px 24px'
     },
-    compact: { 'grid-template-columns': 'minmax(0px, 1fr)', gap: '28px' }
+    compact: { 'grid-template-columns': 'minmax(0px, 1fr)', gap: '32px', 'padding-top': '16px' }
   }
 });
 
+/**
+ * The colour the hero stands in: the cursors' colours as light on the paper, wider than the page — the page clips it
+ * rather than scroll sideways — and faded out at its edges, so it is a glow and not a box.
+ */
+const backdrop = styles('heroBackdrop', {
+  position: 'absolute',
+  inset: '-120px -320px -80px -320px',
+  'z-index': '0',
+  'pointer-events': 'none',
+  'background-image': [
+    'radial-gradient(34% 46% at 30% 32%, color-mix(in srgb, var(--collab-amber) 30%, transparent), transparent)',
+    'radial-gradient(30% 44% at 72% 22%, color-mix(in srgb, var(--collab-orchid) 26%, transparent), transparent)',
+    'radial-gradient(34% 44% at 64% 86%, color-mix(in srgb, var(--collab-teal) 22%, transparent), transparent)',
+    'radial-gradient(24% 34% at 40% 88%, color-mix(in srgb, var(--collab-sky) 20%, transparent), transparent)'
+  ].join(', '),
+  filter: 'blur(12px)'
+});
+
+/** What stands on the backdrop, above it. */
+const lifted = { position: 'relative', 'z-index': '1' } as const;
+
 const pitch = styles('heroPitch', {
+  ...lifted,
   display: 'flex',
   'flex-direction': 'column',
   'align-items': 'flex-start',
-  gap: '20px'
+  gap: '22px'
+});
+
+/**
+ * Things left lying about the hero, drifting a little: a note, a stamp, a star — the board's own things, so the page
+ * looks like one before anything is drawn. Only where there is room for them; still for whoever asked for less motion
+ * (every one is a `motion…` class).
+ */
+const LITTER = {
+  position: 'absolute',
+  'z-index': '2',
+  'pointer-events': 'none',
+  animation: 'wb-float 7s ease-in-out infinite'
+} as const;
+
+const litterNote = styles('motionHeroNote', {
+  css: {
+    desktop: {
+      ...LITTER,
+      top: '28px',
+      left: '31%',
+      width: '104px',
+      height: '96px',
+      padding: '12px',
+      'font-family': 'var(--hand)',
+      'font-size': '17px',
+      'line-height': '1.15',
+      color: 'var(--ink)',
+      'background-color': 'var(--sticky-yellow)',
+      'box-shadow': '0 12px 24px -12px rgba(0, 0, 0, 0.35)',
+      '--tilt': '-8deg'
+    },
+    compact: { display: 'none' }
+  }
+});
+
+const litterStamp = styles('motionHeroStamp', {
+  css: {
+    desktop: {
+      ...LITTER,
+      bottom: '56px',
+      left: '-34px',
+      display: 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      width: '58px',
+      height: '58px',
+      'border-radius': '50%',
+      'font-size': '28px',
+      'background-color': 'var(--surface)',
+      'box-shadow': '0 10px 24px -10px var(--shadow), 0 0 0 3px var(--collab-rose)',
+      'animation-delay': '-2.5s',
+      '--tilt': '10deg'
+    },
+    compact: { display: 'none' }
+  }
+});
+
+const litterStar = styles('motionHeroStar', {
+  css: {
+    desktop: {
+      ...LITTER,
+      top: '-26px',
+      left: '-22px',
+      'font-size': '42px',
+      color: 'var(--collab-amber)',
+      'text-shadow': '0 6px 16px color-mix(in srgb, var(--collab-amber) 50%, transparent)',
+      'animation-delay': '-4s',
+      '--tilt': '14deg'
+    },
+    compact: { display: 'none' }
+  }
 });
 
 const eyebrow = styles('heroEyebrow', {
@@ -183,28 +277,37 @@ const headline = styles('heroTitle', {
     desktop: {
       margin: '0px',
       'font-family': 'var(--hand)',
-      'font-size': '76px',
+      'font-size': '92px',
       'font-weight': '700',
-      'line-height': '1',
+      'line-height': '0.98',
+      'letter-spacing': '-0.01em',
       color: 'var(--ink)'
     },
-    mobile: { 'font-size': '48px' }
+    mobile: { 'font-size': '56px' }
   }
 });
 
 /** A marker stroke under the word, drawn in once the page is there — `wb-marker` in `css.ts`. */
 const highlight = styles('heroHighlight', {
-  'background-image': 'linear-gradient(transparent 62%, var(--fill-yellow) 62%)',
+  display: 'inline-block',
+  'background-image': 'linear-gradient(transparent 64%, var(--fill-yellow) 64%)',
   'background-repeat': 'no-repeat',
   'background-size': '100% 100%',
-  padding: '0px 4px',
+  padding: '0px 6px',
   animation: 'wb-marker 900ms 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both'
+});
+
+/** The word itself in the cursors' colours, over the marker. */
+const inColour = styles('heroInColour', {
+  'background-image': 'linear-gradient(100deg, var(--accent), var(--collab-orchid) 55%, var(--collab-coral))',
+  'background-clip': 'text',
+  color: 'transparent'
 });
 
 const lead = styles('heroLead', {
   margin: '0px',
   'max-width': '520px',
-  'font-size': '18px',
+  'font-size': '19px',
   'line-height': '1.55',
   color: 'var(--muted)'
 });
@@ -249,15 +352,34 @@ const joinGo = styles('joinGo', {
   states: { hover: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' } }
 });
 
-const perks = styles('heroPerks', {
-  display: 'flex',
-  'flex-wrap': 'wrap',
-  gap: '8px 18px',
-  'font-size': '13px',
-  color: 'var(--muted)'
-});
+const perks = styles('heroPerks', { display: 'flex', 'flex-wrap': 'wrap', gap: '8px', 'max-width': '560px' });
 
-const perk = styles('heroPerk', { display: 'inline-flex', 'align-items': 'center', gap: '6px' });
+/** What a board has, as chips in the cursors' colours — one colour each, so the row reads as many things. */
+const perkIn = (tone: CollabColour) =>
+  styles(`heroPerk-${tone}`, {
+    display: 'inline-flex',
+    'align-items': 'center',
+    gap: '7px',
+    padding: '6px 12px',
+    'border-radius': '999px',
+    'font-size': '13px',
+    'font-weight': '600',
+    color: 'var(--ink)',
+    'background-color': `color-mix(in srgb, var(--collab-${tone}) 13%, var(--surface))`,
+    border: `1px solid color-mix(in srgb, var(--collab-${tone}) 30%, transparent)`
+  });
+
+const perkMark = (tone: CollabColour) => styles(`heroPerkMark-${tone}`, { color: `var(--collab-${tone})` });
+
+const PERKS: readonly [string, string, CollabColour][] = [
+  ['fa-solid fa-arrow-pointer', 'Live cursors', 'sky'],
+  ['fa-regular fa-note-sticky', 'Sticky piles', 'amber'],
+  ['fa-regular fa-image', 'Paste images', 'rose'],
+  ['fa-solid fa-table-columns', 'Kanban columns', 'lime'],
+  ['fa-regular fa-comment', 'Comments & chat', 'teal'],
+  ['fa-solid fa-robot', 'AI agents join in', 'orchid'],
+  ['fa-solid fa-lock', 'Private & temporary', 'indigo']
+];
 
 /** A soft light behind the sandbox, in the accent: where the eye goes first. */
 const glow = styles('heroGlow', {
@@ -272,7 +394,7 @@ const glow = styles('heroGlow', {
   filter: 'blur(24px)'
 });
 
-const sandboxWrap = styles('sandboxWrap', { position: 'relative' });
+const sandboxWrap = styles('sandboxWrap', { ...lifted });
 
 const sandboxFrame = styles('sandboxFrame', {
   ...FLOAT,
@@ -338,7 +460,7 @@ const sandboxTool = styles('sandboxTool', {
 
 /** The sandbox's canvas: `boardCanvas`'s colours (in `css.ts`), a fixed height to play in. */
 const sandboxCanvas = styles('sandboxCanvas', {
-  css: { desktop: { position: 'relative', height: '440px' }, mobile: { height: '340px' } }
+  css: { desktop: { position: 'relative', height: '480px' }, mobile: { height: '340px' } }
 });
 
 const SANDBOX_TOOLS: readonly { tool: Tool; icon: string; label: string }[] = [
@@ -415,7 +537,12 @@ const sandboxCard = (): ElementSpec =>
 const sandbox = (): ElementSpec =>
   container({
     class: sandboxWrap,
-    children: [container({ class: glow, children: [] }), sandboxCard()]
+    children: [
+      container({ class: glow, children: [] }),
+      sandboxCard(),
+      text({ content: '🎉', class: litterStamp }),
+      text({ content: '★', class: litterStar })
+    ]
   });
 
 /** A link or a code pasted in: the last part of either is the board's id. */
@@ -450,6 +577,8 @@ export const hero = (): ElementSpec =>
   container({
     class: section,
     children: [
+      container({ class: backdrop, children: [] }),
+      text({ content: 'No sign-up, just draw ✨', class: litterNote }),
       container({
         class: pitch,
         children: [
@@ -460,7 +589,10 @@ export const hero = (): ElementSpec =>
           container({
             subType: 'h1',
             class: headline,
-            children: [text({ content: 'Draw ' }), text({ content: 'together.', class: highlight })]
+            children: [
+              text({ content: 'Draw ' }),
+              container({ class: highlight, children: [text({ content: 'together.', class: inColour })] })
+            ]
           }),
           paragraph({
             content:
@@ -483,15 +615,12 @@ export const hero = (): ElementSpec =>
           }),
           container({
             class: perks,
-            children: [
-              ['fa-solid fa-arrow-pointer', 'Live cursors'],
-              ['fa-regular fa-note-sticky', 'Sticky piles'],
-              ['fa-regular fa-image', 'Paste images'],
-              ['fa-solid fa-table-columns', 'Kanban columns'],
-              ['fa-regular fa-comment', 'Comments & chat'],
-              ['fa-solid fa-robot', 'AI agents join in'],
-              ['fa-solid fa-lock', 'Private & temporary']
-            ].map(([glyph, label]) => container({ class: perk, children: [icon(glyph), text({ content: label })] }))
+            children: PERKS.map(([glyph, label, tone]) =>
+              container({
+                class: perkIn(tone),
+                children: [container({ class: perkMark(tone), children: [icon(glyph)] }), text({ content: label })]
+              })
+            )
           })
         ]
       }),

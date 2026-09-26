@@ -1,4 +1,5 @@
 import { absolutePoints, boundsOf, unionOf } from './geometry.ts';
+import { fillColour, paperColour, strokeColour } from './palette.ts';
 import { isLinear } from '../../board/model.ts';
 
 import type { Core } from './core.ts';
@@ -92,8 +93,7 @@ export const createMinimap = (core: Core) => {
     core.invalidate();
   };
 
-  const colourOf = (from: string): string =>
-    state.palette.collab[state.members.get(from)?.color ?? ''] ?? state.palette.accent;
+  const colourOf = core.memberColour;
 
   /** Every element as a small shape, onto the minimap's own canvas, where `at` and `box` place the board. */
   const drawShapes = (
@@ -120,7 +120,7 @@ export const createMinimap = (core: Core) => {
     for (const element of scene.visible()) {
       if (isLinear(element.type)) {
         const points = absolutePoints(element);
-        context.strokeStyle = palette.stroke[element.stroke];
+        context.strokeStyle = strokeColour(palette, element.stroke);
         context.globalAlpha = 0.6;
         context.lineWidth = 1;
         context.beginPath();
@@ -140,12 +140,12 @@ export const createMinimap = (core: Core) => {
       context.globalAlpha = 0.85;
       context.fillStyle =
         element.type === 'sticky' || element.type === 'stack'
-          ? palette.sticky[element.fill]
+          ? paperColour(palette, element.fill)
           : element.type === 'card'
             ? palette.muted
             : element.fill === 'none'
-              ? palette.stroke[element.stroke]
-              : palette.fill[element.fill];
+              ? strokeColour(palette, element.stroke)
+              : fillColour(palette, element.fill);
       context.fillRect(x, y, width, height);
     }
 

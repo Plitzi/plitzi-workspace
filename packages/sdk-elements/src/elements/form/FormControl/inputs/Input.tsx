@@ -38,9 +38,24 @@ const Input = ({
 
   const handleClickShowPassword = useCallback(() => setIsPasswordVisible(state => !state), [setIsPasswordVisible]);
 
-  const handleClickContainer = useCallback(() => {
-    inputRef.current?.focus();
-  }, [inputRef]);
+  // A colour field is its swatch: a click anywhere on it opens the picker — focusing it, as a text field is, would not.
+  // One on the input itself opens it already.
+  const handleClickContainer = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const input = inputRef.current;
+      input?.focus();
+      if (type !== 'color' || !input || event.target === input) {
+        return;
+      }
+
+      try {
+        input.showPicker();
+      } catch {
+        // A frame of another origin is not allowed to open it: the field has the focus, and Enter opens it there.
+      }
+    },
+    [inputRef, type]
+  );
 
   const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
 

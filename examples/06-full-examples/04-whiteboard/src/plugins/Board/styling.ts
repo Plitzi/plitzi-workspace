@@ -1,13 +1,13 @@
 import { isOneOf } from './values.ts';
 import {
+  asFill,
+  asStroke,
   BRUSHES,
   DASHES,
   EDGES,
   FILL_STYLES,
-  FILLS,
   OPACITIES,
   SLOPPINESS,
-  STROKES,
   STROKE_WIDTHS,
   takesStyle
 } from '../../board/model.ts';
@@ -115,11 +115,13 @@ const withField = (element: BoardElement, field: StyleField, value: string): Boa
   const width = Number(value);
   const percent = Number(value);
 
+  const [stroke, fill] = [asStroke(value), asFill(value)];
+
   switch (field) {
     case 'stroke':
-      return isOneOf(STROKES, value) ? { ...element, stroke: value } : element;
+      return stroke ? { ...element, stroke } : element;
     case 'fill':
-      return isOneOf(FILLS, value) ? { ...element, fill: value } : element;
+      return fill ? { ...element, fill } : element;
     case 'strokeWidth': {
       if (!isOneOf(STROKE_WIDTHS, width)) {
         return element;

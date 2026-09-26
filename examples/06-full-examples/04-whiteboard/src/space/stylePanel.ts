@@ -1,7 +1,11 @@
 import {
+  bindTemplate,
   button,
   container,
   declaredCallback,
+  formControl,
+  named,
+  on,
   onClick,
   setState,
   styles,
@@ -14,7 +18,7 @@ import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
 import { FILLS, STROKES, STROKE_WIDTHS } from '../board/model.ts';
 import boardDeclaration from '../plugins/Board/declaration.ts';
 
-import type { Fill, Stroke, StrokeWidth } from '../board/model.ts';
+import type { FillName, StrokeName, StrokeWidth } from '../board/model.ts';
 import type { CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 /**
@@ -45,8 +49,8 @@ const panel = styles('stylePanel', {
       'flex-direction': 'column',
       gap: '12px',
       padding: '12px',
-      // Seven fills in one row: 7 × 24px swatches and their gaps, inside the padding.
-      width: '238px',
+      // Eight swatches in one row — seven fills and one's own colour: 8 × 24px and their gaps, inside the padding.
+      width: '268px',
       'max-height': 'calc(100dvh - 150px)',
       'overflow-y': 'auto',
       'scrollbar-width': 'thin'
@@ -55,7 +59,7 @@ const panel = styles('stylePanel', {
       top: '64px',
       left: '10px',
       transform: 'none',
-      width: '230px',
+      width: '262px',
       padding: '10px',
       gap: '10px',
       'max-height': 'calc(100dvh - 160px)'
@@ -93,7 +97,7 @@ const swatchClass = (kind: 'stroke' | 'fill', name: string, paint: CssProps) =>
 /** No fill is drawn as the paper with a diagonal through it: the mark every drawing tool uses for "none". */
 const NO_FILL = 'linear-gradient(135deg, transparent 45%, var(--danger) 45%, var(--danger) 55%, transparent 55%)';
 
-const swatch = (kind: 'stroke' | 'fill', name: Stroke | Fill, label: string): ElementSpec => {
+const swatch = (kind: 'stroke' | 'fill', name: StrokeName | FillName, label: string): ElementSpec => {
   const paint: CssProps =
     name === 'none'
       ? { 'background-color': 'var(--surface)', 'background-image': NO_FILL }
@@ -111,6 +115,54 @@ const swatch = (kind: 'stroke' | 'fill', name: Stroke | Fill, label: string): El
     ]
   });
 };
+
+/** The swatch for a colour of one's own: every hue round it — it opens the browser's picker, over which it lies. */
+const customSwatchClass = styles('swatchCustom', {
+  css: {
+    ...SWATCH,
+    position: 'relative',
+    overflow: 'hidden',
+    'background-image': 'conic-gradient(#ff5f5f, #ffd43b, #51cf66, #4dabf7, #b197fc, #ff5f5f)'
+  },
+  states: SWATCH_STATES,
+  variants: { chosen: CHOSEN }
+});
+
+/** The picker itself, laid over the swatch and seen through: a click on the swatch is a click on it. */
+const customPicker = styles('swatchCustomPicker', {
+  position: 'absolute',
+  inset: '-8px',
+  opacity: '0',
+  cursor: 'pointer'
+});
+
+/**
+ * Any colour at all, beside the named ones: the browser's own picker. What is picked is kept as it is — `#rrggbb` —
+ * and drawn the same in either scheme, where a named colour follows the scheme. Chosen while what is in hand has one.
+ */
+const customSwatch = (kind: 'stroke' | 'fill'): ElementSpec =>
+  container({
+    class: customSwatchClass,
+    bind: [variantFrom(customSwatchClass, `computed.${kind}`, { template: "{{ '#' in source ? 'chosen' : '' }}" })],
+    children: [
+      formControl({
+        id: `${kind}-custom`,
+        name: `${kind}Custom`,
+        subType: 'color',
+        label: '',
+        required: false,
+        class: customPicker,
+        bind: [bindTemplate('defaultValue', `computed.${kind}`, "{{ '#' in source ? source : '#1e90ff' }}")],
+        flows: [
+          [
+            named('picked', on('onChange')),
+            setState({ key: kind, type: 'text', value: '{{ picked.value }}' }),
+            boardAction('applyStyle', { [kind]: '{{ picked.value }}' })
+          ]
+        ]
+      })
+    ]
+  });
 
 const widthButton = styles('widthButton', {
   css: {
@@ -157,7 +209,7 @@ const width = (value: StrokeWidth): ElementSpec =>
     children: [text({ content: '', class: widthStroke(value) })]
   });
 
-const STROKE_LABELS: Record<Stroke, string> = {
+const STROKE_LABELS: Record<StrokeName, string> = {
   ink: 'Ink',
   red: 'Red',
   orange: 'Orange',
@@ -166,7 +218,7 @@ const STROKE_LABELS: Record<Stroke, string> = {
   violet: 'Violet'
 };
 
-const FILL_LABELS: Record<Fill, string> = {
+const FILL_LABELS: Record<FillName, string> = {
   none: 'No fill',
   red: 'Red',
   orange: 'Orange',
@@ -347,10 +399,16 @@ export const stylePanel = (): ElementSpec =>
     visible: 'computed.styleOpen',
     children: [
       section('Stroke', 'computed.showStroke', [
-        container({ class: row, children: STROKES.map(name => swatch('stroke', name, STROKE_LABELS[name])) })
+        container({
+          class: row,
+          children: [...STROKES.map(name => swatch('stroke', name, STROKE_LABELS[name])), customSwatch('stroke')]
+        })
       ]),
       section('Background', 'computed.showFill', [
-        container({ class: row, children: FILLS.map(name => swatch('fill', name, FILL_LABELS[name])) })
+        container({
+          class: row,
+          children: [...FILLS.map(name => swatch('fill', name, FILL_LABELS[name])), customSwatch('fill')]
+        })
       ]),
       section('Fill', 'computed.showFillStyle', [choices('fillStyle', 'text', FILL_STYLE_OPTIONS)]),
       section('Stroke width', 'computed.showWidth', [container({ class: row, children: STROKE_WIDTHS.map(width) })]),
