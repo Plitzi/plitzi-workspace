@@ -423,7 +423,13 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             reason: payload.reason ?? 'failed'
           });
 
-          return { status: 'failed', reason: payload.reason ?? 'failed', runId: '', output: {} };
+          return {
+            status: 'failed',
+            reason: payload.reason ?? 'failed',
+            runId: '',
+            output: {},
+            ...(payload.error ? { error: payload.error } : {})
+          };
         }
 
         /**
@@ -465,6 +471,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             settle({
               status: frame.data.status === 'completed' ? 'completed' : 'failed',
               ...(frame.data.output ? { output: frame.data.output as Record<string, unknown> } : {}),
+              ...(typeof frame.data.error === 'string' ? { error: frame.data.error } : {}),
               ...(doneSteps ? { steps: doneSteps } : {})
             });
             reportFlow(context?.hostElementId, 'onFlowEnd', { actionId, runId, ...frame.data });
@@ -547,7 +554,13 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
           }
         );
 
-        return { status: 'failed', reason: payload.reason ?? 'failed', runId: payload.runId ?? '', output: {} };
+        return {
+          status: 'failed',
+          reason: payload.reason ?? 'failed',
+          runId: payload.runId ?? '',
+          output: {},
+          ...(payload.error ? { error: payload.error } : {})
+        };
       }
 
       /**
@@ -561,14 +574,18 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         status: payload.status === 'completed' ? 'completed' : 'failed',
         ...(payload.runId ? { runId: payload.runId } : {}),
         ...(payload.output ? { output: payload.output } : {}),
+        ...(payload.error ? { error: payload.error } : {}),
         ...(payload.steps ? { steps: payload.steps } : {}),
         ...(payload.trace ? { trace: payload.trace } : {})
       });
 
+      // `error` is there only when a step refused with a reason written for the caller — the server keeps every
+      // other failure's message to itself — so a flow can say `{{ step.error }}` and fall back when it is empty.
       return {
         status: payload.status ?? 'completed',
         runId: payload.runId ?? '',
-        output: payload.output ?? {}
+        output: payload.output ?? {},
+        ...(payload.error ? { error: payload.error } : {})
       };
     },
     [endpoint, reportFlow]

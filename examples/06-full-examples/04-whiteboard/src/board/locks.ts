@@ -13,9 +13,62 @@ export type BoardLock = { salt: string; hash: string; version: number };
 
 const derive = (password: string, salt: string): Buffer => scryptSync(password, salt, 32, { N: 16384, r: 8, p: 1 });
 
-export const MIN_PASSWORD = 4;
+export const MIN_PASSWORD = 6;
 
 export const MAX_PASSWORD = 128;
+
+/**
+ * What anybody tries first. Not a dictionary: the handful that a list of leaked passwords opens with, and the words
+ * this board's own name suggests.
+ */
+const GUESSED = new Set([
+  'password',
+  'passw0rd',
+  'contraseña',
+  'contrasena',
+  'qwerty',
+  'azerty',
+  'abc123',
+  'letmein',
+  'welcome',
+  'iloveyou',
+  'admin',
+  'secret',
+  'changeme',
+  'monkey',
+  'dragon',
+  'sunshine',
+  'football',
+  'pizarra',
+  'whiteboard'
+]);
+
+/** Keyboard rows, and the alphabet and the digits: typed along any of them, a password is no secret. */
+const RUNS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm', 'abcdefghijklmnopqrstuvwxyz', '01234567890'];
+
+const alongARun = (text: string): boolean =>
+  RUNS.some(run => run.includes(text) || [...run].reverse().join('').includes(text));
+
+/**
+ * Why a password would not keep anybody out — or nothing, for one that would. Length and guessability only, as NIST
+ * has it: no rules about digits and capitals, which make passwords harder to remember and no harder to guess.
+ */
+export const passwordProblem = (text: string): string | undefined => {
+  if (text.length < MIN_PASSWORD) {
+    return `A password is at least ${MIN_PASSWORD} characters — a few words together are easy to remember`;
+  }
+
+  if (text.length > MAX_PASSWORD) {
+    return `A password is at most ${MAX_PASSWORD} characters`;
+  }
+
+  const lower = text.toLowerCase();
+  if (GUESSED.has(lower) || new Set(lower).size === 1 || alongARun(lower)) {
+    return 'That password is one anybody would try first — a few words together, like “red kite mondays”, are not';
+  }
+
+  return undefined;
+};
 
 export const lockWith = (password: string, previous?: BoardLock): BoardLock => {
   const salt = randomBytes(16).toString('base64url');

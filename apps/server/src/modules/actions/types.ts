@@ -361,4 +361,6 @@ export type ActionRunResult = {
    * anybody allowed to debug the page. The trace above is for authoring and development servers alone.
    */
   steps: ActionRunStep[];
+  /** Why the run failed, when a step said so for the caller (`ActionRefusal`). Absent for every other failure. */
+  error?: string;
 };

@@ -142,29 +142,54 @@ const rename = defineAction({
     },
     listed('{{ input.board }}')
   ],
-  output: '{ "id": "{{ renamed.id }}", "title": "{{ renamed.title }}" }'
+  // As an object rather than JSON text, which a title with a quotation mark in it broke.
+  output: '{{ { "id": renamed.id, "title": renamed.title }|json_encode }}'
 });
 
 /**
  * A password set, changed or removed. Everyone on the board is told on the topic it HAD — the only one they are
- * listening to — that their key no longer opens it; whoever set it gets the new key and topic back.
+ * listening to — whether it is locked now, and by which page (`by`), which already holds the new key and topic it was
+ * answered and goes on as it is.
  */
 const lock = defineAction({
   id: LOCK_ACTION,
   name: 'Lock board',
   description: 'Sets, changes or removes a board’s password.',
-  trigger: { type: 'call', access: 'public', input: { ...onBoard, password: field('Password', false) } },
+  trigger: {
+    type: 'call',
+    access: 'public',
+    input: { ...onBoard, password: field('Password', false), by: field('The page asking (its tab id)', false) }
+  },
   steps: [
     { id: 'locked', task: 'board.lock' },
     {
       id: 'announce',
       task: 'realtime.publish',
-      params: { topic: 'board:{{ locked.previousTopic }}', type: 'locked', data: '{ "id": "{{ locked.id }}" }' }
+      params: {
+        topic: 'board:{{ locked.previousTopic }}',
+        type: 'locked',
+        data: '{{ { "id": locked.id, "locked": locked.locked, "by": input.by }|json_encode }}'
+      }
+    },
+    /**
+     * Removed, the board is open again — and whoever was left at its lock screen was listening to nothing it had,
+     * since its topic is a secret they never opened. A page at the lock screen listens to the open board's own
+     * topic instead (`board:{id}`), which is where it is told.
+     */
+    {
+      id: 'reopen',
+      task: 'realtime.publish',
+      when: { combinator: 'and', rules: [{ field: 'locked.locked', operator: '=', value: false }] },
+      params: {
+        topic: 'board:{{ locked.topic }}',
+        type: 'locked',
+        data: '{{ { "id": locked.id, "locked": false, "by": input.by }|json_encode }}'
+      }
     },
     listed('{{ input.board }}')
   ],
   output:
-    '{ "id": "{{ locked.id }}", "locked": {{ locked.locked }}, "key": "{{ locked.key }}", "topic": "{{ locked.topic }}" }'
+    '{{ { "id": locked.id, "locked": locked.locked, "wasLocked": locked.wasLocked, "key": locked.key, "topic": locked.topic }|json_encode }}'
 });
 
 /** A board removed: everyone on it is told on its topic — and goes back to the boards — and the gallery reads again. */

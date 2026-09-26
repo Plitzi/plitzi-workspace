@@ -263,6 +263,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
           runId: result.runId,
           status: result.status,
           output: result.output,
+          ...(result.error === undefined ? {} : { error: result.error }),
           ...(outline ? { steps: result.steps } : {})
         }
       });
@@ -271,7 +272,13 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       return;
     }
 
-    const payload: Record<string, unknown> = { runId: result.runId, status: result.status, output: result.output };
+    const payload: Record<string, unknown> = {
+      runId: result.runId,
+      status: result.status,
+      output: result.output,
+      // The reason a step wrote for the caller (`ActionRefusal`); no other failure's message leaves the server.
+      ...(result.error === undefined ? {} : { error: result.error })
+    };
     if (outline) {
       payload.steps = result.steps;
     }

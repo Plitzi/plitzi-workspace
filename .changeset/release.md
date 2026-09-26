@@ -259,6 +259,47 @@
 - The authoring skill no longer suggests resetting kept state from `onPageLoad` — the restore lands in the middle of
   that flow — and the MCP guide describes `keepState` as what it is: `runtime.state`, not element state.
 
+## A step's params keep their type, and a failure can say why
+
+- **A param is its value's own type, never one guessed from its text.** Step params — the browser's flows and a
+  server action's steps alike — were rendered to text and read back as JSON, so a text field holding `1234` reached
+  the next step as the number 1234: a password field declared `text` then saw no password at all, and a board's lock
+  was REMOVED where one was being set. One resolver now serves both sides (`processTwigParam` in
+  `@plitzi/sdk-shared/helpers/twigWrapper`): a param that is one `{{ expression }}` is that expression's value as it
+  is; a JSON filter alone (`{{ saved|json_encode }}`) is the value it encodes; text around the tokens is JSON only
+  when it makes an object or array document, and otherwise text. Converting is left to whoever declares a type —
+  `setState`'s `type`, an action's input fields — which already did. **Behaviour change:** a template that renders a
+  number-looking string now hands on the string (`'{{ flag ? "1" : "" }}'` is `'1'`, not `1`).
+- **A failed server action can tell the page why.** A step's own error message still never leaves the server — it
+  can hold a query or a credential's name — but a task may now throw **`ActionRefusal`** (from
+  `@plitzi/sdk-server/actions`) with a message written for the person on the page, and `flow.fail` takes
+  **`tellCaller`**. The run answers `status: 'failed'` with that message as `error` (in a stream's last frame too),
+  and `runServerAction` hands it to the flow as `{{ step.error }}` — as it now also does for a refusal before the run
+  began. The step's preview lists `reason` and `error`, so the builder offers them.
+- **One resolver for a step's params, in the browser and on the server** (`resolveStepParam`). The server only
+  resolved what `hasValidToken` calls a token, so a param written as a condition or an object literal
+  (`{{ { "id": run.id }|json_encode }}`) reached its task as the template text — an action's `output` built that way
+  failed with "not valid JSON". Both sides now run any template syntax, keep the value's type, and read a value that
+  is itself a template again up to the same ceiling.
+- **`when` around a step that already has a `when` adds to it.** It used to replace the inner condition, so the step
+  ran whenever the outer one held and nothing said so. Two `and` groups become one; otherwise both are kept, nested.
+- The schedules example's first-paint test assumed the digest was less than a day away, and failed at weekends.
+
+## A page with many elements keeps its frame rate
+
+- **`useEventBridge` stopped re-subscribing on every render.** Its `callbacks` and `params` defaulted to `= {}` in the
+  signature — a new object each render, and both are the effect's dependencies — so every element on a page (each
+  subscribes through `withElement`) took its subscription off and put it back on every render it went through.
+- **`EventBridge.off` is constant time.** Whether a module had events left was a `for…in` over its keys, which still
+  enumerates all of them on an object that constant deletions have turned into a dictionary: N elements
+  re-subscribing cost N × N. A count per module replaces it. `EventBridgeProps.events` is typed as the bridge holds
+  it — only the modules and events that have a listener — and the package has tests now.
+- **A flow reads a space's computed values once per change, not once per step.** `liveSources` evaluated every
+  computed value before every step and every `when`; it now keeps the last evaluation and reuses it over the same
+  snapshots of the state and the global sources.
+- Measured on Pizarra with 300 notes and a marquee over all of them: from 27 frames over 50 ms (the worst 330 ms,
+  React's development build) to 60 fps with one 88 ms frame when the selection panels mount (production build).
+
 ## Kept state the first paint shows is drawn by the server
 
 - Kept state lives in web storage, which only the browser reads, and is restored after hydration — so anything kept

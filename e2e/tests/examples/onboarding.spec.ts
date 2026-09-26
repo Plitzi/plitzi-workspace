@@ -299,8 +299,9 @@ describeTarget('server-actions-schedules', subject => {
     const html = await (await request.get(subject.origin)).text();
 
     expect(html).toContain('Minute heartbeat');
-    // A 9am Madrid digest reads as nine — beside the UTC instant every replica agrees on.
-    expect(html).toMatch(/\d{2}:00 UTC \(09:00 Europe\/Madrid\)/);
+    // A 9am Madrid digest reads as nine — beside the UTC instant every replica agrees on. It runs on working days, so
+    // seen from a weekend it is more than a day out and both sides carry the date as well.
+    expect(html).toMatch(/\d{2}:00 UTC \((?:[^)]*, )?09:00 Europe\/Madrid\)/);
     // Switched off, and still on the board: a missing row could not say so.
     expect(html).toContain('switched off');
   });

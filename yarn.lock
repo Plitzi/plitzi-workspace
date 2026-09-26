@@ -4501,10 +4501,12 @@ __metadata:
   resolution: "@plitzi/sdk-event-bridge@workspace:packages/sdk-event-bridge"
   dependencies:
     "@plitzi/sdk-shared": "workspace:*"
+    "@testing-library/react": "npm:^16.3.3"
     eslint: "npm:^9.39.5"
     prop-types: "npm:^15.8.1"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.1"
+    vitest: "npm:^5.0.1"
   languageName: unknown
   linkType: soft
 

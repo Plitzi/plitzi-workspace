@@ -44,7 +44,46 @@ export const liveSources = (
     return { ...sources, state: current };
   }
 
-  const globals = Object.fromEntries(COMPUTED_GLOBALS.map(name => [name, sources[name]]));
+  return { ...sources, state: current, computed: computedOver(definitions, sources, current) };
+};
 
-  return { ...sources, state: current, computed: evaluateComputed(definitions, { ...globals, state: current }) };
+/**
+ * The last evaluation, and what it was evaluated over.
+ *
+ * A flow reads its sources before every step — and before every `when` — so that a step sees what the steps before
+ * it wrote; with a space's computed values evaluated each time, a twenty-step flow over a hundred computed values was
+ * four thousand templates, run again on every pointer move that fired it. What they are evaluated over is the store's
+ * own immutable snapshots — `state`, the definitions, each global source — so the same references are the same
+ * answer, and only a read after an actual change evaluates again.
+ */
+let lastEvaluation:
+  | {
+      definitions: Record<string, string>;
+      state: Record<string, unknown>;
+      globals: unknown[];
+      computed: Record<string, unknown>;
+    }
+  | undefined;
+
+const computedOver = (
+  definitions: Record<string, string>,
+  sources: Record<string, unknown>,
+  state: Record<string, unknown>
+): Record<string, unknown> => {
+  const globals = COMPUTED_GLOBALS.map(name => sources[name]);
+  if (
+    lastEvaluation?.definitions === definitions &&
+    lastEvaluation.state === state &&
+    lastEvaluation.globals.every((value, index) => value === globals[index])
+  ) {
+    return lastEvaluation.computed;
+  }
+
+  const computed = evaluateComputed(definitions, {
+    ...Object.fromEntries(COMPUTED_GLOBALS.map((name, index) => [name, globals[index]])),
+    state
+  });
+  lastEvaluation = { definitions, state, globals, computed };
+
+  return computed;
 };

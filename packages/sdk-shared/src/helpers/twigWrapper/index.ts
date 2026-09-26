@@ -1,4 +1,5 @@
-export { processTwig, processTwigValue } from './processTwig';
+export { processTwig, processTwigParam, processTwigValue } from './processTwig';
+export { MAX_PARAM_PASSES, resolveStepParam } from './processTwig/resolveStepParam';
 export { hasTemplateSyntax } from './tokens/hasTemplateSyntax';
 export { hasValidToken } from './tokens/hasValidToken';
 export { inspectTemplate } from './inspectTemplate';

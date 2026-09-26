@@ -46,4 +46,23 @@ describe('liveSources', () => {
   it('treats a missing state as an empty one', () => {
     expect(liveSources(rendered, undefined, undefined).state).toEqual({});
   });
+
+  /**
+   * A flow reads its sources before every step and every `when`. Evaluating a space's computed values each time was the
+   * bulk of a busy frame; over the same snapshots the answer is the same one, and only a change evaluates again.
+   */
+  it('evaluates once over the same snapshots, and again when one of them changes', () => {
+    const definitions = { label: '{{ state.open ? "open" : "shut" }}' };
+    const state = { open: true };
+    const sources = { theme: { resolved: 'dark' } };
+
+    const first = liveSources(sources, state, definitions).computed;
+    const again = liveSources(sources, state, definitions).computed;
+    const changed = liveSources(sources, { open: false }, definitions).computed;
+    const otherTheme = liveSources({ theme: { resolved: 'light' } }, { open: false }, definitions).computed;
+
+    expect(again).toBe(first);
+    expect(changed).toEqual({ label: 'shut' });
+    expect(otherTheme).not.toBe(changed);
+  });
 });

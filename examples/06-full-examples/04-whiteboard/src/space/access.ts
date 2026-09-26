@@ -21,7 +21,6 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { LOCK_ACTION, OPEN_ACTION } from '../actions.ts';
-import { MAX_PASSWORD, MIN_PASSWORD } from '../board/locks.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
 
@@ -294,30 +293,38 @@ export const unlockScreen = (): ElementSpec =>
 
 /**
  * Changing the password — to `password`, or to none with an empty one. Whoever does it stays in: the answer carries
- * the new key, and the board is opened again with it; everyone else on the board is told on its old topic, and asked.
- * `step` names the run, so the form and the remove button each have their own; `guard`, when given, is a rule every
- * step also needs — ANDed in, since a `when` around a `when` replaces its rule rather than adding to it.
+ * the new key, and the board is opened again with it. Everyone else on the board is told on its old topic — and this
+ * page, named in the change (`by`), knows the announcement for its own and goes on as it is. `step` names the run, so
+ * the form and the remove button each have their own.
  */
-const lockSteps = (step: string, password: string, guard: Rule[] = []): StepSpec[] => {
+const lockSteps = (step: string, password: string): StepSpec[] => {
   const reopened = `${step}Reopened`;
-  const only = (rule: Rule, then: StepSpec): StepSpec => when([...guard, rule], then);
-  const ran = named(
-    step,
-    runServerAction({
-      actionId: LOCK_ACTION,
-      input: { board: `{{ ${PROVIDER}.id }}`, password, ...BOARD_PASS },
-      invalidateQueries: 'none'
-    })
-  );
+  const done: Rule = { field: `${step}.status`, operator: '=', value: 'completed' };
+  const said = (locked: boolean, wasLocked: boolean, content: string, appearance: 'success' | 'info'): StepSpec =>
+    when(
+      [
+        { field: `${step}.output.locked`, operator: '=', value: locked },
+        { field: `${step}.output.wasLocked`, operator: '=', value: wasLocked }
+      ],
+      told(content, appearance)
+    );
 
   return [
-    guard.length ? when(guard, ran) : ran,
-    only(
-      { field: `${step}.status`, operator: '!=', value: 'completed' },
+    named(
+      step,
+      runServerAction({
+        actionId: LOCK_ACTION,
+        input: { board: `{{ ${PROVIDER}.id }}`, password, by: '{{ computed.tab }}', ...BOARD_PASS },
+        invalidateQueries: 'none'
+      })
+    ),
+    // The server says what was wrong with it — too short, too easy to guess — in words written for whoever typed it.
+    whenFailed(
+      step,
       told(`{{ ${step}.error ? ${step}.error : "The password could not be changed — try again" }}`, 'danger')
     ),
-    only(
-      { field: `${step}.status`, operator: '=', value: 'completed' },
+    when(
+      done,
       named(
         reopened,
         runServerAction({
@@ -327,30 +334,14 @@ const lockSteps = (step: string, password: string, guard: Rule[] = []): StepSpec
         })
       )
     ),
-    ...keepOpened(reopened).map(kept => only({ field: `${reopened}.status`, operator: '=', value: 'completed' }, kept)),
-    only({ field: `${step}.status`, operator: '=', value: 'completed' }, resetForm('lock-form')),
-    only({ field: `${step}.status`, operator: '=', value: 'completed' }, reloadApi(BOARD_PROVIDER)),
-    only(
-      { field: `${step}.output.locked`, operator: '=', value: true },
-      told('🔒 Password set — share it with whoever should get in', 'success')
-    ),
-    only(
-      { field: `${step}.output.locked`, operator: '=', value: false },
-      told('🔓 Password removed — anyone with the link gets in', 'info')
-    )
+    ...keepOpened(reopened).map(kept => when({ field: `${reopened}.status`, operator: '=', value: 'completed' }, kept)),
+    when(done, resetForm('lock-form')),
+    when(done, reloadApi(BOARD_PROVIDER)),
+    said(true, false, '🔒 Password set — share it with whoever should get in', 'success'),
+    said(true, true, '🔒 Password changed — whoever had the old one is asked for this one', 'success'),
+    said(false, true, '🔓 Password removed — anyone with the link gets in', 'info')
   ];
 };
-
-/**
- * What is wrong with a typed password, said before it is sent — the server refuses the same, but a refused run does
- * not bring its reason back to the flow, and "could not be set" tells nobody what to fix.
- */
-const PASSWORD_PROBLEM = [
-  '{{ (setting.values.password ?? "")|length == 0',
-  "? 'Type a password first'",
-  `: ((setting.values.password|length) < ${MIN_PASSWORD} ? 'A password is at least ${MIN_PASSWORD} characters'`,
-  `: ((setting.values.password|length) > ${MAX_PASSWORD} ? 'A password is at most ${MAX_PASSWORD} characters' : '')) }}`
-].join(' ');
 
 const statusRow = styles('lockStatus', {
   display: 'flex',
@@ -420,11 +411,15 @@ export const passwordSection = (): ElementSpec[] => [
     flows: [
       [
         named('setting', onSubmit()),
-        setState({ key: 'lockProblem', type: 'text', value: PASSWORD_PROBLEM }),
-        when({ field: 'state.lockProblem', operator: '!=', value: '' }, told('{{ state.lockProblem }}', 'danger')),
-        ...lockSteps('locked', '{{ setting.values.password }}', [
-          { field: 'state.lockProblem', operator: '=', value: '' }
-        ])
+        // Only an empty field is caught here — sent, it would REMOVE the password. Every other rule is the server's.
+        // `empty`, not `= ''`: a field nobody typed in sends no value at all.
+        when(
+          { field: 'setting.values.password', operator: 'empty', value: '' },
+          told('Type a password first', 'danger')
+        ),
+        ...lockSteps('locked', '{{ setting.values.password }}').map(step =>
+          when({ field: 'setting.values.password', operator: 'notEmpty', value: '' }, step)
+        )
       ]
     ],
     children: [

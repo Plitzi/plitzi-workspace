@@ -201,6 +201,30 @@ Three triggers fire on the element that launched the run:
 - **On Server Action Error** — plus `reason`: `duplicate`, `over_capacity`, `recursion`, `unauthenticated`, `forbidden`, `timeout`…
 - **On Server Action Progress** — one per chunk a streaming run emitted
 
+**Why it failed, in words the page can show.** An awaited step answers `status` and, when the run did not complete,
+`reason` and — only when somebody wrote one for the caller — `error`:
+
+```ts
+named('saved', runServerAction({ actionId: 'rename', input: { title: '{{ form.values.title }}' } })),
+whenFailed('saved', addNotification({ content: '{{ saved.error ? saved.error : "Could not rename it" }}' }))
+```
+
+A step's own failure message never leaves the server — it can hold a query, a URL, a credential's name — so `error`
+is there for two things alone: a refusal before the run began (`This action is already running`), and a step that
+refused ON PURPOSE. In a flow that is **`flow.fail` with *Tell the caller why* on**; in a task of your own, throw
+**`ActionRefusal`** (`@plitzi/sdk-server/actions`) with a message written for the person on the page:
+
+```ts
+import { ActionRefusal } from '@plitzi/sdk-server/actions';
+
+if (taken) {
+  throw new ActionRefusal('That name is taken — try another');
+}
+```
+
+Anything else a task throws still fails the run and reaches its trace; the page gets `status` and `reason`, and its
+own fallback text.
+
 **In the browser, the dev-tools panel has an `Actions` tab.** Every run this page starts is recorded there as it
 is SENT — which is the only evidence a `detached` or `stream` run leaves, since one is never awaited and the other
 returns before its frames arrive. The runs the SERVER started to build the page are there too: an action feeding a

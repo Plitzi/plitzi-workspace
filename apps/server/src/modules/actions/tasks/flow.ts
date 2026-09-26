@@ -1,4 +1,5 @@
 import { onAbort } from '../../../helpers/onAbort';
+import { ActionRefusal } from '../runtime/errors';
 
 import type { ActionTask } from '../types';
 
@@ -36,16 +37,22 @@ const delay: ActionTask<{ milliseconds: string | number }> = {
   }
 };
 
-/** Ends the run as failed, on purpose. The message reaches the trace, never the caller. */
-const fail: ActionTask<{ message: string }> = {
+/**
+ * Ends the run as failed, on purpose. The message reaches the trace — and, with `tellCaller`, the caller too, as the
+ * run's `error`: a guard whose reason the page should show ("that name is taken") rather than a generic failure.
+ */
+// `tellCaller` as a builder's picker writes it — the WORD — or as a bound value hands it over, a real boolean.
+const fail: ActionTask<{ message: string; tellCaller: boolean | string }> = {
   namespace: 'flow',
   action: 'fail',
   title: 'Fail',
   params: {
-    message: { type: 'text', canBind: true, defaultValue: '', label: 'Message' }
+    message: { type: 'text', canBind: true, defaultValue: '', label: 'Message' },
+    tellCaller: { type: 'boolean', canBind: true, defaultValue: false, label: 'Tell the caller why' }
   },
-  run: ({ message }) => {
-    throw new Error(message || 'Action failed');
+  run: ({ message, tellCaller }) => {
+    const text = message || 'Action failed';
+    throw tellCaller === true || tellCaller === 'true' ? new ActionRefusal(text) : new Error(text);
   }
 };
 

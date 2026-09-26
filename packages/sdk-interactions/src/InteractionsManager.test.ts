@@ -278,8 +278,8 @@ describe('a param that is not a string', () => {
       loop: '{% for n in [1, 2] %}{{ n }}{% endfor %}'
     });
 
-    // Typed the way a token is: a template that renders a number hands on the number.
-    expect(spy.mock.calls[0]?.[0]).toMatchObject({ flag: 1, loop: 12 });
+    // The expression's own value, and the text the loop makes — never a type guessed from what the text looks like.
+    expect(spy.mock.calls[0]?.[0]).toMatchObject({ flag: '1', loop: '12' });
   });
 
   // What a visitor typed is data: resolved once as the value of a token, it is not evaluated again.

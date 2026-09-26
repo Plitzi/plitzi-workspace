@@ -82,7 +82,7 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
   return module;
 };
 
-export { ActionRunError } from './runtime/errors';
+export { ActionRefusal, ActionRunError } from './runtime/errors';
 export { precheckRun } from './runtime/precheck';
 export { checkAction } from './runtime/check';
 export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';

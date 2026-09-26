@@ -134,4 +134,8 @@ after. `docs/en/realtime.md` is the whole of it.
 
 `toggleInState({ key: 'picks', value })` keeps a list; `when({ field: 'state.picks', operator: 'contains', value })`
 asks it. `appendState({ key, value, withId: true })` stores `{ id, value }` — bind `.value`, address by `.id`.
-`whenFailed` matches every outcome that is not `completed` (also `skipped`, `aborted`).
+`whenFailed` matches every outcome that is not `completed` (also `skipped`, `aborted`). A failed run gives `reason`,
+and `error` only when the server or a step wrote one for the caller (a task throwing `ActionRefusal`, `flow.fail` with
+`tellCaller`) — so show `{{ saved.error ? saved.error : "…" }}`, never the bare `error`.
+
+`when(rule, step)` around a step that already has a `when` adds to it: both must hold.

@@ -69,6 +69,12 @@ export const callAction = async (
     throw new Error(`${actionId}: ${error}`);
   }
 
+  // A run that failed is still a 200: its status says so, and `error` says why when the board refused on purpose —
+  // a read-only board, a commit too large — which is what the agent needs to hear to try something else.
+  if (body.status === 'failed') {
+    throw new Error(`${actionId}: ${typeof body.error === 'string' ? body.error : 'the server could not do it'}`);
+  }
+
   return body.output;
 };
 

@@ -2,7 +2,7 @@ import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
-import { hasTemplateSyntax, hasValidToken, processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { MAX_PARAM_PASSES, resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import utility from './utility';
 
@@ -16,8 +16,6 @@ import type {
   InteractionStatus,
   PostCallbackNode
 } from '@plitzi/sdk-shared';
-
-const MAX_TWIG_RESOLUTION_PASSES = 5;
 
 /**
  * How deep into a param's own structure the resolver will go.
@@ -51,27 +49,13 @@ const processParams = (
    */
   const resolve = (value: unknown, param: string, depth: number): unknown => {
     if (typeof value === 'string') {
-      let resolved: unknown = value;
-      let passes = MAX_TWIG_RESOLUTION_PASSES;
-      // The param as written is a template whatever it holds — a condition or a loop as much as a name. What a pass
-      // RETURNS is data, and is read again only when it carries a well-formed token, so text a visitor typed that
-      // happens to contain braces is not evaluated.
-      if (typeof resolved === 'string' && hasTemplateSyntax(resolved) && !hasValidToken(resolved)) {
-        resolved = processTwig(resolved, scope, false, true);
-        passes--;
-      }
-
-      while (typeof resolved === 'string' && hasValidToken(resolved) && passes > 0) {
-        resolved = processTwig(resolved, scope, false, true);
-        passes--;
-      }
-
-      if (typeof resolved === 'string' && hasValidToken(resolved)) {
+      // The same resolver a server action's steps use — see `resolveStepParam`.
+      const { value: resolved, unresolved } = resolveStepParam(value, scope);
+      if (unresolved) {
         pConsole.warning(
           'interactions',
           <span>
-            Twig token resolution exceeded {MAX_TWIG_RESOLUTION_PASSES} passes for <b>{param}</b>, leaving unresolved
-            tokens
+            Twig token resolution exceeded {MAX_PARAM_PASSES} passes for <b>{param}</b>, leaving unresolved tokens
           </span>,
           { param, value: resolved }
         );

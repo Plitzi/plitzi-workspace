@@ -121,6 +121,12 @@ export const computed = {
   hasColour: '{{ state.color ? true : false }}',
   hasVisitor: '{{ state.visitor ? true : false }}',
   visitor: "{{ state.visitor ?? '' }}",
+  /**
+   * This page — one tab, one visit — among the others the same visitor may have open: what a change it makes carries,
+   * so the announcement of it that comes back is known for its own.
+   */
+  hasTab: '{{ state.tab ? true : false }}',
+  tab: "{{ state.tab ?? '' }}",
   timerOpen: '{{ state.timerOpen ? true : false }}',
   /** What this page announces on the board's room: the only thing the others know about it. */
   me: "{{ { 'name': computed.name, 'color': computed.color } }}",
@@ -170,6 +176,9 @@ export const paintedState = [...GROUPS.map(group => PICK_OF(group.id)), 'name', 
  * hand, a selection count, a panel open on arrival are all things that belong to the last visit, not this one.
  */
 export const transientState = [
+  // One per tab and per visit: kept, every tab of a browser would be the same page.
+  'tab',
+  'lockedHere',
   'tool',
   'zoom',
   'selectionCount',
@@ -211,7 +220,6 @@ export const transientState = [
   'timerOpen',
   'deleteOpen',
   'settingsOpen',
-  'lockProblem',
   'stampOpen',
   'reactOpen',
   // What opening a locked board answered, and the last timer heard: this visit's, never kept. The KEY that opened it
@@ -233,5 +241,9 @@ export const identity: StepSpec[] = [
   when(
     { field: 'computed.hasVisitor', operator: '=', value: false },
     setState({ key: 'visitor', type: 'text', value: RANDOM_VISITOR })
+  ),
+  when(
+    { field: 'computed.hasTab', operator: '=', value: false },
+    setState({ key: 'tab', type: 'text', value: RANDOM_VISITOR })
   )
 ];

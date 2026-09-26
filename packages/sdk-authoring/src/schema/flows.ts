@@ -126,8 +126,20 @@ export const named = (id: string, step: StepSpec): StepSpec => ({ ...step, id })
 export const when = (rules: Rule | Rule[], step: StepSpec, combinator: 'and' | 'or' = 'and'): StepSpec => {
   const group: RuleGroup = { combinator, rules: Array.isArray(rules) ? rules : [rules] };
 
-  return { ...step, when: group };
+  return { ...step, when: step.when ? both(step.when, group) : group };
 };
+
+/**
+ * Two conditions a step must BOTH meet — the one it already had and the one put around it.
+ *
+ * `when(a, when(b, step))` used to replace `b` with `a`: the step ran whenever `a` held, whatever `b` said, and nothing
+ * anywhere said so. A helper that returns its steps already guarded (a `when` inside) and a caller adding its own guard
+ * is the ordinary way to get there. Two `and` groups are one group of all their rules; otherwise each keeps its own.
+ */
+const both = (inner: RuleGroup, outer: RuleGroup): RuleGroup =>
+  inner.combinator === 'and' && outer.combinator === 'and' && inner.enabled !== false && outer.enabled !== false
+    ? { combinator: 'and', rules: [...outer.rules, ...inner.rules] }
+    : { combinator: 'and', rules: [outer, inner] };
 
 /**
  * What a trigger does when it fires again while the flow it started still runs.
@@ -167,7 +179,9 @@ export const whenSucceeded = (stepId: string, step: StepSpec): StepSpec =>
  * Runs a step only if the named server action did NOT complete.
  *
  * Every outcome that is not `completed`, which is deliberate: a run can come back `failed`, `skipped` or
- * `aborted`, and to the page they are one event — it did not work, and the reason is in `{{<id>.reason}}`.
+ * `aborted`, and to the page they are one event — it did not work, and the reason is in `{{<id>.reason}}` — and, when
+ * the server or a step wrote one for the caller (`ActionRefusal`, `flow.fail` telling the caller), in
+ * `{{<id>.error}}`.
  * Matching only `failed` is how the other two end up silently doing nothing.
  */
 export const whenFailed = (stepId: string, step: StepSpec): StepSpec =>

@@ -40,7 +40,7 @@ export { cronFiresBetween, cronMatches, cronNextFire, parseCron } from '@plitzi/
  */
 export { checkAction } from './modules/actions/runtime/check';
 export type { ActionCheckDeps } from './modules/actions/runtime/check';
-export { ActionRunError } from './modules/actions/runtime/errors';
+export { ActionRefusal, ActionRunError } from './modules/actions/runtime/errors';
 export { DEFAULT_LIMITS } from './modules/actions/runtime/limits';
 export { createTaskRegistry, taskName } from './modules/actions/tasks/registry';
 export { describeCatalog, describeTask } from './modules/actions/taskCatalog';

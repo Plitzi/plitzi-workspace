@@ -12,36 +12,33 @@ export type EventBridgeParams<T = unknown> = { filter?: (params?: T) => boolean;
 export type Event<T = unknown> = { callback: EventBridgeCallback<T>; filter?: EventBridgeParams<T>['filter'] };
 
 export type EventBridgeProps<T = unknown> = {
-  events?: Record<EventBridgeModule, Record<EventBridgeEvent, Event<T>[]>>;
+  /** What the bridge starts with — as it holds them: only the modules, and the events, that have a listener. */
+  events?: Partial<Record<EventBridgeModule, Partial<Record<EventBridgeEvent, Event<T>[]>>>>;
   debugMode?: boolean;
 };
 
 type EventBridgeUpdateListener = (events: Record<EventBridgeEvent, unknown>) => void;
 
-/**
- * Stops at the first key rather than listing them all.
- *
- * A module holds one event per element (`interaction`, `element`), and every element that unmounts removes its own —
- * so `Object.keys(...).length` here made tearing down a page of N elements cost N × N.
- */
-const hasOwnKeys = (value: object): boolean => {
-  for (const key in value) {
-    if (Object.hasOwn(value, key)) {
-      return true;
-    }
-  }
-
-  return false;
-};
-
 class EventBridge<T = unknown> {
   debugMode: boolean = false;
   events: Partial<Record<EventBridgeModule, Partial<Record<EventBridgeEvent, Event<T>[]>>>>;
   private listeners = new Map<EventBridgeEvent, Set<EventBridgeUpdateListener>>();
+  /**
+   * How many events each module holds, kept beside `events` so emptying one is a count and not a walk.
+   *
+   * A module holds one event per element (`interaction`, `element`), and every element that unmounts removes its own.
+   * Asking the object whether it had keys left was a walk over all of them — `for…in` still enumerates every key of an
+   * object that constant deletions have turned into a dictionary — so tearing down, or re-subscribing, a page of N
+   * elements cost N × N: a third of a busy frame on a board with a few hundred elements.
+   */
+  private counts = new Map<EventBridgeModule, number>();
 
   constructor({ events, debugMode = false }: EventBridgeProps<T> | undefined = {}) {
     this.events = events ?? {};
     this.debugMode = debugMode;
+    for (const [module, byEvent] of Object.entries(this.events) as [EventBridgeModule, object][]) {
+      this.counts.set(module, Object.keys(byEvent).length);
+    }
   }
 
   has(module: EventBridgeModule, event: EventBridgeEvent) {
@@ -69,6 +66,10 @@ class EventBridge<T = unknown> {
 
     if (!this.events[module]) {
       this.events[module] = {};
+    }
+
+    if (!this.events[module][event]) {
+      this.counts.set(module, (this.counts.get(module) ?? 0) + 1);
     }
 
     if (!this.events[module][event] || (override && this.events[module][event].length > 0)) {
@@ -99,10 +100,13 @@ class EventBridge<T = unknown> {
 
     if (this.events[module][event]?.length === 0) {
       delete this.events[module][event];
-    }
-
-    if (!hasOwnKeys(this.events[module])) {
-      delete this.events[module];
+      const left = (this.counts.get(module) ?? 1) - 1;
+      if (left > 0) {
+        this.counts.set(module, left);
+      } else {
+        this.counts.delete(module);
+        delete this.events[module];
+      }
     }
   }
 
@@ -187,6 +191,7 @@ class EventBridge<T = unknown> {
   clear(module?: EventBridgeModule) {
     if (!module) {
       this.events = {};
+      this.counts.clear();
 
       return;
     }
@@ -196,6 +201,7 @@ class EventBridge<T = unknown> {
     }
 
     delete this.events[module];
+    this.counts.delete(module);
   }
 
   getEvents(module?: EventBridgeModule) {

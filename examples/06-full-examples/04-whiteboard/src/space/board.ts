@@ -96,6 +96,12 @@ const THIS_BOARD = `{{ ${PROVIDER}.id }}`;
 const TOPIC = (channel: 'board' | 'room'): string =>
   `{{ ${ofBoard('topic', "''")} ? '${channel}:' ~ ${ofBoard('topic', "''")} : '' }}`;
 
+/**
+ * The board's announcements. A board not opened yet — locked, its topic a secret — is still listened to on the open
+ * board's own topic, where its lock being removed is said: nothing else is ever published there while it is locked.
+ */
+const FEED_TOPIC = `{{ ${ofBoard('topic', "''")} ? 'board:' ~ ${ofBoard('topic', "''")} : (source.found ? 'board:' ~ source.id : '') }}`;
+
 export const screen = styles('screen', {
   position: 'relative',
   width: '100%',
@@ -789,7 +795,7 @@ export const boardPage: PageSpec = {
         channel({
           id: 'feed',
           keep: 0,
-          bind: [bindTemplate('topic', BOARD_PROVIDER, TOPIC('board'))],
+          bind: [bindTemplate('topic', BOARD_PROVIDER, FEED_TOPIC)],
           flows: [
             [
               named('heard', on('onMessage')),
@@ -818,14 +824,33 @@ export const boardPage: PageSpec = {
                 { field: 'heard.type', operator: '=', value: 'timer' },
                 boardAction('chime', { sound: "{{ heard.data.timer ? 'timerStart' : 'timerStop' }}" })
               ),
-              // The password changed: what was opened no longer is. Read the board again — and be asked, like anyone.
+              /**
+               * The password changed. The page that changed it already holds the new key and topic, and goes on as it
+               * is — dropping what it opened would flash the lock screen at the very person who set it. Everyone else
+               * reads the board again; locked, what they opened no longer is, and they are asked like anyone. A
+               * password REMOVED leaves nothing to ask: they read the board again and stay on it.
+               */
               when(
                 { field: 'heard.type', operator: '=', value: 'locked' },
+                setState({ key: 'lockedHere', type: 'boolean', value: '{{ heard.data.by == computed.tab }}' })
+              ),
+              when(
+                [
+                  { field: 'heard.type', operator: '=', value: 'locked' },
+                  { field: 'state.lockedHere', operator: '=', value: false },
+                  { field: 'heard.data.locked', operator: '=', value: true }
+                ],
                 setState({ key: 'opened', type: 'json', value: 'null' })
+              ),
+              when(
+                [
+                  { field: 'heard.type', operator: '=', value: 'locked' },
+                  { field: 'state.lockedHere', operator: '=', value: false }
+                ],
+                reloadApi(BOARD_PROVIDER)
               ),
               when({ field: 'heard.type', operator: '=', value: 'locked' }, boardAction('chime', { sound: 'lock' })),
               when({ field: 'heard.type', operator: '=', value: 'deleted' }, boardAction('chime', { sound: 'remove' })),
-              when({ field: 'heard.type', operator: '=', value: 'locked' }, reloadApi(BOARD_PROVIDER)),
               // The board is gone: nobody stays on nothing. Everyone is told, and sent back to the boards.
               when(
                 { field: 'heard.type', operator: '=', value: 'deleted' },

@@ -62,6 +62,36 @@ describe('when', () => {
     expect(nodes.go.when).toMatchObject({ rules: [{ field: 'save.status' }] });
   });
 
+  const ruleA = { field: 'form.valid', operator: '=', value: true };
+  const ruleB = { field: 'state.ready', operator: '=', value: true };
+
+  /**
+   * A helper that returns its steps already guarded, and a caller adding a guard of its own: both must hold. This used
+   * to REPLACE the inner condition, so the step ran whenever the outer one held — and nothing said so.
+   */
+  it('keeps the condition a step already has, and adds the new one to it', () => {
+    expect(when(ruleA, when(ruleB, step('setState'))).when).toEqual({ combinator: 'and', rules: [ruleA, ruleB] });
+  });
+
+  it('keeps an `or` group whole beside the new condition', () => {
+    const guarded = when(ruleA, when([ruleA, ruleB], step('setState'), 'or'));
+
+    expect(guarded.when).toEqual({
+      combinator: 'and',
+      rules: [
+        { combinator: 'and', rules: [ruleA] },
+        { combinator: 'or', rules: [ruleA, ruleB] }
+      ]
+    });
+  });
+
+  it('keeps whenFailed guarding on the step status when wrapped again', () => {
+    expect(when(ruleA, whenFailed('save', step('setState'))).when?.rules).toEqual([
+      ruleA,
+      { field: 'save.status', operator: '!=', value: 'completed' }
+    ]);
+  });
+
   /** A step with no condition carries no `when` at all, rather than an empty group that evaluates to nothing. */
   it('writes no condition when none was asked for', () => {
     expect(authorFlow([named('go', step('navigate'))]).go).not.toHaveProperty('when');

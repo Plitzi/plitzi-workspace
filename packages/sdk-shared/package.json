@@ -436,6 +436,10 @@
       "types": "./dist/helpers/twigWrapper/processTwig/processTwig.d.ts",
       "import": "./dist/helpers/twigWrapper/processTwig/processTwig.mjs"
     },
+    "./helpers/twigWrapper/processTwig/resolveStepParam": {
+      "types": "./dist/helpers/twigWrapper/processTwig/resolveStepParam.d.ts",
+      "import": "./dist/helpers/twigWrapper/processTwig/resolveStepParam.mjs"
+    },
     "./helpers/twigWrapper/templateRoots": {
       "types": "./dist/helpers/twigWrapper/templateRoots.d.ts",
       "import": "./dist/helpers/twigWrapper/templateRoots.mjs"

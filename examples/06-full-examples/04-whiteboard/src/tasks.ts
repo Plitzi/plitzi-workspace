@@ -1,3 +1,5 @@
+import { ActionRefusal } from '@plitzi/sdk-server/actions';
+
 import { isBoardId } from './board/model.ts';
 import {
   applyToBoard,
@@ -34,7 +36,7 @@ import type { ActionKvStore, ActionTask } from '@plitzi/sdk-server/actions';
 /** Refused rather than looked up: a board id is interpolated into a key, so only an id's own characters get there. */
 const boardId = (id: unknown): string => {
   if (!isBoardId(id)) {
-    throw new Error(`"${String(id)}" is not a board`);
+    throw new ActionRefusal(`"${String(id)}" is not a board`);
   }
 
   return id;

@@ -1,5 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
+import { ActionRefusal } from '@plitzi/sdk-server/actions';
+
 import type { Redis } from 'ioredis';
 
 /**
@@ -57,22 +59,22 @@ const DATA_URL = /^data:(image\/[a-z]+);base64,([A-Za-z0-9+/=]+)$/;
 export const keepAsset = async (store: AssetStore, board: string, data: unknown): Promise<string> => {
   const match = typeof data === 'string' ? DATA_URL.exec(data) : null;
   if (!match) {
-    throw new Error('A picture arrives as a data URL: `data:image/png;base64,…`');
+    throw new ActionRefusal('A picture arrives as a data URL: `data:image/png;base64,…`');
   }
 
   const bytes = Buffer.from(match[2], 'base64');
   const kind = KINDS.find(candidate => candidate.matches(bytes));
   if (!kind) {
-    throw new Error('Only PNG, JPEG, GIF and WebP pictures can be put on a board');
+    throw new ActionRefusal('Only PNG, JPEG, GIF and WebP pictures can be put on a board');
   }
 
   if (bytes.length > MAX_ASSET_BYTES) {
-    throw new Error(`A picture is at most ${Math.round(MAX_ASSET_BYTES / 1024)} KB — try a smaller one`);
+    throw new ActionRefusal(`A picture is at most ${Math.round(MAX_ASSET_BYTES / 1024)} KB — try a smaller one`);
   }
 
   const id = randomBytes(16).toString('base64url');
   if (!(await store.add(board, id, { mime: kind.mime, bytes }))) {
-    throw new Error('This board holds as many pictures as it can');
+    throw new ActionRefusal('This board holds as many pictures as it can');
   }
 
   return id;

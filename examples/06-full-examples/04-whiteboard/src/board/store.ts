@@ -1,8 +1,10 @@
 import { randomInt } from 'node:crypto';
 
+import { ActionRefusal } from '@plitzi/sdk-server/actions';
+
 import { keepAsset } from './assets.ts';
 import { FEATURED } from './featured.ts';
-import { MAX_PASSWORD, MIN_PASSWORD, lockWith, passwordOpens } from './locks.ts';
+import { lockWith, passwordOpens, passwordProblem } from './locks.ts';
 import {
   LIFETIMES,
   LIMITS,
@@ -194,7 +196,7 @@ const locked = async <T>(kv: ActionKvStore, work: () => Promise<T>): Promise<T> 
   const giveUpAt = Date.now() + LOCK_PATIENCE_MS;
   for (let attempt = 0; (await kv.increment(LOCK_KEY, 1, LOCK_SECONDS)) !== 1; attempt += 1) {
     if (Date.now() > giveUpAt) {
-      throw new Error('The boards are busy — try that again in a moment');
+      throw new ActionRefusal('The boards are busy — try that again in a moment');
     }
 
     await pause(Math.min(2 + attempt * 3, 40));
@@ -256,7 +258,7 @@ const readPreview = async (kv: ActionKvStore, id: string): Promise<BoardElement[
 const existing = async (kv: ActionKvStore, id: string): Promise<StoredBoard> => {
   const board = await readBoard(kv, id);
   if (!board) {
-    throw new Error('This board no longer exists');
+    throw new ActionRefusal('This board no longer exists');
   }
 
   return board;
@@ -265,7 +267,7 @@ const existing = async (kv: ActionKvStore, id: string): Promise<StoredBoard> => 
 /** A locked board is read only by whoever opened it: everything asked of it carries the key opening it answered. */
 const assertOpen = (signer: BoardSigner, board: StoredBoard, key: unknown): void => {
   if (board.lock && !signer.keyOpens(board.id, board.lock, key)) {
-    throw new Error('This board is locked: open it with its password first');
+    throw new ActionRefusal('This board is locked: open it with its password first');
   }
 };
 
@@ -282,7 +284,7 @@ export type Pass = { key: unknown; owner?: unknown };
 const assertWritable = (signer: BoardSigner, board: StoredBoard, { key, owner }: Pass): void => {
   assertOpen(signer, board, key);
   if (board.readOnly && !signer.ownerOpens(board.id, owner)) {
-    throw new Error('This board is read-only — use it as a template to get a copy you can change');
+    throw new ActionRefusal('This board is read-only — use it as a template to get a copy you can change');
   }
 };
 
@@ -490,11 +492,11 @@ export const openBoard = async (
 
   const attempts = await kv.increment(`attempts:${id}:${callerId}:${Math.floor(Date.now() / 300_000)}`, 1, 330);
   if (attempts > ATTEMPTS_PER_WINDOW) {
-    throw new Error('Too many tries — wait a few minutes and try again');
+    throw new ActionRefusal('Too many tries — wait a few minutes and try again');
   }
 
   if (typeof password !== 'string' || !password || !passwordOpens(board.lock, password)) {
-    throw new Error('That is not this board’s password');
+    throw new ActionRefusal('That is not this board’s password');
   }
 
   return opened(signer, board, chat);
@@ -510,7 +512,7 @@ const reach = ({
 }): Pick<StoredBoard, 'unlisted' | 'expiresAt'> => {
   const lifetime = Number(hours);
   if (hours !== undefined && hours !== '' && !LIFETIMES.some(entry => entry === lifetime)) {
-    throw new Error(`A board lasts ${LIFETIMES.filter(Boolean).join(', ')} hours — or 0, for good`);
+    throw new ActionRefusal(`A board lasts ${LIFETIMES.filter(Boolean).join(', ')} hours — or 0, for good`);
   }
 
   return {
@@ -586,7 +588,7 @@ export const setReadOnly = (
     const board = await existing(stores.kv, id);
     assertOpen(stores.signer, board, pass.key);
     if (!stores.signer.ownerOpens(id, pass.owner)) {
-      throw new Error('Only whoever made this board can make it read-only');
+      throw new ActionRefusal('Only whoever made this board can make it read-only');
     }
 
     const on = readOnly === true || readOnly === 'true';
@@ -620,14 +622,15 @@ export const lockBoard = (
   id: string,
   password: unknown,
   pass: Pass
-): Promise<{ id: string; locked: boolean; key: string; topic: string; previousTopic: string }> =>
+): Promise<{ id: string; locked: boolean; wasLocked: boolean; key: string; topic: string; previousTopic: string }> =>
   serially(stores.kv, async () => {
     const { keyFor, topicFor } = stores.signer;
     const board = await existing(stores.kv, id);
     assertWritable(stores.signer, board, pass);
     const text = typeof password === 'string' ? password : '';
-    if (text && (text.length < MIN_PASSWORD || text.length > MAX_PASSWORD)) {
-      throw new Error(`A password is ${MIN_PASSWORD} to ${MAX_PASSWORD} characters`);
+    const problem = text ? passwordProblem(text) : undefined;
+    if (problem) {
+      throw new ActionRefusal(problem);
     }
 
     const previousTopic = topicFor(id, board.lock);
@@ -638,6 +641,8 @@ export const lockBoard = (
     return {
       id,
       locked: next.lock !== undefined,
+      // What the page says depends on it: a password set, changed — or removed, which only a board that had one can be.
+      wasLocked: board.lock !== undefined,
       key: next.lock ? keyFor(id, next.lock) : '',
       topic: topicFor(id, next.lock),
       previousTopic
@@ -669,18 +674,18 @@ const elementsOf = (ops: unknown): BoardElement[] => {
     try {
       value = JSON.parse(ops) as unknown;
     } catch {
-      throw new Error('A commit is a list of elements');
+      throw new ActionRefusal('A commit is a list of elements');
     }
   }
 
   if (!Array.isArray(value) || !value.length || value.length > LIMITS.ops) {
-    throw new Error(`A commit is a list of 1 to ${LIMITS.ops} elements`);
+    throw new ActionRefusal(`A commit is a list of 1 to ${LIMITS.ops} elements`);
   }
 
   const elements = value.map(parseElement);
   const invalid = elements.findIndex(element => !element);
   if (invalid !== -1) {
-    throw new Error(`Element ${invalid + 1} of the commit is not a board element`);
+    throw new ActionRefusal(`Element ${invalid + 1} of the commit is not a board element`);
   }
 
   return elements.filter(element => element !== undefined);
@@ -717,7 +722,7 @@ export const applyToBoard = async (
   const incoming = elementsOf(ops);
   const commits = await kv.increment(`rate:${callerId}:${Math.floor(Date.now() / 10_000)}`, 1, 20);
   if (commits > COMMITS_PER_WINDOW) {
-    throw new Error('Too many changes at once — slow down for a moment');
+    throw new ActionRefusal('Too many changes at once — slow down for a moment');
   }
 
   return serially(kv, async () => {
@@ -728,7 +733,7 @@ export const applyToBoard = async (
       incoming.map(element => withKept(element, board.elements[element.id]))
     );
     if (Object.keys(merged.board).length > LIMITS.elements) {
-      throw new Error(`A board holds at most ${LIMITS.elements} elements`);
+      throw new ActionRefusal(`A board holds at most ${LIMITS.elements} elements`);
     }
 
     await save(stores, { ...board, elements: merged.board, updatedAt: Date.now() });
@@ -754,11 +759,11 @@ export const voteOn = (
     assertWritable(stores.signer, board, pass);
     const element = typeof elementId === 'string' ? board.elements[elementId] : undefined;
     if (!element || element.deleted || isLinear(element.type)) {
-      throw new Error('There is nothing to vote for there');
+      throw new ActionRefusal('There is nothing to vote for there');
     }
 
     if (!isVoterId(voter)) {
-      throw new Error('A vote needs the id this visitor keeps');
+      throw new ActionRefusal('A vote needs the id this visitor keeps');
     }
 
     const votes = element.votes ?? [];
@@ -789,7 +794,7 @@ export const setTimer = (
     assertWritable(stores.signer, board, pass);
     const span = Math.round(Number(seconds));
     if (!Number.isFinite(span) || span < 0 || span > MAX_TIMER_SECONDS) {
-      throw new Error(`A timer runs from 1 second to ${MAX_TIMER_SECONDS / 60} minutes`);
+      throw new ActionRefusal(`A timer runs from 1 second to ${MAX_TIMER_SECONDS / 60} minutes`);
     }
 
     const { timer: _previous, ...rest } = board;
@@ -855,12 +860,12 @@ export const sayOn = async (
   const { kv, signer } = stores;
   const text = typeof said.text === 'string' ? said.text.trim().slice(0, 500) : '';
   if (!text) {
-    throw new Error('Say something first');
+    throw new ActionRefusal('Say something first');
   }
 
   const lines = await kv.increment(`chat-rate:${callerId}:${Math.floor(Date.now() / 10_000)}`, 1, 20);
   if (lines > CHATS_PER_WINDOW) {
-    throw new Error('That is a lot at once — give the others a moment');
+    throw new ActionRefusal('That is a lot at once — give the others a moment');
   }
 
   return serially(kv, async () => {
@@ -897,12 +902,12 @@ export const replyTo = (
     assertWritable(stores.signer, board, pass);
     const comment = typeof elementId === 'string' ? board.elements[elementId] : undefined;
     if (comment?.type !== 'comment' || comment.deleted) {
-      throw new Error('There is no comment there to answer');
+      throw new ActionRefusal('There is no comment there to answer');
     }
 
     const said = typeof text === 'string' ? text.trim().slice(0, LIMITS.text) : '';
     if (!said) {
-      throw new Error('Write an answer first');
+      throw new ActionRefusal('Write an answer first');
     }
 
     const reply = {
