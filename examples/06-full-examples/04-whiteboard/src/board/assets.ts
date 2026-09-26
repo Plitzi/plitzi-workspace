@@ -73,6 +73,24 @@ export const keepAsset = (board: string, data: unknown): string => {
 
 export const readAsset = (board: string, id: string): Asset | undefined => boards.get(board)?.get(id);
 
+/** A board copied brings its pictures: the same bytes, under the same ids, kept beside the copy. */
+export const copyAssets = (from: string, to: string, ids: readonly string[]): void => {
+  const source = boards.get(from);
+  if (!source) {
+    return;
+  }
+
+  const target = boards.get(to) ?? new Map<string, Asset>();
+  for (const id of ids) {
+    const asset = source.get(id);
+    if (asset) {
+      target.set(id, asset);
+    }
+  }
+
+  boards.set(to, target);
+};
+
 export const forgetBoardAssets = (board: string): void => {
   boards.delete(board);
 };

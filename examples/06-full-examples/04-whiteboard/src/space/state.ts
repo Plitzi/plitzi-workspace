@@ -25,8 +25,17 @@ export const RANDOM_COLOUR = `{{ ${list(COLLAB_COLOURS)}|random }}`;
  */
 export const RANDOM_VISITOR = `{{ ${Array.from({ length: 16 }, () => "('abcdefghijklmnopqrstuvwxyz0123456789'|random)").join(' ~ ')} }}`;
 
-/** The tools that draw: while one is in hand, the style panel is what it will draw with. */
-const DRAWING_TOOLS = ['rectangle', 'ellipse', 'diamond', 'arrow', 'line', 'freehand', 'text', 'sticky'];
+/** The tools that draw, by what what they draw is styled with: the style panel offers that, and nothing else. */
+const STROKED_TOOLS = ['rectangle', 'ellipse', 'diamond', 'arrow', 'line', 'freehand', 'text'];
+
+const FILLED_TOOLS = ['rectangle', 'ellipse', 'diamond', 'sticky'];
+
+/**
+ * One section of the style panel: shown for what the selection can take — or, with nothing selected, for what the
+ * tool in hand draws.
+ */
+const offers = (canKey: string, tools: readonly string[]): string =>
+  `{{ computed.selectionCount > 0 ? (state.${canKey} ? true : false) : (computed.tool in ${list(tools)}) }}`;
 
 export const computed = {
   tool: "{{ state.tool ?? 'select' }}",
@@ -39,8 +48,11 @@ export const computed = {
   selectionGrouped: '{{ state.selectionGrouped ? true : false }}',
   /** Two or more things that are not already one group: what shows "group". */
   canGroup: '{{ computed.selectionCount > 1 and not state.selectionOneGroup ? true : false }}',
-  /** The style panel is open while something is selected or a drawing tool is in hand — and only then. */
-  styleOpen: `{{ computed.selectionCount > 0 or computed.tool in ${list(DRAWING_TOOLS)} ? true : false }}`,
+  showStroke: offers('selectionCanStroke', STROKED_TOOLS),
+  showFill: offers('selectionCanFill', FILLED_TOOLS),
+  showWidth: offers('selectionCanWidth', STROKED_TOOLS),
+  /** The style panel is open while it has something to offer — and only then. */
+  styleOpen: '{{ computed.showStroke or computed.showFill or computed.showWidth ? true : false }}',
   name: "{{ state.name ?? '' }}",
   color: "{{ state.color ?? 'indigo' }}",
   /** Whether this person has been given a name and a colour yet — on a first visit, neither. */
@@ -68,6 +80,9 @@ export const transientState = [
   'selectionCount',
   'selectionGrouped',
   'selectionOneGroup',
+  'selectionCanStroke',
+  'selectionCanFill',
+  'selectionCanWidth',
   'shareOpen',
   'meOpen',
   'keysOpen',

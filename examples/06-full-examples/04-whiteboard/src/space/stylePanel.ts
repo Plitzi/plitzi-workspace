@@ -172,6 +172,7 @@ export const stylePanel = (): ElementSpec =>
     children: [
       container({
         class: group,
+        visible: 'computed.showStroke',
         children: [
           text({ content: 'Stroke', class: caption }),
           container({ class: row, children: STROKES.map(name => swatch('stroke', name, STROKE_LABELS[name])) })
@@ -179,6 +180,7 @@ export const stylePanel = (): ElementSpec =>
       }),
       container({
         class: group,
+        visible: 'computed.showFill',
         children: [
           text({ content: 'Fill', class: caption }),
           container({ class: row, children: FILLS.map(name => swatch('fill', name, FILL_LABELS[name])) })
@@ -186,6 +188,7 @@ export const stylePanel = (): ElementSpec =>
       }),
       container({
         class: group,
+        visible: 'computed.showWidth',
         children: [
           text({ content: 'Width', class: caption }),
           container({ class: row, children: STROKE_WIDTHS.map(width) })

@@ -12,6 +12,7 @@ import {
 
 import { REACTIONS } from '../board/reactions.ts';
 import stackDeclaration from '../plugins/StickyStack/declaration.ts';
+import { editOnly } from './access.ts';
 import { BUTTON_RESET, FLOAT, divide } from './kit.ts';
 import { boardAction } from './stylePanel.ts';
 
@@ -76,17 +77,20 @@ export const bottomTray = (): ElementSpec =>
     id: 'tray',
     class: tray,
     children: [
-      stickyStack({
-        id: 'sticky-stack',
-        class: stack,
-        flows: [
-          [
-            named('picked', declaredTrigger(stackDeclaration, 'onPick')),
-            boardAction('carry', { fill: '{{ picked.fill }}', kind: '{{ picked.kind }}' })
+      // Notes to take are for a board that can change; reactions are for anyone looking.
+      editOnly([
+        stickyStack({
+          id: 'sticky-stack',
+          class: stack,
+          flows: [
+            [
+              named('picked', declaredTrigger(stackDeclaration, 'onPick')),
+              boardAction('carry', { fill: '{{ picked.fill }}', kind: '{{ picked.kind }}' })
+            ]
           ]
-        ]
-      }),
-      divide(),
+        }),
+        divide()
+      ]),
       container({
         class: reactions,
         children: REACTIONS.map((emoji, index) =>

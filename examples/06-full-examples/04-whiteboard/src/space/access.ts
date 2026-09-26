@@ -4,6 +4,7 @@ import {
   container,
   form,
   formControl,
+  link,
   named,
   on,
   onSubmit,
@@ -18,7 +19,7 @@ import {
 
 import { LOCK_ACTION, OPEN_ACTION } from '../actions.ts';
 import { BOARD_PROVIDER } from './ids.ts';
-import { BUTTON_RESET, FLOAT, caption } from './kit.ts';
+import { BUTTON_RESET, FLOAT, caption, icon } from './kit.ts';
 
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
@@ -44,6 +45,22 @@ export const BOARD_SHOWN = `{{ source.found and (not source.locked or (${OPENED}
 
 /** In a flow: the key a locked board's changes carry, or nothing for an open board. */
 export const BOARD_KEY = `{{ state.opened and state.opened.id == ${PROVIDER}.id ? state.opened.key : '' }}`;
+
+/** Whether the board shown can be changed — every featured board is one to look around, not to draw on. */
+const EDITABLE = { source: BOARD_PROVIDER, template: "{{ source.readOnly ? 'false' : 'true' }}" };
+
+const READ_ONLY = { source: BOARD_PROVIDER, template: "{{ source.readOnly ? 'true' : 'false' }}" };
+
+/** Leaves its children to the layout around it: a wrapper that only decides whether they are there. */
+const contents = styles('contents', { display: 'contents' });
+
+/** What only a board that can change shows: the tools that change it. */
+export const editOnly = (children: ElementSpec[]): ElementSpec =>
+  container({ class: contents, visible: EDITABLE, children });
+
+/** What only a read-only board shows: that it is one, and what to do instead. */
+export const readOnlyOnly = (children: ElementSpec[]): ElementSpec =>
+  container({ class: contents, visible: READ_ONLY, children });
 
 /** What opening answered, kept: the board shown, and the key remembered for the next visit. */
 const keepOpened = (step: string): StepSpec[] => [
@@ -104,6 +121,25 @@ export const submitButton = styles('submitButton', {
   },
   states: {
     hover: { filter: 'brightness(1.08)' },
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '2px' }
+  }
+});
+
+const backLink = styles('unlockBack', {
+  css: {
+    display: 'inline-flex',
+    'align-items': 'center',
+    'justify-content': 'center',
+    gap: '8px',
+    height: '34px',
+    'border-radius': '8px',
+    'font-size': '13px',
+    'font-weight': '600',
+    color: 'var(--muted)',
+    'text-decoration': 'none'
+  },
+  states: {
+    hover: { color: 'var(--ink)', 'background-color': 'var(--surface-2)' },
     'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '2px' }
   }
 });
@@ -207,7 +243,14 @@ export const unlockScreen = (): ElementSpec =>
             class: cardNote
           }),
           passwordField('unlock-password', 'Password'),
-          button({ id: 'unlock-open', subType: 'submit', content: 'Open the board', class: submitButton })
+          button({ id: 'unlock-open', subType: 'submit', content: 'Open the board', class: submitButton }),
+          link({
+            href: '/',
+            mode: 'internal',
+            class: backLink,
+            label: 'All boards',
+            children: [icon('fa-solid fa-chevron-left'), text({ content: 'Back to all boards' })]
+          })
         ]
       })
     ]

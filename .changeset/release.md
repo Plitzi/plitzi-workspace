@@ -801,7 +801,8 @@
   notes to drag from, a laser pointer, reactions, following a collaborator's view, groups, a toolbar authored in the
   space that the canvas lays beside the selection, pictures pasted from the clipboard, password-protected boards (on a
   topic only whoever opened the board can name), votes, a shared timer, cursor chat and "bring everyone here". The
-  front page is a board to try before starting one, templates and two large featured boards. See
+  front page is a board to try before starting one — with scripted collaborators already drawing on it — templates,
+  and two large featured boards that are read-only (looked around together, then "Use as template"). See
   `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
 

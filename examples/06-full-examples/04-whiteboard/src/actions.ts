@@ -22,6 +22,7 @@ export const LIST_ACTION = 'board-list';
 export const LOAD_ACTION = 'board-load';
 export const OPEN_ACTION = 'board-open';
 export const CREATE_ACTION = 'board-create';
+export const COPY_ACTION = 'board-copy';
 export const RENAME_ACTION = 'board-rename';
 export const LOCK_ACTION = 'board-lock';
 export const APPLY_ACTION = 'board-apply';
@@ -92,6 +93,19 @@ const create = defineAction({
   },
   steps: [
     { id: 'board', task: 'board.create' },
+    { id: 'announce', task: 'realtime.publish', params: { topic: 'boards', type: 'changed', data: '{{ board }}' } }
+  ],
+  output: '{{ board }}'
+});
+
+/** A board used as a template: a copy of it, answered with its id for the page to go to. */
+const copy = defineAction({
+  id: COPY_ACTION,
+  name: 'Copy board',
+  description: 'Starts a board drawn like another one, and answers its id, for the page to go to.',
+  trigger: { type: 'call', access: 'public', input: onBoard },
+  steps: [
+    { id: 'board', task: 'board.copy' },
     { id: 'announce', task: 'realtime.publish', params: { topic: 'boards', type: 'changed', data: '{{ board }}' } }
   ],
   output: '{{ board }}'
@@ -221,7 +235,7 @@ const upload = defineAction({
   output: '{ "asset": "{{ uploaded.asset }}" }'
 });
 
-const actions = [list, load, open, create, rename, lock, apply, vote, timer, upload];
+const actions = [list, load, open, create, copy, rename, lock, apply, vote, timer, upload];
 
 /** How the server reaches an action. One live version, so the revision a page was published at is ignored. */
 export const lookups: ActionLookups = {

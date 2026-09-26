@@ -22,6 +22,7 @@ import { BUTTON_RESET, icon } from '../kit.ts';
 import { identity } from '../state.ts';
 import { featured, recent, templates } from './catalogue.ts';
 import { hero } from './hero.ts';
+import { together } from './together.ts';
 
 import type { CssProps, ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 
@@ -36,6 +37,8 @@ import type { CssProps, ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 
 const page = styles('galleryPage', {
   'min-height': '100dvh',
+  // The hero's glow spills past the edges on purpose; the page never scrolls sideways for it.
+  'overflow-x': 'clip',
   'background-color': 'var(--paper)',
   'background-image': 'radial-gradient(var(--dots) 1px, transparent 1px)',
   'background-size': '24px 24px',
@@ -98,8 +101,12 @@ const here = styles('hereNow', {
   border: '1px solid var(--edge)',
   'background-color': 'var(--surface)',
   'font-size': '13px',
-  'font-weight': '600'
+  'font-weight': '600',
+  'white-space': 'nowrap'
 });
+
+/** On a phone the faces say it: the words would push the theme switch off the screen. */
+const hereLabel = styles('hereLabel', { css: { desktop: {}, mobile: { display: 'none' } } });
 
 const faces = styles('faces', { display: 'flex', margin: '0px', padding: '0px', 'list-style-type': 'none' });
 
@@ -185,6 +192,7 @@ const hereNow = (): ElementSpec =>
       }),
       text({
         content: '',
+        class: hereLabel,
         bind: [
           bindTemplate(
             'content',
@@ -249,6 +257,7 @@ export const galleryPage: PageSpec = {
                   ]
                 }),
                 hero(),
+                together(),
                 templates(),
                 featured(),
                 recent()

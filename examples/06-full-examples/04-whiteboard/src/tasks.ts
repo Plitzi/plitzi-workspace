@@ -1,6 +1,7 @@
 import { isBoardId } from './board/model.ts';
 import {
   applyToBoard,
+  copyBoard,
   createBoard,
   listBoards,
   loadBoard,
@@ -58,7 +59,17 @@ export const boardLoadTask: ActionTask<{ id: string }> = {
   run: ({ id }, ctx) =>
     isBoardId(id)
       ? loadBoard(ctx.kv, id)
-      : { found: false, id: String(id), title: '', locked: false, elements: [], topic: '', key: '', timer: null }
+      : {
+          found: false,
+          id: String(id),
+          title: '',
+          locked: false,
+          readOnly: false,
+          elements: [],
+          topic: '',
+          key: '',
+          timer: null
+        }
 };
 
 export const boardOpenTask: ActionTask<{ id: string; password: string; key: string }> = {
@@ -77,6 +88,15 @@ export const boardCreateTask: ActionTask<{ title: string; template: string }> = 
   title: 'Create Board',
   params: { title: text('Title'), template: text('Template (blank | brainstorm | retro | flowchart | kanban)') },
   run: ({ title, template }, ctx) => createBoard(ctx.kv, title, isTemplate(template) ? template : 'blank')
+};
+
+export const boardCopyTask: ActionTask<{ board: string; key: string }> = {
+  namespace: 'board',
+  action: 'copy',
+  title: 'Copy Board',
+  description: 'A new board drawn like another — a read-only example, or any board — for the caller to change.',
+  params: { board: boardParam, key: keyParam },
+  run: ({ board, key }, ctx) => copyBoard(ctx.kv, boardId(board), key)
 };
 
 export const boardRenameTask: ActionTask<{ board: string; title: string; key: string }> = {
@@ -147,6 +167,7 @@ export const boardTasks = [
   boardLoadTask,
   boardOpenTask,
   boardCreateTask,
+  boardCopyTask,
   boardRenameTask,
   boardLockTask,
   boardApplyTask,

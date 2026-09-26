@@ -1,6 +1,6 @@
 import { randomInt } from 'node:crypto';
 
-import { forgetBoardAssets, keepAsset } from './assets.ts';
+import { copyAssets, forgetBoardAssets, keepAsset } from './assets.ts';
 import { FEATURED } from './featured.ts';
 import { MAX_PASSWORD, MIN_PASSWORD, keyFor, keyOpens, lockWith, passwordOpens, topicFor } from './locks.ts';
 import { LIMITS, cleanTitle, isLinear, isVoterId, mergeElements, parseElement } from './model.ts';
@@ -32,6 +32,8 @@ export type StoredBoard = {
   timer?: BoardTimer;
   /** One of the boards visitors find already drawn: never the one evicted to make room. */
   featured?: boolean;
+  /** Looked at together, never changed: whoever wants to change it makes a copy of their own. */
+  readOnly?: boolean;
 };
 
 export type BoardSummary = {
@@ -44,6 +46,7 @@ export type BoardSummary = {
   /** Behind a password: the gallery shows that it exists, and nothing of what is on it. */
   locked: boolean;
   featured: boolean;
+  readOnly: boolean;
 };
 
 /** A board as the gallery shows it: its summary, and enough of the drawing to recognise it by. */
@@ -55,6 +58,8 @@ export type OpenedBoard = {
   id: string;
   title: string;
   locked: boolean;
+  /** Everyone may look around it together — cursors, laser, reactions — and nobody may change it. */
+  readOnly: boolean;
   elements: BoardElement[];
   /** The part of its topics after `board:`/`room:` — empty until a locked board is opened. */
   topic: string;
@@ -143,10 +148,18 @@ const existing = async (kv: ActionKvStore, id: string): Promise<StoredBoard> => 
   return board;
 };
 
-/** A locked board is changed only by whoever opened it: every change carries the key opening it answered. */
+/** A locked board is read only by whoever opened it: everything asked of it carries the key opening it answered. */
 const assertOpen = (board: StoredBoard, key: unknown): void => {
   if (board.lock && !keyOpens(board.id, board.lock, key)) {
     throw new Error('This board is locked: open it with its password first');
+  }
+};
+
+/** Changed only by whoever may: an open board, or a locked one opened — and never a read-only one. */
+const assertWritable = (board: StoredBoard, key: unknown): void => {
+  assertOpen(board, key);
+  if (board.readOnly) {
+    throw new Error('This board is read-only — use it as a template to get a copy you can change');
   }
 };
 
@@ -187,7 +200,8 @@ const writeSummary = async (kv: ActionKvStore, board: StoredBoard): Promise<void
     updatedAt: board.updatedAt,
     count: live(board).length,
     locked: board.lock !== undefined,
-    featured: board.featured === true
+    featured: board.featured === true,
+    readOnly: board.readOnly === true
   };
   const others = (await readIndex(kv)).filter(entry => entry.id !== board.id);
   const index = [summary, ...others].sort((a, b) => b.updatedAt - a.updatedAt);
@@ -232,6 +246,7 @@ const ensureFeatured = async (kv: ActionKvStore): Promise<void> => {
         createdAt: now,
         updatedAt: now,
         featured: true,
+        readOnly: true,
         elements: Object.fromEntries(board.elements().map(element => [element.id, element]))
       });
     }
@@ -266,6 +281,7 @@ const opened = (board: StoredBoard): OpenedBoard => ({
   id: board.id,
   title: board.title,
   locked: board.lock !== undefined,
+  readOnly: board.readOnly === true,
   elements: Object.values(board.elements),
   topic: topicFor(board.id, board.lock),
   key: board.lock ? keyFor(board.id, board.lock) : '',
@@ -280,11 +296,31 @@ export const loadBoard = async (kv: ActionKvStore, id: string): Promise<OpenedBo
   await ensureFeatured(kv);
   const board = await readBoard(kv, id);
   if (!board) {
-    return { found: false, id, title: '', locked: false, elements: [], topic: '', key: '', timer: null };
+    return {
+      found: false,
+      id,
+      title: '',
+      locked: false,
+      readOnly: false,
+      elements: [],
+      topic: '',
+      key: '',
+      timer: null
+    };
   }
 
   return board.lock
-    ? { found: true, id, title: board.title, locked: true, elements: [], topic: '', key: '', timer: null }
+    ? {
+        found: true,
+        id,
+        title: board.title,
+        locked: true,
+        readOnly: board.readOnly === true,
+        elements: [],
+        topic: '',
+        key: '',
+        timer: null
+      }
     : opened(board);
 };
 
@@ -339,6 +375,33 @@ export const createBoard = (
     return { id: board.id, title: board.title };
   });
 
+/**
+ * A board of one's own, drawn like another: its elements as they are now — votes left behind, they were cast on the
+ * original — and its pictures. Neither locked nor read-only, whatever the original was.
+ */
+export const copyBoard = (kv: ActionKvStore, id: string, key: unknown): Promise<{ id: string; title: string }> =>
+  serially(async () => {
+    const source = await existing(kv, id);
+    assertOpen(source, key);
+    const now = Date.now();
+    const elements = live(source).map(({ votes: _votes, ...element }) => element);
+    const board: StoredBoard = {
+      id: newBoardId(),
+      title: cleanTitle(`${source.title} (copy)`),
+      createdAt: now,
+      updatedAt: now,
+      elements: Object.fromEntries(elements.map(element => [element.id, element]))
+    };
+    copyAssets(
+      source.id,
+      board.id,
+      elements.flatMap(element => (element.asset ? [element.asset] : []))
+    );
+    await save(kv, board);
+
+    return { id: board.id, title: board.title };
+  });
+
 export const renameBoard = (
   kv: ActionKvStore,
   id: string,
@@ -347,7 +410,7 @@ export const renameBoard = (
 ): Promise<{ id: string; title: string; topic: string }> =>
   serially(async () => {
     const board = await existing(kv, id);
-    assertOpen(board, key);
+    assertWritable(board, key);
     const renamed = { ...board, title: cleanTitle(title), updatedAt: Date.now() };
     await save(kv, renamed);
 
@@ -366,7 +429,7 @@ export const lockBoard = (
 ): Promise<{ id: string; locked: boolean; key: string; topic: string; previousTopic: string }> =>
   serially(async () => {
     const board = await existing(kv, id);
-    assertOpen(board, key);
+    assertWritable(board, key);
     const text = typeof password === 'string' ? password : '';
     if (text && (text.length < MIN_PASSWORD || text.length > MAX_PASSWORD)) {
       throw new Error(`A password is ${MIN_PASSWORD} to ${MAX_PASSWORD} characters`);
@@ -438,7 +501,7 @@ export const applyToBoard = async (
 
   return serially(async () => {
     const board = await existing(kv, id);
-    assertOpen(board, key);
+    assertWritable(board, key);
     const merged = mergeElements(
       board.elements,
       incoming.map(element => withKeptVotes(element, board.elements[element.id]))
@@ -467,7 +530,7 @@ export const voteOn = (
 ): Promise<{ settled: BoardElement[]; topic: string }> =>
   serially(async () => {
     const board = await existing(kv, id);
-    assertOpen(board, key);
+    assertWritable(board, key);
     const element = typeof elementId === 'string' ? board.elements[elementId] : undefined;
     if (!element || element.deleted || isLinear(element.type)) {
       throw new Error('There is nothing to vote for there');
@@ -502,7 +565,7 @@ export const setTimer = (
 ): Promise<{ board: string; timer: BoardTimer | null; topic: string }> =>
   serially(async () => {
     const board = await existing(kv, id);
-    assertOpen(board, key);
+    assertWritable(board, key);
     const span = Math.round(Number(seconds));
     if (!Number.isFinite(span) || span < 0 || span > MAX_TIMER_SECONDS) {
       throw new Error(`A timer runs from 1 second to ${MAX_TIMER_SECONDS / 60} minutes`);
@@ -523,7 +586,7 @@ export const uploadToBoard = async (
   key: unknown
 ): Promise<{ asset: string }> => {
   const board = await existing(kv, id);
-  assertOpen(board, key);
+  assertWritable(board, key);
 
   return { asset: keepAsset(id, data) };
 };

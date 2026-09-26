@@ -35,12 +35,13 @@ import {
   UPLOAD_ACTION,
   VOTE_ACTION
 } from '../actions.ts';
-import { BOARD_KEY, BOARD_SHOWN, ofBoard, unlockScreen } from './access.ts';
+import { BOARD_KEY, BOARD_SHOWN, editOnly, ofBoard, readOnlyOnly, unlockScreen } from './access.ts';
 import declaration from '../plugins/Board/declaration.ts';
 import { BOARD_ID, BOARD_PROVIDER } from './ids.ts';
 import { keysHelp, shortcuts } from './keys.ts';
 import { BUTTON_RESET, FLOAT, divide, icon, iconAction } from './kit.ts';
 import { popovers, presence } from './people.ts';
+import { readOnlyBanner } from './readOnly.ts';
 import { identity } from './state.ts';
 import { boardAction, stylePanel } from './stylePanel.ts';
 import { selectionTools } from './selectionTools.ts';
@@ -178,6 +179,20 @@ const titleInput = styles('titleInput', {
   }
 });
 
+const readOnlyTitle = styles('readOnlyTitle', {
+  css: {
+    desktop: {
+      padding: '0px 10px',
+      'font-weight': '600',
+      'max-width': '260px',
+      overflow: 'hidden',
+      'text-overflow': 'ellipsis',
+      'white-space': 'nowrap'
+    },
+    mobile: { display: 'none' }
+  }
+});
+
 const zoomLabel = styles('zoomLabel', {
   css: {
     ...BUTTON_RESET,
@@ -258,6 +273,8 @@ const canvas = (): ElementSpec =>
     mode: 'edit',
     bind: [
       { to: 'boardId', source: `${BOARD_PROVIDER}.id` },
+      // A read-only board is looked around together: cursors, laser and reactions, and nothing that changes it.
+      bindTemplate('mode', BOARD_PROVIDER, "{{ source.readOnly ? 'read' : 'edit' }}"),
       // The board as it is shown: its own elements — or, locked, the ones opening it answered.
       bindTemplate('elements', BOARD_PROVIDER, `{{ ${ofBoard('elements', '[]')} }}`, { returns: 'value' }),
       { to: 'title', source: `${BOARD_PROVIDER}.title` },
@@ -356,6 +373,9 @@ const canvas = (): ElementSpec =>
         setState({ key: 'selectionCount', type: 'number', value: '{{ picked.count }}' }),
         setState({ key: 'selectionGrouped', type: 'boolean', value: '{{ picked.grouped }}' }),
         setState({ key: 'selectionOneGroup', type: 'boolean', value: '{{ picked.oneGroup }}' }),
+        setState({ key: 'selectionCanStroke', type: 'boolean', value: '{{ picked.canStroke }}' }),
+        setState({ key: 'selectionCanFill', type: 'boolean', value: '{{ picked.canFill }}' }),
+        setState({ key: 'selectionCanWidth', type: 'boolean', value: '{{ picked.canWidth }}' }),
         when(
           { field: 'picked.stroke', operator: '!=', value: '' },
           setState({ key: 'stroke', type: 'text', value: '{{ picked.stroke }}' })
@@ -442,19 +462,21 @@ const zoomBar = (): ElementSpec =>
     id: 'zoom-bar',
     class: bottomLeft,
     children: [
-      iconAction({
-        id: 'undo',
-        icon: 'fa-solid fa-rotate-left',
-        title: 'Undo — ⌘Z',
-        flow: [onClick(), boardAction('undo')]
-      }),
-      iconAction({
-        id: 'redo',
-        icon: 'fa-solid fa-rotate-right',
-        title: 'Redo — ⌘⇧Z',
-        flow: [onClick(), boardAction('redo')]
-      }),
-      divide(),
+      editOnly([
+        iconAction({
+          id: 'undo',
+          icon: 'fa-solid fa-rotate-left',
+          title: 'Undo — ⌘Z',
+          flow: [onClick(), boardAction('undo')]
+        }),
+        iconAction({
+          id: 'redo',
+          icon: 'fa-solid fa-rotate-right',
+          title: 'Redo — ⌘⇧Z',
+          flow: [onClick(), boardAction('redo')]
+        }),
+        divide()
+      ]),
       iconAction({
         id: 'zoom-out',
         icon: 'fa-solid fa-minus',
@@ -517,14 +539,16 @@ const header = (): ElementSpec[] => [
         children: [icon('fa-solid fa-chevron-left'), text({ content: 'Pizarra' })]
       }),
       text({ content: '', class: titleDivider }),
-      title()
+      editOnly([title()]),
+      // A read-only board's name is read, not edited.
+      readOnlyOnly([text({ content: '', class: readOnlyTitle, bind: { content: `${BOARD_PROVIDER}.title` } })])
     ]
   }),
   container({
     id: 'top-right',
     class: topRight,
     children: [
-      timerButton(),
+      editOnly([timerButton()]),
       iconAction({
         id: 'summon',
         icon: 'fa-solid fa-bullhorn',
@@ -591,11 +615,11 @@ export const boardPage: PageSpec = {
                   class: chrome,
                   children: [
                     ...header(),
-                    toolbar(),
+                    editOnly([toolbar(), stylePanel()]),
+                    readOnlyBanner(),
                     followBanner(),
                     timerPill(),
                     timerPanel(),
-                    stylePanel(),
                     bottomTray(),
                     zoomBar(),
                     helpCorner(),

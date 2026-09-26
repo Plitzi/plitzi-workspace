@@ -267,7 +267,7 @@ const card = (listId: string, frameClass: ReturnType<typeof frame>, featured: bo
                 visible: `${listId}.item.locked`,
                 children: [text({ content: '🔒' }), text({ content: 'Protected', class: lockedLabel })]
               }),
-              ...(featured ? [text({ content: 'Featured', class: badge })] : [])
+              ...(featured ? [text({ content: 'Read-only · template', class: badge })] : [])
             ]
           }),
           container({
@@ -317,7 +317,8 @@ export const featured = (): ElementSpec =>
             children: [
               heading({ content: 'Walk into a finished board', subType: 'h2', class: blockTitle }),
               text({
-                content: 'Big, busy and live: move things, add a note, vote — others may be in there right now.',
+                content:
+                  'Two big boards to look around — with whoever else is in there right now. Like one? Use it as a template.',
                 class: blockLead
               })
             ]

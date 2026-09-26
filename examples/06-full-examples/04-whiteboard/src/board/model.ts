@@ -154,6 +154,27 @@ export const isConnector = (type: ShapeType): boolean => CONNECTORS.has(type);
 /** Whether a connector may be fixed to it: anything with a box — never another line. */
 export const isConnectable = (type: ShapeType): boolean => !LINEAR.has(type);
 
+export type StyleField = 'stroke' | 'fill' | 'strokeWidth';
+
+/**
+ * What each kind of element is restyled with — what the style panel offers for it, and all a restyle changes. A text's
+ * stroke is its colour and its width its size; a note is its paper; a picture is what it is.
+ */
+const STYLES: Record<ShapeType, readonly StyleField[]> = {
+  rectangle: ['stroke', 'fill', 'strokeWidth'],
+  ellipse: ['stroke', 'fill', 'strokeWidth'],
+  diamond: ['stroke', 'fill', 'strokeWidth'],
+  arrow: ['stroke', 'strokeWidth'],
+  line: ['stroke', 'strokeWidth'],
+  freehand: ['stroke', 'strokeWidth'],
+  text: ['stroke', 'strokeWidth'],
+  sticky: ['fill'],
+  stack: ['fill'],
+  image: []
+};
+
+export const takesStyle = (type: ShapeType, field: StyleField): boolean => STYLES[type].includes(field);
+
 const parseBinding = (value: unknown): Binding | undefined | false => {
   if (value === undefined) {
     return undefined;

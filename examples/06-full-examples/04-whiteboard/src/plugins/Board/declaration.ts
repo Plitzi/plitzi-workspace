@@ -30,13 +30,26 @@ const declaration = {
       params: {},
       preview: { tool: '' }
     },
-    /** What is selected now, with the style it shares (`''` where the selection disagrees). */
+    /**
+     * What is selected now, with the style it shares (`''` where the selection disagrees) and what it can be restyled
+     * with at all — `canStroke`, `canFill`, `canWidth`: a note has no outline, a picture nothing.
+     */
     onSelectionChange: {
       action: 'onSelectionChange',
       title: 'On Selection Change',
       type: 'trigger',
       params: {},
-      preview: { count: '', grouped: '', oneGroup: '', stroke: '', fill: '', strokeWidth: '' }
+      preview: {
+        count: '',
+        grouped: '',
+        oneGroup: '',
+        stroke: '',
+        fill: '',
+        strokeWidth: '',
+        canStroke: '',
+        canFill: '',
+        canWidth: ''
+      }
     },
     onViewChange: {
       action: 'onViewChange',
@@ -176,7 +189,9 @@ const declaration = {
         '`onViewChange`, `onResync` and `onFollowChange`. Arrows and lines fix to the anchors of what they are drawn ' +
         'to, and follow it. `carry` takes a sticky off a pad, `follow` shows a member of the room, `react` floats an ' +
         'emoji. Its children are the tools of the selection: shown beside whatever is selected, hidden while it is ' +
-        'dragged or typed into. `mode: view` draws a still preview. Colours come from the `--board-*` custom properties.',
+        'dragged or typed into. `mode: read` is looked around together and changed by nobody; `mode: view` draws a ' +
+        'still preview. `demo` plays scripted collaborators on a board with no room. Colours come from the ' +
+        '`--board-*` custom properties.',
       items: [],
       bindings: {},
       styleSelectors: { base: '' },
@@ -213,7 +228,8 @@ const declaration = {
           { path: 'title', label: 'Title (the exported file’s name)' },
           { path: 'assetBase', label: 'Where pictures are served from' },
           { path: 'voter', label: 'Voter (the id this visitor keeps)' },
-          { path: 'mode', label: 'Mode (edit | view)' },
+          { path: 'mode', label: 'Mode (edit | read | view)' },
+          { path: 'demo', label: 'Played collaborators (a board with no room)' },
           { path: 'tool', label: 'Tool' },
           { path: 'stroke', label: 'Stroke colour' },
           { path: 'fill', label: 'Fill colour' },

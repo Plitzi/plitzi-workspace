@@ -8,8 +8,18 @@ import { FILLS, STROKES, STROKE_WIDTHS } from '../../board/model.ts';
 import { isCollaborator } from '../../board/people.ts';
 import { TOOLS, createBoardController } from './controller.ts';
 import declaration from './declaration';
+import { parseDemo, playDemo } from './demo.ts';
 
-import type { BoardController, ControllerEvent, PointerMessage, ScreenBox, TextEditor, Tool } from './controller.ts';
+import type {
+  BoardController,
+  BoardMode,
+  ControllerEvent,
+  PointerMessage,
+  ScreenBox,
+  TextEditor,
+  Tool
+} from './controller.ts';
+import type { Demo } from './demo.ts';
 import type { BoardElement, Fill, Stroke, StrokeWidth } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 import type { InteractionCallback, RealtimeMessage } from '@plitzi/plitzi-sdk';
@@ -30,8 +40,16 @@ export type BoardProps = {
   assetBase?: string;
   /** The id this visitor keeps: their votes are counted by it, and lit on the badges. */
   voter?: string;
-  /** `edit`, or `view` — a still preview that fits the drawing, takes no pointer and connects to nothing. */
-  mode?: 'edit' | 'view';
+  /**
+   * `edit`; `read` — looked around together (cursors, laser, reactions, chat, following) and changed by nobody; or
+   * `view` — a still preview that fits the drawing, takes no pointer and connects to nothing.
+   */
+  mode?: BoardMode;
+  /**
+   * Collaborators played from a script, on a board with no room: what drawing together looks like before anyone is
+   * here. An object from a binding, or its JSON. Ignored while `roomTopic` names a room — real people come first.
+   */
+  demo?: Demo | string;
   tool?: string;
   stroke?: string;
   fill?: string;
@@ -105,6 +123,7 @@ const Board = ({
   fill = 'none',
   strokeWidth = 2,
   scheme = '',
+  demo,
   className,
   children
 }: BoardProps) => {
@@ -120,7 +139,7 @@ const Board = ({
   const [editor, setEditor] = useState<TextEditor | undefined>(undefined);
   const [selectionBox, setSelectionBox] = useState<ScreenBox | undefined>(undefined);
   const [chatAt, setChatAt] = useState<{ left: number; top: number } | undefined>(undefined);
-  const live = mode === 'edit' && previewMode;
+  const live = mode !== 'view' && previewMode;
 
   const trigger = useCallback(
     (action: string, payload: Record<string, unknown>) => {
@@ -164,7 +183,10 @@ const Board = ({
             oneGroup: event.oneGroup,
             stroke: event.stroke,
             fill: event.fill,
-            strokeWidth: event.strokeWidth
+            strokeWidth: event.strokeWidth,
+            canStroke: event.stylable.stroke,
+            canFill: event.stylable.fill,
+            canWidth: event.stylable.strokeWidth
           });
           break;
         case 'view':
@@ -242,12 +264,12 @@ const Board = ({
       stroke: isOneOf<Stroke>(STROKES, stroke) ? stroke : 'ink',
       fill: isOneOf<Fill>(FILLS, fill) ? fill : 'none',
       strokeWidth: isOneOf<StrokeWidth>(STROKE_WIDTHS, width) ? width : 2,
-      mode: live ? ('edit' as const) : ('view' as const),
+      mode: live ? mode : ('view' as const),
       title,
       assetBase,
       voter
     };
-  }, [tool, stroke, fill, strokeWidth, live, title, assetBase, voter]);
+  }, [tool, stroke, fill, strokeWidth, live, mode, title, assetBase, voter]);
   useEffect(() => controllerRef.current?.setProps(props), [props]);
 
   // Read again once the new scheme's custom properties are in place — the frame after the change, not during it.
@@ -289,7 +311,12 @@ const Board = ({
     summonRef.current = view => void room.publish('summon', { view });
   }, [room]);
 
+  // Who is in the room — and only a room: a board with none may be showing its played collaborators instead.
   useEffect(() => {
+    if (!roomTopic) {
+      return;
+    }
+
     const members = new Map<string, Collaborator>();
     for (const member of room.members) {
       if (!member.me && isCollaborator(member.state)) {
@@ -298,7 +325,17 @@ const Board = ({
     }
 
     controllerRef.current?.setMembers(members);
-  }, [room.members]);
+  }, [room.members, roomTopic]);
+
+  const script = useMemo(() => parseDemo(demo), [demo]);
+  useEffect(() => {
+    const controller = controllerRef.current;
+    if (!controller || !live || roomTopic || !script) {
+      return undefined;
+    }
+
+    return playDemo(controller, script);
+  }, [live, roomTopic, script]);
 
   // A drop means announcements were missed. The page reads the board again; the canvas merges what it is given.
   const everConnected = useRef(false);
@@ -494,7 +531,7 @@ const Board = ({
           onBlur={onChatDone}
         />
       )}
-      {children && live && toolsStyle && (
+      {children && live && mode === 'edit' && toolsStyle && (
         <div className="board__tools" data-placement={below ? 'below' : 'above'} style={toolsStyle}>
           {children}
         </div>
