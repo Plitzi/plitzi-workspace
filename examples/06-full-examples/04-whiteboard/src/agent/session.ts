@@ -102,7 +102,11 @@ export const callAction = async (door: Door, actionId: string, input: Record<str
 };
 
 const isOpened = (value: unknown): value is OpenedBoard =>
-  isRecord(value) && typeof value.id === 'string' && typeof value.found === 'boolean' && Array.isArray(value.elements);
+  isRecord(value) &&
+  typeof value.id === 'string' &&
+  typeof value.found === 'boolean' &&
+  Array.isArray(value.elements) &&
+  isRecord(value.grants);
 
 /** How long an agent stays on a board with nobody else on it: long enough for a page that reloads to come back. */
 const ALONE_MS = 2 * 60 * 1000;
@@ -337,9 +341,11 @@ export const joinBoard = async (
   };
 
   const topics = [`board:${loaded.topic}`, `room:${loaded.topic}`];
+  // What `board-open` let this agent in with: the channels are private, as they are to a page.
+  const grants = [loaded.grants.board, loaded.grants.room];
   const room = `room:${loaded.topic}`;
   const self = (): Collaborator => ({ name, color, agent: true, status });
-  let connection: Connection = await connect(origin, topics, heard => hear(heard));
+  let connection: Connection = await connect(origin, topics, grants, heard => hear(heard));
   connection.announce(room, self());
 
   /** A dropped socket is reopened before anything is said on it. */
@@ -350,7 +356,7 @@ export const joinBoard = async (
     }
 
     if (connection.closed) {
-      connection = await connect(origin, topics, heard => hear(heard));
+      connection = await connect(origin, topics, grants, heard => hear(heard));
       connection.announce(room, self());
     }
 

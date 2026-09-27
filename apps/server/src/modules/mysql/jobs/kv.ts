@@ -100,6 +100,47 @@ export const createMysqlKv = ({ pool, tablePrefix = '', createTables = true }: M
         ttlSeconds * 1000,
         key
       ]);
+    },
+
+    /**
+     * Each branch is ONE statement MySQL applies under the row's lock, so two writers racing for the same key cannot
+     * both win. `affectedRows` counts the rows MATCHED because mysql2 connects with `FOUND_ROWS`: without it, writing
+     * back the value a key already holds would read as a refusal. The comparison is on bytes — the table's collation
+     * ignores case and trailing spaces, and "unchanged" has to mean the same bytes.
+     */
+    swap: async (key, expected, next, ttlSeconds) => {
+      const expiry = ttlSeconds === undefined ? 'NULL' : `${NOW_MS} + ?`;
+      const lifetime = ttlSeconds === undefined ? [] : [ttlSeconds * 1000];
+      const pool = await db();
+      if (expected !== undefined) {
+        const updated = await execute(
+          pool,
+          `UPDATE ${kv} SET v = ?, expires_at = ${expiry}
+          WHERE k = ? AND ${LIVE} AND CAST(v AS BINARY) = CAST(? AS BINARY)`,
+          [next, ...lifetime, key, expected]
+        );
+
+        return updated.affectedRows === 1;
+      }
+
+      // Absent is two cases: a row that lapsed, which is taken over, and no row at all, which is inserted.
+      const revived = await execute(
+        pool,
+        `UPDATE ${kv} SET v = ?, expires_at = ${expiry} WHERE k = ? AND NOT ${LIVE}`,
+        [next, ...lifetime, key]
+      );
+      if (revived.affectedRows === 1) {
+        return true;
+      }
+
+      const inserted = await execute(pool, `INSERT IGNORE INTO ${kv} (k, v, expires_at) VALUES (?, ?, ${expiry})`, [
+        key,
+        next,
+        ...lifetime
+      ]);
+      await sweep();
+
+      return inserted.affectedRows === 1;
     }
   };
 };

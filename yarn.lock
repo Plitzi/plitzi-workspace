@@ -4630,6 +4630,7 @@ __metadata:
     esbuild: "npm:^0.28.2"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
+    ioredis: "npm:^6.0.0"
     jsonwebtoken: "npm:^9.0.3"
     mongodb: "npm:^7.6.0"
     mysql2: "npm:^3.24.4"

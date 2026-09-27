@@ -144,6 +144,21 @@ this page), `publishOn('room', 'reaction', data)` and `announceOn('room', state)
 agree on goes through a server action whose last step is `realtime.publish` — validated and saved first, announced
 after. `docs/en/realtime.md` is the whole of it.
 
+A topic only some visitors may hear — a room behind a password, a customer's order — goes on a channel declared
+`grant: true`. The action that decides they may be there ends with `realtime.grant` and answers the grant; the
+element binds it, or the server refuses the topic every time (`channel-grant`):
+
+```ts
+channels: { 'order:{id}': { access: { mode: 'session' }, grant: true } }
+
+// steps: [ …decide…, { id: 'let', task: 'realtime.grant', params: { topic: 'order:{{ input.order }}' } } ]
+channel({ id: 'order', topic: 'order:{{ id }}', bind: { grant: 'state.follow.grant' }, children: [...] })
+```
+
+Two people writing the same thing at once: `kv.setIf` writes only if the value is still the one the flow read (empty
+`expected` = only if nothing is there yet — claim a seat, a username), `list.put`/`list.range` keep an ordered list
+(latest first, a leaderboard), and `flow.rateLimit` first in a public action that writes.
+
 ## Lists as state
 
 `toggleInState({ key: 'picks', value })` keeps a list; `when({ field: 'state.picks', operator: 'contains', value })`

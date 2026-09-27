@@ -415,5 +415,64 @@ export const describeKv = (name: string, open: () => Promise<KvSubject>, enabled
 
       expect(await kv.get('nothing')).toBeUndefined();
     });
+
+    it('writes only over the value it expected', async () => {
+      await kv.set('seat', 'free');
+
+      expect(await kv.swap('seat', 'taken', 'ana')).toBe(false);
+      expect(await kv.swap('seat', 'free', 'ana')).toBe(true);
+      expect(await kv.get('seat')).toBe('ana');
+      expect(await kv.swap('seat', 'free', 'luis')).toBe(false);
+      expect(await kv.get('seat')).toBe('ana');
+    });
+
+    it('compares the exact value — case and trailing spaces included', async () => {
+      await kv.set('word', 'Ana');
+
+      expect(await kv.swap('word', 'ana', 'x')).toBe(false);
+      expect(await kv.swap('word', 'Ana ', 'x')).toBe(false);
+      expect(await kv.get('word')).toBe('Ana');
+    });
+
+    it('writes back the value a key already holds, and says it did', async () => {
+      await kv.set('same', 'v');
+
+      expect(await kv.swap('same', 'v', 'v')).toBe(true);
+    });
+
+    it('expecting nothing, writes only where there is nothing — a lapsed key counts as nothing', async () => {
+      expect(await kv.swap('claim', undefined, 'first')).toBe(true);
+      expect(await kv.swap('claim', undefined, 'second')).toBe(false);
+      expect(await kv.get('claim')).toBe('first');
+
+      await kv.set('lapsing', 'old', 1);
+      await wait(1_200);
+
+      expect(await kv.swap('lapsing', undefined, 'new')).toBe(true);
+      expect(await kv.get('lapsing')).toBe('new');
+    });
+
+    it('does not match a lapsed value it expected', async () => {
+      await kv.set('gone', 'v', 1);
+      await wait(1_200);
+
+      expect(await kv.swap('gone', 'v', 'w')).toBe(false);
+    });
+
+    it('gives the written value the lifetime it was asked for', async () => {
+      expect(await kv.swap('brief', undefined, 'v', 1)).toBe(true);
+      await wait(1_200);
+
+      expect(await kv.get('brief')).toBeUndefined();
+    });
+
+    it('lets exactly one of many racing writers win', async () => {
+      await kv.set('last', '0');
+      const answers = await Promise.all(Array.from({ length: 12 }, (_, i) => kv.swap('last', '0', String(i + 1))));
+      const claims = await Promise.all(Array.from({ length: 12 }, (_, i) => kv.swap('fresh', undefined, String(i))));
+
+      expect(answers.filter(Boolean)).toHaveLength(1);
+      expect(claims.filter(Boolean)).toHaveLength(1);
+    });
   });
 };

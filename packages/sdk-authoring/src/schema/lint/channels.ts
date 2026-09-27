@@ -6,8 +6,8 @@ import type { LintContext } from './context';
 const SAMPLE_SEGMENT = 'x';
 
 /**
- * A `channel` element whose topic no channel of the space covers: the server refuses it, and the page shows a
- * channel that never connects. Its templated parts (`board:{{ id }}`) are checked as the segment they become.
+ * A `channel` element whose topic no channel of the space covers — or a private one's, with no grant to open it: the
+ * server refuses it, and the page shows a channel that never connects. Its templated parts (`board:{{ id }}`) are checked as the segment they become.
  */
 export const lintChannels = (ctx: LintContext): void => {
   const declared = ctx.schema.settings.channels;
@@ -42,7 +42,19 @@ export const lintChannels = (ctx: LintContext): void => {
     }
 
     const sample = topic.replace(/\{\{[^}]*\}\}/g, SAMPLE_SEGMENT);
-    if (!matchChannel(sample, declared)) {
+    const match = matchChannel(sample, declared);
+    const hasGrant =
+      (typeof element.attributes.grant === 'string' && element.attributes.grant.trim() !== '') ||
+      element.definition.bindings?.attributes?.some(binding => binding.to === 'grant') === true;
+    if (match?.declaration.grant === true && !hasGrant) {
+      ctx.error(
+        'channel-grant',
+        `${where} opens "${topic}", a topic of the private channel "${match.pattern}" (\`grant: true\`), with no grant — the server refuses it every time. Bind \`grant\` to what the action that lets the visitor in returns from its \`realtime.grant\` step.`,
+        element.id
+      );
+    }
+
+    if (!match) {
       ctx.error(
         'channel-topic',
         patterns.length

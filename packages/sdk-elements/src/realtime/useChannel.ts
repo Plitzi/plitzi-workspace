@@ -7,6 +7,11 @@ import type { RealtimeMessage } from '@plitzi/sdk-shared';
 import type { PresenceTracker, RealtimeMember } from '@plitzi/sdk-shared/realtime';
 
 export type UseChannelOptions = {
+  /**
+   * What opens a topic of a `grant: true` channel: the grant a flow's `realtime.grant` answered this visitor. Without
+   * it such a topic is refused. A new one — the page asked its action again — reconnects with it.
+   */
+  grant?: string;
   /** What this page announces to the channel's members — a name, a colour. Announced again when it changes. */
   presence?: unknown;
   /** Each message, as it arrives. Read through a ref: a new function each render does not reconnect anything. */
@@ -36,7 +41,7 @@ export type ChannelHandle = {
  */
 const useChannel = (
   topic: string | undefined,
-  { presence, onMessage, onJoin, onLeave }: UseChannelOptions = {}
+  { grant, presence, onMessage, onJoin, onLeave }: UseChannelOptions = {}
 ): ChannelHandle => {
   const [endpoint] = useCommonStore('realtime.endpoint');
   const [transport] = useCommonStore('realtime.transport');
@@ -51,6 +56,17 @@ const useChannel = (
   useEffect(() => {
     listeners.current = { onMessage, onJoin, onLeave };
   });
+
+  /**
+   * Given before the subscription below, so the connection that includes the topic already carries it. Only ever
+   * given, never taken back: a canvas and a `channel` element on one topic share it, and one of them re-rendering
+   * must not take the other's away. The client forgets it with the topic's last listener.
+   */
+  useEffect(() => {
+    if (client && topic && grant) {
+      client.grant(topic, grant);
+    }
+  }, [client, topic, grant]);
 
   useEffect(() => {
     if (!client || !topic) {

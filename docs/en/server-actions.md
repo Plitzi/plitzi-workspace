@@ -274,17 +274,43 @@ The ones `sdk-server` ships:
 
 | Namespace | What it does |
 |---|---|
-| `flow` | `delay`, `fail`, the `output` step above, and `onFailure` — where a failed run's undo begins |
+| `flow` | `delay`, `fail`, the `output` step above, `onFailure` — where a failed run's undo begins — and `rateLimit` |
 | `transform` | `template` (twig), `json` |
 | `http` | `request` — an outbound call with a credential resolved server-side |
 | `connector` | `read`, `write` — the connectors this space already has |
 | `auth` | `currentUser`, `requireRole` |
-| `kv` | `get`, `set`, `increment`, `delete` — namespaced per space |
+| `kv` | `get`, `set`, `setIf`, `increment`, `delete` — namespaced per space |
+| `list` | `put`, `range`, `remove` — ordered lists (the latest, a leaderboard), per space |
+| `realtime` | `publish` on one of the space's channels, `grant` a page into a private one — see [Realtime](./realtime.md) |
 | `email` | `send` — one plain-text message, through an SMTP server the space holds as a credential |
 | `stream` | `emit` — progress for a streaming caller |
 
 Plus whatever the deployment registered. On Plitzi's own: `ai.complete`, and `db.query` when a database driver is
 available.
+
+### Two people at once: `setIf`, lists and rate limits
+
+A flow that reads a value, changes it and writes it back loses a write when two people do it at the same moment —
+both read the same thing, and the second write undoes the first. **`kv.setIf`** writes only if the key still holds
+the value the flow read (`expected`), and answers `written: false` when somebody got there first — read again, or
+refuse. Left empty, `expected` means *only if there is nothing yet*: "claim this username", "take the last seat".
+
+**`list.put`** keeps an ordered list — one entry per `id`, highest `score` first: the latest comments (score = when),
+a leaderboard (score = points). `keep` cuts it to the highest N on every write. `list.range` reads a window of it,
+`list.remove` takes an entry out. Two writers never lose an entry to each other. A list is read whole, so it is for
+what a page shows at once: at most 500 entries and 60 KB — store an id and what the page shows, the rest under its
+own key.
+
+**`flow.rateLimit`** refuses the run once a caller has asked too often: at most `limit` runs every `windowSeconds`,
+counted **per person** (the signed-in account, or the address of someone who is not) or for everyone together. The
+refusal is its `message`, which the caller sees as the run's `error`. Put it first, for a public action that writes:
+
+```ts
+steps: [
+  { id: 'limit', task: 'flow.rateLimit', params: { bucket: 'comments', limit: '5', windowSeconds: '60', per: 'caller', message: 'Slow down a little' } },
+  { id: 'save', task: 'kv.setIf', params: { key: 'seat:{{ input.seat }}', expected: '', value: '{{ user.id }}' } }
+]
+```
 
 ### What a step can see
 
@@ -704,30 +730,39 @@ many you run. **Four things need it to be shared**, and each of them degrades si
 run), replay (a redelivery runs the work again), and the webhook rate limit. A cluster passes an **adapter** over
 whatever it already runs — Redis, Memcached, a table:
 
-```ts
-const kv: ActionKvAdapter = {
-  get: async key => (await redis.get(key)) ?? undefined,
-  set: async (key, value, ttl) => { ttl ? await redis.set(key, value, 'EX', ttl) : await redis.set(key, value); },
-  delete: async key => { await redis.del(key); },
-  increment: (key, amount) => redis.incrby(key, amount),
-  expire: async (key, ttl) => { await redis.expire(key, ttl); }
-};
+On Redis there is nothing to write — `sdk-server` ships the adapter, over any client that speaks the commands
+(ioredis does):
 
-createServer({ action: { lookups, kv } });
+```ts
+import { createRedisKv } from '@plitzi/sdk-server/actions';
+
+createServer({ action: { lookups, kv: createRedisKv(redis, { prefix: 'myapp:' }) } });
 ```
 
-`increment` must be **atomic** — it is the test-and-set the single-flight key is taken with, and a get-then-set
-version of it hands the same key to two replicas.
+Anything else is six operations:
 
-Five operations over strings, and **no rule to remember**. How a counter behaves is the server's, the same for
+```ts
+const kv: ActionKvAdapter = {
+  get, set, delete, increment, expire,
+  // Writes `next` only if the key holds `expected` — or, with `expected` undefined, only if it holds nothing.
+  swap: (key, expected, next, ttlSeconds) => …
+};
+```
+
+`createMemoryKv` (in-process), `createRedisKv` and the MySQL and Mongo adapters implement all six, and are held to
+one contract in `sdk-server`'s own tests — racing writers included.
+
+Six operations over strings, and **no rule to remember**. How a counter behaves is the server's, the same for
 every deployment — the key prefixing, the JSON round trip, and the one that a rate limit lives or dies by: a
 window's lifetime is set once, by whoever created the counter, and never extended. Refreshed on every hit, a
 one-minute window never closes while traffic keeps arriving.
 
 Two things your adapter does owe:
 
-- **`increment` must be atomic.** It is the one thing get-then-set cannot be, and the reason it is an operation
-  rather than something the server composes.
+- **`increment` and `swap` must be atomic.** They are what get-then-set cannot be, and the reason they are operations
+  rather than something the server composes: single-flight is taken with `increment`, and `setIf` and every list
+  write stand on `swap`. On Redis it is a script (`createRedisKv` has it); on SQL, `UPDATE … WHERE v = ?` and an
+  insert that ignores a key already there — comparing bytes, not a collation that ignores case.
 - **Throw when the store is unreachable.** Nothing above catches, deliberately: this is not a cache, and a miss
   here means the rate limit did not count and the idempotency key was not seen.
 

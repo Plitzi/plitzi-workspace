@@ -16,6 +16,13 @@ export type ChannelDeclaration = {
   publish?: 'clients' | 'server';
   /** Whether members announce themselves — who is here, and what they are pointing at. */
   presence?: boolean;
+  /**
+   * Whether a page needs a GRANT to open a topic of it: a token a flow's `realtime.grant` issued for that exact topic —
+   * after checking a password, an invitation, an order's owner, whatever decides who is in. Without one the topic is
+   * refused, however well its name is known; `access` still applies on top. For a private room, a customer's order,
+   * a locked board.
+   */
+  grant?: boolean;
   /** The largest `data` a page may send, as JSON bytes. 4 KB when absent. */
   maxMessageBytes?: number;
   /** How many messages one connection may send a second. 30 when absent. */

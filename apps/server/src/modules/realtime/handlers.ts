@@ -7,6 +7,7 @@ import { openEventStream } from '../../core/http/sse';
 import { onAbort } from '../../helpers/onAbort';
 
 import type { ChannelResolver } from './declarations';
+import type { RealtimeGrants } from './grants';
 import type { RealtimeConnection, RealtimeHub, RealtimeSpace } from './hub';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
 import type {
@@ -26,7 +27,11 @@ const TYPE = /^[A-Za-z0-9_.:-]{1,64}$/;
 /** How long a disconnected client waits before trying again — ours reconnects itself; this is for anyone else's. */
 const RETRY_MS = 3000;
 
-export type RealtimeRefusal = { topic: string; reason: 'undeclared' | 'unauthenticated' | 'forbidden' };
+export type RealtimeRefusal = {
+  topic: string;
+  /** `ungranted`: the channel is declared `grant: true`, and no grant the page sent opens this topic. */
+  reason: 'undeclared' | 'unauthenticated' | 'forbidden' | 'ungranted';
+};
 
 /** An answer in HTTP terms, whichever transport carries it: a status, and what went wrong when something did. */
 export type RealtimeAnswer = { status: number; error?: string; reason?: string; refused?: RealtimeRefusal[] };
@@ -38,14 +43,30 @@ export const answer = (res: SSRResponseHelpers, { status, ...payload }: Realtime
   res.send(JSON.stringify(payload));
 };
 
-const topicsOf = (query: Record<string, string>): string[] => [
+const listOf = (query: Record<string, string>, name: string): string[] => [
   ...new Set(
-    (Object.hasOwn(query, 'topics') ? query.topics : '')
+    (Object.hasOwn(query, name) ? query[name] : '')
       .split(',')
-      .map(topic => topic.trim())
+      .map(item => item.trim())
       .filter(Boolean)
   )
 ];
+
+/** Whether one of the grants the page sent (`?grants=g1,g2`) was issued for `topic`. */
+const granted = async (
+  grants: RealtimeGrants,
+  space: RealtimeSpace,
+  topic: string,
+  offered: readonly string[]
+): Promise<boolean> => {
+  for (const grant of offered) {
+    if (await grants.opens(space, topic, grant)) {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 /** What a page may open, decided once for either transport. */
 export type Admission =
@@ -63,13 +84,18 @@ export type Admission =
  * declares and against the visitor's access. One that fails is reported, not a reason to refuse the rest; all failing
  * is a `403`.
  */
-export const admit = async (req: SSRRequest, resolveChannels: ChannelResolver): Promise<Admission> => {
+export const admit = async (
+  req: SSRRequest,
+  resolveChannels: ChannelResolver,
+  grants: RealtimeGrants
+): Promise<Admission> => {
   const { environment = 'main', spaceId, revision } = req.ctx.spaceDeployment ?? {};
   if (typeof spaceId !== 'number') {
     return { ok: false, answer: { status: 404, error: 'No space is served here', reason: 'not_found' } };
   }
 
-  const requested = topicsOf(req.query);
+  const requested = listOf(req.query, 'topics');
+  const offered = listOf(req.query, 'grants').slice(0, MAX_TOPICS);
   if (requested.length === 0 || requested.length > MAX_TOPICS) {
     return {
       ok: false,
@@ -80,13 +106,16 @@ export const admit = async (req: SSRRequest, resolveChannels: ChannelResolver): 
   const channels = await resolveChannels(spaceId, environment, revision);
   const accepted = new Map<string, ChannelDeclaration>();
   const refused: RealtimeRefusal[] = [];
+  const space: RealtimeSpace = { spaceId, environment };
   for (const topic of requested) {
     const match = matchChannel(topic, channels);
     const refusal = match ? accessRefusal(match.declaration.access, req.ctx.user) : 'undeclared';
-    if (match && !refusal) {
-      accepted.set(topic, match.declaration);
-    } else {
+    if (!match || refusal) {
       refused.push({ topic, reason: refusal ?? 'undeclared' });
+    } else if (match.declaration.grant === true && !(await granted(grants, space, topic, offered))) {
+      refused.push({ topic, reason: 'ungranted' });
+    } else {
+      accepted.set(topic, match.declaration);
     }
   }
 
@@ -101,7 +130,7 @@ export const admit = async (req: SSRRequest, resolveChannels: ChannelResolver): 
 
   return {
     ok: true,
-    space: { spaceId, environment },
+    space,
     ...(user ? { user: { id: user.id, name: user.username } } : {}),
     accepted,
     refused
@@ -191,10 +220,11 @@ export type SubscribeDeps = {
   signal: AbortSignal;
   hub: RealtimeHub;
   resolveChannels: ChannelResolver;
+  grants: RealtimeGrants;
 };
 
 /**
- * `GET /_realtime?topics=a,b` — one Server-Sent Events connection for every topic a page listens to.
+ * `GET /_realtime?topics=a,b` (and `&grants=g1,g2` for the topics of a `grant: true` channel) — one Server-Sent Events connection for every topic a page listens to.
  *
  * The first event, `ready`, tells the page its public name (`from`) and the secret its publishes carry. Resolves when
  * the page goes.
@@ -205,9 +235,10 @@ export const handleRealtimeSubscribe = async ({
   raw,
   signal,
   hub,
-  resolveChannels
+  resolveChannels,
+  grants
 }: SubscribeDeps): Promise<void> => {
-  const admission = await admit(req, resolveChannels);
+  const admission = await admit(req, resolveChannels, grants);
   if (!admission.ok) {
     answer(res, admission.answer);
 

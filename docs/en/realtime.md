@@ -56,6 +56,34 @@ An agent declares them over MCP with `patchSettings { channels: { … } }`, merg
 one). Every writer is held to the same check — `channelProblems` in `@plitzi/sdk-shared/realtime` — which authoring
 refuses on, `lintSpace` reports (`channel-declaration`) and the MCP answers with.
 
+### Private channels: `grant: true`
+
+`access` decides *who* may open a channel — anyone, a signed-in visitor, a role. It does not decide *which* topic: a
+public `order:{id}` channel is open to anyone who knows an order's id. A channel declared **`grant: true`** opens a
+topic only for a page that brings a **grant** for it, which a flow hands out with the `realtime.grant` task after
+deciding the visitor may be there — a password checked, an invitation, the order's owner:
+
+```ts
+channels: { 'order:{id}': { access: { mode: 'session' }, grant: true } }
+
+defineAction({
+  id: 'order-follow',
+  trigger: { type: 'call', access: 'session', input: { order: { type: 'text' } } },
+  steps: [
+    { id: 'mine', task: 'connector.read', /* … the order, if it is this user's … */ },
+    { id: 'let', task: 'realtime.grant', params: { topic: 'order:{{ input.order }}', ttlSeconds: '86400' } }
+  ],
+  output: '{ "grant": "{{ let.grant }}" }'
+});
+```
+
+The page binds the channel's `grant` to what the action answered (below). Knowing the topic opens nothing; a grant
+opens exactly its topic, of this space, for its lifetime — a day unless the step says otherwise, thirty at most. Kept
+in the store the server's actions use, so a grant one replica issued opens the topic on any other. A new topic — a
+version in its name, `board:{id}.v2` — is how a password change shuts out whoever had the old one. A deployment's
+own task grants through `ctx.grant(topic, ttlSeconds)`. `lintSpace` reports a `channel` element on a `grant: true`
+topic with no grant (`channel-grant`): the server would refuse it every time.
+
 ---
 
 ## 3. On a page: the `channel` element
@@ -65,7 +93,7 @@ to its source.
 
 |                       |                                                                                                                                                                                                   |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Attributes            | `topic` — usually a template: `room:{{ id }}` (a route param) · `presence` — the state this page announces (an object from a binding, or JSON) · `keep` — how many messages its source holds (20) |
+| Attributes            | `topic` — usually a template: `room:{{ id }}` (a route param) · `grant` — for a private channel, what the action that let this visitor in answered · `presence` — the state this page announces (an object from a binding, or JSON) · `keep` — how many messages its source holds (20) |
 | Source `channel_<id>` | `connected`, `me` (this page's name on the channel), `members` (`from`, `user`, `state`, `me`), `messages` (the last `keep`), `last`                                                              |
 | Triggers              | `onMessage` (`type`, `data`, `from`, `user`, `at`), `onJoin`, `onLeave` (`from`, `user`, `state`) |
 | Callbacks             | `publish({ type, data })`, `setPresence({ data })`                                                                                                                                                |
@@ -122,7 +150,7 @@ through a callback, so they re-render nothing:
 ```tsx
 import { useChannel } from '@plitzi/plitzi-sdk';
 
-const room = useChannel(roomTopic, { onMessage: message => drawCursor(message.from, message.data) });
+const room = useChannel(roomTopic, { grant, onMessage: message => drawCursor(message.from, message.data) });
 room.publish('pointer', { x, y }); // Promise<boolean>: false when refused or offline
 room.members; // who is here, with what they announced
 room.connected; // for a "reconnecting…" state, or to re-read after a drop
@@ -189,9 +217,10 @@ Without this, another site could open a `session` channel with a visitor's sessi
 
 ### Server-Sent Events
 
-- `GET /_realtime?topics=board:7f3a,room:7f3a` — Server-Sent Events, 1 to 8 topics. Each topic is authorised on its
-  own: the first event, `ready`, names the connection, gives it a secret for publishing, and lists what was `refused`
-  and why (`undeclared`, `unauthenticated`, `forbidden`). All refused is a `403`.
+- `GET /_realtime?topics=board:7f3a,room:7f3a&grants=…` — Server-Sent Events, 1 to 8 topics, with the grants for
+  those of private channels. Each topic is authorised on its own: the first event, `ready`, names the connection,
+  gives it a secret for publishing, and lists what was `refused` and why (`undeclared`, `unauthenticated`,
+  `forbidden`, `ungranted`). All refused is a `403`.
 - `POST /_realtime` `{ token, topic, type, data }` — a publish. `204`, or `401` (not this server's connection — it
   restarted), `403` (`not_subscribed`, `server_only`), `422` (a `$` type, a bad topic), `413` (too big), `429` (too
   fast).
@@ -279,5 +308,7 @@ balancer; see its README.
   higher `version` wins, a tie goes to the lower `nonce`, the same rule on the server and every screen.
 - **Roll back on refusal.** When the action fails, drop the edits it never confirmed (`onFlowError` → the canvas's
   `rollback`): what it refused never reached anybody else.
+- **Private by grant, not by name.** A topic that only some visitors may hear goes on a `grant: true` channel, with the
+  grant handed out by the action that decided they may — never behind a name that is hard to guess.
 - **Throttle at the source.** A pointer sends at most every 50 ms and always its latest position; declare
   `messagesPerSecond` with room above what the page sends, not equal to it.

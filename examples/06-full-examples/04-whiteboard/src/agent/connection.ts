@@ -29,12 +29,21 @@ export type Connection = {
 };
 
 /**
- * Opens the socket for `topics` on `origin`, and answers once the server said it is ready. `onMessage` hears every
- * message on them — this connection's own too, which the caller tells apart by `me`.
+ * Opens the socket for `topics` on `origin` — with the `grants` the board answered, since its channels are private —
+ * and answers once the server said it is ready. `onMessage` hears every message on them — this connection's own too,
+ * which the caller tells apart by `me`.
  */
-export const connect = (origin: string, topics: string[], onMessage: (heard: Heard) => void): Promise<Connection> =>
+export const connect = (
+  origin: string,
+  topics: string[],
+  grants: string[],
+  onMessage: (heard: Heard) => void
+): Promise<Connection> =>
   new Promise((resolve, reject) => {
-    const url = new URL(`/_realtime?topics=${encodeURIComponent(topics.join(','))}`, origin);
+    const url = new URL(
+      `/_realtime?topics=${encodeURIComponent(topics.join(','))}&grants=${encodeURIComponent(grants.join(','))}`,
+      origin
+    );
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     const socket = new WebSocket(url);
     const acks = new Map<number, (ok: boolean) => void>();

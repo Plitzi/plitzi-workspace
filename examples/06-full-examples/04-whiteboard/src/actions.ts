@@ -6,8 +6,9 @@ import type { ActionField } from '@plitzi/sdk-shared';
 /** The topics, as the space declares them and the actions announce on them — one spelling for both. */
 export const TOPICS = {
   /**
-   * A board's saved elements. Only the server speaks here: what arrives was validated and kept first. A locked board's
-   * `{id}` carries a secret beside the id (`7f3a….k9Q`), which only opening it answers.
+   * A board's saved elements. Only the server speaks here: what arrives was validated and kept first. Private, as the
+   * room is: a page opens it with the grant `board-load` or `board-open` answered. A locked board's `{id}` carries
+   * its password's version (`7f3a….v2`), so a new password is a new topic.
    */
   board: 'board:{id}',
   /** A board's room: who is here, their cursors, lasers, reactions and what they drag. Pages speak directly. */
@@ -54,6 +55,16 @@ const onBoard = {
   key: field('Key (a locked board’s)', false),
   owner: field('Owner key (its creator’s)', false)
 };
+
+/**
+ * At most `limit` of these from one visitor every `seconds`, refused with `message` past it — counted by the platform's
+ * `flow.rateLimit`, per person, before anything is read or kept.
+ */
+const perVisitor = (bucket: string, limit: number, seconds: number, message: string) => ({
+  id: 'limit',
+  task: 'flow.rateLimit',
+  params: { bucket, limit: String(limit), windowSeconds: String(seconds), per: 'caller', message }
+});
 
 /** Tells the gallery a board changed, so it reads the list again. */
 const listed = (board: string) => ({
@@ -243,6 +254,8 @@ const apply = defineAction({
     input: { ...onBoard, ops: { type: 'json', required: true, label: 'Elements' } }
   },
   steps: [
+    // A busy person drawing fast stays well under it.
+    perVisitor('commits', 80, 10, 'Too many changes at once — slow down for a moment'),
     { id: 'apply', task: 'board.apply' },
     {
       id: 'announce',
@@ -383,6 +396,8 @@ const chat = defineAction({
     }
   },
   steps: [
+    // A conversation, not a flood.
+    perVisitor('chat', 20, 10, 'That is a lot at once — give the others a moment'),
     { id: 'said', task: 'board.chat' },
     {
       id: 'announce',
@@ -489,7 +504,12 @@ const templateSave = defineAction({
     access: 'public',
     input: { ...onBoard, title: field('Name', false), elements: { type: 'json', required: true, label: 'Elements' } }
   },
-  steps: [{ id: 'kept', task: 'board.templateSave' }, libraryChanged('kept')],
+  steps: [
+    // A library filled by hand, never by a script.
+    perVisitor('templates', 10, 600, 'That is a lot of templates at once — try again in a few minutes'),
+    { id: 'kept', task: 'board.templateSave' },
+    libraryChanged('kept')
+  ],
   output: libraryAnswer('saved')
 });
 

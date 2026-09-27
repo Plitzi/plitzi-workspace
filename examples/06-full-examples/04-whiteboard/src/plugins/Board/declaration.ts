@@ -422,6 +422,8 @@ const declaration = {
       boardId: '',
       topic: '',
       roomTopic: '',
+      grant: '',
+      roomGrant: '',
       title: '',
       assetBase: '',
       voter: '',
@@ -439,7 +441,8 @@ const declaration = {
       description:
         'An infinite whiteboard in a hand-drawn stroke: pan, zoom, shapes, arrows, lines, freehand, text, sticky ' +
         'notes, cards, and frames that hold what is put in them — a column frame lays it out, as a kanban lane. Bind `elements` to the board as the server keeps it; `topic` is the channel the server announces ' +
-        'saved elements on and `roomTopic` the one cursors, live drags, lasers and reactions travel on. It fires ' +
+        'saved elements on and `roomTopic` the one cursors, live drags, lasers and reactions travel on — both private, opened with ' +
+        '`grant` and `roomGrant`, what the server answered the page that let it in. It fires ' +
         '`onCommit` with the changed elements for the page to keep, and `onToolChange`, `onSelectionChange`, ' +
         '`onViewChange`, `onResync` and `onFollowChange`. Arrows and lines fix to the anchors of what they are drawn ' +
         'to, and follow it. `carry` takes a sticky off a pad, `follow` shows a member of the room, `react` floats an ' +
@@ -480,6 +483,8 @@ const declaration = {
           { path: 'elements', label: 'Elements' },
           { path: 'topic', label: 'Board topic' },
           { path: 'roomTopic', label: 'Room topic' },
+          { path: 'grant', label: 'Board grant (what opens the board topic)' },
+          { path: 'roomGrant', label: 'Room grant (what opens the room topic)' },
           { path: 'title', label: 'Title (the exported file’s name)' },
           { path: 'assetBase', label: 'Where pictures are served from' },
           { path: 'voter', label: 'Voter (the id this visitor keeps)' },

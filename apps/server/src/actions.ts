@@ -56,6 +56,10 @@ export { describeCatalog, describeTask } from './modules/actions/taskCatalog';
  */
 export { createMemoryKv } from './modules/actions/runtime/memoryKv';
 export { createKvStore } from './modules/actions/runtime/kvStore';
+export { createRedisKv } from './modules/actions/runtime/redisKv';
+export type { RedisKvClient, RedisKvOptions } from './modules/actions/runtime/redisKv';
+export { MAX_LIST_BYTES, MAX_LIST_ENTRIES } from './modules/actions/runtime/kvList';
+export type { KvListEntry, KvListRange } from './modules/actions/runtime/kvList';
 
 /**
  * `onRun` and `onReject` for a deployment that wants to SEE its flows without building somewhere to keep them: a

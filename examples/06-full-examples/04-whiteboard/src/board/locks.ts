@@ -3,10 +3,10 @@ import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 /**
  * A board's password, and what opening it hands out.
  *
- * The password is kept as a salted scrypt hash and never leaves the server. Opening the board answers two things
- * derived from it with a secret the deployment holds: a KEY, which every change to the board must carry, and a TOPIC,
- * the name its realtime channels go by. Nobody who has not opened the board can subscribe to what it says — there is
- * no name to subscribe to — and changing the password changes both, so whoever had the old one is locked out.
+ * The password is kept as a salted scrypt hash and never leaves the server. Opening the board answers a KEY, signed
+ * with a secret the deployment holds, which every change to the board must carry — and GRANTS to its channels, which
+ * the platform keeps: nobody who has not opened the board can subscribe to what it says, however well they know its
+ * name. Changing the password changes the key and the topic, so whoever had the old one is locked out.
  */
 
 export type BoardLock = { salt: string; hash: string; version: number };
@@ -82,11 +82,19 @@ export const passwordOpens = (lock: BoardLock, password: string): boolean => {
   return timingSafeEqual(derive(password, lock.salt), expected);
 };
 
+/**
+ * The part of a board's topics after `board:` and `room:`. What keeps a locked board's channels to whoever opened it is
+ * the grant opening it answered — the channels are declared `grant: true` — so the name needs no secret; it carries
+ * the password's version, so a new password is a new topic, and a grant for the old one opens nothing that is said now.
+ */
+export const topicFor = (board: string, lock: BoardLock | undefined): string =>
+  lock ? `${board}.v${String(lock.version)}` : board;
+
 export type BoardSigner = ReturnType<typeof createSigner>;
 
 /**
- * What a board's key and topic are signed with. Every replica must hold the SAME secret: a key one of them handed out
- * is checked by whichever one the next change reaches, and a topic is only one channel if everyone derives one name.
+ * What a board's keys are signed with. Every replica must hold the SAME secret: a key one of them handed out is checked
+ * by whichever one the next change reaches.
  */
 export const createSigner = (secret: Buffer) => {
   const sign = (value: string): string => createHmac('sha256', secret).update(value).digest('base64url');
@@ -106,13 +114,6 @@ export const createSigner = (secret: Buffer) => {
   };
 
   /**
-   * The part of a board's topics after `board:` and `room:`. An open board's is its id; a locked board's carries a
-   * secret beside it — one segment still, as the channel's `{id}` requires.
-   */
-  const topicFor = (board: string, lock: BoardLock | undefined): string =>
-    lock ? `${board}.${sign(`topic:${board}:${lock.version}`).slice(0, 20)}` : board;
-
-  /**
    * What whoever made a board holds: the one thing that may make it read-only for everyone else, and still change it
    * while it is. Handed out once — to the page that created or copied the board — and never stored.
    */
@@ -129,5 +130,5 @@ export const createSigner = (secret: Buffer) => {
     return given.length === expected.length && timingSafeEqual(given, expected);
   };
 
-  return { keyFor, keyOpens, topicFor, ownerKeyFor, ownerOpens };
+  return { keyFor, keyOpens, ownerKeyFor, ownerOpens };
 };

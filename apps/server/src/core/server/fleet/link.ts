@@ -12,7 +12,7 @@ import type { FleetClient, FleetHub, FleetMessage, HostedStore, Remote, StoreMet
  */
 
 /** The stores a single process keeps in memory by default, which the workers of a fleet share (see `stores.ts`). */
-export type FleetStoreName = 'actions.kv' | 'actions.jobs' | 'ssr.drafts' | 'auth.rateLimit';
+export type FleetStoreName = 'actions.kv' | 'realtime.grants' | 'actions.jobs' | 'ssr.drafts' | 'auth.rateLimit';
 
 const listeners = createListeners((channel, error) =>
   serverLog.error('fleet', `a broadcast on "${channel}" failed here`, error)

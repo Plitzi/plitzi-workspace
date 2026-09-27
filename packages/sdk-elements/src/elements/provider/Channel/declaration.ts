@@ -58,6 +58,7 @@ const declaration = elementDeclaration<ChannelAttributes>()({
   content: {
     attributes: {
       topic: '',
+      grant: '',
       keep: 20,
       subType: ''
     },
@@ -67,7 +68,8 @@ const declaration = elementDeclaration<ChannelAttributes>()({
       description:
         'A realtime channel: every page on the same `topic` hears what any of them publishes, within milliseconds. ' +
         'The topic must match a channel the space declares in its settings (`channels`), e.g. `board:{{ id }}` ' +
-        'under `board:{id}`. ITS DESCENDANTS bind to its source `channel_<id>`: `connected`, `members` (with the ' +
+        'under `board:{id}`. A topic of a private channel (`grant: true`) opens only with `grant`, bound to the grant ' +
+        'the action that let this visitor in returned (its `realtime.grant` step). ITS DESCENDANTS bind to its source `channel_<id>`: `connected`, `members` (with the ' +
         'state each announced), `messages` (the last `keep`) and `last`. It fires `onMessage`; `onJoin` when ' +
         'somebody who came after this page has announced who they are, and `onLeave` when somebody goes — each with ' +
         '`from`, `user` and the `state` they announced; and answers `publish({ type, data })` and `setPresence({ data })`; `presence` is the state this ' +

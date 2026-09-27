@@ -638,7 +638,8 @@ what it rendered with it as soon as auth has settled.
 
 When "every few seconds" is too slow — cursors, presence, a shared board — the space declares `channels` and a page
 subscribes with a `channel` element; a server action announces what it saved with `realtime.publish`. A topic no
-declared pattern matches is refused here, naming the patterns (`channel-topic` in `lintSpace`). See
+declared pattern matches is refused here, naming the patterns (`channel-topic` in `lintSpace`); a topic of a private
+(`grant: true`) channel with no `grant` bound is reported too (`channel-grant`). See
 [Realtime channels](./realtime.md).
 
 ---

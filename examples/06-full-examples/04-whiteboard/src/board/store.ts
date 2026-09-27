@@ -4,7 +4,7 @@ import { ActionRefusal } from '@plitzi/sdk-server/actions';
 
 import { keepAsset } from './assets.ts';
 import { FEATURED } from './featured.ts';
-import { lockWith, passwordOpens, passwordProblem } from './locks.ts';
+import { lockWith, passwordOpens, passwordProblem, topicFor } from './locks.ts';
 import {
   LIFETIMES,
   LIMITS,
@@ -136,6 +136,12 @@ export type OpenedBoard = {
   elements: BoardElement[];
   /** The part of its topics after `board:`/`room:` — empty until a locked board is opened. */
   topic: string;
+  /**
+   * What opens its channels on this page — they are private (`grant: true`), so a page opens only the ones the
+   * server let it in to. For a locked board not yet opened, only `board`: the open board's own topic, where its lock
+   * being removed is said.
+   */
+  grants: { board: string; room: string };
   /** What every change to a locked board carries. Empty for an open board, which needs none. */
   key: string;
   timer: BoardTimer | null;
@@ -163,6 +169,7 @@ export const missingBoard = (id: string): OpenedBoard => ({
   featured: false,
   elements: [],
   topic: '',
+  grants: { board: '', room: '' },
   key: '',
   timer: null,
   session: null,
@@ -191,9 +198,6 @@ const PREVIEW_CELLS = 96;
 
 const PREVIEW_POINTS = 120;
 
-/** Commits one visitor may make in a ten-second window: a busy person drawing fast stays well under it. */
-const COMMITS_PER_WINDOW = 80;
-
 /** Passwords one visitor may try on one board in five minutes: enough for typos, too few to guess one. */
 const ATTEMPTS_PER_WINDOW = 10;
 
@@ -215,16 +219,10 @@ const chatKey = (id: string): string => `chat:${id}`;
 /** A template, kept once whichever boards list it: see `savedTemplates.ts`. */
 const templateKey = (id: string): string => `template:${id}`;
 
-/** Templates one visitor may save in a window of ten minutes: a library filled by hand, never by a script. */
-const TEMPLATES_PER_WINDOW = 10;
-
 /** What a board's chat keeps, and what a page is given of it. */
 const CHAT_KEPT = 200;
 
 const CHAT_SERVED = 100;
-
-/** Lines one visitor may say in ten seconds: a conversation, not a flood. */
-const CHATS_PER_WINDOW = 20;
 
 const expired = (board: { expiresAt?: number | null }, now = Date.now()): boolean =>
   typeof board.expiresAt === 'number' && board.expiresAt <= now;
@@ -233,51 +231,39 @@ const expired = (board: { expiresAt?: number | null }, now = Date.now()): boolea
 const lifetimeOf = (board: StoredBoard): number | undefined =>
   board.expiresAt === undefined ? undefined : Math.max(1, Math.ceil((board.expiresAt - Date.now()) / 1000));
 
-/**
- * One write at a time — across every replica sharing the store.
- *
- * A commit is read, merge, write, and two commits interleaved between the read and the write would drop one of them.
- * Within a process a queue keeps them apart; between processes the queue's head takes a lock in the `kv` itself: the
- * first `increment` of its key answers 1, and whoever gets anything else waits and asks again. The lock expires on
- * its own, so a replica that died holding it stalls the others for seconds, not for good.
- */
-const LOCK_KEY = 'lock:boards';
-
-/** Far longer than a write takes: only a holder that died waits it out. */
-const LOCK_SECONDS = 10;
-
-/** How long a write waits for the lock before it gives up and says so. */
-const LOCK_PATIENCE_MS = 15_000;
+/** How many times a write reads again after somebody else wrote first, before it gives up and says so. */
+const WRITE_ATTEMPTS = 20;
 
 const pause = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
-const locked = async <T>(kv: ActionKvStore, work: () => Promise<T>): Promise<T> => {
-  const giveUpAt = Date.now() + LOCK_PATIENCE_MS;
-  for (let attempt = 0; (await kv.increment(LOCK_KEY, 1, LOCK_SECONDS)) !== 1; attempt += 1) {
-    if (Date.now() > giveUpAt) {
-      throw new ActionRefusal('The boards are busy — try that again in a moment');
+/**
+ * One change to one value, across every replica sharing the store: read it, change it, and write it back only if it
+ * is still what was read (`swap`). Whoever wrote in between makes this read again and change what they left — so two
+ * commits never drop one another, and a busy board holds up nobody else's. `change` may run more than once, so it
+ * only computes; answering `undefined` writes nothing.
+ */
+const changeValue = async <T>(
+  kv: ActionKvStore,
+  key: string,
+  change: (value: unknown) => Promise<T | undefined> | T | undefined,
+  lifetime: (next: T) => number | undefined = () => undefined
+): Promise<T | undefined> => {
+  for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
+    const read = await kv.get(key);
+    const next = await change(read);
+    if (next === undefined) {
+      return undefined;
     }
 
-    await pause(Math.min(2 + attempt * 3, 40));
+    if (await kv.swap(key, read, next, lifetime(next))) {
+      return next;
+    }
+
+    // Spread out, so the writers that lost to the same one do not all come back at the same instant.
+    await pause(Math.random() * Math.min(5 + attempt * 5, 50));
   }
 
-  try {
-    return await work();
-  } finally {
-    await kv.delete(LOCK_KEY);
-  }
-};
-
-let queue: Promise<unknown> = Promise.resolve();
-
-const serially = <T>(kv: ActionKvStore, work: () => Promise<T>): Promise<T> => {
-  const run = queue.then(
-    () => locked(kv, work),
-    () => locked(kv, work)
-  );
-  queue = run.catch(() => undefined);
-
-  return run;
+  throw new ActionRefusal('Many people are changing this at once — try that again in a moment');
 };
 
 const ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
@@ -288,19 +274,19 @@ const newBoardId = (): string => Array.from({ length: 10 }, () => ALPHABET[rando
 // The casts below are the store's own round trip: these keys are written by this file and nothing else, so what comes
 // back is what went in — `kv` hands every value back as `unknown` because it cannot know that.
 
-const readIndex = async (kv: ActionKvStore): Promise<BoardSummary[]> => {
-  const value = await kv.get(INDEX_KEY);
+const asIndex = (value: unknown): BoardSummary[] => (Array.isArray(value) ? (value as BoardSummary[]) : []);
 
-  return Array.isArray(value) ? (value as BoardSummary[]) : [];
-};
+const readIndex = async (kv: ActionKvStore): Promise<BoardSummary[]> => asIndex(await kv.get(INDEX_KEY));
 
-const readBoard = async (kv: ActionKvStore, id: string): Promise<StoredBoard | undefined> => {
-  const value = await kv.get(boardKey(id));
+const asBoard = (value: unknown): StoredBoard | undefined => {
   const board = typeof value === 'object' && value !== null ? (value as StoredBoard) : undefined;
 
   // Its time is up: gone, whether or not the store has let go of it yet.
   return board && !expired(board) ? board : undefined;
 };
+
+const readBoard = async (kv: ActionKvStore, id: string): Promise<StoredBoard | undefined> =>
+  asBoard(await kv.get(boardKey(id)));
 
 const readChat = async (kv: ActionKvStore, id: string): Promise<ChatMessage[]> => {
   const value = await kv.get(chatKey(id));
@@ -315,11 +301,16 @@ const readTemplates = async (kv: ActionKvStore, ids: readonly string[] = []): Pr
   return read.filter(template => template !== undefined);
 };
 
-const readPreview = async (kv: ActionKvStore, id: string): Promise<BoardElement[]> => {
-  const value = await kv.get(previewKey(id));
+/** A board's preview, with the time of the change it was drawn from: a later one is never replaced by an earlier. */
+type StoredPreview = { at: number; elements: BoardElement[] };
 
-  return Array.isArray(value) ? (value as BoardElement[]) : [];
-};
+const asPreview = (value: unknown): StoredPreview | undefined =>
+  typeof value === 'object' && value !== null && 'at' in value && 'elements' in value && Array.isArray(value.elements)
+    ? (value as StoredPreview)
+    : undefined;
+
+const readPreview = async (kv: ActionKvStore, id: string): Promise<BoardElement[]> =>
+  asPreview(await kv.get(previewKey(id)))?.elements ?? [];
 
 const existing = async (kv: ActionKvStore, id: string): Promise<StoredBoard> => {
   const board = await readBoard(kv, id);
@@ -441,7 +432,11 @@ const preview = (board: StoredBoard): BoardElement[] => {
   );
 };
 
-/** The gallery's entry for a board, replaced — and the list trimmed to what the demo keeps. */
+/**
+ * The gallery's entry for a board, replaced — and the list trimmed to what the demo keeps — with its preview. Written
+ * after the board, so two changes can arrive here in either order: the entry and the preview of the later one stand,
+ * and a board deleted meanwhile is not listed again.
+ */
 const writeSummary = async ({ kv, assets }: BoardStores, board: StoredBoard): Promise<void> => {
   const summary: BoardSummary = {
     id: board.id,
@@ -455,17 +450,42 @@ const writeSummary = async ({ kv, assets }: BoardStores, board: StoredBoard): Pr
     unlisted: board.unlisted === true,
     expiresAt: board.expiresAt ?? null
   };
-  const others = (await readIndex(kv)).filter(entry => entry.id !== board.id);
-  const index = [summary, ...others].sort((a, b) => b.updatedAt - a.updatedAt);
-  // The featured boards are kept whatever else comes and goes: they are what a first visit is shown.
-  const evicted = index.filter(entry => !entry.featured).slice(MAX_BOARDS - FEATURED.length);
+  let evicted: BoardSummary[] = [];
+  await changeValue(kv, INDEX_KEY, async value => {
+    evicted = [];
+    const index = asIndex(value);
+    const listed = index.find(entry => entry.id === board.id);
+    if (listed && listed.updatedAt > summary.updatedAt) {
+      return undefined;
+    }
+
+    const others = index.filter(entry => entry.id !== board.id);
+    if (!(await readBoard(kv, board.id))) {
+      return listed ? others : undefined;
+    }
+
+    const sorted = [summary, ...others].sort((a, b) => b.updatedAt - a.updatedAt);
+    // The featured boards are kept whatever else comes and goes: they are what a first visit is shown.
+    evicted = sorted.filter(entry => !entry.featured).slice(MAX_BOARDS - FEATURED.length);
+    const gone = new Set(evicted.map(entry => entry.id));
+
+    return sorted.filter(entry => !gone.has(entry.id));
+  });
   await Promise.all(evicted.map(entry => forget(kv, assets, entry.id)));
-  await kv.set(previewKey(board.id), preview(board), lifetimeOf(board));
-  const gone = new Set(evicted.map(entry => entry.id));
-  await kv.set(
-    INDEX_KEY,
-    index.filter(entry => !gone.has(entry.id))
+  await changeValue(
+    kv,
+    previewKey(board.id),
+    value => {
+      const kept = asPreview(value);
+
+      return kept && kept.at > board.updatedAt ? undefined : { at: board.updatedAt, elements: preview(board) };
+    },
+    () => lifetimeOf(board)
   );
+  // Deleted while the preview was being drawn: nothing may be left behind of it.
+  if (!(await readBoard(kv, board.id))) {
+    await kv.delete(previewKey(board.id));
+  }
 };
 
 /** Everything a board leaves in the stores, gone: itself, its preview, its chat, its pictures. */
@@ -473,9 +493,53 @@ const forget = async (kv: ActionKvStore, assets: AssetStore, id: string): Promis
   await Promise.all([kv.delete(boardKey(id)), kv.delete(previewKey(id)), kv.delete(chatKey(id)), assets.forget(id)]);
 };
 
-const save = async (stores: BoardStores, board: StoredBoard): Promise<void> => {
-  await stores.kv.set(boardKey(board.id), board, lifetimeOf(board));
-  await writeSummary(stores, board);
+/**
+ * One change to a board that is there — `change` given it as it is, answering it as it will be and what the action
+ * answers — refused if it is gone. Its entry in the gallery and its preview follow.
+ */
+const changeBoard = async <T>(
+  stores: BoardStores,
+  id: string,
+  change: (board: StoredBoard) => { board: StoredBoard; result: T }
+): Promise<T> => {
+  let answer: { result: T } | undefined;
+  const written = await changeValue(
+    stores.kv,
+    boardKey(id),
+    value => {
+      const board = asBoard(value);
+      if (!board) {
+        throw new ActionRefusal('This board no longer exists');
+      }
+
+      const changed = change(board);
+      answer = { result: changed.result };
+
+      return changed.board;
+    },
+    lifetimeOf
+  );
+  if (!written || !answer) {
+    throw new ActionRefusal('This board no longer exists');
+  }
+
+  await writeSummary(stores, written);
+
+  return answer.result;
+};
+
+/** A new board, under an id nobody else has — drawn again in the unlikely case another replica drew the same. */
+const createStored = async (stores: BoardStores, draft: Omit<StoredBoard, 'id'>): Promise<StoredBoard> => {
+  for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
+    const board: StoredBoard = { ...draft, id: newBoardId() };
+    if (await stores.kv.swap(boardKey(board.id), undefined, board, lifetimeOf(board))) {
+      await writeSummary(stores, board);
+
+      return board;
+    }
+  }
+
+  throw new ActionRefusal('No new board could be started — try again');
 };
 
 /**
@@ -491,26 +555,27 @@ const ensureFeatured = async (stores: BoardStores): Promise<void> => {
     return;
   }
 
-  await serially(kv, async () => {
-    if (await kv.get(FEATURED_KEY)) {
-      return;
-    }
+  // One replica draws them; the others go on without waiting — a gallery read in that instant simply has none yet.
+  if (!(await kv.swap(`${FEATURED_KEY}:drawing`, undefined, true, 60))) {
+    return;
+  }
 
-    const now = Date.now();
-    for (const board of FEATURED) {
-      await save(stores, {
-        id: board.id,
-        title: board.title,
-        createdAt: now,
-        updatedAt: now,
-        featured: true,
-        readOnly: true,
-        elements: Object.fromEntries(board.elements().map(element => [element.id, element]))
-      });
-    }
+  const now = Date.now();
+  for (const board of FEATURED) {
+    const stored: StoredBoard = {
+      id: board.id,
+      title: board.title,
+      createdAt: now,
+      updatedAt: now,
+      featured: true,
+      readOnly: true,
+      elements: Object.fromEntries(board.elements().map(element => [element.id, element]))
+    };
+    await kv.set(boardKey(stored.id), stored);
+    await writeSummary(stores, stored);
+  }
 
-    await kv.set(FEATURED_KEY, true);
-  });
+  await kv.set(FEATURED_KEY, true);
 };
 
 const withPreview = async (kv: ActionKvStore, summary: BoardSummary): Promise<BoardCard> => ({
@@ -534,15 +599,15 @@ export const listBoards = async (
   await ensureFeatured(stores);
   let index = await readIndex(kv);
   if (index.some(entry => expired(entry))) {
-    index = await serially(kv, async () => {
-      const current = await readIndex(kv);
-      const gone = current.filter(entry => expired(entry));
-      await Promise.all(gone.map(entry => forget(kv, assets, entry.id)));
-      const kept = current.filter(entry => !expired(entry));
-      await kv.set(INDEX_KEY, kept);
+    let gone: BoardSummary[] = [];
+    index =
+      (await changeValue(kv, INDEX_KEY, value => {
+        const current = asIndex(value);
+        gone = current.filter(entry => expired(entry));
 
-      return kept;
-    });
+        return gone.length ? current.filter(entry => !expired(entry)) : undefined;
+      })) ?? (await readIndex(kv));
+    await Promise.all(gone.map(entry => forget(kv, assets, entry.id)));
   }
 
   const search = typeof q === 'string' ? q.trim().toLowerCase() : '';
@@ -560,12 +625,23 @@ export const listBoards = async (
   };
 };
 
-const opened = (
-  { keyFor, topicFor }: BoardSigner,
+/** Lets this page into one of the board's channels — the platform's `realtime.grant`, handed to the task. */
+export type Granter = (topic: string) => Promise<string>;
+
+/** The grants a page on a board it may see is given: its saved elements, and the room where everyone on it meets. */
+const grantsFor = async (grant: Granter, topic: string): Promise<OpenedBoard['grants']> => {
+  const [board, room] = await Promise.all([grant(`board:${topic}`), grant(`room:${topic}`)]);
+
+  return { board, room };
+};
+
+const opened = async (
+  { keyFor }: BoardSigner,
+  grant: Granter,
   board: StoredBoard,
   chat: ChatMessage[],
   templates: SavedTemplate[]
-): OpenedBoard => ({
+): Promise<OpenedBoard> => ({
   found: true,
   id: board.id,
   title: board.title,
@@ -574,6 +650,7 @@ const opened = (
   featured: board.featured === true,
   elements: Object.values(board.elements),
   topic: topicFor(board.id, board.lock),
+  grants: await grantsFor(grant, topicFor(board.id, board.lock)),
   key: board.lock ? keyFor(board.id, board.lock) : '',
   timer: runningTimer(board),
   session: board.session ?? null,
@@ -589,7 +666,7 @@ const opened = (
  * A board for the first paint of its page. A locked one answers that it exists and what it is called — and nothing
  * else: its elements, its topic and its key are what opening it with the password is for.
  */
-export const loadBoard = async (stores: BoardStores, id: string): Promise<OpenedBoard> => {
+export const loadBoard = async (stores: BoardStores, id: string, grant: Granter): Promise<OpenedBoard> => {
   await ensureFeatured(stores);
   const board = await readBoard(stores.kv, id);
   if (!board) {
@@ -604,9 +681,16 @@ export const loadBoard = async (stores: BoardStores, id: string): Promise<Opened
         locked: true,
         readOnly: board.readOnly === true,
         featured: board.featured === true,
-        expiresAt: board.expiresAt ?? null
+        expiresAt: board.expiresAt ?? null,
+        grants: { board: await grant(`board:${id}`), room: '' }
       }
-    : opened(stores.signer, board, await readChat(stores.kv, id), await readTemplates(stores.kv, board.templates));
+    : opened(
+        stores.signer,
+        grant,
+        board,
+        await readChat(stores.kv, id),
+        await readTemplates(stores.kv, board.templates)
+      );
 };
 
 /**
@@ -617,16 +701,17 @@ export const openBoard = async (
   { kv, signer }: BoardStores,
   id: string,
   { password, key }: { password: unknown; key: unknown },
-  callerId: string
+  callerId: string,
+  grant: Granter
 ): Promise<OpenedBoard> => {
   const board = await existing(kv, id);
   const [chat, templates] = await Promise.all([readChat(kv, id), readTemplates(kv, board.templates)]);
   if (!board.lock) {
-    return opened(signer, board, chat, templates);
+    return opened(signer, grant, board, chat, templates);
   }
 
   if (signer.keyOpens(board.id, board.lock, key)) {
-    return opened(signer, board, chat, templates);
+    return opened(signer, grant, board, chat, templates);
   }
 
   const attempts = await kv.increment(`attempts:${id}:${callerId}:${Math.floor(Date.now() / 300_000)}`, 1, 330);
@@ -638,7 +723,7 @@ export const openBoard = async (
     throw new ActionRefusal('That is not this board’s password');
   }
 
-  return opened(signer, board, chat, templates);
+  return opened(signer, grant, board, chat, templates);
 };
 
 /** Who may find a board and how long it lasts, as a page asks for them: checked, and only what was asked. */
@@ -660,60 +745,54 @@ const reach = ({
   };
 };
 
-export const createBoard = (
+export const createBoard = async (
   stores: BoardStores,
   title: unknown,
   template: Template,
   options: { visibility?: unknown; hours?: unknown } = {}
-): Promise<{ id: string; title: string; owner: string }> =>
-  serially(stores.kv, async () => {
-    const now = Date.now();
-    const typed = typeof title === 'string' && title.trim() ? title : TEMPLATE_TITLES[template];
-    const board: StoredBoard = {
-      id: newBoardId(),
-      title: cleanTitle(typed),
-      createdAt: now,
-      updatedAt: now,
-      elements: Object.fromEntries(templateElements(template).map(element => [element.id, element])),
-      ...reach(options)
-    };
-    await save(stores, board);
-
-    return { id: board.id, title: board.title, owner: stores.signer.ownerKeyFor(board.id) };
+): Promise<{ id: string; title: string; owner: string }> => {
+  const now = Date.now();
+  const typed = typeof title === 'string' && title.trim() ? title : TEMPLATE_TITLES[template];
+  const board = await createStored(stores, {
+    title: cleanTitle(typed),
+    createdAt: now,
+    updatedAt: now,
+    elements: Object.fromEntries(templateElements(template).map(element => [element.id, element])),
+    ...reach(options)
   });
+
+  return { id: board.id, title: board.title, owner: stores.signer.ownerKeyFor(board.id) };
+};
 
 /**
  * A board of one's own, drawn like another: its elements as they are now — votes left behind, they were cast on the
  * original — and its pictures. Neither locked, read-only nor temporary, whatever the original was.
  */
-export const copyBoard = (
+export const copyBoard = async (
   stores: BoardStores,
   id: string,
   key: unknown
-): Promise<{ id: string; title: string; owner: string }> =>
-  serially(stores.kv, async () => {
-    const source = await existing(stores.kv, id);
-    assertOpen(stores.signer, source, key);
-    const now = Date.now();
-    const elements = live(source).map(({ votes: _votes, ...element }) => element);
-    const board: StoredBoard = {
-      id: newBoardId(),
-      title: cleanTitle(`${source.title} (copy)`),
-      createdAt: now,
-      updatedAt: now,
-      elements: Object.fromEntries(elements.map(element => [element.id, element])),
-      // Its library too: the formats a team keeps come along with the board they keep them on.
-      ...(source.templates?.length ? { templates: source.templates } : {})
-    };
-    await stores.assets.copy(
-      source.id,
-      board.id,
-      elements.flatMap(element => (element.asset ? [element.asset] : []))
-    );
-    await save(stores, board);
-
-    return { id: board.id, title: board.title, owner: stores.signer.ownerKeyFor(board.id) };
+): Promise<{ id: string; title: string; owner: string }> => {
+  const source = await existing(stores.kv, id);
+  assertOpen(stores.signer, source, key);
+  const now = Date.now();
+  const elements = live(source).map(({ votes: _votes, ...element }) => element);
+  const board = await createStored(stores, {
+    title: cleanTitle(`${source.title} (copy)`),
+    createdAt: now,
+    updatedAt: now,
+    elements: Object.fromEntries(elements.map(element => [element.id, element])),
+    // Its library too: the formats a team keeps come along with the board they keep them on.
+    ...(source.templates?.length ? { templates: source.templates } : {})
   });
+  await stores.assets.copy(
+    source.id,
+    board.id,
+    elements.flatMap(element => (element.asset ? [element.asset] : []))
+  );
+
+  return { id: board.id, title: board.title, owner: stores.signer.ownerKeyFor(board.id) };
+};
 
 /**
  * A board made read-only for everyone but whoever made it — or opened to everyone again. Only its creator may: the
@@ -725,8 +804,7 @@ export const setReadOnly = (
   pass: Pass,
   readOnly: unknown
 ): Promise<{ id: string; topic: string; readOnly: boolean }> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
+  changeBoard(stores, id, board => {
     assertOpen(stores.signer, board, pass.key);
     if (!stores.signer.ownerOpens(id, pass.owner)) {
       throw new ActionRefusal('Only whoever made this board can make it read-only');
@@ -734,9 +812,11 @@ export const setReadOnly = (
 
     const on = readOnly === true || readOnly === 'true';
     const { readOnly: _previous, ...rest } = board;
-    await save(stores, { ...rest, ...(on ? { readOnly: true } : {}), updatedAt: Date.now() });
 
-    return { id, topic: stores.signer.topicFor(id, board.lock), readOnly: on };
+    return {
+      board: { ...rest, ...(on ? { readOnly: true } : {}), updatedAt: Date.now() },
+      result: { id, topic: topicFor(id, board.lock), readOnly: on }
+    };
   });
 
 /**
@@ -748,19 +828,18 @@ export const setAgentSettings = (
   id: string,
   pass: Pass,
   { minutes, listens }: { minutes?: unknown; listens?: unknown }
-): Promise<{ id: string; topic: string; agentQuietMinutes: number; agentListens: AgentListens }> =>
-  serially(stores.kv, async () => {
-    const quiet = minutes === undefined || minutes === '' ? undefined : Number(minutes);
-    if (quiet !== undefined && !AGENT_QUIET_CHOICES.some(choice => choice === quiet)) {
-      throw new ActionRefusal(`An agent waits ${AGENT_QUIET_CHOICES.join(', ')} minutes`);
-    }
+): Promise<{ id: string; topic: string; agentQuietMinutes: number; agentListens: AgentListens }> => {
+  const quiet = minutes === undefined || minutes === '' ? undefined : Number(minutes);
+  if (quiet !== undefined && !AGENT_QUIET_CHOICES.some(choice => choice === quiet)) {
+    throw new ActionRefusal(`An agent waits ${AGENT_QUIET_CHOICES.join(', ')} minutes`);
+  }
 
-    const wakes = listens === undefined || listens === '' ? undefined : listens;
-    if (wakes !== undefined && !isAgentListens(wakes)) {
-      throw new ActionRefusal(`An agent listens for ${AGENT_LISTENS.join(' or ')}`);
-    }
+  const wakes = listens === undefined || listens === '' ? undefined : listens;
+  if (wakes !== undefined && !isAgentListens(wakes)) {
+    throw new ActionRefusal(`An agent listens for ${AGENT_LISTENS.join(' or ')}`);
+  }
 
-    const board = await existing(stores.kv, id);
+  return changeBoard(stores, id, board => {
     assertWritable(stores.signer, board, pass);
     const next = {
       ...board,
@@ -768,15 +847,18 @@ export const setAgentSettings = (
       ...(wakes === undefined ? {} : { agentListens: wakes }),
       updatedAt: Date.now()
     };
-    await save(stores, next);
 
     return {
-      id,
-      topic: stores.signer.topicFor(id, board.lock),
-      agentQuietMinutes: next.agentQuietMinutes ?? AGENT_QUIET_DEFAULT,
-      agentListens: next.agentListens ?? AGENT_LISTENS_DEFAULT
+      board: next,
+      result: {
+        id,
+        topic: topicFor(id, board.lock),
+        agentQuietMinutes: next.agentQuietMinutes ?? AGENT_QUIET_DEFAULT,
+        agentListens: next.agentListens ?? AGENT_LISTENS_DEFAULT
+      }
     };
   });
+};
 
 export const renameBoard = (
   stores: BoardStores,
@@ -784,13 +866,11 @@ export const renameBoard = (
   title: unknown,
   pass: Pass
 ): Promise<{ id: string; title: string; topic: string }> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
+  changeBoard(stores, id, board => {
     assertWritable(stores.signer, board, pass);
     const renamed = { ...board, title: cleanTitle(title), updatedAt: Date.now() };
-    await save(stores, renamed);
 
-    return { id, title: renamed.title, topic: stores.signer.topicFor(id, board.lock) };
+    return { board: renamed, result: { id, title: renamed.title, topic: topicFor(id, board.lock) } };
   });
 
 /**
@@ -802,50 +882,63 @@ export const lockBoard = (
   id: string,
   password: unknown,
   pass: Pass
-): Promise<{ id: string; locked: boolean; wasLocked: boolean; key: string; topic: string; previousTopic: string }> =>
-  serially(stores.kv, async () => {
-    const { keyFor, topicFor } = stores.signer;
-    const board = await existing(stores.kv, id);
+): Promise<{ id: string; locked: boolean; wasLocked: boolean; key: string; topic: string; previousTopic: string }> => {
+  const { keyFor } = stores.signer;
+  const text = typeof password === 'string' ? password : '';
+  const problem = text ? passwordProblem(text) : undefined;
+  if (problem) {
+    throw new ActionRefusal(problem);
+  }
+
+  // Hashed once, outside the change: it is slow on purpose, and a change that has to be read again is not re-hashed.
+  const lockFrom = (previous: BoardLock | undefined) => (text ? lockWith(text, previous) : undefined);
+  let hashed: { previous: BoardLock | undefined; lock: BoardLock | undefined } | undefined;
+
+  return changeBoard(stores, id, board => {
     assertWritable(stores.signer, board, pass);
-    const text = typeof password === 'string' ? password : '';
-    const problem = text ? passwordProblem(text) : undefined;
-    if (problem) {
-      throw new ActionRefusal(problem);
+    if (!hashed || hashed.previous?.version !== board.lock?.version) {
+      hashed = { previous: board.lock, lock: lockFrom(board.lock) };
     }
 
-    const previousTopic = topicFor(id, board.lock);
     const { lock: _previous, ...rest } = board;
-    const next: StoredBoard = text ? { ...rest, lock: lockWith(text, board.lock) } : rest;
-    await save(stores, { ...next, updatedAt: Date.now() });
+    const next: StoredBoard = hashed.lock ? { ...rest, lock: hashed.lock } : rest;
 
     return {
-      id,
-      locked: next.lock !== undefined,
-      // What the page says depends on it: a password set, changed — or removed, which only a board that had one can be.
-      wasLocked: board.lock !== undefined,
-      key: next.lock ? keyFor(id, next.lock) : '',
-      topic: topicFor(id, next.lock),
-      previousTopic
+      board: { ...next, updatedAt: Date.now() },
+      result: {
+        id,
+        locked: next.lock !== undefined,
+        // What the page says depends on it: a password set, changed — or removed, which only a board that had one can be.
+        wasLocked: board.lock !== undefined,
+        key: next.lock ? keyFor(id, next.lock) : '',
+        topic: topicFor(id, next.lock),
+        previousTopic: topicFor(id, board.lock)
+      }
     };
   });
+};
 
 /**
  * A board gone, with its preview, its place in the gallery and its pictures. Answers the topic it went by, which is
  * where everyone still on it is told — and sent back to the boards.
  */
-export const deleteBoard = (stores: BoardStores, id: string, pass: Pass): Promise<{ id: string; topic: string }> =>
-  serially(stores.kv, async () => {
-    const { kv, assets, signer } = stores;
-    const board = await existing(kv, id);
-    assertWritable(signer, board, pass);
-    await forget(kv, assets, id);
-    await kv.set(
-      INDEX_KEY,
-      (await readIndex(kv)).filter(entry => entry.id !== id)
-    );
+export const deleteBoard = async (
+  stores: BoardStores,
+  id: string,
+  pass: Pass
+): Promise<{ id: string; topic: string }> => {
+  const { kv, assets, signer } = stores;
+  const board = await existing(kv, id);
+  assertWritable(signer, board, pass);
+  await forget(kv, assets, id);
+  await changeValue(kv, INDEX_KEY, value => {
+    const index = asIndex(value);
 
-    return { id, topic: signer.topicFor(id, board.lock) };
+    return index.some(entry => entry.id === id) ? index.filter(entry => entry.id !== id) : undefined;
   });
+
+  return { id, topic: topicFor(id, board.lock) };
+};
 
 /** A commit arrives as the flow sent it: the elements themselves, or their JSON. */
 const elementsOf = (ops: unknown): BoardElement[] => {
@@ -895,18 +988,12 @@ export const applyToBoard = async (
   stores: BoardStores,
   id: string,
   ops: unknown,
-  callerId: string,
   pass: Pass
 ): Promise<{ settled: BoardElement[]; topic: string }> => {
-  const { kv, signer } = stores;
+  const { signer } = stores;
   const incoming = elementsOf(ops);
-  const commits = await kv.increment(`rate:${callerId}:${Math.floor(Date.now() / 10_000)}`, 1, 20);
-  if (commits > COMMITS_PER_WINDOW) {
-    throw new ActionRefusal('Too many changes at once — slow down for a moment');
-  }
 
-  return serially(kv, async () => {
-    const board = await existing(kv, id);
+  return changeBoard(stores, id, board => {
     assertWritable(signer, board, pass);
     const merged = mergeElements(
       board.elements,
@@ -916,9 +1003,10 @@ export const applyToBoard = async (
       throw new ActionRefusal(`A board holds at most ${LIMITS.elements} elements`);
     }
 
-    await save(stores, { ...board, elements: merged.board, updatedAt: Date.now() });
-
-    return { settled: merged.settled, topic: signer.topicFor(id, board.lock) };
+    return {
+      board: { ...board, elements: merged.board, updatedAt: Date.now() },
+      result: { settled: merged.settled, topic: topicFor(id, board.lock) }
+    };
   });
 };
 
@@ -934,8 +1022,7 @@ export const voteOn = (
   voter: unknown,
   pass: Pass
 ): Promise<{ settled: BoardElement[]; topic: string }> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
+  changeBoard(stores, id, board => {
     assertWritable(stores.signer, board, pass);
     const element = typeof elementId === 'string' ? board.elements[elementId] : undefined;
     if (!element || element.deleted || isLinear(element.type)) {
@@ -957,9 +1044,10 @@ export const voteOn = (
       version: element.version + 1,
       nonce: randomInt(2 ** 31)
     };
-    await save(stores, { ...board, elements: { ...board.elements, [voted.id]: voted }, updatedAt: Date.now() });
-
-    return { settled: [voted], topic: stores.signer.topicFor(id, board.lock) };
+    return {
+      board: { ...board, elements: { ...board.elements, [voted.id]: voted }, updatedAt: Date.now() },
+      result: { settled: [voted], topic: topicFor(id, board.lock) }
+    };
   });
 
 /** A countdown started — or, at zero, stopped — for everyone on the board. */
@@ -969,8 +1057,7 @@ export const setTimer = (
   seconds: unknown,
   pass: Pass
 ): Promise<{ board: string; timer: BoardTimer | null; topic: string }> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
+  changeBoard(stores, id, board => {
     assertWritable(stores.signer, board, pass);
     const span = Math.round(Number(seconds));
     if (!Number.isFinite(span) || span < 0 || span > MAX_TIMER_SECONDS) {
@@ -979,9 +1066,10 @@ export const setTimer = (
 
     const { timer: _previous, ...rest } = board;
     const timer = span ? { endsAt: Date.now() + span * 1000, seconds: span } : null;
-    await save(stores, timer ? { ...rest, timer } : rest);
-
-    return { board: id, timer, topic: stores.signer.topicFor(id, board.lock) };
+    return {
+      board: timer ? { ...rest, timer } : rest,
+      result: { board: id, timer, topic: topicFor(id, board.lock) }
+    };
   });
 
 /**
@@ -996,8 +1084,7 @@ export const runSession = (
   host: unknown,
   pass: Pass
 ): Promise<{ board: string; session: BoardSession | null; topic: string }> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
+  changeBoard(stores, id, board => {
     assertWritable(stores.signer, board, pass);
     const now = Date.now();
     const at = (session: Omit<BoardSession, 'endsAt'>): BoardSession => ({
@@ -1033,9 +1120,10 @@ export const runSession = (
     }
 
     const { session: _previous, ...rest } = board;
-    await save(stores, session ? { ...rest, session } : rest);
-
-    return { board: id, session, topic: stores.signer.topicFor(id, board.lock) };
+    return {
+      board: session ? { ...rest, session } : rest,
+      result: { board: id, session, topic: topicFor(id, board.lock) }
+    };
   });
 
 /** A picture for the board, kept beside it: answers the asset id the image element names. */
@@ -1061,8 +1149,7 @@ export const setReach = (
   pass: Pass,
   choice: { visibility: unknown; hours: unknown }
 ): Promise<{ id: string; topic: string; unlisted: boolean; expiresAt: number | null }> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
+  changeBoard(stores, id, board => {
     assertWritable(stores.signer, board, pass);
     const { unlisted: _unlisted, expiresAt: _expiresAt, ...rest } = board;
     // A lifetime left as it was is not restarted: "5 hours" chosen again does not add five more.
@@ -1073,13 +1160,14 @@ export const setReach = (
       ...kept,
       updatedAt: Date.now()
     };
-    await save(stores, next);
-
     return {
-      id,
-      topic: stores.signer.topicFor(id, board.lock),
-      unlisted: next.unlisted === true,
-      expiresAt: next.expiresAt ?? null
+      board: next,
+      result: {
+        id,
+        topic: topicFor(id, board.lock),
+        unlisted: next.unlisted === true,
+        expiresAt: next.expiresAt ?? null
+      }
     };
   });
 
@@ -1088,8 +1176,7 @@ export const sayOn = async (
   stores: BoardStores,
   id: string,
   pass: Pass,
-  said: { name: unknown; color: unknown; text: unknown; by: unknown; agent?: unknown },
-  callerId: string
+  said: { name: unknown; color: unknown; text: unknown; by: unknown; agent?: unknown }
 ): Promise<{ message: ChatMessage; topic: string }> => {
   const { kv, signer } = stores;
   const text = typeof said.text === 'string' ? said.text.trim().slice(0, 500) : '';
@@ -1097,28 +1184,26 @@ export const sayOn = async (
     throw new ActionRefusal('Say something first');
   }
 
-  const lines = await kv.increment(`chat-rate:${callerId}:${Math.floor(Date.now() / 10_000)}`, 1, 20);
-  if (lines > CHATS_PER_WINDOW) {
-    throw new ActionRefusal('That is a lot at once — give the others a moment');
-  }
+  const board = await existing(kv, id);
+  // Talking about a board is not changing it: a read-only one has a chat too.
+  assertOpen(signer, board, pass.key);
+  const message: ChatMessage = {
+    id: newBoardId(),
+    name: typeof said.name === 'string' && said.name.trim() ? said.name.trim().slice(0, 24) : 'Someone',
+    color: typeof said.color === 'string' ? said.color.slice(0, 16) : '',
+    text,
+    at: Date.now(),
+    by: typeof said.by === 'string' ? said.by.slice(0, 32) : '',
+    ...(said.agent === true || said.agent === 'true' ? { agent: true } : {})
+  };
+  await changeValue(
+    kv,
+    chatKey(id),
+    value => [...(Array.isArray(value) ? (value as ChatMessage[]) : []), message].slice(-CHAT_KEPT),
+    () => lifetimeOf(board)
+  );
 
-  return serially(kv, async () => {
-    const board = await existing(kv, id);
-    // Talking about a board is not changing it: a read-only one has a chat too.
-    assertOpen(signer, board, pass.key);
-    const message: ChatMessage = {
-      id: newBoardId(),
-      name: typeof said.name === 'string' && said.name.trim() ? said.name.trim().slice(0, 24) : 'Someone',
-      color: typeof said.color === 'string' ? said.color.slice(0, 16) : '',
-      text,
-      at: Date.now(),
-      by: typeof said.by === 'string' ? said.by.slice(0, 32) : '',
-      ...(said.agent === true || said.agent === 'true' ? { agent: true } : {})
-    };
-    await kv.set(chatKey(id), [...(await readChat(kv, id)), message].slice(-CHAT_KEPT), lifetimeOf(board));
-
-    return { message, topic: signer.topicFor(id, board.lock) };
-  });
+  return { message, topic: topicFor(id, board.lock) };
 };
 
 /**
@@ -1131,8 +1216,7 @@ export const replyTo = (
   pass: Pass,
   { element: elementId, author, text }: { element: unknown; author: unknown; text: unknown }
 ): Promise<{ settled: BoardElement[]; topic: string }> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
+  changeBoard(stores, id, board => {
     assertWritable(stores.signer, board, pass);
     const comment = typeof elementId === 'string' ? board.elements[elementId] : undefined;
     if (comment?.type !== 'comment' || comment.deleted) {
@@ -1155,26 +1239,33 @@ export const replyTo = (
       version: comment.version + 1,
       nonce: randomInt(2 ** 31)
     };
-    await save(stores, { ...board, elements: { ...board.elements, [answered.id]: answered }, updatedAt: Date.now() });
-
-    return { settled: [answered], topic: stores.signer.topicFor(id, board.lock) };
+    return {
+      board: { ...board, elements: { ...board.elements, [answered.id]: answered }, updatedAt: Date.now() },
+      result: { settled: [answered], topic: topicFor(id, board.lock) }
+    };
   });
 
 /** A board's library as its page and its agents are told it: the templates it lists, and where to tell them. */
 export type BoardTemplates = { board: string; templates: SavedTemplate[]; topic: string };
 
-const withTemplates = async (
+/** A board's library changed — `pick` given the board, answering the codes it lists now — and answered whole. */
+const changeLibrary = async (
   stores: BoardStores,
-  board: StoredBoard,
-  ids: readonly string[]
+  id: string,
+  pass: Pass,
+  pick: (board: StoredBoard) => string[]
 ): Promise<BoardTemplates> => {
-  await save(stores, { ...board, templates: [...ids], updatedAt: Date.now() });
+  const { ids, topic } = await changeBoard(stores, id, board => {
+    assertWritable(stores.signer, board, pass);
+    const listed = pick(board);
 
-  return {
-    board: board.id,
-    templates: await readTemplates(stores.kv, ids),
-    topic: stores.signer.topicFor(board.id, board.lock)
-  };
+    return {
+      board: { ...board, templates: listed, updatedAt: Date.now() },
+      result: { ids: listed, topic: topicFor(board.id, board.lock) }
+    };
+  });
+
+  return { board: id, templates: await readTemplates(stores.kv, ids), topic };
 };
 
 /** The template a code names, as a person types it — spaces and capitals forgiven — or `undefined`. */
@@ -1204,8 +1295,7 @@ export const saveTemplate = async (
   stores: BoardStores,
   id: string,
   { title, elements }: { title: unknown; elements: unknown },
-  pass: Pass,
-  callerId: string
+  pass: Pass
 ): Promise<BoardTemplates & { saved: { id: string; title: string } }> => {
   const { kv, signer } = stores;
   const contents = asTemplate(elementsOf(elements));
@@ -1213,59 +1303,42 @@ export const saveTemplate = async (
     throw new ActionRefusal('Select what to keep as a template first — a frame, a column, some notes');
   }
 
-  const saves = await kv.increment(`template-rate:${callerId}:${Math.floor(Date.now() / 600_000)}`, 1, 660);
-  if (saves > TEMPLATES_PER_WINDOW) {
-    throw new ActionRefusal('That is a lot of templates at once — try again in a few minutes');
-  }
+  const current = await existing(kv, id);
+  assertWritable(signer, current, pass);
+  // Refused before anything is kept, when the shelf is already full: a template nobody lists is kept for nobody.
+  shelved(current, '');
+  const template: SavedTemplate = {
+    id: newBoardId(),
+    title: templateTitle(title),
+    elements: contents,
+    savedAt: Date.now()
+  };
+  await kv.set(templateKey(template.id), template);
 
-  return serially(kv, async () => {
-    const board = await existing(kv, id);
-    assertWritable(signer, board, pass);
-    const template: SavedTemplate = {
-      id: newBoardId(),
-      title: templateTitle(title),
-      elements: contents,
-      savedAt: Date.now()
-    };
-    const ids = shelved(board, template.id);
-    await kv.set(templateKey(template.id), template);
-
-    return { ...(await withTemplates(stores, board, ids)), saved: { id: template.id, title: template.title } };
-  });
+  return {
+    ...(await changeLibrary(stores, id, pass, board => shelved(board, template.id))),
+    saved: { id: template.id, title: template.title }
+  };
 };
 
 /** A template another board keeps, added to this one's library by its code — and answered whole, to be put down. */
-export const addTemplate = (
+export const addTemplate = async (
   stores: BoardStores,
   id: string,
   code: unknown,
   pass: Pass
-): Promise<BoardTemplates & { added: SavedTemplate }> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
-    assertWritable(stores.signer, board, pass);
-    const template = await templateByCode(stores.kv, code);
-    if (!template) {
-      throw new ActionRefusal('There is no template with that code — check it, it is 10 letters and numbers');
-    }
+): Promise<BoardTemplates & { added: SavedTemplate }> => {
+  const template = await templateByCode(stores.kv, code);
+  if (!template) {
+    throw new ActionRefusal('There is no template with that code — check it, it is 10 letters and numbers');
+  }
 
-    const ids = shelved(board, template.id);
-
-    return { ...(await withTemplates(stores, board, ids)), added: template };
-  });
+  return { ...(await changeLibrary(stores, id, pass, board => shelved(board, template.id))), added: template };
+};
 
 /** A template taken out of this board's library — kept for the other boards that list it. */
 export const removeTemplate = (stores: BoardStores, id: string, code: unknown, pass: Pass): Promise<BoardTemplates> =>
-  serially(stores.kv, async () => {
-    const board = await existing(stores.kv, id);
-    assertWritable(stores.signer, board, pass);
-
-    return withTemplates(
-      stores,
-      board,
-      (board.templates ?? []).filter(entry => entry !== code)
-    );
-  });
+  changeLibrary(stores, id, pass, board => (board.templates ?? []).filter(entry => entry !== code));
 
 /** A template by its code, whichever board keeps it: what an agent puts down when it is told one. */
 export const findTemplate = async (stores: BoardStores, code: unknown): Promise<SavedTemplate> => {

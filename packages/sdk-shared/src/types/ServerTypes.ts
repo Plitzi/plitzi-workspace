@@ -603,7 +603,7 @@ export type SSRActionConfig = {
   /**
    * Where the `kv` tasks keep things — shaped as `ActionKvAdapter` in `@plitzi/sdk-server/actions`.
    *
-   * Five operations over strings, with no rule to obey: Redis, Memcached, a table, whatever this deployment
+   * Six operations over strings, with no rule to obey: Redis, Memcached, a table, whatever this deployment
    * already runs. How a counter BEHAVES — the key prefixing, the JSON round trip, and the rule that a window's
    * lifetime is set once by whoever created it — belongs to the server, not to the thing it writes into.
    *
@@ -616,6 +616,8 @@ export type SSRActionConfig = {
     delete: (key: string) => Promise<void>;
     increment: (key: string, amount: number) => Promise<number>;
     expire: (key: string, ttlSeconds: number) => Promise<void>;
+    /** Writes `next` only if the key holds `expected` (nothing, when undefined); answers whether it wrote. Atomic. */
+    swap: (key: string, expected: string | undefined, next: string, ttlSeconds?: number) => Promise<boolean>;
   };
   /**
    * Scheduled runs: the durable queue they wait in, how many this replica runs at once, and whether it produces.

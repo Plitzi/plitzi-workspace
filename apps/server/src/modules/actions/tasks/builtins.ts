@@ -4,6 +4,7 @@ import { emailTasks } from './email';
 import { flowTasks, streamTasks } from './flow';
 import { httpTasks } from './http';
 import { kvTasks } from './kv';
+import { listTasks } from './list';
 import { realtimeTasks } from './realtime';
 import { transformTasks } from './transform';
 
@@ -24,6 +25,7 @@ export const builtinTasks: ActionTask<Record<string, unknown>>[] = [
   ...connectorTasks,
   ...authTasks,
   ...kvTasks,
+  ...listTasks,
   ...emailTasks,
   ...streamTasks,
   ...realtimeTasks

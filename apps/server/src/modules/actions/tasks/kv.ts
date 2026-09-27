@@ -58,6 +58,36 @@ const increment: ActionTask<{ key: string; amount: string | number; ttlSeconds: 
   }
 };
 
+/**
+ * Writes a value only if the key still holds the one this run read — or, left empty, only if it holds nothing.
+ *
+ * What makes read-change-write safe when two people do it at once: "take the last seat", "claim this username",
+ * "append to the list I just read". The one whose write finds the value changed is told (`written: false`) and can
+ * read again or refuse, instead of silently undoing the other.
+ */
+const setIf: ActionTask<{ key: string; expected: unknown; value: unknown; ttlSeconds: string | number }> = {
+  namespace: 'kv',
+  action: 'setIf',
+  title: 'Write Value If Unchanged',
+  params: {
+    key: { type: 'text', canBind: true, defaultValue: '', label: 'Key' },
+    expected: {
+      type: 'codemirror-text',
+      canBind: true,
+      defaultValue: '',
+      label: 'Only if it holds (the value read; empty = only if it holds nothing)'
+    },
+    value: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Value' },
+    ttlSeconds: { type: 'text', canBind: true, defaultValue: '', label: 'TTL (seconds)' }
+  },
+  run: async ({ key, expected, value, ttlSeconds }, ctx) => {
+    const ttl = ttlSeconds === '' ? undefined : toNumber(ttlSeconds, 0) || undefined;
+    const written = await ctx.kv.swap(key, expected === '' || expected === null ? undefined : expected, value, ttl);
+
+    return { key, written, value: (await ctx.kv.get(key)) ?? null };
+  }
+};
+
 const remove: ActionTask<{ key: string }> = {
   namespace: 'kv',
   action: 'delete',
@@ -70,4 +100,4 @@ const remove: ActionTask<{ key: string }> = {
   }
 };
 
-export const kvTasks = [get, set, increment, remove] as ActionTask<Record<string, unknown>>[];
+export const kvTasks = [get, set, setIf, increment, remove] as ActionTask<Record<string, unknown>>[];

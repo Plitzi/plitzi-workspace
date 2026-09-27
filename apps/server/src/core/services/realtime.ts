@@ -24,6 +24,7 @@ export const realtimeStage: Stage<SSRContext> = async ctx => {
       upgrade: ctx.upgrade,
       hub: realtime.hub,
       resolveChannels: realtime.resolveChannels,
+      grants: realtime.grants,
       allowedOrigins: realtime.allowedOrigins
     });
 
@@ -38,7 +39,8 @@ export const realtimeStage: Stage<SSRContext> = async ctx => {
       raw: ctx.rawRes,
       signal: ctx.signal,
       hub: realtime.hub,
-      resolveChannels: realtime.resolveChannels
+      resolveChannels: realtime.resolveChannels,
+      grants: realtime.grants
     });
 
     return true;

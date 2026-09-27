@@ -39,7 +39,7 @@ id. `end` releases the key and remembers the answer.
 **The store is the seam that degrades in silence.** Without `kv`, the module keeps its own Map: honest for one
 process, a no-op for a cluster. Single-flight stops being single, a cancel never reaches the replica running the
 flow, and a redelivery runs the work twice. Nothing errors — the symptom is a customer charged twice on a
-Tuesday. [`kv.ts`](src/kv.ts) writes the adapter out in full, with the Redis command each of its five operations
+Tuesday. [`kv.ts`](src/kv.ts) writes the adapter out in full, with the Redis command each of its six operations
 maps to.
 
 **`onRun` and `onReject` are separate on purpose.** Runs are history; refusals are a fault report. A queue that

@@ -1115,3 +1115,29 @@ changed.
 - The SDK's demo page and the static deployment template map `react/compiler-runtime`, which the bundle imports and
   only the page server's template mapped: a statically deployed space failed to start with "Failed to resolve module
   specifier".
+
+## Two writers at once, and private channels
+
+What an app with more than one person in it had to build for itself, now the platform's — Pizarra, the whiteboard
+example, was built on the lack of them and is simpler for it.
+
+- **`kv.setIf`**: writes only if the key still holds the value the flow read, and answers `written: false` when somebody
+  got there first; empty `expected` = only if nothing is there yet (claim a seat, a username). `ActionKvStore.swap` for
+  a deployment's own tasks.
+- **Lists**: `list.put` (one entry per id, highest score first, `keep` the top N), `list.range`, `list.remove`. At most
+  500 entries and 60 KB — they fit every store. `ActionKvStore.listPut` / `listRange` / `listRemove`.
+- **`flow.rateLimit`**: at most N runs every so many seconds, per person or for everyone, refused with its message.
+- **The `kv` adapter has a sixth operation, `swap`** (compare-and-set) — a breaking change for a deployment with its
+  own adapter. Memory, the worker fleet's shared copy, MySQL, Mongo and the examples implement it; **`createRedisKv`**
+  ships in `@plitzi/sdk-server/actions`, so a deployment on Redis writes no adapter at all (plitzi-sdk-server uses it).
+  All of them pass one contract, racing writers included.
+- **Private channels**: a channel declared `grant: true` opens a topic only for a page that brings a grant for it —
+  handed out by the `realtime.grant` task (or `ctx.grant`) after the flow decided the visitor may be there. Refused
+  otherwise (`ungranted`), however well the topic's name is known. Grants live in the store the actions use, so they
+  work across replicas with nothing new to configure; a day by default, thirty at most. The `channel` element and
+  `useChannel` take a `grant`, the realtime client's `grant(topic, grant)` sends it; `lintSpace` reports a private
+  topic opened with none (`channel-grant`).
+- Pizarra: every board is written on its own with `swap` instead of one lock for all of them across every replica;
+  its rate limits are `flow.rateLimit` steps in its actions; its board and room channels are private, opened with the
+  grant `board-load`/`board-open` answer — a locked board's topic no longer carries a secret, only its password's
+  version.

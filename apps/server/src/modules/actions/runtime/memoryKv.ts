@@ -22,7 +22,8 @@ export const KV_METHODS: StoreMethods<ActionKvAdapter> = {
   set: true,
   delete: true,
   increment: true,
-  expire: true
+  expire: true,
+  swap: true
 };
 
 export const createMemoryKv = (): ActionKvAdapter => {
@@ -97,6 +98,16 @@ export const createMemoryKv = (): ActionKvAdapter => {
       }
 
       return Promise.resolve();
+    },
+    swap: (key, expected, next, ttlSeconds) => {
+      if (read(key)?.value !== expected) {
+        return Promise.resolve(false);
+      }
+
+      entries.set(key, { value: next, expiresAt: expiry(ttlSeconds) });
+      sweep();
+
+      return Promise.resolve(true);
     }
   };
 };

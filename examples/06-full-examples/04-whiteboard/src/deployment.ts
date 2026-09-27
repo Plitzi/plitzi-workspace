@@ -3,6 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { Redis } from 'ioredis';
 
 import { createMemoryPubSub, createRedisPubSub } from '@plitzi/sdk-server';
+import { createRedisKv } from '@plitzi/sdk-server/actions';
 
 import { createMemoryAssets, createRedisAssets } from './board/assets.ts';
 import { createSigner } from './board/locks.ts';
@@ -53,28 +54,6 @@ export type Deployment = {
 };
 
 const PREFIX = 'pizarra:';
-
-/**
- * The `kv` seam over Redis: five commands, and nothing to decide — what a counter means is the server's.
- * `INCRBY` is atomic, which is what the boards' write lock and every rate limit rely on.
- */
-const createRedisKv = (redis: Redis): ActionKvAdapter => {
-  const key = (name: string): string => `${PREFIX}kv:${name}`;
-
-  return {
-    get: async name => (await redis.get(key(name))) ?? undefined,
-    set: async (name, value, ttlSeconds) => {
-      await (ttlSeconds === undefined ? redis.set(key(name), value) : redis.set(key(name), value, 'EX', ttlSeconds));
-    },
-    delete: async name => {
-      await redis.del(key(name));
-    },
-    increment: (name, amount) => redis.incrby(key(name), amount),
-    expire: async (name, ttlSeconds) => {
-      await redis.expire(key(name), ttlSeconds);
-    }
-  };
-};
 
 /** One process holds every agent there is: none to find anywhere else. */
 const soloAgents: AgentDirectory = {
@@ -144,7 +123,7 @@ export const deploymentFrom = (env: NodeJS.ProcessEnv): Deployment => {
   const self = replicaAddress(env);
 
   return {
-    kv: createRedisKv(redis),
+    kv: createRedisKv(redis, { prefix: `${PREFIX}kv:` }),
     pubsub: createRedisPubSub({ publisher: redis, subscriber, prefix: `${PREFIX}rt:` }),
     assets: createRedisAssets(redis, PREFIX),
     signer: createSigner(secretFrom(env.BOARD_SECRET)),

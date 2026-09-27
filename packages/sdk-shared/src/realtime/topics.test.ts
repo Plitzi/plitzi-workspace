@@ -46,6 +46,7 @@ describe('channelProblems', () => {
       []
     );
     expect(channelProblems('lobby', { access: { mode: 'role', permissions: ['boardEdit'] } })).toEqual([]);
+    expect(channelProblems('order:{id}', { access: { mode: 'public' }, grant: true })).toEqual([]);
   });
 
   it('names each thing that is wrong, and how to write it', () => {
@@ -59,8 +60,9 @@ describe('channelProblems', () => {
         access: { mode: 'role' },
         publish: 'everyone',
         presence: 'yes',
+        grant: 'yes',
         messagesPerSecond: 0.5
       })
-    ).toHaveLength(4);
+    ).toHaveLength(5);
   });
 });

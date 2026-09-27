@@ -43,6 +43,10 @@ export type BoardProps = {
   topic?: string;
   /** The channel cursors and live drags travel on — `room:{{ id }}`. */
   roomTopic?: string;
+  /** What opens `topic`: its channel is private, and the server answers this page a grant when it lets it in. */
+  grant?: string;
+  /** What opens `roomTopic`, likewise. */
+  roomGrant?: string;
   /** The board's name: what an exported image is called. */
   title?: string;
   /** Where the board's pictures are served from: `/board-assets/<board>`. */
@@ -157,6 +161,8 @@ const Board = ({
   elements,
   topic = '',
   roomTopic = '',
+  grant = '',
+  roomGrant = '',
   title = '',
   assetBase = '',
   voter = '',
@@ -475,8 +481,8 @@ const Board = ({
     }
   }, []);
 
-  const board = useChannel(live && topic ? topic : undefined, { onMessage: onBoardMessage });
-  const room = useChannel(live && roomTopic ? roomTopic : undefined, { onMessage: onRoomMessage });
+  const board = useChannel(live && topic ? topic : undefined, { grant, onMessage: onBoardMessage });
+  const room = useChannel(live && roomTopic ? roomTopic : undefined, { grant: roomGrant, onMessage: onRoomMessage });
 
   useEffect(() => {
     roomRef.current = message => void room.publish('pointer', message);

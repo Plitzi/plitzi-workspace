@@ -1,11 +1,16 @@
 import { matchChannel } from '@plitzi/sdk-shared/realtime';
 
 import { createChannelResolver } from './declarations';
+import { createRealtimeGrants } from './grants';
 import { createRealtimeHub } from './hub';
 import { createMemoryPubSub } from './memoryPubSub';
+import { fleetStore } from '../../core/server/fleet/link';
+import { createMemoryKv, KV_METHODS } from '../actions/runtime/memoryKv';
 
 import type { ChannelResolver } from './declarations';
+import type { RealtimeGrants } from './grants';
 import type { RealtimeHub } from './hub';
+import type { ActionKvAdapter } from '../actions/types';
 import type { RealtimeTransport, SSRServerConfig } from '@plitzi/sdk-shared';
 
 export { createMemoryPubSub } from './memoryPubSub';
@@ -23,6 +28,8 @@ export type RealtimeModule = {
   /** Origins besides the server's own whose pages may open a socket. */
   allowedOrigins: readonly string[];
   resolveChannels: ChannelResolver;
+  /** The grants issued for topics of channels declared `grant: true`, and the check a subscription makes. */
+  grants: RealtimeGrants;
   /** Closes every connection this process holds: the server is shutting down (`HttpServerParts.onClosing`). */
   close: () => void;
   /**
@@ -35,6 +42,12 @@ export type RealtimeModule = {
     type: string,
     data: unknown
   ) => Promise<void>;
+  /**
+   * A grant for one topic of a channel declared `grant: true` — what a flow's `realtime.grant` hands a page, once it
+   * has decided the visitor may be there. Refused for a topic of any other channel: a grant it would never ask for
+   * is a mistake in the flow, not a key to hand out.
+   */
+  grant: (space: { spaceId: number; environment: string }, topic: string, ttlSeconds?: number) => Promise<string>;
 };
 
 const modules = new WeakMap<object, RealtimeModule>();
@@ -56,12 +69,18 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
 
   const hub = createRealtimeHub(config.realtime?.pubsub ?? createMemoryPubSub());
   const resolveChannels = createChannelResolver(getOfflineData);
+  // Where the actions keep their `kv`, so a grant one replica issues opens the topic on another; the fleet's shared
+  // copy, or this process's own, where the deployment gave none — the same fallbacks the actions take.
+  const grants = createRealtimeGrants(
+    config.action?.kv ?? fleetStore<ActionKvAdapter>('realtime.grants', KV_METHODS) ?? createMemoryKv()
+  );
   const module: RealtimeModule = {
     hub,
     path: config.realtime?.path ?? '/_realtime',
     transport: config.realtime?.transport ?? 'sse',
     allowedOrigins: config.realtime?.allowedOrigins ?? [],
     resolveChannels,
+    grants,
     close: () => hub.closeAll(),
     publish: async (space, topic, type, data) => {
       const channels = await resolveChannels(space.spaceId, space.environment);
@@ -74,6 +93,20 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
       }
 
       await hub.publish(space, { topic, type, data, from: 'server', at: Date.now() });
+    },
+    grant: async (space, topic, ttlSeconds) => {
+      const match = matchChannel(topic, await resolveChannels(space.spaceId, space.environment));
+      if (!match) {
+        throw new Error(`No channel of this space matches "${topic}": declare it in the space's \`channels\``);
+      }
+
+      if (match.declaration.grant !== true) {
+        throw new Error(
+          `"${match.pattern}" is open to anyone its access lets in, so it takes no grant: declare it \`grant: true\` to make its topics private`
+        );
+      }
+
+      return grants.issue(space, topic, ttlSeconds);
     }
   };
   modules.set(config, module);

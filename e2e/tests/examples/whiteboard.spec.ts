@@ -39,6 +39,51 @@ const action = async (origin: string, actionId: string, input: Record<string, un
   return body.output;
 };
 
+/**
+ * What `/_realtime` answers a page asking for `topics` with `grants`: the topics it opened, or the refusal — read from
+ * the stream's first event, and the stream let go of.
+ */
+const subscribe = async (
+  origin: string,
+  topics: string[],
+  grants: string[] = []
+): Promise<{ status: number; topics: string[]; refused: { topic: string; reason: string }[] }> => {
+  const controller = new AbortController();
+  const query = `topics=${encodeURIComponent(topics.join(','))}&grants=${encodeURIComponent(grants.join(','))}`;
+  const response = await fetch(new URL(`/_realtime?${query}`, origin), {
+    headers: { accept: 'text/event-stream' },
+    signal: controller.signal
+  });
+  if (!response.ok) {
+    const body = (await response.json()) as { refused?: { topic: string; reason: string }[] };
+
+    return { status: response.status, topics: [], refused: body.refused ?? [] };
+  }
+
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+  while (reader && !text.includes('\n\n')) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    text += decoder.decode(value, { stream: true });
+  }
+
+  controller.abort();
+  const data = text.split('\n').find(line => line.startsWith('data: '));
+  const ready = JSON.parse(data?.slice(6) ?? '{}') as {
+    topics?: string[];
+    refused?: { topic: string; reason: string }[];
+  };
+
+  return { status: response.status, topics: ready.topics ?? [], refused: ready.refused ?? [] };
+};
+
+type Opened = { topic: string; grants: { board: string; room: string } };
+
 /** An element as a page commits it, from its box and whatever else it says. */
 const element = (
   index: number,
@@ -376,6 +421,51 @@ describeTarget('whiteboard', subject => {
 
   /** Said at the cursor with Enter, words are kept in the board's chat as well: whoever was not looking at the cursor
    *  reads them there, and so does an agent. */
+  /**
+   * A board's channels are private (`grant: true`): a page opens them with the grant the server answered when it let
+   * that page in. A locked board's topic is no secret — its id and its password's version — so knowing it opens
+   * nothing; its password does, and a new password shuts out whoever had the old one.
+   */
+  test('a locked board’s channels open with its password, and a new password shuts out the old one', async () => {
+    const id = await seedBoard(subject.origin, 'e2e — private channels', []);
+    const open = (await action(subject.origin, 'board-open', { id, password: '', key: '' })) as Opened;
+
+    expect((await subscribe(subject.origin, [`room:${open.topic}`], [open.grants.room])).topics).toEqual([
+      `room:${open.topic}`
+    ]);
+
+    await action(subject.origin, 'board-lock', { board: id, password: 'red kite mondays' });
+    const stranger = await subscribe(subject.origin, [`room:${id}.v1`]);
+
+    expect(stranger.status).toBe(403);
+    expect(stranger.refused).toEqual([{ topic: `room:${id}.v1`, reason: 'ungranted' }]);
+
+    const unlocked = (await action(subject.origin, 'board-open', {
+      id,
+      password: 'red kite mondays',
+      key: ''
+    })) as Opened;
+
+    expect(unlocked.topic).toBe(`${id}.v1`);
+    expect((await subscribe(subject.origin, [`room:${unlocked.topic}`], [unlocked.grants.room])).topics).toEqual([
+      `room:${unlocked.topic}`
+    ]);
+
+    // A grant for the open board's room — issued before the lock — opens nothing of the locked one.
+    expect((await subscribe(subject.origin, [`room:${unlocked.topic}`], [open.grants.room])).status).toBe(403);
+
+    const relocked = (await action(subject.origin, 'board-lock', {
+      board: id,
+      password: 'another kite tuesdays',
+      key: (
+        (await action(subject.origin, 'board-open', { id, password: 'red kite mondays', key: '' })) as { key: string }
+      ).key
+    })) as { topic: string };
+
+    expect(relocked.topic).toBe(`${id}.v2`);
+    expect((await subscribe(subject.origin, [`room:${relocked.topic}`], [unlocked.grants.room])).status).toBe(403);
+  });
+
   test('words said at the cursor are kept in the board chat too', async ({ page }) => {
     const id = await seedBoard(subject.origin, 'e2e — cursor chat', []);
     await page.goto(`${subject.origin}/b/${id}`);

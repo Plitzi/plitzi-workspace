@@ -28,7 +28,8 @@ import {
 import { TEMPLATES, isTemplate } from './board/templates.ts';
 
 import type { BoardStores } from './board/store.ts';
-import type { ActionKvStore, ActionTask } from '@plitzi/sdk-server/actions';
+import type { Granter } from './board/store.ts';
+import type { ActionKvStore, ActionTask, ActionTaskContext } from '@plitzi/sdk-server/actions';
 
 /**
  * What this deployment can do on the server: keep boards.
@@ -60,6 +61,20 @@ const ownerParam = text('Owner key (from creating or copying the board)');
 type Passed = { key: string; owner: string };
 
 /**
+ * What lets a page into a board's channels — they are private (`grant: true`): the platform's grant, issued by the
+ * task that has just decided the visitor may be there.
+ */
+const granterOf =
+  ({ grant }: ActionTaskContext): Granter =>
+  topic => {
+    if (!grant) {
+      throw new Error('This server has no realtime channels');
+    }
+
+    return grant(topic);
+  };
+
+/**
  * The tasks, over where this deployment keeps pictures and what it signs keys and topics with — the `kv` is each run's
  * own, handed in by the server already narrowed to the space.
  */
@@ -87,7 +102,7 @@ export const createBoardTasks = ({
     description: 'One board: its title and every element on it — or, locked, only that it exists.',
     params: { id: boardParam },
     // An id that is not one is a board that does not exist — the page says so — rather than an error page.
-    run: ({ id }, ctx) => (isBoardId(id) ? loadBoard(on(ctx.kv), id) : missingBoard(String(id)))
+    run: ({ id }, ctx) => (isBoardId(id) ? loadBoard(on(ctx.kv), id, granterOf(ctx)) : missingBoard(String(id)))
   };
 
   const boardOpenTask: ActionTask<{ id: string; password: string; key: string }> = {
@@ -97,7 +112,8 @@ export const createBoardTasks = ({
     description: 'A locked board, opened with its password or a key kept from the last time.',
     params: { id: boardParam, password: text('Password'), key: keyParam },
     // `callerId` is who is asking as the transport saw them: what password attempts are counted against.
-    run: ({ id, password, key }, ctx) => openBoard(on(ctx.kv), boardId(id), { password, key }, ctx.callerId)
+    run: ({ id, password, key }, ctx) =>
+      openBoard(on(ctx.kv), boardId(id), { password, key }, ctx.callerId, granterOf(ctx))
   };
 
   const boardCreateTask: ActionTask<{ title: string; template: string; visibility: string; hours: string }> = {
@@ -164,9 +180,8 @@ export const createBoardTasks = ({
       by: text('Who (the id their browser keeps)'),
       agent: text('Said by an agent (true | empty)')
     },
-    // `callerId` is who is asking as the transport saw them: what a visitor's lines are counted against.
     run: ({ board, key, owner, name, color, text: said, by, agent }, ctx) =>
-      sayOn(on(ctx.kv), boardId(board), { key, owner }, { name, color, text: said, by, agent }, ctx.callerId)
+      sayOn(on(ctx.kv), boardId(board), { key, owner }, { name, color, text: said, by, agent })
   };
 
   const boardCopyTask: ActionTask<{ board: string; key: string }> = {
@@ -215,9 +230,7 @@ export const createBoardTasks = ({
       key: keyParam,
       owner: ownerParam
     },
-    // `callerId` is who is asking as the transport saw them: what a visitor's commits are counted against.
-    run: ({ board, ops, key, owner }, ctx) =>
-      applyToBoard(on(ctx.kv), boardId(board), ops, ctx.callerId, { key, owner })
+    run: ({ board, ops, key, owner }, ctx) => applyToBoard(on(ctx.kv), boardId(board), ops, { key, owner })
   };
 
   const boardVoteTask: ActionTask<{ board: string; element: string; voter: string } & Passed> = {
@@ -312,7 +325,7 @@ export const createBoardTasks = ({
       owner: ownerParam
     },
     run: ({ board, title, elements, key, owner }, ctx) =>
-      saveTemplate(on(ctx.kv), boardId(board), { title, elements }, { key, owner }, ctx.callerId)
+      saveTemplate(on(ctx.kv), boardId(board), { title, elements }, { key, owner })
   };
 
   const templateAddTask: ActionTask<{ board: string; code: string } & Passed> = {

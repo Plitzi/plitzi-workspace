@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
+import { createActionsModule } from '../actions';
 import { createChannelResolver } from './declarations';
+import { createRealtimeGrants } from './grants';
 import { handleRealtimePublish, handleRealtimeSubscribe } from './handlers';
 import { createRealtimeHub } from './hub';
 import { realtimeModuleFor } from './index';
 import { createMemoryPubSub } from './memoryPubSub';
+import { createMemoryKv } from '../actions/runtime/memoryKv';
 
+import type { RealtimeGrants } from './grants';
 import type { RealtimeHub } from './hub';
 import type {
   ChannelDeclarations,
+  ElementInteraction,
   OfflineDataRaw,
   RealtimeMessage,
   SSRRequest,
@@ -20,8 +25,14 @@ import type {
 const CHANNELS: ChannelDeclarations = {
   'board:{id}': { access: { mode: 'public' }, presence: true, maxMessageBytes: 64, messagesPerSecond: 2 },
   'members:{id}': { access: { mode: 'session' } },
-  'scores:{id}': { access: { mode: 'public' }, publish: 'server' }
+  'scores:{id}': { access: { mode: 'public' }, publish: 'server' },
+  'room:{id}': { access: { mode: 'public' }, grant: true }
 };
+
+/** The grants every page of these tests is checked against, as a server keeps them. */
+const GRANTS = createRealtimeGrants(createMemoryKv());
+
+const SPACE = { spaceId: 1, environment: 'main' };
 
 /** The documents a space with these channels answers — only the part the resolver reads is real. */
 const resolverFor = (channels: ChannelDeclarations) =>
@@ -91,17 +102,24 @@ const request = (query: Record<string, string>, user?: Partial<SSRUser>, body?: 
   }) as unknown as SSRRequest;
 
 /** A page connected to `topics`: its `ready` event, what it hears, and how to close it. */
-const connect = async (hub: RealtimeHub, topics: string, user?: Partial<SSRUser>) => {
+const connect = async (
+  hub: RealtimeHub,
+  topics: string,
+  user?: Partial<SSRUser>,
+  grants?: string,
+  store: RealtimeGrants = GRANTS
+) => {
   const { raw, events } = buildRaw();
   const { res, sent } = buildRes();
   const controller = new AbortController();
   const done = handleRealtimeSubscribe({
-    req: request({ topics }, user),
+    req: request({ topics, ...(grants === undefined ? {} : { grants }) }, user),
     res,
     raw,
     signal: controller.signal,
     hub,
-    resolveChannels: resolverFor(CHANNELS)
+    resolveChannels: resolverFor(CHANNELS),
+    grants: store
   });
   await new Promise(resolve => setTimeout(resolve, 0));
   const ready = events().find(entry => entry.event === 'ready')?.data as
@@ -273,5 +291,115 @@ describe('realtimeModuleFor', () => {
         realtime: false
       } as unknown as SSRServerConfig)
     ).toBeUndefined();
+  });
+});
+
+describe('granted channels', () => {
+  it('refuses a topic of a `grant: true` channel to a page that brings no grant, however well it knows the name', async () => {
+    const hub = createRealtimeHub(createMemoryPubSub());
+    const page = await connect(hub, 'room:alpha,board:1');
+
+    expect(page.ready?.topics).toEqual(['board:1']);
+    expect(page.ready?.refused).toEqual([{ topic: 'room:alpha', reason: 'ungranted' }]);
+    await page.close();
+  });
+
+  it('opens it with a grant issued for that topic, and for no other', async () => {
+    const hub = createRealtimeHub(createMemoryPubSub());
+    const grant = await GRANTS.issue(SPACE, 'room:alpha');
+    const invited = await connect(hub, 'room:alpha', undefined, grant);
+    const elsewhere = await connect(hub, 'room:beta', undefined, grant);
+
+    expect(invited.ready?.topics).toEqual(['room:alpha']);
+    expect(elsewhere.sent.status).toBe(403);
+    await invited.close();
+  });
+
+  it('takes a grant only for the space that issued it', async () => {
+    const grant = await GRANTS.issue({ spaceId: 2, environment: 'main' }, 'room:alpha');
+
+    expect(await GRANTS.opens(SPACE, 'room:alpha', grant)).toBe(false);
+    expect(await GRANTS.opens({ spaceId: 2, environment: 'main' }, 'room:alpha', grant)).toBe(true);
+  });
+
+  it('forgets a grant once its lifetime runs out', async () => {
+    const kv = createMemoryKv();
+    const grants = createRealtimeGrants(kv);
+    const grant = await grants.issue(SPACE, 'room:alpha', 60);
+    await kv.expire(`realtime-grant:1:main:${grant}`, 0);
+
+    expect(await grants.opens(SPACE, 'room:alpha', grant)).toBe(false);
+  });
+
+  it('issues a grant only for a channel that takes one', async () => {
+    const config = {
+      adapters: {
+        getOfflineData: () =>
+          Promise.resolve({ schema: { settings: { channels: CHANNELS } }, style: {} } as unknown as OfflineDataRaw)
+      }
+    } as unknown as SSRServerConfig;
+    const realtime = realtimeModuleFor(config);
+    if (!realtime) {
+      throw new Error('expected a realtime module');
+    }
+
+    const grant = await realtime.grant(SPACE, 'room:alpha', 600);
+
+    expect(await realtime.grants.opens(SPACE, 'room:alpha', grant)).toBe(true);
+    await expect(realtime.grant(SPACE, 'board:1')).rejects.toThrow('takes no grant');
+    await expect(realtime.grant(SPACE, 'nowhere:1')).rejects.toThrow('No channel of this space');
+  });
+
+  it('hands a flow’s visitor the grant their page opens the topic with', async () => {
+    const config = {
+      adapters: {
+        getOfflineData: () =>
+          Promise.resolve({ schema: { settings: { channels: CHANNELS } }, style: {} } as unknown as OfflineDataRaw)
+      }
+    } as unknown as SSRServerConfig;
+    const realtime = realtimeModuleFor(config);
+    if (!realtime) {
+      throw new Error('expected a realtime module');
+    }
+
+    const actions = createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) }, realtime });
+    const step = (id: string, action: string, params: Record<string, unknown>, afterNode = ''): ElementInteraction => ({
+      id,
+      title: id,
+      type: id === 'start' ? 'trigger' : 'task',
+      action,
+      params,
+      preview: {},
+      elementId: null,
+      beforeNode: '',
+      afterNode,
+      flowId: 'flow',
+      enabled: true
+    });
+    const result = await actions.runAction({
+      entry: {
+        id: 'join',
+        document: {
+          name: 'Join',
+          output: { grant: { type: 'text' } },
+          nodes: {
+            start: step('start', 'call', { access: 'public' }, 'let'),
+            let: step('let', 'realtime.grant', { topic: 'room:alpha', ttlSeconds: '600' }, 'ret'),
+            ret: step('ret', 'flow.output', { values: '{"grant": "{{ let.grant }}"}' })
+          }
+        }
+      },
+      input: {},
+      callerId: 'ip:198.51.100.7',
+      spaceId: 1,
+      environment: 'main',
+      trigger: 'call',
+      runId: 'join-1'
+    });
+    const grant = String(result.output.grant);
+    const page = await connect(realtime.hub, 'room:alpha', undefined, grant, realtime.grants);
+
+    expect(page.ready?.topics).toEqual(['room:alpha']);
+    await page.close();
   });
 });

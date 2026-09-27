@@ -8,6 +8,12 @@ type StatusListener = (status: RealtimeStatus) => void;
 export type RealtimeClient = {
   /** Listens to a topic; the page's one connection is reopened to include it. Returns what stops listening. */
   subscribe: (topic: string, listener: MessageListener) => () => void;
+  /**
+   * What opens a topic of a `grant: true` channel: the grant a flow's `realtime.grant` answered. Sent whenever the
+   * connection opens for as long as the topic is listened to — a grant is only asked for at the door, so a new one
+   * reopens nothing the server already let in. `undefined` forgets it.
+   */
+  grant: (topic: string, grant: string | undefined) => void;
   /** Sends on a topic this page listens to. `false` when the server refused it or there is no connection. */
   publish: (topic: string, type: string, data: unknown) => Promise<boolean>;
   onStatus: (listener: StatusListener) => () => void;
@@ -96,8 +102,8 @@ const parseFrame = (frame: unknown): { event: string; data: unknown } | undefine
 };
 
 /** The socket's address for an endpoint written as a path: the page's own host, `ws:` or `wss:` as the page is. */
-const socketUrl = (endpoint: string, topics: string): string => {
-  const url = new URL(`${endpoint}?topics=${encodeURIComponent(topics)}`, globalThis.location.href);
+const socketUrl = (endpoint: string, query: string): string => {
+  const url = new URL(`${endpoint}?${query}`, globalThis.location.href);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
 
   return url.href;
@@ -129,6 +135,7 @@ export const createRealtimeClient = (
   { transport: preferred = 'sse', fetchImpl = fetch, WebSocketImpl = globalThis.WebSocket }: RealtimeClientOptions = {}
 ): RealtimeClient => {
   const listeners = new Map<string, Set<MessageListener>>();
+  const grants = new Map<string, string>();
   const statusListeners = new Set<StatusListener>();
   let status: RealtimeStatus = 'idle';
   let current: Connection | undefined;
@@ -144,6 +151,13 @@ export const createRealtimeClient = (
   };
 
   const topicsKey = (): string => [...listeners.keys()].sort().join(',');
+
+  /** `topics=a,b`, and `&grants=…` for those of them a grant was given for. */
+  const queryFor = (topics: string): string => {
+    const offered = topics.split(',').flatMap(topic => grants.get(topic) ?? []);
+
+    return `topics=${encodeURIComponent(topics)}${offered.length ? `&grants=${encodeURIComponent(offered.join(','))}` : ''}`;
+  };
 
   const deliver = (message: RealtimeMessage): void => {
     listeners.get(message.topic)?.forEach(listener => listener(message));
@@ -168,7 +182,7 @@ export const createRealtimeClient = (
     retry = setTimeout(open, wait);
   };
 
-  const openStream = (topics: string): Connection => {
+  const openStream = (topics: string, query: string): Connection => {
     const controller = new AbortController();
     let token: string | undefined;
     const connection: Connection = {
@@ -225,7 +239,7 @@ export const createRealtimeClient = (
       }
     };
 
-    void fetchImpl(`${endpoint}?topics=${encodeURIComponent(topics)}`, {
+    void fetchImpl(`${endpoint}?${query}`, {
       headers: { accept: 'text/event-stream' },
       credentials: 'same-origin',
       signal: controller.signal
@@ -251,8 +265,8 @@ export const createRealtimeClient = (
     return connection;
   };
 
-  const openSocket = (topics: string): Connection => {
-    const socket = new WebSocketImpl(socketUrl(endpoint, topics));
+  const openSocket = (topics: string, query: string): Connection => {
+    const socket = new WebSocketImpl(socketUrl(endpoint, query));
     const acks = new Map<number, (ok: boolean) => void>();
     let nextId = 0;
     let ready = false;
@@ -336,14 +350,16 @@ export const createRealtimeClient = (
     }
 
     setStatus('connecting');
-    current = socketsWork ? openSocket(topics) : openStream(topics);
+    const query = queryFor(topics);
+    current = socketsWork ? openSocket(topics, query) : openStream(topics, query);
   }
 
-  const reopenSoon = (): void => {
+  /** Reopens, after gathering what else changes, when the topics differ — or, `force`d, whatever they are. */
+  const reopenSoon = (force = false): void => {
     clearTimeout(gather);
     clearTimeout(retry);
     gather = setTimeout(() => {
-      if (current?.topics !== topicsKey()) {
+      if (force || current?.topics !== topicsKey()) {
         open();
       }
     }, GATHER_MS);
@@ -384,9 +400,29 @@ export const createRealtimeClient = (
         set.delete(listener);
         if (!set.size) {
           listeners.delete(topic);
+          grants.delete(topic);
           reopenSoon();
         }
       };
+    },
+    grant: (topic, grant) => {
+      if (grants.get(topic) === grant) {
+        return;
+      }
+
+      // The latest one given: a page that asked its action again holds the grant that is still good.
+      if (grant) {
+        grants.set(topic, grant);
+      } else {
+        grants.delete(topic);
+      }
+
+      // Reopening a connection that already holds the topic would only drop what is said meanwhile — a member leaving,
+      // for one. A grant matters to a topic the server has not let in yet: refused, or being asked for without it.
+      const admitted = covers(topic) && !refusals.has(topic);
+      if (grant && listeners.has(topic) && !admitted) {
+        reopenSoon(true);
+      }
     },
     publish: async (topic, type, data) => {
       if (!(await whenOpen(topic)) || !current) {

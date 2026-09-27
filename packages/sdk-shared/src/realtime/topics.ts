@@ -63,7 +63,7 @@ export const channelProblems = (pattern: string, declaration: unknown): string[]
     return [...problems, 'a channel is an object: `{ access: { mode: "public" } }`'];
   }
 
-  const { access, publish, presence, maxMessageBytes, messagesPerSecond } = declaration;
+  const { access, publish, presence, grant, maxMessageBytes, messagesPerSecond } = declaration;
   const mode = isRecord(access) ? access.mode : undefined;
   if (typeof mode !== 'string' || !ACCESS_MODES.has(mode)) {
     problems.push('`access` is { mode: "public" }, { mode: "session" } or { mode: "role", permissions: […] }');
@@ -84,6 +84,10 @@ export const channelProblems = (pattern: string, declaration: unknown): string[]
 
   if (presence !== undefined && typeof presence !== 'boolean') {
     problems.push('`presence` is true or false');
+  }
+
+  if (grant !== undefined && typeof grant !== 'boolean') {
+    problems.push('`grant` is true (a page needs a grant from `realtime.grant` to open a topic) or false');
   }
 
   for (const [name, value] of [

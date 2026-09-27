@@ -97,4 +97,108 @@ describe('kv tasks', () => {
 
     expect(result.output).toEqual({ value: 'hola' });
   });
+
+  it('writes over a value only when it is still the one read — the loser is told', async () => {
+    const claim = counterAction(
+      {
+        start: node('start', { type: 'trigger', action: 'call', params: { access: 'public' }, afterNode: 'take' }),
+        take: node('take', {
+          action: 'kv.setIf',
+          afterNode: 'ret',
+          params: { key: 'seat:12', expected: '', value: 'taken' }
+        }),
+        ret: node('ret', { action: 'flow.output', params: { values: '{"value": {{ take.written }}}' } })
+      },
+      'text'
+    );
+    const { call } = run(claim);
+
+    expect((await call('run-1')).output).toEqual({ value: true });
+    expect((await call('run-2')).output).toEqual({ value: false });
+  });
+});
+
+describe('list tasks', () => {
+  const listAction = (score: string): ActionEntry => ({
+    id: 'scores',
+    document: {
+      name: 'Scores',
+      output: { top: { type: 'json' } },
+      nodes: {
+        start: node('start', { type: 'trigger', action: 'call', params: { access: 'public' }, afterNode: 'put' }),
+        put: node('put', {
+          action: 'list.put',
+          afterNode: 'read',
+          params: { list: 'leaderboard', id: `p${score}`, score, value: `{"points": ${score}}` }
+        }),
+        read: node('read', { action: 'list.range', afterNode: 'ret', params: { list: 'leaderboard', limit: '2' } }),
+        ret: node('ret', { action: 'flow.output', params: { values: '{"top": {{ read.entries|json_encode }}}' } })
+      }
+    }
+  });
+
+  it('answers the highest scores first, a window of them', async () => {
+    const module = createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) } });
+    const call = (score: string) =>
+      module.runAction({
+        entry: listAction(score),
+        input: {},
+        callerId: 'ip:198.51.100.7',
+        spaceId: 1,
+        environment: 'main',
+        trigger: 'call',
+        runId: `run-${score}`
+      });
+
+    await call('5');
+    await call('30');
+    const result = await call('12');
+
+    expect(result.output.top).toEqual([
+      { id: 'p30', score: 30, value: { points: 30 } },
+      { id: 'p12', score: 12, value: { points: 12 } }
+    ]);
+  });
+});
+
+describe('flow.rateLimit', () => {
+  const limited: ActionEntry = counterAction({
+    start: node('start', { type: 'trigger', action: 'call', params: { access: 'public' }, afterNode: 'limit' }),
+    limit: node('limit', {
+      action: 'flow.rateLimit',
+      afterNode: 'ret',
+      params: { bucket: 'comments', limit: '2', windowSeconds: '60', per: 'caller', message: 'Slow down' }
+    }),
+    ret: node('ret', { action: 'flow.output', params: { values: '{"value": {{ limit.remaining }}}' } })
+  });
+
+  const callAs = (module: ReturnType<typeof run>['module'], callerId: string, runId: string) =>
+    module.runAction({
+      entry: limited,
+      input: {},
+      callerId,
+      spaceId: 1,
+      environment: 'main',
+      trigger: 'call',
+      runId
+    });
+
+  it('lets a caller through up to the limit, then refuses them with the message', async () => {
+    const { module } = run(limited);
+
+    expect((await callAs(module, 'ip:198.51.100.7', 'r1')).output).toEqual({ value: 1 });
+    expect((await callAs(module, 'ip:198.51.100.7', 'r2')).output).toEqual({ value: 0 });
+    const refused = await callAs(module, 'ip:198.51.100.7', 'r3');
+
+    expect(refused.status).toBe('failed');
+    expect(refused.error).toBe('Slow down');
+  });
+
+  it('counts each person apart', async () => {
+    const { module } = run(limited);
+    await callAs(module, 'ip:198.51.100.7', 'r1');
+    await callAs(module, 'ip:198.51.100.7', 'r2');
+
+    expect((await callAs(module, 'user:42', 'r3')).status).toBe('completed');
+  });
 });

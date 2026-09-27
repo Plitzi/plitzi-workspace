@@ -89,6 +89,73 @@ describe('createRealtimeClient', () => {
     expect(chat).toHaveLength(0);
   });
 
+  it('sends the grant a private topic was given, and reopens for a new one only where it was not let in', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    const listen = () => undefined;
+    client.grant('room:alpha', 'g1');
+    stops.push(client.subscribe('room:alpha', listen));
+    stops.push(client.subscribe('board:1', listen));
+    await wait();
+
+    expect(decodeURIComponent(server.streams[0].url)).toBe('/_realtime?topics=board:1,room:alpha&grants=g1');
+
+    // Let in: a page that read its board again holds a new grant, and nothing is reopened — a reconnect would drop
+    // whatever is said meanwhile.
+    server.streams[0].push('ready', { connection: 'me', topics: ['board:1', 'room:alpha'], refused: [] });
+    await wait(10);
+    client.grant('room:alpha', 'g2');
+    await wait();
+
+    expect(server.streams).toHaveLength(1);
+  });
+
+  it('reopens with a grant for a topic the server refused without one', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    stops.push(client.subscribe('room:alpha', () => undefined));
+    stops.push(client.subscribe('board:1', () => undefined));
+    await wait();
+    server.streams[0].push('ready', {
+      connection: 'me',
+      topics: ['board:1'],
+      refused: [{ topic: 'room:alpha', reason: 'ungranted' }]
+    });
+    await wait(10);
+    client.grant('room:alpha', 'g1');
+    await wait();
+
+    expect(server.streams).toHaveLength(2);
+    expect(decodeURIComponent(server.streams[1].url)).toBe('/_realtime?topics=board:1,room:alpha&grants=g1');
+  });
+
+  it('keeps a topic’s grant while any listener remains — a canvas and an element share one', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    client.grant('room:alpha', 'g1');
+    const stopCanvas = client.subscribe('room:alpha', () => undefined);
+    stops.push(client.subscribe('room:alpha', () => undefined));
+    stops.push(client.subscribe('board:1', () => undefined));
+    await wait();
+    stopCanvas();
+    await wait();
+
+    expect(decodeURIComponent(server.streams.at(-1)?.url ?? '')).toBe('/_realtime?topics=board:1,room:alpha&grants=g1');
+  });
+
+  it('forgets a topic’s grant with the last listener, so it is not sent for a topic no longer open', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    client.grant('room:alpha', 'g1');
+    const stopRoom = client.subscribe('room:alpha', () => undefined);
+    stops.push(client.subscribe('board:1', () => undefined));
+    await wait();
+    stopRoom();
+    await wait();
+
+    expect(decodeURIComponent(server.streams.at(-1)?.url ?? '')).toBe('/_realtime?topics=board:1');
+  });
+
   it('publishes with the connection’s secret once it is open', async () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });

@@ -2,6 +2,7 @@ import { admit, answer, connectionFor, publishFrom } from './handlers';
 import { requestOrigin } from '../../core/requestParser';
 
 import type { ChannelResolver } from './declarations';
+import type { RealtimeGrants } from './grants';
 import type { RealtimeHub } from './hub';
 import type { UpgradeRequest } from '../../core/http/socketResponse';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
@@ -74,6 +75,7 @@ export type SocketDeps = {
   upgrade: UpgradeRequest;
   hub: RealtimeHub;
   resolveChannels: ChannelResolver;
+  grants: RealtimeGrants;
   allowedOrigins: readonly string[];
 };
 
@@ -92,6 +94,7 @@ export const handleRealtimeSocket = async ({
   upgrade,
   hub,
   resolveChannels,
+  grants,
   allowedOrigins
 }: SocketDeps): Promise<void> => {
   if (!originAllowed(raw, req, allowedOrigins)) {
@@ -100,7 +103,7 @@ export const handleRealtimeSocket = async ({
     return;
   }
 
-  const admission = await admit(req, resolveChannels);
+  const admission = await admit(req, resolveChannels, grants);
   if (!admission.ok) {
     answer(res, admission.answer);
 

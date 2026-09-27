@@ -14,6 +14,10 @@ export const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStor
     get: key => store.get(scoped(key)),
     set: (key, value, ttlSeconds) => store.set(scoped(key), value, ttlSeconds),
     delete: key => store.delete(scoped(key)),
-    increment: (key, amount, ttlSeconds) => store.increment(scoped(key), amount, ttlSeconds)
+    increment: (key, amount, ttlSeconds) => store.increment(scoped(key), amount, ttlSeconds),
+    swap: (key, expected, next, ttlSeconds) => store.swap(scoped(key), expected, next, ttlSeconds),
+    listPut: (list, entry, options) => store.listPut(scoped(list), entry, options),
+    listRange: (list, range) => store.listRange(scoped(list), range),
+    listRemove: (list, id) => store.listRemove(scoped(list), id)
   };
 };

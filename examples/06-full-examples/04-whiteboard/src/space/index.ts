@@ -44,14 +44,16 @@ export const space: SpaceSpec = {
    * `authorSpace`, before it ever is.
    */
   channels: {
-    // What was saved: said only by the server, after `board-apply` validated and kept it.
-    [TOPICS.board]: { access: { mode: 'public' }, publish: 'server' },
+    // What was saved: said only by the server, after `board-apply` validated and kept it. Private, as `room` is: a page
+    // opens it with the grant `board-load` or `board-open` answered — a locked board only after its password.
+    [TOPICS.board]: { access: { mode: 'public' }, publish: 'server', grant: true },
     /**
      * Who is here and what they are doing: pages speak directly. A pointer message carries a cursor and, while
      * something is dragged, the dragged elements — hence the room to spare over the defaults.
      */
     [TOPICS.room]: {
       access: { mode: 'public' },
+      grant: true,
       publish: 'clients',
       presence: true,
       maxMessageBytes: 8192,

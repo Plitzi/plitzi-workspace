@@ -545,6 +545,23 @@ describe('lintSpace', () => {
       );
     });
 
+    it('channel-grant', () => {
+      const withGrant = (attributes: Record<string, unknown>, bound = false) =>
+        withChange(({ schema }) => {
+          schema.settings.channels = { 'room:{id}': { access: { mode: 'public' }, grant: true } };
+          addElement(schema, { id: 'room', type: 'channel', attributes: { topic: 'room:{{ id }}', ...attributes } });
+          if (bound) {
+            schema.flat.room.definition.bindings = {
+              attributes: [{ id: 'grant-binding', to: 'grant', source: 'state.grant' }]
+            };
+          }
+        });
+
+      expect(errorsOf(withGrant({}))).toContain('channel-grant');
+      expect(errorsOf(withGrant({ grant: 'abc' }))).not.toContain('channel-grant');
+      expect(errorsOf(withGrant({}, true))).not.toContain('channel-grant');
+    });
+
     it('channel-topic', () => {
       const undeclared = withChange(({ schema }) => {
         addElement(schema, { id: 'room', type: 'channel', attributes: { topic: 'board:{{ id }}' } });

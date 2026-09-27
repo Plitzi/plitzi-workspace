@@ -28,6 +28,11 @@ export type ChannelProps = {
   children?: ReactNode;
   /** The topic, usually a template: `board:{{ id }}`. A channel the space declares must cover it. */
   topic?: string;
+  /**
+   * What opens a topic of a private (`grant: true`) channel: bound to the `grant` the action that let this visitor in
+   * returned — `{{ data.grant }}`. Empty for any other channel.
+   */
+  grant?: string;
   /** What this page announces to the members — an object from a binding, or JSON text typed in the builder. */
   presence?: unknown;
   /** How many of the latest messages its source holds. */
@@ -51,7 +56,16 @@ const valueOf = (value: unknown): unknown => {
 
 const CHANNEL_TYPES = new Set([PRESENCE_TYPE, JOIN_TYPE, LEAVE_TYPE]);
 
-const Channel = ({ ref, className, children, topic = '', presence, keep = 20, subType = '' }: ChannelProps) => {
+const Channel = ({
+  ref,
+  className,
+  children,
+  topic = '',
+  grant = '',
+  presence,
+  keep = 20,
+  subType = ''
+}: ChannelProps) => {
   const {
     id,
     definition: { label = 'Channel' }
@@ -94,6 +108,7 @@ const Channel = ({ ref, className, children, topic = '', presence, keep = 20, su
 
   // The builder is editing a document, not attending a meeting: nothing connects there.
   const channel = useChannel(previewMode && topic ? topic : undefined, {
+    grant: grant || undefined,
     presence: presence === undefined || presence === '' ? undefined : valueOf(presence),
     onMessage,
     onJoin,

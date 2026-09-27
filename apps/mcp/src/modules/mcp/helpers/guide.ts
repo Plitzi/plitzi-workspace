@@ -705,6 +705,14 @@ Pages that see each other — cursors, presence, a shared board, a game. Three p
 
 A topic no pattern matches is refused by the server and reported by the linter (\`channel-topic\`).
 
+**Private topics** (a room behind a password, a customer's order): declare the pattern \`grant: true\`. The action that
+decides the visitor may be there ends with \`realtime.grant { topic }\` and answers its \`grant\`; the \`channel\`
+element binds \`grant\` to it. Without one the topic is refused however well its name is known (\`channel-grant\`).
+
+**Two writers at once**: read-change-write with \`kv.setIf\` (written only if the value is still the one read — empty
+\`expected\` = only if nothing is there yet), ordered lists with \`list.put\` / \`list.range\`, and put
+\`flow.rateLimit\` first in any public action that writes.
+
 ## Shared layouts — the chrome a page does NOT contain
 A page's tree is usually **not the whole page**. The header, the sidebar and the footer normally live in a **layout
 container**: a shell several pages are rendered inside, so the navigation is authored once instead of once per page.

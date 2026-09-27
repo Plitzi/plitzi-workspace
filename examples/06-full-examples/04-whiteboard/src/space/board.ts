@@ -109,10 +109,20 @@ const TOPIC = (channel: 'board' | 'room'): string =>
   `{{ ${ofBoard('topic', "''")} ? '${channel}:' ~ ${ofBoard('topic', "''")} : '' }}`;
 
 /**
- * The board's announcements. A board not opened yet — locked, its topic a secret — is still listened to on the open
- * board's own topic, where its lock being removed is said: nothing else is ever published there while it is locked.
+ * The board's announcements. A board not opened yet — locked, its topic not given until its password is — is still
+ * listened to on the open board's own topic, where its lock being removed is said: nothing else is ever published
+ * there while it is locked.
  */
 const FEED_TOPIC = `{{ ${ofBoard('topic', "''")} ? 'board:' ~ ${ofBoard('topic', "''")} : (source.found ? 'board:' ~ source.id : '') }}`;
+
+/**
+ * What opens a board's channel on this page: the grant the server answered with the board — `board-load`, or, for a
+ * locked one, `board-open` after its password. The channels are private (`grant: true`): a topic's name is not enough.
+ */
+const GRANT = (channel: 'board' | 'room'): string => `{{ ${ofBoard(`grants.${channel}`, "''")} }}`;
+
+/** The feed's: before a locked board is opened, the one `board-load` gave for its open topic, where unlocking is said. */
+const FEED_GRANT = `{{ ${ofBoard('grants.board', 'source.grants.board')} }}`;
 
 export const screen = styles('screen', {
   position: 'relative',
@@ -428,6 +438,8 @@ const canvas = (): ElementSpec =>
       { to: 'title', source: `${BOARD_PROVIDER}.title` },
       bindTemplate('topic', BOARD_PROVIDER, TOPIC('board')),
       bindTemplate('roomTopic', BOARD_PROVIDER, TOPIC('room')),
+      bindTemplate('grant', BOARD_PROVIDER, GRANT('board')),
+      bindTemplate('roomGrant', BOARD_PROVIDER, GRANT('room')),
       bindTemplate('assetBase', `${BOARD_PROVIDER}.id`, '/board-assets/{{ source }}'),
       { to: 'voter', source: 'computed.visitor' },
       { to: 'tool', source: 'computed.tool' },
@@ -943,8 +955,12 @@ export const boardPage: PageSpec = {
           id: 'room',
           keep: 0,
           // Who this page is to the others: its name and colour, announced again whenever either changes. Its topic is
-          // the board's — with, for a locked one, the secret opening it answered: before that, there is none to open.
-          bind: [{ to: 'presence', source: 'computed.me' }, bindTemplate('topic', BOARD_PROVIDER, TOPIC('room'))],
+          // the board's, opened with the grant the server answered — for a locked one, only once it has been opened.
+          bind: [
+            { to: 'presence', source: 'computed.me' },
+            bindTemplate('topic', BOARD_PROVIDER, TOPIC('room')),
+            bindTemplate('grant', BOARD_PROVIDER, GRANT('room'))
+          ],
           // Somebody coming or going is said, by the name they announced — the canvas chimes, this says who.
           flows: [
             [named('arrived', on('onJoin')), cameOrWent('{{ arrived.state.name ?? "Someone" }} joined the board')],
@@ -997,7 +1013,7 @@ export const boardPage: PageSpec = {
         channel({
           id: 'feed',
           keep: 0,
-          bind: [bindTemplate('topic', BOARD_PROVIDER, FEED_TOPIC)],
+          bind: [bindTemplate('topic', BOARD_PROVIDER, FEED_TOPIC), bindTemplate('grant', BOARD_PROVIDER, FEED_GRANT)],
           flows: [
             [
               named('heard', on('onMessage')),

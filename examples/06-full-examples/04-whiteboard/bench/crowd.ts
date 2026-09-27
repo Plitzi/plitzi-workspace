@@ -23,6 +23,16 @@ export type Crowd = {
 
 const NAMES = ['Ada', 'Grace', 'Alan', 'Edsger', 'Barbara', 'Donald', 'Radia', 'Ken', 'Margaret', 'Tim'];
 
+/** The grants a board's channels are opened with, as `board-open` answers them — or none, where it did not. */
+const grantsOf = (opened: unknown): string[] => {
+  const grants = typeof opened === 'object' && opened !== null && 'grants' in opened ? opened.grants : undefined;
+  if (typeof grants !== 'object' || grants === null) {
+    return [];
+  }
+
+  return Object.values(grants).filter(grant => typeof grant === 'string');
+};
+
 /** Twenty times a second: what a page sends while its pointer moves. */
 const POINTER_MS = 50;
 
@@ -58,9 +68,11 @@ export const startCrowd = async (
     }
   };
 
+  // One opening for the whole crowd: a grant opens its topic for whoever holds it, as a page's does for every tab.
+  const grants = grantsOf(await callAction(doorTo(origin), 'board-open', { id: board, password: '', key: '' }));
   const members: Connection[] = await Promise.all(
     Array.from({ length: size }, () =>
-      connect(origin, [`room:${board}`, `board:${board}`], heard => {
+      connect(origin, [`room:${board}`, `board:${board}`], grants, heard => {
         if (heard.topic === `board:${board}` && heard.type === 'elements') {
           hear(heard.data);
         }
