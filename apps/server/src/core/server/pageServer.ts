@@ -118,6 +118,9 @@ export const createPageServer = (
       pluginManager.forget(name, version);
       invalidatePluginComponentCache();
     },
+    // Every realtime connection told to go the moment the server stops taking new ones: an open socket or stream never
+    // ends on its own, and would hold the shutdown until the grace cut it.
+    onClosing: () => realtime?.close(),
     onDestroy: async () => {
       // Awaited first, and before the sockets go: the jobs running here are finished rather than abandoned, so a
       // rolling deploy costs no retries. Nothing else is waited for — what is still pending stays in the shared

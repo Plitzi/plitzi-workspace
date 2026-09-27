@@ -1212,6 +1212,12 @@ server.listen(3000);
 closeOnSignals(server, { afterClose: () => mongoClient.close() });
 ```
 
+`close()` does not wait for what never ends on its own: it stops taking connections, tells every realtime socket and
+stream to go (a WebSocket is closed with 1001, "going away", which the pages reconnect from once the server is back),
+ends any other event stream, lets what is being answered finish, and cuts whatever is still open after ten seconds
+(`SHUTDOWN_GRACE_MS`). A page left open on a board, or an agent's app listening, no longer holds a Ctrl+C or a
+SIGTERM until something kills the process.
+
 `@plitzi/sdk-server/mysql` has the same pair over a `mysql2` pool (`createMysqlJobQueue`, `createMysqlKv`). Anything
 else is the `ActionJobQueue` contract written against your store — see
 [server actions § self-hosted](https://github.com/plitzi/plitzi-workspace/blob/main/docs/en/server-actions.md#13-for-a-self-hosted-deployment).

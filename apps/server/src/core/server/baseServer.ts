@@ -1,5 +1,6 @@
 import { serverLog } from '../../helpers/serverLog';
 import { buildTransport, protoLabel } from '../transports';
+import { watchConnections } from './drain';
 import { channelName } from './fleet/link';
 import { relayCache, relayPlugins } from './fleet/relay';
 import { fleetRole, resolveWorkers } from './fleet/role';
@@ -45,6 +46,11 @@ export interface HttpServerParts {
   plugins: PluginRegistry;
   /** Started once the transport is bound: background work that should not run in a server nobody listened on. */
   onListen?: () => void;
+  /**
+   * The server has stopped taking connections and is shutting down: what holds connections open for good — realtime
+   * sockets and streams — lets them go now, rather than being cut when the grace runs out.
+   */
+  onClosing?: () => void;
   /** Awaited, so a server that holds work in flight — jobs, drains — can finish it before the sockets close. */
   onDestroy?: () => void | Promise<void>;
   /** What a plugin invalidated in another process of the fleet leaves to do here: forget it, in memory only. */
@@ -72,6 +78,7 @@ export const createHttpServer = (
 
   // Undefined until listen() builds the transport, and `close()` has to cope with that — see below.
   let primary: ReturnType<typeof buildTransport>['primary'] | undefined;
+  let connections: ReturnType<typeof watchConnections> | undefined;
   let h3: ReturnType<typeof buildTransport>['h3'];
   // Set on a primary that started workers instead of binding.
   let fleet: Fleet | undefined;
@@ -124,6 +131,7 @@ export const createHttpServer = (
 
       const handler = makeHandlerForPort(port);
       ({ primary, h3 } = buildTransport(config, handler, port, label));
+      connections = watchConnections(primary);
 
       primary.on('error', (error: NodeJS.ErrnoException) => {
         if (config.onListenError) {
@@ -152,31 +160,32 @@ export const createHttpServer = (
       // The workers first: each finishes what it is serving before the primary lets go of what it holds.
       await fleet?.stop();
       fleet = undefined;
+
+      // No new connection from here, and the open ones let go: requests finish, streams end, the rest is cut after the
+      // grace (`drain.ts`). Started before the jobs are waited for, so a page reconnecting meanwhile finds nothing.
+      const draining = connections?.drain(label);
+      const quic = h3;
+      primary = undefined;
+      connections = undefined;
+      h3 = undefined;
+      parts.onClosing?.();
       await parts.onDestroy?.();
 
-      const open = [primary, h3].filter(srv => srv !== undefined);
-      primary = undefined;
-      h3 = undefined;
+      await Promise.all([
+        draining,
+        quic &&
+          new Promise<void>((resolve, reject) => {
+            quic.close(error => {
+              if (error && !('code' in error && error.code === 'ERR_SERVER_NOT_RUNNING')) {
+                reject(error);
 
-      await Promise.all(
-        open.map(
-          srv =>
-            new Promise<void>((resolve, reject) => {
-              srv.close(err => {
-                // ERR_SERVER_NOT_RUNNING is the state close() is trying to reach, so it is not a failure: it
-                // shows up when the bind has not completed yet (a shutdown signal during startup) or when the
-                // transport was already closed. Anything else is a real teardown error.
-                if (err && (err as NodeJS.ErrnoException).code !== 'ERR_SERVER_NOT_RUNNING') {
-                  reject(err);
+                return;
+              }
 
-                  return;
-                }
-
-                resolve();
-              });
-            })
-        )
-      );
+              resolve();
+            });
+          })
+      ]);
     }
   };
 };

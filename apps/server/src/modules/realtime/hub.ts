@@ -20,6 +20,8 @@ export type RealtimeConnection = {
   /** Messages sent this second, by topic — the rate a channel allows is per connection, and a connection is here. */
   sent: Map<string, { second: number; count: number }>;
   send: (event: string, data: unknown) => void;
+  /** Closes it from the server's side — the server is going away. Its own `close` then lets it go as any other. */
+  end: () => void;
 };
 
 /** A space's topic, as the adapter knows it: namespaced, so two spaces never hear each other. */
@@ -135,6 +137,20 @@ export const createRealtimeHub = (pubsub: PubSubAdapter) => {
 
         await leave(connection, topic);
       }
+    },
+
+    /**
+     * Every connection closed from here: the server is shutting down. An open socket or event stream is a request that
+     * never ends, so a server waiting for them to finish waited for ever — each is told to go, and goes the way it
+     * goes when its page leaves.
+     */
+    closeAll: (): void => {
+      [...byToken.values()].forEach(connection => connection.end());
+    },
+
+    /** How many connections this process holds — for tests and for a health endpoint. */
+    get connectionCount(): number {
+      return byToken.size;
     },
 
     /** How many topics this process holds a subscription for — for tests and for a health endpoint. */

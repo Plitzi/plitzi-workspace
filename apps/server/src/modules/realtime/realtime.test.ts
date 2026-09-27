@@ -111,7 +111,7 @@ const connect = async (hub: RealtimeHub, topics: string, user?: Partial<SSRUser>
       .filter(entry => entry.event === 'message')
       .map(entry => entry.data as RealtimeMessage);
 
-  return { ready, heard, sent, close: async () => (controller.abort(), done) };
+  return { ready, heard, sent, done, close: async () => (controller.abort(), done) };
 };
 
 const publish = async (hub: RealtimeHub, body: Record<string, unknown>) => {
@@ -147,6 +147,20 @@ describe('realtime channels', () => {
       { topic: 'chat:1', reason: 'undeclared' }
     ]);
     await page.close();
+  });
+
+  it('closes every connection it holds when the server shuts down', async () => {
+    const hub = createRealtimeHub(createMemoryPubSub());
+    const alice = await connect(hub, 'board:1');
+    const bob = await connect(hub, 'board:1');
+
+    expect(hub.connectionCount).toBe(2);
+
+    hub.closeAll();
+    await Promise.all([alice.done, bob.done]);
+
+    expect(hub.connectionCount).toBe(0);
+    expect(hub.topicCount).toBe(0);
   });
 
   it('refuses a connection none of whose topics may be opened', async () => {

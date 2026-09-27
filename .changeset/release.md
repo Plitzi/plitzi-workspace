@@ -1082,3 +1082,12 @@ now put the right things there, authors can say the rest, and the linter says wh
   `outlineOfTree`, `outlineOfSnapshot` and `unnamedControls` are exported.
 - The MCP guide, its quickstart, the server instructions and the co-worker prompt teach it; so does the authoring skill
   (`reference/accessibility.md`, a recipe, the review checklist).
+
+## A server with pages open shuts down
+
+- `close()` — and so `closeOnSignals` — waited for every open connection to end, and a realtime WebSocket, an event
+  stream or an agent's listening MCP stream never does: with a page open, the first Ctrl+C or SIGTERM hung until a
+  second one, or a SIGKILL, cut it. Now the server stops taking connections, the realtime hub closes its connections
+  (a socket with 1001, going away), any other event stream is ended, requests being answered finish, and what is
+  still open after `SHUTDOWN_GRACE_MS` (10 s) is cut. `HttpServerParts.onClosing`; `RealtimeConnection.end`,
+  `hub.closeAll()`, `hub.connectionCount`.

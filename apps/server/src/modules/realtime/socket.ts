@@ -125,7 +125,8 @@ export const handleRealtimeSocket = async ({
 
       socket.send(JSON.stringify({ event, data }));
     };
-    const connection = connectionFor(admission, send);
+    // 1001, going away: what a page hears when the server shuts down, and reconnects from once it is back.
+    const connection = connectionFor(admission, send, () => socket.close(1001, 'The server is going away'));
 
     let alive = true;
     const heartbeat = setInterval(() => {

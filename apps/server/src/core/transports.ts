@@ -17,6 +17,9 @@ export type CloseableServer = {
   on: (event: 'error', listener: (error: NodeJS.ErrnoException) => void) => unknown;
 };
 
+/** The server a port is served by: Node's own, whichever protocol — what a shutdown drains (`server/drain.ts`). */
+export type PrimaryServer = http.Server | https.Server | http2.Http2SecureServer;
+
 /** A request asking to switch protocols: node hands over the socket, and the bytes it read past the headers. */
 export type UpgradeHandler = (req: IncomingMessage, socket: Duplex, head: Buffer) => void;
 
@@ -62,9 +65,9 @@ export const buildTransport = (
   handler: Handler,
   port: number,
   label = 'Server'
-): { primary: CloseableServer; h3?: CloseableServer } => {
+): { primary: PrimaryServer; h3?: CloseableServer } => {
   const version = config.httpVersion ?? 2;
-  let primary: CloseableServer;
+  let primary: PrimaryServer;
   let h3: CloseableServer | undefined;
 
   if (version >= 3) {

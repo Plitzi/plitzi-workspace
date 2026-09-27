@@ -111,7 +111,8 @@ export const admit = async (req: SSRRequest, resolveChannels: ChannelResolver): 
 /** A new connection for what was admitted, speaking through `send`. */
 export const connectionFor = (
   admission: Extract<Admission, { ok: true }>,
-  send: RealtimeConnection['send']
+  send: RealtimeConnection['send'],
+  end: RealtimeConnection['end']
 ): RealtimeConnection => ({
   id: randomUUID(),
   token: randomBytes(24).toString('base64url'),
@@ -120,7 +121,8 @@ export const connectionFor = (
   topics: admission.accepted,
   announced: new Set(),
   sent: new Map(),
-  send
+  send,
+  end
 });
 
 /** Whether this connection may send one more message on `topic` this second. */
@@ -217,7 +219,7 @@ export const handleRealtimeSubscribe = async ({
     finish = resolve;
   });
   const stream = openEventStream(raw, { onAbort: () => finish(), retryMs: RETRY_MS });
-  const connection = connectionFor(admission, stream.send);
+  const connection = connectionFor(admission, stream.send, () => finish());
 
   const release = onAbort(signal, () => finish());
   stream.send('ready', {

@@ -23,6 +23,8 @@ export type RealtimeModule = {
   /** Origins besides the server's own whose pages may open a socket. */
   allowedOrigins: readonly string[];
   resolveChannels: ChannelResolver;
+  /** Closes every connection this process holds: the server is shutting down (`HttpServerParts.onClosing`). */
+  close: () => void;
   /**
    * Publishes from the server — what a flow's `realtime.publish` does. Checked against the space's channels like a
    * page's publish, and sent `from: 'server'`: the one sender a page cannot be.
@@ -60,6 +62,7 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
     transport: config.realtime?.transport ?? 'sse',
     allowedOrigins: config.realtime?.allowedOrigins ?? [],
     resolveChannels,
+    close: () => hub.closeAll(),
     publish: async (space, topic, type, data) => {
       const channels = await resolveChannels(space.spaceId, space.environment);
       if (!matchChannel(topic, channels)) {
