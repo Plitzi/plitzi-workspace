@@ -249,7 +249,7 @@ const WATCHING: Step[] = [
   {
     title: 'How long it stays',
     says: [
-      'It stays while you work, however long its app goes without asking it anything. It leaves by itself when you ask it to — in the chat, or with ✕ on its avatar — when nobody else is on the board for two minutes, when nothing happens on the board for the time set in Board settings (30 minutes unless changed), or when the board’s password changes. It says why in the chat.'
+      'It stays while you work, however long its app goes without asking it anything. You can talk to it while it works — it hears you between its steps — and ■ on its avatar stops what it is doing. It leaves by itself when you ask it to — in the chat, or with ✕ on its avatar — when nobody else is on the board for two minutes, when nothing happens on the board for the time set in Board settings (30 minutes unless changed), or when the board’s password changes. It says why in the chat.'
     ]
   }
 ];

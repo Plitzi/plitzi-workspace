@@ -108,7 +108,10 @@ const declaration = {
       preview: { title: '', elements: '', count: '' }
     },
     /** A warning for the person about what they just did: a blocked card moved on, a link refused. */
-    onNotice: { action: 'onNotice', title: 'On Notice', type: 'trigger', params: {}, preview: { text: '' } },
+    /** Something to tell the person about what just happened: `text`, and `tone` — `info`, `success` or `warning`. */
+    onNotice: { action: 'onNotice', title: 'On Notice', type: 'trigger', params: {}, preview: { text: '', tone: '' } },
+    /** Words said at this page's cursor, sent with Enter: `text` — kept in the board's chat as well. */
+    onCursorSay: { action: 'onCursorSay', title: 'On Cursor Say', type: 'trigger', params: {}, preview: { text: '' } },
     /** A vote asked for on an element — its badge clicked, or `vote` called. */
     onVote: { action: 'onVote', title: 'On Vote', type: 'trigger', params: {}, preview: { id: '' } },
     /** The board's frames, in the order they are gone through: `frames` (`id`, `title`, `count`) and `count`. */
@@ -354,6 +357,13 @@ const declaration = {
     dismiss: {
       action: 'dismiss',
       title: 'Ask an Agent to Leave',
+      type: 'callback',
+      params: { from: { label: 'Agent (its `from` on the room)', defaultValue: '', type: 'text' } }
+    },
+    /** An agent on the board stops what it is doing: its next piece of work is refused, and it says where it got to. */
+    interrupt: {
+      action: 'interrupt',
+      title: 'Stop an Agent',
       type: 'callback',
       params: { from: { label: 'Agent (its `from` on the room)', defaultValue: '', type: 'text' } }
     },

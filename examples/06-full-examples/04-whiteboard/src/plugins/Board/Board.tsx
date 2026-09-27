@@ -215,6 +215,7 @@ const Board = ({
   const summonRef = useRef<((view: [number, number, number, number]) => void) | undefined>(undefined);
   /** An agent on the room asked to leave: said to it alone, by the id it is on the room with. */
   const dismissRef = useRef<((to: string) => void) | undefined>(undefined);
+  const interruptRef = useRef<((to: string) => void) | undefined>(undefined);
   const presentRef = useRef<((message: PresentMessage) => void) | undefined>(undefined);
   const flushPointer = useCallback(() => {
     timer.current = undefined;
@@ -293,7 +294,7 @@ const Board = ({
           setContents(event.outline);
           break;
         case 'notice':
-          trigger(declaration.triggers.onNotice.action, { text: event.text });
+          trigger(declaration.triggers.onNotice.action, { text: event.text, tone: event.tone ?? 'warning' });
           break;
         case 'templateSave':
           trigger(declaration.triggers.onTemplateSave.action, {
@@ -483,6 +484,7 @@ const Board = ({
     summonRef.current = view => void room.publish('summon', { view });
     presentRef.current = message => void room.publish('present', message);
     dismissRef.current = to => void room.publish('dismiss', { to });
+    interruptRef.current = to => void room.publish('interrupt', { to });
   }, [room]);
 
   // Who is in the room — and only a room: a board with none may be showing its played collaborators instead.
@@ -632,6 +634,14 @@ const Board = ({
           }
         }
       },
+      interrupt: {
+        ...declaration.callbacks.interrupt,
+        callback: (params: { from?: unknown }) => {
+          if (typeof params.from === 'string' && params.from) {
+            interruptRef.current?.(params.from);
+          }
+        }
+      },
       stamp: {
         ...declaration.callbacks.stamp,
         callback: (params: { emoji?: unknown }) => controllerRef.current?.stamp(params)
@@ -767,13 +777,22 @@ const Board = ({
     controllerRef.current?.typeChat(event.target.value);
   }, []);
 
-  const onChatKey = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
-    // Enter says it and closes; Escape closes. Either way the words linger a moment on the other screens.
-    if (event.key === 'Enter' || event.key === 'Escape') {
-      event.preventDefault();
-      chatRef.current?.blur();
-    }
-  }, []);
+  const onChatKey = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      // Enter says it and closes; Escape closes. Either way the words linger a moment on the other screens — and said
+      // with Enter, they are kept in the board's chat too, for whoever was not looking at the cursor.
+      if (event.key === 'Enter' || event.key === 'Escape') {
+        event.preventDefault();
+        const said = event.currentTarget.value.trim();
+        if (event.key === 'Enter' && said) {
+          trigger(declaration.triggers.onCursorSay.action, { text: said });
+        }
+
+        chatRef.current?.blur();
+      }
+    },
+    [trigger]
+  );
 
   const onChatDone = useCallback(() => controllerRef.current?.closeChat(), []);
 

@@ -21,6 +21,7 @@ import { createSearch } from './search.ts';
 import { isSound, REACTION_SOUNDS } from './sounds.ts';
 import { restyled } from './styling.ts';
 import { isDefined, isOneOf, isPoint, newId } from './values.ts';
+import { cardTitle } from '../../board/dependencies.ts';
 import {
   byStacking,
   DUTY_ROLES,
@@ -171,6 +172,41 @@ export const createBoardController = (
       } else if (known && element.done && !known.done) {
         sounds.play(element.type === 'comment' ? 'resolve' : 'done');
       }
+
+      tellLinks(known, element);
+    }
+  };
+
+  /**
+   * A card somebody else made wait on another — or no longer: said on this page too, as it is to whoever did it, so
+   * nobody finds a red "Blocked" tab without knowing where it came from.
+   */
+  const tellLinks = (known: BoardElement | undefined, element: BoardElement): void => {
+    if (!known || element.type !== 'card' || element.deleted) {
+      return;
+    }
+
+    const before = new Set(known.blockedBy ?? []);
+    const after = new Set(element.blockedBy ?? []);
+    const titleOf = (id: string): string => {
+      const other = scene.element(id);
+
+      return other ? cardTitle(other) : 'a card';
+    };
+    const added = [...after].filter(id => !before.has(id));
+    const removed = [...before].filter(id => !after.has(id));
+    if (added.length) {
+      core.emit({
+        type: 'notice',
+        text: `On the board: “${cardTitle(element)}” now waits on “${titleOf(added[0])}”`,
+        tone: 'info'
+      });
+    } else if (removed.length) {
+      core.emit({
+        type: 'notice',
+        text: `On the board: “${cardTitle(element)}” no longer waits on “${titleOf(removed[0])}”`,
+        tone: 'info'
+      });
     }
   };
   /** Until when a board just opened stays quiet about the people it finds there. */

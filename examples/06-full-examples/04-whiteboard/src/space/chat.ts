@@ -239,7 +239,7 @@ const send = styles('chatSend', {
 });
 
 /** A line said in the chat — typed, or an emoji sent with one click — and, refused, why. */
-const sayInChat = (text: string, name: string): StepSpec[] => [
+export const sayInChat = (text: string, name: string): StepSpec[] => [
   boardAction('chime', { sound: 'sent' }),
   named(
     name,

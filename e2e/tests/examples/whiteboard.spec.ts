@@ -1,6 +1,7 @@
 import { pressShortcut } from '@plitzi/sdk-authoring';
 
 import { describeTarget, expect, test } from '../../fixtures';
+import { agentAt } from '../../helpers/mcpAgent';
 
 import type { Page } from '@playwright/test';
 
@@ -350,6 +351,94 @@ describeTarget('whiteboard', subject => {
     await expect.poll(yOf).toBe(3);
   });
 
+  /** Brought beside another, a shape stops at a gap from it — room to breathe, a column's spacing, or all but
+   *  touching — whichever it comes nearest, on either side. */
+  test('a shape brought beside another stops at a gap from it, far, near or all but touching', async ({ page }) => {
+    const still = element(0, { type: 'rectangle', x: 0, y: 0, width: 100, height: 100 });
+    const moved = element(1, { type: 'rectangle', x: 300, y: 0, width: 100, height: 100 });
+    const id = await seedBoard(subject.origin, 'e2e — gaps', [still, moved]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    // Fitted at its own size around both: the board's middle, (200, 50), is the canvas's.
+    const [x, y] = await middle(page);
+    const xOf = async () => (await savedElements(subject.origin, id)).find(saved => saved.id === moved.id)?.x;
+
+    // 174 left puts it 26 from the other: it stops at 24.
+    await drag(page, [x + 150, y], [x + 150 - 174, y], 8);
+    await expect.poll(xOf).toBe(124);
+    // 11 more puts it 13 away: it stops at 12, a column's spacing.
+    await drag(page, [x - 26, y], [x - 37, y], 6);
+    await expect.poll(xOf).toBe(112);
+    // 9 more puts it 3 away: all but touching.
+    await drag(page, [x - 38, y], [x - 47, y], 6);
+    await expect.poll(xOf).toBe(102);
+  });
+
+  /** Said at the cursor with Enter, words are kept in the board's chat as well: whoever was not looking at the cursor
+   *  reads them there, and so does an agent. */
+  test('words said at the cursor are kept in the board chat too', async ({ page }) => {
+    const id = await seedBoard(subject.origin, 'e2e — cursor chat', []);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    await page.mouse.move(...(await middle(page)));
+    await page.keyboard.press('/');
+    await page.getByRole('textbox', { name: 'Say something at your cursor' }).fill('Hola desde el cursor');
+    await page.keyboard.press('Enter');
+
+    await expect
+      .poll(async () => {
+        const opened = (await action(subject.origin, 'board-open', { id, password: '', key: '' })) as {
+          chat: { text: string }[];
+        };
+
+        return opened.chat.map(line => line.text);
+      })
+      .toContain('Hola desde el cursor');
+  });
+
+  /** An agent on the board as a teammate is: it hears what is said while it works, stops when somebody presses stop,
+   *  and once it has gone it is gone — no cursor left behind by the words it last said. */
+  test('an agent hears the board between its steps, stops when told, and leaves no ghost', async ({ page }) => {
+    const id = await seedBoard(subject.origin, 'e2e — agent', []);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    const agent = await agentAt(subject.origin);
+    await agent.call('join_board', { link: `${subject.origin}/b/${id}` });
+    const stop = page.getByRole('button', { name: 'Stop the agent' });
+    await expect(stop).toBeVisible();
+
+    // Said in the chat while it works: it hears it with the answer to whatever it does next — once.
+    await action(subject.origin, 'board-chat', {
+      board: id,
+      key: '',
+      name: 'Ana',
+      color: 'blue',
+      text: '¿Cuánto te falta?',
+      by: 'e2e-person'
+    });
+    await expect.poll(async () => agent.call('read_board')).toContain('Ana in the chat: ¿Cuánto te falta?');
+    expect(await agent.call('read_board')).not.toContain('Meanwhile on the board');
+
+    // Stop pressed: its next piece of work is refused, and talking still works.
+    await stop.click();
+    await expect
+      .poll(async () => {
+        const moved = await agent.answer('point_at', { x: 0, y: 0 });
+
+        return moved.failed && moved.text.startsWith('STOPPED');
+      })
+      .toBe(true);
+    await agent.call('say', { text: 'Me quedé en el primer paso.' });
+
+    // Its last words fade five seconds after it went: that used to bring it back, as a cursor nobody could remove.
+    await agent.call('say', { text: 'Me voy.', where: 'both' });
+    await agent.call('leave_board');
+    const dismiss = page.getByRole('button', { name: 'Ask the agent to leave' });
+    await expect(dismiss).toHaveCount(0, { timeout: 15_000 });
+    await page.waitForTimeout(6500);
+    await expect(dismiss).toHaveCount(0);
+  });
+
   /** The library is a place to take elements from, as the pad is: a tile dragged onto the board lands where it is let
    *  go, and one let go over the library itself goes back. A click still puts the tool in hand. */
   test('an element dragged off the library lands where it is let go', async ({ page }) => {
@@ -641,6 +730,7 @@ describeTarget('whiteboard', subject => {
     await page.mouse.move(...at([540, 90]));
     await page.mouse.click(...at([550, 86]));
     await expect.poll(async () => (await saved(client))?.blockedBy).toEqual([api.id]);
+    await expect(page.getByText('“Build the client” now waits on “Design the API”')).toBeVisible();
 
     await page.keyboard.press('Escape');
     await drag(page, at([150, 86]), at([950, 200]), 12);
@@ -700,7 +790,6 @@ describeTarget('whiteboard', subject => {
         { text: 'Design the API', parent: todo.id, done: true },
         { text: 'Write the docs', parent: done.id, done: true }
       ]);
-
   });
 
   test('a frame is branched and the branch taken back', async ({ page }) => {

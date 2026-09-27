@@ -1593,6 +1593,11 @@ export const drawCursor = (
     context.globalAlpha = 1;
     context.font = `500 14px ${font}`;
     lines.forEach((line, index) => context.fillText(line, 24, 42 + index * 18));
+    // An agent talking while it works is still working: what it is doing stays beside what it says.
+    if (status && status !== 'idle') {
+      drawAgentStatus(context, 14 + width + 4, 20, status, colour, font);
+    }
+
     context.restore();
 
     return;

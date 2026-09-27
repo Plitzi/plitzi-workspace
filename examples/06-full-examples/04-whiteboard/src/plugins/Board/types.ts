@@ -209,7 +209,8 @@ export type ControllerEvent =
   /** The board as a list, for whoever cannot read the canvas (`outline.ts`) — told a moment after it changes. */
   | { type: 'outline'; outline: Outline }
   /** A warning for this person about what they just did: a blocked card moved on, a link refused. */
-  | { type: 'notice'; text: string }
+  /** Something to tell the person about what just happened — a warning, unless `tone` says it is news or a success. */
+  | { type: 'notice'; text: string; tone?: 'info' | 'success' | 'warning' }
   /** A vote asked for — a click on an element's badge, or the selection's vote button. */
   | { type: 'vote'; id: string }
   /** The chat field at the cursor: open (where, on screen), or closed. */

@@ -24,6 +24,7 @@ import { COLUMN_PADDING, layoutColumn, membersOf, moved, readingOrder } from '..
 import { anchorPoint, boundsOf, nearestAnchor, overlaps } from '../plugins/Board/geometry.ts';
 import { restyled } from '../plugins/Board/styling.ts';
 
+import type { ToolCallHooks } from './observe.ts';
 import type { Activity, Door, Session } from './session.ts';
 import type { BoardElement, Point } from '../board/model.ts';
 import type { AgentStatus } from '../board/people.ts';
@@ -97,6 +98,8 @@ const describeActivity = (entry: Activity): string => {
       return `Heads-up: ${entry.text}`;
     case 'joined':
       return `${entry.name} joined`;
+    case 'stop':
+      return `${entry.name} pressed stop`;
     case 'left':
       return `${entry.name} left`;
   }
@@ -117,9 +120,10 @@ const CLOSE_THE_SESSION =
 /** How often a long wait says it is still waiting, to a client that asked to be told. */
 const PROGRESS_MS = 15_000;
 
-export type AgentTools = {
-  /** A tool call began: it is working — or listening, for `wait_for_activity`. The answer says it has ended. */
-  called: (tool: string) => () => void;
+/** What an agent may still do once somebody pressed stop: talk, listen, look — and go. Everything else is work. */
+const WHILE_STOPPED = new Set(['say', 'wait_for_activity', 'read_board', 'find_elements', 'my_duties', 'leave_board']);
+
+export type AgentTools = ToolCallHooks & {
   /** Whether it is on a board now. */
   present: () => boolean;
   /** Off its board, saying `reason` in the chat — its client is gone. */
@@ -130,9 +134,17 @@ export type AgentTools = {
 export const registerTools = (server: McpServer, options: AgentOptions): AgentTools => {
   let session: Session | undefined;
   let lastLooked = Date.now();
+  /** When it joined the board it is on: what it is told of the people's words starts there. */
+  let joinedAt = Date.now();
   let status: AgentStatus = 'idle';
   let running = 0;
   let settle: ReturnType<typeof setTimeout> | undefined;
+  /** What of the people's words it has been told, and as what — a line at a cursor grows as it is typed. */
+  const told = new WeakMap<Activity, string>();
+  const tell = (entries: readonly Activity[]): void => {
+    entries.forEach(entry => told.set(entry, 'text' in entry ? entry.text : entry.kind));
+  };
+  const untold = (entry: Activity): boolean => told.get(entry) !== ('text' in entry ? entry.text : entry.kind);
 
   const show = (next: AgentStatus): void => {
     status = next;
@@ -200,6 +212,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
     session = next;
     next.setStatus(status);
     lastLooked = Date.now();
+    joinedAt = lastLooked;
     // In the middle of what is there, where people will see it arrive.
     const elements = next.elements();
     const landing = elements.length ? centre(elements[Math.floor(elements.length / 2)]) : ([0, 0] as Point);
@@ -853,6 +866,9 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
     },
     async ({ seconds = 45, frames }, extra) => {
       const board = onBoard();
+      // Listening is what a stop asks for: one pressed now, or while it listens, is answered by this — told in what it
+      // hears — and holds back no work later.
+      board.takeStop();
       const watched = new Set((frames ?? []).flatMap(name => frameNamed(board, name)?.id ?? []));
       if (frames?.length && !watched.size) {
         throw new Error(`No frame named ${frames.join(', ')} on the board — my_duties or read_board for the ids`);
@@ -884,7 +900,14 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
                 })
                 .catch(() => undefined);
             }, PROGRESS_MS);
-      const heard = await board.activitySince(since, seconds * 1000, worth).finally(() => clearInterval(beat));
+      // What it was already told between two steps of its work is not news again.
+      const heard = (
+        await board
+          .activitySince(since, seconds * 1000, entry => worth(entry) && untold(entry))
+          .finally(() => clearInterval(beat))
+      ).filter(untold);
+      tell(heard);
+      board.takeStop();
       lastLooked = Date.now();
       if (board.left !== undefined) {
         return text(`You left the board while listening — ${board.left}.`);
@@ -1299,6 +1322,28 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
 
   return {
     called,
+    refuse: tool => {
+      const who = session?.left === undefined && !WHILE_STOPPED.has(tool) ? session?.takeStop() : undefined;
+
+      return who === undefined
+        ? undefined
+        : `STOPPED — ${who} pressed stop on the board, so this was not done, and neither is the rest of what you were ` +
+            'doing. Say in the chat, in a line, where you got to, then wait_for_activity for what they want instead.';
+    },
+    news: () => {
+      const fresh = session ? session.saidSince(joinedAt).filter(untold) : [];
+      if (!fresh.length) {
+        return undefined;
+      }
+
+      tell(fresh);
+
+      return [
+        'Meanwhile on the board — answer what asks you something now (say), change course if they want something else, ' +
+          'and stop if they ask you to:',
+        ...fresh.map(entry => `- ${describeActivity(entry)}`)
+      ].join('\n');
+    },
     present: () => session !== undefined && session.left === undefined,
     leave: reason => {
       clearTimeout(settle);

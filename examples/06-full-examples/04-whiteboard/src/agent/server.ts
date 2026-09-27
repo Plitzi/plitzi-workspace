@@ -29,6 +29,7 @@ How you work:
 - Kanban: a frame with layout "column" stacks what is put in it; cards have a done box (update_elements done: true), and a column that completes ticks off what is moved into it.
 - Point at what you mean (point_at), connect related ideas (connect), answer comments where they are (reply_to_comment).
 - Stay with them: after you speak, wait_for_activity and answer what they say, and keep listening while they want you around. You stay on the board between calls.
+- While you work, what the people say comes back with each tool's answer ("Meanwhile on the board"). Read it every time: answer a question at once with say, change course when they ask for something else, and stop when they ask you to. A tool answering STOPPED means someone pressed stop: say where you got to and wait_for_activity.
 - You leave when asked (leave_board), when nobody else is on the board, or after the board's quiet time — a tool then says why; do not go on working on a board you have left.
 - Never delete or rewrite what others made unless they asked.`;
 
@@ -48,7 +49,7 @@ export const createAgentServer = (options: AgentOptions): AgentServer => {
 
   return {
     server,
-    connect: transport => server.connect(observeToolCalls(transport, tools.called)),
+    connect: transport => server.connect(observeToolCalls(transport, tools)),
     present: tools.present,
     leave: tools.leave
   };

@@ -50,7 +50,7 @@ import {
   readOnlyOnly,
   unlockScreen
 } from './access.ts';
-import { chatButton, chatPanel, hearChat } from './chat.ts';
+import { chatButton, chatPanel, hearChat, sayInChat } from './chat.ts';
 import { COPY_DECLARATION, copyClass, copyText } from './copy.ts';
 import { deleteButton, deletePanel } from './deleteBoard.ts';
 import { dutyPanel } from './duty.ts';
@@ -507,15 +507,26 @@ const canvas = (): ElementSpec =>
         )
       ],
       templateSaveFlow,
-      // What the canvas warns the person of, about what they just did: a blocked card moved on, a link refused.
+      // Words said at the cursor with Enter are kept in the chat too: said once, read by whoever looks either way.
+      [
+        named('cursorSaid', declaredTrigger(declaration, 'onCursorSay')),
+        ...sayInChat('{{ cursorSaid.text }}', 'cursorChat')
+      ],
+      // What the canvas tells the person about what just happened: a blocked card moved on, a link made or refused —
+      // in the colour of what it is: a warning, news, or something done.
       [
         named('told', declaredTrigger(declaration, 'onNotice')),
-        addNotification({
-          content: '{{ told.text }}',
-          appearance: 'warning',
-          placement: 'bottom-center',
-          autoDismissTimeout: 5000
-        })
+        ...(['warning', 'info', 'success'] as const).map(tone =>
+          when(
+            { field: 'told.tone', operator: '=', value: tone },
+            addNotification({
+              content: '{{ told.text }}',
+              appearance: tone,
+              placement: 'bottom-center',
+              autoDismissTimeout: 5000
+            })
+          )
+        )
       ],
       // A vote — a badge clicked, or the selection's button — kept by the server, one at a time, and announced.
       [

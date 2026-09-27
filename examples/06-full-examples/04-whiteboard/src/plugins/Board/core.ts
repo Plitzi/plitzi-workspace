@@ -19,7 +19,7 @@ import { createScene } from './scene.ts';
 import { createSounds } from './sounds.ts';
 import { byField, restyled, styleOf } from './styling.ts';
 import { newId, newSeed } from './values.ts';
-import { blockedWarning, movedOnBlocked, toggledBlocker } from '../../board/dependencies.ts';
+import { blockedWarning, cardTitle, movedOnBlocked, toggledBlocker } from '../../board/dependencies.ts';
 import {
   byStacking,
   holdsText,
@@ -974,6 +974,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     state.pickingBlocker = card.id;
     canvas.style.cursor = 'crosshair';
     invalidate();
+    emit({ type: 'notice', text: `Click the card “${cardTitle(card)}” waits on — Esc to cancel`, tone: 'info' });
   };
 
   /**
@@ -988,7 +989,13 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     const shown = lying();
     const card = id === undefined ? undefined : shown.get(id);
     const blocker = target ? shown.get(target.id) : undefined;
-    if (!card || blocker?.type !== 'card') {
+    if (!card) {
+      return;
+    }
+
+    if (blocker?.type !== 'card') {
+      emit({ type: 'notice', text: `Nothing linked — “${cardTitle(card)}” waits on what it did before`, tone: 'info' });
+
       return;
     }
 
@@ -1003,6 +1010,13 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     sounds.play(result.added ? 'connect' : 'remove');
     commit([result.card]);
     setSelection([card.id]);
+    emit({
+      type: 'notice',
+      text: result.added
+        ? `“${cardTitle(card)}” now waits on “${cardTitle(blocker)}”`
+        : `“${cardTitle(card)}” no longer waits on “${cardTitle(blocker)}”`,
+      tone: 'success'
+    });
   };
 
   const commit = (changes: readonly BoardElement[]): void => {

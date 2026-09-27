@@ -28,7 +28,9 @@ export type Activity =
   | { kind: 'changed'; name: string; count: number; ids: string[]; at: number }
   | { kind: 'joined' | 'left'; name: string; at: number }
   /** What the board itself flags: a blocked card moved on. */
-  | { kind: 'warning'; name: string; text: string; at: number };
+  | { kind: 'warning'; name: string; text: string; at: number }
+  /** Somebody pressed stop on this agent: whatever it is doing, it stops. */
+  | { kind: 'stop'; name: string; at: number };
 
 type Member = { name: string; color: string; agent: boolean };
 
@@ -163,6 +165,12 @@ export const joinBoard = async (
   let expiresAt = loaded.expiresAt;
   /** Since when its socket on the board's channels could not be opened again. */
   let lostSince: number | undefined;
+  /** Who pressed stop on it, until its next tool call hears it: that call is refused, and the work it was in with it. */
+  let stopAsked: string | undefined;
+  /** What this agent says at its cursor, and until when — carried by every move, so a dropped message loses nothing. */
+  let saying = { text: '', until: 0 };
+  /** The move that clears its words once their time is up. */
+  let fade: ReturnType<typeof setTimeout> | undefined;
   /** Who this agent is on the board, as a page's visitor id: what it writes face down is its own by this, not its name. */
   const visitor = Array.from({ length: 16 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[randomInt(36)]).join('');
 
@@ -227,6 +235,12 @@ export const joinBoard = async (
         };
         chat.push(line);
         lastActive = Date.now();
+        // Said at a cursor and then kept in the chat — the cursor chat does both — it is heard once, as a chat line.
+        const last = activity.at(-1);
+        if (last?.kind === 'said' && last.name === line.name && last.text.trim() === line.text.trim()) {
+          activity.pop();
+        }
+
         if (!line.agent || line.name !== name) {
           note({ kind: 'chat', name: line.name, text: line.text, at: line.at });
         }
@@ -265,7 +279,21 @@ export const joinBoard = async (
     }
 
     if (type === 'dismiss' && isRecord(data) && data.to === connection.me) {
+      // Gone already and still seen — its socket outlived its going: a second ✕ takes it off for good.
+      if (left !== undefined) {
+        connection.close();
+
+        return;
+      }
+
       leave(`${nameOf(from)} asked me to leave`);
+
+      return;
+    }
+
+    if (type === 'interrupt' && isRecord(data) && data.to === connection.me) {
+      stopAsked = nameOf(from);
+      note({ kind: 'stop', name: stopAsked, at: Date.now() });
 
       return;
     }
@@ -302,6 +330,11 @@ export const joinBoard = async (
 
   /** A dropped socket is reopened before anything is said on it. */
   const live = async (): Promise<Connection> => {
+    // Once it has left, nothing opens its line again — a cursor move still pending would bring it back as a ghost.
+    if (left !== undefined) {
+      throw new Error(`I left the board — ${left}`);
+    }
+
     if (connection.closed) {
       connection = await connect(origin, topics, heard => hear(heard));
       connection.announce(room, self());
@@ -324,6 +357,7 @@ export const joinBoard = async (
 
     left = reason;
     clearInterval(watch);
+    clearTimeout(fade);
     const goodbye =
       announce && people() > 0 && !gone
         ? callAction(door, 'board-chat', {
@@ -377,11 +411,12 @@ export const joinBoard = async (
     840
   ];
 
-  /** What this agent says at its cursor, and until when — carried by every move, so a dropped message loses nothing. */
-  let saying = { text: '', until: 0 };
-
   const pointer = async (at: Point, extra: Record<string, unknown> = {}): Promise<void> => {
     cursor = at;
+    if (left !== undefined) {
+      return;
+    }
+
     await (
       await live()
     ).publish(`room:${loaded.topic}`, 'pointer', {
@@ -490,7 +525,8 @@ export const joinBoard = async (
       saying = { text: text.slice(0, 160), until: Date.now() + 5000 };
       await pointer(cursor);
       // Said once more when its time is up, as empty: the words fade on the others' screens.
-      setTimeout(() => void pointer(cursor), 5100);
+      clearTimeout(fade);
+      fade = setTimeout(() => void pointer(cursor).catch(() => undefined), 5100);
     },
     /**
      * A presentation, as a page gives one: every page on the board eases to `view` and says who presents and where —
@@ -560,6 +596,20 @@ export const joinBoard = async (
     get left() {
       return left;
     },
+    /** Who pressed stop on it since it last looked — and the press forgotten, since it has now been heard. */
+    takeStop: (): string | undefined => {
+      const who = stopAsked;
+      stopAsked = undefined;
+
+      return who;
+    },
+    /** What was said on the board since `since` — chat, cursor words, warnings, stops: what it answers while working. */
+    saidSince: (since: number): Activity[] =>
+      activity.filter(
+        entry =>
+          entry.at > since &&
+          (entry.kind === 'chat' || entry.kind === 'said' || entry.kind === 'warning' || entry.kind === 'stop')
+      ),
     get status() {
       return status;
     },

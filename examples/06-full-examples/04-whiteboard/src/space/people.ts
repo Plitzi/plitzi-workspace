@@ -135,6 +135,32 @@ const dismiss = styles('agentDismiss', {
   ancestors: { [avatarItem.name]: { states: { hover: { opacity: '1' } } } }
 });
 
+/**
+ * Stops an agent at work: on its avatar, opposite the ✕, while it is working or thinking between two steps — its next
+ * piece of work is refused, and it says where it got to. Always shown while it works: stopping is what is reached for
+ * in a hurry.
+ */
+const stopWork = styles('agentStop', {
+  css: {
+    ...BUTTON_RESET,
+    position: 'absolute',
+    bottom: '-6px',
+    right: '-6px',
+    'z-index': '2',
+    display: 'inline-flex',
+    'align-items': 'center',
+    'justify-content': 'center',
+    width: '16px',
+    height: '16px',
+    'border-radius': '50%',
+    'font-size': '8px',
+    'line-height': '1',
+    color: 'var(--on-accent)',
+    'background-color': 'var(--danger)'
+  },
+  states: { 'focus-visible': { outline: '2px solid var(--accent)' } }
+});
+
 /** What an agent is doing, in words, from what it announces on the room. */
 const AGENT_DOING =
   "({'working': 'working…', 'thinking': 'thinking…', 'listening': 'listening to you', 'idle': 'idle — ask it in its app'}[source.status] ?? 'here')";
@@ -180,8 +206,21 @@ const others = (): ElementSpec =>
             flows: [[onClick(), boardAction('follow', { from: '{{ list_people.item.from }}' })]]
           }),
           button({
+            content: '■',
+            title: 'Stop what it is doing',
+            label: 'Stop the agent',
+            class: stopWork,
+            visible: {
+              source: 'people.item.state',
+              template:
+                "{{ source.agent and (source.status == 'working' or source.status == 'thinking') ? true : false }}"
+            },
+            flows: [[onClick(), boardAction('interrupt', { from: '{{ list_people.item.from }}' })]]
+          }),
+          button({
             content: '✕',
             title: 'Ask it to leave the board',
+            label: 'Ask the agent to leave',
             class: dismiss,
             visible: { source: 'people.item.state', template: '{{ source.agent ? true : false }}' },
             flows: [[onClick(), boardAction('dismiss', { from: '{{ list_people.item.from }}' })]]
