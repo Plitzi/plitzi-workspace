@@ -35,7 +35,7 @@ const SegmentsContextProvider = ({ children }: SegmentsContextProviderProps) => 
       }
 
       try {
-        const response = await query('Segment', { identifier }, 'network-only');
+        const response = await query('Segment', { identifier });
         const segmentRaw = response.result?.Segment;
         let segmentNew: Segment | undefined = undefined;
         if (response.success && segmentRaw) {

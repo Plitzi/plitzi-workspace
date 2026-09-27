@@ -14,7 +14,6 @@ import { enUS } from 'date-fns/locale/en-US';
 import { es } from 'date-fns/locale/es';
 import { pt } from 'date-fns/locale/pt';
 import { parseISO } from 'date-fns/parseISO';
-import { toZonedTime } from 'date-fns-tz/toZonedTime';
 
 import type { FormatDistanceToNowOptions, Locale } from 'date-fns';
 
@@ -71,6 +70,25 @@ export function formatDate(
   return format(d, formatStr, { locale: locales[locale] });
 }
 
+/**
+ * The same instant, moved so that its local fields read what its UTC fields do — which is how `format`, reading local
+ * fields, prints UTC. `setFullYear` because the constructor reads years 0–99 as 1900–1999.
+ */
+const utcWallClock = (d: Date): Date => {
+  const wallClock = new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    d.getUTCHours(),
+    d.getUTCMinutes(),
+    d.getUTCSeconds(),
+    d.getUTCMilliseconds()
+  );
+  wallClock.setFullYear(d.getUTCFullYear());
+
+  return wallClock;
+};
+
 export function formatDateUTC(
   date?: string | number | Date,
   formatStr: string = 'dd MMMM, yyyy',
@@ -82,10 +100,14 @@ export function formatDateUTC(
 
   const d = parseDate(date);
 
-  return format(toZonedTime(d, 'UTC'), formatStr, { locale: locales[locale] });
+  return format(utcWallClock(d), formatStr, { locale: locales[locale] });
 }
 
-/** Formats a UTC timestamp/string to local timezone */
+/**
+ * Formats a UTC timestamp/string in the local timezone. A `Date` is an instant and `format` reads its local fields, so
+ * there is nothing to convert: moving it first is what printed the repeated hour at the end of daylight saving time an
+ * hour off.
+ */
 export function formatUTCToLocal(
   date?: string | number | Date,
   formatStr: string = 'dd MMMM, yyyy HH:mm',
@@ -95,11 +117,7 @@ export function formatUTCToLocal(
     return '';
   }
 
-  const d = parseDate(date);
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const localDate = toZonedTime(d, timeZone);
-
-  return format(localDate, formatStr, { locale: locales[locale] });
+  return format(parseDate(date), formatStr, { locale: locales[locale] });
 }
 
 /**

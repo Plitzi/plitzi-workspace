@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { PageInfo, SegmentRaw } from '../../../../../types';
 
 export type TSegmentsQuery = {
   Segments: { edges: SegmentRaw[]; pageInfo: PageInfo };
 };
 
-const SegmentsQuery = gql`
+const SegmentsQuery = /* GraphQL */ `
   query SegmentsQuery($environment: String!, $filter: JsonObject, $cursor: String, $limit: Int) {
     Segments(environment: $environment, filter: $filter, cursor: $cursor, limit: $limit) {
       edges {

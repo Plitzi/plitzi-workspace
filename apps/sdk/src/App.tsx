@@ -1,4 +1,3 @@
-import { ApolloProvider } from '@apollo/client/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { buttonTheme } from '@plitzi/plitzi-ui/Button';
 import { containerCollapsableTheme } from '@plitzi/plitzi-ui/ContainerCollapsable';
@@ -15,7 +14,6 @@ import clsx from 'clsx';
 import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, useState, Fragment } from 'react';
 import { BrowserRouter, MemoryRouter, StaticRouter } from 'react-router-dom';
 
-import { initClient } from '@modules/App/AppHelper';
 import AppMain from '@modules/App/AppMain';
 import { readDebugPreference, writeDebugPreference } from '@modules/App/debugPreference';
 import SpaceThemeProvider from '@modules/App/SpaceThemeProvider';
@@ -35,7 +33,6 @@ import { tracingCollector, tracingMiddleware } from '@plitzi/sdk-shared/store/tr
 
 import { getEnvironmentServer } from './config';
 
-import type { ApolloClient } from '@apollo/client/core';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type {
   AnalyticsConfig,
@@ -161,7 +158,6 @@ const App = ({
   const [debugPreference, setDebugPreference] = useState(() => readDebugPreference(debugCookie));
   const debugMode = debugModeProp && debugPreference;
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
-  const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
 
   useEffect(() => {
     console.log(
@@ -294,18 +290,16 @@ const App = ({
           >
             <HelmetProvider>
               <ReactRouter {...(reactRouterProps as { location: string })}>
-                <ApolloProvider client={client}>
-                  <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-                    <AppMain
-                      server={finalServer}
-                      webKey={webKey}
-                      renderMode={renderMode}
-                      debugMode={debugMode}
-                      webId={webId}
-                      {...sdkProps}
-                    />
-                  </ComponentProvider>
-                </ApolloProvider>
+                <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                  <AppMain
+                    server={finalServer}
+                    webKey={webKey}
+                    renderMode={renderMode}
+                    debugMode={debugMode}
+                    webId={webId}
+                    {...sdkProps}
+                  />
+                </ComponentProvider>
               </ReactRouter>
             </HelmetProvider>
           </ThemedRoot>

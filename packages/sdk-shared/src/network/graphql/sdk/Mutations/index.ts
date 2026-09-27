@@ -3,6 +3,6 @@
 // exposing a mutation per operation. The map stays so the network layer's generic typing keeps compiling.
 export type SdkMutationsMap = Record<string, never>;
 
-const SdkMutations: Record<string, never> = {};
+const SdkMutations: Record<keyof SdkMutationsMap, string> = {};
 
 export default SdkMutations;

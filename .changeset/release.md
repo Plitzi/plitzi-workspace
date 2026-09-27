@@ -407,10 +407,10 @@
   no longer exported from `helpers/formatDate`.
 - Needs `@plitzi/plitzi-ui` with the same fix in its `formatDate` (the QueryBuilder evaluator a server loads imported
   date-fns whole, and `parse` for one fixed format). Measured on the SSR example: resident memory at rest 308 → 177 MB.
-- The SDK builds to one file again: `plitzi-sdk.js`, with no `withElement-<hash>.js` or `rolldown-runtime-<hash>.js`
+- Everything a page runs is in `plitzi-sdk.js` again, with no `withElement-<hash>.js` or `rolldown-runtime-<hash>.js`
   beside it. The plugin loader's dynamic imports split a chunk off, which every host serving the SDK by name had to
-  know about. `codeSplitting: false` (rolldown's name for the deprecated `inlineDynamicImports`) in both the SDK and
-  the vendor builds.
+  know about. The vendor build has `codeSplitting: false`; the SDK's keeps every module its entry reaches statically in
+  the entry (see "A lighter SDK" for the one chunk it does split).
 
 ## A page server that fits in half a CPU and 256 MB
 
@@ -950,8 +950,8 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   cards: a red "Blocked" tab while any is open, a dashed line to each when selected, a warning when one is moved on
   anyway — which a guardian agent hears too — and `is:blocked` in the search. A List view (⇧L): the board as a list with
   a
-button for every change, always in the page for a screen reader or Claude in Chrome, which reads the accessibility tree
-and not a canvas. It runs on several replicas over Redis
+  button for every change, always in the page for a screen reader or Claude in Chrome, which reads the accessibility tree
+  and not a canvas. It runs on several replicas over Redis
   (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action `kv` shared by all
   of them, and which replica holds each agent's session — a call reaching another is passed on to it (`REPLICA_URL`), so
   no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine, and the
@@ -1091,3 +1091,27 @@ now put the right things there, authors can say the rest, and the linter says wh
   (a socket with 1001, going away), any other event stream is ended, requests being answered finish, and what is
   still open after `SHUTDOWN_GRACE_MS` (10 s) is cut. `HttpServerParts.onClosing`; `RealtimeConnection.end`,
   `hub.closeAll()`, `hub.connectionCount`.
+
+## A lighter SDK
+
+`plitzi-sdk.js` (production) goes from 1141 KB to 766 KB minified, 342 KB to 239 KB gzipped. Nothing a page does
+changed.
+
+- No Apollo in the SDK. It sends three queries, always to the network, and carried a GraphQL client with a normalized
+  cache, `graphql`'s parser, rxjs and optimism for them — a quarter of the bundle. A `fetch` sends them now
+  (`createGraphqlClient`, `GraphqlRequestError` with `failure: 'network' | 'http' | 'graphql'`), a 401 still reaches
+  the auth-failure channel, and a page that cannot load says what it said before ("Access not authorized", "Service
+  not available"). `SdkQueries` in `sdk-shared` are strings rather than `gql` documents, typed
+  `Record<keyof SdkQueriesMap, string>`; the builder's documents are unchanged. `@apollo/client` and `graphql` are no
+  longer dependencies of `@plitzi/plitzi-sdk`.
+- The dev-tools panel is a chunk of its own, `plitzi-sdk-devtools-<hash>.js`, beside `plitzi-sdk.js`: a page loads it
+  when it is allowed to debug and shows the tools, and no other page does. `DevToolsContainer` loads its badge and panel
+  lazily (they were never drawn before hydration), so the builder splits them off too. The chunk imports the SDK as
+  `@plitzi/plitzi-sdk` — the name every page's import map already gives it for plugins — so the panel inspects the
+  page's own stores, not a second copy the `?v=` cache-buster would have loaded. The build fails if anything else ever
+  splits off.
+- `date-fns-tz` is gone from `sdk-shared`: `formatDateUTC` and `formatUTCToLocal` need no time-zone library.
+  `formatUTCToLocal` printed the hour that repeats when daylight saving time ends an hour off; it no longer does.
+- The SDK's demo page and the static deployment template map `react/compiler-runtime`, which the bundle imports and
+  only the page server's template mapped: a statically deployed space failed to start with "Failed to resolve module
+  specifier".
