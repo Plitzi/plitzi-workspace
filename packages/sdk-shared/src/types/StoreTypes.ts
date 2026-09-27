@@ -95,6 +95,11 @@ export type CommonState = {
     /** Scheme, host AND port — what a link needs to name this page absolutely. `hostname` has no port, which is why
      *  it answers `when` rules and cannot answer this. */
     origin: string;
+    /**
+     * The page's whole address — origin, path and query — as the server was asked for it and the browser shows it: what
+     * a link that shares THIS page is. Known in the first paint, so a text built from it is right before hydration.
+     */
+    href: string;
     currentPageId: string;
     navigate: (url: string, isExternal?: boolean) => void;
   };

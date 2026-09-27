@@ -6,6 +6,7 @@ import { describeSession, isFaceDown, parseSession } from '../board/sessions.ts'
 
 import type { Connection, Heard } from './connection.ts';
 import type { BoardElement, Point } from '../board/model.ts';
+import type { AgentStatus, Collaborator } from '../board/people.ts';
 import type { BoardSession } from '../board/sessions.ts';
 import type { ChatMessage, OpenedBoard } from '../board/store.ts';
 
@@ -35,8 +36,11 @@ export const newElementId = (): string =>
     () => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[randomInt(62)]
   ).join('');
 
-/** A board link, a bare id, or an id with the server beside it — as a person pastes one to an agent. */
-export const parseLink = (link: string, fallbackOrigin: string): { origin: string; board: string } => {
+/**
+ * A board link, a bare id, or an id with the server beside it — as a person pastes one to an agent. A link copied from
+ * a locked board's invite panel carries the key its page opened it with (`#key=…`), which opens it for the agent too.
+ */
+export const parseLink = (link: string, fallbackOrigin: string): { origin: string; board: string; key?: string } => {
   const trimmed = link.trim();
   const bare = /^[a-z0-9]{10}$/.exec(trimmed);
   if (bare) {
@@ -49,7 +53,9 @@ export const parseLink = (link: string, fallbackOrigin: string): { origin: strin
     throw new Error('That is not a board link: it looks like https://…/b/abcd234xyz');
   }
 
-  return { origin: url.origin, board: match[1] };
+  const key = new URLSearchParams(url.hash.slice(1)).get('key');
+
+  return { origin: url.origin, board: match[1], ...(key ? { key } : {}) };
 };
 
 /**
@@ -88,19 +94,29 @@ export const callAction = async (door: Door, actionId: string, input: Record<str
 const isOpened = (value: unknown): value is OpenedBoard =>
   isRecord(value) && typeof value.id === 'string' && typeof value.found === 'boolean' && Array.isArray(value.elements);
 
+/** How long an agent stays on a board with nobody else on it: long enough for a page that reloads to come back. */
+const ALONE_MS = 2 * 60 * 1000;
+
+/** How often it looks at whether it should still be here — and says where its cursor is, so it stays in sight. */
+const WATCH_MS = 15_000;
+
 export const joinBoard = async (
-  { door, board }: { door: Door; board: string },
+  { door, board, key }: { door: Door; board: string; key?: string },
   { name, color, password }: { name: string; color: string; password?: string }
 ) => {
   const { origin } = door;
-  // `board-open` answers an open board as it is, and a locked one once its password is right: one door for both.
-  const loaded = await callAction(door, 'board-open', { id: board, password: password ?? '', key: '' });
+  // `board-open` answers an open board as it is, and a locked one once its password — or the key a page that opened it
+  // handed on in the link — is right: one door for all three.
+  const loaded = await callAction(door, 'board-open', { id: board, password: password ?? '', key: key ?? '' });
   if (!isOpened(loaded) || !loaded.found) {
     throw new Error('There is no board there — it may have been deleted, or its time ran out');
   }
 
   if (loaded.locked && !loaded.topic) {
-    throw new Error('This board is locked: join it again with its password');
+    throw new Error(
+      'This board has a password. Ask for it, and join again with it — or for the link from its invite panel, which ' +
+        'carries a key that opens it.'
+    );
   }
 
   const elements = new Map<string, BoardElement>();
@@ -122,6 +138,15 @@ export const joinBoard = async (
   const stampOf = (element: BoardElement): string => `${element.id}:${element.version}:${element.nonce}`;
   let gone = false;
   let cursor: Point = [0, 0];
+  /** What the people see this agent doing (`AgentStatus`): it has just arrived, and is reading what is here. */
+  let status: AgentStatus = 'thinking';
+  /** When anything last happened on the board — the people's doing or this agent's: what its quiet is counted from. */
+  let lastActive = Date.now();
+  let quietMinutes = loaded.agentQuietMinutes;
+  /** Since when nobody but agents has been here. */
+  let aloneSince: number | undefined;
+  /** Why this agent left the board, once it has: said to its model, which may be asked to come back. */
+  let left: string | undefined;
   /** Who this agent is on the board, as a page's visitor id: what it writes face down is its own by this, not its name. */
   const visitor = Array.from({ length: 16 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[randomInt(36)]).join('');
 
@@ -156,6 +181,7 @@ export const joinBoard = async (
         }
 
         if (changed.length) {
+          lastActive = Date.now();
           note({ kind: 'changed', name: 'the board', count: changed.length, ids: changed, at: Date.now() });
         }
       } else if (type === 'chat' && isRecord(data) && typeof data.text === 'string') {
@@ -169,6 +195,7 @@ export const joinBoard = async (
           ...(data.agent === true ? { agent: true } : {})
         };
         chat.push(line);
+        lastActive = Date.now();
         if (!line.agent || line.name !== name) {
           note({ kind: 'chat', name: line.name, text: line.text, at: line.at });
         }
@@ -182,15 +209,32 @@ export const joinBoard = async (
           text: session ? `Session: ${describeSession(session)}` : 'The session is over.',
           at: Date.now()
         });
+      } else if (type === 'agents' && isRecord(data) && typeof data.agentQuietMinutes === 'number') {
+        quietMinutes = data.agentQuietMinutes;
+      } else if (type === 'locked') {
+        // A password set, changed or removed: the key this agent opened it with — and the topic it listens on — are
+        // the old one's. It goes, and says why; whoever wants it back sends the board again.
+        leave('the board’s password changed');
       } else if (type === 'deleted') {
         gone = true;
         note({ kind: 'left', name: 'The board was deleted', at: Date.now() });
+        leave('the board was deleted');
       }
 
       return;
     }
 
-    // The room: who is here, and what they say at their cursors.
+    // The room: who is here, and what they say at their cursors. A person moving on the board is the board alive.
+    if (!members.get(from)?.agent && type === 'pointer') {
+      lastActive = Date.now();
+    }
+
+    if (type === 'dismiss' && isRecord(data) && data.to === connection.me) {
+      leave(`${nameOf(from)} asked me to leave`);
+
+      return;
+    }
+
     if (type === '$presence' && isRecord(data) && typeof data.name === 'string') {
       const known = members.has(from);
       members.set(from, { name: data.name, color: textOf(data.color), agent: data.agent === true });
@@ -216,19 +260,64 @@ export const joinBoard = async (
   };
 
   const topics = [`board:${loaded.topic}`, `room:${loaded.topic}`];
-  const self = { name, color, agent: true };
+  const room = `room:${loaded.topic}`;
+  const self = (): Collaborator => ({ name, color, agent: true, status });
   let connection: Connection = await connect(origin, topics, heard => hear(heard));
-  connection.announce(`room:${loaded.topic}`, self);
+  connection.announce(room, self());
 
   /** A dropped socket is reopened before anything is said on it. */
   const live = async (): Promise<Connection> => {
     if (connection.closed) {
       connection = await connect(origin, topics, heard => hear(heard));
-      connection.announce(`room:${loaded.topic}`, self);
+      connection.announce(room, self());
     }
 
     return connection;
   };
+
+  const people = (): number => [...members.values()].filter(member => !member.agent).length;
+
+  /**
+   * Off the board, for `reason` — said in the chat when there is anyone to read it, so nobody wonders where it went. An
+   * agent leaves when it is asked to, when nobody is here, after the quiet the board asks for, and when the board it
+   * opened is not the one there any more (deleted, or its password changed).
+   */
+  const leave = (reason: string, announce = true): void => {
+    if (left !== undefined) {
+      return;
+    }
+
+    left = reason;
+    clearInterval(watch);
+    const goodbye =
+      announce && people() > 0 && !gone
+        ? callAction(door, 'board-chat', {
+            board,
+            key: loaded.key,
+            name,
+            color,
+            text: `✦ I have left the board — ${reason}. Ask me to join again when you need me.`,
+            by: '',
+            agent: 'true'
+          }).catch(() => undefined)
+        : Promise.resolve();
+    void goodbye.then(() => connection.close());
+    waiters.forEach(wake => wake());
+  };
+
+  // Whether it should still be here — and its cursor said again, so it stays where the people last saw it working.
+  const watch = setInterval(() => {
+    const now = Date.now();
+    aloneSince = people() > 0 ? undefined : (aloneSince ?? now);
+    if (aloneSince !== undefined && now - aloneSince > ALONE_MS) {
+      leave('nobody else was on the board');
+    } else if (now - lastActive > quietMinutes * 60_000) {
+      leave(`nothing happened on the board for ${quietMinutes} minutes`);
+    } else {
+      void pointer(cursor).catch(() => undefined);
+    }
+  }, WATCH_MS);
+  watch.unref();
 
   const shown = (): BoardElement[] => [...elements.values()].filter(element => !element.deleted).sort(byStacking);
 
@@ -379,9 +468,10 @@ export const joinBoard = async (
             // A moment for whoever is typing at their cursor to finish the line.
             setTimeout(resolve, 1200);
           };
-          // Woken by something not worth handing over: waiting goes on for the rest of the time.
+          // Woken by something not worth handing over, waiting goes on for the rest of the time — unless it was this
+          // agent leaving the board, which ends it.
           const heard = (): void => {
-            if (fresh().length) {
+            if (fresh().length || left !== undefined) {
               finish();
             }
           };
@@ -392,6 +482,28 @@ export const joinBoard = async (
 
       return fresh();
     },
-    leave: (): void => connection.close()
+    /** Why it left the board, once it has — by a rule, or asked to. */
+    get left() {
+      return left;
+    },
+    get status() {
+      return status;
+    },
+    /** What the people see it doing: said on the room, and its cursor said again with it, so it shows where it is. */
+    setStatus: (next: AgentStatus): void => {
+      if (next === status || left !== undefined) {
+        return;
+      }
+
+      status = next;
+      connection.announce(room, self());
+      void pointer(cursor).catch(() => undefined);
+    },
+    /** It did something: the board is not quiet. */
+    touch: (): void => {
+      lastActive = Date.now();
+    },
+    /** Off the board: said in the chat when there is a `reason` to give — without one, it has said goodbye itself. */
+    leave: (reason?: string): void => leave(reason ?? 'I said goodbye', reason !== undefined)
   };
 };

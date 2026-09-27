@@ -945,6 +945,7 @@ export const boardPage: PageSpec = {
               when({ field: 'heard.type', operator: '=', value: 'title' }, reloadApi(BOARD_PROVIDER)),
               // Made private, public, temporary: read the board again — the badges say what it is now.
               when({ field: 'heard.type', operator: '=', value: 'reach' }, reloadApi(BOARD_PROVIDER)),
+              when({ field: 'heard.type', operator: '=', value: 'agents' }, reloadApi(BOARD_PROVIDER)),
               // Made read-only by whoever made it, or opened again: read it again — the canvas and the tools follow.
               when({ field: 'heard.type', operator: '=', value: 'readOnly' }, reloadApi(BOARD_PROVIDER)),
               when({ field: 'heard.type', operator: '=', value: 'readOnly' }, boardAction('chime', { sound: 'lock' })),

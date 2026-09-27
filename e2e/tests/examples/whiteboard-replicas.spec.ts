@@ -48,9 +48,15 @@ const agentAt = async (origin: string) => {
     }
 
     expect(response.status, `${method} answered ${response.status}`).toBe(200);
-    const body = (await response.json()) as { result?: unknown };
+    // An event stream, as the endpoint answers: the answer is the `data:` of its message.
+    const stream = await response.text();
+    const data = stream
+      .split('\n')
+      .filter(line => line.startsWith('data: '))
+      .map(line => JSON.parse(line.slice('data: '.length)) as { id?: number; result?: unknown })
+      .find(message => message.id === id);
 
-    return body.result;
+    return data?.result;
   };
 
   await rpc('initialize', {

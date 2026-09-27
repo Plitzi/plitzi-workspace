@@ -37,6 +37,8 @@ export const CHAT_ACTION = 'board-chat';
 export const REPLY_ACTION = 'board-reply';
 export const READ_ONLY_ACTION = 'board-readonly';
 
+export const AGENTS_ACTION = 'board-agents';
+
 const field = (label: string, required = true): ActionField => ({ type: 'text', required, label });
 
 /**
@@ -422,6 +424,23 @@ const readOnly = defineAction({
   output: '{{ set|json_encode }}'
 });
 
+/** How long an agent stays through quiet on a board. The agents on it are told (`agents`), and keep to it. */
+const agents = defineAction({
+  id: AGENTS_ACTION,
+  name: 'Agents on a board',
+  description: 'How many minutes an agent stays on a board with nothing happening before it leaves.',
+  trigger: { type: 'call', access: 'public', input: { ...onBoard, minutes: field('Minutes') } },
+  steps: [
+    { id: 'set', task: 'board.agents' },
+    {
+      id: 'announce',
+      task: 'realtime.publish',
+      params: { topic: 'board:{{ set.topic }}', type: 'agents', data: '{{ set|json_encode }}' }
+    }
+  ],
+  output: '{{ set|json_encode }}'
+});
+
 const actions = [
   list,
   load,
@@ -439,7 +458,8 @@ const actions = [
   reachAction,
   chat,
   reply,
-  readOnly
+  readOnly,
+  agents
 ];
 
 /** How the server reaches an action. One live version, so the revision a page was published at is ignored. */

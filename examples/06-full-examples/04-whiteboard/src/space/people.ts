@@ -59,13 +59,36 @@ const colourVariants = Object.fromEntries(
   COLLAB_COLOURS.map(colour => [colour, { 'background-color': `var(--collab-${colour})` }])
 );
 
+/**
+ * One person on the room — or an agent, whose avatar says what it is doing: a ring that beats while it works or thinks,
+ * a steady one while it listens. Nothing while it is idle: on the board, waiting to be asked in its own app.
+ */
+const avatarItem = styles('avatarItem', {
+  css: { position: 'relative', display: 'flex' },
+  variants: { working: {}, thinking: {}, listening: {}, idle: {} }
+});
+
+const AGENT_BUSY = {
+  animation: 'wb-agent-busy 1.2s ease-in-out infinite',
+  'box-shadow': '0 0 0 2px var(--accent)'
+};
+
 const avatar = styles('avatar', {
   css: { ...AVATAR, 'margin-left': '-6px' },
   states: {
     hover: { 'box-shadow': '0 0 0 2px var(--accent)', 'z-index': '1' },
     'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '2px' }
   },
-  variants: colourVariants
+  variants: colourVariants,
+  ancestors: {
+    [avatarItem.name]: {
+      variants: {
+        working: AGENT_BUSY,
+        thinking: AGENT_BUSY,
+        listening: { 'box-shadow': '0 0 0 2px var(--green)' }
+      }
+    }
+  }
 });
 
 const meAvatar = styles('meAvatar', {
@@ -86,7 +109,34 @@ const peopleRow = styles('people', {
   'list-style-type': 'none'
 });
 
-const avatarItem = styles('avatarItem', { display: 'flex' });
+/** Asks an agent to leave: on its avatar, to hand while pointing at it. */
+const dismiss = styles('agentDismiss', {
+  css: {
+    ...BUTTON_RESET,
+    position: 'absolute',
+    top: '-6px',
+    right: '-6px',
+    'z-index': '2',
+    display: 'inline-flex',
+    'align-items': 'center',
+    'justify-content': 'center',
+    width: '16px',
+    height: '16px',
+    'border-radius': '50%',
+    'font-size': '10px',
+    'line-height': '1',
+    color: 'var(--on-accent)',
+    'background-color': 'var(--ink)',
+    opacity: '0',
+    transition: 'opacity 140ms ease'
+  },
+  states: { 'focus-visible': { opacity: '1', outline: '2px solid var(--accent)' } },
+  ancestors: { [avatarItem.name]: { states: { hover: { opacity: '1' } } } }
+});
+
+/** What an agent is doing, in words, from what it announces on the room. */
+const AGENT_DOING =
+  "({'working': 'working…', 'thinking': 'thinking…', 'listening': 'listening to you', 'idle': 'idle — ask it in its app'}[source.status] ?? 'here')";
 
 /** The others on the room. This page is not among them: it is the chip beside them, which opens its own panel. */
 const others = (): ElementSpec =>
@@ -108,6 +158,7 @@ const others = (): ElementSpec =>
       container({
         subType: 'li',
         class: avatarItem,
+        bind: [variantFrom(avatarItem, 'people.item.state', { template: "{{ source.agent ? source.status : '' }}" })],
         children: [
           // A click follows them: this page shows what they show until the person here touches the board.
           button({
@@ -117,9 +168,22 @@ const others = (): ElementSpec =>
             bind: [
               // An agent is a star — a person, their initial.
               bindTemplate('content', 'people.item.state', "{{ source.agent ? '✦' : source.name|first|upper }}"),
+              // An agent's says what it is doing: the ring beside it says so too.
+              bindTemplate(
+                'title',
+                'people.item.state',
+                `{{ source.agent ? source.name ~ ' — ' ~ ${AGENT_DOING} ~ ' · click to follow' : 'Follow ' ~ source.name ~ ' — see what they see' }}`
+              ),
               variantFrom(avatar, 'people.item.state.color')
             ],
             flows: [[onClick(), boardAction('follow', { from: '{{ list_people.item.from }}' })]]
+          }),
+          button({
+            content: '✕',
+            title: 'Ask it to leave the board',
+            class: dismiss,
+            visible: { source: 'people.item.state', template: '{{ source.agent ? true : false }}' },
+            flows: [[onClick(), boardAction('dismiss', { from: '{{ list_people.item.from }}' })]]
           })
         ]
       })

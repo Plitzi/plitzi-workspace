@@ -15,6 +15,7 @@ import {
   replyTo,
   sayOn,
   setReach,
+  setAgentQuiet,
   setReadOnly,
   runSession,
   setTimer,
@@ -273,6 +274,15 @@ export const createBoardTasks = ({
     run: ({ board, key, owner, readOnly }, ctx) => setReadOnly(on(ctx.kv), boardId(board), { key, owner }, readOnly)
   };
 
+  const boardAgentsTask: ActionTask<{ board: string; minutes: string } & Passed> = {
+    namespace: 'board',
+    action: 'agents',
+    title: 'Set Agent Quiet',
+    description: 'How many minutes an agent stays on a board with nothing happening before it leaves.',
+    params: { board: boardParam, key: keyParam, owner: ownerParam, minutes: text('Minutes') },
+    run: ({ board, key, owner, minutes }, ctx) => setAgentQuiet(on(ctx.kv), boardId(board), { key, owner }, minutes)
+  };
+
   // The catalog is heterogeneous by nature — each task declares its own params — and the server reads it as such.
   return [
     boardListTask,
@@ -291,6 +301,7 @@ export const createBoardTasks = ({
     boardReachTask,
     boardChatTask,
     boardReplyTask,
-    boardReadOnlyTask
+    boardReadOnlyTask,
+    boardAgentsTask
   ] as ActionTask<Record<string, unknown>>[];
 };

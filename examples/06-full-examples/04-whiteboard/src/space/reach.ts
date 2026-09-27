@@ -14,8 +14,8 @@ import {
   whenFailed
 } from '@plitzi/sdk-authoring';
 
-import { CREATE_ACTION, REACH_ACTION, READ_ONLY_ACTION } from '../actions.ts';
-import { BOARD_PASS, IS_OWNER, keepOwned } from './access.ts';
+import { AGENTS_ACTION, CREATE_ACTION, REACH_ACTION, READ_ONLY_ACTION } from '../actions.ts';
+import { BOARD_PASS, IS_OWNER, keepOwned, ofBoard } from './access.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BUTTON_RESET, caption, icon } from './kit.ts';
 import { DEFAULT_LIFETIME } from '../board/model.ts';
@@ -89,6 +89,64 @@ const LIFETIMES: readonly { hours: string; label: string; long: string }[] = [
   { hours: '24', label: '1 day', long: '1 day' },
   { hours: '168', label: '1 wk', long: '1 week' },
   { hours: '0', label: 'Ever', long: 'for good' }
+];
+
+const QUIET: readonly { minutes: number; label: string }[] = [
+  { minutes: 15, label: '15 min' },
+  { minutes: 30, label: '30 min' },
+  { minutes: 60, label: '1 h' },
+  { minutes: 120, label: '2 h' },
+  { minutes: 240, label: '4 h' }
+];
+
+/**
+ * How long an agent stays through quiet on this board — nobody drawing, writing or saying anything — before it leaves
+ * by itself. The agents on the board are told, and keep to it.
+ */
+export const agentsSection = (): ElementSpec[] => [
+  text({ content: 'AI agents leave after', class: caption }),
+  container({
+    class: row,
+    children: QUIET.map(option =>
+      button({
+        id: `agent-quiet-${option.minutes}`,
+        content: option.label,
+        title: `An agent on the board leaves after ${option.label} with nothing happening`,
+        class: choice,
+        bind: [
+          variantFrom(choice, BOARD_PROVIDER, {
+            template: `{{ (${ofBoard('agentQuietMinutes', '30')} ?? 30) == ${option.minutes} ? 'chosen' : '' }}`
+          })
+        ],
+        flows: [
+          [
+            onClick(),
+            named(
+              'quieted',
+              runServerAction({
+                actionId: AGENTS_ACTION,
+                input: { board: `{{ ${PROVIDER}.id }}`, ...BOARD_PASS, minutes: String(option.minutes) },
+                invalidateQueries: 'none'
+              })
+            ),
+            whenFailed(
+              'quieted',
+              addNotification({
+                content: '{{ quieted.error ? quieted.error : "That could not be changed" }}',
+                appearance: 'danger',
+                placement: 'bottom-center',
+                autoDismissTimeout: 5000
+              })
+            )
+          ]
+        ]
+      })
+    )
+  }),
+  text({
+    content: '… of quiet. They also leave when nobody is on the board, or when asked to (✕ on their avatar).',
+    class: note
+  })
 ];
 
 /** The two choices in the share panel — for whoever may change the board. */

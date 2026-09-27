@@ -937,7 +937,10 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   collaborators through the MCP server every Pizarra serves at `/mcp` (streamable HTTP, mounted as a `preAuth` pipeline
   stage): anyone on a board adds it to Claude Code, OpenCode or the Claude app from the invite panel, with nothing to
   install, and a guide at `/agents` walks through it — Claude first — and what to do when it does not connect; it
-  joins only that Pizarra's boards, and is a client of the board's server like a browser. It runs on several
+  joins only that Pizarra's boards, and is a client of the board's server like a browser. The people see what an agent
+  is doing — working, thinking, listening — at its cursor and on its avatar; it stays while they work and leaves by
+  itself when asked (✕ on its avatar), when nobody is on the board, after the board's quiet time (Board settings), or
+  when the board's password changes; a locked board's invite carries a key that opens it for the agent. It runs on several
   replicas over Redis (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action
   `kv` shared by all of them, and which replica holds each agent's session — a call reaching another is passed on to it
   (`REPLICA_URL`), so no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine,
@@ -957,6 +960,13 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
 - A `link` to a page of the site with a `target` of its own (`blank`…) opened in the same tab — the click was always
   taken over for in-place navigation. So was a click held with ⌘, Ctrl or Shift, or with the middle button. Only a
   plain click to the same tab navigates in place now; the rest is the browser's.
+
+## `navigation.href`: the page's whole address, from the first paint
+
+- The navigation store (and the `navigation` global source) carries `href` — origin, path and query — beside
+  `origin`, on the server as in the browser. A text or a code built from "this page's link" is right in the first
+  paint, where one filled in by the browser once mounted showed its placeholder first. The builder answers it for the
+  host being tested.
 
 ## The server names a page's origin with its port
 

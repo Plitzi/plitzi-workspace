@@ -3,6 +3,7 @@ import {
   container,
   declaredTrigger,
   defineElement,
+  fontAwesome,
   form,
   formControl,
   named,
@@ -19,7 +20,7 @@ import {
 import { connect, drawing, loop, scribble, sticky } from '../../board/sketch.ts';
 import declaration from '../../plugins/Board/declaration.ts';
 import { newBoardFlow, primaryButton } from '../board.ts';
-import { BUTTON_RESET, FLOAT, ICON_BUTTON, icon } from '../kit.ts';
+import { BUTTON_RESET, FLOAT, ICON_BUTTON, icon, iconGlyph } from '../kit.ts';
 import { quickPrivateBoard } from '../reach.ts';
 
 import type { CollabColour } from '../../board/people.ts';
@@ -292,44 +293,84 @@ const lead = styles('heroLead', {
   color: 'var(--muted)'
 });
 
-const actions = styles('heroActions', { display: 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', gap: '12px' });
+/**
+ * The two ways to start, side by side, and under them the way in to somebody else's board — as wide as both, so the
+ * three read as one block: start one, or join one.
+ */
+const actions = styles('heroActions', {
+  css: {
+    desktop: {
+      display: 'inline-grid',
+      'grid-template-columns': 'auto auto',
+      'align-items': 'center',
+      'justify-self': 'start',
+      'align-self': 'flex-start',
+      gap: '12px'
+    },
+    mobile: { display: 'grid', 'grid-template-columns': 'minmax(0px, 1fr)', 'align-self': 'stretch' }
+  }
+});
 
 const joinForm = styles('joinForm', {
-  display: 'flex',
-  'align-items': 'center',
-  gap: '6px',
-  padding: '4px',
-  'border-radius': '12px',
-  border: '1px solid var(--edge)',
-  'background-color': 'var(--surface)'
+  css: {
+    'grid-column': '1 / -1',
+    display: 'flex',
+    'align-items': 'center',
+    gap: '8px',
+    height: '56px',
+    padding: '0px 6px 0px 16px',
+    'border-radius': '16px',
+    border: '1.5px solid color-mix(in srgb, var(--accent) 35%, var(--edge))',
+    'background-color': 'var(--surface)',
+    'box-shadow': '0 10px 30px -14px color-mix(in srgb, var(--accent) 55%, transparent)',
+    transition: 'border-color 160ms ease, box-shadow 160ms ease'
+  },
+  states: {
+    hover: { 'border-color': 'color-mix(in srgb, var(--accent) 60%, var(--edge))' },
+    'focus-within': {
+      'border-color': 'var(--accent)',
+      'box-shadow':
+        '0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent), 0 10px 30px -14px color-mix(in srgb, var(--accent) 55%, transparent)'
+    }
+  }
 });
+
+const joinMark = styles('joinMark', { 'font-size': '16px', color: 'var(--accent)', 'flex-shrink': '0' });
 
 /** The field sits in the form's pill, which is its box: the slot draws none of its own. */
 const joinBox = styles('joinBox', {
   css: {
     display: 'flex',
     'align-items': 'center',
-    height: '34px',
-    padding: '0px 8px',
+    height: '44px',
+    padding: '0px 4px',
     border: '0px',
     'background-color': 'transparent',
-    'box-shadow': 'none'
+    'box-shadow': 'none',
+    'font-size': '16px',
+    'font-weight': '500'
   }
 });
 
-const joinField = styles('joinField', { width: '190px' });
+const joinField = styles('joinField', { flex: '1', 'min-width': '0px' });
 
 const joinGo = styles('joinGo', {
   css: {
     ...BUTTON_RESET,
-    height: '34px',
-    padding: '0px 12px',
-    'border-radius': '8px',
-    'font-weight': '600',
-    'font-size': '13px',
-    'background-color': 'var(--surface-2)'
+    display: 'inline-flex',
+    'align-items': 'center',
+    gap: '8px',
+    height: '44px',
+    padding: '0px 18px',
+    'border-radius': '12px',
+    'font-weight': '700',
+    'font-size': '15px',
+    color: 'var(--on-accent)',
+    'background-color': 'var(--accent)',
+    'flex-shrink': '0',
+    transition: 'filter 140ms ease, transform 140ms ease'
   },
-  states: { hover: { 'background-color': 'var(--accent-soft)', color: 'var(--accent)' } }
+  states: { hover: { filter: 'brightness(1.08)' }, active: { transform: 'scale(0.96)' } }
 });
 
 const perks = styles('heroPerks', { display: 'flex', 'flex-wrap': 'wrap', gap: '8px', 'max-width': '560px' });
@@ -539,6 +580,7 @@ const join = (): ElementSpec =>
       ]
     ],
     children: [
+      fontAwesome({ icon: 'fa-solid fa-link', class: joinMark }),
       formControl({
         id: 'join-code',
         name: 'code',
@@ -549,7 +591,13 @@ const join = (): ElementSpec =>
         class: joinField,
         slots: { input: joinBox }
       }),
-      button({ id: 'join-go', subType: 'submit', content: 'Join', class: joinGo })
+      button({
+        id: 'join-go',
+        subType: 'submit',
+        content: '',
+        class: joinGo,
+        children: [text({ content: 'Join' }), fontAwesome({ icon: 'fa-solid fa-arrow-right', class: iconGlyph })]
+      })
     ]
   });
 

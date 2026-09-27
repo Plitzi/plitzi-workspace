@@ -31,8 +31,12 @@ export const AGENT_PATH = '/mcp';
 /** The header a replica passes a session on with: the one it reaches answers it, or says it is gone — never passes it on. */
 const FORWARDED = 'x-pizarra-forwarded';
 
-/** How long an agent nobody has asked anything is kept on its board — its client closed, or its person went home. */
-const AGENT_IDLE_MS = 30 * 60 * 1000;
+/**
+ * How long a session nobody has asked anything is kept. One on a board stays for as long as the board wants it (the
+ * board decides: nobody there, its quiet time, being asked to go) — this is only the bound past which a client that
+ * never came back is let go for good. One on no board is only a connection, and goes much sooner.
+ */
+const SESSION_IDLE_MS = { onBoard: 12 * 60 * 60 * 1000, offBoard: 30 * 60 * 1000 };
 
 /** How many agents one replica holds at once: each is a socket on a board and a board's worth of memory. */
 const MAX_AGENTS = 200;
@@ -185,10 +189,10 @@ export const createAgentEndpoint = ({
   const held = new Map<string, Held>();
   const inside = insideOrigin(host, port);
 
-  const drop = async (session: string): Promise<void> => {
+  const drop = async (session: string, reason: string): Promise<void> => {
     const entry = held.get(session);
     held.delete(session);
-    entry?.agent.leave();
+    entry?.agent.leave(reason);
     await Promise.all([entry?.transport.close(), directory.release(session)]);
   };
 
@@ -196,8 +200,8 @@ export const createAgentEndpoint = ({
   const sweep = setInterval(() => {
     const now = Date.now();
     for (const [session, entry] of held) {
-      if (now - entry.lastSeen > AGENT_IDLE_MS) {
-        void drop(session);
+      if (now - entry.lastSeen > SESSION_IDLE_MS[entry.agent.present() ? 'onBoard' : 'offBoard']) {
+        void drop(session, 'my app has not been back for hours');
       }
     }
   }, 60_000);
@@ -215,9 +219,14 @@ export const createAgentEndpoint = ({
     const agent = createAgentServer({
       home: door,
       locate: link => {
-        const { origin, board } = parseLink(link, publicOrigin);
+        const { origin, board, key } = parseLink(link, publicOrigin);
 
-        return { door, board, ...(new URL(origin).host === new URL(publicOrigin).host ? {} : { elsewhere: origin }) };
+        return {
+          door,
+          board,
+          ...(key ? { key } : {}),
+          ...(new URL(origin).host === new URL(publicOrigin).host ? {} : { elsewhere: origin })
+        };
       },
       identity: () => {
         const name = agentNameOf(agent.server.server.getClientVersion()?.name);
@@ -230,13 +239,14 @@ export const createAgentEndpoint = ({
       lastSeen: Date.now(),
       transport: new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: randomUUID,
-        enableJsonResponse: true,
+        // Answers as event streams: a long wait for the people is kept open by the stream's keep-alives, where a
+        // silent JSON answer is cut by the first proxy with a read timeout.
         onsessioninitialized: session => {
           held.set(session, entry);
           void directory.hold(session);
         },
         onsessionclosed: session => {
-          void drop(session);
+          void drop(session, 'my app closed the connection');
         }
       })
     };
@@ -330,7 +340,7 @@ export const createAgentEndpoint = ({
     // No session yet: this should be an `initialize`, which makes one. Anything else is refused by the transport, and
     // the agent it would have been never starts.
     const entry = open(ctx);
-    await entry.agent.server.connect(entry.transport);
+    await entry.agent.connect(entry.transport);
     const response = await entry.transport.handleRequest(request);
     if (entry.transport.sessionId === undefined) {
       await entry.transport.close();
@@ -359,7 +369,7 @@ export const createAgentEndpoint = ({
     },
     close: async () => {
       clearInterval(sweep);
-      await Promise.all([...held.keys()].map(drop));
+      await Promise.all([...held.keys()].map(session => drop(session, 'the board’s server is restarting')));
     }
   };
 };

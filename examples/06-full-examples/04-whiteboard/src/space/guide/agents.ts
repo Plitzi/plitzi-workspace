@@ -214,7 +214,19 @@ const CLAUDE_CODE: Step[] = [
     ],
     copy: { id: 'claude-join', line: 'Join this Pizarra board and help us: <the board’s link>' },
     after:
-      'On the board you see it arrive: "Claude Code" among the avatars, a cursor that glides to what it works on, its lines in the chat marked AI. A board with a password: put the password in the same message.'
+      'On the board you see it arrive: "Claude Code" among the avatars, a cursor that glides to what it works on, its lines in the chat marked AI.'
+  },
+  {
+    title: 'A board with a password',
+    says: [
+      'Copy the message from ✦ Invite an AI agent on the board: on a board with a password its link carries a key that opens it (#key=…), so the agent gets in without the password. Send it only to your agent.',
+      'Or give it the password in the same message:'
+    ],
+    copy: {
+      id: 'claude-password',
+      line: 'Join this Pizarra board and help us: <the board’s link> password: <the password>'
+    },
+    after: 'If the password changes, the agent leaves the board — send it the new one.'
   },
   {
     title: 'Work with it',
@@ -222,7 +234,23 @@ const CLAUDE_CODE: Step[] = [
       'Ask it the way you would ask a teammate at the board. It says what it is about to do, then does it — everyone sees the notes, cards and arrows appear.',
       '“Sort these notes into themes, with a title over each.” · “Turn the Ideas frame into a kanban.” · “Stay on the board and answer us in the chat.” · “Run a retro with us.” · “Keep a card in Decisions with what we decided.”'
     ],
-    after: 'It leaves when you tell it to — “leave the board” — or after half an hour nobody has asked it anything.'
+    after:
+      'To keep it answering while you work, ask it to stay: “stay on the board and answer us in the chat”. It listens, and goes on listening.'
+  }
+];
+
+const WATCHING: Step[] = [
+  {
+    title: 'What it is doing',
+    says: [
+      'Beside its cursor, and around its avatar: working (one of its tools running), thinking (reading what came back and deciding what next — the dots move), listening (waiting for you to say something: a steady green ring), or nothing, when it is idle — on the board, waiting to be asked again in its app.'
+    ]
+  },
+  {
+    title: 'How long it stays',
+    says: [
+      'It stays while you work, however long its app goes without asking it anything. It leaves by itself when you ask it to — in the chat, or with ✕ on its avatar — when nobody else is on the board for two minutes, when nothing happens on the board for the time set in Board settings (30 minutes unless changed), or when the board’s password changes. It says why in the chat.'
+    ]
   }
 ];
 
@@ -275,9 +303,19 @@ const TROUBLE: readonly { question: string; answer: string }[] = [
       'It joins a board only when you send it the link. Ask it: “Join this Pizarra board: <link>”. It answers with what it found there.'
   },
   {
-    question: 'It stopped answering, or says to join a board first',
+    question: 'It is on the board, but does not answer',
     answer:
-      'It leaves a board after half an hour of quiet, and when Pizarra restarts. It reconnects by itself: send it the link again.'
+      'It is idle: its app is not asking it anything. Ask it again in its app — “stay on the board and answer us in the chat” keeps it listening.'
+  },
+  {
+    question: 'It left the board',
+    answer:
+      'It says why in the chat: asked to, nobody else there, the quiet time in Board settings, or the password changed. When Pizarra restarts its app reconnects by itself. Send it the link again.'
+  },
+  {
+    question: 'It says the board has a password',
+    answer:
+      'Send it the message from ✦ Invite an AI agent — its link opens the board — or add “password: <the password>” to what you send.'
   },
   {
     question: 'It says the link is to another Pizarra',
@@ -335,8 +373,15 @@ export const agentsGuidePage: PageSpec = {
           'indigo',
           'Claude Code',
           'With Claude Code',
-          'The quickest way, from a terminal. Five steps; the first three are once.',
+          'The quickest way, from a terminal. The first three steps are once.',
           [container({ class: steps, children: CLAUDE_CODE.map((entry, index) => step(index + 1, entry)) })]
+        ),
+        section(
+          'lime',
+          'While it works',
+          'Seeing it work',
+          'What the people on the board see of an agent, and when it goes.',
+          [container({ class: steps, children: WATCHING.map((entry, index) => step(index + 1, entry)) })]
         ),
         section(
           'orchid',

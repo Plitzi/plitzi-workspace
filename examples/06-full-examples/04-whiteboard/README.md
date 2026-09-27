@@ -145,7 +145,20 @@ who use it: **`/agents`** ([`src/space/guide/agents.ts`](./src/space/guide/agent
 the Claude app, OpenCode, other apps, and what to do when it does not show up — linked from the invite panel and the
 front page. On the board, people see it arrive — an avatar under its app's
 name (Claude Code, OpenCode…, or the one it gives itself), a cursor that glides to what it works on, its lines in the
-chat marked AI. It leaves when told to, or after half an hour nobody has asked it anything.
+chat marked AI. What it is doing shows beside its cursor and around its avatar — working, thinking (between one tool
+call and the next, while its model decides), listening (in `wait_for_activity`), or nothing when idle — worked out on
+the wire from its tool calls (`agent/observe.ts`), so no tool can forget to say it.
+
+It stays on the board while the people work, however long its app goes without asking it anything, and leaves by
+itself — saying why in the chat — when asked to (in the chat, or ✕ on its avatar), when nobody but agents has been on
+the board for two minutes, when nothing has happened on it for the quiet the board allows (Board settings → AI agents
+leave after, 30 minutes unless changed), or when the board is deleted or its password changes. A tool called after
+that answers why it left. `wait_for_activity` waits up to ten minutes, as an event stream with keep-alives, and says
+its progress every fifteen seconds to a client that asks — so a client that times calls out does not cut it.
+
+A board with a password: the message the invite panel copies carries the key its page opened the board with
+(`#key=…` — never sent to the server in a URL a browser loads), so the agent gets in without the password; or the
+person adds "password: …" to what they send.
 
 It is a client of the board like a browser: it opens the board through `board-open`, connects to its channels,
 announces itself on the room (`$presence` with `agent: true`) and commits through `board-apply` — calling the replica

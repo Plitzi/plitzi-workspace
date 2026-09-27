@@ -1,6 +1,6 @@
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useMemo } from 'react';
 
-import { RootElement, useElement, usePlitziServiceContext } from '@plitzi/plitzi-sdk';
+import { RootElement, useElement, usePlitziServiceContext, useStore } from '@plitzi/plitzi-sdk';
 
 import './CopyText.css';
 
@@ -22,8 +22,9 @@ export type CopyTextProps = {
 const TRIGGERS: Record<string, InteractionCallback> = declaration.triggers;
 
 /**
- * A line of text and a button that puts it on the clipboard — a command to paste, a sentence to send. Rendered on the
- * server with `{url}` and `{origin}` left as they are, and completed in the browser the moment it mounts.
+ * A line of text and a button that puts it on the clipboard — a command to paste, a sentence to send. `{url}` and
+ * `{origin}` are filled from the navigation the SDK keeps, which the server renders with too: the first paint already
+ * shows the address, where filling it in once mounted showed the placeholder first.
  */
 const CopyText = ({ text = '', label = 'Copy', className }: CopyTextProps) => {
   const { id } = useElement();
@@ -31,11 +32,8 @@ const CopyText = ({ text = '', label = 'Copy', className }: CopyTextProps) => {
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext);
-  const [shown, setShown] = useState(text);
-
-  useEffect(() => {
-    setShown(text.replaceAll('{url}', window.location.href).replaceAll('{origin}', window.location.origin));
-  }, [text]);
+  const [[href, origin]] = useStore(['navigation.href', 'navigation.origin']);
+  const shown = useMemo(() => text.replaceAll('{url}', href).replaceAll('{origin}', origin), [text, href, origin]);
 
   const copy = useCallback(async () => {
     await navigator.clipboard.writeText(shown);

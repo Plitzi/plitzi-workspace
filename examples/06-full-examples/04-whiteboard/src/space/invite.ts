@@ -1,5 +1,6 @@
 import {
   addNotification,
+  bindTemplate,
   button,
   container,
   declaredTrigger,
@@ -13,6 +14,7 @@ import {
 
 import { copyClass, copyText, COPY_DECLARATION } from './copy.ts';
 import { guideLinkFromBoard } from './guide/agents.ts';
+import { BOARD_PROVIDER } from './ids.ts';
 import { BELOW_HEADER, BUTTON_RESET, FLOAT, ICON_BUTTON, PRESSED, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
 import { boardAction } from './stylePanel.ts';
@@ -37,6 +39,18 @@ const copied = (what: string) => [
     autoDismissTimeout: 2000
   })
 ];
+
+/** The key the page opened a locked board with, as the tail of the link an agent is sent: nothing, for an open one. */
+const WITH_KEY = "source.locked and state.opened and state.opened.id == source.id ? '#key=' ~ state.opened.key : ''";
+
+const lockedNote = styles('inviteLockedNote', {
+  padding: '8px 10px',
+  'border-radius': '10px',
+  'font-size': '12px',
+  'line-height': '1.45',
+  color: 'var(--ink)',
+  'background-color': 'var(--accent-soft)'
+});
 
 const PANEL_MOTION = panelMotion({ from: 'above', origin: 'top right' });
 
@@ -229,11 +243,19 @@ export const agentPanel = (): ElementSpec =>
         class: copyClass,
         text: 'Join this Pizarra board and help us: {url}',
         label: 'Copy',
+        // A board with a password: the link carries the key this page opened it with, and the agent opens it with that.
+        bind: [bindTemplate('text', BOARD_PROVIDER, `Join this Pizarra board and help us: {url}{{ ${WITH_KEY} }}`)],
         flows: [copied('Message')]
       }),
       text({
         content:
-          'Added once, it can be invited to any board on this Pizarra. It shows up under its app’s name — Claude, OpenCode… — and leaves when you tell it to, or after half an hour of quiet.',
+          'This board has a password. The message carries a key that opens it, so your agent does not need the password — send it only to your agent. Or send the password instead: “… help us: <link> password: <the password>”.',
+        class: lockedNote,
+        visible: { source: BOARD_PROVIDER, template: '{{ source.locked }}' }
+      }),
+      text({
+        content:
+          'Added once, it can be invited to any board on this Pizarra. It shows up under its app’s name — Claude, OpenCode… — and stays while you work: it leaves when you ask it to, when nobody is on the board, or after the quiet set in Board settings.',
         class: note
       }),
       guideLinkFromBoard()

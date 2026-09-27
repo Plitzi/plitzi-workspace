@@ -3,7 +3,7 @@ import { container, onClick, styles, text, toggleState } from '@plitzi/sdk-autho
 import { editOnly, passwordSection } from './access.ts';
 import { BELOW_HEADER, FLOAT, iconAction, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
-import { editingSection, reachSection } from './reach.ts';
+import { agentsSection, editingSection, reachSection } from './reach.ts';
 
 import type { ElementSpec } from '@plitzi/sdk-authoring';
 
@@ -56,7 +56,8 @@ export const settingsPanel = (): ElementSpec =>
         text({ content: 'Board settings', class: title }),
         ...reachSection(),
         editingSection(),
-        ...passwordSection()
+        ...passwordSection(),
+        ...agentsSection()
       ]
     })
   ]);

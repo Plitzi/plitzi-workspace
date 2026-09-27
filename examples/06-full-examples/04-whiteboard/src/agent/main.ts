@@ -23,16 +23,18 @@ const requested = process.env.PIZARRA_AGENT_COLOR;
 const color = COLLAB_COLOURS.find(colour => colour === requested) ?? 'orchid';
 const home = doorTo(process.env.PIZARRA_URL ?? 'http://127.0.0.1:4016');
 
-const { server } = createAgentServer({
+const agent = createAgentServer({
   home,
   locate: link => {
-    const { origin, board } = parseLink(link, home.origin);
+    const { origin, board, key } = parseLink(link, home.origin);
 
-    return { door: doorTo(origin), board };
+    return { door: doorTo(origin), board, ...(key ? { key } : {}) };
   },
   identity: () => ({ name, color })
 });
 
 // Stdout is the protocol's: anything said to a person goes to stderr.
-await server.connect(new StdioServerTransport());
+await agent.connect(new StdioServerTransport());
+// Its client gone — the app closed, the terminal quit — it is gone from the board too, and says so.
+agent.server.server.onclose = () => agent.leave('my app closed the connection');
 console.error(`[pizarra agent] ready as ${name} (${color})`);

@@ -195,6 +195,8 @@ const Board = ({
   const roomRef = useRef<((message: PointerMessage) => void) | undefined>(undefined);
   const reactRef = useRef<((reaction: { emoji: string; x: number; y: number }) => void) | undefined>(undefined);
   const summonRef = useRef<((view: [number, number, number, number]) => void) | undefined>(undefined);
+  /** An agent on the room asked to leave: said to it alone, by the id it is on the room with. */
+  const dismissRef = useRef<((to: string) => void) | undefined>(undefined);
   const presentRef = useRef<((message: PresentMessage) => void) | undefined>(undefined);
   const flushPointer = useCallback(() => {
     timer.current = undefined;
@@ -446,6 +448,7 @@ const Board = ({
     reactRef.current = reaction => void room.publish('reaction', reaction);
     summonRef.current = view => void room.publish('summon', { view });
     presentRef.current = message => void room.publish('present', message);
+    dismissRef.current = to => void room.publish('dismiss', { to });
   }, [room]);
 
   // Who is in the room — and only a room: a board with none may be showing its played collaborators instead.
@@ -582,6 +585,14 @@ const Board = ({
         callback: (params: { from?: unknown }) => controllerRef.current?.follow(params)
       },
       unfollow: call('unfollow', controller => controller.unfollow()),
+      dismiss: {
+        ...declaration.callbacks.dismiss,
+        callback: (params: { from?: unknown }) => {
+          if (typeof params.from === 'string' && params.from) {
+            dismissRef.current?.(params.from);
+          }
+        }
+      },
       stamp: {
         ...declaration.callbacks.stamp,
         callback: (params: { emoji?: unknown }) => controllerRef.current?.stamp(params)

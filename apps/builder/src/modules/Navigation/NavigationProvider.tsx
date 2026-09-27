@@ -129,6 +129,7 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
       'navigation.queryParams',
       'navigation.hostname',
       'navigation.origin',
+      'navigation.href',
       'navigation.currentPageId',
       'navigation.navigate'
     ],
@@ -138,6 +139,8 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
       testedQueryParams,
       testedHostname,
       testedOrigin,
+      // As the tested host would show it: the page being previewed, at the address the author is testing it on.
+      `${testedOrigin}${location.pathname}${testedSearchParams.size ? `?${testedSearchParams.toString()}` : ''}`,
       currentPageId ?? '',
       handleNavigate
     ],

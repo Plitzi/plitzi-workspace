@@ -17,6 +17,7 @@ import { restyled } from '../plugins/Board/styling.ts';
 
 import type { Activity, Door, Session } from './session.ts';
 import type { BoardElement, Point } from '../board/model.ts';
+import type { AgentStatus } from '../board/people.ts';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 /**
@@ -32,7 +33,7 @@ export type AgentOptions = {
    * The board a link names, and the door to reach it through. `elsewhere` is the server the link names when it is not
    * the one this agent reaches — a hosted agent looks for the board on its own, and says where to go if it is not there.
    */
-  locate: (link: string) => { door: Door; board: string; elsewhere?: string };
+  locate: (link: string) => { door: Door; board: string; key?: string; elsewhere?: string };
   /** Who the people on a board see this agent as, unless it names itself as it joins. */
   identity: () => { name: string; color: string };
 };
@@ -90,18 +91,64 @@ const describeActivity = (entry: Activity): string => {
   }
 };
 
-/** The tools on `server`; what it answers is how to take this agent off its board when its client is gone. */
-export const registerTools = (server: McpServer, options: AgentOptions): { leave: () => void } => {
+/**
+ * How long after its last tool call an agent is shown thinking — its model reading what came back and deciding what
+ * next — before it is shown idle: on the board, doing nothing until it is asked again in its app.
+ */
+const THINKING_MS = 45_000;
+
+/** How often a long wait says it is still waiting, to a client that asked to be told. */
+const PROGRESS_MS = 15_000;
+
+export type AgentTools = {
+  /** A tool call began: it is working — or listening, for `wait_for_activity`. The answer says it has ended. */
+  called: (tool: string) => () => void;
+  /** Whether it is on a board now. */
+  present: () => boolean;
+  /** Off its board, saying `reason` in the chat — its client is gone. */
+  leave: (reason: string) => void;
+};
+
+/** The tools on `server`, and what the server they run in tells them: calls starting and ending, the client going. */
+export const registerTools = (server: McpServer, options: AgentOptions): AgentTools => {
   let session: Session | undefined;
   let lastLooked = Date.now();
+  let status: AgentStatus = 'idle';
+  let running = 0;
+  let settle: ReturnType<typeof setTimeout> | undefined;
+
+  const show = (next: AgentStatus): void => {
+    status = next;
+    session?.setStatus(next);
+  };
+
+  const called = (tool: string): (() => void) => {
+    running += 1;
+    clearTimeout(settle);
+    session?.touch();
+    show(tool === 'wait_for_activity' ? 'listening' : 'working');
+
+    return () => {
+      running -= 1;
+      if (running > 0) {
+        return;
+      }
+
+      show('thinking');
+      settle = setTimeout(() => show('idle'), THINKING_MS);
+      settle.unref();
+    };
+  };
 
   const onBoard = (): Session => {
     if (!session) {
       throw new Error('Join a board first: join_board with its link');
     }
 
-    if (session.gone) {
-      throw new Error('That board was deleted — join another');
+    if (session.left !== undefined) {
+      throw new Error(
+        `You left the board — ${session.left}. Join it again (join_board with its link) only if someone asks you to.`
+      );
     }
 
     return session;
@@ -111,11 +158,14 @@ export const registerTools = (server: McpServer, options: AgentOptions): { leave
     const at = options.locate(link);
     const { name, color } = options.identity();
     // On the new board before off the old one: a link that leads nowhere leaves the agent where it was.
-    const next = await joinBoard(at, {
-      name: named?.trim() || name,
-      color,
-      ...(password ? { password } : {})
-    }).catch((error: unknown) => {
+    const next = await joinBoard(
+      { door: at.door, board: at.board, ...(at.key ? { key: at.key } : {}) },
+      {
+        name: named?.trim() || name,
+        color,
+        ...(password ? { password } : {})
+      }
+    ).catch((error: unknown) => {
       if (!at.elsewhere) {
         throw error;
       }
@@ -126,8 +176,9 @@ export const registerTools = (server: McpServer, options: AgentOptions): { leave
         { cause: error }
       );
     });
-    session?.leave();
+    session?.leave('I moved to another board');
     session = next;
+    next.setStatus(status);
     lastLooked = Date.now();
     // In the middle of what is there, where people will see it arrive.
     const elements = next.elements();
@@ -143,11 +194,14 @@ export const registerTools = (server: McpServer, options: AgentOptions): { leave
       title: 'Join a board',
       description:
         'Join a Pizarra board as a collaborator: you appear on it by name with your own cursor, and can read, draw and ' +
-        'talk. Give the link someone shared (https://…/b/abcd234xyz) — or just its id. A locked board needs its ' +
-        'password. Answers everything on the board, the people on it and the recent chat.',
+        'talk. Give the link someone shared (https://…/b/abcd234xyz) — or just its id — exactly as it was given: a ' +
+        'link copied from a locked board carries the key that opens it (#key=…). If the message gives a password ' +
+        '("password: …"), pass it as `password`. Answers everything on the board, the people on it and the recent chat. ' +
+        'You stay on the board until you leave_board, someone asks you to go, nobody is on it, or it is quiet for as ' +
+        'long as the board allows.',
       inputSchema: {
         link: z.string().describe('The board link, or its 10-character id'),
-        password: z.string().optional().describe('Only for a locked board'),
+        password: z.string().optional().describe('A locked board’s password, when the person gave it'),
         name: z
           .string()
           .max(40)
@@ -676,9 +730,15 @@ export const registerTools = (server: McpServer, options: AgentOptions): { leave
       title: 'Listen',
       description:
         'Wait for the people on the board — a line in the chat, words at a cursor, changes, someone arriving — and ' +
-        'answer what happened since you last looked. Use it to hold a conversation: say something, then listen.',
+        'answer what happened since you last looked. Use it to hold a conversation: say something, then listen. You ' +
+        'stay on the board between calls: call it again to keep listening, as long as the people want you there.',
       inputSchema: {
-        seconds: z.number().min(0).max(120).optional().describe('How long to wait at most; default 30'),
+        seconds: z
+          .number()
+          .min(0)
+          .max(600)
+          .optional()
+          .describe('How long to wait at most; default 45. Longer waits (up to 600) need a client that takes progress'),
         frames: z
           .array(z.string())
           .max(20)
@@ -689,7 +749,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): { leave
           )
       }
     },
-    async ({ seconds = 30, frames }) => {
+    async ({ seconds = 45, frames }, extra) => {
       const board = onBoard();
       const watched = new Set((frames ?? []).flatMap(name => frameNamed(board, name)?.id ?? []));
       if (frames?.length && !watched.size) {
@@ -707,8 +767,27 @@ export const registerTools = (server: McpServer, options: AgentOptions): { leave
       const worth = (entry: Activity): boolean =>
         !watched.size || entry.kind !== 'changed' || entry.ids.some(inWatched);
       const since = lastLooked;
-      const heard = await board.activitySince(since, seconds * 1000, worth);
+      // Progress while it waits, for a client that asked for it: one that times a call out resets its clock on each,
+      // so a long wait is not cut at the client's own limit (60 seconds, for many).
+      const token = extra._meta?.progressToken;
+      const started = Date.now();
+      const beat =
+        token === undefined
+          ? undefined
+          : setInterval(() => {
+              void extra
+                .sendNotification({
+                  method: 'notifications/progress',
+                  params: { progressToken: token, progress: Math.round((Date.now() - started) / 1000), total: seconds }
+                })
+                .catch(() => undefined);
+            }, PROGRESS_MS);
+      const heard = await board.activitySince(since, seconds * 1000, worth).finally(() => clearInterval(beat));
       lastLooked = Date.now();
+      if (board.left !== undefined) {
+        return text(`You left the board while listening — ${board.left}.`);
+      }
+
       if (!heard.length) {
         return text(`Nothing happened in ${seconds} seconds.`);
       }
@@ -1014,8 +1093,11 @@ export const registerTools = (server: McpServer, options: AgentOptions): { leave
   );
 
   return {
-    leave: () => {
-      session?.leave();
+    called,
+    present: () => session !== undefined && session.left === undefined,
+    leave: reason => {
+      clearTimeout(settle);
+      session?.leave(reason);
       session = undefined;
     }
   };

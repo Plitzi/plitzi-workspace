@@ -179,6 +179,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   const routeParams = useStableValue(routeParamsValue);
   const stableQueryParams = useStableValue(queryParams);
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const href = origin ? `${origin}${location.pathname}${location.search}` : '';
 
   useSdkStoreSync(
     [
@@ -187,10 +188,11 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       'navigation.queryParams',
       'navigation.hostname',
       'navigation.origin',
+      'navigation.href',
       'navigation.currentPageId',
       'navigation.navigate'
     ],
-    [urlSearchParams, routeParams, stableQueryParams, hostname, origin, currentPageId, handleNavigate],
+    [urlSearchParams, routeParams, stableQueryParams, hostname, origin, href, currentPageId, handleNavigate],
     { raw: true }
   );
 

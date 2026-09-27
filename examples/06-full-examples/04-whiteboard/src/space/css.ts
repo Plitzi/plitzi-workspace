@@ -64,6 +64,8 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
 /* ── The chrome's motion (\`kit.ts\`) ─────────────────────────────────────────────────────────────────────────────────
    What a panel holds rises in after it; the panels themselves move by their \`hidden\` state. */
 @keyframes wb-enter { from { opacity: 0; transform: translateY(6px) scale(0.92); } }
+/* An agent working or thinking: its avatar's ring beats. */
+@keyframes wb-agent-busy { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent); } }
 @media (prefers-reduced-motion: reduce) {
   .screen *, .screen *::before, .screen *::after {
     transition-duration: 0s !important;

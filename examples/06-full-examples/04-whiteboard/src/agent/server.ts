@@ -1,8 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+import { observeToolCalls } from './observe.ts';
 import { registerTools } from './tools.ts';
 
 import type { AgentOptions } from './tools.ts';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
 /**
  * Pizarra for agents: one MCP server, whichever way an agent reaches it — over HTTP from the board's own server
@@ -18,18 +20,28 @@ Work as a considerate teammate:
 - Add in batches (add_elements takes many at once). Leave x/y out and things are placed in free space; name a frame to put things in it.
 - Kanban: a frame with layout "column" stacks what is put in it. Cards have a done box (update_elements done: true); a column that completes ticks off what is moved into it.
 - Connect ideas with connect, point at what you mean with point_at, and answer comments with reply_to_comment.
-- To hold a conversation, say something and then wait_for_activity: it answers what people said in the chat or at their cursors.
+- To hold a conversation, say something and then wait_for_activity: it answers what people said in the chat or at their cursors. Keep calling it while the people want you around — you stay on the board between calls, and the people see you listening.
+- You leave on your own when someone asks you to (leave_board), when nobody else is on the board, or after the board's quiet time; a tool then says why.
 - Never delete what others made unless they asked.`;
 
 export type AgentServer = {
   server: McpServer;
-  /** Takes the agent off its board: its client closed the session, or went quiet for too long. */
-  leave: () => void;
+  /** Serves the agent over `transport`, its tool calls watched for what the people on the board see it doing. */
+  connect: (transport: Transport) => Promise<void>;
+  /** Whether it is on a board now: an agent on one stays while the board wants it, however quiet its client is. */
+  present: () => boolean;
+  /** Takes the agent off its board, saying `reason` in the chat: its client closed the session, or went for good. */
+  leave: (reason: string) => void;
 };
 
 export const createAgentServer = (options: AgentOptions): AgentServer => {
   const server = new McpServer({ name: 'pizarra', version: '1.0.0' }, { instructions: INSTRUCTIONS });
-  const { leave } = registerTools(server, options);
+  const tools = registerTools(server, options);
 
-  return { server, leave };
+  return {
+    server,
+    connect: transport => server.connect(observeToolCalls(transport, tools.called)),
+    present: tools.present,
+    leave: tools.leave
+  };
 };

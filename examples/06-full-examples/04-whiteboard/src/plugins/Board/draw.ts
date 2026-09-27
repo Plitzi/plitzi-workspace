@@ -13,6 +13,7 @@ import type { Box, Camera } from './geometry.ts';
 import type { Palette } from './palette.ts';
 import type { GuideLine } from './snapping.ts';
 import type { BoardElement, Point } from '../../board/model.ts';
+import type { AgentStatus } from '../../board/people.ts';
 import type { RoughCanvas } from 'roughjs/bin/canvas';
 import type { Drawable, Options } from 'roughjs/bin/core';
 
@@ -1452,7 +1453,8 @@ export const drawCursor = (
   name: string,
   colour: string,
   font: string,
-  message?: string
+  message?: string,
+  status?: AgentStatus
 ): void => {
   const [x, y] = toScreen(camera, boardX, boardY);
   context.save();
@@ -1504,7 +1506,48 @@ export const drawCursor = (
   context.fillStyle = '#ffffff';
   context.textBaseline = 'middle';
   context.fillText(label, 18, 30);
+  if (status && status !== 'idle') {
+    drawAgentStatus(context, 12 + width + 4, 20, status, colour, font);
+  }
+
   context.restore();
+};
+
+/** What an agent is doing, beside its name: a word, and for thinking and working three dots that come and go. */
+const drawAgentStatus = (
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  status: AgentStatus,
+  colour: string,
+  font: string
+): void => {
+  const busy = status === 'thinking' || status === 'working';
+  context.font = `600 11px ${font}`;
+  const words = context.measureText(status).width;
+  const width = words + (busy ? 30 : 14);
+  context.beginPath();
+  context.roundRect(x, y, width, 20, 10);
+  context.fillStyle = '#ffffff';
+  context.fill();
+  context.lineWidth = 1.5;
+  context.strokeStyle = colour;
+  context.stroke();
+  context.fillStyle = colour;
+  context.textBaseline = 'middle';
+  context.fillText(status, x + 7, y + 10.5);
+  if (busy) {
+    // One dot lit after another, a beat each: the same rhythm on every screen, from the clock.
+    const beat = Math.floor(Date.now() / 280) % 4;
+    for (let dot = 0; dot < 3; dot += 1) {
+      context.globalAlpha = dot < beat ? 1 : 0.25;
+      context.beginPath();
+      context.arc(x + words + 12 + dot * 5.5, y + 10.5, 1.8, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    context.globalAlpha = 1;
+  }
 };
 
 /**

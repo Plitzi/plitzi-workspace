@@ -733,9 +733,10 @@ export const createPainter = (
       const cursor = member ? remotes.cursorOf(remote, now) : undefined;
       if (member && cursor) {
         const label = member.agent === true ? `✦ ${member.name}` : member.name;
-        drawCursor(context, camera, cursor.at, label, colourOf(from), palette.ui, cursor.saying);
-        // Still on its way to where it was heard: the next frame moves it on.
-        if (cursor.moving) {
+        const status = member.agent === true ? member.status : undefined;
+        drawCursor(context, camera, cursor.at, label, colourOf(from), palette.ui, cursor.saying, status);
+        // Still on its way to where it was heard — or an agent thinking, whose dots keep time: the next frame moves on.
+        if (cursor.moving || status === 'thinking' || status === 'working') {
           core.invalidate();
         }
       }

@@ -322,6 +322,13 @@ const declaration = {
       params: { from: { label: 'Member (their `from` on the room)', defaultValue: '', type: 'text' } }
     },
     unfollow: callback('unfollow', 'Stop Following'),
+    /** An agent on the board asked to leave: it says so in the chat, and goes. */
+    dismiss: {
+      action: 'dismiss',
+      title: 'Ask an Agent to Leave',
+      type: 'callback',
+      params: { from: { label: 'Agent (its `from` on the room)', defaultValue: '', type: 'text' } }
+    },
     /** The server kept a pasted picture: its element is committed, naming the asset. */
     placeImage: {
       action: 'placeImage',

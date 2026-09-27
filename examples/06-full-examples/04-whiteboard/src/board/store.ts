@@ -58,7 +58,14 @@ export type StoredBoard = {
   unlisted?: boolean;
   /** Temporary: gone for everyone at this instant, with everything on it. */
   expiresAt?: number;
+  /** How long an agent stays on the board with nothing happening before it leaves — {@link AGENT_QUIET_DEFAULT}. */
+  agentQuietMinutes?: number;
 };
+
+/** The quiet an agent sits through before it leaves a board, as a board may choose it — in minutes. */
+export const AGENT_QUIET_CHOICES = [15, 30, 60, 120, 240] as const;
+
+export const AGENT_QUIET_DEFAULT = 30;
 
 /** A line of the board's chat: who said it, in their colour, and when — an agent's marked as one. */
 export type ChatMessage = {
@@ -113,6 +120,8 @@ export type OpenedBoard = {
   unlisted: boolean;
   /** When a temporary board goes — `null` for one that stays. */
   expiresAt: number | null;
+  /** How long an agent on it stays through nothing happening, in minutes. */
+  agentQuietMinutes: number;
   /** The last of what was said in its chat, oldest first. */
   chat: ChatMessage[];
 };
@@ -132,6 +141,7 @@ export const missingBoard = (id: string): OpenedBoard => ({
   session: null,
   unlisted: false,
   expiresAt: null,
+  agentQuietMinutes: AGENT_QUIET_DEFAULT,
   chat: []
 });
 
@@ -508,6 +518,7 @@ const opened = ({ keyFor, topicFor }: BoardSigner, board: StoredBoard, chat: Cha
   session: board.session ?? null,
   unlisted: board.unlisted === true,
   expiresAt: board.expiresAt ?? null,
+  agentQuietMinutes: board.agentQuietMinutes ?? AGENT_QUIET_DEFAULT,
   chat: chat.slice(-CHAT_SERVED)
 });
 
@@ -661,6 +672,29 @@ export const setReadOnly = (
     await save(stores, { ...rest, ...(on ? { readOnly: true } : {}), updatedAt: Date.now() });
 
     return { id, topic: stores.signer.topicFor(id, board.lock), readOnly: on };
+  });
+
+/**
+ * How long an agent stays on a board through nothing happening — by anyone who can change the board, as its other
+ * settings are.
+ */
+export const setAgentQuiet = (
+  stores: BoardStores,
+  id: string,
+  pass: Pass,
+  minutes: unknown
+): Promise<{ id: string; topic: string; agentQuietMinutes: number }> =>
+  serially(stores.kv, async () => {
+    const chosen = Number(minutes);
+    if (!AGENT_QUIET_CHOICES.some(choice => choice === chosen)) {
+      throw new ActionRefusal(`An agent waits ${AGENT_QUIET_CHOICES.join(', ')} minutes`);
+    }
+
+    const board = await existing(stores.kv, id);
+    assertWritable(stores.signer, board, pass);
+    await save(stores, { ...board, agentQuietMinutes: chosen, updatedAt: Date.now() });
+
+    return { id, topic: stores.signer.topicFor(id, board.lock), agentQuietMinutes: chosen };
   });
 
 export const renameBoard = (

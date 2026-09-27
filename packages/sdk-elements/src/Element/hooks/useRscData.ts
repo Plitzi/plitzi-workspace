@@ -38,7 +38,8 @@ const useRscData = <T>() => {
    */
   const elsewhere =
     (location !== undefined && location !== currentRscLocation()) ||
-    (rootId !== undefined && rootId !== currentPageId && pages.includes(rootId));
+    // `Array.isArray`, not the type's word for it: a render with no schema in its store (a widget, a test) has none.
+    (rootId !== undefined && rootId !== currentPageId && Array.isArray(pages) && pages.includes(rootId));
   /** The last answer this element had for where it is — what it keeps showing while the payload is somebody else's. */
   const kept = useRef<unknown>(undefined);
   if (!elsewhere && value !== undefined) {

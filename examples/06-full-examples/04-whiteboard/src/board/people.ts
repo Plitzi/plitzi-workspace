@@ -37,12 +37,26 @@ export const GUEST_NAMES = [
   'Okapi'
 ] as const;
 
+/**
+ * What an agent on the board is doing, as the people there see it: `working` while one of its tools runs, `thinking`
+ * between them — the model reading what came back and deciding the next step — `listening` while it waits for someone
+ * to say something, and `idle` once it has been quiet a while: on the board, not doing anything until it is asked in
+ * its own app.
+ */
+export const AGENT_STATUSES = ['working', 'thinking', 'listening', 'idle'] as const;
+
+export type AgentStatus = (typeof AGENT_STATUSES)[number];
+
+export const isAgentStatus = (value: unknown): value is AgentStatus => AGENT_STATUSES.some(status => status === value);
+
 /** What a member announces on the room — the only shape the canvas reads from presence. */
 export type Collaborator = {
   name: string;
   color: string;
   /** An AI agent on the board (`src/agent`), marked as one wherever it appears. */
   agent?: boolean;
+  /** An agent's: what it is doing. */
+  status?: AgentStatus;
 };
 
 export const isCollaborator = (value: unknown): value is Collaborator =>

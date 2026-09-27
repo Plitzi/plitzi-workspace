@@ -1,7 +1,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { encode } from 'uqr';
 
-import { RootElement, useElement, usePlitziServiceContext } from '@plitzi/plitzi-sdk';
+import { RootElement, useElement, usePlitziServiceContext, useStore } from '@plitzi/plitzi-sdk';
 
 import './ShareCard.css';
 
@@ -10,7 +10,7 @@ import declaration from './declaration';
 import type { InteractionCallback } from '@plitzi/plitzi-sdk';
 
 export type ShareCardProps = {
-  /** What to share. Empty is the address the page is at — which only the browser knows. */
+  /** What to share. Empty is the address the page is at. */
   url?: string;
   copyLabel?: string;
   shareLabel?: string;
@@ -28,8 +28,8 @@ const qrPath = (text: string): { path: string; size: number } => {
 };
 
 /**
- * The share card. Rendered on the server without a code — the server does not know which address the visitor typed
- * — and completed in the browser the moment it mounts.
+ * The share card: the page's address — as the navigation the SDK keeps has it, which the server renders with too — as
+ * a code and a link. What the browser alone can say (whether it can share) is found out once it mounts.
  */
 const ShareCard = ({ url = '', copyLabel = 'Copy link', shareLabel = 'Share…', className }: ShareCardProps) => {
   const { id } = useElement();
@@ -37,13 +37,13 @@ const ShareCard = ({ url = '', copyLabel = 'Copy link', shareLabel = 'Share…',
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext);
-  const [address, setAddress] = useState(url);
+  const [here] = useStore('navigation.href');
+  const address = url || here;
   const [canShare, setCanShare] = useState(false);
 
   useEffect(() => {
-    setAddress(url || window.location.href);
     setCanShare(typeof navigator.share === 'function');
-  }, [url]);
+  }, []);
 
   const code = useMemo(() => (address ? qrPath(address) : undefined), [address]);
 
