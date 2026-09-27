@@ -1,3 +1,5 @@
+import { REVOKED_TYPE } from './topics';
+
 import type { RealtimeMessage, RealtimeTransport } from '../types/RealtimeTypes';
 
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'closed';
@@ -160,6 +162,11 @@ export const createRealtimeClient = (
   };
 
   const deliver = (message: RealtimeMessage): void => {
+    // Let go of the topic by the server: refused from now on, so a new grant for it opens it again.
+    if (message.type === REVOKED_TYPE && message.from === 'server') {
+      refusals.set(message.topic, 'revoked');
+    }
+
     listeners.get(message.topic)?.forEach(listener => listener(message));
   };
 

@@ -385,6 +385,25 @@ export const describeKv = (name: string, open: () => Promise<KvSubject>, enabled
       expect(await kv.get('greeting')).toBeUndefined();
     });
 
+    it('keeps keys apart that differ only in case or a trailing space', async () => {
+      await kv.set('Board', 'upper');
+      await kv.set('board', 'lower');
+      await kv.set('board ', 'spaced');
+
+      expect([await kv.get('Board'), await kv.get('board'), await kv.get('board ')]).toEqual([
+        'upper',
+        'lower',
+        'spaced'
+      ]);
+    });
+
+    it('keeps a value past 64 KB whole', async () => {
+      const large = 'ñ'.repeat(70_000);
+      await kv.set('large', large);
+
+      expect(await kv.get('large')).toBe(large);
+    });
+
     it('answers nothing for a key past its lifetime', async () => {
       await kv.set('short', 'lived', 1);
       expect(await kv.get('short')).toBe('lived');

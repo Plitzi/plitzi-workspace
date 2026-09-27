@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { realtimeClientFor, trackPresence } from '@plitzi/sdk-shared/realtime';
+import { REVOKED_TYPE, realtimeClientFor, trackPresence } from '@plitzi/sdk-shared/realtime';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import type { RealtimeMessage } from '@plitzi/sdk-shared';
@@ -75,13 +75,20 @@ const useChannel = (
 
     const current = trackPresence(client, topic, {
       onChange: setMembers,
-      onMessage: message => listeners.current.onMessage?.(message),
+      onMessage: message => {
+        if (message.type === REVOKED_TYPE && message.from === 'server') {
+          setConnected(false);
+        }
+
+        listeners.current.onMessage?.(message);
+      },
       onArrive: member => listeners.current.onJoin?.(member),
       onDepart: member => listeners.current.onLeave?.(member)
     });
     tracker.current = current;
-    setConnected(client.status === 'open');
-    const stopStatus = client.onStatus(status => setConnected(status === 'open'));
+    // Connected is open AND let in: a topic the server refused — or let go of — is not connected, however open the rest is.
+    setConnected(client.status === 'open' && !client.refusal(topic));
+    const stopStatus = client.onStatus(status => setConnected(status === 'open' && !client.refusal(topic)));
 
     return () => {
       stopStatus();

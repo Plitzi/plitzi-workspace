@@ -1,5 +1,5 @@
 import type { ActionEmailSender } from './runtime/email';
-import type { KvListEntry, KvListRange } from './runtime/kvList';
+import type { KvListEntry, KvListPut, KvListPutOptions, KvListRange } from './runtime/kvList';
 import type {
   ActionEmailConfig,
   ActionJobQueue,
@@ -96,10 +96,11 @@ export type ActionKvStore = {
    */
   swap: (key: string, expected: unknown, next: unknown, ttlSeconds?: number) => Promise<boolean>;
   /**
-   * Puts `entry` in the list — replacing the one with its id — keeping the highest `keep` by score. A list has no
-   * lifetime: it lives until its entries are removed.
+   * Puts `entry` in the list — replacing the one with its id — keeping the highest `keep` by score, and answers what
+   * that dropped, for whatever it named to be let go of too. A list has no lifetime: it lives until its entries are
+   * removed.
    */
-  listPut: (list: string, entry: KvListEntry, options?: { keep?: number }) => Promise<void>;
+  listPut: (list: string, entry: KvListEntry, options?: KvListPutOptions) => Promise<KvListPut>;
   listRange: (list: string, range?: KvListRange) => Promise<KvListEntry[]>;
   /** Takes the entry with `id` out of the list, and answers whether it was there. */
   listRemove: (list: string, id: string) => Promise<boolean>;
@@ -179,6 +180,8 @@ export type ActionTaskContext = {
    * flow has decided the visitor may be there. `undefined` when the server has no realtime channels.
    */
   grant?: (topic: string, ttlSeconds?: number) => Promise<string>;
+  /** Revokes `grant` for `topic` — or every grant for it, naming none — and lets go whoever is on it with one. */
+  revoke?: (topic: string, grant?: string) => Promise<void>;
 };
 
 /** How the actions module reaches the server's realtime channels. Set by `createServer`, never by a deployment. */
@@ -190,6 +193,7 @@ export type ActionRealtime = {
     data: unknown
   ) => Promise<void>;
   grant: (space: { spaceId: number; environment: string }, topic: string, ttlSeconds?: number) => Promise<string>;
+  revoke: (space: { spaceId: number; environment: string }, topic: string, grant?: string) => Promise<void>;
 };
 
 /**

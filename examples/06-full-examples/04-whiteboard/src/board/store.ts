@@ -26,7 +26,7 @@ import type { BoardElement, Point } from './model.ts';
 import type { SavedTemplate } from './savedTemplates.ts';
 import type { BoardSession } from './sessions.ts';
 import type { Template } from './templates.ts';
-import type { ActionKvStore } from '@plitzi/sdk-server/actions';
+import type { ActionKvStore, KvListEntry } from '@plitzi/sdk-server/actions';
 
 /**
  * Where boards live: the action `kv` — this process's memory for one server, Redis for several (`deployment.ts`).
@@ -204,7 +204,13 @@ const ATTEMPTS_PER_WINDOW = 10;
 /** The longest a timer may run: an hour is a workshop; more is a board left counting down for nobody. */
 const MAX_TIMER_SECONDS = 3600;
 
-const INDEX_KEY = 'boards';
+/**
+ * The gallery: two of the platform's lists, newest first. The featured boards have one of their own, so the boards
+ * that come and go can never push them out.
+ */
+const BOARDS_LIST = 'boards';
+
+const FEATURED_LIST = 'featured';
 
 const boardKey = (id: string): string => `board:${id}`;
 
@@ -274,9 +280,14 @@ const newBoardId = (): string => Array.from({ length: 10 }, () => ALPHABET[rando
 // The casts below are the store's own round trip: these keys are written by this file and nothing else, so what comes
 // back is what went in — `kv` hands every value back as `unknown` because it cannot know that.
 
-const asIndex = (value: unknown): BoardSummary[] => (Array.isArray(value) ? (value as BoardSummary[]) : []);
+const summariesOf = (entries: readonly KvListEntry[]): BoardSummary[] =>
+  entries.map(entry => entry.value as BoardSummary);
 
-const readIndex = async (kv: ActionKvStore): Promise<BoardSummary[]> => asIndex(await kv.get(INDEX_KEY));
+const readIndex = async (kv: ActionKvStore): Promise<{ featured: BoardSummary[]; boards: BoardSummary[] }> => {
+  const [featured, boards] = await Promise.all([kv.listRange(FEATURED_LIST), kv.listRange(BOARDS_LIST)]);
+
+  return { featured: summariesOf(featured), boards: summariesOf(boards) };
+};
 
 const asBoard = (value: unknown): StoredBoard | undefined => {
   const board = typeof value === 'object' && value !== null ? (value as StoredBoard) : undefined;
@@ -433,9 +444,9 @@ const preview = (board: StoredBoard): BoardElement[] => {
 };
 
 /**
- * The gallery's entry for a board, replaced — and the list trimmed to what the demo keeps — with its preview. Written
- * after the board, so two changes can arrive here in either order: the entry and the preview of the later one stand,
- * and a board deleted meanwhile is not listed again.
+ * The gallery's entry for a board, replaced — the board the list lets go of to make room forgotten — with its
+ * preview. Written after the board, so two changes can arrive here in either order: the entry and the preview of the
+ * later one stand, and a board deleted meanwhile is not listed again.
  */
 const writeSummary = async ({ kv, assets }: BoardStores, board: StoredBoard): Promise<void> => {
   const summary: BoardSummary = {
@@ -450,28 +461,14 @@ const writeSummary = async ({ kv, assets }: BoardStores, board: StoredBoard): Pr
     unlisted: board.unlisted === true,
     expiresAt: board.expiresAt ?? null
   };
-  let evicted: BoardSummary[] = [];
-  await changeValue(kv, INDEX_KEY, async value => {
-    evicted = [];
-    const index = asIndex(value);
-    const listed = index.find(entry => entry.id === board.id);
-    if (listed && listed.updatedAt > summary.updatedAt) {
-      return undefined;
-    }
-
-    const others = index.filter(entry => entry.id !== board.id);
-    if (!(await readBoard(kv, board.id))) {
-      return listed ? others : undefined;
-    }
-
-    const sorted = [summary, ...others].sort((a, b) => b.updatedAt - a.updatedAt);
-    // The featured boards are kept whatever else comes and goes: they are what a first visit is shown.
-    evicted = sorted.filter(entry => !entry.featured).slice(MAX_BOARDS - FEATURED.length);
-    const gone = new Set(evicted.map(entry => entry.id));
-
-    return sorted.filter(entry => !gone.has(entry.id));
-  });
-  await Promise.all(evicted.map(entry => forget(kv, assets, entry.id)));
+  // A later change's entry stands against an earlier one arriving after it: its score, the time of the change, is higher.
+  const list = board.featured ? FEATURED_LIST : BOARDS_LIST;
+  const put = await kv.listPut(
+    list,
+    { id: board.id, score: board.updatedAt, value: summary },
+    { keep: board.featured ? FEATURED.length : MAX_BOARDS - FEATURED.length, higherOnly: true }
+  );
+  await Promise.all(put.dropped.map(entry => forget(kv, assets, entry.id)));
   await changeValue(
     kv,
     previewKey(board.id),
@@ -482,9 +479,9 @@ const writeSummary = async ({ kv, assets }: BoardStores, board: StoredBoard): Pr
     },
     () => lifetimeOf(board)
   );
-  // Deleted while the preview was being drawn: nothing may be left behind of it.
+  // Deleted while this was being written: it is not listed again, and nothing is left behind of it.
   if (!(await readBoard(kv, board.id))) {
-    await kv.delete(previewKey(board.id));
+    await Promise.all([kv.listRemove(list, board.id), kv.delete(previewKey(board.id))]);
   }
 };
 
@@ -597,28 +594,21 @@ export const listBoards = async (
 ): Promise<Gallery> => {
   const { kv, assets } = stores;
   await ensureFeatured(stores);
-  let index = await readIndex(kv);
-  if (index.some(entry => expired(entry))) {
-    let gone: BoardSummary[] = [];
-    index =
-      (await changeValue(kv, INDEX_KEY, value => {
-        const current = asIndex(value);
-        gone = current.filter(entry => expired(entry));
-
-        return gone.length ? current.filter(entry => !expired(entry)) : undefined;
-      })) ?? (await readIndex(kv));
-    await Promise.all(gone.map(entry => forget(kv, assets, entry.id)));
-  }
+  const index = await readIndex(kv);
+  const gone = index.boards.filter(entry => expired(entry));
+  await Promise.all(
+    gone.map(async entry => Promise.all([kv.listRemove(BOARDS_LIST, entry.id), forget(kv, assets, entry.id)]))
+  );
 
   const search = typeof q === 'string' ? q.trim().toLowerCase() : '';
   const asked = Math.floor(Number(limit));
   const shown = Number.isFinite(asked) && asked > 0 ? Math.min(asked, MAX_BOARDS) : GALLERY_PAGE;
-  const matching = index.filter(
-    entry => !entry.featured && !entry.unlisted && (!search || entry.title.toLowerCase().includes(search))
+  const matching = index.boards.filter(
+    entry => !expired(entry) && !entry.unlisted && (!search || entry.title.toLowerCase().includes(search))
   );
 
   return {
-    featured: await Promise.all(index.filter(entry => entry.featured).map(entry => withPreview(kv, entry))),
+    featured: await Promise.all(index.featured.map(entry => withPreview(kv, entry))),
     boards: await Promise.all(matching.slice(0, shown).map(entry => withPreview(kv, entry))),
     total: matching.length,
     hasMore: matching.length > shown
@@ -931,11 +921,7 @@ export const deleteBoard = async (
   const board = await existing(kv, id);
   assertWritable(signer, board, pass);
   await forget(kv, assets, id);
-  await changeValue(kv, INDEX_KEY, value => {
-    const index = asIndex(value);
-
-    return index.some(entry => entry.id === id) ? index.filter(entry => entry.id !== id) : undefined;
-  });
+  await kv.listRemove(board.featured ? FEATURED_LIST : BOARDS_LIST, id);
 
   return { id, topic: topicFor(id, board.lock) };
 };

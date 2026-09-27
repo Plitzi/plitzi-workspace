@@ -1,4 +1,4 @@
-import { JOIN_TYPE, LEAVE_TYPE } from '@plitzi/sdk-shared/realtime';
+import { JOIN_TYPE, LEAVE_TYPE, REVOKED_TYPE } from '@plitzi/sdk-shared/realtime';
 
 import type { ChannelDeclaration, PubSubAdapter, RealtimeMessage, RealtimeSender } from '@plitzi/sdk-shared';
 
@@ -15,6 +15,8 @@ export type RealtimeConnection = {
   user?: RealtimeSender['user'];
   /** The topics it subscribed to, with the channel each falls under. */
   topics: Map<string, ChannelDeclaration>;
+  /** The grant each topic of a `grant: true` channel was opened with — what a revoke names. */
+  grants: Map<string, string>;
   /** The topics it announced itself on, which hear `$leave` when it goes. */
   announced: Set<string>;
   /** Messages sent this second, by topic — the rate a channel allows is per connection, and a connection is here. */
@@ -27,6 +29,18 @@ export type RealtimeConnection = {
 /** A space's topic, as the adapter knows it: namespaced, so two spaces never hear each other. */
 export const adapterTopic = ({ spaceId, environment }: RealtimeSpace, topic: string): string =>
   `${spaceId}/${environment}/${topic}`;
+
+/**
+ * Said between the servers, never to a page: every connection opened with the grant it names — or, naming none, with
+ * any grant for the topic — is let go of it. On the topic's own adapter channel, so it reaches every replica holding
+ * the topic, and only them. A page cannot send it: the types a page or a flow may use have no `$` but `$presence`.
+ */
+const REVOKE_TYPE = '$revoke';
+
+const revokedGrant = (data: unknown): string | undefined =>
+  typeof data === 'object' && data !== null && 'grant' in data && typeof data.grant === 'string'
+    ? data.grant
+    : undefined;
 
 /** A message as the adapter carried it — written by this module, but read from a transport that is not. */
 const isMessage = (value: unknown): value is RealtimeMessage =>
@@ -73,7 +87,15 @@ export const createRealtimeHub = (pubsub: PubSubAdapter) => {
       const connections = new Set<RealtimeConnection>();
       const release = pubsub.subscribe(key, raw => {
         const message = parse(raw);
-        if (message) {
+        if (message?.type === REVOKE_TYPE) {
+          const grant = revokedGrant(message.data);
+          const revoked = [...connections].filter(member => {
+            const opened = member.grants.get(message.topic);
+
+            return opened !== undefined && (grant === undefined || opened === grant);
+          });
+          revoked.forEach(member => void releaseTopic(member, message.topic));
+        } else if (message) {
           connections.forEach(member => member.send('message', message));
         }
       });
@@ -111,10 +133,37 @@ export const createRealtimeHub = (pubsub: PubSubAdapter) => {
     at: Date.now()
   });
 
+  /**
+   * Lets `connection` go of `topic`: it is told, the others on a presence channel hear it leave, and it no longer
+   * hears the topic or may send on it.
+   */
+  const releaseTopic = async (connection: RealtimeConnection, topic: string): Promise<void> => {
+    connection.send('message', { topic, type: REVOKED_TYPE, data: null, from: 'server', at: Date.now() });
+    connection.topics.delete(topic);
+    connection.grants.delete(topic);
+    await leave(connection, topic);
+    if (connection.announced.delete(topic)) {
+      await publish(connection.space, from(connection, topic, LEAVE_TYPE, null));
+    }
+  };
+
   return {
     publish,
     from,
     find: (token: string): RealtimeConnection | undefined => byToken.get(token),
+
+    /**
+     * Lets go of `topic` every connection, on every replica, that opened it with `grant` — or with any grant, naming
+     * none. What stops a grant that is already in use; `grants.revoke` is what stops it being used again.
+     */
+    revoke: (space: RealtimeSpace, topic: string, grant?: string): Promise<void> =>
+      publish(space, {
+        topic,
+        type: REVOKE_TYPE,
+        data: grant === undefined ? null : { grant },
+        from: 'server',
+        at: Date.now()
+      }),
 
     /** Subscribes a new connection to its topics, and tells the members of each presence channel it arrived. */
     connect: async (connection: RealtimeConnection): Promise<void> => {

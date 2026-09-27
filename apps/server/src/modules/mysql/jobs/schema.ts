@@ -1,4 +1,4 @@
-import { execute } from '../query';
+import { execute, selectRows } from '../query';
 
 import type { Queryable } from '../query';
 
@@ -31,6 +31,10 @@ const CHARSET = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_c
  * Instants are epoch milliseconds in `BIGINT`, read from the SERVER's clock; `history` and `input` are JSON kept as
  * text, because they are only ever read whole. Separate from the account store's schema and its version: a deployment
  * can use either without the other.
+ *
+ * A `kv` key is BYTES, as it is in Redis and in memory: under a collation `Board` and `board` — and `a` and `a ` — were
+ * one key here and two everywhere else. A value is a `MEDIUMTEXT`: a `TEXT` stops at 64 KB, and past it MySQL
+ * refuses the write, or cuts it short where it is not strict.
  */
 export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
   const t = jobTables(prefix);
@@ -80,13 +84,34 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
       KEY action_schedules_due (enabled, next_run_at)
     ) ${CHARSET}`,
     `CREATE TABLE IF NOT EXISTS ${t.kv} (
-      k VARCHAR(191) NOT NULL,
-      v TEXT NOT NULL,
+      k VARBINARY(764) NOT NULL,
+      v MEDIUMTEXT NOT NULL,
       expires_at BIGINT NULL,
       PRIMARY KEY (k),
       KEY action_kv_expires (expires_at)
     ) ${CHARSET}`
   ];
+};
+
+/**
+ * What brings a `kv` table made before the columns above up to them — for a deployment that runs its own migrations,
+ * once. `ensureJobTables` does it by itself, and only when the table needs it: the `ALTER` copies the table.
+ */
+export const mysqlJobSchemaUpgrades = (prefix = ''): string[] => [
+  `ALTER TABLE ${jobTables(prefix).kv} MODIFY k VARBINARY(764) NOT NULL, MODIFY v MEDIUMTEXT NOT NULL`
+];
+
+/** Whether the `kv` table still has the columns it was first made with. */
+const kvNeedsUpgrade = async (db: Queryable, prefix: string): Promise<boolean> => {
+  const columns = await selectRows<{ name: string; type: string }>(
+    db,
+    `SELECT COLUMN_NAME AS name, DATA_TYPE AS type FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME IN ('k', 'v')`,
+    [`${prefix}action_kv`]
+  );
+  const typeOf = (name: string) => columns.find(column => column.name === name)?.type.toLowerCase();
+
+  return typeOf('k') !== 'varbinary' || typeOf('v') !== 'mediumtext';
 };
 
 /** The server's now, in epoch ms, as an SQL expression — what every comparison reads instead of a caller's clock. */
@@ -104,6 +129,12 @@ export const ensureJobTables = (db: Queryable, prefix: string, create: boolean):
     ready ??= (async () => {
       for (const statement of mysqlJobSchemaStatements(prefix)) {
         await execute(db, statement);
+      }
+
+      if (await kvNeedsUpgrade(db, prefix)) {
+        for (const statement of mysqlJobSchemaUpgrades(prefix)) {
+          await execute(db, statement);
+        }
       }
     })().catch((error: unknown) => {
       ready = undefined;

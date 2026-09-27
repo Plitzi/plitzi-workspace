@@ -708,6 +708,7 @@ A topic no pattern matches is refused by the server and reported by the linter (
 **Private topics** (a room behind a password, a customer's order): declare the pattern \`grant: true\`. The action that
 decides the visitor may be there ends with \`realtime.grant { topic }\` and answers its \`grant\`; the \`channel\`
 element binds \`grant\` to it. Without one the topic is refused however well its name is known (\`channel-grant\`).
+\`realtime.revoke { topic, grant }\` takes one back — or all, naming none — and lets go whoever is on it with it.
 
 **Two writers at once**: read-change-write with \`kv.setIf\` (written only if the value is still the one read — empty
 \`expected\` = only if nothing is there yet), ordered lists with \`list.put\` / \`list.range\`, and put

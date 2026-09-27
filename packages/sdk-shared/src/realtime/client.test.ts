@@ -129,6 +129,26 @@ describe('createRealtimeClient', () => {
     expect(decodeURIComponent(server.streams[1].url)).toBe('/_realtime?topics=board:1,room:alpha&grants=g1');
   });
 
+  it('takes a topic the server let go of as refused, and opens it again with a new grant', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    const heard: string[] = [];
+    client.grant('room:alpha', 'g1');
+    stops.push(client.subscribe('room:alpha', entry => heard.push(entry.type)));
+    await wait();
+    server.streams[0].push('ready', { connection: 'me', topics: ['room:alpha'], refused: [] });
+    server.streams[0].push('message', message({ topic: 'room:alpha', type: '$revoked', from: 'server' }));
+    await wait(10);
+
+    expect(heard).toEqual(['$revoked']);
+    expect(client.refusal('room:alpha')).toBe('revoked');
+
+    client.grant('room:alpha', 'g2');
+    await wait();
+
+    expect(decodeURIComponent(server.streams.at(-1)?.url ?? '')).toBe('/_realtime?topics=room:alpha&grants=g2');
+  });
+
   it('keeps a topic’s grant while any listener remains — a canvas and an element share one', async () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
@@ -296,6 +316,29 @@ describe('createRealtimeClient over a WebSocket', () => {
 });
 
 describe('trackPresence', () => {
+  it('forgets who is there once let go of the topic — without telling anyone left', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    let members: RealtimeMember[] = [];
+    const departed: string[] = [];
+    const tracker = trackPresence(client, 'board:1', {
+      onChange: next => {
+        members = next;
+      },
+      onDepart: member => departed.push(member.from)
+    });
+    stops.push(tracker.stop);
+    await wait();
+    server.streams[0].push('ready', { connection: 'me', token: 'secret', topics: ['board:1'], refused: [] });
+    server.streams[0].push('message', message({ type: '$presence', from: 'bob', data: { name: 'Bob' } }));
+    await wait(10);
+    server.streams[0].push('message', message({ type: '$revoked', from: 'server' }));
+    await wait(10);
+
+    expect(members.filter(member => !member.me)).toEqual([]);
+    expect(departed).toEqual([]);
+  });
+
   it('keeps who announced themselves, drops who left, and answers a newcomer with its own state', async () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });

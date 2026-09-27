@@ -421,6 +421,20 @@ describeTarget('whiteboard', subject => {
 
   /** Said at the cursor with Enter, words are kept in the board's chat as well: whoever was not looking at the cursor
    *  reads them there, and so does an agent. */
+  /** The gallery is two of the platform's lists: a new board is on it, found by its name, and gone once deleted. */
+  test('the gallery lists a new board, finds it by name, and forgets it once it is deleted', async ({ page }) => {
+    const title = `e2e gallery ${String(Date.now())}`;
+    const created = (await action(subject.origin, 'board-create', { title })) as { id: string };
+    await page.goto(`${subject.origin}/?q=${encodeURIComponent(title)}`);
+
+    await expect(page.getByText(title).first()).toBeVisible();
+
+    await action(subject.origin, 'board-delete', { board: created.id, key: '' });
+    await page.reload();
+
+    await expect(page.getByText(title)).toHaveCount(0);
+  });
+
   /**
    * A board's channels are private (`grant: true`): a page opens them with the grant the server answered when it let
    * that page in. A locked board's topic is no secret — its id and its password's version — so knowing it opens

@@ -52,20 +52,20 @@ const listOf = (query: Record<string, string>, name: string): string[] => [
   )
 ];
 
-/** Whether one of the grants the page sent (`?grants=g1,g2`) was issued for `topic`. */
-const granted = async (
+/** The one of the grants the page sent (`?grants=g1,g2`) that opens `topic` — or none. */
+const grantFor = async (
   grants: RealtimeGrants,
   space: RealtimeSpace,
   topic: string,
   offered: readonly string[]
-): Promise<boolean> => {
+): Promise<string | undefined> => {
   for (const grant of offered) {
     if (await grants.opens(space, topic, grant)) {
-      return true;
+      return grant;
     }
   }
 
-  return false;
+  return undefined;
 };
 
 /** What a page may open, decided once for either transport. */
@@ -76,6 +76,8 @@ export type Admission =
       space: RealtimeSpace;
       user?: RealtimeSender['user'];
       accepted: Map<string, ChannelDeclaration>;
+      /** The grant each accepted topic of a `grant: true` channel was opened with. */
+      granted: Map<string, string>;
       refused: RealtimeRefusal[];
     };
 
@@ -105,17 +107,23 @@ export const admit = async (
 
   const channels = await resolveChannels(spaceId, environment, revision);
   const accepted = new Map<string, ChannelDeclaration>();
+  const granted = new Map<string, string>();
   const refused: RealtimeRefusal[] = [];
   const space: RealtimeSpace = { spaceId, environment };
   for (const topic of requested) {
     const match = matchChannel(topic, channels);
     const refusal = match ? accessRefusal(match.declaration.access, req.ctx.user) : 'undeclared';
+    const grant =
+      match && !refusal && match.declaration.grant === true ? await grantFor(grants, space, topic, offered) : undefined;
     if (!match || refusal) {
       refused.push({ topic, reason: refusal ?? 'undeclared' });
-    } else if (match.declaration.grant === true && !(await granted(grants, space, topic, offered))) {
+    } else if (match.declaration.grant === true && grant === undefined) {
       refused.push({ topic, reason: 'ungranted' });
     } else {
       accepted.set(topic, match.declaration);
+      if (grant !== undefined) {
+        granted.set(topic, grant);
+      }
     }
   }
 
@@ -133,6 +141,7 @@ export const admit = async (
     space,
     ...(user ? { user: { id: user.id, name: user.username } } : {}),
     accepted,
+    granted,
     refused
   };
 };
@@ -148,6 +157,7 @@ export const connectionFor = (
   space: admission.space,
   ...(admission.user ? { user: admission.user } : {}),
   topics: admission.accepted,
+  grants: admission.granted,
   announced: new Set(),
   sent: new Map(),
   send,

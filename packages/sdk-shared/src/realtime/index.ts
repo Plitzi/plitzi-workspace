@@ -4,6 +4,7 @@ export {
   JOIN_TYPE,
   LEAVE_TYPE,
   PRESENCE_TYPE,
+  REVOKED_TYPE,
   channelLimits,
   channelProblems,
   isValidTopic,

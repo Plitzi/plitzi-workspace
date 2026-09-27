@@ -1124,8 +1124,9 @@ example, was built on the lack of them and is simpler for it.
 - **`kv.setIf`**: writes only if the key still holds the value the flow read, and answers `written: false` when somebody
   got there first; empty `expected` = only if nothing is there yet (claim a seat, a username). `ActionKvStore.swap` for
   a deployment's own tasks.
-- **Lists**: `list.put` (one entry per id, highest score first, `keep` the top N), `list.range`, `list.remove`. At most
-  500 entries and 60 KB — they fit every store. `ActionKvStore.listPut` / `listRange` / `listRemove`.
+- **Lists**: `list.put` (one entry per id, highest score first, `keep` the top N — answering what it `dropped` — and
+  `higherOnly` to keep a higher score already there), `list.range`, `list.remove`. At most 500 entries and 128 KB.
+  `ActionKvStore.listPut` / `listRange` / `listRemove`.
 - **`flow.rateLimit`**: at most N runs every so many seconds, per person or for everyone, refused with its message.
 - **The `kv` adapter has a sixth operation, `swap`** (compare-and-set) — a breaking change for a deployment with its
   own adapter. Memory, the worker fleet's shared copy, MySQL, Mongo and the examples implement it; **`createRedisKv`**
@@ -1137,7 +1138,15 @@ example, was built on the lack of them and is simpler for it.
   work across replicas with nothing new to configure; a day by default, thirty at most. The `channel` element and
   `useChannel` take a `grant`, the realtime client's `grant(topic, grant)` sends it; `lintSpace` reports a private
   topic opened with none (`channel-grant`).
-- Pizarra: every board is written on its own with `swap` instead of one lock for all of them across every replica;
+- **Revoking**: `realtime.revoke { topic, grant }` (or `ctx.revoke`) takes one grant back — or, naming none, every grant
+  for the topic, the ones not used yet too. Whoever is on it with one, on any replica, is let go of it at once: their
+  page hears `$revoked`, the others hear them leave, `useChannel` says `connected: false`; a new grant opens it again.
+- **MySQL `kv`**: a key is bytes (`VARBINARY(764)`) — `Board` and `board` were one key here and two in Redis and in
+  memory — and a value a `MEDIUMTEXT`, where a `TEXT` refused, or cut short, anything past 64 KB. An existing table is
+  brought up to it on first use, and only when it needs it; `mysqlJobSchemaUpgrades()` for a deployment that migrates
+  its own tables (`createTables: false`).
+- Pizarra: its gallery is two of these lists — the featured boards and the rest, 200 kept, the one dropped forgotten;
+  every board is written on its own with `swap` instead of one lock for all of them across every replica;
   its rate limits are `flow.rateLimit` steps in its actions; its board and room channels are private, opened with the
   grant `board-load`/`board-open` answer — a locked board's topic no longer carries a secret, only its password's
   version.

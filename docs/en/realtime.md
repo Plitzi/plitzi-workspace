@@ -84,6 +84,13 @@ version in its name, `board:{id}.v2` — is how a password change shuts out whoe
 own task grants through `ctx.grant(topic, ttlSeconds)`. `lintSpace` reports a `channel` element on a `grant: true`
 topic with no grant (`channel-grant`): the server would refuse it every time.
 
+A grant is asked for at the door; to take one back, **`realtime.revoke { topic, grant }`** — the grant named (one
+person out of a room), or, naming none, every grant for the topic, the ones in use and the ones not used yet. Whoever
+is on the topic with a revoked grant, on any replica, is let go of it at once: their page hears `$revoked` (from
+`server`, through `onMessage`), the others on a presence channel hear them leave, and `useChannel` reports it
+`connected: false`. Getting back in takes a new grant from the action that decides who may. `ctx.revoke(topic, grant)`
+from a deployment's own task.
+
 ---
 
 ## 3. On a page: the `channel` element
@@ -220,7 +227,8 @@ Without this, another site could open a `session` channel with a visitor's sessi
 - `GET /_realtime?topics=board:7f3a,room:7f3a&grants=…` — Server-Sent Events, 1 to 8 topics, with the grants for
   those of private channels. Each topic is authorised on its own: the first event, `ready`, names the connection,
   gives it a secret for publishing, and lists what was `refused` and why (`undeclared`, `unauthenticated`,
-  `forbidden`, `ungranted`). All refused is a `403`.
+  `forbidden`, `ungranted`). All refused is a `403`. A topic let go of later — a revoked grant — is told with a
+  `$revoked` message on it.
 - `POST /_realtime` `{ token, topic, type, data }` — a publish. `204`, or `401` (not this server's connection — it
   restarted), `403` (`not_subscribed`, `server_only`), `422` (a `$` type, a bad topic), `413` (too big), `429` (too
   fast).

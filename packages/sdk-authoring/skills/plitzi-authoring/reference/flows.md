@@ -146,7 +146,8 @@ after. `docs/en/realtime.md` is the whole of it.
 
 A topic only some visitors may hear — a room behind a password, a customer's order — goes on a channel declared
 `grant: true`. The action that decides they may be there ends with `realtime.grant` and answers the grant; the
-element binds it, or the server refuses the topic every time (`channel-grant`):
+element binds it, or the server refuses the topic every time (`channel-grant`). `realtime.revoke { topic, grant }`
+takes one back — or every grant for the topic, naming none — and lets go whoever is on it with it:
 
 ```ts
 channels: { 'order:{id}': { access: { mode: 'session' }, grant: true } }

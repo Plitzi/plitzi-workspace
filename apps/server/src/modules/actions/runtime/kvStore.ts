@@ -1,6 +1,6 @@
 import { listIdProblem, parseList, rangeOf, withEntry } from './kvList';
 
-import type { KvListEntry } from './kvList';
+import type { KvListEntry, KvListPut } from './kvList';
 import type { ActionKvAdapter, ActionKvStore } from '../types';
 
 /** How many times a list write reads again after losing a race, before it says the list is busy. */
@@ -95,7 +95,7 @@ export const createKvStore = (adapter: ActionKvAdapter, { prefix = 'kv:' }: KvSt
         JSON.stringify(next),
         ttlSeconds
       ),
-    listPut: async (list, entry, { keep } = {}) => {
+    listPut: async (list, entry, options = {}) => {
       const problem = listIdProblem(entry.id);
       if (problem) {
         throw new Error(problem);
@@ -105,7 +105,15 @@ export const createKvStore = (adapter: ActionKvAdapter, { prefix = 'kv:' }: KvSt
         throw new Error('A list entry’s score is a number');
       }
 
-      await changeList(list, entries => withEntry(entries, entry, keep));
+      let put: KvListPut = { stored: false, dropped: [] };
+      await changeList(list, entries => {
+        const next = withEntry(entries, entry, options);
+        put = next ? { stored: true, dropped: next.dropped } : { stored: false, dropped: [] };
+
+        return next?.kept;
+      });
+
+      return put;
     },
     listRange: async (list, range) => rangeOf(parseList(await adapter.get(listKey(list))), range),
     listRemove: (list, id) =>

@@ -115,3 +115,8 @@ export const PRESENCE_TYPE = '$presence';
 export const LEAVE_TYPE = '$leave';
 /** A member arrived: the others answer with their `$presence`, so the newcomer sees everyone at once. */
 export const JOIN_TYPE = '$join';
+/**
+ * What a page hears on a topic when the grant it opened it with is revoked (`realtime.revoke`): it is let go of the
+ * topic, and hears nothing more on it until a new grant opens it again.
+ */
+export const REVOKED_TYPE = '$revoked';

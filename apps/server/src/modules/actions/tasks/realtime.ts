@@ -70,4 +70,30 @@ const grant: ActionTask<{ topic: string; ttlSeconds: string | number }> = {
   }
 };
 
-export const realtimeTasks = [publish, grant] as ActionTask<Record<string, unknown>>[];
+/**
+ * Takes back what `realtime.grant` gave: the grant named — one person out of a room — or, naming none, every grant for
+ * the topic, the ones in use and the ones not used yet. Whoever is on the topic with one is let go of it at once
+ * (`$revoked`), on every replica; getting back in takes a new grant from the action that decides who may.
+ */
+const revoke: ActionTask<{ topic: string; grant: string }> = {
+  namespace: 'realtime',
+  action: 'revoke',
+  title: 'Revoke Channel Grant',
+  description:
+    'Takes back one grant to a private channel’s topic — or all of them — and lets go whoever is on it with one.',
+  params: {
+    topic: { type: 'text', canBind: true, defaultValue: '', label: 'Topic (room:{{ input.room }})' },
+    grant: { type: 'text', canBind: true, defaultValue: '', label: 'Grant (empty = every grant for the topic)' }
+  },
+  run: async ({ topic, grant }, ctx) => {
+    if (!ctx.revoke) {
+      throw new Error('This server has no realtime channels');
+    }
+
+    await ctx.revoke(topic, grant ? grant : undefined);
+
+    return { topic, revoked: grant ? 'one' : 'all' };
+  }
+};
+
+export const realtimeTasks = [publish, grant, revoke] as ActionTask<Record<string, unknown>>[];

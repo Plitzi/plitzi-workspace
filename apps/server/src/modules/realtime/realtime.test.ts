@@ -26,7 +26,7 @@ const CHANNELS: ChannelDeclarations = {
   'board:{id}': { access: { mode: 'public' }, presence: true, maxMessageBytes: 64, messagesPerSecond: 2 },
   'members:{id}': { access: { mode: 'session' } },
   'scores:{id}': { access: { mode: 'public' }, publish: 'server' },
-  'room:{id}': { access: { mode: 'public' }, grant: true }
+  'room:{id}': { access: { mode: 'public' }, grant: true, presence: true }
 };
 
 /** The grants every page of these tests is checked against, as a server keeps them. */
@@ -401,5 +401,66 @@ describe('granted channels', () => {
 
     expect(page.ready?.topics).toEqual(['room:alpha']);
     await page.close();
+  });
+
+  it('revokes one grant, and leaves the others as they were', async () => {
+    const one = await GRANTS.issue(SPACE, 'room:rev1');
+    const other = await GRANTS.issue(SPACE, 'room:rev1');
+    await GRANTS.revoke(SPACE, 'room:rev1', one);
+
+    expect(await GRANTS.opens(SPACE, 'room:rev1', one)).toBe(false);
+    expect(await GRANTS.opens(SPACE, 'room:rev1', other)).toBe(true);
+  });
+
+  it('revokes every grant of a topic at once — and a grant issued after opens it again', async () => {
+    const before = await GRANTS.issue(SPACE, 'room:rev2');
+    await GRANTS.revoke(SPACE, 'room:rev2');
+    const after = await GRANTS.issue(SPACE, 'room:rev2');
+
+    expect(await GRANTS.opens(SPACE, 'room:rev2', before)).toBe(false);
+    expect(await GRANTS.opens(SPACE, 'room:rev2', after)).toBe(true);
+  });
+
+  it('lets go of the topic a page on it with a revoked grant, and the others hear it leave', async () => {
+    const hub = createRealtimeHub(createMemoryPubSub());
+    const ana = await GRANTS.issue(SPACE, 'room:rev3');
+    const bob = await GRANTS.issue(SPACE, 'room:rev3');
+    const anaPage = await connect(hub, 'room:rev3', undefined, ana);
+    const bobPage = await connect(hub, 'room:rev3', undefined, bob);
+    await publish(hub, { token: anaPage.ready?.token, topic: 'room:rev3', type: '$presence', data: { name: 'Ana' } });
+
+    await GRANTS.revoke(SPACE, 'room:rev3', ana);
+    await hub.revoke(SPACE, 'room:rev3', ana);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await publish(hub, { token: bobPage.ready?.token, topic: 'room:rev3', type: 'note', data: 'still here?' });
+
+    expect(anaPage.heard().map(message => message.type)).toContain('$revoked');
+    expect(anaPage.heard().some(message => message.type === 'note')).toBe(false);
+    expect(bobPage.heard().find(message => message.type === '$leave')?.from).toBe(anaPage.ready?.connection);
+    expect(bobPage.heard().some(message => message.type === '$revoked')).toBe(false);
+    expect(
+      await publish(hub, { token: anaPage.ready?.token, topic: 'room:rev3', type: 'note', data: 'let me back' })
+    ).toBe(403);
+    await anaPage.close();
+    await bobPage.close();
+  });
+
+  it('revokes only on a private channel', async () => {
+    const config = {
+      adapters: {
+        getOfflineData: () =>
+          Promise.resolve({ schema: { settings: { channels: CHANNELS } }, style: {} } as unknown as OfflineDataRaw)
+      }
+    } as unknown as SSRServerConfig;
+    const realtime = realtimeModuleFor(config);
+    if (!realtime) {
+      throw new Error('expected a realtime module');
+    }
+
+    const grant = await realtime.grant(SPACE, 'room:rev4', 600);
+    await realtime.revoke(SPACE, 'room:rev4', grant);
+
+    expect(await realtime.grants.opens(SPACE, 'room:rev4', grant)).toBe(false);
+    await expect(realtime.revoke(SPACE, 'board:1')).rejects.toThrow('no grants to revoke');
   });
 });

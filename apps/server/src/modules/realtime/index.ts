@@ -48,6 +48,12 @@ export type RealtimeModule = {
    * is a mistake in the flow, not a key to hand out.
    */
   grant: (space: { spaceId: number; environment: string }, topic: string, ttlSeconds?: number) => Promise<string>;
+  /**
+   * `grant` no longer opens `topic` — or, naming none, no grant issued for it until now does: nobody who holds one gets
+   * in again, and whoever is on the topic with one, on any replica, is let go of it (`$revoked`). A page kept out asks
+   * the action that lets it in for a new grant, if it still may.
+   */
+  revoke: (space: { spaceId: number; environment: string }, topic: string, grant?: string) => Promise<void>;
 };
 
 const modules = new WeakMap<object, RealtimeModule>();
@@ -107,6 +113,17 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
       }
 
       return grants.issue(space, topic, ttlSeconds);
+    },
+    revoke: async (space, topic, grant) => {
+      const match = matchChannel(topic, await resolveChannels(space.spaceId, space.environment));
+      if (match?.declaration.grant !== true) {
+        throw new Error(
+          `"${topic}" is not a topic of a private (\`grant: true\`) channel of this space: it has no grants to revoke`
+        );
+      }
+
+      await grants.revoke(space, topic, grant);
+      await hub.revoke(space, topic, grant);
     }
   };
   modules.set(config, module);

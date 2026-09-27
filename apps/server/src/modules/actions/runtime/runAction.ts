@@ -430,7 +430,9 @@ export const createActionRunner = (
               publish: (topic: string, type: string, data: unknown) =>
                 realtime.publish({ spaceId: request.spaceId, environment: request.environment }, topic, type, data),
               grant: (topic: string, ttlSeconds?: number) =>
-                realtime.grant({ spaceId: request.spaceId, environment: request.environment }, topic, ttlSeconds)
+                realtime.grant({ spaceId: request.spaceId, environment: request.environment }, topic, ttlSeconds),
+              revoke: (topic: string, grant?: string) =>
+                realtime.revoke({ spaceId: request.spaceId, environment: request.environment }, topic, grant)
             }
           : {})
       });

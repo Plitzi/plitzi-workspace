@@ -1,4 +1,4 @@
-import { JOIN_TYPE, LEAVE_TYPE, PRESENCE_TYPE } from './topics';
+import { JOIN_TYPE, LEAVE_TYPE, PRESENCE_TYPE, REVOKED_TYPE } from './topics';
 
 import type { RealtimeClient } from './client';
 import type { RealtimeMessage, RealtimeSender } from '../types/RealtimeTypes';
@@ -118,6 +118,11 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
     } else if (message.type === JOIN_TYPE) {
       joining.add(message.from);
       announce();
+    } else if (message.type === REVOKED_TYPE && message.from === 'server') {
+      // This page was let go of the topic: it no longer sees who is there. Nobody left — nobody is told they did.
+      others.clear();
+      joining.clear();
+      changed();
     }
 
     listeners.forEach(listener => listener.onMessage?.(message));

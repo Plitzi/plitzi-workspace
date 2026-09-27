@@ -33,7 +33,12 @@ export { createMysqlStore, mysqlSchemaStatements } from './modules/mysql';
  *  createServer({ action: { lookups, kv: createMysqlKv({ pool }), jobs: { queue: createMysqlJobQueue({ pool }) } } });
  *  ```
  */
-export { createMysqlJobQueue, createMysqlKv, mysqlJobSchemaStatements } from './modules/mysql/jobs';
+export {
+  createMysqlJobQueue,
+  createMysqlKv,
+  mysqlJobSchemaStatements,
+  mysqlJobSchemaUpgrades
+} from './modules/mysql/jobs';
 export type { MysqlJobQueue, MysqlJobQueueOptions, MysqlKvOptions } from './modules/mysql/jobs';
 export { SCHEMA_VERSION, TABLE_NAMES, tableNames } from './modules/mysql';
 

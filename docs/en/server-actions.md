@@ -281,7 +281,7 @@ The ones `sdk-server` ships:
 | `auth` | `currentUser`, `requireRole` |
 | `kv` | `get`, `set`, `setIf`, `increment`, `delete` — namespaced per space |
 | `list` | `put`, `range`, `remove` — ordered lists (the latest, a leaderboard), per space |
-| `realtime` | `publish` on one of the space's channels, `grant` a page into a private one — see [Realtime](./realtime.md) |
+| `realtime` | `publish` on one of the space's channels, `grant` a page into a private one, `revoke` it — see [Realtime](./realtime.md) |
 | `email` | `send` — one plain-text message, through an SMTP server the space holds as a credential |
 | `stream` | `emit` — progress for a streaming caller |
 
@@ -296,9 +296,11 @@ the value the flow read (`expected`), and answers `written: false` when somebody
 refuse. Left empty, `expected` means *only if there is nothing yet*: "claim this username", "take the last seat".
 
 **`list.put`** keeps an ordered list — one entry per `id`, highest `score` first: the latest comments (score = when),
-a leaderboard (score = points). `keep` cuts it to the highest N on every write. `list.range` reads a window of it,
+a leaderboard (score = points). `keep` cuts it to the highest N on every write, and `list.put` answers the ids it
+dropped (`dropped`) — delete what they named, if anything. `higherOnly` keeps an entry already there with a higher score:
+a player's best, or the latest of two writes that arrived out of order. `list.range` reads a window of it,
 `list.remove` takes an entry out. Two writers never lose an entry to each other. A list is read whole, so it is for
-what a page shows at once: at most 500 entries and 60 KB — store an id and what the page shows, the rest under its
+what a page shows at once: at most 500 entries and 128 KB — store an id and what the page shows, the rest under its
 own key.
 
 **`flow.rateLimit`** refuses the run once a caller has asked too often: at most `limit` runs every `windowSeconds`,
@@ -712,6 +714,10 @@ import { createMysqlJobQueue, createMysqlKv } from '@plitzi/sdk-server/mysql'; /
 const db = mongoClient.db('app');
 createServer({ action: { lookups, kv: createMongoKv({ db }), jobs: { queue: createMongoJobQueue({ db }) } } });
 ```
+
+On MySQL a key is bytes (`VARBINARY`) — `Board` and `board` are two keys, as they are in Redis — and a value is a
+`MEDIUMTEXT`, so one past 64 KB is kept whole. A table made before that is brought up to it on first use; with
+`createTables: false`, run `mysqlJobSchemaUpgrades()` in your own migrations, once.
 
 Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store.
 [`05-schedules`](../../examples/05-with-server-actions/05-schedules) is one written out: every method of the queue

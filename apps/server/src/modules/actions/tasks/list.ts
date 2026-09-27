@@ -35,10 +35,19 @@ const nameParam = { type: 'text', canBind: true, defaultValue: '', label: 'List'
  * Puts an entry in a list, ordered by score: the latest things (score = when it happened), a leaderboard (score = points),
  * a gallery. An entry with the same id is replaced, so a list never holds one thing twice.
  *
- * A list is read whole, so it is for what a page shows at once — at most {@link MAX_LIST_ENTRIES} entries and 60 KB;
+ * `dropped` answers the ids `keep` let go of, for whatever they named to be let go of too.
+ *
+ * A list is read whole, so it is for what a page shows at once — at most {@link MAX_LIST_ENTRIES} entries and 128 KB;
  * `keep` cuts it to the highest scores on every write.
  */
-const put: ActionTask<{ list: string; id: string; score: string | number; value: unknown; keep: string | number }> = {
+const put: ActionTask<{
+  list: string;
+  id: string;
+  score: string | number;
+  value: unknown;
+  keep: string | number;
+  higherOnly: boolean | string;
+}> = {
   namespace: 'list',
   action: 'put',
   title: 'Add To List',
@@ -47,17 +56,28 @@ const put: ActionTask<{ list: string; id: string; score: string | number; value:
     id: { type: 'text', canBind: true, defaultValue: '', label: 'Entry id' },
     score: { type: 'text', canBind: true, defaultValue: '0', label: 'Score (highest first)' },
     value: { type: 'codemirror-json', canBind: true, defaultValue: '', label: 'Value' },
-    keep: { type: 'text', canBind: true, defaultValue: '', label: `Keep at most (≤ ${MAX_LIST_ENTRIES})` }
+    keep: { type: 'text', canBind: true, defaultValue: '', label: `Keep at most (≤ ${MAX_LIST_ENTRIES})` },
+    higherOnly: {
+      type: 'boolean',
+      canBind: true,
+      defaultValue: false,
+      label: 'Only replace a lower score (a best score, the latest of two writes)'
+    }
   },
-  run: async ({ list, id, score, value, keep }, ctx) => {
+  run: async ({ list, id, score, value, keep, higherOnly }, ctx) => {
     const sorted = toNumber(score, undefined);
     if (sorted === undefined) {
       throw new Error(`A score is a number, and "${String(score)}" is not one`);
     }
 
-    await ctx.kv.listPut(list, { id, score: sorted, value: valueOf(value) }, { keep: toNumber(keep, undefined) });
+    const put = await ctx.kv.listPut(
+      list,
+      { id, score: sorted, value: valueOf(value) },
+      { keep: toNumber(keep, undefined), higherOnly: higherOnly === true || higherOnly === 'true' }
+    );
 
-    return { list, id, stored: true };
+    // What `keep` dropped, by id: a flow deleting what those entries pointed at has what to delete.
+    return { list, id, stored: put.stored, dropped: put.dropped.map(entry => entry.id) };
   }
 };
 

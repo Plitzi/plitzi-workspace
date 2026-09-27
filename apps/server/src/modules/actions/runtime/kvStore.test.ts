@@ -175,6 +175,29 @@ describe('createKvStore lists', () => {
     expect((await kv.listRange('latest')).map(entry => entry.id)).toEqual(['n5', 'n4', 'n3']);
   });
 
+  it('answers what `keep` dropped, so what those entries named can be let go of too', async () => {
+    const kv = createKvStore(createMemoryKv());
+    await kv.listPut('latest', { id: 'old', score: 1, value: null }, { keep: 2 });
+    await kv.listPut('latest', { id: 'mid', score: 2, value: null }, { keep: 2 });
+    const put = await kv.listPut('latest', { id: 'new', score: 3, value: null }, { keep: 2 });
+
+    expect(put).toEqual({ stored: true, dropped: [{ id: 'old', score: 1, value: null }] });
+  });
+
+  it('with `higherOnly`, keeps an entry whose score is higher than the one put', async () => {
+    const kv = createKvStore(createMemoryKv());
+    await kv.listPut('best', { id: 'ana', score: 30, value: 'thirty' });
+
+    expect(await kv.listPut('best', { id: 'ana', score: 10, value: 'ten' }, { higherOnly: true })).toEqual({
+      stored: false,
+      dropped: []
+    });
+    expect((await kv.listPut('best', { id: 'ana', score: 30, value: 'again' }, { higherOnly: true })).stored).toBe(
+      true
+    );
+    expect(await kv.listRange('best')).toEqual([{ id: 'ana', score: 30, value: 'again' }]);
+  });
+
   it('removes an entry, and says whether it was there', async () => {
     const kv = createKvStore(createMemoryKv());
     await kv.listPut('l', { id: 'a', score: 1, value: null });
@@ -209,7 +232,7 @@ describe('createKvStore lists', () => {
     const kv = createKvStore(createMemoryKv());
 
     await expect(kv.listPut('l', { id: 'no spaces', score: 1, value: null })).rejects.toThrow('id is 1-128');
-    await expect(kv.listPut('l', { id: 'big', score: 1, value: 'x'.repeat(70_000) })).rejects.toThrow(
+    await expect(kv.listPut('l', { id: 'big', score: 1, value: 'x'.repeat(150_000) })).rejects.toThrow(
       'keep fewer entries'
     );
   });
