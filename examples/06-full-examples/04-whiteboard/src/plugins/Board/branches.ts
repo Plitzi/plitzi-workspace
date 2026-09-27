@@ -1,7 +1,7 @@
 import { cloneElements } from './clone.ts';
 import { releasedFrom } from './connectors.ts';
 import { membersOf } from './containers.ts';
-import { isConnector } from '../../board/model.ts';
+import { byStacking, isConnector } from '../../board/model.ts';
 
 import type { BoardElement } from '../../board/model.ts';
 
@@ -29,6 +29,51 @@ export const frameContents = (elements: readonly BoardElement[], frame: BoardEle
   );
 
   return [frame, ...members, ...connectors];
+};
+
+/**
+ * What a selection holds, as a template keeps it: what is chosen, what its frames hold, and the lines that run between
+ * any of it — in the order they are drawn. A card chosen without its column brings the column: a card lives in one.
+ */
+export const selectionContents = (
+  elements: readonly BoardElement[],
+  chosen: readonly BoardElement[]
+): BoardElement[] => {
+  const frames = new Set(
+    chosen.flatMap(element =>
+      element.type === 'frame' ? [element.id] : element.type === 'card' && element.parent ? [element.parent] : []
+    )
+  );
+  const ids = new Set([
+    ...chosen.map(element => element.id),
+    ...frames,
+    ...[...frames].flatMap(frame => membersOf(elements, frame).map(member => member.id))
+  ]);
+  const between = (element: BoardElement): boolean =>
+    isConnector(element.type) &&
+    element.start !== undefined &&
+    element.end !== undefined &&
+    ids.has(element.start.id) &&
+    ids.has(element.end.id);
+
+  return elements.filter(element => !element.deleted && (ids.has(element.id) || between(element))).sort(byStacking);
+};
+
+/** What a selection would be called as a template: its frames' titles — or, without any, its first words. */
+export const selectionTitle = (contents: readonly BoardElement[]): string => {
+  const titles = contents
+    .filter(element => element.type === 'frame' && element.text?.trim())
+    .map(element => element.text?.trim() ?? '');
+  if (titles.length) {
+    return titles.slice(0, 3).join(' · ');
+  }
+
+  return (
+    contents
+      .find(element => element.text?.trim())
+      ?.text?.trim()
+      .split('\n')[0] ?? ''
+  );
 };
 
 /**

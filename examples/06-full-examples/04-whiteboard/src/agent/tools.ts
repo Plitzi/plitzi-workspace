@@ -3,13 +3,22 @@ import { z } from 'zod';
 import { describeBoard, describeElement } from './describe.ts';
 import { cardHeight, frameNamed, placeAll } from './place.ts';
 import { callAction, joinBoard, newElementId } from './session.ts';
+import { blockedWarning, cardTitle, movedOnBlocked, openBlockers, toggledBlocker } from '../board/dependencies.ts';
 import { DUTY_PRESETS, instructionOf } from '../board/duties.ts';
 import { isConnector, markedDone, settleDone } from '../board/model.ts';
 import { isEmptyQuery, matchesQuery, parseQuery } from '../board/query.ts';
 import { isStamp, REACTIONS, STAMPS } from '../board/reactions.ts';
+import { isTemplateId, templateSummary } from '../board/savedTemplates.ts';
 import { SCRIPT_IDS, SCRIPTS } from '../board/sessions.ts';
 import { TEMPLATES } from '../board/templates.ts';
-import { branchFrame, frameContents, mergeBranch } from '../plugins/Board/branches.ts';
+import {
+  branchFrame,
+  frameContents,
+  mergeBranch,
+  selectionContents,
+  selectionTitle
+} from '../plugins/Board/branches.ts';
+import { cloneElements } from '../plugins/Board/clone.ts';
 import { releasedFrom } from '../plugins/Board/connectors.ts';
 import { COLUMN_PADDING, layoutColumn, membersOf, moved, readingOrder } from '../plugins/Board/containers.ts';
 import { anchorPoint, boundsOf, nearestAnchor, overlaps } from '../plugins/Board/geometry.ts';
@@ -84,6 +93,8 @@ const describeActivity = (entry: Activity): string => {
       return `${entry.name} at their cursor: ${entry.text}`;
     case 'changed':
       return `${entry.count} element(s) changed on the board`;
+    case 'warning':
+      return `Heads-up: ${entry.text}`;
     case 'joined':
       return `${entry.name} joined`;
     case 'left':
@@ -281,19 +292,16 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
     ({ query, limit }) => {
       const board = onBoard();
       const elements = board.elements();
-      const frames = new Map(elements.filter(element => element.type === 'frame').map(frame => [frame.id, frame]));
       const parsed = parseQuery(query);
       const found = isEmptyQuery(parsed)
         ? []
-        : elements.filter(
-            element => !board.faceDown(element) && matchesQuery(element, parsed, id => frames.get(id)?.text?.trim())
-          );
+        : elements.filter(element => !board.faceDown(element) && matchesQuery(element, parsed, board.element));
       const shown = found.slice(0, limit ?? 100);
 
       return text(
         found.length
           ? `${found.length} found${shown.length < found.length ? `, the first ${shown.length}` : ''}:\n` +
-              shown.map(element => describeElement(element, frames, board.faceDown)).join('\n')
+              shown.map(element => describeElement(element, board.element, board.faceDown)).join('\n')
           : `Nothing matches "${query}".`
       );
     }
@@ -369,12 +377,6 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
       const kept = await board.commit(placed);
       // New ones are at their first version; the rest are what making room for them moved.
       const added = kept.filter(element => element.version === 1);
-      const frames = new Map(
-        board
-          .elements()
-          .filter(element => element.type === 'frame')
-          .map(frame => [frame.id, frame])
-      );
 
       // Put where it was told, over something else — outside the frame it is in: said, so it can be moved if that was
       // not what was meant. Things are not moved behind the agent's back.
@@ -397,7 +399,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
       return text(
         [
           `Added ${added.length}:`,
-          ...added.map(element => describeElement(element, frames, board.faceDown)),
+          ...added.map(element => describeElement(element, board.element, board.faceDown)),
           ...covering
         ].join('\n')
       );
@@ -618,10 +620,78 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
       }
 
       const changed = [...next.values()];
+      const blocked = movedOnBlocked(changed, board.element, id => all.get(id));
       await board.glide(centre(changed[0]));
       await board.commit(changed);
 
-      return text(`Changed ${changed.length} element(s).`);
+      return text(
+        [
+          `Changed ${changed.length} element(s).`,
+          ...blocked.map(entry => `Note: ${blockedWarning(entry)} — say so to the people here if they did not mean it.`)
+        ].join('\n')
+      );
+    }
+  );
+
+  server.registerTool(
+    'set_dependencies',
+    {
+      title: 'Say what a card waits on',
+      description:
+        'A card that cannot be done before others: it waits on them, and shows as blocked while any is still open — ' +
+        'people see a red "Blocked" on it, and a line from each when they select it. `remove` takes them off instead. ' +
+        'read_board and find_elements (`is:blocked`) show what waits on what.',
+      inputSchema: {
+        card: z.string().describe('The card that waits — its id or title'),
+        waitsOn: z.array(z.string()).min(1).max(12).describe('The cards it waits on — ids or titles'),
+        remove: z.boolean().optional().describe('Take these off what it waits on')
+      }
+    },
+    async ({ card: named, waitsOn, remove }) => {
+      const board = onBoard();
+      const cardNamed = (name: string): BoardElement | undefined => {
+        const found = board.element(name);
+        const wanted = name.trim().toLowerCase();
+
+        return found?.type === 'card'
+          ? found
+          : board.elements().find(element => element.type === 'card' && element.text?.trim().toLowerCase() === wanted);
+      };
+      let card = cardNamed(named);
+      if (!card) {
+        throw new Error(`No card "${named}" on the board — find_elements with type:card`);
+      }
+
+      if (card.locked) {
+        throw new Error(lockedProblem(card));
+      }
+
+      for (const name of waitsOn) {
+        const blocker = cardNamed(name);
+        if (!blocker) {
+          throw new Error(`No card "${name}" on the board — find_elements with type:card`);
+        }
+
+        // Toggled only where it changes what was asked: added when adding, taken off when removing.
+        if ((card.blockedBy ?? []).includes(blocker.id) === (remove === true)) {
+          const toggled = toggledBlocker(card, blocker, board.element);
+          if ('refused' in toggled) {
+            throw new Error(toggled.refused);
+          }
+
+          card = toggled.card;
+        }
+      }
+
+      await board.glide(centre(card));
+      await board.commit([card]);
+      const open = openBlockers(card, board.element);
+
+      return text(
+        (card.blockedBy ?? []).length
+          ? `${card.id} "${cardTitle(card)}" waits on ${(card.blockedBy ?? []).length} card(s) — ${open.length ? `blocked by ${open.map(blocker => `"${cardTitle(blocker)}"`).join(', ')}` : 'all done, so not blocked'}.`
+          : `${card.id} "${cardTitle(card)}" waits on nothing now.`
+      );
     }
   );
 
@@ -824,12 +894,6 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
         return text(`Nothing happened in ${seconds} seconds.`);
       }
 
-      const frameMap = new Map(
-        board
-          .elements()
-          .filter(element => element.type === 'frame')
-          .map(frame => [frame.id, frame])
-      );
       // In the frames watched, what changed is told element by element: that is what a duty acts on.
       const lines = heard.flatMap(entry => {
         if (!watched.size || entry.kind !== 'changed') {
@@ -840,7 +904,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
 
         return [
           `${changed.length} changed in your frames:`,
-          ...changed.map(element => describeElement(element, frameMap, board.faceDown))
+          ...changed.map(element => describeElement(element, board.element, board.faceDown))
         ];
       });
 
@@ -891,14 +955,13 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
         await Promise.all([board.sayAtCursor(say), board.chatLine(say)]);
       }
 
-      const frameMap = new Map(frames.map(each => [each.id, each]));
       const inside = frameContents(board.elements(), frame).slice(1);
 
       return text(
         [
           `Presenting ${index + 1} of ${frames.length}: "${title}"${index + 1 < frames.length ? ` — next: "${frames[index + 1].text ?? ''}"` : ' — the last one'}.`,
           inside.length ? 'In it:' : 'It is empty.',
-          ...inside.map(element => describeElement(element, frameMap, board.faceDown))
+          ...inside.map(element => describeElement(element, board.element, board.faceDown))
         ].join('\n')
       );
     }
@@ -949,6 +1012,113 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
 
       return text(
         `Branched ${frame.id} into ${copy.id} "${copy.text ?? ''}" with ${copies.length - 1} element(s): change it there.`
+      );
+    }
+  );
+
+  server.registerTool(
+    'list_templates',
+    {
+      title: 'The board’s templates',
+      description:
+        'The templates in this board’s library — the formats the team keeps: a retro’s columns, a check-in frame, a ' +
+        'triage lane — each with its code, its name and what it holds. Put one down with use_template.',
+      inputSchema: {}
+    },
+    () => {
+      const shelf = onBoard().templates();
+      if (!shelf.length) {
+        return text(
+          'This board’s library has no templates yet. Keep what the team lays out every time with save_template — or ' +
+            'use_template with the code of one another board keeps.'
+        );
+      }
+
+      return text(
+        shelf.map(template => `${template.id} "${template.title}" — ${templateSummary(template)}`).join('\n')
+      );
+    }
+  );
+
+  server.registerTool(
+    'save_template',
+    {
+      title: 'Keep a template',
+      description:
+        'Keep what is laid out — frames with everything in them, columns, notes — as a template in the board’s ' +
+        'library, for the team to put down again here or on any other board (by its code). A card is kept with its ' +
+        'column. Do it when the people ask for it, or offer it when a format is clearly one they will reuse.',
+      inputSchema: {
+        elements: z.array(z.string()).min(1).describe('What to keep: element ids, or frame titles'),
+        title: z.string().max(60).optional().describe('What it is called — its frames’ titles when left out')
+      }
+    },
+    async ({ elements: names, title }) => {
+      const board = onBoard();
+      const chosen = names.map(name => board.element(name) ?? frameNamed(board, name));
+      const missing = names.filter((_, index) => !chosen[index]);
+      if (missing.length) {
+        throw new Error(`Nothing called ${missing.map(name => `"${name}"`).join(', ')} on the board — read_board`);
+      }
+
+      const contents = selectionContents(
+        board.elements(),
+        chosen.filter(element => element !== undefined)
+      );
+      const saved = await board.saveTemplate(title?.trim() || selectionTitle(contents), contents);
+
+      return text(
+        `Kept "${saved.title}" as template ${saved.id} (${contents.length} element(s)) in the board’s library. On ` +
+          `another board, use_template with ${saved.id} puts it down — or anyone pastes the code in its library.`
+      );
+    }
+  );
+
+  server.registerTool(
+    'use_template',
+    {
+      title: 'Put a template down',
+      description:
+        'Put a template down on the board: one from its library (by code or name — list_templates), or any other by ' +
+        'its code, which adds it to this board’s library too. Lands to the right of what is on the board, or at x/y.',
+      inputSchema: {
+        template: z.string().describe('Its code, or its name in this board’s library'),
+        x: z.number().optional().describe('Where its top left corner goes'),
+        y: z.number().optional()
+      }
+    },
+    async ({ template: named, x, y }) => {
+      const board = onBoard();
+      const wanted = named.trim().toLowerCase();
+      const shelf = board.templates();
+      const template =
+        shelf.find(entry => entry.id === wanted || entry.title.toLowerCase() === wanted) ??
+        (isTemplateId(wanted) ? await board.addTemplate(wanted) : undefined);
+      if (!template) {
+        throw new Error(
+          `No template "${named}" in this board’s library${shelf.length ? ` — it has ${shelf.map(entry => `"${entry.title}" (${entry.id})`).join(', ')}` : ''}. ` +
+            'A template another board keeps is used by its 10-character code.'
+        );
+      }
+
+      const existing = board.elements();
+      const [left, top] =
+        x !== undefined && y !== undefined
+          ? [x, y]
+          : existing.length
+            ? [
+                Math.max(...existing.map(element => element.x + element.width)) + 120,
+                Math.min(...existing.map(element => element.y))
+              ]
+            : [0, 0];
+      const copies = cloneElements(template.elements, { dx: left, dy: top, topZ: board.topZ(), keepFrame: false });
+      await board.commit(copies);
+      await board.glide(centre(copies[0]));
+      const frames = copies.filter(element => element.type === 'frame');
+
+      return text(
+        `Put down "${template.title}" (${copies.length} element(s)) at ${Math.round(left)}, ${Math.round(top)}` +
+          (frames.length ? `: ${frames.map(frame => `${frame.id} "${frame.text ?? ''}"`).join(', ')}.` : '.')
       );
     }
   );

@@ -39,6 +39,10 @@ export const READ_ONLY_ACTION = 'board-readonly';
 
 export const AGENTS_ACTION = 'board-agents';
 
+export const TEMPLATE_SAVE_ACTION = 'board-template-save';
+export const TEMPLATE_ADD_ACTION = 'board-template-add';
+export const TEMPLATE_REMOVE_ACTION = 'board-template-remove';
+
 const field = (label: string, required = true): ActionField => ({ type: 'text', required, label });
 
 /**
@@ -448,6 +452,58 @@ const agents = defineAction({
   output: '{{ set|json_encode }}'
 });
 
+/** Everyone on the board is told its library as it now is (`templates`): the pages' libraries and the agents follow. */
+const libraryChanged = (step: string) => ({
+  id: 'announce',
+  task: 'realtime.publish',
+  params: {
+    topic: `board:{{ ${step}.topic }}`,
+    type: 'templates',
+    data: `{ "board": {{ ${step}.board|json_encode }}, "templates": {{ ${step}.templates|json_encode }} }`
+  }
+});
+
+/**
+ * What the page that asked is answered: the library as it now is — its own, whatever the channel does — and the
+ * template it saved or added (`template`).
+ */
+const libraryAnswer = (template?: 'saved' | 'added'): string =>
+  `{ "board": {{ kept.board|json_encode }}, "templates": {{ kept.templates|json_encode }}${template ? `, "template": {{ kept.${template}|json_encode }}` : ''} }`;
+
+/** What someone laid out, kept as a template in the board's library — answered with its code and name. */
+const templateSave = defineAction({
+  id: TEMPLATE_SAVE_ACTION,
+  name: 'Save template',
+  description: 'Keeps a selection — with what its frames hold — as a template in the board’s library.',
+  trigger: {
+    type: 'call',
+    access: 'public',
+    input: { ...onBoard, title: field('Name', false), elements: { type: 'json', required: true, label: 'Elements' } }
+  },
+  steps: [{ id: 'kept', task: 'board.templateSave' }, libraryChanged('kept')],
+  output: libraryAnswer('saved')
+});
+
+/** A template another board keeps, added to this board's library by its code. */
+const templateAdd = defineAction({
+  id: TEMPLATE_ADD_ACTION,
+  name: 'Add template',
+  description: 'Adds a template to the board’s library by its code.',
+  trigger: { type: 'call', access: 'public', input: { ...onBoard, code: field('Template code') } },
+  steps: [{ id: 'kept', task: 'board.templateAdd' }, libraryChanged('kept')],
+  output: libraryAnswer('added')
+});
+
+/** A template taken out of the board's library. */
+const templateRemove = defineAction({
+  id: TEMPLATE_REMOVE_ACTION,
+  name: 'Remove template',
+  description: 'Takes a template out of the board’s library.',
+  trigger: { type: 'call', access: 'public', input: { ...onBoard, code: field('Template code') } },
+  steps: [{ id: 'kept', task: 'board.templateRemove' }, libraryChanged('kept')],
+  output: libraryAnswer()
+});
+
 const actions = [
   list,
   load,
@@ -466,7 +522,10 @@ const actions = [
   chat,
   reply,
   readOnly,
-  agents
+  agents,
+  templateSave,
+  templateAdd,
+  templateRemove
 ];
 
 /** How the server reaches an action. One live version, so the revision a page was published at is ignored. */

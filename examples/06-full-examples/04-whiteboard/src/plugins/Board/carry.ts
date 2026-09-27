@@ -1,3 +1,4 @@
+import { cloneElements } from './clone.ts';
 import { COLUMN_PADDING, columnAt } from './containers.ts';
 import { COMMENT_PIN_BOX, DEFAULT_BOX, STACK_BOX } from './core.ts';
 import { boundsOf, toBoard, unionOf } from './geometry.ts';
@@ -66,13 +67,24 @@ export const createCarry = (core: Core) => {
     }
   };
 
-  /** What is carried, as it is made: one element, a pile, or the three columns of a kanban board. */
-  const elementsFor = (what: Carried, paper: Fill): BoardElement[] => {
-    if (what === 'stack') {
-      return [{ ...core.newElement('stack', [0, 0]), ...STACK_BOX, fill: paper }];
-    }
+  /**
+   * What is carried, as it is made: one element, a pile, the three columns of a kanban board — or a template, copied
+   * afresh each time it is taken, so it can be put down as often as it is needed.
+   */
+  const elementsFor = (what: Carried, paper: Fill, template: unknown): BoardElement[] => {
+    switch (what) {
+      case 'stack':
+        return [{ ...core.newElement('stack', [0, 0]), ...STACK_BOX, fill: paper }];
+      case 'kanban':
+        return core.kanbanAt([0, 0]);
+      case 'template': {
+        const kept = state.props.templates.find(entry => entry.id === template);
 
-    return what === 'kanban' ? core.kanbanAt([0, 0]) : [elementFor(what, paper)];
+        return kept ? cloneElements(kept.elements, { dx: 0, dy: 0, topZ: core.scene.topZ, keepFrame: false }) : [];
+      }
+      default:
+        return [elementFor(what, paper)];
+    }
   };
 
   const forget = (carrying: Carrying): void => {
@@ -159,10 +171,10 @@ export const createCarry = (core: Core) => {
         draft.set(element.id, element);
       }
 
-      // Where it would go: a card's column and the gap in it; a note's frame. Columns are put in nothing.
+      // Where it would go: a card's column and the gap in it; a note's frame. Frames are put in nothing.
       if (carrying.what === 'card') {
         core.aimCard(point);
-      } else if (carrying.what === 'kanban') {
+      } else if (carrying.elements.some(element => element.type === 'frame')) {
         core.aimDrop(undefined, new Set());
       } else {
         core.aimDrop(point, new Set(carrying.elements.map(element => element.id)));
@@ -196,18 +208,21 @@ export const createCarry = (core: Core) => {
 
   /**
    * What `tool` puts down — a note in `fill`'s paper when none is named, as the pad's are — or a pile of notes
-   * (`kind: 'stack'`), or a whole kanban board (`kind: 'kanban'`), taken to the board. `drag`: taken by a press, and
-   * only carried if it is dragged. A tool that puts nothing down — a line, the eraser — carries nothing.
+   * (`kind: 'stack'`), a whole kanban board (`kind: 'kanban'`) or the library's `template` (`kind: 'template'`), taken
+   * to the board. `drag`: taken by a press, and only carried if it is dragged. A tool that puts nothing down — a line,
+   * the eraser — carries nothing, and neither does a template the library no longer has.
    */
   const start = ({
     fill,
     kind,
     tool,
+    template,
     drag
   }: {
     fill?: unknown;
     kind?: unknown;
     tool?: unknown;
+    template?: unknown;
     drag?: unknown;
   }): void => {
     end();
@@ -218,19 +233,20 @@ export const createCarry = (core: Core) => {
     const picked = asFill(fill);
     const paper: Fill = picked && picked !== 'none' ? picked : 'yellow';
     const what: Carried | undefined =
-      kind === 'stack' || kind === 'kanban'
+      kind === 'stack' || kind === 'kanban' || kind === 'template'
         ? kind
         : tool === undefined
           ? 'sticky'
           : isOneOf(PLACED_TOOLS, tool)
             ? tool
             : undefined;
-    if (!what) {
+    const elements = what ? elementsFor(what, paper, template) : [];
+    if (!what || !elements.length) {
       return;
     }
 
     state.carrying = {
-      elements: elementsFor(what, paper),
+      elements,
       what,
       moved: false,
       over: false,

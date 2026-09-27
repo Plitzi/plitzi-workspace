@@ -4,6 +4,7 @@ import {
   drawCursor,
   drawOffscreenCursor,
   drawDots,
+  drawDependencies,
   drawDropTarget,
   drawGuides,
   drawHandles,
@@ -25,6 +26,7 @@ import {
   unionOf
 } from './geometry.ts';
 import { CONNECT_OFFSET } from './picking.ts';
+import { openBlockers, waitingOn } from '../../board/dependencies.ts';
 import { ANCHORS, isConnectable } from '../../board/model.ts';
 import { isFaceDown } from '../../board/sessions.ts';
 
@@ -83,10 +85,27 @@ const changedArea = (
   const gone = new Map(before.map(element => [element.id, element]));
   const boxes: Box[] = [];
   const frames = new Set<string>();
+  // A card done, or open again, changes whether the cards waiting on it show as blocked.
+  let waiting: Map<string, BoardElement[]> | undefined;
+  const waitersOf = (id: string): BoardElement[] => {
+    waiting ??= next.reduce((found, element) => {
+      for (const blocker of element.blockedBy ?? []) {
+        found.set(blocker, [...(found.get(blocker) ?? []), element]);
+      }
+
+      return found;
+    }, new Map<string, BoardElement[]>());
+
+    return waiting.get(id) ?? [];
+  };
   const touched = (element: BoardElement): void => {
     boxes.push(boundsOf(element));
     if (element.parent) {
       frames.add(element.parent);
+    }
+
+    if (element.type === 'card') {
+      boxes.push(...waitersOf(element.id).map(boundsOf));
     }
   };
   for (const element of next) {
@@ -116,6 +135,30 @@ const changedArea = (
   }
 
   return boxes.length > MOST_CHANGED * 2 ? undefined : { area: unionOf(boxes) };
+};
+
+/** A card's: how many of the cards it waits on are still open — none for anything else. */
+const blockedCount = (element: BoardElement, shown: ReadonlyMap<string, BoardElement>): number =>
+  element.type === 'card' && element.blockedBy?.length ? openBlockers(element, id => shown.get(id)).length : 0;
+
+/** The lines a card selected shows: from each card it waits on, and to each card that waits on it. */
+const dependencyLinks = (
+  card: BoardElement,
+  shown: ReadonlyMap<string, BoardElement>,
+  boxOf: (element: BoardElement) => Box
+): { from: Box; to: Box; open: boolean }[] => {
+  const blockers = (card.blockedBy ?? []).flatMap(id => {
+    const blocker = shown.get(id);
+
+    return blocker?.type === 'card' ? [{ from: boxOf(blocker), to: boxOf(card), open: blocker.done !== true }] : [];
+  });
+  const waiting = waitingOn(card, [...shown.values()]).map(other => ({
+    from: boxOf(card),
+    to: boxOf(other),
+    open: card.done !== true
+  }));
+
+  return [...blockers, ...waiting];
 };
 
 /**
@@ -329,7 +372,8 @@ export const createPainter = (
       for (const element of opened) {
         moving.drawOpened(context, element, palette, {
           writing: element.id === editing,
-          authors: props.authors
+          authors: props.authors,
+          blocked: blockedCount(element, core.current())
         });
       }
     }
@@ -439,9 +483,11 @@ export const createPainter = (
   ): void => {
     const { palette, props, editing } = state;
     const members = membersIn(core.displayed());
+    const shown = core.current();
     for (const element of elements) {
       if (overlaps(boundsOf(element), view, 40)) {
         use.drawElement(context, element, palette, {
+          blocked: blockedCount(element, shown),
           hideText: element.id === editing,
           faded: fade(element),
           faceDown: isFaceDown(element, props.session, props.voter),
@@ -648,6 +694,18 @@ export const createPainter = (
       drawDropTarget(context, camera, boundsOf(drop), palette.accent, state.dropTarget.line);
     }
 
+    // A card waiting to be told what it waits on: the next click says, and the pointer says so.
+    if (state.pickingBlocker && state.lastPointer) {
+      drawHint(context, camera, state.lastPointer, 'Click the card it waits on — Esc to stop', palette);
+    }
+
+    // One card selected: what it waits on, and what waits on it.
+    const [only] = core.selection.size === 1 ? core.selected() : [];
+    const linked = state.pickingBlocker ? byId.get(state.pickingBlocker) : only;
+    if (linked?.type === 'card' && !gesture) {
+      drawDependencies(context, camera, dependencyLinks(linked, byId, core.shownBox), palette);
+    }
+
     // The card tool out of a column: a card is a task on a kanban, and the tool says where it goes instead of making one.
     if (props.tool === 'card' && core.editable() && !gesture && !state.dropTarget && state.lastPointer) {
       const columns = core.displayed().some(element => element.layout === 'column');
@@ -696,11 +754,17 @@ export const createPainter = (
       }
     }
 
-    // Where a connector can start from, on the shape under the pointer — and where one being drawn will land.
+    // Where a connector can start from, on the shape under the pointer — and where one being drawn will land. Never on
+    // the opened card: it is being read, and it may have opened under a pointer that has not moved since.
     const { snapping, hovered } = state;
     const target = snapping
       ? byId.get(snapping.id)
-      : !gesture && !state.carrying && selecting && hovered
+      : !gesture &&
+          !state.carrying &&
+          !state.pickingBlocker &&
+          selecting &&
+          hovered &&
+          hovered !== core.openedCard()?.element.id
         ? byId.get(hovered)
         : undefined;
     if (target && isConnectable(target.type)) {
@@ -745,8 +809,11 @@ export const createPainter = (
       }
     }
 
-    // The selection's tools stand aside while it is being moved, resized or typed into — they would cover the work.
-    reportBox(selecting && !gesture && !state.pinch ? unionOf(chosen.map(core.shownBox)) : undefined);
+    // The selection's tools stand aside while it is being moved, resized or typed into — they would cover the work —
+    // and while a card waits to be told what it waits on: the card to click may be under them.
+    reportBox(
+      selecting && !gesture && !state.pinch && !state.pickingBlocker ? unionOf(chosen.map(core.shownBox)) : undefined
+    );
     const [sole] = chosen;
     reportThread(
       chosen.length === 1 && sole.type === 'comment' && !editing && !gesture && core.editable() ? sole : undefined

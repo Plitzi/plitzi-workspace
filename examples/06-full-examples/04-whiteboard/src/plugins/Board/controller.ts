@@ -1,4 +1,4 @@
-import { branchFrame, mergeBranch } from './branches.ts';
+import { branchFrame, mergeBranch, selectionContents, selectionTitle } from './branches.ts';
 import { createCarry } from './carry.ts';
 import { cloneElements } from './clone.ts';
 import { releasedFrom } from './connectors.ts';
@@ -636,10 +636,19 @@ export const createBoardController = (
       core.reportSelection();
     }),
     deselect: (): void => {
+      // Waiting to be told what a card waits on, Escape only stops waiting: the card stays selected.
+      if (state.pickingBlocker) {
+        core.chooseBlocker(undefined);
+
+        return;
+      }
+
       carry.end();
       core.finishEditing();
       core.setSelection([]);
     },
+    /** The card selected waits for the next click to say which card it waits on — clicked again, no longer. */
+    pickBlocker: whenEditable(() => core.pickBlocker()),
 
     /** A sticky taken off the pad, in `fill`'s paper: dragged onto the board, or clicked and then placed. */
     carry: carry.start,
@@ -977,6 +986,20 @@ export const createBoardController = (
       core.commit(merged);
       const original = core.current().get(frame.branchOf);
       core.setSelection(original ? [original.id] : []);
+    }),
+    /**
+     * What is selected, handed to the page to keep as a template — with what its frames hold, as it lies (never as an
+     * opened card spreads its column on this screen) — named `title`, or after its frames when that is empty.
+     */
+    saveTemplate: whenEditable(({ title }: { title?: unknown } = {}) => {
+      const lying = core.lying();
+      const chosen = [...core.selection].flatMap(id => lying.get(id) ?? []);
+      const elements = selectionContents([...lying.values()], chosen);
+      if (!elements.length) {
+        return;
+      }
+
+      emit({ type: 'templateSave', title: textOf(title).trim() || selectionTitle(elements), elements });
     }),
     search: ({ query }: { query?: unknown }): void => search.find(textOf(query)),
     searchStep: ({ direction }: { direction?: unknown }): void =>

@@ -70,6 +70,7 @@ import { SESSION, sessionBar } from './session.ts';
 import { settingsButton, settingsPanel } from './settings.ts';
 import { identity } from './state.ts';
 import { boardAction, stylePanel } from './stylePanel.ts';
+import { hearTemplates, TEMPLATES, templateSaveFlow } from './templates.ts';
 import { timerButton, timerPanel, timerPill } from './timer.ts';
 import { toolbar, toolFlyouts } from './toolbar.ts';
 import { bottomTray, followBanner, reactionPicker, stampPicker } from './tray.ts';
@@ -441,6 +442,7 @@ const canvas = (): ElementSpec =>
       { to: 'opacity', source: 'computed.opacity' },
       { to: 'author', source: 'computed.name' },
       bindTemplate('session', BOARD_PROVIDER, SESSION, { returns: 'value' }),
+      bindTemplate('templates', BOARD_PROVIDER, TEMPLATES, { returns: 'value' }),
       { to: 'minimap', source: 'computed.minimap' },
       { to: 'authors', source: 'computed.showAuthors' },
       { to: 'sounds', source: 'computed.sounds' },
@@ -502,6 +504,17 @@ const canvas = (): ElementSpec =>
             autoDismissTimeout: 5000
           })
         )
+      ],
+      templateSaveFlow,
+      // What the canvas warns the person of, about what they just did: a blocked card moved on, a link refused.
+      [
+        named('told', declaredTrigger(declaration, 'onNotice')),
+        addNotification({
+          content: '{{ told.text }}',
+          appearance: 'warning',
+          placement: 'bottom-center',
+          autoDismissTimeout: 5000
+        })
       ],
       // A vote — a badge clicked, or the selection's button — kept by the server, one at a time, and announced.
       [
@@ -565,6 +578,7 @@ const canvas = (): ElementSpec =>
         setState({ key: 'selectionCanSloppiness', type: 'boolean', value: '{{ picked.canSloppiness }}' }),
         setState({ key: 'selectionCanBrush', type: 'boolean', value: '{{ picked.canBrush }}' }),
         setState({ key: 'selectionIsTask', type: 'boolean', value: '{{ picked.isTask }}' }),
+        setState({ key: 'selectionIsCard', type: 'boolean', value: '{{ picked.isCard }}' }),
         setState({ key: 'selectionIsDone', type: 'boolean', value: '{{ picked.isDone }}' }),
         setState({ key: 'selectionIsLocked', type: 'boolean', value: '{{ picked.isLocked }}' }),
         setState({ key: 'selectionCanEdges', type: 'boolean', value: '{{ picked.canEdges }}' }),
@@ -991,6 +1005,7 @@ export const boardPage: PageSpec = {
                 })
               ),
               ...hearChat('heard').map(step => when({ field: 'heard.type', operator: '=', value: 'chat' }, step)),
+              hearTemplates('heard'),
               when(
                 { field: 'heard.type', operator: '=', value: 'timer' },
                 setState({ key: 'timer', type: 'json', value: '{{ heard.data }}' })

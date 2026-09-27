@@ -1,3 +1,4 @@
+import { openBlockers } from './dependencies.ts';
 import { SHAPE_TYPES } from './model.ts';
 
 import type { BoardElement, ShapeType } from './model.ts';
@@ -9,7 +10,8 @@ import type { BoardElement, ShapeType } from './model.ts';
  * - words: in what it says — its text, a card's description, who wrote it — every one of them, in any case;
  * - `#tag`: a hashtag written in it. A tag is nothing but that: `#bug` in a note is the note tagged `bug`;
  * - `@name`: who wrote it; `in:name`: the frame it is in, by its title; `"two words"` keep together;
- * - `is:done`, `is:open`: a task ticked or not — a card, a comment; `is:locked`;
+ * - `is:done`, `is:open`: a task ticked or not — a card, a comment; `is:locked`; `is:blocked`, a card waiting on
+ *   another still open;
  * - `type:card` (`note` is a sticky), `color:red` — its line or its fill.
  */
 
@@ -22,6 +24,7 @@ export type Query = {
   colours: string[];
   done?: boolean;
   locked?: boolean;
+  blocked?: boolean;
 };
 
 /** A tag: what follows `#` — letters, digits, `-` and `_`, in any script. */
@@ -70,6 +73,8 @@ export const parseQuery = (text: string): Query => {
       query.done = lower === 'is:done';
     } else if (lower === 'is:locked') {
       query.locked = true;
+    } else if (lower === 'is:blocked') {
+      query.blocked = true;
     } else if (lower) {
       query.words.push(lower);
     }
@@ -87,18 +92,20 @@ export const isEmptyQuery = (query: Query): boolean =>
   !query.types.length &&
   !query.colours.length &&
   query.done === undefined &&
-  query.locked === undefined;
+  query.locked === undefined &&
+  query.blocked === undefined;
 
 const isTaskType = (type: ShapeType): boolean => type === 'card' || type === 'comment';
 
 /**
- * Whether an element is what `query` asks for — every part of it at once. `frameTitle` answers the title of the frame
- * an element is in, for `in:`. A pen stroke says nothing and is found by its type and colour alone.
+ * Whether an element is what `query` asks for — every part of it at once. `find` answers the other elements on the
+ * board by id: the frame an element is in, for `in:`, and the cards it waits on, for `is:blocked`. A pen stroke says
+ * nothing and is found by its type and colour alone.
  */
 export const matchesQuery = (
   element: BoardElement,
   query: Query,
-  frameTitle: (id: string) => string | undefined
+  find: (id: string) => BoardElement | undefined
 ): boolean => {
   if (element.deleted) {
     return false;
@@ -107,7 +114,7 @@ export const matchesQuery = (
   const said = `${element.text ?? ''}\n${element.description ?? ''}\n${element.author ?? ''}`.toLowerCase();
   const tags = query.tags.length ? tagsOf(element) : [];
   const author = (element.author ?? '').toLowerCase();
-  const frame = element.parent ? (frameTitle(element.parent) ?? '').toLowerCase() : '';
+  const frame = element.parent ? (find(element.parent)?.text?.trim() ?? '').toLowerCase() : '';
 
   return (
     query.words.every(word => said.includes(word)) &&
@@ -117,6 +124,7 @@ export const matchesQuery = (
     (!query.types.length || query.types.includes(element.type)) &&
     query.colours.every(colour => element.stroke === colour || element.fill === colour) &&
     (query.done === undefined || (isTaskType(element.type) && (element.done === true) === query.done)) &&
-    (query.locked === undefined || element.locked === true)
+    (query.locked === undefined || element.locked === true) &&
+    (query.blocked === undefined || (!element.done && openBlockers(element, find).length > 0))
   );
 };

@@ -479,6 +479,26 @@ const clampLines = (
 };
 
 /**
+ * A card waiting on others still open: a tab on its top edge, in red — where it does not take a line from its words,
+ * and is seen down a whole column at a glance.
+ */
+const drawBlockedBadge = (context: CanvasRenderingContext2D, width: number, count: number, palette: Palette): void => {
+  const label = count > 1 ? `Blocked · ${count}` : 'Blocked';
+  context.save();
+  context.font = `600 11px ${palette.ui}`;
+  const badge = context.measureText(label).width + 20;
+  const [x, y] = [width - badge - 12, -9];
+  context.beginPath();
+  context.roundRect(x, y, badge, 18, 9);
+  context.fillStyle = palette.stroke.red;
+  context.fill();
+  context.fillStyle = '#ffffff';
+  context.textBaseline = 'middle';
+  context.fillText(label, x + 10, y + 9.5);
+  context.restore();
+};
+
+/**
  * A card: printed, with a strip in its colour, a box that ticks it done, its title, its description and who wrote it.
  * Opened, it is drawn raised over what lies under it, as tall as all it says. Being written on, it is outlined in the
  * accent and its words are left to the fields over it.
@@ -488,7 +508,20 @@ const drawCard = (
   element: BoardElement,
   palette: Palette,
   layout: CardLayout,
-  { height, opened, writing, authors }: { height: number; opened: boolean; writing: boolean; authors: boolean }
+  {
+    height,
+    opened,
+    writing,
+    authors,
+    blocked
+  }: {
+    height: number;
+    opened: boolean;
+    writing: boolean;
+    authors: boolean;
+    /** How many of the cards it waits on are still open (`dependencies.ts`). */
+    blocked: number;
+  }
 ): void => {
   const { width } = element;
   context.save();
@@ -574,6 +607,10 @@ const drawCard = (
 
   if (element.author && authors) {
     drawSignature(context, element.author, CARD_TEXT_LEFT, height - CARD_AUTHOR_ROW / 2 - 4, palette, palette.muted);
+  }
+
+  if (blocked > 0 && !element.done) {
+    drawBlockedBadge(context, width, blocked, palette);
   }
 
   context.restore();
@@ -1099,7 +1136,8 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       picture,
       voter,
       members = 0,
-      authors = true
+      authors = true,
+      blocked = 0
     }: {
       hideText?: boolean;
       /** Written in a session's writing step by someone else: its words are theirs until the step is over. */
@@ -1111,6 +1149,8 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
       members?: number;
       /** Who wrote cards is shown. */
       authors?: boolean;
+      /** A card's: how many of the cards it waits on are still open. */
+      blocked?: number;
     } = {}
   ): void => {
     context.save();
@@ -1134,7 +1174,8 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
         height: element.height,
         opened: false,
         writing: hideText || faceDown,
-        authors
+        authors,
+        blocked
       });
     }
 
@@ -1204,11 +1245,14 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
     palette: Palette,
     {
       writing = false,
-      authors = true
+      authors = true,
+      blocked = 0
     }: {
       /** Its words are being typed: the fields over it show them instead. */
       writing?: boolean;
       authors?: boolean;
+      /** A card's: how many of the cards it waits on are still open. */
+      blocked?: number;
     } = {}
   ): void => {
     context.save();
@@ -1225,7 +1269,8 @@ export const createRenderer = (canvas: HTMLCanvasElement) => {
         height: Math.max(element.height, layout.height),
         opened: true,
         writing,
-        authors
+        authors,
+        blocked
       });
     }
 
@@ -1404,6 +1449,60 @@ export const drawGuides = (
 };
 
 /** A word beside the pointer about the tool in hand: what it does here, or why it does nothing. */
+/**
+ * What a card waits on and what waits on it, while it is selected: a dashed line from each card to the one waiting on
+ * it, ending in an arrow — red while it still holds that one back, quiet once it is done. Between two columns it runs
+ * straight across; within one, where the two may be stacked a gap apart, it bows out past their left edges, so it is
+ * seen whatever lies between them.
+ */
+export const drawDependencies = (
+  context: CanvasRenderingContext2D,
+  camera: Camera,
+  links: readonly { from: Box; to: Box; open: boolean }[],
+  palette: Palette
+): void => {
+  const screen = ([x, y]: Point): Point => toScreen(camera, x, y);
+  context.save();
+  context.lineWidth = 2;
+  context.lineCap = 'round';
+  for (const { from, to, open } of links) {
+    const colour = open ? palette.stroke.red : palette.muted;
+    context.strokeStyle = colour;
+    context.fillStyle = colour;
+    context.setLineDash([6, 5]);
+    context.beginPath();
+    const apart = Math.abs(from.x + from.width / 2 - (to.x + to.width / 2)) > (from.width + to.width) / 2;
+    let tail: Point;
+    let tip: Point;
+    if (apart) {
+      const right = to.x > from.x;
+      tail = screen([right ? from.x + from.width : from.x, from.y + from.height / 2]);
+      tip = screen([right ? to.x : to.x + to.width, to.y + to.height / 2]);
+      context.moveTo(...tail);
+      context.lineTo(...tip);
+    } else {
+      const start = screen([from.x, from.y + from.height / 2]);
+      tip = screen([to.x, to.y + to.height / 2]);
+      const bow = 28 + Math.abs(tip[1] - start[1]) * 0.15;
+      tail = [Math.min(start[0], tip[0]) - bow, tip[1]];
+      context.moveTo(...start);
+      context.bezierCurveTo(start[0] - bow, start[1], ...tail, ...tip);
+    }
+
+    context.stroke();
+    const angle = Math.atan2(tip[1] - tail[1], tip[0] - tail[0]);
+    context.setLineDash([]);
+    context.beginPath();
+    context.moveTo(...tip);
+    context.lineTo(tip[0] - 10 * Math.cos(angle - 0.45), tip[1] - 10 * Math.sin(angle - 0.45));
+    context.lineTo(tip[0] - 10 * Math.cos(angle + 0.45), tip[1] - 10 * Math.sin(angle + 0.45));
+    context.closePath();
+    context.fill();
+  }
+
+  context.restore();
+};
+
 export const drawHint = (
   context: CanvasRenderingContext2D,
   camera: Camera,

@@ -223,6 +223,13 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
       return;
     }
 
+    // The click a card waited for: the card it waits on — or, anywhere else, the end of waiting.
+    if (state.pickingBlocker) {
+      core.chooseBlocker(picking.topmostAt(toBoard(state.camera, ...screenOf(event))));
+
+      return;
+    }
+
     if (document.activeElement instanceof HTMLElement && document.activeElement !== document.body) {
       document.activeElement.blur();
     }
@@ -340,6 +347,15 @@ export const createPointer = (core: Core, picking: Picking, carry: Carry, effect
 
   /** No button held: what is under the pointer shows how it can be taken — and the others see where it is. */
   const hover = (screen: Point, point: Point): void => {
+    // Waiting to be told which card another waits on: a card under the pointer is what a click would pick.
+    if (state.pickingBlocker) {
+      canvas.style.cursor = picking.topmostAt(point)?.type === 'card' ? 'pointer' : 'crosshair';
+      core.invalidate();
+      core.reportPointer(false);
+
+      return;
+    }
+
     const selecting = state.props.tool === 'select' && core.editable();
     const shown = selecting ? picking.hoveredAt(point) : undefined;
     if (shown !== state.hovered) {

@@ -80,6 +80,8 @@ export const computed = {
   showBrush: offers('selectionCanBrush', ['freehand']),
   /** The selection is one card or comment: what can be ticked done, or resolved. */
   selectionIsTask: '{{ state.selectionIsTask ? true : false }}',
+  /** The selection is one card: what can wait on other cards. */
+  selectionIsCard: '{{ state.selectionIsCard ? true : false }}',
   selectionIsDone: '{{ state.selectionIsDone ? true : false }}',
   selectionIsLocked: '{{ state.selectionIsLocked ? true : false }}',
   /** Nothing to undo, or to redo — until the canvas says otherwise: a board just opened has no history. */
@@ -221,6 +223,7 @@ export const transientState = [
   'selectionCanSloppiness',
   'selectionCanBrush',
   'selectionIsTask',
+  'selectionIsCard',
   'selectionIsDone',
   'selectionIsLocked',
   'canUndo',
@@ -240,6 +243,8 @@ export const transientState = [
   'framesOpen',
   'sessionView',
   'sessionHeard',
+  // The board's library as its channel last said it: the next board starts from what it is read with.
+  'templatesHeard',
   'dutyOpen',
   'hasDuty',
   'dutyAgent',

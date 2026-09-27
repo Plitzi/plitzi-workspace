@@ -213,6 +213,8 @@ export type BoardElement = {
   author?: string;
   /** A card's: the task is done. A comment's: it was dealt with. */
   done?: boolean;
+  /** A card's: the cards that have to be done first — it is blocked while any of them is open (`dependencies.ts`). */
+  blockedBy?: string[];
   /**
    * A comment's thread, oldest first. Written by the server alone (`board.reply`), as votes are: a commit carries the
    * comment, and the replies on it are whatever the server holds — so two people answering at once are both kept.
@@ -267,6 +269,8 @@ export const LIMITS = {
   author: 32,
   /** Replies one comment may carry. */
   replies: 100,
+  /** Cards one card may wait on: a handful of dependencies, never a project plan. */
+  blockers: 12,
   /** A duty's instruction: a paragraph, not a document. */
   duty: 600,
   /** A stamp's emoji, in UTF-16 units: enough for a flag or a family, never a sentence. */
@@ -515,6 +519,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     veiled,
     author,
     done,
+    blockedBy,
     dash,
     sloppiness,
     brush,
@@ -555,6 +560,11 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     (task !== undefined && type !== 'frame') ||
     (author !== undefined && (typeof author !== 'string' || !isAuthored(type))) ||
     (done !== undefined && (!isTask(type) || typeof done !== 'boolean')) ||
+    (blockedBy !== undefined &&
+      (type !== 'card' ||
+        !Array.isArray(blockedBy) ||
+        blockedBy.length > LIMITS.blockers ||
+        !blockedBy.every(entry => isElementId(entry) && entry !== id))) ||
     (description !== undefined &&
       (type !== 'card' || typeof description !== 'string' || description.length > LIMITS.text)) ||
     (replies !== undefined &&
@@ -598,6 +608,7 @@ export const parseElement = (value: unknown): BoardElement | undefined => {
     ...(completes === true && layout === 'column' ? { completes } : {}),
     ...(typeof author === 'string' && author.trim() ? { author: author.trim().slice(0, LIMITS.author) } : {}),
     ...(done === true ? { done } : {}),
+    ...(Array.isArray(blockedBy) && blockedBy.length ? { blockedBy: [...new Set(blockedBy.filter(isElementId))] } : {}),
     ...(typeof description === 'string' && description.trim() ? { description } : {}),
     ...(dash === undefined ? {} : { dash }),
     ...(sloppiness === undefined ? {} : { sloppiness }),

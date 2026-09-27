@@ -15,6 +15,7 @@ import {
   mergeElements,
   parseElement
 } from './model.ts';
+import { asTemplate, isTemplateId, parseTemplate, TEMPLATE_LIMITS, templateTitle } from './savedTemplates.ts';
 import { SCRIPT_IDS, SCRIPTS } from './sessions.ts';
 import { TEMPLATE_TITLES, templateElements } from './templates.ts';
 import { boundsOf, unionOf } from '../plugins/Board/geometry.ts';
@@ -22,6 +23,7 @@ import { boundsOf, unionOf } from '../plugins/Board/geometry.ts';
 import type { AssetStore } from './assets.ts';
 import type { BoardLock, BoardSigner } from './locks.ts';
 import type { BoardElement, Point } from './model.ts';
+import type { SavedTemplate } from './savedTemplates.ts';
 import type { BoardSession } from './sessions.ts';
 import type { Template } from './templates.ts';
 import type { ActionKvStore } from '@plitzi/sdk-server/actions';
@@ -60,6 +62,8 @@ export type StoredBoard = {
   expiresAt?: number;
   /** How long an agent stays on the board with nothing happening before it leaves — {@link AGENT_QUIET_DEFAULT}. */
   agentQuietMinutes?: number;
+  /** The codes of the templates in its library, newest first (`savedTemplates.ts`). */
+  templates?: string[];
 };
 
 /** The quiet an agent sits through before it leaves a board, as a board may choose it — in minutes. */
@@ -124,6 +128,8 @@ export type OpenedBoard = {
   agentQuietMinutes: number;
   /** The last of what was said in its chat, oldest first. */
   chat: ChatMessage[];
+  /** The templates in its library, newest first — what they put down with them. */
+  templates: SavedTemplate[];
 };
 
 /** A board that is not there — never was, was deleted, or ran out of time. */
@@ -142,7 +148,8 @@ export const missingBoard = (id: string): OpenedBoard => ({
   unlisted: false,
   expiresAt: null,
   agentQuietMinutes: AGENT_QUIET_DEFAULT,
-  chat: []
+  chat: [],
+  templates: []
 });
 
 /** How many boards a public demo keeps. The one nobody has touched for longest makes room for a new one. */
@@ -182,6 +189,12 @@ const boardKey = (id: string): string => `board:${id}`;
 const previewKey = (id: string): string => `preview:${id}`;
 
 const chatKey = (id: string): string => `chat:${id}`;
+
+/** A template, kept once whichever boards list it: see `savedTemplates.ts`. */
+const templateKey = (id: string): string => `template:${id}`;
+
+/** Templates one visitor may save in a window of ten minutes: a library filled by hand, never by a script. */
+const TEMPLATES_PER_WINDOW = 10;
 
 /** What a board's chat keeps, and what a page is given of it. */
 const CHAT_KEPT = 200;
@@ -271,6 +284,13 @@ const readChat = async (kv: ActionKvStore, id: string): Promise<ChatMessage[]> =
   const value = await kv.get(chatKey(id));
 
   return Array.isArray(value) ? (value as ChatMessage[]) : [];
+};
+
+/** The templates `ids` name, in that order — a code whose template is gone is left out. */
+const readTemplates = async (kv: ActionKvStore, ids: readonly string[] = []): Promise<SavedTemplate[]> => {
+  const read = await Promise.all(ids.map(async id => parseTemplate(await kv.get(templateKey(id)))));
+
+  return read.filter(template => template !== undefined);
 };
 
 const readPreview = async (kv: ActionKvStore, id: string): Promise<BoardElement[]> => {
@@ -518,7 +538,12 @@ export const listBoards = async (
   };
 };
 
-const opened = ({ keyFor, topicFor }: BoardSigner, board: StoredBoard, chat: ChatMessage[]): OpenedBoard => ({
+const opened = (
+  { keyFor, topicFor }: BoardSigner,
+  board: StoredBoard,
+  chat: ChatMessage[],
+  templates: SavedTemplate[]
+): OpenedBoard => ({
   found: true,
   id: board.id,
   title: board.title,
@@ -533,7 +558,8 @@ const opened = ({ keyFor, topicFor }: BoardSigner, board: StoredBoard, chat: Cha
   unlisted: board.unlisted === true,
   expiresAt: board.expiresAt ?? null,
   agentQuietMinutes: board.agentQuietMinutes ?? AGENT_QUIET_DEFAULT,
-  chat: chat.slice(-CHAT_SERVED)
+  chat: chat.slice(-CHAT_SERVED),
+  templates
 });
 
 /**
@@ -557,7 +583,7 @@ export const loadBoard = async (stores: BoardStores, id: string): Promise<Opened
         featured: board.featured === true,
         expiresAt: board.expiresAt ?? null
       }
-    : opened(stores.signer, board, await readChat(stores.kv, id));
+    : opened(stores.signer, board, await readChat(stores.kv, id), await readTemplates(stores.kv, board.templates));
 };
 
 /**
@@ -571,13 +597,13 @@ export const openBoard = async (
   callerId: string
 ): Promise<OpenedBoard> => {
   const board = await existing(kv, id);
-  const chat = await readChat(kv, id);
+  const [chat, templates] = await Promise.all([readChat(kv, id), readTemplates(kv, board.templates)]);
   if (!board.lock) {
-    return opened(signer, board, chat);
+    return opened(signer, board, chat, templates);
   }
 
   if (signer.keyOpens(board.id, board.lock, key)) {
-    return opened(signer, board, chat);
+    return opened(signer, board, chat, templates);
   }
 
   const attempts = await kv.increment(`attempts:${id}:${callerId}:${Math.floor(Date.now() / 300_000)}`, 1, 330);
@@ -589,7 +615,7 @@ export const openBoard = async (
     throw new ActionRefusal('That is not this board’s password');
   }
 
-  return opened(signer, board, chat);
+  return opened(signer, board, chat, templates);
 };
 
 /** Who may find a board and how long it lasts, as a page asks for them: checked, and only what was asked. */
@@ -652,7 +678,9 @@ export const copyBoard = (
       title: cleanTitle(`${source.title} (copy)`),
       createdAt: now,
       updatedAt: now,
-      elements: Object.fromEntries(elements.map(element => [element.id, element]))
+      elements: Object.fromEntries(elements.map(element => [element.id, element])),
+      // Its library too: the formats a team keeps come along with the board they keep them on.
+      ...(source.templates?.length ? { templates: source.templates } : {})
     };
     await stores.assets.copy(
       source.id,
@@ -1092,3 +1120,120 @@ export const replyTo = (
 
     return { settled: [answered], topic: stores.signer.topicFor(id, board.lock) };
   });
+
+/** A board's library as its page and its agents are told it: the templates it lists, and where to tell them. */
+export type BoardTemplates = { board: string; templates: SavedTemplate[]; topic: string };
+
+const withTemplates = async (
+  stores: BoardStores,
+  board: StoredBoard,
+  ids: readonly string[]
+): Promise<BoardTemplates> => {
+  await save(stores, { ...board, templates: [...ids], updatedAt: Date.now() });
+
+  return {
+    board: board.id,
+    templates: await readTemplates(stores.kv, ids),
+    topic: stores.signer.topicFor(board.id, board.lock)
+  };
+};
+
+/** The template a code names, as a person types it — spaces and capitals forgiven — or `undefined`. */
+const templateByCode = async (kv: ActionKvStore, code: unknown): Promise<SavedTemplate | undefined> => {
+  const typed = typeof code === 'string' ? code.trim().toLowerCase() : '';
+
+  return isTemplateId(typed) ? parseTemplate(await kv.get(templateKey(typed))) : undefined;
+};
+
+/** A board's library with one more code in it — first, and once. Refused when its shelf is full. */
+const shelved = (board: StoredBoard, id: string): string[] => {
+  const others = (board.templates ?? []).filter(entry => entry !== id);
+  if (others.length >= TEMPLATE_LIMITS.perBoard) {
+    throw new ActionRefusal(
+      `A board keeps at most ${TEMPLATE_LIMITS.perBoard} templates — remove one from its library first`
+    );
+  }
+
+  return [id, ...others];
+};
+
+/**
+ * What someone laid out, kept as a template — `elements` the selection it is saved from, with what its frames hold —
+ * and put in this board's library. Answers the library as it now is, and the new template's code.
+ */
+export const saveTemplate = async (
+  stores: BoardStores,
+  id: string,
+  { title, elements }: { title: unknown; elements: unknown },
+  pass: Pass,
+  callerId: string
+): Promise<BoardTemplates & { saved: { id: string; title: string } }> => {
+  const { kv, signer } = stores;
+  const contents = asTemplate(elementsOf(elements));
+  if (!contents) {
+    throw new ActionRefusal('Select what to keep as a template first — a frame, a column, some notes');
+  }
+
+  const saves = await kv.increment(`template-rate:${callerId}:${Math.floor(Date.now() / 600_000)}`, 1, 660);
+  if (saves > TEMPLATES_PER_WINDOW) {
+    throw new ActionRefusal('That is a lot of templates at once — try again in a few minutes');
+  }
+
+  return serially(kv, async () => {
+    const board = await existing(kv, id);
+    assertWritable(signer, board, pass);
+    const template: SavedTemplate = {
+      id: newBoardId(),
+      title: templateTitle(title),
+      elements: contents,
+      savedAt: Date.now()
+    };
+    const ids = shelved(board, template.id);
+    await kv.set(templateKey(template.id), template);
+
+    return { ...(await withTemplates(stores, board, ids)), saved: { id: template.id, title: template.title } };
+  });
+};
+
+/** A template another board keeps, added to this one's library by its code — and answered whole, to be put down. */
+export const addTemplate = (
+  stores: BoardStores,
+  id: string,
+  code: unknown,
+  pass: Pass
+): Promise<BoardTemplates & { added: SavedTemplate }> =>
+  serially(stores.kv, async () => {
+    const board = await existing(stores.kv, id);
+    assertWritable(stores.signer, board, pass);
+    const template = await templateByCode(stores.kv, code);
+    if (!template) {
+      throw new ActionRefusal('There is no template with that code — check it, it is 10 letters and numbers');
+    }
+
+    const ids = shelved(board, template.id);
+
+    return { ...(await withTemplates(stores, board, ids)), added: template };
+  });
+
+/** A template taken out of this board's library — kept for the other boards that list it. */
+export const removeTemplate = (stores: BoardStores, id: string, code: unknown, pass: Pass): Promise<BoardTemplates> =>
+  serially(stores.kv, async () => {
+    const board = await existing(stores.kv, id);
+    assertWritable(stores.signer, board, pass);
+
+    return withTemplates(
+      stores,
+      board,
+      (board.templates ?? []).filter(entry => entry !== code)
+    );
+  });
+
+/** A template by its code, whichever board keeps it: what an agent puts down when it is told one. */
+export const findTemplate = async (stores: BoardStores, code: unknown): Promise<SavedTemplate> => {
+  const template = await templateByCode(stores.kv, code);
+  if (!template) {
+    throw new ActionRefusal('There is no template with that code');
+  }
+
+  return template;
+};

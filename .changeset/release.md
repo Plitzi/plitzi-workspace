@@ -919,36 +919,40 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   page is a board to try before starting one — with scripted collaborators already drawing on it — templates, and two
   large featured boards that are read-only (looked around together, then "Use as template"). Frames that hold what is
   put in them — a column frame is a kanban lane that lays out its cards, with the drop shown as it is dragged — task
-  cards made in a column (a title and a description, the whole of it shown when a card is opened) and a column that is
-  the team's Done (a card moved into it is ticked off, and open again moved out), panels that come out of the button
-  that opens them and leave quicker than they came, their items one after another, a corner that folds away to the
-  way home, smart guides that
+  cards made in a column (a title and a description, the whole of it shown when a card is selected — no double-click to
+  read one — and the cards under it moved down to make room, never covered) and a column that is the team's Done (a card
+  moved into it is ticked off, and open again moved out), panels that come out of the button that opens them and leave
+  quicker than they came, their items one after another, a corner that folds away to the way home, smart guides that
   snap what is dragged to the edges and middles of what stays still, the others' cursors drawn a moment behind so they
-  move as smoothly as a hand whatever the network does, a search with tags (`#word` written in anything; ⌘F dims what
-  it does not find), duties an agent keeps doing in a frame, sessions with a script (a retro's private writing step
-  keeps the others' notes face down), branches of a frame to try another way and take back, agents that present a
-  board a frame at a time, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style, sloppiness, edges,
-  opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or private and temporary
-  boards (in Board settings, beside the title), boards their creator makes read-only for everyone else, an elements
-  library built from one registry (searchable, with favourites), texts resized by their handles, stamps, elements locked
-  in place, and sounds. The gallery previews a crowded board whole, coarsened on a grid. It carries its own bench
-  (`yarn bench`, `--cpu 4` for slower hardware): boards of a thousand and four thousand elements opened, panned, zoomed,
-  drawn on, selected, moved, pasted, deleted and undone, and crowds of fifty collaborators on them. AI agents join as
-  collaborators through the MCP server every Pizarra serves at `/mcp` (streamable HTTP, mounted as a `preAuth` pipeline
-  stage): anyone on a board adds it to Claude Code, OpenCode or the Claude app from the invite panel, with nothing to
-  install, and a guide at `/agents` walks through it — Claude first — and what to do when it does not connect; it
-  joins only that Pizarra's boards, and is a client of the board's server like a browser. The people see what an agent
-  is doing — working, thinking, listening — at its cursor and on its avatar; it stays while they work and leaves by
-  itself when asked (✕ on its avatar), when nobody is on the board, after the board's quiet time (Board settings), or
-  when the board's password changes, when its app has gone (its listening stream closed and not back within a minute)
-  or its connection to the board is lost; a locked board's invite carries a key that opens it for the agent. It acts as
-  the team's facilitator — about their work, never its tools — and closes what it runs with the outcome. Cursors off
-  screen show at the edge of the view, and a board's code sits beside its name, a click from the clipboard. The front page
-  shows a dozen boards and a "Load more", and its search asks the server across every board. It runs on several
-  replicas over Redis (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action
-  `kv` shared by all of them, and which replica holds each agent's session — a call reaching another is passed on to it
-  (`REPLICA_URL`), so no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine,
-  and the `whiteboard-replicas` browser test spreads people and an agent across them. See `docs/en/realtime.md`.
+  move as smoothly as a hand whatever the network does, a search with tags (`#word` written in anything; ⌘F dims what it
+  does not find), duties an agent keeps doing in a frame, sessions with a script (a retro's private writing step keeps
+  the others' notes face down), branches of a frame to try another way and take back, agents that present a board a
+  frame at a time, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style,
+  sloppiness, edges, opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or
+  private and temporary boards (in Board settings, beside the title), boards their creator makes read-only for everyone
+  else, an elements library built from one registry (searchable, with favourites), texts resized by their handles,
+  stamps, elements locked in place, and sounds. The gallery previews a crowded board whole, coarsened on a grid. It
+  carries its own bench (`yarn bench`, `--cpu 4` for slower hardware): boards of a thousand and four thousand elements
+  opened, panned, zoomed, drawn on, selected, moved, pasted, deleted and undone, and crowds of fifty collaborators on
+  them. AI agents join as collaborators through the MCP server every Pizarra serves at `/mcp` (streamable HTTP, mounted
+  as a `preAuth` pipeline stage): anyone on a board adds it to Claude Code, OpenCode or the Claude app from the invite
+  panel, with nothing to install, and a guide at `/agents` walks through it — Claude first — and what to do when it does
+  not connect; it joins only that Pizarra's boards, and is a client of the board's server like a browser. The people see
+  what an agent is doing — working, thinking, listening — at its cursor and on its avatar; it stays while they work and
+  leaves by itself when asked (✕ on its avatar), when nobody is on the board, after the board's quiet time (Board
+  settings), or when the board's password changes, when its app has gone (its listening stream closed and not back
+  within a minute) or its connection to the board is lost; a locked board's invite carries a key that opens it for the
+  agent. It acts as the team's facilitator — about their work, never its tools — and closes what it runs with the
+  outcome. Cursors off screen show at the edge of the view, and a board's code sits beside its name, a click from the
+  clipboard. The front page shows a dozen boards and a "Load more", and its search asks the server across every board.
+  Templates of a team's own: what is selected kept, with what its frames hold, in the board's library — put down again
+  from there, dragged or clicked, and on any other board by its code (people and agents alike). Cards that wait on other
+  cards: a red "Blocked" tab while any is open, a dashed line to each when selected, a warning when one is moved on
+  anyway — which a guardian agent hears too — and `is:blocked` in the search. It runs on several replicas over Redis
+  (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action `kv` shared by all
+  of them, and which replica holds each agent's session — a call reaching another is passed on to it (`REPLICA_URL`), so
+  no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine, and the
+  `whiteboard-replicas` browser test spreads people and an agent across them. See `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
 
 ## A page on its way out keeps what it showed

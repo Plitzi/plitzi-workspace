@@ -2,6 +2,7 @@ import type { Box, Camera, Handle } from './geometry.ts';
 import type { Guides } from './snapping.ts';
 import type { StyleChoice } from './styling.ts';
 import type { BoardElement, Duty, Fill, Point, Reply, Stroke, StrokeWidth, StyleField } from '../../board/model.ts';
+import type { SavedTemplate } from '../../board/savedTemplates.ts';
 import type { BoardSession } from '../../board/sessions.ts';
 
 export const TOOLS = [
@@ -78,6 +79,8 @@ export type ControllerProps = {
   sounds: boolean;
   /** The session with a script the board is going through, if any: its writing step turns the others' notes over. */
   session: BoardSession | undefined;
+  /** The templates in the board's library: what carrying one puts down (`savedTemplates.ts`). */
+  templates: readonly SavedTemplate[];
   /** The rest of the style new elements are drawn with — dash, sloppiness, edges, fill style, opacity. */
   extras: StyleChoice;
 };
@@ -180,6 +183,8 @@ export type ControllerEvent =
       completes: boolean;
       /** The selection is one card or comment — what can be ticked off — and whether it is. */
       task: boolean;
+      /** The selection is one card: what can wait on other cards. */
+      card: boolean;
       done: boolean;
       /** Everything selected is locked — what the lock button then offers to let go. */
       locked: boolean;
@@ -198,6 +203,10 @@ export type ControllerEvent =
   | { type: 'reaction'; reaction: { emoji: string; x: number; y: number } }
   /** A picture pasted or dropped, shown already, for the page to upload: `id` is the element waiting for it. */
   | { type: 'image'; id: string; data: string }
+  /** What is selected, to be kept as a template: named `title`, with what its frames hold, as it lies on the board. */
+  | { type: 'templateSave'; title: string; elements: BoardElement[] }
+  /** A warning for this person about what they just did: a blocked card moved on, a link refused. */
+  | { type: 'notice'; text: string }
   /** A vote asked for — a click on an element's badge, or the selection's vote button. */
   | { type: 'vote'; id: string }
   /** The chat field at the cursor: open (where, on screen), or closed. */
@@ -277,9 +286,11 @@ export type Gesture =
 /** Two fingers on the board: the distance and middle they started at, and the camera then. */
 export type Pinch = { distance: number; center: Point; camera: Camera };
 
-/** A sticky or a pile taken off the tray, following the pointer until it is put down. */
-/** What can be carried to the board: what one tool puts down, a pile of notes, or a whole kanban board. */
-export type Carried = PlacedTool | 'stack' | 'kanban';
+/**
+ * What can be carried to the board: what one tool puts down, a pile of notes, a whole kanban board, or one of the
+ * templates in the board's library.
+ */
+export type Carried = PlacedTool | 'stack' | 'kanban' | 'template';
 
 /**
  * What is carried to the board, following the pointer: the elements as they will land — centred on the point they are

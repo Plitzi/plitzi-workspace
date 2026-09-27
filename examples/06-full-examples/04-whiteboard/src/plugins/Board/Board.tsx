@@ -8,8 +8,10 @@ import { TOOLS, createBoardController } from './controller.ts';
 import declaration from './declaration';
 import { parseDemo, playDemo } from './demo.ts';
 import { choiceFrom } from './styling.ts';
+import { isDefined } from './values.ts';
 import { asFill, asStroke, STROKE_WIDTHS } from '../../board/model.ts';
 import { isCollaborator } from '../../board/people.ts';
+import { parseTemplate } from '../../board/savedTemplates.ts';
 import { parseSession, SCRIPTS, stepOf } from '../../board/sessions.ts';
 
 import type {
@@ -51,6 +53,8 @@ export type BoardProps = {
    * writing step, what the others write is face down, and what this person writes is kept face down for them.
    */
   session?: unknown;
+  /** The templates in the board's library (`board/savedTemplates.ts`), as the server keeps them: what `carry` puts down. */
+  templates?: unknown;
   /** Show who wrote each note and card. */
   authors?: boolean | string;
   /** Make the board's small sounds — somebody arriving, a reaction, a line in the chat. */
@@ -147,6 +151,7 @@ const Board = ({
   voter = '',
   author = '',
   session,
+  templates,
   authors = true,
   sounds = true,
   mode = 'edit',
@@ -239,6 +244,7 @@ const Board = ({
             isColumn: event.column,
             completes: event.completes,
             isTask: event.task,
+            isCard: event.card,
             isDone: event.done,
             isLocked: event.locked,
             hasDuty: event.duty !== undefined,
@@ -269,6 +275,16 @@ const Board = ({
           break;
         case 'image':
           trigger(declaration.triggers.onImagePaste.action, { id: event.id, data: event.data });
+          break;
+        case 'notice':
+          trigger(declaration.triggers.onNotice.action, { text: event.text });
+          break;
+        case 'templateSave':
+          trigger(declaration.triggers.onTemplateSave.action, {
+            title: event.title,
+            elements: event.elements,
+            count: event.elements.length
+          });
           break;
         case 'vote':
           trigger(declaration.triggers.onVote.action, { id: event.id });
@@ -381,6 +397,7 @@ const Board = ({
       voter,
       author,
       session: parseSession(session),
+      templates: Array.isArray(templates) ? templates.map(parseTemplate).filter(isDefined) : [],
       authors: authors === true || authors === 'true',
       sounds: sounds === true || sounds === 'true',
       extras: choiceFrom({ dash, sloppiness, brush, edges, fillStyle, opacity })
@@ -397,6 +414,7 @@ const Board = ({
     voter,
     author,
     session,
+    templates,
     authors,
     sounds,
     dash,
@@ -541,6 +559,7 @@ const Board = ({
       },
       clearDuty: call('clearDuty', controller => controller.clearDuty()),
       branchFrame: call('branchFrame', controller => controller.branchFrame()),
+      pickBlocker: call('pickBlocker', controller => controller.pickBlocker()),
       mergeBranch: call('mergeBranch', controller => controller.mergeBranch()),
       toggleDutyPause: call('toggleDutyPause', controller => controller.toggleDutyPause()),
       goToFrame: {
@@ -569,8 +588,12 @@ const Board = ({
       rollback: call('rollback', controller => controller.rollback()),
       carry: {
         ...declaration.callbacks.carry,
-        callback: (params: { tool?: unknown; fill?: unknown; kind?: unknown; drag?: unknown }) =>
+        callback: (params: { tool?: unknown; fill?: unknown; kind?: unknown; template?: unknown; drag?: unknown }) =>
           controllerRef.current?.carry(params)
+      },
+      saveTemplate: {
+        ...declaration.callbacks.saveTemplate,
+        callback: (params: { title?: unknown }) => controllerRef.current?.saveTemplate(params)
       },
       search: {
         ...declaration.callbacks.search,

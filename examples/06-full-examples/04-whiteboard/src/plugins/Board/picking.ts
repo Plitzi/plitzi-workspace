@@ -64,11 +64,12 @@ export const createPicking = (core: Core) => {
     shapeAround(point);
 
   /**
-   * Which of a card's fields a point is on, as the card lies on the board: its description's line, or else its title —
-   * where a double-click puts the focus as it opens the card to be written on.
+   * Which of a card's fields a point is on, as the card is shown — lying in its column, or opened: its description, or
+   * else its title — where a double-click puts the focus as it opens the card to be written on.
    */
   const cardFieldAt = (card: BoardElement, point: Point): EditField => {
-    const { descriptionTop, description } = cardLayout(core.context, card, state.palette, 'lying');
+    const view = core.openedCard()?.element.id === card.id ? 'opened' : 'lying';
+    const { descriptionTop, description } = cardLayout(core.context, card, state.palette, view);
 
     return description.length && point[1] >= card.y + descriptionTop - 4 ? 'description' : 'text';
   };

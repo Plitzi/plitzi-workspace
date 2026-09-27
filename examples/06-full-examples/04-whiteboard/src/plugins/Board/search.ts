@@ -13,14 +13,14 @@ import type { BoardElement } from '../../board/model.ts';
 export const createSearch = (core: Core) => {
   const { state, scene } = core;
 
-  const frameTitle = (id: string): string | undefined => core.current().get(id)?.text?.trim();
+  const elementOf = (id: string): BoardElement | undefined => core.current().get(id);
 
   /** Whether an element is what is searched for — everything is, while nothing is searched for. */
   const faceDown = (element: BoardElement): boolean => isFaceDown(element, state.props.session, state.props.voter);
 
   /** A note face down is nobody's but its author's to find: its words are not out yet. */
   const matches = (element: BoardElement): boolean =>
-    !state.search || (!faceDown(element) && matchesQuery(element, state.search.query, frameTitle));
+    !state.search || (!faceDown(element) && matchesQuery(element, state.search.query, elementOf));
 
   let found: { key: string; list: BoardElement[]; holding: ReadonlySet<string> } | undefined;
 
@@ -51,7 +51,7 @@ export const createSearch = (core: Core) => {
     if (found?.key !== key) {
       const list = scene
         .visible()
-        .filter(element => !faceDown(element) && matchesQuery(element, search.query, frameTitle))
+        .filter(element => !faceDown(element) && matchesQuery(element, search.query, elementOf))
         .sort((a, b) => Math.round(a.y / 40) - Math.round(b.y / 40) || a.x - b.x);
       found = { key, list, holding: new Set(list.flatMap(element => (element.parent ? [element.parent] : []))) };
     }

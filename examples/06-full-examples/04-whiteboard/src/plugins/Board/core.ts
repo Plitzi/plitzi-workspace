@@ -6,7 +6,8 @@ import {
   insertionAt,
   layoutColumn,
   membersOf as inFrame,
-  moved
+  moved,
+  spreadColumn
 } from './containers.ts';
 import { cardLayout, COMMENT_PIN, fontSizeOf, measureCard, measureText, STICKY_SIZE } from './draw.ts';
 import { editorFor } from './editor.ts';
@@ -18,6 +19,7 @@ import { createScene } from './scene.ts';
 import { createSounds } from './sounds.ts';
 import { byField, restyled, styleOf } from './styling.ts';
 import { newId, newSeed } from './values.ts';
+import { blockedWarning, movedOnBlocked, toggledBlocker } from '../../board/dependencies.ts';
 import {
   byStacking,
   holdsText,
@@ -32,7 +34,7 @@ import {
 } from '../../board/model.ts';
 import { isFaceDown, veiledIn } from '../../board/sessions.ts';
 
-import type { CardLayout } from './draw.ts';
+import type { CardLayout, CardView } from './draw.ts';
 import type { Box, Camera, Handle } from './geometry.ts';
 import type { Palette } from './palette.ts';
 import type { GuideLine } from './snapping.ts';
@@ -156,6 +158,8 @@ export type CoreState = {
   dropTarget: { frame: string; line?: number; home?: boolean } | undefined;
   /** What the pointer is over, whatever it is: a comment there opens its bubble. */
   pointed: string | undefined;
+  /** The card waiting for the next click to say which card it waits on (`pickBlocker`). */
+  pickingBlocker: string | undefined;
   /** Where what is dragged lined up with what stays still: the lines shown while it does. */
   guides: GuideLine[];
   /** What the board is searched for, and which of what it finds was last shown — nothing while nothing is. */
@@ -205,6 +209,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       authors: true,
       sounds: true,
       session: undefined,
+      templates: [],
       extras: {}
     },
     palette: readPalette(host),
@@ -227,6 +232,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     chatting: undefined,
     dropTarget: undefined,
     pointed: undefined,
+    pickingBlocker: undefined,
     guides: [],
     search: undefined
   };
@@ -250,21 +256,32 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
    * one is handed.
    */
   let shown: { key: string; list: readonly BoardElement[]; byId: ReadonlyMap<string, BoardElement> } | undefined;
+  /** The room opened cards make, as the board last drawn was drawn with: `''` while none does. */
+  let spreadKey = '';
 
   const displayed = (now = Date.now()): readonly BoardElement[] => {
     remotes.advance(now);
-    const key = `${scene.revision}:${draft.revision}:${remotes.draftRevision}`;
+    const spread = spreadNow(now);
+    spreadKey = [...spread].map(([id, grown]) => `${id}=${grown}`).join(',');
+    const key = `${scene.revision}:${draft.revision}:${remotes.draftRevision}:${spreadKey}`;
     if (shown?.key === key) {
       return shown.list;
     }
 
-    const list = drawnBoard(now);
+    const list = drawnBoard(now, spread);
     shown = { key, list, byId: new Map(list.map(element => [element.id, element])) };
 
     return list;
   };
 
-  const drawnBoard = (now: number): BoardElement[] => {
+  /** The board as it lies, without the room an opened card makes in its column: what a change is worked out from. */
+  const lying = (): ReadonlyMap<string, BoardElement> => {
+    const drawn = current();
+
+    return spreadKey ? new Map(drawnBoard(Date.now(), new Map()).map(element => [element.id, element])) : drawn;
+  };
+
+  const drawnBoard = (now: number, spread: ReadonlyMap<string, number>): BoardElement[] => {
     const elements = new Map(scene.visible().map(element => [element.id, element]));
     const versionOf = (id: string): number => scene.element(id)?.version ?? 0;
     for (const element of [...remotes.drafts(now, versionOf), ...draft.values()]) {
@@ -272,6 +289,21 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
         elements.delete(element.id);
       } else {
         elements.set(element.id, element);
+      }
+    }
+
+    for (const [id, grown] of spread) {
+      const card = elements.get(id);
+      const column = card?.parent === undefined ? undefined : elements.get(card.parent);
+      if (card && column?.layout === 'column') {
+        // What someone is carrying is where their hand is, not in the column's order.
+        const moving = movingIds();
+        const members = [...elements.values()].filter(
+          element => element.parent === column.id && !moving.has(element.id)
+        );
+        for (const room of spreadColumn(column, members, card, grown)) {
+          elements.set(room.id, room);
+        }
       }
     }
 
@@ -392,7 +424,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   let still: { key: string; list: readonly BoardElement[] } | undefined;
   const displayedStill = (now = Date.now()): readonly BoardElement[] => {
     const all = displayed(now);
-    const key = `${scene.revision}:${draft.membership}:${remotes.draftIds().join(',')}`;
+    const key = `${scene.revision}:${draft.membership}:${remotes.draftIds().join(',')}:${spreadKey}`;
     if (still?.key === key) {
       return still.list;
     }
@@ -442,18 +474,112 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
   const resizable = (): BoardElement[] => changeable().filter(element => element.type !== 'card');
 
   /**
+   * The card being read, not written on: the one selected alone, lying still — or, on a board that is only looked at,
+   * the one pointed at.
+   */
+  const readCard = (): string | undefined => {
+    if (!editable()) {
+      return state.pointed;
+    }
+
+    const only = selection.size === 1 ? [...selection][0] : undefined;
+    const moving = only !== undefined && (draft.has(only) || remotes.draftIds().includes(only));
+
+    return moving ? undefined : only;
+  };
+
+  /** How long a column takes to make room for a card opened in it, and to close up again. */
+  const SPREAD_MS = 180;
+  /** The room each opened card is making in its column: eased from what it was toward what it will be. */
+  const spreads = new Map<string, { from: number; to: number; since: number }>();
+  /** How much taller than it lies a card is opened — measured once for each version of it. */
+  const grownBy = new WeakMap<BoardElement, { view: CardView; palette: Palette; grown: number }>();
+
+  const grownOf = (card: BoardElement, view: CardView): number => {
+    const known = grownBy.get(card);
+    if (known?.view === view && known.palette === state.palette) {
+      return known.grown;
+    }
+
+    const grown = Math.max(0, cardLayout(context, card, state.palette, view).height - card.height);
+    grownBy.set(card, { view, palette: state.palette, grown });
+
+    return grown;
+  };
+
+  const spreadAt = ({ from, to, since }: { from: number; to: number; since: number }, now: number): number => {
+    const t = Math.min(1, Math.max(0, now - since) / SPREAD_MS);
+
+    return from + (to - from) * (1 - (1 - t) ** 3);
+  };
+
+  const aimSpread = (id: string, to: number, now: number): void => {
+    const tween = spreads.get(id);
+    if (tween?.to === to || (!tween && to === 0)) {
+      return;
+    }
+
+    spreads.set(id, { from: tween ? spreadAt(tween, now) : 0, to, since: now });
+  };
+
+  /**
+   * The room opened cards make in their columns right now, card by card — the one selected or written on grows it
+   * toward its height, one let go shrinks it back — so the cards under it are moved down, not covered, and the next one
+   * is still there to be picked. Only on a board that can change: one only looked at opens a card under the pointer,
+   * and a column that moved away from it as it opened would never hold still. Keeps the frames coming while any eases.
+   */
+  const spreadNow = (now: number): ReadonlyMap<string, number> => {
+    const id = state.editing ?? (editable() ? readCard() : undefined);
+    const card = id === undefined ? undefined : (draft.get(id) ?? scene.element(id));
+    const column = card?.parent === undefined ? undefined : scene.element(card.parent);
+    const opened = card?.type === 'card' && column?.layout === 'column' ? card : undefined;
+    if (opened) {
+      aimSpread(opened.id, grownOf(opened, state.editing === opened.id ? 'writing' : 'opened'), now);
+    }
+
+    const values = new Map<string, number>();
+    let easing = false;
+    for (const [other, tween] of spreads) {
+      if (other !== opened?.id) {
+        aimSpread(other, 0, now);
+      }
+
+      const aimed = spreads.get(other) ?? tween;
+      const value = Math.round(spreadAt(aimed, now));
+      if (now - aimed.since < SPREAD_MS) {
+        easing = true;
+      } else if (aimed.to === 0) {
+        spreads.delete(other);
+      }
+
+      if (value > 0) {
+        values.set(other, value);
+      }
+    }
+
+    if (easing) {
+      invalidate();
+    }
+
+    return values;
+  };
+
+  /**
    * The card opened right now, drawn whole over what lies under it and taken by a press anywhere on it: the one being
-   * written on — its editor is a form of two fields, and opening it is what editing it looks like — or, on a board that
-   * is only looked at, the one pointed at, for its description to be read.
+   * written on — its editor is a form of two fields, and opening it is what editing it looks like — or the one being
+   * read (`readCard`), when its column cuts some of it short: its title past three lines, its description past one.
    */
   const openedCard = (): { element: BoardElement; layout: CardLayout; box: Box } | undefined => {
-    const id = state.editing ?? (editable() ? undefined : state.pointed);
+    const id = state.editing ?? readCard();
     const element = id === undefined ? undefined : current().get(id);
-    if (element?.type !== 'card' || (!state.editing && !element.description)) {
+    if (element?.type !== 'card') {
       return undefined;
     }
 
     const layout = cardLayout(context, element, state.palette, state.editing === id ? 'writing' : 'opened');
+    if (!state.editing && layout.height <= element.height) {
+      return undefined;
+    }
 
     return { element, layout, box: { ...boundsOf(element), height: Math.max(element.height, layout.height) } };
   };
@@ -526,6 +652,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
       column: sole?.type === 'frame' && sole.layout === 'column',
       completes: sole?.type === 'frame' && sole.completes === true,
       task: sole !== undefined && isTask(sole.type),
+      card: sole?.type === 'card',
       done: sole?.done === true,
       locked: chosen.length > 0 && chosen.every(element => element.locked === true),
       duty: sole?.type === 'frame' ? sole.duty : undefined,
@@ -707,7 +834,7 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     const next = new Map(changes.map(change => [change.id, change]));
     // Everything as it will be, kept current as the pass adds to it: one read of the scene, however big the change —
     // copied, since the board as drawn is shared with everything else that asks for it this frame.
-    const all = new Map(current());
+    const all = new Map(lying());
     const put = (element: BoardElement): void => {
       next.set(element.id, element);
       all.set(element.id, element);
@@ -834,8 +961,62 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     }
   };
 
+  /**
+   * The card selected, waiting for the next click to say which card it waits on — the selection's "waits on" button.
+   * The pointer says so until it does.
+   */
+  const pickBlocker = (): void => {
+    const card = selection.size === 1 ? selected().at(0) : undefined;
+    if (card?.type !== 'card') {
+      return;
+    }
+
+    state.pickingBlocker = card.id;
+    canvas.style.cursor = 'crosshair';
+    invalidate();
+  };
+
+  /**
+   * The click after `pickBlocker`: the card under it made one the waiting card waits on — or no longer, clicked again.
+   * Refused, the person is told why; anywhere but on a card, the waiting just stops.
+   */
+  const chooseBlocker = (target: BoardElement | undefined): void => {
+    const id = state.pickingBlocker;
+    state.pickingBlocker = undefined;
+    canvas.style.cursor = restCursor();
+    invalidate();
+    const shown = lying();
+    const card = id === undefined ? undefined : shown.get(id);
+    const blocker = target ? shown.get(target.id) : undefined;
+    if (!card || blocker?.type !== 'card') {
+      return;
+    }
+
+    const result = toggledBlocker(card, blocker, other => shown.get(other));
+    if ('refused' in result) {
+      sounds.play('hmm');
+      emit({ type: 'notice', text: result.refused });
+
+      return;
+    }
+
+    sounds.play(result.added ? 'connect' : 'remove');
+    commit([result.card]);
+    setSelection([card.id]);
+  };
+
   const commit = (changes: readonly BoardElement[]): void => {
-    publish(scene.commit(settle(changes)));
+    const settled = settle(changes);
+    const before = (id: string): BoardElement | undefined => scene.element(id);
+    const find = (id: string): BoardElement | undefined => settled.find(change => change.id === id) ?? before(id);
+    const blocked = movedOnBlocked(settled, before, find);
+    publish(scene.commit(settled));
+    // Moved on anyway — the person may know better — and told what it still waits on.
+    if (blocked.length) {
+      sounds.play('hmm');
+      emit({ type: 'notice', text: blockedWarning(blocked[0]) });
+    }
+
     invalidate();
   };
 
@@ -1077,6 +1258,9 @@ export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (
     displayedStill,
     displayedMoving,
     current,
+    lying,
+    pickBlocker,
+    chooseBlocker,
     selected,
     changeable,
     soleConnector,

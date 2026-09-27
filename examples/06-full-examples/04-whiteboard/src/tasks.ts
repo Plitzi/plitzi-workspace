@@ -2,6 +2,7 @@ import { ActionRefusal } from '@plitzi/sdk-server/actions';
 
 import { isBoardId } from './board/model.ts';
 import {
+  addTemplate,
   applyToBoard,
   copyBoard,
   createBoard,
@@ -11,6 +12,7 @@ import {
   loadBoard,
   lockBoard,
   openBoard,
+  removeTemplate,
   renameBoard,
   replyTo,
   sayOn,
@@ -18,6 +20,7 @@ import {
   setAgentQuiet,
   setReadOnly,
   runSession,
+  saveTemplate,
   setTimer,
   uploadToBoard,
   voteOn
@@ -285,6 +288,42 @@ export const createBoardTasks = ({
     run: ({ board, key, owner, minutes }, ctx) => setAgentQuiet(on(ctx.kv), boardId(board), { key, owner }, minutes)
   };
 
+  const templateSaveTask: ActionTask<{ board: string; title: string; elements: unknown } & Passed> = {
+    namespace: 'board',
+    action: 'templateSave',
+    title: 'Save Template',
+    description:
+      'Keeps what was laid out — a selection, with what its frames hold — as a template in the board’s library, and ' +
+      'answers its code, which adds it to any other board.',
+    params: {
+      board: boardParam,
+      title: text('Name'),
+      elements: { type: 'codemirror-json', canBind: true, defaultValue: '[]', label: 'Elements' },
+      key: keyParam,
+      owner: ownerParam
+    },
+    run: ({ board, title, elements, key, owner }, ctx) =>
+      saveTemplate(on(ctx.kv), boardId(board), { title, elements }, { key, owner }, ctx.callerId)
+  };
+
+  const templateAddTask: ActionTask<{ board: string; code: string } & Passed> = {
+    namespace: 'board',
+    action: 'templateAdd',
+    title: 'Add Template',
+    description: 'Adds a template another board keeps to this board’s library, by its code.',
+    params: { board: boardParam, code: text('Template code'), key: keyParam, owner: ownerParam },
+    run: ({ board, code, key, owner }, ctx) => addTemplate(on(ctx.kv), boardId(board), code, { key, owner })
+  };
+
+  const templateRemoveTask: ActionTask<{ board: string; code: string } & Passed> = {
+    namespace: 'board',
+    action: 'templateRemove',
+    title: 'Remove Template',
+    description: 'Takes a template out of this board’s library; the other boards that list it keep it.',
+    params: { board: boardParam, code: text('Template code'), key: keyParam, owner: ownerParam },
+    run: ({ board, code, key, owner }, ctx) => removeTemplate(on(ctx.kv), boardId(board), code, { key, owner })
+  };
+
   // The catalog is heterogeneous by nature — each task declares its own params — and the server reads it as such.
   return [
     boardListTask,
@@ -304,6 +343,9 @@ export const createBoardTasks = ({
     boardChatTask,
     boardReplyTask,
     boardReadOnlyTask,
-    boardAgentsTask
+    boardAgentsTask,
+    templateSaveTask,
+    templateAddTask,
+    templateRemoveTask
   ] as ActionTask<Record<string, unknown>>[];
 };

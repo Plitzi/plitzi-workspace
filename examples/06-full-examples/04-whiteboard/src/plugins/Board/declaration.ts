@@ -65,6 +65,7 @@ const declaration = {
         isColumn: '',
         completes: '',
         isTask: '',
+        isCard: '',
         isDone: '',
         isLocked: '',
         hasDuty: '',
@@ -95,6 +96,19 @@ const declaration = {
       params: {},
       preview: { id: '', data: '' }
     },
+    /**
+     * What is selected, to be kept as a template (`saveTemplate`): its `title`, and the `elements` — the selection with
+     * what its frames hold — for the page to hand to the server.
+     */
+    onTemplateSave: {
+      action: 'onTemplateSave',
+      title: 'On Template Save',
+      type: 'trigger',
+      params: {},
+      preview: { title: '', elements: '', count: '' }
+    },
+    /** A warning for the person about what they just did: a blocked card moved on, a link refused. */
+    onNotice: { action: 'onNotice', title: 'On Notice', type: 'trigger', params: {}, preview: { text: '' } },
     /** A vote asked for on an element — its badge clicked, or `vote` called. */
     onVote: { action: 'onVote', title: 'On Vote', type: 'trigger', params: {}, preview: { id: '' } },
     /** The board's frames, in the order they are gone through: `frames` (`id`, `title`, `count`) and `count`. */
@@ -310,9 +324,23 @@ const declaration = {
       params: {
         tool: { label: 'Tool (sticky, rectangle, text, card, column…)', defaultValue: 'sticky', type: 'text' },
         fill: { label: 'Paper (yellow | red | orange | green | blue | violet)', defaultValue: 'yellow', type: 'text' },
-        kind: { label: 'Kind (stack: a pile of notes · kanban: a whole board)', defaultValue: '', type: 'text' },
+        kind: {
+          label: 'Kind (stack: a pile of notes · kanban: a whole board · template: one of the library’s)',
+          defaultValue: '',
+          type: 'text'
+        },
+        template: { label: 'Template (its code, with kind: template)', defaultValue: '', type: 'text' },
         drag: { label: 'Only when dragged', defaultValue: false, type: 'boolean' }
       }
+    },
+    /** The one card selected waits for the next click to say which card it waits on — clicked again, no longer. */
+    pickBlocker: callback('pickBlocker', 'Pick What It Waits On'),
+    /** What is selected, kept as a template: fires `onTemplateSave`, named `title` — or after its frames. */
+    saveTemplate: {
+      action: 'saveTemplate',
+      title: 'Save As Template',
+      type: 'callback',
+      params: { title: { label: 'Name (its frames’ titles when empty)', defaultValue: '', type: 'text' } }
     },
     /** Show what a member of the room shows, and keep showing it until this person touches the board. */
     follow: {
@@ -446,6 +474,7 @@ const declaration = {
           { path: 'scheme', label: 'Colour scheme' },
           { path: 'author', label: 'Author (whose name goes on notes and cards)' },
           { path: 'session', label: 'Session with a script (as the server keeps it)' },
+          { path: 'templates', label: 'Templates in the board’s library (as the server keeps them)' },
           { path: 'authors', label: 'Show who wrote notes and cards' },
           { path: 'sounds', label: 'Make sounds' },
           { path: 'minimap', label: 'Show the minimap' }

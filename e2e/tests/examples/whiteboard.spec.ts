@@ -76,8 +76,11 @@ type Saved = {
   stroke?: string;
   x: number;
   y: number;
+  height: number;
   text?: string;
+  author?: string;
   description?: string;
+  blockedBy?: string[];
   parent?: string;
   done?: boolean;
   completes?: boolean;
@@ -489,6 +492,162 @@ describeTarget('whiteboard', subject => {
     await drag(page, at([there.x + 150, there.y + 20]), at([150, 300]), 10);
     await expect.poll(async () => (await saved(moving))?.parent).toBe(todo.id);
     expect((await saved(moving))?.done).toBeUndefined();
+  });
+
+  /** A card selected opens whole — no double-click to read it — and moves the cards under it down rather than covering
+   *  them, so the next one is still there to be picked. Only on this screen: the column saved is the one that lies. A
+   *  title and a description past what an opened card shows (6 lines and 12) make its height a known one: it lies
+   *  114 tall and opens 394, so what is under it goes 280 down. */
+  test('a card selected opens whole, and the ones under it make room', async ({ page }) => {
+    const column = element(0, { type: 'frame', layout: 'column', x: 0, y: 0, width: 300, height: 460, text: 'To do' });
+    const lines = (word: string, count: number) =>
+      Array.from({ length: count }, (_, index) => `${word} ${index + 1}`).join('\n');
+    const long = element(1, {
+      type: 'card',
+      x: 14,
+      y: 62,
+      width: 272,
+      height: 114,
+      text: lines('Step', 8),
+      description: lines('Note', 14),
+      parent: column.id
+    });
+    const next = element(2, { type: 'card', x: 14, y: 188, width: 272, height: 48, text: 'Next', parent: column.id });
+    const id = await seedBoard(subject.origin, 'e2e — an opened card', [column, long, next]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    const [x, y] = await middle(page);
+    const at = (point: [number, number]): [number, number] => [x + point[0] - 150, y + point[1] - 230];
+    const saved = async (of: { id: string }) =>
+      (await savedElements(subject.origin, id)).find(entry => entry.id === of.id);
+
+    await page.mouse.click(...at([150, 100]));
+    await page.waitForTimeout(400);
+    // Under the column as it lies — where the next card is only while the opened one has pushed it down.
+    await page.mouse.click(...at([150, 500]));
+    await page.locator('[data-plitzi-el="done"]').click();
+    await expect.poll(async () => (await saved(next))?.done).toBe(true);
+    expect((await saved(long))?.done).toBeUndefined();
+    expect((await saved(next))?.y).toBe(188);
+    expect((await saved(column))?.height).toBe(460);
+  });
+
+  /** What a team lays out every time, kept as a template from the selection's tools and put down again from the
+   *  library — on this board, and, by its code, on another. */
+  test('a column kept as a template is put down again, here and on another board', async ({ page }) => {
+    const column = element(0, {
+      type: 'frame',
+      layout: 'column',
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 460,
+      text: 'Check-in'
+    });
+    const card = element(1, {
+      type: 'card',
+      x: 14,
+      y: 62,
+      width: 272,
+      height: 48,
+      text: 'How are you?',
+      author: 'Ana',
+      parent: column.id
+    });
+    const id = await seedBoard(subject.origin, 'e2e — a template', [column, card]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    const [x, y] = await middle(page);
+    const at = (point: [number, number]): [number, number] => [x + point[0] - 150, y + point[1] - 230];
+    const library = async (of: string) => {
+      const response = await fetch(new URL(`/_rsc?location=/b/${of}&ids=board`, subject.origin));
+      const body = (await response.json()) as {
+        serverData: { board: { templates: { id: string; title: string; elements: Saved[] }[] } };
+      };
+
+      return body.serverData.board.templates;
+    };
+
+    // Kept from the column's tools: in the board's library, without who wrote the card.
+    await page.mouse.click(...at([150, 24]));
+    await page.locator('[data-plitzi-el="save-template"]').click();
+    await expect.poll(async () => (await library(id)).map(template => template.title)).toEqual(['Check-in']);
+    const [kept] = await library(id);
+    expect(kept.elements.map(saved => [saved.type, saved.author])).toEqual([
+      ['frame', undefined],
+      ['card', undefined]
+    ]);
+
+    // Dragged out of the library onto the board, beside the original: a column with its card in it.
+    await page.keyboard.press('Escape');
+    await page.locator('[data-plitzi-el="tool-library"]').click();
+    const tile = page.locator('[data-plitzi-el="library-templates"] li button').first();
+    const from = await tile.boundingBox();
+    if (!from) {
+      throw new Error('The template is not in the library');
+    }
+
+    await drag(page, [from.x + from.width / 2, from.y + 30], at([600, 230]), 12);
+    await expect
+      .poll(async () => (await savedElements(subject.origin, id)).filter(saved => saved.type === 'frame').length)
+      .toBe(2);
+    const placed = (await savedElements(subject.origin, id)).filter(saved => ![column.id, card.id].includes(saved.id));
+    const copy = placed.find(saved => saved.type === 'frame');
+    expect(placed.find(saved => saved.type === 'card')?.parent).toBe(copy?.id);
+
+    // On another board, by its code.
+    const other = await seedBoard(subject.origin, 'e2e — another board', []);
+    await page.goto(`${subject.origin}/b/${other}`);
+    await expect(board(page)).toBeVisible();
+    await page.locator('[data-plitzi-el="tool-library"]').click();
+    await page.locator('[data-plitzi-el="template-code"] input').fill(kept.id.toUpperCase());
+    await page.keyboard.press('Enter');
+    await expect.poll(async () => (await library(other)).map(template => template.id)).toEqual([kept.id]);
+    await expect(page.locator('[data-plitzi-el="library-templates"] li')).toHaveCount(1);
+  });
+
+  /** A card that waits on another: said from its tools — the next click picks the card — and moved on while that one
+   *  is still open, the person is warned. */
+  test('a card waits on another, and moving it on anyway is warned of', async ({ page }) => {
+    const column = (index: number, x: number, text: string, completes = false) =>
+      element(index, {
+        type: 'frame',
+        layout: 'column',
+        x,
+        y: 0,
+        width: 300,
+        height: 460,
+        text,
+        ...(completes ? { completes } : {})
+      });
+    const todo = column(0, 0, 'To do');
+    const doing = column(1, 400, 'Doing');
+    const done = column(2, 800, 'Done', true);
+    const card = (index: number, parent: { id: string; x: number }, text: string) =>
+      element(index, { type: 'card', x: parent.x + 14, y: 62, width: 272, height: 48, text, parent: parent.id });
+    const client = card(3, todo, 'Build the client');
+    const api = card(4, doing, 'Design the API');
+    const id = await seedBoard(subject.origin, 'e2e — dependencies', [todo, doing, done, client, api]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    // Fitted at its own size: the board's middle, (550, 230), is the canvas's.
+    const [x, y] = await middle(page);
+    const at = (point: [number, number]): [number, number] => [x + point[0] - 550, y + point[1] - 230];
+    const saved = async (of: { id: string }) =>
+      (await savedElements(subject.origin, id)).find(entry => entry.id === of.id);
+
+    await page.mouse.click(...at([150, 86]));
+    await page.locator('[data-plitzi-el="waits-on"]').click();
+    await page.mouse.move(...at([540, 90]));
+    await page.mouse.click(...at([550, 86]));
+    await expect.poll(async () => (await saved(client))?.blockedBy).toEqual([api.id]);
+
+    await page.keyboard.press('Escape');
+    await drag(page, at([150, 86]), at([950, 200]), 12);
+    await expect.poll(async () => (await saved(client))?.parent).toBe(done.id);
+    await expect(
+      page.getByText('“Build the client” went on while it waits on “Design the API”, still open')
+    ).toBeVisible();
   });
 
   test('a frame is branched and the branch taken back', async ({ page }) => {

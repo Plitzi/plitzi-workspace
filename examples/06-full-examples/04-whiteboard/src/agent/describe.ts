@@ -1,3 +1,4 @@
+import { cardTitle, openBlockers } from '../board/dependencies.ts';
 import { DUTY_PRESETS, instructionOf } from '../board/duties.ts';
 import { isConnector } from '../board/model.ts';
 import { describeSession } from '../board/sessions.ts';
@@ -34,11 +35,12 @@ const colourOf = (element: BoardElement): string =>
 
 /**
  * One element on one line: its id first, so the agent can name it back. One `faceDown` — written by someone else in a
- * session's writing step — says who is writing it, and nothing of what.
+ * session's writing step — says who is writing it, and nothing of what. `find` answers the others it names: the frame
+ * it is in, the cards it waits on.
  */
 export const describeElement = (
   element: BoardElement,
-  frames: Map<string, BoardElement>,
+  find: (id: string) => BoardElement | undefined,
   faceDown: (element: BoardElement) => boolean = () => false
 ): string => {
   if (faceDown(element)) {
@@ -46,12 +48,20 @@ export const describeElement = (
   }
 
   const box = `at (${round(element.x)}, ${round(element.y)}) size ${round(element.width)}×${round(element.height)}`;
-  const inside = element.parent && frames.has(element.parent) ? ` in "${frames.get(element.parent)?.text ?? ''}"` : '';
+  const frame = element.parent ? find(element.parent) : undefined;
+  const inside = frame?.type === 'frame' ? ` in "${frame.text ?? ''}"` : '';
+  const waits = (element.blockedBy ?? []).flatMap(id => {
+    const blocker = find(id);
+
+    return blocker ? [`${blocker.id} "${cardTitle(blocker)}" (${blocker.done ? 'done' : 'open'})`] : [];
+  });
+  const blocked = !element.done && openBlockers(element, find).length > 0;
   const marks = [
     element.locked ? 'locked' : '',
     element.done ? (element.type === 'comment' ? 'resolved' : 'done') : '',
     element.votes?.length ? `${element.votes.length} votes` : '',
     element.author ? `by ${element.author}` : '',
+    waits.length ? `${blocked ? 'BLOCKED — ' : ''}waits on ${waits.join(', ')}` : '',
     element.description ? `description: ${quoted(element.description, 400)}` : '',
     element.layout === 'column' ? 'column (stacks what is dropped in)' : '',
     element.completes ? 'the team’s Done: a card moved into it is ticked off, out of it open again' : '',
@@ -71,7 +81,6 @@ export const describeBoard = (session: Session): string => {
   const running = session.session();
   const elements = session.elements();
   const byId = new Map(elements.map(element => [element.id, element]));
-  const frames = new Map(elements.filter(element => element.type === 'frame').map(element => [element.id, element]));
   const connectors = elements.filter(element => isConnector(element.type));
   const things = elements.filter(element => !isConnector(element.type) && element.type !== 'freehand');
   const drawings = elements.filter(element => element.type === 'freehand').length;
@@ -95,7 +104,7 @@ export const describeBoard = (session: Session): string => {
       : 'The board is empty.',
     '',
     `Elements (${things.length}${drawings ? `, plus ${drawings} pen strokes` : ''}):`,
-    ...things.map(element => describeElement(element, frames, session.faceDown)),
+    ...things.map(element => describeElement(element, session.element, session.faceDown)),
     ...(connectors.length
       ? [
           '',

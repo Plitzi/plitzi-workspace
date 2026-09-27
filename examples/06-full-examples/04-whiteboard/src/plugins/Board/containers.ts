@@ -93,6 +93,26 @@ export const layoutColumn = (
 };
 
 /**
+ * A column as it is drawn while a card in it is opened, `grown` taller than it lies: what lies under the card moved down
+ * by as much, and the column as tall as that needs — so the next card is still there to be picked. Only drawn: the
+ * column a change is laid out from, and the one the others see, is the one that lies.
+ */
+export const spreadColumn = (
+  column: BoardElement,
+  members: readonly BoardElement[],
+  card: BoardElement,
+  grown: number
+): BoardElement[] => {
+  const below = members
+    .filter(member => member.id !== card.id && member.y > card.y)
+    .map(member => ({ ...member, y: member.y + grown }));
+  const bottom = Math.max(card.y + card.height + grown, ...below.map(member => member.y + member.height));
+  const height = Math.max(column.height, bottom + COLUMN_PADDING - column.y);
+
+  return [...(height === column.height ? [] : [{ ...column, height }]), ...below];
+};
+
+/**
  * The frames in reading order — row by row, left to right — which is the order a board's sections are gone through,
  * and a presentation shows them. Frames whose tops are within a band of each other are one row.
  */

@@ -14,6 +14,7 @@ import {
 import { CATEGORIES, dragFlows, ELEMENTS, entriesOf, pickSteps } from './elements.ts';
 import { BUTTON_RESET, FLOAT, caption, icon, panelMotion } from './kit.ts';
 import { closePanels } from './panels.ts';
+import { templatesSection } from './templates.ts';
 import { markOf } from './toolbar.ts';
 
 import type { Category, ElementEntry } from './elements.ts';
@@ -392,6 +393,7 @@ export const libraryPanel = (): ElementSpec =>
       container({
         class: body,
         children: [
+          templatesSection(),
           favoritesHint(),
           favoritesSection(),
           ...CATEGORIES.map(sectionFor),

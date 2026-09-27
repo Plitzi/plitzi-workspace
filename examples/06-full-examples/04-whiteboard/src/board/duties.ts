@@ -15,7 +15,7 @@ export const DUTY_PRESETS: Record<DutyRole, { label: string; instruction: string
     label: 'Guardian',
     instruction:
       'Watch this frame and say so in the chat, briefly, when something breaks its rules — too many cards, one left ' +
-      'without an owner, something done that is still here.'
+      'without an owner, something done that is still here, a card moved on while a card it waits on is still open.'
   },
   organizer: {
     label: 'Organizer',

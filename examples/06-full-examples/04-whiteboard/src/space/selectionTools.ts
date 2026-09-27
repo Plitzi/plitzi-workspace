@@ -3,6 +3,7 @@ import { container, onClick, styles, variantFrom } from '@plitzi/sdk-authoring';
 import { dutyButton } from './duty.ts';
 import { FLOAT, divide, iconAction, iconButton } from './kit.ts';
 import { boardAction } from './stylePanel.ts';
+import { saveTemplateStep } from './templates.ts';
 
 import type { ElementSpec } from '@plitzi/sdk-authoring';
 
@@ -134,6 +135,19 @@ export const selectionTools = (): ElementSpec =>
               })
             ]
           }),
+          // A card that waits on others: the next click on a card says which — clicked again, no longer.
+          container({
+            id: 'blocker-tool',
+            visible: 'computed.selectionIsCard',
+            children: [
+              iconAction({
+                id: 'waits-on',
+                icon: 'fa-solid fa-link',
+                title: 'Waits on… — click the card it waits on',
+                flow: [onClick(), boardAction('pickBlocker')]
+              })
+            ]
+          }),
           container({
             id: 'tidy-tool',
             visible: 'computed.canTidy',
@@ -178,6 +192,13 @@ export const selectionTools = (): ElementSpec =>
         icon: 'fa-regular fa-thumbs-up',
         title: 'Vote — ⇧V',
         flow: [onClick(), boardAction('vote')]
+      }),
+      // Kept as a template in the board's library — what the team lays out every time, put down again from there.
+      iconAction({
+        id: 'save-template',
+        icon: 'fa-regular fa-bookmark',
+        title: 'Keep as a template — in the library, for this board and any other',
+        flow: [onClick(), saveTemplateStep]
       }),
       iconAction({
         id: 'duplicate',

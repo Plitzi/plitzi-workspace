@@ -1,12 +1,15 @@
 import { randomInt } from 'node:crypto';
 
 import { connect } from './connection.ts';
+import { blockedWarning, movedOnBlocked } from '../board/dependencies.ts';
 import { byStacking, isRecord, parseElement, supersedes, textOf } from '../board/model.ts';
+import { parseTemplate } from '../board/savedTemplates.ts';
 import { describeSession, isFaceDown, parseSession } from '../board/sessions.ts';
 
 import type { Connection, Heard } from './connection.ts';
 import type { BoardElement, Point } from '../board/model.ts';
 import type { AgentStatus, Collaborator } from '../board/people.ts';
+import type { SavedTemplate } from '../board/savedTemplates.ts';
 import type { BoardSession } from '../board/sessions.ts';
 import type { ChatMessage, OpenedBoard } from '../board/store.ts';
 
@@ -23,7 +26,9 @@ export type Activity =
   | { kind: 'chat'; name: string; text: string; at: number }
   | { kind: 'said'; name: string; text: string; at: number }
   | { kind: 'changed'; name: string; count: number; ids: string[]; at: number }
-  | { kind: 'joined' | 'left'; name: string; at: number };
+  | { kind: 'joined' | 'left'; name: string; at: number }
+  /** What the board itself flags: a blocked card moved on. */
+  | { kind: 'warning'; name: string; text: string; at: number };
 
 type Member = { name: string; color: string; agent: boolean };
 
@@ -136,6 +141,10 @@ export const joinBoard = async (
   let title = loaded.title;
   /** The session with a script the board goes through — its writing step keeps the others' notes face down. */
   let session: BoardSession | undefined = parseSession(loaded.session);
+  /** The board's library of templates, as it was read and as its channel says it changes. */
+  const templatesOf = (value: unknown): SavedTemplate[] =>
+    Array.isArray(value) ? value.map(parseTemplate).filter(template => template !== undefined) : [];
+  let templates = templatesOf(loaded.templates);
   /** What this agent committed, as the server will announce it back: its own changes are not news to it. */
   const own = new Set<string>();
   const stampOf = (element: BoardElement): string => `${element.id}:${element.version}:${element.nonce}`;
@@ -176,8 +185,14 @@ export const joinBoard = async (
     if (topic.startsWith('board:')) {
       if (type === 'elements' && Array.isArray(data)) {
         const changed: string[] = [];
+        const before = new Map<string, BoardElement>();
         for (const element of data.map(parseElement)) {
           if (element && supersedes(element, elements.get(element.id))) {
+            const was = elements.get(element.id);
+            if (was) {
+              before.set(element.id, was);
+            }
+
             elements.set(element.id, element);
             if (!own.delete(stampOf(element))) {
               changed.push(element.id);
@@ -190,6 +205,15 @@ export const joinBoard = async (
         if (changed.length) {
           lastActive = Date.now();
           note({ kind: 'changed', name: 'the board', count: changed.length, ids: changed, at: Date.now() });
+          // A card someone moved on while what it waits on is still open: what a guardian is there to catch.
+          const movedOn = movedOnBlocked(
+            changed.flatMap(id => elements.get(id) ?? []),
+            id => before.get(id),
+            id => elements.get(id)
+          );
+          for (const entry of movedOn) {
+            note({ kind: 'warning', name: 'The board', text: blockedWarning(entry), at: Date.now() });
+          }
         }
       } else if (type === 'chat' && isRecord(data) && typeof data.text === 'string') {
         const line: ChatMessage = {
@@ -216,6 +240,8 @@ export const joinBoard = async (
           text: session ? `Session: ${describeSession(session)}` : 'The session is over.',
           at: Date.now()
         });
+      } else if (type === 'templates' && isRecord(data)) {
+        templates = templatesOf(data.templates);
       } else if (type === 'reach' && isRecord(data)) {
         expiresAt = typeof data.expiresAt === 'number' ? data.expiresAt : null;
       } else if (type === 'agents' && isRecord(data) && typeof data.agentQuietMinutes === 'number') {
@@ -421,6 +447,32 @@ export const joinBoard = async (
       const found = elements.get(id);
 
       return found && !found.deleted ? found : undefined;
+    },
+    /** The templates in the board's library, newest first. */
+    templates: (): SavedTemplate[] => templates,
+    /** What `elements` are, kept as a template named `title` in the board's library: answers its code and name. */
+    saveTemplate: async (title: string, elements: BoardElement[]): Promise<{ id: string; title: string }> => {
+      const answer = await callAction(door, 'board-template-save', { board, key: loaded.key, title, elements });
+      const saved = isRecord(answer) && isRecord(answer.template) ? answer.template : undefined;
+      if (!isRecord(answer) || !saved) {
+        throw new Error('board-template-save: no template came back');
+      }
+
+      templates = templatesOf(answer.templates);
+
+      return { id: textOf(saved.id), title: textOf(saved.title) };
+    },
+    /** A template another board keeps, added to this board's library by its code — and answered whole. */
+    addTemplate: async (code: string): Promise<SavedTemplate> => {
+      const answer = await callAction(door, 'board-template-add', { board, key: loaded.key, code });
+      const added = isRecord(answer) ? parseTemplate(answer.template) : undefined;
+      if (!isRecord(answer) || !added) {
+        throw new Error(`board-template-add: no template came back for ${code}`);
+      }
+
+      templates = templatesOf(answer.templates);
+
+      return added;
     },
     /** The session under way, if one is. */
     session: (): BoardSession | undefined => session,
