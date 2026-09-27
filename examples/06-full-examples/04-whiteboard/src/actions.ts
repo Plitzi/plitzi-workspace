@@ -435,12 +435,21 @@ const readOnly = defineAction({
   output: '{{ set|json_encode }}'
 });
 
-/** How long an agent stays through quiet on a board. The agents on it are told (`agents`), and keep to it. */
+/**
+ * How the agents on a board behave: how long one stays through quiet, and what wakes one while it listens. The agents
+ * on it are told (`agents`), and keep to it.
+ */
 const agents = defineAction({
   id: AGENTS_ACTION,
   name: 'Agents on a board',
-  description: 'How many minutes an agent stays on a board with nothing happening before it leaves.',
-  trigger: { type: 'call', access: 'public', input: { ...onBoard, minutes: field('Minutes') } },
+  description:
+    'How the agents on a board behave: the minutes one stays with nothing happening before it leaves, and what wakes ' +
+    'one while it listens — only what names it (named), or every change too (changes).',
+  trigger: {
+    type: 'call',
+    access: 'public',
+    input: { ...onBoard, minutes: field('Minutes', false), listens: field('What wakes it', false) }
+  },
   steps: [
     { id: 'set', task: 'board.agents' },
     {

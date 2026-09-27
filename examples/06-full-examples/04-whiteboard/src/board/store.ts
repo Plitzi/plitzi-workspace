@@ -62,9 +62,28 @@ export type StoredBoard = {
   expiresAt?: number;
   /** How long an agent stays on the board with nothing happening before it leaves — {@link AGENT_QUIET_DEFAULT}. */
   agentQuietMinutes?: number;
+  /** What wakes an agent listening on the board — {@link AGENT_LISTENS}. */
+  agentListens?: AgentListens;
   /** The codes of the templates in its library, newest first (`savedTemplates.ts`). */
   templates?: string[];
 };
+
+/**
+ * What wakes an agent that is listening on the board, and so what it spends its model's tokens on:
+ *
+ * - `named` — only what is said to it (`@name`, `@agent`), somebody pressing stop, and a blocked card moved on; and, for
+ *   an agent on a duty, what changes in its frames. The default: an agent is a teammate asked for things.
+ * - `changes` — that, and every change anyone makes on the board: for an agent that follows the work as it happens.
+ *
+ * People arriving and leaving never wake it: that is nothing to answer.
+ */
+export const AGENT_LISTENS = ['named', 'changes'] as const;
+
+export type AgentListens = (typeof AGENT_LISTENS)[number];
+
+export const AGENT_LISTENS_DEFAULT: AgentListens = 'named';
+
+export const isAgentListens = (value: unknown): value is AgentListens => AGENT_LISTENS.some(choice => choice === value);
 
 /** The quiet an agent sits through before it leaves a board, as a board may choose it — in minutes. */
 export const AGENT_QUIET_CHOICES = [15, 30, 60, 120, 240] as const;
@@ -126,6 +145,8 @@ export type OpenedBoard = {
   expiresAt: number | null;
   /** How long an agent on it stays through nothing happening, in minutes. */
   agentQuietMinutes: number;
+  /** What wakes an agent listening on it. */
+  agentListens: AgentListens;
   /** The last of what was said in its chat, oldest first. */
   chat: ChatMessage[];
   /** The templates in its library, newest first — what they put down with them. */
@@ -148,6 +169,7 @@ export const missingBoard = (id: string): OpenedBoard => ({
   unlisted: false,
   expiresAt: null,
   agentQuietMinutes: AGENT_QUIET_DEFAULT,
+  agentListens: AGENT_LISTENS_DEFAULT,
   chat: [],
   templates: []
 });
@@ -558,6 +580,7 @@ const opened = (
   unlisted: board.unlisted === true,
   expiresAt: board.expiresAt ?? null,
   agentQuietMinutes: board.agentQuietMinutes ?? AGENT_QUIET_DEFAULT,
+  agentListens: board.agentListens ?? AGENT_LISTENS_DEFAULT,
   chat: chat.slice(-CHAT_SERVED),
   templates
 });
@@ -717,26 +740,42 @@ export const setReadOnly = (
   });
 
 /**
- * How long an agent stays on a board through nothing happening — by anyone who can change the board, as its other
- * settings are.
+ * How the agents on a board behave — how long they stay through nothing happening, and what wakes them while they
+ * listen — by anyone who can change the board, as its other settings are. Each is changed only when it is given.
  */
-export const setAgentQuiet = (
+export const setAgentSettings = (
   stores: BoardStores,
   id: string,
   pass: Pass,
-  minutes: unknown
-): Promise<{ id: string; topic: string; agentQuietMinutes: number }> =>
+  { minutes, listens }: { minutes?: unknown; listens?: unknown }
+): Promise<{ id: string; topic: string; agentQuietMinutes: number; agentListens: AgentListens }> =>
   serially(stores.kv, async () => {
-    const chosen = Number(minutes);
-    if (!AGENT_QUIET_CHOICES.some(choice => choice === chosen)) {
+    const quiet = minutes === undefined || minutes === '' ? undefined : Number(minutes);
+    if (quiet !== undefined && !AGENT_QUIET_CHOICES.some(choice => choice === quiet)) {
       throw new ActionRefusal(`An agent waits ${AGENT_QUIET_CHOICES.join(', ')} minutes`);
+    }
+
+    const wakes = listens === undefined || listens === '' ? undefined : listens;
+    if (wakes !== undefined && !isAgentListens(wakes)) {
+      throw new ActionRefusal(`An agent listens for ${AGENT_LISTENS.join(' or ')}`);
     }
 
     const board = await existing(stores.kv, id);
     assertWritable(stores.signer, board, pass);
-    await save(stores, { ...board, agentQuietMinutes: chosen, updatedAt: Date.now() });
+    const next = {
+      ...board,
+      ...(quiet === undefined ? {} : { agentQuietMinutes: quiet }),
+      ...(wakes === undefined ? {} : { agentListens: wakes }),
+      updatedAt: Date.now()
+    };
+    await save(stores, next);
 
-    return { id, topic: stores.signer.topicFor(id, board.lock), agentQuietMinutes: chosen };
+    return {
+      id,
+      topic: stores.signer.topicFor(id, board.lock),
+      agentQuietMinutes: next.agentQuietMinutes ?? AGENT_QUIET_DEFAULT,
+      agentListens: next.agentListens ?? AGENT_LISTENS_DEFAULT
+    };
   });
 
 export const renameBoard = (

@@ -1,4 +1,5 @@
 import {
+  bindTemplate,
   addNotification,
   button,
   container,
@@ -21,6 +22,7 @@ import { BUTTON_RESET, caption, icon } from './kit.ts';
 import { DEFAULT_LIFETIME } from '../board/model.ts';
 import countdownDeclaration from '../plugins/Countdown/declaration.ts';
 
+import type { AgentListens } from '../board/store.ts';
 import type { CountdownAttributes } from '../plugins/Countdown/declaration.ts';
 import type { ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
@@ -91,6 +93,20 @@ const LIFETIMES: readonly { hours: string; label: string; long: string }[] = [
   { hours: '0', label: 'Ever', long: 'for good' }
 ];
 
+/** What wakes an agent listening on the board (`AGENT_LISTENS`): the words on each choice, and what it means. */
+const LISTENS: readonly { value: AgentListens; label: string; says: string }[] = [
+  {
+    value: 'named',
+    label: 'When named',
+    says: 'Agents answer only when someone writes @their name — the fewest tokens spent'
+  },
+  {
+    value: 'changes',
+    label: 'Every change',
+    says: 'Agents also wake for every change on the board, to follow the work as it happens'
+  }
+];
+
 const QUIET: readonly { minutes: number; label: string }[] = [
   { minutes: 15, label: '15 min' },
   { minutes: 30, label: '30 min' },
@@ -145,6 +161,56 @@ export const agentsSection = (): ElementSpec[] => [
   }),
   text({
     content: '… of quiet. They also leave when nobody is on the board, or when asked to (✕ on their avatar).',
+    class: note
+  }),
+  text({ content: 'AI agents wake for', class: caption }),
+  container({
+    class: row,
+    children: LISTENS.map(option =>
+      button({
+        id: `agent-listens-${option.value}`,
+        content: option.label,
+        title: option.says,
+        class: choice,
+        bind: [
+          variantFrom(choice, BOARD_PROVIDER, {
+            template: `{{ (${ofBoard('agentListens', "'named'")} ?? 'named') == '${option.value}' ? 'chosen' : '' }}`
+          }),
+          bindTemplate(
+            'ariaPressed',
+            BOARD_PROVIDER,
+            `{{ (${ofBoard('agentListens', "'named'")} ?? 'named') == '${option.value}' ? 'true' : 'false' }}`
+          )
+        ],
+        flows: [
+          [
+            onClick(),
+            named(
+              'listening',
+              runServerAction({
+                actionId: AGENTS_ACTION,
+                input: { board: `{{ ${PROVIDER}.id }}`, ...BOARD_PASS, listens: option.value },
+                invalidateQueries: 'none'
+              })
+            ),
+            whenFailed(
+              'listening',
+              addNotification({
+                content: '{{ listening.error ? listening.error : "That could not be changed" }}',
+                appearance: 'danger',
+                placement: 'bottom-center',
+                autoDismissTimeout: 5000
+              })
+            )
+          ]
+        ]
+      })
+    )
+  }),
+  text({
+    content:
+      'Named: an agent answers only when someone writes @its name — the fewest tokens. Every change: it also follows ' +
+      'the work as it happens. People arriving or leaving never wake it.',
     class: note
   })
 ];

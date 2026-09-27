@@ -400,7 +400,11 @@ describeTarget('whiteboard', subject => {
    *  says who wrote. */
   test('Enter writes in the chat, and a line naming you pings you', async ({ page }) => {
     const id = await seedBoard(subject.origin, 'e2e — mentions', []);
+    // Its channels open, before anything is said on them: a line said earlier is one nothing on this page was there
+    // to hear.
+    const socket = page.waitForEvent('websocket');
     await page.goto(`${subject.origin}/b/${id}`);
+    await (await socket).waitForEvent('framereceived', frame => String(frame.payload).includes('"ready"'));
     await expect(board(page)).toBeVisible();
     await page.mouse.click(...(await middle(page)));
 
@@ -442,8 +446,31 @@ describeTarget('whiteboard', subject => {
     await page.waitForTimeout(300);
     expect(await agent.call('read_board')).not.toContain('Meanwhile on the board');
     expect(await agent.call('wait_for_activity', { seconds: 2 })).toContain(
-      'Nothing for you in 2 seconds — the others talked among themselves:'
+      'Nothing for you in 2 seconds — only this, to know and not to answer'
     );
+
+    // Somebody arriving is nothing to answer either: it is not woken by it — and not charged the tokens for it.
+    const arriving = agent.call('wait_for_activity', { seconds: 3 });
+    const other = await page.context().newPage();
+    await other.goto(`${subject.origin}/b/${id}`);
+    const heardArrival = await arriving;
+    expect(heardArrival).toContain('Nothing for you in 3 seconds');
+    expect(heardArrival).toContain('joined');
+    await other.close();
+
+    // A board that asks its agents to follow the work wakes them for a change — and only then.
+    await action(subject.origin, 'board-agents', { board: id, key: '', listens: 'changes' });
+    await agent.call('wait_for_activity', { seconds: 0 });
+    const woken = agent.call('wait_for_activity', { seconds: 30 });
+    const startedAt = Date.now();
+    await page.waitForTimeout(500);
+    await action(subject.origin, 'board-apply', {
+      board: id,
+      key: '',
+      ops: [element(90, { type: 'rectangle', x: 0, y: 0, width: 80, height: 80 })]
+    });
+    expect(await woken).toContain('element(s) changed on the board');
+    expect(Date.now() - startedAt).toBeLessThan(15_000);
 
     // Named, it is: said while it works, it hears it with the answer to whatever it does next — once.
     await chat('Ana', '@Claude Code ¿cuánto te falta?');

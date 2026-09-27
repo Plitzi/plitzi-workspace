@@ -6,13 +6,14 @@ import { mentions } from '../board/mentions.ts';
 import { byStacking, isRecord, parseElement, supersedes, textOf } from '../board/model.ts';
 import { parseTemplate } from '../board/savedTemplates.ts';
 import { describeSession, isFaceDown, parseSession } from '../board/sessions.ts';
+import { isAgentListens } from '../board/store.ts';
 
 import type { Connection, Heard } from './connection.ts';
 import type { BoardElement, Point } from '../board/model.ts';
 import type { AgentStatus, Collaborator } from '../board/people.ts';
 import type { SavedTemplate } from '../board/savedTemplates.ts';
 import type { BoardSession } from '../board/sessions.ts';
-import type { ChatMessage, OpenedBoard } from '../board/store.ts';
+import type { AgentListens, ChatMessage, OpenedBoard } from '../board/store.ts';
 
 /**
  * An agent on one board: what it knows of the board, and how it acts on it — the way a page does.
@@ -159,6 +160,8 @@ export const joinBoard = async (
   /** When anything last happened on the board — the people's doing or this agent's: what its quiet is counted from. */
   let lastActive = Date.now();
   let quietMinutes = loaded.agentQuietMinutes;
+  /** What wakes it while it listens, as the board's settings say (`AGENT_LISTENS`). */
+  let listens = loaded.agentListens;
   /** Since when nobody but agents has been here. */
   let aloneSince: number | undefined;
   /** Why this agent left the board, once it has: said to its model, which may be asked to come back. */
@@ -262,8 +265,14 @@ export const joinBoard = async (
         templates = templatesOf(data.templates);
       } else if (type === 'reach' && isRecord(data)) {
         expiresAt = typeof data.expiresAt === 'number' ? data.expiresAt : null;
-      } else if (type === 'agents' && isRecord(data) && typeof data.agentQuietMinutes === 'number') {
-        quietMinutes = data.agentQuietMinutes;
+      } else if (type === 'agents' && isRecord(data)) {
+        if (typeof data.agentQuietMinutes === 'number') {
+          quietMinutes = data.agentQuietMinutes;
+        }
+
+        if (isAgentListens(data.agentListens)) {
+          listens = data.agentListens;
+        }
       } else if (type === 'locked') {
         // A password set, changed or removed: the key this agent opened it with — and the topic it listens on — are
         // the old one's. It goes, and says why; whoever wants it back sends the board again.
@@ -624,6 +633,10 @@ export const joinBoard = async (
     heardSince: (since: number): Activity[] => activity.filter(entry => entry.at > since),
     get status() {
       return status;
+    },
+    /** What wakes it while it listens: only what names it, or every change too. */
+    get listens(): AgentListens {
+      return listens;
     },
     /** What the people see it doing: said on the room, and its cursor said again with it, so it shows where it is. */
     setStatus: (next: AgentStatus): void => {

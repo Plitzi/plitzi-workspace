@@ -916,10 +916,32 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
       // It wakes for what is for it — a line that names it, a change, somebody arriving — not for the people talking to
       // each other, which it reads as the context of what woke it. What it was already told between two steps of its
       // work is not news again.
-      const wakes = (entry: Activity): boolean =>
-        worth(entry) && untold(entry) && ((entry.kind !== 'chat' && entry.kind !== 'said') || entry.toMe);
+      //
+      // People arriving and leaving never wake it — there is nothing to answer — and a change, or a card moved on while
+      // blocked, only does when the board asks its agents to follow the work (`agentListens: 'changes'`) or the agent
+      // listens to the frames it has a duty in.
+      const wakes = (entry: Activity): boolean => {
+        if (!worth(entry) || !untold(entry)) {
+          return false;
+        }
+
+        switch (entry.kind) {
+          case 'chat':
+          case 'said':
+            return entry.toMe;
+          case 'joined':
+          case 'left':
+            return false;
+          case 'changed':
+          case 'warning':
+            return watched.size > 0 || board.listens === 'changes';
+          default:
+            return true;
+        }
+      };
       await board.activitySince(since, seconds * 1000, wakes).finally(() => clearInterval(beat));
       const heard = board.heardSince(since).filter(entry => worth(entry) && untold(entry));
+      const forIt = heard.some(wakes);
       tell(heard);
       board.takeStop();
       lastLooked = Date.now();
@@ -931,8 +953,9 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
         return text(`Nothing happened in ${seconds} seconds.`);
       }
 
-      const forIt = heard.some(entry => (entry.kind !== 'chat' && entry.kind !== 'said') || entry.toMe);
-      const context = forIt ? [] : [`Nothing for you in ${seconds} seconds — the others talked among themselves:`];
+      const context = forIt
+        ? []
+        : [`Nothing for you in ${seconds} seconds — only this, to know and not to answer (no need to say anything):`];
 
       // In the frames watched, what changed is told element by element: that is what a duty acts on.
       const lines = heard.flatMap(entry => {

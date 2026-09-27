@@ -155,7 +155,10 @@ still shows what it is doing beside the words.
 
 It acts only on what is said to it: a line that names it with an @ (`@Claude Code`, `@Claude`, or `@agent` for every
 agent). The rest is the people talking to each other — it reads it as context and leaves it alone, and it is not woken
-by it. People are named the same way: `@Ana`, or `@all`, pings them with a sound and says who wrote. The chat says so
+by it — nor by people arriving or leaving, which it does not answer. How much else wakes it is the board's to say, to
+spend fewer tokens or follow more closely (Board settings → AI agents wake for): **When named** (the default) — only
+what names it, a stop, and for an agent on a duty what changes in its frames; **Every change** — every change on the
+board too. People are named the same way: `@Ana`, or `@all`, pings them with a sound and says who wrote. The chat says so
 above where one writes, with the agents on the board to ask; Enter on the board opens the chat, ready to type.
 
 It is talked to while it works, as Claude Code is between two of its steps: what the people say in the chat or at their

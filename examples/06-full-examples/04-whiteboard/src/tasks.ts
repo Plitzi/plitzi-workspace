@@ -17,7 +17,7 @@ import {
   replyTo,
   sayOn,
   setReach,
-  setAgentQuiet,
+  setAgentSettings,
   setReadOnly,
   runSession,
   saveTemplate,
@@ -279,13 +279,22 @@ export const createBoardTasks = ({
     run: ({ board, key, owner, readOnly }, ctx) => setReadOnly(on(ctx.kv), boardId(board), { key, owner }, readOnly)
   };
 
-  const boardAgentsTask: ActionTask<{ board: string; minutes: string } & Passed> = {
+  const boardAgentsTask: ActionTask<{ board: string; minutes: string; listens: string } & Passed> = {
     namespace: 'board',
     action: 'agents',
-    title: 'Set Agent Quiet',
-    description: 'How many minutes an agent stays on a board with nothing happening before it leaves.',
-    params: { board: boardParam, key: keyParam, owner: ownerParam, minutes: text('Minutes') },
-    run: ({ board, key, owner, minutes }, ctx) => setAgentQuiet(on(ctx.kv), boardId(board), { key, owner }, minutes)
+    title: 'Set Agent Settings',
+    description:
+      'How the agents on a board behave: the minutes one stays through nothing happening, and what wakes one while it ' +
+      'listens (named | changes). Either may be left empty.',
+    params: {
+      board: boardParam,
+      key: keyParam,
+      owner: ownerParam,
+      minutes: text('Minutes'),
+      listens: text('What wakes it (named | changes)')
+    },
+    run: ({ board, key, owner, minutes, listens }, ctx) =>
+      setAgentSettings(on(ctx.kv), boardId(board), { key, owner }, { minutes, listens })
   };
 
   const templateSaveTask: ActionTask<{ board: string; title: string; elements: unknown } & Passed> = {
