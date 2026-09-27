@@ -8,12 +8,13 @@ import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
 import { resolveLimits } from './limits';
 import { createMemoryKv } from './memoryKv';
-import { namespaceKv } from './namespaceKv';
 import { precheckRun } from './precheck';
 import { createRedactor, projectUser } from './scope';
+import { createRunFetch, taskContextFor } from './taskContext';
 import { onAbort } from '../../../helpers/onAbort';
 import { serverLog } from '../../../helpers/serverLog';
 
+import type { TaskContextRequest } from './taskContext';
 import type {
   ActionKvAdapter,
   ActionRunRecord,
@@ -129,82 +130,6 @@ const resolveParams = (
 };
 
 /**
- * Holds an answer to what the run is allowed to carry.
- *
- * Two checks rather than one, because a body arrives in two ways. `Content-Length` is refused before a byte is
- * read, which is the cheap half; a chunked answer that declares nothing is counted AS it streams and errored the
- * moment it goes over — so the ceiling holds for a backend that lies about its size or never states one.
- *
- * The cap is on one response and not on the run: it exists so that a single answer cannot be unbounded, which is
- * a different failure from a flow that makes many small calls (that is `maxRequests`).
- */
-const capped = (response: Response, maxBytes: number): Response => {
-  const declared = Number(response.headers.get('content-length') ?? '');
-  if (Number.isFinite(declared) && declared > maxBytes) {
-    throw new ActionRunError('over_capacity', `Response is larger than the ${maxBytes} byte budget`);
-  }
-
-  if (!response.body) {
-    return response;
-  }
-
-  let seen = 0;
-  const counted = response.body.pipeThrough(
-    new TransformStream<Uint8Array, Uint8Array>({
-      transform: (chunk, controller) => {
-        seen += chunk.byteLength;
-        if (seen > maxBytes) {
-          controller.error(new ActionRunError('over_capacity', `Response exceeded the ${maxBytes} byte budget`));
-
-          return;
-        }
-
-        controller.enqueue(chunk);
-      }
-    })
-  );
-
-  return new Response(counted, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: response.headers
-  });
-};
-
-/**
- * Counts outbound calls, refuses past the budget, caps what one answer may carry back, and stamps the run's
- * lineage on every one of them.
- *
- * The budget stops a loop from turning one run into a hundred requests. The lineage header is what makes the
- * OTHER loop detectable: an action whose HTTP step reaches its own space's webhook arrives carrying the chain
- * that led there, and the run it would start refuses itself. It names the space's own actions to a backend that
- * space configured, which is the cost of catching a cycle nothing else can see.
- *
- * Every ceiling lives HERE rather than in each task, because this is the only door a task has to the outside
- * world — a task that had to remember to count its own bytes is a task that will forget.
- */
-const createRunFetch = (
-  base: typeof fetch,
-  signal: AbortSignal,
-  limits: ResolvedActionLimits,
-  lineage: string[]
-): typeof fetch => {
-  let issued = 0;
-
-  return async (input, init) => {
-    issued += 1;
-    if (issued > limits.maxRequests) {
-      throw new ActionRunError('over_capacity', `Action exceeded its ${limits.maxRequests} outbound request budget`);
-    }
-
-    const headers = new Headers(init?.headers);
-    headers.set('X-Plitzi-Action-Lineage', lineage.join(','));
-
-    return capped(await base(input, { ...init, headers, signal: init?.signal ?? signal }), limits.maxResponseBytes);
-  };
-};
-
-/**
  * Fills in what the node left out, from the task's own catalog entry.
  *
  * A task declares its params with a `defaultValue`, and a document written before a param existed simply has no
@@ -259,7 +184,7 @@ const failureHandlerOf = (
 /** A step as a debugger may see it: what it was and how it ended, and nothing it was given or returned. */
 const stepOf = (
   node: ElementInteraction,
-  { status, phase, startTime, endTime, error }: Omit<ActionRunStep, 'id' | 'title' | 'action'>
+  { status, phase, startTime, endTime, error, logs = [] }: Omit<ActionRunStep, 'id' | 'title' | 'action'>
 ): ActionRunStep => ({
   id: node.id,
   title: node.title || node.action,
@@ -268,8 +193,13 @@ const stepOf = (
   phase,
   startTime,
   endTime,
-  ...(error === undefined ? {} : { error })
+  ...(error === undefined ? {} : { error }),
+  ...(logs.length ? { logs } : {})
 });
+
+/** What one step may log: enough to debug with, bounded so a loop that logs cannot fill a run's record. */
+const MAX_LOG_LINES = 100;
+const MAX_LOG_LINE = 1000;
 
 const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Record<string, unknown> =>
   Object.entries(task.params).reduce<Record<string, unknown>>(
@@ -317,6 +247,16 @@ const runNode = async (
 export type ActionRunner = { runAction: (request: ActionRunRequest) => Promise<ActionRunResult> };
 
 /**
+ * What a function answering a route runs with: the context a run's step gets — the same stores, the same redaction, the
+ * same outbound budget under the deployment's ceilings — for work that is not a flow.
+ */
+export type TaskContextSource = (
+  request: TaskContextRequest,
+  signal: AbortSignal,
+  lineage: string[]
+) => Omit<ActionTaskContext, 'log'>;
+
+/**
  * Builds the runner every trigger goes through.
  *
  * Every check that decides whether a run may happen at all — the trigger and whether it is on, access, lineage,
@@ -325,9 +265,9 @@ export type ActionRunner = { runAction: (request: ActionRunRequest) => Promise<A
  */
 export const createActionRunner = (
   config: ActionsConfig,
-  registry: ActionTaskRegistry,
+  registryFor: (request: ActionRunRequest) => ActionTaskRegistry | Promise<ActionTaskRegistry>,
   baseFetch: typeof fetch = fetch
-): ActionRunner => {
+): ActionRunner & { taskContext: TaskContextSource } => {
   const kv = createKvStore(config.kv ?? createMemoryKv());
   // Over the server's own store rather than a space's: the counter that limits a flow is not a key the flow can reach.
   const emailSender = createEmailSender({ ...config.email, kv });
@@ -354,6 +294,9 @@ export const createActionRunner = (
       lineage: request.lineage
     });
 
+    // The deployment's tasks, and — when a step names one of its own — the space's functions as of this revision.
+    const registry = await registryFor(request);
+
     const limits: ResolvedActionLimits = resolveLimits(config.limits, document.limits);
     // Learns as the run goes: a credential is registered by the task that resolved it, always before that task's
     // own result is redacted. Nothing is resolved up front because nothing is declared up front any more.
@@ -367,8 +310,6 @@ export const createActionRunner = (
     const deadline = createDeadline(timeoutMs, controller);
     const releaseOuter = onAbort(request.signal, () => controller.abort());
 
-    const scopedKv = namespaceKv(kv, request.spaceId);
-    const { realtime } = config;
     const lineage = [...(request.lineage ?? []), entry.id];
     /**
      * What a step runs with, for one abort signal and one outbound budget.
@@ -376,66 +317,8 @@ export const createActionRunner = (
      * Two of them per run at most: the flow's, and — only when it failed — the undo's, which must still be able to
      * reach the outside world after the flow's signal was aborted or its request budget spent.
      */
-    const contextFor =
-      (signal: AbortSignal, runFetch: typeof fetch) =>
-      (scope: Record<string, unknown>): ActionTaskContext => ({
-        runId,
-        spaceId: request.spaceId,
-        environment: request.environment,
-        trigger: request.trigger,
-        user: request.user,
-        callerId: request.callerId,
-        signal,
-        scope,
-        /**
-         * The secret a STEP asked for, resolved inside that step and never in the flow scope.
-         *
-         * There is no allow-list to check it against, deliberately: an action is authored by someone who may edit
-         * every action in the space, so a list they can edit is not a boundary — it only ever told the redactor what
-         * to look for, and the redactor now learns from what was actually resolved. What IS a boundary is that a
-         * credential reaches only the params of the step that named it, which is `renderTaskParams`' whole job.
-         */
-        credential: async identifier => {
-          const credential = await config.lookups.getCredential?.(request.spaceId, identifier);
-          if (credential) {
-            redactor.add(credential);
-          }
-
-          return credential;
-        },
-        connector: async connectorId => {
-          const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId, request.at);
-          if (!manifest) {
-            return undefined;
-          }
-
-          // The connector's own credential: naming the connector is what reaches the secret it declares, exactly as
-          // the element-addressed write endpoint has always done.
-          const credential = manifest.credential
-            ? await config.lookups.getCredential?.(request.spaceId, manifest.credential)
-            : undefined;
-          if (credential) {
-            redactor.add(credential);
-          }
-
-          return { manifest, credential };
-        },
-        fetch: runFetch,
-        kv: scopedKv,
-        dbDrivers: config.dbDrivers ?? [],
-        email: emailSender,
-        emit: chunk => request.emit?.(redact(chunk)),
-        ...(realtime
-          ? {
-              publish: (topic: string, type: string, data: unknown) =>
-                realtime.publish({ spaceId: request.spaceId, environment: request.environment }, topic, type, data),
-              grant: (topic: string, ttlSeconds?: number) =>
-                realtime.grant({ spaceId: request.spaceId, environment: request.environment }, topic, ttlSeconds),
-              revoke: (topic: string, grant?: string) =>
-                realtime.revoke({ spaceId: request.spaceId, environment: request.environment }, topic, grant)
-            }
-          : {})
-      });
+    const contextFor = (signal: AbortSignal, runFetch: typeof fetch) =>
+      taskContextFor(config, { kv, email: emailSender, redactor }, request, signal, runFetch);
     const buildContext = contextFor(controller.signal, createRunFetch(baseFetch, controller.signal, limits, lineage));
 
     const trace: InteractionNode[] = [];
@@ -501,8 +384,14 @@ export const createActionRunner = (
     ): Promise<NodeOutcome> => {
       const startTime = Date.now();
       const late = () => phase === 'flow' && flowSettled;
+      const logs: string[] = [];
+      const log = (line: string): void => {
+        if (logs.length < MAX_LOG_LINES) {
+          logs.push(redact(line.length > MAX_LOG_LINE ? `${line.slice(0, MAX_LOG_LINE)}…` : line));
+        }
+      };
       try {
-        const outcome = await runNode(node, scope, registry, build);
+        const outcome = await runNode(node, scope, registry, stepScope => ({ ...build(stepScope), log }));
         if (late()) {
           return outcome;
         }
@@ -516,7 +405,7 @@ export const createActionRunner = (
           startTime,
           endTime
         });
-        steps.push(stepOf(node, { status: outcome.status, phase, startTime, endTime }));
+        steps.push(stepOf(node, { status: outcome.status, phase, startTime, endTime, logs }));
         request.onNode?.(node.id, outcome.status);
         scope[node.id] = outcome.result;
 
@@ -529,7 +418,7 @@ export const createActionRunner = (
         const endTime = Date.now();
         const message = redact(error instanceof Error ? error.message : String(error));
         trace.push({ node, status: 'failed', result: { error: message }, postCallbacks: [], startTime, endTime });
-        steps.push(stepOf(node, { status: 'failed', phase, startTime, endTime, error: message }));
+        steps.push(stepOf(node, { status: 'failed', phase, startTime, endTime, error: message, logs }));
         request.onNode?.(node.id, 'failed');
 
         throw error;
@@ -761,5 +650,14 @@ export const createActionRunner = (
     };
   };
 
-  return { runAction };
+  const taskContext: TaskContextSource = (contextRequest, signal, lineage) =>
+    taskContextFor(
+      config,
+      { kv, email: emailSender, redactor: createRedactor() },
+      contextRequest,
+      signal,
+      createRunFetch(baseFetch, signal, resolveLimits(config.limits, undefined), lineage)
+    )({});
+
+  return { runAction, taskContext };
 };

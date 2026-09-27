@@ -161,3 +161,30 @@ export const space = async (options: AccountOptions): Promise<void> => {
   console.log(chalk.green(`\nConnected to ${api}.`));
   console.log(`${spaceLine(connected.value)}\n`);
 };
+
+/**
+ * The connection to work through: the one there is when it has a space, else one made in the browser now — so the first
+ * command that needs a space is one command too. `doing` finishes the prompt: "to upload to", "to pull from".
+ */
+export const connectionWithSpace = async (api: string, doing = 'to work in'): Promise<Connection | undefined> => {
+  const current = await currentConnection(api);
+  if (!current.ok) {
+    fail(current.error);
+
+    return undefined;
+  }
+
+  if (current.value?.space) {
+    return current.value;
+  }
+
+  console.log(current.value ? `\nChoose the space ${doing}.` : `\nSign in, and choose the space ${doing}.`);
+  const chosen = await chooseSpace(api);
+  if (!chosen.ok) {
+    fail(chosen.error);
+
+    return undefined;
+  }
+
+  return chosen.value;
+};

@@ -7,7 +7,7 @@ import { createAuth } from '@plitzi/sdk-server/auth';
 import { accounts, verifyPassword } from './accounts.ts';
 import { lookups } from './actions.ts';
 import { offlineData } from './space.ts';
-import { blogTasks } from './tasks.ts';
+import { blogFunctions } from './tasks.ts';
 
 const PORT = Number(process.env.PORT ?? 4013);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.
@@ -63,9 +63,9 @@ const server = createServer({
    * The two reads on the pages are `render` triggers rather than calls, so they cost nothing extra to enable:
    * the same module resolves them while the page is built.
    */
+  functions: { native: [blogFunctions] },
   action: {
     lookups,
-    tasks: blogTasks,
     onRun: record =>
       console.log(`[blog] ${record.actionId} via ${record.trigger} — ${record.status} in ${record.durationMs}ms`),
     // A refusal is not a run, and it is the half worth watching while permissions are being set up.

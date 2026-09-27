@@ -6,6 +6,7 @@ import type { PreviewClient, ScreenshotClient, ScreenshotImage } from '../../typ
 import type { Env, Persisters } from '../../types';
 import type { McpUiToolMeta } from '@modelcontextprotocol/ext-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { ActionRunReport } from '@plitzi/sdk-shared';
 import type { ZodObject, ZodRawShape } from 'zod';
 
 /** Everything a tool needs at call time: the loaded space, the target environment, and the persisters (only the
@@ -23,6 +24,9 @@ export interface ToolContext {
    *  plitzi_render uses it: a widget renders inside the host's sandbox, where an undeclared origin cannot be
    *  reached at all. */
   proxy?: ResourceProxy;
+  /** Runs one task of the space's functions in the sandbox, for the person behind the connection — when the host
+   *  wired it. Only plitzi_try_function uses it. */
+  tryFunction?: (task: string, params: Record<string, unknown>) => Promise<ActionRunReport>;
 }
 
 /** A capability a tool depends on; the host skips registering a tool whose capability it did not wire (so

@@ -28,6 +28,7 @@ export type AppMainProps = {
   state?: Record<string, unknown>;
   children?: ReactNode;
   debugMode?: boolean;
+  functionsWorkerUrl?: string;
 };
 
 const AppMain = ({
@@ -40,7 +41,8 @@ const AppMain = ({
   includeSubscriptions = true,
   includeRealTime = true,
   externalStyle = '',
-  debugMode = false
+  debugMode = false,
+  functionsWorkerUrl = ''
 }: AppMainProps) => {
   const [previewMode, setPreviewMode] = useState(false);
   const [displayBorderComponents, setDisplayBorderComponents] = useStorage<AppContextValue['displayBorderComponents']>(
@@ -70,7 +72,8 @@ const AppMain = ({
       displayMode,
       setDisplayMode,
       mobilePreview,
-      setMobilePreview
+      setMobilePreview,
+      functionsWorkerUrl
     }),
     [
       previewMode,
@@ -83,7 +86,8 @@ const AppMain = ({
       displayMode,
       setDisplayMode,
       mobilePreview,
-      setMobilePreview
+      setMobilePreview,
+      functionsWorkerUrl
     ]
   );
 

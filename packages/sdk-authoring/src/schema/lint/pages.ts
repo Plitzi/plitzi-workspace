@@ -1,3 +1,4 @@
+import { FUNCTION_ROUTES_PREFIX, isFunctionRoutePath } from '@plitzi/sdk-shared/actions';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { ACCESS_LEVELS } from '../guard';
@@ -80,6 +81,14 @@ export const lintPages = (ctx: LintContext): void => {
 
     // Every page answers at its own slug — the default one at `/` as well, which the structural validator watches.
     const path = `/${[typeof folder === 'string' && folder ? folderPath(ctx, folder) : '', textOf(slug)].filter(Boolean).join('/')}`;
+    if (isFunctionRoutePath(path)) {
+      ctx.error(
+        'page-route-reserved',
+        `${where} answers at ${path}, under ${FUNCTION_ROUTES_PREFIX} — which is where the space's functions answer, never a page. Give it another slug (or its folder another one).`,
+        pageId
+      );
+    }
+
     const key = `${path} ${typeof accessLevel === 'string' && accessLevel ? accessLevel : 'everyone'}`;
     const earlier = routes.get(key);
     if (earlier !== undefined) {

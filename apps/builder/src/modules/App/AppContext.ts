@@ -15,6 +15,8 @@ export type AppContextValue = {
   setDisplayMode: Dispatch<SetStateAction<DisplayMode>>;
   mobilePreview: boolean;
   setMobilePreview: Dispatch<SetStateAction<boolean>>;
+  /** Where the Functions panel's TypeScript worker is served; empty when the host serves none. */
+  functionsWorkerUrl: string;
 };
 
 const appContextDefaultValue: AppContextValue = {} as AppContextValue;

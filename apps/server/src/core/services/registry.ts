@@ -1,4 +1,5 @@
 import { actionStage } from './action';
+import { functionRoutesStage } from './functionRoutes';
 import { realtimeStage } from './realtime';
 import { rscStage } from './rsc';
 import { notFoundStage, ssrStage } from './ssr';
@@ -43,6 +44,10 @@ export const buildPagePipeline = (
   stages.push(realtimeStage);
 
   stages.push(...(extensions.data ?? []));
+
+  // After the deployment's own data stages, so a route of its own under `/api/` is its own; before the pages, which
+  // never own `/api` (its slug is refused).
+  stages.push(functionRoutesStage);
 
   stages.push(services.ssr ? ssrStage : notFoundStage);
 

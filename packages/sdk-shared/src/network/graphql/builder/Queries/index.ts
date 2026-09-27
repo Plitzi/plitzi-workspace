@@ -10,6 +10,7 @@ import SpaceCheckActionQuery from './Space/SpaceCheckActionQuery';
 import SpaceConnectorsQuery from './Space/SpaceConnectorsQuery';
 import SpaceCredentialsQuery from './Space/SpaceCredentialsQuery';
 import SpaceDeploymentsQuery from './Space/SpaceDeploymentsQuery';
+import SpaceFunctionsQuery from './Space/SpaceFunctionsQuery';
 import SpaceIssuesQuery from './Space/SpaceIssuesQuery';
 import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
 import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
@@ -27,6 +28,7 @@ import type { TSpaceCheckActionQuery } from './Space/SpaceCheckActionQuery';
 import type { TSpaceConnectorsQuery } from './Space/SpaceConnectorsQuery';
 import type { TSpaceCredentialsQuery } from './Space/SpaceCredentialsQuery';
 import type { TSpaceDeploymentsQuery } from './Space/SpaceDeploymentsQuery';
+import type { TSpaceFunctionsQuery } from './Space/SpaceFunctionsQuery';
 import type { TSpaceIssuesQuery } from './Space/SpaceIssuesQuery';
 import type { TSpaceLatestRevisionQuery } from './Space/SpaceLatestRevisionQuery';
 import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
@@ -50,6 +52,7 @@ export type BuilderQueriesMap = {
   SpaceActionEvents: TSpaceActionEventsQuery;
   SpaceCheckAction: TSpaceCheckActionQuery;
   SpaceActionTasks: TSpaceActionTasksQuery;
+  SpaceFunctions: TSpaceFunctionsQuery;
   SpaceConnectors: TSpaceConnectorsQuery;
   SpaceCredentials: TSpaceCredentialsQuery;
   Segment: TSegmentQuery;
@@ -69,6 +72,7 @@ const BuilderQueries = {
   SpaceActionEvents: SpaceActionEventsQuery,
   SpaceCheckAction: SpaceCheckActionQuery,
   SpaceActionTasks: SpaceActionTasksQuery,
+  SpaceFunctions: SpaceFunctionsQuery,
   SpaceConnectors: SpaceConnectorsQuery,
   SpaceCredentials: SpaceCredentialsQuery,
   Segment: SegmentQuery,

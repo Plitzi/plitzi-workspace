@@ -93,6 +93,11 @@ export default defineConfig(({ mode }) => {
           // Server actions. Own entry so a deployment writing its own tasks imports the contract alone, and a
           // server that runs none never loads the runner or the task set to find that out.
           actions: path.resolve(root, 'src/actions.ts'),
+          // Functions: the contract a space's code and a server's own code are written against. Own entry so that code
+          // imports the contract alone — nothing that runs it, no sandbox, no runner.
+          functions: path.resolve(root, 'src/functions.ts'),
+          // What runs the spaces' functions: the runner service, the platform's client to it, the isolates.
+          functionsRunner: path.resolve(root, 'src/functionsRunner.ts'),
           // Ready-made request handlers for the auth flows. Depends on no framework — see src/handlers.ts —
           // but keeping it out of the barrels is what makes it opt-in rather than something a page server drags in.
           handlers: path.resolve(root, 'src/handlers.ts')

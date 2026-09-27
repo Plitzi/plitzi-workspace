@@ -90,6 +90,11 @@ export type AppProps = {
   includeSubscriptions?: boolean;
   userKey?: string;
   debugMode?: boolean;
+  /**
+   * Where the TypeScript worker the Functions panel types a space's code with is served — `plitzi-functions-worker.js`
+   * of this package, from wherever the host serves the builder's files. Absent, the panel edits and saves without it.
+   */
+  functionsWorkerUrl?: string;
 };
 
 const components = {

@@ -1,7 +1,9 @@
+import { defineFunctions } from '@plitzi/sdk-server/functions';
+
 import { isEventId, quakeDetail } from './detail.ts';
 import { isFeedWindow, seismicReport } from './feed.ts';
 
-import type { ActionTask } from '@plitzi/sdk-server/actions';
+import type { FunctionTask } from '@plitzi/sdk-server/functions';
 
 /**
  * The one thing this deployment can do on the server.
@@ -10,7 +12,7 @@ import type { ActionTask } from '@plitzi/sdk-server/actions';
  * and addressed from an action document as `seismic.feed`. Everything Plitzi needs to know about earthquakes is this
  * file and the one beside it.
  */
-export const seismicFeedTask: ActionTask<{ window: string }> = {
+export const seismicFeedTask: FunctionTask<{ window: string }> = {
   namespace: 'seismic',
   action: 'feed',
   title: 'Seismic Feed',
@@ -35,7 +37,7 @@ export const seismicFeedTask: ActionTask<{ window: string }> = {
 };
 
 /** One event, closely: its shaking contours, how the fault moved, and where it ranks in the region since 1900. */
-export const seismicDetailTask: ActionTask<{ id: string }> = {
+export const seismicDetailTask: FunctionTask<{ id: string }> = {
   namespace: 'seismic',
   action: 'detail',
   title: 'Seismic Detail',
@@ -51,5 +53,8 @@ export const seismicDetailTask: ActionTask<{ id: string }> = {
   }
 };
 
-// The catalog is heterogeneous by nature — each task declares its own params — and the server reads it as such.
-export const seismicTasks = [seismicFeedTask, seismicDetailTask] as ActionTask<Record<string, unknown>>[];
+/** Seismic's server code: two tasks, and the one host they read — what the platform's sandbox lets them reach. */
+export const seismicFunctions = defineFunctions({
+  allow: { hosts: ['earthquake.usgs.gov'] },
+  tasks: [seismicFeedTask, seismicDetailTask]
+});

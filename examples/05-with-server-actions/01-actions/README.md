@@ -30,11 +30,15 @@ answer appears. The browser sent a name and two values.
 
 ## What matters
 
-**One config key turns it on**, in [`src/main.ts`](./src/main.ts):
+**Two config keys**, in [`src/main.ts`](./src/main.ts):
 
 ```ts
-action: { lookups, tasks: [shippingRate] }
+functions: { native: [shopFunctions] },
+action: { lookups }
 ```
+
+`functions` is this server's own code — `shopFunctions = defineFunctions({ tasks: [shippingRate] })`, in
+[`src/tasks.ts`](./src/tasks.ts). The same file a space would run in the platform's sandbox, loaded here natively.
 
 `lookups` is how this server reaches the space's actions — [`src/actions.ts`](./src/actions.ts), where a real
 deployment reads rows and this one reads an array. Without it there is no endpoint at all, rather than one whose
@@ -59,7 +63,7 @@ however many you run. A cluster passes its own store — `action.kv`, four metho
 open. The SDK connects to nothing itself.
 
 **Your own tasks are the extension point.** [`src/tasks.ts`](./src/tasks.ts) registers `example.shippingRate`, and
-it appears in the builder's step catalog with no fork of anything — that catalog is served by *this* server, so
+it appears in the builder's step catalog with no fork of anything — that catalog is served by _this_ server, so
 what a space can do server-side is decided by the process running it.
 
 ## Two ports, one rule
@@ -70,10 +74,10 @@ The example starts the same space twice: **4009 is published** (`production`, re
 Publishing **copies** every action into the revision it published. So which version a run reads is decided by what
 started it:
 
-| Started by | Reads |
-|---|---|
-| A page — a step in its flow, or a `render` element | the version that page was published with |
-| A webhook, a schedule, a trigger the deployment mounted | the draft |
+| Started by                                              | Reads                                    |
+| ------------------------------------------------------- | ---------------------------------------- |
+| A page — a step in its flow, or a `render` element      | the version that page was published with |
+| A webhook, a schedule, a trigger the deployment mounted | the draft                                |
 
 The second row is deliberate: nothing about a sender or a clock names a revision, and an integration pinned to an
 old one would keep answering with a flow its author already fixed. A revision with no copy falls back to the draft,

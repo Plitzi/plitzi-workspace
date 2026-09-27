@@ -145,6 +145,22 @@ export const getPopups = ({
       }
     },
     {
+      id: 'functions',
+      component: undefined,
+      active: activeIds.includes('functions'),
+      placementSettings: { left: { position: 7, multi: false } },
+      settings: {
+        icon: 'fa-solid fa-code',
+        title: 'Functions',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
       id: 'connectors',
       component: undefined,
       active: activeIds.includes('connectors'),

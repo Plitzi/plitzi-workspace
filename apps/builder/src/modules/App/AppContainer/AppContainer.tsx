@@ -14,6 +14,7 @@ import ContainerActions from './containers/ContainerActions';
 import ContainerConnectors from './containers/ContainerConnectors';
 import ContainerCredentials from './containers/ContainerCredentials';
 import ContainerDefault from './containers/ContainerDefault';
+import ContainerFunctions from './containers/ContainerFunctions';
 import ContainerSettings from './containers/ContainerSettings';
 import ContainerSitemap from './containers/ContainerSitemap';
 import { getPopups } from '../helpers/utils';
@@ -91,10 +92,11 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
                 />
               )}
               <div className="flex grow basis-0 flex-col overflow-hidden">
-                {!['actions', 'connectors', 'credentials', 'settings', 'sitemap'].includes(popupsActiveLeft[0]) && (
-                  <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
-                )}
+                {!['actions', 'functions', 'connectors', 'credentials', 'settings', 'sitemap'].includes(
+                  popupsActiveLeft[0]
+                ) && <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />}
                 {popupsActiveLeft[0] === 'actions' && <ContainerActions />}
+                {popupsActiveLeft[0] === 'functions' && <ContainerFunctions />}
                 {popupsActiveLeft[0] === 'connectors' && <ContainerConnectors />}
                 {popupsActiveLeft[0] === 'credentials' && <ContainerCredentials />}
                 {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}

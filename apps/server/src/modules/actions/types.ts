@@ -1,4 +1,6 @@
 import type { ActionEmailSender } from './runtime/email';
+import type { FunctionsConfig } from '../functions/config';
+import type { SpaceFunctions } from '../functions/protocol';
 import type { KvListEntry, KvListPut, KvListPutOptions, KvListRange } from './runtime/kvList';
 import type {
   ActionEmailConfig,
@@ -128,6 +130,11 @@ export type ActionLookups = {
   listScheduledSpaces?: () => Promise<number[]>;
   getCredential?: (spaceId: number, identifier: string) => Promise<ActionCredential | undefined>;
   getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<ConnectorManifest | undefined>;
+  /**
+   * The space's own functions as of that revision — the bundle and what it declared when saved. Only asked when a
+   * runner is configured and a run names a task the deployment does not have.
+   */
+  getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<SpaceFunctions | undefined>;
 };
 
 /**
@@ -170,6 +177,11 @@ export type ActionTaskContext = {
   email: ActionEmailSender;
   /** Pushes a `data` frame to a streaming caller. A no-op when nobody negotiated a stream. */
   emit: (chunk: unknown) => void;
+  /**
+   * A line for whoever reads the run: kept on the step that said it (`logs`), redacted like the rest of it, and shown
+   * wherever the run is — the builder's Try, the run history.
+   */
+  log: (line: string) => void;
   /**
    * Publishes on one of this space's realtime channels, as the server — `undefined` when the server has none. What
    * the `realtime.publish` task sends through.
@@ -229,8 +241,8 @@ export type ActionTaskRegistry = {
 /** What a deployment hands to `createServer` under `actions`. Absent → the module is never constructed. */
 export type ActionsConfig = {
   lookups: ActionLookups;
-  /** Deployment-owned tasks, validated at boot against the built-ins. */
-  tasks?: ActionTask<never>[];
+  /** Code of the server's own, and the sandbox for the spaces' — see `FunctionsConfig`. */
+  functions?: FunctionsConfig;
   /** Ceilings a per-action document may tighten but never exceed. */
   limits?: ActionLimits;
   /** How many runs may be in flight at once. Counted per space and for the process as a whole. */

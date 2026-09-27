@@ -10,7 +10,7 @@ import { AGENT_PATH, createAgentEndpoint } from './agent/hosted.ts';
 import { BRAND_PATH, BRAND_SVG } from './board/brand.ts';
 import { deploymentFrom } from './deployment.ts';
 import { PLUGINS, space } from './space/index.ts';
-import { createBoardTasks } from './tasks.ts';
+import { createBoardFunctions } from './tasks.ts';
 
 import type { SSRMiddleware } from '@plitzi/sdk-shared';
 
@@ -110,9 +110,9 @@ const server = createServer(
     }),
     plugins,
     middlewares: [serveAssets],
+    functions: { native: [createBoardFunctions(deployment)] },
     action: {
       lookups,
-      tasks: createBoardTasks(deployment),
       kv: deployment.kv,
       // Nothing here runs on a clock.
       jobs: false,

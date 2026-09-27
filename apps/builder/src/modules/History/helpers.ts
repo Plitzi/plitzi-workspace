@@ -150,7 +150,8 @@ export const KIND_LABEL: Record<ChangeKind, string> = {
   globalStyle: 'Global style',
   idStyle: 'Id style',
   token: 'Token',
-  font: 'Font'
+  font: 'Font',
+  file: 'Function file'
 };
 
 /** What a row of saves did, each thing on its own line and said once — ten keystrokes in one text are one line. */

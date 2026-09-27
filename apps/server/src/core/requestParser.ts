@@ -77,7 +77,8 @@ export const forwardedIp = (headers: Record<string, string | string[] | undefine
 
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB — login/logout payloads are tiny; cap guards against abuse.
 
-export const readRawBody = (raw: IncomingMessage): Promise<string> =>
+/** A request's body as it arrived, byte for byte — what a binary upload to a function's route needs. */
+export const readRawBytes = (raw: IncomingMessage): Promise<Buffer> =>
   new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
@@ -91,6 +92,8 @@ export const readRawBody = (raw: IncomingMessage): Promise<string> =>
 
       chunks.push(chunk);
     });
-    raw.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    raw.on('end', () => resolve(Buffer.concat(chunks)));
     raw.on('error', reject);
   });
+
+export const readRawBody = async (raw: IncomingMessage): Promise<string> => (await readRawBytes(raw)).toString('utf8');

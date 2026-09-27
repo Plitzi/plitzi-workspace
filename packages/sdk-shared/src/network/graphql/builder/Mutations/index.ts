@@ -40,6 +40,9 @@ import SpaceUpdateCredentialMutation from './Space/credentials/SpaceUpdateCreden
 import SpaceAddPageFolderMutation from './Space/folders/SpaceAddPageFolderMutation';
 import SpaceRemovePageFolderMutation from './Space/folders/SpaceRemovePageFolderMutation';
 import SpaceUpdatePageFolderMutation from './Space/folders/SpaceUpdatePageFolderMutation';
+import SpaceRemoveFunctionsMutation from './Space/functions/SpaceRemoveFunctionsMutation';
+import SpaceSaveFunctionsMutation from './Space/functions/SpaceSaveFunctionsMutation';
+import SpaceTryFunctionMutation from './Space/functions/SpaceTryFunctionMutation';
 import SpaceAddPageMutation from './Space/pages/SpaceAddPageMutation';
 import SpaceHomePageMutation from './Space/pages/SpaceHomePageMutation';
 import SpaceRemovePageMutation from './Space/pages/SpaceRemovePageMutation';
@@ -101,6 +104,9 @@ import type { TSpaceUpdateConnectorMutation } from './Space/connectors/SpaceUpda
 import type { TSpaceAddPageFolderMutation } from './Space/folders/SpaceAddPageFolderMutation';
 import type { TSpaceRemovePageFolderMutation } from './Space/folders/SpaceRemovePageFolderMutation';
 import type { TSpaceUpdatePageFolderMutation } from './Space/folders/SpaceUpdatePageFolderMutation';
+import type { TSpaceRemoveFunctionsMutation } from './Space/functions/SpaceRemoveFunctionsMutation';
+import type { TSpaceSaveFunctionsMutation } from './Space/functions/SpaceSaveFunctionsMutation';
+import type { TSpaceTryFunctionMutation } from './Space/functions/SpaceTryFunctionMutation';
 import type { TSpaceAddPageMutation } from './Space/pages/SpaceAddPageMutation';
 import type { TSpaceHomePageMutation } from './Space/pages/SpaceHomePageMutation';
 import type { TSpaceRemovePageMutation } from './Space/pages/SpaceRemovePageMutation';
@@ -150,6 +156,9 @@ export type BuilderMutationsMap = {
   SpaceUpdateAction: TSpaceUpdateActionMutation;
   SpaceRemoveAction: TSpaceRemoveActionMutation;
   SpaceRunAction: TSpaceRunActionMutation;
+  SpaceSaveFunctions: TSpaceSaveFunctionsMutation;
+  SpaceRemoveFunctions: TSpaceRemoveFunctionsMutation;
+  SpaceTryFunction: TSpaceTryFunctionMutation;
   SpaceAddConnector: TSpaceAddConnectorMutation;
   SpaceUpdateConnector: TSpaceUpdateConnectorMutation;
   SpaceRemoveConnector: TSpaceRemoveConnectorMutation;
@@ -239,6 +248,9 @@ const BuilderMutations = {
   SpaceUpdateAction: SpaceUpdateActionMutation,
   SpaceRemoveAction: SpaceRemoveActionMutation,
   SpaceRunAction: SpaceRunActionMutation,
+  SpaceSaveFunctions: SpaceSaveFunctionsMutation,
+  SpaceRemoveFunctions: SpaceRemoveFunctionsMutation,
+  SpaceTryFunction: SpaceTryFunctionMutation,
   SpaceAddConnector: SpaceAddConnectorMutation,
   SpaceUpdateConnector: SpaceUpdateConnectorMutation,
   SpaceRemoveConnector: SpaceRemoveConnectorMutation,

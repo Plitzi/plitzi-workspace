@@ -30,6 +30,10 @@
       "types": "./dist/actions/failureHandler.d.ts",
       "import": "./dist/actions/failureHandler.mjs"
     },
+    "./actions/functionRoutes": {
+      "types": "./dist/actions/functionRoutes.d.ts",
+      "import": "./dist/actions/functionRoutes.mjs"
+    },
     "./actions/index": {
       "types": "./dist/actions/index.d.ts",
       "import": "./dist/actions/index.mjs"
@@ -787,6 +791,18 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/folders/SpaceUpdatePageFolderMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/folders/SpaceUpdatePageFolderMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/functions/SpaceRemoveFunctionsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceRemoveFunctionsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceRemoveFunctionsMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/functions/SpaceSaveFunctionsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceSaveFunctionsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceSaveFunctionsMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/functions/SpaceTryFunctionMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceTryFunctionMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceTryFunctionMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/pages/SpaceAddPageMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/pages/SpaceAddPageMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/pages/SpaceAddPageMutation.mjs"
@@ -942,6 +958,10 @@
     "./network/graphql/builder/Queries/Space/SpaceDeploymentsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceDeploymentsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceDeploymentsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceFunctionsQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceFunctionsQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceFunctionsQuery.mjs"
     },
     "./network/graphql/builder/Queries/Space/SpaceIssuesQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceIssuesQuery.d.ts",
@@ -1306,6 +1326,9 @@
     },
     "./types/EventBridgeTypes": {
       "types": "./dist/types/EventBridgeTypes.d.ts"
+    },
+    "./types/FunctionTypes": {
+      "types": "./dist/types/FunctionTypes.d.ts"
     },
     "./types/InteractionTypes": {
       "types": "./dist/types/InteractionTypes.d.ts"

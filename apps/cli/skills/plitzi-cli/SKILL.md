@@ -3,9 +3,10 @@ name: plitzi-cli
 description: >-
   Use the Plitzi command line (@plitzi/cli, `plitzi …` or `npx @plitzi/cli …`) instead of hand-writing what it
   generates: scaffold a project that renders a space, add elements of your own (plugins) to it, create a plugin package,
-  build a plugin into the module + manifest + zip the platform takes, and sign in to upload and install it on a space.
-  Use whenever the task is to start a Plitzi project, create or change a plugin/custom element, pack, upload or install
-  one, or work out which space the CLI is connected to.
+  build a plugin into the module + manifest + zip the platform takes, sign in to upload and install it on a space, and
+  edit a space's own server code (its functions) in the project. Use whenever the task is to start a Plitzi project,
+  create or change a plugin/custom element, pack, upload or install one, pull/push/try a space's functions, or work out
+  which space the CLI is connected to.
 ---
 
 # The Plitzi CLI
@@ -21,6 +22,10 @@ npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can 
 npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
 npx @plitzi/cli upload plugin                  # that zip, on the space you work in, and installed there
 npx @plitzi/cli whoami                         # who the CLI is signed in as, and the space it works in
+npx @plitzi/cli functions pull                 # the space's functions (its own server code) into functions/
+npx @plitzi/cli functions push                 # functions/ back as the space's draft, built and checked
+npx @plitzi/cli functions try feed.read --params '{"limit":3}'   # one task of the saved draft, in the sandbox
+npx @plitzi/cli functions dev feed.read --watch                   # the same, from functions/, on this machine
 ```
 
 `plitzi --help` and `plitzi <command> --help` list every flag; what follows is what the help does not say.
@@ -120,6 +125,23 @@ its settings kept. `--plugin-version` sets the version the manifest carries.
 
 A self-hosted page server does not need `pack`: it compiles a plugin from its source
 (`plugins: { seatPicker: { js: 'src/plugins/SeatPicker/index.ts', action: 'compile' } }` in `createServer`).
+
+## A space's functions (`functions`)
+
+A space's own server code — TypeScript tasks its actions run as steps, and routes under `/api/` — lives in the space;
+`functions/` in a project is a **working copy** of it. The contract (`defineFunctions`, `ctx`) and every rule are in
+`docs/en/functions.md` of the workspace; what matters for the CLI:
+
+- **Pull before you edit, push when done.** `pull` refuses to overwrite what is not pushed (`--force` throws it
+  away); `push` refuses when the space changed since the pull — someone saved in the builder. Then: keep your changes
+  aside, `pull`, apply them again, `push`. Never `--force` over somebody else's work to get past it.
+- **A push is checked, not just stored.** A problem comes back as `functions/<file>:<line> <message>` and nothing is
+  saved — fix it and push again. `index.ts` must default-export `defineFunctions({ … })`; files import each other by
+  relative path and `@plitzi/sdk-server/functions`, nothing else.
+- **`try` runs the saved draft for real** (its fetches and writes happen). `dev` runs `functions/` on this machine with
+  the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
+  nothing to the space; `PLITZI_FUNCTIONS_CREDENTIALS='{"stripe":{"apiKey":"…"}}'` gives it credentials to name.
+- **The live site runs what the space was last published with.** A push changes the draft; publishing is the person's.
 
 ## When something does not work
 

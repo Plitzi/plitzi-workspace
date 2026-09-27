@@ -7,15 +7,44 @@ import { namespaceKv } from './runtime/namespaceKv';
 import { createActionRunner } from './runtime/runAction';
 import { createTaskRegistry } from './tasks/registry';
 import { fleetStore } from '../../core/server/fleet/link';
+import { createRoutes } from '../functions/routes';
+import { createSpaceRegistries, prepareFunctions } from '../functions/space';
 
 import type { ActionJobs } from './jobs';
 import type { RunGuards } from './runtime/guards';
 import type { ActionRunner } from './runtime/runAction';
-import type { ActionKvAdapter, ActionKvStore, ActionsConfig, ActionTaskRegistry, ResolvedActionLimits } from './types';
+import type {
+  ActionKvAdapter,
+  ActionKvStore,
+  ActionRunRequest,
+  ActionsConfig,
+  ActionTaskRegistry,
+  ResolvedActionLimits,
+  SpaceRevision
+} from './types';
+import type { FunctionsSource } from '../functions/build';
+import type { RouteHandler, RouteVisit } from '../functions/routes';
+import type { PreparedFunctions } from '../functions/space';
 import type { ActionDocument } from '@plitzi/sdk-shared';
 
 export type ActionsModule = ActionRunner & {
+  /** The deployment's own tasks: shipped, and its native functions. */
   registry: ActionTaskRegistry;
+  /**
+   * What a space's actions can use as of that revision: the deployment's tasks and the space's own functions — what
+   * its catalog offers, what a check checks against and what its runs run.
+   */
+  registryFor: (spaceId: number, at?: SpaceRevision) => Promise<ActionTaskRegistry>;
+  /**
+   * A space's functions source, built, read and checked — ready to store, or the problems to show where they are. The
+   * one way a space's functions become storable; refused when this server has no runner.
+   */
+  prepareFunctions: (source: FunctionsSource) => Promise<PreparedFunctions>;
+  /**
+   * The function that answers `method path` under `/api/` for this visit — the deployment's own routes, then the space's
+   * — or none, and the page server answers as it would have.
+   */
+  routeFor: (visit: RouteVisit, method: string, path: string) => Promise<RouteHandler | undefined>;
   guards: RunGuards;
   /** The key/value store, namespaced to one space — the same one the `kv` tasks write through, so a rate limit the
    *  transport keeps and a counter a flow keeps cannot end up in different places. */
@@ -57,8 +86,26 @@ const withFleetKv = (config: ActionsConfig): ActionsConfig => {
 
 export const createActionsModule = (given: ActionsConfig): ActionsModule => {
   const config = withFleetKv(given);
-  const registry = createTaskRegistry(config.tasks, { db: (config.dbDrivers?.length ?? 0) > 0 });
-  const { runAction } = createActionRunner(config, registry, config.fetchImpl);
+  const registry = createTaskRegistry(config.functions?.native, { db: (config.dbDrivers?.length ?? 0) > 0 });
+  const spaceRegistries = createSpaceRegistries(registry, config.functions);
+  const reserved = new Set(registry.list().map(task => task.namespace));
+  const registryFor = async (spaceId: number, at?: SpaceRevision): Promise<ActionTaskRegistry> =>
+    spaceRegistries.registryFor(
+      config.functions?.runner ? await config.lookups.getFunctions?.(spaceId, at) : undefined
+    );
+  // A run whose every step is the deployment's never asks for the space's functions: most runs, and no lookup.
+  const registryForRun = (request: ActionRunRequest): ActionTaskRegistry | Promise<ActionTaskRegistry> =>
+    Object.values(request.entry.document.nodes).every(
+      node => node.type !== 'task' || !node.action || registry.get(node.action)
+    )
+      ? registry
+      : registryFor(request.spaceId, request.at);
+  const { runAction, taskContext } = createActionRunner(config, registryForRun, config.fetchImpl);
+  const routes = createRoutes({
+    config: config.functions ?? {},
+    ...(config.lookups.getFunctions ? { getFunctions: config.lookups.getFunctions } : {}),
+    taskContext
+  });
   /**
    * Single-flight over the store the deployment already gave the `kv` tasks — its own Redis, table or whatever it
    * runs — because per process it is not a guarantee: the same double-click behind a load balancer lands on two
@@ -70,6 +117,15 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
   const module: ActionsModule = {
     runAction,
     registry,
+    registryFor,
+    routeFor: routes.routeFor,
+    prepareFunctions: source => {
+      const runner = config.functions?.runner;
+
+      return runner
+        ? prepareFunctions(source, runner, reserved)
+        : Promise.resolve({ ok: false, problems: [{ message: 'This server runs no space functions' }] });
+    },
     guards,
     kv: spaceId => namespaceKv(kv, spaceId),
     limitsFor

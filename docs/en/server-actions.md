@@ -286,7 +286,7 @@ The ones `sdk-server` ships:
 | `stream` | `emit` — progress for a streaming caller |
 
 Plus whatever the deployment registered. On Plitzi's own: `ai.complete`, and `db.query` when a database driver is
-available.
+available. And the space's own: the tasks its [functions](./functions.md) declare, in the same catalog.
 
 ### Two people at once: `setIf`, lists and rate limits
 
@@ -618,9 +618,11 @@ Four decisions that are open rather than forgotten, so nobody re-derives them fr
 
 Everything above is configuration; the two extension points are code you own:
 
-- **Your own tasks** — `createServer({ action: { tasks: [...] } })`. They appear in your builder's catalog with no
-  fork, because the catalog is served rather than hardcoded. A task declares its parameters the same way an
-  interaction callback does.
+- **Your own tasks** — `createServer({ functions: { native: [defineFunctions({ tasks: [...] })] } })`, from
+  `@plitzi/sdk-server/functions`. They appear in your builder's catalog with no fork, because the catalog is served
+  rather than hardcoded. A task declares its parameters the same way an interaction callback does, and runs with a
+  function's context (`kv`, `fetch`, `publish`, `user`, …) — the same code a space runs in the platform's sandbox. See
+  [Functions](./functions.md) — and for a space's own, written in the builder and run in the sandbox.
 - **Your own triggers** — mount a stage (or a queue consumer, or a CLI) and call the runner. Every check lives in
   the runner, so a trigger you add cannot end up with a weaker set of rules than the built-in ones.
 

@@ -10,7 +10,7 @@ import { createActivityLog } from './store/activity.ts';
 import { openDatabase } from './store/database.ts';
 import { createSqliteKv } from './store/kv.ts';
 import { createSqliteJobQueue } from './store/queue.ts';
-import { createTasks } from './tasks.ts';
+import { createFunctions } from './tasks.ts';
 
 const PORT = Number(process.env.PORT ?? 4016);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.
@@ -50,9 +50,9 @@ const server = createServer({
   // The board is different on every request, which is exactly what a page cache is not for.
   cacheTtlMs: 0,
   rsc: { cacheTtlMs: 0 },
+  functions: { native: [createFunctions({ queue, activity, lookups, replica: REPLICA })] },
   action: {
     lookups,
-    tasks: createTasks({ queue, activity, lookups, replica: REPLICA }),
     kv,
     // Room for the slow export; every other run here finishes in milliseconds.
     limits: { timeoutMs: 30_000 },

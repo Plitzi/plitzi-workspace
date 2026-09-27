@@ -1,8 +1,11 @@
+import { defineFunctions } from '@plitzi/sdk-server/functions';
+
 import { acceptsQueuedJobs } from './actions.ts';
 import { shapeBoard } from './board.ts';
 
 import type { ActivityLog } from './store/activity.ts';
-import type { ActionLookups, ActionTask } from '@plitzi/sdk-server/actions';
+import type { ActionLookups } from '@plitzi/sdk-server/actions';
+import type { FunctionTask } from '@plitzi/sdk-server/functions';
 import type { ActionJobQueue, ActionJobStatus } from '@plitzi/sdk-shared';
 
 /**
@@ -69,8 +72,8 @@ const pause = (ms: number, signal: AbortSignal): Promise<void> =>
 
 const STATUSES: ActionJobStatus[] = ['pending', 'running', 'succeeded', 'failed', 'dead', 'cancelled'];
 
-export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => {
-  const note: ActionTask<{ message: string }> = {
+export const createFunctions = ({ queue, activity, lookups, replica }: TaskDeps) => {
+  const note: FunctionTask<{ message: string }> = {
     namespace: 'example',
     action: 'note',
     title: 'Note',
@@ -93,7 +96,7 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
    *
    * The job id is derived from the run that asked, so the same run retried writes the same job rather than two.
    */
-  const enqueue: ActionTask<{
+  const enqueue: FunctionTask<{
     actionId: string;
     delaySeconds: string | number;
     payload: unknown;
@@ -142,7 +145,7 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
    * Refused by its "upstream" the first `failures` times. The count lives in `kv`, keyed by the job, because it has
    * to outlast every attempt — and in the SHARED kv, because the next attempt may run on another replica.
    */
-  const flaky: ActionTask<{ jobId: string; failures: string | number }> = {
+  const flaky: FunctionTask<{ jobId: string; failures: string | number }> = {
     namespace: 'example',
     action: 'flaky',
     title: 'Flaky upstream',
@@ -168,7 +171,7 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
     }
   };
 
-  const work: ActionTask<{ seconds: string | number }> = {
+  const work: FunctionTask<{ seconds: string | number }> = {
     namespace: 'example',
     action: 'work',
     title: 'Slow work',
@@ -193,7 +196,7 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
   };
 
   /** One read of everything the page shows. Counted per status by the store, not from the page of jobs it lists. */
-  const board: ActionTask<Record<string, never>> = {
+  const board: FunctionTask<Record<string, never>> = {
     namespace: 'example',
     action: 'board',
     title: 'Queue board',
@@ -236,7 +239,7 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
   };
 
   /** Both refuse a job of another space: the queue is asked with this run's space id, never with one it was sent. */
-  const retry: ActionTask<{ jobId: string }> = {
+  const retry: FunctionTask<{ jobId: string }> = {
     namespace: 'example',
     action: 'retry',
     title: 'Run a job again',
@@ -249,7 +252,7 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
     }
   };
 
-  const cancel: ActionTask<{ jobId: string }> = {
+  const cancel: FunctionTask<{ jobId: string }> = {
     namespace: 'example',
     action: 'cancel',
     title: 'Cancel a job',
@@ -265,5 +268,5 @@ export const createTasks = ({ queue, activity, lookups, replica }: TaskDeps) => 
     }
   };
 
-  return [note, enqueue, flaky, work, board, retry, cancel];
+  return defineFunctions({ tasks: [note, enqueue, flaky, work, board, retry, cancel] });
 };

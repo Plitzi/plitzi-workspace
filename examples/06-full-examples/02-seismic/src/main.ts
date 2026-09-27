@@ -8,7 +8,7 @@ import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions'
 
 import { lookups } from './actions.ts';
 import { PLUGINS, space } from './space/index.ts';
-import { seismicTasks } from './tasks.ts';
+import { seismicFunctions } from './tasks.ts';
 
 const PORT = Number(process.env.PORT ?? 4014);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.
@@ -71,9 +71,10 @@ const server = createServer({
    * is no endpoint at all — and `tasks` is its own half of the step catalog: what a space can do on the server is
    * decided by the process running it.
    */
+  // Its server code — two tasks — loaded as the self-hosted server's own. On the platform the same file runs sandboxed.
+  functions: { native: [seismicFunctions] },
   action: {
     lookups,
-    tasks: seismicTasks,
     // Nothing here runs on a clock — the page's own refresh is what keeps it live — so there is no queue to keep.
     jobs: false,
     onRun: createRunLogger(consoleLogger),

@@ -1855,7 +1855,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/autocomplete@npm:^6.0.0, @codemirror/autocomplete@npm:^6.20.3":
+"@codemirror/autocomplete@npm:^6, @codemirror/autocomplete@npm:^6.0.0, @codemirror/autocomplete@npm:^6.20.3":
   version: 6.20.3
   resolution: "@codemirror/autocomplete@npm:6.20.3"
   dependencies:
@@ -1948,7 +1948,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/lint@npm:^6.0.0":
+"@codemirror/lint@npm:^6, @codemirror/lint@npm:^6.0.0":
   version: 6.9.7
   resolution: "@codemirror/lint@npm:6.9.7"
   dependencies:
@@ -1970,7 +1970,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/state@npm:^6.0.0, @codemirror/state@npm:^6.7.0, @codemirror/state@npm:^6.7.6":
+"@codemirror/state@npm:^6, @codemirror/state@npm:^6.0.0, @codemirror/state@npm:^6.7.0, @codemirror/state@npm:^6.7.6":
   version: 6.7.6
   resolution: "@codemirror/state@npm:6.7.6"
   dependencies:
@@ -4172,6 +4172,9 @@ __metadata:
     "@babel/polyfill": "npm:^7.12.1"
     "@babel/preset-env": "npm:^8.0.6"
     "@babel/preset-react": "npm:^8.0.1"
+    "@codemirror/autocomplete": "npm:^6"
+    "@codemirror/lint": "npm:^6"
+    "@codemirror/state": "npm:^6"
     "@fortawesome/fontawesome-free": "npm:^7.3.1"
     "@plitzi/nexus": "npm:^1.3.1"
     "@plitzi/plitzi-sdk": "workspace:*"
@@ -4185,14 +4188,18 @@ __metadata:
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-plugins": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
+    "@plitzi/sdk-server": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@plitzi/sdk-style": "workspace:*"
     "@plitzi/sdk-variables": "workspace:*"
     "@tailwindcss/postcss": "npm:^4.3.3"
     "@tanstack/react-virtual": "npm:^3.14.13"
+    "@typescript/vfs": "npm:^1.6.5"
+    "@valtown/codemirror-ts": "npm:^2.3.1"
     "@xyflow/react": "npm:^12.11.6"
     apollo-upload-client: "npm:^20.0.0"
     clsx: "npm:^2.1.1"
+    comlink: "npm:^4.4.2"
     css-loader: "npm:^7.1.5"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
@@ -4616,6 +4623,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-server@workspace:apps/server"
   dependencies:
+    "@microsoft/api-extractor": "npm:^7.59.2"
     "@plitzi/plitzi-sdk": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
     "@types/ejs": "npm:^3.1.5"
@@ -4626,11 +4634,13 @@ __metadata:
     "@types/ws": "npm:^8.18.1"
     "@vitejs/plugin-react": "npm:^6.1.1"
     "@vitest/coverage-v8": "npm:^5.0.1"
+    core-js: "npm:^3.50.0"
     ejs: "npm:^6.0.1"
     esbuild: "npm:^0.28.2"
     eslint: "npm:^9.39.5"
     eslint-plugin-import: "npm:^2.32.0"
     ioredis: "npm:^6.0.0"
+    isolated-vm: "npm:^7.0.1"
     jsonwebtoken: "npm:^9.0.3"
     mongodb: "npm:^7.6.0"
     mysql2: "npm:^3.24.4"
@@ -4644,11 +4654,17 @@ __metadata:
     vitest: "npm:^5.0.1"
     ws: "npm:^8.21.1"
   peerDependencies:
+    core-js: ^3.50.0
+    isolated-vm: ^7.0.1
     mongodb: ^6 || ^7
     mysql2: ^3
     react: ^19
     react-dom: ^19
   peerDependenciesMeta:
+    core-js:
+      optional: true
+    isolated-vm:
+      optional: true
     mongodb:
       optional: true
     mysql2:
@@ -6203,6 +6219,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript/vfs@npm:^1.6.5":
+  version: 1.6.5
+  resolution: "@typescript/vfs@npm:1.6.5"
+  dependencies:
+    debug: "npm:^4.4.3"
+  peerDependencies:
+    typescript: "*"
+  checksum: 10c0/c8631a2a28984d43026898d22f41d50301e1c7d1485c00d4cf32c1470cba6cd8f37a766815c6799e3a62c583b48dec076c3307b5c34542f7ab08481941bb244b
+  languageName: node
+  linkType: hard
+
 "@uiw/color-convert@npm:2.10.3, @uiw/color-convert@npm:^2.10.3":
   version: 2.10.3
   resolution: "@uiw/color-convert@npm:2.10.3"
@@ -6337,6 +6364,18 @@ __metadata:
   version: 1.4.0
   resolution: "@ungap/structured-clone@npm:1.4.0"
   checksum: 10c0/be74a389850d02901c836c07f10c1070d7604dab4070ba3c4b77c91665b90b4175d9f186189a02a399cf054fc051d3251418238564a4491d0164969e05c802a2
+  languageName: node
+  linkType: hard
+
+"@valtown/codemirror-ts@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "@valtown/codemirror-ts@npm:2.3.1"
+  peerDependencies:
+    "@codemirror/autocomplete": ^6
+    "@codemirror/lint": ^6
+    "@codemirror/state": ^6
+    "@codemirror/view": ^6
+  checksum: 10c0/0e578919c5c066ce2314e7fae13b783ccb49582f6e5c408b5fe26218050c12ba529c823178af062eb6e999c61a720df7fb01efe61c062d4606d44998876868f9
   languageName: node
   linkType: hard
 
@@ -8185,6 +8224,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"comlink@npm:^4.4.2":
+  version: 4.4.2
+  resolution: "comlink@npm:4.4.2"
+  checksum: 10c0/38aa1f455cf08e94aaa8fc494fd203cc0ef02ece6c21404b7931ce17567e8a72deacddab98aa5650cfd78332ff24c34610586f6fb27fd19dc77e753ed1980deb
+  languageName: node
+  linkType: hard
+
 "comma-separated-tokens@npm:^2.0.0":
   version: 2.0.3
   resolution: "comma-separated-tokens@npm:2.0.3"
@@ -8369,6 +8415,13 @@ __metadata:
   version: 2.6.12
   resolution: "core-js@npm:2.6.12"
   checksum: 10c0/00128efe427789120a06b819adc94cc72b96955acb331cb71d09287baf9bd37bebd191d91f1ee4939c893a050307ead4faea08876f09115112612b6a05684b63
+  languageName: node
+  linkType: hard
+
+"core-js@npm:^3.50.0":
+  version: 3.50.0
+  resolution: "core-js@npm:3.50.0"
+  checksum: 10c0/1bfcfb1dbdf45b0b1428a9fdcb03697d1fc52c7e9bc336f804a86ff2c2705a301dca7d9d6636d09d49d60298183273b9321681baeaf330c78db5393bc73f3f6a
   languageName: node
   linkType: hard
 
@@ -11954,6 +12007,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"isolated-vm@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "isolated-vm@npm:7.0.1"
+  dependencies:
+    node-gyp: "npm:latest"
+    node-gyp-build: "npm:^4.8.4"
+  checksum: 10c0/9935e7cc4f5ee0c8a474f928e03ca6f921204d875470934d112ce8d38c422a5a05fd92c408f7c4cc66d615164d16d233286f04e9fa070fc10394a4092ac49154
+  languageName: node
+  linkType: hard
+
 "iterator.prototype@npm:^1.1.5":
   version: 1.1.5
   resolution: "iterator.prototype@npm:1.1.5"
@@ -13957,6 +14020,17 @@ __metadata:
     object.entries: "npm:^1.1.9"
     semver: "npm:^6.3.1"
   checksum: 10c0/5278fab18e8c97f45275c51819c3078ca9488361e875bc01b680776a339d2fee1ca9c6fcfb972df14945a1b184cc9924a1d9ba87e90f6cb3422c7f5b6900f4bc
+  languageName: node
+  linkType: hard
+
+"node-gyp-build@npm:^4.8.4":
+  version: 4.8.4
+  resolution: "node-gyp-build@npm:4.8.4"
+  bin:
+    node-gyp-build: bin.js
+    node-gyp-build-optional: optional.js
+    node-gyp-build-test: build-test.js
+  checksum: 10c0/444e189907ece2081fe60e75368784f7782cfddb554b60123743dfb89509df89f1f29c03bbfa16b3a3e0be3f48799a4783f487da6203245fa5bed239ba7407e1
   languageName: node
   linkType: hard
 

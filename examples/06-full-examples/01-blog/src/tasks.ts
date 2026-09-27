@@ -1,3 +1,5 @@
+import { defineFunctions } from '@plitzi/sdk-server/functions';
+
 import {
   addPost,
   findPost,
@@ -11,7 +13,7 @@ import {
   view
 } from './posts.ts';
 
-import type { ActionTask } from '@plitzi/sdk-server/actions';
+import type { FunctionTask } from '@plitzi/sdk-server/functions';
 
 /**
  * What this blog can do on the server, as four steps its flows chain together.
@@ -35,7 +37,7 @@ const toBoolean = (value: string | boolean | undefined, fallback: boolean): bool
   return value === undefined || value === '' ? fallback : value === 'true' || value === '1';
 };
 
-export const listPostsTask: ActionTask<{
+export const listPostsTask: FunctionTask<{
   page: string | number;
   perPage: string | number;
   featured: string | boolean;
@@ -65,7 +67,7 @@ export const listPostsTask: ActionTask<{
   }
 };
 
-export const getPostTask: ActionTask<{ slug: string }> = {
+export const getPostTask: FunctionTask<{ slug: string }> = {
   namespace: 'blog',
   action: 'getPost',
   title: 'Get Post',
@@ -111,7 +113,7 @@ export const getPostTask: ActionTask<{ slug: string }> = {
  * from the session, on the server — the link is hidden as a courtesy, and the action behind it is what actually
  * refuses anyone without the permission.
  */
-export const siteChromeTask: ActionTask<Record<string, never>> = {
+export const siteChromeTask: FunctionTask<Record<string, never>> = {
   namespace: 'blog',
   action: 'chrome',
   title: 'Site Chrome',
@@ -131,7 +133,7 @@ export const siteChromeTask: ActionTask<Record<string, never>> = {
   }
 };
 
-export const publishPostTask: ActionTask<{
+export const publishPostTask: FunctionTask<{
   title: string;
   standfirst: string;
   body: string;
@@ -191,7 +193,7 @@ export const publishPostTask: ActionTask<{
  *
  * A field left blank means "leave it alone", which is what makes the editor safe to open and close.
  */
-export const updatePostTask: ActionTask<{
+export const updatePostTask: FunctionTask<{
   slug: string;
   title: string;
   standfirst: string;
@@ -245,7 +247,7 @@ export const updatePostTask: ActionTask<{
  * occasionally be handed to the wrong one. A write is never shared, which makes it the only honest place to ask
  * who is writing.
  */
-export const recordSightingTask: ActionTask<{ slug: string }> = {
+export const recordSightingTask: FunctionTask<{ slug: string }> = {
   namespace: 'blog',
   action: 'recordSighting',
   title: 'Record Sighting',
@@ -282,7 +284,7 @@ export const recordSightingTask: ActionTask<{ slug: string }> = {
  * The cost is one small request after the page loads, and the button is briefly pressable while it is in flight.
  * Pressing it then costs nothing: the write answers the same reader with the same total.
  */
-export const hasSeenSightingTask: ActionTask<{ slug: string }> = {
+export const hasSeenSightingTask: FunctionTask<{ slug: string }> = {
   namespace: 'blog',
   action: 'hasSeenSighting',
   title: 'Has Seen Sighting',
@@ -296,12 +298,14 @@ export const hasSeenSightingTask: ActionTask<{ slug: string }> = {
   }
 };
 
-export const blogTasks = [
-  listPostsTask,
-  getPostTask,
-  siteChromeTask,
-  publishPostTask,
-  updatePostTask,
-  recordSightingTask,
-  hasSeenSightingTask
-];
+export const blogFunctions = defineFunctions({
+  tasks: [
+    listPostsTask,
+    getPostTask,
+    siteChromeTask,
+    publishPostTask,
+    updatePostTask,
+    recordSightingTask,
+    hasSeenSightingTask
+  ]
+});

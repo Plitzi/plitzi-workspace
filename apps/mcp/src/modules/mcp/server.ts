@@ -99,24 +99,42 @@ export const createMcpServer = async ({
     // The catalog is optional reference data (plugin type semantics); a failure to load it must never block the
     // space read, so it is fetched best-effort and degrades to built-in-only type descriptions. Connectors are
     // read the same way: a deployment that wires no connector adapter still edits pages and styles.
-    const [schema, style, catalog, connectors, actions, actionTasks] = await Promise.all([
+    const [schema, style, catalog, connectors, actions, actionTasks, functions] = await Promise.all([
       adapters.getSchema?.(id, MCP_ENV),
       adapters.getStyle?.(id, MCP_ENV),
       adapters.getComponentCatalog?.(id, MCP_ENV).catch(() => undefined),
       adapters.getConnectors?.(id).catch(() => undefined),
       adapters.getActions?.(id).catch(() => undefined),
-      adapters.getActionTasks?.(id).catch(() => undefined)
+      adapters.getActionTasks?.(id).catch(() => undefined),
+      adapters.getFunctions?.(id).catch(() => undefined)
     ]);
     if (!schema || !style) {
       throw new Error(emptySpaceMessage);
     }
 
-    return { schema, style, catalog, connectors: connectors ?? [], actions: actions ?? [], actionTasks };
+    return {
+      schema,
+      style,
+      catalog,
+      connectors: connectors ?? [],
+      actions: actions ?? [],
+      actionTasks,
+      ...(functions ? { functions } : {})
+    };
   };
 
   // Every write in the server funnels through these four, which is why the check lives here rather than in each
   // tool: a tool that forgot to ask is the bug this arrangement makes impossible.
-  const { saveSchema, saveStyle, saveConnector, deleteConnector, saveAction, deleteAction } = adapters;
+  const {
+    saveSchema,
+    saveStyle,
+    saveConnector,
+    deleteConnector,
+    saveAction,
+    deleteAction,
+    saveFunctions,
+    tryFunction
+  } = adapters;
   // A stateless server builds itself per request, and a request is one tool call: everything it writes is one batch.
   const write: SSRWriteContext = { userId: grant?.userId, batch: randomUUID() };
   const persisters: Persisters = {
@@ -125,7 +143,10 @@ export const createMcpServer = async ({
     saveConnector: saveConnector ? entry => saveConnector(requireWritableSpaceId(), entry) : undefined,
     deleteConnector: deleteConnector ? id => deleteConnector(requireWritableSpaceId(), id) : undefined,
     saveAction: saveAction ? entry => saveAction(requireWritableSpaceId(), entry) : undefined,
-    deleteAction: deleteAction ? id => deleteAction(requireWritableSpaceId(), id) : undefined
+    deleteAction: deleteAction ? id => deleteAction(requireWritableSpaceId(), id) : undefined,
+    saveFunctions: saveFunctions
+      ? (files, base) => saveFunctions(requireWritableSpaceId(), files, base, write)
+      : undefined
   };
 
   // Load the space at most once per request, and only on first read/write — never for the handshake.
@@ -160,7 +181,10 @@ export const createMcpServer = async ({
     spaceId: requireSpaceId(),
     preview,
     screenshot,
-    proxy: proxyForTool(proxy, tool)
+    proxy: proxyForTool(proxy, tool),
+    ...(tryFunction
+      ? { tryFunction: (task, params) => tryFunction(requireWritableSpaceId(), task, params, write) }
+      : {})
   });
 
   // A space-independent tool (plitzi_render) must never trigger a spaceId/space load, so it stays callable with no

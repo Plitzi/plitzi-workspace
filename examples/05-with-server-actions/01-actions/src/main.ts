@@ -2,7 +2,7 @@ import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-ser
 
 import { lookups } from './actions.ts';
 import { offlineData } from './space.ts';
-import { shippingRate } from './tasks.ts';
+import { shopFunctions } from './tasks.ts';
 
 import type { SSRSpaceDeployment } from '@plitzi/sdk-shared';
 
@@ -17,17 +17,17 @@ const space = offlineData();
  * One page server, wired for actions.
  *
  * `action.lookups` is what turns the endpoint on: with no way to read a document there is nothing to run, and the
- * `/_action` path keeps answering element-addressed connector writes alone. `tasks` is this deployment's own half
- * of the step catalog — the server serves it, so a space can do server-side exactly what this process registered.
+ * `/_action` path keeps answering element-addressed connector writes alone. `functions` is this deployment's own
+ * half of the step catalog — the server serves it, so a space can do server-side exactly what this process loaded.
  */
 const serverFor = (deployment: SSRSpaceDeployment) =>
   createServer({
     devMode: process.env.NODE_ENV !== 'production',
     logger: consoleLogger,
     adapters: createJsonAdapters({ offlineData: space, deployment }),
+    functions: { native: [shopFunctions] },
     action: {
       lookups,
-      tasks: [shippingRate],
       /**
        * Every run that STARTED, whatever began it. A run that was REFUSED is not reported: a 409 is not a run,
        * and logging one would bury the real ones under retries.

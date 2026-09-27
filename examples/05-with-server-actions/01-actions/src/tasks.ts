@@ -1,4 +1,6 @@
-import type { ActionTask } from '@plitzi/sdk-server/actions';
+import { defineFunctions } from '@plitzi/sdk-server/functions';
+
+import type { FunctionTask } from '@plitzi/sdk-server/functions';
 
 /**
  * A task this deployment adds to the ones `sdk-server` ships.
@@ -20,7 +22,7 @@ const toNumber = (value: string | number, fallback: number): number => {
 
 const DISTANCE_BANDS: Record<string, number> = { berlin: 1, madrid: 2, tokyo: 4 };
 
-export const shippingRate: ActionTask<{ city: string; weightKg: string | number; ratePerKg: string | number }> = {
+export const shippingRate: FunctionTask<{ city: string; weightKg: string | number; ratePerKg: string | number }> = {
   namespace: 'example',
   action: 'shippingRate',
   title: 'Shipping Rate',
@@ -39,3 +41,6 @@ export const shippingRate: ActionTask<{ city: string; weightKg: string | number;
     return { city, band, total, currency: 'EUR' };
   }
 };
+
+/** This deployment's own code: one task, loaded natively by its server — or run in the platform's sandbox, unchanged. */
+export const shopFunctions = defineFunctions({ tasks: [shippingRate] });

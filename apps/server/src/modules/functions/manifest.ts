@@ -1,0 +1,181 @@
+import { taskName, taskNameProblem } from '../actions/tasks/registry';
+
+import type { FunctionsManifest, FunctionTaskManifest } from '@plitzi/sdk-shared';
+
+type TaskParam = FunctionTaskManifest['params'][string];
+
+export const ROUTE_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+
+export type RouteMethod = (typeof ROUTE_METHODS)[number];
+
+export type RouteKey = { method: RouteMethod; segments: string[] };
+
+const SEGMENT = /^(:[a-zA-Z][a-zA-Z0-9]*|[A-Za-z0-9._~-]+)$/;
+
+const isRouteMethod = (method: string): method is RouteMethod => ROUTE_METHODS.some(known => known === method);
+
+/**
+ * A route key, `'<METHOD> /<path>'`: literal segments and `:params`, served under `/api/`. Anything else — a query, a
+ * wildcard, `..` — is not a key, so what a space may answer is only ever a path it spelled out.
+ */
+export const parseRouteKey = (key: string): RouteKey | undefined => {
+  const [method = '', path = '', ...rest] = key.trim().split(/\s+/);
+  if (rest.length || !isRouteMethod(method) || !path.startsWith('/')) {
+    return undefined;
+  }
+
+  const segments = path.slice(1).split('/');
+  if (!segments.every(segment => SEGMENT.test(segment) && segment !== '.' && segment !== '..')) {
+    return undefined;
+  }
+
+  return { method, segments };
+};
+
+const HOST = /^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const stringOf = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
+
+const optionsOf = (value: unknown): { label: string; value: string }[] | undefined =>
+  Array.isArray(value)
+    ? value.flatMap(option => {
+        const label = isRecord(option) ? stringOf(option.label) : undefined;
+        const optionValue = isRecord(option) ? stringOf(option.value) : undefined;
+
+        return label !== undefined && optionValue !== undefined ? [{ label, value: optionValue }] : [];
+      })
+    : undefined;
+
+/**
+ * One param, rebuilt from what the bundle said rather than trusted: only the serializable shapes a step editor draws.
+ * A computed `type`, `when` or `options` is code, and a bundle's code runs in the sandbox, never in the builder.
+ */
+const paramOf = (value: unknown): TaskParam | string => {
+  if (!isRecord(value)) {
+    return 'is not an object';
+  }
+
+  const base = {
+    ...(typeof value.canBind === 'boolean' ? { canBind: value.canBind } : {}),
+    ...(typeof value.label === 'string' ? { label: value.label } : {}),
+    ...(typeof value.when === 'boolean' ? { when: value.when } : {})
+  };
+  const defaultValue = value.defaultValue;
+  switch (value.type) {
+    case 'text':
+    case 'textarea':
+      return {
+        ...base,
+        type: value.type,
+        ...(typeof defaultValue === 'string' || typeof defaultValue === 'number' ? { defaultValue } : {})
+      };
+    case 'codemirror-text':
+    case 'codemirror-json':
+      return { ...base, type: value.type, ...(typeof defaultValue === 'string' ? { defaultValue } : {}) };
+    case 'boolean':
+      return { ...base, type: 'boolean', ...(typeof defaultValue === 'boolean' ? { defaultValue } : {}) };
+    case 'elements':
+      return {
+        ...base,
+        type: 'elements',
+        ...(Array.isArray(defaultValue) ? { defaultValue: defaultValue.filter(id => typeof id === 'string') } : {}),
+        ...(typeof value.elementType === 'string' ? { elementType: value.elementType } : {})
+      };
+    case 'select': {
+      const options = optionsOf(value.options);
+      if (!options?.length) {
+        return 'is a select with no options';
+      }
+
+      return { ...base, type: 'select', options, ...(typeof defaultValue === 'string' ? { defaultValue } : {}) };
+    }
+    default:
+      return `has a type the builder cannot draw ("${String(value.type)}"): text, textarea, codemirror-text, codemirror-json, boolean, elements or select`;
+  }
+};
+
+export type ManifestReading = { manifest: FunctionsManifest; problems: string[] };
+
+/**
+ * Reads what a bundle said it declares, and every rule it must meet — the one validator, at save and nowhere else
+ * afterwards, because what is stored is only ever what passed it.
+ *
+ * `reserved` is every namespace this deployment's own tasks use: a space's task may take none of them, so a step that
+ * names a platform task always runs the platform's.
+ */
+export const readManifest = (value: unknown, reserved: ReadonlySet<string>): ManifestReading => {
+  const problems: string[] = [];
+  const raw = isRecord(value) ? value : {};
+
+  const hosts = Array.isArray(raw.hosts) ? raw.hosts.filter(host => typeof host === 'string') : [];
+  hosts
+    .filter(host => !HOST.test(host))
+    .forEach(host => {
+      problems.push(`allow.hosts: "${host}" is not a hostname (a name like api.example.com, or *.example.com)`);
+    });
+
+  const tasks: FunctionTaskManifest[] = [];
+  const names = new Set<string>();
+  (Array.isArray(raw.tasks) ? raw.tasks : []).forEach((entry: unknown, index) => {
+    const task = isRecord(entry) ? entry : {};
+    const namespace = stringOf(task.namespace) ?? '';
+    const action = stringOf(task.action) ?? '';
+    const title = stringOf(task.title) ?? '';
+    const where = namespace && action ? `Task "${namespace}.${action}"` : `tasks[${String(index)}]`;
+    const nameProblem = taskNameProblem({ namespace, action }, reserved);
+    if (nameProblem) {
+      problems.push(nameProblem);
+
+      return;
+    }
+
+    const name = taskName({ namespace, action });
+    if (names.has(name)) {
+      problems.push(`${where} is declared twice`);
+
+      return;
+    }
+
+    names.add(name);
+    if (!title) {
+      problems.push(`${where} has no title`);
+    }
+
+    const params: Record<string, TaskParam> = {};
+    Object.entries(isRecord(task.params) ? task.params : {}).forEach(([key, param]) => {
+      const read = paramOf(param);
+      if (typeof read === 'string') {
+        problems.push(`${where}: param "${key}" ${read}`);
+      } else {
+        params[key] = read;
+      }
+    });
+
+    const description = stringOf(task.description);
+    tasks.push({ namespace, action, title, ...(description ? { description } : {}), params });
+  });
+
+  const routes = Array.isArray(raw.routes) ? raw.routes.filter(route => typeof route === 'string') : [];
+  const routed = new Set<string>();
+  routes.forEach(route => {
+    const key = parseRouteKey(route);
+    if (!key) {
+      problems.push(`Route "${route}" is not "<GET|POST|PUT|PATCH|DELETE> /<path>" of literal segments and :params`);
+
+      return;
+    }
+
+    // `/a/:x` and `/a/:y` answer the same requests, so they are the same route whatever the params are called.
+    const shape = `${key.method} /${key.segments.map(segment => (segment.startsWith(':') ? ':' : segment)).join('/')}`;
+    if (routed.has(shape)) {
+      problems.push(`Route "${route}" answers the same requests as another one`);
+    }
+
+    routed.add(shape);
+  });
+
+  return { manifest: { hosts, tasks, routes }, problems };
+};

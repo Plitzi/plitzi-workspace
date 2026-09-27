@@ -1150,3 +1150,40 @@ example, was built on the lack of them and is simpler for it.
   its rate limits are `flow.rateLimit` steps in its actions; its board and room channels are private, opened with the
   grant `board-load`/`board-open` answer — a locked board's topic no longer carries a secret, only its password's
   version.
+
+## Functions: a space's own server code
+
+A space can have its own server code: TypeScript whose **tasks** are steps in its actions and whose
+**routes** answer under `/api/` on its host, run by the platform in a sandbox. See `docs/en/functions.md`.
+
+- **The contract**, `@plitzi/sdk-server/functions`: `defineFunctions({ allow: { hosts }, tasks, routes })`, `ctx`
+  (`kv`, `fetch` to declared hosts only — a credential NAMED and written in by the platform, its value never in the code
+  —, `publish`/`grant`/`revoke`, `user` without its session, `log`, `emit`, `signal`), web-standard only.
+  `dist/functions-api.d.ts` is the contract rolled up in one file, for editors (`@plitzi/sdk-server/functions-api.d.ts`).
+- **Breaking: `action.tasks` is gone.** A deployment's own tasks are functions loaded natively:
+  `createServer({ functions: { native: [defineFunctions({ tasks })] } })` — the same shape a space's are. Their routes
+  are served too.
+- **The runner**, `@plitzi/sdk-server/functions-runner` (`isolated-vm` and `core-js@3` are optional peers):
+  `startFunctionsRunnerService` — its own process, one V8 isolate per invocation from a snapshot (~2 ms), CPU / wall /
+  memory / output / calls limits that hold, behind a shared secret; `createRemoteRunner` — the page server's client,
+  one WebSocket per invocation with the code's calls answered on it; `createIsolateRunner`; `createLocalFunctions`.
+- **Wired into actions**: `lookups.getFunctions(spaceId, at)`; `registryFor(spaceId, at)` — the catalog, the check and
+  the runs of a space see its tasks; `prepareFunctions(source)` builds, reads and checks a source before it is stored;
+  `functions.limits`, `functions.admit`, `functions.onUsage` for a deployment's ceilings and budget. A run only asks for
+  a space's functions when a step names a task the deployment does not have.
+- **`ctx.log`** for every task: a step's lines are kept on it (`ActionRunStep.logs`, redacted, at most 100), shown by
+  a Try and in the run history. Builder test runs return `steps`.
+- **Routes** under `/api/`: the visitor's `cookie`/`authorization` never reach the code, `Set-Cookie` is dropped, a
+  failure answers 500/503 with its reason in the server log only. `lintSpace` refuses a page under `/api`
+  (`page-route-reserved`); the prefix is `FUNCTION_ROUTES_PREFIX` in `@plitzi/sdk-shared/actions`.
+- **Builder**: a Functions panel — the files, TypeScript that knows `ctx` in a worker of its own
+  (`dist/plitzi-functions-worker.js`, loaded only when the panel opens; the host passes `functionsWorkerUrl`), Save with
+  the problems where they are, what the code declares, and Try. Needs `@plitzi/plitzi-ui` 1.6.24 (`CodeMirror`
+  `mode="ts"` and `extensions`).
+- **CLI**: `plitzi functions pull | push | try | dev` — `functions/` as a working copy of the space's, refused rather
+  than overwritten in either direction; `dev` runs it on the machine with the project's own `@plitzi/sdk-server`.
+- **MCP**: the `upsertFunctionFile` / `deleteFunctionFile` operations (saved first in a batch, so a problem refuses
+  it all), `plitzi://functions/{env}` and `/{+path}`, and `plitzi_try_function`.
+- **Shared types**: `FunctionsManifest`, `FunctionsDraft`, `FunctionsProblem`, `FunctionsSaveResult`; the builder's
+  `SpaceFunctions`, `SpaceSaveFunctions`, `SpaceRemoveFunctions`, `SpaceTryFunction`; `ChangeDocument` `functions`
+  with entries of kind `file`; `SSRAdapters.getFunctions` / `saveFunctions` / `tryFunction`.
