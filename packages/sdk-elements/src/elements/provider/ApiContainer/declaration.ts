@@ -53,7 +53,22 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
     }
   },
   callbacks: {
-    performQuery: { action: 'performQuery', title: 'Perform Query', type: 'callback', preview: {}, params: {} },
+    performQuery: {
+      action: 'performQuery',
+      title: 'Perform Query',
+      type: 'callback',
+      preview: {},
+      params: {
+        input: {
+          label: 'Input (server providers)',
+          type: 'codemirror-json',
+          defaultValue: '{}',
+          description:
+            'Values handed to a server-driven provider with its request, beside the page’s own route and query params — ' +
+            'a search, a filter. Kept for the pages it loads after (`loadMore`, `goToPage`) until the next query.'
+        }
+      }
+    },
     loadMore: { action: 'loadMore', title: 'Load More', type: 'callback', preview: {}, params: {} },
     goToPage: {
       action: 'goToPage',

@@ -4,7 +4,7 @@ import { describeBoard, describeElement } from './describe.ts';
 import { cardHeight, frameNamed, placeAll } from './place.ts';
 import { callAction, joinBoard, newElementId } from './session.ts';
 import { DUTY_PRESETS, instructionOf } from '../board/duties.ts';
-import { markedDone, settleDone } from '../board/model.ts';
+import { isConnector, markedDone, settleDone } from '../board/model.ts';
 import { isEmptyQuery, matchesQuery, parseQuery } from '../board/query.ts';
 import { isStamp, REACTIONS, STAMPS } from '../board/reactions.ts';
 import { SCRIPT_IDS, SCRIPTS } from '../board/sessions.ts';
@@ -12,7 +12,7 @@ import { TEMPLATES } from '../board/templates.ts';
 import { branchFrame, frameContents, mergeBranch } from '../plugins/Board/branches.ts';
 import { releasedFrom } from '../plugins/Board/connectors.ts';
 import { COLUMN_PADDING, layoutColumn, membersOf, moved, readingOrder } from '../plugins/Board/containers.ts';
-import { anchorPoint, boundsOf, nearestAnchor } from '../plugins/Board/geometry.ts';
+import { anchorPoint, boundsOf, nearestAnchor, overlaps } from '../plugins/Board/geometry.ts';
 import { restyled } from '../plugins/Board/styling.ts';
 
 import type { Activity, Door, Session } from './session.ts';
@@ -97,6 +97,12 @@ const describeActivity = (entry: Activity): string => {
  */
 const THINKING_MS = 45_000;
 
+/** What a facilitator does as a session ends — said to the agent by the tools that end one. */
+const CLOSE_THE_SESSION =
+  'Close it for the team: in the board’s chat (say), the outcome — the themes, what was decided, and the action items, each with an ' +
+  'owner (ask when there is none) — and put the actions on the board as cards in a To do column. Talk about their ' +
+  'work, not about the board or your tools.';
+
 /** How often a long wait says it is still waiting, to a client that asked to be told. */
 const PROGRESS_MS = 15_000;
 
@@ -142,7 +148,10 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
 
   const onBoard = (): Session => {
     if (!session) {
-      throw new Error('Join a board first: join_board with its link');
+      throw new Error(
+        'You are not on a board. Join one with join_board and its link — if you were on one a moment ago, your ' +
+          'connection to Pizarra was reset (its server restarted): join it again with the same link.'
+      );
     }
 
     if (session.left !== undefined) {
@@ -353,6 +362,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
         throw new Error(`Element ${described + 1} is a ${elements[described].type}: only a card has a description.`);
       }
 
+      const before = board.elements();
       const placed = placeAll(board, elements);
       const first = placed[0];
       await board.glide(centre(first));
@@ -366,8 +376,30 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
           .map(frame => [frame.id, frame])
       );
 
+      // Put where it was told, over something else — outside the frame it is in: said, so it can be moved if that was
+      // not what was meant. Things are not moved behind the agent's back.
+      const covering = added.flatMap(element => {
+        const under = before.filter(
+          other =>
+            other.type !== 'frame' &&
+            other.id !== element.parent &&
+            !isConnector(other.type) &&
+            overlaps(boundsOf(element), boundsOf(other))
+        );
+
+        return under.length
+          ? [
+              `${element.id} lies over ${under.map(other => other.id).join(', ')} — move it (update_elements) if that was not meant.`
+            ]
+          : [];
+      });
+
       return text(
-        `Added ${added.length}:\n${added.map(element => describeElement(element, frames, board.faceDown)).join('\n')}`
+        [
+          `Added ${added.length}:`,
+          ...added.map(element => describeElement(element, frames, board.faceDown)),
+          ...covering
+        ].join('\n')
       );
     }
   );
@@ -884,7 +916,10 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
       presenting = undefined;
       await board.present([0, 0, 0, 0], -1, 0, '');
 
-      return text('The presentation is over.');
+      return text(
+        'The presentation is over. Close it for the team in a line or two: what it showed and what they should decide or ' +
+          'do next — not how it was presented.'
+      );
     }
   );
 
@@ -979,7 +1014,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
       await board.runSession('next');
       const { steps } = SCRIPTS[running.script];
       if (running.step + 1 >= steps.length) {
-        return text('That was the last step: the session is over.');
+        return text(`That was the last step: the session is over. ${CLOSE_THE_SESSION}`);
       }
 
       const next = steps[running.step + 1];
@@ -994,7 +1029,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
     async () => {
       await onBoard().runSession('stop');
 
-      return text('The session is over.');
+      return text(`The session is over. ${CLOSE_THE_SESSION}`);
     }
   );
 

@@ -58,12 +58,19 @@ const listed = (board: string) => ({
   params: { topic: 'boards', type: 'changed', data: `{ "id": "${board}" }` }
 });
 
-/** The gallery, built into the first paint. Never cached: a board drawn a second ago belongs in it. */
+/**
+ * The gallery, built into the first paint. Never cached: a board drawn a second ago belongs in it. A search and how
+ * many to show come with the page's query params, or with the front page's own reload of it (`reloadApi` with input).
+ */
 const list = defineAction({
   id: LIST_ACTION,
   name: 'Boards',
-  description: 'The featured boards and the ones touched last, with a preview of each.',
-  trigger: { type: 'render', access: 'public' },
+  description: 'The featured boards and the ones touched last, with a preview of each — searched, a page at a time.',
+  trigger: {
+    type: 'render',
+    access: 'public',
+    input: { q: field('Search', false), limit: field('How many', false) }
+  },
   steps: [{ id: 'list', task: 'board.list' }]
 });
 

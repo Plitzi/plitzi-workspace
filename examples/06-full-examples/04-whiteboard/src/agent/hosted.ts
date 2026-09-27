@@ -44,7 +44,22 @@ const MAX_AGENTS = 200;
 /** What a request says at most: tool calls are small; a board's worth of elements is the largest. */
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 
-type Held = { transport: WebStandardStreamableHTTPServerTransport; agent: AgentServer; lastSeen: number };
+/**
+ * How long after its app stops listening an agent is taken to be gone. An app like Claude Code keeps a stream open to
+ * hear the server (the MCP `GET`) for as long as it runs: closed and not opened again — the app quit, crashed, lost its
+ * network for good — the agent leaves its board instead of standing there answering nobody.
+ */
+const CLIENT_GONE_MS = 60_000;
+
+type Held = {
+  transport: WebStandardStreamableHTTPServerTransport;
+  agent: AgentServer;
+  lastSeen: number;
+  /** Its app's streams open now — and whether it ever opened one, which is what makes one closing mean anything. */
+  streams: number;
+  listened: boolean;
+  gone?: ReturnType<typeof setTimeout>;
+};
 
 /** What the people on a board see an agent as, from the app it came through, until it names itself. */
 const CLIENT_NAMES: readonly [RegExp, string][] = [
@@ -103,6 +118,9 @@ const headersOf = (ctx: BaseContext): Headers => {
 
   return headers;
 };
+
+/** What to do once an answer has gone out — or its client has stopped taking it: a stream that ends. */
+const ended = new WeakMap<Response, () => void>();
 
 /** The answer, onto the wire: its status, its headers, and its body as it comes — an event stream stays open. */
 const send = async (ctx: BaseContext, response: Response): Promise<void> => {
@@ -192,6 +210,7 @@ export const createAgentEndpoint = ({
   const drop = async (session: string, reason: string): Promise<void> => {
     const entry = held.get(session);
     held.delete(session);
+    clearTimeout(entry?.gone);
     entry?.agent.leave(reason);
     await Promise.all([entry?.transport.close(), directory.release(session)]);
   };
@@ -206,6 +225,31 @@ export const createAgentEndpoint = ({
     }
   }, 60_000);
   sweep.unref();
+
+  /**
+   * Its app not listening, for now: gone unless it listens — or asks anything — again within {@link CLIENT_GONE_MS}.
+   * Only for an app that listens at all; one that never opens a stream is left to the board's own rules.
+   */
+  const unheard = (session: string, entry: Held): void => {
+    clearTimeout(entry.gone);
+    if (entry.listened && entry.streams === 0) {
+      entry.gone = setTimeout(() => void drop(session, 'my app disconnected'), CLIENT_GONE_MS);
+      entry.gone.unref();
+    }
+  };
+
+  /** Its app listening: the stream is counted while it is open, and its end starts the wait for the app to be back. */
+  const listening = (session: string, entry: Held, response: Response): Response => {
+    entry.streams += 1;
+    entry.listened = true;
+    clearTimeout(entry.gone);
+    ended.set(response, () => {
+      entry.streams -= 1;
+      unheard(session, entry);
+    });
+
+    return response;
+  };
 
   /** A new agent: its server, and the transport that makes it a session once its client says `initialize`. */
   const open = (ctx: BaseContext): Held => {
@@ -237,6 +281,8 @@ export const createAgentEndpoint = ({
     const entry: Held = {
       agent,
       lastSeen: Date.now(),
+      streams: 0,
+      listened: false,
       transport: new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: randomUUID,
         // Answers as event streams: a long wait for the people is kept open by the stream's keep-alives, where a
@@ -280,6 +326,11 @@ export const createAgentEndpoint = ({
         signal: ctx.signal
       });
     } catch {
+      // Its own client leaving is not the owner failing: the session is still there, for when it comes back.
+      if (ctx.signal.aborted) {
+        return new Response(null, { status: 499 });
+      }
+
       await directory.release(session);
 
       return jsonRpcError(404, 'Session not found — connect again');
@@ -326,8 +377,12 @@ export const createAgentEndpoint = ({
 
       entry.lastSeen = Date.now();
       void directory.hold(session);
+      // Whatever it asks, its app is there: the wait for it to listen again starts over.
+      unheard(session, entry);
       try {
-        return await entry.transport.handleRequest(request);
+        const response = await entry.transport.handleRequest(request);
+
+        return raw.method === 'GET' && response.ok && response.body ? listening(session, entry, response) : response;
       } finally {
         entry.lastSeen = Date.now();
       }
@@ -363,7 +418,12 @@ export const createAgentEndpoint = ({
       }
 
       ctx.operation = `mcp ${ctx.raw.method ?? ''}`;
-      await send(ctx, await answer(ctx));
+      const response = await answer(ctx);
+      try {
+        await send(ctx, response);
+      } finally {
+        ended.get(response)?.();
+      }
 
       return true;
     },

@@ -97,6 +97,9 @@ const isOpened = (value: unknown): value is OpenedBoard =>
 /** How long an agent stays on a board with nobody else on it: long enough for a page that reloads to come back. */
 const ALONE_MS = 2 * 60 * 1000;
 
+/** How long its connection to the board may stay broken — a server restarting, a network gone — before it gives up. */
+const LOST_MS = 2 * 60 * 1000;
+
 /** How often it looks at whether it should still be here — and says where its cursor is, so it stays in sight. */
 const WATCH_MS = 15_000;
 
@@ -147,6 +150,10 @@ export const joinBoard = async (
   let aloneSince: number | undefined;
   /** Why this agent left the board, once it has: said to its model, which may be asked to come back. */
   let left: string | undefined;
+  /** When a temporary board goes for everyone — and this agent with it. */
+  let expiresAt = loaded.expiresAt;
+  /** Since when its socket on the board's channels could not be opened again. */
+  let lostSince: number | undefined;
   /** Who this agent is on the board, as a page's visitor id: what it writes face down is its own by this, not its name. */
   const visitor = Array.from({ length: 16 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[randomInt(36)]).join('');
 
@@ -209,6 +216,8 @@ export const joinBoard = async (
           text: session ? `Session: ${describeSession(session)}` : 'The session is over.',
           at: Date.now()
         });
+      } else if (type === 'reach' && isRecord(data)) {
+        expiresAt = typeof data.expiresAt === 'number' ? data.expiresAt : null;
       } else if (type === 'agents' && isRecord(data) && typeof data.agentQuietMinutes === 'number') {
         quietMinutes = data.agentQuietMinutes;
       } else if (type === 'locked') {
@@ -309,12 +318,25 @@ export const joinBoard = async (
   const watch = setInterval(() => {
     const now = Date.now();
     aloneSince = people() > 0 ? undefined : (aloneSince ?? now);
-    if (aloneSince !== undefined && now - aloneSince > ALONE_MS) {
+    if (expiresAt !== null && now >= expiresAt) {
+      gone = true;
+      leave('the board’s time ran out');
+    } else if (lostSince !== undefined && now - lostSince > LOST_MS) {
+      leave('I lost my connection to the board');
+    } else if (aloneSince !== undefined && now - aloneSince > ALONE_MS) {
       leave('nobody else was on the board');
     } else if (now - lastActive > quietMinutes * 60_000) {
       leave(`nothing happened on the board for ${quietMinutes} minutes`);
     } else {
-      void pointer(cursor).catch(() => undefined);
+      // Its cursor said again — and a dropped socket opened again by saying it: what fails is counted as lost.
+      pointer(cursor).then(
+        () => {
+          lostSince = undefined;
+        },
+        () => {
+          lostSince ??= now;
+        }
+      );
     }
   }, WATCH_MS);
   watch.unref();

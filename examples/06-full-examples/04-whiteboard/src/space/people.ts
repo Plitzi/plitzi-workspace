@@ -17,6 +17,7 @@ import {
   variantFrom
 } from '@plitzi/sdk-authoring';
 
+import { COPY_DECLARATION, copyClass, copyText } from './copy.ts';
 import { BOARD_PROVIDER } from './ids.ts';
 import { BELOW_HEADER, BUTTON_RESET, FLOAT, caption, panelMotion } from './kit.ts';
 import { closeOthers } from './panels.ts';
@@ -424,9 +425,45 @@ const sharePanel = (): ElementSpec =>
             })
           ]
         ]
+      }),
+      // The board's code, for the front page's "Paste a board link or code" — or an agent.
+      container({
+        class: codeRow,
+        children: [
+          text({ content: 'Board code', class: popoverNote }),
+          copyText({
+            id: 'share-code',
+            compact: true,
+            text: '',
+            label: 'Copy this board’s code',
+            class: copyClass,
+            bind: { text: `${BOARD_PROVIDER}.id` },
+            flows: [
+              [
+                declaredTrigger(COPY_DECLARATION, 'onCopied'),
+                boardAction('chime', { sound: 'copy' }),
+                addNotification({
+                  content: 'Board code copied',
+                  appearance: 'success',
+                  placement: 'bottom-center',
+                  autoDismissTimeout: 2000
+                })
+              ]
+            ]
+          })
+        ]
       })
     ]
   });
+
+const codeRow = styles('shareCodeRow', {
+  display: 'flex',
+  'align-items': 'center',
+  'justify-content': 'space-between',
+  gap: '8px',
+  'padding-top': '10px',
+  'border-top': '1px solid var(--edge)'
+});
 
 /** The card's class — and, in `css.ts`, where its `--share-*` colours are set. */
 const shareCardClass = styles('shareCard', { color: 'var(--ink)' });

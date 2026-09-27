@@ -940,7 +940,11 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   joins only that Pizarra's boards, and is a client of the board's server like a browser. The people see what an agent
   is doing — working, thinking, listening — at its cursor and on its avatar; it stays while they work and leaves by
   itself when asked (✕ on its avatar), when nobody is on the board, after the board's quiet time (Board settings), or
-  when the board's password changes; a locked board's invite carries a key that opens it for the agent. It runs on several
+  when the board's password changes, when its app has gone (its listening stream closed and not back within a minute)
+  or its connection to the board is lost; a locked board's invite carries a key that opens it for the agent. It acts as
+  the team's facilitator — about their work, never its tools — and closes what it runs with the outcome. Cursors off
+  screen show at the edge of the view, and a board's code sits beside its name, a click from the clipboard. The front page
+  shows a dozen boards and a "Load more", and its search asks the server across every board. It runs on several
   replicas over Redis (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action
   `kv` shared by all of them, and which replica holds each agent's session — a call reaching another is passed on to it
   (`REPLICA_URL`), so no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine,
@@ -967,6 +971,15 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   `origin`, on the server as in the browser. A text or a code built from "this page's link" is right in the first
   paint, where one filled in by the browser once mounted showed its placeholder first. The builder answers it for the
   host being tested.
+
+## A server provider pages, and searches, where it is
+
+- What a refresh of a server-driven provider asks for besides its page — the next page of a "load more", the input it
+  was reloaded with — reaches what resolves it. `/_rsc` read only the query of the page's `location` and dropped the
+  rest, so a provider paged in place (`pagination: 'append'`, `goToPage`) was answered its first page every time.
+- `performQuery` (authoring: `reloadApi(id, input)`) takes an `input` for a server-driven provider — a search, a
+  filter, how many to show — and the provider keeps it for the pages and refreshes after it: "load more" of a search
+  is more of the search, and a live refresh does not lose it.
 
 ## The server names a page's origin with its port
 

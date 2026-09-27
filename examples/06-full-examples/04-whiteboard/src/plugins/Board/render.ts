@@ -2,6 +2,7 @@ import { endsOf } from './connectors.ts';
 import {
   createRenderer,
   drawCursor,
+  drawOffscreenCursor,
   drawDots,
   drawDropTarget,
   drawGuides,
@@ -734,7 +735,9 @@ export const createPainter = (
       if (member && cursor) {
         const label = member.agent === true ? `✦ ${member.name}` : member.name;
         const status = member.agent === true ? member.status : undefined;
-        drawCursor(context, camera, cursor.at, label, colourOf(from), palette.ui, cursor.saying, status);
+        if (!drawOffscreenCursor(context, camera, state.size, cursor.at, label, colourOf(from), palette.ui, status)) {
+          drawCursor(context, camera, cursor.at, label, colourOf(from), palette.ui, cursor.saying, status);
+        }
         // Still on its way to where it was heard — or an agent thinking, whose dots keep time: the next frame moves on.
         if (cursor.moving || status === 'thinking' || status === 'working') {
           core.invalidate();

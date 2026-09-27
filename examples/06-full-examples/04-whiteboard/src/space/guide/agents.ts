@@ -210,7 +210,7 @@ const CLAUDE_CODE: Step[] = [
   {
     title: 'Send it the board',
     says: [
-      'Adding Pizarra does not put Claude on any board: it joins the one you give it. Copy the board’s link — from ✦ Invite an AI agent on the board, or the address bar — and say so:'
+      'Adding Pizarra does not put Claude on any board: it joins the one you give it. Copy the board’s link — from ✦ Invite an AI agent on the board, or the address bar — or just its code, beside the board’s name, and say so:'
     ],
     copy: { id: 'claude-join', line: 'Join this Pizarra board and help us: <the board’s link>' },
     after:
@@ -305,7 +305,12 @@ const TROUBLE: readonly { question: string; answer: string }[] = [
   {
     question: 'It is on the board, but does not answer',
     answer:
-      'It is idle: its app is not asking it anything. Ask it again in its app — “stay on the board and answer us in the chat” keeps it listening.'
+      'It is idle: its app is not asking it anything. Ask it again in its app — “stay on the board and answer us in the chat” keeps it listening. If its app closed or crashed, it leaves the board by itself within a minute.'
+  },
+  {
+    question: 'I see it among the avatars, but not its cursor',
+    answer:
+      'It is working on another part of the board: its name shows at the edge of your view, with an arrow toward it. Click its avatar to follow it.'
   },
   {
     question: 'It left the board',
@@ -333,15 +338,39 @@ const TROUBLE: readonly { question: string; answer: string }[] = [
 export const guideLink = (label = '✦ Invite an AI agent'): ElementSpec =>
   link({ href: GUIDE_PATH, mode: 'internal', label, class: pill, children: [text({ content: label })] });
 
+/** At the foot of a panel: as wide as it, and its words on as many lines as they take — a panel is narrow. */
+const panelLink = styles('guidePanelLink', {
+  css: {
+    display: 'flex',
+    'align-items': 'center',
+    'justify-content': 'space-between',
+    gap: '10px',
+    padding: '9px 12px',
+    'border-radius': '10px',
+    border: '1px solid var(--edge)',
+    'background-color': 'var(--surface)',
+    color: 'var(--ink)',
+    'font-size': '12px',
+    'font-weight': '600',
+    'line-height': '1.4',
+    'text-decoration': 'none',
+    transition: 'border-color 140ms ease, color 140ms ease'
+  },
+  states: {
+    hover: { 'border-color': 'var(--accent)', color: 'var(--accent)' },
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '2px' }
+  }
+});
+
 /** From a board: the guide in a tab of its own, so nobody leaves the board to read it. */
 export const guideLinkFromBoard = (): ElementSpec =>
   link({
     href: GUIDE_PATH,
     mode: 'internal',
     target: 'blank',
-    label: 'Step-by-step guide — and what to do when it does not connect',
-    class: pill,
-    children: [text({ content: 'Step-by-step guide — and what to do when it does not connect ↗' })]
+    label: 'The guide: setting it up, and what to do when it does not connect — opens in a new tab',
+    class: panelLink,
+    children: [text({ content: 'Guide: set it up, and what to do if it does not connect' }), text({ content: '↗' })]
   });
 
 export const agentsGuidePage: PageSpec = {

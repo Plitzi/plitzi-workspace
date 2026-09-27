@@ -51,6 +51,7 @@ import {
   unlockScreen
 } from './access.ts';
 import { chatButton, chatPanel, hearChat } from './chat.ts';
+import { COPY_DECLARATION, copyClass, copyText } from './copy.ts';
 import { deleteButton, deletePanel } from './deleteBoard.ts';
 import { dutyPanel } from './duty.ts';
 import { framesButton, framesPanel, minimapButton, presentationBanner } from './frames.ts';
@@ -293,6 +294,35 @@ const foldGlyph = styles('foldGlyph', {
 });
 
 const FOLDED = { template: "{{ source ? 'folded' : '' }}" };
+
+/** On a phone the corner has no room for it: the share panel carries it there. */
+const boardCodeChip = styles('boardCodeChip', { css: { desktop: {}, mobile: { display: 'none' } } });
+
+/**
+ * The board's code beside its name, a click from the clipboard: what a person pastes on the front page to get here,
+ * or hands an agent — who joins by it as well as by the link.
+ */
+const boardCode = (): ElementSpec =>
+  copyText({
+    id: 'board-code',
+    compact: true,
+    text: '',
+    label: 'Copy this board’s code — for an agent, or the front page’s “Paste a board link or code”',
+    class: [copyClass, boardCodeChip],
+    bind: { text: `${BOARD_PROVIDER}.id` },
+    flows: [
+      [
+        declaredTrigger(COPY_DECLARATION, 'onCopied'),
+        boardAction('chime', { sound: 'copy' }),
+        addNotification({
+          content: 'Board code copied',
+          appearance: 'success',
+          placement: 'bottom-center',
+          autoDismissTimeout: 2000
+        })
+      ]
+    ]
+  });
 
 const zoomLabel = styles('zoomLabel', {
   css: {
@@ -764,10 +794,12 @@ const header = (): ElementSpec[] => [
             class: foldableRow,
             children: [
               text({ content: '', class: titleDivider }),
-              editOnly([title(), settingsButton(), deleteButton()]),
-              ...reachBadges(),
+              editOnly([title()]),
               // A read-only board's name is read, not edited.
-              readOnlyOnly([text({ content: '', class: readOnlyTitle, bind: { content: `${BOARD_PROVIDER}.title` } })])
+              readOnlyOnly([text({ content: '', class: readOnlyTitle, bind: { content: `${BOARD_PROVIDER}.title` } })]),
+              boardCode(),
+              editOnly([settingsButton(), deleteButton()]),
+              ...reachBadges()
             ]
           })
         ]

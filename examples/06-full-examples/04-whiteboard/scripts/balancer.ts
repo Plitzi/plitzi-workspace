@@ -33,8 +33,17 @@ export const startBalancer = (port: number, host: string, targets: readonly numb
       }
     );
     upstream.on('error', () => {
-      res.writeHead(502, { 'content-type': 'text/plain' });
+      if (!res.headersSent) {
+        res.writeHead(502, { 'content-type': 'text/plain' });
+      }
+
       res.end(`Replica ${target} is not answering`);
+    });
+    // A client gone is gone for the replica too, as for any balancer: an open stream to it is closed, not left open.
+    res.on('close', () => {
+      if (!res.writableFinished) {
+        upstream.destroy();
+      }
     });
     req.pipe(upstream);
   });

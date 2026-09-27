@@ -17,13 +17,13 @@ const declaration = {
   },
   callbacks: {},
   content: {
-    attributes: { text: '', label: 'Copy' },
+    attributes: { text: '', label: 'Copy', compact: false },
     definition: {
       label: 'Copy Text',
       type: 'copyText',
       description:
         'A text (`text`, where `{url}` is the page’s address and `{origin}` the site’s) and a button (`label`) that ' +
-        'copies it. Fires ' +
+        'copies it — or, `compact`, one small button that is both. Fires ' +
         '`onCopied`. Colours come from `--copy-field`, `--copy-accent` and `--copy-on-accent`.',
       items: [],
       bindings: {},

@@ -49,6 +49,9 @@ const meterRsc = async (
   }
 };
 
+/** The endpoint's own parameters: what it is asked about, never input to what it resolves. */
+const ENDPOINT_PARAMS = new Set(['location', 'ids']);
+
 /**
  * Rewrites the request to the page the browser is actually on.
  *
@@ -56,23 +59,32 @@ const meterRsc = async (
  * nothing in `schema.pages` and every client-side refresh silently returns no data. The SDK sends the visitor's
  * location as `?location=`, and route params plus the page parameter are read from that instead.
  *
- * Reflecting it is safe by construction: it is matched against this space's own page list, so the worst a forged
- * value can do is resolve a page the same visitor could have loaded directly.
+ * What a refresh asks for besides — the next page of a "load more", a search a provider was reloaded with — rides on
+ * the query string beside `location`, and is read over the location's own query. It used to be dropped with the rest
+ * of the endpoint's query, so a provider paged in place was answered its first page every time.
+ *
+ * Reflecting both is safe by construction: the location is matched against this space's own page list, and the rest
+ * is what the same visitor could have put in the page's own address; the cache key is the whole request, so no answer
+ * is served for a query it was not made for.
  */
-const withPageLocation = (req: SSRRequest): SSRRequest => {
+export const withPageLocation = (req: SSRRequest): SSRRequest => {
   const location = req.query.location;
   if (!location || !location.startsWith('/') || location.length > MAX_PAGE_LOCATION) {
     return req;
   }
 
   const url = new URL(location, `${req.protocol}://${req.hostname}`);
-  const query = [...url.searchParams.entries()].reduce<Record<string, string>>((acum, [key, value]) => {
-    acum[key] = value;
+  const asked = Object.entries(req.query).filter(([key]) => !ENDPOINT_PARAMS.has(key));
+  const query = Object.fromEntries([...url.searchParams.entries(), ...asked]);
+  const search = new URLSearchParams(query).toString();
 
-    return acum;
-  }, {});
-
-  return { ...req, path: url.pathname, search: url.search, url: `${url.pathname}${url.search}`, query };
+  return {
+    ...req,
+    path: url.pathname,
+    search: search ? `?${search}` : '',
+    url: `${url.pathname}${search ? `?${search}` : ''}`,
+    query
+  };
 };
 
 /**

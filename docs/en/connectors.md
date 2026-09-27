@@ -239,7 +239,10 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
    `action` + `recordId`, it does `POST /_action`; when it finishes it invalidates the cached browser requests).
    Triggers `onApiSuccess` / `onApiError`. In client mode, with `cache: true` (off by default), the response lives in
    the `@plitzi/sdk-shared/queries` cache for `staleTime` seconds (30 by default); `performQuery` always asks again —
-   see "Cached requests" in [Authoring spaces](./authoring-spaces.md).
+   see "Cached requests" in [Authoring spaces](./authoring-spaces.md). A server-driven provider's `performQuery`
+   takes an `input` — `reloadApi(id, { q: '{{ state.search }}' })` in authoring — handed to what resolves it beside
+   the page's route and query params (a search, a filter, how many to show), and kept for every page `loadMore` or
+   `goToPage` asks for after it and every refresh, until the next query with an input.
 6. **Render** — `<RootElement tag={subType}>` wraps a `<StoreProvider>` with the children.
 
 ### How it knows to wait for the RSC

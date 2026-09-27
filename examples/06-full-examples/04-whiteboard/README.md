@@ -156,6 +156,13 @@ leave after, 30 minutes unless changed), or when the board is deleted or its pas
 that answers why it left. `wait_for_activity` waits up to ten minutes, as an event stream with keep-alives, and says
 its progress every fifteen seconds to a client that asks — so a client that times calls out does not cut it.
 
+An agent whose app is gone — quit, crashed, lost its network — leaves too: an app like Claude Code keeps a stream open
+to hear the server for as long as it runs, and when it closes and is not opened again within a minute the agent says
+"my app disconnected" and goes, instead of standing on the board answering nobody. A cursor off the part of the board
+on screen is shown at its edge, with an arrow toward it. The agent is told to act as the team's facilitator: to speak
+about their work, never its tools, and to close what it runs with the outcome — themes, decisions, actions with owners
+— in the board's chat and as cards.
+
 A board with a password: the message the invite panel copies carries the key its page opened the board with
 (`#key=…` — never sent to the server in a URL a browser loads), so the agent gets in without the password; or the
 person adds "password: …" to what they send.

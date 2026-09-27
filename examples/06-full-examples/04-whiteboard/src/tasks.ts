@@ -66,13 +66,15 @@ export const createBoardTasks = ({
 }: Omit<BoardStores, 'kv'>): ActionTask<Record<string, unknown>>[] => {
   const on = (kv: ActionKvStore): BoardStores => ({ kv, assets, signer });
 
-  const boardListTask: ActionTask = {
+  const boardListTask: ActionTask<{ q: string; limit: string }> = {
     namespace: 'board',
     action: 'list',
     title: 'List Boards',
-    description: 'The featured boards and the ones touched last, each with a preview of its drawing.',
-    params: {},
-    run: (_params, ctx) => listBoards(on(ctx.kv))
+    description:
+      'The featured boards and the ones touched last — those whose name holds `q` — the first `limit` of them, each ' +
+      'with a preview of its drawing.',
+    params: { q: text('Search'), limit: text('How many') },
+    run: ({ q, limit }, ctx) => listBoards(on(ctx.kv), { q, limit })
   };
 
   const boardLoadTask: ActionTask<{ id: string }> = {

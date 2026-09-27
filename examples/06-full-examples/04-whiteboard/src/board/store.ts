@@ -148,8 +148,11 @@ export const missingBoard = (id: string): OpenedBoard => ({
 /** How many boards a public demo keeps. The one nobody has touched for longest makes room for a new one. */
 const MAX_BOARDS = 200;
 
-/** How many the gallery shows: the ones touched last. */
-const GALLERY_BOARDS = 24;
+/** How many the gallery shows at first — the ones touched last — and how many more each "Load more" adds. */
+export const GALLERY_PAGE = 12;
+
+/** What the gallery answers: the featured boards, the first `limit` of the others that match, and whether more do. */
+export type Gallery = { featured: BoardCard[]; boards: BoardCard[]; total: number; hasMore: boolean };
 
 /** How many elements a preview holds besides the frames: a crowded board is shown in coarser pieces to stay under it. */
 const PREVIEW_ELEMENTS = 300;
@@ -477,7 +480,14 @@ const withPreview = async (kv: ActionKvStore, summary: BoardSummary): Promise<Bo
  * The gallery: the featured boards, and the public ones touched last, newest first — each with its preview. A
  * temporary board whose time is up is let go of here, with everything it left.
  */
-export const listBoards = async (stores: BoardStores): Promise<{ featured: BoardCard[]; boards: BoardCard[] }> => {
+/**
+ * The front page's boards: the featured ones, and the others touched last — those whose name holds `q`, when a search
+ * is typed, the first `limit` of them (a page's worth unless more were asked for), with how many there are in all.
+ */
+export const listBoards = async (
+  stores: BoardStores,
+  { q, limit }: { q?: unknown; limit?: unknown } = {}
+): Promise<Gallery> => {
   const { kv, assets } = stores;
   await ensureFeatured(stores);
   let index = await readIndex(kv);
@@ -493,14 +503,18 @@ export const listBoards = async (stores: BoardStores): Promise<{ featured: Board
     });
   }
 
+  const search = typeof q === 'string' ? q.trim().toLowerCase() : '';
+  const asked = Math.floor(Number(limit));
+  const shown = Number.isFinite(asked) && asked > 0 ? Math.min(asked, MAX_BOARDS) : GALLERY_PAGE;
+  const matching = index.filter(
+    entry => !entry.featured && !entry.unlisted && (!search || entry.title.toLowerCase().includes(search))
+  );
+
   return {
     featured: await Promise.all(index.filter(entry => entry.featured).map(entry => withPreview(kv, entry))),
-    boards: await Promise.all(
-      index
-        .filter(entry => !entry.featured && !entry.unlisted)
-        .slice(0, GALLERY_BOARDS)
-        .map(entry => withPreview(kv, entry))
-    )
+    boards: await Promise.all(matching.slice(0, shown).map(entry => withPreview(kv, entry))),
+    total: matching.length,
+    hasMore: matching.length > shown
   };
 };
 

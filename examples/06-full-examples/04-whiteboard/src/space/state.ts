@@ -249,6 +249,9 @@ export const transientState = [
   'agentOpen',
   'libraryOpen',
   'librarySearch',
+  'galleryLimit',
+  // What the front page searches is asked of the server this visit: kept, the field would start empty over a filtered list.
+  'search',
   'searchOpen',
   'searchQuery',
   'searchCount',

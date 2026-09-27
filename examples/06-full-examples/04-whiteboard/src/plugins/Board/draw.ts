@@ -1513,6 +1513,63 @@ export const drawCursor = (
   context.restore();
 };
 
+/** How far in from each edge an off-screen cursor is shown: clear of the bars the page lays over the board. */
+const EDGE_INSET = { top: 78, right: 20, bottom: 78, left: 84 };
+
+/**
+ * Somebody whose cursor is off the part of the board on screen: their name at the edge, on the side they are, with an
+ * arrow toward them — so an agent working elsewhere, or a person who wandered off, is still somewhere to look. Answers
+ * whether it was drawn: a cursor on screen is drawn as a cursor instead.
+ */
+export const drawOffscreenCursor = (
+  context: CanvasRenderingContext2D,
+  camera: Camera,
+  size: { width: number; height: number },
+  [boardX, boardY]: Point,
+  name: string,
+  colour: string,
+  font: string,
+  status?: AgentStatus
+): boolean => {
+  const [x, y] = toScreen(camera, boardX, boardY);
+  if (x >= 0 && x <= size.width && y >= 0 && y <= size.height) {
+    return false;
+  }
+
+  const label = status && status !== 'idle' ? `${name} · ${status}` : name;
+  context.save();
+  context.font = `600 12px ${font}`;
+  const width = context.measureText(label).width + 30;
+  const cx = Math.min(Math.max(x, EDGE_INSET.left + width / 2), size.width - EDGE_INSET.right - width / 2);
+  const cy = Math.min(Math.max(y, EDGE_INSET.top + 12), size.height - EDGE_INSET.bottom - 12);
+  context.globalAlpha = 0.92;
+  context.fillStyle = colour;
+  context.beginPath();
+  context.roundRect(cx - width / 2, cy - 12, width, 24, 12);
+  context.fill();
+  // The arrow, inside the pill at its start, pointing where they are.
+  const angle = Math.atan2(y - cy, x - cx);
+  const ax = cx - width / 2 + 13;
+  context.translate(ax, cy);
+  context.rotate(angle);
+  context.fillStyle = '#ffffff';
+  context.beginPath();
+  context.moveTo(5, 0);
+  context.lineTo(-3.5, -4.5);
+  context.lineTo(-3.5, 4.5);
+  context.closePath();
+  context.fill();
+  context.restore();
+  context.save();
+  context.font = `600 12px ${font}`;
+  context.fillStyle = '#ffffff';
+  context.textBaseline = 'middle';
+  context.fillText(label, cx - width / 2 + 22, cy + 0.5);
+  context.restore();
+
+  return true;
+};
+
 /** What an agent is doing, beside its name: a word, and for thinking and working three dots that come and go. */
 const drawAgentStatus = (
   context: CanvasRenderingContext2D,

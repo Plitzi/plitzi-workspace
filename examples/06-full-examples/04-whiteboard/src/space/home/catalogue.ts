@@ -3,6 +3,7 @@ import {
   button,
   container,
   defineElement,
+  delay,
   formControl,
   link,
   list,
@@ -10,13 +11,16 @@ import {
   navigate,
   on,
   onClick,
+  reloadApi,
   runServerAction,
   setState,
   styles,
-  text
+  text,
+  whileRunning
 } from '@plitzi/sdk-authoring';
 
 import { CREATE_ACTION } from '../../actions.ts';
+import { GALLERY_PAGE } from '../../board/store.ts';
 import { templateElements } from '../../board/templates.ts';
 import declaration from '../../plugins/Board/declaration.ts';
 import { keepOwned } from '../access.ts';
@@ -35,7 +39,7 @@ import {
 
 import type { Template } from '../../board/templates.ts';
 import type { BoardAttributes } from '../../plugins/Board/declaration.ts';
-import type { CssProps, ElementSpec } from '@plitzi/sdk-authoring';
+import type { CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 /**
  * What the front page offers below its hero: templates to start from, the boards already drawn to look around in,
@@ -337,8 +341,37 @@ const empty = styles('emptyBoards', {
 
 const emptyTitle = styles('emptyTitle', { 'font-family': 'var(--hand)', 'font-size': '26px', color: 'var(--ink)' });
 
-/** The boards whose names contain what was searched — all of them while nothing is. */
-const MATCHING = "source|filter(board => (state.search ?? '')|trim|lower in board.title|lower)";
+const more = styles('loadMore', {
+  css: {
+    ...BUTTON_RESET,
+    'align-self': 'center',
+    display: 'inline-flex',
+    'align-items': 'center',
+    gap: '8px',
+    height: '42px',
+    padding: '0px 22px',
+    'border-radius': '999px',
+    border: '1px solid var(--edge)',
+    'background-color': 'var(--surface)',
+    'font-weight': '600',
+    'font-size': '14px',
+    transition: 'border-color 140ms ease, color 140ms ease, transform 140ms ease'
+  },
+  states: {
+    hover: { 'border-color': 'var(--accent)', color: 'var(--accent)' },
+    active: { transform: 'scale(0.97)' },
+    'focus-visible': { outline: '2px solid var(--accent)', 'outline-offset': '2px' }
+  }
+});
+
+/** How many boards the front page shows now: a page of them, and a page more for each "Load more". */
+const SHOWN = `(state.galleryLimit ?? ${GALLERY_PAGE})`;
+
+/**
+ * The gallery asked again, as it is being looked at — the search typed, as many as are shown. Kept by the provider
+ * with every reload after it: somebody drawing on a board refreshes the list without losing either.
+ */
+const askGallery = (limit: string): StepSpec => reloadApi(GALLERY_PROVIDER, { q: "{{ state.search ?? '' }}", limit });
 
 export const recent = (): ElementSpec =>
   container({
@@ -357,8 +390,8 @@ export const recent = (): ElementSpec =>
               bind: [
                 bindTemplate(
                   'content',
-                  `${GALLERY_PROVIDER}.boards`,
-                  "{{ source|length }} {{ (source|length) == 1 ? 'board' : 'boards' }} — updated live as people draw"
+                  GALLERY_PROVIDER,
+                  "{{ source.total ?? 0 }} {{ (source.total ?? 0) == 1 ? 'board' : 'boards' }} — updated live as people draw"
                 )
               ]
             })
@@ -373,7 +406,14 @@ export const recent = (): ElementSpec =>
             class: searchField,
             slots: { input: searchBox },
             flows: [
-              [named('typed', on('onChange')), setState({ key: 'search', type: 'text', value: '{{ typed.value }}' })]
+              [named('typed', on('onChange')), setState({ key: 'search', type: 'text', value: '{{ typed.value }}' })],
+              // Asked of the server once the typing pauses — across every board, not only the ones shown.
+              [
+                whileRunning('skip', on('onChange')),
+                delay(350),
+                setState({ key: 'galleryLimit', type: 'number', value: GALLERY_PAGE }),
+                askGallery(String(GALLERY_PAGE))
+              ]
             ]
           })
         ]
@@ -382,7 +422,7 @@ export const recent = (): ElementSpec =>
         id: 'boards',
         source: 'controlled',
         class: grid,
-        bind: [bindTemplate('items', `${GALLERY_PROVIDER}.boards`, `{{ ${MATCHING} }}`, { returns: 'value' })],
+        bind: { items: `${GALLERY_PROVIDER}.boards` },
         children: [card('boards', frame('thumbFrame', '160px'), false)]
       }),
       container({
@@ -390,11 +430,31 @@ export const recent = (): ElementSpec =>
         class: empty,
         visible: {
           source: `${GALLERY_PROVIDER}.boards`,
-          template: `{{ (${MATCHING})|length == 0 }}`
+          template: '{{ source|length == 0 }}'
         },
         children: [
           text({ content: 'Nothing here yet', class: emptyTitle }),
           text({ content: 'Start a board above — or search for another name.' })
+        ]
+      }),
+      button({
+        id: 'load-more-boards',
+        content: '',
+        class: more,
+        visible: { source: GALLERY_PROVIDER, template: '{{ source.hasMore ? true : false }}' },
+        bind: [
+          bindTemplate(
+            'content',
+            GALLERY_PROVIDER,
+            "{{ source.isLoading ? 'Loading…' : 'Load more — ' ~ (source.total - (source.boards|length)) ~ ' more' }}"
+          )
+        ],
+        flows: [
+          [
+            onClick(),
+            setState({ key: 'galleryLimit', type: 'number', value: `{{ ${SHOWN} + ${GALLERY_PAGE} }}` }),
+            askGallery(`{{ ${SHOWN} }}`)
+          ]
         ]
       })
     ]

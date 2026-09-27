@@ -16,6 +16,11 @@ export type CopyTextProps = {
   text?: string;
   /** What the button says. */
   label?: string;
+  /**
+   * The whole of it one small button: the text, and a mark that says a click copies it — for something short that is
+   * copied often, like a board's id beside its name. `label` is then what it says to a screen reader and on hover.
+   */
+  compact?: boolean;
   className?: string;
 };
 
@@ -26,7 +31,7 @@ const TRIGGERS: Record<string, InteractionCallback> = declaration.triggers;
  * `{origin}` are filled from the navigation the SDK keeps, which the server renders with too: the first paint already
  * shows the address, where filling it in once mounted showed the placeholder first.
  */
-const CopyText = ({ text = '', label = 'Copy', className }: CopyTextProps) => {
+const CopyText = ({ text = '', label = 'Copy', compact = false, className }: CopyTextProps) => {
   const { id } = useElement();
   const {
     contexts: { InteractionsContext }
@@ -40,16 +45,23 @@ const CopyText = ({ text = '', label = 'Copy', className }: CopyTextProps) => {
     void interactionsManager.interactionTrigger(id, declaration.triggers.onCopied.action, { text: shown });
   }, [id, interactionsManager, shown]);
 
+  const classes = [compact ? 'copy-text copy-text--compact' : 'copy-text', className].filter(Boolean).join(' ');
+
   return (
-    <RootElement
-      className={className ? `copy-text ${className}` : 'copy-text'}
-      interactionTriggers={TRIGGERS}
-      interactionCallbacks={{}}
-    >
-      <code className="copy-text__text">{shown}</code>
-      <button type="button" className="copy-text__button" onClick={() => void copy()}>
-        {label}
-      </button>
+    <RootElement className={classes} interactionTriggers={TRIGGERS} interactionCallbacks={{}}>
+      {compact ? (
+        <button type="button" className="copy-text__chip" title={label} aria-label={label} onClick={() => void copy()}>
+          <code>{shown}</code>
+          <i className="fa-regular fa-copy" aria-hidden="true" />
+        </button>
+      ) : (
+        <>
+          <code className="copy-text__text">{shown}</code>
+          <button type="button" className="copy-text__button" onClick={() => void copy()}>
+            {label}
+          </button>
+        </>
+      )}
     </RootElement>
   );
 };

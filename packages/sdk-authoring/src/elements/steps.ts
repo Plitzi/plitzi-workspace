@@ -162,14 +162,17 @@ export const setFieldValue = (target: string, name: string, value: string): Step
  * somebody reloads it. Pair it with the call that did the writing rather than with a notification: what tells the
  * person it worked is the row leaving.
  *
- * An element callback, so `target` is the CONTAINER's id, not the button's.
+ * An element callback, so `target` is the CONTAINER's id, not the button's. `input` is what a server-driven one is
+ * asked with this time — `{ q: '{{ state.search }}' }` for a search — beside the page's route and query params, and
+ * kept for every page it loads after, until the next reload.
  */
-export const reloadApi = (target: string): StepSpec => ({
+export const reloadApi = (target: string, input?: Record<string, string>): StepSpec => ({
   type: 'callback',
   action: 'performQuery',
   title: 'Reload',
   on: target,
-  params: {}
+  // What a server-driven provider is asked with this time — a search, a filter — and keeps for the pages after it.
+  params: input ? { input } : {}
 });
 
 /**
