@@ -13,6 +13,11 @@ export type CheckboxProps = {
   disabled?: boolean;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   onValidate?: () => void;
+  /**
+   * The id of the message saying what is wrong with the value, while something is: the field is then marked invalid
+   * and described by it, so a screen reader or a browser agent hears why the form would not send.
+   */
+  errorId?: string;
 };
 
 const Checkbox = ({
@@ -24,7 +29,8 @@ const Checkbox = ({
   required = true,
   disabled = false,
   onChange,
-  onValidate
+  onValidate,
+  errorId
 }: CheckboxProps) => {
   const handleBlur = useCallback(() => onValidate?.(), [onValidate]);
 
@@ -32,6 +38,8 @@ const Checkbox = ({
     <input
       className={clsx('form-control__checkbox-container', className)}
       id={id}
+      aria-invalid={errorId ? true : undefined}
+      aria-describedby={errorId}
       name={name}
       type="checkbox"
       placeholder={placeholder}

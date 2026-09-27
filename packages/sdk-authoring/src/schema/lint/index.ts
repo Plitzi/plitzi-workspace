@@ -1,3 +1,4 @@
+import { lintAccessibility } from './accessibility';
 import { lintChannels } from './channels';
 import { LintContext } from './context';
 import { lintElements } from './elements';
@@ -40,6 +41,7 @@ export const lintSpace = (
   lintChannels(ctx);
   lintFlows(ctx);
   lintStyle(ctx);
+  lintAccessibility(ctx);
 
   return { errors: ctx.errors, warnings: ctx.warnings };
 };

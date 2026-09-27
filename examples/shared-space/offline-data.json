@@ -73,7 +73,8 @@
         "id": "logo",
         "attributes": {
           "src": "https://cdn.plitzi.com/resources/img/favicon.svg",
-          "alt": "",
+          "alt": "Plitzi",
+          "decorative": false,
           "fetchPriority": "auto",
           "loadMode": "auto"
         },

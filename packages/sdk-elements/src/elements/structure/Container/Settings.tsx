@@ -1,5 +1,9 @@
+import Checkbox from '@plitzi/plitzi-ui/Checkbox';
+import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback } from 'react';
+
+import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
   subType?:
@@ -23,11 +27,18 @@ type SettingsProps = {
     | 'h4'
     | 'h5'
     | 'h6';
+  label?: string;
+  decorative?: boolean;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ subType = 'div', onUpdate }: SettingsProps) => {
+const Settings = ({ subType = 'div', label = '', decorative = false, onUpdate }: SettingsProps) => {
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+
+  const handleChangeDecorative = useCallback(
+    (e: ChangeEvent) => onUpdate?.('decorative', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
 
   return (
     <div className="flex flex-col gap-4 py-2">
@@ -53,6 +64,19 @@ const Settings = ({ subType = 'div', onUpdate }: SettingsProps) => {
         <option value="h5">H5 (heading with parts)</option>
         <option value="h6">H6 (heading with parts)</option>
       </Select>
+      <Input
+        value={label}
+        label="Region Name"
+        placeholder="e.g. Main navigation, Search results"
+        onChange={handleChange('label')}
+        size="xs"
+      />
+      <Checkbox
+        checked={decorative}
+        label="Decorative (hidden from screen readers)"
+        onChange={handleChangeDecorative}
+        size="xs"
+      />
     </div>
   );
 };

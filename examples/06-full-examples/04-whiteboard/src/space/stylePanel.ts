@@ -154,7 +154,9 @@ const customSwatch = (kind: 'stroke' | 'fill'): ElementSpec =>
         id: `${kind}-custom`,
         name: `${kind}Custom`,
         subType: 'color',
-        label: '',
+        // The swatch shows what it is; the name is for whoever cannot see it — a screen reader, Claude in Chrome.
+        label: kind === 'stroke' ? 'Any stroke colour' : 'Any fill colour',
+        hideLabel: true,
         required: false,
         class: customPicker,
         bind: [bindTemplate('defaultValue', `computed.${kind}`, "{{ '#' in source ? source : '#1e90ff' }}")],

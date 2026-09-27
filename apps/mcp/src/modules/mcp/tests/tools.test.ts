@@ -244,6 +244,56 @@ describe('mcp-ai plitzi_screenshot tool', () => {
     expect(res.html).toContain('<!doctype html>');
   });
 
+  it('reads the page as assistive technology does, and lists what has no name, without an image', async () => {
+    const asked: Array<string[] | undefined> = [];
+    const screenshot = {
+      capture: (input: { views?: string[] }) => {
+        asked.push(input.views);
+
+        return Promise.resolve({
+          ok: true as const,
+          images: [],
+          accessibility: [{ label: 'desktop', outline: '- navigation "Main":\n  - link "Docs"\n  - button\n- img' }]
+        });
+      }
+    };
+
+    const res = (await screenshotToolDef()?.execute(
+      { view: 'accessibility' },
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
+    )) as { content?: unknown; accessibility?: unknown; hint?: string };
+
+    expect(asked).toEqual([['accessibility']]);
+    expect(res.content).toBeUndefined();
+    expect(res.accessibility).toEqual([
+      {
+        viewport: 'desktop',
+        outline: '- navigation "Main":\n  - link "Docs"\n  - button\n- img',
+        unnamed: [
+          { role: 'button', line: 3 },
+          { role: 'img', line: 4 }
+        ]
+      }
+    ]);
+    expect(res.hint).toContain('`alt`');
+  });
+
+  it('says so when the browser service answers without the accessibility tree', async () => {
+    const screenshot = {
+      capture: () =>
+        Promise.resolve({ ok: true as const, images: [{ label: 'desktop', mimeType: 'image/png', data: 'AAAA' }] })
+    };
+
+    const res = (await screenshotToolDef()?.execute(
+      { view: 'both' },
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
+    )) as { content?: Array<{ type: string; text?: string }> };
+
+    const meta = res.content?.find(c => c.type === 'text')?.text ?? '';
+    expect(JSON.parse(meta)).toMatchObject({ warning: 'ACCESSIBILITY_UNSUPPORTED' });
+    expect(res.content?.some(c => c.type === 'image')).toBe(true);
+  });
+
   it('falls back to HTML when no browser service is wired', async () => {
     const res = (await screenshotToolDef()?.execute(
       {},

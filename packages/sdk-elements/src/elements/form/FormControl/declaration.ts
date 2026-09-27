@@ -97,6 +97,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       subType: 'text',
       name: '',
       label: 'Label',
+      hideLabel: false,
       placeholder: '',
       defaultValue: '',
       autoComplete: true,

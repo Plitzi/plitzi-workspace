@@ -34,6 +34,12 @@ export type ButtonProps = {
    * whose words were among its children after the default "Button" instead.
    */
   title?: string;
+  /**
+   * The button's name, for when the words it shows do not say what it does: a key hint beside an icon ("V"), a count,
+   * an arrow. Read in place of everything inside it by screen readers and browser agents, so it says the whole of it —
+   * "Select (V)". Left empty, the button is named by what it shows, then by `title`.
+   */
+  label?: string;
 };
 
 const Button = ({
@@ -46,7 +52,8 @@ const Button = ({
   disabled = false,
   ariaExpanded,
   ariaPressed,
-  title
+  title,
+  label
 }: ButtonProps) => {
   const {
     settings: { previewMode }
@@ -62,6 +69,7 @@ const Button = ({
       })}
       disabled={disabled}
       title={title || undefined}
+      aria-label={label || undefined}
       aria-expanded={ariaExpanded}
       aria-pressed={ariaPressed}
     >

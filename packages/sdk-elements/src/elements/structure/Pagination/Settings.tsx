@@ -10,6 +10,7 @@ type SettingsProps = {
   previousLabel?: string;
   nextLabel?: string;
   loadMoreLabel?: string;
+  label?: string;
   onUpdate?: (key: string, value: string | boolean | number | object) => void;
 };
 
@@ -21,6 +22,7 @@ const Settings = ({
   previousLabel = 'Previous',
   nextLabel = 'Next',
   loadMoreLabel = 'Load more',
+  label = 'Pagination',
   onUpdate
 }: SettingsProps) => {
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
@@ -54,6 +56,13 @@ const Settings = ({
       {mode === 'loadMore' && (
         <Input value={loadMoreLabel} label="Button label" onChange={handleChange('loadMoreLabel')} size="xs" />
       )}
+      <Input
+        value={label}
+        label="Navigation name"
+        title="What a screen reader calls this pager, in the site's language."
+        onChange={handleChange('label')}
+        size="xs"
+      />
       <span className="text-xs text-gray-500">
         Bind <strong>pageInfo</strong> to your provider&apos;s page info, for example{' '}
         <code>apiContainer_posts.pageInfo</code>.

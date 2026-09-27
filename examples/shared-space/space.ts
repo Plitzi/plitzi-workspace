@@ -176,7 +176,7 @@ export const sampleSpace: SpaceSpec = {
         container({ class: 'backdrop' }),
         container({
           class: 'logoFrame',
-          children: [image({ id: 'logo', src: 'https://cdn.plitzi.com/resources/img/favicon.svg', class: 'logo' })]
+          children: [image({ id: 'logo', src: 'https://cdn.plitzi.com/resources/img/favicon.svg', alt: 'Plitzi', class: 'logo' })]
         }),
         container({
           class: 'headline',

@@ -36,6 +36,28 @@ deployment enables guests) is a widgets-only connection too.
 What the agent may change follows the account: a member who can only view a space gets a connection that reads it
 and is refused at every write.
 
+### Claude Code, OpenCode and other terminal agents
+
+Add the server once, for every folder:
+
+```bash
+claude mcp add --transport http --scope user plitzi https://mcp.example.com/mcp
+opencode mcp add plitzi --url https://mcp.example.com/mcp
+```
+
+`--scope user` matters: Claude Code's default scope is the folder the command ran in, so a server added without it
+is missing everywhere else ("Claude says it has no Plitzi tools"). `claude mcp list` shows whether it is connected.
+Sign in from `/mcp` inside Claude Code. It opens the same sign-in and consent screen the Claude app shows. A session
+started before the server was added does not see it; start a new one.
+
+### Claude in Chrome
+
+Claude in Chrome needs no connector. It works the builder, or any published page, as the person who has it open,
+through the page's accessibility tree. It is the right tool for using a space. It is not the tool for editing one:
+the MCP server edits the space as a document, and the builder is a canvas of drag and drop an agent would fight.
+What makes a page easy for Claude in Chrome (names on every control, clicks on buttons and links, state that is
+announced) is in [Accessibility and browser agents](./accessibility.md).
+
 ### Other MCP clients
 
 A client that can send headers skips OAuth: pass a space token as `Authorization: Bearer <token>` (or
@@ -58,7 +80,9 @@ calls as a small one:
 2. **`plitzi_search`** — finds elements by label, type or attribute, and each hit already carries what an edit needs
    (its URI, its version, and with `include: "detail"` its props and resolved CSS).
 3. **`plitzi_validate`** or **`plitzi_apply` with `dryRun`** — checks a batch without saving.
-4. **`plitzi_screenshot`** — renders the page with the unsaved batch applied, desktop and mobile.
+4. **`plitzi_screenshot`** — renders the page with the unsaved batch applied, desktop and mobile. With
+   `view: "accessibility"` it reads the page as a screen reader and a browser agent do instead, and lists every
+   control and picture with no name.
 5. **`plitzi_apply`** — saves.
 
 | Tool | What it is for |
@@ -68,7 +92,7 @@ calls as a small one:
 | `plitzi_validate` | Check a batch of operations without saving |
 | `plitzi_apply` | Apply and save a batch — all of it or none of it |
 | `plitzi_preview` | Render a page to HTML, optionally with an unsaved batch |
-| `plitzi_screenshot` | Render a page to an image, optionally with an unsaved batch |
+| `plitzi_screenshot` | Render a page to an image, or to its accessibility tree (`view: "accessibility"`), optionally with an unsaved batch |
 | `plitzi_render` | Show the user an offline widget; never touches the space |
 
 The resources (`plitzi://…`) are the catalog the agent browses: pages and layouts, element types, style classes,
@@ -112,9 +136,11 @@ so a new operation or resource is not finished until the guide explains it.
 
 ## 6. Deliberately left open
 
-- **Quality beyond validity.** The linter guarantees a space is well-formed and wired; it does not judge it. There is
-  no check yet for accessibility (image `alt`, heading order, contrast) or for hardcoded values where a design token
-  exists, so "make this page better" rests on the agent's judgement and the screenshot.
+- **Quality beyond validity.** The linter guarantees a space is well-formed and wired, and warns about what makes a
+  page unusable without sight: controls with no name, pictures with no `alt`, clicks on things that are not
+  controls, headings that skip a level ([Accessibility](./accessibility.md)). It does not judge the rest. Contrast,
+  focus order and hardcoded values where a design token exists are not checked, so "make this page better" still
+  rests on the agent's judgement, the screenshot and the accessibility view.
 - **Intent.** Nothing tells the agent what a page is *for* — its audience or goal — beyond what the user says in the
   conversation.
 - **Evals.** There is no golden corpus of spaces and edits that measures whether an agent's change improves a page

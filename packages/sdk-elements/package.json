@@ -350,6 +350,10 @@
       "types": "./dist/elements/basic/Dropdown/useDropdown.d.ts",
       "import": "./dist/elements/basic/Dropdown/useDropdown.mjs"
     },
+    "./elements/basic/Dropdown/useDropdownTrigger": {
+      "types": "./dist/elements/basic/Dropdown/useDropdownTrigger.d.ts",
+      "import": "./dist/elements/basic/Dropdown/useDropdownTrigger.mjs"
+    },
     "./elements/basic/Heading": {
       "types": "./dist/elements/basic/Heading/index.d.ts",
       "import": "./dist/elements/basic/Heading/index.mjs"
@@ -533,6 +537,10 @@
     "./elements/form/FormControl/components/Label": {
       "types": "./dist/elements/form/FormControl/components/Label.d.ts",
       "import": "./dist/elements/form/FormControl/components/Label.mjs"
+    },
+    "./elements/form/FormControl/components/visuallyHidden": {
+      "types": "./dist/elements/form/FormControl/components/visuallyHidden.d.ts",
+      "import": "./dist/elements/form/FormControl/components/visuallyHidden.mjs"
     },
     "./elements/form/FormControl/declaration": {
       "types": "./dist/elements/form/FormControl/declaration.d.ts",
@@ -933,6 +941,10 @@
     "./elements/structure/ModalContainer/metadataFromText": {
       "types": "./dist/elements/structure/ModalContainer/metadataFromText.d.ts",
       "import": "./dist/elements/structure/ModalContainer/metadataFromText.mjs"
+    },
+    "./elements/structure/ModalContainer/useModalDialog": {
+      "types": "./dist/elements/structure/ModalContainer/useModalDialog.d.ts",
+      "import": "./dist/elements/structure/ModalContainer/useModalDialog.mjs"
     },
     "./elements/structure/Pagination": {
       "types": "./dist/elements/structure/Pagination/index.d.ts",

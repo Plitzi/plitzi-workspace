@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 
 import TabContainerContext from './TabContainerContext';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
 import type { ReactNode, RefObject } from 'react';
@@ -15,8 +16,13 @@ export type TabContainerProps = {
 };
 
 const TabContainer = ({ ref, className = '', children }: TabContainerProps) => {
+  const { id, rootId } = useElement();
   const [tabSelected, setTabSelected] = useState(0);
-  const tabContainerContextValue = useMemo(() => ({ tabSelected, onSelect: setTabSelected }), [tabSelected]);
+  const baseId = `${rootId}_${id}`;
+  const tabContainerContextValue = useMemo(
+    () => ({ baseId, tabSelected, onSelect: setTabSelected }),
+    [baseId, tabSelected]
+  );
 
   return (
     <RootElement ref={ref} className={clsx('plitzi-component__tab-container', className)}>

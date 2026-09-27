@@ -35,9 +35,9 @@ export const elementAttributeNames = {
   ],
   blockHtml: ['content'],
   blockJsx: ['allowEmptyRender', 'content', 'contentCache', 'props'],
-  button: ['ariaExpanded', 'ariaPressed', 'content', 'contentPlacement', 'disabled', 'subType', 'title'],
+  button: ['ariaExpanded', 'ariaPressed', 'content', 'contentPlacement', 'disabled', 'label', 'subType', 'title'],
   channel: ['keep', 'presence', 'subType', 'topic'],
-  container: ['subType'],
+  container: ['decorative', 'label', 'subType'],
   custom: null,
   dialogContainer: [
     'acceptButtonLabel',
@@ -57,7 +57,7 @@ export const elementAttributeNames = {
     'popupPlacement'
   ],
   dropdownPopup: [],
-  fontAwesome: ['icon', 'iconAnimation', 'size'],
+  fontAwesome: ['icon', 'iconAnimation', 'label', 'size'],
   form: ['actionUrl', 'errors', 'managedByInteractions', 'method', 'noValidate', 'values'],
   formControl: [
     'autoComplete',
@@ -65,6 +65,7 @@ export const elementAttributeNames = {
     'defaultValue',
     'disabled',
     'formatMessage',
+    'hideLabel',
     'label',
     'matches',
     'matchesMessage',
@@ -84,7 +85,7 @@ export const elementAttributeNames = {
     'subType'
   ],
   heading: ['content', 'subType'],
-  image: ['alt', 'fetchPriority', 'loadMode', 'src'],
+  image: ['alt', 'decorative', 'fetchPriority', 'loadMode', 'src'],
   layoutContainer: ['layout', 'layoutContainer', 'subType'],
   link: ['href', 'label', 'mode', 'target'],
   list: ['items', 'source', 'subType'],
@@ -372,7 +373,17 @@ export const elementAttributeNames = {
   ],
   notFound: [],
   page: ['layout', 'layoutContainer', 'seoEnabled', 'seoPageDescription', 'seoPageTitle'],
-  pagination: ['loadMoreLabel', 'mode', 'nextLabel', 'pageInfo', 'pageParam', 'previousLabel', 'target', 'windowSize'],
+  pagination: [
+    'label',
+    'loadMoreLabel',
+    'mode',
+    'nextLabel',
+    'pageInfo',
+    'pageParam',
+    'previousLabel',
+    'target',
+    'windowSize'
+  ],
   paragraph: ['content'],
   reference: ['referenceContainer', 'referenceId', 'referenceType'],
   richText: ['content', 'format', 'mediaBaseUrl'],

@@ -11,10 +11,11 @@ type SettingsProps = {
   mode?: 'page' | 'internal' | 'external';
   href?: string;
   target?: 'blank' | 'self' | 'parent' | 'top';
+  label?: string;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ mode = 'page', href = '#', target = 'self', onUpdate }: SettingsProps) => {
+const Settings = ({ mode = 'page', href = '#', target = 'self', label = '', onUpdate }: SettingsProps) => {
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
@@ -106,6 +107,13 @@ const Settings = ({ mode = 'page', href = '#', target = 'self', onUpdate }: Sett
           <div className="truncate rounded-b border-r border-b border-l border-gray-200 p-1 text-xs">{fullpath}</div>
         </div>
       )}
+      <Input
+        value={label}
+        label="Accessible Name"
+        placeholder="For a link that wraps a whole card"
+        onChange={handleChange('label')}
+        size="sm"
+      />
     </div>
   );
 };

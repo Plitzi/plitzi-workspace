@@ -11,6 +11,7 @@ type SettingsProps = {
   subType?: 'button' | 'reset' | 'submit';
   disabled?: boolean;
   title?: string;
+  label?: string;
   onUpdate?: (key: string, value: string | number | boolean) => void;
 };
 
@@ -20,6 +21,7 @@ const Settings = ({
   subType = 'button',
   disabled = false,
   title = '',
+  label = '',
   onUpdate
 }: SettingsProps) => {
   const handleChangeContent = useCallback((value: string) => onUpdate?.('content', value), [onUpdate]);
@@ -32,6 +34,8 @@ const Settings = ({
   const handleChangeSubType = useCallback((value: string) => onUpdate?.('subType', value), [onUpdate]);
 
   const handleChangeTitle = useCallback((value: string) => onUpdate?.('title', value), [onUpdate]);
+
+  const handleChangeLabel = useCallback((value: string) => onUpdate?.('label', value), [onUpdate]);
 
   const handleChangeDisabled = useCallback(
     (e: ChangeEvent) => onUpdate?.('disabled', (e.target as HTMLInputElement).checked),
@@ -46,6 +50,13 @@ const Settings = ({
         label="Tooltip"
         placeholder="What the button does, for an icon-only one"
         onChange={handleChangeTitle}
+        size="xs"
+      />
+      <Input
+        value={label}
+        label="Accessible Name"
+        placeholder="When its words do not say what it does"
+        onChange={handleChangeLabel}
         size="xs"
       />
       <Select value={contentPlacement} label="Mode" onChange={handleChangeContentPlacement} size="xs">

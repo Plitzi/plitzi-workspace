@@ -35,7 +35,10 @@ export {
   createHttpPreviewClient,
   createHttpScreenshotClient,
   createLocalScreenshotClient,
-  resolveLocalBrowser
+  resolveLocalBrowser,
+  outlineOfSnapshot,
+  outlineOfTree,
+  unnamedControls
 } from './modules/mcp';
 export {
   apply,
@@ -60,6 +63,10 @@ export type {
   ScreenshotClient,
   ScreenshotImage,
   ScreenshotResult,
+  AccessibilityNode,
+  AccessibilityOutline,
+  CaptureView,
+  UnnamedControl,
   Viewport,
   HttpScreenshotClientConfig
 } from './modules/mcp';

@@ -1,6 +1,15 @@
 import { PREVIEW_TOKEN_PARAM } from '@plitzi/sdk-server/kernel';
 
-import type { ScreenshotClient, ScreenshotImage, ScreenshotInput, ScreenshotResult } from './types';
+import { outlineOfSnapshot, outlineOfTree } from './accessibilityOutline';
+
+import type { AccessibilityNode } from './accessibilityOutline';
+import type {
+  AccessibilityOutline,
+  ScreenshotClient,
+  ScreenshotImage,
+  ScreenshotInput,
+  ScreenshotResult
+} from './types';
 
 /**
  * A capture that needs no service to be running.
@@ -29,6 +38,10 @@ type Page = {
   emulateMediaFeatures?: (features: { name: string; value: string }[]) => Promise<void>;
   evaluate: <T>(fn: () => T) => Promise<T>;
   screenshot: (options: Record<string, unknown>) => Promise<Buffer | Uint8Array>;
+  /** Playwright's: the page's accessibility tree, already written as an outline. */
+  locator?: (selector: string) => { ariaSnapshot: () => Promise<string> };
+  /** Puppeteer's: the same tree, as nodes. */
+  accessibility?: { snapshot: (options?: { interestingOnly?: boolean }) => Promise<AccessibilityNode | null> };
 };
 
 type Browser = {
@@ -94,6 +107,20 @@ const setViewport = async (page: Page, size: { width: number; height: number }):
   await (page.setViewportSize ? page.setViewportSize(size) : page.setViewport?.(size));
 };
 
+/** The tree a screen reader walks, from whichever driver this is; `undefined` from one that offers neither. */
+const readOutline = async (page: Page): Promise<string | undefined> => {
+  if (page.locator) {
+    return outlineOfSnapshot(await page.locator('body').ariaSnapshot());
+  }
+
+  if (page.accessibility) {
+    // The whole tree: the "interesting" one leaves out a picture with no name — the very thing worth finding.
+    return outlineOfTree(await page.accessibility.snapshot({ interestingOnly: false }));
+  }
+
+  return undefined;
+};
+
 /** Before the navigation: a space on the `system` theme paints from `prefers-color-scheme` from its first frame. */
 const emulateColorScheme = async (page: Page, colorScheme: ColorScheme): Promise<void> => {
   await (page.emulateMedia
@@ -123,7 +150,8 @@ export const createLocalScreenshotClient = async ({
       token,
       viewports,
       fullPage = true,
-      colorScheme
+      colorScheme,
+      views = ['image']
     }: ScreenshotInput): Promise<ScreenshotResult> {
       const url = new URL(pagePath, renderBaseUrl);
       if (token) {
@@ -144,6 +172,7 @@ export const createLocalScreenshotClient = async ({
           ...(ignoreHttpsErrors ? { ignoreHTTPSErrors: true } : {})
         });
         const images: ScreenshotImage[] = [];
+        const accessibility: AccessibilityOutline[] = [];
 
         for (const viewport of viewports) {
           const page = await browser.newPage();
@@ -167,11 +196,18 @@ export const createLocalScreenshotClient = async ({
             }
           }
 
-          const shot = await page.screenshot({ type: 'png', fullPage });
-          images.push({ label: viewport.label, mimeType: 'image/png', data: Buffer.from(shot).toString('base64') });
+          if (views.includes('image')) {
+            const shot = await page.screenshot({ type: 'png', fullPage });
+            images.push({ label: viewport.label, mimeType: 'image/png', data: Buffer.from(shot).toString('base64') });
+          }
+
+          const outline = views.includes('accessibility') ? await readOutline(page) : undefined;
+          if (outline !== undefined) {
+            accessibility.push({ label: viewport.label, outline });
+          }
         }
 
-        return { ok: true, images };
+        return { ok: true, images, ...(views.includes('accessibility') ? { accessibility } : {}) };
       } catch (err) {
         return { ok: false, error: 'SCREENSHOT_FAILED', message: `Local browser capture failed: ${String(err)}` };
       } finally {

@@ -7,12 +7,15 @@ import {
   bindTemplate,
   button,
   channel,
+  closeModal,
   declaredCallback,
   declaredTrigger,
   defineElement,
   delay,
+  fontAwesome,
   form,
   formControl,
+  image,
   link,
   list,
   modalContainer,
@@ -118,6 +121,20 @@ describe('the skill’s recipes', () => {
               }),
               modalContainer({ id: 'details', visible: false, title: 'Details', children: [text('Details')] }),
               button({ content: 'Open', flows: [[onClick(), openModal('details')]] }),
+              button({
+                content: '',
+                title: 'Close',
+                children: [fontAwesome({ icon: 'fa-solid fa-xmark' })],
+                flows: [[onClick(), closeModal('details')]]
+              }),
+              button({
+                content: '',
+                children: [text('Pro'), text('12 € a month')],
+                flows: [[onClick(), setState({ key: 'plan', type: 'text', value: 'pro' })]]
+              }),
+              formControl({ name: 'q', label: 'Search the docs', hideLabel: true, placeholder: 'Search…' }),
+              image({ src: '/team.jpg', alt: 'The team at the 2026 offsite' }),
+              image({ src: '/grain.png', decorative: true }),
               link({ href: 'about', children: [text('About')] }),
               link({ href: '/games/nebula', mode: 'internal', children: [text('Nebula')] }),
               seats({

@@ -20,6 +20,11 @@ export type InputProps = {
   readOnly?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onValidate?: () => void;
+  /**
+   * The id of the message saying what is wrong with the value, while something is: the field is then marked invalid
+   * and described by it, so a screen reader or a browser agent hears why the form would not send.
+   */
+  errorId?: string;
 };
 
 const Input = ({
@@ -36,7 +41,8 @@ const Input = ({
   disabled = false,
   readOnly = false,
   onChange,
-  onValidate
+  onValidate,
+  errorId
 }: InputProps) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +77,8 @@ const Input = ({
         ref={inputRef}
         className="input-container__input"
         id={id}
+        aria-invalid={errorId ? true : undefined}
+        aria-describedby={errorId}
         name={name}
         type={type === 'password' && isPasswordVisible ? 'text' : type}
         placeholder={placeholder}
@@ -83,15 +91,18 @@ const Input = ({
         onChange={onChange}
         onBlur={handleBlur}
       />
-      {type === 'password' && !isPasswordVisible && (
-        <div className="form-input__icon" onClick={handleClickShowPassword}>
-          <i className="fa-solid fa-eye" />
-        </div>
-      )}
-      {type === 'password' && isPasswordVisible && (
-        <div className="form-input__icon" onClick={handleClickShowPassword}>
-          <i className="fa-solid fa-eye-slash" />
-        </div>
+      {type === 'password' && (
+        // Named by its title, not an `aria-label`: a test — or an agent — looking for the field by its label ("Password")
+        // would find this button too, since a label is matched by the words it contains.
+        <button
+          type="button"
+          className="form-input__icon"
+          aria-pressed={isPasswordVisible}
+          title="Show password"
+          onClick={handleClickShowPassword}
+        >
+          <i className={isPasswordVisible ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'} aria-hidden="true" />
+        </button>
       )}
     </div>
   );

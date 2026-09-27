@@ -115,4 +115,12 @@ describe('ThemeToggle', () => {
 
     expect(setTheme).toHaveBeenCalledWith('system');
   });
+
+  it('says which scheme is chosen, in the segmented form, as a group of pressed buttons', () => {
+    const { getByRole } = render(atTheme('dark', <ThemeToggle subType="segmented" showSystem />));
+
+    expect(getByRole('group', { name: 'Light / Dark' })).toBeTruthy();
+    expect(getByRole('button', { name: 'Dark' }).getAttribute('aria-pressed')).toBe('true');
+    expect(getByRole('button', { name: 'Light' }).getAttribute('aria-pressed')).toBe('false');
+  });
 });

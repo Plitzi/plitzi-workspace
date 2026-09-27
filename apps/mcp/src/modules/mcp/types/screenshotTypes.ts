@@ -4,7 +4,18 @@ export type Viewport = { label: string; width: number; height: number };
 
 export type ScreenshotImage = { label: string; mimeType: string; data: string };
 
-export type ScreenshotResult = { ok: true; images: ScreenshotImage[] } | { ok: false; error: string; message: string };
+/**
+ * What a capture brings back of a page: how it looks, and how assistive technology reads it — the accessibility tree a
+ * screen reader walks, and the one a browser agent such as Claude in Chrome finds the page's controls in.
+ */
+export type CaptureView = 'image' | 'accessibility';
+
+/** One viewport's accessibility tree, as an indented outline: `- button "Close"`, `- heading "Plans" [level=1]`. */
+export type AccessibilityOutline = { label: string; outline: string };
+
+export type ScreenshotResult =
+  | { ok: true; images: ScreenshotImage[]; accessibility?: AccessibilityOutline[] }
+  | { ok: false; error: string; message: string };
 
 export type ScreenshotInput = {
   pagePath: string;
@@ -16,6 +27,11 @@ export type ScreenshotInput = {
    * forces a theme keeps its own; left out, the browser's default applies, which is light.
    */
   colorScheme?: ColorScheme;
+  /**
+   * What to bring back; `['image']` when left out. A browser that cannot read the accessibility tree answers without
+   * `accessibility`, and the caller says so rather than failing.
+   */
+  views?: CaptureView[];
 };
 
 /** How plitzi_screenshot reaches the headless-browser service. The consumer injects an implementation (an HTTP

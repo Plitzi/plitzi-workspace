@@ -15,7 +15,7 @@ export type TabContainerBodyProps = {
 };
 
 const TabContainerBody = ({ ref, className = '', children }: TabContainerBodyProps) => {
-  const { tabSelected, onSelect } = use(TabContainerContext);
+  const { baseId, tabSelected, onSelect } = use(TabContainerContext);
 
   const { childrenParsed } = useMemo(() => {
     const components: { childrenParsed: ReactNode[] } = { childrenParsed: [] };
@@ -30,6 +30,7 @@ const TabContainerBody = ({ ref, className = '', children }: TabContainerBodyPro
           ...childProps,
           internalProps: {
             ...(childProps.internalProps as Record<string, unknown>),
+            baseId,
             onSelect,
             tabSelected,
             tabIndex: i
@@ -39,7 +40,7 @@ const TabContainerBody = ({ ref, className = '', children }: TabContainerBodyPro
     });
 
     return components;
-  }, [children, onSelect, tabSelected]);
+  }, [baseId, children, onSelect, tabSelected]);
 
   return (
     <RootElement ref={ref} className={clsx('plitzi-component__tab-container-body', className)}>

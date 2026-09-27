@@ -1,4 +1,5 @@
 import {
+  bindTemplate,
   button,
   container,
   onClick,
@@ -153,9 +154,14 @@ const soloButton = (entry: ElementEntry): ElementSpec =>
     id: `tool-${entry.id}`,
     content: '',
     title: `${entry.label} — ${entry.description} · ${entry.hint}`,
+    // Its name, not its key hint: what it shows is a glyph and a letter.
+    label: `${entry.label} (${entry.hint})`,
     class: toolButton,
     bind: entry.tool
-      ? [variantFrom(toolButton, 'computed.tool', { template: `{{ source == '${entry.tool}' ? 'active' : '' }}` })]
+      ? [
+          variantFrom(toolButton, 'computed.tool', { template: `{{ source == '${entry.tool}' ? 'active' : '' }}` }),
+          bindTemplate('ariaPressed', 'computed.tool', `{{ source == '${entry.tool}' ? 'true' : 'false' }}`)
+        ]
       : [],
     flows: [[onClick(), ...closePanels, ...pickSteps(entry)], ...dragFlows(entry)],
     children: [markOf(entry), text({ content: entry.hint, class: keyHint })]
@@ -179,11 +185,13 @@ const groupButton = (category: Category & { id: GroupId }): ElementSpec =>
     id: `tool-${category.id}`,
     content: '',
     title: `${category.label} — ${category.hint}`,
+    label: `${category.label} (${category.hint})`,
     class: toolButton,
     bind: [
       variantFrom(toolButton, 'computed.tool', {
         template: `{{ source in ${list(toolsOf(category))} ? 'active' : '' }}`
-      })
+      }),
+      bindTemplate('ariaExpanded', `computed.${category.id}Open`, "{{ source ? 'true' : 'false' }}")
     ],
     // Only the choice: the tool changes — and its style panel opens — once something is picked.
     flows: [[onClick(), ...closeOthers(`${category.id}Open`), toggleState({ key: `${category.id}Open` })]],
@@ -209,8 +217,12 @@ const libraryButton = (): ElementSpec =>
     id: 'tool-library',
     content: '',
     title: 'All elements — I',
+    label: 'All elements (I)',
     class: toolButton,
-    bind: [variantFrom(toolButton, 'computed.libraryOpen', { template: "{{ source ? 'active' : '' }}" })],
+    bind: [
+      variantFrom(toolButton, 'computed.libraryOpen', { template: "{{ source ? 'active' : '' }}" }),
+      bindTemplate('ariaExpanded', 'computed.libraryOpen', "{{ source ? 'true' : 'false' }}")
+    ],
     flows: [[onClick(), ...closeOthers('libraryOpen'), toggleState({ key: 'libraryOpen' })]],
     children: [icon('fa-solid fa-plus'), text({ content: 'I', class: keyHint })]
   });

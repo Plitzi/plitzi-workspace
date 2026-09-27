@@ -18,6 +18,8 @@ import {
   withChange
 } from './testUtils/lintFixture';
 
+import type { Schema } from '@plitzi/sdk-shared';
+
 /**
  * Every rule of the linter, pinned by its code.
  *
@@ -792,6 +794,157 @@ describe('lintSpace', () => {
       });
 
       expect(warningsOf(documents)).toContain('colour-without-dark');
+    });
+  });
+
+  describe('accessibility', () => {
+    const iconOnly = (schema: Schema, id: string, type: 'button' | 'link', attributes: Record<string, unknown>) => {
+      addElement(schema, { id, type, attributes });
+      addElement(schema, { id: `${id}-icon`, type: 'fontAwesome', attributes: { icon: 'fa-solid fa-xmark' } });
+      const home = homeId(schema);
+      schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(
+        item => item !== `${id}-icon`
+      );
+      schema.flat[`${id}-icon`].definition.parentId = id;
+      schema.flat[id].definition.items = [`${id}-icon`];
+    };
+
+    it('control-without-name', () => {
+      const documents = withChange(({ schema }) => {
+        iconOnly(schema, 'close', 'button', { content: '' });
+      });
+
+      expect(warningsOf(documents)).toContain('control-without-name');
+    });
+
+    it('control-without-name is quiet once a title, a label or words inside name the control', () => {
+      const documents = withChange(({ schema }) => {
+        iconOnly(schema, 'close', 'button', { content: '', title: 'Close' });
+        iconOnly(schema, 'profile', 'link', { label: 'Your profile' });
+        addElement(schema, { id: 'email', type: 'formControl', attributes: { label: '', placeholder: 'Email' } });
+        addElement(schema, { id: 'plain', type: 'button', attributes: {} });
+      });
+
+      expect(warningsOf(documents)).not.toContain('control-without-name');
+    });
+
+    it('control-without-name reads a field nothing names — a placeholder names only a field typed into', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'email', type: 'formControl', attributes: { label: '', placeholder: '' } });
+        addElement(schema, {
+          id: 'swatch',
+          type: 'formControl',
+          attributes: { subType: 'color', label: '', placeholder: 'Colour' }
+        });
+        addElement(schema, {
+          id: 'tint',
+          type: 'formControl',
+          attributes: { subType: 'color', label: 'Tint', hideLabel: true }
+        });
+      });
+      const flagged = lintSpace(documents)
+        .warnings.filter(issue => issue.code === 'control-without-name')
+        .map(issue => issue.elementId);
+
+      expect(flagged).toEqual(['email', 'swatch']);
+    });
+
+    it('image-without-alt', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'hero', type: 'image', attributes: { src: '/hero.png', alt: '' } });
+        addElement(schema, { id: 'texture', type: 'image', attributes: { src: '/grain.png', decorative: true } });
+        addElement(schema, { id: 'team', type: 'image', attributes: { src: '/team.png', alt: 'The team at work' } });
+      });
+      const flagged = lintSpace(documents)
+        .warnings.filter(issue => issue.code === 'image-without-alt')
+        .map(issue => issue.elementId);
+
+      expect(flagged).toEqual(['hero']);
+    });
+
+    it('click-on-static-element', () => {
+      const documents = withChange(({ schema }) => {
+        setFlow(schema, 'box', [step('click', 'trigger', 'onClick', { elementId: 'box' })]);
+      });
+
+      expect(warningsOf(documents)).toContain('click-on-static-element');
+    });
+
+    it('click-on-static-element leaves an empty backdrop alone', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'scrim', type: 'container', attributes: {} });
+        setFlow(schema, 'scrim', [step('click', 'trigger', 'onClick', { elementId: 'scrim' })]);
+      });
+
+      expect(warningsOf(documents)).not.toContain('click-on-static-element');
+    });
+
+    it('label-ignored', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'row', type: 'container', attributes: { subType: 'li', label: 'A row' } });
+        addElement(schema, { id: 'menu', type: 'container', attributes: { subType: 'nav', label: 'Main' } });
+      });
+      const flagged = lintSpace(documents)
+        .warnings.filter(issue => issue.code === 'label-ignored')
+        .map(issue => issue.elementId);
+
+      expect(flagged).toEqual(['row']);
+    });
+
+    it('control-in-decorative, and nothing else inside an illustration', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'mock', type: 'container', attributes: { decorative: true } });
+        iconOnly(schema, 'mock-cta', 'button', { content: '' });
+        addElement(schema, { id: 'mock-card', type: 'container', attributes: {} });
+        addElement(schema, { id: 'mock-shot', type: 'image', attributes: { src: '/shot.png' } });
+        const home = homeId(schema);
+        for (const id of ['mock-cta', 'mock-card', 'mock-shot']) {
+          schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(item => item !== id);
+          schema.flat[id].definition.parentId = 'mock';
+        }
+        schema.flat.mock.definition.items = ['mock-cta', 'mock-card', 'mock-shot'];
+        schema.flat['mock-card'].definition.items = [];
+        setFlow(schema, 'mock-card', [step('click', 'trigger', 'onClick', { elementId: 'mock-card' })]);
+      });
+      const accessibility = lintSpace(documents).warnings.filter(issue =>
+        ['control-in-decorative', 'control-without-name', 'image-without-alt', 'click-on-static-element'].includes(
+          issue.code
+        )
+      );
+
+      expect(accessibility.map(issue => [issue.code, issue.elementId])).toEqual([
+        ['control-in-decorative', 'mock-cta']
+      ]);
+    });
+
+    it('dropdown-without-control', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'menu', type: 'dropdown', attributes: {} });
+        addElement(schema, { id: 'menu-popup', type: 'dropdownPopup', attributes: {} });
+        addElement(schema, { id: 'menu-avatar', type: 'container', attributes: {} });
+        const home = homeId(schema);
+        schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(
+          item => item !== 'menu-popup' && item !== 'menu-avatar'
+        );
+        schema.flat['menu-popup'].definition.parentId = 'menu';
+        schema.flat['menu-avatar'].definition.parentId = 'menu';
+        schema.flat.menu.definition.items = ['menu-popup', 'menu-avatar'];
+      });
+
+      expect(warningsOf(documents)).toContain('dropdown-without-control');
+    });
+
+    it('heading-level-skipped', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'title', type: 'heading', attributes: { subType: 'h1', content: 'Plans' } });
+        addElement(schema, { id: 'fine-print', type: 'heading', attributes: { subType: 'h3', content: 'Terms' } });
+        addElement(schema, { id: 'faq', type: 'heading', attributes: { subType: 'h2', content: 'FAQ' } });
+      });
+      const flagged = lintSpace(documents)
+        .warnings.filter(issue => issue.code === 'heading-level-skipped')
+        .map(issue => issue.elementId);
+
+      expect(flagged).toEqual(['fine-print']);
     });
   });
 

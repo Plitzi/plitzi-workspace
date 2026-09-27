@@ -20,6 +20,11 @@ export type TextareaProps = {
   readOnly?: boolean;
   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
   onValidate?: () => void;
+  /**
+   * The id of the message saying what is wrong with the value, while something is: the field is then marked invalid
+   * and described by it, so a screen reader or a browser agent hears why the form would not send.
+   */
+  errorId?: string;
 };
 
 const Textarea = ({
@@ -34,7 +39,8 @@ const Textarea = ({
   disabled = false,
   readOnly = false,
   onChange,
-  onValidate
+  onValidate,
+  errorId
 }: TextareaProps) => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   useFocusWhenShown(inputRef, autoFocus);
@@ -50,6 +56,8 @@ const Textarea = ({
       ref={inputRef}
       className={clsx('form-control__textarea-container', className)}
       id={id}
+      aria-invalid={errorId ? true : undefined}
+      aria-describedby={errorId}
       name={name}
       placeholder={placeholder}
       value={value}

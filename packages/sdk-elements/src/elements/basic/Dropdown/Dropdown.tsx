@@ -6,6 +6,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import DropdownContext from './DropdownContext';
 import useDropdown from './useDropdown';
+import useDropdownTrigger from './useDropdownTrigger';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -87,6 +88,21 @@ const Dropdown = ({
     onChange: handleOpenChange
   });
 
+  const noteClick = useDropdownTrigger({
+    popupRef,
+    open: openPopup,
+    positioned: Boolean(parameters),
+    enabled: Boolean(previewMode) && !disabled
+  });
+
+  const handleClickTrigger = useCallback(
+    (e: MouseEvent) => {
+      noteClick(e);
+      handleClick(e);
+    },
+    [noteClick, handleClick]
+  );
+
   const dropdownContext = useMemo(
     () => ({ popupRef, openPopup, parameters, onClick: handleClickPopup }),
     [handleClickPopup, openPopup, parameters]
@@ -96,7 +112,7 @@ const Dropdown = ({
     <RootElement
       ref={ref}
       className={clsx('plitzi-component__dropdown', className, { 'container--empty--skip': !previewMode && !children })}
-      onClick={handleClick}
+      onClick={handleClickTrigger}
     >
       <DropdownContext value={dropdownContext}>{children}</DropdownContext>
       {openPopup && backgroundDisabled && previewMode && (

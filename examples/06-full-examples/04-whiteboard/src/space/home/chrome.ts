@@ -103,7 +103,7 @@ export const siteBar = (id: string, end: ElementSpec[] = []): ElementSpec =>
         children: [
           container({
             class: brand,
-            children: [image({ src: BRAND_PATH, alt: '', class: brandMark }), text({ content: 'Pizarra' })]
+            children: [image({ src: BRAND_PATH, decorative: true, class: brandMark }), text({ content: 'Pizarra' })]
           })
         ]
       }),

@@ -41,6 +41,9 @@ export const serverInstructions =
   'edit them with patchElement (initialState), upsertBinding/patchBinding/deleteBinding, and ' +
   'upsertInteractionFlow/patchInteractionNode/deleteInteraction. An element read shows all three plus ' +
   'availableVariants (which variant each of its classes offers). ' +
+  'Build pages people can use without sight: screen readers and browser agents (Claude in Chrome) work a page ' +
+  'through its accessibility tree, so every control needs words and clicks go on buttons and links — see ' +
+  'Accessibility in plitzi://guide, and plitzi_screenshot view:"accessibility" to check. ' +
   'Separately, to SHOW the user a small self-contained widget (offline, no space or backend) instead of editing ' +
   'the space — a card, hero, pricing table, a visual answer — use plitzi_render; read plitzi://render/guide for it.';
 
@@ -125,6 +128,11 @@ flow — list page, detail page, paging, writes — in \`plitzi://guide\`.
 slugs prepend the path). A \`:name\` segment (\`"posts/:postId"\`) is a route param, readable as \`{{name}}\` and as the
 source \`navigation.routeParams.name\` → build dynamic pages this way. To move between pages **prefer the \`Link\`
 element** (a container: \`mode\` "page"/"internal"/"external") over a \`navigate\` interaction.
+
+**Accessible by default:** screen readers and browser agents (Claude in Chrome) read the accessibility tree, so every
+button/link needs words (an icon-only button a \`title\`), every field a \`label\` (\`hideLabel: true\` hides it), every
+image an \`alt\` or \`decorative: true\`; clicks go on a \`button\`/\`link\`, never a container; headings step down one
+level at a time. \`plitzi_screenshot view:"accessibility"\` shows the tree and what has no name.
 
 **Touched elements must be malformation-free.** Editing an element also checks its CURRENT stored content and BLOCKS
 the save on any \`Pre-existing malformation in element …\` error (a broken transformer, a malformed step, an attribute
@@ -249,8 +257,10 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   so one bad uri never fails the batch. Use it instead of N single reads whenever you already hold several refs.
 - \`plitzi_preview\` — render a page to HTML, optionally with unsaved \`operations\` applied, to check structure.
 - \`plitzi_screenshot\` — render a page to a PNG (desktop, mobile or \`both\`), optionally with unsaved \`operations\`:
-  the way to SEE overflow, misalignment and broken layout before you commit. Both need the SSR render service; where
-  it is missing they answer \`PREVIEW_UNAVAILABLE\`.
+  the way to SEE overflow, misalignment and broken layout before you commit. \`view: "accessibility"\` reads the same
+  page as a screen reader and a browser agent (Claude in Chrome) do — its accessibility tree as an outline of roles and
+  names, with every control and picture that has no name listed in \`unnamed\` — as text, far cheaper than an image
+  (\`"both"\` returns both). Both need the SSR render service; where it is missing they answer \`PREVIEW_UNAVAILABLE\`.
 - \`plitzi_render\` — a different job: show the user a self-contained widget built offline. It never touches the space.
 
 ## Readers: resources vs plitzi_search vs plitzi_read (do not confuse them)
@@ -791,6 +801,41 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   \`null\` removes one.
   Example — inject a keyframe globally:
   \`{ "type": "patchSettings", "customCss": "@keyframes spin { to { transform: rotate(360deg); } }" }\`.
+
+## Accessibility — pages people, screen readers and browser agents can all use
+A page is read three ways: seen, heard through a screen reader, and worked by a **browser agent** (Claude in Chrome)
+— which finds the controls it can press in the same **accessibility tree** a screen reader walks. A control that
+tree names nothing is invisible to both, however it looks. So build every page to be operable without sight:
+- **Every control has words.** A \`button\` is named by its \`content\` and the words inside it; an icon-only one needs a
+  \`title\` (also its tooltip), and one whose words do not say what it does (a key hint, a count) a \`label\`. A \`link\` is named by what it holds, or \`label\` (set it on a link wrapping a whole card).
+  A \`formControl\` is named by its \`label\` — keep it and set \`hideLabel: true\` when the design shows what the field
+  is (a swatch, a search box); a \`placeholder\` names only a field typed into, and only until something is typed.
+- **Every picture says what it shows** (\`alt\`), or is marked \`decorative: true\` when the words beside it already say
+  it. A \`fontAwesome\` icon is decoration (hidden) unless its \`label\` gives it a meaning of its own.
+- **Only controls are clicked.** A click flow belongs on a \`button\` (it holds children — a whole card can be one) or
+  a \`link\` when it goes somewhere — never on a \`container\`, \`text\` or \`image\`: a keyboard cannot reach those and
+  no agent finds them. An empty backdrop that closes a panel is the exception (the panel's close button and Escape
+  are the ways everyone has).
+- **State is said, not only styled.** A toggle sets \`ariaPressed\`, a button that opens a panel \`ariaExpanded\`
+  (bind them like any attribute) — an "active" class alone is invisible to both readers.
+- **A dropdown opens from a \`button\`** among its children, outside the popup (an avatar, a "⋯": the button holds it and
+  has a \`title\`). The dropdown marks it and moves the focus in and out; a box or an icon alone opens nothing from a
+  keyboard.
+- **An illustration** built from elements (a mock of a page, art) is a \`container\` with \`decorative: true\`: both
+  readers skip it. Keep controls out of it.
+- **The page has an outline.** Headings go down one level at a time (h1 → h2 → h3; size them with their class, not
+  their level). Landmarks are containers with a tag — \`header\`, \`nav\`, \`main\`, \`aside\`, \`footer\` — and a
+  \`label\` when a page has two of one kind; a \`section\` with a \`label\` is a region an assistant can jump to.
+- **What comes built in:** modals and dialogs are \`dialog\`s named by their title, take the focus, keep Tab inside
+  and close on Escape; tabs are a tab list worked with the arrow keys; a field that breaks a rule is marked invalid and
+  described by its message; the pager marks the current page. Nothing to add for those.
+- **A canvas is a picture** to both readers. A plugin that draws (a chart, a board, a map) also renders what it shows
+  as real elements — a list, a table — with a button for every action; one hidden until focused cannot be clicked by an
+  agent that clicks by position, so offer a visible "list view".
+The linter warns about these (\`control-without-name\`, \`image-without-alt\`, \`click-on-static-element\`,
+\`dropdown-without-control\`, \`heading-level-skipped\`, \`label-ignored\`, \`control-in-decorative\`) on every element
+you touch; fix them in the same batch. Then look:
+\`plitzi_screenshot\` with \`view: "accessibility"\` shows the page as those readers get it, and lists what has no name.
 
 ## Semantics
 - **props are fully replaced** on \`upsertElement\`: send every prop you want to keep. To change only some props,

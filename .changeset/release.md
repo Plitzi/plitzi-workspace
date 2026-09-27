@@ -1045,3 +1045,40 @@ and not a canvas. It runs on several replicas over Redis
 - With ⌘/Ctrl held a press in a field still reaches `onKey` (so `mod+k` opens a palette from a search box), but the
   field keeps ⌘A, ⌘Z/⌘⇧Z/⌘Y, ⌘C/⌘X/⌘V and moving or deleting by word and line (`isFieldEditing`): a space binding
   `mod+a` to "select all shapes" no longer steals "select this text".
+
+## Usable without sight: screen readers and browser agents
+
+Screen readers and browser agents (Claude in Chrome) find a page's controls in its accessibility tree. The elements
+now put the right things there, authors can say the rest, and the linter says when they have not. See
+`docs/en/accessibility.md`.
+
+- `modalContainer` / `dialogContainer` are a `dialog` / `alertdialog` with `aria-modal`, named by their title. They
+  take the focus as they open, keep Tab inside, close on Escape (a dialog is turned down, never accepted) and give the
+  focus back as they close. Their footer buttons are `type="button"`.
+- `tabContainer` is a `tablist` of `tab`s (`aria-selected`, `aria-controls`) and `tabpanel`s, with one tab in the Tab
+  order; the arrow keys, Home and End move between tabs, Enter and Space select.
+- `formControl`: a control breaking a rule is `aria-invalid` and described by its message (`aria-describedby`), which
+  is an `alert`. The password eye is a real button, "Show password", with `aria-pressed`. New `hideLabel`: the label
+  stays out of sight and still names the field.
+- `fontAwesome` is `aria-hidden` unless its new `label` gives it a meaning (`role="img"`).
+- `image` takes `decorative`: `alt=""` whatever `alt` says. The builder's settings can now write `alt` at all.
+- `container` takes `label`: a landmark's name, a `section` becomes a region, a `div` a named group
+  (`NAMEABLE_CONTAINER_TAGS`).
+- `pagination` is a `nav` named by its new `label` ("Pagination"); the current page is `aria-current="page"`.
+- The segmented `themeToggle` is a named `group` whose options carry `aria-pressed`.
+- `link`'s `label` can be written in the builder. `button` takes a `label` too (`aria-label`), for a button whose words
+  do not say what it does — a key hint, a count.
+- `dropdown` marks the control that opens it (`aria-haspopup`, `aria-expanded`); opened from the keyboard the focus
+  moves to the popup's first control, and it goes back to the trigger when the popup closes with the focus inside.
+- `container` takes `decorative`: an illustration built from elements, `aria-hidden` whatever it holds.
+- The SDK's button base no longer removes the focus ring for everyone: only for a pointer
+  (`:focus:not(:focus-visible)`).
+- New warnings in `lintSpace`: `control-without-name`, `image-without-alt`, `click-on-static-element`,
+  `dropdown-without-control`, `heading-level-skipped`, `label-ignored`, `control-in-decorative`. Nothing inside a
+  `decorative` container is held to them. The blank space and the examples author with none.
+- `plitzi_screenshot` takes `view: 'accessibility' | 'both'`: the page's accessibility tree as an outline, and every
+  control or picture with no name (`unnamed`). `ScreenshotInput.views`, `ScreenshotResult.accessibility`; the HTTP
+  client reads the screenshot service's Puppeteer tree (service ≥ 0.1.9), the local client Playwright's or Puppeteer's.
+  `outlineOfTree`, `outlineOfSnapshot` and `unnamedControls` are exported.
+- The MCP guide, its quickstart, the server instructions and the co-worker prompt teach it; so does the authoring skill
+  (`reference/accessibility.md`, a recipe, the review checklist).

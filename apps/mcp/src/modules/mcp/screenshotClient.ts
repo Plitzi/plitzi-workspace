@@ -1,5 +1,8 @@
 import { PREVIEW_TOKEN_PARAM } from '@plitzi/sdk-server/kernel';
 
+import { outlineOfTree } from './accessibilityOutline';
+
+import type { AccessibilityNode } from './accessibilityOutline';
 import type { ScreenshotClient, ScreenshotImage, ScreenshotInput, ScreenshotResult } from './types';
 
 export type HttpScreenshotClientConfig = {
@@ -48,7 +51,14 @@ export const createHttpScreenshotClient = ({
   renderBaseUrl,
   fetchImpl = fetch
 }: HttpScreenshotClientConfig): ScreenshotClient => ({
-  async capture({ pagePath, token, viewports, fullPage, colorScheme }: ScreenshotInput): Promise<ScreenshotResult> {
+  async capture({
+    pagePath,
+    token,
+    viewports,
+    fullPage,
+    colorScheme,
+    views = ['image']
+  }: ScreenshotInput): Promise<ScreenshotResult> {
     const url = composeUrl(renderBaseUrl, pagePath, token);
 
     let res: Response;
@@ -56,7 +66,7 @@ export const createHttpScreenshotClient = ({
       res = await fetchImpl(serviceUrl, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url, viewports, fullPage, colorScheme })
+        body: JSON.stringify({ url, viewports, fullPage, colorScheme, views })
       });
     } catch (err) {
       return { ok: false, error: 'SCREENSHOT_UNREACHABLE', message: `Browser service unreachable: ${String(err)}` };
@@ -71,11 +81,18 @@ export const createHttpScreenshotClient = ({
       return { ok: false, error: 'SCREENSHOT_FAILED', message: `Browser service returned ${res.status}.` };
     }
 
-    const body = (await res.json()) as { images?: ScreenshotImage[] };
-    if (!body.images || body.images.length === 0) {
+    const body = (await res.json()) as {
+      images?: ScreenshotImage[];
+      accessibility?: { label: string; tree: AccessibilityNode | null }[];
+    };
+    const images = body.images ?? [];
+    if (views.includes('image') && images.length === 0) {
       return { ok: false, error: 'SCREENSHOT_EMPTY', message: 'Browser service returned no images.' };
     }
 
-    return { ok: true, images: body.images };
+    // A service from before the accessibility view answers without it; the tool says so rather than failing.
+    const accessibility = body.accessibility?.map(({ label, tree }) => ({ label, outline: outlineOfTree(tree) }));
+
+    return { ok: true, images, ...(accessibility ? { accessibility } : {}) };
   }
 });

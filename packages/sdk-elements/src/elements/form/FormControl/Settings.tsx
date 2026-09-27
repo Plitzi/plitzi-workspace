@@ -24,6 +24,7 @@ type SettingsProps = {
     | 'switch';
   name?: string;
   label?: string;
+  hideLabel?: boolean;
   placeholder?: string;
   autoComplete?: boolean;
   autoFocus?: boolean;
@@ -57,6 +58,7 @@ const Settings = ({
   subType = 'text',
   name = '',
   label = 'Label',
+  hideLabel = false,
   defaultValue = '',
   placeholder = '',
   autoComplete = true,
@@ -84,6 +86,11 @@ const Settings = ({
   const handleChangeName = useCallback((value: string) => onUpdate?.('name', value), [onUpdate]);
 
   const handleChangeLabel = useCallback((value: string) => onUpdate?.('label', value), [onUpdate]);
+
+  const handleChangeHideLabel = useCallback(
+    (e: ChangeEvent) => onUpdate?.('hideLabel', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
 
   const handleChangePlaceholder = useCallback((value: string) => onUpdate?.('placeholder', value), [onUpdate]);
 
@@ -172,6 +179,12 @@ const Settings = ({
     <div className="flex h-full flex-col gap-4 py-2">
       <Input value={name} label="Input Name" onChange={handleChangeName} size="xs" />
       <Input value={label} label="Label" onChange={handleChangeLabel} size="xs" />
+      <Checkbox
+        checked={hideLabel}
+        label="Hide Label (still read by screen readers)"
+        onChange={handleChangeHideLabel}
+        size="xs"
+      />
       <Input value={placeholder} label="Placeholder" onChange={handleChangePlaceholder} size="xs" />
       <Select value={subType} onChange={handleChangeType} label="Input Type" size="xs">
         <option value="text">Text</option>

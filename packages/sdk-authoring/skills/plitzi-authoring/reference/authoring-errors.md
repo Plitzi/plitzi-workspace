@@ -61,3 +61,10 @@ A warning means the space renders, and renders something you probably did not me
 | `state-toggled-in-branches` | two `setState` steps of one key, each under a `when` on that key — the second flips back what the first wrote | `toggleState({ key })`; for something shown by default, a key named for hiding it |
 | `form-value-compared-to-blank` | a `when` asking whether a submitted field (`….values.x`) `=` or `!=` `""` — a field nobody typed in is not sent, so it never matches | `operator: 'empty'` / `'notEmpty'` |
 | `overlay-never-opened` | a modal or dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |
+| `control-without-name` | a button or link with no words (an icon, a picture without `alt`, nothing), or a field nothing names — a screen reader says just "button", a browser agent cannot find it | `title` on the button, `label` on the link, `label` (with `hideLabel: true`) on the field — see [accessibility](accessibility.md) |
+| `image-without-alt` | an image that is not `decorative` and has no `alt` | say what it shows, or `decorative: true` |
+| `click-on-static-element` | a click flow on a container, text, heading, image or list item — no keyboard reaches it, no agent finds it | the flow on a `button` (it holds children) or a `link` |
+| `heading-level-skipped` | an `h4` right after an `h2` on a page — the outline misses a level | the next level down; size it with its class |
+| `label-ignored` | a `label` on a container whose tag is named by what it holds (`li`, a heading) | the words inside, or a landmark tag (`nav`, `section`, …) |
+| `dropdown-without-control` | a dropdown opened from a box or an icon — no keyboard opens it | a `button` as what opens it (`title` if it is only an icon) |
+| `control-in-decorative` | a control inside a `decorative` container — Tab lands on something nothing announces | move it out of the illustration |

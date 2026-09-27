@@ -34,6 +34,7 @@ const TOOLS = [
   '• plitzi_apply — persist a batch of operations. Pass dryRun to preview the full diff without writing, and',
   '  expectedResourceVersions to guard against concurrent edits (apply and search hand back the versions you need).',
   '• plitzi_preview / plitzi_screenshot — render a page (HTML / PNG), with unsaved operations applied if you pass them.',
+  '  plitzi_screenshot view:"accessibility" reads it as a screen reader or a browser agent does, listing what has no name.',
   '• plitzi_render — show the user an offline widget; it never touches the space (read plitzi://render/guide).',
   'Discover → browse resources. Find a name → plitzi_search. Fetch known URIs → plitzi_read. Do not confuse them.'
 ].join('\n');
@@ -56,6 +57,15 @@ const RESOURCES = [
   '• plitzi://actions/{env} , /tasks — server actions, and the tasks this deployment can build them from.',
   '• plitzi://changes/{env} , /{id} — the change history (read-only): who changed what, before and after.',
   '• plitzi://settings/{env} — space-level settings.'
+].join('\n');
+
+const ACCESSIBILITY = [
+  '━━ ACCESSIBILITY ━━',
+  'Screen readers and browser agents (Claude in Chrome) work a page through its accessibility tree, so build every page',
+  'to be usable without sight: a button or link has words (an icon-only button a `title`; a link wrapping a card a',
+  '`label`), a field a `label` (`hideLabel: true` keeps it out of sight), an image an `alt` or `decorative: true`.',
+  'Clicks go on a button (it holds children) or a link — never on a container, text or image. Toggles bind',
+  '`ariaPressed`, openers `ariaExpanded`. Headings step down one level at a time. The linter warns on each of these.'
 ].join('\n');
 
 const NAVIGATION = [
@@ -125,4 +135,4 @@ const INTERACTIONS = (): string =>
  *  authoritative about: its editing model, tools, resources and interaction vocabulary. It intentionally does NOT
  *  cover a consumer’s own tools (previews, design helpers) or product framing (modes, identity, security). */
 export const buildAgentGuide = (): string =>
-  [EDITING_MODEL, '', TOOLS, '', RESOURCES, '', NAVIGATION, '', INTERACTIONS()].join('\n');
+  [EDITING_MODEL, '', TOOLS, '', RESOURCES, '', ACCESSIBILITY, '', NAVIGATION, '', INTERACTIONS()].join('\n');

@@ -14,7 +14,17 @@ export type ImageProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
   src?: string;
+  /**
+   * What the picture shows, in words — read by screen readers and browser agents in its place, and shown when it
+   * cannot load. Say what it is for on this page, not what file it is: "Maya presenting the roadmap", not "photo".
+   */
   alt?: string;
+  /**
+   * A picture that adds nothing the words around it do not already say — a texture, an ornament, a photo beside a
+   * caption that describes it. It is left out of what assistive technology reads (`alt=""`), whatever `alt` says,
+   * and the linter stops asking for a description.
+   */
+  decorative?: boolean;
   fetchPriority?: 'high' | 'low' | 'auto';
   /** `auto` leaves the choice to the browser — what the builder offers first. */
   loadMode?: 'auto' | 'eager' | 'lazy';
@@ -24,7 +34,15 @@ const fallback = getFallbackSVGBase64();
 
 const PLACEHOLDER = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg';
 
-const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'auto', loadMode }: ImageProps) => {
+const Image = ({
+  ref,
+  className = '',
+  src: srcProp,
+  alt: altProp = '',
+  decorative = false,
+  fetchPriority = 'auto',
+  loadMode
+}: ImageProps) => {
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -37,6 +55,7 @@ const Image = ({ ref, className = '', src: srcProp, alt = '', fetchPriority = 'a
    * re-requests the whole page to put it in an image, and React warns about exactly that.
    */
   const src = srcProp || PLACEHOLDER;
+  const alt = decorative ? '' : altProp;
 
   /**
    * The source that failed, so the fallback is drawn in its place — and SAID to be.

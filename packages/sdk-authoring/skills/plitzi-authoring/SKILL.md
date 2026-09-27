@@ -88,6 +88,11 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
 12. **Hand plugins over as their declarations**: `authorSpace(space, { plugins: [declaration] })` holds a plugin —
     its own type, or a `custom({ renderType })` host — to the events, actions and attributes it declares. See
     [plugins](reference/plugins.md).
+13. **Usable without sight.** Screen readers and browser agents (Claude in Chrome) find a page's controls in its
+    accessibility tree: every button and link has words (an icon-only button a `title`), every field a `label`
+    (`hideLabel: true` hides it and keeps the name), every image an `alt` or `decorative: true`. Clicks go on a
+    `button` — it holds children, so a whole card can be one — or a `link`, never on a container. See
+    [accessibility](reference/accessibility.md).
 
 ## Recipes
 
@@ -136,6 +141,13 @@ seats({ id: 'seats', flows: [[named('picked', declaredTrigger(declaration, 'onPi
 button({ content: 'Clear', flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'seats' })]] })
 authorSpace(space, { plugins: [declaration] })
 
+// Usable without sight: an icon-only button says what it does; a clickable card IS a button; a field keeps its label
+// out of sight rather than dropping it; a picture says what it shows, or that it only decorates.
+button({ content: '', title: 'Close', children: [fontAwesome({ icon: 'fa-solid fa-xmark' })], flows: [[onClick(), closeModal('details')]] })
+button({ content: '', class: card, children: [text('Pro'), text('12 € a month')], flows: [[onClick(), setState({ key: 'plan', type: 'text', value: 'pro' })]] })
+formControl({ name: 'q', label: 'Search the docs', hideLabel: true, placeholder: 'Search…' })
+image({ src: '/team.jpg', alt: 'The team at the 2026 offsite' }); image({ src: '/grain.png', decorative: true })
+
 // A link: to a page by its id, to a path with mode 'internal', to anything else with mode 'external'.
 link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link({ href: 'mailto:hi@x.com', mode: 'external' })
 ```
@@ -157,4 +169,5 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame, shortcuts, counting renders |
 | [performance.md](reference/performance.md) | A page with many elements, a busy flow, something that feels slow: what renders, what it costs, how to measure it |
 | [templates-and-export.md](reference/templates-and-export.md) | Publishing a template; turning an exported JSON into code |
+| [accessibility.md](reference/accessibility.md) | Icon buttons, fields, images, clickable cards, toggles, headings, landmarks, a canvas — anything a screen reader or a browser agent has to use |
 | [review-checklist.md](reference/review-checklist.md) | Before you say it is done |

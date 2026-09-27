@@ -135,8 +135,12 @@ export const minimapButton = (): ElementSpec =>
     id: 'minimap-toggle',
     content: '',
     title: 'Minimap — the whole board, and where everyone is',
+    label: 'Minimap',
     class: iconButton,
-    bind: [variantFrom(iconButton, 'computed.minimap', { template: "{{ source ? 'active' : '' }}" })],
+    bind: [
+      variantFrom(iconButton, 'computed.minimap', { template: "{{ source ? 'active' : '' }}" }),
+      bindTemplate('ariaPressed', 'computed.minimap', "{{ source ? 'true' : 'false' }}")
+    ],
     flows: [[onClick(), setState({ key: 'minimap', type: 'boolean', value: '{{ not computed.minimap }}' })]],
     children: [icon('fa-regular fa-map')]
   });
@@ -151,8 +155,13 @@ export const listViewButton = (): ElementSpec =>
     id: 'list-view-toggle',
     content: '',
     title: 'List view — the board as a list, to read and change it without the canvas (⇧L)',
+    // The name an assistant is told to look for: "open its List view".
+    label: 'List view',
     class: iconButton,
-    bind: [variantFrom(iconButton, 'computed.listView', { template: "{{ source ? 'active' : '' }}" })],
+    bind: [
+      variantFrom(iconButton, 'computed.listView', { template: "{{ source ? 'active' : '' }}" }),
+      bindTemplate('ariaPressed', 'computed.listView', "{{ source ? 'true' : 'false' }}")
+    ],
     flows: [[onClick(), setState({ key: 'listView', type: 'boolean', value: '{{ not computed.listView }}' })]],
     children: [icon('fa-solid fa-list-ul')]
   });

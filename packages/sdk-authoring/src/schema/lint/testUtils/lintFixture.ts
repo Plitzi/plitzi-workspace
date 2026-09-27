@@ -39,7 +39,12 @@ export const authored = (): Documents => {
           button({ id: 'go', content: 'Go' }),
           button({ id: 'open-modal', content: 'Open', flows: [[clicked(), openModal('modal')]] }),
           modalContainer({ id: 'modal', visible: false }),
-          link({ id: 'to-about', mode: 'page', href: '/about' })
+          link({
+            id: 'to-about',
+            mode: 'page',
+            href: '/about',
+            children: [text({ id: 'to-about-text', content: 'About us' })]
+          })
         ]
       },
       { name: 'About', slug: 'about', body: [text({ id: 'about-text', content: 'About' })] }

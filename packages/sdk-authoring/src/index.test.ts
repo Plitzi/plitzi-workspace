@@ -507,7 +507,7 @@ describe('the element catalogs', () => {
         authoring.dropdown({
           id: 'menu',
           children: [
-            authoring.text({ content: 'Menu' }),
+            authoring.button({ content: 'Menu' }),
             authoring.container({ children: [authoring.dropdownPopup({ id: 'panel' })] })
           ]
         })

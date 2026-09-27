@@ -15,10 +15,11 @@ export type TabContainerHeaderProps = {
 };
 
 const TabContainerHeader = ({ ref, className = '', children }: TabContainerHeaderProps) => {
-  const { tabSelected, onSelect } = use(TabContainerContext);
+  const { baseId, tabSelected, onSelect } = use(TabContainerContext);
 
   const { childrenParsed } = useMemo(() => {
     const components: { childrenParsed: ReactNode[] } = { childrenParsed: [] };
+    const tabCount = Children.toArray(children).filter(isValidElement).length;
     Children.forEach(children, (child, i: number) => {
       if (!isValidElement(child)) {
         return;
@@ -31,19 +32,21 @@ const TabContainerHeader = ({ ref, className = '', children }: TabContainerHeade
           internalProps: {
             ...(childProps.internalProps as Record<string, unknown>),
             isHeader: true,
+            baseId,
             onSelect,
             tabSelected,
-            tabIndex: i
+            tabIndex: i,
+            tabCount
           }
         })
       );
     });
 
     return components;
-  }, [children, onSelect, tabSelected]);
+  }, [baseId, children, onSelect, tabSelected]);
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__tab-container-header', className)}>
+    <RootElement ref={ref} role="tablist" className={clsx('plitzi-component__tab-container-header', className)}>
       {childrenParsed}
     </RootElement>
   );

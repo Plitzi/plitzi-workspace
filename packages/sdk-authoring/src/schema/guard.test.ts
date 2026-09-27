@@ -210,8 +210,8 @@ describe('a declaration TypeScript never saw', () => {
     const { warnings } = authoring.authorSpace(
       space([
         { type: 'carousel', id: 'c' },
-        authoring.link({ id: 'about', href: '/about' }),
-        authoring.link({ id: 'mail', href: 'mailto:a@b.c', mode: 'external' })
+        authoring.link({ id: 'about', href: '/about', label: 'About us' }),
+        authoring.link({ id: 'mail', href: 'mailto:a@b.c', mode: 'external', label: 'Write to us' })
       ]),
       { pluginTypes: ['carousel'] }
     );

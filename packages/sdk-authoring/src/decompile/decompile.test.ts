@@ -196,7 +196,11 @@ const legacy = (): SpaceDocuments => {
           { type: 'container', id: 'panel', class: 'box' },
           { type: 'container', id: 'aside', class: 'box' },
           { type: 'text', id: 'label', attributes: { content: 'x' }, bind: { content: 'state.label' } },
-          { type: 'link', id: 'out', attributes: { href: 'https://plitzi.com', target: 'blank', mode: 'external' } },
+          {
+            type: 'link',
+            id: 'out',
+            attributes: { href: 'https://plitzi.com', target: 'blank', mode: 'external', label: 'Plitzi' }
+          },
           { type: 'list', id: 'rows' },
           {
             type: 'button',
