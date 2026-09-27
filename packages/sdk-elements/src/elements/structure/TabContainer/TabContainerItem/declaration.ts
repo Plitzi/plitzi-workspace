@@ -7,7 +7,7 @@ import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare'
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type TabContainerItemAttributes = AuthorableAttributes<
   TabContainerItemProps,
-  'tabSelected' | 'tabIndex' | 'isHeader' | 'onSelect'
+  'baseId' | 'tabSelected' | 'tabIndex' | 'tabCount' | 'isHeader' | 'onSelect'
 >;
 
 const declaration = elementDeclaration<TabContainerItemAttributes>()({

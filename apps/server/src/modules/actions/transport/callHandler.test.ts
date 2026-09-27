@@ -515,6 +515,72 @@ describe('handleActionCall (streaming)', () => {
     expect(sent.at(-1)?.data).toMatchObject({ status: 'failed' });
   });
 
+  /**
+   * A step's params are resolved as the browser resolves them: any template syntax runs — an object literal, a
+   * condition — and a value keeps its own type. The server used to resolve only what looked like a plain name, and an
+   * output written as an object reached the output step as its template text.
+   */
+  it('resolves an output written as an object, keeping each value’s type', async () => {
+    const objectOutput = entry({
+      output: { code: { type: 'text' }, long: { type: 'boolean' } },
+      nodes: {
+        start: callTrigger({ input: '{"code":{"type":"text","required":true}}' }, 'compute'),
+        compute: node('compute', {
+          action: 'flow.output',
+          params: { values: '{{ { "code": input.code, "long": input.code|length > 3 }|json_encode }}' }
+        })
+      }
+    });
+
+    const { payload } = await call(buildConfig(objectOutput), { actionId: 'quote', input: { code: '0012' } });
+
+    expect(payload).toMatchObject({ status: 'completed', output: { code: '0012', long: true } });
+  });
+
+  /**
+   * A failure's message leaves the server only when a step wrote it for the caller: any other can carry a query, a URL
+   * or a credential's name, and a page is shown to anybody.
+   */
+  describe('why a run failed', () => {
+    const failing = (params: Record<string, unknown>) =>
+      entry({
+        nodes: {
+          start: callTrigger({}, 'boom'),
+          boom: node('boom', { action: 'flow.fail', params })
+        }
+      });
+
+    it('tells the caller the reason a step refused with', async () => {
+      const { sent, payload } = await call(buildConfig(failing({ message: 'That name is taken', tellCaller: true })), {
+        actionId: 'quote',
+        input: { amount: 1 }
+      });
+
+      expect(sent.status).toBe(200);
+      expect(payload).toMatchObject({ status: 'failed', error: 'That name is taken' });
+    });
+
+    it('keeps any other failure to itself', async () => {
+      const { payload } = await call(buildConfig(failing({ message: 'SELECT * FROM users failed' })), {
+        actionId: 'quote',
+        input: { amount: 1 }
+      });
+
+      expect(payload.status).toBe('failed');
+      expect(payload.error).toBeUndefined();
+    });
+
+    it('sends the reason in the last frame of a stream too', async () => {
+      const { written } = await call(
+        buildConfig(failing({ message: 'That name is taken', tellCaller: 'true' })),
+        { actionId: 'quote', input: { amount: 1 } },
+        { headers: streaming }
+      );
+
+      expect(frames(written).at(-1)?.data).toMatchObject({ status: 'failed', error: 'That name is taken' });
+    });
+  });
+
   it('carries what a step emitted while it ran', async () => {
     const emitting = {
       namespace: 'test',

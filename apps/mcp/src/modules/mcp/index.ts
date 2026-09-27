@@ -5,11 +5,13 @@ export { computeVersion, buildAgentGuide } from './helpers';
 export { createHttpPreviewClient } from './previewClient';
 export { createLocalScreenshotClient, resolveLocalBrowser } from './localScreenshotClient';
 export { createHttpScreenshotClient } from './screenshotClient';
+export { outlineOfSnapshot, outlineOfTree, unnamedControls } from './accessibilityOutline';
 
 export type { McpRequestOptions } from './handler';
 export type { HttpPreviewClientConfig } from './previewClient';
 export type { LocalScreenshotClientConfig } from './localScreenshotClient';
 export type { HttpScreenshotClientConfig } from './screenshotClient';
+export type { AccessibilityNode, UnnamedControl } from './accessibilityOutline';
 export type { McpServerContext } from './server';
 export type {
   ApplyInput,

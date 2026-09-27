@@ -3,6 +3,8 @@ import { createContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type TabContainerContextValue = {
+  /** What the tabs' and the panels' ids start with, so each tab can name the panel it shows and each panel its tab. */
+  baseId: string;
   tabSelected: number;
   onSelect: Dispatch<SetStateAction<number>>;
 };

@@ -36,24 +36,23 @@ describe('mcp-ai validator (teaching errors)', () => {
 });
 
 describe('mcp-ai variable-reference validation', () => {
-  it('accepts a known space schema variable, no warning', () => {
-    const r = validate({ operations: [varOp('home', 'container', '{{apiUrl}}/x')] }, buildSpace());
+  it('accepts a known space schema variable', () => {
+    const r = validate({ operations: [varOp('home', 'text', '{{apiUrl}}/x')] }, buildSpace());
     expect(r.valid).toBe(true);
-    expect(r.warnings.some(w => w.includes('Unknown variable'))).toBe(false);
   });
 
-  it('warns (does not error) on an unknown/hallucinated variable', () => {
-    const r = validate({ operations: [varOp('home', 'container', '{{bogusVar}}')] }, buildSpace());
-    expect(r.valid).toBe(true);
-    expect(r.warnings.some(w => w.includes('Unknown variable {{bogusVar}}'))).toBe(true);
+  // An attribute reading a name nothing answers renders empty, and nothing anywhere says why: refused.
+  it('refuses an unknown/hallucinated variable', () => {
+    const r = validate({ operations: [varOp('home', 'text', '{{bogusVar}}')] }, buildSpace());
+    expect(r.valid).toBe(false);
+    expect(r.errors.some(e => e.message.includes('"bogusVar"') && e.message.includes('nothing here answers'))).toBe(
+      true
+    );
   });
 
   it('accepts a page route param (from the slug) as a valid {{name}}', () => {
-    const r = validate(
-      { operations: [varOp('spaceid', 'container', '{{apiUrl}}/spaces/{{spaceId}}')] },
-      spaceWithRoute()
-    );
-    expect(r.warnings.some(w => w.includes('Unknown variable'))).toBe(false);
+    const r = validate({ operations: [varOp('home', 'text', '{{apiUrl}}/spaces/{{spaceId}}')] }, spaceWithRoute());
+    expect(r.valid).toBe(true);
   });
 
   it('accepts a variable the same batch declares', () => {
@@ -61,12 +60,12 @@ describe('mcp-ai variable-reference validation', () => {
       {
         operations: [
           { type: 'upsertVariable', name: 'newVar', variableType: 'text', value: 'v' },
-          varOp('home', 'container', '{{newVar}}')
+          varOp('home', 'text', '{{newVar}}')
         ]
       },
       buildSpace()
     );
-    expect(r.warnings.some(w => w.includes('Unknown variable'))).toBe(false);
+    expect(r.valid).toBe(true);
   });
 
   it('skips {{...}} inside raw-code element types (no false positives on JSX)', () => {
@@ -74,7 +73,7 @@ describe('mcp-ai variable-reference validation', () => {
       { operations: [varOp('home', 'blockJsx', 'style={{ position: "relative" }} {{bogusVar}}')] },
       buildSpace()
     );
-    expect(r.warnings.some(w => w.includes('Unknown variable'))).toBe(false);
+    expect(r.valid).toBe(true);
   });
 
   it('validates var(--token) in CSS values against the design tokens', () => {
@@ -211,8 +210,8 @@ describe('mcp-ai pre-existing malformation audit (blocks save until fixed)', () 
   });
 });
 
-describe('mcp-ai type-aware prop warnings (I5)', () => {
-  it('warns (not errors) when a prop is not among the type\u2019s observed props', () => {
+describe('mcp-ai type-aware props (I5)', () => {
+  it('refuses a prop a built-in type never reads', () => {
     const r = validate(
       {
         operations: [
@@ -221,20 +220,24 @@ describe('mcp-ai type-aware prop warnings (I5)', () => {
       },
       buildSpace()
     );
-    expect(r.valid).toBe(true);
-    expect(r.warnings.some(w => w.includes('bogusProp'))).toBe(true);
+    expect(r.valid).toBe(false);
+    expect(r.errors.some(e => e.message.includes('"bogusProp"') && e.message.includes('never reads'))).toBe(true);
   });
 
-  it('does not warn for an observed prop', () => {
+  it('accepts a prop the type reads', () => {
     const r = validate(
       {
         operations: [
-          { type: 'upsertElement', pageRef: 'home', element: { ref: 'c2', type: 'container', props: { title: 'ok' } } }
+          {
+            type: 'upsertElement',
+            pageRef: 'home',
+            element: { ref: 'c2', type: 'container', props: { subType: 'section' } }
+          }
         ]
       },
       buildSpace()
     );
-    expect(r.warnings.some(w => w.includes('has no observed prop'))).toBe(false);
+    expect(r.valid).toBe(true);
   });
 });
 

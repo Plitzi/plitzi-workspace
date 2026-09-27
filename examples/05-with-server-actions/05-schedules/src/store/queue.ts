@@ -1,6 +1,6 @@
-import { integer, optionalInteger, optionalText, placeholders, storeNow, text, transaction } from './database';
+import { integer, optionalInteger, optionalText, placeholders, storeNow, text, transaction } from './database.ts';
 
-import type { Row } from './database';
+import type { Row } from './database.ts';
 import type {
   ActionJob,
   ActionJobAttempt,

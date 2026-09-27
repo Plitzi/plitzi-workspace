@@ -30,6 +30,24 @@ export type SchemaValidationResult = {
   warnings: SchemaValidationError[];
 };
 
+/**
+ * The errors that are a reference to something no longer there, rather than the document being broken.
+ *
+ * An editor produces them in the ordinary course of editing: delete a provider and the binding that read it names
+ * nothing, delete an element and the step aimed at it has no target. The next edit is what settles them — rebind, or
+ * drop the step — so a writer that edits one change at a time reports them and refuses them only when the space is
+ * about to be served. Every other error is the tree itself broken — an orphan, a cycle, two ids for one element — and
+ * no sequence of edits should ever leave one behind.
+ */
+export const REFERENCE_ERROR_CODES: ReadonlySet<string> = new Set([
+  'UNRESOLVED_BINDING_SOURCE',
+  'MISMATCHED_BINDING_SOURCE',
+  'UNRESOLVED_INTERACTION_TARGET'
+]);
+
+/** Whether an error is the document itself being broken, as opposed to a reference an edit left dangling. */
+export const isIntegrityError = (error: SchemaValidationError): boolean => !REFERENCE_ERROR_CODES.has(error.code);
+
 const createValidator = (schema: Schema) => {
   const errors: SchemaValidationError[] = [];
   const warnings: SchemaValidationError[] = [];

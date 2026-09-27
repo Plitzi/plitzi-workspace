@@ -12,7 +12,9 @@ export type SdkQueriesMap = {
   Segments: TSegmentsQuery;
 };
 
-const SdkQueries = {
+// Plain strings, not `gql` documents: parsing them would put the whole of `graphql` in the SDK bundle, and the SDK
+// only ever sends them.
+const SdkQueries: Record<keyof SdkQueriesMap, string> = {
   Init: InitQuery,
   Segment: SegmentQuery,
   Segments: SegmentsQuery

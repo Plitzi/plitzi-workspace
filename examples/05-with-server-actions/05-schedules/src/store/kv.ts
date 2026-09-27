@@ -1,4 +1,4 @@
-import { optionalText, storeNow, text } from './database';
+import { optionalText, storeNow, text } from './database.ts';
 
 import type { ActionKvAdapter } from '@plitzi/sdk-server/actions';
 import type { DatabaseSync } from 'node:sqlite';
@@ -61,6 +61,31 @@ export const createSqliteKv = (db: DatabaseSync): ActionKvAdapter => {
       db.prepare('UPDATE kv SET expires_at = ? WHERE key = ?').run(expiresAt(ttlSeconds), key);
 
       return Promise.resolve();
+    },
+    /**
+     * One statement either way. Expecting a value, the `WHERE` names it. Expecting nothing, the insert takes a free
+     * key, and over a taken one updates only a row whose lifetime has run out — a live row is left as it is, and no
+     * row changed is the refusal.
+     */
+    swap: (key, expected, next, ttlSeconds) => {
+      const at = storeNow(db);
+      const written =
+        expected === undefined
+          ? db
+              .prepare(
+                `INSERT INTO kv (key, value, expires_at) VALUES (?, ?, ?)
+                 ON CONFLICT (key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at
+                 WHERE kv.expires_at IS NOT NULL AND kv.expires_at <= ?`
+              )
+              .run(key, next, expiresAt(ttlSeconds), at)
+          : db
+              .prepare(
+                `UPDATE kv SET value = ?, expires_at = ?
+                 WHERE key = ? AND value = ? AND (expires_at IS NULL OR expires_at > ?)`
+              )
+              .run(next, expiresAt(ttlSeconds), key, expected, at);
+
+      return Promise.resolve(written.changes === 1);
     }
   };
 };

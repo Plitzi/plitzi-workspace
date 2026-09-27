@@ -40,8 +40,8 @@ export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
         type: 'select',
         description: 'Credentials to sign in with: a username and password, or a token obtained elsewhere.',
         default: 'normal',
-        options: ['normal', 'token'],
-        optionLabels: { normal: 'User and Password', token: 'Token' },
+        options: ['normal', 'token', 'mfa'],
+        optionLabels: { normal: 'User and Password', token: 'Token', mfa: 'Second factor' },
         canBind: false
       },
       username: { type: 'text', description: 'Username.', default: '', when: params => params.mode === 'normal' },
@@ -51,6 +51,18 @@ export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
         description: 'A token to exchange for a session.',
         default: '',
         when: params => params.mode === 'token'
+      },
+      mfaToken: {
+        type: 'text',
+        description: 'The challenge a sign-in answered with when it owed a second factor: `{{ login.mfaToken }}`.',
+        default: '',
+        when: params => params.mode === 'mfa'
+      },
+      code: {
+        type: 'text',
+        description: 'The code from the authenticator app, or a recovery code.',
+        default: '',
+        when: params => params.mode === 'mfa'
       }
     },
     /**
@@ -63,6 +75,8 @@ export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
       // A preview states the KEYS that land in scope; every value in one is a placeholder, `ok` included.
       ok: '',
       reason: '',
+      // Present when `reason` is `mfa`: what `mode: 'mfa'` completes the sign-in against.
+      mfaToken: '',
       errors: { username: '', password: '', token: '' },
       accessToken: '',
       expiresAt: '',

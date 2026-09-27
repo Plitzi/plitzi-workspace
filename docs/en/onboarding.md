@@ -34,8 +34,6 @@ between them are absolute paths).
 | **plitzi-sdk-server** | REST API, GraphQL, the auth kernel and RBAC, Prisma/MySQL, MongoDB, Redis, and the local dev gateway | Persistence, permissions, tokens, anything returning 401/403 |
 | **plitzi-ui** | The design system the builder is built from | Shared UI components |
 | **nexus** | The state store (`@plitzi/nexus`), its own repository | Store internals, reactivity, performance |
-| **plitzi-cli** | Command-line tooling | Scaffolding and local workflows |
-| **plitzi-plugin-template** | Starting point for a third-party plugin | Writing or debugging a plugin |
 | **plitzi-platform** | Cluster (k3s + ArgoCD) and Terraform | Deploying, cluster config, secrets |
 
 ## Inside the monorepo
@@ -46,6 +44,8 @@ apps/
   sdk/       @plitzi/plitzi-sdk       the runtime that renders a space
   server/    @plitzi/sdk-server       page server: SSR, RSC, plugins, connectors
   mcp/       @plitzi/sdk-mcp          the AI surface, built on top of apps/server
+  cli/       @plitzi/cli              scaffold a project or a plugin package; add elements to a project
+  desktop/   @plitzi/plitzi-desktop   the desktop client
 packages/
   sdk-*                               shared libraries, consumed by the apps and by each other
 ```
@@ -58,6 +58,7 @@ The packages are easier to hold in mind grouped by what they are *for* than alph
 | Group | Packages | Concern |
 |---|---|---|
 | The space itself | `sdk-schema`, `sdk-style`, `sdk-elements` | What a space *is*: its tree, its styles, its components |
+| Writing one | `sdk-authoring` | A space as TypeScript, and the linter the builder, the server and the MCP all hold a space to |
 | Behaviour at runtime | `sdk-interactions`, `sdk-variables`, `sdk-navigation`, `sdk-auth` | What a rendered space *does* |
 | Plumbing | `sdk-shared`, `sdk-plugins`, `sdk-event-bridge`, `sdk-dev-tools` | Types and utilities, the plugin system, cross-frame messaging, debugging |
 
@@ -175,10 +176,10 @@ Before opening a PR: `yarn typecheck`, `yarn lint`, and tests for changed behavi
 | Why the architecture is the way it is | The guide for the area, and the comments next to the code that enforces it. [RFCs](../rfc/README.md) hold only what has NOT been built yet |
 | To publish a change | [Releases](./releases.md) |
 | The page server's API | [apps/server/README.md](../../apps/server/README.md) |
-| The AI surface | [apps/mcp/README.md](../../apps/mcp/README.md) |
+| The AI surface | [AI agents and the MCP server](./mcp.md) · [apps/mcp/README.md](../../apps/mcp/README.md) |
 
-Start with the guides, in this order: how data reaches a space and how it is presented (the connector and CMS
-element docs, and `docs/es/connectors.md`), [Server actions](./server-actions.md) for the work a page cannot do in
+Start with the guides, in this order: how data reaches a space and how it is presented ([Connectors](./connectors.md)
+and the CMS elements it covers), [Server actions](./server-actions.md) for the work a page cannot do in
 the browser, and `docs/auth/` in the server repository for who is allowed to do any of it. Between them they cover
 most of what a new developer would otherwise learn by surprise.
 

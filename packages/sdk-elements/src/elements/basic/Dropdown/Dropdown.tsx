@@ -6,6 +6,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import DropdownContext from './DropdownContext';
 import useDropdown from './useDropdown';
+import useDropdownTrigger from './useDropdownTrigger';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -77,12 +78,30 @@ const Dropdown = ({
     open: openPopup,
     disabled: !previewMode || disabled,
     closeOnClickPopup,
+    // With no background layer to catch it, a click outside the menu is caught at the window instead — which is what
+    // `closeOnClickBackground` always promised and, without the layer, never did.
+    closeOnClickOutside: closeOnClickBackground && !backgroundDisabled,
     placement: popupPlacement,
     offsetX: containerLeftOffset,
     offsetY: containerTopOffset,
     myWindow: windowInstance,
     onChange: handleOpenChange
   });
+
+  const noteClick = useDropdownTrigger({
+    popupRef,
+    open: openPopup,
+    positioned: Boolean(parameters),
+    enabled: Boolean(previewMode) && !disabled
+  });
+
+  const handleClickTrigger = useCallback(
+    (e: MouseEvent) => {
+      noteClick(e);
+      handleClick(e);
+    },
+    [noteClick, handleClick]
+  );
 
   const dropdownContext = useMemo(
     () => ({ popupRef, openPopup, parameters, onClick: handleClickPopup }),
@@ -93,7 +112,7 @@ const Dropdown = ({
     <RootElement
       ref={ref}
       className={clsx('plitzi-component__dropdown', className, { 'container--empty--skip': !previewMode && !children })}
-      onClick={handleClick}
+      onClick={handleClickTrigger}
     >
       <DropdownContext value={dropdownContext}>{children}</DropdownContext>
       {openPopup && backgroundDisabled && previewMode && (

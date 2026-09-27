@@ -225,4 +225,53 @@ describe('useDropdown hook', () => {
 
   //   global.window = originalWindow;
   // });
+
+  /** A menu of controls stays open while they are used: the popup's own clicks bubble to the trigger, and are not its. */
+  it('ignores, at the trigger, a click that happened inside the popup', () => {
+    const control = document.createElement('button');
+    popupRef.current.append(control);
+    const { result } = renderHook(() => useDropdown({ ref: triggerRef, popupRef, closeOnClickPopup: false }));
+    act(() => result.current[2](mouseEvent));
+    expect(result.current[0]).toBe(true);
+
+    act(() => result.current[2]({ ...mouseEvent, target: control }));
+
+    expect(result.current[0]).toBe(true);
+  });
+
+  it('closes on a pointer down outside the trigger and the popup, and only there', () => {
+    document.body.append(triggerRef.current, popupRef.current);
+    const outside = document.createElement('div');
+    document.body.append(outside);
+    const { result } = renderHook(() => useDropdown({ ref: triggerRef, popupRef, closeOnClickOutside: true }));
+    act(() => result.current[2](mouseEvent));
+
+    act(() => {
+      popupRef.current.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      triggerRef.current.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    });
+    expect(result.current[0]).toBe(true);
+
+    act(() => {
+      outside.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    });
+    expect(result.current[0]).toBe(false);
+    triggerRef.current.remove();
+    popupRef.current.remove();
+    outside.remove();
+  });
+
+  it('leaves an outside click alone unless asked to close on it', () => {
+    const outside = document.createElement('div');
+    document.body.append(outside);
+    const { result } = renderHook(() => useDropdown({ ref: triggerRef, popupRef }));
+    act(() => result.current[2](mouseEvent));
+
+    act(() => {
+      outside.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    });
+
+    expect(result.current[0]).toBe(true);
+    outside.remove();
+  });
 });

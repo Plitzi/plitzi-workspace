@@ -2,7 +2,7 @@
 
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import clsx from 'clsx';
-import { useCallback, use, useEffect, useMemo } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
@@ -15,6 +15,7 @@ import { useSdkStore } from '@plitzi/sdk-shared/store';
 import declaration from './declaration';
 import { isEmptyAnswer } from './helpers/isEmptyAnswer';
 import providerOutcome from './helpers/providerOutcome';
+import { queryInputOf } from './helpers/queryInput';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
 import useAutoRefresh from './hooks/useAutoRefresh';
 import useProviderPagination from './hooks/useProviderPagination';
@@ -267,6 +268,16 @@ const ApiContainer = ({
    */
   const isInitialLoad = serverMode ? rscPending : isApiInitialLoad;
 
+  /**
+   * What the last query asked a server provider for — a search, a filter — and asks again with every page after it:
+   * "load more" of a search is more of the search, not more of everything.
+   */
+  const queryInput = useRef<Record<string, string>>({});
+  const refreshWithInput = useCallback(
+    (ids?: string[], params?: Record<string, string>) => refresh(ids, { ...queryInput.current, ...params }),
+    [refresh]
+  );
+
   const refetch = useCallback(async () => {
     if (!serverMode) {
       apiRefetch();
@@ -274,8 +285,21 @@ const ApiContainer = ({
       return;
     }
 
-    await refresh([id]);
-  }, [serverMode, apiRefetch, refresh, id]);
+    await refreshWithInput([id]);
+  }, [serverMode, apiRefetch, refreshWithInput, id]);
+
+  /** A query asked for with `input`: kept, then asked — from its first page. */
+  const performQuery = useCallback(
+    async ({ input }: { input?: unknown } = {}) => {
+      const given = queryInputOf(input);
+      if (given) {
+        queryInput.current = given;
+      }
+
+      await refetch();
+    },
+    [refetch]
+  );
 
   /**
    * Only a provider that can already fetch: a server one once a live payload has answered for this page (the
@@ -295,7 +319,7 @@ const ApiContainer = ({
     pageParam,
     records: windowRecords,
     page: slice.pageInfo?.page ?? 1,
-    refresh,
+    refresh: refreshWithInput,
     navigate
   });
 
@@ -332,6 +356,7 @@ const ApiContainer = ({
       // do and a lie if nobody can say it: this is how a page tells its visitor the numbers are from before.
       isStale: serverMode && rscStale
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, slice.records, slice.record, records, isLoading, isLoadingMore, singleRecord, hasError, serverMode, rscStale]
   );
 
@@ -347,7 +372,7 @@ const ApiContainer = ({
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     const callbacks: Record<string, InteractionCallback> = {
-      performQuery: { ...declaration.callbacks.performQuery, title: `Perform Query ${label}`, callback: refetch },
+      performQuery: { ...declaration.callbacks.performQuery, title: `Perform Query ${label}`, callback: performQuery },
       loadMore: { ...declaration.callbacks.loadMore, title: `Load More ${label}`, callback: loadMore },
       goToPage: {
         ...declaration.callbacks.goToPage,
@@ -367,7 +392,7 @@ const ApiContainer = ({
     }
 
     return callbacks;
-  }, [label, refetch, loadMore, goToPage, serverMode, writeRecord]);
+  }, [label, performQuery, loadMore, goToPage, serverMode, writeRecord]);
 
   const storeContext = useMemo(
     () => (sourceName ? { runtime: { sources: { [sourceName]: publishedData } } } : emptyObject),

@@ -9,9 +9,45 @@ import type { Operation } from '../tools';
 import type { AIElementDetail } from '../types';
 import type { ComponentCatalog } from '@plitzi/sdk-shared';
 
+// The trigger a hand-written flow starts with: a flow without one never runs, and the linter refuses it.
+const clickTrigger = (next: string) => ({
+  'onClick-1': {
+    id: 'onClick-1',
+    title: 'Click',
+    type: 'trigger' as const,
+    action: 'onClick',
+    params: {},
+    preview: {},
+    elementId: 'c1',
+    beforeNode: '',
+    afterNode: next,
+    flowId: 'onClick-1',
+    enabled: true
+  }
+});
+
 describe('mcp-ai interactions', () => {
   // Interactions are wired by the element's id, which is also how the flow is addressed here.
-  const interactiveSpace = (): Space => buildSpace();
+  // A button beside the container: what an element setState writes has to be something the element reads, and a
+  // button reads `content` and `disabled`.
+  const interactiveSpace = (): Space => {
+    const space = buildSpace();
+    space.schema.flat.b1 = {
+      id: 'b1',
+      attributes: { subType: 'button', content: 'Save' },
+      definition: {
+        rootId: 'home',
+        parentId: 'home',
+        label: 'Button',
+        type: 'button',
+        items: [],
+        styleSelectors: { base: '' }
+      }
+    };
+    space.schema.flat.home.definition.items = [...(space.schema.flat.home.definition.items ?? []), 'b1'];
+
+    return space;
+  };
 
   const flowOp: Operation = {
     type: 'upsertInteractionFlow',
@@ -112,8 +148,8 @@ describe('mcp-ai interactions', () => {
       definition: {
         rootId: 'home',
         parentId: 'home',
-        label: 'Bare',
-        type: 'container',
+        label: 'Modal',
+        type: 'modalContainer',
         items: [],
         styleSelectors: { base: '' }
       }
@@ -130,7 +166,7 @@ describe('mcp-ai interactions', () => {
             ref: 'c1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
-              { nodeType: 'callback', action: 'setVisibility', title: 'Hide', elementId: 'c2' }
+              { nodeType: 'callback', action: 'openModal', title: 'Open', elementId: 'c2' }
             ]
           }
         ]
@@ -381,7 +417,7 @@ describe('mcp-ai interactions', () => {
           {
             type: 'upsertInteractionFlow',
             pageRef: 'home',
-            ref: 'c1',
+            ref: 'b1',
             nodes: [
               { nodeType: 'trigger', action: 'onClick', title: 'Click' },
               {
@@ -398,10 +434,10 @@ describe('mcp-ai interactions', () => {
       cap.persisters
     );
 
-    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+    const node = Object.values(cap.saved().schema.flat.b1.definition.interactions ?? {}).find(
       n => n.type === 'callback' && n.action === 'setState'
     );
-    expect(node?.elementId).toBe('c1');
+    expect(node?.elementId).toBe('b1');
     expect(node?.params).toMatchObject({
       category: 'attribute',
       key: 'content',
@@ -414,7 +450,7 @@ describe('mcp-ai interactions', () => {
     const op: Operation = {
       type: 'upsertInteractionFlow',
       pageRef: 'home',
-      ref: 'c1',
+      ref: 'b1',
       nodes: [
         { nodeType: 'trigger', action: 'onClick', title: 'Click' },
         {
@@ -431,7 +467,7 @@ describe('mcp-ai interactions', () => {
 
     const cap = capturing(interactiveSpace());
     await apply({ operations: [op] }, cap.saved(), cap.persisters);
-    const node = Object.values(cap.saved().schema.flat.c1.definition.interactions ?? {}).find(
+    const node = Object.values(cap.saved().schema.flat.b1.definition.interactions ?? {}).find(
       n => n.type === 'callback' && n.action === 'setState'
     );
     expect(node?.params).not.toHaveProperty('type');
@@ -526,6 +562,7 @@ describe('mcp-ai interactions', () => {
   it('normalizes a stringified nullish elementId ("undefined") on a patched utility to null', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-1'),
       'delayTime-1': {
         id: 'delayTime-1',
         title: 'Wait 2 seconds',
@@ -535,9 +572,9 @@ describe('mcp-ai interactions', () => {
         preview: {},
         // The builder writes the literal string "undefined" here — a known artifact.
         elementId: 'undefined',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-1',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -552,9 +589,11 @@ describe('mcp-ai interactions', () => {
     expect(cap.saved().schema.flat.c1.definition.interactions?.['delayTime-1'].elementId).toBeNull();
   });
 
-  it('warns when an existing utility node carries a real (host) elementId, on patch', () => {
+  // Touching the node fixes what was already wrong with it, where that has one reading — and says so.
+  it('fixes, and says it fixed, a utility node that carries a real (host) elementId, on patch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-1'),
       'delayTime-1': {
         id: 'delayTime-1',
         title: 'Wait',
@@ -563,9 +602,9 @@ describe('mcp-ai interactions', () => {
         params: { time: 2000 },
         preview: {},
         elementId: 'c1',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-1',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -577,12 +616,16 @@ describe('mcp-ai interactions', () => {
       },
       space
     );
-    expect(res.warnings.some(w => w.includes('delayTime') && w.includes('takes NO element'))).toBe(true);
+    expect(res.valid).toBe(true);
+    expect(
+      res.warnings.some(w => w.startsWith('Fixed a pre-existing problem in element "c1"') && w.includes('delayTime'))
+    ).toBe(true);
   });
 
-  it('warns on a literal string "undefined" elementId (stringified nullish, a builder artifact)', () => {
+  it('fixes, and says it fixed, a literal string "undefined" elementId (stringified nullish, a builder artifact)', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-1'),
       'delayTime-1': {
         id: 'delayTime-1',
         title: 'Wait',
@@ -591,9 +634,9 @@ describe('mcp-ai interactions', () => {
         params: { time: 2000 },
         preview: {},
         elementId: 'undefined',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-1',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -605,10 +648,14 @@ describe('mcp-ai interactions', () => {
       },
       space
     );
-    expect(res.warnings.some(w => w.includes('literal string elementId') && w.includes('"undefined"'))).toBe(true);
+    expect(res.valid).toBe(true);
+    expect(
+      res.warnings.some(w => w.startsWith('Fixed a pre-existing problem in element "c1"') && w.includes('delayTime'))
+    ).toBe(true);
   });
 
-  it('warns when a global callback is used with nodeType "callback" (wrong node type)', () => {
+  // Refused — no element answers it, so the step would do nothing — and the warning names the node type that fixes it.
+  it('refuses a global callback used with nodeType "callback" and names the right node type', () => {
     const res = validate(
       {
         operations: [
@@ -625,7 +672,7 @@ describe('mcp-ai interactions', () => {
       },
       interactiveSpace()
     );
-    expect(res.valid).toBe(true);
+    expect(res.valid).toBe(false);
     expect(
       res.warnings.some(
         w => w.includes('addNotification') && w.includes('global callback') && w.includes('globalCallback')
@@ -669,68 +716,73 @@ describe('mcp-ai interactions', () => {
 
   const spaceWithCatalog = (catalog: ComponentCatalog): Space => ({ ...interactiveSpace(), catalog });
 
-  const setStateFlow = (params: Record<string, unknown>): Operation => ({
+  const setStateFlow = (params: Record<string, unknown>, elementId?: string): Operation => ({
     type: 'upsertInteractionFlow',
     pageRef: 'home',
-    ref: 'c1',
+    ref: 'b1',
     nodes: [
       { nodeType: 'trigger', action: 'onClick', title: 'Click' },
-      { nodeType: 'callback', action: 'setState', title: 'Set', params }
+      { nodeType: 'callback', action: 'setState', title: 'Set', params, ...(elementId ? { elementId } : {}) }
     ]
   });
 
-  it('warns when the element setState is missing required params (category/key)', () => {
+  // A setState with no key writes nothing: the step runs and nothing changes, so it does not get saved.
+  it('refuses an element setState missing its key', () => {
     const res = validate({ operations: [setStateFlow({ value: 'x' })] }, interactiveSpace());
-    expect(res.valid).toBe(true);
-    const missing = res.warnings.find(w => w.includes('setState') && w.includes('missing required'));
-    expect(missing).toBeTruthy();
-    expect(missing).toContain('"category"');
-    expect(missing).toContain('"key"');
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('setState') && e.message.includes('needs "key"'))).toBe(true);
   });
 
-  it('ERRORS on a setState attribute key not on a default (custom:false) target type; a real key passes', () => {
-    const catalog: ComponentCatalog = {
-      container: { custom: false, attributes: ['title', 'content'], styleSelectors: ['base'] }
-    };
+  it('refuses a setState attribute key the built-in target never reads; a real key passes', () => {
     const ok = validate(
       { operations: [setStateFlow({ category: 'attribute', key: 'content', value: 'x' })] },
-      spaceWithCatalog(catalog)
+      interactiveSpace()
     );
     expect(ok.valid).toBe(true);
 
     const bad = validate(
       { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' })] },
-      spaceWithCatalog(catalog)
+      interactiveSpace()
     );
     expect(bad.valid).toBe(false);
-    expect(bad.errors.some(e => e.message.includes('container') && e.message.includes('bogus'))).toBe(true);
+    expect(bad.errors.some(e => e.message.includes('"button"') && e.message.includes('"bogus"'))).toBe(true);
   });
 
-  it('only WARNS on a bad setState key for a plugin (custom:true) target type', () => {
-    const catalog: ComponentCatalog = {
-      container: { custom: true, attributes: ['title'], styleSelectors: ['base'] }
+  // Only this deployment's manifest knows a plugin's attributes, and it is a best-effort snapshot.
+  it('only WARNS on a bad setState key for a plugin target type', () => {
+    const space = spaceWithCatalog({ myWidget: { custom: true, attributes: ['title'], styleSelectors: ['base'] } });
+    space.schema.flat.w1 = {
+      id: 'w1',
+      attributes: { title: 'Weather' },
+      definition: {
+        rootId: 'home',
+        parentId: 'home',
+        label: 'Widget',
+        type: 'myWidget',
+        items: [],
+        styleSelectors: { base: '' }
+      }
     };
+    space.schema.flat.home.definition.items = [...(space.schema.flat.home.definition.items ?? []), 'w1'];
+
     const res = validate(
-      { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' })] },
-      spaceWithCatalog(catalog)
+      { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' }, 'w1')] },
+      space
     );
     expect(res.valid).toBe(true);
-    expect(res.warnings.some(w => w.includes('container') && w.includes('bogus'))).toBe(true);
+    expect(res.warnings.some(w => w.includes('myWidget') && w.includes('bogus'))).toBe(true);
   });
 
   it('validates category="state" keys against the type visibility + styleSelectors', () => {
-    const catalog: ComponentCatalog = {
-      container: { custom: false, attributes: ['title'], styleSelectors: ['base'] }
-    };
     const ok = validate(
       { operations: [setStateFlow({ category: 'state', key: 'styleSelectors.base', value: 'true' })] },
-      spaceWithCatalog(catalog)
+      interactiveSpace()
     );
     expect(ok.valid).toBe(true);
 
     const bad = validate(
       { operations: [setStateFlow({ category: 'state', key: 'styleSelectors.nope', value: 'true' })] },
-      spaceWithCatalog(catalog)
+      interactiveSpace()
     );
     expect(bad.valid).toBe(false);
   });
@@ -751,8 +803,8 @@ describe('mcp-ai interactions', () => {
     expect(strict.errors.some(e => e.message.includes('container') && e.message.includes('bogus'))).toBe(true);
 
     const lenient = validate(
-      { operations: [upsert] },
-      spaceWithCatalog({ container: { custom: true, attributes: ['title'] } })
+      { operations: [{ ...upsert, element: { ref: 'w-1', type: 'myWidget', props: { bogus: 1 } } }] },
+      spaceWithCatalog({ myWidget: { custom: true, attributes: ['title'] } })
     );
     expect(lenient.valid).toBe(true);
     expect(lenient.warnings.some(w => w.includes('bogus'))).toBe(true);
@@ -812,7 +864,7 @@ describe('mcp-ai interactions', () => {
     const res = validate({ operations: [notifyFlow({ appearance: 'bogus' })] }, interactiveSpace());
     expect(res.valid).toBe(false);
     const err = res.errors.find(e => e.message.includes('appearance'));
-    expect(err?.validValues).toContain('success');
+    expect(err?.message).toContain('success');
   });
 
   // `value` is a `scalar` param: its data type follows the target attribute (a boolean attribute stores a real
@@ -821,10 +873,15 @@ describe('mcp-ai interactions', () => {
     const flow = (value: unknown): Operation => ({
       type: 'upsertInteractionFlow',
       pageRef: 'home',
-      ref: 'c1',
+      ref: 'b1',
       nodes: [
         { nodeType: 'trigger', action: 'onClick', title: 'Click' },
-        { nodeType: 'callback', action: 'setState', title: 'Set', params: { category: 'attribute', key: 'x', value } }
+        {
+          nodeType: 'callback',
+          action: 'setState',
+          title: 'Set',
+          params: { category: 'attribute', key: 'content', value }
+        }
       ]
     });
     expect(validate({ operations: [flow(true)] }, interactiveSpace()).valid).toBe(true);
@@ -838,6 +895,7 @@ describe('mcp-ai interactions', () => {
   it('re-validates the whole merged node on patch, catching a malformed param the patch did not touch', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-bad'),
       'delayTime-bad': {
         id: 'delayTime-bad',
         title: 'Notify',
@@ -846,9 +904,9 @@ describe('mcp-ai interactions', () => {
         params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-bad',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -864,7 +922,7 @@ describe('mcp-ai interactions', () => {
     expect(res.errors.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
   });
 
-  it('surfaces leftover unknown params (delay/time) on the merged node when patching one field', () => {
+  it('drops leftover unknown params (delay/time) on the node it patches, and says so', () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
       'setState-1': {
@@ -889,7 +947,9 @@ describe('mcp-ai interactions', () => {
       },
       space
     );
-    expect(res.warnings.some(w => w.includes('setState') && w.includes('"delay"') && w.includes('"time"'))).toBe(true);
+    const fixed = res.warnings.filter(w => w.startsWith('Fixed a pre-existing problem in element "c1"'));
+    expect(fixed.some(w => w.includes('"delay"'))).toBe(true);
+    expect(fixed.some(w => w.includes('"time"'))).toBe(true);
   });
 
   // The whole point: a patch whose OWN fields are correct must still be REJECTED (and NOT persisted) while the node
@@ -897,6 +957,7 @@ describe('mcp-ai interactions', () => {
   it('blocks the save when a valid patch lands on an already-malformed node, and persists nothing', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-bad'),
       'delayTime-bad': {
         id: 'delayTime-bad',
         title: 'Notify',
@@ -905,9 +966,9 @@ describe('mcp-ai interactions', () => {
         params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-bad',
+        flowId: 'onClick-1',
         enabled: true
       }
     };
@@ -937,6 +998,7 @@ describe('mcp-ai interactions', () => {
   it('lets the save through once the same patch ALSO corrects the malformation', async () => {
     const space = interactiveSpace();
     space.schema.flat.c1.definition.interactions = {
+      ...clickTrigger('delayTime-bad'),
       'delayTime-bad': {
         id: 'delayTime-bad',
         title: 'Notify',
@@ -945,9 +1007,9 @@ describe('mcp-ai interactions', () => {
         params: { content: 'Hi', autoDismissTimeout: 'soon' },
         preview: {},
         elementId: 'space',
-        beforeNode: '',
+        beforeNode: 'onClick-1',
         afterNode: '',
-        flowId: 'delayTime-bad',
+        flowId: 'onClick-1',
         enabled: true
       }
     };

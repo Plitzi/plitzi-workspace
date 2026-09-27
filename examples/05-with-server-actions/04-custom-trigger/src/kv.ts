@@ -8,8 +8,9 @@ import type { ActionKvAdapter } from '@plitzi/sdk-server/actions';
  * reaches the replica running the flow, and a redelivery runs the work twice. Nothing errors. The symptom is a
  * customer charged twice on a Tuesday.
  *
- * Five operations over strings, and no rule to obey — everything that decides how a counter behaves lives above
- * this. Against Redis they are one command each, which is the whole reason the seam is this shape:
+ * Six operations over strings, and no rule to obey — everything that decides how a counter behaves lives above
+ * this. Against Redis they are one command each — `swap` a short script, since it reads and writes as one — which is
+ * the whole reason the seam is this shape:
  *
  * | here        | Redis                 |
  * |-------------|-----------------------|
@@ -18,6 +19,7 @@ import type { ActionKvAdapter } from '@plitzi/sdk-server/actions';
  * | `delete`    | `DEL key`             |
  * | `increment` | `INCRBY key amount`   |
  * | `expire`    | `EXPIRE key s`        |
+ * | `swap`      | `GET` + `SET` in one `EVAL` |
  *
  * This one is a Map with real expiry so the example runs with nothing installed. Yours is the client you already
  * have; what matters is that `increment` is ATOMIC — it is the test-and-set the single-flight key is taken with,
@@ -67,5 +69,16 @@ export const exampleKv: ActionKvAdapter = {
     }
 
     return Promise.resolve();
+  },
+  // Atomic here for free — nothing else runs between the read and the write in one process. A shared store has to
+  // make it so: Redis with a script, SQL with `UPDATE … WHERE v = ?` and `INSERT IGNORE`.
+  swap: (key, expected, next, ttlSeconds) => {
+    if (live(key)?.value !== expected) {
+      return Promise.resolve(false);
+    }
+
+    entries.set(key, { value: next, ...(ttlSeconds === undefined ? {} : { expiresAt: Date.now() + ttlSeconds * 1000 }) });
+
+    return Promise.resolve(true);
   }
 };

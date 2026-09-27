@@ -72,16 +72,10 @@ export const operation = z.discriminatedUnion('type', [
 export type Operation = z.infer<typeof operation>;
 export type OperationType = Operation['type'];
 
-// The style/connector/action op type names are exactly the keys of those maps, so adding an op needs no change here.
+// The style op type names are exactly the keys of that map, so adding one needs no change here.
 const STYLE_OP_TYPES = new Set<string>(Object.keys(styleOps));
-const CONNECTOR_OP_TYPES = new Set<string>(Object.keys(connectorOps));
-const ACTION_OP_TYPES = new Set<string>(Object.keys(actionOps));
 
 export const isStyleOp = (type: OperationType): boolean => STYLE_OP_TYPES.has(type);
-
-export const isConnectorOp = (type: OperationType): boolean => CONNECTOR_OP_TYPES.has(type);
-
-export const isActionOp = (type: OperationType): boolean => ACTION_OP_TYPES.has(type);
 
 // The maximum number of operations one apply/validate batch may carry — the single source of truth, enforced by
 // the zod shape below (parse-time) and re-checked with a teachable message by the batch validator.

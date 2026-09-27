@@ -28,7 +28,7 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
 
   it('execute validates raw args against the shape, then runs the typed tool', () => {
     const searchTool = tools.find(t => t.name === 'plitzi_search');
-    const result = searchTool?.execute({ query: 'box' }, ctx()) as SearchResponse;
+    const result = searchTool?.execute({ query: 'section' }, ctx()) as SearchResponse;
     expect(result.results.some(r => r.ref === 'c1')).toBe(true);
   });
 
@@ -42,7 +42,7 @@ describe('mcp-ai draft store (preview tokens)', () => {
   it('returns the stashed draft exactly once, then nothing', () => {
     const store = createMemoryDraftStore();
     const data = { schema: buildSpace().schema, style: buildSpace().style };
-    void store.put('tok', data, { ttlMs: 60000 });
+    void store.put('tok', data, { ttlMs: 60000, spaceId: 1 });
     expect(store.take('tok')).toMatchObject({ data, reusable: false });
     expect(store.take('tok')).toBeUndefined();
   });
@@ -51,14 +51,14 @@ describe('mcp-ai draft store (preview tokens)', () => {
   it('keeps a reusable draft for as long as its session lasts', () => {
     const store = createMemoryDraftStore();
     const data = { schema: buildSpace().schema, style: buildSpace().style };
-    void store.put('tok', data, { ttlMs: 60000, reusable: true });
+    void store.put('tok', data, { ttlMs: 60000, reusable: true, spaceId: 1 });
     expect(store.take('tok')).toMatchObject({ data, reusable: true });
     expect(store.take('tok')).toMatchObject({ data, reusable: true });
   });
 
   it('drops an expired token', () => {
     const store = createMemoryDraftStore();
-    void store.put('tok', { schema: buildSpace().schema, style: buildSpace().style }, { ttlMs: -1 });
+    void store.put('tok', { schema: buildSpace().schema, style: buildSpace().style }, { ttlMs: -1, spaceId: 1 });
     expect(store.take('tok')).toBeUndefined();
   });
 });
@@ -242,6 +242,56 @@ describe('mcp-ai plitzi_screenshot tool', () => {
 
     expect(asked).toEqual([false, undefined]);
     expect(res.html).toContain('<!doctype html>');
+  });
+
+  it('reads the page as assistive technology does, and lists what has no name, without an image', async () => {
+    const asked: Array<string[] | undefined> = [];
+    const screenshot = {
+      capture: (input: { views?: string[] }) => {
+        asked.push(input.views);
+
+        return Promise.resolve({
+          ok: true as const,
+          images: [],
+          accessibility: [{ label: 'desktop', outline: '- navigation "Main":\n  - link "Docs"\n  - button\n- img' }]
+        });
+      }
+    };
+
+    const res = (await screenshotToolDef()?.execute(
+      { view: 'accessibility' },
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
+    )) as { content?: unknown; accessibility?: unknown; hint?: string };
+
+    expect(asked).toEqual([['accessibility']]);
+    expect(res.content).toBeUndefined();
+    expect(res.accessibility).toEqual([
+      {
+        viewport: 'desktop',
+        outline: '- navigation "Main":\n  - link "Docs"\n  - button\n- img',
+        unnamed: [
+          { role: 'button', line: 3 },
+          { role: 'img', line: 4 }
+        ]
+      }
+    ]);
+    expect(res.hint).toContain('`alt`');
+  });
+
+  it('says so when the browser service answers without the accessibility tree', async () => {
+    const screenshot = {
+      capture: () =>
+        Promise.resolve({ ok: true as const, images: [{ label: 'desktop', mimeType: 'image/png', data: 'AAAA' }] })
+    };
+
+    const res = (await screenshotToolDef()?.execute(
+      { view: 'both' },
+      { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
+    )) as { content?: Array<{ type: string; text?: string }> };
+
+    const meta = res.content?.find(c => c.type === 'text')?.text ?? '';
+    expect(JSON.parse(meta)).toMatchObject({ warning: 'ACCESSIBILITY_UNSUPPORTED' });
+    expect(res.content?.some(c => c.type === 'image')).toBe(true);
   });
 
   it('falls back to HTML when no browser service is wired', async () => {

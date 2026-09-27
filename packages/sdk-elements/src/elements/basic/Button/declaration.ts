@@ -70,7 +70,9 @@ const declaration = elementDeclaration<ButtonAttributes>()({
                 'padding-bottom': '6px',
                 cursor: 'pointer',
                 'font-size': '16px',
-                'line-height': '24px',
+                // A ratio, not a length: 24px at the default 16px, and the same proportion for a class that resizes
+                // the text. A fixed 24px left every small button — a chip, a row, a tab — a line taller than its text.
+                'line-height': '1.5',
                 'border-top-left-radius': '4px',
                 'border-top-right-radius': '4px',
                 'border-bottom-left-radius': '4px',
@@ -91,7 +93,9 @@ const declaration = elementDeclaration<ButtonAttributes>()({
                 'padding-bottom': '6px',
                 cursor: 'pointer',
                 'font-size': '16px',
-                'line-height': '24px',
+                // A ratio, not a length: 24px at the default 16px, and the same proportion for a class that resizes
+                // the text. A fixed 24px left every small button — a chip, a row, a tab — a line taller than its text.
+                'line-height': '1.5',
                 'border-top-left-radius': '4px',
                 'border-top-right-radius': '4px',
                 'border-bottom-left-radius': '4px',
@@ -112,7 +116,9 @@ const declaration = elementDeclaration<ButtonAttributes>()({
                 'padding-bottom': '6px',
                 cursor: 'pointer',
                 'font-size': '16px',
-                'line-height': '24px',
+                // A ratio, not a length: 24px at the default 16px, and the same proportion for a class that resizes
+                // the text. A fixed 24px left every small button — a chip, a row, a tab — a line taller than its text.
+                'line-height': '1.5',
                 'border-top-left-radius': '4px',
                 'border-top-right-radius': '4px',
                 'border-bottom-left-radius': '4px',

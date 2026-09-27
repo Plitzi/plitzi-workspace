@@ -1,5 +1,5 @@
 import { describeTarget, expect, test } from '../../fixtures';
-import { openHarness, renderSpace } from '../../helpers/harness';
+import { el, openHarness, renderSpace } from '../../helpers/harness';
 import { ROUTE_ORDER_ID, ROUTE_ORDER_PATH, ROUTE_QUERY_IDS, routeQuerySpace } from '../../spaces';
 
 import type { Page } from '@playwright/test';
@@ -24,7 +24,9 @@ const watchOrders = async (page: Page) => {
   return { asked };
 };
 
-const open = (page: Page, id: string) => page.locator(`.${id}`).click();
+const space = routeQuerySpace();
+
+const open = (page: Page, id: string) => el(page, space, id).click();
 
 describeTarget('harness', () => {
   test('leaving a page asks nothing, and does not run its flows again', async ({ page, step }) => {
@@ -34,13 +36,13 @@ describeTarget('harness', () => {
 
     await step('the detail page asks once, for the order it is showing', async () => {
       await open(page, ROUTE_QUERY_IDS.toOrder);
-      await expect(page.locator(`.${ROUTE_QUERY_IDS.title}`)).toHaveText(`Order ${ROUTE_ORDER_ID}`);
+      await expect(el(page, space, ROUTE_QUERY_IDS.title)).toHaveText(`Order ${ROUTE_ORDER_ID}`);
       expect(orders.asked).toEqual([`${ROUTE_ORDER_PATH}/${ROUTE_ORDER_ID}`]);
     });
 
     await step('leaving it asks for nothing', async () => {
       await open(page, ROUTE_QUERY_IDS.toHome);
-      await expect(page.locator(`.${ROUTE_QUERY_IDS.toOrder}`)).toBeVisible();
+      await expect(el(page, space, ROUTE_QUERY_IDS.toOrder)).toBeVisible();
       // Long enough for a request that was going to happen to have happened.
       await page.waitForTimeout(500);
 
@@ -51,7 +53,7 @@ describeTarget('harness', () => {
 
     await step('and the flow behind onApiSuccess did not run again', async () => {
       // It writes `routeParams.orderId`, which by then is gone: a second firing empties what the page is keyed by.
-      await expect(page.locator(`.${ROUTE_QUERY_IDS.seen}`), 'the flow ran again on the way out').toHaveText(
+      await expect(el(page, space, ROUTE_QUERY_IDS.seen), 'the flow ran again on the way out').toHaveText(
         ROUTE_ORDER_ID
       );
     });

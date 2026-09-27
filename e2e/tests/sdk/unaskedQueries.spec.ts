@@ -1,5 +1,5 @@
 import { describeTarget, expect, test } from '../../fixtures';
-import { openHarness, renderSpace } from '../../helpers/harness';
+import { el, openHarness, renderSpace } from '../../helpers/harness';
 import { ORDER_ID, ORDER_PATH, UNASKED_IDS, unaskedQuerySpace } from '../../spaces';
 
 import type { Page } from '@playwright/test';
@@ -25,7 +25,9 @@ const watchOrders = async (page: Page) => {
   return { asked };
 };
 
-const click = (page: Page, id: string) => page.locator(`.${id}`).click();
+const space = unaskedQuerySpace();
+
+const click = (page: Page, id: string) => el(page, space, id).click();
 
 describeTarget('harness', () => {
   test('a URL that still carries a token is not a question, and is never asked', async ({ page }) => {
@@ -33,7 +35,7 @@ describeTarget('harness', () => {
     await openHarness(page);
     await renderSpace(page, unaskedQuerySpace());
 
-    await expect(page.locator(`.${UNASKED_IDS.load}`)).toBeVisible();
+    await expect(el(page, space, UNASKED_IDS.load)).toBeVisible();
     // Long enough for a request that was going to happen to have happened.
     await page.waitForTimeout(500);
 
@@ -52,8 +54,8 @@ describeTarget('harness', () => {
 
     await step('loading the order asks once and runs the flow behind it', async () => {
       await click(page, UNASKED_IDS.load);
-      await expect(page.locator(`.${UNASKED_IDS.title}`)).toHaveText(`Order ${ORDER_ID}`);
-      await expect(page.locator(`.${UNASKED_IDS.seen}`)).toHaveText(ORDER_ID);
+      await expect(el(page, space, UNASKED_IDS.title)).toHaveText(`Order ${ORDER_ID}`);
+      await expect(el(page, space, UNASKED_IDS.seen)).toHaveText(ORDER_ID);
       expect(orders.asked).toEqual([`${ORDER_PATH}/${ORDER_ID}`]);
     });
 
@@ -64,13 +66,13 @@ describeTarget('harness', () => {
       expect(orders.asked).toEqual([`${ORDER_PATH}/${ORDER_ID}`]);
       // The last answer stays: a provider that reported "nothing yet" here would unmount everything it feeds, and
       // the page would collapse and come back a frame later.
-      await expect(page.locator(`.${UNASKED_IDS.title}`)).toHaveText(`Order ${ORDER_ID}`);
+      await expect(el(page, space, UNASKED_IDS.title)).toHaveText(`Order ${ORDER_ID}`);
     });
 
     await step('and does not run onApiSuccess again for a URL it never asked', async () => {
       // The flow writes whatever the state holds NOW. Fired again with the state cleared, it writes an empty string —
       // which on the dashboard was the workspace id everything else was keyed by.
-      await expect(page.locator(`.${UNASKED_IDS.seen}`), 'the flow ran again').toHaveText(ORDER_ID);
+      await expect(el(page, space, UNASKED_IDS.seen), 'the flow ran again').toHaveText(ORDER_ID);
     });
   });
 });

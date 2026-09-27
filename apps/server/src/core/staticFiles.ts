@@ -2,8 +2,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { getMimeType, getCacheControl } from './mimeTypes';
+import { CompressedFileCache } from '../helpers/cache/CompressedFileCache';
 
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
+
+// The SDK bundle, its vendor and stylesheet compress to well under a megabyte each; this leaves room for a
+// deployment's own assets without letting a directory of large text files hold the process's memory.
+const COMPRESSED_FILES_BUDGET_BYTES = 16 * 1024 * 1024;
+
+const compressedFiles = new CompressedFileCache(COMPRESSED_FILES_BUDGET_BYTES);
+
+// Text is what compresses; an image or a font is compressed already and goes out as the bytes on disk.
+const isText = (mimeType: string): boolean => /^text\/|javascript|json|xml|svg/.test(mimeType);
 
 const buildEtag = (stat: fs.Stats): string => `"${stat.mtimeMs.toString(36)}-${stat.size.toString(36)}"`;
 
@@ -21,11 +31,20 @@ const serveFile = (req: SSRRequest, res: SSRResponseHelpers, filePath: string, s
     return true;
   }
 
+  const mimeType = getMimeType(filePath);
+  res.setHeader('Content-Type', mimeType);
+  if (isText(mimeType)) {
+    // Read only when this request's encoding has no stored form yet — once per version of the file, not per request.
+    res.send(() => fs.readFileSync(filePath, 'utf-8'), { compressed: compressedFiles.storeFor(filePath, etag) });
+    compressedFiles.trim();
+
+    return true;
+  }
+
   // The Buffer as read, not a string: a woff2 or a png has bytes that are not valid UTF-8, and decoding then
   // re-encoding them replaces every one of those with U+FFFD — a file that arrives the right length and broken.
-  const content = fs.readFileSync(filePath);
-  res.setHeader('Content-Type', getMimeType(filePath));
-  res.send(content);
+  res.send(fs.readFileSync(filePath));
+
   return true;
 };
 

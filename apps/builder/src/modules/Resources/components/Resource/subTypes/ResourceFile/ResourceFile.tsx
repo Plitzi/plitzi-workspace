@@ -40,6 +40,7 @@ const ResourceFile = ({
     (e: DragEvent) => {
       e.stopPropagation();
       setDraggingFile({ id, type, directoryName });
+      setIsDragging(true);
     },
     [directoryName, id, setDraggingFile, type]
   );

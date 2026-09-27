@@ -1,4 +1,4 @@
-import { bookingTimes, openingHours } from '../content';
+import { bookingTimes, openingHours } from '../content.ts';
 
 /**
  * The restaurant's rules, as the pieces the actions' templates are built from.

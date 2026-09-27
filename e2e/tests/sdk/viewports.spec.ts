@@ -1,8 +1,7 @@
 import { describeTarget, test } from '../../fixtures';
-import { openHarness } from '../../helpers/harness';
-import { expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
-import { expectVisuallyHealthy } from '../../helpers/visualHealth';
-import { sampleSpace } from '../../spaces';
+import { expectPageWhole, openHarness } from '../../helpers/harness';
+import { expectSampleSpaceContent, WITHOUT_RSC } from '../../helpers/space';
+import { sampleAuthored } from '../../spaces';
 
 /** Sizes a space is actually looked at on. A layout that only holds at 1440px is a layout that breaks for most of
  *  the people who see it, and nothing below a browser can tell you that. */
@@ -20,8 +19,7 @@ describeTarget('harness', () => {
       await openHarness(page);
 
       await expectSampleSpaceContent(page);
-      await expectSpaceRendered(page, sampleSpace());
-      await expectVisuallyHealthy(page);
+      await expectPageWhole(page, sampleAuthored(), { elements: 'all', ...WITHOUT_RSC });
 
       await capture(viewport.name);
     });

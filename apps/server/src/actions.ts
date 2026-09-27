@@ -40,7 +40,7 @@ export { cronFiresBetween, cronMatches, cronNextFire, parseCron } from '@plitzi/
  */
 export { checkAction } from './modules/actions/runtime/check';
 export type { ActionCheckDeps } from './modules/actions/runtime/check';
-export { ActionRunError } from './modules/actions/runtime/errors';
+export { ActionRefusal, ActionRunError } from './modules/actions/runtime/errors';
 export { DEFAULT_LIMITS } from './modules/actions/runtime/limits';
 export { createTaskRegistry, taskName } from './modules/actions/tasks/registry';
 export { describeCatalog, describeTask } from './modules/actions/taskCatalog';
@@ -56,6 +56,10 @@ export { describeCatalog, describeTask } from './modules/actions/taskCatalog';
  */
 export { createMemoryKv } from './modules/actions/runtime/memoryKv';
 export { createKvStore } from './modules/actions/runtime/kvStore';
+export { createRedisKv } from './modules/actions/runtime/redisKv';
+export type { RedisKvClient, RedisKvOptions } from './modules/actions/runtime/redisKv';
+export { MAX_LIST_BYTES, MAX_LIST_ENTRIES } from './modules/actions/runtime/kvList';
+export type { KvListEntry, KvListPut, KvListPutOptions, KvListRange } from './modules/actions/runtime/kvList';
 
 /**
  * `onRun` and `onReject` for a deployment that wants to SEE its flows without building somewhere to keep them: a

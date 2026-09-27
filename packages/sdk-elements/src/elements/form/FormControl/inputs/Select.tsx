@@ -13,6 +13,11 @@ export type SelectProps = {
   disabled?: boolean;
   onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
   onValidate?: () => void;
+  /**
+   * The id of the message saying what is wrong with the value, while something is: the field is then marked invalid
+   * and described by it, so a screen reader or a browser agent hears why the form would not send.
+   */
+  errorId?: string;
 };
 
 const Select = ({
@@ -24,7 +29,8 @@ const Select = ({
   className = '',
   disabled = false,
   onChange,
-  onValidate
+  onValidate,
+  errorId
 }: SelectProps) => {
   const inputRef = useRef<HTMLSelectElement>(null);
 
@@ -44,12 +50,6 @@ const Select = ({
     }
 
     return options.map(option => {
-      // try {
-      //   option = JSON.parse(option) as unknown;
-      // } catch {
-      //   // Nothing here due that is not a valid JSON
-      // }
-
       if (typeof option === 'string') {
         return { value: option, label: option };
       }
@@ -76,6 +76,8 @@ const Select = ({
       <select
         ref={inputRef}
         id={id}
+        aria-invalid={errorId ? true : undefined}
+        aria-describedby={errorId}
         name={name}
         onChange={onChange}
         value={value}

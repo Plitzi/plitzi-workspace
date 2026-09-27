@@ -1,0 +1,79 @@
+/* Structure only: the colours are the card's — `--copy-*`, which the space points at its tokens. */
+.copy-text {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.copy-text__text {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--copy-field, rgba(0, 0, 0, 0.05));
+  font:
+    12px/1.45 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.copy-text__button {
+  flex-shrink: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--copy-accent, #4c6ef5);
+  color: var(--copy-on-accent, #ffffff);
+  font:
+    600 12px system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+
+.copy-text__button:hover {
+  filter: brightness(1.08);
+}
+
+/* Compact: one button that is the text and says it copies — for an id beside a name. */
+.copy-text--compact {
+  display: inline-flex;
+}
+
+.copy-text__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--copy-field, rgba(0, 0, 0, 0.05));
+  color: inherit;
+  font:
+    600 12px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.copy-text__chip:hover {
+  border-color: var(--copy-accent, #4c6ef5);
+  color: var(--copy-accent, #4c6ef5);
+}
+
+.copy-text__chip:focus-visible {
+  outline: 2px solid var(--copy-accent, #4c6ef5);
+  outline-offset: 2px;
+}
+
+.copy-text__chip i {
+  font-size: 11px;
+  opacity: 0.7;
+}

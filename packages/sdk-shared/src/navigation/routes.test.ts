@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPageFullPath, getPaths, getSlugParams, matchRoutePath } from './routes';
+import { getPageFullPath, getPaths, getSlugParams, matchRoutePath, navigationTarget } from './routes';
 
 import type { Element, PageFolder } from '../types';
 
@@ -84,5 +84,120 @@ describe('routes', () => {
     expect(getSlugParams('blog/{{year}}/{{slug}}')).toEqual(['year', 'slug']);
     expect(getSlugParams(':spaceId/update/*')).toEqual(['spaceId']);
     expect(getSlugParams('about')).toEqual([]);
+  });
+});
+
+/**
+ * A flow's `navigate` to a page, which has to land where a link to the same page does.
+ *
+ * It resolved the page's own slug and nothing else, so a page in a folder lost the folder — `/audience` rather than
+ * `/analytics/audience` — and a folder's index page, whose slug is empty, went to the home page.
+ */
+describe('navigationTarget', () => {
+  it('goes to a page in a folder at its full path, as a link to it does', () => {
+    expect(navigationTarget(pages, folders, 'audience')).toBe('/analytics/audience');
+    expect(navigationTarget(pages, folders, 'audience')).toBe(getPageFullPath(pages, folders, 'audience', true));
+  });
+
+  it('goes to a folder\u2019s index page at the folder, not at the home page', () => {
+    expect(navigationTarget(pages, folders, 'overview')).toBe('/analytics');
+    expect(navigationTarget(pages, folders, 'reportsIndex')).toBe('/analytics/reports');
+  });
+
+  it('goes home for the home page, and takes anything that is not a page as the path it is', () => {
+    expect(navigationTarget(pages, folders, 'home')).toBe('/');
+    expect(navigationTarget(pages, folders, '/somewhere/else')).toBe('/somewhere/else');
+  });
+});
+
+/**
+ * Which page a visitor gets, decided from `authenticated` — once on the server, which answers with a 302 or the page,
+ * and again in the browser, which must reach the same answer or the page it hydrates is not the one it shows.
+ *
+ * `public` is a GUEST page, not "anyone": a signed-in visitor is refused it, and sent on where the page says.
+ */
+describe('who may see a page', () => {
+  const access: Record<string, Element> = {
+    home: page('home', { slug: '', default: true }),
+    signIn: page('signIn', {
+      slug: 'sign-in',
+      accessLevel: 'public',
+      unauthorizedBehaviour: 'redirect',
+      unauthorizedPageRedirect: 'dashboard'
+    }),
+    dashboard: page('dashboard', {
+      slug: 'dashboard',
+      folder: 'analytics',
+      accessLevel: 'authenticated',
+      unauthorizedBehaviour: 'redirect',
+      unauthorizedPageRedirect: 'signIn'
+    }),
+    welcome: page('welcome', { slug: 'welcome', accessLevel: 'public' }),
+    account: page('account', {
+      slug: 'account',
+      accessLevel: 'authenticated',
+      unauthorizedBehaviour: 'redirect',
+      unauthorizedPageRedirect: '{{authUrl}}/'
+    })
+  };
+
+  const match = (pathName: string, authenticated: boolean, previewMode = true) =>
+    matchRoutePath(getPaths(access, folders, authenticated, '', previewMode), pathName, authenticated);
+
+  it('sends a signed-in visitor away from a guest page, to the full path of the page it names', () => {
+    expect(match('/sign-in', true).action).toEqual({ type: 'redirect', path: '/analytics/dashboard' });
+  });
+
+  it('shows a guest page to a guest', () => {
+    expect(match('/sign-in', false)).toMatchObject({ action: { type: 'normal' }, pageId: 'signIn' });
+  });
+
+  it('refuses a guest page that names nowhere to go, rather than showing it to a signed-in visitor', () => {
+    expect(match('/welcome', true).action).toEqual({ type: 'accessDenied', path: undefined });
+    expect(match('/welcome', false)).toMatchObject({ action: { type: 'normal' }, pageId: 'welcome' });
+  });
+
+  it('sends a guest away from a signed-in page, and lets a signed-in visitor through', () => {
+    expect(match('/analytics/dashboard', false).action).toEqual({ type: 'redirect', path: '/sign-in' });
+    expect(match('/analytics/dashboard', true)).toMatchObject({ action: { type: 'normal' }, pageId: 'dashboard' });
+  });
+
+  // Resolved by the provider against the space's variables; run through the page resolver it became `/{{authUrl}}`.
+  it('keeps an off-site destination as written, for the provider to resolve', () => {
+    expect(match('/account', false).action).toEqual({ type: 'redirect', path: '{{authUrl}}/' });
+  });
+
+  it('opens every page in the builder, where nobody is being kept out', () => {
+    expect(match('/sign-in', true, false)).toMatchObject({ action: { type: 'normal' }, pageId: 'signIn' });
+    expect(match('/analytics/dashboard', false, false)).toMatchObject({
+      action: { type: 'normal' },
+      pageId: 'dashboard'
+    });
+  });
+
+  /**
+   * One address, two pages: the guest's landing and the signed-in home. Neither redirects — the address picks between
+   * them — so what decides the page is `authenticated` alone, and the server and the browser have to agree on it.
+   */
+  it('picks between two pages at one address without redirecting either visitor', () => {
+    const shared: Record<string, Element> = {
+      landing: page('landing', {
+        slug: '',
+        default: true,
+        accessLevel: 'public',
+        unauthorizedBehaviour: 'redirect',
+        unauthorizedPageRedirect: 'app'
+      }),
+      app: page('app', {
+        slug: '',
+        accessLevel: 'authenticated',
+        unauthorizedBehaviour: 'redirect',
+        unauthorizedPageRedirect: '{{authUrl}}/'
+      })
+    };
+    const at = (authenticated: boolean) => matchRoutePath(getPaths(shared, [], authenticated), '/', authenticated);
+
+    expect(at(false)).toMatchObject({ action: { type: 'normal' }, pageId: 'landing' });
+    expect(at(true)).toMatchObject({ action: { type: 'normal' }, pageId: 'app' });
   });
 });

@@ -1,13 +1,13 @@
-import { carta } from './pages/carta';
-import { degustacion } from './pages/degustacion';
-import { articulo, diario } from './pages/diario';
-import { eventos } from './pages/eventos';
-import { inicio } from './pages/inicio';
-import { nosotros } from './pages/nosotros';
-import { regalar } from './pages/regalar';
-import { reservas } from './pages/reservas';
-import { vinos } from './pages/vinos';
-import { classes, customCss, elements, fonts, variables } from './theme';
+import { carta } from './pages/carta.ts';
+import { degustacion } from './pages/degustacion.ts';
+import { articulo, diario } from './pages/diario.ts';
+import { eventos } from './pages/eventos.ts';
+import { inicio } from './pages/inicio.ts';
+import { nosotros } from './pages/nosotros.ts';
+import { regalar } from './pages/regalar.ts';
+import { reservas } from './pages/reservas.ts';
+import { vinos } from './pages/vinos.ts';
+import { classes, customCss, elements, fonts, variables } from './theme.ts';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 

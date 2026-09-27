@@ -25,41 +25,56 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
     [localComponents, localCustomComponents]
   );
   const remoteComponents = useRef<Record<string, ComponentPluginWithHOC>>({});
-  const components = useRef({ ...remoteComponents.current, ...localComponentsParsed });
+  /**
+   * The registry: a mutable box, as every consumer reads `components.current` — but a NEW box whenever the host's own
+   * plugins change.
+   *
+   * Built once, it never learned of a plugin the host handed over after mounting — one the server could not import,
+   * passed only when hydration is done, or a `<PlitziSdk.Plugin>` an application adds later — and an element of that
+   * type rendered nothing, with nothing saying why. A new box is also what the consumers that memoise on it (the item
+   * renderer) recompute from; remote plugins already registered are carried over.
+   */
+  const components = useMemo(
+    () => ({ current: { ...remoteComponents.current, ...localComponentsParsed } }),
+    [localComponentsParsed]
+  );
 
-  const getComponent = useCallback((componentTypes: string | string[] = [], withPlugins = false) => {
-    if (typeof componentTypes === 'string' && !withPlugins) {
-      return components.current[componentTypes];
-    }
-
-    if (typeof componentTypes === 'string' && withPlugins) {
-      const component = components.current[componentTypes] as ComponentPluginWithHOC | undefined;
-      if (!component) {
-        return {};
+  const getComponent = useCallback(
+    (componentTypes: string | string[] = [], withPlugins = false) => {
+      if (typeof componentTypes === 'string' && !withPlugins) {
+        return components.current[componentTypes];
       }
 
-      return { [componentTypes]: component, ...omit(getPlugins(component), [componentTypes]) };
-    }
+      if (typeof componentTypes === 'string' && withPlugins) {
+        const component = components.current[componentTypes] as ComponentPluginWithHOC | undefined;
+        if (!component) {
+          return {};
+        }
 
-    let componentsToReturn: Record<string, ComponentPluginWithHOC> = {};
-    (componentTypes as string[]).forEach(componentType => {
-      const component = components.current[componentType] as ComponentPluginWithHOC | undefined;
-      if (!component) {
-        return;
+        return { [componentTypes]: component, ...omit(getPlugins(component), [componentTypes]) };
       }
 
-      if (withPlugins) {
-        componentsToReturn = {
-          ...componentsToReturn,
-          ...omit(getPlugins(component), [componentType])
-        };
-      } else {
-        componentsToReturn[componentType] = component;
-      }
-    });
+      let componentsToReturn: Record<string, ComponentPluginWithHOC> = {};
+      (componentTypes as string[]).forEach(componentType => {
+        const component = components.current[componentType] as ComponentPluginWithHOC | undefined;
+        if (!component) {
+          return;
+        }
 
-    return componentsToReturn;
-  }, []);
+        if (withPlugins) {
+          componentsToReturn = {
+            ...componentsToReturn,
+            ...omit(getPlugins(component), [componentType])
+          };
+        } else {
+          componentsToReturn[componentType] = component;
+        }
+      });
+
+      return componentsToReturn;
+    },
+    [components]
+  );
 
   const register = useCallback(
     (newComponents: ComponentPluginWithHOC[] | ComponentPluginWithHOC = []) => {
@@ -83,7 +98,7 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
 
       return componentsToAppend;
     },
-    [localComponentsParsed]
+    [components, localComponentsParsed]
   );
 
   const unregister = useCallback(
@@ -112,7 +127,7 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
 
       return componentsToRemove;
     },
-    [getComponent, localComponentsParsed]
+    [components, getComponent, localComponentsParsed]
   );
 
   // Required by builder
@@ -149,7 +164,7 @@ const ComponentProvider = ({ localComponents, localCustomComponents, children }:
       unregisterDefinition,
       registerDefinition
     }),
-    [register, unregister, registerDefinition, unregisterDefinition, getComponent]
+    [components, register, unregister, registerDefinition, unregisterDefinition, getComponent]
   );
 
   return <ComponentContext value={componentsContextValue}>{children}</ComponentContext>;

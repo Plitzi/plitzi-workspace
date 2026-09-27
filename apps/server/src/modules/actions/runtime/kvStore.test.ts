@@ -35,6 +35,11 @@ const spyAdapter = () => {
       calls.push({ method: 'expire', args: [key, ttl] });
 
       return inner.expire(key, ttl);
+    },
+    swap: (key, expected, next, ttl) => {
+      calls.push({ method: 'swap', args: [key, expected, next, ttl] });
+
+      return inner.swap(key, expected, next, ttl);
     }
   };
 
@@ -114,5 +119,131 @@ describe('createKvStore', () => {
     await createKvStore(adapter, { prefix: 'flows:' }).set('a', 1);
 
     expect(calls[0].args[0]).toBe('flows:a');
+  });
+  it('swaps over the value get answered — an object included', async () => {
+    const kv = createKvStore(createMemoryKv());
+    await kv.set('seat', { taken: false, by: null });
+    const read = await kv.get('seat');
+
+    expect(await kv.swap('seat', read, { taken: true, by: 'ana' })).toBe(true);
+    expect(await kv.swap('seat', read, { taken: true, by: 'luis' })).toBe(false);
+    expect(await kv.get('seat')).toEqual({ taken: true, by: 'ana' });
+  });
+
+  it('swaps into a key that holds nothing when expecting undefined', async () => {
+    const kv = createKvStore(createMemoryKv());
+
+    expect(await kv.swap('first', undefined, 1)).toBe(true);
+    expect(await kv.swap('first', undefined, 2)).toBe(false);
+  });
+});
+
+describe('createKvStore lists', () => {
+  it('keeps the highest scores first, one entry per id', async () => {
+    const kv = createKvStore(createMemoryKv());
+    await kv.listPut('board', { id: 'ana', score: 10, value: { name: 'Ana' } });
+    await kv.listPut('board', { id: 'luis', score: 30, value: null });
+    await kv.listPut('board', { id: 'ana', score: 50, value: { name: 'Ana' } });
+
+    expect((await kv.listRange('board')).map(entry => [entry.id, entry.score])).toEqual([
+      ['ana', 50],
+      ['luis', 30]
+    ]);
+  });
+
+  it('reads a window of it, either way round', async () => {
+    const kv = createKvStore(createMemoryKv());
+    for (const [id, score] of [
+      ['a', 1],
+      ['b', 2],
+      ['c', 3],
+      ['d', 4]
+    ] as const) {
+      await kv.listPut('l', { id, score, value: null });
+    }
+
+    expect((await kv.listRange('l', { offset: 1, limit: 2 })).map(entry => entry.id)).toEqual(['c', 'b']);
+    expect((await kv.listRange('l', { order: 'asc', limit: 2 })).map(entry => entry.id)).toEqual(['a', 'b']);
+  });
+
+  it('drops the lowest scores past `keep`', async () => {
+    const kv = createKvStore(createMemoryKv());
+    for (let score = 1; score <= 5; score += 1) {
+      await kv.listPut('latest', { id: `n${score}`, score, value: null }, { keep: 3 });
+    }
+
+    expect((await kv.listRange('latest')).map(entry => entry.id)).toEqual(['n5', 'n4', 'n3']);
+  });
+
+  it('answers what `keep` dropped, so what those entries named can be let go of too', async () => {
+    const kv = createKvStore(createMemoryKv());
+    await kv.listPut('latest', { id: 'old', score: 1, value: null }, { keep: 2 });
+    await kv.listPut('latest', { id: 'mid', score: 2, value: null }, { keep: 2 });
+    const put = await kv.listPut('latest', { id: 'new', score: 3, value: null }, { keep: 2 });
+
+    expect(put).toEqual({ stored: true, dropped: [{ id: 'old', score: 1, value: null }] });
+  });
+
+  it('with `higherOnly`, keeps an entry whose score is higher than the one put', async () => {
+    const kv = createKvStore(createMemoryKv());
+    await kv.listPut('best', { id: 'ana', score: 30, value: 'thirty' });
+
+    expect(await kv.listPut('best', { id: 'ana', score: 10, value: 'ten' }, { higherOnly: true })).toEqual({
+      stored: false,
+      dropped: []
+    });
+    expect((await kv.listPut('best', { id: 'ana', score: 30, value: 'again' }, { higherOnly: true })).stored).toBe(
+      true
+    );
+    expect(await kv.listRange('best')).toEqual([{ id: 'ana', score: 30, value: 'again' }]);
+  });
+
+  it('removes an entry, and says whether it was there', async () => {
+    const kv = createKvStore(createMemoryKv());
+    await kv.listPut('l', { id: 'a', score: 1, value: null });
+
+    expect(await kv.listRemove('l', 'a')).toBe(true);
+    expect(await kv.listRemove('l', 'a')).toBe(false);
+    expect(await kv.listRange('l')).toEqual([]);
+  });
+
+  it('loses no entry to writers racing for the same list', async () => {
+    const kv = createKvStore(createMemoryKv());
+    // The memory adapter answers at once; a store answers later, and that gap is where the writes interleave.
+    const slow = createMemoryKv();
+    const delayed = createKvStore({
+      ...slow,
+      get: async key => {
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 3));
+
+        return slow.get(key);
+      }
+    });
+    await Promise.all(
+      Array.from({ length: 20 }, (_, i) => delayed.listPut('race', { id: `w${i}`, score: i, value: i }))
+    );
+    await Promise.all(Array.from({ length: 5 }, (_, i) => kv.listPut('calm', { id: `c${i}`, score: i, value: i })));
+
+    expect(await delayed.listRange('race')).toHaveLength(20);
+    expect(await kv.listRange('calm')).toHaveLength(5);
+  });
+
+  it('refuses an id a list cannot hold, and a list larger than a store keeps', async () => {
+    const kv = createKvStore(createMemoryKv());
+
+    await expect(kv.listPut('l', { id: 'no spaces', score: 1, value: null })).rejects.toThrow('id is 1-128');
+    await expect(kv.listPut('l', { id: 'big', score: 1, value: 'x'.repeat(150_000) })).rejects.toThrow(
+      'keep fewer entries'
+    );
+  });
+
+  it('keeps lists apart from the values a flow writes', async () => {
+    const { adapter, calls } = spyAdapter();
+    const kv = createKvStore(adapter);
+    await kv.set('scores', 1);
+    await kv.listPut('scores', { id: 'a', score: 1, value: null });
+
+    expect(await kv.get('scores')).toBe(1);
+    expect(calls.find(call => call.method === 'swap')?.args[0]).toBe('kv:list:scores');
   });
 });

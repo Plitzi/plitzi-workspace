@@ -51,9 +51,12 @@ const useRenderSettings = (): Required<RenderSettings> => {
   );
 };
 
-/** Builds the value for a `<StoreProvider>` that renders a subtree under different settings — the builder's preview
- *  pane being preview whatever the editor's own toggle says. Carries the surrounding settings over explicitly,
- *  because the scope shadows the slice: what an override leaves out is NOT inherited, it is lost.
+/** Builds the value for a `<StoreProvider inherit="live">` that renders a subtree under different settings — the
+ *  builder's preview pane being preview whatever the editor's own toggle says. Carries the surrounding settings over
+ *  explicitly, because the scope shadows the slice: what an override leaves out is NOT inherited, it is lost.
+ *
+ *  `inherit="live"` is not optional. A nexus scope inherits nothing by default, so without it the subtree sees a store
+ *  holding `render` and nothing else — no `schema`, no `style` — and every element in it fails to find itself.
  *
  *  `overrides` has to be referentially stable (a module-level constant), like any memo input. */
 export const useRenderOverride = (overrides: RenderSettings) => {

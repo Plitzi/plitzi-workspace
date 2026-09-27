@@ -2,6 +2,10 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { writeFileAtomic } from '../../helpers/atomicFile';
+import { fetchOutbound } from '../../helpers/outboundGuard';
+import { serverLog } from '../../helpers/serverLog';
+
 import type { PluginManager } from '../../plugins/manager';
 import type { OfflineDataRaw, PluginManifest, PluginRaw, PluginSourceFile } from '@plitzi/sdk-shared';
 
@@ -38,18 +42,20 @@ const readDiskEntry = async (dir: string, resource: string): Promise<ManifestCac
 const writeDiskEntry = async (dir: string, resource: string, entry: ManifestCacheEntry): Promise<void> => {
   try {
     await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(cacheFilePath(dir, resource), JSON.stringify(entry), 'utf-8');
+    await writeFileAtomic(cacheFilePath(dir, resource), JSON.stringify(entry));
   } catch (err) {
-    console.warn(`[SSR] Failed to persist plugin manifest cache for ${resource}:`, err);
+    serverLog.warn('SSR', `Failed to persist plugin manifest cache for ${resource}`, err);
   }
 };
 
 const fetchAndStore = async (dir: string, resource: string): Promise<PluginManifest | null> => {
   try {
     const url = `${resource}/plugin-manifest.json`;
-    const res = await fetch(url);
+    // The resource is written by whoever edits the space and fetched from inside the cluster, so it answers to the
+    // same outbound rule as a flow's `http.request`; a refusal lands in the catch below like any other failed fetch.
+    const res = await fetchOutbound(fetch, new URL(url));
     if (!res.ok) {
-      console.warn(`[SSR] Failed to fetch plugin manifest from ${url}: HTTP ${res.status}`);
+      serverLog.warn('SSR', `Failed to fetch plugin manifest from ${url}: HTTP ${res.status}`);
       return null;
     }
 
@@ -60,7 +66,7 @@ const fetchAndStore = async (dir: string, resource: string): Promise<PluginManif
 
     return manifest;
   } catch (err) {
-    console.warn(`[SSR] Error fetching plugin manifest from ${resource}:`, err);
+    serverLog.warn('SSR', `Error fetching plugin manifest from ${resource}`, err);
     return null;
   }
 };
@@ -122,7 +128,7 @@ const registerPlugin = async (pluginManager: PluginManager, plugin: PluginRaw): 
 
   const jsUrl = findAsset(manifest, 'script', plugin.resource);
   if (!jsUrl) {
-    console.warn(`[SSR] Plugin "${plugin.type}" has no JS asset in manifest, skipping`);
+    serverLog.warn('SSR', `Plugin "${plugin.type}" has no JS asset in manifest, skipping`);
     return null;
   }
 

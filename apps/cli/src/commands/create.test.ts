@@ -35,6 +35,27 @@ const inTemp = async (run: (dir: string) => Promise<void>): Promise<void> => {
   }
 };
 
+/** Runs `run` as if a person were at the terminal: vitest's streams are not TTYs, and neither is an agent's shell. */
+const atTerminal = async (run: () => Promise<void>): Promise<void> => {
+  const stdin = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
+  const stdout = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY');
+  Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
+  Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+  try {
+    await run();
+  } finally {
+    const restore = (stream: NodeJS.ReadStream | NodeJS.WriteStream, descriptor?: PropertyDescriptor) => {
+      if (descriptor) {
+        Object.defineProperty(stream, 'isTTY', descriptor);
+      } else {
+        Reflect.deleteProperty(stream, 'isTTY');
+      }
+    };
+    restore(process.stdin, stdin);
+    restore(process.stdout, stdout);
+  }
+};
+
 describe('the scaffold', () => {
   it('gives a local project the space as its own source', () => {
     const files = scaffold(answers());
@@ -115,8 +136,8 @@ describe('the scaffold', () => {
   });
 
   /**
-   * Yarn installs Plug'n'Play by default and a server-mode project cannot start under it: `node --import tsx`
-   * fails to resolve its own entry. The linker is pinned so all three managers produce a project that runs.
+   * Yarn installs Plug'n'Play by default, and the project runs straight from `node_modules`. The linker is pinned so
+   * all three managers produce a project that runs.
    */
   it('pins Yarn to the layout the other two already give it', () => {
     expect(scaffold(answers({ packageManager: 'yarn' }))['.yarnrc.yml']).toContain('nodeLinker: node-modules\n');
@@ -197,23 +218,28 @@ describe('the scaffold', () => {
     const files = scaffold(answers({ mode: 'client' }));
     const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
 
-    expect(scripts.shot).toBe('node --import tsx scripts/shot.ts');
+    expect(scripts.shot).toBe('node scripts/shot.ts');
     expect(files['scripts/shot.ts']).toContain('fullPage: true');
     expect(files['scripts/shot.ts']).toContain('const PORT = 5173;');
   });
 
   /**
    * `compile` is what makes a server-mode plugin part of the HTML rather than something hydration adds later.
-   * The browser build has no server to compile anything, so it registers the component it already bundles.
+   * The browser build has no server to compile anything, so it registers the component it already bundles. Both find
+   * the plugins by folder, so one `plitzi add plugin` writes is registered with no line of this file changed.
    */
-  it('registers the plugin the way each mode can actually render it', () => {
+  it('registers every plugin folder the way each mode can actually render it', () => {
     const server = scaffold(answers())['src/main.ts'];
     const client = scaffold(answers({ mode: 'client' }))['src/main.ts'];
 
     expect(server).toContain("action: 'compile' as const");
-    expect(server).toContain('plugins/StatCard/index.ts');
-    expect(client).toContain('const plugins = { statCard: { component: StatCard } };');
-    expect(client).toContain("import StatCard from './plugins/StatCard';");
+    expect(server).toContain('readdirSync(PLUGINS_DIR, { withFileTypes: true })');
+    expect(server).toContain("path.join(PLUGINS_DIR, entry.name, 'index.ts')");
+    expect(client).toContain(
+      "import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.ts'"
+    );
+    expect(client).toContain('{ component: module.default }');
+    expect(client).not.toContain("import StatCard from './plugins/StatCard';");
   });
 
   /**
@@ -279,20 +305,71 @@ describe('the scaffold', () => {
     expect(spec).toContain('page.goto(pageHandle.path');
     // What a bare visit cannot show is not held against the page: a session, a route param, a condition.
     expect(spec).toContain("pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0");
-    expect(spec).toContain('entry.named && !entry.conditional && !entry.repeated && !entry.boxless');
+    // The condition, the list row and the boxless provider are set aside by `inspectPage`, from what authoring knows.
+    expect(spec).toContain('inspectPage(page, handles, { page: pageHandle.id })');
   });
 
-  // `npm run author` is `node --import tsx`, in a client-mode project too.
-  it('can author the space on a fresh checkout, in either mode', () => {
+  /**
+   * Node runs the project's TypeScript itself: no transpiler loads beside the server, whose loader thread cost more
+   * memory than the server. What that needs is checked by `tsc` rather than discovered at `npm start`.
+   */
+  it('runs its TypeScript on Node alone, in either mode', () => {
     for (const mode of ['client', 'server'] as const) {
-      const { scripts, devDependencies } = JSON.parse(scaffold(answers({ mode }))['package.json']) as {
+      const files = scaffold(answers({ mode }));
+      const { scripts, devDependencies, engines } = JSON.parse(files['package.json']) as {
         scripts: Record<string, string>;
         devDependencies: Record<string, string>;
+        engines: Record<string, string>;
       };
+      const { compilerOptions } = JSON.parse(files['tsconfig.json']) as { compilerOptions: Record<string, unknown> };
 
-      expect(scripts.author).toContain('tsx');
-      expect(devDependencies.tsx).toBeTruthy();
+      expect(scripts.author).toBe('node src/author.ts');
+      expect(devDependencies.tsx).toBeUndefined();
+      expect(engines.node).toBe('>=22.18');
+      expect(compilerOptions).toMatchObject({
+        allowImportingTsExtensions: true,
+        verbatimModuleSyntax: true,
+        erasableSyntaxOnly: true
+      });
+      expect(files['src/author.ts']).toContain("from './space.ts'");
     }
+
+    const server = JSON.parse(scaffold(answers({ mode: 'server' }))['package.json']) as {
+      scripts: Record<string, string>;
+    };
+    expect(server.scripts.start).toBe('node src/main.ts');
+  });
+
+  /**
+   * Production runs JavaScript: stripping types loads a TypeScript transformer into the server for its whole life
+   * (~10 MB), so a deployment runs what `build` emitted. The plugins stay source — the page server builds them.
+   */
+  it('builds the server to JavaScript for production, leaving the plugins to the page server', () => {
+    const files = scaffold(answers({ mode: 'server' }));
+    const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
+    const build = JSON.parse(files['tsconfig.build.json']) as {
+      compilerOptions: Record<string, unknown>;
+      exclude: string[];
+    };
+
+    expect(scripts.build).toBe('tsc -p tsconfig.build.json');
+    expect(scripts['start:prod']).toBe('node dist/main.js');
+    expect(build.compilerOptions).toMatchObject({
+      noEmit: false,
+      outDir: 'dist',
+      rewriteRelativeImportExtensions: true
+    });
+    expect(build.exclude).toEqual(['src/plugins']);
+    // The same folder from `src/main.ts` and from `dist/main.js`.
+    expect(files['src/main.ts']).toContain("const PLUGINS_DIR = path.join(PROJECT_ROOT, 'src/plugins');");
+    expect(scaffold(answers({ mode: 'client' }))['tsconfig.build.json']).toBeUndefined();
+  });
+
+  it('listens where the deployment says, loopback when it says nothing', () => {
+    const main = scaffold(answers({ mode: 'server' }))['src/main.ts'];
+
+    expect(main).toContain("const HOST = process.env.HOST ?? '127.0.0.1';");
+    expect(main).toContain('server.listen(PORT, HOST);');
   });
 
   // Claude Code finds the skill on its own; any other agent looks for AGENTS.md, and CLAUDE.md imports it.
@@ -314,6 +391,14 @@ describe('the scaffold', () => {
     // The references the skill links to travel with it, or every link in it points at nothing.
     expect(files['.claude/skills/plitzi-authoring/reference/layouts.md']).toContain('activeOn');
     expect(files['.claude/skills/plitzi-authoring/reference/review-checklist.md']).toBeDefined();
+  });
+
+  /** An agent that does not know the CLI hand-writes a plugin, and gets its declaration, registration and build wrong. */
+  it('carries the CLI skill too, and points agents at it for plugins', () => {
+    const files = scaffold(answers());
+
+    expect(files['.claude/skills/plitzi-cli/SKILL.md']).toContain('name: plitzi-cli');
+    expect(files['AGENTS.md']).toContain('.claude/skills/plitzi-cli/SKILL.md');
   });
 
   /** Vite binds `localhost`, which is IPv6 here, while everything waiting for a dev server asks 127.0.0.1. */
@@ -345,6 +430,7 @@ describe('plitzi create', () => {
         'playwright.config.ts',
         'scripts',
         'src',
+        'tsconfig.build.json',
         'tsconfig.json',
         'visual'
       ]);
@@ -404,9 +490,12 @@ describe('plitzi create', () => {
       await create(dir, { install: false, mode: 'client' });
 
       const said = error.mock.calls.flat().join('\n');
-      expect(said).toContain('--package-manager npm|yarn|pnpm');
-      expect(said).toContain('--source local|cloud');
-      expect(said).not.toContain('--mode server|client');
+      expect(said).toContain('If you are an AI agent: ask the user');
+      expect(said).toContain('--package-manager npm | yarn | pnpm');
+      expect(said).toContain('--source local | cloud');
+      expect(said).not.toContain('--mode server | client');
+      // It used to end with "or with --yes to take the defaults", and an agent took that exit instead of asking.
+      expect(said).not.toContain('--yes');
       expect(process.exitCode).toBe(1);
       expect(await fs.readdir(dir)).toEqual([]);
 
@@ -415,9 +504,40 @@ describe('plitzi create', () => {
     });
   });
 
-  it('takes the defaults for what was not passed when told to with --yes', async () => {
+  it('does not let --yes answer for a person who is not there', async () => {
     await inTemp(async dir => {
-      await create(dir, { install: false, yes: true, packageManager: 'pnpm' });
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await create(dir, { install: false, yes: true });
+
+      expect(error.mock.calls.flat().join('\n')).toContain('--mode server | client');
+      expect(process.exitCode).toBe(1);
+      expect(await fs.readdir(dir)).toEqual([]);
+
+      error.mockRestore();
+      process.exitCode = 0;
+    });
+  });
+
+  it('asks for the cloud key instead of failing over an empty one when nobody is at the terminal', async () => {
+    await inTemp(async dir => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await create(dir, { install: false, packageManager: 'npm', mode: 'client', source: 'cloud' });
+
+      const said = error.mock.calls.flat().join('\n');
+      expect(said).toContain('--key <key>');
+      expect(said).toContain('public render key');
+      expect(await fs.readdir(dir)).toEqual([]);
+
+      error.mockRestore();
+      process.exitCode = 0;
+    });
+  });
+
+  it('takes the defaults for what was not passed when a person at the terminal says --yes', async () => {
+    await inTemp(async dir => {
+      await atTerminal(() => create(dir, { install: false, yes: true, packageManager: 'pnpm' }));
 
       const manifest = JSON.parse(await fs.readFile(path.join(dir, 'package.json'), 'utf-8')) as {
         dependencies: Record<string, string>;

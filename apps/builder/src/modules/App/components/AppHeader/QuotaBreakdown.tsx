@@ -1,12 +1,11 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
+import { elementsByRoot } from '@plitzi/sdk-schema/helpers/elementTree';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import elementsByRoot from '@pmodules/Space/helpers/elementsByRoot';
 import useAccountUsage from '@pmodules/Space/hooks/useAccountUsage';
 import { format, refillsPeriodically } from '@pmodules/Space/hooks/useSpaceQuota';
 
-import type { Element } from '@plitzi/sdk-shared';
 import type { QuotaLevel, QuotaReading } from '@pmodules/Space/hooks/useSpaceQuota';
 import type { ReactNode } from 'react';
 
@@ -98,7 +97,7 @@ const QuotaBreakdown = ({ readings, spaceId, liveElements }: QuotaBreakdownProps
 
   // Grouped here rather than in the meter's hook: the meter needs a count on every keystroke, this needs a grouping
   // only while somebody is reading it, and the panel is mounted only then.
-  const livePages = useMemo(() => elementsByRoot(flat as Record<string, Element>), [flat]);
+  const livePages = useMemo(() => elementsByRoot(flat), [flat]);
 
   // This space is answered from the store above, so it is dropped here rather than listed twice.
   const others = usage?.spaces.filter(space => space.id !== spaceId) ?? [];

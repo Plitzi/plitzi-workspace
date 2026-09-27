@@ -20,3 +20,19 @@ export class ActionRunError extends Error {
     this.reason = reason;
   }
 }
+
+/**
+ * A step refusing to go on, with a reason written for whoever called — a password too easy to guess, a board that is
+ * read-only, a quota reached.
+ *
+ * What any other step throws stays in the run's record and never reaches the caller: an error can carry a query, a
+ * URL, a credential's name, and a page is shown to anybody. This one says, by its type, that its message was written
+ * to be read. A run that ends on it answers `status: 'failed'` with the message as `error`, which a page's flow reads
+ * as `{{ step.error }}` — the same place a refusal before the run began puts its own.
+ */
+export class ActionRefusal extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ActionRefusal';
+  }
+}

@@ -121,6 +121,39 @@ export const createMongoKv = ({ db, collection = 'action_kv' }: MongoKvOptions):
 
     expire: async (key, ttlSeconds) => {
       await (await store()).updateOne({ _id: key, $expr: LIVE }, [{ $set: { expiresAt: expiryIn(ttlSeconds) } }]);
+    },
+
+    /**
+     * Each branch is one update Mongo applies to the document atomically. Expecting a value, the filter names it.
+     * Expecting nothing is two cases: a lapsed document, taken over by a filter that matches only a lapsed one; and no
+     * document, inserted by an upsert whose filter no stored document satisfies — so a live one makes it collide on
+     * `_id`, which is the refusal, not an error. (An upsert may not filter with `$expr`, or this would be one step.)
+     */
+    swap: async (key, expected, next, ttlSeconds) => {
+      const keysNow = await store();
+      const write = [{ $set: { value: next, expiresAt: ttlSeconds === undefined ? null : expiryIn(ttlSeconds) } }];
+      if (expected !== undefined) {
+        const updated = await keysNow.updateOne({ _id: key, value: expected, $expr: LIVE }, write);
+
+        return updated.matchedCount === 1;
+      }
+
+      const revived = await keysNow.updateOne({ _id: key, $expr: { $not: [LIVE] } }, write);
+      if (revived.matchedCount === 1) {
+        return true;
+      }
+
+      try {
+        const inserted = await keysNow.updateOne({ _id: key, value: { $exists: false } }, write, { upsert: true });
+
+        return inserted.upsertedCount === 1;
+      } catch (error) {
+        if ((error as { code?: number }).code === DUPLICATE_KEY) {
+          return false;
+        }
+
+        throw error;
+      }
     }
   };
 };

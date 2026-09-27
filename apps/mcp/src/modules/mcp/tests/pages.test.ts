@@ -29,6 +29,84 @@ describe('mcp-ai settings (space-level customCss + auth config)', () => {
     expect(settings.keepState).toBe(true);
   });
 
+  it('keeps state per space, leaving out the keys it is told never to keep', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'patchSettings', keepState: true, transientState: ['tourStep'] }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as { transientState?: string[] };
+    expect(settings.transientState).toEqual(['tourStep']);
+  });
+
+  // The runtime compares top-level keys: a dotted one would match nothing and the state would be kept regardless.
+  it('refuses a dotted transient key', () => {
+    const res = validate({ operations: [{ type: 'patchSettings', transientState: ['tour.step'] }] }, buildSpace());
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('no dots'))).toBe(true);
+  });
+
+  // The kept keys the first paint shows: written like the transient ones, and never one of them.
+  it('keeps the painted keys the server draws with', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'patchSettings', keepState: true, paintedState: ['toolPick'] }] },
+      buildSpace(),
+      cap.persisters
+    );
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as { paintedState?: string[] };
+    expect(settings.paintedState).toEqual(['toolPick']);
+  });
+
+  it('refuses a painted key that is dotted, or also transient', () => {
+    const dotted = validate({ operations: [{ type: 'patchSettings', paintedState: ['tool.pick'] }] }, buildSpace());
+    expect(dotted.errors.some(e => e.path.endsWith('paintedState[0]') && e.message.includes('no dots'))).toBe(true);
+
+    const both = validate(
+      { operations: [{ type: 'patchSettings', paintedState: ['toolPick'], transientState: ['toolPick'] }] },
+      buildSpace()
+    );
+    expect(both.valid).toBe(false);
+    expect(both.errors.some(e => e.message.includes('both paintedState and transientState'))).toBe(true);
+  });
+
+  it('declares realtime channels pattern by pattern, and takes one out with null', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [
+          {
+            type: 'patchSettings',
+            channels: {
+              'board:{id}': { access: { mode: 'public' }, publish: 'server' },
+              'room:{id}': { access: { mode: 'public' }, presence: true }
+            }
+          }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    await apply(
+      { operations: [{ type: 'patchSettings', channels: { 'board:{id}': null } }] },
+      cap.saved(),
+      cap.persisters
+    );
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as { channels?: object };
+    expect(settings.channels).toEqual({ 'room:{id}': { access: { mode: 'public' }, presence: true } });
+  });
+
+  // The pattern is what the server matches topics against: one it cannot read opens nothing, silently.
+  it('refuses a channel the server could not serve, saying how to write it', () => {
+    const res = validate(
+      { operations: [{ type: 'patchSettings', channels: { 'board {id}': { access: { mode: 'public' } } } }] },
+      buildSpace()
+    );
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(e => e.message.includes('`board:{id}`'))).toBe(true);
+  });
+
   it('exposes settings in the cold-start primer', async () => {
     const cap = capturing(buildSpace());
     await apply({ operations: [{ type: 'patchSettings', customCss: '.z{}' }] }, buildSpace(), cap.persisters);
@@ -100,13 +178,25 @@ describe('mcp-ai page slug is relative (leading slash stripped)', () => {
 describe('mcp-ai patchElement (I3/R3 — partial merge)', () => {
   it('changes only the listed prop, preserving the rest', async () => {
     const space = buildSpace();
-    (space.schema.flat.c1.attributes as Record<string, unknown>).extra = 'keep';
+    space.schema.flat.home.definition.items = ['c1', 'img'];
+    space.schema.flat.img = {
+      id: 'img',
+      attributes: { src: 'https://cdn.example.com/a.png', alt: 'Before' },
+      definition: {
+        rootId: 'home',
+        parentId: 'home',
+        label: 'Image',
+        type: 'image',
+        items: [],
+        styleSelectors: { base: '' }
+      }
+    };
     const res = await apply(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: 'Renamed' } }] },
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'img', props: { alt: 'After' } }] },
       space
     );
-    const el = res.elements?.find(e => e.ref === 'c1');
-    expect(el?.props).toEqual({ title: 'Renamed', extra: 'keep' });
+    const el = res.elements?.find(e => e.ref === 'img');
+    expect(el?.props).toEqual({ src: 'https://cdn.example.com/a.png', alt: 'After' });
   });
 
   it('unsets a prop when its value is null', async () => {
@@ -487,7 +577,11 @@ describe('mcp-ai write response element versions (R1)', () => {
     const res = await apply(
       {
         operations: [
-          { type: 'upsertElement', pageRef: 'home', element: { ref: 'c1', type: 'container', props: { title: 'X' } } }
+          {
+            type: 'upsertElement',
+            pageRef: 'home',
+            element: { ref: 'c1', type: 'container', props: { subType: 'article' } }
+          }
         ]
       },
       buildSpace()

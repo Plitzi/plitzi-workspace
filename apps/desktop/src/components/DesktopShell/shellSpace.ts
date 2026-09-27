@@ -276,9 +276,8 @@ const collapsedClass = {
  * Whether THIS row is the space that is open.
  *
  * The question compares two things — the row's own url against the one the host says is open — and a binding reads
- * one source, so the comparison is a template and what it writes is the row's class. The second binding is what
- * makes the first work: an element subscribes only to the sources its bindings NAME, so without it the row's own
- * value is not in scope and the template compares against nothing.
+ * one source, so the comparison is a template and what it writes is the row's class. The row's own value reaches it
+ * because the template names it: an element subscribes to the sources its templates read, not only to its `source`.
  */
 const openClass = (listId: string) => ({
   action: 'twigTemplate',
@@ -298,8 +297,7 @@ const spaceRowFor = (listId: string): ElementSpec =>
         source: 'host.openSpace',
         category: 'initialState',
         transformers: [openClass(listId)]
-      },
-      { to: 'data-url', source: `${listId}.item.url` }
+      }
     ],
     children: [
       text({ id: `${listId}-badge`, class: badge, bind: { content: `${listId}.item.initial` } }),

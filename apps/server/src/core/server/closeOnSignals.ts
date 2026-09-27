@@ -1,3 +1,5 @@
+import { serverLog } from '../../helpers/serverLog';
+
 /** Anything that closes the way a server from `createServer` does. */
 export type Closable = { close: () => Promise<void> };
 
@@ -33,21 +35,21 @@ export const closeOnSignals = (
 
   const onSignal = (signal: NodeJS.Signals): void => {
     if (closing) {
-      console.warn(`[server] ${signal} again: exiting without waiting`);
+      serverLog.warn('server', `${signal} again: exiting without waiting`);
       process.exit(1);
 
       return;
     }
 
     closing = true;
-    console.info(`[server] ${signal}: finishing what is running, then exiting`);
+    serverLog.info('server', `${signal}: finishing what is running, then exiting`);
     void (async () => {
       try {
         await server.close();
         await afterClose?.();
         process.exit(0);
       } catch (error) {
-        console.error('[server] could not close cleanly:', error);
+        serverLog.error('server', 'could not close cleanly', error);
         process.exit(1);
       }
     })();

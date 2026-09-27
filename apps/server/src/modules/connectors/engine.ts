@@ -2,7 +2,7 @@ import { BODYLESS_METHODS, DEFAULT_READ_ENDPOINT, EMPTY_RESPONSE_METHODS } from 
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { getByPath } from './getByPath';
-import { assertOutboundAllowed } from '../../helpers/outboundGuard';
+import { fetchOutbound } from '../../helpers/outboundGuard';
 
 import type {
   ConnectorCredential,
@@ -271,10 +271,6 @@ export const fetchConnectorRecords = async ({
     ...renderFilters(resolved, connection.operators, variables)
   }).forEach(([key, value]) => url.searchParams.set(key, value));
 
-  // The same rule the `http.request` task follows, and for the same reason: a manifest's `baseUrl` is typed by a
-  // customer, and this call goes out from inside the cluster.
-  await assertOutboundAllowed(url);
-
   const method = read.method ?? 'GET';
   const headers = { ...applyAuth(connection, variables, url), ...renderEntries(read.headers ?? {}, variables) };
   // A search endpoint reads through POST; the body is templated the same way the query string is.
@@ -283,7 +279,9 @@ export const fetchConnectorRecords = async ({
     headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetchImpl(url.toString(), {
+  // The same rule the `http.request` task follows, and for the same reason: a manifest's `baseUrl` is typed by a
+  // customer, and this call goes out from inside the cluster.
+  const response = await fetchOutbound(fetchImpl, url, {
     method,
     headers,
     body: sendsBody ? JSON.stringify(renderEntries(read.body ?? {}, variables)) : undefined
@@ -349,12 +347,10 @@ export const writeConnectorRecord = async ({
     url.searchParams.set(key, value)
   );
 
-  await assertOutboundAllowed(url);
-
   const headers = { ...applyAuth(connection, variables, url), ...renderEntries(operation.headers ?? {}, variables) };
   headers['Content-Type'] = 'application/json';
 
-  const response = await fetchImpl(url.toString(), {
+  const response = await fetchOutbound(fetchImpl, url, {
     method: operation.method,
     headers,
     body: BODYLESS_METHODS.includes(operation.method) ? undefined : JSON.stringify(wrapBody(values, operation.bodyPath))

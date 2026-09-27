@@ -107,6 +107,105 @@ function renameCssPlugin(): Plugin {
   };
 }
 
+/** What `vite.vendor.config.ts` builds into the same `dist`: React and its kin, a separate build of their own. */
+const VENDOR_OUTPUT = /^plitzi-sdk(-dev)?-vendor\.js(\.map)?(\.gz)?$/;
+
+/**
+ * Empties `dist` of what this build made before — and only of that.
+ *
+ * `emptyOutDir` empties all of it, and the vendor bundles are built into the same folder by another config: a
+ * production build left a `dist` with no React, and every page served from it answered a script that 302'd to HTML.
+ * Run at the start of a production build only; a development build overwrites in place, as it always has.
+ */
+function cleanOwnOutputPlugin(): Plugin {
+  return {
+    name: 'plitzi-clean-own-output',
+    apply: 'build',
+
+    buildStart() {
+      const outDir = path.resolve(import.meta.dirname, 'dist');
+      if (!fs.existsSync(outDir)) {
+        return;
+      }
+
+      for (const entry of fs.readdirSync(outDir)) {
+        if (!VENDOR_OUTPUT.test(entry)) {
+          fs.rmSync(path.join(outDir, entry), { recursive: true, force: true });
+        }
+      }
+    }
+  };
+}
+
+/** What the SDK's own module is called wherever it is loaded: the import map of every page that runs it, and the name
+ *  a bundler resolves it by. Plugins import the SDK by it too. */
+const SDK_SPECIFIER = '@plitzi/plitzi-sdk';
+
+const DEVTOOLS_CHUNK = /^plitzi-sdk-devtools-[\w-]+\.js$/;
+
+/**
+ * Holds the one split this build allows: the dev-tools panel, a chunk of its own that `plitzi-sdk.js` imports only
+ * when a page is allowed to debug and has a panel to show.
+ *
+ * The chunk shares the SDK's modules — the stores the panel inspects, the registries, the contexts — so it has to reach
+ * the very module the page loaded, not a copy of it. Left to the bundler it imports `./plitzi-sdk.js`, and a page that
+ * loaded the SDK as `plitzi-sdk.js?v=…` (the page server's cache-buster) would evaluate the whole SDK a second time,
+ * and the panel would inspect an empty one. So the chunk imports it by name: an import map resolves that to the URL the
+ * page loaded, and a bundler to the same file.
+ *
+ * Anything else split off is a file the pages would have to know about, so it fails the build rather than ship.
+ */
+function devToolsChunkPlugin(): Plugin {
+  return {
+    name: 'plitzi-devtools-chunk',
+    apply: 'build',
+    enforce: 'post',
+
+    generateBundle(_options, bundle) {
+      const split = Object.values(bundle).filter(output => output.type === 'chunk' && !output.isEntry);
+      if (split.length > 1) {
+        this.error(`The SDK splits into one dev-tools chunk, and this build split off ${String(split.length)} chunks.`);
+      }
+
+      for (const output of split) {
+        if (output.type !== 'chunk') {
+          continue;
+        }
+
+        if (!output.isDynamicEntry || !DEVTOOLS_CHUNK.test(output.fileName)) {
+          this.error(
+            `${output.fileName}: the SDK is one file and its dev-tools chunk. A dynamic import() in the source split this off; import it statically, or place it in the dev-tools group.`
+          );
+        }
+
+        const entryImport = /(["'])\.\/plitzi-sdk\.js\1/g;
+        if (!entryImport.test(output.code)) {
+          this.error(
+            `${output.fileName}: the dev-tools chunk no longer imports plitzi-sdk.js, so it cannot be pointed at it.`
+          );
+        }
+
+        output.code = output.code.replace(entryImport, `$1${SDK_SPECIFIER}$1`);
+      }
+    },
+
+    // A development build writes over the last one in place, so the chunk a previous build hashed differently is removed
+    // here rather than left beside the new one.
+    writeBundle(options, bundle) {
+      const outDir = options.dir;
+      if (!outDir) {
+        return;
+      }
+
+      for (const file of fs.readdirSync(outDir)) {
+        if (DEVTOOLS_CHUNK.test(file) && !(file in bundle)) {
+          fs.rmSync(path.join(outDir, file), { force: true });
+        }
+      }
+    }
+  };
+}
+
 /** Skips rewriting a declaration whose content is already on disk. Every build regenerates every `.d.ts`, unchanged
  *  ones included, and replacing hundreds of files at once is what makes the editors holding them open fall over.
  *  Inlined rather than shared: a vite config importing across packages breaks `composite` type-checking (TS6059). */
@@ -145,10 +244,16 @@ export default defineConfig(({ mode, command }) => {
         reactDomClient: devMode ? '/src/vendor-entry.ts' : '/plitzi-sdk-vendor.js',
         version: PACKAGE.version
       }),
+      command === 'build' && !devMode && cleanOwnOutputPlugin(),
       command === 'build' && ejsPlugin(devMode),
       command === 'build' && renameCssPlugin(),
+      command === 'build' && devToolsChunkPlugin(),
       !isWatch &&
-        viteCompression({ algorithm: 'gzip', deleteOriginFile: onlyGzip, filter: /plitzi-sdk(|-devtools).(js|css)$/ }),
+        viteCompression({
+          algorithm: 'gzip',
+          deleteOriginFile: onlyGzip,
+          filter: /plitzi-sdk(-devtools(-[\w-]+)?)?\.(js|css)$/
+        }),
       dts({
         entryRoot: 'src',
         outDir: 'dist',
@@ -162,6 +267,11 @@ export default defineConfig(({ mode, command }) => {
           'vendor-entry.ts'
         ],
         tsconfigPath: './tsconfig.app.json',
+        // A development build points the packages at their sources; the types it writes must not. Left to the
+        // plugin, every import of one became a path into `packages/*/src`, and whatever typechecked against this
+        // build compiled those sources under its own settings — the examples' `erasableSyntaxOnly` refusing their
+        // enums — while a production build said nothing.
+        aliasesExclude: Object.keys(packages),
         beforeWriteFile: skipUnchangedDts
       }),
       // {
@@ -245,6 +355,10 @@ export default defineConfig(({ mode, command }) => {
       cssCodeSplit: true,
       rollupOptions: {
         treeshake: true,
+        // Lets the entry hold the code its dev-tools chunk shares with it, rather than turning into a facade that
+        // re-exports it from a third file: the chunk has to be able to import the SDK by name (see
+        // `devToolsChunkPlugin`), and the page to load one file.
+        preserveEntrySignatures: 'allow-extension',
         external: [
           'react',
           'react-dom',
@@ -258,8 +372,16 @@ export default defineConfig(({ mode, command }) => {
           {
             format: 'es',
             exports: 'named',
-            manualChunks: undefined,
-            // inlineDynamicImports: true, // false if u want to have chunks !devMode,
+            /**
+             * One file, and the dev-tools panel beside it. The SDK is loaded from a `<script>` by name — by the page
+             * server, by a static HTML, by a space somebody hosts wherever — so everything a page runs is in
+             * `plitzi-sdk.js`: the group takes every module the entry reaches statically, which inlines the dynamic
+             * `import()`s the plugin loader uses to break an evaluation cycle. What is left is what only the panel
+             * reaches, loaded by the SDK itself when a page may debug — see `devToolsChunkPlugin`. Hashed, because the
+             * assets are cached and the SDK reaches it by a URL no cache-buster is added to.
+             */
+            codeSplitting: { groups: [{ name: 'plitzi-sdk', tags: ['$initial'] }] },
+            chunkFileNames: 'plitzi-sdk-devtools-[hash].js',
             entryFileNames: 'plitzi-sdk.js',
             assetFileNames: '[name].[ext]',
             globals: {
@@ -288,7 +410,7 @@ export default defineConfig(({ mode, command }) => {
         }
       },
       sourcemap: false,
-      emptyOutDir: !devMode
+      emptyOutDir: false
     },
     define: {
       /**

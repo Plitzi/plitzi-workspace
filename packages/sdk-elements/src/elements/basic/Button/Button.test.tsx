@@ -69,4 +69,14 @@ describe('Button Tests', () => {
 
     expect(getByRole('button', { name: 'Launch' }).hasAttribute('aria-label')).toBe(false);
   });
+
+  it('is named by its label when the words it shows are only a key hint', () => {
+    const { getByRole } = render(
+      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+        <Button content="V" label="Select (V)" title="Select — click a shape · V" />
+      </ElementContext>
+    );
+
+    expect(getByRole('button', { name: 'Select (V)' })).toBeTruthy();
+  });
 });

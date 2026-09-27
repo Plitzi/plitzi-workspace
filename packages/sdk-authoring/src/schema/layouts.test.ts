@@ -111,15 +111,67 @@ describe('authorSpace / layouts', () => {
   });
 });
 
-describe('authorSpace / page state', () => {
-  it('keeps the page state where the page asked for it', () => {
-    const { schema } = authorSpace({
-      name: 'Stateful',
-      permanentUrl: 'stateful',
-      pages: [{ id: 'home', name: 'Home', slug: '', keepState: true, stateStorage: 'localStorage', body: [] }]
-    });
+describe('authorSpace / kept state', () => {
+  const space = (settings: SpaceSpec['settings'], page: Record<string, unknown> = {}): SpaceSpec => ({
+    name: 'Stateful',
+    permanentUrl: 'stateful',
+    settings,
+    pages: [{ id: 'home', name: 'Home', slug: '', body: [], ...page }]
+  });
 
-    expect(schema.flat.home.attributes).toMatchObject({ keepState: true, stateStorage: 'localStorage' });
+  // A page never kept anything: the runtime reads `keepState` from the space's settings and nowhere else, so a page
+  // that said it did was a promise nothing kept.
+  it('refuses keepState on a page, and says where it goes', () => {
+    expect(() => authorSpace(space({}, { keepState: true }))).toThrow(/settings: \{ keepState: true \}/u);
+  });
+
+  it('writes the keys never to keep into the settings', () => {
+    const { schema, warnings } = authorSpace(space({ keepState: true, transientState: ['tourStep'] }));
+
+    expect(schema.settings.transientState).toEqual(['tourStep']);
+    expect(warnings).toEqual([]);
+  });
+
+  it('refuses a dotted key, naming the top-level one', () => {
+    expect(() => authorSpace(space({ keepState: true, transientState: ['tour.step'] }))).toThrow(/write "tour"/u);
+  });
+
+  it('refuses a transientState that is not a list of names', () => {
+    const notAList = { keepState: true, transientState: 'tourStep' } as unknown as SpaceSpec['settings'];
+
+    expect(() => authorSpace(space(notAList))).toThrow(/as a list/u);
+    expect(() => authorSpace(space({ keepState: true, transientState: [''] }))).toThrow(/not a state key/u);
+  });
+
+  it('warns when nothing is kept in the first place', () => {
+    const { warnings } = authorSpace(space({ transientState: ['tourStep'] }));
+
+    expect(warnings.map(warning => warning.code)).toEqual(['transient-state-without-keep-state']);
+  });
+
+  // The kept keys the first paint shows, which the server renders with from a cookie.
+  it('writes the painted keys into the settings', () => {
+    const { schema, warnings } = authorSpace(space({ keepState: true, paintedState: ['toolPick', 'name'] }));
+
+    expect(schema.settings.paintedState).toEqual(['toolPick', 'name']);
+    expect(warnings).toEqual([]);
+  });
+
+  it('refuses a painted key that is not a top-level state key', () => {
+    expect(() => authorSpace(space({ keepState: true, paintedState: ['tool.pick'] }))).toThrow(/write "tool"/u);
+    expect(() => authorSpace(space({ keepState: true, paintedState: [''] }))).toThrow(/not a state key/u);
+  });
+
+  it('refuses a key that is both painted and transient', () => {
+    expect(() =>
+      authorSpace(space({ keepState: true, paintedState: ['toolPick'], transientState: ['toolPick', 'demo'] }))
+    ).toThrow(/both name "toolPick"/u);
+  });
+
+  it('warns when nothing is kept to paint with', () => {
+    const { warnings } = authorSpace(space({ paintedState: ['toolPick'] }));
+
+    expect(warnings.map(warning => warning.code)).toEqual(['painted-state-without-keep-state']);
   });
 });
 

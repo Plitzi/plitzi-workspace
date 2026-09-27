@@ -378,7 +378,6 @@ const BuilderProvider = ({
         style: { ...elementsStyle, cache: generateCache(elementsStyle) }
       };
 
-      // const jsonBlob = new Blob([JSON.stringify(jsonData)], { type: 'application/json' });
       const file = new File([JSON.stringify(jsonData, null, 2)], `${name}.json`, {
         type: 'application/json',
         lastModified: Date.now()

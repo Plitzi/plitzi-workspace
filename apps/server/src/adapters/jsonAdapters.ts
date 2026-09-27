@@ -1,4 +1,6 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
+
+import { serverLog } from '../helpers/serverLog';
 
 import type { OfflineDataRaw, SSRPageAdapters, SSRRequest, SSRSpaceDeployment } from '@plitzi/sdk-shared';
 
@@ -19,9 +21,32 @@ export type JsonAdaptersConfig = {
 const isDeploymentObject = (v: NonNullable<JsonAdaptersConfig['deployment']>): v is SSRSpaceDeployment =>
   typeof v === 'object' && ('spaceId' in v || 'environment' in v || 'error' in v);
 
-const readJson = (filePath: string): unknown => JSON.parse(readFileSync(filePath, 'utf-8'));
+// Parsed once per version of the file rather than per request, which was a tenth of a render's CPU on a real space.
+// Every request shares the parsed object, as it does the one `createCloudAdapters` holds.
+const createJsonReader = () => {
+  const held = new Map<string, { mtimeMs: number; size: number; value: unknown }>();
+
+  return {
+    read: (filePath: string): unknown => {
+      const { mtimeMs, size } = statSync(filePath);
+      const hit = held.get(filePath);
+      if (hit?.mtimeMs === mtimeMs && hit.size === size) {
+        return hit.value;
+      }
+
+      const value: unknown = JSON.parse(readFileSync(filePath, 'utf-8'));
+      held.set(filePath, { mtimeMs, size, value });
+
+      return value;
+    },
+    forget: (filePath: string): void => {
+      held.delete(filePath);
+    }
+  };
+};
 
 export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters => {
+  const json = createJsonReader();
   const pathFor = (spaceId: number, environment: string, revision?: number): string | undefined => {
     if (typeof config.offlineData === 'function') {
       return config.offlineData(spaceId, environment, revision);
@@ -41,9 +66,9 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters 
         return Promise.resolve(config.offlineData as OfflineDataRaw);
       }
 
-      return Promise.resolve(readJson(filePath) as OfflineDataRaw);
+      return Promise.resolve(json.read(filePath) as OfflineDataRaw);
     } catch (err: unknown) {
-      console.error('[JsonAdapters] Failed to read offlineData:', (err as Error).message);
+      serverLog.error('JsonAdapters', 'Failed to read offlineData', err);
 
       return Promise.resolve(undefined);
     }
@@ -56,6 +81,7 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters 
     }
 
     writeFileSync(filePath, JSON.stringify(data, null, 2));
+    json.forget(filePath);
 
     return Promise.resolve();
   };
@@ -69,9 +95,10 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters 
 
     if (typeof deployment === 'string') {
       try {
-        return Promise.resolve(readJson(deployment) as SSRSpaceDeployment);
+        return Promise.resolve(json.read(deployment) as SSRSpaceDeployment);
       } catch (err: unknown) {
-        console.error('[JsonAdapters] Failed to read deployment file:', (err as Error).message);
+        serverLog.error('JsonAdapters', 'Failed to read deployment file', err);
+
         return Promise.resolve({ error: { code: 500, message: 'Deployment config unreadable' } });
       }
     }

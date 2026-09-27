@@ -1,3 +1,5 @@
+import { serverLog } from '../helpers/serverLog';
+
 import type {
   Element,
   Environment,
@@ -277,21 +279,21 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
       });
 
       if (!response.ok) {
-        console.error(`[CloudAdapters] ${what} answered ${response.status}`);
+        serverLog.error('CloudAdapters', `${what} answered ${response.status}`);
 
         return undefined;
       }
 
       const payload = (await response.json()) as { data?: T; errors?: { message: string }[] };
       if (payload.errors?.length) {
-        console.error(`[CloudAdapters] ${what}: ${payload.errors.map(error => error.message).join('; ')}`);
+        serverLog.error('CloudAdapters', `${what}: ${payload.errors.map(error => error.message).join('; ')}`);
 
         return undefined;
       }
 
       return payload.data;
     } catch (error: unknown) {
-      console.error(`[CloudAdapters] ${what} could not be reached:`, (error as Error).message);
+      serverLog.error('CloudAdapters', `${what} could not be reached`, error);
 
       return undefined;
     }

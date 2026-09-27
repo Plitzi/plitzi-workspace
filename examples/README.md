@@ -52,7 +52,7 @@ these build on.
 | | Example | What it is | Port |
 |---|---|---|---|
 | 01 | [blog](./06-full-examples/01-blog) | A front page, posts, a sidebar, sessions, and who may publish | 4013 |
-| 02 | [seismic](./06-full-examples/02-seismic) | One live screen: a world map of USGS earthquakes, refreshing itself | 4014 |
+| 02 | [seismic](./06-full-examples/02-seismic) | One live screen: a WebGL globe of USGS earthquakes — filtered, replayed and explained by the space around it | 4014 |
 | 03 | [ceniza](./06-full-examples/03-ceniza) | A restaurant's website: live availability, bookings with email, a journal — no server code | 4015 |
 
 Everything above, assembled: this is the one to read when the question is not "how does X work" but "what does it

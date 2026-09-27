@@ -7,7 +7,10 @@ plitzi-workspace/
 ├── apps/
 │   ├── builder/     # Builder visual (@plitzi/plitzi-builder)
 │   ├── sdk/         # App del SDK Plitzi (@plitzi/plitzi-sdk)
-│   └── server/      # Servidor SSR / RSC / MCP (@plitzi/sdk-server)
+│   ├── server/      # Servidor de páginas: SSR / RSC (@plitzi/sdk-server)
+│   ├── mcp/         # Superficie de IA: servidor MCP (@plitzi/sdk-mcp)
+│   ├── cli/         # Crea un servidor que renderiza un space tuyo (@plitzi/cli)
+│   └── desktop/     # Cliente de escritorio
 ├── packages/
 │   ├── sdk-auth/
 │   ├── sdk-authoring/   # Autoría offline de espacios y plantillas (@plitzi/sdk-authoring)

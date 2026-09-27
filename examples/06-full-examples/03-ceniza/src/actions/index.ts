@@ -1,10 +1,10 @@
-import { AVAILABILITY_ACTION, availabilityAction } from './availability';
-import { BOOKING_ACTION, bookingAction } from './booking';
-import { HOURS_ACTION, hoursAction } from './hours';
-import { JOURNAL_ACTION, journalAction } from './journal';
-import { NEWSLETTER_ACTION, newsletterAction } from './newsletter';
-import { SMTP_CREDENTIAL } from './rules';
-import { restaurant } from '../content';
+import { AVAILABILITY_ACTION, availabilityAction } from './availability.ts';
+import { BOOKING_ACTION, bookingAction } from './booking.ts';
+import { HOURS_ACTION, hoursAction } from './hours.ts';
+import { JOURNAL_ACTION, journalAction } from './journal.ts';
+import { NEWSLETTER_ACTION, newsletterAction } from './newsletter.ts';
+import { SMTP_CREDENTIAL } from './rules.ts';
+import { restaurant } from '../content.ts';
 
 import type { ActionLookups } from '@plitzi/sdk-server/actions';
 
@@ -48,4 +48,4 @@ export const lookups: ActionLookups = {
 };
 
 export { AVAILABILITY_ACTION, BOOKING_ACTION, HOURS_ACTION, JOURNAL_ACTION, NEWSLETTER_ACTION };
-export { slotId } from './rules';
+export { slotId } from './rules.ts';

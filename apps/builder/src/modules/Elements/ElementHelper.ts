@@ -62,3 +62,26 @@ export const getInitialItems = (
 
   return { directItems, items: result };
 };
+
+/** The catalog as the elements panel lists it: every definition whose label matches `filter`, grouped by category. */
+export const definitionsByCategory = (
+  definitions: Record<string, ComponentDefinition>,
+  filter: string
+): Record<string, ComponentDefinition[]> => {
+  const needle = filter.toLowerCase();
+  const byCategory: Record<string, ComponentDefinition[]> = {};
+  for (const definition of Object.values(definitions)) {
+    if (!definition.definition.label.toLowerCase().includes(needle)) {
+      continue;
+    }
+
+    const { category } = definition.market;
+    if (!(byCategory[category] as ComponentDefinition[] | undefined)) {
+      byCategory[category] = [];
+    }
+
+    byCategory[category].push(definition);
+  }
+
+  return byCategory;
+};

@@ -9,6 +9,7 @@ type SettingsProps = {
   icon?: string;
   size?: 'fa-1x' | 'fa-2x' | 'fa-3x' | 'fa-4x';
   iconAnimation?: string;
+  label?: string;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
@@ -17,7 +18,7 @@ type FontIcon = {
   label: string;
 };
 
-const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', onUpdate }: SettingsProps) => {
+const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', label = '', onUpdate }: SettingsProps) => {
   const [icons, setIcons] = useState<Record<string, FontIcon>>({});
   const [type, setType] = useState('');
   const [loading, setLoading] = useState(false);
@@ -97,6 +98,13 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', onUpdate }: S
 
   return (
     <div className="flex grow basis-0 flex-col gap-4 py-2">
+      <Input
+        value={label}
+        label="Meaning"
+        placeholder="Only for an icon that says something alone"
+        onChange={handleChange('label')}
+        size="xs"
+      />
       <Select value={type} placeholder="All" label="Icon Type" onChange={handleChangeType} size="xs">
         <option value="regular">Regular</option>
         <option value="solid">Solid</option>

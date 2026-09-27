@@ -1,8 +1,7 @@
 import { describeTarget, expect, test } from '../../fixtures';
-import { openHarness, renderSpace } from '../../helpers/harness';
-import { expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
-import { expectVisuallyHealthy } from '../../helpers/visualHealth';
-import { minimalSpace, MINIMAL_IDS, SAMPLE_REFS, sampleSpace, sampleSpaceWith } from '../../spaces';
+import { expectPageWhole, openHarness, renderSpace } from '../../helpers/harness';
+import { expectSampleSpaceContent, WITHOUT_RSC } from '../../helpers/space';
+import { minimalSpace, SAMPLE_REFS, sampleAuthored, sampleSpaceWith } from '../../spaces';
 
 /** The SDK rendering in a browser, with no server anywhere in the picture. Everything here goes through the
  *  harness, which renders whatever schema it is handed — so a failure is the renderer's, never a server's. */
@@ -11,20 +10,20 @@ describeTarget('harness', () => {
     await openHarness(page);
 
     await expectSampleSpaceContent(page);
-    await expectSpaceRendered(page, sampleSpace());
-    await expectVisuallyHealthy(page);
+    await expectPageWhole(page, sampleAuthored(), { elements: 'all', ...WITHOUT_RSC });
 
     await capture('sample-space');
   });
 
   test('renders a space that exists only in this test', async ({ page, capture }) => {
     await openHarness(page);
-    await renderSpace(page, minimalSpace({ heading: 'Built in a spec', body: 'Two elements, no fixture file.' }));
+    const space = minimalSpace({ heading: 'Built in a spec', body: 'Two elements, no fixture file.' });
+    await renderSpace(page, space);
 
     await expect(page.getByRole('heading', { name: 'Built in a spec' })).toBeVisible();
     await expect(page.getByText('Two elements, no fixture file.')).toBeVisible();
 
-    await expectSpaceRendered(page, minimalSpace());
+    await expectPageWhole(page, space);
     await capture('minimal-space');
   });
 
@@ -42,7 +41,7 @@ describeTarget('harness', () => {
    *  stack of unstyled divs, and it is invisible to anything that only inspects the DOM. */
   test('applies the space style, not just the markup', async ({ page }) => {
     await openHarness(page);
-    await renderSpace(page, minimalSpace({ css: `.${MINIMAL_IDS.heading}{color:rgb(1, 2, 3);}` }));
+    await renderSpace(page, minimalSpace({ headingCss: { color: 'rgb(1, 2, 3)' } }));
 
     const heading = page.getByRole('heading', { name: 'Minimal space' });
     await expect(heading).toBeVisible();

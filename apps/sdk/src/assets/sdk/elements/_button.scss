@@ -10,8 +10,13 @@
     border-top-left-radius: 4px;
     line-height: 24px;
     font-size: 16px;
-    outline: none;
     cursor: pointer;
+
+    // The ring is taken off only for a pointer: a keyboard has to see where it is, and so does a person watching a
+    // browser agent work the page. A space that draws its own focus style still wins.
+    &:focus:not(:focus-visible) {
+      outline: none;
+    }
   }
 
   .builder-iframe.builder--display-component-border {

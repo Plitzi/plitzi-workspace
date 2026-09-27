@@ -71,7 +71,6 @@ const TransitionItem = ({ value = '', onRemove, onChange }: TransitionItemProps)
         }
 
         const { duration, delay, property, easing } = valueAux;
-        console.log('called', type, easing, itemValue);
         onChange?.(`${property} ${duration} ${easing} ${delay}`);
       },
     [onChange]
@@ -195,15 +194,7 @@ const TransitionItem = ({ value = '', onRemove, onChange }: TransitionItemProps)
                     <Icon icon={loopHandler ? 'fas fa-pause' : 'fas fa-play'} />
                     <InspectorLabel>{!loopHandler ? 'Play' : 'Pause'}</InspectorLabel>
                   </div>
-                  <InputEasing
-                    value={easingValue}
-                    // onChange={handleChange('easing')}
-                    progress={progress}
-                    height={200}
-                    width={200}
-                    // handleStroke={3}
-                    handleRadius={6}
-                  />
+                  <InputEasing value={easingValue} progress={progress} height={200} width={200} handleRadius={6} />
                 </div>
               </ContainerFloating.Content>
             </ContainerFloating>

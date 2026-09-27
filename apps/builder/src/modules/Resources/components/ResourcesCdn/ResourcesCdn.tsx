@@ -11,6 +11,7 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import SpaceCredentialSelectorModal from '@pmodules/Space/components/SpaceCredentialSelectorModal';
 
+import { mainPluginOf } from '../../helpers';
 import ResourceManager from '../ResourceManager';
 import ResourcesList from '../ResourcesList';
 
@@ -53,7 +54,7 @@ const ResourcesCdn = ({
   const [removing, setRemoving] = useState(false);
   const { plugins, remove, add } = use(PluginsContext);
   const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
-  const { data, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
+  const { data, error, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
     cdnIdentifier: identifier
   });
 
@@ -113,7 +114,7 @@ const ResourcesCdn = ({
   const handleResourceRemoved = useCallback(
     (resource: TResource) => {
       if (resource.type === 'plugin') {
-        const plugin = Object.values(plugins).find(plugin => plugin.type === resource.metadata.root && plugin.isMain);
+        const plugin = mainPluginOf(plugins, resource.metadata.root);
         if (plugin) {
           void remove?.(plugin.type);
         }
@@ -130,10 +131,6 @@ const ResourcesCdn = ({
     (isCollapsed: boolean) => onCollapse?.(identifier, isCollapsed),
     [identifier, onCollapse]
   );
-
-  // const handleClickUpdate = useCallback((e: MouseEvent) => {
-  //   e.stopPropagation();
-  // }, []);
 
   const handleSelectCredential = useCallback(
     async (credentialIdentifier: string) => {
@@ -185,23 +182,12 @@ const ResourcesCdn = ({
         <div className="rounded border border-gray-400 px-1 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
           {finalResources.length}
         </div>
-        {/* <Icon
-          icon="fa-solid fa-pencil"
-          className="hidden cursor-pointer group-hover:block"
-          title="Update"
-          onClick={handleClickUpdate}
-        /> */}
         <SpaceCredentialSelectorModal
           providersSupported={['r2', 's3']}
           selected={credentialIdentifier}
           onSelect={handleSelectCredential}
         >
-          <Icon
-            // intent="primary"
-            icon="fa-solid fa-key"
-            className="hidden cursor-pointer group-hover:block"
-            title="Credentials"
-          />
+          <Icon icon="fa-solid fa-key" className="hidden cursor-pointer group-hover:block" title="Credentials" />
         </SpaceCredentialSelectorModal>
         <Icon
           intent="danger"
@@ -221,7 +207,21 @@ const ResourcesCdn = ({
             onUploadAdded={handleUploadAdded}
           />
         )}
-        {!isLoading && !removing && (
+        {/* Kept on screen, beside the toast that announced it: an empty list would read as "nothing uploaded yet". */}
+        {error && !isLoading && !removing && (
+          <div className="flex flex-col gap-2 rounded border border-red-300 bg-red-50 p-3 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+            <span className="font-semibold">This CDN cannot be read</span>
+            <span>{error.message}</span>
+            <SpaceCredentialSelectorModal
+              providersSupported={['r2', 's3']}
+              selected={credentialIdentifier}
+              onSelect={handleSelectCredential}
+            >
+              <span className="cursor-pointer font-semibold underline">Choose or fix the credential</span>
+            </SpaceCredentialSelectorModal>
+          </div>
+        )}
+        {!error && !isLoading && !removing && (
           <ResourcesList
             className="overflow-y-auto"
             prefix={prefix}

@@ -24,6 +24,8 @@ export type ComponentProps = {
   overQuota?: boolean;
   /** The theme this document was rendered with, from the visitor's cookie. See `prepareRender`. */
   theme?: Theme;
+  /** The kept state the first paint depends on (`settings.paintedState`), from the visitor's cookie. */
+  state?: Record<string, unknown>;
 };
 
 const Component = ({
@@ -37,7 +39,8 @@ const Component = ({
   sdkDevToolsStylePath,
   debugMode = false,
   overQuota,
-  theme
+  theme,
+  state
 }: ComponentProps) => {
   // The response channel travels inside the server surface rather than as a prop of its own. Merged here, after
   // `prepareRender` has already serialized `server` for the browser, so this render-only object never ships.
@@ -55,6 +58,7 @@ const Component = ({
       debugMode={debugMode}
       {...(overQuota === undefined ? {} : { overQuota })}
       {...(theme === undefined ? {} : { theme })}
+      {...(state === undefined ? {} : { state })}
     >
       {plugins &&
         Object.keys(plugins).map(key => (

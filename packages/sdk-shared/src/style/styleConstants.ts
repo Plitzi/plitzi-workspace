@@ -89,6 +89,8 @@ const styleConstants = {
   TRANSITION_DURATION: 'transition-duration',
   TRANSITION_TIMING_FUNCTION: 'transition-timing-function',
   TRANSITION_DELAY: 'transition-delay',
+  // `allow-discrete`: what cannot move in steps — `display` — transitions too, so a hidden element can fade out.
+  TRANSITION_BEHAVIOR: 'transition-behavior',
   ANIMATION: 'animation',
   ANIMATION_NAME: 'animation-name',
   ANIMATION_DURATION: 'animation-duration',
@@ -310,6 +312,7 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   [styleConstants.TRANSITION_DURATION]: '0s',
   [styleConstants.TRANSITION_TIMING_FUNCTION]: 'ease',
   [styleConstants.TRANSITION_DELAY]: '0s',
+  [styleConstants.TRANSITION_BEHAVIOR]: 'normal',
   [styleConstants.ANIMATION]: 'none',
   [styleConstants.ANIMATION_NAME]: 'none',
   [styleConstants.ANIMATION_DURATION]: '0s',

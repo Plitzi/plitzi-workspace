@@ -5,7 +5,7 @@ import DetailsDefinition from './DetailsDefinition';
 
 import type { Element } from '@plitzi/sdk-shared';
 
-const tabs = [{ label: 'Definition' }, { label: 'Attributes' }]; // , { label: 'Style' }
+const tabs = [{ label: 'Definition' }, { label: 'Attributes' }];
 
 export type ElementDetailsProps = {
   definition?: Element['definition'];
@@ -22,7 +22,6 @@ const ElementDetails = ({ definition, attributes, onSelectElement }: ElementDeta
     <ContainerTabs.TabContent>
       <DetailsAttributes attributes={attributes} />
     </ContainerTabs.TabContent>
-    {/* <ContainerTabs.TabContent>Style</ContainerTabs.TabContent> */}
   </ContainerTabs>
 );
 

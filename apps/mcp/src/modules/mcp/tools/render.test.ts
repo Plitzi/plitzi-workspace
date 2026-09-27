@@ -253,8 +253,8 @@ describe('plitzi_render interaction wiring', () => {
     }
 
     const error = result.errors.find(e => e.message.includes('card-detail'));
-    expect(error).toBeDefined();
-    expect(error?.path).toContain('elementId');
+    expect(error?.message).toContain('no element answers');
+    expect(error?.path).toBe('element "card-head"');
   });
 
   it('says nothing about a widget with no flows', () => {

@@ -3,6 +3,7 @@ import type { SubscriptionCollaborator, SubscriptionCollaboratorPointer } from '
 import type { Environment, RenderMode } from './CommonTypes';
 import type { Source } from './DataSourceTypes';
 import type { QueryParams, RouteParams } from './NavigationTypes';
+import type { RealtimeTransport } from './RealtimeTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { Segment } from './SegmentTypes';
 import type { SpaceConnector } from './SpaceTypes';
@@ -62,6 +63,8 @@ export type CommonState = {
   // Where this origin runs server actions, seeded at the root from what the rendering server published. Top-level
   // beside `rsc` and for the same reason: nothing but the root owns it, and every depth reads it.
   actions?: ActionsState;
+  /** Where this origin's realtime channels answer — absent in a render with no server, where no channel opens. */
+  realtime?: { endpoint?: string; transport?: RealtimeTransport };
   // How THIS render is happening. Seeded once at the root of whichever surface is mounting (the SDK, the builder) and
   // read from the store by everything below, instead of being threaded through every provider as five props.
   render?: RenderSettings;
@@ -92,6 +95,11 @@ export type CommonState = {
     /** Scheme, host AND port — what a link needs to name this page absolutely. `hostname` has no port, which is why
      *  it answers `when` rules and cannot answer this. */
     origin: string;
+    /**
+     * The page's whole address — origin, path and query — as the server was asked for it and the browser shows it: what
+     * a link that shares THIS page is. Known in the first paint, so a text built from it is right before hydration.
+     */
+    href: string;
     currentPageId: string;
     navigate: (url: string, isExternal?: boolean) => void;
   };

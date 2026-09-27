@@ -41,6 +41,11 @@ export type PaginationProps = {
   previousLabel?: string;
   nextLabel?: string;
   loadMoreLabel?: string;
+  /**
+   * The pager's name, in the site's language: a page often has more than one navigation, and a screen reader or a
+   * browser agent lists them by name.
+   */
+  label?: string;
 };
 
 const buildPageUrl = (pageParam: string, page: number) => {
@@ -76,7 +81,8 @@ const Pagination = ({
   windowSize = 5,
   previousLabel = 'Previous',
   nextLabel = 'Next',
-  loadMoreLabel = 'Load more'
+  loadMoreLabel = 'Load more',
+  label = 'Pagination'
 }: PaginationProps) => {
   const { id } = useElement();
   const {
@@ -123,6 +129,7 @@ const Pagination = ({
     <RootElement
       ref={ref}
       tag="nav"
+      aria-label={label || undefined}
       className={clsx('plitzi-component__pagination', className)}
       interactionTriggers={declaration.triggers}
     >
@@ -153,6 +160,7 @@ const Pagination = ({
               className={clsx('plitzi-component__pagination-page', {
                 'plitzi-component__pagination-page--current': item === page
               })}
+              aria-current={item === page ? 'page' : undefined}
               onClick={handleClickPage(item)}
             >
               {item}

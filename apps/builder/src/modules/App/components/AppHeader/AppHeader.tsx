@@ -11,10 +11,14 @@ import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import BuilderSearchButton from '@pmodules/Builder/components/BuilderSearch/components/BuilderSearchButton';
 import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';
 import ExportSpace from '@pmodules/Export';
+import { issuesFromError, PUBLISH_REFUSED } from '@pmodules/Space/helpers/spaceIssues';
+import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
+import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
 import BorderButton from './BorderButton';
 import DisplayModeButtons from './DisplayModeButtons';
 import HistoryButtons from './HistoryButtons';
+import IssuesButton from './IssuesButton';
 import PageHeader from './PageHeader';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
@@ -33,8 +37,19 @@ const AppHeader = () => {
   const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
   const [loadingDeployment, setLoadingDeployment] = useState(false);
   const [collaborators] = useBuilderStore('collaboration.collaborators');
+  const { refresh: refreshIssues } = useSpaceIssues();
+  const showSpaceIssues = useShowSpaceIssues();
 
   const handleClickPublish = useCallback(async () => {
+    // Read fresh before asking for a description: the server refuses a space with errors anyway, and finding that out
+    // after filling in the form is finding it out one step too late.
+    const issues = await refreshIssues();
+    if (issues && issues.errors.length > 0) {
+      await showSpaceIssues(issues, PUBLISH_REFUSED);
+
+      return;
+    }
+
     const response = await showModal<{ environment: string; description: string }>(
       <Modal.Header>
         <h4>Make Snapshot</h4>
@@ -50,8 +65,12 @@ const AppHeader = () => {
       return;
     }
 
-    const responseMutation = await mutate('SpacePublish', response);
-    if (responseMutation.result) {
+    const responseMutation = await mutate('SpacePublish', response, true);
+    const refused = issuesFromError(responseMutation.error);
+    if (refused) {
+      // Saved between the check above and the publish: the server's reading is the one that counts.
+      await showSpaceIssues({ errors: refused, warnings: [] }, PUBLISH_REFUSED);
+    } else if (responseMutation.result) {
       addToast(
         <div>
           Snapshot <b>{`${responseMutation.result.environment}:${responseMutation.result.revision}`}</b> Created
@@ -66,7 +85,7 @@ const AppHeader = () => {
         placement: 'top-right'
       });
     }
-  }, [addToast, mutate, showModal]);
+  }, [addToast, mutate, refreshIssues, showModal, showSpaceIssues]);
 
   const handleClickDeploy = useCallback(async () => {
     const response = await showModal<{
@@ -170,6 +189,7 @@ const AppHeader = () => {
           })}
         </div>
         <PreviewModeButtons />
+        <IssuesButton />
         <QuotaMeter />
         <button
           className={clsx(

@@ -29,7 +29,7 @@ import {
   whenSucceeded
 } from '@plitzi/sdk-authoring';
 
-import { classes, customCss, elements, variables } from './theme';
+import { classes, customCss, elements, variables } from './theme.ts';
 
 import type { Attributes, ElementSpec, PageSpec, SpaceSpec } from '@plitzi/sdk-authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -55,8 +55,14 @@ const boundHeading = (
   subType: Attributes<'heading'>['subType'] = 'h2'
 ): ElementSpec => heading({ subType, content: '', class: className, bind: { content: source } });
 
-const boundImage = (source: string, className: string): ElementSpec =>
-  image({ alt: '', loadMode: 'lazy', class: className, bind: { src: source } });
+/**
+ * A post's cover. Beside its own headline it adds nothing a reader of the page does not already have, so it is
+ * decoration — unless it stands alone in a link, where it is the link's only words and says what the headline says.
+ */
+const boundImage = (source: string, className: string, altSource?: string): ElementSpec =>
+  altSource
+    ? image({ loadMode: 'lazy', class: className, bind: { src: source, alt: altSource } })
+    : image({ decorative: true, loadMode: 'lazy', class: className, bind: { src: source } });
 
 /** `internal` is a path this space serves; `page` would resolve a page id instead, and `external` leaves. */
 const linkTo = (href: string, className: string, children: ElementSpec[]): ElementSpec =>
@@ -276,7 +282,7 @@ const feedCard = (src: string): ElementSpec =>
   container({
     class: 'card',
     children: [
-      boundLink(`${src}.url`, 'cardLink', [boundImage(`${src}.cover`, 'cardImage')]),
+      boundLink(`${src}.url`, 'cardLink', [boundImage(`${src}.cover`, 'cardImage', `${src}.title`)]),
       container({
         class: 'cardBody',
         children: [
@@ -292,7 +298,7 @@ const feedCard = (src: string): ElementSpec =>
 const panel = (title: string, children: ElementSpec[]): ElementSpec =>
   container({
     class: 'panel',
-    children: [heading({ subType: 'h3', content: title, class: 'panelTitle' }), ...children]
+    children: [heading({ subType: 'h2', content: title, class: 'panelTitle' }), ...children]
   });
 
 const note = (content: string): ElementSpec => paragraph({ content, class: 'panelText' });
@@ -699,7 +705,7 @@ const post: PageSpec = {
                       boundLink('moreList.item.url', 'moreCard', [
                         boundImage('moreList.item.cover', 'moreImage'),
                         bound('text', 'moreList.item.topic', 'chip'),
-                        boundHeading('moreList.item.title', 'moreTitle', 'h3'),
+                        boundHeading('moreList.item.title', 'moreTitle', 'h2'),
                         bound('text', 'moreList.item.date', 'meta')
                       ])
                     ]

@@ -5,6 +5,8 @@ import type { OAuthGrantTarget, OAuthStore, OAuthUser } from '@plitzi/sdk-shared
 export type ClientRecord = {
   clientId: string;
   clientName: string;
+  /** RFC 7591 `software_id`, when the client sent one. */
+  softwareId?: string;
   redirectUris: string[];
   /** When this registration was first handed out, so re-registering the same client keeps reporting its real age. */
   issuedAt: number;
@@ -41,6 +43,11 @@ export type RefreshRecord = {
   scope?: string;
   user: OAuthUser;
   target: OAuthGrantTarget;
+  /**
+   * What `issueToken` last minted for this grant. Handed back as `replaces` on the renewal, so the deployment can
+   * rotate that credential instead of adding another, and to `revokeToken` when the grant is revoked.
+   */
+  credential?: string;
 };
 
 /** A bearer this server handed out. The token a client holds is an opaque handle minted here, and this record is

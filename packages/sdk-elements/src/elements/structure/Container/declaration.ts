@@ -7,6 +7,23 @@ import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare'
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type ContainerAttributes = AuthorableAttributes<ContainerProps>;
 
+/**
+ * The tags a `label` names: a landmark (`nav`, `main`, `aside`…), a `section` — which a name turns into a region an
+ * assistant can jump to — and a `div`, which is then a named group. The rest either take their name from what they
+ * hold (a heading, a list item) or refuse one outright, so a label on them would be read by nobody.
+ */
+export const NAMEABLE_CONTAINER_TAGS: readonly NonNullable<ContainerProps['subType']>[] = [
+  'div',
+  'header',
+  'footer',
+  'nav',
+  'main',
+  'section',
+  'article',
+  'aside',
+  'figure'
+];
+
 const declaration = elementDeclaration<ContainerAttributes>()({
   type: 'container',
   attributeValues: {

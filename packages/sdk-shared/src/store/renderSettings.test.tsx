@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 
+import { useCommonStore } from './index';
 import useRenderSettings, { DEFAULT_RENDER_SETTINGS, useRenderOverride } from './renderSettings';
 
 import type { RenderSettings } from '../types';
@@ -48,5 +49,24 @@ describe('useRenderSettings', () => {
 
     // The builder's preview pane: preview whatever the editor's toggle says, everything else still the editor's.
     expect(seen).toEqual({ ...DEFAULT_RENDER_SETTINGS, previewMode: true, debugMode: true, renderMode: 'raw' });
+  });
+
+  it('leaves the rest of the store readable under the override, as a live scope', () => {
+    const overrides = { previewMode: true };
+    const SchemaProbe = () => <span data-testid="schema">{JSON.stringify(useCommonStore('schema.flat.root')[0])}</span>;
+    const Override = () => (
+      <StoreProvider value={useRenderOverride(overrides)} inherit="live">
+        <SchemaProbe />
+      </StoreProvider>
+    );
+
+    const { getByTestId } = render(
+      <StoreProvider value={{ render: { previewMode: false }, schema: { flat: { root: { id: 'root' } } } }}>
+        <Override />
+      </StoreProvider>
+    );
+
+    // The element a preview renders lives in the parent's schema; an override that hid it broke every preview.
+    expect(JSON.parse(getByTestId('schema').textContent)).toEqual({ id: 'root' });
   });
 });

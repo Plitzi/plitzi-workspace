@@ -1,21 +1,39 @@
+import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useMemo } from 'react';
 
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import type { ChangeEvent } from 'react';
+
 type SettingsProps = {
   src?: string;
+  alt?: string;
+  decorative?: boolean;
   fetchPriority?: 'high' | 'low' | 'auto';
   loadMode?: 'auto' | 'lazy' | 'eager';
   variables?: Record<string, string>;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ src = '', variables, fetchPriority = 'auto', loadMode = 'auto', onUpdate }: SettingsProps) => {
+const Settings = ({
+  src = '',
+  alt = '',
+  decorative = false,
+  variables,
+  fetchPriority = 'auto',
+  loadMode = 'auto',
+  onUpdate
+}: SettingsProps) => {
   const urlPreview = useMemo(() => processTwig(src, variables, true) as string, [variables, src]);
 
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+
+  const handleChangeDecorative = useCallback(
+    (e: ChangeEvent) => onUpdate?.('decorative', (e.target as HTMLInputElement).checked),
+    [onUpdate]
+  );
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
@@ -30,6 +48,21 @@ const Settings = ({ src = '', variables, fetchPriority = 'auto', loadMode = 'aut
           </div>
         )}
       </div>
+      {!decorative && (
+        <Input
+          value={alt}
+          label="Alt Text"
+          placeholder="What the picture shows, for who cannot see it"
+          onChange={handleChange('alt')}
+          size="xs"
+        />
+      )}
+      <Checkbox
+        checked={decorative}
+        label="Decorative (nothing to describe)"
+        onChange={handleChangeDecorative}
+        size="xs"
+      />
       <Select value={fetchPriority} label="Fetch Priority" onChange={handleChange('fetchPriority')} size="xs">
         <option value="auto">Auto</option>
         <option value="high">Hight</option>

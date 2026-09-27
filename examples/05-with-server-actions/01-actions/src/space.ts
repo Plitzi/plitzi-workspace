@@ -47,12 +47,8 @@ const quoteFlow = [
   setState({ key: 'quote', type: 'text', value: '{{quote.output.summary}}' })
 ];
 
-const field = (
-  name: string,
-  label: string,
-  subType: 'text' | 'number',
-  defaultValue: string
-): PageSpec['body'][0] => formControl({ subType, name, label, defaultValue, required: true, slots: { input: 'actionInput' } });
+const field = (name: string, label: string, subType: 'text' | 'number', defaultValue: string): PageSpec['body'][0] =>
+  formControl({ subType, name, label, defaultValue, required: true, slots: { input: 'actionInput' } });
 
 const quotePage: PageSpec = {
   name: 'Shipping quote',

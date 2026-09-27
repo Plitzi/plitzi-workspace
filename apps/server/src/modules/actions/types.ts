@@ -1,4 +1,5 @@
 import type { ActionEmailSender } from './runtime/email';
+import type { KvListEntry, KvListPut, KvListPutOptions, KvListRange } from './runtime/kvList';
 import type {
   ActionEmailConfig,
   ActionJobQueue,
@@ -52,7 +53,7 @@ export type ActionDbDriver = {
 /**
  * Where a deployment keeps the `kv` tasks' data — Redis, Memcached, a table, whatever it already runs.
  *
- * Deliberately the DUMBEST possible surface: five operations over strings, with no rule to obey. Everything that
+ * Deliberately the DUMBEST possible surface: six operations over strings, with no rule to obey. Everything that
  * decides how a counter behaves — the key prefixing, the JSON round trip, and the one rule a rate limit lives or
  * dies by — is `createKvStore`'s, above this. An adapter that had to remember "extend the TTL only when the
  * counter did not exist" would be an adapter each deployment gets to write that rule wrongly in.
@@ -69,6 +70,12 @@ export type ActionKvAdapter = {
   increment: (key: string, amount: number) => Promise<number>;
   /** Sets a lifetime on a key that already exists. When to call it is decided above, never here. */
   expire: (key: string, ttlSeconds: number) => Promise<void>;
+  /**
+   * Writes `next` only if the key still holds `expected` — or, with `expected` undefined, only if it holds nothing (a
+   * key past its lifetime holds nothing). Answers whether it wrote. Must be atomic: it is what lets two writers
+   * read, change and write the same value without one of them silently undoing the other.
+   */
+  swap: (key: string, expected: string | undefined, next: string, ttlSeconds?: number) => Promise<boolean>;
 };
 
 /**
@@ -82,6 +89,21 @@ export type ActionKvStore = {
   set: (key: string, value: unknown, ttlSeconds?: number) => Promise<void>;
   delete: (key: string) => Promise<void>;
   increment: (key: string, amount: number, ttlSeconds?: number) => Promise<number>;
+  /**
+   * Writes `next` only if the key still holds `expected` — the value `get` answered — or, with `expected` undefined,
+   * only if it holds nothing. Answers whether it wrote: read, change, and write back with this, and a writer that
+   * lost the race is told so instead of undoing the other.
+   */
+  swap: (key: string, expected: unknown, next: unknown, ttlSeconds?: number) => Promise<boolean>;
+  /**
+   * Puts `entry` in the list — replacing the one with its id — keeping the highest `keep` by score, and answers what
+   * that dropped, for whatever it named to be let go of too. A list has no lifetime: it lives until its entries are
+   * removed.
+   */
+  listPut: (list: string, entry: KvListEntry, options?: KvListPutOptions) => Promise<KvListPut>;
+  listRange: (list: string, range?: KvListRange) => Promise<KvListEntry[]>;
+  /** Takes the entry with `id` out of the list, and answers whether it was there. */
+  listRemove: (list: string, id: string) => Promise<boolean>;
 };
 
 /** Re-exported so the module's files import one place. One type for actions and connectors: it is one concept. */
@@ -148,6 +170,30 @@ export type ActionTaskContext = {
   email: ActionEmailSender;
   /** Pushes a `data` frame to a streaming caller. A no-op when nobody negotiated a stream. */
   emit: (chunk: unknown) => void;
+  /**
+   * Publishes on one of this space's realtime channels, as the server — `undefined` when the server has none. What
+   * the `realtime.publish` task sends through.
+   */
+  publish?: (topic: string, type: string, data: unknown) => Promise<void>;
+  /**
+   * A grant for one topic of a `grant: true` channel of this space — what `realtime.grant` hands the page, once the
+   * flow has decided the visitor may be there. `undefined` when the server has no realtime channels.
+   */
+  grant?: (topic: string, ttlSeconds?: number) => Promise<string>;
+  /** Revokes `grant` for `topic` — or every grant for it, naming none — and lets go whoever is on it with one. */
+  revoke?: (topic: string, grant?: string) => Promise<void>;
+};
+
+/** How the actions module reaches the server's realtime channels. Set by `createServer`, never by a deployment. */
+export type ActionRealtime = {
+  publish: (
+    space: { spaceId: number; environment: string },
+    topic: string,
+    type: string,
+    data: unknown
+  ) => Promise<void>;
+  grant: (space: { spaceId: number; environment: string }, topic: string, ttlSeconds?: number) => Promise<string>;
+  revoke: (space: { spaceId: number; environment: string }, topic: string, grant?: string) => Promise<void>;
 };
 
 /**
@@ -236,6 +282,8 @@ export type ActionsConfig = {
    */
   idempotency?: { replayTtlMs?: number };
   fetchImpl?: typeof fetch;
+  /** The server's realtime channels, for the `realtime.publish` task. Set by `createServer`. */
+  realtime?: ActionRealtime;
 };
 
 /**
@@ -344,4 +392,6 @@ export type ActionRunResult = {
    * anybody allowed to debug the page. The trace above is for authoring and development servers alone.
    */
   steps: ActionRunStep[];
+  /** Why the run failed, when a step said so for the caller (`ActionRefusal`). Absent for every other failure. */
+  error?: string;
 };

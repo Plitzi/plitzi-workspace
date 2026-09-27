@@ -1740,7 +1740,36 @@ describe('comma-separated layers', () => {
       'transition-property': 'opacity, transform',
       'transition-duration': '200ms, 300ms',
       'transition-timing-function': 'ease, linear',
-      'transition-delay': 'initial, 50ms'
+      'transition-delay': '0s, 50ms'
+    });
+  });
+
+  it('fills what one layer omits with the longhand initial value — `initial` in a list voids the declaration', () => {
+    const result = expandShorthand({ transition: 'opacity 200ms ease-out 40ms, display 200ms allow-discrete' });
+    expect(result).toEqual({
+      'transition-property': 'opacity, display',
+      'transition-duration': '200ms, 200ms',
+      'transition-timing-function': 'ease-out, ease',
+      'transition-delay': '40ms, 0s',
+      'transition-behavior': 'normal, allow-discrete'
+    });
+  });
+
+  it('reads allow-discrete as the transition behaviour', () => {
+    const result = expandShorthand({ transition: 'display 200ms allow-discrete' });
+    expect(result).toEqual({
+      'transition-property': 'display',
+      'transition-duration': '200ms',
+      'transition-behavior': 'allow-discrete'
+    });
+  });
+
+  it('keeps only the last background layer colour: the colour is no list', () => {
+    const result = expandShorthand({ background: 'url(a.png) no-repeat, red url(b.png)' });
+    expect(result).toEqual({
+      'background-image': 'url(a.png), url(b.png)',
+      'background-repeat': 'no-repeat, repeat',
+      'background-color': 'red'
     });
   });
 

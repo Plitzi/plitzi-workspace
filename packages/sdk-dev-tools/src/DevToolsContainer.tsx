@@ -1,12 +1,11 @@
 import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
-import { useCallback, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 
 import { DevStoreScopeContext } from '@plitzi/nexus/react';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
-import DevToolsOverlay from './components/DevToolsOverlay';
 import DevToolsContextProvider from './DevToolsContextProvider';
 import DevToolsRoot from './DevToolsRoot';
 import { useIsSelectedInstance } from './instanceRegistry';
@@ -18,6 +17,12 @@ import type { LogType } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type Orientation = 'horizontal' | 'vertical';
+
+/**
+ * The badge and the panel: nearly all of the dev tools' weight, and never drawn before hydration. Loaded when there is
+ * one to draw, so a page that bundles the container — the SDK does — does not carry the panel for every visitor.
+ */
+const DevToolsOverlay = lazy(() => import('./components/DevToolsOverlay'));
 
 /** What the server renders with, because it is what a page with nothing remembered yet gets. */
 const DEFAULT_ORIENTATION: Orientation = 'horizontal';
@@ -126,38 +131,40 @@ const DevToolsContainer = ({
   const overlay = isSelected && hydrated && (
     <DevToolsRoot>
       <DevToolsContextProvider>
-        {renderMode === 'default' && (
-          <DevToolsOverlay
-            className={clsx({ dark: resolvedTheme === 'dark' })}
-            collapsed={collapsed}
-            orientation={dockedAt}
-            tabSelected={tabSelected}
-            logTypeFilter={logTypeFilter}
-            onOpen={handleOpen}
-            onCollapse={handleCollapse}
-            onTabSelect={handleTabSelect}
-            onChangeOrientation={handleChangeOrientation}
-          />
-        )}
-        {renderMode === 'shadow' && (
-          <ContainerShadow>
-            {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
-            <ContainerShadow.Content>
-              <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
-              <DevToolsOverlay
-                className={clsx({ dark: resolvedTheme === 'dark' })}
-                collapsed={collapsed}
-                orientation={dockedAt}
-                tabSelected={tabSelected}
-                logTypeFilter={logTypeFilter}
-                onOpen={handleOpen}
-                onCollapse={handleCollapse}
-                onTabSelect={handleTabSelect}
-                onChangeOrientation={handleChangeOrientation}
-              />
-            </ContainerShadow.Content>
-          </ContainerShadow>
-        )}
+        <Suspense fallback={null}>
+          {renderMode === 'default' && (
+            <DevToolsOverlay
+              className={clsx({ dark: resolvedTheme === 'dark' })}
+              collapsed={collapsed}
+              orientation={dockedAt}
+              tabSelected={tabSelected}
+              logTypeFilter={logTypeFilter}
+              onOpen={handleOpen}
+              onCollapse={handleCollapse}
+              onTabSelect={handleTabSelect}
+              onChangeOrientation={handleChangeOrientation}
+            />
+          )}
+          {renderMode === 'shadow' && (
+            <ContainerShadow>
+              {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
+              <ContainerShadow.Content>
+                <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
+                <DevToolsOverlay
+                  className={clsx({ dark: resolvedTheme === 'dark' })}
+                  collapsed={collapsed}
+                  orientation={dockedAt}
+                  tabSelected={tabSelected}
+                  logTypeFilter={logTypeFilter}
+                  onOpen={handleOpen}
+                  onCollapse={handleCollapse}
+                  onTabSelect={handleTabSelect}
+                  onChangeOrientation={handleChangeOrientation}
+                />
+              </ContainerShadow.Content>
+            </ContainerShadow>
+          )}
+        </Suspense>
       </DevToolsContextProvider>
     </DevToolsRoot>
   );

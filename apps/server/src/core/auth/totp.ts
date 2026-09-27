@@ -80,35 +80,48 @@ export const totpCode = (secret: string, at: number = Date.now()): string =>
   codeAt(secret, Math.floor(at / 1000 / STEP_SECONDS));
 
 /**
- * Is this the code?
+ * Which time step this code belongs to, or `undefined` when it belongs to none near now.
  *
  * `window` steps either side are accepted, one by default — thirty seconds of tolerance for a clock that drifts
  * and for a person who starts typing at second twenty-nine. Wider is friendlier and weaker; this is the usual
  * trade and the same one Google Authenticator's own guidance makes.
  *
+ * The step is the answer, not a yes: a code stays valid for its whole window, so a verifier that remembers nothing
+ * accepts the same code twice. RFC 6238 §5.2 forbids that — see `MfaRecord.lastUsedStep`.
+ *
  * Compared in constant time: a comparison that returns on the first differing digit leaks how much of a guess was
  * right, which turns a million-guess space into ten guesses per position.
  */
-export const verifyTotp = (secret: string, code: string, options: { window?: number; at?: number } = {}): boolean => {
+export const totpStep = (
+  secret: string,
+  code: string,
+  options: { window?: number; at?: number } = {}
+): number | undefined => {
   const { window = 1, at = Date.now() } = options;
   const candidate = code.trim();
 
   if (!/^\d{6}$/.test(candidate)) {
-    return false;
+    return undefined;
   }
 
   const counter = Math.floor(at / 1000 / STEP_SECONDS);
   const supplied = Buffer.from(candidate);
 
-  let matched = false;
+  let matched: number | undefined;
   for (let drift = -window; drift <= window; drift++) {
     const expected = Buffer.from(codeAt(secret, counter + drift));
     // Not short-circuited: leaving the loop on the first match would leak which step matched through timing.
-    matched = timingSafeEqual(expected, supplied) || matched;
+    if (timingSafeEqual(expected, supplied)) {
+      matched = counter + drift;
+    }
   }
 
   return matched;
 };
+
+/** Is this the code? `totpStep`, for a caller that does not need to know which step it was. */
+export const verifyTotp = (secret: string, code: string, options: { window?: number; at?: number } = {}): boolean =>
+  totpStep(secret, code, options) !== undefined;
 
 /**
  * The URI an authenticator app scans. `issuer` appears twice by convention — in the label and as a parameter —

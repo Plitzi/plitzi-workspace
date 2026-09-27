@@ -1,5 +1,6 @@
-import { RootElement } from '@plitzi/plitzi-sdk';
 import { useMemo, useState } from 'react';
+
+import { RootElement } from '@plitzi/plitzi-sdk';
 
 /**
  * The conservation status of the animal an article is about.

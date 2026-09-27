@@ -1,5 +1,5 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, use, useMemo, useRef } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import { evaluateComputed, resolveVariables } from '@plitzi/sdk-shared/dataSource';
@@ -21,12 +21,13 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   const { environment } = useRenderSettings();
 
   // --- variables ---
-  const [[variables, routeParams, queryParams, hostname, origin, currentPageId]] = useCommonStore([
+  const [[variables, routeParams, queryParams, hostname, origin, href, currentPageId]] = useCommonStore([
     'schema.variables',
     'navigation.routeParams',
     'navigation.queryParams',
     'navigation.hostname',
     'navigation.origin',
+    'navigation.href',
     'navigation.currentPageId'
   ]);
   // Shared with the router, which needs the same answer BEFORE this provider exists: a page that redirects an
@@ -56,10 +57,11 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
    * `origin` is here and `hostname` is not, and the split is deliberate: `hostname` is what a variable's `when` rule
    * matches on, while `origin` is what a LINK needs — scheme and port included — to name this page absolutely.
    * Without it the only way to write "send me back where I am" was a per-environment variable naming each host.
+   * `href` is the page itself, whole: the link that shares it.
    */
   const navigationValue = useMemo(
-    () => ({ routeParams, queryParams, origin, currentPageId }),
-    [routeParams, queryParams, origin, currentPageId]
+    () => ({ routeParams, queryParams, origin, href, currentPageId }),
+    [routeParams, queryParams, origin, href, currentPageId]
   );
   const navigationFields = useCallback(() => {
     const fields = getPathsFromObeject({ routeParams, queryParams }).map(path => ({
@@ -67,12 +69,13 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
       name: `navigation.${path}`
     })) as SourceField[];
     const originField = { path: 'origin', name: 'Origin' } as SourceField;
+    const hrefField = { path: 'href', name: 'This page’s address' } as SourceField;
     const currentPageField =
       pages.length > 0
         ? ({ path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pages } as SourceField)
         : ({ path: 'currentPageId', name: 'Current Page' } as SourceField);
 
-    return [...fields, originField, currentPageField];
+    return [...fields, originField, hrefField, currentPageField];
   }, [routeParams, queryParams, pages]);
   useRegisterSource({ id: 'global', source: 'navigation', name: 'Navigation', fields: navigationFields });
   useCommonStoreSync('runtime.sources.navigation', navigationValue);
@@ -159,20 +162,26 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
    * every binding that shows it. Evaluated here, over the globals above, so they change when what they read changes.
    */
   const [definitions] = useCommonStore('schema.settings.computed');
-  const computedValue = useStableValue(
-    useMemo(
-      () =>
-        evaluateComputed(definitions ?? {}, {
+  // The evaluation before this one, so what did not change keeps its object: written during render, like
+  // `useStableValue`, and only with what the render produced.
+  const previousComputed = useRef<Record<string, unknown> | undefined>(undefined);
+  const computedValue = useMemo(
+    () =>
+      evaluateComputed(
+        definitions ?? {},
+        {
           variables: variablesValue,
           navigation: navigationValue,
           auth: authValue,
           state: state ?? {},
           host: host ?? {},
           theme: themeValue
-        }),
-      [definitions, variablesValue, navigationValue, authValue, state, host, themeValue]
-    )
+        },
+        previousComputed.current
+      ),
+    [definitions, variablesValue, navigationValue, authValue, state, host, themeValue]
   );
+  previousComputed.current = computedValue;
   const computedFields = useCallback(
     () => getPathsFromObeject(computedValue).map(path => ({ path, name: `computed.${path}` })),
     [computedValue]

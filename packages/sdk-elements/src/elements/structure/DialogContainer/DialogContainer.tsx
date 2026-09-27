@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useCallback, use, useEffect, useMemo, useState } from 'react';
+import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
@@ -13,6 +13,7 @@ import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
+import useModalDialog from '../ModalContainer/useModalDialog';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
@@ -41,17 +42,22 @@ const DialogContainer = ({
 }: DialogContainerProps) => {
   const {
     id,
+    rootId,
+    visible,
     setElementState,
     definition: { styleSelectors, label = 'Dialog' },
     elementState
   } = useElement();
   const sourceName = getSourceName(declaration.sourceType, id);
   const {
+    settings: { previewMode },
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
   const [processing, setProcessing] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = `${rootId}_${id}_title`;
 
   // Dialog methods
 
@@ -116,6 +122,9 @@ const DialogContainer = ({
     };
   }, [handleClickClose, handleOpeDialog, label]);
 
+  // Escape answers as the close button does: the dialog is turned down, not accepted.
+  useModalDialog({ panelRef, open: Boolean(previewMode) && visible, onClose: () => void handleClickCancel() });
+
   useEffect(() => {
     if (elementState.visibility !== false) {
       void interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
@@ -140,11 +149,19 @@ const DialogContainer = ({
     >
       <div
         className={clsx('dialog-container__background', styleSelectors.backgroundContainer)}
+        aria-hidden="true"
         onClick={handleClickBackground}
       />
-      <div className={clsx('dialog-container__root', styleSelectors.rootContainer)}>
+      <div
+        ref={panelRef}
+        className={clsx('dialog-container__root', styleSelectors.rootContainer)}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
         <div className={clsx('dialog-container__header', styleSelectors.headerContainer)}>
-          <div className={clsx('dialog-container__header__title', styleSelectors.headerTitle)}>
+          <div id={titleId} className={clsx('dialog-container__header__title', styleSelectors.headerTitle)}>
             {headerLabel ? headerLabel : 'Dialog Header'}
           </div>
           <button
@@ -164,19 +181,21 @@ const DialogContainer = ({
         </div>
         <div className={clsx('dialog-container__footer', styleSelectors.footerContainer)}>
           <button
+            type="button"
             className={clsx('footer__button button--accept', styleSelectors.acceptButton)}
             onClick={handleClickAccept}
             disabled={processing}
           >
             {processing && (
               <div className="button--accept__container">
-                <i className="fa-solid fa-rotate fa-spin" />
+                <i className="fa-solid fa-rotate fa-spin" aria-hidden="true" />
                 {acceptButtonLabelLoading}
               </div>
             )}
             {!processing && acceptButtonLabel}
           </button>
           <button
+            type="button"
             className={clsx('footer__button button--cancel', styleSelectors.cancelButton)}
             onClick={handleClickCancel}
             disabled={processing}

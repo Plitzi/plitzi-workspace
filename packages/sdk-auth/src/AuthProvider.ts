@@ -5,7 +5,15 @@ import SessionStore from './helpers/SessionStore';
 import { nowInSeconds, toSeconds, tokenExpiresAt } from './helpers/tokenClaims';
 
 import type { StoredSession } from './helpers/SessionStore';
-import type { AuthFailureReason, AuthResult, AuthState, LoginResult, Schema, TokenResult } from '@plitzi/sdk-shared';
+import type {
+  AuthFailureReason,
+  AuthResult,
+  AuthState,
+  LoginResult,
+  MfaChallenge,
+  Schema,
+  TokenResult
+} from '@plitzi/sdk-shared';
 
 /** Why a state changed. Not control flow — it is what makes an auth trace readable, and every transition below
  *  names one, because "it went to guest" is not a diagnosis and "the hint cookie was gone" is. */
@@ -81,6 +89,15 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   private readonly revalidateSeconds: number;
   private readonly listeners = new Set<AuthEventListener>();
   private renewal?: Promise<boolean>;
+  /**
+   * Which session an answer belongs to. Moved on by every change of WHO is signed in — a sign-out, a sign-in, another
+   * tab's — and read around each request that can adopt or end a session.
+   *
+   * An identity asked for before a sign-out and answered after it carried the old cookie, so it came back `ok` and
+   * signed the person straight back in: the router then read a session on the guest's own page and answered "Access
+   * Denied". Under load that is not a corner case — the account screen asks who is there while its button is pressed.
+   */
+  private epoch = 0;
   private renewalTimer?: ReturnType<typeof setTimeout>;
   private detachListeners?: () => void;
   /** Set when a request failed to reach the backend, so the next `online` event retries instead of waiting. */
@@ -114,7 +131,8 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     return [];
   }
 
-  protected abstract requestLogin(params: Record<string, unknown>): Promise<AuthResult<U>>;
+  /** A session, why there is none — or, for an account with a second factor, the challenge its code completes. */
+  protected abstract requestLogin(params: Record<string, unknown>): Promise<AuthResult<U> | MfaChallenge>;
   protected abstract requestRenewal(refreshToken?: string): Promise<AuthResult<U>>;
   protected abstract requestIdentity(): Promise<AuthResult<U>>;
   protected abstract requestLogout(): Promise<void>;
@@ -339,8 +357,16 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    * somebody to check credentials that were perfectly correct.
    */
   async login(params: Record<string, unknown>): Promise<LoginResult> {
+    this.epoch += 1;
     this.setState('authenticating', 'authenticating');
     const result = await this.requestLogin(params);
+    if (!result.ok && result.reason === 'mfa') {
+      // Nothing was lost — there was no session to lose — so no expiry is announced: the page asks for the code.
+      this.endSession();
+
+      return result;
+    }
+
     if (!result.ok) {
       this.endSession(result.reason);
 
@@ -519,7 +545,12 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   }
 
   private async performRenewal(): Promise<boolean> {
+    const epoch = this.epoch;
     const result = await this.requestRenewal(this.session.token?.refreshToken ?? undefined);
+    if (epoch !== this.epoch) {
+      return this.state === 'authenticated';
+    }
+
     if (!result.ok) {
       this.handleFailure(result.reason);
 
@@ -537,7 +568,12 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   }
 
   private async loadIdentity(): Promise<boolean> {
+    const epoch = this.epoch;
     const result = await this.requestIdentity();
+    if (epoch !== this.epoch) {
+      return this.state === 'authenticated';
+    }
+
     if (!result.ok) {
       // `this.renewal` guards the one loop this could enter: a renewal that asks for identity, whose refusal asks
       // for a renewal.
@@ -592,6 +628,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    * worth remembering: it is what keeps a signed-out visitor from paying for the same refused request on every load.
    */
   private endSession(reason?: AuthFailureReason, cause: AuthStateReason = 'signed-out'): void {
+    this.epoch += 1;
     clearTimeout(this.renewalTimer);
     this.renewalTimer = undefined;
     this.session = { validatedAt: nowInSeconds() };
@@ -737,6 +774,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    * out over nothing.
    */
   private adoptFromStorage(stored?: StoredSession<U>): void {
+    this.epoch += 1;
     if (!stored?.token && !stored?.user) {
       clearTimeout(this.renewalTimer);
       this.renewalTimer = undefined;

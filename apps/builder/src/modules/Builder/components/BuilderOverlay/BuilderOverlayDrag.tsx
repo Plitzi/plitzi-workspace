@@ -8,9 +8,6 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import type { DropPosition, Element as PlitziElement } from '@plitzi/sdk-shared';
 import type { CSSProperties, RefObject } from 'react';
 
-export const OVERLAY_MODE_NORMAL = 'normal';
-export const OVERLAY_MODE_DRAG = 'drag';
-
 export type BuilderOverlayDragProps = {
   refIframe: RefObject<HTMLIFrameElement | null>;
   sizeOffset?: number;

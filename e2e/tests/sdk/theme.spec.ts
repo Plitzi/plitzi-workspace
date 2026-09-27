@@ -1,5 +1,5 @@
 import { describeTarget, expect, test } from '../../fixtures';
-import { HARNESS_ORIGIN, openHarness, renderSpace } from '../../helpers/harness';
+import { el, HARNESS_ORIGIN, openHarness, renderSpace } from '../../helpers/harness';
 import { THEMED_BACKGROUND, THEMED_IDS, themedSpace } from '../../spaces';
 
 import type { Page } from '@playwright/test';
@@ -14,8 +14,10 @@ import type { Page } from '@playwright/test';
  *  embedded root while the palette stayed keyed to `:root`, and a check on the class passed over a space that had not
  *  changed colour at all. */
 
+const space = themedSpace();
+
 const pageBackground = (page: Page): Promise<string> =>
-  page.locator(`.${THEMED_IDS.page}`).evaluate(node => getComputedStyle(node).backgroundColor);
+  el(page, space, THEMED_IDS.page).evaluate(node => getComputedStyle(node).backgroundColor);
 
 const themeCookie = async (page: Page): Promise<string | undefined> =>
   (await page.context().cookies(HARNESS_ORIGIN)).find(cookie => cookie.name === 'theme')?.value;
@@ -31,7 +33,7 @@ describeTarget('harness', () => {
       await renderSpace(page, themedSpace());
       await expect.poll(() => pageBackground(page)).toBe(THEMED_BACKGROUND.light);
 
-      await page.locator(`.${THEMED_IDS.toggle}`).click();
+      await el(page, space, THEMED_IDS.toggle).click();
 
       await expect(page.locator('html')).toHaveClass(/\bdark\b/);
       await expect.poll(() => pageBackground(page)).toBe(THEMED_BACKGROUND.dark);
@@ -51,7 +53,7 @@ describeTarget('harness', () => {
       await renderSpace(page, themedSpace(), { themeScope: 'container' });
       await expect.poll(() => pageBackground(page)).toBe(THEMED_BACKGROUND.light);
 
-      await page.locator(`.${THEMED_IDS.toggle}`).click();
+      await el(page, space, THEMED_IDS.toggle).click();
 
       await expect(sdkRoot(page)).toHaveClass(/\bdark\b/);
       await expect
@@ -68,7 +70,7 @@ describeTarget('harness', () => {
       await page.context().addCookies([{ name: 'theme', value: 'dark', url: HARNESS_ORIGIN }]);
       await renderSpace(page, themedSpace(), { themeScope: 'container' });
 
-      await expect(page.locator(`.${THEMED_IDS.page}`)).toBeVisible();
+      await expect(el(page, space, THEMED_IDS.page)).toBeVisible();
       await expect(sdkRoot(page)).not.toHaveClass(/\bdark\b/);
       await expect.poll(() => pageBackground(page)).toBe(THEMED_BACKGROUND.light);
     });
@@ -89,7 +91,7 @@ describeTarget('harness', () => {
       await openHarness(page);
       await renderSpace(page, themedSpace(), { themeScope: 'container' });
 
-      await page.locator(`.${THEMED_IDS.toggle}`).click();
+      await el(page, space, THEMED_IDS.toggle).click();
 
       await expect(sdkRoot(page)).toHaveClass(/\blight\b/);
       await expect.poll(() => pageBackground(page)).toBe(THEMED_BACKGROUND.light);

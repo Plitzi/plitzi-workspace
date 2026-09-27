@@ -75,6 +75,30 @@ describe('getBindingsDetails', () => {
     expect(getBindingsDetails({ variables: { found: false } }, element).definition.initialState?.visibility).toBe(true);
   });
 
+  /**
+   * A visibility answered with anything else than a boolean: a condition's template printing nothing, `0` or a list.
+   * Each is a no — and a no is WRITTEN, so an element shown a moment ago is hidden again when its condition empties.
+   * A value not there at all is no answer yet, and leaves the element as it starts.
+   */
+  it('reads a visibility as a yes or a no once the data answers, writing the no too', () => {
+    const element = makeElement({
+      initialState: [
+        binding({
+          source: 'variables.owner',
+          to: 'visibility',
+          transformers: [{ action: 'twigTemplate', params: { template: '{{ source }}' } }]
+        })
+      ]
+    });
+    const visibility = (owner: unknown) =>
+      getBindingsDetails({ variables: { owner } }, element).definition.initialState?.visibility;
+
+    expect(visibility('key-1')).toBe(true);
+    expect(visibility('')).toBe(false);
+    expect(visibility('0')).toBe(false);
+    expect(visibility(undefined)).toBeUndefined();
+  });
+
   it('skips a binding whose `when` evaluates to false and applies it when true', () => {
     const when = {
       combinator: 'and',

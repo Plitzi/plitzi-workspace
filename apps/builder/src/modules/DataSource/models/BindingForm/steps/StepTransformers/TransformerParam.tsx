@@ -1,12 +1,14 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
+import ErrorMessage from '@plitzi/plitzi-ui/ErrorMessage';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { templateProblem } from '@pmodules/Schema/helpers/templateProblem';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -53,6 +55,7 @@ const TransformerParam = ({
   );
 
   const label = useMemo(() => (!labelProp ? id : labelProp), [labelProp, id]);
+  const problem = useMemo(() => templateProblem(value), [value]);
 
   const fieldsDataSource = useMemo<AutoComplete[]>(() => {
     if (!dataSourceFields) {
@@ -93,6 +96,7 @@ const TransformerParam = ({
           label={label}
           id={id}
           value={value as string}
+          error={problem}
           onChange={handleChangeText}
         />
       )}
@@ -118,6 +122,7 @@ const TransformerParam = ({
           id={id}
           label={label}
           value={value as string}
+          error={problem}
           onChange={handleChangeText}
         />
       )}
@@ -142,9 +147,11 @@ const TransformerParam = ({
           mode="text"
           autoComplete={fieldsDataSource}
           lineWrapping
+          error={Boolean(problem)}
           onChange={handleChangeText}
         />
       )}
+      {type === 'codemirror-text' && problem && <ErrorMessage message={problem} error />}
     </div>
   );
 };

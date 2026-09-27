@@ -69,13 +69,14 @@ const TOKEN_LIFETIME = 43_200;
  */
 export type CsrfSubject = 'write' | 'signIn' | 'delegated';
 
-export type CsrfFailure = 'missing' | 'malformed' | 'expired' | 'mismatch';
+export type CsrfFailure = 'missing' | 'malformed' | 'expired' | 'mismatch' | 'foreign';
 
 export const csrfFailureMessage: Record<CsrfFailure, string> = {
   missing: 'A CSRF token is required',
   malformed: 'CSRF token malformed',
   expired: 'CSRF token expired',
-  mismatch: 'CSRF token does not match this session'
+  mismatch: 'CSRF token does not match this session',
+  foreign: 'A request from another site may not act with this session'
 };
 
 export type CsrfResult = { ok: true } | { ok: false; reason: CsrfFailure };
@@ -88,6 +89,24 @@ export interface CsrfCarrier {
   cookies?: Record<string, string>;
   body?: unknown;
 }
+
+/**
+ * The carrier, read off whatever request a host hands over — named field by field, never spread.
+ *
+ * A spread copies OWN properties, and on Node's `IncomingMessage` (which an Express request is) `headers` is a getter on
+ * the prototype: `{ ...req }` arrives with no headers at all, and the first header read throws. Every guard built on a
+ * spread failed that way on every request.
+ */
+export const carrierOf = (
+  req: { method?: string; headers: CsrfCarrier['headers']; hostname: string; cookies?: unknown; body?: unknown },
+  method: string | undefined = req.method
+): CsrfCarrier => ({
+  method,
+  headers: req.headers,
+  hostname: req.hostname,
+  ...(req.cookies && typeof req.cookies === 'object' ? { cookies: req.cookies as Record<string, string> } : {}),
+  body: req.body
+});
 
 const equal = (a: string, b: string): boolean => {
   const left = Buffer.from(a);
@@ -162,10 +181,10 @@ export const createCsrf = (config: CsrfConfig) => {
    * anything: there is no victim's session sitting in it. That is what keeps every API client, mobile app and
    * script signing in with nothing extra to send.
    */
-  const foreign = (carrier: CsrfCarrier): boolean => {
+  const foreign = (carrier: CsrfCarrier, alsoAllowed: readonly string[] = []): boolean => {
     const site = header(carrier, 'sec-fetch-site');
     const origin = header(carrier, 'origin');
-    const allowed = origin !== undefined && permitted(origin);
+    const allowed = origin !== undefined && (permitted(origin) || alsoAllowed.includes(origin));
 
     if (site !== undefined) {
       // The browser has answered the question. `same-origin`, `same-site` and `none` (a typed URL, a bookmark)
@@ -315,6 +334,17 @@ export const createCsrf = (config: CsrfConfig) => {
 
       return readCookieHeader(carrier, sessionCookieParams(carrier.hostname, cookie).name) !== undefined;
     },
+
+    /**
+     * Whether a browser sent this from a site this deployment does not recognise — its own origins, and
+     * `alsoAllowed` (the origins a SPACE declared, for a request that carries that space's credential).
+     *
+     * The rule `signIn` flows are guarded by, offered on its own for a router whose writes cannot all carry a token:
+     * a cookie-carried write that a foreign page caused is refused by where it came from — see
+     * `createOriginGuardMiddleware`. A request with neither Fetch Metadata nor `Origin` is not a browser's, and is
+     * never foreign: there is no victim's session in a script.
+     */
+    crossSite: (carrier: CsrfCarrier, alsoAllowed?: readonly string[]): boolean => foreign(carrier, alsoAllowed),
 
     /**
      * The whole check. The echoed token must verify against the session the request carries, and — when the

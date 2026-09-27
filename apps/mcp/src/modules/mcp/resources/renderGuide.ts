@@ -405,7 +405,8 @@ The widget runs the live SDK, so beyond static layout it can fetch data and resp
 \`ref\`, just like styling. (Full reference: **plitzi://guide** — sections Data bindings and Interactions.)
 
 ### Fetch data — a provider + a binding
-An \`apiContainer\` fetches at runtime and exposes the result as the source **\`apiContainer_<id>.data\`**, visible
+An \`apiContainer\` fetches at runtime and exposes the result as the source **\`apiContainer_<id>.data\`** (the
+parsed body; \`.status\` is the HTTP status, beside \`.isLoading\`, \`.isEmpty\` and \`.hasError\`), visible
 to its **DESCENDANTS only** — the bound element must live inside the container's subtree. \`upsertBinding\` then
 connects that source to a descendant's field. With no \`subType\` (its default) the provider renders **no element of
 its own** — its children lay out in its parent, and a class on it styles nothing; give it \`"subType": "div"\` when the
@@ -455,7 +456,7 @@ An element starts hidden with \`initialState: { "visibility": false }\` on the e
 \`true\` counts as false, so a panel that has never been set flips **open** on the first click.
 
 Expand/collapse is therefore **ONE step on ONE trigger** — never two \`setState\` branches under opposite \`when\`
-conditions, which read the state as it was when the flow STARTED and so are always one click behind:
+conditions: every step reads the state as it is when it runs, so the second sees what the first wrote and flips it back:
 
 \`\`\`json
 { "operations": [

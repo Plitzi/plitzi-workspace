@@ -140,6 +140,8 @@ const ThemeToggle = ({
       <RootElement
         ref={ref}
         tag="div"
+        role="group"
+        aria-label={`${lightLabel} / ${darkLabel}`}
         className={clsx('plitzi-component__theme-toggle plitzi-component__theme-toggle--segmented', className)}
         interactionTriggers={declaration.triggers}
       >
@@ -150,6 +152,7 @@ const ThemeToggle = ({
             className={clsx('plitzi-component__theme-toggle-option', styleSelectors.option)}
             // Written only once the browser is rendering: during hydration nothing may depend on stored state.
             data-active={isMounted && theme === option.value ? 'true' : undefined}
+            aria-pressed={isMounted ? theme === option.value : undefined}
             data-theme-option={option.value}
             onClick={choose(option.value)}
           >

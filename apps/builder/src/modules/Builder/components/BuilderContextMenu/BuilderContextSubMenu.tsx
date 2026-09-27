@@ -34,7 +34,6 @@ const BuilderContextSubMenu = ({ items, width = 150, iframeDOM, onClick }: Build
         'relative flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none first:rounded-tl last:border-b-0 hover:bg-blue-100 dark:border-zinc-700 dark:hover:bg-blue-900/40',
         { 'rounded-tr': items?.length === 0 }
       )}
-      // onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseOver={handleMouseEnter}
     >

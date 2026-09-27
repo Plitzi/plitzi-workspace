@@ -1,35 +1,75 @@
+import { passes, perFilter } from './filters.ts';
+
+import type { DepthKey, FloorKey } from './filters.ts';
+
 /**
  * The USGS feed, and the shape a page can actually draw.
  *
- * GeoJSON is a transport format: a `features` array of `geometry.coordinates` triples and a `properties` bag with
- * eighteen fields, most of which describe how the measurement was made. A map needs six of them, in the units it
- * draws in. Reshaping that is real work, so it is a TASK rather than a template — a twig expression pretending to
- * flatten GeoJSON would be a worse example than the honest version, and this is the file a reader of the example
- * should be able to skim without knowing what a `magType` is.
+ * GeoJSON is a transport format: a `features` array of coordinate triples and a properties bag of twenty-odd fields,
+ * most of them about how the measurement was made. A monitor needs a dozen, in the units it shows them in, plus the
+ * totals it leads with. Reshaping that is real work, so it is a TASK — a twig expression pretending to flatten
+ * GeoJSON would be a worse example than the honest version.
  *
- * Everything here runs on the SERVER. The browser never talks to the USGS: the page is built with the answer
- * already in it, and the refresh below asks this same server again.
+ * Everything here runs on the SERVER. The browser never talks to the USGS: the page is built with the answer already
+ * in it, and every refresh asks this same server again.
  */
 
 /**
- * No key, no quota, updated every minute. Three windows, each at the magnitude the window can carry.
+ * No key, no quota, regenerated every minute.
  *
- * The threshold rises with the range on purpose. A day of everything the USGS records is a few hundred events; a
- * month of it is tens of thousands, most of them below the level anyone felt — a page of that is not more
- * information, it is the same map with the coastlines buried. So a week drops what is under M2.5 and a month what
- * is under M4.5, which is the level the USGS itself treats as reportable worldwide.
+ * Every window carries every magnitude except the month, where the USGS publishes nothing below M2.5 — all of a month
+ * is tens of thousands of events. The magnitude filter is the page's, not the feed's, so the page says when the feed
+ * has already applied a floor of its own.
  */
 const FEEDS = {
-  day: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson',
-  week: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson',
-  month: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.geojson'
+  hour: { url: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson', floorNote: '' },
+  day: { url: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson', floorNote: '' },
+  week: { url: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson', floorNote: '' },
+  month: {
+    url: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_month.geojson',
+    floorNote: 'The 30-day feed starts at M2.5'
+  }
 } as const;
 
 export type FeedWindow = keyof typeof FEEDS;
 
 export const isFeedWindow = (value: unknown): value is FeedWindow => typeof value === 'string' && value in FEEDS;
 
-/** One event, in the units the map and the readout use. Nothing else from the feed survives. */
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+/**
+ * How each window is read: its length, and how the activity strip cuts it.
+ *
+ * The strip is a histogram, so its bins are chosen for the reader rather than for arithmetic — five minutes across an
+ * hour, an hour across a day, six hours across a week, a day across a month. Each ends NOW, which is the edge a live
+ * display is read from.
+ */
+const SPANS: Record<FeedWindow, { span: number; bin: number; label: string; binLabel: string; axisStart: string }> = {
+  hour: { span: HOUR, bin: 5 * MINUTE, label: '1 H', binLabel: '5 MIN BINS', axisStart: '−60 MIN' },
+  day: { span: DAY, bin: HOUR, label: '24 H', binLabel: '1 H BINS', axisStart: '−24 H' },
+  week: { span: 7 * DAY, bin: 6 * HOUR, label: '7 D', binLabel: '6 H BINS', axisStart: '−7 D' },
+  month: { span: 30 * DAY, bin: DAY, label: '30 D', binLabel: '1 DAY BINS', axisStart: '−30 D' }
+};
+
+/**
+ * Focal depth, in the bands a seismologist reads it in.
+ *
+ * Depth is what decides whether an earthquake is felt: a M6 at 15 km flattens a town, the same magnitude at 500 km
+ * is an instrument reading. The map colours by it and the legend explains it, so the band is decided once, here.
+ */
+export type DepthBand = 'shallow' | 'intermediate' | 'deep';
+
+const bandOf = (depthKm: number): DepthBand => {
+  if (depthKm < 70) {
+    return 'shallow';
+  }
+
+  return depthKm < 300 ? 'intermediate' : 'deep';
+};
+
+/** One event, in the units the map and the readouts use. Nothing else from the feed survives. */
 export type Quake = {
   id: string;
   /** The USGS one-line description, e.g. "18 km SSE of Volcano, Hawaii". */
@@ -37,57 +77,87 @@ export type Quake = {
   /** Just the region half of it, for a column that has no room for the distance. */
   region: string;
   magnitude: number;
-  /**
-   * The same two numbers as text, because a readout is not a plot.
-   *
-   * `4` and `4.0` are the same magnitude and only one of them is how a seismologist writes it, and a depth column
-   * of bare integers reads as a count of something. The map wants the numbers; a column wants the units. Formatted
-   * here so every visitor sees the same string and no page has to know the convention.
-   */
+  /** `M4.0`, not `M4`: two numbers that are the same magnitude, and only one of them is how it is written. */
   magnitudeLabel: string;
-  /** Kilometres below the surface. Shallow quakes are the destructive ones, which is why the map colours by it. */
+  /** How it was measured — `mww`, `ml`, `md`… A moment magnitude and a local one are not the same instrument. */
+  magnitudeType: string;
   depthKm: number;
   depthLabel: string;
+  band: DepthBand;
   latitude: number;
   longitude: number;
-  /** Milliseconds since the epoch, as the feed gives it — the page formats, the server does not guess a timezone. */
+  /** `38.21°N 142.37°E` — hemispheres, never signs, which is how a position is read aloud. */
+  coordinates: string;
+  /** Milliseconds since the epoch. The page formats it, in UTC, and says so. */
   time: number;
-  /** USGS's own significance score, 0–1000. Anything over 600 is an event people will have heard about. */
+  /** "4m", "2h", "3d" before the feed was generated — the same for every visitor between two refreshes. */
+  ageLabel: string;
+  /** Inside the last hour of the feed: the map rings it and the log marks it. */
+  isFresh: boolean;
+  /** USGS significance, 0–1000: magnitude, felt reports and estimated impact in one number. */
   significance: number;
-  /** Whether a tsunami warning was issued alongside it. */
+  /** As a share of the scale, for the bar that draws it. */
+  significancePct: number;
   tsunami: boolean;
+  /** The PAGER alert for estimated losses — `green` to `red` — or `none` when none was issued. */
+  alert: 'none' | 'green' | 'yellow' | 'orange' | 'red';
+  /** "Did You Feel It?" reports. Zero is a real answer for an event in the middle of an ocean. */
+  felt: number;
+  /** Peak shaking on the Modified Mercalli scale, in its own roman numerals — or "—" when it was not estimated. */
+  intensity: string;
+  /** `reviewed` by a seismologist, or still `automatic`. An automatic magnitude can move. */
+  status: string;
+  network: string;
   url: string;
 };
 
+/** One value per magnitude floor and depth band: `grid[computed.floor][computed.depth]`. */
+export type ByFilter<T> = Record<FloorKey, Record<DepthKey, T>>;
+
+export type ActivityBin = {
+  id: string;
+  /**
+   * The bar's height under every filter — relative to the busiest bin under the SAME filter, so a strip filtered to
+   * M5+ still uses its whole height instead of a sliver at the foot of the unfiltered one.
+   */
+  pct: ByFilter<number>;
+};
+
+/** The window's totals, under one filter. */
+export type WindowStats = {
+  count: number;
+  m6: number;
+  tsunami: number;
+  /** PAGER alerts above green: events expected to cause damage or casualties somewhere. */
+  alerts: number;
+  /** Radiated energy, as a TNT equivalent — the one total of a magnitude scale that means something physical. */
+  energy: string;
+  energyUnit: string;
+};
+
 export type SeismicReport = {
-  records: Quake[];
-  /** The strongest event in the window, for the readout that leads with it. An empty object when there are none. */
-  strongest: Quake | Record<string, never>;
-  hasStrongest: boolean;
-  isEmpty: boolean;
-  total: number;
-  /**
-   * How many crossed magnitude 6 — the level at which a shallow event damages buildings.
-   *
-   * Not 4.5, which is the threshold the month feed already filters on: a count of the events that got through the
-   * filter is a count of the rows, and a readout that always equals the one beside it says nothing.
-   */
-  notable: number;
-  felt: number;
-  /**
-   * The window this report covers, a phrase naming it, and one flag per range.
-   *
-   * The flags are what the range control binds to: a chip cannot decide it is the current one, because a binding
-   * compares nothing — it shows an element when a field is true. So the answer says which range it IS.
-   */
   window: FeedWindow;
   windowLabel: string;
-  isDay: boolean;
-  isWeek: boolean;
-  isMonth: boolean;
-  /** When the FEED was generated, not when this ran: the difference is how stale the answer is. */
+  /** A qualification the page must show beside the window, or nothing. */
+  floorNote: string;
+  /** Every event in the window, newest first. The map draws all of them; the page filters and crops. */
+  records: Quake[];
+  isEmpty: boolean;
+  /**
+   * The totals under every filter the page offers, so a counter picks a number rather than counting two thousand rows
+   * in a template on every refresh.
+   */
+  stats: ByFilter<WindowStats>;
+  bins: ActivityBin[];
+  binLabel: string;
+  axisStart: string;
+  /** When the USGS generated the feed. It moves once a minute, whatever the page's cadence. */
   generatedAt: number;
-  updatedLabel: string;
+  /**
+   * When this server asked the USGS for it — what moves on every refresh. The two together say both "the page is
+   * listening" and "how old the news is": a feed checked a second ago can still be a minute old.
+   */
+  checkedAt: number;
 };
 
 type Feature = {
@@ -95,26 +165,25 @@ type Feature = {
   properties?: {
     place?: string | null;
     mag?: number | null;
+    magType?: string | null;
     time?: number | null;
     sig?: number | null;
     tsunami?: number | null;
+    alert?: string | null;
     felt?: number | null;
+    mmi?: number | null;
+    status?: string | null;
+    net?: string | null;
     url?: string | null;
   };
   geometry?: { coordinates?: (number | null)[] };
 };
 
-const WINDOW_LABELS: Record<FeedWindow, string> = {
-  day: 'LAST 24 H · ALL',
-  week: 'LAST 7 D · M2.5+',
-  month: 'LAST 30 D · M4.5+'
-};
-
 /**
  * The half of a place name worth showing in a narrow column.
  *
- * USGS writes "18 km SSE of Volcano, Hawaii". The distance and bearing are precision nobody reads at a glance and
- * they push the part that identifies the event off the end of the row.
+ * USGS writes "18 km SSE of Volcano, Hawaii". The distance and bearing are precision nobody reads at a glance, and they
+ * push the part that identifies the event off the end of the row.
  */
 const regionOf = (place: string): string => {
   const separator = place.indexOf(' of ');
@@ -122,7 +191,34 @@ const regionOf = (place: string): string => {
   return separator === -1 ? place : place.slice(separator + 4);
 };
 
-const toQuake = (feature: Feature): Quake | undefined => {
+const hemisphere = (value: number, positive: string, negative: string): string =>
+  `${Math.abs(value).toFixed(2)}°${value >= 0 ? positive : negative}`;
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
+const intensityOf = (mmi: number | null | undefined): string =>
+  typeof mmi === 'number' && mmi >= 1 ? ROMAN[Math.min(Math.round(mmi), 12) - 1] : '—';
+
+const ALERTS: readonly string[] = ['green', 'yellow', 'orange', 'red'] satisfies Quake['alert'][];
+
+const isAlert = (value: string | null | undefined): value is Exclude<Quake['alert'], 'none'> =>
+  typeof value === 'string' && ALERTS.includes(value);
+
+const alertOf = (alert: string | null | undefined): Quake['alert'] => (isAlert(alert) ? alert : 'none');
+
+/** "3 min ago", in the words a monitor uses. Relative to the feed, so every visitor reads the same clock. */
+const ageOf = (time: number, reference: number): string => {
+  const minutes = Math.max(Math.round((reference - time) / MINUTE), 0);
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+
+  const hours = Math.round(minutes / 60);
+
+  return hours < 48 ? `${hours}h` : `${Math.round(hours / 24)}d`;
+};
+
+const toQuake = (feature: Feature, generatedAt: number): Quake | undefined => {
   const [longitude, latitude, depth] = feature.geometry?.coordinates ?? [];
   const magnitude = feature.properties?.mag;
   // A feature with no position cannot be plotted and one with no magnitude cannot be sized. Both happen: the feed
@@ -132,6 +228,9 @@ const toQuake = (feature: Feature): Quake | undefined => {
   }
 
   const place = feature.properties?.place ?? 'Unknown location';
+  const depthKm = Math.max(Math.round(typeof depth === 'number' ? depth : 0), 0);
+  const time = feature.properties?.time ?? 0;
+  const significance = feature.properties?.sig ?? 0;
 
   return {
     id: feature.id,
@@ -139,38 +238,97 @@ const toQuake = (feature: Feature): Quake | undefined => {
     region: regionOf(place),
     magnitude: Math.round(magnitude * 10) / 10,
     magnitudeLabel: `M${magnitude.toFixed(1)}`,
-    depthKm: Math.round(typeof depth === 'number' ? depth : 0),
-    depthLabel: `${Math.round(typeof depth === 'number' ? depth : 0)} km`,
+    magnitudeType: feature.properties?.magType ?? '',
+    depthKm,
+    depthLabel: `${depthKm} km`,
+    band: bandOf(depthKm),
     latitude,
     longitude,
-    time: feature.properties?.time ?? 0,
-    significance: feature.properties?.sig ?? 0,
+    coordinates: `${hemisphere(latitude, 'N', 'S')} ${hemisphere(longitude, 'E', 'W')}`,
+    time,
+    ageLabel: ageOf(time, generatedAt),
+    isFresh: generatedAt - time < HOUR,
+    significance,
+    significancePct: Math.min(Math.round(significance / 10), 100),
     tsunami: feature.properties?.tsunami === 1,
+    alert: alertOf(feature.properties?.alert),
+    felt: feature.properties?.felt ?? 0,
+    intensity: intensityOf(feature.properties?.mmi),
+    status: feature.properties?.status ?? 'automatic',
+    network: (feature.properties?.net ?? '').toUpperCase(),
     url: feature.properties?.url ?? ''
   };
 };
 
-/** "3 min ago", in the words a monitor uses. Computed on the server, so every visitor reads the same clock. */
-const ago = (from: number, now: number): string => {
-  const seconds = Math.max(Math.round((now - from) / 1000), 0);
-  if (seconds < 90) {
-    return `${seconds}s AGO`;
+/**
+ * Radiated energy, by the Gutenberg–Richter relation `log₁₀ E = 1.5 M + 4.8` (joules), as tonnes of TNT.
+ *
+ * A magnitude is a logarithm, and a reader adds logarithms wrong: two M5s are not a M10, and a single M7 outweighs a
+ * thousand M5s. Summing energy is the one total of a window that means something physical — and it shows how much of
+ * it the one big event carried.
+ */
+const TNT_JOULES_PER_TONNE = 4.184e9;
+
+const energyOf = (quakes: Quake[]): Pick<WindowStats, 'energy' | 'energyUnit'> => {
+  const tonnes = quakes.reduce((sum, quake) => sum + 10 ** (1.5 * quake.magnitude + 4.8), 0) / TNT_JOULES_PER_TONNE;
+  if (tonnes >= 1e6) {
+    return { energy: (tonnes / 1e6).toFixed(tonnes >= 1e7 ? 0 : 1), energyUnit: 'Mt TNT' };
   }
 
-  const minutes = Math.round(seconds / 60);
+  if (tonnes >= 1e3) {
+    return { energy: (tonnes / 1e3).toFixed(tonnes >= 1e4 ? 0 : 1), energyUnit: 'kt TNT' };
+  }
 
-  return minutes < 90 ? `${minutes}m AGO` : `${Math.round(minutes / 60)}h AGO`;
+  return { energy: tonnes.toFixed(tonnes >= 10 ? 0 : 1), energyUnit: 't TNT' };
+};
+
+const statsOf = (quakes: Quake[]): WindowStats => ({
+  count: quakes.length,
+  m6: quakes.filter(quake => quake.magnitude >= 6).length,
+  tsunami: quakes.filter(quake => quake.tsunami).length,
+  alerts: quakes.filter(quake => quake.alert !== 'none' && quake.alert !== 'green').length,
+  ...energyOf(quakes)
+});
+
+/** The activity strip: every bin of the window, under every filter. */
+const binsOf = (quakes: Quake[], window: FeedWindow, end: number): ActivityBin[] => {
+  const { span, bin } = SPANS[window];
+  const start = end - span;
+  const total = Math.round(span / bin);
+  const indexOf = (quake: Quake): number => Math.floor((quake.time - start) / bin);
+  const counts = perFilter((floor, depth) => {
+    const cells = Array.from({ length: total }, () => 0);
+    quakes
+      .filter(quake => passes(quake, floor.min, depth))
+      .forEach(quake => {
+        const index = indexOf(quake);
+        if (index >= 0 && index < total) {
+          cells[index] += 1;
+        }
+      });
+
+    return { cells, busiest: Math.max(...cells, 0) };
+  });
+
+  return Array.from({ length: total }, (_, index) => ({
+    id: `bin-${index}`,
+    pct: perFilter((floor, depth) => {
+      const { cells, busiest } = counts[floor.key][depth];
+
+      return busiest ? Math.round((cells[index] / busiest) * 100) : 0;
+    })
+  }));
 };
 
 /**
  * Everything the page shows, from one request.
  *
- * Newest first, because a monitor is read from the top. `strongest` is picked over the whole window rather than
- * over what fits on screen: the largest event of the day is the one fact the page exists to state, and a list
- * cropped to twenty rows would hide it whenever the day was busy.
+ * Newest first, because a monitor is read from the top. Every total is over the whole window rather than what fits
+ * on screen: a list cropped to eighty rows would otherwise decide what the counters say.
  */
-export const seismicReport = async (window: FeedWindow, limit: number): Promise<SeismicReport> => {
-  const response = await fetch(FEEDS[window], { headers: { accept: 'application/json' } });
+export const seismicReport = async (window: FeedWindow): Promise<SeismicReport> => {
+  const feed = FEEDS[window];
+  const response = await fetch(feed.url, { headers: { accept: 'application/json' } });
   if (!response.ok) {
     // Thrown rather than answered with an empty report: an empty one reads as "a quiet day", and a quiet day and a
     // provider that refused are not the same page. Failing here is what makes the element report itself unresolved.
@@ -178,25 +336,23 @@ export const seismicReport = async (window: FeedWindow, limit: number): Promise<
   }
 
   const payload = (await response.json()) as { features?: Feature[]; metadata?: { generated?: number } };
-  const all = (payload.features ?? []).map(toQuake).filter((quake): quake is Quake => quake !== undefined);
-  const ordered = [...all].sort((a, b) => b.time - a.time);
-  const strongest = [...all].sort((a, b) => b.magnitude - a.magnitude)[0];
   const generatedAt = payload.metadata?.generated ?? Date.now();
+  const records = (payload.features ?? [])
+    .map(entry => toQuake(entry, generatedAt))
+    .filter((quake): quake is Quake => quake !== undefined)
+    .sort((a, b) => b.time - a.time);
 
   return {
-    records: ordered.slice(0, limit),
-    strongest: strongest ?? {},
-    hasStrongest: Boolean(strongest),
-    isEmpty: all.length === 0,
-    total: all.length,
-    notable: all.filter(quake => quake.magnitude >= 6).length,
-    felt: all.filter(quake => quake.significance >= 600).length,
     window,
-    windowLabel: WINDOW_LABELS[window],
-    isDay: window === 'day',
-    isWeek: window === 'week',
-    isMonth: window === 'month',
+    windowLabel: SPANS[window].label,
+    floorNote: feed.floorNote,
+    records,
+    isEmpty: records.length === 0,
+    stats: perFilter((floor, depth) => statsOf(records.filter(quake => passes(quake, floor.min, depth)))),
+    bins: binsOf(records, window, generatedAt),
+    binLabel: SPANS[window].binLabel,
+    axisStart: SPANS[window].axisStart,
     generatedAt,
-    updatedLabel: ago(generatedAt, Date.now())
+    checkedAt: Date.now()
   };
 };

@@ -1,0 +1,14 @@
+{
+  "extends": "../packages/sdk-shared/tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "composite": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["ES2023"],
+    "resolveJsonModule": true
+  },
+  "include": ["src", "targets", "probe", "vitest.config.ts"],
+  "exclude": ["node_modules", "results", ".cache"]
+}

@@ -25,6 +25,20 @@ of it; each line is something that has shipped broken before.
 - [ ] Light AND dark. Every colour is a token with both values; no theme-following text on a fixed background.
 - [ ] Focus is visible on everything clickable (`focus-visible`), and `prefers-reduced-motion` stops what moves.
 
+## Usable without sight
+
+Screen readers and browser agents (Claude in Chrome) work a page through its accessibility tree. See
+[accessibility](accessibility.md).
+
+- [ ] Every button and link has words — an icon-only button a `title`, a link around a card a `label` — and every field
+      a `label` (`hideLabel: true` when the design shows what it is).
+- [ ] Every image has an `alt` saying what it shows, or `decorative: true`.
+- [ ] Every click is on a `button` or a `link`; the whole page can be worked from the keyboard.
+- [ ] A toggle binds `ariaPressed`, a button that opens something `ariaExpanded`.
+- [ ] Headings step down one level at a time; parts of the page a person jumps to are landmarks (`nav`, `main`, a
+      labelled `section`).
+- [ ] What a canvas or a plugin draws is also there as elements, with a visible way to reach them.
+
 ## No copies
 
 - [ ] Chrome shared by pages is a layout; the current menu entry comes from `activeOn`, not per-page styling.

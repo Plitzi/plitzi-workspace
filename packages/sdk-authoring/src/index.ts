@@ -1,3 +1,5 @@
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+
 import {
   elementAncestorTypes,
   elementAttributeNames,
@@ -7,12 +9,15 @@ import {
   elementLeafTypes,
   elementSlots,
   elementSourceTypes,
-  elementTriggers
+  elementTriggers,
+  withPluginCatalogs
 } from './elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from './interactions';
 import {
   authorSpace as authorSpaceUnchecked,
   authorTemplate as authorTemplateUnchecked,
+  fixSpace as fixSpaceUnchecked,
+  lintSpace as lintSpaceUnchecked,
   validateSpace as validateSpaceUnchecked,
   validateTemplate as validateTemplateUnchecked
 } from './schema';
@@ -22,13 +27,17 @@ import type {
   AuthorSpaceOptions,
   AuthoredSpace,
   AuthoredTemplate,
+  FixResult,
+  LintCatalogs,
+  LintResult,
   SpaceDocuments,
+  SpaceValidationOptions,
   SpaceSpec,
   StepVocabulary,
   Template,
   TemplateSpec
 } from './schema';
-import type { SchemaValidationOptions, SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
 
 /**
  * Authoring a space, or a template, in code — and the only place any of it lives.
@@ -55,6 +64,7 @@ export * from './interactions';
 export * from './schema';
 export * from './spaces';
 export * from './style';
+export * from './testing';
 export * from './transformers';
 
 /**
@@ -79,7 +89,8 @@ const STEP_VOCABULARY: StepVocabulary = {
   globalCallbacks: BUILTIN_GLOBAL_CALLBACKS,
   utilities: BUILTIN_UTILITIES,
   triggers: elementTriggers,
-  callbacks: elementCallbacks
+  callbacks: elementCallbacks,
+  sharedCallbacks: BUILTIN_ELEMENT_CALLBACKS
 };
 
 /** Everything the composed surface knows about the built-in elements that the assembly half cannot import. */
@@ -96,7 +107,7 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
 };
 
 /**
- * `authorSpace`, holding this SDK's own vocabularies.
+ * `authorSpace`, holding this SDK's own vocabularies — and each plugin handed in as `plugins`, held to its declaration.
  *
  * Deliberately shadows the one re-exported above — an explicit export wins over a star — so that everybody who
  * imports from this package gets both checks that need to know what this SDK ships.
@@ -110,16 +121,33 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
  * is the half an author cannot see, and is not always the element's own type.
  */
 export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>
-  authorSpaceUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
+  authorSpaceUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
 
 /**
- * `validateSpace`, holding this SDK's own source catalog — the same gate, for documents authored elsewhere.
- *
- * Which is where it matters most: a JSON edited by hand, or an export whose bindings were retyped. Without the
- * catalog a source can only be half-checked, and the half it cannot see is the one nobody gets right.
+ * `validateSpace`, holding this SDK's own catalogs — the same gate `authorSpace` puts its output through, for documents
+ * written anywhere else: the builder saving through the API, an import, an agent's edit, a JSON edited by hand.
  */
-export const validateSpace = (space: SpaceDocuments, options: SchemaValidationOptions = {}): SchemaValidationResult =>
-  validateSpaceUnchecked(space, { sourceTypes: elementSourceTypes, ...options });
+export const validateSpace = (space: SpaceDocuments, options: SpaceValidationOptions = {}): SchemaValidationResult =>
+  validateSpaceUnchecked(space, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
+
+/**
+ * `lintSpace`, holding this SDK's own catalogs: what a space's documents MEAN, read the way the runtime will read
+ * them — every template, flow, binding, attribute and link. For a caller that already knows the structure holds and
+ * wants the problems to show — a panel of them, beside the element each one names.
+ */
+export const lintSpace = (space: SpaceDocuments, options: LintCatalogs = {}): LintResult =>
+  lintSpaceUnchecked(space, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
+
+/**
+ * `fixSpace`, holding the same catalogs `lintSpace` reads with — so a fix settles exactly what the linter reports, on
+ * a copy of the documents. `codes` narrows it to some of `FIXABLE_CODES`.
+ */
+export const fixSpace = (
+  space: SpaceDocuments,
+  options: LintCatalogs = {},
+  codes?: Iterable<string>,
+  elements?: Iterable<string>
+): FixResult => fixSpaceUnchecked(space, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }), codes, elements);
 
 /**
  * `authorTemplate`, holding the same vocabularies — the artefact you publish when you are not building a space.
@@ -131,6 +159,6 @@ export const validateSpace = (space: SpaceDocuments, options: SchemaValidationOp
 export const authorTemplate = (spec: TemplateSpec, options: AuthorSpaceOptions = {}): AuthoredTemplate =>
   authorTemplateUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
 
-/** `validateTemplate`, holding this SDK's own source catalog — for a manifest authored elsewhere. */
-export const validateTemplate = (template: Template, options: SchemaValidationOptions = {}): SchemaValidationResult =>
-  validateTemplateUnchecked(template, { sourceTypes: elementSourceTypes, ...options });
+/** `validateTemplate`, holding this SDK's own catalogs — for a manifest authored elsewhere. */
+export const validateTemplate = (template: Template, options: SpaceValidationOptions = {}): SchemaValidationResult =>
+  validateTemplateUnchecked(template, { ...ELEMENT_CATALOGS, ...options });

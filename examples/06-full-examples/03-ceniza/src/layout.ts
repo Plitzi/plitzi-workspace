@@ -25,10 +25,10 @@ import {
   whenFailed
 } from '@plitzi/sdk-authoring';
 
-import { HOURS_ACTION, NEWSLETTER_ACTION } from './actions';
-import { photo, restaurant } from './content';
+import { HOURS_ACTION, NEWSLETTER_ACTION } from './actions/index.ts';
+import { photo, restaurant } from './content.ts';
 
-import type { Faq, Pillar, ProcessStep } from './content';
+import type { Faq, Pillar, ProcessStep } from './content.ts';
 import type { Attributes, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 export type PageKey =

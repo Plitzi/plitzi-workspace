@@ -4,10 +4,10 @@ import getSourcesByElementId from './getSourcesByElementId';
 
 import type { Schema, Source } from '@plitzi/sdk-shared';
 
-// The ancestry walk is exercised elsewhere (FlatMap.parentTree); here it's stubbed so the source-visibility
+// The walk is exercised where it lives (sdk-schema `elementTree`); here it's stubbed so the source-visibility
 // filtering is tested in isolation. `child` sees `parent`; anything else sees no ancestors.
-vi.mock('@plitzi/sdk-schema/helpers/FlatMap', () => ({
-  default: { parentTree: (_flat: unknown, id: string) => (id === 'child' ? ['parent'] : []) }
+vi.mock('@plitzi/sdk-schema/helpers/elementTree', () => ({
+  renderContext: (_flat: unknown, id: string) => (id === 'child' ? ['parent'] : [])
 }));
 
 const flat = { child: {}, parent: {} } as unknown as Schema['flat'];

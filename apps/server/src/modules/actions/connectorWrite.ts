@@ -1,3 +1,4 @@
+import { serverLog } from '../../helpers/serverLog';
 import { writeConnectorRecord } from '../connectors/engine';
 
 import type { ConnectorLookups } from '../connectors/resolver';
@@ -115,7 +116,7 @@ export const handleAction = async (
     res.setHeader('Cache-Control', 'no-store');
     res.send(JSON.stringify({ record: record ?? null }));
   } catch (err) {
-    console.error('[Action] connector write failed:', err);
+    serverLog.error('Action', 'connector write failed', err);
     // The provider's own message can carry its URL or internal details, so the browser gets a flat failure.
     fail(res, 502, 'Connector write failed');
   }

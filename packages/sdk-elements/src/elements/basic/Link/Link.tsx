@@ -72,7 +72,10 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
     }
 
     e.stopPropagation();
-    if (mode === 'page' || mode === 'internal') {
+    // A page of the site is navigated to in place — unless the link, or the person, asked for somewhere else: a
+    // `target` of its own, or a click held with ⌘, Ctrl or Shift, or not the main button. The browser opens those.
+    const elsewhere = target !== 'self' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
+    if ((mode === 'page' || mode === 'internal') && !elsewhere) {
       e.preventDefault();
       navigate(url);
     }

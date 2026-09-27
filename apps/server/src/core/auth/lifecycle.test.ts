@@ -207,6 +207,33 @@ describe('closing an account', () => {
     expect(deleteAccount).toHaveBeenCalledWith(1);
   });
 
+  /** What the account owns would be orphaned — a workspace nobody else owns, a plan still billed — so it is refused. */
+  it('refuses while the account still owns something, and says what', async () => {
+    const deleteAccount = vi.fn(() => Promise.resolve());
+    const deletionBlockers = vi.fn(() => Promise.resolve(['“Studio” has 3 spaces.']));
+    const api = build({ findById: () => Promise.resolve(ada), deleteAccount, deletionBlockers });
+
+    expect(await api.deleteSelf(actorFor(ada), 'pw')).toMatchObject({
+      ok: false,
+      status: 409,
+      body: { blockers: ['“Studio” has 3 spaces.'] }
+    });
+    expect(deleteAccount).not.toHaveBeenCalled();
+  });
+
+  /** Asked only once the password is right: a borrowed session learns nothing about what the account owns. */
+  it('says nothing about what it owns to a wrong password', async () => {
+    const deletionBlockers = vi.fn(() => Promise.resolve(['“Studio” has 3 spaces.']));
+    const api = build({
+      findById: () => Promise.resolve(ada),
+      deleteAccount: () => Promise.resolve(),
+      deletionBlockers
+    });
+
+    expect(await api.deleteSelf(actorFor(ada), 'wrong')).toMatchObject({ ok: false, status: 401 });
+    expect(deletionBlockers).not.toHaveBeenCalled();
+  });
+
   /** An account created through an identity provider has no password to be asked for; the session is the proof. */
   it('accepts the session alone for an account with no password', async () => {
     const passwordless = { ...ada, passwordHash: undefined };
@@ -584,6 +611,29 @@ describe('throttling', () => {
 
     await api.login({ username: 'ada', password: 'pw' });
 
+    expect(seen).toEqual([
+      { action: 'login', succeeded: undefined },
+      { action: 'login', succeeded: true }
+    ]);
+  });
+
+  /** A second factor makes a right password buy a challenge — still a right password, still not a failure to count. */
+  it('reports a right password as a success when it is answered with a second-factor challenge', async () => {
+    const seen: { action: string; succeeded?: boolean }[] = [];
+    const api = limited(
+      {
+        findByUsername: () => Promise.resolve(ada),
+        loadMfa: () => Promise.resolve({ secret: 'JBSWY3DPEHPK3PXP', confirmedAt: 1 }),
+        saveMfa: () => Promise.resolve()
+      },
+      attempt => {
+        seen.push({ action: attempt.action, succeeded: attempt.succeeded });
+
+        return Promise.resolve(true);
+      }
+    );
+
+    expect(body(await api.login({ username: 'ada', password: 'pw' }))).toMatchObject({ mfaRequired: true });
     expect(seen).toEqual([
       { action: 'login', succeeded: undefined },
       { action: 'login', succeeded: true }
@@ -968,14 +1018,43 @@ describe('a second factor', () => {
     expect(outcome.ok && outcome.session).toBeUndefined();
   });
 
+  /** The code the app shows NEXT: the one on screen now was spent proving the enrolment. */
+  const nextCode = (secret: string) => totpCode(secret, Date.now() + 30_000);
+
   it('finishes the sign-in with a code from the app', async () => {
     const { api, secret } = await enrol();
     const challenge = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
 
-    const outcome = await api.completeMfa(challenge, totpCode(secret));
+    const outcome = await api.completeMfa(challenge, nextCode(secret));
 
     expect(outcome).toMatchObject({ ok: true });
     expect(outcome.ok && outcome.session?.token).toEqual(expect.any(String));
+  });
+
+  /**
+   * A code is valid for its whole window. Without remembering which step was last accepted, one seen over a shoulder or
+   * lifted by a phishing page signs a second person in within that window — RFC 6238 §5.2 forbids exactly this.
+   */
+  it('refuses a code that already signed somebody in, and any older one', async () => {
+    const { api, secret, current } = await enrol();
+    const code = nextCode(secret);
+    const first = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+    expect(await api.completeMfa(first, code)).toMatchObject({ ok: true });
+
+    const second = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+    expect(await api.completeMfa(second, code)).toMatchObject({ status: 401 });
+    expect(await api.completeMfa(second, totpCode(secret))).toMatchObject({ status: 401 });
+    expect(current()?.lastUsedStep).toEqual(expect.any(Number));
+  });
+
+  it('refuses the code that proved the enrolment as a way in', async () => {
+    const { api } = withMfa();
+    const begun = body(await api.mfa.begin(actorFor(ada)));
+    const code = totpCode(begun.secret as string);
+    await api.mfa.confirm(actorFor(ada), code);
+    const challenge = body(await api.login({ username: 'ada', password: 'pw' })).mfaToken as string;
+
+    expect(await api.completeMfa(challenge, code)).toMatchObject({ status: 401 });
   });
 
   it('refuses the wrong code, and anything that is not a challenge', async () => {

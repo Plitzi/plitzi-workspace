@@ -151,7 +151,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.22",
+    "@plitzi/plitzi-ui": "^1.6.23",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
     "zod": "^4.6.5"
@@ -159,7 +159,7 @@
   "devDependencies": {
     "eslint": "^9.39.5",
     "typescript": "^6.0.3",
-    "vite": "^8.3.0",
+    "vite": "^8.3.1",
     "vitest": "^5.0.1"
   }
 }

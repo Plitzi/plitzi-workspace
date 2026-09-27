@@ -349,7 +349,12 @@ const topBar = container({
       target: 'blank',
       class: navLink,
       children: [
-        image({ src: 'https://cdn.plitzi.com/resources/img/favicon.svg', css: { width: '24px', height: '24px' } }),
+        // The name beside it already says what the mark is: read out, it would say "Plitzi" twice.
+        image({
+          src: 'https://cdn.plitzi.com/resources/img/favicon.svg',
+          decorative: true,
+          css: { width: '24px', height: '24px' }
+        }),
         text('Plitzi', { css: { color: 'var(--foreground)', 'font-size': '16px', 'font-weight': '700' } })
       ]
     }),

@@ -58,7 +58,9 @@ export const actionsCallbacks: Record<string, BuiltinGlobalCallback> = {
       // unless its author narrows that down — or turns it off for an action that only reads.
       ...writeInvalidationParams(['all', 'elements', 'none'])
     },
-    preview: { runId: '', status: '', output: {} }
+    // `reason` and `error` only when the run did not complete: the server's refusal (`duplicate`, `forbidden`…) and,
+    // when there is one, the reason it or a step wrote for the caller.
+    preview: { runId: '', status: '', output: {}, reason: '', error: '' }
   },
   cancelServerAction: {
     source: 'actions',

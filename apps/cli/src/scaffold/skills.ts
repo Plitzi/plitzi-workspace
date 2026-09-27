@@ -12,14 +12,20 @@ import type { ProjectFiles } from './types';
  * manager. Read from the installed package rather than embedded here, so the CLI cannot ship a stale copy of
  * somebody else's documentation.
  *
- * Only `plitzi-authoring` travels. `plitzi-render` is the other one Plitzi ships, and it is deliberately left
- * out: it drives the `plitzi_render` MCP tool, so in a project with no MCP connection it would be an instruction
- * to use something that is not there.
+ * Two travel: `plitzi-authoring` (how a space is written) and `plitzi-cli` (what this command line does — plugins,
+ * packing, uploading — so an agent reaches for it instead of hand-writing what it generates). `plitzi-render` is the
+ * other one Plitzi ships, and it is deliberately left out: it drives the `plitzi_render` MCP tool, so in a project with
+ * no MCP connection it would be an instruction to use something that is not there.
  */
 
 const require = createRequire(import.meta.url);
 
-const SKILLS = [{ package: '@plitzi/sdk-authoring', name: 'plitzi-authoring' }];
+const SKILLS = {
+  'plitzi-authoring': '@plitzi/sdk-authoring',
+  'plitzi-cli': '@plitzi/cli'
+} as const;
+
+export type SkillName = keyof typeof SKILLS;
 
 /**
  * Where a skill file sits, resolved through the package's own export map rather than guessed from a path.
@@ -50,14 +56,15 @@ const filesUnder = (root: string, folder = root): [string, string][] =>
       : [];
   });
 
-export const skillFiles = (): ProjectFiles => {
+/** The skills a project carries: both for a project that renders a space, the CLI's alone for a plugin package. */
+export const skillFiles = (names: readonly SkillName[] = ['plitzi-authoring', 'plitzi-cli']): ProjectFiles => {
   const files: ProjectFiles = {};
 
-  for (const skill of SKILLS) {
+  for (const name of names) {
     try {
-      const root = dirname(skillPath(skill.package, skill.name));
+      const root = dirname(skillPath(SKILLS[name], name));
       for (const [path, content] of filesUnder(root)) {
-        files[`.claude/skills/${skill.name}/${path}`] = content;
+        files[`.claude/skills/${name}/${path}`] = content;
       }
     } catch {
       // A skill that cannot be read is a skill the project does without. It is documentation for an agent, not a

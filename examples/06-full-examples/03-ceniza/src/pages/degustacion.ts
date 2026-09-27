@@ -1,6 +1,6 @@
 import { container, heading, image, paragraph, text } from '@plitzi/sdk-authoring';
 
-import { photo, photos, tastingMenu } from '../content';
+import { photo, photos, tastingMenu } from '../content.ts';
 import {
   closeMenuOnLoad,
   eyebrow,
@@ -12,7 +12,7 @@ import {
   section,
   sectionHead,
   shell
-} from '../layout';
+} from '../layout.ts';
 
 import type { ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 

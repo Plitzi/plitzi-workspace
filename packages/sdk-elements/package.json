@@ -134,6 +134,10 @@
       "types": "./dist/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/Element/hooks/useInternalItems.mjs"
     },
+    "./Element/hooks/useKeyTriggers": {
+      "types": "./dist/Element/hooks/useKeyTriggers.d.ts",
+      "import": "./dist/Element/hooks/useKeyTriggers.mjs"
+    },
     "./Element/hooks/useLayoutChain": {
       "types": "./dist/Element/hooks/useLayoutChain.d.ts",
       "import": "./dist/Element/hooks/useLayoutChain.mjs"
@@ -346,6 +350,10 @@
       "types": "./dist/elements/basic/Dropdown/useDropdown.d.ts",
       "import": "./dist/elements/basic/Dropdown/useDropdown.mjs"
     },
+    "./elements/basic/Dropdown/useDropdownTrigger": {
+      "types": "./dist/elements/basic/Dropdown/useDropdownTrigger.d.ts",
+      "import": "./dist/elements/basic/Dropdown/useDropdownTrigger.mjs"
+    },
     "./elements/basic/Heading": {
       "types": "./dist/elements/basic/Heading/index.d.ts",
       "import": "./dist/elements/basic/Heading/index.mjs"
@@ -530,6 +538,10 @@
       "types": "./dist/elements/form/FormControl/components/Label.d.ts",
       "import": "./dist/elements/form/FormControl/components/Label.mjs"
     },
+    "./elements/form/FormControl/components/visuallyHidden": {
+      "types": "./dist/elements/form/FormControl/components/visuallyHidden.d.ts",
+      "import": "./dist/elements/form/FormControl/components/visuallyHidden.mjs"
+    },
     "./elements/form/FormControl/declaration": {
       "types": "./dist/elements/form/FormControl/declaration.d.ts",
       "import": "./dist/elements/form/FormControl/declaration.mjs"
@@ -565,6 +577,10 @@
     "./elements/form/FormControl/inputs/Textarea": {
       "types": "./dist/elements/form/FormControl/inputs/Textarea.d.ts",
       "import": "./dist/elements/form/FormControl/inputs/Textarea.mjs"
+    },
+    "./elements/form/FormControl/inputs/useFocusWhenShown": {
+      "types": "./dist/elements/form/FormControl/inputs/useFocusWhenShown.d.ts",
+      "import": "./dist/elements/form/FormControl/inputs/useFocusWhenShown.mjs"
     },
     "./elements/index": {
       "types": "./dist/elements/index.d.ts",
@@ -754,6 +770,10 @@
       "types": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.d.ts",
       "import": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.mjs"
     },
+    "./elements/provider/ApiContainer/helpers/queryInput": {
+      "types": "./dist/elements/provider/ApiContainer/helpers/queryInput.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/helpers/queryInput.mjs"
+    },
     "./elements/provider/ApiContainer/hooks/useApi": {
       "types": "./dist/elements/provider/ApiContainer/hooks/useApi.d.ts",
       "import": "./dist/elements/provider/ApiContainer/hooks/useApi.mjs"
@@ -773,6 +793,26 @@
     "./elements/provider/ApiContainer/index": {
       "types": "./dist/elements/provider/ApiContainer/index.d.ts",
       "import": "./dist/elements/provider/ApiContainer/index.mjs"
+    },
+    "./elements/provider/Channel": {
+      "types": "./dist/elements/provider/Channel/index.d.ts",
+      "import": "./dist/elements/provider/Channel/index.mjs"
+    },
+    "./elements/provider/Channel/Channel": {
+      "types": "./dist/elements/provider/Channel/Channel.d.ts",
+      "import": "./dist/elements/provider/Channel/Channel.mjs"
+    },
+    "./elements/provider/Channel/Settings": {
+      "types": "./dist/elements/provider/Channel/Settings.d.ts",
+      "import": "./dist/elements/provider/Channel/Settings.mjs"
+    },
+    "./elements/provider/Channel/declaration": {
+      "types": "./dist/elements/provider/Channel/declaration.d.ts",
+      "import": "./dist/elements/provider/Channel/declaration.mjs"
+    },
+    "./elements/provider/Channel/index": {
+      "types": "./dist/elements/provider/Channel/index.d.ts",
+      "import": "./dist/elements/provider/Channel/index.mjs"
     },
     "./elements/settings": {
       "types": "./dist/elements/settings.d.ts",
@@ -902,6 +942,10 @@
       "types": "./dist/elements/structure/ModalContainer/metadataFromText.d.ts",
       "import": "./dist/elements/structure/ModalContainer/metadataFromText.mjs"
     },
+    "./elements/structure/ModalContainer/useModalDialog": {
+      "types": "./dist/elements/structure/ModalContainer/useModalDialog.d.ts",
+      "import": "./dist/elements/structure/ModalContainer/useModalDialog.mjs"
+    },
     "./elements/structure/Pagination": {
       "types": "./dist/elements/structure/Pagination/index.d.ts",
       "import": "./dist/elements/structure/Pagination/index.mjs"
@@ -1013,6 +1057,10 @@
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
+    },
+    "./realtime/useChannel": {
+      "types": "./dist/realtime/useChannel.d.ts",
+      "import": "./dist/realtime/useChannel.mjs"
     }
   },
   "scripts": {
@@ -1028,8 +1076,8 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/nexus": "^1.2.2",
-    "@plitzi/plitzi-ui": "^1.6.22",
+    "@plitzi/nexus": "^1.3.1",
+    "@plitzi/plitzi-ui": "^1.6.23",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
@@ -1048,7 +1096,7 @@
     "eslint": "^9.39.5",
     "react": "^19.3.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.0",
+    "vite": "^8.3.1",
     "vitest": "^5.0.1"
   }
 }

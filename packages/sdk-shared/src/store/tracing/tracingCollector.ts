@@ -318,8 +318,41 @@ const clear = () => {
   writeSnapshot();
 };
 
+/** The id of the last commit recorded, flushed or not: what a caller marks before doing something. */
+const lastCommitId = (): number => commitSeq;
+
+/**
+ * Every commit after `commitId`, oldest first, including the ones still waiting for this frame's flush — so a test that
+ * clicks and then asks sees the renders its click caused without waiting a frame for them.
+ *
+ * Only what is still held: the oldest commits go once there are `MAX_COMMITS`.
+ */
+const commitsSince = (commitId: number): CommitEntry[] => {
+  const pending = [...pendingByCommit.values()].sort((a, b) => a.timestamp - b.timestamp);
+
+  return [...commits, ...pending].filter(commit => commit.commitId > commitId);
+};
+
+/**
+ * What the SDK publishes as `window.plitziTracing` while its render tracing is on (`debugMode`): the commits since a
+ * mark, for a test to ask which elements an interaction rendered — `inspectRenders` in `@plitzi/sdk-authoring/testing`.
+ */
+export type TracingReader = {
+  lastCommitId: () => number;
+  commitsSince: (commitId: number) => CommitEntry[];
+};
+
+declare global {
+  interface Window {
+    /** Present while render tracing is on (`debugMode`) — see {@link TracingReader}. */
+    plitziTracing?: TracingReader;
+  }
+}
+
 const tracingCollector = {
   onRender,
+  lastCommitId,
+  commitsSince,
   linkParent,
   markMounted,
   markUnmounted,

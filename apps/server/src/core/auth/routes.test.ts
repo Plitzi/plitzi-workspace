@@ -101,6 +101,15 @@ describe('the route table', () => {
     ]);
   });
 
+  /** JSON carries an all-digit value as a number; `123456` is still the code somebody typed, not a missing one. */
+  it('reads a number the client sent as the text of it', async () => {
+    const { route, calls } = routeFor('/validate-account');
+
+    await route.handler(carrier({ body: { token: 123456 } }));
+
+    expect(calls[0]?.args[0]).toBe('123456');
+  });
+
   it('answers the session question from the actor the guard resolved, with no lookup of its own', async () => {
     const { route, calls } = routeFor('/session');
     const actor = { id: 7, permissions: [] } as unknown as NonNullable<AuthRequest['actor']>;

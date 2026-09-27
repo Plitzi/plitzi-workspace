@@ -5,9 +5,10 @@
   "description": "Server-render a space that lives in Plitzi, from a server that is not Plitzi's.",
   "type": "module",
   "scripts": {
-    "start": "node --use-system-ca --import tsx src/main.ts",
-    "start:dev": "NODE_OPTIONS=--use-system-ca tsx watch src/main.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "start": "node --use-system-ca src/main.ts",
+    "start:dev": "node --use-system-ca --watch-path=./src src/main.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "yarn run -T eslint ."
   },
   "dependencies": {
     "@plitzi/sdk-server": "workspace:*",
@@ -16,7 +17,9 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

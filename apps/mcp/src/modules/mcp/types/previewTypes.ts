@@ -8,6 +8,12 @@ import type { Operation } from '../tools/operations';
 export type PreviewRequestBody = {
   spaceId: number;
   env?: string;
+  /**
+   * A published revision of `env` to render instead of its latest. Ignored for `main`, which has no revisions — it is
+   * the draft. Asked for when what is shown has to be one exact version: a reviewed one, rather than whatever was
+   * published after the review.
+   */
+  revision?: number;
   pageRef?: string;
   operations?: Operation[];
   /**

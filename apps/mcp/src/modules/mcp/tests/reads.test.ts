@@ -27,7 +27,7 @@ describe('mcp-ai reads (filesystem model)', () => {
     const reg = buildTypeRegistry(buildSpace().schema);
     expect(Object.keys(reg.types).sort()).toEqual(['container', 'page']);
     expect(reg.types.container.slots).toEqual(['base']);
-    expect(reg.types.container.subTypes).toEqual(['div']);
+    expect(reg.types.container.subTypes).toEqual(['section']);
     expect(reg.styleVariableCategories).toEqual(['color', 'spacing', 'shadow', 'custom']);
   });
 
@@ -121,7 +121,7 @@ describe('mcp-ai reads (filesystem model)', () => {
       ref: 'c1',
       type: 'container',
       label: 'Container',
-      subType: 'div',
+      subType: 'section',
       childCount: 0,
       base: ['box']
     });
@@ -139,7 +139,7 @@ describe('mcp-ai reads (filesystem model)', () => {
     const original = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages/home')?.stateVersion;
     const cap = capturing(buildSpace());
     await apply(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: 'Renamed' } }] },
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { subType: 'article' } }] },
       buildSpace(),
       cap.persisters
     );
@@ -154,7 +154,7 @@ describe('mcp-ai reads (filesystem model)', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1');
     const el = res?.data as AIElementDetail;
     expect(el).toMatchObject({ ref: 'c1', type: 'container', pageRef: 'home', parentRef: 'home' });
-    expect(el.props).toEqual({ title: 'Box' });
+    expect(el.subType).toBe('section');
     expect(el.style.base).toEqual(['box']);
   });
 
@@ -303,7 +303,7 @@ describe('mcp-ai resolved style inlined in element detail', () => {
   });
 
   it('search include:"detail" carries resolvedStyle and its version matches a direct element read', () => {
-    const withDetail = search({ query: 'box', include: 'detail' }, buildSpace(), 'main');
+    const withDetail = search({ query: 'section', include: 'detail' }, buildSpace(), 'main');
     const hit = withDetail.results.find(r => r.ref === 'c1');
     expect(hit?.detail?.resolvedStyle?.box.desktop).toEqual({ display: 'flex' });
     const read = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1');

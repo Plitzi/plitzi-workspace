@@ -53,4 +53,36 @@ describe('mcp/screenshotClient', () => {
 
     expect(await client.capture(input)).toMatchObject({ ok: false, error: 'SCREENSHOT_FAILED' });
   });
+
+  it('asks for the accessibility tree, and writes the one it gets back as an outline', async () => {
+    const { client, fetchImpl } = clientAnswering(
+      respond(200, {
+        images: [],
+        accessibility: [
+          { label: 'desktop', tree: { role: 'RootWebArea', children: [{ role: 'button', name: 'Close' }] } }
+        ]
+      })
+    );
+
+    const result = await client.capture({ ...input, views: ['accessibility'] });
+
+    const body = fetchImpl.mock.calls[0]?.[1]?.body;
+    expect(JSON.parse(typeof body === 'string' ? body : '')).toMatchObject({ views: ['accessibility'] });
+    expect(result).toEqual({
+      ok: true,
+      images: [],
+      accessibility: [{ label: 'desktop', outline: '- button "Close"' }]
+    });
+  });
+
+  it('answers without an accessibility view when the service does not have one yet', async () => {
+    const { client } = clientAnswering(
+      respond(200, { images: [{ label: 'desktop', mimeType: 'image/png', data: 'AA==' }] })
+    );
+
+    expect(await client.capture({ ...input, views: ['image', 'accessibility'] })).toEqual({
+      ok: true,
+      images: [{ label: 'desktop', mimeType: 'image/png', data: 'AA==' }]
+    });
+  });
 });

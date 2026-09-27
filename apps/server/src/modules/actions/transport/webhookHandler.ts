@@ -2,6 +2,7 @@ import { triggerHasStaleVerify, triggerVerify } from '@plitzi/sdk-shared/actions
 
 import { verifySignature } from './verifySignature';
 import { onAbort } from '../../../helpers/onAbort';
+import { serverLog } from '../../../helpers/serverLog';
 import { ActionRunError } from '../runtime/errors';
 import { precheckRun } from '../runtime/precheck';
 import { reportReject } from '../runtime/report';
@@ -124,8 +125,9 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     // To the console, like a failed RSC slice, because no log event describes a document that cannot be run — and
     // to the SENDER, nothing but "unavailable": telling a caller the signature check is misconfigured tells them
     // the endpoint is currently unverified.
-    console.error(
-      `[Actions] webhook "${actionId}" in space ${spaceId} carries a signature check in a format nothing reads any ` +
+    serverLog.error(
+      'Actions',
+      `webhook "${actionId}" in space ${spaceId} carries a signature check in a format nothing reads any ` +
         'more, so it is refused. Name the signing credential on the trigger step.'
     );
     await reject(
@@ -166,7 +168,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     if (!check.ok) {
       // The reason goes to the log, not the wire: telling a caller which half of the check failed helps only the
       // caller who should not be here.
-      console.warn(`[Actions] webhook "${actionId}" rejected: ${check.reason}`);
+      serverLog.warn('Actions', `webhook "${actionId}" rejected: ${check.reason}`);
       await reject('invalid_signature', check.reason);
       send(res, 401, { error: 'Invalid signature' });
 
@@ -250,7 +252,7 @@ export const handleActionWebhook = async (deps: ActionWebhookDeps): Promise<void
     outcome = result;
     send(res, 200, { accepted: true, runId: result.runId, status: result.status });
   } catch (error) {
-    console.error('[Actions] webhook run failed:', error);
+    serverLog.error('Actions', 'webhook run failed', error);
     // 500 rather than a flat 200: most providers retry a 5xx, and a run that failed for a transient reason is
     // exactly the one worth retrying.
     send(res, 500, { accepted: false });

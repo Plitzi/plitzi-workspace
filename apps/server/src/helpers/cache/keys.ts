@@ -1,7 +1,24 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';
 
+import { ssrPaintedCookieName } from '../paintedCookie';
 import { readCookie } from '../readCookie';
+
+/** The fields of an HTML key, in the order they are joined. */
+const HTML_KEY_FIELDS = [
+  'accessToken',
+  'spaceId',
+  'environment',
+  'revision',
+  'theme',
+  'painted',
+  'debugHidden',
+  'hostname',
+  'path',
+  'search'
+] as const;
+
+type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
 
 /**
  * The key a rendered document is cached under.
@@ -15,7 +32,11 @@ import { readCookie } from '../readCookie';
  * one keyed — a space that switched dev tools on for its published site would otherwise hand the first visitor's
  * choice to the rest.
  *
- * Read from the request here rather than handed in, so a call site cannot key the page without it. Only those two
+ * So is the kept state the first paint depends on (`settings.paintedState`): `prepareRender` renders with that cookie's
+ * values, so a page drawn with one visitor's toolbar must not be served to the next. Keyed by its raw value — this
+ * key does not know which keys a space declares, and a space that declares none has no such cookie to split on.
+ *
+ * Read from the request here rather than handed in, so a call site cannot key the page without it. Only those
  * cookies are read: keying the whole header would split the cache on every analytics cookie a visitor carries.
  */
 export const buildHtmlCacheKey = (
@@ -25,10 +46,32 @@ export const buildHtmlCacheKey = (
   revision: number,
   req: { hostname: string; path: string; search: string; headers: { cookie?: string; host?: string } }
 ): string => {
-  const theme = themeFromCookies(req.headers.cookie) ?? '';
-  const debugHidden = readCookie(req.headers.cookie, debugCookieName(req.headers.host)) === 'false' ? 'debug-off' : '';
+  const fields: HtmlCacheKeyFields = {
+    accessToken,
+    spaceId: String(spaceId ?? 1),
+    environment,
+    revision: String(revision),
+    theme: themeFromCookies(req.headers.cookie) ?? '',
+    painted: readCookie(req.headers.cookie, ssrPaintedCookieName(req.headers.host)) ?? '',
+    debugHidden: readCookie(req.headers.cookie, debugCookieName(req.headers.host)) === 'false' ? 'debug-off' : '',
+    hostname: req.hostname,
+    path: req.path,
+    search: req.search
+  };
 
-  return `${accessToken}\0${spaceId ?? 1}\0${environment}\0${revision}\0${theme}\0${debugHidden}\0${req.hostname}\0${req.path}\0${req.search}`;
+  return HTML_KEY_FIELDS.map(field => fields[field]).join('\0');
+};
+
+/**
+ * What an HTML key says about the page it holds, read by the one list that also writes it. `server.cache.invalidate`
+ * filters on these; it used to split the key by positions of its own, and when the key grew a field in front the
+ * filter went on reading the wrong ones — every invalidation by space matched nothing.
+ */
+export const readHtmlCacheKey = (key: string): { spaceId: string; environment: string; hostname: string } => {
+  const parts = key.split('\0');
+  const at = (field: (typeof HTML_KEY_FIELDS)[number]): string => parts[HTML_KEY_FIELDS.indexOf(field)] ?? '';
+
+  return { spaceId: at('spaceId'), environment: at('environment'), hostname: at('hostname') };
 };
 
 export const buildOfflineDataCacheKey = (spaceId: number, environment: string, revision: number): string =>

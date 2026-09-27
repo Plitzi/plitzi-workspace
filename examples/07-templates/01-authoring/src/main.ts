@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { pricingCard } from './template';
+import { pricingCard } from './template.ts';
 
 /**
  * The whole build: author the template, write the JSON.
@@ -21,7 +21,9 @@ const file = path.join(outDir, 'pricing-card.json');
 await writeFile(file, `${JSON.stringify(template, null, 2)}\n`);
 
 console.log(`[example] wrote ${path.relative(process.cwd(), file)}`);
-console.log(`[example] ${Object.keys(template.schema.flat).length} elements, base "${template.definition.baseElementId}"`);
+console.log(
+  `[example] ${Object.keys(template.schema.flat).length} elements, base "${template.definition.baseElementId}"`
+);
 
 if (warnings.length > 0) {
   warnings.forEach(warning => console.warn(`[example] ${warning.code}: ${warning.message}`));

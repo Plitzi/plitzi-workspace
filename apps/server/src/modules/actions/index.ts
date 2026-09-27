@@ -2,15 +2,16 @@ import { createActionJobs } from './jobs';
 import { createRunGuards } from './runtime/guards';
 import { createKvStore } from './runtime/kvStore';
 import { resolveLimits } from './runtime/limits';
-import { createMemoryKv } from './runtime/memoryKv';
+import { createMemoryKv, KV_METHODS } from './runtime/memoryKv';
 import { namespaceKv } from './runtime/namespaceKv';
 import { createActionRunner } from './runtime/runAction';
 import { createTaskRegistry } from './tasks/registry';
+import { fleetStore } from '../../core/server/fleet/link';
 
 import type { ActionJobs } from './jobs';
 import type { RunGuards } from './runtime/guards';
 import type { ActionRunner } from './runtime/runAction';
-import type { ActionKvStore, ActionsConfig, ActionTaskRegistry, ResolvedActionLimits } from './types';
+import type { ActionKvAdapter, ActionKvStore, ActionsConfig, ActionTaskRegistry, ResolvedActionLimits } from './types';
 import type { ActionDocument } from '@plitzi/sdk-shared';
 
 export type ActionsModule = ActionRunner & {
@@ -38,7 +39,24 @@ export type ActionsModule = ActionRunner & {
  * are a single set for the process — two instances would each think they were the only run in flight, which is
  * the same as having no single-flight at all. Nothing outside this folder needs to know how a run is assembled.
  */
-export const createActionsModule = (config: ActionsConfig): ActionsModule => {
+/**
+ * The workers of one server are one replica, so with no `kv` configured they share the primary's: a flow's counter,
+ * a webhook's rate limit, a run's single-flight key, a cancel and a replayed answer then mean the same whichever
+ * worker the request lands on — the path a deployment with its own shared store already takes. One process keeps
+ * its own map.
+ */
+const withFleetKv = (config: ActionsConfig): ActionsConfig => {
+  if (config.kv) {
+    return config;
+  }
+
+  // One store either way, made HERE: the runner, the guards and the module's own `kv` are handed the same adapter —
+  // left to default each, they made a Map apiece, and a key a flow wrote was not the key a guard or a webhook read.
+  return { ...config, kv: fleetStore<ActionKvAdapter>('actions.kv', KV_METHODS) ?? createMemoryKv() };
+};
+
+export const createActionsModule = (given: ActionsConfig): ActionsModule => {
+  const config = withFleetKv(given);
   const registry = createTaskRegistry(config.tasks, { db: (config.dbDrivers?.length ?? 0) > 0 });
   const { runAction } = createActionRunner(config, registry, config.fetchImpl);
   /**
@@ -64,7 +82,7 @@ export const createActionsModule = (config: ActionsConfig): ActionsModule => {
   return module;
 };
 
-export { ActionRunError } from './runtime/errors';
+export { ActionRefusal, ActionRunError } from './runtime/errors';
 export { precheckRun } from './runtime/precheck';
 export { checkAction } from './runtime/check';
 export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';

@@ -1,6 +1,7 @@
 import { actionsModuleFor } from '../modules/actions/moduleFor';
 import { connectorRscData } from '../modules/rsc/connectorRscData';
 import { createAuthApiStage } from './http/stages/authApi';
+import { createRenewalEndpointStage, createSessionRenewalStage } from './http/stages/sessionRenewal';
 import { createPageServer } from './server/pageServer';
 import { resolveServices } from './services/resolve';
 
@@ -36,6 +37,17 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
    * `adapters` or `authCookie` still wins, so a deployment can override one piece without giving up the rest.
    */
   auth?: Auth;
+  /**
+   * Where a page request whose access cookie has died, while its refresh cookie lives on, is sent to renew before
+   * the page is rendered — so the server renders the visitor the browser is about to become, rather than a guest
+   * the browser then replaces. The endpoint is `GET <basePath>/refresh`, served by `auth` here or by
+   * `mountAuthRoutes` wherever `/auth` lives.
+   *
+   * On by default with `auth`, at its own `/refresh`. Without it, name the endpoint — an absolute URL when another
+   * host serves `/auth` (a host sharing the session's cookie domain, or the hint that triggers this never arrives).
+   * `false` turns it off.
+   */
+  sessionRenewal?: { url: string } | false;
 };
 
 /** The server this package makes: pages and RSC, mounting whatever the config enables, plus any stages a
@@ -65,30 +77,41 @@ const withConnectorRsc = <
     return config;
   }
 
-  // The same module the endpoint runs on, so a `render` element and a call share one guard set and one task
-  // registry. `actionsModuleFor` memoizes on this very config object.
-  const module = actionsModuleFor(config as SSRServerConfig);
+  const resolved: T = { ...config, adapters: { ...config.adapters } };
+  // The same module the endpoint runs on, so a `render` element and a call share one guard set, one task registry
+  // and one `kv`. `actionsModuleFor` memoizes on the config OBJECT — so it is asked about the object the page server
+  // is handed, never the one this was spread from: asked about that one, it built a second module, and a board a
+  // call had just saved read as missing from every render.
+  const module = actionsModuleFor(resolved as SSRServerConfig);
   const actions =
     module && config.action?.lookups ? { lookups: config.action.lookups as ActionLookups, module } : undefined;
+  resolved.adapters.getRscData = connectorRscData(
+    config.connectors as ConnectorLookups | undefined,
+    actions,
+    config.rsc?.elementTimeoutMs
+  );
 
-  return {
-    ...config,
-    adapters: {
-      ...config.adapters,
-      getRscData: connectorRscData(
-        config.connectors as ConnectorLookups | undefined,
-        actions,
-        config.rsc?.elementTimeoutMs
-      )
-    }
-  };
+  return resolved;
 };
 
-export const createServer = ({ auth, ...config }: ServerConfig, extensions?: PipelineExtensions): SSRServer => {
+/** The renewal stage in front of whatever else gates itself, when there is anywhere to renew. */
+const withRenewal = (extensions: PipelineExtensions | undefined, url: string | undefined): PipelineExtensions => ({
+  ...extensions,
+  preAuth: [...(extensions?.preAuth ?? []), ...(url ? [createSessionRenewalStage(url)] : [])]
+});
+
+export const createServer = (
+  { auth, sessionRenewal, ...config }: ServerConfig,
+  extensions?: PipelineExtensions
+): SSRServer => {
   if (!auth) {
     const resolvedConfig = withConnectorRsc(config);
 
-    return createPageServer(resolvedConfig, resolveServices(resolvedConfig), extensions);
+    return createPageServer(
+      resolvedConfig,
+      resolveServices(resolvedConfig),
+      withRenewal(extensions, sessionRenewal ? sessionRenewal.url : undefined)
+    );
   }
 
   // Only what the deployment actually supplied overrides auth's answers. A plain spread would let a `getUser: undefined`
@@ -115,11 +138,13 @@ export const createServer = ({ auth, ...config }: ServerConfig, extensions?: Pip
   });
 
   // `preAuth`, because these gate themselves: each flow already states what a caller must present, and half of
-  // them are what a signed-out visitor uses to sign in.
+  // them are what a signed-out visitor uses to sign in. Renewal sits there too: it has to act before the auth chain
+  // resolves a guest out of a session that is only half-lapsed.
   const withAuthRoutes: PipelineExtensions = {
     ...extensions,
-    preAuth: [...(extensions?.preAuth ?? []), createAuthApiStage(auth, auth.basePath)]
+    preAuth: [...(extensions?.preAuth ?? []), createAuthApiStage(auth, auth.basePath), createRenewalEndpointStage(auth)]
   };
+  const renewalUrl = sessionRenewal === false ? undefined : (sessionRenewal?.url ?? `${auth.basePath}/refresh`);
 
-  return createPageServer(resolved, resolveServices(resolved), withAuthRoutes);
+  return createPageServer(resolved, resolveServices(resolved), withRenewal(withAuthRoutes, renewalUrl));
 };

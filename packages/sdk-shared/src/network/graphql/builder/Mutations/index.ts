@@ -52,6 +52,7 @@ import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
 import SpaceAddTemplateMutation from './Space/SpaceAddTemplateMutation';
 import SpaceCloneElementMutation from './Space/SpaceCloneElementMutation';
 import SpaceDeployMutation from './Space/SpaceDeployMutation';
+import SpaceFixIssuesMutation from './Space/SpaceFixIssuesMutation';
 import SpaceMoveElementMutation from './Space/SpaceMoveElementMutation';
 import SpacePublishMutation from './Space/SpacePublishMutation';
 import SpaceRemoveElementMutation from './Space/SpaceRemoveElementMutation';
@@ -109,6 +110,7 @@ import type { TSpaceMoveResourceMutation } from './Space/resources/SpaceMoveReso
 import type { TSpaceRemoveResourceMutation } from './Space/resources/SpaceRemoveResourceMutation';
 import type { TSpaceAddPluginMutation } from './Space/SpaceAddPluginMutation';
 import type { TSpaceDeployMutation } from './Space/SpaceDeployMutation';
+import type { TSpaceFixIssuesMutation } from './Space/SpaceFixIssuesMutation';
 import type { TSpacePublishMutation } from './Space/SpacePublishMutation';
 import type { TSpaceRenameElementMutation } from './Space/SpaceRenameElementMutation';
 import type { TSpaceUpdatePluginMutation } from './Space/SpaceUpdatePluginMutation';
@@ -155,6 +157,7 @@ export type BuilderMutationsMap = {
   SpaceUpdateCredential: unknown;
   SpaceRemoveCredential: unknown;
   SpacePublish: TSpacePublishMutation;
+  SpaceFixIssues: TSpaceFixIssuesMutation;
   SpaceDeploy: TSpaceDeployMutation;
   SpaceUpdateSettings: unknown;
 
@@ -243,6 +246,7 @@ const BuilderMutations = {
   SpaceUpdateCredential: SpaceUpdateCredentialMutation,
   SpaceRemoveCredential: SpaceRemoveCredentialMutation,
   SpacePublish: SpacePublishMutation,
+  SpaceFixIssues: SpaceFixIssuesMutation,
   SpaceDeploy: SpaceDeployMutation,
   SpaceUpdateSettings: SpaceUpdateSettingsMutation,
 

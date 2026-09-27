@@ -1,6 +1,6 @@
 import { container, heading, image, paragraph, text } from '@plitzi/sdk-authoring';
 
-import { dietLabels, photo, photos, restaurant, seasonal, signatureDishes, testimonials } from '../content';
+import { dietLabels, photo, photos, restaurant, seasonal, signatureDishes, testimonials } from '../content.ts';
 import {
   arrow,
   closeMenuOnLoad,
@@ -16,10 +16,10 @@ import {
   sectionHead,
   shell,
   stat
-} from '../layout';
-import { articleList, journalProvider } from './diario';
+} from '../layout.ts';
+import { articleList, journalProvider } from './diario.ts';
 
-import type { Dish } from '../content';
+import type { Dish } from '../content.ts';
 import type { ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 
 export const tags = (dish: Dish): ElementSpec[] =>

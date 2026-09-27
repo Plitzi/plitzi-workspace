@@ -36,16 +36,28 @@ const globalStep = (action: string, params: Record<string, unknown> = {}): StepS
   };
 };
 
-/** Writes `runtime.state.<key>`. NOT the element `setState`, which changes one element's own attribute. */
-export const setState = (params: { key: string; type: 'boolean' | 'number' | 'text'; value: unknown }): StepSpec =>
+/**
+ * What `setState` can store a value as — the state source's own `type` options, spelled once for the type system. A
+ * test holds the two to the same list: this one had lost `json`, so storing a row or an object was a compile error in
+ * exactly the place the runtime and the docs said to do it.
+ */
+export const SET_STATE_TYPES = ['boolean', 'number', 'text', 'json'] as const;
+
+/**
+ * Writes `runtime.state.<key>`. NOT the element `setState`, which changes one element's own attribute.
+ *
+ * `json` stores an object or a list: `value: '{{ list_rows.item }}'` keeps the row itself, not its text.
+ */
+export const setState = (params: { key: string; type: (typeof SET_STATE_TYPES)[number]; value: unknown }): StepSpec =>
   globalStep('setState', params);
 
 /**
  * Flips `runtime.state.<key>` — expand and collapse, open and close, from ONE step on ONE trigger.
  *
- * The alternative is two `setState` steps under `when` conditions that have to be exact complements of each other,
- * and those conditions read the state as it was when the flow STARTED, so the pattern only ever worked by being one
- * step behind. Anything not already `true` counts as false, so a key nobody has set yet flips ON first.
+ * The alternative — two `setState` steps under `when` conditions that are complements of each other — undoes itself:
+ * each step reads the state as it is when it runs, so the second sees what the first just wrote and writes it back.
+ * Anything not already `true` counts as false, so a key nobody has set yet flips ON first: for something shown by
+ * default, name the key for hiding it (`sidebarCollapsed`), so its absence means shown.
  */
 export const toggleState = (params: { key: string }): StepSpec => globalStep('toggleState', params);
 
@@ -95,7 +107,7 @@ export const moveState = (params: { from: string; to: string; value: unknown }):
  * A checkbox, as one step: in the list at `runtime.state.<key>` if it was not, out of it if it was.
  *
  * The list is a SET, which is what makes pressing the box twice safe — an append guarded by a check reads the list
- * as it was when the flow started, so two presses in the same tick both add.
+ * before the other press's write lands, so two presses in the same tick both add.
  */
 export const toggleInState = (params: { key: string; value: unknown }): StepSpec => globalStep('toggleInState', params);
 
@@ -135,7 +147,10 @@ export const addNotification = (params: {
  * would be too vague to read at an import.
  */
 export const authLogin = (
-  params: { mode: 'normal'; username: string; password: string } | { mode: 'token'; token: string }
+  params:
+    | { mode: 'normal'; username: string; password: string }
+    | { mode: 'token'; token: string }
+    | { mode: 'mfa'; mfaToken: string; code: string }
 ): StepSpec => globalStep('login', params);
 
 export const authLogout = (): StepSpec => globalStep('logout');
@@ -211,6 +226,11 @@ export const webHook = (params: {
   method?: 'get' | 'post' | 'put' | 'delete' | 'patch' | 'head';
   body?: string | Record<string, unknown>;
   authorizationToken?: string;
+  /**
+   * Headers of the request by name, templates for the values: `{ 'x-api-key': '{{ apiKey }}' }`. Not `Authorization`
+   * (that is `authorizationToken`) nor the content type (the body's own), which the step sets itself.
+   */
+  headers?: Record<string, string>;
   credentials?: 'include' | 'omit' | 'same-origin';
   /** A read only: serve it from the page's query cache for `staleTime` seconds, shared with api containers. */
   cache?: boolean;

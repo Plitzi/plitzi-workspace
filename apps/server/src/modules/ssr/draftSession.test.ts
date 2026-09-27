@@ -78,7 +78,7 @@ beforeEach(() => vi.clearAllMocks());
 describe('the draft store', () => {
   it('spends a one-shot token on the render that uses it', async () => {
     const store = createMemoryDraftStore();
-    await store.put('once', draft, { ttlMs: 60_000 });
+    await store.put('once', draft, { ttlMs: 60_000, spaceId: 42 });
 
     expect(await store.take('once')).toMatchObject({ reusable: false });
     expect(await store.take('once')).toBeUndefined();
@@ -87,7 +87,7 @@ describe('the draft store', () => {
   /** The whole point of a session: the second look has to work, or "iterate" means "mint another token". */
   it('leaves a reusable token where it is', async () => {
     const store = createMemoryDraftStore();
-    await store.put('session', draft, { ttlMs: 60_000, reusable: true });
+    await store.put('session', draft, { ttlMs: 60_000, spaceId: 42, reusable: true });
 
     expect(await store.take('session')).toMatchObject({ reusable: true });
     expect(await store.take('session')).toMatchObject({ reusable: true });
@@ -95,7 +95,7 @@ describe('the draft store', () => {
 
   it('ends a session when it is dropped', async () => {
     const store = createMemoryDraftStore();
-    await store.put('session', draft, { ttlMs: 60_000, reusable: true });
+    await store.put('session', draft, { ttlMs: 60_000, spaceId: 42, reusable: true });
     await store.drop('session');
 
     expect(await store.take('session')).toBeUndefined();
@@ -103,7 +103,7 @@ describe('the draft store', () => {
 
   it('stops resolving a session once it has expired', async () => {
     const store = createMemoryDraftStore();
-    await store.put('session', draft, { ttlMs: -1, reusable: true });
+    await store.put('session', draft, { ttlMs: -1, spaceId: 42, reusable: true });
 
     expect(await store.take('session')).toBeUndefined();
   });
@@ -115,15 +115,26 @@ describe('resolving which draft a request is looking at', () => {
 
   it('reads the token from the query', async () => {
     const store = createMemoryDraftStore();
-    await store.put('tok', draft, { ttlMs: 60_000, reusable: true });
+    await store.put('tok', draft, { ttlMs: 60_000, spaceId: 42, reusable: true });
 
     expect(await takeDraftOverride(request({ __pt: 'tok' }), config(store))).toMatchObject({ token: 'tok' });
+  });
+
+  /**
+   * A draft belongs to the space it was made from. Rendered under another space's host it would be one space's
+   * authored content served from another's origin, so it is not applied there at all.
+   */
+  it('ignores a draft made from another space', async () => {
+    const store = createMemoryDraftStore();
+    await store.put('tok', draft, { ttlMs: 60_000, spaceId: 7, reusable: true });
+
+    expect(await takeDraftOverride(request({ __pt: 'tok' }), config(store))).toBeUndefined();
   });
 
   /** The request that matters: a link followed inside a preview carries no query param, only the cookie. */
   it('falls back to the session cookie', async () => {
     const store = createMemoryDraftStore();
-    await store.put('tok', draft, { ttlMs: 60_000, reusable: true });
+    await store.put('tok', draft, { ttlMs: 60_000, spaceId: 42, reusable: true });
 
     const resolved = await takeDraftOverride(request({}, `${PREVIEW_COOKIE}=tok`), config(store));
 
@@ -134,8 +145,8 @@ describe('resolving which draft a request is looking at', () => {
   it('prefers the query param over the cookie', async () => {
     const store = createMemoryDraftStore();
     const newer = { ...draft };
-    await store.put('old', draft, { ttlMs: 60_000, reusable: true });
-    await store.put('new', newer, { ttlMs: 60_000, reusable: true });
+    await store.put('old', draft, { ttlMs: 60_000, spaceId: 42, reusable: true });
+    await store.put('new', newer, { ttlMs: 60_000, spaceId: 42, reusable: true });
 
     const resolved = await takeDraftOverride(request({ __pt: 'new' }, `${PREVIEW_COOKIE}=old`), config(store));
 
@@ -152,7 +163,7 @@ describe('resolving which draft a request is looking at', () => {
 describe('rendering a draft', () => {
   it('remembers a session for the rest of the visit, and says the page must not travel', async () => {
     const store = createMemoryDraftStore();
-    await store.put('session', draft, { ttlMs: 900_000, reusable: true });
+    await store.put('session', draft, { ttlMs: 900_000, spaceId: 42, reusable: true });
     const { res, headers } = response();
 
     await render(request({ __pt: 'session' }), res, configWith(store));
@@ -168,7 +179,7 @@ describe('rendering a draft', () => {
    *  for something that is already gone. */
   it('does not remember a one-shot token', async () => {
     const store = createMemoryDraftStore();
-    await store.put('once', draft, { ttlMs: 60_000 });
+    await store.put('once', draft, { ttlMs: 60_000, spaceId: 42 });
     const { res, headers } = response();
 
     await render(request({ __pt: 'once' }), res, configWith(store));
@@ -180,7 +191,7 @@ describe('rendering a draft', () => {
   /** Nobody is billed for looking at their own unsaved edits — including on the reloads a session makes possible. */
   it('is never metered', async () => {
     const store = createMemoryDraftStore();
-    await store.put('session', draft, { ttlMs: 900_000, reusable: true });
+    await store.put('session', draft, { ttlMs: 900_000, spaceId: 42, reusable: true });
 
     await render(request({ __pt: 'session' }), response().res, configWith(store));
     await render(request({}, `${PREVIEW_COOKIE}=session`), response().res, configWith(store));

@@ -1,4 +1,4 @@
-import { RAW_CODE_TYPES, checkVarRefs, warnOnce } from './context';
+import { RAW_CODE_TYPES, warnOnce } from './context';
 import { checkIdRef } from './refs';
 import { definitionVariantNames } from '../../operations/style/translator';
 
@@ -6,41 +6,27 @@ import type { ValidationCtx } from './context';
 import type { ElementInput } from '../../operations';
 import type { InitialStateInput } from '../../operations/schema/shared';
 
-// Flag a prop that is not one the type declares. Strict-vs-lenient by ownership: for a DEFAULT (sdk-elements) type
-// we own the full attribute set (catalog `custom:false`), so an unknown prop is an ERROR; for a PLUGIN type
-// (`custom:true`) or a type only known from observed instances it stays a WARNING (an unseen-but-valid prop is
-// possible). Skips raw-code types and any type with no known attributes (zero knowledge → no basis to flag).
+// A plugin type's props against what its manifest declares, or what its instances carry: a hint, never a block — an
+// unseen-but-valid prop is possible. A built-in type is held to its declaration by the lint of the result
+// (`lintDraft`), which knows every attribute it reads.
 export const checkTypeProps = (
   type: string,
   props: Record<string, unknown> | undefined,
   path: string,
   ctx: ValidationCtx
 ): void => {
-  if (!props || RAW_CODE_TYPES.has(type)) {
+  const meta = ctx.typeMeta.get(type);
+  if (!props || RAW_CODE_TYPES.has(type) || meta?.custom === false) {
     return;
   }
 
-  const meta = ctx.typeMeta.get(type);
-  // A default type's authoritative attribute set; else the observed props (lenient basis).
   const known = meta && meta.attributes.size > 0 ? meta.attributes : ctx.typeProps.get(type);
   if (!known || known.size === 0) {
     return;
   }
 
-  const strict = meta?.custom === false;
   for (const key of Object.keys(props)) {
-    if (key === 'subType' || known.has(key)) {
-      continue;
-    }
-
-    if (strict) {
-      ctx.errors.push({
-        path,
-        message: `Type "${type}" has no attribute "${key}"`,
-        hint: `Valid attributes: ${[...known].sort().join(', ')}`,
-        validValues: [...known].sort()
-      });
-    } else {
+    if (key !== 'subType' && !known.has(key)) {
       warnOnce(
         ctx,
         `Type "${type}" has no observed prop "${key}" at ${path} (known: ${[...known].sort().join(', ')}). ` +
@@ -114,16 +100,6 @@ export const checkRawMarkup = (
 
 const checkElementProps = (element: ElementInput, path: string, ctx: ValidationCtx): void => {
   checkRawMarkup(element.type, element.props, path, ctx);
-  if (!element.props || RAW_CODE_TYPES.has(element.type)) {
-    return;
-  }
-
-  for (const [key, value] of Object.entries(element.props)) {
-    if (typeof value === 'string') {
-      checkVarRefs(value, `${path}.props.${key}`, ctx);
-    }
-  }
-
   checkTypeProps(element.type, element.props, path, ctx);
 };
 

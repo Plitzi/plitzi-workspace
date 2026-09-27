@@ -59,8 +59,9 @@ const recorder = (): { res: SSRResponseHelpers; out: Recorded } => {
     setStatus: code => {
       out.status = code;
     },
+    // A body can arrive as the function that produces it (a stored file read only when needed).
     send: body => {
-      out.body = Buffer.from(body);
+      out.body = Buffer.from(typeof body === 'function' ? body() : body);
     },
     write: chunk => {
       out.body = Buffer.concat([out.body, Buffer.from(chunk)]);

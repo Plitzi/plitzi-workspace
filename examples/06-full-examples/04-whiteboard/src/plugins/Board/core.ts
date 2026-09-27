@@ -1,0 +1,1318 @@
+import {
+  COLUMN_PADDING,
+  columnAt,
+  frameAt,
+  frameUnder,
+  insertionAt,
+  layoutColumn,
+  membersOf as inFrame,
+  moved,
+  spreadColumn
+} from './containers.ts';
+import { cardLayout, COMMENT_PIN, fontSizeOf, measureCard, measureText, STICKY_SIZE } from './draw.ts';
+import { editorFor } from './editor.ts';
+import { boundsOf, clampZoom, fitCamera, movedBy, resolveConnector, shiftOf, unionOf } from './geometry.ts';
+import { readPalette } from './palette.ts';
+import { createRemotes } from './remotes.ts';
+import { RevisionedMap, RevisionedSet } from './revisioned.ts';
+import { createScene } from './scene.ts';
+import { createSounds } from './sounds.ts';
+import { byField, restyled, styleOf } from './styling.ts';
+import { newId, newSeed } from './values.ts';
+import { blockedWarning, cardTitle, movedOnBlocked, toggledBlocker } from '../../board/dependencies.ts';
+import {
+  byStacking,
+  holdsText,
+  isAuthored,
+  isConnector,
+  isLinear,
+  isTask,
+  LIMITS,
+  settleDone,
+  takesLabel,
+  takesStyle
+} from '../../board/model.ts';
+import { isFaceDown, veiledIn } from '../../board/sessions.ts';
+
+import type { CardLayout, CardView } from './draw.ts';
+import type { Box, Camera, Handle } from './geometry.ts';
+import type { Palette } from './palette.ts';
+import type { GuideLine } from './snapping.ts';
+import type {
+  Carrying,
+  ControllerEvent,
+  ControllerProps,
+  EditField,
+  Gesture,
+  Pinch,
+  ScreenBox,
+  Tool,
+  View
+} from './types.ts';
+import type { Binding, BoardElement, Fill, Point, ShapeType, StyleField } from '../../board/model.ts';
+import type { Collaborator } from '../../board/people.ts';
+import type { Query } from '../../board/query.ts';
+
+/**
+ * What every part of the canvas shares: the scene and what is drawn over it, the camera, the selection, and the few
+ * operations each of them needs — drawing again, committing, selecting, reporting to the page.
+ *
+ * The pointer, the renderer, the carried sticky and the page's API are each their own module over this one. Mutable
+ * state lives in `state`, read where it is used, so no module keeps a stale copy of another's.
+ */
+
+/** Between the columns of a kanban board put down whole. */
+const KANBAN_GAP = 20;
+
+/** A comment's pin: the same size wherever it is put. */
+export const COMMENT_PIN_BOX = { width: COMMENT_PIN, height: COMMENT_PIN };
+
+export const DEFAULT_BOX: Record<'sticky' | 'shape' | 'frame' | 'column', { width: number; height: number }> = {
+  sticky: { width: STICKY_SIZE, height: STICKY_SIZE },
+  shape: { width: 140, height: 90 },
+  frame: { width: 480, height: 360 },
+  column: { width: 300, height: 460 }
+};
+
+/**
+ * The most elements a drag shows the others as it goes: a few notes moved are drawn moving on every screen, a hundred
+ * are only a cursor until they land — copying and sending all of them at every pointer move is what a big drag cost.
+ * Counted here, at every move, because it costs nothing; the draft's SIZE — a few long strokes — is weighed where the
+ * message is sent (`DRAFT_BYTES` in `Board.tsx`), once per send.
+ */
+const SHARED_DRAFT = 40;
+
+/** A pile on the board: a note's size, with its strip below and the notes under it showing. */
+export const STACK_BOX = { width: 222, height: 252 };
+
+export const CURSORS: Record<Tool, string> = {
+  select: 'default',
+  hand: 'grab',
+  rectangle: 'crosshair',
+  ellipse: 'crosshair',
+  diamond: 'crosshair',
+  triangle: 'crosshair',
+  hexagon: 'crosshair',
+  cylinder: 'crosshair',
+  star: 'crosshair',
+  arrow: 'crosshair',
+  line: 'crosshair',
+  freehand: 'crosshair',
+  text: 'text',
+  sticky: 'crosshair',
+  card: 'crosshair',
+  frame: 'crosshair',
+  column: 'crosshair',
+  comment: 'crosshair',
+  eraser: 'cell',
+  laser: 'crosshair'
+};
+
+export const HANDLE_CURSORS: Record<Handle, string> = {
+  nw: 'nwse-resize',
+  se: 'nwse-resize',
+  ne: 'nesw-resize',
+  sw: 'nesw-resize'
+};
+
+/** The style a selection shares, one field at a time: `''` where its elements disagree. */
+const shared = (elements: readonly BoardElement[], pick: (element: BoardElement) => string): string => {
+  const values = new Set(elements.map(pick));
+
+  return values.size === 1 ? [...values][0] : '';
+};
+
+export type CoreState = {
+  props: ControllerProps;
+  palette: Palette;
+  camera: Camera;
+  size: { width: number; height: number; dpr: number };
+  members: Map<string, Collaborator>;
+  boardId: string | undefined;
+  gesture: Gesture | undefined;
+  pinch: Pinch | undefined;
+  /** The element being typed into, and the field the focus went to as it opened — a card has two. */
+  editing: string | undefined;
+  editingField: EditField;
+  spaceHeld: boolean;
+  fitPending: boolean;
+  lastPointer: Point | undefined;
+  /**
+   * The group this person double-clicked into: its members are picked one at a time until the selection leaves it.
+   * Everywhere else a click on a member picks up the whole group.
+   */
+  insideGroup: string | undefined;
+  /** The shape under the pointer, whose connection points show. */
+  hovered: string | undefined;
+  /** The anchor a connector being drawn will fix to if let go now. */
+  snapping: Binding | undefined;
+  carrying: Carrying | undefined;
+  /** The member whose view this page follows. */
+  following: string | undefined;
+  /** What this person is typing at their cursor, while the chat field is open. */
+  chatting: string | undefined;
+  /**
+   * Where what is being dragged would land: the frame under the pointer — and, in a column, the board `y` of the gap
+   * it would go into. Drawn as a suggestion until it is let go.
+   */
+  dropTarget: { frame: string; line?: number; home?: boolean } | undefined;
+  /** What the pointer is over, whatever it is: a comment there opens its bubble. */
+  pointed: string | undefined;
+  /** The card waiting for the next click to say which card it waits on (`pickBlocker`). */
+  pickingBlocker: string | undefined;
+  /** Where what is dragged lined up with what stays still: the lines shown while it does. */
+  guides: GuideLine[];
+  /** What the board is searched for, and which of what it finds was last shown — nothing while nothing is. */
+  search: { text: string; query: Query; at: number } | undefined;
+};
+
+export const createCore = (canvas: HTMLCanvasElement, host: HTMLElement, emit: (event: ControllerEvent) => void) => {
+  const context2d = canvas.getContext('2d');
+  if (!context2d) {
+    throw new Error('This browser cannot draw on a canvas');
+  }
+
+  // Named once narrowed: the functions below close over it, which a narrowing does not reach.
+  const context: CanvasRenderingContext2D = context2d;
+  const scene = createScene();
+  const selection = new RevisionedSet<string>();
+  /** This person's gesture, drawn over the scene until it ends and is committed. */
+  const draft = new RevisionedMap<string, BoardElement>();
+  let frame = 0;
+  let paint: () => void = () => undefined;
+  let reportedZoom = 0;
+
+  const invalidate = (): void => {
+    if (!frame) {
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        paint();
+      });
+    }
+  };
+
+  const remotes = createRemotes(ms => setTimeout(invalidate, ms));
+  /** The board's cues, for every part of the canvas to play: what one's own hand does, and what the others do. */
+  const sounds = createSounds();
+
+  const state: CoreState = {
+    props: {
+      tool: 'select',
+      stroke: 'ink',
+      fill: 'none',
+      strokeWidth: 2,
+      mode: 'edit',
+      title: '',
+      assetBase: '',
+      voter: '',
+      author: '',
+      authors: true,
+      sounds: true,
+      session: undefined,
+      templates: [],
+      extras: {}
+    },
+    palette: readPalette(host),
+    camera: { x: 0, y: 0, zoom: 1 },
+    size: { width: 0, height: 0, dpr: 1 },
+    members: new Map(),
+    boardId: undefined,
+    gesture: undefined,
+    pinch: undefined,
+    editing: undefined,
+    editingField: 'text',
+    spaceHeld: false,
+    fitPending: true,
+    lastPointer: undefined,
+    insideGroup: undefined,
+    hovered: undefined,
+    snapping: undefined,
+    carrying: undefined,
+    following: undefined,
+    chatting: undefined,
+    dropTarget: undefined,
+    pointed: undefined,
+    pickingBlocker: undefined,
+    guides: [],
+    search: undefined
+  };
+
+  /** Anything can change: the board is in `edit` mode. */
+  const editable = (): boolean => state.props.mode === 'edit';
+
+  /** Somebody is on the board — editing or looking around — rather than it being a still preview. */
+  const present = (): boolean => state.props.mode !== 'view';
+
+  /** The pointer while nothing is under it: the tool's — or, on a board that cannot change, a hand to pan with. */
+  const restCursor = (): string => (!editable() && state.props.tool !== 'laser' ? 'grab' : CURSORS[state.props.tool]);
+
+  // ── What is drawn ───────────────────────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * The board as it is drawn, worked out once for each change to what it is drawn from — the scene, this person's
+   * draft, the others' drafts. Asked for many times a frame (the painter, the selection, every hit test), it used to
+   * build and sort the whole board each time: on a board of four thousand elements, every cursor another person moved
+   * was the board worked out again several times over. Read-only, so nothing a caller does can change what the next
+   * one is handed.
+   */
+  let shown: { key: string; list: readonly BoardElement[]; byId: ReadonlyMap<string, BoardElement> } | undefined;
+  /** The room opened cards make, as the board last drawn was drawn with: `''` while none does. */
+  let spreadKey = '';
+
+  const displayed = (now = Date.now()): readonly BoardElement[] => {
+    remotes.advance(now);
+    const spread = spreadNow(now);
+    spreadKey = [...spread].map(([id, grown]) => `${id}=${grown}`).join(',');
+    const key = `${scene.revision}:${draft.revision}:${remotes.draftRevision}:${spreadKey}`;
+    if (shown?.key === key) {
+      return shown.list;
+    }
+
+    const list = drawnBoard(now, spread);
+    shown = { key, list, byId: new Map(list.map(element => [element.id, element])) };
+
+    return list;
+  };
+
+  /** The board as it lies, without the room an opened card makes in its column: what a change is worked out from. */
+  const lying = (): ReadonlyMap<string, BoardElement> => {
+    const drawn = current();
+
+    return spreadKey ? new Map(drawnBoard(Date.now(), new Map()).map(element => [element.id, element])) : drawn;
+  };
+
+  const drawnBoard = (now: number, spread: ReadonlyMap<string, number>): BoardElement[] => {
+    const elements = new Map(scene.visible().map(element => [element.id, element]));
+    const versionOf = (id: string): number => scene.element(id)?.version ?? 0;
+    for (const element of [...remotes.drafts(now, versionOf), ...draft.values()]) {
+      if (element.deleted) {
+        elements.delete(element.id);
+      } else {
+        elements.set(element.id, element);
+      }
+    }
+
+    for (const [id, grown] of spread) {
+      const card = elements.get(id);
+      const column = card?.parent === undefined ? undefined : elements.get(card.parent);
+      if (card && column?.layout === 'column') {
+        // What someone is carrying is where their hand is, not in the column's order.
+        const moving = movingIds();
+        const members = [...elements.values()].filter(
+          element => element.parent === column.id && !moving.has(element.id)
+        );
+        for (const room of spreadColumn(column, members, card, grown)) {
+          elements.set(room.id, room);
+        }
+      }
+    }
+
+    // Every connector drawn from where its elements are NOW — a shape being dragged pulls its arrows along with it.
+    return [...elements.values()]
+      .map(element =>
+        isConnector(element.type) && (element.start || element.end) ? connectorAsDrawn(element, elements) : element
+      )
+      .sort(byStacking);
+  };
+
+  /**
+   * A connector as drawn, kept for as long as it and both of its ends are the objects they were: the elements never
+   * change in place, so the same three objects are the same line. A drag used to redraw every arrow on the board at
+   * every step — a thousand of them on a busy one — to move the few attached to what was dragged.
+   */
+  type Drawn = {
+    connector: BoardElement;
+    start: BoardElement | undefined;
+    end: BoardElement | undefined;
+    drawn: BoardElement;
+  };
+  // Kept by the connector a drag copies from: the copy of every step finds what the one before it was drawn as.
+  const connectors = new WeakMap<BoardElement, Drawn>();
+  const connectorAsDrawn = (connector: BoardElement, elements: ReadonlyMap<string, BoardElement>): BoardElement => {
+    const start = connector.start ? elements.get(connector.start.id) : undefined;
+    const end = connector.end ? elements.get(connector.end.id) : undefined;
+    const base = shiftOf(connector).from;
+    const known = connectors.get(base);
+    if (known?.connector === connector && known.start === start && known.end === end) {
+      return known.drawn;
+    }
+
+    const offset = known && sameShift(known, { connector, start, end, drawn: known.drawn });
+    const drawn =
+      known && offset
+        ? movedBy(known.drawn, offset[0], offset[1])
+        : resolveConnector(connector, id => elements.get(id));
+    connectors.set(base, { connector, start, end, drawn });
+
+    return drawn;
+  };
+
+  /**
+   * How far a connector moved whole since it was last drawn, if it did: both its ends — and, where one is loose, the
+   * connector itself, which that end is drawn from — moved by the same amount since. Dragging a hundred shapes joined
+   * by arrows moves the arrows as they are, instead of working each curve out again at every step.
+   */
+  const sameShift = (before: Drawn, now: Drawn): Point | undefined => {
+    const loose = !now.connector.start || !now.connector.end;
+    const pairs: [BoardElement | undefined, BoardElement | undefined][] = [
+      [before.start, now.start],
+      [before.end, now.end],
+      ...(loose ? [[before.connector, now.connector] satisfies [BoardElement, BoardElement]] : [])
+    ];
+    let offset: Point | undefined;
+    for (const [then, current] of pairs) {
+      if (!then || !current) {
+        if (then !== current) {
+          return undefined;
+        }
+
+        continue;
+      }
+
+      const [a, b] = [shiftOf(then), shiftOf(current)];
+      if (a.from !== b.from) {
+        return undefined;
+      }
+
+      const step: Point = [b.dx - a.dx, b.dy - a.dy];
+      if (offset && (offset[0] !== step[0] || offset[1] !== step[1])) {
+        return undefined;
+      }
+
+      offset = step;
+    }
+
+    return offset;
+  };
+
+  /** The connectors fixed to each element, by its id — worked out once per change to the board. */
+  let fixed: { revision: number; byEnd: Map<string, string[]> } | undefined;
+  const connectorsTo = (id: string): readonly string[] => {
+    if (fixed?.revision !== scene.revision) {
+      const byEnd = new Map<string, string[]>();
+      for (const element of scene.visible()) {
+        for (const end of [element.start?.id, element.end?.id]) {
+          if (end) {
+            byEnd.set(end, [...(byEnd.get(end) ?? []), element.id]);
+          }
+        }
+      }
+
+      fixed = { revision: scene.revision, byEnd };
+    }
+
+    return fixed.byEnd.get(id) ?? [];
+  };
+
+  /** What is moving under somebody's hand: this person's draft, the others', and the arrows fixed to any of them. */
+  const movingIds = (): Set<string> => {
+    const ids = new Set([...draft.keys(), ...remotes.draftIds()]);
+    for (const id of [...ids]) {
+      for (const connector of connectorsTo(id)) {
+        ids.add(connector);
+      }
+    }
+
+    return ids;
+  };
+
+  /**
+   * The board without what is moving — the part that can be painted once and left, while what moves is drawn over it
+   * every step. Worked out again only when the board changes or when WHAT moves changes: a drag begun, a drag ended,
+   * never a step of one.
+   */
+  let still: { key: string; list: readonly BoardElement[] } | undefined;
+  const displayedStill = (now = Date.now()): readonly BoardElement[] => {
+    const all = displayed(now);
+    const key = `${scene.revision}:${draft.membership}:${remotes.draftIds().join(',')}:${spreadKey}`;
+    if (still?.key === key) {
+      return still.list;
+    }
+
+    const moving = movingIds();
+    const list = moving.size ? all.filter(element => !moving.has(element.id)) : all;
+    still = { key, list };
+
+    return list;
+  };
+
+  /** What moves this frame, as it is drawn now: over the board, in its stacking order. */
+  const displayedMoving = (now = Date.now()): readonly BoardElement[] => {
+    const moving = movingIds();
+
+    return moving.size ? displayed(now).filter(element => moving.has(element.id)) : [];
+  };
+
+  const current = (): ReadonlyMap<string, BoardElement> => {
+    displayed();
+
+    return shown?.byId ?? new Map();
+  };
+
+  /** What is selected, as it is drawn: a connector with its ends where its elements are. */
+  const selected = (): BoardElement[] => {
+    const shown = current();
+
+    return [...selection].map(id => shown.get(id)).filter((element): element is BoardElement => element !== undefined);
+  };
+
+  /** What of the selection may be changed: everything but what is locked. What every edit of the selection acts on. */
+  const changeable = (): BoardElement[] => selected().filter(element => element.locked !== true);
+
+  /** The one connector selected, when that is the whole selection: its ends are what the handles move. */
+  const soleConnector = (): BoardElement | undefined => {
+    const chosen = selected();
+
+    return chosen.length === 1 && isConnector(chosen[0].type) ? chosen[0] : undefined;
+  };
+
+  /** A member's colour on this page — the one they announced — or the accent for someone not heard from. */
+  const memberColour = (from: string): string =>
+    state.palette.collab[state.members.get(from)?.color ?? ''] ?? state.palette.accent;
+
+  /** What of the selection its handles resize: never a card — its column sets its width, and its words its height. */
+  const resizable = (): BoardElement[] => changeable().filter(element => element.type !== 'card');
+
+  /**
+   * The card being read, not written on: the one selected alone, lying still — or, on a board that is only looked at,
+   * the one pointed at.
+   */
+  const readCard = (): string | undefined => {
+    if (!editable()) {
+      return state.pointed;
+    }
+
+    const only = selection.size === 1 ? [...selection][0] : undefined;
+    const moving = only !== undefined && (draft.has(only) || remotes.draftIds().includes(only));
+
+    return moving ? undefined : only;
+  };
+
+  /** How long a column takes to make room for a card opened in it, and to close up again. */
+  const SPREAD_MS = 180;
+  /** The room each opened card is making in its column: eased from what it was toward what it will be. */
+  const spreads = new Map<string, { from: number; to: number; since: number }>();
+  /** How much taller than it lies a card is opened — measured once for each version of it. */
+  const grownBy = new WeakMap<BoardElement, { view: CardView; palette: Palette; grown: number }>();
+
+  const grownOf = (card: BoardElement, view: CardView): number => {
+    const known = grownBy.get(card);
+    if (known?.view === view && known.palette === state.palette) {
+      return known.grown;
+    }
+
+    const grown = Math.max(0, cardLayout(context, card, state.palette, view).height - card.height);
+    grownBy.set(card, { view, palette: state.palette, grown });
+
+    return grown;
+  };
+
+  const spreadAt = ({ from, to, since }: { from: number; to: number; since: number }, now: number): number => {
+    const t = Math.min(1, Math.max(0, now - since) / SPREAD_MS);
+
+    return from + (to - from) * (1 - (1 - t) ** 3);
+  };
+
+  const aimSpread = (id: string, to: number, now: number): void => {
+    const tween = spreads.get(id);
+    if (tween?.to === to || (!tween && to === 0)) {
+      return;
+    }
+
+    spreads.set(id, { from: tween ? spreadAt(tween, now) : 0, to, since: now });
+  };
+
+  /**
+   * The room opened cards make in their columns right now, card by card — the one selected or written on grows it
+   * toward its height, one let go shrinks it back — so the cards under it are moved down, not covered, and the next one
+   * is still there to be picked. Only on a board that can change: one only looked at opens a card under the pointer,
+   * and a column that moved away from it as it opened would never hold still. Keeps the frames coming while any eases.
+   */
+  const spreadNow = (now: number): ReadonlyMap<string, number> => {
+    const id = state.editing ?? (editable() ? readCard() : undefined);
+    const card = id === undefined ? undefined : (draft.get(id) ?? scene.element(id));
+    const column = card?.parent === undefined ? undefined : scene.element(card.parent);
+    const opened = card?.type === 'card' && column?.layout === 'column' ? card : undefined;
+    if (opened) {
+      aimSpread(opened.id, grownOf(opened, state.editing === opened.id ? 'writing' : 'opened'), now);
+    }
+
+    const values = new Map<string, number>();
+    let easing = false;
+    for (const [other, tween] of spreads) {
+      if (other !== opened?.id) {
+        aimSpread(other, 0, now);
+      }
+
+      const aimed = spreads.get(other) ?? tween;
+      const value = Math.round(spreadAt(aimed, now));
+      if (now - aimed.since < SPREAD_MS) {
+        easing = true;
+      } else if (aimed.to === 0) {
+        spreads.delete(other);
+      }
+
+      if (value > 0) {
+        values.set(other, value);
+      }
+    }
+
+    if (easing) {
+      invalidate();
+    }
+
+    return values;
+  };
+
+  /**
+   * The card opened right now, drawn whole over what lies under it and taken by a press anywhere on it: the one being
+   * written on — its editor is a form of two fields, and opening it is what editing it looks like — or the one being
+   * read (`readCard`), when its column cuts some of it short: its title past three lines, its description past one.
+   */
+  const openedCard = (): { element: BoardElement; layout: CardLayout; box: Box } | undefined => {
+    const id = state.editing ?? readCard();
+    const element = id === undefined ? undefined : current().get(id);
+    if (element?.type !== 'card') {
+      return undefined;
+    }
+
+    const layout = cardLayout(context, element, state.palette, state.editing === id ? 'writing' : 'opened');
+    if (!state.editing && layout.height <= element.height) {
+      return undefined;
+    }
+
+    return { element, layout, box: { ...boundsOf(element), height: Math.max(element.height, layout.height) } };
+  };
+
+  /** The box an element takes on screen: its own — or, for the opened card, all of it. */
+  const shownBox = (element: BoardElement): Box => {
+    const opened = openedCard();
+
+    return opened?.element.id === element.id ? opened.box : boundsOf(element);
+  };
+
+  const viewport = (): Box => ({
+    x: state.camera.x,
+    y: state.camera.y,
+    width: state.size.width / state.camera.zoom,
+    height: state.size.height / state.camera.zoom
+  });
+
+  const viewOf = (box: Box): View => [
+    Math.round(box.x),
+    Math.round(box.y),
+    Math.round(box.width),
+    Math.round(box.height)
+  ];
+
+  /** Where something with no pointer to go by lands: the pointer if it is on the board, else the middle of the view. */
+  const aim = (): Point => {
+    const view = viewport();
+
+    return state.lastPointer ?? [view.x + view.width / 2, view.y + view.height / 2];
+  };
+
+  // ── What the page hears ─────────────────────────────────────────────────────────────────────────────────────────
+
+  const reportView = (): void => {
+    const zoom = Math.round(state.camera.zoom * 100);
+    if (zoom !== reportedZoom) {
+      reportedZoom = zoom;
+      emit({ type: 'view', zoom });
+    }
+  };
+
+  /** Told only when it changes: whether an undo, or a redo, would do anything. */
+  let reportedHistory = '';
+  const reportHistory = (): void => {
+    const key = `${scene.canUndo()}:${scene.canRedo()}`;
+    if (key !== reportedHistory) {
+      reportedHistory = key;
+      emit({ type: 'history', canUndo: scene.canUndo(), canRedo: scene.canRedo() });
+    }
+  };
+
+  const reportSelection = (): void => {
+    const chosen = selected();
+    const sole = chosen.length === 1 ? chosen[0] : undefined;
+    // The style panel offers what a restyle would change, and a restyle leaves what is locked as it is.
+    const offering = (field: StyleField): BoardElement[] =>
+      changeable().filter(element => takesStyle(element.type, field));
+    emit({
+      type: 'selection',
+      count: chosen.length,
+      grouped: chosen.some(element => element.group !== undefined),
+      oneGroup:
+        chosen.length > 0 &&
+        chosen[0].group !== undefined &&
+        chosen.every(element => element.group === chosen[0].group),
+      style: byField(field => shared(offering(field), element => styleOf(element, field))),
+      stylable: byField(field => offering(field).length > 0),
+      frame: sole?.type === 'frame',
+      column: sole?.type === 'frame' && sole.layout === 'column',
+      completes: sole?.type === 'frame' && sole.completes === true,
+      task: sole !== undefined && isTask(sole.type),
+      card: sole?.type === 'card',
+      done: sole?.done === true,
+      locked: chosen.length > 0 && chosen.every(element => element.locked === true),
+      duty: sole?.type === 'frame' ? sole.duty : undefined,
+      branch: sole?.type === 'frame' && sole.branchOf !== undefined
+    });
+  };
+
+  /** The version this page's draft of an element will be committed at: what the others compare it against. */
+  const predicted = (element: BoardElement): BoardElement => ({
+    ...element,
+    version: (scene.element(element.id)?.version ?? 0) + 1
+  });
+
+  const reportPointer = (final: boolean): void => {
+    if (!present()) {
+      return;
+    }
+
+    const { lastPointer, gesture, chatting } = state;
+    emit({
+      type: 'pointer',
+      final,
+      message: {
+        ...(lastPointer ? { x: Math.round(lastPointer[0]), y: Math.round(lastPointer[1]) } : {}),
+        sentAt: Date.now(),
+        draft: draft.size && draft.size <= SHARED_DRAFT && !final ? [...draft.values()].map(predicted) : null,
+        selection: [...selection].slice(0, 50),
+        view: viewOf(viewport()),
+        ...(gesture?.kind === 'laser' ? { laser: true } : {}),
+        ...(chatting === undefined ? {} : { chat: chatting })
+      }
+    });
+  };
+
+  const reportEditor = (): void => {
+    const element = state.editing ? (draft.get(state.editing) ?? scene.element(state.editing)) : undefined;
+    emit({
+      type: 'editor',
+      editor: element ? editorFor(element, state.editingField, state.camera, state.palette, context) : undefined
+    });
+  };
+
+  // ── The camera ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+  const setCamera = (next: Camera): void => {
+    state.camera = next;
+    reportView();
+    reportEditor();
+    // A follower's view is set from this, as it changes — not only when the pointer moves.
+    reportPointer(false);
+    invalidate();
+  };
+
+  const stopFollowing = (): void => {
+    if (state.following) {
+      sounds.play('unfollow');
+      state.following = undefined;
+      emit({ type: 'follow', name: '' });
+    }
+  };
+
+  /** Shows what a followed member shows: the same middle, at the zoom that fits their view in this one. */
+  const showView = ([x, y, width, height]: View): void => {
+    const { size } = state;
+    const zoom = clampZoom(Math.min(size.width / Math.max(width, 1), size.height / Math.max(height, 1)));
+    setCamera({ x: x + width / 2 - size.width / 2 / zoom, y: y + height / 2 - size.height / 2 / zoom, zoom });
+  };
+
+  let glide = 0;
+
+  /** The camera eased to `target` — a move somebody should be able to follow with their eyes, not a jump. */
+  const glideTo = (target: Camera, ms = 380): void => {
+    cancelAnimationFrame(glide);
+    const from = state.camera;
+    const started = performance.now();
+    const step = (now: number): void => {
+      const t = Math.min(1, (now - started) / ms);
+      const eased = 1 - (1 - t) ** 3;
+      // Zoom eased in its own scale: halfway from 0.5 to 2 is 1, not 1.25.
+      const zoom = Math.exp(Math.log(from.zoom) + (Math.log(target.zoom) - Math.log(from.zoom)) * eased);
+      const centre = (camera: Camera, axis: 'x' | 'y'): number =>
+        camera[axis] + (axis === 'x' ? state.size.width : state.size.height) / 2 / camera.zoom;
+      const [cx, cy] = [
+        centre(from, 'x') + (centre(target, 'x') - centre(from, 'x')) * eased,
+        centre(from, 'y') + (centre(target, 'y') - centre(from, 'y')) * eased
+      ];
+      setCamera({ x: cx - state.size.width / 2 / zoom, y: cy - state.size.height / 2 / zoom, zoom });
+      if (t < 1) {
+        glide = requestAnimationFrame(step);
+      }
+    };
+    glide = requestAnimationFrame(step);
+  };
+
+  const fit = (): void => {
+    const box = unionOf(scene.visible().map(boundsOf));
+    const { size } = state;
+    setCamera(
+      box && box.width + box.height > 0
+        ? fitCamera(box, size.width, size.height, present() ? 64 : 12)
+        : { x: -size.width / 2, y: -size.height / 2, zoom: 1 }
+    );
+  };
+
+  // ── The selection ───────────────────────────────────────────────────────────────────────────────────────────────
+
+  const groupOf = (id: string): string | undefined => (draft.get(id) ?? scene.element(id))?.group;
+
+  const membersOf = (group: string): string[] =>
+    scene
+      .visible()
+      .filter(element => element.group === group)
+      .map(element => element.id);
+
+  /** What picking these picks: each whole group — the entered one aside, whose members are picked alone. */
+  const widened = (ids: Iterable<string>): Set<string> => {
+    const chosen = new Set(ids);
+    for (const id of [...chosen]) {
+      const group = groupOf(id);
+      if (group && group !== state.insideGroup) {
+        membersOf(group).forEach(member => chosen.add(member));
+      }
+    }
+
+    return chosen;
+  };
+
+  /**
+   * Where the selection's tools stand on screen, told to the page only when it changes. Worked out as a frame is painted
+   * — except that an empty selection says so at once, with the selection itself: waiting for the frame, the tools stood
+   * one frame longer with the content of no selection — the parts a locked one hides back on show, then gone.
+   */
+  let reportedBox = '';
+  const reportSelectionBox = (box: ScreenBox | undefined): void => {
+    const key = JSON.stringify(box ?? null);
+    if (key !== reportedBox) {
+      reportedBox = key;
+      emit({ type: 'selectionBox', box });
+    }
+  };
+
+  const setSelection = (ids: Iterable<string>): void => {
+    const chosen = [...ids];
+    if (state.insideGroup && !chosen.some(id => groupOf(id) === state.insideGroup)) {
+      state.insideGroup = undefined;
+    }
+
+    selection.clear();
+    for (const id of widened(chosen)) {
+      selection.add(id);
+    }
+
+    if (selection.size === 0) {
+      reportSelectionBox(undefined);
+    }
+
+    reportSelection();
+    reportPointer(false);
+    invalidate();
+  };
+
+  // ── Changes ─────────────────────────────────────────────────────────────────────────────────────────────────────
+
+  /** A text's box is what its lines take, and a card's height what its words do: measured once they are typed. */
+  const measured = (element: BoardElement): BoardElement => {
+    if (element.type === 'text') {
+      return { ...element, ...measureText(context, element, state.palette) };
+    }
+
+    return element.type === 'card' ? { ...element, height: measureCard(context, element, state.palette) } : element;
+  };
+
+  /**
+   * What a change does to the frames around it, added to it: something new goes into the frame it is made in; a frame
+   * removed lets go of what was in it; and every column something left, entered, or changed in is laid out again — so
+   * a card dropped in a column takes its place there, and the gap it left in the other one closes.
+   */
+  const settle = (changes: readonly BoardElement[]): BoardElement[] => {
+    const next = new Map(changes.map(change => [change.id, change]));
+    // Everything as it will be, kept current as the pass adds to it: one read of the scene, however big the change —
+    // copied, since the board as drawn is shared with everything else that asks for it this frame.
+    const all = new Map(lying());
+    const put = (element: BoardElement): void => {
+      next.set(element.id, element);
+      all.set(element.id, element);
+    };
+    changes.forEach(change => all.set(change.id, change));
+    const frames = [...all.values()].filter(element => element.type === 'frame').sort(byStacking);
+
+    for (const change of changes) {
+      if (!scene.element(change.id) && change.parent === undefined && !change.deleted) {
+        const frame = frameUnder(frames, change);
+        if (frame) {
+          put({ ...change, parent: frame.id });
+        }
+      }
+
+      if (change.type === 'frame' && change.deleted) {
+        for (const member of inFrame([...all.values()], change.id)) {
+          const { parent: _parent, ...free } = member;
+          put(free);
+        }
+      }
+    }
+
+    // A card into a column that completes what lands in it is done — and heard to be; out of one, open again.
+    const frameOf = (id: string | undefined): BoardElement | undefined => (id === undefined ? undefined : all.get(id));
+    for (const marked of settleDone([...next.values()], frameOf, id => scene.element(id)?.parent)) {
+      if (marked !== next.get(marked.id)) {
+        put(marked);
+        if (marked.done) {
+          sounds.play('done');
+        }
+      }
+    }
+
+    const columns = new Set<string>();
+    for (const change of next.values()) {
+      [change.parent, scene.element(change.id)?.parent, change.type === 'frame' ? change.id : undefined]
+        .filter((id): id is string => id !== undefined)
+        .forEach(id => columns.add(id));
+    }
+
+    for (const id of columns) {
+      const column = all.get(id);
+      if (column?.type === 'frame' && column.layout === 'column' && !column.deleted) {
+        for (const laid of layoutColumn(column, inFrame([...all.values()], id), measured)) {
+          if (moved(all.get(laid.id), laid)) {
+            put(laid);
+          }
+        }
+      }
+    }
+
+    return [...next.values()];
+  };
+
+  /**
+   * What letting go at `point` would do, shown before it is done: the frame there — unless it is the one `from`, a
+   * free area the dragged things are already in — and, in a column, the gap they would go into.
+   */
+  const aimDrop = (point: Point | undefined, excluding: ReadonlySet<string>, from?: string): void => {
+    const frame = point ? frameAt(displayed(), point, excluding) : undefined;
+    const column = frame?.layout === 'column';
+    const home = from ? current().get(from) : undefined;
+    // Out of a column and over no frame: a kanban card is not left loose on the board — its column is shown, which
+    // is where it goes back to.
+    const next =
+      point && frame && (column || frame.id !== from)
+        ? {
+            frame: frame.id,
+            ...(column
+              ? {
+                  line: insertionAt(
+                    frame,
+                    inFrame(displayed(), frame.id).filter(element => !excluding.has(element.id)),
+                    point[1]
+                  )
+                }
+              : {})
+          }
+        : point && !frame && home?.layout === 'column'
+          ? { frame: home.id, home: true }
+          : undefined;
+    setDropTarget(next);
+  };
+
+  /**
+   * Where the card tool would put a card if pressed at `point`, shown as a drop is: the column there, and the gap in it.
+   * Nowhere, out of a column.
+   */
+  const aimCard = (point: Point | undefined): void => {
+    const column = point ? columnAt(displayed(), point) : undefined;
+    setDropTarget(
+      column && point
+        ? { frame: column.id, line: insertionAt(column, inFrame(displayed(), column.id), point[1]) }
+        : undefined
+    );
+  };
+
+  const setDropTarget = (next: CoreState['dropTarget']): void => {
+    if (JSON.stringify(next) !== JSON.stringify(state.dropTarget)) {
+      state.dropTarget = next;
+      invalidate();
+    }
+  };
+
+  /** Whether a point is inside a frame's area. */
+  const frameContains = (id: string, [x, y]: Point): boolean => {
+    const frame = current().get(id);
+
+    return (
+      frame !== undefined && x >= frame.x && x <= frame.x + frame.width && y >= frame.y && y <= frame.y + frame.height
+    );
+  };
+
+  /**
+   * Ops to the server in commits it takes: at most `LIMITS.ops` elements each. Moving, deleting or pasting more than
+   * that at once — everything on a busy board — was one commit the server refused whole, and the canvas rolled the
+   * change back: select all, delete, and nothing happened. The page sends them in order (its flow queues), and a
+   * refusal of any still rolls back every edit not confirmed, so the screen ends as the others see it.
+   */
+  const publish = (ops: readonly BoardElement[]): void => {
+    for (let from = 0; from < ops.length; from += LIMITS.ops) {
+      emit({ type: 'commit', ops: ops.slice(from, from + LIMITS.ops) });
+    }
+  };
+
+  /**
+   * The card selected, waiting for the next click to say which card it waits on — the selection's "waits on" button.
+   * The pointer says so until it does.
+   */
+  const pickBlocker = (): void => {
+    const card = selection.size === 1 ? selected().at(0) : undefined;
+    if (card?.type !== 'card') {
+      return;
+    }
+
+    state.pickingBlocker = card.id;
+    canvas.style.cursor = 'crosshair';
+    invalidate();
+    emit({ type: 'notice', text: `Click the card “${cardTitle(card)}” waits on — Esc to cancel`, tone: 'info' });
+  };
+
+  /**
+   * The click after `pickBlocker`: the card under it made one the waiting card waits on — or no longer, clicked again.
+   * Refused, the person is told why; anywhere but on a card, the waiting just stops.
+   */
+  const chooseBlocker = (target: BoardElement | undefined): void => {
+    const id = state.pickingBlocker;
+    state.pickingBlocker = undefined;
+    canvas.style.cursor = restCursor();
+    invalidate();
+    const shown = lying();
+    const card = id === undefined ? undefined : shown.get(id);
+    const blocker = target ? shown.get(target.id) : undefined;
+    if (!card) {
+      return;
+    }
+
+    if (blocker?.type !== 'card') {
+      emit({ type: 'notice', text: `Nothing linked — “${cardTitle(card)}” waits on what it did before`, tone: 'info' });
+
+      return;
+    }
+
+    const result = toggledBlocker(card, blocker, other => shown.get(other));
+    if ('refused' in result) {
+      sounds.play('hmm');
+      emit({ type: 'notice', text: result.refused });
+
+      return;
+    }
+
+    sounds.play(result.added ? 'connect' : 'remove');
+    commit([result.card]);
+    setSelection([card.id]);
+    emit({
+      type: 'notice',
+      text: result.added
+        ? `“${cardTitle(card)}” now waits on “${cardTitle(blocker)}”`
+        : `“${cardTitle(card)}” no longer waits on “${cardTitle(blocker)}”`,
+      tone: 'success'
+    });
+  };
+
+  const commit = (changes: readonly BoardElement[]): void => {
+    const settled = settle(changes);
+    const before = (id: string): BoardElement | undefined => scene.element(id);
+    const find = (id: string): BoardElement | undefined => settled.find(change => change.id === id) ?? before(id);
+    const blocked = movedOnBlocked(settled, before, find);
+    publish(scene.commit(settled));
+    // Moved on anyway — the person may know better — and told what it still waits on.
+    if (blocked.length) {
+      sounds.play('hmm');
+      emit({ type: 'notice', text: blockedWarning(blocked[0]) });
+    }
+
+    invalidate();
+  };
+
+  /** Ops the scene already applied — an undo, a redo — sent, and the selection cleared of what they removed. */
+  const send = (ops: BoardElement[]): void => {
+    publish(ops);
+
+    for (const id of selection) {
+      if (scene.element(id)?.deleted ?? true) {
+        selection.delete(id);
+      }
+    }
+
+    reportSelection();
+    invalidate();
+  };
+
+  const switchTool = (tool: Tool): void => {
+    if (tool !== state.props.tool) {
+      state.props = { ...state.props, tool };
+      canvas.style.cursor = restCursor();
+      emit({ type: 'tool', tool });
+    }
+  };
+
+  const newElement = (type: ShapeType, [x, y]: Point): BoardElement => {
+    const veiled = veiledIn(state.props.session, type, state.props.voter);
+    const { props } = state;
+    const paper = type === 'sticky' || type === 'stack';
+    const fill: Fill = !takesStyle(type, 'fill') ? 'none' : paper && props.fill === 'none' ? 'yellow' : props.fill;
+
+    return restyled(
+      {
+        id: newId(),
+        type,
+        x,
+        y,
+        width: 0,
+        height: 0,
+        stroke: props.stroke,
+        fill,
+        strokeWidth: props.strokeWidth,
+        seed: newSeed(),
+        z: scene.topZ + 1,
+        version: 0,
+        nonce: 0,
+        deleted: false,
+        ...(isLinear(type) ? { points: [[0, 0]] as Point[] } : {}),
+        ...(holdsText(type) ? { text: '' } : {}),
+        ...(isAuthored(type) && props.author ? { author: props.author } : {}),
+        // Written while the session asks everyone to write on their own: face down for the others until it moves on.
+        ...(veiled ? { veiled } : {})
+      },
+      props.extras
+    );
+  };
+
+  // ── Typing ──────────────────────────────────────────────────────────────────────────────────────────────────────
+
+  /** Writing on `element` begins — on its text, or on a card's description. */
+  const startEditing = (element: BoardElement, field: EditField = 'text'): void => {
+    // A locked element keeps its words as it keeps its place; one face down keeps them to whoever wrote them.
+    if (element.locked || isFaceDown(element, state.props.session, state.props.voter)) {
+      return;
+    }
+
+    // A comment left waiting with words in it is posted, not lost, when something else is written.
+    if (state.editing && state.editing !== element.id) {
+      finishEditing(true);
+    }
+
+    state.editing = element.id;
+    state.editingField = element.type === 'card' ? field : 'text';
+    draft.set(element.id, element);
+    reportEditor();
+    invalidate();
+  };
+
+  /** What is being typed, dropped: a new element never made, an edited one as it was. */
+  const cancelEditing = (): void => {
+    const id = state.editing;
+    if (!id) {
+      return;
+    }
+
+    state.editing = undefined;
+    state.editingField = 'text';
+    draft.delete(id);
+    emit({ type: 'editor', editor: undefined });
+    invalidate();
+  };
+
+  /**
+   * Typing is over: what was typed is kept. A comment is the exception — it is POSTED, on purpose (`explicit`: its
+   * button, or Enter). Looking away from one with words in it leaves it open, waiting; with none, it goes.
+   */
+  const finishEditing = (explicit = false): void => {
+    const id = state.editing;
+    if (!id) {
+      return;
+    }
+
+    const element = draft.get(id);
+    if (element?.type === 'comment' && !explicit) {
+      if ((element.text ?? '').trim()) {
+        return;
+      }
+
+      cancelEditing();
+
+      return;
+    }
+
+    state.editing = undefined;
+    state.editingField = 'text';
+    draft.delete(id);
+    emit({ type: 'editor', editor: undefined });
+    if (!element) {
+      invalidate();
+
+      return;
+    }
+
+    const saved = scene.element(id);
+    const empty = !(element.text ?? '').trim();
+    if (takesLabel(element.type)) {
+      // A label emptied is no label: the key goes, rather than an empty string being kept and sent.
+      const { text, ...shape } = element;
+      const labelled = empty ? shape : { ...shape, text };
+      if ((saved?.text ?? '') !== (empty ? '' : text)) {
+        commit([labelled]);
+      }
+
+      setSelection([id]);
+
+      return;
+    }
+
+    // A text or a comment with nothing in it is not kept: it would be a thing nobody can see or read.
+    if ((element.type === 'text' || element.type === 'comment') && empty) {
+      if (saved && !saved.deleted) {
+        commit([{ ...saved, deleted: true }]);
+      }
+
+      selection.delete(id);
+      reportSelection();
+      invalidate();
+
+      return;
+    }
+
+    // A description emptied is no description: the key goes, as a label's does.
+    const { description, ...undescribed } = element;
+    const written: BoardElement = description?.trim() ? element : undescribed;
+    if (!saved || saved.text !== written.text || saved.description !== written.description) {
+      commit([measured(written)]);
+      // Something new written down: a comment's bubble, or a text put on the board.
+      if (!saved && (element.type === 'comment' || element.type === 'text')) {
+        sounds.play(element.type === 'comment' ? 'comment' : 'place');
+      }
+    }
+
+    setSelection([id]);
+  };
+
+  // ── Making one where it is put ──────────────────────────────────────────────────────────────────────────────────
+
+  /** A card made in `column` at `point` — as wide as the column, in the gap there — and written on at once. */
+  const addCard = (column: BoardElement, point: Point): void => {
+    const made = measured({
+      ...newElement('card', point),
+      width: column.width - COLUMN_PADDING * 2,
+      parent: column.id
+    });
+    // Its middle at the point: the column puts it in the gap there.
+    const card = { ...made, x: column.x + COLUMN_PADDING, y: point[1] - made.height / 2 };
+    commit([card]);
+    sounds.play('place');
+    setSelection([card.id]);
+    switchTool('select');
+    startEditing(scene.element(card.id) ?? card);
+  };
+
+  /**
+   * A kanban board — To do, Doing, Done: three columns side by side, centred on `point`, not yet kept. The last is the
+   * team's Done: a card moved into it is ticked off.
+   */
+  const kanbanAt = ([x, y]: Point): BoardElement[] => {
+    const { width, height } = DEFAULT_BOX.column;
+    const titles = ['To do', 'Doing', 'Done'];
+
+    return titles.map((title, index) => ({
+      ...newElement('frame', [x - (width * 3 + KANBAN_GAP * 2) / 2 + index * (width + KANBAN_GAP), y - height / 2]),
+      width,
+      height,
+      text: title,
+      layout: 'column' as const,
+      ...(index === titles.length - 1 ? { completes: true } : {}),
+      z: scene.topZ + 1 + index
+    }));
+  };
+
+  /** A text begun at `point`, placed so the point lands inside its first line rather than on its top edge. */
+  const startText = (point: Point): void => {
+    const element = newElement('text', point);
+    setSelection([]);
+    startEditing({ ...element, y: element.y - fontSizeOf(element) * 0.6 });
+    switchTool('select');
+  };
+
+  /** A comment begun, pinned by its tail: the bottom-left of the pin is `point`, what the comment is about. */
+  const startComment = (point: Point): void => {
+    setSelection([]);
+    startEditing({ ...newElement('comment', [point[0], point[1] - COMMENT_PIN]), ...COMMENT_PIN_BOX });
+    switchTool('select');
+  };
+
+  return {
+    canvas,
+    host,
+    context,
+    emit,
+    scene,
+    selection,
+    draft,
+    remotes,
+    sounds,
+    state,
+    /** The one function that draws a frame — the renderer's, handed in once it exists. */
+    paintWith: (next: () => void): void => {
+      paint = next;
+    },
+    cancelFrame: (): void => cancelAnimationFrame(frame),
+    invalidate,
+    editable,
+    present,
+    restCursor,
+    displayed,
+    displayedStill,
+    displayedMoving,
+    current,
+    lying,
+    pickBlocker,
+    chooseBlocker,
+    selected,
+    changeable,
+    soleConnector,
+    resizable,
+    memberColour,
+    openedCard,
+    shownBox,
+    viewport,
+    viewOf,
+    aim,
+    reportSelection,
+    reportSelectionBox,
+    reportHistory,
+    reportPointer,
+    reportEditor,
+    setCamera,
+    glideTo,
+    stopFollowing,
+    showView,
+    fit,
+    membersOf,
+    setSelection,
+    commit,
+    send,
+    switchTool,
+    newElement,
+    measured,
+    aimDrop,
+    aimCard,
+    frameContains,
+    startEditing,
+    finishEditing,
+    addCard,
+    kanbanAt,
+    startText,
+    startComment,
+    cancelEditing
+  };
+};
+
+export type Core = ReturnType<typeof createCore>;

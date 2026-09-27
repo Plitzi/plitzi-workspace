@@ -1,4 +1,4 @@
-import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { processTwigParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import type { ActionTaskContext } from '../types';
 
@@ -29,7 +29,7 @@ export const renderTaskParams = async <T extends Record<string, unknown>>(
   const scope = { ...ctx.scope, ...(credential ? { credential } : {}) };
 
   return Object.entries(params).reduce<Record<string, unknown>>((acum, [key, value]) => {
-    acum[key] = typeof value === 'string' ? processTwig(value, scope, false, true) : value;
+    acum[key] = typeof value === 'string' ? processTwigParam(value, scope) : value;
 
     return acum;
   }, {}) as T;

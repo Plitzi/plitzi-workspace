@@ -1,4 +1,16 @@
-import type { Element, ElementInteraction, OfflineDataRaw } from '@plitzi/sdk-shared';
+import {
+  apiContainer,
+  authorSpace,
+  bindTemplate,
+  button,
+  on,
+  onClick,
+  paragraph,
+  setState,
+  singlePageSpace
+} from '@plitzi/sdk-authoring';
+
+import type { AuthoredSpace } from '@plitzi/sdk-authoring';
 
 /**
  * Two providers with nothing to ask, which is a state every provider passes through.
@@ -16,10 +28,8 @@ import type { Element, ElementInteraction, OfflineDataRaw } from '@plitzi/sdk-sh
  *   with the state already cleared — and that flow writes the id the rest of the page is keyed by.
  */
 
-const PAGE_ID = 'uq-page';
-
 export const UNASKED_IDS = {
-  page: PAGE_ID,
+  page: 'uq-page',
   load: 'uq-load',
   clear: 'uq-clear',
   unresolved: 'uq-unresolved',
@@ -33,150 +43,41 @@ export const ORDER_PATH = '/__e2e/order';
 
 export const ORDER_ID = '7';
 
-const element = (
-  id: string,
-  type: string,
-  attributes: Record<string, unknown>,
-  extra: Partial<Element['definition']> = {}
-): Element => ({
-  id,
-  attributes,
-  definition: {
-    label: type,
-    type,
-    rootId: PAGE_ID,
-    parentId: PAGE_ID,
-    styleSelectors: { base: id },
-    initialState: { visibility: true },
-    ...extra
-  }
-});
+const setOrderId = (id: string, content: string, value: string) =>
+  button({ id, content, flows: [[onClick(), setState({ key: 'orderId', type: 'text', value })]] });
 
-const node = (flowId: string, id: string, overrides: Partial<ElementInteraction>): ElementInteraction => ({
-  id,
-  title: id,
-  type: 'task',
-  action: '',
-  params: {},
-  preview: {},
-  elementId: null,
-  beforeNode: '',
-  afterNode: '',
-  flowId,
-  enabled: true,
-  ...overrides
-});
-
-/** One click, one global step. */
-const clickRuns = (
-  buttonId: string,
-  step: Pick<ElementInteraction, 'action' | 'elementId' | 'params'>
-): Record<string, ElementInteraction> => ({
-  trigger: node(buttonId, 'trigger', { type: 'trigger', action: 'onClick', elementId: buttonId, afterNode: 'step' }),
-  step: node(buttonId, 'step', { type: 'globalCallback', beforeNode: 'trigger', ...step })
-});
-
-/** What a detail view does with the record it just loaded: remember which one is being looked at. */
-const rememberOrder: Record<string, ElementInteraction> = {
-  trigger: node('remember', 'trigger', {
-    type: 'trigger',
-    action: 'onApiSuccess',
-    elementId: UNASKED_IDS.bound,
-    afterNode: 'step'
-  }),
-  step: node('remember', 'step', {
-    type: 'globalCallback',
-    action: 'setState',
-    elementId: 'state',
-    params: { key: 'lastOrder', type: 'text', value: '{{ state.orderId }}' },
-    beforeNode: 'trigger'
-  })
-};
-
-const setOrderId = (buttonId: string, value: string) =>
-  clickRuns(buttonId, { action: 'setState', elementId: 'state', params: { key: 'orderId', type: 'text', value } });
-
-export const unaskedQuerySpace = (): OfflineDataRaw =>
-  ({
-    schema: {
-      definition: { name: 'unasked queries', permanentUrl: '' },
-      variables: [],
-      settings: { customCss: '' },
-      pages: [PAGE_ID],
-      pageFolders: {},
-      flat: {
-        [PAGE_ID]: element(
-          PAGE_ID,
-          'page',
-          { slug: '', default: true, name: 'Orders' },
-          {
-            parentId: undefined,
-            items: [UNASKED_IDS.load, UNASKED_IDS.clear, UNASKED_IDS.unresolved, UNASKED_IDS.bound, UNASKED_IDS.seen]
-          }
-        ),
-        [UNASKED_IDS.load]: element(
-          UNASKED_IDS.load,
-          'button',
-          { subType: 'button', content: 'Load the order' },
-          { interactions: setOrderId(UNASKED_IDS.load, ORDER_ID) }
-        ),
-        [UNASKED_IDS.clear]: element(
-          UNASKED_IDS.clear,
-          'button',
-          { subType: 'button', content: 'Leave it' },
-          { interactions: setOrderId(UNASKED_IDS.clear, '') }
-        ),
-        [UNASKED_IDS.unresolved]: element(UNASKED_IDS.unresolved, 'apiContainer', {
+export const unaskedQuerySpace = (): AuthoredSpace =>
+  authorSpace(
+    singlePageSpace(
+      [
+        setOrderId(UNASKED_IDS.load, 'Load the order', ORDER_ID),
+        setOrderId(UNASKED_IDS.clear, 'Leave it', ''),
+        apiContainer({
+          id: UNASKED_IDS.unresolved,
           query: `${ORDER_PATH}/{{orderId}}`,
           method: 'get',
           subType: 'section'
         }),
-        [UNASKED_IDS.bound]: element(
-          UNASKED_IDS.bound,
-          'apiContainer',
-          { query: '', method: 'get', subType: 'section' },
-          {
-            items: [UNASKED_IDS.title],
-            interactions: rememberOrder,
-            bindings: {
-              attributes: [
-                {
-                  id: 'bound-url',
-                  source: 'state.orderId',
-                  to: 'query',
-                  transformers: [
-                    { action: 'twigTemplate', params: { template: `{{ source ? '${ORDER_PATH}/' ~ source : '' }}` } }
-                  ]
-                }
-              ]
-            }
-          }
-        ),
-        [UNASKED_IDS.title]: element(
-          UNASKED_IDS.title,
-          'paragraph',
-          { content: '' },
-          {
-            parentId: UNASKED_IDS.bound,
-            bindings: {
-              attributes: [
-                {
-                  id: 'title-1',
-                  source: `apiContainer_${UNASKED_IDS.bound}.data.title`,
-                  to: 'content',
-                  transformers: []
-                }
-              ]
-            }
-          }
-        ),
-        [UNASKED_IDS.seen]: element(
-          UNASKED_IDS.seen,
-          'paragraph',
-          { content: '' },
-          { bindings: { attributes: [{ id: 'seen-1', source: 'state.lastOrder', to: 'content', transformers: [] }] } }
-        )
-      }
-    },
-    style: { cache: '' }
-  }) as unknown as OfflineDataRaw;
+        apiContainer({
+          id: UNASKED_IDS.bound,
+          method: 'get',
+          subType: 'section',
+          bind: [bindTemplate('query', 'state.orderId', `{{ source ? '${ORDER_PATH}/' ~ source : '' }}`)],
+          // What a detail view does with the record it just loaded: remember which one is being looked at.
+          flows: [[on('onApiSuccess'), setState({ key: 'lastOrder', type: 'text', value: '{{ state.orderId }}' })]],
+          children: [paragraph('', { id: UNASKED_IDS.title, bind: { content: `${UNASKED_IDS.bound}.data.title` } })]
+        }),
+        paragraph('', { id: UNASKED_IDS.seen, bind: { content: 'state.lastOrder' } })
+      ],
+      { name: 'unasked queries', permanentUrl: 'unasked-queries', page: { id: UNASKED_IDS.page, name: 'Orders' } }
+    ),
+    {
+      allow: [
+        {
+          code: 'template-unknown-name',
+          element: UNASKED_IDS.unresolved,
+          why: 'the subject: a URL whose token nothing answers must never be asked for'
+        }
+      ]
+    }
+  );

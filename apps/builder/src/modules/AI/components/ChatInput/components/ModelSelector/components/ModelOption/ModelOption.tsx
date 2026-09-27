@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { deriveTag, TAG_CLASS } from '../../helpers';
 
@@ -8,11 +8,20 @@ import type { AiModelInfo } from '@pmodules/AI/types';
 export type ModelOptionProps = {
   model: AiModelInfo;
   isActive: boolean;
+  isHighlighted?: boolean;
   onSelect: (id: string) => void;
 };
 
-const ModelOption = ({ model, isActive, onSelect }: ModelOptionProps) => {
+const ModelOption = ({ model, isActive, isHighlighted = false, onSelect }: ModelOptionProps) => {
+  const ref = useRef<HTMLButtonElement>(null);
   const tag = deriveTag(model.id);
+
+  // Moved to with the keyboard, so it has to stay in view the way a hovered one already is.
+  useEffect(() => {
+    if (isHighlighted) {
+      ref.current?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [isHighlighted]);
 
   const handleClick = useCallback(() => {
     onSelect(model.id);
@@ -20,10 +29,12 @@ const ModelOption = ({ model, isActive, onSelect }: ModelOptionProps) => {
 
   return (
     <button
+      ref={ref}
       onClick={handleClick}
       className={clsx(
         'flex w-full items-start gap-2.5 px-2 py-2 text-left transition-colors',
-        isActive ? 'bg-neutral-100 dark:bg-zinc-700' : 'hover:bg-neutral-50 dark:hover:bg-zinc-700'
+        isActive ? 'bg-neutral-100 dark:bg-zinc-700' : 'hover:bg-neutral-50 dark:hover:bg-zinc-700',
+        { 'bg-neutral-50 dark:bg-zinc-700/60': isHighlighted && !isActive }
       )}
     >
       <div

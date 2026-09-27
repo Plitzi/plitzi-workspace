@@ -1,5 +1,6 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
+
+import { copyFileAtomic, writeFileAtomic } from '../helpers/atomicFile';
 
 export const copyPlugin = async (src: string, destDir: string, filename: string): Promise<void> => {
   const dest = path.join(destDir, filename);
@@ -10,8 +11,8 @@ export const copyPlugin = async (src: string, destDir: string, filename: string)
       throw new Error(`[SSR] Plugin fetch failed ${src}: ${res.status}`);
     }
 
-    await fs.writeFile(dest, await res.text(), 'utf-8');
+    await writeFileAtomic(dest, await res.text());
   } else {
-    await fs.copyFile(src, dest);
+    await copyFileAtomic(src, dest);
   }
 };

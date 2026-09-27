@@ -1,7 +1,7 @@
 import { apiContainer, container, heading, image, link, list, paragraph, text } from '@plitzi/sdk-authoring';
 
-import { JOURNAL_ACTION } from '../actions';
-import { photos } from '../content';
+import { JOURNAL_ACTION } from '../actions/index.ts';
+import { photos } from '../content.ts';
 import {
   arrow,
   closeMenuOnLoad,
@@ -13,7 +13,7 @@ import {
   section,
   sectionHead,
   shell
-} from '../layout';
+} from '../layout.ts';
 
 import type { Attributes, ElementSpec, PageSpec } from '@plitzi/sdk-authoring';
 

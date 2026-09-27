@@ -2,14 +2,15 @@ import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { offlineDataPath } from '@plitzi/example-space';
 import { createServer } from '@plitzi/sdk-mcp/server';
 import { consoleLogger } from '@plitzi/sdk-server/kernel';
-
-import { offlineDataPath } from '@plitzi/example-space';
 
 import type { OfflineDataRaw, Schema, SSRAdapters, Style } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4005);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 
 // The agent WRITES here, so work on a copy — a session must not dirty the shared fixture. Delete it to reset.
 const workingCopy = path.join(tmpdir(), 'plitzi-example-mcp-space.json');
@@ -31,7 +32,7 @@ const adapters: SSRAdapters = {
   getSpaceDeployment: () => Promise.resolve({ spaceId: 1, environment: 'main', revision: 0, pluginNames: [] }),
   getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent', canWrite: true }),
   getSchema: () => Promise.resolve(read().schema),
-  getStyle: () => Promise.resolve(read().style as Style),
+  getStyle: () => Promise.resolve(read().style),
   saveSchema: (_spaceId, _environment, schema: Schema) => {
     write({ ...read(), schema });
 
@@ -45,8 +46,13 @@ const adapters: SSRAdapters = {
 };
 
 // A dedicated MCP server owns its whole origin: it answers JSON-RPC on every path, not under /mcp.
-const server = createServer({ port: PORT, devMode: true, adapters, logger: consoleLogger });
+const server = createServer({
+  port: PORT,
+  devMode: process.env.NODE_ENV !== 'production',
+  adapters,
+  logger: consoleLogger
+});
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 console.log(`[example] MCP on http://127.0.0.1:${PORT}/   (space copy: ${workingCopy})`);
 console.log('[example] point an MCP client at it, or run `yarn inspector`');

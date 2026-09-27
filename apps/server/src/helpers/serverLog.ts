@@ -1,4 +1,4 @@
-import type { ServerLogEvent, ServerLogger } from '@plitzi/sdk-shared';
+import type { LogLevel, ServerLogEvent, ServerLogger } from '@plitzi/sdk-shared';
 
 const outcomeOf = (event: ServerLogEvent): string => (event.ok ? 'ok' : `ERROR ${event.error ?? ''}`.trim());
 
@@ -35,6 +35,9 @@ const renderReject = (event: Extract<ServerLogEvent, { kind: 'reject' }>): strin
   return `[Action] ${event.name} via ${event.trigger} space=${event.spaceId} REFUSED ${event.reason}${caller} ${outcomeOf(event)}`;
 };
 
+const renderMessage = (event: Extract<ServerLogEvent, { kind: 'message' }>): string =>
+  `[${event.scope}] ${event.message}${event.error ? `: ${event.error}` : ''}`;
+
 /** One line for any {@link ServerLogEvent}: an HTTP request reads as an access-log line
  *  (`[SSR] 203.0.113.7 GET /pricing 200 12ms ok`), the MCP events as what happened inside one
  *  (`[MCP] tools/call plitzi_apply {operations:[3]} 41ms ok`), a server action as what its flow did
@@ -55,16 +58,97 @@ export const renderLogEvent = (event: ServerLogEvent): string => {
       return renderRun(event);
     case 'reject':
       return renderReject(event);
+    case 'message':
+      return renderMessage(event);
   }
 };
+
+const RANK: Record<LogLevel | 'silent', number> = { silent: 0, error: 1, warn: 2, info: 3, debug: 4 };
+
+/**
+ * How severe an event is: what it says it is, or — for a request, a tool call, a run — whether it went wrong. A
+ * refusal is never `ok` yet never the server's failure: the caller was turned away, which is a `warn`.
+ */
+export const logLevelOf = (event: ServerLogEvent): LogLevel => {
+  if (event.kind === 'message') {
+    return event.level;
+  }
+
+  if (event.kind === 'reject') {
+    return 'warn';
+  }
+
+  return event.ok ? 'info' : 'error';
+};
+
+/** Whether a server at `threshold` says something at `level`. */
+export const isLogged = (threshold: LogLevel | 'silent', level: LogLevel): boolean => RANK[level] <= RANK[threshold];
+
+/** What a server says when the deployment did not choose: what went wrong in production, more while developing. */
+export const defaultLogLevel = (devMode = false): LogLevel => (devMode ? 'info' : 'error');
 
 /** A drop-in `SSRServerConfig.logger` for consumers that just want the log on the console. Consumers with their
  *  own logging stack should pass their own sink instead and read the structured event. */
 export const consoleLogger: ServerLogger = event => {
   const line = renderLogEvent(event);
-  if (event.ok) {
-    console.log(line);
-  } else {
+  const level = logLevelOf(event);
+  if (level === 'error') {
     console.error(line);
+  } else if (level === 'warn') {
+    console.warn(line);
+  } else {
+    console.log(line);
+  }
+};
+
+const errorText = (cause: unknown): string =>
+  cause instanceof Error ? (cause.stack ?? cause.message) : typeof cause === 'string' ? cause : JSON.stringify(cause);
+
+/**
+ * Where everything the server says that is not a request goes — one threshold and one sink for the process.
+ *
+ * Process-wide because what speaks is often created before any server exists (an adapter, a job worker) and has no
+ * config to read. `createServer` sets it from its own `logLevel` and `logger`; until then it is `error` under
+ * `NODE_ENV=production` and `info` otherwise, to the console.
+ */
+const state: { level: LogLevel | 'silent'; sink: ServerLogger } = {
+  level: process.env.NODE_ENV === 'production' ? 'error' : 'info',
+  sink: consoleLogger
+};
+
+export const configureServerLog = (options: { level: LogLevel | 'silent'; logger?: ServerLogger }): void => {
+  state.level = options.level;
+  state.sink = options.logger ?? consoleLogger;
+};
+
+const say = (level: LogLevel, scope: string, message: string, cause?: unknown): void => {
+  if (!isLogged(state.level, level)) {
+    return;
+  }
+
+  state.sink({
+    kind: 'message',
+    level,
+    scope,
+    message,
+    ok: level !== 'error',
+    ...(cause === undefined ? {} : { error: errorText(cause) }),
+    timestamp: new Date().toISOString()
+  });
+};
+
+/** The server's own voice: `serverLog.error('RSC', 'element failed to resolve', error)`. Below the threshold, nothing. */
+export const serverLog = {
+  error: (scope: string, message: string, cause?: unknown) => say('error', scope, message, cause),
+  warn: (scope: string, message: string, cause?: unknown) => say('warn', scope, message, cause),
+  info: (scope: string, message: string, cause?: unknown) => say('info', scope, message, cause),
+  debug: (scope: string, message: string, cause?: unknown) => say('debug', scope, message, cause),
+  /** Whether a level would be said — to skip building a costly message nobody will read. */
+  enabled: (level: LogLevel): boolean => isLogged(state.level, level),
+  /** Hands an event to a sink the consumer wired itself (`onRun`, `onReject`) only when the process would say it. */
+  emit: (logger: ServerLogger, event: ServerLogEvent): void => {
+    if (isLogged(state.level, logLevelOf(event))) {
+      logger(event);
+    }
   }
 };

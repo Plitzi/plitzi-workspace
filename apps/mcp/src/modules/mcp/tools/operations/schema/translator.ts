@@ -1,8 +1,9 @@
+import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+
 import {
   bindingsToAI,
   computeVersion,
   descendantCount,
-  descendantIds,
   elementById,
   flowsFromInteractions,
   getLayoutElements,
@@ -179,7 +180,7 @@ export const pageStylesToAI = (schema: Schema, style: Style, pageEl: Element): A
   };
 
   collect(pageEl);
-  for (const id of descendantIds(schema, pageEl.id)) {
+  for (const id of descendants(schema.flat, pageEl.id)) {
     const el = elementById(schema, id);
     if (el) {
       collect(el);

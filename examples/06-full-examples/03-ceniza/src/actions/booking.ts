@@ -1,8 +1,8 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
-import { restaurant } from '../content';
-import { seatsKey } from './availability';
-import { checkEmail, literal, MAX_DAYS_AHEAD, SEATS_PER_SLOT, setUpDay, slotState, SMTP_CREDENTIAL } from './rules';
+import { restaurant } from '../content.ts';
+import { seatsKey } from './availability.ts';
+import { checkEmail, literal, MAX_DAYS_AHEAD, SEATS_PER_SLOT, setUpDay, slotState, SMTP_CREDENTIAL } from './rules.ts';
 
 import type { ActionStepSpec } from '@plitzi/sdk-authoring';
 

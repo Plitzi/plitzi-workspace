@@ -4,6 +4,8 @@ import type { OfflineDataRaw, ThemeScope } from '@plitzi/sdk-shared';
 export type HarnessRenderOptions = {
   /** `container` mounts the space the way an application with a theme of its own does — the desktop window. */
   themeScope?: ThemeScope;
+  /** The dev tools and the render tracing on — what `inspectRenders` reads. */
+  debugMode?: boolean;
 };
 
 /** What a spec drives the harness through. Deliberately tiny: hand it a space, get a promise that settles once

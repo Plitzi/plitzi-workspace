@@ -15,6 +15,17 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
+  /**
+   * The press itself, before it is a click: where something dragged away from the element starts — a tile taken to a
+   * canvas, a handle pulled. Let go where it went down, it is a click as well, and `onClick` fires after it.
+   */
+  onPointerDown: {
+    action: 'onPointerDown',
+    title: 'On Pointer Down',
+    type: 'trigger',
+    preview: { propagateEvent: '' },
+    params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
+  },
   onMouseEnter: {
     action: 'onMouseEnter',
     title: 'On Mouse Enter',
@@ -49,6 +60,27 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
     type: 'trigger',
     preview: { propagateEvent: '' },
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
+  },
+  /**
+   * A keyboard shortcut, heard while the element is on the page — on the page itself, the whole page's.
+   *
+   * Not a DOM event of the element: it listens on the window, so the element need not have focus, and it is ignored
+   * while somebody types in a field unless Ctrl, ⌘ or Alt is held, or the key is Escape — and the field keeps its own
+   * editing even then (⌘A, ⌘Z, ⌘C/⌘V, moving by word). `keys` is one shortcut or several with commas — `'f'`, `'shift+f'`, `'mod+k'` (⌘ on a Mac, Ctrl elsewhere), `'escape, q'`.
+   */
+  onKey: {
+    action: 'onKey',
+    title: 'On Key',
+    type: 'trigger',
+    preview: { key: '', shortcuts: '' },
+    params: {
+      keys: {
+        canBind: false,
+        defaultValue: '',
+        type: 'text',
+        label: 'Keys (e.g. f, shift+f, mod+k, escape)'
+      }
+    }
   },
   /**
    * The end of a server action this element started.
@@ -86,4 +118,12 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
   }
 };
 
-export const nativeEventsList = ['onClick', 'onHover', 'onFocus', 'onBlur', 'onMouseEnter', 'onMouseLeave'];
+export const nativeEventsList = [
+  'onClick',
+  'onPointerDown',
+  'onHover',
+  'onFocus',
+  'onBlur',
+  'onMouseEnter',
+  'onMouseLeave'
+];

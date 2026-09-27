@@ -1,3 +1,5 @@
+import { serverLog } from '../../helpers/serverLog';
+
 import type { HttpRoute, RouterLike, SocialRouteHandler } from './types';
 import type { SocialAuth } from '../auth/oauth';
 import type { SessionCookies } from '../auth/session';
@@ -13,7 +15,7 @@ export interface SocialRouteHandlersOptions {
    * proves WHO, and what a session is worth is the kernel's answer, not the provider's.
    */
   issueSession: (userId: number) => Promise<SSRSession>;
-  /** Reports a callback that threw. Without it the failure goes to `console.error`; the caller still gets a 500. */
+  /** Reports a callback that threw. Without it the failure goes to the server log at `error`; the caller still gets a 500. */
   onError?: (error: unknown, context: { method: string; path: string }) => void;
 }
 
@@ -65,7 +67,7 @@ export const createSocialAuthRouteHandlers = ({
       return;
     }
 
-    console.error(`[auth] ${context.method} ${context.path} failed:`, error);
+    serverLog.error('auth', `${context.method} ${context.path} failed`, error);
   };
 
   return [

@@ -23,8 +23,6 @@ import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 
-// eslint-disable-next-line
-// @ts-ignore
 import styleFrame from '../../../Builder/Assets/index-iframe.scss?inline';
 
 export type BuilderAreaPreviewProps = {
@@ -139,8 +137,10 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
     <ContainerFrame className={clsx('builder-area flex', className)} css={css} style={{ colorScheme: resolvedTheme }}>
       <PlitziServiceProvider value={plitziContextValue}>
         {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding
-            settings with that one flag flipped beats threading it as a prop through every provider under here. */}
-        <StoreProvider value={previewRender}>
+            settings with that one flag flipped beats threading it as a prop through every provider under here.
+            `live`, because a nexus scope inherits nothing by default: without it this one held `render` and nothing
+            else, and every element under it failed to find itself in `schema.flat`. */}
+        <StoreProvider value={previewRender} inherit="live">
           <GlobalSources>
             <InteractionsSourcesProvider>
               <div

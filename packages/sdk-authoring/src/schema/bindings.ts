@@ -91,8 +91,9 @@ export const visibleWhen = (source: string, template?: string): BindingSpec => (
 });
 
 /**
- * A visibility the data does not answer on its own: a template over the value that says `true` or `false` —
- * `{ source: 'state.genre', template: "{{ source == '' or source == list_games.item.genre }}" }`.
+ * A visibility the data does not answer on its own: a template over the value, read as a yes or a no —
+ * `{ source: 'state.genre', template: "{{ source == '' or source == list_games.item.genre }}" }`. `false`, `0`, an
+ * empty text, an empty list and nothing at all are a no; anything else is a yes. No `? 'true' : 'false'` needed.
  *
  * As an element's `visible` it also starts the element hidden, which is what a condition computed from data wants:
  * shown only once the template has said so, rather than drawn and then taken away.

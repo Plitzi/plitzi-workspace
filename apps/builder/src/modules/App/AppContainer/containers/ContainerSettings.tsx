@@ -23,16 +23,36 @@ const PROVIDER_SETTINGS = [
   'refreshTokenPath',
   'expirationTimePath',
   'refreshExpirationTimePath',
-  'sessionHintCookie'
+  'sessionHintCookie',
+  'sessionExchangeUrl',
+  'mfaUrl'
 ] as const;
+
+/** The settings that name `runtime.state` keys, each edited as a comma-separated field. */
+type StateKeySetting = 'transientState' | 'paintedState';
+
+/** The state keys a comma-separated field names, as the runtime compares them: trimmed, none empty. */
+const parseStateKeys = (text: string): string[] =>
+  text
+    .split(',')
+    .map(key => key.trim())
+    .filter(Boolean);
 
 const ContainerSettings = () => {
   const [[settingsProp, styleMode]] = useBuilderStore(['schema.settings', 'style.mode']);
   const { eventBridge } = use(EventBridgeContext);
 
   const [settings, setSettings] = useState(settingsProp);
+  // Each field's own text, so a comma being typed is not normalised away under the cursor.
+  const [keyTexts, setKeyTexts] = useState<Record<StateKeySetting, string>>({
+    transientState: (settingsProp.transientState ?? []).join(', '),
+    paintedState: (settingsProp.paintedState ?? []).join(', ')
+  });
+  const transientKeys = parseStateKeys(keyTexts.transientState);
+  const paintedKeys = parseStateKeys(keyTexts.paintedState);
+  const dottedKeys = [...transientKeys, ...paintedKeys].filter(key => key.includes('.'));
+  const bothKeys = paintedKeys.filter(key => transientKeys.includes(key));
   const {
-    // head = '', // @todo: pending to implement
     userProvider,
     keepState,
     stateStorage,
@@ -49,6 +69,8 @@ const ContainerSettings = () => {
     expirationTimePath = 'expire_at',
     refreshExpirationTimePath = 'refresh_expire_at',
     sessionHintCookie = '',
+    sessionExchangeUrl = '',
+    mfaUrl = '',
     sessionGate = 'optimistic',
     sessionRevalidateSeconds = 300,
     debugMode = false
@@ -59,6 +81,16 @@ const ContainerSettings = () => {
       void eventBridge.emit('main', 'schemaUpdateSettings', '', 'stateStorage');
       setSettings(state => ({ ...state, keepState: e.target.checked }));
       void eventBridge.emit('main', 'schemaUpdateSettings', e.target.checked, 'keepState');
+    },
+    [eventBridge]
+  );
+
+  const handleChangeStateKeys = useCallback(
+    (setting: StateKeySetting) => (value: string) => {
+      const keys = parseStateKeys(value);
+      setKeyTexts(texts => ({ ...texts, [setting]: value }));
+      setSettings(state => ({ ...state, [setting]: keys }));
+      void eventBridge.emit('main', 'schemaUpdateSettings', keys, setting);
     },
     [eventBridge]
   );
@@ -83,9 +115,6 @@ const ContainerSettings = () => {
           [name]: value
         }));
         void eventBridge.emit('main', 'schemaUpdateSettings', value, name);
-      } else if (name === 'head') {
-        // setSettings(state => ({ ...state, [name]: e }));
-        // eventBridge.emit('main', 'schemaUpdateSettings', e, name);
       } else {
         setSettings(state => ({ ...state, [name]: value }));
         void eventBridge.emit('main', 'schemaUpdateSettings', value, name);
@@ -170,6 +199,20 @@ const ContainerSettings = () => {
                 value={logoutUrl}
                 onChange={handleChange('logoutUrl')}
                 label="API Logout Url"
+              />
+              <Input
+                size="sm"
+                name="mfaUrl"
+                value={mfaUrl}
+                onChange={handleChange('mfaUrl')}
+                label="API Second Factor Url (Optional) - completes a sign-in that asked for a code"
+              />
+              <Input
+                size="sm"
+                name="sessionExchangeUrl"
+                value={sessionExchangeUrl}
+                onChange={handleChange('sessionExchangeUrl')}
+                label="Session Exchange Url (Optional) - for a sign-in that happens in the browser"
               />
               <Input
                 size="sm"
@@ -278,6 +321,44 @@ const ContainerSettings = () => {
               <option value="sessionStorage">Session Storage</option>
             </Select>
           )}
+          {keepState && (
+            <Input
+              size="sm"
+              name="transientState"
+              value={keyTexts.transientState}
+              onChange={handleChangeStateKeys('transientState')}
+              label="Never keep these state keys"
+              placeholder="filter, tourStep, panelOpen"
+            />
+          )}
+          {keepState && (
+            <Input
+              size="sm"
+              name="paintedState"
+              value={keyTexts.paintedState}
+              onChange={handleChangeStateKeys('paintedState')}
+              label="Draw these kept keys on the server"
+              placeholder="toolPick, name"
+            />
+          )}
+          {keepState && (
+            <p className="text-xs text-gray-500 dark:text-zinc-400">
+              For what the first paint shows — the tool a toolbar shows, a name in an avatar. They are kept in a cookie
+              too, so a server-rendered page arrives with them instead of swapping them in. Small values only.
+            </p>
+          )}
+          {keepState && dottedKeys.length > 0 && (
+            <Alert intent="warning" size="xs" solid={false}>
+              {dottedKeys.join(', ')}: name the top-level key a Set State step writes, without dots — anything under it
+              goes with it.
+            </Alert>
+          )}
+          {keepState && bothKeys.length > 0 && (
+            <Alert intent="warning" size="xs" solid={false}>
+              {bothKeys.join(', ')}: in both lists. A key drawn on the server is kept; one never kept is not — remove it
+              from one of them.
+            </Alert>
+          )}
         </div>
         <div className="flex grow basis-0 flex-col gap-4 border-b border-gray-300 p-6">
           <Heading as="h4">Debugging</Heading>
@@ -295,17 +376,6 @@ const ContainerSettings = () => {
             label="Dev tools on the published SSR site (*.plitzi.app)"
           />
         </div>
-        {/* <div className="p-6 border-b border-gray-300 grow basis-0 flex flex-col gap-4">
-        <Heading type="h4">Space Settings</Heading>
-        <CodeMirror
-          value={head}
-          theme="dark"
-          className="min-h-[300px]"
-          lineWrapping
-          onChange={handleChange('head')}
-          mode="html"
-        />
-      </div> */}
       </Card.Body>
     </Card>
   );

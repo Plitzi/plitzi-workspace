@@ -1,6 +1,19 @@
-import { format, parseISO, differenceInMilliseconds, formatDistanceToNow, getTime, isValid, parse } from 'date-fns';
-import { enUS, es, pt } from 'date-fns/locale';
-import { toZonedTime } from 'date-fns-tz';
+/**
+ * One function per import, from its own subpath — never the package root.
+ *
+ * This module is published file by file, so nothing tree-shakes it for a server: `from 'date-fns'` loaded all 826 of
+ * the package's modules, and `from 'date-fns/locale'` every locale there is, for a handful of functions and three
+ * languages. On a page server that was the single largest cost of starting at all — about 300 MB of resident memory,
+ * held for the life of the process.
+ */
+import { differenceInMilliseconds } from 'date-fns/differenceInMilliseconds';
+import { format } from 'date-fns/format';
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { getTime } from 'date-fns/getTime';
+import { enUS } from 'date-fns/locale/en-US';
+import { es } from 'date-fns/locale/es';
+import { pt } from 'date-fns/locale/pt';
+import { parseISO } from 'date-fns/parseISO';
 
 import type { FormatDistanceToNowOptions, Locale } from 'date-fns';
 
@@ -57,6 +70,25 @@ export function formatDate(
   return format(d, formatStr, { locale: locales[locale] });
 }
 
+/**
+ * The same instant, moved so that its local fields read what its UTC fields do — which is how `format`, reading local
+ * fields, prints UTC. `setFullYear` because the constructor reads years 0–99 as 1900–1999.
+ */
+const utcWallClock = (d: Date): Date => {
+  const wallClock = new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    d.getUTCHours(),
+    d.getUTCMinutes(),
+    d.getUTCSeconds(),
+    d.getUTCMilliseconds()
+  );
+  wallClock.setFullYear(d.getUTCFullYear());
+
+  return wallClock;
+};
+
 export function formatDateUTC(
   date?: string | number | Date,
   formatStr: string = 'dd MMMM, yyyy',
@@ -68,10 +100,14 @@ export function formatDateUTC(
 
   const d = parseDate(date);
 
-  return format(toZonedTime(d, 'UTC'), formatStr, { locale: locales[locale] });
+  return format(utcWallClock(d), formatStr, { locale: locales[locale] });
 }
 
-/** Formats a UTC timestamp/string to local timezone */
+/**
+ * Formats a UTC timestamp/string in the local timezone. A `Date` is an instant and `format` reads its local fields, so
+ * there is nothing to convert: moving it first is what printed the repeated hour at the end of daylight saving time an
+ * hour off.
+ */
 export function formatUTCToLocal(
   date?: string | number | Date,
   formatStr: string = 'dd MMMM, yyyy HH:mm',
@@ -81,11 +117,7 @@ export function formatUTCToLocal(
     return '';
   }
 
-  const d = parseDate(date);
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const localDate = toZonedTime(d, timeZone);
-
-  return format(localDate, formatStr, { locale: locales[locale] });
+  return format(parseDate(date), formatStr, { locale: locales[locale] });
 }
 
 /**
@@ -149,29 +181,3 @@ export function isValidFormat(formatStr: string): boolean {
 export const toUnixSeconds = (input: string | number | Date): string => {
   return Math.floor(getTime(parseDate(input)) / 1000).toString();
 };
-
-/** Strictly validates whether a string matches a given date-fns format. */
-export function isDate(value: string, formatStr: string): boolean {
-  if (typeof value !== 'string') {
-    return false;
-  }
-
-  try {
-    // 1. Parse date using date-fns
-    const parsed = parse(value, formatStr, new Date());
-
-    // 2. Check if parsed date is valid
-    if (!isValid(parsed)) {
-      return false;
-    }
-
-    // 3. Strict format validation:
-    // Re-format parsed date and compare with original input
-    // If they differ → input didn't strictly match the format
-    const reformatted = format(parsed, formatStr);
-
-    return reformatted === value;
-  } catch {
-    return false;
-  }
-}

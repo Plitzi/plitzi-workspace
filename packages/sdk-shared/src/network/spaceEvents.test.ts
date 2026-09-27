@@ -26,6 +26,16 @@ describe('what a payload has to look like', () => {
     expect(validateSpaceEvent('SPACE_UPDATE_SETTINGS', { path: 'a.b', value: 3 }).ok).toBe(true);
   });
 
+  /** A plugin travels as the space lists it — what a builder needs to load its definition without asking again. */
+  it('carries a plugin whole, and refuses one without an address to load it from', () => {
+    const plugin = { type: 'seatPicker', resource: 'https://cdn.test/seat-picker.zip', settings: {} };
+
+    expect(validateSpaceEvent('SPACE_ADD_PLUGIN', { plugin }).ok).toBe(true);
+    expect(validateSpaceEvent('SPACE_UPDATE_PLUGIN', { plugin: { ...plugin, settings: { rows: 12 } } }).ok).toBe(true);
+    expect(validateSpaceEvent('SPACE_REMOVE_PLUGIN', { pluginType: 'seatPicker' }).ok).toBe(true);
+    expect(validateSpaceEvent('SPACE_ADD_PLUGIN', { plugin: { type: 'seatPicker', settings: {} } }).ok).toBe(false);
+  });
+
   it('rejects a payload missing what the handler will read', () => {
     const result = validateSpaceEvent('SPACE_MOVE_ELEMENT', { from: 'a', to: 'b', elementId: 'el1' });
 

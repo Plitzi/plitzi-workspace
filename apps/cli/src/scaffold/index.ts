@@ -9,6 +9,8 @@ import { visualFiles } from './visual';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
+export { projectDeclarations } from './plugin';
+
 export {
   PACKAGE_MANAGERS,
   detectManagerVersion,
@@ -17,7 +19,17 @@ export {
   runCommand
 } from './packageManager';
 
-export type { CreateAnswers, PackageManager, ProjectFiles } from './types';
+export {
+  declarationsRegistry,
+  elementsRegistry,
+  pluginNameProblem,
+  pluginNames,
+  scaffoldElement,
+  scaffoldPlugin
+} from './pluginPackage';
+
+export type { PluginNames } from './pluginPackage';
+export type { CreateAnswers, PackageManager, PluginAnswers, ProjectFiles } from './types';
 
 /**
  * Every file of a generated project, assembled from the two decisions that shape it.

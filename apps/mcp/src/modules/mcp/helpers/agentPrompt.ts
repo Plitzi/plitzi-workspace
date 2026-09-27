@@ -33,30 +33,46 @@ const TOOLS = [
   '• plitzi_validate — check a batch of operations without executing; returns teachable errors and warnings.',
   '• plitzi_apply — persist a batch of operations. Pass dryRun to preview the full diff without writing, and',
   '  expectedResourceVersions to guard against concurrent edits (apply and search hand back the versions you need).',
-  '• plitzi_preview / plitzi_screenshot — render an element/page already in the schema (HTML / image).',
+  '• plitzi_preview / plitzi_screenshot — render a page (HTML / PNG), with unsaved operations applied if you pass them.',
+  '  plitzi_screenshot view:"accessibility" reads it as a screen reader or a browser agent does, listing what has no name.',
+  '• plitzi_render — show the user an offline widget; it never touches the space (read plitzi://render/guide).',
   'Discover → browse resources. Find a name → plitzi_search. Fetch known URIs → plitzi_read. Do not confuse them.'
 ].join('\n');
 
 const RESOURCES = [
   '━━ MCP RESOURCES (read) ━━',
-  'Read plitzi://primer/{env} FIRST — a cold-start bundle: guide + types + css-properties + page/definition/variable',
-  'summaries in one call. Then, on demand:',
+  'Read plitzi://primer/{env} FIRST — a cold-start bundle: the guide’s quickstart + types + css-properties +',
+  'page/definition/variable summaries in one call. Then, on demand:',
   '• plitzi://guide — full usage reference.',
   '• plitzi://types — element types observed in this space (props, slots, subTypes, label/description/category).',
   '• plitzi://css-properties — valid kebab-case CSS property keys.',
   '• plitzi://schema/{env}/pages , /{ref} — page summaries, then one page as a skeleton tree.',
+  '• plitzi://schema/{env}/layouts — shared layout shells (header/sidebar/footer) and the pages inside each.',
   '• plitzi://folders/{env} — page folders (the sidebar tree).',
-  '• plitzi://definitions/{env} , plitzi://style-variables/{env} — style classes and design tokens.',
+  '• plitzi://definitions/{env} , plitzi://style-variables/{env} , plitzi://fonts/{env} — style classes, design',
+  '  tokens and the font families the space loads.',
   '• plitzi://interactions/{env} — interaction actions + built-in globalCallbacks with their source + param schema.',
   '• plitzi://data-sources/{env} — data-source paths and binding targets (vocabulary for upsertBinding).',
+  '• plitzi://connectors/{env} , plitzi://connector-presets — CMS/API connectors (this space’s, and working ones).',
+  '• plitzi://actions/{env} , /tasks — server actions, and the tasks this deployment can build them from.',
+  '• plitzi://changes/{env} , /{id} — the change history (read-only): who changed what, before and after.',
   '• plitzi://settings/{env} — space-level settings.'
+].join('\n');
+
+const ACCESSIBILITY = [
+  '━━ ACCESSIBILITY ━━',
+  'Screen readers and browser agents (Claude in Chrome) work a page through its accessibility tree, so build every page',
+  'to be usable without sight: a button or link has words (an icon-only button a `title`; a link wrapping a card a',
+  '`label`), a field a `label` (`hideLabel: true` keeps it out of sight), an image an `alt` or `decorative: true`.',
+  'Clicks go on a button (it holds children) or a link — never on a container, text or image. Toggles bind',
+  '`ariaPressed`, openers `ariaExpanded`. Headings step down one level at a time. The linter warns on each of these.'
 ].join('\n');
 
 const NAVIGATION = [
   '━━ NAVIGATION & DYNAMIC PAGES ━━',
   'To move between pages, PREFER the Link element over an interaction — it is a CONTAINER that wraps any children and',
   'navigates on click. mode "page" links to another space page (href = the target page); mode "internal" takes a',
-  'path inside the space and resolves {{token}} templates in it (e.g. /posts/{{postId}}); mode "external" is a full',
+  'path inside the space and resolves {{token}} templates in it (e.g. posts/{{postId}}); mode "external" is a full',
   'URL. Reach for the navigate globalCallback only when navigation must be one step inside a larger flow.',
   'A page slug is RELATIVE — never start it with "/" (the runtime prepends it). Folder slugs PREPEND to the page',
   'slug, so a page at slug "post" inside folders "blog" > "2024" resolves to /blog/2024/post.',
@@ -119,4 +135,4 @@ const INTERACTIONS = (): string =>
  *  authoritative about: its editing model, tools, resources and interaction vocabulary. It intentionally does NOT
  *  cover a consumer’s own tools (previews, design helpers) or product framing (modes, identity, security). */
 export const buildAgentGuide = (): string =>
-  [EDITING_MODEL, '', TOOLS, '', RESOURCES, '', NAVIGATION, '', INTERACTIONS()].join('\n');
+  [EDITING_MODEL, '', TOOLS, '', RESOURCES, '', ACCESSIBILITY, '', NAVIGATION, '', INTERACTIONS()].join('\n');

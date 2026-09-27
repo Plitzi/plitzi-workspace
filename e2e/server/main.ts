@@ -1,12 +1,10 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { mcpExtensions } from '@plitzi/sdk-mcp';
 import { createServer } from '@plitzi/sdk-server';
 
-import { sampleId, sampleSpace } from '../spaces';
+import { sampleSpace } from '../spaces';
+import { getRscData, plugins } from './sample';
 
-import type { OfflineDataRaw, Schema, SSRPageAdapters, SSRRscContext, SSRRscData, Style } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw, Schema, SSRPageAdapters, Style } from '@plitzi/sdk-shared';
 
 /** The suite's own server.
  *
@@ -23,29 +21,7 @@ import type { OfflineDataRaw, Schema, SSRPageAdapters, SSRRscContext, SSRRscData
 export const PORT = Number(process.env.PORT ?? 5200);
 export const PREVIEW_SECRET = 'e2e-preview-secret';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-
 let space: OfflineDataRaw = sampleSpace();
-
-const plugins = {
-  serverInfo: { js: path.resolve(here, 'plugins/ServerProbe.tsx'), action: 'compile' as const },
-  clientInfo: { js: path.resolve(here, 'plugins/ClientProbe.tsx'), action: 'compile' as const },
-  sharedInfo: { js: path.resolve(here, 'plugins/SharedProbe.tsx'), action: 'compile' as const }
-};
-
-/** Fixed values, not timestamps: a spec asserting on `renderedAt` would be asserting on the clock.
- *
- *  Keyed by the ELEMENT ID, which is what the runtime looks a slice up by — an authored space derives those, so
- *  they are resolved from the name the space gave the element rather than written down. */
-const SLICES: Record<string, unknown> = {
-  [sampleId('rsc-server')]: { message: 'from the server', nodeVersion: process.version },
-  [sampleId('rsc-shared')]: { message: 'from both' }
-};
-
-// eslint-disable-next-line @typescript-eslint/require-await
-const getRscData = async ({ ids }: SSRRscContext): Promise<SSRRscData> => ({
-  serverData: ids?.length ? Object.fromEntries(ids.filter(id => id in SLICES).map(id => [id, SLICES[id]])) : SLICES
-});
 
 const adapters: SSRPageAdapters = {
   getOfflineData: () => Promise.resolve(space),

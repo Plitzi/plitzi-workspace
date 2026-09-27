@@ -21,7 +21,7 @@ export const generatePluginModule = async (url: string): Promise<PlitziModule | 
 
     return (await import(/* @vite-ignore */ /* webpackIgnore: true */ URL.createObjectURL(moduleBlob))) as PlitziModule;
   } catch (e) {
-    console.log(e);
+    console.error(e);
 
     return undefined;
   }

@@ -50,7 +50,8 @@ const declaration = elementDeclaration<TextAttributes>()({
         base: {
           default: {
             'font-size': '14px',
-            'line-height': '24px',
+            // A ratio landing on the same pixels at this size: a class that resizes the text keeps the proportion.
+            'line-height': '1.714',
             display: 'inline'
           }
         }

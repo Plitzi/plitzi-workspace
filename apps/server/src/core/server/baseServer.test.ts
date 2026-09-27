@@ -90,3 +90,33 @@ describe('createHttpServer lifecycle', () => {
     await holder.close();
   });
 });
+
+/**
+ * One process — workers off, one asked for, one core — is the server as it was before workers existed: what the
+ * page server hands in is what the deployment gets, with nothing of the fleet in between.
+ */
+describe('createHttpServer as a single server', () => {
+  const cache = { invalidate: () => 0, clear: () => undefined, size: 0 };
+  const plugins: PluginRegistry = { register: () => undefined, invalidate: () => Promise.resolve() };
+  const single = (workers: SSRServerConfig['workers']) =>
+    createHttpServer({ httpVersion: 1, workers, adapters: {} }, () => handler, {
+      label: 'TEST',
+      cache,
+      plugins,
+      forgetPlugins: () => undefined
+    });
+
+  it.each([false, 1] as const)('hands back its own cache and plugins, unwrapped, with workers: %s', workers => {
+    const server = single(workers);
+
+    expect(server.cache).toBe(cache);
+    expect(server.plugins).toBe(plugins);
+  });
+
+  it('listens on no channel', () => {
+    const listening = process.listenerCount('message');
+    single(false);
+
+    expect(process.listenerCount('message')).toBe(listening);
+  });
+});

@@ -32,7 +32,7 @@ export const createServer = (config: SSRServerConfig, options: McpOptions = {}):
       port
     });
 
-    return makeHandler('MCP', buildContext, stages, config.compression);
+    return makeHandler('MCP', buildContext, stages, { compression: config.compression });
   };
 
   return createHttpServer(config, makeHandlerForPort, { label: 'MCP', cache: null, plugins: noPlugins });

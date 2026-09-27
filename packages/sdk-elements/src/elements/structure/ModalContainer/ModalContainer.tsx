@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useCallback, use, useEffect, useMemo, useState } from 'react';
+import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
@@ -10,6 +10,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import declaration from './declaration';
 import { metadataFromText } from './metadataFromText';
+import useModalDialog from './useModalDialog';
 import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -36,16 +37,21 @@ const ModalContainer = ({
 }: ModalContainerProps) => {
   const {
     id,
+    rootId,
+    visible,
     definition: { styleSelectors, label = 'Modal' },
     elementState,
     setElementState
   } = useElement();
   const sourceName = getSourceName(declaration.sourceType, id);
   const {
+    settings: { previewMode },
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = `${rootId}_${id}_title`;
 
   const handleOpenModal = useCallback(
     (params: InteractionCallbackParamValues<{ metadata?: Record<string, unknown> }>) => {
@@ -88,6 +94,8 @@ const ModalContainer = ({
     };
   }, [handleClickClose, handleOpenModal, label]);
 
+  useModalDialog({ panelRef, open: Boolean(previewMode) && visible, onClose: handleClickClose });
+
   useEffect(() => {
     if (elementState.visibility !== false) {
       void interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
@@ -112,11 +120,19 @@ const ModalContainer = ({
     >
       <div
         className={clsx('modal-container__background', styleSelectors.backgroundContainer)}
+        aria-hidden="true"
         onClick={handleClickBackground}
       />
-      <div className={clsx('modal-container__root', styleSelectors.rootContainer)}>
+      <div
+        ref={panelRef}
+        className={clsx('modal-container__root', styleSelectors.rootContainer)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
         <div className={clsx('modal-container__header', styleSelectors.headerContainer)}>
-          <div className={clsx('modal-container__header__title', styleSelectors.headerTitle)}>
+          <div id={titleId} className={clsx('modal-container__header__title', styleSelectors.headerTitle)}>
             {title ? title : 'Modal Header'}
           </div>
           <button

@@ -37,6 +37,9 @@ export const parseApplyFilters = (expr: string, issues?: string[]): FilterCall[]
  * Templates are evaluated on the shared page server, and a pattern that backtracks catastrophically would stall it for
  * every space it serves — so the language keeps the tests that cannot: `starts with`, `ends with` and `in`.
  */
+/** Twig's tests that take an argument: two words, then the argument in parentheses. */
+const WORDED_TESTS = ['same as', 'divisible by'] as const;
+
 const MATCHES_UNSUPPORTED =
   '`matches` is not supported: templates evaluate no regular expressions. Use `starts with`, `ends with` or `in`.';
 
@@ -139,8 +142,18 @@ class ExpressionParser extends Cursor {
     while (!this.eof()) {
       if (this.matchKeyword('is')) {
         this.skipWs();
-        const operator = this.matchKeyword('not') ? 'is not' : 'is';
-        left = { type: 'binary', operator, left, right: this.parseConcat() };
+        const negated = this.matchKeyword('not');
+        this.skipWs();
+        const worded = this.matchWordedTest();
+        if (worded) {
+          // `x is same as(y)`: a test with an argument, its own operator — never `same` compared with `x`.
+          const test: Expression = { type: 'binary', operator: worded, left, right: this.parseConcat() };
+          left = negated ? { type: 'unary', operator: 'not', operand: test } : test;
+          this.skipWs();
+          continue;
+        }
+
+        left = { type: 'binary', operator: negated ? 'is not' : 'is', left, right: this.parseConcat() };
         this.skipWs();
         continue;
       }
@@ -190,6 +203,30 @@ class ExpressionParser extends Cursor {
     }
 
     return left;
+  }
+
+  /**
+   * `same as(value)` / `divisible by(number)`: Twig's two tests that take an argument, each named in two words.
+   *
+   * Without these, `x is same as(false)` read `same` as a variable nobody set and compared `x` with it — true exactly
+   * when `x` was undefined, and the `as(false)` after it was silently dropped. A template testing a flag against
+   * `false` got an unset flag as the match.
+   */
+  private matchWordedTest(): (typeof WORDED_TESTS)[number] | null {
+    const start = this.pos;
+    for (const test of WORDED_TESTS) {
+      const [first, second] = test.split(' ');
+      if (this.matchKeyword(first)) {
+        this.skipWs();
+        if (this.matchKeyword(second)) {
+          return test;
+        }
+
+        this.pos = start;
+      }
+    }
+
+    return null;
   }
 
   /** `starts with` / `ends with`: two words, so one is not enough to commit — `starts` alone is a name. */
@@ -405,6 +442,12 @@ class ExpressionParser extends Cursor {
       return this.maybeTrailingFilters({ type: 'literal', value: name === 'true' });
     }
 
+    // Twig's null, in either spelling. Read as a name it was a variable nobody set — `undefined` — so
+    // `x is same as(null)` could never hold, and `x == null` answered for a value that did not exist.
+    if (name === 'null' || name === 'none') {
+      return this.maybeTrailingFilters({ type: 'literal', value: null });
+    }
+
     this.skipWs();
 
     // Check for single-param arrow function: name =>
@@ -472,7 +515,11 @@ class ExpressionParser extends Cursor {
       this.expectChar(Char.RBracket, 'a closing "]"');
 
       // A literal subscript is the same thing as a dotted key, so it joins the run rather than ending it.
-      if (staticRun && index.type === 'literal' && typeof index.value !== 'boolean') {
+      if (
+        staticRun &&
+        index.type === 'literal' &&
+        (typeof index.value === 'string' || typeof index.value === 'number')
+      ) {
         staticRun.push(String(index.value));
         continue;
       }

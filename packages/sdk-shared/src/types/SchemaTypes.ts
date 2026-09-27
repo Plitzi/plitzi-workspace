@@ -1,4 +1,5 @@
 import type { InteractionCallbackParamValues, InteractionCallbackType } from './InteractionTypes';
+import type { ChannelDeclarations } from './RealtimeTypes';
 import type { Style } from './StyleTypes';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -54,6 +55,17 @@ export type ElementBinding = {
   to: string;
 };
 
+/**
+ * What a trigger does when it fires again while the flow it started is still running.
+ *
+ * - `skip` (the default): the new firing is ignored — what keeps a double click from submitting twice.
+ * - `parallel`: every firing runs its own flow, at the same time.
+ * - `queue`: every firing runs, one after another, in the order they came — none lost, none overlapping.
+ */
+export type WhileRunning = 'skip' | 'parallel' | 'queue';
+
+export const WHILE_RUNNING_MODES: readonly WhileRunning[] = ['skip', 'parallel', 'queue'];
+
 export type ElementInteraction<T extends Record<string, unknown> = Record<string, unknown>> = {
   id: string;
   title: string;
@@ -70,6 +82,8 @@ export type ElementInteraction<T extends Record<string, unknown> = Record<string
   flowId: string;
   enabled: boolean;
   when?: RuleGroup;
+  /** On a trigger only: what a firing does while this flow is still running. `skip` when absent. */
+  whileRunning?: WhileRunning;
 };
 
 export type ElementDefinition = {
@@ -130,6 +144,20 @@ export type Schema = {
   settings: {
     keepState?: boolean;
     stateStorage?: 'localStorage' | 'sessionStorage';
+    /**
+     * Keys of `runtime.state` that are never kept, even with `keepState` on: they are not written, not brought back,
+     * and a value one of them already holds survives the moment the rest is restored. For state that must start fresh
+     * on every visit — a demo, a panel somebody left open, a step of a walkthrough. Top-level keys, as `setState`
+     * writes them.
+     */
+    transientState?: string[];
+    /**
+     * Keys of `runtime.state` the first paint depends on — the tool a toolbar shows, a name in an avatar — kept in a
+     * cookie as well as in `stateStorage`, so the server renders with them and the page does not swap them in after
+     * hydration. Small values only: the cookie travels with every request and holds at most a few kilobytes. Needs
+     * `keepState`; a key cannot be both painted and transient. Top-level keys, as `setState` writes them.
+     */
+    paintedState?: string[];
     customCss: string;
     /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
     userProvider?: 'basic' | 'custom' | '' | (string & {});
@@ -159,6 +187,13 @@ export type Schema = {
      */
     sessionExchangeUrl?: string;
     /**
+     * Where a sign-in that owed a second factor is completed: a password the backend answered with `mfaRequired` and
+     * an `mfaToken` resolves `auth.login` to `{ ok: false, reason: 'mfa', mfaToken }`, and `auth.login` with `mode:
+     * 'mfa'` posts `{ mfaToken, code }` here and adopts the session it answers with. Leave empty when the backend has
+     * no second factor.
+     */
+    mfaUrl?: string;
+    /**
      * What to do on a page that requires a session while the stored one is being re-checked. `optimistic` (the
      * default) renders from the stored session and signs out if the check disagrees; `strict` waits for the answer,
      * trading a round trip for never showing a signed-in page to someone whose session has just ended.
@@ -181,6 +216,11 @@ export type Schema = {
      * `{{ expression }}` gives its value (a number, a list); anything else gives text.
      */
     computed?: Record<string, string>;
+    /**
+     * The realtime channels the space offers, by topic pattern: `{ 'board:{id}': { access: { mode: 'public' } } }`.
+     * A page subscribes to and publishes on a topic one of them matches, and on nothing else.
+     */
+    channels?: ChannelDeclarations;
   };
   rsc?: SchemaRsc;
   pages: Element['id'][];

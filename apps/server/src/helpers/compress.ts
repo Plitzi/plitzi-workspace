@@ -9,7 +9,8 @@ export const DEFAULT_COMPRESSION = {
   encodings: ['br', 'gzip'] as ('br' | 'gzip')[],
   // Below about a KB the compressed body plus its headers is no smaller, and the CPU is spent for nothing.
   threshold: 1024,
-  brotliQuality: 4,
+  brotliQuality: 2,
+  keptBrotliQuality: 6,
   gzipLevel: 6
 };
 
@@ -63,10 +64,12 @@ export const selectEncoding = (
   return compression.encodings.find(encoding => accepted.has(encoding) || accepted.has('*')) ?? 'identity';
 };
 
+/** `kept`: the result is stored and served again, so it is worth compressing harder once. */
 export const compressBody = (
   body: string,
   encoding: ContentEncoding,
-  compression: ResolvedCompression = DEFAULT_COMPRESSION
+  compression: ResolvedCompression = DEFAULT_COMPRESSION,
+  kept = false
 ): Buffer | string => {
   if (encoding === 'identity' || body.length < compression.threshold) {
     return body;
@@ -74,7 +77,11 @@ export const compressBody = (
 
   const buf = Buffer.from(body, 'utf-8');
   if (encoding === 'br') {
-    return brotliCompressSync(buf, { params: { [constants.BROTLI_PARAM_QUALITY]: compression.brotliQuality } });
+    const quality = kept ? compression.keptBrotliQuality : compression.brotliQuality;
+
+    return brotliCompressSync(buf, {
+      params: { [constants.BROTLI_PARAM_QUALITY]: quality, [constants.BROTLI_PARAM_SIZE_HINT]: buf.length }
+    });
   }
 
   return gzipSync(buf, { level: compression.gzipLevel });

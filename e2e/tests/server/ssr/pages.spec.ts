@@ -1,7 +1,7 @@
 import { describeTarget, expect, test } from '../../../fixtures';
-import { expectSampleSpaceContent, expectSpaceRendered } from '../../../helpers/space';
-import { expectVisuallyHealthy } from '../../../helpers/visualHealth';
-import { sampleSpace } from '../../../spaces';
+import { expectPageWhole } from '../../../helpers/harness';
+import { expectSampleSpaceContent } from '../../../helpers/space';
+import { sampleAuthored } from '../../../spaces';
 
 describeTarget('server', subject => {
   /** The claim server rendering makes is not that the page renders — the SDK does that in the browser too — but
@@ -22,8 +22,7 @@ describeTarget('server', subject => {
     await page.goto(subject.origin);
 
     await expectSampleSpaceContent(page);
-    await expectSpaceRendered(page, sampleSpace());
-    await expectVisuallyHealthy(page);
+    await expectPageWhole(page, sampleAuthored(), { elements: 'all' });
 
     await capture('server-rendered');
   });

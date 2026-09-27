@@ -1,7 +1,7 @@
 export { createServer, resolveServices } from './core/createServer';
 export { closeOnSignals } from './core/server/closeOnSignals';
 export { registerHealthCheck, buildHealthPayload } from './core/health';
-export { consoleLogger, renderLogEvent } from './helpers/serverLog';
+export { consoleLogger, isLogged, logLevelOf, renderLogEvent, serverLog } from './helpers/serverLog';
 export type { HealthCheckApp, HealthIdentity } from './core/health';
 export { createCloudAdapters } from './adapters/cloudAdapters';
 export { createJsonAdapters } from './adapters/jsonAdapters';
@@ -20,6 +20,8 @@ export {
 // `@plitzi/sdk-mcp` — applying unsaved operations is the tool engine's job, not the renderer's.
 export { createLocalFontStore, hostedPathsOf } from './core/fontStore';
 export { createMemoryDraftStore, takeDraftOverride } from './modules/ssr/preview';
+export { createMemoryPubSub } from './modules/realtime/memoryPubSub';
+export { createRedisPubSub } from './modules/realtime/redisPubSub';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
 export { resolveRscData } from './modules/rsc/resolveRscData';
 export {
@@ -63,6 +65,8 @@ export type {
   ProviderPagination
 } from './modules/connectors';
 export type { FontStore, StoredFont } from './core/fontStore';
+export type { PubSubAdapter, SSRRealtimeConfig } from '@plitzi/sdk-shared';
+export type { RedisPubSubClients } from './modules/realtime/redisPubSub';
 export type { ResolvedServices } from './core/createServer';
 export type { Closable, CloseOnSignalsOptions } from './core/server/closeOnSignals';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';

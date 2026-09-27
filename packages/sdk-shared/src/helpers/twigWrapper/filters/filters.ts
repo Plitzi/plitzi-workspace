@@ -33,6 +33,15 @@ const compareValues = (a: unknown, b: unknown): number => {
   return String(a).localeCompare(String(b));
 };
 
+/** What JSON cannot hold — nothing, a function, a symbol — is Twig's `null`; a bigint is its digits. */
+const toJson = (value: unknown): string => {
+  if (value === undefined || typeof value === 'function' || typeof value === 'symbol') {
+    return 'null';
+  }
+
+  return typeof value === 'bigint' ? value.toString() : JSON.stringify(value);
+};
+
 const toStr = (value: unknown): string => {
   if (value === null || value === undefined) {
     return '';
@@ -265,8 +274,11 @@ export const filters: Record<string, TwigFilter> = {
   raw: value => wrapRaw(value),
 
   // ── Serialisation ────────────────────────────────────────────────────────────────
-  to_json: value => (typeof value === 'object' && value !== null ? JSON.stringify(value) : toStr(value)),
-  json_encode: value => (typeof value === 'object' && value !== null ? JSON.stringify(value) : toStr(value)),
+  // Twig's: the value as JSON, whatever it is — a string quoted and escaped, nothing at all as `null` — so what it
+  // prints can always be put inside a JSON document. Encoding objects alone printed `null` as nothing and a string
+  // bare, and the document around them stopped being JSON.
+  to_json: value => toJson(value),
+  json_encode: value => toJson(value),
   // Serialises an object so an asRaw result can be JSON.parsed back into typed data; leaves primitives untouched.
   object_as_json: value => (typeof value === 'object' && value !== null ? JSON.stringify(value) : value),
 

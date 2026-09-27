@@ -1,44 +1,55 @@
-import { isFeedWindow, seismicReport } from './feed';
+import { isEventId, quakeDetail } from './detail.ts';
+import { isFeedWindow, seismicReport } from './feed.ts';
 
 import type { ActionTask } from '@plitzi/sdk-server/actions';
 
 /**
  * The one thing this deployment can do on the server.
  *
- * A task is the extension point a deployment owns: registered here, offered in the builder's step catalog, and
- * addressed from an action document as `seismic.<action>`. Everything Plitzi needs to know about earthquakes is
- * this file and the one beside it.
+ * A task is the extension point a deployment owns: registered in `main.ts`, offered in the builder's step catalog,
+ * and addressed from an action document as `seismic.feed`. Everything Plitzi needs to know about earthquakes is this
+ * file and the one beside it.
  */
-
-/** A lone twig token keeps its type; an embedded one arrives as text. A numeric param has to survive both. */
-const toNumber = (value: string | number | undefined, fallback: number): number => {
-  const parsed = typeof value === 'number' ? value : Number.parseInt(value ?? '', 10);
-
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-};
-
-export const seismicFeedTask: ActionTask<{ window: string; limit: string | number }> = {
+export const seismicFeedTask: ActionTask<{ window: string }> = {
   namespace: 'seismic',
   action: 'feed',
   title: 'Seismic Feed',
-  description: 'Every earthquake the USGS has published in a window, newest first, with the day’s totals.',
+  description: 'Every earthquake the USGS has published in a window, newest first, with its totals and activity.',
   params: {
     window: {
       type: 'select',
       canBind: true,
-      defaultValue: 'month',
+      defaultValue: 'day',
       options: [
+        { label: 'Last hour', value: 'hour' },
         { label: 'Last 24 hours', value: 'day' },
-        { label: 'Last 7 days, M2.5+', value: 'week' },
-        { label: 'Last 30 days, M4.5+', value: 'month' }
+        { label: 'Last 7 days', value: 'week' },
+        { label: 'Last 30 days, M2.5+', value: 'month' }
       ],
       label: 'Window'
-    },
-    limit: { type: 'text', canBind: true, defaultValue: '40', label: 'Rows' }
+    }
   },
-  // An unknown window falls back rather than throwing: it arrives from a query string, and a URL somebody typed
-  // wrong should show the default page, not an error.
-  run: ({ window, limit }) => seismicReport(isFeedWindow(window) ? window : 'month', toNumber(limit, 40))
+  // An unknown window falls back rather than throwing: it arrives from a query string, and a URL somebody typed wrong
+  // should show the default page, not an error.
+  run: ({ window }) => seismicReport(isFeedWindow(window) ? window : 'day')
 };
 
-export const seismicTasks = [seismicFeedTask] as ActionTask<Record<string, unknown>>[];
+/** One event, closely: its shaking contours, how the fault moved, and where it ranks in the region since 1900. */
+export const seismicDetailTask: ActionTask<{ id: string }> = {
+  namespace: 'seismic',
+  action: 'detail',
+  title: 'Seismic Detail',
+  description: 'One earthquake’s ShakeMap contours, faulting and regional history, from the USGS.',
+  params: { id: { type: 'text', canBind: true, defaultValue: '', label: 'USGS event id' } },
+  // Refused rather than fetched: the id is interpolated into a USGS path, so only an id's own characters get there.
+  run: ({ id }) => {
+    if (!isEventId(id)) {
+      throw new Error(`"${String(id)}" is not a USGS event id`);
+    }
+
+    return quakeDetail(id);
+  }
+};
+
+// The catalog is heterogeneous by nature — each task declares its own params — and the server reads it as such.
+export const seismicTasks = [seismicFeedTask, seismicDetailTask] as ActionTask<Record<string, unknown>>[];

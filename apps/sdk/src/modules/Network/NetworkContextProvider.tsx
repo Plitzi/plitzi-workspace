@@ -1,4 +1,3 @@
-import { getApolloContext } from '@apollo/client/react';
 import { get, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useEffect, useMemo, useState, useCallback, use } from 'react';
 
@@ -10,7 +9,8 @@ import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalCo
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
-import type { ApolloClient, DocumentNode, FetchPolicy } from '@apollo/client';
+import { createGraphqlClient, GraphqlRequestError } from './graphqlClient';
+
 import type {
   OfflineDataRaw,
   Server,
@@ -35,6 +35,22 @@ export type NetworkContextProviderProps = {
   offlineDataType?: 'json' | 'yaml';
 };
 
+const initFailureMessage = (error: string | Error): string => {
+  if (!(error instanceof GraphqlRequestError)) {
+    return typeof error === 'string' ? error : error.message;
+  }
+
+  if (error.statusCode === 401) {
+    return 'Access not authorized';
+  }
+
+  if (error.failure === 'network') {
+    return 'Service not available';
+  }
+
+  return error.message;
+};
+
 const NetworkContextProvider = ({
   children,
   server,
@@ -50,7 +66,7 @@ const NetworkContextProvider = ({
   const { environment, debugMode } = useRenderSettings();
   const setSdkStore = useSdkStoreSetter();
   const offlineDataAvailable = offlineMode && !!offlineData && !!offlineData.schema;
-  const client = use(getApolloContext()).client;
+  const client = useMemo(() => createGraphqlClient(server.serverUrl, webKey), [server.serverUrl, webKey]);
   const [loading, setLoading] = useState(!(offlineMode && !!offlineData));
   const [error, setError] = useState<ReactNode | undefined>(undefined);
   const { components } = use(ComponentContext);
@@ -65,32 +81,15 @@ const NetworkContextProvider = ({
   const query = useCallback(
     async <T extends keyof SdkQueriesMap>(
       queryKey: T,
-      variables?: Record<string, unknown>,
-      fetchPolicy: FetchPolicy = 'network-only'
+      variables?: Record<string, unknown>
     ): Promise<{ success: boolean; result?: SdkQueriesMap[T]; error?: string | Error }> => {
-      const document = SdkQueries[queryKey];
-      if (!(document as DocumentNode | undefined)) {
-        setError('Query Not Found');
-
-        throw new Error(`Query ${queryKey} not found`);
-      }
-
-      let result: ApolloClient.QueryResult<SdkQueriesMap[T]> | undefined;
       try {
-        result = await client?.query<SdkQueriesMap[T]>({
-          query: document,
-          variables: { environment, ...variables },
-          fetchPolicy
-        });
+        const result = await client.request<SdkQueriesMap[T]>(SdkQueries[queryKey], { environment, ...variables });
+
+        return { success: true, result };
       } catch (e: unknown) {
-        return { success: false, result: undefined, error: e as Error };
+        return { success: false, result: undefined, error: e instanceof Error ? e : String(e) };
       }
-
-      if (!result) {
-        setError('Network Not Available, Please try again');
-      }
-
-      return { success: true, result: result?.data };
     },
     [client, environment]
   );
@@ -99,45 +98,25 @@ const NetworkContextProvider = ({
     async <T extends keyof SdkMutationsMap>(
       mutationKey: T,
       variables?: Record<string, unknown>,
-      includeEnvironment = true,
-      uploadOptions = {}
+      includeEnvironment = true
     ): Promise<{ success: boolean; result?: SdkMutationsMap[T]; error?: string | Error }> => {
-      if (!(SdkMutations[mutationKey] as DocumentNode | undefined)) {
+      const document: string | undefined = SdkMutations[mutationKey];
+      if (!document) {
         return { success: false, result: undefined, error: 'Mutation Not Found' };
       }
 
-      let result: ApolloClient.MutateResult<SdkMutationsMap[T]> | undefined;
-      // let abortHandler;
       try {
-        result = await client?.mutate<SdkMutationsMap[T]>({
-          mutation: SdkMutations[mutationKey],
-          variables: includeEnvironment ? { environment, ...variables } : variables,
-          context: {
-            fetchOptions: {
-              customFetch: false,
-              // onProgress: ev => {
-              //   setProgress(ev.loaded / ev.total);
-              // },
-              // onProgress: undefined,
-              // onAbortPossible: abortHandlerInternal => {
-              //   abortHandler = abortHandlerInternal;
-              // },
-              // onAbortPossible: undefined,
-              ...uploadOptions
-            }
-          }
-        });
+        const result = await client.request<SdkMutationsMap[T]>(
+          document,
+          includeEnvironment ? { environment, ...variables } : variables
+        );
+
+        // No unwrapping by mutation key: the SDK exposes no mutations of its own any more (writes go through the
+        // server's /_action endpoint), so the raw payload is the result.
+        return { success: true, result };
       } catch (e: unknown) {
-        return { success: false, result: undefined, error: e as Error };
+        return { success: false, result: undefined, error: e instanceof Error ? e : String(e) };
       }
-
-      if (!result) {
-        return { success: false, result: undefined, error: 'Network Not Available, Please try again' };
-      }
-
-      // No unwrapping by mutation key: the SDK exposes no mutations of its own any more (writes go through the
-      // server's /_action endpoint), so the raw payload is the result.
-      return { success: true, result: result.data };
     },
     [client, environment]
   );
@@ -148,18 +127,10 @@ const NetworkContextProvider = ({
       revisionAux = undefined;
     }
 
-    const response = await query('Init', { environment, revision: revisionAux }, 'network-only');
+    const response = await query('Init', { environment, revision: revisionAux });
     if (response.error) {
       setLoading(false);
-      if (typeof response.error === 'string') {
-        setError(response.error);
-      } else if ('statusCode' in response.error && response.error.statusCode === 401) {
-        setError('Access not authorized');
-      } else if ('networkError' in response.error && response.error.networkError) {
-        setError('Service not available');
-      } else {
-        setError(response.error.message);
-      }
+      setError(initFailureMessage(response.error));
 
       return;
     }

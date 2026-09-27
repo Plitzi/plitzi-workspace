@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import esbuild from 'esbuild';
 
+import { writeFileAtomic } from '../helpers/atomicFile';
+
 const EXTERNAL = [
   'react',
   'react-dom',
@@ -32,7 +34,8 @@ const ASSET_LOADERS: Record<string, esbuild.Loader> = {
 };
 
 /**
- * Everything that went into the bundle, so a dev server can tell when any of it has moved on.
+ * Everything that went into the bundle, so a server can tell when any of it has moved on: a dev server as it is
+ * edited, and any server — a deployment — when it finds a bundle built from something else (its content digest).
  *
  * The entry file is one file and a plugin is a directory: a component edited beside its `index.ts` leaves the entry's
  * timestamp exactly where it was, and a watcher looking only at that never rebuilds. esbuild already knows the answer
@@ -65,14 +68,15 @@ export const compilePlugin = async (
     minify: !devMode,
     splitting: false,
     logLevel: 'warning',
-    // Only where something watches for a change: a deployment's plugins do not move under it.
-    metafile: devMode
+    // What went in: what a dev server watches, and what the cached bundle's content digest is taken over.
+    metafile: true,
+    // Kept in memory and written file by file whole — another worker may be building or reading the same plugin.
+    write: false
   });
 
-  const hasCSS = await fs
-    .access(path.join(outDir, 'index.css'))
-    .then(() => true)
-    .catch(() => false);
+  await fs.mkdir(outDir, { recursive: true });
+  await Promise.all(result.outputFiles.map(output => writeFileAtomic(output.path, output.contents)));
+  const hasCSS = result.outputFiles.some(output => path.basename(output.path) === 'index.css');
 
   return { hasCSS, inputs: sourceInputs(result.metafile) };
 };

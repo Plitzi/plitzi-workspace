@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import { createFailureStreak } from './failureStreak';
+import { serverLog } from '../../../helpers/serverLog';
 import { ActionRunError } from '../runtime/errors';
 
 import type { ActionsModule } from '../index';
@@ -69,6 +71,8 @@ export type JobWorkerOptions = {
   backoff?: { baseMs?: number; maxMs?: number };
   /** Names this replica in the job history, so a bad one is identifiable. Defaults to the process and a random id. */
   workerId?: string;
+  /** Every failure, in place of the default report. By default a claim or a heartbeat that fails is a warning, and an
+   *  error once it has kept failing for a minute (see `createFailureStreak`); anything else is an error at once. */
   onError?: (error: unknown) => void;
 };
 
@@ -104,8 +108,11 @@ export const createJobWorker = ({
   leaseMs = 30_000,
   backoff = {},
   workerId = `${process.pid}-${randomUUID().slice(0, 8)}`,
-  onError = error => console.error('[Actions] job worker failed:', error)
+  onError: customOnError
 }: JobWorkerOptions): JobWorker => {
+  const onError = customOnError ?? ((error: unknown) => serverLog.error('Actions', 'job worker failed', error));
+  const claimFailures = createFailureStreak('Actions', 'job claim');
+  const heartbeatFailures = createFailureStreak('Actions', 'job heartbeat');
   const { baseMs = 30_000, maxMs = 15 * 60_000 } = backoff;
   const active = new Map<string, AbortController>();
   /** Every job this worker started, until it has settled — what `stop()` waits for. */
@@ -311,8 +318,8 @@ export const createJobWorker = ({
     }
 
     pass = poll()
-      .then(() => undefined)
-      .catch(onError)
+      .then(() => claimFailures.succeeded())
+      .catch(customOnError ?? claimFailures.failed)
       .finally(() => {
         pass = undefined;
       });
@@ -330,7 +337,13 @@ export const createJobWorker = ({
 
       timer = setInterval(() => void guarded(), pollMs);
       timer.unref();
-      heart = setInterval(() => void beat().catch(onError), Math.max(1_000, Math.floor(leaseMs / 3)));
+      heart = setInterval(
+        () =>
+          void beat()
+            .then(() => heartbeatFailures.succeeded())
+            .catch(customOnError ?? heartbeatFailures.failed),
+        Math.max(1_000, Math.floor(leaseMs / 3))
+      );
       heart.unref();
     },
     stop: async () => {
@@ -342,7 +355,7 @@ export const createJobWorker = ({
       await pass;
 
       if (inFlight.size > 0) {
-        console.info(`[Actions] waiting for ${inFlight.size} running job(s) to finish before stopping`);
+        serverLog.info('Actions', `waiting for ${inFlight.size} running job(s) to finish before stopping`);
       }
 
       /**

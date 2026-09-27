@@ -5,6 +5,7 @@ import getDateGroup from '@pmodules/AI/helpers/getDateGroup';
 import ConversationList from './components/ConversationList';
 import HistoryFooter from './components/HistoryFooter';
 import HistorySearch from './components/HistorySearch';
+import { GROUP_LABELS } from './helpers';
 
 import type { ConversationGroup, EnrichedConversation } from './types';
 import type { ConversationSummary } from '../../types';
@@ -15,13 +16,6 @@ export type HistoryPanelProps = {
   onClose: () => void;
   onSelect: (id: string) => void;
   onNew: () => void;
-};
-
-const DATE_GROUP_LABELS: Record<string, string> = {
-  today: 'Today',
-  yesterday: 'Yesterday',
-  week: 'This week',
-  older: 'Earlier'
 };
 
 const HistoryPanel = ({ conversations, currentConversationId, onClose, onSelect, onNew }: HistoryPanelProps) => {
@@ -66,7 +60,7 @@ const HistoryPanel = ({ conversations, currentConversationId, onClose, onSelect,
     const dateGroups = (['today', 'yesterday', 'week', 'older'] as const)
       .map(key => ({
         key,
-        label: DATE_GROUP_LABELS[key],
+        label: GROUP_LABELS[key],
         items: enrich(
           others.filter(c => getDateGroup(c.updatedAt) === key),
           false

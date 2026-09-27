@@ -5,6 +5,7 @@ import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
+import { RUNTIME_STYLE_ID } from '@plitzi/sdk-shared/style';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import OverQuotaNotice from '../components/OverQuotaNotice';
@@ -33,7 +34,7 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
 
   return (
     <SpaceContainer>
-      <style type="text/css" rel="stylesheet" data-id="plitzi-runtime-style">
+      <style type="text/css" rel="stylesheet" data-id={RUNTIME_STYLE_ID}>
         {style}
       </style>
       <PlitziServiceProvider value={plitziContextValue}>

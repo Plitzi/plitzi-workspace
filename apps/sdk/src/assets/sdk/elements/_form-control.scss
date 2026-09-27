@@ -111,13 +111,19 @@
     }
   }
 
+  // A real button, so a keyboard, a screen reader and a browser agent can reach it: the browser's own button look is
+  // taken off, and the icon inside keeps the field's colour and size.
   .form-input__icon {
     height: 100%;
+    margin: 0;
     padding-right: 4px;
     padding-left: 4px;
     display: flex;
     justify-content: center;
     align-items: center;
+    border: 0;
+    background: none;
+    font: inherit;
     color: inherit;
     cursor: pointer;
   }

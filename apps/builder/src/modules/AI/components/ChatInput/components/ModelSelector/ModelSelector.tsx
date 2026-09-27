@@ -2,7 +2,7 @@ import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal from '@plitzi/plitzi-ui/Modal';
 import clsx from 'clsx';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
 
@@ -26,14 +26,32 @@ const ModelSelector = ({
   onChange
 }: ModelSelectorProps) => {
   const [filter, setFilter] = useState('');
+  const [highlighted, setHighlighted] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleModalClose = useCallback(() => {
     setFilter('');
+    setHighlighted(0);
   }, []);
 
   const [id, open, onOpen, onClose] = useDisclosure({ onClose: handleModalClose });
+
+  const filtered = useMemo(() => {
+    const lower = filter.toLowerCase();
+
+    return filter
+      ? models.filter(m => m.name.toLowerCase().includes(lower) || m.id.toLowerCase().includes(lower))
+      : models;
+  }, [filter, models]);
+
+  const handleSelect = useCallback(
+    (modelId: string) => {
+      onChange(modelId);
+      onOpen();
+    },
+    [onChange, onOpen]
+  );
 
   useEffect(() => {
     if (!open) {
@@ -51,22 +69,16 @@ const ModelSelector = ({
         void onClose();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        // setHighlighted(h => Math.min(h + 1, flatList.length - 1));
+        setHighlighted(h => Math.min(h + 1, filtered.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        // setHighlighted(h => Math.max(h - 1, 0));
+        setHighlighted(h => Math.max(h - 1, 0));
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        // const item = flatList.at(highlighted);
-        // if (item) {
-        // onChange(item.id);
-        // }
-      } else if (/^[1-9]$/.test(e.key) && (e.metaKey || e.ctrlKey)) {
-        // e.preventDefault();
-        // const item = flatList.at(parseInt(e.key, 10) - 1);
-        // if (item) {
-        //   onChange(item.id);
-        // }
+        const model = filtered.at(highlighted);
+        if (model) {
+          handleSelect(model.id);
+        }
       }
     };
 
@@ -77,7 +89,7 @@ const ModelSelector = ({
       document.removeEventListener('mousedown', handler);
       document.removeEventListener('keydown', handlerKeyboard);
     };
-  }, [onClose, onOpen, open]);
+  }, [filtered, handleSelect, highlighted, onClose, onOpen, open]);
 
   useEffect(() => {
     if (open) {
@@ -85,24 +97,16 @@ const ModelSelector = ({
     }
   }, [open]);
 
-  const handleSearchChange = useCallback((value: string) => setFilter(value), []);
-
-  const handleSelect = useCallback(
-    (modelId: string) => {
-      onChange(modelId);
-      onOpen();
-    },
-    [onChange, onOpen]
-  );
+  // A new search is a new list, so the highlight starts over at its first match.
+  const handleSearchChange = useCallback((value: string) => {
+    setFilter(value);
+    setHighlighted(0);
+  }, []);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
   }, []);
 
-  const lower = filter.toLowerCase();
-  const filtered = filter
-    ? models.filter(m => m.name.toLowerCase().includes(lower) || m.id.toLowerCase().includes(lower))
-    : models;
   const displayLabel = currentModel?.split('/').pop() ?? 'model';
 
   return (
@@ -176,8 +180,14 @@ const ModelSelector = ({
             )}
 
             {!modelsLoading &&
-              filtered.map(m => (
-                <ModelOption key={m.id} model={m} isActive={m.id === currentModel} onSelect={handleSelect} />
+              filtered.map((m, i) => (
+                <ModelOption
+                  key={m.id}
+                  model={m}
+                  isActive={m.id === currentModel}
+                  isHighlighted={i === highlighted}
+                  onSelect={handleSelect}
+                />
               ))}
           </div>
 

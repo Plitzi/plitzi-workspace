@@ -1,5 +1,5 @@
 import { describeTarget, expect, test } from '../../fixtures';
-import { openHarness, renderSpace } from '../../helpers/harness';
+import { el, openHarness, renderSpace } from '../../helpers/harness';
 import { ORDERS_PATH, QUERY_IDS, querySpace } from '../../spaces';
 
 import type { Page } from '@playwright/test';
@@ -23,9 +23,11 @@ const answerOrders = async (page: Page) => {
   return { count: () => served };
 };
 
-const title = (page: Page) => page.locator(`.${QUERY_IDS.title}`);
+const space = querySpace();
 
-const togglePanel = (page: Page) => page.locator(`.${QUERY_IDS.toggle}`).click();
+const title = (page: Page) => el(page, space, QUERY_IDS.title);
+
+const togglePanel = (page: Page) => el(page, space, QUERY_IDS.toggle).click();
 
 describeTarget('harness', () => {
   test('a provider shown again inside its cache time answers without asking', async ({ page, step }) => {
@@ -34,7 +36,7 @@ describeTarget('harness', () => {
     await renderSpace(page, querySpace({ cache: true }));
 
     await step('a hidden provider asks nothing', async () => {
-      await expect(page.locator(`.${QUERY_IDS.toggle}`)).toBeVisible();
+      await expect(el(page, space, QUERY_IDS.toggle)).toBeVisible();
       expect(orders.count()).toBe(0);
     });
 
@@ -55,7 +57,7 @@ describeTarget('harness', () => {
     });
 
     await step('saying the orders changed asks again for the provider on screen', async () => {
-      await page.locator(`.${QUERY_IDS.invalidate}`).click();
+      await el(page, space, QUERY_IDS.invalidate).click();
       await expect(title(page)).toHaveText('Orders #2');
       expect(orders.count()).toBe(2);
     });
@@ -72,7 +74,7 @@ describeTarget('harness', () => {
     await expect(title(page)).toHaveText('Orders #1');
     await togglePanel(page);
 
-    await page.locator(`.${QUERY_IDS.invalidate}`).click();
+    await el(page, space, QUERY_IDS.invalidate).click();
     await page.waitForTimeout(300);
     expect(orders.count()).toBe(1);
 

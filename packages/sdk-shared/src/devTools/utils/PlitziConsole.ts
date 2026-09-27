@@ -1,5 +1,3 @@
-import { formatDate } from '../../helpers';
-
 import type { Log, LogInteraction, LogNavigation, ProviderCallback } from '../../types/DevToolsTypes';
 import type { ChangeListener } from '@plitzi/nexus';
 
@@ -10,6 +8,22 @@ type CallbackInternal = (
   params: Record<string, unknown> | Log['params'],
   time?: Log['time']
 ) => void;
+
+const pad = (value: number, width = 2): string => String(value).padStart(width, '0');
+
+/**
+ * `HH:mm:ss.SSS` in local time, by hand. Every log is stamped, and the SDK logs every store change, so a general
+ * date formatter here was a measurable share of rendering a page.
+ */
+const clockTime = (date: Date): string =>
+  `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${pad(date.getMilliseconds(), 3)}`;
+
+/**
+ * Whether a log nobody listens to yet may be kept for whoever listens later — the dev tools opening on a page that
+ * has been running. Only in a browser: a server process renders for everyone, so what it kept would be other
+ * visitors' logs, delivered to nobody and holding their state in memory.
+ */
+const canDeliverLater = (): boolean => typeof window !== 'undefined';
 
 type CallbackAddProvider = (methodName: string, callback: ProviderCallback) => void;
 
@@ -69,6 +83,10 @@ class PlitziConsole {
   // Private Methods
 
   #log(logType: Log['logType'], category: Log['category'], message: Log['message'], params: Log['params']) {
+    if (!this.callbackInternal && !canDeliverLater()) {
+      return;
+    }
+
     const time = this.getTime(true);
     if (!this.callbackInternal) {
       this.pendingLogs.push({ logType, category, message, params, time } as Log);
@@ -136,7 +154,7 @@ class PlitziConsole {
       return now;
     }
 
-    return formatDate(now, 'HH:mm:ss.SSS');
+    return clockTime(now);
   }
 
   info(category: Log['category'], message: Log['message'], params: Log['params']) {

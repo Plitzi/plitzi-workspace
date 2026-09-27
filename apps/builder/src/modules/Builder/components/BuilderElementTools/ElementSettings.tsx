@@ -54,13 +54,7 @@ const ElementSettings = ({
   } = use(BuilderContext);
   const { rootRef } = use(ContainerRootContext);
 
-  const getWindow = useCallback(() => {
-    // if (ref.current) {
-    //   return ref.current.contentWindow;
-    // }
-
-    return window;
-  }, []); // ref
+  const getWindow = useCallback(() => window, []);
 
   const plitziContextValue = useMemo<PlitziServiceContextValue>(
     () => ({

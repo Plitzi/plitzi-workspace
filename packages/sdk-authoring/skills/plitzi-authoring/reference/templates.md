@@ -8,7 +8,7 @@ Plitzi's templates are Twig, run by Plitzi's own interpreter. What a `{{ … }}`
 | --- | --- | --- |
 | a binding's `twigTemplate` transformer | the whole template: conditions, filters, `{% set %}`, loops, tests | `source` (the bound value), `sourceTo`, the globals, the variables by bare name, and every source around the element |
 | a flow step's params | the whole template | the trigger's payload and earlier steps by name, the globals, sources around the element |
-| an ATTRIBUTE (`href`, `src`, `content`…) | only `{{ name }}` and `{{ name|filter }}` tokens | the globals, the variables and the page's route params by bare name (`{{ apiUrl }}`, `{{ slug }}`), and every source around the element (`{{ list_games.item.slug }}`) |
+| an ATTRIBUTE (`href`, `src`, `content`…) | only `{{ name }}` tokens (a filter after the name is allowed) | the globals, the variables and the page's route params by bare name (`{{ apiUrl }}`, `{{ slug }}`), and every source around the element (`{{ list_games.item.slug }}`) |
 
 A **query parameter** is `navigation.queryParams.<name>` everywhere — never a bare name.
 
@@ -61,7 +61,8 @@ outside the element that publishes it — each with the name it should have been
   `{% apply upper %}…{% endapply %}`, `{% break %}`, `{% continue %}`.
 - Arrow functions in filters, closing over `{% set %}` variables: `rows|sort(r => r.at)|first`,
   `rows|sort((a, b) => b.score - a.score)`, `rows|filter(r => r.score >= min)`, `rows|map(r => r.name)`.
-- Tests: `is defined`, `is empty`, `is null`, `is iterable`, `is even`, `is odd`, and their `is not` forms.
+- Tests: `is defined`, `is empty`, `is null`, `is iterable`, `is even`, `is odd`, `is same as(x)` (strict: `false` is
+  not `'false'`, `0` or an unset value), `is divisible by(n)`, and their `is not` forms. `null` and `none` are literals.
 - Functions: `range`, `min`, `max`, `cycle`.
 - **Not supported**: `matches` (no regular expressions are evaluated — use `starts with`, `ends with`, `in`), macros,
   `include`/`extends`, and any filter or function not listed here. `authorSpace` refuses them, and anything else the
@@ -87,10 +88,16 @@ A lookup across two sources — a row joined to the stats around it:
 
 - **An empty list is false**, like an absent one. To tell "arrived and empty" from "not arrived":
   `{{ items is defined and items is empty }}`.
-- **`json_encode` of a string is the string**, unquoted. Do not build JSON by interpolating text a visitor typed —
-  pass objects as step params instead.
+- **`json_encode` prints JSON for any value** — a string quoted and escaped, nothing as `null` — so a JSON document
+  is built by encoding each value: `'{ "board": {{ id|json_encode }}, "timer": {{ timer|json_encode }} }'`. In a flow
+  step's params and an action's output, `"{{ text }}"` in quotes is safe too — a value inside a string literal of a
+  param written as a JSON document is escaped for it. Anywhere else (an attribute, a binding's template) it is not:
+  encode.
 - **Numbers**: `number_format(decimals, point, thousands)`; `round(precision)`.
-- **A template that renders a number hands on a number** in step params (`'1'` → `1`).
+- **A step param that is one `{{ expression }}` is that value, with its type**: a number stays a number, and a
+  string stays a string however it looks — a password typed `1234` arrives as `"1234"`. Nothing is guessed from the
+  text: to convert, declare the type where the value lands (`setState`'s `type`, the action's input field). Text around
+  the tokens is text, unless it makes a JSON object or array — then it is that document (see `json_encode` above).
 
 ## Dates
 

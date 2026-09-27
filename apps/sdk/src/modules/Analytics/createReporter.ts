@@ -63,8 +63,12 @@ export const createReporter = (config: AnalyticsConfig, batchSize = 20, flushInt
 
     // The key rides in the query string, not a header: `sendBeacon` cannot set one. The endpoint accepts
     // either, and only this path can send during unload.
+    //
+    // As text, which the collector reads as JSON: the one body a page on a customer's domain can post to the
+    // collector without asking first. A JSON type is preflighted, and a beacon always goes with credentials, which
+    // the platform only answers its own origins with — every beacon from a published site was refused there.
     if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-      const delivered = navigator.sendBeacon(endpoint, new Blob([body], { type: 'application/json' }));
+      const delivered = navigator.sendBeacon(endpoint, body);
       if (delivered) {
         return;
       }
@@ -72,9 +76,10 @@ export const createReporter = (config: AnalyticsConfig, batchSize = 20, flushInt
 
     // Beacon refused (over its size cap, or unavailable). keepalive gives fetch the same survive-unload
     // property; a failure here is dropped on purpose — analytics must never surface an error to a visitor.
+    // `no-cors` sends a text body whatever it is told, so it is told the truth.
     void fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       body,
       keepalive: true,
       mode: 'no-cors'

@@ -8,9 +8,12 @@ plitzi-workspace/
 │   ├── builder/     # Visual builder (@plitzi/plitzi-builder)
 │   ├── sdk/         # Plitzi SDK app (@plitzi/plitzi-sdk)
 │   ├── server/      # Page server: SSR / RSC (@plitzi/sdk-server)
-│   └── mcp/         # AI surface: MCP server (@plitzi/sdk-mcp)
+│   ├── mcp/         # AI surface: MCP server (@plitzi/sdk-mcp)
+│   ├── cli/         # Scaffold a server that renders a space you own (@plitzi/cli)
+│   └── desktop/     # Desktop client: sign in, browse your spaces, open one
 ├── packages/
 │   ├── sdk-auth/
+│   ├── sdk-authoring/   # Spaces and templates written in TypeScript; the linter every writer runs
 │   ├── sdk-dev-tools/
 │   ├── sdk-elements/
 │   ├── sdk-event-bridge/

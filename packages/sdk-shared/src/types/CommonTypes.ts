@@ -1,4 +1,5 @@
 import type { User } from './AuthTypes';
+import type { RealtimeTransport } from './RealtimeTypes';
 import type { SSRRenderResult, SSRRscData } from './ServerTypes';
 
 export type Environment = 'production' | 'staging' | 'development' | 'main';
@@ -47,6 +48,11 @@ export type ServerSSR = {
    *  is what tells a client flow that a `serverAction` step has nowhere to run, rather than letting it fail per
    *  click. A static export publishes nothing here and the step reports itself inert. */
   actionPath?: string;
+  /** Path where this origin's realtime channels answer. Published only by a server that mounts them: its absence is
+   *  what keeps a `channel` element closed in the builder, an embed or a static export. */
+  realtimePath?: string;
+  /** How pages connect to them — a stream (`sse`, when absent) or a socket (`websocket`). */
+  realtimeTransport?: RealtimeTransport;
   /** Channel the SSR render writes its response into (status, redirect). Server-side only and by reference: it never
    *  crosses to the browser, and nothing subscribes to it. */
   renderResult?: SSRRenderResult;

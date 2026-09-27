@@ -85,13 +85,13 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
           {
             type: 'upsertElement',
             pageRef: 'home',
-            element: { ref: 'c1', type: 'container', props: { title: 'Renamed' } }
+            element: { ref: 'c1', type: 'container', props: { subType: 'article' } }
           }
         ]
       },
       buildSpace()
     );
-    expect(res.elements?.find(e => e.ref === 'c1')?.props).toEqual({ title: 'Renamed' });
+    expect(res.elements?.find(e => e.ref === 'c1')?.subType).toBe('article');
   });
 
   it('omits the elements field for a delete-only batch', async () => {
@@ -141,6 +141,23 @@ describe('mcp-ai schema integrity gate (validateSchema)', () => {
     // Rollback: nothing persisted, c1 still sits under the page untouched.
     const page = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
     expect(page.tree.map(n => n.ref)).toEqual(['c1']);
+  });
+
+  // The subtree would end up holding itself: refused by the tree operation every writer shares, with the reason.
+  it('refuses to move an element inside one of its own descendants', async () => {
+    const res = await apply(
+      {
+        operations: [
+          { type: 'upsertElement', pageRef: 'home', parentRef: 'c1', element: { ref: 'inner', type: 'container' } },
+          { type: 'moveElement', pageRef: 'home', ref: 'c1', toParentRef: 'inner', position: 'inside' }
+        ]
+      },
+      buildSpace()
+    );
+
+    expect(res.applied).toBe(false);
+    expect(res.errors?.[0].message).toContain('"c1" cannot move inside "inner"');
+    expect(res.errors?.[0].hint).toContain('inside itself or one of its own descendants');
   });
 });
 

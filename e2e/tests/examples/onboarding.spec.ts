@@ -2,12 +2,12 @@ import { createHmac } from 'node:crypto';
 
 import { describeTarget, expect, test } from '../../fixtures';
 import { paintTrace, resetPaint, watchPaint } from '../../helpers/flicker';
+import { expectPageWhole } from '../../helpers/harness';
 import { mailFor, uniqueRecipient } from '../../helpers/mail';
 import { boardJob, callAction } from '../../helpers/schedules';
-import { RSC_IDS } from '../../helpers/space';
-import { expectDevToolsAvailable, expectSampleSpaceContent, expectSpaceRendered } from '../../helpers/space';
+import { expectDevToolsAvailable, expectSampleSpaceContent, RSC_IDS, WITHOUT_RSC } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
-import { sampleSpace } from '../../spaces';
+import { sampleAuthored } from '../../spaces';
 
 import type { APIRequestContext } from '@playwright/test';
 
@@ -35,8 +35,7 @@ describeTarget('render', subject => {
     await page.goto(subject.origin);
 
     await expectSampleSpaceContent(page);
-    await expectSpaceRendered(page, sampleSpace());
-    await expectVisuallyHealthy(page);
+    await expectPageWhole(page, sampleAuthored(), { elements: 'all', ...WITHOUT_RSC });
     await expectDevToolsAvailable(page);
 
     await capture('render');
@@ -300,8 +299,9 @@ describeTarget('server-actions-schedules', subject => {
     const html = await (await request.get(subject.origin)).text();
 
     expect(html).toContain('Minute heartbeat');
-    // A 9am Madrid digest reads as nine — beside the UTC instant every replica agrees on.
-    expect(html).toMatch(/\d{2}:00 UTC \(09:00 Europe\/Madrid\)/);
+    // A 9am Madrid digest reads as nine — beside the UTC instant every replica agrees on. It runs on working days, so
+    // seen from a weekend it is more than a day out and both sides carry the date as well.
+    expect(html).toMatch(/\d{2}:00 UTC \((?:[^)]*, )?09:00 Europe\/Madrid\)/);
     // Switched off, and still on the board: a missing row could not say so.
     expect(html).toContain('switched off');
   });

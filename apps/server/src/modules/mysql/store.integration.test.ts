@@ -283,6 +283,18 @@ describe.skipIf(!available)('the MySQL store, against a real database', () => {
       expect(await store.authAdapters.findByPendingEmail?.('confirm-me')).toBeUndefined();
     });
 
+    /** The step of the last code accepted is what refuses the same code twice: it has to survive the round trip. */
+    it('keeps a second factor whole, the step of its last accepted code included', async () => {
+      const id = await store.admin.ensureAccount({ username: 'itest6', email: 'itest6@example.test', password: 'pw' });
+      const record = { secret: 'JBSWY3DPEHPK3PXP', confirmedAt: 1_700_000_000, recoveryCodes: ['a1', 'b2'] };
+
+      await store.authAdapters.saveMfa?.(id, record);
+      expect(await store.authAdapters.loadMfa?.(id)).toEqual(record);
+
+      await store.authAdapters.saveMfa?.(id, { ...record, lastUsedStep: 56_666_666 });
+      expect(await store.authAdapters.loadMfa?.(id)).toEqual({ ...record, lastUsedStep: 56_666_666 });
+    });
+
     it('never resolves a blank confirmation token, however many rows have none', async () => {
       expect(await store.authAdapters.findByPendingEmail?.('')).toBeUndefined();
       expect(await store.authAdapters.findByPendingEmail?.('   ')).toBeUndefined();

@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
-import { descendantIds, empty, fail, findRootByRef, indexRemoveElements, resolveRef } from '../../../../helpers';
-import { pageUri, removeFromParent } from '../write';
+import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+
+import { empty, fail, findRootByRef, indexRemoveElements, resolveRef } from '../../../../helpers';
+import { pageUri } from '../write';
 
 import type { Space } from '../../../../helpers';
 import type { OpResult } from '../../../../helpers';
@@ -32,13 +35,8 @@ export const deleteElement = (space: Space, env: Env, op: DeleteElement): OpResu
     );
   }
 
-  const ids = [...descendantIds(space.schema, el.id), el.id];
-  const removed = ids.map(id => space.schema.flat[id]);
-  for (const id of ids) {
-    Reflect.deleteProperty(space.schema.flat, id);
-  }
-
-  removeFromParent(space, el);
+  const removed = [el.id, ...descendants(space.schema.flat, el.id)].map(id => space.schema.flat[id]);
+  new FlatMap({ flat: space.schema.flat }).removeElement(el.id);
   indexRemoveElements(space.schema, removed);
 
   return { ...empty(), deleted: 1, staleResources: [pageUri(env, op.pageRef)] };

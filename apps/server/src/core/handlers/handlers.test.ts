@@ -36,6 +36,11 @@ const build = () => {
       );
     },
     findByUsername: username => Promise.resolve(username === account.username ? account : undefined),
+    findByRefreshToken: token => {
+      const session = [...sessions.values()].find(held => held.refreshToken === token);
+
+      return Promise.resolve(session ? { ...account, refreshExpiresAt: session.refreshExpiresAt } : undefined);
+    },
     saveSession: (_userId, session) => {
       sessions.set(session.token, session);
 
@@ -162,9 +167,101 @@ describe('auth handlers on a plain object request', () => {
 
     expect(get.map(([path]) => path)).toContain('/capabilities');
     expect(get.map(([path]) => path)).toContain('/sessions');
+    expect(get.map(([path]) => path)).toContain('/refresh');
+    expect(post.map(([path]) => path)).toContain('/refresh');
     expect(post.map(([path]) => path)).toContain('/login');
     expect(post.map(([path]) => path)).toContain('/admin/account/delete');
-    expect(get.length + post.length).toBe(33);
+    expect(get.length + post.length).toBe(34);
+  });
+});
+
+/**
+ * `GET /refresh`, where a page server sends a browser whose access cookie has died to renew before the page renders.
+ * Mounted with the rest because `/auth` often lives on another host than the pages — the api beside them.
+ */
+describe('renewing on the way to a page', () => {
+  const DOCUMENT = { 'sec-fetch-mode': 'navigate', 'sec-fetch-dest': 'document' };
+
+  const signIn = async (auth: ReturnType<typeof build>) => {
+    const routes = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies });
+    const { res, sent } = response();
+    await routes
+      .find(route => route.path === '/login')
+      ?.handle(request({ body: { username: 'ada', password: 'password' } }), res);
+
+    return (sent.body as { refresh_token: string }).refresh_token;
+  };
+
+  const renew = (auth: ReturnType<typeof build>, over: Partial<AuthedRequest>) => {
+    const route = createAuthRouteHandlers({ api: auth.api, cookies: auth.cookies }).find(
+      candidate => candidate.path === '/refresh' && candidate.method === 'GET'
+    );
+    const { res, sent } = response();
+
+    return { sent, done: route?.handle(request({ path: '/refresh', method: 'GET', ...over }), res) };
+  };
+
+  it('renews with the refresh cookie and sends the browser back to a page on a sibling host', async () => {
+    const auth = build();
+    const refreshToken = await signIn(auth);
+    const { sent, done } = renew(auth, {
+      hostname: 'api.acme.test',
+      headers: { ...DOCUMENT, cookie: `plitzi_session_refresh=${refreshToken}` },
+      query: { redirect: 'https://www.acme.test/pricing?plan=pro' }
+    });
+    await done;
+
+    expect(sent.status).toBe(303);
+    expect(sent.headers['Location']).toBe('https://www.acme.test/pricing?plan=pro');
+    expect(sent.headers['Cache-Control']).toBe('no-store');
+    expect(sent.headers['Set-Cookie']).toEqual(expect.arrayContaining([expect.stringMatching(/^plitzi_session=/u)]));
+  });
+
+  it('sends the browser back even when the session cannot be renewed, and ends it', async () => {
+    const auth = build();
+    const { sent, done } = renew(auth, {
+      hostname: 'api.acme.test',
+      headers: { ...DOCUMENT, cookie: 'plitzi_session_refresh=revoked' },
+      query: { redirect: '/pricing' }
+    });
+    await done;
+
+    expect(sent.status).toBe(303);
+    expect(sent.headers['Location']).toBe('/pricing');
+    expect(sent.headers['Set-Cookie']).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^plitzi_session_hint=;.*Max-Age=0/u)])
+    );
+  });
+
+  it('never sends the browser to a host outside the session’s cookie domain', async () => {
+    const auth = build();
+    const { sent, done } = renew(auth, {
+      hostname: 'api.acme.test',
+      headers: DOCUMENT,
+      query: { redirect: 'https://evil.test/' }
+    });
+    await done;
+
+    expect(sent.headers['Location']).toBe('/');
+  });
+
+  // It rotates the session, and the refresh cookie rides on a cross-site `<img>` wherever it is `SameSite=None`.
+  it('tells anything but a whole-tab navigation to renew with POST', async () => {
+    const auth = build();
+    const refreshToken = await signIn(auth);
+    const saved = vi.spyOn(auth.api, 'refresh');
+    const { sent, done } = renew(auth, {
+      headers: {
+        'sec-fetch-mode': 'no-cors',
+        'sec-fetch-dest': 'image',
+        cookie: `plitzi_session_refresh=${refreshToken}`
+      }
+    });
+    await done;
+
+    expect(sent.status).toBe(405);
+    expect(sent.headers['Allow']).toBe('POST');
+    expect(saved).not.toHaveBeenCalled();
   });
 });
 

@@ -1,6 +1,8 @@
 {
   "extends": "../../../packages/sdk-shared/tsconfig.app.json",
   "compilerOptions": {
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
     "rootDir": "./",
     "noEmit": true,
     "types": ["node"],

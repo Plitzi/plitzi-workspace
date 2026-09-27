@@ -70,7 +70,8 @@ describe('resolving the policy', () => {
     expect(resolveCompression({ gzipLevel: 9 })).toEqual({
       encodings: ['br', 'gzip'],
       threshold: 1024,
-      brotliQuality: 4,
+      brotliQuality: 2,
+      keptBrotliQuality: 6,
       gzipLevel: 9
     });
   });
@@ -78,5 +79,19 @@ describe('resolving the policy', () => {
   // `false` becomes an empty list rather than a second shape to re-test at every use.
   it('expresses "never compress" the same way an empty list does', () => {
     expect(resolveCompression(false).encodings).toEqual([]);
+  });
+});
+
+describe('compressBody quality', () => {
+  // Repetitive but not trivially so: the kind of markup a page is, where the extra effort finds more to share.
+  const markup = Array.from({ length: 400 }, (_, index) => `<li class="item item-${index % 7}">Row ${index}</li>`).join(
+    ''
+  );
+
+  it('compresses a body that will be kept harder than one sent once', () => {
+    const once = compressBody(markup, 'br');
+    const kept = compressBody(markup, 'br', undefined, true);
+
+    expect(kept.length).toBeLessThan(once.length);
   });
 });

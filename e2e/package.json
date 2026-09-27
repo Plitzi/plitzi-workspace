@@ -12,12 +12,15 @@
     "lint": "TIMING=1 eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start:auth": "node --import tsx server/authServer.ts",
-    "start:published": "node --import tsx server/publishedServer.ts",
-    "start:published-devtools": "PORT=5206 E2E_SPACE_DEBUG_MODE=1 node --import tsx server/publishedServer.ts"
+    "start:published": "NODE_ENV=production node --import tsx server/publishedServer.ts",
+    "start:published-devtools": "NODE_ENV=production PORT=5206 E2E_SPACE_DEBUG_MODE=1 node --import tsx server/publishedServer.ts",
+    "start:workers": "NODE_ENV=production node --import tsx server/workersServer.ts",
+    "start:plugin": "node --import tsx server/pluginServer.ts"
   },
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
     "@plitzi/plitzi-sdk": "workspace:*",
+    "@plitzi/sdk-authoring": "workspace:*",
     "@plitzi/sdk-mcp": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
@@ -38,6 +41,6 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vite": "^8.3.0"
+    "vite": "^8.3.1"
   }
 }

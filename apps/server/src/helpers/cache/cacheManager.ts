@@ -1,7 +1,9 @@
+import { readHtmlCacheKey } from './keys';
+
 import type { TtlCache } from './TtlCache';
 import type { CacheFilter, CacheManager } from '@plitzi/sdk-shared';
 
-export const buildCacheManager = (store: TtlCache<string>): CacheManager => ({
+export const buildCacheManager = <T>(store: TtlCache<T>): CacheManager => ({
   invalidate(filter?: CacheFilter): number {
     if (!filter || Object.keys(filter).length === 0) {
       const count = store.size;
@@ -11,7 +13,7 @@ export const buildCacheManager = (store: TtlCache<string>): CacheManager => ({
     }
 
     return store.invalidateWhere(key => {
-      const [keySpaceId, keyEnvironment, , keyHostname] = key.split('\0');
+      const { spaceId: keySpaceId, environment: keyEnvironment, hostname: keyHostname } = readHtmlCacheKey(key);
       if (filter.spaceId !== undefined && keySpaceId !== String(filter.spaceId)) {
         return false;
       }

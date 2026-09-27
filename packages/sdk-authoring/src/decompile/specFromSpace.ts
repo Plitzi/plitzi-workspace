@@ -9,7 +9,7 @@ import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import { authorFlows, GLOBAL_SOURCES } from '../schema';
 import { css } from '../style';
 import { foldCustomCss } from './customCss';
-import { categoryOf, definitionOf, isRecord } from './documents';
+import { categoryOf, definitionOf, isRecord, withNamedIds } from './documents';
 import { readSelector, unwritableCss } from './styles';
 
 import type {
@@ -56,6 +56,7 @@ const classesOf = (selector: string): string[] => selector.split(/\s+/).filter(B
  */
 
 export type SpecCorrectionCode =
+  | 'legacy-element-id'
   | 'legacy-element-type'
   | 'unknown-element-type'
   | 'dropped-field'
@@ -160,8 +161,6 @@ const PAGE_ATTRIBUTES = new Set([
   'seoEnabled',
   'seoPageTitle',
   'seoPageDescription',
-  'keepState',
-  'stateStorage',
   'enabled'
 ]);
 
@@ -175,6 +174,8 @@ const LAYOUT_ATTRIBUTES = new Set(['folder', 'layout', 'layoutContainer']);
 export const SCHEMA_SETTINGS = [
   'keepState',
   'stateStorage',
+  'transientState',
+  'paintedState',
   'customCss',
   'userProvider',
   'tokenStorage',
@@ -189,10 +190,12 @@ export const SCHEMA_SETTINGS = [
   'refreshExpirationTimePath',
   'sessionHintCookie',
   'sessionExchangeUrl',
+  'mfaUrl',
   'sessionGate',
   'sessionRevalidateSeconds',
   'debugMode',
-  'computed'
+  'computed',
+  'channels'
 ] as const satisfies readonly (keyof Schema['settings'])[];
 
 const SETTING_NAMES = new Set<string>(SCHEMA_SETTINGS);
@@ -329,11 +332,25 @@ class SpecReader {
 
   private readonly droppedAttributes = new Map<string, number>();
 
+  private readonly documents: SpaceDocuments;
+
   constructor(
-    private readonly documents: SpaceDocuments,
+    documents: SpaceDocuments,
     private readonly options: SpecFromSpaceOptions
   ) {
-    this.flat = documents.schema.flat;
+    const { schema, renames } = withNamedIds(documents.schema);
+    for (const { from, to, fromIdRef } of renames) {
+      this.correct(
+        'legacy-element-id',
+        fromIdRef
+          ? `"${from}" is the key an older builder gave "${to}", whose id is its name now; renamed, and everything that pointed at it.`
+          : `"${from}" is not an id anything can name; renamed "${to}", and everything that pointed at it.`,
+        to
+      );
+    }
+
+    this.documents = { ...documents, schema };
+    this.flat = schema.flat;
     this.pluginTypes = new Set(options.pluginTypes ?? []);
     this.references = tokensOf(
       JSON.stringify([
@@ -342,8 +359,8 @@ class SpecReader {
           bindingCorpus(element.definition.bindings),
           stepCorpus(element.id, element.definition.interactions ?? {})
         ]),
-        documents.schema.settings,
-        documents.schema.variables
+        schema.settings,
+        schema.variables
       ])
     );
   }
@@ -365,6 +382,10 @@ class SpecReader {
     const ownCss = this.foldCustomCss(typeof written === 'string' ? written : '');
     const pageFolders = this.readFolders();
     const roots = this.collectRoots();
+    if (roots.pages.length === 0) {
+      throw new Error('The space has no pages, so there is nothing to write out: add one before exporting it as code.');
+    }
+
     this.countSelectorUses(roots);
     this.derived = this.derivedIds(roots);
 
@@ -376,8 +397,8 @@ class SpecReader {
 
     const classes = this.classesSpec(style.mode);
     // `customCss` is read above — what is left of it once the rules a class can hold have moved into their classes.
-    // `computed` too: a space declares it at its top, where authoring reads it, and not inside `settings`.
-    const { computed, ...settings } = this.readSettings(
+    // `computed` and `channels` too: a space declares them at its top, where authoring reads them, not in `settings`.
+    const { computed, channels, ...settings } = this.readSettings(
       Object.fromEntries(Object.entries(schema.settings).filter(([key]) => key !== 'customCss'))
     );
     const customCss = [ownCss, ...this.keptCss].filter(Boolean).join('\n\n');
@@ -394,6 +415,7 @@ class SpecReader {
       ...(schema.variables.length > 0 ? { schemaVariables: this.readSchemaVariables(schema.variables) } : {}),
       ...(isEmpty(settings) ? {} : { settings }),
       ...(computed && !isEmpty(computed) ? { computed } : {}),
+      ...(channels && !isEmpty(channels) ? { channels } : {}),
       ...(customCss ? { customCss } : {}),
       ...(schema.rsc ? { rsc: schema.rsc } : {}),
       ...(pageFolders.length > 0 ? { pageFolders } : {}),
@@ -958,10 +980,6 @@ class SpecReader {
       attributes.unauthorizedBehaviour === 'redirect' && typeof attributes.unauthorizedPageRedirect === 'string'
         ? attributes.unauthorizedPageRedirect
         : undefined;
-    const stateStorage =
-      attributes.stateStorage === 'localStorage' || attributes.stateStorage === 'sessionStorage'
-        ? attributes.stateStorage
-        : undefined;
     const seoTitle = typeof attributes.seoPageTitle === 'string' ? attributes.seoPageTitle : '';
     const seoDescription = typeof attributes.seoPageDescription === 'string' ? attributes.seoPageDescription : '';
 
@@ -980,8 +998,6 @@ class SpecReader {
       ...(layout ? { layout } : {}),
       ...(accessLevel ? { accessLevel } : {}),
       ...(redirect ? { unauthorizedRedirect: redirect } : {}),
-      ...(typeof attributes.keepState === 'boolean' ? { keepState: attributes.keepState } : {}),
-      ...(stateStorage ? { stateStorage } : {}),
       ...this.pageStyle(page.definition.styleSelectors.base),
       ...this.readFlows(page),
       body: this.childrenOf(page).map(child => this.readElement(child))
@@ -1507,7 +1523,10 @@ class SpecReader {
       ...(isEmpty(node.preview) ? {} : { preview: node.preview }),
       ...(on ? { on } : {}),
       ...(when ? { when } : {}),
-      ...(!node.enabled ? { enabled: false } : {})
+      ...(!node.enabled ? { enabled: false } : {}),
+      ...(node.type === 'trigger' && node.whileRunning && node.whileRunning !== 'skip'
+        ? { whileRunning: node.whileRunning }
+        : {})
     };
   }
 }

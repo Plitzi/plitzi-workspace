@@ -61,3 +61,39 @@ describe('ComponentProvider registry', () => {
     expect(getApi().getComponent('temp')).toBeUndefined();
   });
 });
+
+/**
+ * A host's plugins can change after the provider mounted — a plugin the server could not import is handed over only
+ * once hydration is done, and an application may add a `<PlitziSdk.Plugin>` later. The registry was built once, so
+ * such a plugin was never in it and its element rendered nothing at all.
+ */
+describe('ComponentProvider plugins handed over after mount', () => {
+  it('resolves a plugin the host adds later, keeps what was registered, and tells its consumers', () => {
+    const seen: ComponentContextValue[] = [];
+    const Probe = () => {
+      seen.push(use(ComponentContext));
+
+      return null;
+    };
+    const late = makeComponent('late');
+    const { rerender } = render(
+      <ComponentProvider localCustomComponents={{}}>
+        <Probe />
+      </ComponentProvider>
+    );
+    const first = seen[seen.length - 1];
+    first.register(makeComponent('remote'));
+
+    rerender(
+      <ComponentProvider localCustomComponents={{ late }}>
+        <Probe />
+      </ComponentProvider>
+    );
+    const latest = seen[seen.length - 1];
+
+    expect(latest.components.current.late).toBeDefined();
+    expect(latest.components.current.remote).toBeDefined();
+    // A new registry object is what a consumer memoised on it recomputes from.
+    expect(latest.components).not.toBe(first.components);
+  });
+});

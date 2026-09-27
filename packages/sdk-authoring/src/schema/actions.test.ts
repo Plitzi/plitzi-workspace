@@ -139,6 +139,26 @@ describe('defineAction', () => {
   });
 
   /**
+   * The runner walks `afterNode` from the trigger that fired and runs whatever it reaches. Chained one after the
+   * other, the second way in was run as a step of every run through the first — found migrating an e2e fixture.
+   */
+  it('heads the same chain from every way in, never one from another', () => {
+    const nodes = nodesOf(
+      minimal({
+        trigger: [
+          { type: 'render', access: 'public' },
+          { type: 'call', access: 'public' }
+        ]
+      })
+    );
+
+    expect([nodes.render.beforeNode, nodes.render.afterNode]).toEqual(['', 'rate']);
+    expect([nodes.call.beforeNode, nodes.call.afterNode]).toEqual(['', 'rate']);
+    expect(nodes.call.flowId).toBe(nodes.render.flowId);
+    expect(nodes.rate.beforeNode).toBe('render');
+  });
+
+  /**
    * The node map is keyed by id, so a repeated one does not add a step — it REPLACES one, and the flow that runs
    * is shorter than the one that was written with nothing saying so.
    */

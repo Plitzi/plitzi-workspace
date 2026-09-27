@@ -3,7 +3,13 @@ import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
 import { authorFlow } from './flows';
 
 import type { StepSpec } from './types';
-import type { ActionAccess, ActionEntry, ActionField, ActionTriggerParams } from '@plitzi/sdk-shared';
+import type {
+  ActionAccess,
+  ActionEntry,
+  ActionField,
+  ActionTriggerParams,
+  ElementInteraction
+} from '@plitzi/sdk-shared';
 
 /**
  * Authoring a server action.
@@ -200,6 +206,28 @@ const assertUniqueIds = (ids: string[], actionId: string): void => {
  * });
  * ```
  */
+/**
+ * Every way in after the first, heading the same chain.
+ *
+ * The runner walks `afterNode` from the trigger that fired and runs whatever it reaches, so a second trigger chained
+ * AFTER the first would be run as a step of every render — the chain is authored from the first way in, and each
+ * other one is written beside it pointing at the same first step: one action, several doors.
+ */
+const withDoors = (
+  chain: Record<string, ElementInteraction>,
+  doors: StepSpec[]
+): Record<string, ElementInteraction> => {
+  const [head, ...rest] = Object.values(chain);
+  const extra = doors.map(door => ({
+    ...authorFlow([door])[door.id ?? ''],
+    beforeNode: '',
+    afterNode: head.afterNode,
+    flowId: head.flowId
+  }));
+
+  return Object.fromEntries([head, ...extra, ...rest].map(node => [node.id, node]));
+};
+
 export const defineAction = (spec: ActionSpec): ActionEntry => {
   const triggers = Array.isArray(spec.trigger) ? spec.trigger : [spec.trigger];
   if (triggers.length === 0) {
@@ -235,8 +263,9 @@ export const defineAction = (spec: ActionSpec): ActionEntry => {
     ...(step.enabled === undefined ? {} : { enabled: step.enabled })
   });
 
+  const [first, ...otherDoors] = triggers.map((trigger, index) => triggerStep(trigger, triggerIds[index], spec.name));
   const steps: StepSpec[] = [
-    ...triggers.map((trigger, index) => triggerStep(trigger, triggerIds[index], spec.name)),
+    first,
     ...spec.steps.map(taskStep),
     { id: 'answer', type: 'task', action: 'flow.output', params: { values: spec.output ?? `{{ ${last.id} }}` } },
     // After the answer, because a run that reaches the handler has succeeded and ends there.
@@ -250,7 +279,7 @@ export const defineAction = (spec: ActionSpec): ActionEntry => {
     document: {
       name: spec.name,
       ...(spec.description ? { description: spec.description } : {}),
-      nodes: authorFlow(steps)
+      nodes: withDoors(authorFlow(steps), otherDoors)
     }
   };
 };

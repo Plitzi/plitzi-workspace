@@ -1,0 +1,42 @@
+import { describe, expect, it } from 'vitest';
+
+import { buildServerInfo } from './buildServerInfo';
+
+import type { SSRRequest, SSRServerConfig, ServerSSR } from '@plitzi/sdk-shared';
+
+/** A request as `parseRequest` makes one: a host it cannot trust leaves `hostname` empty. */
+const request = (host: string, protocol: 'http' | 'https' = 'http'): SSRRequest => ({
+  method: 'GET',
+  path: '/agents',
+  search: '',
+  url: '/agents',
+  hostname: /^[a-zA-Z0-9.-]+$/.test(host.split(':')[0]) ? host.split(':')[0] : '',
+  protocol,
+  headers: { host },
+  query: {},
+  ctx: {}
+});
+
+const config = { environment: 'production' } as SSRServerConfig;
+const ssr = {} as ServerSSR;
+
+describe('buildServerInfo', () => {
+  it('names the page’s origin with its port, as the browser’s own location does', () => {
+    const { location, origin } = buildServerInfo(request('127.0.0.1:4016'), config, ssr);
+
+    expect(origin).toBe('http://127.0.0.1:4016');
+    expect(location?.origin).toBe('http://127.0.0.1:4016');
+    expect(location?.host).toBe('127.0.0.1:4016');
+    expect(location?.hostname).toBe('127.0.0.1');
+  });
+
+  it('has no port to name on the default one', () => {
+    expect(buildServerInfo(request('pizarra.example', 'https'), config, ssr).location?.origin).toBe(
+      'https://pizarra.example'
+    );
+  });
+
+  it('keeps a forged host out of it', () => {
+    expect(buildServerInfo(request('evil.example"><script>'), config, ssr).location?.origin).toBe('http://');
+  });
+});

@@ -73,9 +73,6 @@ const Resources = () => {
           <Button.Icon icon="fa-solid fa-plus" />
           Add CDN Provider
         </Button>
-        {/* <Input placeholder="Search" value={filter} onChange={handleChange} label="">
-          <Input.Icon icon="fa-solid fa-magnifying-glass" />
-        </Input> */}
       </Flex>
       {!isLoading && (
         <div className="flex flex-col gap-4">

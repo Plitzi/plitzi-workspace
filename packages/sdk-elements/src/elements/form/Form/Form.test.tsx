@@ -52,8 +52,10 @@ const control = (
 ) => ({
   ref: { current: document.createElement('div') },
   className: '',
+  hideLabel: false,
   placeholder: '',
   autoComplete: false,
+  autoFocus: false,
   disabled: false,
   options: [],
   required: true,
@@ -384,5 +386,58 @@ describe('FormControl / on its own, with no form around it', () => {
     );
 
     expect(input('q').value).toBe('');
+  });
+});
+
+describe('Form / what assistive technology is told', () => {
+  beforeEach(() => {
+    interactionTrigger.mockClear();
+  });
+
+  it('marks a control that breaks a rule invalid, described by the message that says why', () => {
+    render(<Harness>{passwordControls}</Harness>);
+
+    fireEvent.change(input('password'), { target: { value: 'short' } });
+    fireEvent.change(input('passwordConfirm'), { target: { value: 'short' } });
+    fireEvent.submit(screen.getByText('Create'));
+
+    const field = input('password');
+    const message = screen.getByText('Use at least 10 characters');
+
+    expect(field.getAttribute('aria-invalid')).toBe('true');
+    expect(field.getAttribute('aria-describedby')).toBe(message.id);
+    expect(message.getAttribute('role')).toBe('alert');
+    expect(input('passwordConfirm').getAttribute('aria-invalid')).toBeNull();
+  });
+
+  it('shows a password with a real, named button that says whether it is on', () => {
+    render(<Harness>{passwordControls}</Harness>);
+
+    const [toggle] = screen.getAllByRole('button', { name: 'Show password' });
+
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.click(toggle);
+
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(input('password').type).toBe('text');
+  });
+
+  it('keeps a hidden label naming its field, out of sight', () => {
+    render(
+      <Harness>
+        <ElementContext value={controlEntry('search')}>
+          <Control
+            {...control({ name: 'q', subType: 'text', label: 'Search the docs', hideLabel: true, required: false })}
+          />
+        </ElementContext>
+      </Harness>
+    );
+
+    const label = screen.getByText('Search the docs');
+
+    expect(screen.getByLabelText('Search the docs')).toBe(input('q'));
+    expect(label.style.position).toBe('absolute');
+    expect(label.style.clipPath).toBe('inset(50%)');
   });
 });

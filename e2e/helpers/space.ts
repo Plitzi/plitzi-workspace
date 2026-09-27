@@ -3,15 +3,11 @@ import { expect } from '@playwright/test';
 import { sampleId } from '../spaces';
 
 import type { Locator, Page } from '@playwright/test';
-import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
-/** What "this space rendered correctly" means, stated once and derived from the schema rather than from a
- *  hand-written list that drifts from it.
+/** What the suite knows about the sample space beyond its handles: the RSC nodes, its copy, the dev tools.
  *
- *  It reads the DOM through the class the SDK gives every element — `plitzi-component__<type>` — because that is
- *  what a browser sees in BOTH render paths. The `data-id` attributes are server-side only: they exist so
- *  hydration can find the nodes the server rendered, and a client-side render has no such need and emits none.
- *  Asserting on them means writing a check that can only ever pass against SSR. */
+ *  "It rendered whole" is not here: that is `expectPageWhole` in `./harness`, against the authored sample
+ *  (`sampleAuthored()`), which checks every element by the id the declaration gave it rather than a per-type count. */
 
 /** React Server Component nodes, by the name the space gives them.
  *
@@ -30,27 +26,9 @@ export const RSC_IDS = {
 
 export const RSC_NODE_IDS = Object.values(RSC_IDS);
 
-/** Element types the SDK renders itself. Anything else is a plugin the deployment provides, which renders through
- *  `RootElement` and carries no `plitzi-component__` class of its own. */
-const isBuiltIn = (type: string): boolean => !['serverInfo', 'clientInfo', 'sharedInfo'].includes(type);
-
-const componentClass = (type: string): string => `.plitzi-component__${type.toLowerCase()}`;
-
-type TypeCount = { type: string; expected: number };
-
-const builtInCounts = (data: OfflineDataRaw): TypeCount[] => {
-  const tally = new Map<string, number>();
-
-  for (const node of Object.values(data.schema.flat)) {
-    const { type } = node.definition;
-
-    if (isBuiltIn(type)) {
-      tally.set(type, (tally.get(type) ?? 0) + 1);
-    }
-  }
-
-  return [...tally].map(([type, expected]) => ({ type, expected }));
-};
+/** What a page owes minus what only a deployment with the three RSC components can draw: the nodes and the section
+ *  holding them, which renders empty without them. For `expectPageWhole` wherever those components are absent. */
+export const WITHOUT_RSC = { ignore: [...RSC_NODE_IDS, 'rsc-section'] };
 
 /** Locates an element by schema id. Server-rendered pages only — see the note at the top of this file. */
 export const serverElement = (page: Page, id: string): Locator => page.locator(`[data-id="${id}"]`);
@@ -58,40 +36,6 @@ export const serverElement = (page: Page, id: string): Locator => page.locator(`
 /** Locates an element by the id its server data is keyed under. Present in both render paths, because the client
  *  needs it to reattach a partial refresh to the right node. */
 export const rscElement = (page: Page, id: string): Locator => page.locator(`[data-rsc-id="${id}"]`);
-
-/** Completeness: every element the schema declares reached the DOM, counted per type. A missing element, a
- *  duplicated one and a whole branch that failed to render all show up here with the type that went wrong. */
-export const expectSchemaRendered = async (page: Page, data: OfflineDataRaw): Promise<void> => {
-  const expectedCounts = builtInCounts(data);
-
-  const actual = await page.evaluate(
-    selectors => selectors.map(({ type, selector }) => ({ type, found: document.querySelectorAll(selector).length })),
-    expectedCounts.map(({ type }) => ({ type, selector: componentClass(type) }))
-  );
-
-  const mismatched = expectedCounts
-    .map(({ type, expected }) => ({ type, expected, found: actual.find(entry => entry.type === type)?.found ?? 0 }))
-    .filter(entry => entry.expected !== entry.found);
-
-  expect(mismatched, 'element types that did not render the number of elements the schema declares').toEqual([]);
-};
-
-/** Substance: the elements that carry content occupy space. This is what separates "the DOM is there" from "a
- *  human can see it" — a collapsed flex parent, a stylesheet that never loaded and a `display:none` inherited from
- *  somewhere all satisfy a DOM query and fail here. */
-export const expectSpaceVisible = async (page: Page): Promise<void> => {
-  const collapsed = await page.evaluate(() =>
-    [...document.querySelectorAll('.plitzi-component__heading, .plitzi-component__paragraph, .plitzi-component__image')]
-      .filter(node => {
-        const box = node.getBoundingClientRect();
-
-        return box.width === 0 || box.height === 0;
-      })
-      .map(node => `${node.className.split(' ')[0]}: "${node.textContent?.trim().slice(0, 30) ?? ''}"`)
-  );
-
-  expect(collapsed, 'elements with content that render with no area').toEqual([]);
-};
 
 /** The sample space's own copy, asserted through the accessibility tree: this is the text a reader is promised on
  *  the page they were told to open. */
@@ -103,13 +47,6 @@ export const expectSampleSpaceContent = async (page: Page): Promise<void> => {
   }
 
   await expect(page.getByText('Explore the Plitzi playground')).toBeVisible();
-};
-
-/** Completeness and substance together, for any space. What the space SAYS is its own spec's business — the sample
- *  space has {@link expectSampleSpaceContent} for that. */
-export const expectSpaceRendered = async (page: Page, data: OfflineDataRaw): Promise<void> => {
-  await expectSchemaRendered(page, data);
-  await expectSpaceVisible(page);
 };
 
 /**

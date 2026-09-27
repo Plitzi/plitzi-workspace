@@ -1,4 +1,3 @@
-import { ApolloProvider } from '@apollo/client/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { buttonTheme } from '@plitzi/plitzi-ui/Button';
 import { containerCollapsableTheme } from '@plitzi/plitzi-ui/ContainerCollapsable';
@@ -15,9 +14,9 @@ import clsx from 'clsx';
 import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, useState, Fragment } from 'react';
 import { BrowserRouter, MemoryRouter, StaticRouter } from 'react-router-dom';
 
-import { initClient } from '@modules/App/AppHelper';
 import AppMain from '@modules/App/AppMain';
 import { readDebugPreference, writeDebugPreference } from '@modules/App/debugPreference';
+import SpaceThemeProvider from '@modules/App/SpaceThemeProvider';
 import ThemedRoot from '@modules/App/ThemedRoot';
 import useDebugShortcut from '@modules/App/useDebugShortcut';
 import sdkComponents from '@modules/Element';
@@ -25,7 +24,7 @@ import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import { createStoreDevToolsLogger, ThemeProvider, type SdkState } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, type SdkState } from '@plitzi/sdk-shared';
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
@@ -34,7 +33,6 @@ import { tracingCollector, tracingMiddleware } from '@plitzi/sdk-shared/store/tr
 
 import { getEnvironmentServer } from './config';
 
-import type { ApolloClient } from '@apollo/client/core';
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
 import type {
   AnalyticsConfig,
@@ -160,7 +158,6 @@ const App = ({
   const [debugPreference, setDebugPreference] = useState(() => readDebugPreference(debugCookie));
   const debugMode = debugModeProp && debugPreference;
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
-  const client = useMemo<ApolloClient>(() => initClient(finalServer, webKey), [finalServer, webKey]);
 
   useEffect(() => {
     console.log(
@@ -190,6 +187,26 @@ const App = ({
       );
     }
   }, [debugModeProp, debugPreference, debugCookie]);
+
+  /**
+   * The render tracing, readable by a test while it is on: `inspectRenders` (`@plitzi/sdk-authoring/testing`) marks,
+   * lets the test act, and asks which elements rendered and what changed for each. Only under `debugMode`, where the
+   * elements are profiled at all — and taken away with it, so a published page carries no such global.
+   */
+  useEffect(() => {
+    if (!debugMode) {
+      return undefined;
+    }
+
+    window.plitziTracing = {
+      lastCommitId: tracingCollector.lastCommitId,
+      commitsSince: tracingCollector.commitsSince
+    };
+
+    return () => {
+      delete window.plitziTracing;
+    };
+  }, [debugMode]);
 
   // Tells the render profiler this app hydrated SSR output, so it can label the hydration commit (a pure client mount
   // looks identical at the React-phase level).
@@ -265,7 +282,7 @@ const App = ({
           : [])
       ]}
     >
-      <ThemeProvider defaultTheme="system" scope={themeScope} theme={theme}>
+      <SpaceThemeProvider scope={themeScope} theme={theme}>
         <Provider components={components}>
           <ThemedRoot
             scoped={themeScope === 'container'}
@@ -273,23 +290,21 @@ const App = ({
           >
             <HelmetProvider>
               <ReactRouter {...(reactRouterProps as { location: string })}>
-                <ApolloProvider client={client}>
-                  <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-                    <AppMain
-                      server={finalServer}
-                      webKey={webKey}
-                      renderMode={renderMode}
-                      debugMode={debugMode}
-                      webId={webId}
-                      {...sdkProps}
-                    />
-                  </ComponentProvider>
-                </ApolloProvider>
+                <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                  <AppMain
+                    server={finalServer}
+                    webKey={webKey}
+                    renderMode={renderMode}
+                    debugMode={debugMode}
+                    webId={webId}
+                    {...sdkProps}
+                  />
+                </ComponentProvider>
               </ReactRouter>
             </HelmetProvider>
           </ThemedRoot>
         </Provider>
-      </ThemeProvider>
+      </SpaceThemeProvider>
     </StoreProvider>
   );
 };

@@ -2,7 +2,7 @@ import { applyBuiltinCallback, applyElementCallback, applyUtility } from '../cat
 
 import type { AIBinding, AIBindings, AIInteractionFlow, AIInteractionNode, AIInteractionNodeType } from '../types';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { ElementBinding, ElementDefinition, ElementInteraction } from '@plitzi/sdk-shared';
+import type { ElementBinding, ElementDefinition, ElementInteraction, WhileRunning } from '@plitzi/sdk-shared';
 
 /** The node shape agents supply on write: same as AIInteractionNode but `id` is optional (generated when
  *  omitted). Kept structural so the tool-layer zod type assigns to it without importing the tool layer here. */
@@ -14,6 +14,7 @@ export interface FlowNodeInput {
   params?: Record<string, unknown>;
   enabled?: boolean;
   when?: RuleGroup;
+  whileRunning?: WhileRunning;
   elementId?: string;
   preview?: Record<string, unknown>;
 }
@@ -46,6 +47,10 @@ const nodeToAI = (node: ElementInteraction): AIInteractionNode => {
 
   if (node.when !== undefined) {
     ai.when = node.when;
+  }
+
+  if (node.whileRunning !== undefined) {
+    ai.whileRunning = node.whileRunning;
   }
 
   if (node.elementId && node.elementId !== node.id) {
@@ -181,6 +186,10 @@ export const materializeFlow = (
     };
     if (node.when !== undefined) {
       interaction.when = node.when;
+    }
+
+    if (node.whileRunning !== undefined) {
+      interaction.whileRunning = node.whileRunning;
     }
 
     record[ids[i]] = interaction;

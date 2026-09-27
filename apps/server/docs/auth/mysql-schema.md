@@ -78,6 +78,8 @@ somebody ends the session they are already holding rather than only their next s
 | `refresh_token` | TEXT, prefix-indexed | |
 | `refresh_expires_at` | BIGINT | Read on every renewal — see the traps. |
 | `user_agent`, `ip` | VARCHAR NULL | So a device list can name a device. Nothing decides anything on them. |
+| `app_name`, `app_id` | VARCHAR NULL | The application holding it when it is not a browser, as it registered over OAuth (`client_name`, `software_id`): `Plitzi CLI on carlos-mbp`, `plitzi-cli`. (Step 4.) |
+| `last_active_at` | BIGINT NULL | When it was last used, written on the token lookup at most every `SESSION_ACTIVITY_RESOLUTION_SECONDS` (five minutes) — never a write per request. (Step 4.) |
 
 **One row per device, not one per account.** A token pair on the account row is smaller and wrong in a way people
 notice: signing in on a phone signs you out on a laptop, and "sign out my other devices" cannot be built at all.
@@ -176,6 +178,11 @@ server's and worth knowing:
   finish that one sign-in; it verifies as nothing else.
 - **Recovery codes are stored hashed and shown once**, and a used one is spent. One that survives being used is a
   password with extra steps.
+- **A code signs in once.** A code stays valid for its whole window (a step either side of now), so the step of the
+  last one accepted is kept (`account_mfa.last_used_step`, step 5) and nothing up to it is taken again — RFC 6238
+  §5.2. The code that confirms the enrolment is spent the same way.
+- **Proving the password forgives the sign-in counter** even when a code is still owed; codes have a counter of their
+  own (five wrong ones in five minutes).
 
 ### Signing in by email
 
@@ -193,6 +200,9 @@ it:
   and signing out the device making the change would be absurd.
 - **Closing an account asks for the password**, where there is one. It is irreversible, and a borrowed session
   should not be able to do it.
+- **Closing an account is refused while it owns something that would be lost with it** — when the deployment says so
+  through `deletionBlockers(userId)`: a workspace nobody else owns, the spaces in it, a plan still billed. The refusal
+  is a 409 carrying the list, and it is asked only once the password is right.
 - **An administrator cannot act on their own account** through the admin routes. That is how a deployment loses its
   last administrator, and it is never what was meant.
 - **A new email address is parked, not applied.** It goes to `pending_email` and takes effect only when

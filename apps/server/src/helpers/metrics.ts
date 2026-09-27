@@ -1,3 +1,5 @@
+import { serverLog } from './serverLog';
+
 export class RequestMetrics {
   private readonly start: number;
   private readonly phases: Array<{ name: string; dur: number }> = [];
@@ -25,10 +27,10 @@ export class RequestMetrics {
     this.phases.push({ name, dur });
   }
 
-  /** Logs a one-line summary to stdout (dev mode only). */
+  /** Logs a one-line summary at `debug`. */
   log(label: string): void {
     const total = Math.round(performance.now() - this.start);
     const parts = this.phases.map(p => `${p.name}=${p.dur}ms`).join(' ');
-    console.log(`[SSR] ${label} — ${parts} | total=${total}ms`);
+    serverLog.debug('SSR', `${label} — ${parts} | total=${total}ms`);
   }
 }

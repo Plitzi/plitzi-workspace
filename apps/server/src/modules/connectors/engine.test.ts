@@ -32,8 +32,7 @@ const wordpress: ConnectorManifest = {
   pagination: 'page'
 };
 
-const jsonResponse = (body: unknown, ok = true, status = 200) =>
-  ({ ok, status, json: () => Promise.resolve(body) }) as Response;
+const jsonResponse = (body: unknown, status = 200) => Response.json(body, { status });
 
 const strapiBody = {
   data: [
@@ -219,7 +218,7 @@ describe('fetchConnectorRecords', () => {
   });
 
   it('fails loudly on a provider error instead of returning an empty page', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ error: 'nope' }, false, 403));
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ error: 'nope' }, 403));
 
     await expect(
       fetchConnectorRecords({ manifest: strapi, query: { resource: 'articles' }, fetchImpl })

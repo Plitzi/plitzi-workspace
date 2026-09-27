@@ -1,4 +1,12 @@
+import { listIdProblem, parseList, rangeOf, withEntry } from './kvList';
+
+import type { KvListEntry, KvListPut } from './kvList';
 import type { ActionKvAdapter, ActionKvStore } from '../types';
+
+/** How many times a list write reads again after losing a race, before it says the list is busy. */
+const LIST_ATTEMPTS = 25;
+
+const pause = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 export type KvStoreConfig = {
   /**
@@ -25,9 +33,35 @@ export type KvStoreConfig = {
  *    table.
  * 3. **Nothing is caught.** This is not a cache: a miss means the rate limit did not count and the idempotency key
  *    was not seen, so an adapter that cannot answer fails the run rather than being read as "no value".
+ *
+ * A list is one value, changed only by `swap`: read, change, write back if nobody wrote in between, and read again if
+ * somebody did. Every adapter can do that much, so lists work on all of them without a command of their own. They
+ * live under `list:` rather than beside the values, so no key a flow writes can be one.
  */
 export const createKvStore = (adapter: ActionKvAdapter, { prefix = 'kv:' }: KvStoreConfig = {}): ActionKvStore => {
   const prefixed = (key: string) => `${prefix}${key}`;
+  const listKey = (list: string) => `${prefix}list:${list}`;
+
+  /** Applies `change` to the list and writes it back unless somebody wrote first — then reads again. */
+  const changeList = async (list: string, change: (entries: KvListEntry[]) => KvListEntry[] | undefined) => {
+    const key = listKey(list);
+    for (let attempt = 0; attempt < LIST_ATTEMPTS; attempt += 1) {
+      const raw = await adapter.get(key);
+      const next = change(parseList(raw));
+      if (!next) {
+        return false;
+      }
+
+      if (await adapter.swap(key, raw, JSON.stringify(next))) {
+        return true;
+      }
+
+      // Spread out, so the writers that lost to the same one do not all come back at the same instant.
+      await pause(Math.random() * Math.min(5 + attempt * 5, 50));
+    }
+
+    throw new Error(`The list "${list}" is being written by many at once — try again in a moment`);
+  };
 
   return {
     get: async key => {
@@ -53,6 +87,38 @@ export const createKvStore = (adapter: ActionKvAdapter, { prefix = 'kv:' }: KvSt
       }
 
       return value;
-    }
+    },
+    swap: (key, expected, next, ttlSeconds) =>
+      adapter.swap(
+        prefixed(key),
+        expected === undefined ? undefined : JSON.stringify(expected),
+        JSON.stringify(next),
+        ttlSeconds
+      ),
+    listPut: async (list, entry, options = {}) => {
+      const problem = listIdProblem(entry.id);
+      if (problem) {
+        throw new Error(problem);
+      }
+
+      if (!Number.isFinite(entry.score)) {
+        throw new Error('A list entry’s score is a number');
+      }
+
+      let put: KvListPut = { stored: false, dropped: [] };
+      await changeList(list, entries => {
+        const next = withEntry(entries, entry, options);
+        put = next ? { stored: true, dropped: next.dropped } : { stored: false, dropped: [] };
+
+        return next?.kept;
+      });
+
+      return put;
+    },
+    listRange: async (list, range) => rangeOf(parseList(await adapter.get(listKey(list))), range),
+    listRemove: (list, id) =>
+      changeList(list, entries =>
+        entries.some(entry => entry.id === id) ? entries.filter(entry => entry.id !== id) : undefined
+      )
   };
 };

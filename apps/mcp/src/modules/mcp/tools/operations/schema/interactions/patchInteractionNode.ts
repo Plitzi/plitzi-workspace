@@ -7,7 +7,7 @@ import { pageUri, resolveElement, resolveTargetRef } from '../write';
 import type { OpResult, Space } from '../../../../helpers';
 import type { Env } from '../../../../types';
 
-const { title, action, params, enabled, when, elementId, preview } = interactionNode.shape;
+const { title, action, params, enabled, when, whileRunning, elementId, preview } = interactionNode.shape;
 
 export const patchInteractionNodeOp = z
   .object({
@@ -20,6 +20,7 @@ export const patchInteractionNodeOp = z
     params: params.describe('Merged onto the node params: listed keys change, others are preserved'),
     enabled,
     when,
+    whileRunning,
     elementId,
     preview
   })
@@ -60,6 +61,10 @@ export const patchInteractionNode = (space: Space, env: Env, op: PatchInteractio
 
   if (op.when !== undefined) {
     node.when = op.when;
+  }
+
+  if (op.whileRunning !== undefined) {
+    node.whileRunning = op.whileRunning;
   }
 
   if (op.elementId !== undefined) {

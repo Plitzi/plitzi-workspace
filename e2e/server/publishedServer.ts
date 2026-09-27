@@ -14,7 +14,8 @@ import {
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
 /**
- * The same space as `actionServer.ts`, served the way a real site is: **not a development server.**
+ * The same space as `actionServer.ts`, served the way a real site is: **not a development server** — no `devMode`,
+ * and started with `NODE_ENV=production` (its scripts), which is what a real site runs with.
  *
  * Its own process because `devMode` is a property of the DEPLOYMENT, and what these specs are about is what a
  * published page is told about the flows behind it. Two of them run, from this one module:

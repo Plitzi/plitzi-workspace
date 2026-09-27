@@ -72,7 +72,7 @@ const section = (page: number, index: number): ElementSpec => {
         content: 'Status',
         bind: [
           { category: 'initialState', to: 'styleSelectors.base', source: `state.status${n}` },
-          { to: 'data-status', source: `state.status${n}` }
+          { to: 'content', source: `state.status${n}` }
         ]
       }),
       authoring.list({
@@ -85,7 +85,7 @@ const section = (page: number, index: number): ElementSpec => {
         managedByInteractions: true,
         flows: [
           [
-            authoring.named(`sent${index}`, authoring.onSubmit()),
+            authoring.whileRunning('queue', authoring.named(`sent${index}`, authoring.onSubmit())),
             authoring.setState({ key: `email${n}`, type: 'text', value: `{{sent${index}.values.email}}` })
           ]
         ],

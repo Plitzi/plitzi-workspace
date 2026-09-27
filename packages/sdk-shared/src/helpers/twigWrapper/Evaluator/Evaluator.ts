@@ -36,6 +36,18 @@ const readsOneName = (expression: Expression): boolean =>
 const isUnresolved = (expression: Expression, value: unknown): boolean =>
   value === undefined || value === null || (value === '' && readsOneName(expression));
 
+/**
+ * The test a right-hand side names, if it is one word: `defined`, `empty`… — and `null`/`none`, which are literals
+ * everywhere else but, after `is`, the test (true for a value that was never set as much as for `null`).
+ */
+const testNameOf = (expression: Expression): string | undefined => {
+  if (expression.type === 'path' && expression.segments.length === 1) {
+    return expression.segments[0];
+  }
+
+  return expression.type === 'literal' && expression.value === null ? 'null' : undefined;
+};
+
 export type EvalResult = {
   readonly output: string;
   readonly variables: Record<string, unknown>;
@@ -45,12 +57,21 @@ export type EvalResult = {
 // Shared empty argument list for no-arg filters (`| upper`, `| trim`, …) — avoids a per-call allocation.
 const NO_ARGS: readonly unknown[] = [];
 
+/**
+ * Renders `nodes` against `context`.
+ *
+ * `jsonStrings` is for a template the author wrote as a JSON document — `{ "city": "{{ values.city }}" }`: a value
+ * printed inside one of its string literals is escaped for it, so a city typed with a quote or on two lines is still
+ * that document, not text the reader has to give up on. A value printed anywhere else is printed as always: it IS the
+ * JSON value there (`"seen": {{ count }}`).
+ */
 export const evaluate = (
   nodes: readonly ASTNode[],
   context: Record<string, unknown>,
-  keepEmptyTokens = false
+  keepEmptyTokens = false,
+  jsonStrings = false
 ): EvalResult => {
-  const ctx = new Evaluator(context, keepEmptyTokens);
+  const ctx = new Evaluator(context, keepEmptyTokens, jsonStrings);
   const output = ctx.evalNodes(nodes);
   return { output, variables: ctx.variables, hasSet: ctx.hasSet };
 };
@@ -73,16 +94,21 @@ type LoopState = {
 class Evaluator {
   readonly variables: Record<string, unknown>;
   private readonly keepEmptyTokens: boolean;
+  private readonly jsonStrings: boolean;
+  /** Under `jsonStrings`: whether the text written so far has left a JSON string literal open, and a `\` pending in it. */
+  private inString = false;
+  private escaping = false;
   private breakFlag = false;
   private continueFlag = false;
   hasSet = false;
 
-  constructor(context: Record<string, unknown>, keepEmptyTokens = false) {
+  constructor(context: Record<string, unknown>, keepEmptyTokens = false, jsonStrings = false) {
     // Shallow own-property copy for scratch (loop/`set` vars). A plain object keeps every variable read as a
     // fast monomorphic own-property access — measurably faster than an `Object.create(context)` prototype
     // chain for the common small-context template, which more than pays for the one-time copy.
     this.variables = { ...context };
     this.keepEmptyTokens = keepEmptyTokens;
+    this.jsonStrings = jsonStrings;
   }
 
   evalNodes(nodes: readonly ASTNode[]): string {
@@ -109,9 +135,15 @@ class Evaluator {
   private evalNode(node: ASTNode): string {
     switch (node.type) {
       case 'text':
+        if (this.jsonStrings) {
+          this.followQuotes(node.value);
+        }
+
         return node.value;
       case 'variable':
-        return this.evalVariable(node);
+        return this.jsonStrings && this.inString
+          ? JSON.stringify(this.evalVariable(node)).slice(1, -1)
+          : this.evalVariable(node);
       case 'if':
         return this.evalIf(node);
       case 'for':
@@ -161,6 +193,20 @@ class Evaluator {
     }
 
     return '';
+  }
+
+  /** The author's own text, read for where its JSON string literals open and close — their `\"` stays inside. */
+  private followQuotes(text: string): void {
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (this.escaping) {
+        this.escaping = false;
+      } else if (this.inString && char === '\\') {
+        this.escaping = true;
+      } else if (char === '"') {
+        this.inString = !this.inString;
+      }
+    }
   }
 
   private evalIf(node: IfNode): string {
@@ -525,8 +571,9 @@ class Evaluator {
     // `x is defined`, `x is not empty`: a Twig test names a question about the value, not a variable to compare it
     // with. Read as a comparison, `defined` was a variable nobody set, so `anything is defined` asked whether the
     // value was undefined — true exactly when it was not defined.
-    if ((operator === 'is' || operator === 'is not') && rightExpr.type === 'path' && rightExpr.segments.length === 1) {
-      const test = TESTS[rightExpr.segments[0]];
+    const testName = testNameOf(rightExpr);
+    if ((operator === 'is' || operator === 'is not') && testName !== undefined) {
+      const test = TESTS[testName];
       if (test) {
         const answer = test(this.evalExpression(leftExpr));
 
@@ -582,6 +629,13 @@ class Evaluator {
         return valueIn(left, right);
       case 'not in':
         return !valueIn(left, right);
+      case 'same as':
+        return left === right;
+      case 'divisible by': {
+        const divisor = Number(right);
+
+        return divisor !== 0 && Number.isFinite(divisor) && Number(left) % divisor === 0;
+      }
       case 'is':
         return left === right;
       case 'is not':

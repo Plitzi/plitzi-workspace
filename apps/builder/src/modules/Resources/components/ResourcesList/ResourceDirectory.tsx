@@ -8,6 +8,7 @@ import { use, useCallback, useMemo, useState } from 'react';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import { mainPluginOf } from '../../helpers';
 import Resource from '../Resource';
 import { ResourcesListContext } from './ResourcesListProvider';
 
@@ -59,7 +60,7 @@ const ResourceDirectory = ({
       }
 
       if (resource.type === 'plugin') {
-        const plugin = Object.values(plugins).find(plugin => plugin.type === resource.metadata.root && plugin.isMain);
+        const plugin = mainPluginOf(plugins, resource.metadata.root);
         if (plugin) {
           void remove?.(plugin.type);
         }

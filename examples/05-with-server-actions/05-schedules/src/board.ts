@@ -1,4 +1,4 @@
-import type { ActivityEntry } from './store/activity';
+import type { ActivityEntry } from './store/activity.ts';
 import type { ActionEntry, ActionJob, ActionJobStatus, ActionSchedule } from '@plitzi/sdk-shared';
 
 /**

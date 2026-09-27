@@ -46,7 +46,11 @@ const shippingQuote = (ratePerKg: number, label: string): ActionEntry =>
     // Params written out because this step takes something the caller did not send: the rate, which belongs to the
     // document rather than to the request. A step that names none takes the declared input one field at a time.
     steps: [
-      { id: 'rate', task: 'example.shippingRate', params: { city: '{{input.city}}', weightKg: '{{input.weightKg}}', ratePerKg } }
+      {
+        id: 'rate',
+        task: 'example.shippingRate',
+        params: { city: '{{input.city}}', weightKg: '{{input.weightKg}}', ratePerKg }
+      }
     ],
     /**
      * The contract. What this names is exactly what the caller receives — `band`, which the task also returned,

@@ -17,7 +17,7 @@ export default defineConfig({
     target: 'node20',
     lib: { entry: './src/index.ts', formats: ['es'] },
     rollupOptions: {
-      external: ['chalk', 'commander', '@plitzi/sdk-authoring', /^node:/],
+      external: ['chalk', 'commander', 'esbuild', 'fflate', '@plitzi/sdk-authoring', /^node:/],
       output: { entryFileNames: 'index.js', banner: '#!/usr/bin/env node' }
     },
     minify: false,

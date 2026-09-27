@@ -1,7 +1,6 @@
 import clsx from 'clsx';
-import { useMemo } from 'react';
 
-import PluginContent from './PluginContent';
+import ResourceContent from '../../../ResourceContent';
 import ResourceLoading from '../../ResourceLoading';
 import ResourceRemoveButton from '../../ResourceRemoveButton';
 
@@ -20,37 +19,24 @@ export type ResourcePluginProps = {
 };
 
 const ResourcePlugin = ({
-  className,
+  className = '',
   metadata,
   removing = false,
   isLoading = false,
   onClick,
   onRemove
-}: ResourcePluginProps) => {
-  const componentsAvailables = useMemo(() => Object.keys(metadata?.pluginSchema || {}).join(', '), [metadata]);
-
-  return (
-    <div
-      className={clsx(
-        'group relative flex w-full cursor-pointer overflow-hidden rounded-md border border-gray-300 select-none [column-span:all] dark:border-zinc-600',
-        className
-      )}
-      onClick={onClick}
-    >
-      <PluginContent
-        className={className}
-        name={metadata?.definition.name}
-        icon={metadata?.definition.icon}
-        backgroundColor={metadata?.definition.backgroundColor}
-        version={metadata?.version}
-        components={componentsAvailables}
-        size={0}
-        isUploaded
-      />
-      <ResourceRemoveButton onRemove={onRemove} />
-      {(isLoading || removing) && <ResourceLoading />}
-    </div>
-  );
-};
+}: ResourcePluginProps) => (
+  <div
+    className={clsx(
+      'group relative flex w-full cursor-pointer overflow-hidden rounded-md border border-gray-300 select-none [column-span:all] dark:border-zinc-600',
+      className
+    )}
+    onClick={onClick}
+  >
+    <ResourceContent className={className} type="plugin" metadata={metadata} isUploaded />
+    <ResourceRemoveButton onRemove={onRemove} />
+    {(isLoading || removing) && <ResourceLoading />}
+  </div>
+);
 
 export default ResourcePlugin;

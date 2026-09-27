@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-import { get, set } from '@plitzi/plitzi-ui/helpers';
-
-import { EMPTY_SCHEMA, VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
 
 import { elementIdConflict, elementIdsFree, randomElementId, repointIds, takenIds, uniqueElementId } from './elementId';
-import { validateSchema, type SchemaValidationResult } from './schemaValidator';
+import { descendants, parentChain } from './elementTree';
 
 import type { MintElementId } from './elementId';
 import type { Style, Element, Schema, DisplayMode, StyleItem, DropPosition, SchemaVariable } from '@plitzi/sdk-shared';
@@ -51,7 +49,7 @@ class FlatMap {
 
   /** A free id for a new element of `type`, minted through this map's minter and unique against what it holds. */
   nextId = (type: string, alsoTaken: (candidate: string) => boolean = () => false) => {
-    const taken = this.takenIds();
+    const taken = takenIds(this.flat);
 
     return this.mintId(type, candidate => taken.has(candidate) || alsoTaken(candidate));
   };
@@ -65,106 +63,57 @@ class FlatMap {
     initialItems: Record<Element['id'], Element> = {}
   ) => {
     const data: Element = input.id ? (input as Element) : { ...input, id: this.nextId(input.definition.type) };
-    let parent;
-    if (dropPosition !== 'custom') {
-      if (dropPosition !== 'inside') {
-        const element = this.flat[to] as Element | undefined;
-        if (!element) {
-          return false;
-        }
-
-        if (element.definition.parentId) {
-          parent = this.flat[element.definition.parentId];
-        }
-      } else {
-        parent = this.flat[to];
-      }
-
-      if (!parent) {
-        return false;
-      }
-    }
-
-    if (dropPosition !== 'custom' && !Array.isArray(get(parent, 'definition.items'))) {
-      return false;
-    }
-
-    if (!this.isValidElement(data)) {
-      return false;
-    }
-
     // The name has to be well formed and free — of the document AND of the rest of this insert. Refused rather
     // than uniquified: a caller that named an element meant that name, and silently storing it under another one
     // is how a binding written against it resolves to nothing.
-    if (!elementIdsFree(this.flat, [data, ...Object.values(initialItems)])) {
+    if (!this.isValidElement(data) || !elementIdsFree(this.flat, [data, ...Object.values(initialItems)])) {
       return false;
     }
 
-    set(this.flat, data.id, data);
-    switch (dropPosition) {
-      case 'left':
-      case 'top': {
-        const items = get(parent, 'definition.items', []);
-        items.splice(
-          items.findIndex(i => i === to),
-          0,
-          data.id
-        );
-
-        if (!parent) {
-          return false;
-        }
-
-        set(this.flat, `${parent.id}.definition.items`, items);
-        set(this.flat, `${data.id}.definition.parentId`, parent.id);
-        set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
-
-        break;
-      }
-
-      case 'right':
-      case 'bottom': {
-        const items = get(parent, 'definition.items', []);
-        items.splice(items.findIndex(i => i === to) + 1, 0, data.id);
-        if (!parent) {
-          return false;
-        }
-
-        set(this.flat, `${parent.id}.definition.items`, items);
-        set(this.flat, `${data.id}.definition.parentId`, parent.id);
-        set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
-
-        break;
-      }
-
-      case 'inside': {
-        const items = get(parent, 'definition.items', []);
-        if (!parent) {
-          return false;
-        }
-
-        set(this.flat, `${to}.definition.items`, [...items, data.id]);
-        set(this.flat, `${data.id}.definition.parentId`, to);
-        set(this.flat, `${data.id}.definition.rootId`, parent.definition.rootId);
-
-        break;
-      }
-
-      case 'custom': {
-        break;
-      }
-
-      default:
+    if (dropPosition !== 'custom') {
+      const placement = this.placement(to, dropPosition, [data.id]);
+      if (!placement) {
         return false;
+      }
+
+      placement.parent.definition.items = placement.items;
+      data.definition.parentId = placement.parent.id;
+      data.definition.rootId = placement.parent.definition.rootId;
     }
 
-    if (Object.keys(initialItems).length > 0) {
-      Object.keys(initialItems).forEach(itemKey => {
-        this.flat[itemKey] = initialItems[itemKey];
-      });
-    }
+    this.flat[data.id] = data;
+    Object.assign(this.flat, initialItems);
 
     return true;
+  };
+
+  /**
+   * Where `ids` go when dropped at `dropPosition` of `to`: the parent that takes them and its items with them in place.
+   * Null when there is nowhere to put them — no such element, a sibling of an element with no parent, a parent that
+   * holds no items, or an anchor its parent does not list. Computed without writing, so a refusal leaves no trace.
+   */
+  private placement = (
+    to: Element['id'],
+    dropPosition: DropPosition,
+    ids: Element['id'][],
+    without?: Element['id']
+  ): { parent: Element; items: Element['id'][] } | null => {
+    const anchor = this.flat[to] as Element | undefined;
+    const parentId = dropPosition === 'inside' ? to : anchor?.definition.parentId;
+    const parent = parentId ? (this.flat[parentId] as Element | undefined) : undefined;
+    if (!anchor || !parent?.definition.items) {
+      return null;
+    }
+
+    const items = parent.definition.items.filter(id => id !== without);
+    const at = dropPosition === 'inside' ? items.length : items.indexOf(to);
+    if (at < 0 || !['inside', 'left', 'top', 'right', 'bottom'].includes(dropPosition)) {
+      return null;
+    }
+
+    items.splice(dropPosition === 'right' || dropPosition === 'bottom' ? at + 1 : at, 0, ...ids);
+
+    return { parent, items };
   };
 
   /** Replaces a stored element with an edited copy of itself. The id is its identity, not a field an update may
@@ -206,100 +155,46 @@ class FlatMap {
     return repointIds(this.flat, { [from]: to }, this.pages);
   };
 
-  /** Why this element cannot be renamed to `id` (charset or a clash), or null when the name is free. */
-  renameConflict = (from: Element['id'], id: string) => elementIdConflict(this.flat, id, from);
-
+  /**
+   * Moves an element — and everything in it — next to or inside `to`. Refused when `to` is the element itself or one
+   * of its own descendants: the subtree would end up holding itself. Crossing into another page or layout takes the
+   * subtree's `rootId` along, so the tree agrees with itself about where everything lives.
+   */
   moveElement = (
     from: Element['id'],
     to: Element['id'],
     elementId: Element['id'],
     dropPosition: DropPosition = 'inside'
   ) => {
-    if (elementId === to || !(this.flat[from] as Element | undefined)) {
+    const source = this.flat[from] as Element | undefined;
+    const element = this.flat[elementId] as Element | undefined;
+    if (!source || !element || elementId === to || parentChain(this.flat, to).includes(elementId)) {
       return false;
     }
 
-    // Verify if the receptor is child from the sender
-    const elementTo = this.flat[to] as Element | undefined;
-    if (!elementTo) {
+    const placement = this.placement(to, dropPosition, [elementId], elementId);
+    if (!placement) {
       return false;
     }
 
-    let element = this.flat[to] as Element | undefined;
-    while (element) {
-      const parentId = get(element, 'definition.parentId');
-      if (!parentId) {
-        break;
-      }
-
-      if (element.id === elementId) {
-        return false;
-      }
-
-      element = this.flat[parentId];
-    }
-
-    if (!element) {
-      return false;
-    }
-
-    // Do the swap
-    const fromItems = (get(this.flat, `${from}.definition.items`, []) as Element['id'][]).filter(
-      item => item !== elementId
-    );
-    if (['left', 'top', 'right', 'bottom'].includes(dropPosition)) {
-      if (!elementTo.definition.parentId) {
-        return false;
-      }
-
-      const parent = this.flat[elementTo.definition.parentId] as Element | undefined;
-      if (!parent) {
-        return false;
-      }
-
-      let parentItems = get(parent, 'definition.items', [] as Element['id'][]);
-      if (parent.id === from) {
-        parentItems = fromItems;
-      }
-
-      let dropPositionIndex = parentItems.findIndex(i => i === to);
-      if (['right', 'bottom'].includes(dropPosition)) {
-        dropPositionIndex++;
-      }
-
-      parentItems.splice(dropPositionIndex, 0, elementId);
-      set(this.flat, `${from}.definition.items`, fromItems);
-      set(this.flat, `${parent.id}.definition.items`, parentItems);
-      set(this.flat, `${elementId}.definition.parentId`, parent.id);
-    } else if (dropPosition === 'inside') {
-      const parent = this.flat[to] as Element | undefined;
-      if (!parent) {
-        return false;
-      }
-
-      let toItems = get(this.flat, `${to}.definition.items`, []) as Element['id'][];
-      if (from === to) {
-        toItems = fromItems;
-      }
-
-      toItems = [...toItems, elementId];
-      set(this.flat, `${from}.definition.items`, fromItems);
-      set(this.flat, `${to}.definition.items`, toItems);
-      set(this.flat, `${elementId}.definition.parentId`, to);
-    }
+    source.definition.items = (source.definition.items ?? []).filter(id => id !== elementId);
+    placement.parent.definition.items = placement.items;
+    element.definition.parentId = placement.parent.id;
+    this.carryRoot(elementId, placement.parent.definition.rootId);
 
     return true;
   };
 
-  getElement = (elementId: Element['id']) => get(this.flat, elementId);
+  /** Points a subtree at the root it now lives under, when a move took it into another page or layout. */
+  private carryRoot = (elementId: Element['id'], rootId: Element['id']) => {
+    if (this.flat[elementId].definition.rootId === rootId) {
+      return;
+    }
 
-  /** Every id currently in use, so a newly minted one stays unique across the document. */
-  takenIds = () => takenIds(this.flat);
-
-  /** Why an id cannot be used here (charset or a clash), or null when it is free. `ignoreElementId` exempts the
-   *  element being edited, so re-saving an element its own name is not a conflict. */
-  elementIdConflict = (id: string, ignoreElementId?: Element['id']) =>
-    elementIdConflict(this.flat, id, ignoreElementId);
+    for (const id of [elementId, ...descendants(this.flat, elementId)]) {
+      this.flat[id].definition.rootId = rootId;
+    }
+  };
 
   /**
    * Copies a subtree onto fresh names.
@@ -324,10 +219,8 @@ class FlatMap {
       return result;
     }
 
-    const ids = [elementId, ...this.childTree(elementId)].filter(
-      id => (this.flat[id] as Element | undefined) !== undefined
-    );
-    const taken = this.takenIds();
+    const ids = [elementId, ...descendants(this.flat, elementId)];
+    const taken = takenIds(this.flat);
     for (const id of ids) {
       // Derived from the name being copied, not minted from the type: a copy of `hero` is `hero-2`, which still
       // says what it is.
@@ -356,13 +249,14 @@ class FlatMap {
       delete result.acum[mapIds[elementId]];
     }
 
+    // Dropped onto an element that holds no children, the copy goes beside it instead.
     const parentElement = this.flat[parentId] as Element | undefined;
-    if (!parentElement || !Array.isArray(get(parentElement, 'definition.items'))) {
-      parentId = get(parentElement, 'definition.parentId', get(element, 'definition.parentId')) as Element['id'];
+    if (!parentElement?.definition.items) {
+      parentId = parentElement?.definition.parentId ?? element.definition.parentId ?? '';
     }
 
     if (parentId) {
-      set(result, 'item.definition.parentId', parentId);
+      result.item.definition.parentId = parentId;
     }
 
     return result;
@@ -373,30 +267,20 @@ class FlatMap {
     if (
       !element ||
       (element.definition.type === 'page' && !removePage) ||
-      (removePage && get(element, 'attributes.default', false as boolean))
+      (removePage && Boolean(element.attributes.default))
     ) {
       return false;
     }
 
-    const elementItems = get(element, 'definition.items');
-    if (elementItems && elementItems.length > 0) {
-      elementItems.forEach(id => this.removeElement(id));
+    for (const id of descendants(this.flat, elementId)) {
+      delete this.flat[id];
     }
 
-    const parentId = get(element, 'definition.parentId');
-    const parent = parentId ? this.flat[parentId] : undefined;
-    if (parentId && parent) {
-      const {
-        definition: { items = [] }
-      } = parent;
-
-      set(
-        parent,
-        'definition.items',
-        items.filter(id => id !== elementId)
-      );
-
-      this.flat[parentId] = parent;
+    const parent = element.definition.parentId
+      ? (this.flat[element.definition.parentId] as Element | undefined)
+      : undefined;
+    if (parent?.definition.items) {
+      parent.definition.items = parent.definition.items.filter(id => id !== elementId);
     }
 
     delete this.flat[elementId];
@@ -454,56 +338,6 @@ class FlatMap {
 
   // Extra Methods
 
-  /**
-   * Everything an element is rendered inside, nearest first — its ancestors, and past a root the shell that root is
-   * shown in. A layout names its own shell the way a page does, so the walk continues through as many as are nested;
-   * `visited` keeps a document whose shells name each other from walking forever.
-   */
-  parentTree = (elementId: Element['id'], visited: Set<Element['id']> = new Set()) => {
-    let element = this.flat[elementId] as Element | undefined;
-    const ids: Element['id'][] = [];
-    if (!element) {
-      return ids;
-    }
-
-    do {
-      const type = get(element, 'definition.type');
-      if ((type === 'page' || type === 'layoutContainer') && !visited.has(element.id)) {
-        visited.add(element.id);
-        const layout = get(element, 'attributes.layout');
-        const layoutContainer = get(element, 'attributes.layoutContainer') as Element['id'];
-        if (layout && layoutContainer) {
-          ids.push(layoutContainer, ...this.parentTree(layoutContainer, visited));
-        }
-      }
-
-      if (elementId !== element.id) {
-        ids.push(element.id);
-      }
-
-      element = get(this.flat, get(element, 'definition.parentId') as Element['id'], undefined);
-    } while (element);
-
-    return ids;
-  };
-
-  childTree = (elementId: Element['id']) => {
-    const element = this.flat[elementId] as Element | undefined;
-    if (!element) {
-      return [];
-    }
-
-    const ids: Element['id'][] = [];
-    const children = get(element, 'definition.items');
-    if (!children) {
-      return ids;
-    }
-
-    children.forEach(childId => ids.push(childId, ...this.childTree(childId)));
-
-    return ids;
-  };
-
   isValidElement = (element?: Partial<Element>) => {
     if (!element) {
       return false;
@@ -529,7 +363,7 @@ class FlatMap {
       return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
     }
 
-    const element = get(this.flat, elementId) as Element | undefined;
+    const element = this.flat[elementId] as Element | undefined;
     if (!element) {
       return { elements: { acum: {}, item: undefined }, elementsStyle, variables };
     }
@@ -541,7 +375,10 @@ class FlatMap {
 
     Object.values(elements.acum).forEach(element => {
       const { id } = element;
-      set(elements.acum, `${id}.definition.rootId`, elements.item?.id);
+      if (elements.item) {
+        element.definition.rootId = elements.item.id;
+      }
+
       const calculatedStyle = calculateInheriting(
         element,
         element.definition.type,
@@ -564,7 +401,8 @@ class FlatMap {
       }
     });
 
-    set(elements.acum, `${elements.item.id}.definition.parentId`, null);
+    // The base of a template answers to no parent: it is placed wherever the template is dropped.
+    delete elements.acum[elements.item.id].definition.parentId;
 
     if (excludeRoot) {
       delete elements.acum[elements.item.id];
@@ -578,31 +416,9 @@ class FlatMap {
     return { elements, elementsStyle, variables };
   };
 
-  // Validation
-
-  validate = (): SchemaValidationResult => {
-    return validateSchema({ ...EMPTY_SCHEMA.schema, flat: this.flat, variables: this.variables });
-  };
-
-  isValid = (): boolean => {
-    return this.validate().valid;
-  };
-
-  assertValid = (context?: string): void => {
-    const result = validateSchema({ ...EMPTY_SCHEMA.schema, flat: this.flat, variables: this.variables });
-    if (!result.valid) {
-      const message = `Invalid schema${context ? ` (${context})` : ''}: ${result.errors.map(e => e.message).join('; ')}`;
-
-      throw new Error(message);
-    }
-  };
-
-  // Semi - Static
-
   getElementVariables = (style: Style, elementId: Element['id'], flat = this.flat, variables = this.variables) => {
     const variablesFound: Schema['variables'] = [];
-    const selectors = get(flat, `${elementId}.definition.styleSelectors`) as unknown as
-      Element['definition']['styleSelectors'] | undefined;
+    const selectors = (flat[elementId] as Element | undefined)?.definition.styleSelectors;
     if (!selectors) {
       return variablesFound;
     }
@@ -654,9 +470,6 @@ class FlatMap {
     dropPosition: DropPosition = 'inside'
   ) => this.getInstance({ flat }).moveElement(from, to, elementId, dropPosition);
 
-  static getElement = (flat: Schema['flat'], elementId: Element['id']) =>
-    this.getInstance({ flat }).getElement(elementId);
-
   static cloneElements = (
     flat: Schema['flat'],
     elementId: Element['id'],
@@ -667,11 +480,6 @@ class FlatMap {
 
   static removeElement = (flat: Schema['flat'], elementId: Element['id'], removePage = false) =>
     this.getInstance({ flat }).removeElement(elementId, removePage);
-
-  static takenIds = (flat: Schema['flat']) => this.getInstance({ flat }).takenIds();
-
-  static elementIdConflict = (flat: Schema['flat'], id: string, ignoreElementId?: Element['id']) =>
-    this.getInstance({ flat }).elementIdConflict(id, ignoreElementId);
 
   // Variables - Static
 
@@ -693,12 +501,6 @@ class FlatMap {
     return instance.updateVariable(variable);
   };
 
-  static removeVariables = (schemaVariables: Schema['variables'], variables: string[]) => {
-    const instance = this.getInstance({ variables: schemaVariables });
-
-    return instance.removeVariables(variables);
-  };
-
   static removeVariable = (schemaVariables: Schema['variables'], variable: string) => {
     const instance = this.getInstance({ variables: schemaVariables });
 
@@ -707,44 +509,10 @@ class FlatMap {
 
   // Extra Methods - Static
 
-  static parentTree = (flat: Schema['flat'], elementId: Element['id']) =>
-    this.getInstance({ flat }).parentTree(elementId);
-
-  static childTree = (flat: Schema['flat'], elementId: Element['id']) =>
-    this.getInstance({ flat }).childTree(elementId);
-
-  static isValidElement = (flat: Schema['flat'], element: Element) =>
-    this.getInstance({ flat }).isValidElement(element);
-
   static flatAsTemplate = (schema: Schema, style: Style, elementId: Element['id'], excludeRoot = false) => {
     const { flat, variables } = schema;
 
     return this.getInstance({ flat, variables }).flatAsTemplate(style, elementId, excludeRoot);
-  };
-
-  static getElementVariables = (schema: Schema, style: Style, elementId: Element['id']) => {
-    const { flat, variables } = schema;
-
-    return this.getInstance({ flat, variables }).getElementVariables(style, elementId);
-  };
-
-  // Validation - Static
-
-  static validate = (schema: Schema): SchemaValidationResult => {
-    return validateSchema(schema);
-  };
-
-  static isValid = (schema: Schema): boolean => {
-    return validateSchema(schema).valid;
-  };
-
-  static assertValid = (schema: Schema, context?: string): void => {
-    const result = validateSchema(schema);
-    if (!result.valid) {
-      const message = `Invalid schema${context ? ` (${context})` : ''}: ${result.errors.map(e => e.message).join('; ')}`;
-
-      throw new Error(message);
-    }
   };
 }
 

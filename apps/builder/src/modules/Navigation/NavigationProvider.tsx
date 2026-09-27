@@ -129,6 +129,7 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
       'navigation.queryParams',
       'navigation.hostname',
       'navigation.origin',
+      'navigation.href',
       'navigation.currentPageId',
       'navigation.navigate'
     ],
@@ -138,6 +139,8 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
       testedQueryParams,
       testedHostname,
       testedOrigin,
+      // As the tested host would show it: the page being previewed, at the address the author is testing it on.
+      `${testedOrigin}${location.pathname}${testedSearchParams.size ? `?${testedSearchParams.toString()}` : ''}`,
       currentPageId ?? '',
       handleNavigate
     ],
@@ -145,14 +148,10 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
   );
 
   if (action.type === 'notFound') {
-    // @todo: In the future this should navigate to page 404
-    // return <Navigate to="/not-found" replace />;
     return 'Not Found';
   }
 
   if (action.type === 'accessDenied') {
-    // @todo: In the future this should navigate to page 403
-    // return <Navigate to="/unauthorized" replace />;
     return 'Access Denied';
   }
 

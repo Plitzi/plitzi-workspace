@@ -78,8 +78,7 @@ const request = (body: unknown): SSRRequest =>
     ctx: { spaceDeployment: { spaceId: 3, environment: 'production', revision: 1 } }
   }) as unknown as SSRRequest;
 
-const jsonResponse = (body: unknown, ok = true, status = 200) =>
-  ({ ok, status, json: () => Promise.resolve(body) }) as Response;
+const jsonResponse = (body: unknown, status = 200) => Response.json(body, { status });
 
 const lookups = (fetchImpl: typeof fetch, override?: Partial<ConnectorManifest>) => ({
   getConnector: () => Promise.resolve({ ...manifest, ...override }),
@@ -265,7 +264,7 @@ describe('handleAction', () => {
   });
 
   it('does not leak the provider error to the browser', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ error: 'nope' }, false, 403));
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ error: 'nope' }, 403));
     const { res, sent } = buildRes();
 
     await handleAction(

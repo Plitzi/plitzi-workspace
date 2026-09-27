@@ -1,8 +1,12 @@
 import { applySecurityHeaders } from './securityHeaders';
+import { socketResponse } from './socketResponse';
 import { buildResponseHelpers } from '../../helpers/buildResponseHelpers';
 import { resolveCompression } from '../../helpers/compress';
+import { serverLog } from '../../helpers/serverLog';
+import { isLogged } from '../../helpers/serverLog';
 import { clientIp, parseRequest } from '../requestParser';
 
+import type { UpgradeRequest } from './socketResponse';
 import type { BaseContext, Stage } from './types';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
 import type { ResolvedCompression } from '../../helpers/compress';
@@ -47,7 +51,8 @@ const runPipeline = async <C extends BaseContext>(
   buildContext: BuildContext<C>,
   stages: Stage<C>[],
   server: string,
-  compression: ResolvedCompression
+  compression: ResolvedCompression,
+  upgrade?: UpgradeRequest
 ): Promise<void> => {
   const startedAt = Date.now();
   const req = parseRequest(raw);
@@ -72,7 +77,11 @@ const runPipeline = async <C extends BaseContext>(
   });
   // The cast is the price of assembling a generic context from its parts: TypeScript cannot see that adding the
   // one omitted key back reconstructs `C`.
-  const ctx = { ...buildContext(raw, rawRes, req, res), signal: controller.signal } as C;
+  const ctx = {
+    ...buildContext(raw, rawRes, req, res),
+    signal: controller.signal,
+    ...(upgrade ? { upgrade } : {})
+  } as C;
   const logger = ctx.config.logger;
   // Read while the socket is still attached: a request logged from the catch block can outlive its connection.
   const ip = logger ? clientIp(raw, req) : '';
@@ -84,6 +93,12 @@ const runPipeline = async <C extends BaseContext>(
     }
 
     const status = statusOf(rawRes, res);
+    const failed = !!error || status >= 500;
+    // Decided before the event is built: at the default `error`, an answered request costs nothing to not log.
+    if (!isLogged(ctx.config.logLevel ?? 'error', failed ? 'error' : 'info')) {
+      return;
+    }
+
     logger({
       kind: 'request',
       server,
@@ -134,28 +149,66 @@ const runPipeline = async <C extends BaseContext>(
 
 // Turns a server's context builder + pipeline into an HTTP handler. Errors that escape a stage produce a bare
 // 500 so the socket is never left hanging. `label` names the server in logs (e.g. SSR, MCP).
+export type HandlerOptions = {
+  compression?: SSRServerConfig['compression'];
+  /**
+   * The paths that may switch protocols. An upgrade anywhere else is refused before the pipeline runs: a WebSocket
+   * opened on a page's address would otherwise render the page — and count a visit — to answer a socket.
+   */
+  upgrades?: (path: string) => boolean;
+};
+
+const pathOf = (url: string | undefined): string => (url ?? '/').split('?')[0];
+
 export const makeHandler = <C extends BaseContext>(
   label: string,
   buildContext: BuildContext<C>,
   stages: Stage<C>[],
-  compressionConfig?: SSRServerConfig['compression']
+  { compression: compressionConfig, upgrades }: HandlerOptions = {}
 ): Handler => {
   // Resolved once per server rather than per request: the policy cannot change between requests, and the
   // defaults would otherwise be re-merged on every one of them.
   const compression = resolveCompression(compressionConfig);
 
-  return (raw, rawRes) => {
-    runPipeline(raw, rawRes, buildContext, stages, label, compression).catch((err: unknown) => {
-      console.error(`[${label}] Unhandled error:`, err);
-      try {
-        if (!rawRes.headersSent) {
-          rawRes.writeHead(500, { 'Content-Type': 'text/plain' });
-        }
-
-        rawRes.end('Internal Server Error');
-      } catch {
-        // stream already closed
+  const fail = (rawRes: RawResponse) => (err: unknown) => {
+    serverLog.error(label, 'Unhandled error', err);
+    try {
+      if (!rawRes.headersSent) {
+        rawRes.writeHead(500, { 'Content-Type': 'text/plain' });
       }
-    });
+
+      rawRes.end('Internal Server Error');
+    } catch {
+      // stream already closed
+    }
   };
+
+  const handler: Handler = (raw, rawRes) => {
+    runPipeline(raw, rawRes, buildContext, stages, label, compression).catch(fail(rawRes));
+  };
+
+  if (upgrades) {
+    handler.upgrade = (raw, socket, head) => {
+      const rawRes = socketResponse(socket);
+      if (!upgrades(pathOf(raw.url))) {
+        rawRes.writeHead(404, { 'Content-Type': 'text/plain' });
+        rawRes.end('Not Found');
+
+        return;
+      }
+
+      const upgrade: UpgradeRequest = { socket, head, taken: false };
+      runPipeline(raw, rawRes, buildContext, stages, label, compression, upgrade)
+        .then(() => {
+          // Every stage fell through: nobody answered, and a socket left open here would hang until it timed out.
+          if (!upgrade.taken && !rawRes.writableFinished) {
+            rawRes.writeHead(404, { 'Content-Type': 'text/plain' });
+            rawRes.end('Not Found');
+          }
+        })
+        .catch(fail(rawRes));
+    };
+  }
+
+  return handler;
 };

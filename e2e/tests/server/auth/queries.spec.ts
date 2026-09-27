@@ -1,6 +1,6 @@
 import { describeTarget, expect, test } from '../../../fixtures';
 import { CREDENTIALS } from '../../../server/accounts';
-import { AUTH_PROBE, PROBE_PATH } from '../../../spaces/auth';
+import { AUTH_PROBE, authSpace, PROBE_PATH } from '../../../spaces/auth';
 
 import type { Page } from '@playwright/test';
 
@@ -54,7 +54,7 @@ describeTarget('auth-server', subject => {
 
     // The one page with no access level at all: a sign-out leaves it, and its provider, exactly where they are.
     await page.goto(`${subject.origin}/always`);
-    await expect(page.locator(`.${AUTH_PROBE.alwaysTitle}`)).toHaveText('always');
+    await expect(page.locator(authSpace().handles.element(AUTH_PROBE.alwaysTitle).selector)).toHaveText('always');
 
     const probes = watchProbes(page);
     await page.getByRole('button', { name: 'Sign out here' }).click();

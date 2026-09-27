@@ -1,7 +1,7 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
-import { restaurant } from '../content';
-import { checkEmail, SMTP_CREDENTIAL } from './rules';
+import { restaurant } from '../content.ts';
+import { checkEmail, SMTP_CREDENTIAL } from './rules.ts';
 
 import type { ActionStepSpec } from '@plitzi/sdk-authoring';
 

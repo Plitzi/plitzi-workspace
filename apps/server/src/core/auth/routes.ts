@@ -1,4 +1,4 @@
-import { csrfFailureMessage } from './csrf';
+import { carrierOf, csrfFailureMessage } from './csrf';
 
 import type { AccountStatus, AuthApi, AuthOutcome } from './api';
 import type { AuthPolicy, Requirement } from './authorize';
@@ -34,9 +34,17 @@ export interface AuthRoute {
 
 const body = (req: AuthRequest): Record<string, unknown> => (req.body ?? {}) as Record<string, unknown>;
 
-/** A body field as a string, whatever arrived. Handlers validate what they need; this only stops `[object Object]`. */
+/**
+ * A body field as text. A NUMBER counts — JSON carries an all-digit code or password as one, and a client that sent
+ * `123456` has sent a code: reading it as absent answered a right second-factor code with "Invalid code". Anything else
+ * (an object, a boolean) is not a value anybody typed, and is absent.
+ */
 const field = (req: AuthRequest, name: string): string => {
   const value = body(req)[name];
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
 
   return typeof value === 'string' ? value : '';
 };
@@ -354,7 +362,7 @@ export const authRoutes = ({
        * unbound token satisfies a signed-out caller, which is how signing in is protected when a deployment asks
        * for that.
        */
-      const carrier = { ...req, method: route.method };
+      const carrier = carrierOf(req, route.method);
       if (csrf && csrfNeeded(csrf, policy, carrier)) {
         const result = csrf.verify(carrier, cookies.resolveSessionToken(req));
         if (!result.ok) {

@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
+import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+
 import { empty, fail, findRootByRef, indexInvalidateDetails, resolveRef } from '../../../../helpers';
 import { position } from '../shared';
-import { pageUri, placeChild, removeFromParent } from '../write';
+import { DROP_POSITION, pageUri } from '../write';
 
 import type { Space } from '../../../../helpers';
 import type { OpResult } from '../../../../helpers';
@@ -36,18 +38,22 @@ export const moveElement = (space: Space, env: Env, op: MoveElement): OpResult =
     return fail('toParentRef', `Target "${op.toParentRef}" not found`, 'Read the page resource for valid refs');
   }
 
-  removeFromParent(space, el);
-  let parent = anchor;
-  let index: number | undefined;
-  if (op.position === 'before' || op.position === 'after') {
-    parent = anchor.definition.parentId ? (space.schema.flat[anchor.definition.parentId] ?? page) : page;
-    const items = parent.definition.items ?? [];
-    const at = items.indexOf(anchor.id);
-    index = at < 0 ? undefined : op.position === 'after' ? at + 1 : at;
+  // `from` is where the element sits now; the move itself — and its refusal to put a subtree inside itself — is the
+  // tree operation every writer shares.
+  const moved = new FlatMap({ flat: space.schema.flat }).moveElement(
+    el.definition.parentId ?? page.id,
+    anchor.id,
+    el.id,
+    DROP_POSITION[op.position]
+  );
+  if (!moved) {
+    return fail(
+      'toParentRef',
+      `"${op.ref}" cannot move ${op.position} "${op.toParentRef}"`,
+      'An element cannot move inside itself or one of its own descendants, and before/after needs an anchor that has a parent.'
+    );
   }
 
-  el.definition.parentId = parent.id;
-  placeChild(parent, el.id, index);
   // The move stays within the page (both refs resolved inside it), so the ref/page maps are unchanged; only the
   // moved element's parentRef and the two parents' childRefs did, so just drop the affected memoized detail.
   indexInvalidateDetails(space.schema);

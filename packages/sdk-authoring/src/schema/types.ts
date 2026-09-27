@@ -5,6 +5,7 @@ import type { AncestorSpec, ClassList, CssSpec, StatesSpec, StyleDeclaration, St
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   BindingCategory,
+  ChannelDeclarations,
   ElementBinding,
   ElementInteraction,
   ElementLoadStrategy,
@@ -46,6 +47,8 @@ export interface StepSpec {
   on?: string;
   when?: ElementInteraction['when'];
   enabled?: boolean;
+  /** On a trigger: what firing it again does while its flow still runs. See {@link whileRunning}. */
+  whileRunning?: ElementInteraction['whileRunning'];
 }
 
 export interface BindingSpec {
@@ -161,7 +164,8 @@ export interface ElementSpec {
    * `false` starts it hidden with no condition at all: a panel that a flow reveals (`toggleState`, `setState`)
    * rather than one the data does.
    *
-   * `{ source, template }` is a condition the value does not answer on its own — the template says `true` or `false`
+   * `{ source, template }` is a condition the value does not answer on its own — the template's value is read as a yes
+   * or a no (`false`, `0`, empty, an empty list or nothing is a no)
    * (`"{{ source == '' or source == list_games.item.genre }}"`). Like every condition, it starts hidden.
    */
   visible?: string | false | VisibleCondition;
@@ -212,7 +216,8 @@ export interface PageSpec {
    */
   accessLevel?: 'public' | 'authenticated';
   /**
-   * Where a visitor this page is not for is sent — a slug, e.g. `login`.
+   * Where a visitor this page is not for is sent — a page's id or slug (`login`; `''` is the home page), its path, or a
+   * full URL for somewhere off this space. Resolved to the page's id, and refused when it names no page.
    *
    * Without it they are answered 403, which is correct and rarely what a site wants: somebody who followed a link
    * to a members page should land on the sign-in, not on a refusal. One field rather than the router's two,
@@ -228,9 +233,6 @@ export interface PageSpec {
   folder?: string;
   /** The shared layout this page renders inside. See {@link LayoutRef}. */
   layout?: LayoutRef;
-  /** Keep the page's element state across visits, in the storage named by {@link PageSpec.stateStorage}. */
-  keepState?: boolean;
-  stateStorage?: Schema['settings']['stateStorage'];
   css?: CssSpec;
   /** As {@link ElementSpec.selector}. */
   selector?: string;
@@ -337,6 +339,20 @@ export interface SpaceSpec {
    */
   computed?: Record<string, string>;
   /**
+   * The realtime channels the space offers, by topic pattern — what a `channel` element's `topic` must match:
+   *
+   * ```ts
+   * channels: {
+   *   'board:{id}': { access: { mode: 'public' }, presence: true },
+   *   'scores:{id}': { access: { mode: 'session' }, publish: 'server' }
+   * }
+   * ```
+   *
+   * `{id}` is the part a page fills in (`board:{{ id }}`); each board is its own topic. `publish: 'server'` is a
+   * channel only a flow's `realtime.publish` sends on. See `docs/en/realtime.md`.
+   */
+  channels?: ChannelDeclarations;
+  /**
    * Everything else the schema's settings carry — where sign-in posts to, which cookie hints at a session, how
    * state is kept. `customCss` above is the one field of that same object every space sets, and it stays named on
    * its own for that reason; these are the rest, spread over it.
@@ -389,6 +405,12 @@ export interface StepVocabulary {
   triggers?: Record<string, readonly string[]>;
   /** Element type → every element callback it answers to, the shared `setState`/`toggleState` included. */
   callbacks?: Record<string, readonly string[]>;
+  /**
+   * The callbacks every element answers to, and the params each takes. A type's own callbacks (`openModal`) describe
+   * their params for the builder's controls, whose options only a mounted element knows, so only these are held to
+   * their params.
+   */
+  sharedCallbacks?: Record<string, { strictParams?: boolean; params?: ParamSpec }>;
 }
 
 /**
@@ -398,6 +420,49 @@ export interface StepVocabulary {
  * the one they depend on. Without it a binding source is written as declared and only its structure is checked.
  */
 export type SourceTypes = Record<string, string>;
+
+/**
+ * One refusal a document is allowed to carry, named exactly: which check, on which element, and why.
+ *
+ * Narrow on purpose — a code alone would let a second, accidental instance through beside the intended one. It is
+ * never silent either: the refusal comes back in `warnings` with the reason in front, and an entry that matches nothing
+ * is itself refused, so it cannot outlive the break it was written for.
+ */
+export interface AllowedBreak {
+  /** The validator code, as a refusal prints it in brackets — `template-unknown-name`. */
+  code: string;
+  /** The id of the element that breaks it. */
+  element: string;
+  /** Why this is on purpose. Printed with the warning, for whoever reads it next. */
+  why: string;
+}
+
+/**
+ * What `authorSpace` reads from a plugin's declaration. Structural, so a `PluginDeclaration`, an element's own
+ * declaration and a manifest's `pluginSchema` entry (with its `type`) all fit.
+ */
+export interface PluginDeclarationData {
+  type: string;
+  /** The source name it publishes under, when it publishes one. */
+  sourceType?: string;
+  /** The events it fires beyond the ones every element does, by action. */
+  triggers?: Readonly<Record<string, { action: string }>>;
+  /** The actions it answers to beyond `setState` and `toggleState`, by action. */
+  callbacks?: Readonly<Record<string, { action: string }>>;
+  content?: {
+    /** Its starting attributes: what it reads, and what a factory merges under the author's own. */
+    attributes?: Readonly<Record<string, unknown>>;
+    definition?: {
+      /** Its name in the builder. */
+      label?: string;
+      /** Present when it holds children. */
+      items?: readonly unknown[];
+      styleSelectors?: Readonly<Record<string, unknown>>;
+    };
+    /** The attributes a data source may be pointed at — read as attributes too, since a binding writes them. */
+    defaultStyle?: { bindingsAllowed?: { attributes?: readonly { path: string }[] } };
+  };
+}
 
 export interface AuthorSpaceOptions {
   /**
@@ -437,6 +502,21 @@ export interface AuthorSpaceOptions {
    * (`contaner`) and a plugin nobody registered render the same: nothing.
    */
   pluginTypes?: readonly string[];
+  /**
+   * The plugins this project ships, as their declarations — the `declaration.ts` beside each component, or the
+   * `pluginSchema` of a published manifest.
+   *
+   * More than `pluginTypes`: a declared plugin is held to what it declares, like a built-in element. A flow that
+   * starts on a trigger it never fires, a step sent to a callback it does not answer, an attribute it does not read
+   * and a binding onto one are all reported — with only a type name, every one of them is written and silently does
+   * nothing.
+   */
+  plugins?: readonly PluginDeclarationData[];
+  /**
+   * What this document breaks ON PURPOSE — a fixture for how the runtime copes with something no author would write,
+   * like a provider whose URL names a route param no page has. See {@link AllowedBreak}.
+   */
+  allow?: readonly AllowedBreak[];
   /** The binding transformers and their params. Left out, a transformer nothing implements is written as given. */
   transformers?: Readonly<Record<string, { strictParams?: boolean; params?: ParamSpec }>>;
 }

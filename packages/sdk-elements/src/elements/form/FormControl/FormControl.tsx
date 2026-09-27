@@ -6,6 +6,7 @@ import { createStoreHook } from '@plitzi/nexus/react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import Label from './components/Label';
+import { VISUALLY_HIDDEN } from './components/visuallyHidden';
 import declaration from './declaration';
 import withFieldValue from './hocs/withFieldValue';
 import Checkbox from './inputs/Checkbox';
@@ -35,11 +36,24 @@ export type FormControlProps = {
     | 'switch'
     | 'select'
     | 'textarea'
-    | 'hidden';
+    | 'hidden'
+    /** The browser's own colour picker: its value is `#rrggbb`. */
+    | 'color';
   name: string;
   label: string;
+  /**
+   * Keeps `label` out of sight while it still names the field — for a field whose design already says what it is for:
+   * a search box with a magnifier, a colour swatch. Without a label a screen reader or a browser agent finds an unnamed
+   * box; a placeholder names only a text field, and only until something is typed.
+   */
+  hideLabel: boolean;
   placeholder: string;
   autoComplete: boolean;
+  /**
+   * Takes the focus as it appears — a search box opened by a shortcut is typed into at once. With the control's
+   * container shown only while wanted (`loadStrategy: 'visible'`), it appears each time it is opened.
+   */
+  autoFocus: boolean;
   disabled: boolean;
   options: { label: string; value: string }[];
   required: boolean;
@@ -83,8 +97,10 @@ const FormControl = ({
   subType = 'text',
   name = '',
   label = 'Label',
+  hideLabel = false,
   placeholder = '',
   autoComplete = true,
+  autoFocus = false,
   disabled = false,
   options = [],
   required = true,
@@ -99,6 +115,7 @@ const FormControl = ({
   const {
     id,
     rootId,
+    visible,
     definition: { styleSelectors }
   } = useElement();
   const {
@@ -141,6 +158,9 @@ const FormControl = ({
   // authoring one without remembering to blank it puts "Label" and a box on the page above a field nobody can
   // see. The control itself is `display: none` in a real render; only the builder shows a placeholder for it.
   const isHidden = subType === 'hidden';
+  // Every time it is shown — a search bar opened a second time takes the focus again — and never in the builder.
+  const focusWhenShown = autoFocus && previewMode && visible;
+  const errorId = error && previewMode ? `${rootId}_${id}_error` : undefined;
 
   useEffect(() => {
     if (!registerField || !unregisterField) {
@@ -169,6 +189,7 @@ const FormControl = ({
           className={styleSelectors.label}
           type={subType}
           required={required}
+          hidden={hideLabel && previewMode}
         >
           {label}
         </Label>
@@ -192,6 +213,7 @@ const FormControl = ({
               disabled={disabled}
               onChange={handleChangeInteraction}
               onValidate={handleValidate}
+              errorId={errorId}
             />
           )}
           {/* {subType === 'switch' && (
@@ -206,7 +228,7 @@ const FormControl = ({
               disabled={disabled}
             />
           )} */}
-          {label}
+          {hideLabel && previewMode ? <span style={VISUALLY_HIDDEN}>{label}</span> : label}
         </Label>
       )}
       {subType === 'checkbox' && !label && (
@@ -220,6 +242,7 @@ const FormControl = ({
           disabled={disabled}
           onChange={handleChangeInteraction}
           onValidate={handleValidate}
+          errorId={errorId}
         />
       )}
       {/* {subType === 'switch' && !label && (
@@ -236,7 +259,7 @@ const FormControl = ({
           disabled={disabled}
         />
       )} */}
-      {['text', 'number', 'email', 'password', 'date', 'time'].includes(subType) && (
+      {['text', 'number', 'email', 'password', 'date', 'time', 'color'].includes(subType) && (
         <Input
           id={`${rootId}_${id}`}
           name={name}
@@ -245,12 +268,14 @@ const FormControl = ({
           className={styleSelectors.input}
           placeholder={placeholder}
           autoComplete={subType !== 'password' ? autoComplete : false}
+          autoFocus={focusWhenShown}
           required={required}
           maxLength={maxLength}
           disabled={disabled}
           readOnly={readOnly || !previewMode}
           onChange={handleChangeInteraction}
           onValidate={handleValidate}
+          errorId={errorId}
         />
       )}
       {subType === 'hidden' && (
@@ -269,6 +294,7 @@ const FormControl = ({
           name={name}
           onChange={handleChangeInteraction}
           onValidate={handleValidate}
+          errorId={errorId}
           value={value}
           className={styleSelectors.input}
           placeholder={placeholder}
@@ -283,30 +309,21 @@ const FormControl = ({
           value={value}
           className={styleSelectors.input}
           placeholder={placeholder}
+          autoFocus={focusWhenShown}
           required={required}
           maxLength={maxLength}
           disabled={disabled}
           readOnly={readOnly}
           onChange={handleChangeInteraction}
           onValidate={handleValidate}
+          errorId={errorId}
         />
       )}
-      {/* {subType === 'color' && (
-        <ColorPicker
-          {...inputProps}
-          ref={ref}
-          id={`${rootId}_${id}`}
-          name={name}
-          onChange={onChange}
-          value={value}
-          size={size}
-          className={inputClassName}
-          placeholder={placeholder}
-          hasError={!!errorMessage}
-          disabled={disabled}
-        />
-      )} */}
-      {error && <div className={clsx('form-control__error-message', styleSelectors.error)}>{error}</div>}
+      {error && (
+        <div id={errorId} role="alert" className={clsx('form-control__error-message', styleSelectors.error)}>
+          {error}
+        </div>
+      )}
     </RootElement>
   );
 };

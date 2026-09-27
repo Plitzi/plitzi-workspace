@@ -297,6 +297,8 @@ describe('sources read inside a flow', () => {
   const listWith = (flow: StepSpec[]) => ({
     name: 'Rows',
     permanentUrl: 'rows',
+    // The board is resolved on the server, which the space has to turn on.
+    rsc: { enabled: true },
     pages: [
       {
         name: 'Home',
@@ -505,7 +507,7 @@ describe('the element catalogs', () => {
         authoring.dropdown({
           id: 'menu',
           children: [
-            authoring.text({ content: 'Menu' }),
+            authoring.button({ content: 'Menu' }),
             authoring.container({ children: [authoring.dropdownPopup({ id: 'panel' })] })
           ]
         })

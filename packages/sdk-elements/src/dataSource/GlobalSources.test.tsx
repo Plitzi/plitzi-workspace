@@ -1,12 +1,14 @@
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { setThemeMode } from '@plitzi/sdk-shared/theme/themeStore';
 
 import GlobalSources from './GlobalSources';
+import useElementDataSource from '../Element/hooks/useElementDataSource';
 
 import type { AuthContextValue } from '@plitzi/sdk-shared';
 
@@ -90,5 +92,61 @@ describe('GlobalSources — the auth source', () => {
 
   it('publishes nothing when the space does not authenticate', () => {
     expect(authSourceFor('')).toEqual({});
+  });
+});
+
+describe('GlobalSources — the computed source', () => {
+  /**
+   * Every computed value is evaluated again whenever the state changes, and a list comes out a new array each time.
+   * Published as it came, every element reading one rendered again for a change to another value — on a whiteboard,
+   * the hundred and sixty stars reading the favourites, for the tool in hand changing. This pins that it does not.
+   */
+  it('keeps a value that came out the same, so what reads it does not render again', () => {
+    type Page = {
+      schema: { settings: { computed: Record<string, string> }; variables: unknown[] };
+      pageDefinitions: Record<string, unknown>;
+      navigation: typeof navigation;
+      runtime: { state: { favourites: string[]; tool: string }; sources: Record<string, unknown> };
+    };
+    const store = createStore<Page>({
+      schema: {
+        settings: { computed: { picked: '{{ state.favourites|sort }}', tool: '{{ state.tool }}' } },
+        variables: []
+      },
+      pageDefinitions: {},
+      navigation,
+      runtime: { state: { favourites: ['b', 'a'], tool: 'pen' }, sources: {} }
+    });
+    let renders = 0;
+    let picked: unknown;
+    const Star = () => {
+      renders += 1;
+      picked = (useElementDataSource({ sources: ['computed.picked'] }).computed as { picked?: unknown } | undefined)
+        ?.picked;
+
+      return null;
+    };
+
+    render(
+      <StoreProvider store={store}>
+        <AuthContext value={authValue}>
+          <GlobalSources>
+            <Star />
+          </GlobalSources>
+        </AuthContext>
+      </StoreProvider>
+    );
+    const first = picked;
+    const before = renders;
+
+    act(() => store.setState('runtime.state', { favourites: ['b', 'a'], tool: 'laser' }));
+
+    expect(store.getPath('runtime.sources.computed.tool')).toBe('laser');
+    expect(picked).toBe(first);
+    expect(renders).toBe(before);
+
+    act(() => store.setState('runtime.state', { favourites: ['c', 'a'], tool: 'laser' }));
+
+    expect(picked).toEqual(['a', 'c']);
   });
 });

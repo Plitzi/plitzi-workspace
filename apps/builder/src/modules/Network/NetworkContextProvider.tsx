@@ -76,11 +76,22 @@ const NetworkContextProvider = ({
           fetchPolicy
         });
       } catch (e) {
+        /**
+         * The server's own sentence when it answered with one — "the credential was refused", "no such bucket" —
+         * because that is what the person can act on. Only a request that never got an answer is a network problem;
+         * a GraphQL error is the server speaking, and used to be announced as the network being down.
+         */
+        const answered = CombinedGraphQLErrors.is(e);
         if (!silentError) {
-          addToast(`Query ${queryKey} Failed`, { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
+          const message = answered ? e.errors.map(error => error.message).join(' ') : '';
+          addToast(message || `Query ${queryKey} Failed`, {
+            appeareance: 'error',
+            autoDismiss: true,
+            placement: 'top-right'
+          });
         }
 
-        if (CombinedGraphQLErrors.is(e)) {
+        if (!answered) {
           addToast('Network Not Available, Please try again', {
             appeareance: 'error',
             autoDismiss: true,
@@ -111,7 +122,6 @@ const NetworkContextProvider = ({
       }
 
       let result: ApolloClient.MutateResult<BuilderMutationsMap[T]>;
-      // let abortHandler;
       try {
         result = await client.mutate<BuilderMutationsMap[T]>({
           mutation: BuilderMutations[mutationKey],
@@ -119,14 +129,6 @@ const NetworkContextProvider = ({
           context: {
             fetchOptions: {
               customFetch: false,
-              // onProgress: ev => {
-              //   setProgress(ev.loaded / ev.total);
-              // },
-              // onProgress: undefined,
-              // onAbortPossible: abortHandlerInternal => {
-              //   abortHandler = abortHandlerInternal;
-              // },
-              // onAbortPossible: undefined,
               ...uploadOptions
             }
           }
@@ -159,10 +161,6 @@ const NetworkContextProvider = ({
     },
     [addToast, client, environment]
   );
-
-  const connectivityStatus = useCallback(() => {
-    console.log(window.navigator.onLine);
-  }, []);
 
   const initQuery = useCallback(async () => {
     try {
@@ -217,14 +215,7 @@ const NetworkContextProvider = ({
   }, [environment, query, registerDefinition]);
 
   useEffect(() => {
-    window.addEventListener('offline', connectivityStatus);
-    window.addEventListener('online', connectivityStatus);
-
     void initQuery();
-    return () => {
-      window.removeEventListener('offline', connectivityStatus);
-      window.removeEventListener('online', connectivityStatus);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

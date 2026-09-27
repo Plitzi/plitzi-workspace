@@ -2,14 +2,15 @@ import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { offlineDataPath } from '@plitzi/example-space';
 import { mcpExtensions } from '@plitzi/sdk-mcp';
 import { consoleLogger, createServer } from '@plitzi/sdk-server';
-
-import { offlineDataPath } from '@plitzi/example-space';
 
 import type { OfflineDataRaw, Schema, SSRPageAdapters, Style } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4006);
+// Loopback unless told otherwise: a container publishes a port only from an address it listens on.
+const HOST = process.env.HOST ?? '127.0.0.1';
 const PREVIEW_SECRET = 'example-secret';
 
 const workingCopy = path.join(tmpdir(), 'plitzi-example-combined-space.json');
@@ -26,7 +27,7 @@ const adapters: SSRPageAdapters = {
   // verified bearer; every caller getting write access to space 1 is fine for an example and nowhere else.
   getGrant: () => Promise.resolve({ spaceId: 1, scope: 'agent', canWrite: true }),
   getSchema: () => Promise.resolve(read().schema),
-  getStyle: () => Promise.resolve(read().style as Style),
+  getStyle: () => Promise.resolve(read().style),
   saveSchema: (_s, _e, schema: Schema) => {
     write({ ...read(), schema });
 
@@ -48,7 +49,7 @@ const adapters: SSRPageAdapters = {
 const server = createServer(
   {
     port: PORT,
-    devMode: true,
+    devMode: process.env.NODE_ENV !== 'production',
     adapters,
     logger: consoleLogger,
     preview: { enabled: true, secret: PREVIEW_SECRET }
@@ -56,7 +57,7 @@ const server = createServer(
   mcpExtensions()
 );
 
-server.listen(PORT, '127.0.0.1');
+server.listen(PORT, HOST);
 console.log(`[example] pages   http://127.0.0.1:${PORT}/`);
 console.log(`[example] MCP     http://127.0.0.1:${PORT}/mcp`);
 console.log(`[example] preview POST http://127.0.0.1:${PORT}/__preview  (x-preview-secret: ${PREVIEW_SECRET})`);

@@ -1,6 +1,6 @@
 import { defineAction } from '@plitzi/sdk-authoring';
 
-import { articles, photo } from '../content';
+import { articles, photo } from '../content.ts';
 
 export const JOURNAL_ACTION = 'leer-diario';
 

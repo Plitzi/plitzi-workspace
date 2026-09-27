@@ -4,11 +4,8 @@ import { authorSpace } from './space';
 import { validateSpace } from './validate';
 
 import type { AuthorSpaceOptions, AuthoredTemplate, TemplateSpec } from './types';
-import type {
-  SchemaValidationError,
-  SchemaValidationOptions,
-  SchemaValidationResult
-} from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SpaceValidationOptions } from './validate';
+import type { SchemaValidationError, SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type { Element, Schema, Style, Template } from '@plitzi/sdk-shared';
 
 /**
@@ -177,6 +174,16 @@ const validateBindingScope = (schema: Schema): SchemaValidationError[] => {
   return errors;
 };
 
+/** The binding an error is about: the element carrying it and the source it names. */
+const bindingKey = ({ elementId, details }: SchemaValidationError): string => {
+  const source =
+    typeof details === 'object' && details !== null && 'source' in details && typeof details.source === 'string'
+      ? details.source
+      : '';
+
+  return `${elementId ?? ''}:${source}`;
+};
+
 /**
  * Whether a template is one a builder can instantiate.
  *
@@ -184,7 +191,7 @@ const validateBindingScope = (schema: Schema): SchemaValidationError[] => {
  * counted from the base element, since there are no pages to count them from — plus the four things only a
  * template can get wrong.
  */
-export const validateTemplate = (template: Template, options: SchemaValidationOptions = {}): SchemaValidationResult => {
+export const validateTemplate = (template: Template, options: SpaceValidationOptions = {}): SchemaValidationResult => {
   const { definition, schema, style } = template;
   const { baseElementId } = definition;
   const errors: SchemaValidationError[] = [];
@@ -214,7 +221,14 @@ export const validateTemplate = (template: Template, options: SchemaValidationOp
   );
 
   const { errors: spaceErrors, warnings } = validateSpace({ schema, style }, { ...options, baseElementId });
-  const all = dedupe([...spaceErrors, ...errors, ...validateBindingScope(schema)]);
+  // A binding onto a provider left behind is also a name the structural pass cannot resolve; the template's own
+  // reading says what to do about it, so it is the one that is kept.
+  const outOfScope = validateBindingScope(schema);
+  const told = new Set(outOfScope.map(bindingKey));
+  const structural = spaceErrors.filter(
+    error => error.code !== 'UNRESOLVED_BINDING_SOURCE' || !told.has(bindingKey(error))
+  );
+  const all = dedupe([...structural, ...errors, ...outOfScope]);
 
   return { valid: all.length === 0, errors: all, warnings: dedupe([...warnings, ...validateSelectors(schema, style)]) };
 };
@@ -223,7 +237,7 @@ export const validateTemplate = (template: Template, options: SchemaValidationOp
 export const assertTemplateValid = (
   template: Template,
   context: string,
-  options: SchemaValidationOptions = {}
+  options: SpaceValidationOptions = {}
 ): SchemaValidationError[] => {
   const { valid, errors, warnings } = validateTemplate(template, options);
   if (!valid) {
