@@ -65,13 +65,13 @@ describeTarget('whiteboard-replicas', subject => {
       board.serverData.board.elements.filter(element => element.type === 'sticky' && !element.deleted).map(e => e.text)
     ).toEqual(['From the agent']);
 
-    // And it hears the people, wherever they are: a line said on the second replica, while it waits — once what it
-    // was already told (the two of them arriving) is out of the way.
+    // And it hears the people who name it, wherever they are: a line said on the second replica, while it waits —
+    // once what it was already told (the two of them arriving) is out of the way.
     await agent.call('wait_for_activity', { seconds: 0 });
     const heard = agent.call('wait_for_activity', { seconds: 20 });
     await leo.waitForTimeout(500);
-    await say(leo, 'Are you there, agent?');
-    expect(await heard).toContain('Are you there, agent?');
+    await say(leo, '@agent are you there?');
+    expect(await heard).toContain('to you, in the chat: @agent are you there?');
 
     // Its session lives on one replica; the balancer spread its calls over more than one.
     expect(agent.replicas.size).toBeGreaterThan(1);

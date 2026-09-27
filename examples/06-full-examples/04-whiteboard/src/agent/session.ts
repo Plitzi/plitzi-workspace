@@ -2,6 +2,7 @@ import { randomInt } from 'node:crypto';
 
 import { connect } from './connection.ts';
 import { blockedWarning, movedOnBlocked } from '../board/dependencies.ts';
+import { mentions } from '../board/mentions.ts';
 import { byStacking, isRecord, parseElement, supersedes, textOf } from '../board/model.ts';
 import { parseTemplate } from '../board/savedTemplates.ts';
 import { describeSession, isFaceDown, parseSession } from '../board/sessions.ts';
@@ -23,8 +24,9 @@ import type { ChatMessage, OpenedBoard } from '../board/store.ts';
  */
 
 export type Activity =
-  | { kind: 'chat'; name: string; text: string; at: number }
-  | { kind: 'said'; name: string; text: string; at: number }
+  /** A line in the chat, or at a cursor — `toMe` when it names this agent with an @ (`mentions.ts`). */
+  | { kind: 'chat'; name: string; text: string; at: number; toMe: boolean }
+  | { kind: 'said'; name: string; text: string; at: number; toMe: boolean }
   | { kind: 'changed'; name: string; count: number; ids: string[]; at: number }
   | { kind: 'joined' | 'left'; name: string; at: number }
   /** What the board itself flags: a blocked card moved on. */
@@ -242,17 +244,19 @@ export const joinBoard = async (
         }
 
         if (!line.agent || line.name !== name) {
-          note({ kind: 'chat', name: line.name, text: line.text, at: line.at });
+          note({ kind: 'chat', name: line.name, text: line.text, at: line.at, toMe: mentions(line.text, name) });
         }
       } else if (type === 'title' && isRecord(data) && typeof data.title === 'string') {
         title = data.title;
       } else if (type === 'session' && isRecord(data)) {
         session = parseSession(data.session);
+        // The board itself speaks to everyone on it — its agents too.
         note({
           kind: 'chat',
           name: 'The board',
           text: session ? `Session: ${describeSession(session)}` : 'The session is over.',
-          at: Date.now()
+          at: Date.now(),
+          toMe: true
         });
       } else if (type === 'templates' && isRecord(data)) {
         templates = templatesOf(data.templates);
@@ -316,8 +320,9 @@ export const joinBoard = async (
       if (last?.kind === 'said' && last.name === nameOf(from)) {
         last.text = data.chat;
         last.at = Date.now();
+        last.toMe = mentions(data.chat, name);
       } else {
-        note({ kind: 'said', name: nameOf(from), text: data.chat, at: Date.now() });
+        note({ kind: 'said', name: nameOf(from), text: data.chat, at: Date.now(), toMe: mentions(data.chat, name) });
       }
     }
   };
@@ -603,13 +608,20 @@ export const joinBoard = async (
 
       return who;
     },
-    /** What was said on the board since `since` — chat, cursor words, warnings, stops: what it answers while working. */
+    /**
+     * What was said to it on the board since `since` — lines that name it, warnings, stops: what it answers while
+     * working. What the people say to each other is not in it.
+     */
     saidSince: (since: number): Activity[] =>
       activity.filter(
         entry =>
           entry.at > since &&
-          (entry.kind === 'chat' || entry.kind === 'said' || entry.kind === 'warning' || entry.kind === 'stop')
+          (((entry.kind === 'chat' || entry.kind === 'said') && entry.toMe) ||
+            entry.kind === 'warning' ||
+            entry.kind === 'stop')
       ),
+    /** Everything heard since `since`, what it waits on or not: what it reads the board by. */
+    heardSince: (since: number): Activity[] => activity.filter(entry => entry.at > since),
     get status() {
       return status;
     },

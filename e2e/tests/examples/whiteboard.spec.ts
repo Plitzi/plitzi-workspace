@@ -396,6 +396,29 @@ describeTarget('whiteboard', subject => {
       .toContain('Hola desde el cursor');
   });
 
+  /** Enter on the board opens the chat ready to type; a line that names this page's person — or everyone — pings it and
+   *  says who wrote. */
+  test('Enter writes in the chat, and a line naming you pings you', async ({ page }) => {
+    const id = await seedBoard(subject.origin, 'e2e — mentions', []);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    await page.mouse.click(...(await middle(page)));
+
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('textbox', { name: 'Message everyone' })).toBeFocused();
+    await expect(page.getByText('Write @name to ping someone')).toBeVisible();
+
+    await action(subject.origin, 'board-chat', {
+      board: id,
+      key: '',
+      name: 'Ana',
+      color: 'blue',
+      text: '@all nos vemos en la retro',
+      by: 'e2e-ana'
+    });
+    await expect(page.getByText('Ana to you: @all nos vemos en la retro')).toBeVisible();
+  });
+
   /** An agent on the board as a teammate is: it hears what is said while it works, stops when somebody presses stop,
    *  and once it has gone it is gone — no cursor left behind by the words it last said. */
   test('an agent hears the board between its steps, stops when told, and leaves no ghost', async ({ page }) => {
@@ -407,16 +430,26 @@ describeTarget('whiteboard', subject => {
     const stop = page.getByRole('button', { name: 'Stop the agent' });
     await expect(stop).toBeVisible();
 
-    // Said in the chat while it works: it hears it with the answer to whatever it does next — once.
-    await action(subject.origin, 'board-chat', {
-      board: id,
-      key: '',
-      name: 'Ana',
-      color: 'blue',
-      text: '¿Cuánto te falta?',
-      by: 'e2e-person'
-    });
-    await expect.poll(async () => agent.call('read_board')).toContain('Ana in the chat: ¿Cuánto te falta?');
+    const chat = (name: string, words: string) =>
+      action(subject.origin, 'board-chat', { board: id, key: '', name, color: 'blue', text: words, by: `e2e-${name}` });
+
+    // What it has not heard yet — this page's person arriving — heard now, so what follows is all there is.
+    await agent.call('wait_for_activity', { seconds: 0 });
+
+    // The people talking to each other are not talking to it: nothing rides on its answers, and listening, it is not
+    // woken — it reads them as what the others said among themselves.
+    await chat('Ana', 'Leo, ¿lo revisas tú?');
+    await page.waitForTimeout(300);
+    expect(await agent.call('read_board')).not.toContain('Meanwhile on the board');
+    expect(await agent.call('wait_for_activity', { seconds: 2 })).toContain(
+      'Nothing for you in 2 seconds — the others talked among themselves:'
+    );
+
+    // Named, it is: said while it works, it hears it with the answer to whatever it does next — once.
+    await chat('Ana', '@Claude Code ¿cuánto te falta?');
+    await expect
+      .poll(async () => agent.call('read_board'))
+      .toContain('Ana to you, in the chat: @Claude Code ¿cuánto te falta?');
     expect(await agent.call('read_board')).not.toContain('Meanwhile on the board');
 
     // Stop pressed: its next piece of work is refused, and talking still works.

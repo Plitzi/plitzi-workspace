@@ -5,6 +5,7 @@ import { cardHeight, frameNamed, placeAll } from './place.ts';
 import { callAction, joinBoard, newElementId } from './session.ts';
 import { blockedWarning, cardTitle, movedOnBlocked, openBlockers, toggledBlocker } from '../board/dependencies.ts';
 import { DUTY_PRESETS, instructionOf } from '../board/duties.ts';
+import { handleOf } from '../board/mentions.ts';
 import { isConnector, markedDone, settleDone } from '../board/model.ts';
 import { isEmptyQuery, matchesQuery, parseQuery } from '../board/query.ts';
 import { isStamp, REACTIONS, STAMPS } from '../board/reactions.ts';
@@ -89,9 +90,13 @@ const centre = (element: BoardElement): Point => {
 const describeActivity = (entry: Activity): string => {
   switch (entry.kind) {
     case 'chat':
-      return `${entry.name} in the chat: ${entry.text}`;
+      return entry.toMe
+        ? `${entry.name} to you, in the chat: ${entry.text}`
+        : `${entry.name} to the others, in the chat (not for you — do not answer it or act on it): ${entry.text}`;
     case 'said':
-      return `${entry.name} at their cursor: ${entry.text}`;
+      return entry.toMe
+        ? `${entry.name} to you, at their cursor: ${entry.text}`
+        : `${entry.name} to the others, at their cursor (not for you): ${entry.text}`;
     case 'changed':
       return `${entry.count} element(s) changed on the board`;
     case 'warning':
@@ -244,7 +249,15 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
           )
       }
     },
-    async ({ link, password, name }) => text(describeBoard(await join(link, password, name)))
+    async ({ link, password, name }) => {
+      const board = await join(link, password, name);
+
+      return text(
+        `${describeBoard(board)}\n\nYou are ${handleOf(board.name)} here. The people talk to each other on this board too: a line ` +
+          `is for you when it names you (${handleOf(board.name)}, or @agent) — act on those. The rest is their ` +
+          'conversation: read it for context, and do not answer it or act on it.'
+      );
+    }
   );
 
   server.registerTool(
@@ -900,12 +913,13 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
                 })
                 .catch(() => undefined);
             }, PROGRESS_MS);
-      // What it was already told between two steps of its work is not news again.
-      const heard = (
-        await board
-          .activitySince(since, seconds * 1000, entry => worth(entry) && untold(entry))
-          .finally(() => clearInterval(beat))
-      ).filter(untold);
+      // It wakes for what is for it — a line that names it, a change, somebody arriving — not for the people talking to
+      // each other, which it reads as the context of what woke it. What it was already told between two steps of its
+      // work is not news again.
+      const wakes = (entry: Activity): boolean =>
+        worth(entry) && untold(entry) && ((entry.kind !== 'chat' && entry.kind !== 'said') || entry.toMe);
+      await board.activitySince(since, seconds * 1000, wakes).finally(() => clearInterval(beat));
+      const heard = board.heardSince(since).filter(entry => worth(entry) && untold(entry));
       tell(heard);
       board.takeStop();
       lastLooked = Date.now();
@@ -916,6 +930,9 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
       if (!heard.length) {
         return text(`Nothing happened in ${seconds} seconds.`);
       }
+
+      const forIt = heard.some(entry => (entry.kind !== 'chat' && entry.kind !== 'said') || entry.toMe);
+      const context = forIt ? [] : [`Nothing for you in ${seconds} seconds — the others talked among themselves:`];
 
       // In the frames watched, what changed is told element by element: that is what a duty acts on.
       const lines = heard.flatMap(entry => {
@@ -931,7 +948,7 @@ export const registerTools = (server: McpServer, options: AgentOptions): AgentTo
         ];
       });
 
-      return text(lines.join('\n'));
+      return text([...context, ...lines].join('\n'));
     }
   );
 

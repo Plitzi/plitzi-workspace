@@ -153,6 +153,11 @@ call and the next, while its model decides), listening (in `wait_for_activity`),
 the wire from its tool calls (`agent/observe.ts`), so no tool can forget to say it. Saying something at its cursor, it
 still shows what it is doing beside the words.
 
+It acts only on what is said to it: a line that names it with an @ (`@Claude Code`, `@Claude`, or `@agent` for every
+agent). The rest is the people talking to each other — it reads it as context and leaves it alone, and it is not woken
+by it. People are named the same way: `@Ana`, or `@all`, pings them with a sound and says who wrote. The chat says so
+above where one writes, with the agents on the board to ask; Enter on the board opens the chat, ready to type.
+
 It is talked to while it works, as Claude Code is between two of its steps: what the people say in the chat or at their
 cursors meanwhile goes back with the answer to its next tool call ("Meanwhile on the board"), so it can answer at once,
 change course or stop. ■ on its avatar, shown while it works, stops it: its next piece of work is refused outright

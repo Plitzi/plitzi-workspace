@@ -242,6 +242,20 @@ const declaration = {
         }
       }
     },
+    /**
+     * A line of the board's chat, heard: when it names this page's person with an @ — or everyone, `@all` — and is
+     * somebody else's, a ping and a word of who wrote to them.
+     */
+    hearLine: {
+      action: 'hearLine',
+      title: 'Hear a Chat Line',
+      type: 'callback',
+      params: {
+        name: { label: 'Who wrote it', defaultValue: '', type: 'text' },
+        text: { label: 'What it says', defaultValue: '', type: 'text' },
+        mine: { label: 'Written on this page (true / empty)', defaultValue: '', type: 'text' }
+      }
+    },
     /** The one frame selected made a column — which lays out what is put in it, as a kanban lane — or free again. */
     toggleColumn: callback('toggleColumn', 'Toggle Column'),
     toggleCompletes: callback('toggleCompletes', 'Toggle Column Completes'),

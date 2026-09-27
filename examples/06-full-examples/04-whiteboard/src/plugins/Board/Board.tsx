@@ -569,6 +569,11 @@ const Board = ({
         ...declaration.callbacks.chime,
         callback: (params: { sound?: unknown }) => controllerRef.current?.chime(params)
       },
+      hearLine: {
+        ...declaration.callbacks.hearLine,
+        callback: (params: { name?: unknown; text?: unknown; mine?: unknown }) =>
+          controllerRef.current?.hearLine(params)
+      },
       toggleColumn: call('toggleColumn', controller => controller.toggleColumn()),
       toggleCompletes: call('toggleCompletes', controller => controller.toggleCompletes()),
       setDuty: {

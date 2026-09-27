@@ -14,6 +14,7 @@ export const SOUNDS = [
   'join',
   'leave',
   'message',
+  'mention',
   'sent',
   'summon',
   'present',
@@ -131,6 +132,8 @@ const CUES: Record<Sound, readonly Part[]> = {
   leave: [tone(0, E6, 0.12, 0.035), tone(0.1, C6, 0.18, 0.035)],
   // A line to read; one's own, sent off.
   message: [tone(0, A5, 0.12, 0.06, { to: 640 })],
+  // Somebody wrote to you by name: brighter than a line in the chat, and twice, so it is heard over the rest.
+  mention: [tone(0, G5, 0.1, 0.07), tone(0.09, C6, 0.12, 0.07), tone(0.24, G5, 0.1, 0.06), tone(0.33, C6, 0.18, 0.06)],
   sent: [noise(0, 900, 3200, 0.12, 0.03, 2), tone(0.02, 700, 0.08, 0.025, { to: 1200 })],
   // The view moving to somebody else's; a presentation moving on; following someone.
   summon: [noise(0, 300, 2400, 0.42, 0.08, 1.4)],

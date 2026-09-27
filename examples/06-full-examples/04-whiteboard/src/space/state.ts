@@ -188,6 +188,8 @@ export const computed = {
   headerFolded: '{{ state.headerFolded ? true : false }}',
   chatOpen: '{{ state.chatOpen ? true : false }}',
   chatEmojisOpen: '{{ state.chatEmojisOpen ? true : false }}',
+  /** The chat's field wants the focus — Enter asked to write — until it has it and lets it go. */
+  chatWriting: '{{ state.chatWriting ? true : false }}',
   /** Lines said in the chat while it was closed. */
   unread: '{{ state.unread ?? 0 }}',
   /** One of the popovers is open: what a click anywhere else closes. */
@@ -273,6 +275,7 @@ export const transientState = [
   'tags',
   'chatOpen',
   'chatEmojisOpen',
+  'chatWriting',
   'chat',
   'unread',
   // What the board holds and who presents are the board's, read again on every visit.

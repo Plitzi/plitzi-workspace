@@ -45,6 +45,12 @@ export const shortcuts: StepSpec[][] = [
   [onKey('shift+l'), setState({ key: 'listView', type: 'boolean', value: '{{ not computed.listView }}' })],
   // Cursor chat: say something where you point, for everyone on the board.
   [onKey('/'), boardAction('chat')],
+  // The board's chat, written in at once: opened if it was closed, its field taking the focus.
+  [
+    onKey('enter'),
+    setState({ key: 'chatOpen', type: 'boolean', value: true }),
+    setState({ key: 'chatWriting', type: 'boolean', value: true })
+  ],
   [onKey('shift+v'), boardAction('vote')],
   [onKey('i'), ...closeOthers('libraryOpen'), toggleState({ key: 'libraryOpen' })],
   [onKey('?'), setState({ key: 'shareOpen', type: 'boolean', value: false }), toggleState({ key: 'keysOpen' })],
@@ -91,6 +97,7 @@ const KEYS: readonly { keys: string[]; does: string }[] = [
   { keys: ['⌘', 'F'], does: 'Search — words, #tags, @people, is:open' },
   { keys: ['⇧', 'L'], does: 'List view — the board as a list' },
   { keys: ['/'], does: 'Say something at your cursor' },
+  { keys: ['Enter'], does: 'Write in the chat — @name to ping someone' },
   { keys: ['⇧', 'V'], does: 'Vote for the selection' },
   { keys: ['⌘', 'V'], does: 'Paste a picture · text as a note' },
   { keys: ['Esc'], does: 'Deselect · stop following · close' }

@@ -22,6 +22,7 @@ import { isSound, REACTION_SOUNDS } from './sounds.ts';
 import { restyled } from './styling.ts';
 import { isDefined, isOneOf, isPoint, newId } from './values.ts';
 import { cardTitle } from '../../board/dependencies.ts';
+import { mentionsPerson } from '../../board/mentions.ts';
 import {
   byStacking,
   DUTY_ROLES,
@@ -1222,6 +1223,22 @@ export const createBoardController = (
     chime: ({ sound }: { sound?: unknown }): void => {
       if (isSound(sound)) {
         sounds.play(sound);
+      }
+    },
+    /** A chat line heard: a ping, and who wrote, when it names this page's person — `@Ana`, or `@all`. */
+    hearLine: ({ name, text, mine }: { name?: unknown; text?: unknown; mine?: unknown }): void => {
+      if (mine === 'true' || typeof text !== 'string' || !state.props.author) {
+        return;
+      }
+
+      if (mentionsPerson(text, state.props.author)) {
+        sounds.play('mention');
+        const said = text.length > 120 ? `${text.slice(0, 119)}…` : text;
+        emit({
+          type: 'notice',
+          text: `${typeof name === 'string' && name ? name : 'Someone'} to you: ${said}`,
+          tone: 'info'
+        });
       }
     },
     /** The minimap's canvas, or none: drawn with the board, and a click or drag on it moves the view there. */

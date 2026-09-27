@@ -10,6 +10,7 @@ import {
   onClick,
   onSubmit,
   resetForm,
+  on,
   runServerAction,
   setState,
   styles,
@@ -64,7 +65,13 @@ export const hearChat = (heard: string): StepSpec[] => [
     value: `{{ (state.unread ?? 0) + (not state.chatOpen and ${heard}.data.by != computed.visitor ? 1 : 0) }}`
   }),
   // And a soft sound for it — somebody else's, never one's own: no sound named is no sound.
-  boardAction('chime', { sound: `{{ ${heard}.data.by != computed.visitor ? 'message' : '' }}` })
+  boardAction('chime', { sound: `{{ ${heard}.data.by != computed.visitor ? 'message' : '' }}` }),
+  // Named in it — `@you`, or `@all` — a ping over that, and who wrote.
+  boardAction('hearLine', {
+    name: `{{ ${heard}.data.name }}`,
+    text: `{{ ${heard}.data.text }}`,
+    mine: `{{ ${heard}.data.by == computed.visitor ? 'true' : '' }}`
+  })
 ];
 
 const unreadBadge = styles('unreadBadge', {
@@ -316,6 +323,19 @@ const emojiToggle = styles('chatEmojiToggle', {
 
 const closeEmojis = setState({ key: 'chatEmojisOpen', type: 'boolean', value: false });
 
+/** How to address someone, said above where one writes: the people ping, the agents only answer what names them. */
+const hint = styles('chatHint', {
+  display: 'flex',
+  'flex-direction': 'column',
+  gap: '2px',
+  padding: '6px 14px 0px',
+  'font-size': '11.5px',
+  'line-height': '1.4',
+  color: 'var(--muted)'
+});
+
+const hintAgents = styles('chatHintAgents', { color: 'var(--accent)', 'font-weight': '600' });
+
 export const chatPanel = (): ElementSpec =>
   container({
     id: 'chat-panel',
@@ -400,6 +420,29 @@ export const chatPanel = (): ElementSpec =>
           })
         )
       }),
+      container({
+        id: 'chat-hint',
+        class: hint,
+        children: [
+          text({ content: 'Write @name to ping someone — @all for everyone. Agents only answer what names them.' }),
+          text({
+            id: 'chat-hint-agents',
+            content: '',
+            class: hintAgents,
+            bind: [
+              bindTemplate(
+                'content',
+                'room.members',
+                "{{ 'Ask: ' ~ (source|filter(member => member.state.agent)|map(member => '@' ~ member.state.name)|join(', ')) }}"
+              )
+            ],
+            visible: {
+              source: 'room.members',
+              template: '{{ source|filter(member => member.state.agent)|length > 0 }}'
+            }
+          })
+        ]
+      }),
       form({
         id: 'chat-form',
         class: composer,
@@ -428,12 +471,16 @@ export const chatPanel = (): ElementSpec =>
           formControl({
             id: 'chat-text',
             name: 'text',
-            label: '',
-            placeholder: 'Message everyone…',
+            label: 'Message everyone',
+            hideLabel: true,
+            placeholder: 'Message everyone — @name to ping someone',
             required: false,
             autoComplete: false,
             class: field,
-            slots: { input: fieldBox }
+            slots: { input: fieldBox },
+            // Enter on the board asks to write (`keys.ts`): the field takes the focus, and lets the wish go with it.
+            bind: { autoFocus: 'computed.chatWriting' },
+            flows: [[on('onBlur'), setState({ key: 'chatWriting', type: 'boolean', value: false })]]
           }),
           button({
             id: 'chat-send',
