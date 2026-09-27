@@ -477,7 +477,8 @@ const declaration = {
           { path: 'templates', label: 'Templates in the board’s library (as the server keeps them)' },
           { path: 'authors', label: 'Show who wrote notes and cards' },
           { path: 'sounds', label: 'Make sounds' },
-          { path: 'minimap', label: 'Show the minimap' }
+          { path: 'minimap', label: 'Show the minimap' },
+          { path: 'outline', label: 'Show the board as a list beside it' }
         ],
         initialState: []
       }

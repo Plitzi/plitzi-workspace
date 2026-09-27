@@ -141,6 +141,22 @@ export const minimapButton = (): ElementSpec =>
     children: [icon('fa-regular fa-map')]
   });
 
+/**
+ * The board as a list beside it — every frame, card and note in reading order, each with what can be done to it — for
+ * reading and changing the board without the canvas. The list is in the page either way, for a screen reader or an
+ * assistant in the browser; this shows it. Kept across visits.
+ */
+export const listViewButton = (): ElementSpec =>
+  button({
+    id: 'list-view-toggle',
+    content: '',
+    title: 'List view — the board as a list, to read and change it without the canvas (⇧L)',
+    class: iconButton,
+    bind: [variantFrom(iconButton, 'computed.listView', { template: "{{ source ? 'active' : '' }}" })],
+    flows: [[onClick(), setState({ key: 'listView', type: 'boolean', value: '{{ not computed.listView }}' })]],
+    children: [icon('fa-solid fa-list-ul')]
+  });
+
 export const framesPanel = (): ElementSpec =>
   container({
     id: 'frames-panel',

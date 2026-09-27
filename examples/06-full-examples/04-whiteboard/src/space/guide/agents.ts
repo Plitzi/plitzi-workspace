@@ -272,6 +272,31 @@ const CLAUDE_APP: Step[] = [
   }
 ];
 
+/**
+ * Claude in Chrome drives the page itself, as its person would — a canvas is a picture to it, so it works through the
+ * board's List view: the same board as a list, with a button for every change.
+ */
+const CHROME: Step[] = [
+  {
+    title: 'Open the board in Chrome, and Claude beside it',
+    says: [
+      'With the Claude in Chrome extension there is nothing to add: open the board, then Claude from the extension’s icon.'
+    ]
+  },
+  {
+    title: 'Point it at the List view',
+    says: [
+      'Claude sees a canvas as a picture. The List view — the list button in the bottom bar, or Shift+L — is the same board as a list: every frame, column, card and note, with buttons to add, edit, tick off, move and remove them. Start with:'
+    ],
+    copy: {
+      id: 'chrome-prompt',
+      line: 'This is a Pizarra whiteboard. Open its List view (the list button in the bottom bar, or Shift+L) and help us: '
+    },
+    after:
+      'It acts as you, on your screen: what it changes is yours, and it works only while you ask. To have an agent of its own on the board — with its own cursor, staying while you work — use Claude Code or the Claude app above.'
+  }
+];
+
 const OPENCODE: Step[] = [
   {
     title: 'Add Pizarra to OpenCode — once',
@@ -418,6 +443,13 @@ export const agentsGuidePage: PageSpec = {
           'In the Claude app',
           'Claude on the desktop or at claude.ai, as a custom connector.',
           [container({ class: steps, children: CLAUDE_APP.map((entry, index) => step(index + 1, entry)) })]
+        ),
+        section(
+          'rose',
+          'Claude in Chrome',
+          'In Chrome, with Claude beside the board',
+          'The browser extension, on the board you have open: nothing to set up.',
+          [container({ class: steps, children: CHROME.map((entry, index) => step(index + 1, entry)) })]
         ),
         section('teal', 'OpenCode', 'With OpenCode', 'The same agent, from OpenCode’s terminal app.', [
           container({ class: steps, children: OPENCODE.map((entry, index) => step(index + 1, entry)) })

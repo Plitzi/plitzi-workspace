@@ -948,7 +948,10 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
   Templates of a team's own: what is selected kept, with what its frames hold, in the board's library — put down again
   from there, dragged or clicked, and on any other board by its code (people and agents alike). Cards that wait on other
   cards: a red "Blocked" tab while any is open, a dashed line to each when selected, a warning when one is moved on
-  anyway — which a guardian agent hears too — and `is:blocked` in the search. It runs on several replicas over Redis
+  anyway — which a guardian agent hears too — and `is:blocked` in the search. A List view (⇧L): the board as a list with
+  a
+button for every change, always in the page for a screen reader or Claude in Chrome, which reads the accessibility tree
+and not a canvas. It runs on several replicas over Redis
   (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action `kv` shared by all
   of them, and which replica holds each agent's session — a call reaching another is passed on to it (`REPLICA_URL`), so
   no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine, and the

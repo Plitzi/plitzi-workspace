@@ -54,7 +54,7 @@ import { chatButton, chatPanel, hearChat } from './chat.ts';
 import { COPY_DECLARATION, copyClass, copyText } from './copy.ts';
 import { deleteButton, deletePanel } from './deleteBoard.ts';
 import { dutyPanel } from './duty.ts';
-import { framesButton, framesPanel, minimapButton, presentationBanner } from './frames.ts';
+import { framesButton, framesPanel, listViewButton, minimapButton, presentationBanner } from './frames.ts';
 import { BOARD_ID, BOARD_PROVIDER } from './ids.ts';
 import { agentButtonFor, agentPanel } from './invite.ts';
 import { keysHelp, shortcuts } from './keys.ts';
@@ -444,6 +444,7 @@ const canvas = (): ElementSpec =>
       bindTemplate('session', BOARD_PROVIDER, SESSION, { returns: 'value' }),
       bindTemplate('templates', BOARD_PROVIDER, TEMPLATES, { returns: 'value' }),
       { to: 'minimap', source: 'computed.minimap' },
+      { to: 'outline', source: 'computed.listView' },
       { to: 'authors', source: 'computed.showAuthors' },
       { to: 'sounds', source: 'computed.sounds' },
       { to: 'scheme', source: 'theme.resolved' }
@@ -779,6 +780,7 @@ const zoomBar = (): ElementSpec =>
       divide(),
       framesButton(),
       minimapButton(),
+      listViewButton(),
       iconAction({
         id: 'fullscreen',
         icon: 'fa-solid fa-maximize',

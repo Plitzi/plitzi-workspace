@@ -42,6 +42,7 @@ export const shortcuts: StepSpec[][] = [
   [onKey('shift+f'), boardAction('zoomToFit')],
   [onKey('mod+0'), boardAction('zoomReset')],
   [onKey('mod+shift+e'), boardAction('exportPng')],
+  [onKey('shift+l'), setState({ key: 'listView', type: 'boolean', value: '{{ not computed.listView }}' })],
   // Cursor chat: say something where you point, for everyone on the board.
   [onKey('/'), boardAction('chat')],
   [onKey('shift+v'), boardAction('vote')],
@@ -88,6 +89,7 @@ const KEYS: readonly { keys: string[]; does: string }[] = [
   { keys: ['⌘', 'drag'], does: 'Move without snapping to guides' },
   { keys: ['⌘', '⇧', 'E'], does: 'Export PNG' },
   { keys: ['⌘', 'F'], does: 'Search — words, #tags, @people, is:open' },
+  { keys: ['⇧', 'L'], does: 'List view — the board as a list' },
   { keys: ['/'], does: 'Say something at your cursor' },
   { keys: ['⇧', 'V'], does: 'Vote for the selection' },
   { keys: ['⌘', 'V'], does: 'Paste a picture · text as a note' },

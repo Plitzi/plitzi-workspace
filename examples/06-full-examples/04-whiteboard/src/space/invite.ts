@@ -144,6 +144,12 @@ const APPS = [
     copy: '{origin}/mcp'
   },
   {
+    id: 'chrome',
+    label: 'Chrome',
+    how: 'Claude in Chrome, the browser extension: nothing to add. Open Claude beside this board and paste this, with what you want done. It works on this page as you — through the List view — so what it changes is yours, and it stays only while you ask.',
+    copy: 'This is a Pizarra whiteboard. Open its List view (the list button in the bottom bar, or Shift+L) — every frame, card and note is there, with buttons to add, edit, tick off and move them — and help us: '
+  },
+  {
     id: 'other',
     label: 'Other',
     how: 'Any app that speaks MCP — Cursor, VS Code, Codex… — as a remote (HTTP) server at this address.',
@@ -151,10 +157,11 @@ const APPS = [
   }
 ] as const;
 
-// Each as wide as its name, and the room left shared: "Claude Code" is longer than "Other".
+// Each as wide as its name, and the room left shared: "Claude Code" is longer than "Other". What does not fit on one
+// line goes on to the next, whole — a name cut short is a tab nobody can find.
 const apps = styles('agentApps', {
-  display: 'grid',
-  'grid-template-columns': 'repeat(4, auto)',
+  display: 'flex',
+  'flex-wrap': 'wrap',
   gap: '2px',
   padding: '3px',
   'border-radius': '10px',
@@ -164,6 +171,7 @@ const apps = styles('agentApps', {
 const app = styles('agentApp', {
   css: {
     ...BUTTON_RESET,
+    flex: '1 1 auto',
     height: '30px',
     padding: '0px 6px',
     'border-radius': '8px',
@@ -187,6 +195,9 @@ const app = styles('agentApp', {
 
 const howTo = styles('agentHow', { display: 'flex', 'flex-direction': 'column', gap: '8px' });
 
+/** An app that reaches the board through `/mcp` — every one but Claude in Chrome, which works on the page itself. */
+const THROUGH_MCP = { source: 'computed.agentApp', template: "{{ source != 'chrome' }}" };
+
 const chosenApp = (id: string) => ({ source: 'computed.agentApp', template: `{{ source == '${id}' }}` });
 
 /** Two steps: give the agent Pizarra, once, from the app it lives in; then send it this board. */
@@ -203,9 +214,11 @@ export const agentPanel = (): ElementSpec =>
       text({
         content:
           'It joins like a person: its name among the avatars, a cursor you watch move, notes and cards it adds, lines in the chat. It answers when you talk to it.',
-        class: note
+        class: note,
+        visible: THROUGH_MCP
       }),
-      text({ content: '1 · Add Pizarra to your agent — once', class: step }),
+      text({ content: '1 · Add Pizarra to your agent — once', class: step, visible: THROUGH_MCP }),
+      text({ content: '1 · Ask Claude, beside this board', class: step, visible: chosenApp('chrome') }),
       container({
         class: apps,
         children: APPS.map(entry =>
@@ -231,13 +244,15 @@ export const agentPanel = (): ElementSpec =>
               class: copyClass,
               text: entry.copy,
               label: 'Copy',
-              flows: [copied(entry.copy.startsWith('{origin}') ? 'Address' : 'Command')]
+              flows: [
+                copied(entry.id === 'chrome' ? 'Message' : entry.copy.startsWith('{origin}') ? 'Address' : 'Command')
+              ]
             }),
             text({ content: entry.how, class: note })
           ]
         })
       ),
-      text({ content: '2 · Send it this board', class: step }),
+      text({ content: '2 · Send it this board', class: step, visible: THROUGH_MCP }),
       copyText({
         id: 'agent-prompt',
         class: copyClass,
@@ -245,18 +260,20 @@ export const agentPanel = (): ElementSpec =>
         label: 'Copy',
         // A board with a password: the link carries the key this page opened it with, and the agent opens it with that.
         bind: [bindTemplate('text', BOARD_PROVIDER, `Join this Pizarra board and help us: {url}{{ ${WITH_KEY} }}`)],
+        visible: THROUGH_MCP,
         flows: [copied('Message')]
       }),
       text({
         content:
           'This board has a password. The message carries a key that opens it, so your agent does not need the password — send it only to your agent. Or send the password instead: “… help us: <link> password: <the password>”.',
         class: lockedNote,
-        visible: { source: BOARD_PROVIDER, template: '{{ source.locked }}' }
+        visible: { source: BOARD_PROVIDER, template: "{{ source.locked and computed.agentApp != 'chrome' }}" }
       }),
       text({
         content:
           'Added once, it can be invited to any board on this Pizarra. It shows up under its app’s name — Claude, OpenCode… — and stays while you work: it leaves when you ask it to, when nobody is on the board, or after the quiet set in Board settings.',
-        class: note
+        class: note,
+        visible: THROUGH_MCP
       }),
       guideLinkFromBoard()
     ]

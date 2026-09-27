@@ -2,13 +2,14 @@ import { branchFrame, mergeBranch, selectionContents, selectionTitle } from './b
 import { createCarry } from './carry.ts';
 import { cloneElements } from './clone.ts';
 import { releasedFrom } from './connectors.ts';
-import { membersOf, readingOrder } from './containers.ts';
-import { createCore } from './core.ts';
+import { COLUMN_PADDING, membersOf, readingOrder } from './containers.ts';
+import { createCore, DEFAULT_BOX } from './core.ts';
 import { createEffects } from './effects.ts';
 import { exportPng } from './exporter.ts';
-import { boundsOf, fitCamera, toScreen, unionOf, zoomAt } from './geometry.ts';
+import { boundsOf, fitCamera, overlaps, toScreen, unionOf, zoomAt } from './geometry.ts';
 import { createInput } from './input.ts';
 import { createMinimap } from './minimap.ts';
+import { outlineOf, sharedWith } from './outline.ts';
 import { readPalette } from './palette.ts';
 import { createPicking } from './picking.ts';
 import { createPictures } from './pictures.ts';
@@ -24,15 +25,18 @@ import {
   byStacking,
   DUTY_ROLES,
   fitsInFrame,
+  holdsText,
   isLinear,
   isTask,
   LIMITS,
   markedDone,
   parseElement,
+  takesLabel,
   textOf
 } from '../../board/model.ts';
 import { isReaction, isStamp, STAMP_SIZE } from '../../board/reactions.ts';
 
+import type { Outline } from './outline.ts';
 import type { StyleChoice } from './styling.ts';
 import type { ControllerEvent, ControllerProps, EditField, FrameEntry } from './types.ts';
 import type { BoardElement, Point } from '../../board/model.ts';
@@ -61,6 +65,10 @@ export type {
  * around it hands it props, forwards what the channels hear, and turns what it `emit`s into the element's events.
  * This file puts the parts together and answers the page; each part is its own module over the shared `core`.
  */
+
+/** How long the board's list waits after a change before it is told again: a burst of changes is one telling. */
+const OUTLINE_MS = 250;
+
 /**
  * `canvas` takes the pointer and draws what moves — cursors, selections, the laser; `boardCanvas`, under it, holds the
  * board itself and is painted only when the board changed. Two canvases the browser composites, rather than one the
@@ -187,10 +195,68 @@ export const createBoardController = (
       emit({ type: 'frames', frames });
     }
   };
+  /**
+   * The board as a list (`outline.ts`), told a moment after it changes — a burst of changes once. Only for a board
+   * someone is on: a still preview in a gallery has nobody to read it.
+   */
+  let outlined = '';
+  let told: Outline = { sections: [], columns: [], drawings: 0 };
+  let outlining: ReturnType<typeof setTimeout> | undefined;
+  const reportOutline = (): void => {
+    const key = `${scene.revision}:${reportedSession}:${state.props.voter}`;
+    if (!core.present() || key === outlined || outlining) {
+      return;
+    }
+
+    outlining = setTimeout(() => {
+      outlining = undefined;
+      outlined = `${scene.revision}:${reportedSession}:${state.props.voter}`;
+      told = sharedWith(told, outlineOf(scene.visible(), { session: state.props.session, voter: state.props.voter }));
+      emit({ type: 'outline', outline: told });
+    }, OUTLINE_MS);
+  };
+
+  /** One element, from the board's list: brought into the middle of the view at the zoom it is at, and selected. */
+  const bringUp = (id: unknown): BoardElement | undefined => {
+    const element = typeof id === 'string' ? core.lying().get(id) : undefined;
+    if (!element) {
+      return undefined;
+    }
+
+    const { zoom } = state.camera;
+    const box = boundsOf(element);
+    core.stopFollowing();
+    core.glideTo({
+      zoom,
+      x: box.x + box.width / 2 - state.size.width / 2 / zoom,
+      y: box.y + box.height / 2 - state.size.height / 2 / zoom
+    });
+    core.setSelection([element.id]);
+
+    return element;
+  };
+
+  /** Where something added from the list goes: the middle of the view, moved down clear of what is there. */
+  const clearSpotFor = (box: { width: number; height: number }): Point => {
+    const view = core.viewport();
+    const shown = scene.visible();
+    let at: Point = [view.x + view.width / 2 - box.width / 2, view.y + view.height / 2 - box.height / 2];
+    for (
+      let tries = 0;
+      tries < 20 && shown.some(other => overlaps({ x: at[0], y: at[1], ...box }, boundsOf(other), 16));
+      tries += 1
+    ) {
+      at = [at[0], at[1] + box.height + 24];
+    }
+
+    return at;
+  };
+
   core.paintWith(() => {
     painter.paint();
     minimap.paint();
     reportFrames();
+    reportOutline();
     search.report();
     search.reportTags();
   });
@@ -1001,6 +1067,78 @@ export const createBoardController = (
 
       emit({ type: 'templateSave', title: textOf(title).trim() || selectionTitle(elements), elements });
     }),
+    // ── From the board's list (`outline.ts`): the same changes the canvas makes, named by id ───────────────────────
+
+    /** Brought into view and selected. */
+    showElement: (id: unknown): void => {
+      bringUp(id);
+    },
+    /** Selected and opened for writing: the editor the canvas opens, with the focus in it. */
+    editElement: whenEditable((id: unknown) => {
+      const element = bringUp(id);
+      if (element && (holdsText(element.type) || takesLabel(element.type))) {
+        core.startEditing({ ...element, text: element.text ?? '' });
+      }
+    }),
+    /** A card ticked done or open again, a comment resolved or reopened. */
+    toggleDoneOf: whenEditable((id: unknown) => {
+      const task = typeof id === 'string' ? core.lying().get(id) : undefined;
+      if (!task || !isTask(task.type) || task.locked) {
+        return;
+      }
+
+      const { done: _done, ...rest } = task;
+      core.commit([task.done ? rest : { ...rest, done: true }]);
+      sounds.play(task.done ? 'undone' : task.type === 'comment' ? 'resolve' : 'done');
+    }),
+    /** A card moved to the end of another column — ticked off into the team's Done, open again out of it. */
+    moveCardTo: whenEditable((id: unknown, columnId: unknown) => {
+      const shown = core.lying();
+      const card = typeof id === 'string' ? shown.get(id) : undefined;
+      const column = typeof columnId === 'string' ? shown.get(columnId) : undefined;
+      if (card?.type !== 'card' || card.locked || column?.layout !== 'column' || card.parent === column.id) {
+        return;
+      }
+
+      sounds.play('place');
+      core.commit([{ ...card, parent: column.id, x: column.x + COLUMN_PADDING, y: column.y + column.height }]);
+    }),
+    /** Removed, as the delete key removes it — never a locked one. */
+    removeElement: whenEditable((id: unknown) => {
+      if (bringUp(id)) {
+        removeSelection();
+      }
+    }),
+    /** A card titled `text` at the end of a column. */
+    addCardTo: whenEditable((columnId: unknown, text: unknown) => {
+      const column = typeof columnId === 'string' ? core.lying().get(columnId) : undefined;
+      const title = textOf(text).trim().slice(0, LIMITS.text);
+      if (column?.layout !== 'column' || !title) {
+        return;
+      }
+
+      const card = core.measured({
+        ...core.newElement('card', [column.x + COLUMN_PADDING, column.y + column.height]),
+        width: column.width - COLUMN_PADDING * 2,
+        parent: column.id,
+        text: title
+      });
+      sounds.play('place');
+      core.commit([card]);
+    }),
+    /** A note saying `text`, in the middle of the view — clear of what is there. */
+    addNote: whenEditable((text: unknown) => {
+      const said = textOf(text).trim().slice(0, LIMITS.text);
+      if (!said) {
+        return;
+      }
+
+      const [x, y] = clearSpotFor(DEFAULT_BOX.sticky);
+      const note = { ...core.newElement('sticky', [x, y]), ...DEFAULT_BOX.sticky, text: said };
+      sounds.play('place');
+      core.commit([note]);
+      bringUp(note.id);
+    }),
     search: ({ query }: { query?: unknown }): void => search.find(textOf(query)),
     searchStep: ({ direction }: { direction?: unknown }): void =>
       search.step(direction === -1 || direction === '-1' ? -1 : 1),
@@ -1073,6 +1211,7 @@ export const createBoardController = (
       core.setSelection([...selection].filter(id => !(scene.element(id)?.deleted ?? true)));
     },
     destroy: (): void => {
+      clearTimeout(outlining);
       carry.end();
       core.cancelFrame();
       resizeObserver.disconnect();

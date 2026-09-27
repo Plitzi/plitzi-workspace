@@ -650,6 +650,59 @@ describeTarget('whiteboard', subject => {
     ).toBeVisible();
   });
 
+  /** The board as a list, for whoever cannot read the canvas — a screen reader, an assistant in the browser: read and
+   *  changed by role and name alone, never by where something is drawn. */
+  test('the board is read and changed through its list, by role and name', async ({ page }) => {
+    const column = (index: number, x: number, text: string, completes = false) =>
+      element(index, {
+        type: 'frame',
+        layout: 'column',
+        x,
+        y: 0,
+        width: 300,
+        height: 460,
+        text,
+        ...(completes ? { completes } : {})
+      });
+    const todo = column(0, 0, 'To do');
+    const done = column(1, 400, 'Done', true);
+    const api = element(2, {
+      type: 'card',
+      x: 14,
+      y: 62,
+      width: 272,
+      height: 48,
+      text: 'Design the API',
+      parent: todo.id
+    });
+    const id = await seedBoard(subject.origin, 'e2e — a list', [todo, done, api]);
+    await page.goto(`${subject.origin}/b/${id}`);
+    await expect(board(page)).toBeVisible();
+    const list = page.getByRole('region', { name: 'Board contents: e2e — a list' });
+    await expect(list.getByRole('region', { name: /^To do/ }).getByRole('listitem')).toHaveText(/Design the API/);
+    // Out of sight until asked for — List view shows it beside the board.
+    await expect(list).not.toBeInViewport();
+    await page.locator('[data-plitzi-el="list-view-toggle"]').click();
+    await expect(list).toBeInViewport();
+
+    await list.getByRole('textbox', { name: 'New card in To do' }).fill('Write the docs');
+    await list.getByRole('button', { name: 'Add the card to To do' }).click();
+    await list.getByRole('button', { name: 'Mark done: “Design the API”' }).click();
+    await list.getByRole('combobox', { name: 'Move “Write the docs” to another column' }).selectOption('Move to Done');
+    await expect
+      .poll(async () =>
+        (await savedElements(subject.origin, id))
+          .filter(saved => saved.type === 'card')
+          .map(({ text, parent, done: ticked }) => ({ text, parent, done: ticked === true }))
+          .sort((a, b) => (a.text ?? '').localeCompare(b.text ?? ''))
+      )
+      .toEqual([
+        { text: 'Design the API', parent: todo.id, done: true },
+        { text: 'Write the docs', parent: done.id, done: true }
+      ]);
+
+  });
+
   test('a frame is branched and the branch taken back', async ({ page }) => {
     const frame = element(0, { type: 'frame', x: 0, y: 0, width: 400, height: 300, fill: 'none', text: 'Plan' });
     const note = element(1, {

@@ -1,4 +1,5 @@
 import type { Box, Camera, Handle } from './geometry.ts';
+import type { Outline } from './outline.ts';
 import type { Guides } from './snapping.ts';
 import type { StyleChoice } from './styling.ts';
 import type { BoardElement, Duty, Fill, Point, Reply, Stroke, StrokeWidth, StyleField } from '../../board/model.ts';
@@ -205,6 +206,8 @@ export type ControllerEvent =
   | { type: 'image'; id: string; data: string }
   /** What is selected, to be kept as a template: named `title`, with what its frames hold, as it lies on the board. */
   | { type: 'templateSave'; title: string; elements: BoardElement[] }
+  /** The board as a list, for whoever cannot read the canvas (`outline.ts`) — told a moment after it changes. */
+  | { type: 'outline'; outline: Outline }
   /** A warning for this person about what they just did: a blocked card moved on, a link refused. */
   | { type: 'notice'; text: string }
   /** A vote asked for — a click on an element's badge, or the selection's vote button. */

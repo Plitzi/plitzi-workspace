@@ -270,3 +270,159 @@
   background: var(--board-accent, #4c6ef5);
   color: #ffffff;
 }
+
+/*
+ * The board as a list: out of sight, and in the page for whoever reads it another way — a screen reader, an assistant
+ * in the browser. Opened, or with the focus in it, it is a panel along the board's right edge.
+ */
+.board__outline {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.board__outline[data-open='true'],
+.board__outline:focus-within {
+  z-index: 5;
+  top: 72px;
+  right: 16px;
+  bottom: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(360px, calc(100% - 32px));
+  height: auto;
+  margin: 0;
+  padding: 14px;
+  overflow-y: auto;
+  clip-path: none;
+  white-space: normal;
+  border: 1px solid var(--board-edge, rgba(0, 0, 0, 0.14));
+  border-radius: 14px;
+  background: var(--board-surface, #ffffff);
+  color: var(--board-ink, #1e1e1e);
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.4);
+  font: 13px/1.45 var(--board-ui-font, system-ui, sans-serif);
+}
+
+.board__outline h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.board__outline h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.board__outline ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board__outline p {
+  margin: 0;
+}
+
+.board__outline-meta,
+.board__outline-states,
+.board__outline-empty {
+  color: var(--board-muted, #6b6b6b);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.board__outline-section {
+  padding-top: 10px;
+  border-top: 1px solid var(--board-edge, rgba(0, 0, 0, 0.14));
+}
+
+.board__outline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--board-edge, rgba(0, 0, 0, 0.14));
+  border-radius: 10px;
+}
+
+.board__outline-item[data-done='true'] .board__outline-label {
+  color: var(--board-muted, #6b6b6b);
+  text-decoration: line-through;
+}
+
+.board__outline-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.board__outline-kind {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--board-muted, #6b6b6b) 14%, transparent);
+  color: var(--board-muted, #6b6b6b);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.board__outline-label {
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.board__outline-detail {
+  color: var(--board-muted, #6b6b6b);
+  white-space: pre-line;
+}
+
+.board__outline-actions,
+.board__outline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.board__outline button,
+.board__outline select,
+.board__outline input {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--board-edge, rgba(0, 0, 0, 0.14));
+  border-radius: 7px;
+  background: var(--board-surface, #ffffff);
+  color: var(--board-ink, #1e1e1e);
+  font: 500 12px var(--board-ui-font, system-ui, sans-serif);
+}
+
+.board__outline input {
+  flex: 1;
+  min-width: 0;
+}
+
+.board__outline button {
+  cursor: pointer;
+}
+
+.board__outline button:hover,
+.board__outline select:hover {
+  border-color: var(--board-accent, #4c6ef5);
+}
+
+.board__outline :focus-visible {
+  outline: 2px solid var(--board-accent, #4c6ef5);
+  outline-offset: 1px;
+}

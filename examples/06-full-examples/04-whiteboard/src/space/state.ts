@@ -119,6 +119,8 @@ export const computed = {
     "{{ computed.presenter ? state.presentation.position ~ ' / ' ~ state.presentation.total ~ ' · ' ~ state.presentation.title : '' }}",
   /** The whole board in a corner — on until this person closes it. */
   minimap: '{{ state.minimap ?? true }}',
+  /** The board as a list beside it — off until this person opens it. */
+  listView: '{{ state.listView ?? false }}',
   /** The board's small sounds — on until this person turns them off. */
   sounds: '{{ state.sounds ?? true }}',
   /** Who wrote each note and card, shown — on until this person turns it off. */
@@ -201,7 +203,14 @@ export const computed = {
  * with them from a cookie, so a reload does not paint the defaults and swap these in. Nothing else: the cookie goes with
  * every request.
  */
-export const paintedState = [...GROUPS.map(group => PICK_OF(group.id)), 'name', 'color', 'minimap', 'headerFolded'];
+export const paintedState = [
+  ...GROUPS.map(group => PICK_OF(group.id)),
+  'name',
+  'color',
+  'minimap',
+  'listView',
+  'headerFolded'
+];
 
 /**
  * Kept across visits: who this person is, and the style they draw with. Not kept: where they were — a tool left in

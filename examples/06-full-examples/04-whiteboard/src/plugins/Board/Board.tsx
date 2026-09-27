@@ -4,6 +4,7 @@ import { RootElement, useChannel, useElement, usePlitziServiceContext } from '@p
 
 import './Board.css';
 
+import Outline from './components/Outline/index.ts';
 import { TOOLS, createBoardController } from './controller.ts';
 import declaration from './declaration';
 import { parseDemo, playDemo } from './demo.ts';
@@ -14,6 +15,7 @@ import { isCollaborator } from '../../board/people.ts';
 import { parseTemplate } from '../../board/savedTemplates.ts';
 import { parseSession, SCRIPTS, stepOf } from '../../board/sessions.ts';
 
+import type { OutlineActions } from './components/Outline/index.ts';
 import type {
   BoardController,
   BoardMode,
@@ -26,6 +28,7 @@ import type {
   Tool
 } from './controller.ts';
 import type { Demo } from './demo.ts';
+import type { Outline as OutlineData } from './outline.ts';
 import type { BoardElement, StrokeWidth } from '../../board/model.ts';
 import type { Collaborator } from '../../board/people.ts';
 import type { InteractionCallback, RealtimeMessage } from '@plitzi/plitzi-sdk';
@@ -85,6 +88,11 @@ export type BoardProps = {
   scheme?: string;
   /** Shows the whole board in a corner, with where everyone is. */
   minimap?: boolean | string;
+  /**
+   * Shows the board as a list beside it (`outline.ts`). Shown or not, the list is in the page for whoever reads it
+   * another way — a screen reader, an assistant in the browser — and opens by itself when the focus goes in.
+   */
+  outline?: boolean | string;
   className?: string;
   /** The selection's tools, authored by the space: laid beside whatever is selected, and hidden while nothing is. */
   children?: ReactNode;
@@ -105,6 +113,9 @@ const TOOLS_ROOM = 64;
  * elements a draft may carry is decided before it gets here (`SHARED_DRAFT` in `core.ts`).
  */
 const DRAFT_BYTES = 6000;
+
+/** The board's list before the canvas has told it anything. */
+const EMPTY_OUTLINE: OutlineData = { sections: [], columns: [], drawings: 0 };
 
 const isOneOf = <T extends string | number>(values: readonly T[], value: unknown): value is T =>
   values.some(entry => entry === value);
@@ -167,6 +178,7 @@ const Board = ({
   opacity = 100,
   scheme = '',
   minimap = false,
+  outline = false,
   demo,
   className,
   children
@@ -185,6 +197,7 @@ const Board = ({
   const [selectionBox, setSelectionBox] = useState<ScreenBox | undefined>(undefined);
   const [chatAt, setChatAt] = useState<{ left: number; top: number } | undefined>(undefined);
   const [thread, setThread] = useState<Thread | undefined>(undefined);
+  const [contents, setContents] = useState<OutlineData>(EMPTY_OUTLINE);
   const live = mode !== 'view' && previewMode;
 
   const trigger = useCallback(
@@ -275,6 +288,9 @@ const Board = ({
           break;
         case 'image':
           trigger(declaration.triggers.onImagePaste.action, { id: event.id, data: event.data });
+          break;
+        case 'outline':
+          setContents(event.outline);
           break;
         case 'notice':
           trigger(declaration.triggers.onNotice.action, { text: event.text });
@@ -638,6 +654,21 @@ const Board = ({
     };
   }, []);
 
+  // ── The board as a list ────────────────────────────────────────────────────────────────────────────────────────
+
+  const outlineActions = useMemo<OutlineActions>(
+    () => ({
+      show: id => controllerRef.current?.showElement(id),
+      edit: id => controllerRef.current?.editElement(id),
+      toggleDone: id => controllerRef.current?.toggleDoneOf(id),
+      moveCard: (id, column) => controllerRef.current?.moveCardTo(id, column),
+      remove: id => controllerRef.current?.removeElement(id),
+      addCard: (column, text) => controllerRef.current?.addCardTo(column, text),
+      addNote: text => controllerRef.current?.addNote(text)
+    }),
+    []
+  );
+
   // ── The minimap ────────────────────────────────────────────────────────────────────────────────────────────────
 
   const showMinimap = live && (minimap === true || minimap === 'true');
@@ -836,7 +867,11 @@ const Board = ({
       interactionCallbacks={callbacks}
     >
       <canvas ref={boardCanvasRef} className="board__canvas board__canvas--board" aria-hidden />
-      <canvas ref={canvasRef} className="board__canvas" aria-label={title ? `Board: ${title}` : 'Board'} />
+      <canvas
+        ref={canvasRef}
+        className="board__canvas"
+        aria-label={`${title ? `Board: ${title}` : 'Board'} — a drawing. Everything on it is listed under “Board contents”; List view (Shift+L) shows that list, with a button for every change.`}
+      />
       {editor?.composer && (
         <div className="board__composer" style={{ left: editor.left, top: editor.top, width: editor.width }}>
           <strong>Comment</strong>
@@ -935,6 +970,15 @@ const Board = ({
         </div>
       )}
       {showMinimap && <canvas ref={setMinimapCanvas} className="board__minimap" aria-label="The whole board" />}
+      {live && (
+        <Outline
+          outline={contents}
+          title={title}
+          open={outline === true || outline === 'true'}
+          editable={mode === 'edit'}
+          actions={outlineActions}
+        />
+      )}
       {children && live && mode === 'edit' && toolsStyle && (
         <div className="board__tools" data-placement={below ? 'below' : 'above'} style={toolsStyle}>
           {children}
