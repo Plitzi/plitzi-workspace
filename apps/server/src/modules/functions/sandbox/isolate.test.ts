@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createIsolateRunner } from './isolate';
 import { createActionsModule } from '../../actions';
+import { functionsInHand } from '../space';
 
 import type { FunctionsConfig } from '../config';
 import type { FunctionLimits, SpaceFunctions } from '../protocol';
@@ -89,7 +90,7 @@ const spaceWith = async (
     throw new Error(prepared.problems.map(problem => problem.message).join('\n'));
   }
 
-  const functions: SpaceFunctions = { ...prepared.functions, ...(limits ? { limits } : {}) };
+  const functions: SpaceFunctions = { ...functionsInHand(prepared.functions), ...(limits ? { limits } : {}) };
   const module = createActionsModule({
     lookups: {
       getAction: () => Promise.resolve(undefined),
@@ -375,5 +376,54 @@ describe('what an invocation spends', () => {
 
     expect((await space.run()).error).toContain('used their CPU for this minute');
     expect(onUsage).not.toHaveBeenCalled();
+  });
+});
+
+describe('what a runner keeps', () => {
+  const invocationOf = (): Parameters<typeof runner.invoke>[0]['invocation'] => ({
+    kind: 'task',
+    name: 'probe.run',
+    params: {},
+    context: { spaceId: 1, environment: 'main', runId: 'r', trigger: 'call', callerId: 'x' }
+  });
+  const LIMITS = { cpuMs: 1000, wallMs: 5000, memoryMb: 64, outputBytes: 100_000, calls: 10 };
+  const codeOf = (value: string, padding: number) =>
+    `export default { tasks: [{ namespace: 'probe', action: 'run', run: () => '${value}' }] };\n// ${'x'.repeat(padding)}`;
+
+  it('asks for a bundle’s code only when it does not keep it, and lets the oldest go past its bytes', async () => {
+    const small = createIsolateRunner({ cacheBytes: 3000 });
+    const loadA = vi.fn(() => Promise.resolve(codeOf('a', 1500)));
+    const loadB = vi.fn(() => Promise.resolve(codeOf('b', 1500)));
+    const run = (id: string, load: () => Promise<string>) =>
+      small.invoke({
+        bundle: { id, load },
+        invocation: invocationOf(),
+        limits: LIMITS,
+        answer: () => Promise.resolve(null),
+        signal: new AbortController().signal
+      });
+
+    expect(await run('a', loadA)).toBe('a');
+    expect(await run('a', loadA)).toBe('a');
+    expect(loadA).toHaveBeenCalledTimes(1);
+
+    expect(await run('b', loadB)).toBe('b');
+    expect(await run('a', loadA)).toBe('a');
+    expect(loadA).toHaveBeenCalledTimes(2);
+  });
+
+  it('is ready before its first invocation once warmed', async () => {
+    const fresh = createIsolateRunner();
+    await fresh.warm();
+    const started = performance.now();
+    await fresh.invoke({
+      bundle: { id: 'after-warm', load: () => Promise.resolve(codeOf('w', 0)) },
+      invocation: invocationOf(),
+      limits: LIMITS,
+      answer: () => Promise.resolve(null),
+      signal: new AbortController().signal
+    });
+
+    expect(performance.now() - started).toBeLessThan(50);
   });
 });

@@ -6,6 +6,8 @@ import { pathToFileURL } from 'node:url';
 
 import chalk from 'chalk';
 
+import { readFunctionsSource } from '@plitzi/sdk-shared/actions';
+
 import { apiFor, connectionWithSpace, fail } from './account';
 import { findProject } from './existingProject';
 import { authorizedRequest } from '../account/session';
@@ -29,7 +31,6 @@ export interface FunctionsOptions extends AccountOptions {
 
 const FUNCTIONS_DIR = 'functions';
 const STATE_FILE = path.join('.plitzi', 'functions.json');
-const SOURCE = /\.(ts|js|mjs|json)$/;
 
 type Files = Record<string, string>;
 type WorkingCopy = { space: number; version: string; files: Files };
@@ -42,31 +43,16 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 /** The project's root: where `functions/` and `.plitzi/` go. */
 const rootOf = async (): Promise<string> => (await findProject(process.cwd()))?.root ?? process.cwd();
 
-/** Every source file under `functions/`, by its path there, with `/` whatever the platform. */
-const readLocal = async (root: string): Promise<Files> => {
-  const base = path.join(root, FUNCTIONS_DIR);
-  const files: Files = {};
-  const walk = async (dir: string): Promise<void> => {
-    let entries: import('node:fs').Dirent[];
-    try {
-      entries = await fs.readdir(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory() && entry.name !== 'node_modules') {
-        await walk(full);
-      } else if (entry.isFile() && SOURCE.test(entry.name)) {
-        files[path.relative(base, full).split(path.sep).join('/')] = await fs.readFile(full, 'utf8');
-      }
-    }
-  };
-  await walk(base);
-
-  return files;
-};
+/** Every source file under `functions/`, by its path there — read by the one rule of what a source is. */
+const readLocal = (root: string): Promise<Files> =>
+  readFunctionsSource(path.join(root, FUNCTIONS_DIR), {
+    list: async dir =>
+      (await fs.readdir(dir, { withFileTypes: true })).map(entry => ({
+        name: entry.name,
+        directory: entry.isDirectory()
+      })),
+    read: file => fs.readFile(file, 'utf8')
+  });
 
 const readState = async (root: string): Promise<WorkingCopy | undefined> => {
   try {

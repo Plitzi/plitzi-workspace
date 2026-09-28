@@ -11,6 +11,7 @@ import type { FunctionsSource } from './build';
 import type { FunctionsConfig } from './config';
 import type { FunctionContext } from './contract';
 import type {
+  FunctionsBundle,
   FunctionInvocationContext,
   FunctionLimits,
   FunctionRunner,
@@ -18,7 +19,7 @@ import type {
   SpaceFunctions
 } from './protocol';
 import type { ActionTask, ActionTaskRegistry, RegisteredTask } from '../actions/types';
-import type { FunctionsProblem } from '@plitzi/sdk-shared';
+import type { FunctionsManifest, FunctionsProblem } from '@plitzi/sdk-shared';
 
 const invocationContextOf = ({
   spaceId,
@@ -148,8 +149,19 @@ export const createSpaceRegistries = (base: ActionTaskRegistry, config: Function
   };
 };
 
+/** Functions whose code is already in hand — prepared a moment ago, or a deployment's own — as a run reaches them. */
+export const functionsInHand = ({
+  bundle,
+  manifest
+}: {
+  bundle: FunctionsBundle;
+  manifest: FunctionsManifest;
+}): SpaceFunctions => ({ bundle: { id: bundle.id, load: () => Promise.resolve(bundle.code) }, manifest });
+
+/** A source made ready to store: the bundle whole — storing is the one place its code travels — and what it declared. */
 export type PreparedFunctions =
-  { ok: true; functions: Omit<SpaceFunctions, 'limits'> } | { ok: false; problems: FunctionsProblem[] };
+  | { ok: true; functions: { bundle: FunctionsBundle; manifest: FunctionsManifest } }
+  | { ok: false; problems: FunctionsProblem[] };
 
 /**
  * A space's source made ready to save: built, read by the runner, and checked — the only way a space's functions are

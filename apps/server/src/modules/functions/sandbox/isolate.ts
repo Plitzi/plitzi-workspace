@@ -6,6 +6,7 @@ import { FunctionFailure } from '../protocol';
 
 import type { GuestDriver } from './guest';
 import type {
+  FunctionsBundleRef,
   FunctionInvocation,
   FunctionUsage,
   FunctionLimits,
@@ -23,8 +24,20 @@ export type IsolateRunnerOptions = {
    * times that times two is what the runner needs.
    */
   concurrency?: number;
-  /** Bundles kept compiled (their V8 code cache), most recently used first. */
-  cacheSize?: number;
+  /**
+   * How many bytes of bundles this runner keeps — their code and V8's cache of it — least recently used let go first.
+   * A bundle it no longer has is asked of the platform again; one it has is never sent twice.
+   */
+  cacheBytes?: number;
+};
+
+/** The isolates, and what readies them before the first invocation pays for it. */
+export type IsolateRunner = FunctionRunner & {
+  /**
+   * Builds the prelude, the heap every isolate starts from and V8's cache of the guest, and runs a first bundle — what
+   * the first invocation of a fresh process would otherwise spend (~70 ms) on top of its own.
+   */
+  warm: () => Promise<void>;
 };
 
 /** What reading a bundle's declaration may spend: its top level runs, and nothing else. */
@@ -120,10 +133,10 @@ const BOOTSTRAP = `(() => {
   });
 })()`;
 
-type Cached = { code: string; cachedData?: IsolatedVM.ExternalCopy<ArrayBuffer> };
+type Cached = { code: string; bytes: number; cachedData?: IsolatedVM.ExternalCopy<ArrayBuffer> };
 
 type Session = {
-  bundle: FunctionsBundle;
+  bundle: FunctionsBundleRef;
   limits: FunctionLimits;
   answer: (call: unknown) => Promise<unknown>;
   signal?: AbortSignal;
@@ -142,9 +155,10 @@ type Session = {
  */
 export const createIsolateRunner = ({
   concurrency = 8,
-  cacheSize = 256
-}: IsolateRunnerOptions = {}): FunctionRunner => {
+  cacheBytes = 64 * 1024 * 1024
+}: IsolateRunnerOptions = {}): IsolateRunner => {
   const cache = new Map<string, Cached>();
+  let cachedBytes = 0;
   /** Every isolate starts from a heap with the prelude already run in it: running it each time was most of the cost. */
   let snapshot: IsolatedVM.ExternalCopy<ArrayBuffer> | undefined;
   let guestCache: IsolatedVM.ExternalCopy<ArrayBuffer> | undefined;
@@ -164,28 +178,46 @@ export const createIsolateRunner = ({
     waiting.shift()?.();
   };
 
-  const cached = (bundle: FunctionsBundle): Cached => {
-    const found = cache.get(bundle.id) ?? { code: bundle.code };
-    cache.delete(bundle.id);
-    cache.set(bundle.id, found);
-    while (cache.size > cacheSize) {
-      const oldest = cache.keys().next().value;
-      if (oldest === undefined) {
+  /** The bundle's entry, most recently used now: its code fetched only when this runner has never kept it. */
+  const cached = async (bundle: FunctionsBundleRef): Promise<Cached> => {
+    const kept = cache.get(bundle.id);
+    if (kept) {
+      cache.delete(bundle.id);
+      cache.set(bundle.id, kept);
+
+      return kept;
+    }
+
+    const code = await bundle.load();
+    const entry: Cached = { code, bytes: Buffer.byteLength(code) };
+    cache.set(bundle.id, entry);
+    cachedBytes += entry.bytes;
+    for (const [id, oldest] of cache) {
+      if (cachedBytes <= cacheBytes || id === bundle.id) {
         break;
       }
 
-      cache.delete(oldest);
+      cache.delete(id);
+      cachedBytes -= oldest.bytes;
     }
 
-    return found;
+    return entry;
+  };
+
+  /** What every isolate is made from, once per process: the module, the prelude, the heap it starts as. */
+  const ready = async (): Promise<Ivm> => {
+    const ivm = await loadIvm();
+    snapshot ??= ivm.Isolate.createSnapshot([{ code: await guestPrelude(), filename: 'plitzi:prelude' }]);
+
+    return ivm;
   };
 
   const session = async ({ bundle, limits, answer, signal, onUsage, drive }: Session): Promise<unknown> => {
-    const ivm = await loadIvm();
-    const prelude = await guestPrelude();
+    const ivm = await ready();
+    // Before a slot is taken: fetching code a runner does not keep is waiting on the platform, not running anything.
+    const entry = await cached(bundle);
     await acquire();
 
-    snapshot ??= ivm.Isolate.createSnapshot([{ code: prelude, filename: 'plitzi:prelude' }]);
     const isolate = new ivm.Isolate({ memoryLimit: limits.memoryMb, snapshot });
     const timers = new Set<NodeJS.Timeout>();
     let stopped: FunctionStopReason | undefined;
@@ -280,7 +312,6 @@ export const createIsolateRunner = ({
         onAbort();
       }
 
-      const entry = cached(bundle);
       const module = isolate.compileModuleSync(entry.code, {
         filename: 'functions.js',
         ...(entry.cachedData ? { cachedData: entry.cachedData } : { produceCachedData: true })
@@ -343,21 +374,23 @@ export const createIsolateRunner = ({
     }
   };
 
-  return {
-    describe: bundle =>
-      session({
-        bundle,
-        limits: DESCRIBE_LIMITS,
-        answer: describeAnswer,
-        drive: async (driver, definition) => {
-          const describe = driver.getSync('describe', { reference: true });
+  const describe = (bundle: FunctionsBundle): Promise<unknown> =>
+    session({
+      bundle: { id: bundle.id, load: () => Promise.resolve(bundle.code) },
+      limits: DESCRIBE_LIMITS,
+      answer: describeAnswer,
+      drive: async (driver, definition) => {
+        const describeRef = driver.getSync('describe', { reference: true });
 
-          return describe.apply(driver.derefInto(), [definition.derefInto()], {
-            result: { copy: true },
-            timeout: DESCRIBE_LIMITS.cpuMs
-          });
-        }
-      }),
+        return describeRef.apply(driver.derefInto(), [definition.derefInto()], {
+          result: { copy: true },
+          timeout: DESCRIBE_LIMITS.cpuMs
+        });
+      }
+    });
+
+  return {
+    describe,
     invoke: ({ bundle, invocation, limits, answer, signal, onUsage }) =>
       session({
         bundle,
@@ -374,6 +407,11 @@ export const createIsolateRunner = ({
             timeout: limits.cpuMs
           });
         }
-      })
+      }),
+    warm: async () => {
+      await ready();
+      // One whole invocation's path, so V8's cache of the guest is made now too — not by a visitor's first request.
+      await describe({ id: 'plitzi:warm-up', code: 'export default {};' });
+    }
   };
 };

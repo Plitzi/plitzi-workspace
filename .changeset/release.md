@@ -1163,10 +1163,20 @@ A space can have its own server code: TypeScript whose **tasks** are steps in it
 - **Breaking: `action.tasks` is gone.** A deployment's own tasks are functions loaded natively:
   `createServer({ functions: { native: [defineFunctions({ tasks })] } })` — the same shape a space's are. Their routes
   are served too.
+- **`loadFunctions(dir)`** (`@plitzi/sdk-server`): a `functions/` folder built as the platform builds a space's and
+  loaded natively — what a self-hosted server passes to `functions.native`, and what a `plitzi create` server project
+  now does with its own `functions/`. Which files are the source is one rule, `readFunctionsSource` /
+  `isFunctionsSourcePath` in `@plitzi/sdk-shared/actions`, used by it, the build and the CLI.
 - **The runner**, `@plitzi/sdk-server/functions-runner` (`isolated-vm` and `core-js@3` are optional peers):
   `startFunctionsRunnerService` — its own process, one V8 isolate per invocation from a snapshot (~2 ms), CPU / wall /
-  memory / output / calls limits that hold, behind a shared secret; `createRemoteRunner` — the page server's client,
-  one WebSocket per invocation with the code's calls answered on it; `createIsolateRunner`; `createLocalFunctions`.
+  memory / output / calls limits that hold, behind a shared secret, warmed before it listens so no request pays the
+  first isolate; `createRemoteRunner` — the page server's client, one WebSocket per invocation with the code's calls
+  answered on it, abandoned past the invocation's wall time plus `graceMs` (5 s) even when the runner never answers;
+  `createIsolateRunner({ concurrency, cacheBytes })` — compiled bundles kept by size (64 MB), least recently used out;
+  `createLocalFunctions`.
+- **A run carries the bundle by reference**: `FunctionsBundleRef { id, load }` in `FunctionInvokeRequest` and
+  `SpaceFunctions` — a runner asks for the code (`needBundle`) only when it does not keep that bundle, so a lookup never
+  reads it on the way to one. `functionsInHand` makes one from a bundle already in memory.
 - **Wired into actions**: `lookups.getFunctions(spaceId, at)`; `registryFor(spaceId, at)` — the catalog, the check and
   the runs of a space see its tasks; `prepareFunctions(source)` builds, reads and checks a source before it is stored;
   `functions.limits`, `functions.admit`, `functions.onUsage` for a deployment's ceilings and budget. A run only asks for

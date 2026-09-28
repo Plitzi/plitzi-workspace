@@ -2,6 +2,8 @@ import path from 'node:path';
 
 import esbuild from 'esbuild';
 
+import { isFunctionsSourcePath } from '@plitzi/sdk-shared/actions';
+
 import { defineFunctions } from './contract';
 
 import type { FunctionsProblem } from '@plitzi/sdk-shared';
@@ -39,15 +41,12 @@ const CONTRACT_SPECIFIER = '@plitzi/sdk-server/functions';
  */
 const CONTRACT_MODULE = `export const defineFunctions = ${defineFunctions.toString()};`;
 
-const SOURCE_PATH = /^[A-Za-z0-9_][A-Za-z0-9_./-]*\.(ts|js|mjs|json)$/;
-
 const normalize = (file: string): string => path.posix.normalize(file).replace(/^\.\//, '');
 
 const sourceProblems = (source: FunctionsSource): FunctionsProblem[] => {
   const problems: FunctionsProblem[] = [];
   for (const file of Object.keys(source)) {
-    const normal = normalize(file);
-    if (!SOURCE_PATH.test(normal) || normal.startsWith('..') || normal.includes('/../')) {
+    if (!isFunctionsSourcePath(file)) {
       problems.push({ file, message: 'A file is a relative path under functions/, ending in .ts, .js, .mjs or .json' });
     }
   }

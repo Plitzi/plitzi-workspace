@@ -5,6 +5,7 @@ import { createJsonAdapters } from '../adapters/jsonAdapters';
 import { createActionsModule } from '../modules/actions';
 import { defineFunctions } from '../modules/functions/contract';
 import { createIsolateRunner } from '../modules/functions/sandbox/isolate';
+import { functionsInHand } from '../modules/functions/space';
 
 import type { SpaceFunctions } from '../modules/functions/protocol';
 import type { OfflineDataRaw, Schema, SSRServer } from '@plitzi/sdk-shared';
@@ -63,7 +64,7 @@ beforeAll(async () => {
     throw new Error(prepared.problems.map(problem => problem.message).join('\n'));
   }
 
-  const functions: SpaceFunctions = { ...prepared.functions, limits: { cpuMs: 100 } };
+  const functions: SpaceFunctions = { ...functionsInHand(prepared.functions), limits: { cpuMs: 100 } };
   server = createServer({
     port: PORT,
     adapters: createJsonAdapters({ offlineData: { schema, style: {} } as unknown as OfflineDataRaw }),

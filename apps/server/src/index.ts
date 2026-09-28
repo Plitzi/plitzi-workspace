@@ -1,5 +1,7 @@
 export { createServer, resolveServices } from './core/createServer';
 export { closeOnSignals } from './core/server/closeOnSignals';
+// A project's own `functions/`, built as the platform builds a space's and loaded natively: `functions: { native }`.
+export { loadFunctions } from './modules/functions/load';
 export { registerHealthCheck, buildHealthPayload } from './core/health';
 export { consoleLogger, isLogged, logLevelOf, renderLogEvent, serverLog } from './helpers/serverLog';
 export type { HealthCheckApp, HealthIdentity } from './core/health';

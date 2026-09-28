@@ -9,13 +9,7 @@ import { frameText } from '../../../helpers/wsFrame';
 import { FUNCTIONS_PROTOCOL, FunctionFailure } from '../protocol';
 import { createIsolateRunner } from '../sandbox/isolate';
 
-import type {
-  FunctionAnswer,
-  FunctionRunner,
-  FunctionsBundle,
-  FunctionUsage,
-  RunnerResponseMessage
-} from '../protocol';
+import type { FunctionAnswer, FunctionRunner, FunctionUsage, RunnerResponseMessage } from '../protocol';
 import type { IsolateRunnerOptions } from '../sandbox/isolate';
 import type { AddressInfo } from 'node:net';
 import type { WebSocket } from 'ws';
@@ -25,9 +19,10 @@ export type FunctionsRunnerServiceOptions = IsolateRunnerOptions & {
   secret: string;
   port?: number;
   host?: string;
-  /** Bundles kept by id, so a warm runner is never sent the code again. */
-  bundles?: number;
-  /** The engine; the isolates in this process by default. */
+  /**
+   * The engine; the isolates in this process by default, warmed before the service listens. It keeps the bundles it
+   * runs — this service keeps none of its own — and asks the platform for one it does not have.
+   */
   runner?: FunctionRunner;
 };
 
@@ -50,17 +45,12 @@ const authorised = (header: string | undefined, secret: string): boolean =>
  * socket. The platform replica that asked is the one answering, so nothing about a run has to be shared between
  * replicas, and a connection that closes is the invocation aborting.
  */
-const serveConnection = (
-  socket: WebSocket,
-  runner: FunctionRunner,
-  bundles: Map<string, string>,
-  keep: number
-): void => {
+const serveConnection = (socket: WebSocket, runner: FunctionRunner): void => {
   const pending = new Map<number, (answer: FunctionAnswer) => void>();
   const controller = new AbortController();
   let nextCall = 1;
   let started = false;
-  let waitingBundle: ((bundle: FunctionsBundle) => void) | undefined;
+  let waitingBundle: ((code: string) => void) | undefined;
 
   const send = (message: RunnerResponseMessage): void => {
     if (socket.readyState === socket.OPEN) {
@@ -70,18 +60,6 @@ const serveConnection = (
   const finish = (message: RunnerResponseMessage): void => {
     send(message);
     socket.close(1000);
-  };
-  const remember = (bundle: FunctionsBundle): void => {
-    bundles.delete(bundle.id);
-    bundles.set(bundle.id, bundle.code);
-    while (bundles.size > keep) {
-      const oldest = bundles.keys().next().value;
-      if (oldest === undefined) {
-        break;
-      }
-
-      bundles.delete(oldest);
-    }
   };
   let usage: FunctionUsage | undefined;
   const settle = (work: Promise<unknown>): void => {
@@ -127,8 +105,7 @@ const serveConnection = (
     }
 
     if (message.type === 'bundle') {
-      remember(message.bundle);
-      waitingBundle?.(message.bundle);
+      waitingBundle?.(message.bundle.code);
       waitingBundle = undefined;
 
       return;
@@ -152,34 +129,31 @@ const serveConnection = (
     }
 
     if (message.type === 'describe') {
-      remember(message.bundle);
       settle(runner.describe(message.bundle));
 
       return;
     }
 
     const { bundleId, invocation, limits } = message;
-    const known = bundles.get(bundleId);
-    const bundle =
-      known === undefined
-        ? new Promise<FunctionsBundle>(resolve => {
-            waitingBundle = resolve;
-            send({ type: 'needBundle' });
-          })
-        : Promise.resolve({ id: bundleId, code: known });
     settle(
-      bundle.then(found =>
-        runner.invoke({
-          bundle: found,
-          invocation,
-          limits,
-          answer,
-          signal: controller.signal,
-          onUsage: spent => {
-            usage = spent;
-          }
-        })
-      )
+      runner.invoke({
+        // The code only if the engine has never kept this id: asked of the platform on this same connection.
+        bundle: {
+          id: bundleId,
+          load: () =>
+            new Promise<string>(resolve => {
+              waitingBundle = resolve;
+              send({ type: 'needBundle' });
+            })
+        },
+        invocation,
+        limits,
+        answer,
+        signal: controller.signal,
+        onUsage: spent => {
+          usage = spent;
+        }
+      })
     );
   });
 
@@ -200,7 +174,6 @@ export const startFunctionsRunnerService = async ({
   secret,
   port = 8790,
   host = '0.0.0.0',
-  bundles: keep = 512,
   runner,
   ...isolate
 }: FunctionsRunnerServiceOptions): Promise<FunctionsRunnerService> => {
@@ -208,8 +181,17 @@ export const startFunctionsRunnerService = async ({
     throw new Error('The functions runner needs a secret of at least 32 characters');
   }
 
-  const engine = runner ?? createIsolateRunner(isolate);
-  const bundles = new Map<string, string>();
+  let engine: FunctionRunner;
+  if (runner) {
+    engine = runner;
+  } else {
+    // Before listening: the orchestrator sends traffic once /health answers, and the first request must not be the one
+    // that builds the prelude and the heap every isolate starts from.
+    const isolates = createIsolateRunner(isolate);
+    await isolates.warm();
+    engine = isolates;
+  }
+
   const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME_BYTES });
   const server = http.createServer((req, res) => {
     res.writeHead(req.method === 'GET' && req.url === '/health' ? 200 : 404, { 'content-type': 'text/plain' });
@@ -222,7 +204,7 @@ export const startFunctionsRunnerService = async ({
       return;
     }
 
-    sockets.handleUpgrade(req, socket, head, ws => serveConnection(ws, engine, bundles, keep));
+    sockets.handleUpgrade(req, socket, head, ws => serveConnection(ws, engine));
   });
 
   await new Promise<void>((resolve, reject) => {

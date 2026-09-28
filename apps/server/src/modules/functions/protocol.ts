@@ -12,6 +12,12 @@ export const FUNCTIONS_PROTOCOL = 1;
 export type FunctionsBundle = { id: string; code: string };
 
 /**
+ * A bundle as a run knows it: its id, and how to fetch its code — which only a runner that has never seen that id asks
+ * for. A run carries no code of its own: up to a megabyte read and sent on every run would be the run's whole cost.
+ */
+export type FunctionsBundleRef = { id: string; load: () => Promise<string> };
+
+/**
  * What one invocation may spend — the portable subset every runner can enforce, each mapped to its own knobs. The
  * platform sets them per space (its plan) and never above the deployment's ceilings.
  */
@@ -89,7 +95,7 @@ export type FunctionRunner = {
 export type FunctionUsage = { cpuMs: number; wallMs: number; calls: number };
 
 export type FunctionInvokeRequest = {
-  bundle: FunctionsBundle;
+  bundle: FunctionsBundleRef;
   invocation: FunctionInvocation;
   limits: FunctionLimits;
   /** Handed each call exactly as the code sent it: the platform reads it (`readCall`), trusting no runner to have. */
@@ -110,8 +116,15 @@ export class FunctionFailure extends Error {
   }
 }
 
-/** A space's built functions, as the platform stores them: the bundle, and what it declared when it was saved. */
-export type SpaceFunctions = { bundle: FunctionsBundle; manifest: FunctionsManifest; limits?: Partial<FunctionLimits> };
+/**
+ * A space's functions as a run reaches them: the bundle by reference, what it declared when it was saved, and the limits
+ * its plan sets.
+ */
+export type SpaceFunctions = {
+  bundle: FunctionsBundleRef;
+  manifest: FunctionsManifest;
+  limits?: Partial<FunctionLimits>;
+};
 
 /** The messages of one runner connection (our own runner service), each side's in turn. */
 export type RunnerRequestMessage =

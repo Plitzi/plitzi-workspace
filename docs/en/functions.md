@@ -175,15 +175,19 @@ turns, so one space's loop slows its own account and nobody else. Each deploymen
 
 Everything here is `@plitzi/sdk-server`'s.
 
-**A self-hosted server's own functions** are loaded natively — trusted code, in the process:
+**A self-hosted server's own functions** are loaded natively — trusted code, in the process. `loadFunctions` builds a
+`functions/` folder the way the platform builds a space's (same files, same imports, same checks) and loads it:
 
 ```ts
-import { createServer } from '@plitzi/sdk-server';
-import functions from './functions/index.ts';
+import { createServer, loadFunctions } from '@plitzi/sdk-server';
 
-createServer({ /* … */ functions: { native: [functions] } });
+const functions = await loadFunctions(new URL('../functions/', import.meta.url));
+
+createServer({ /* … */ functions: { native: functions } });
 ```
 
+A server project made by `plitzi create` already does this, so the files `plitzi functions pull` brings run there as
+they run on the platform. A `defineFunctions({ … })` written in the server's own code goes in `native` the same way.
 Their tasks join the catalog and their routes answer under `/api/` on every space the server serves. This replaces
 the old `action.tasks`: a deployment's own tasks and a space's are written the same way.
 
@@ -200,6 +204,19 @@ A space's functions reach a run through `action.lookups.getFunctions(spaceId, at
 when it was saved, as of the revision the run belongs to. `actions.prepareFunctions(source)` is the one way to make
 one: built, read by the runner and checked. `functions.limits` sets the per-invocation ceilings; `functions.admit` and
 `functions.onUsage` are how a deployment budgets CPU across a space's account.
+
+**What a runner keeps, and what it does not.** A function is stateless, like a Lambda: everything it needs comes in its
+params and `ctx`, and anything that must outlive the invocation goes to `ctx.kv` — so any runner, any replica, can run
+any invocation. What a runner keeps is only what makes the next start cheap:
+
+- the web-API prelude as a V8 snapshot, made before the service listens — the first request does not pay for it;
+- each bundle's compiled code, by size (`cacheBytes`, 64 MB), least recently used out. A run carries its bundle by
+  reference (`FunctionsBundleRef`): the code crosses the wire, and is read from storage, only when the runner does not
+  keep it.
+
+Nothing waits forever: past its wall time an invocation's isolate is disposed, and the page server's client
+(`createRemoteRunner`) gives up on the runner `graceMs` after that (5 s) even if the runner never answers — its
+connection is closed and the step fails with `wall`.
 
 The runner is an adapter: the same bundle runs on another one — a Cloudflare Workers for Platforms dispatcher, or a
 Lambda per bundle — that implements `describe` and `invoke` over the same messages.

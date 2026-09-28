@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { createIsolateRunner } from './sandbox/isolate';
+import { functionsInHand } from './space';
 import { functionTryEntry } from './tryEntry';
 import { createActionsModule } from '../actions';
 
@@ -68,7 +69,7 @@ export const createLocalFunctions = ({
         return prepared;
       }
 
-      loaded = prepared.functions;
+      loaded = functionsInHand(prepared.functions);
 
       return { ok: true, tasks: prepared.functions.manifest.tasks.map(task => `${task.namespace}.${task.action}`) };
     },

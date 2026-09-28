@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { WebSocketServer } from 'ws';
 
 import { createRemoteRunner } from './remote';
 import { startFunctionsRunnerService } from './service';
 import { createActionsModule } from '../../actions';
 import { FunctionFailure } from '../protocol';
+import { functionsInHand } from '../space';
 
 import type { FunctionsRunnerService } from './service';
 import type { FunctionInvocation, FunctionLimits, FunctionRunner, SpaceFunctions } from '../protocol';
@@ -78,7 +80,7 @@ describe('the runner service, through the remote runner', () => {
       throw new Error(prepared.problems.map(problem => problem.message).join('\n'));
     }
 
-    const functions: SpaceFunctions = prepared.functions;
+    const functions: SpaceFunctions = functionsInHand(prepared.functions);
     const module = createActionsModule({
       lookups: { getAction: () => Promise.resolve(undefined), getFunctions: () => Promise.resolve(functions) },
       functions: { runner: remote }
@@ -99,25 +101,29 @@ describe('the runner service, through the remote runner', () => {
   });
 
   it('is sent a bundle only when it does not have it', async () => {
-    const bundle = {
-      id: 'bundle-sent-once',
-      code: 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };'
-    };
+    const code = 'export default { tasks: [{ namespace: "probe", action: "run", run: () => "ran" }] };';
+    const firstLoad = vi.fn(() => Promise.resolve(code));
+    const secondLoad = vi.fn(() => Promise.resolve('not sent, so never compiled'));
     const answer = vi.fn(() => Promise.resolve(null));
     const signal = new AbortController().signal;
-    const cold = remote.invoke({ bundle, invocation, limits: LIMITS, answer, signal });
-    const warm = await cold.then(() =>
-      remote.invoke({
-        bundle: { id: bundle.id, code: 'not sent, so never compiled' },
-        invocation,
-        limits: LIMITS,
-        answer,
-        signal
-      })
-    );
+    const cold = await remote.invoke({
+      bundle: { id: 'bundle-sent-once', load: firstLoad },
+      invocation,
+      limits: LIMITS,
+      answer,
+      signal
+    });
+    const warm = await remote.invoke({
+      bundle: { id: 'bundle-sent-once', load: secondLoad },
+      invocation,
+      limits: LIMITS,
+      answer,
+      signal
+    });
 
-    expect(await cold).toBe('ran');
-    expect(warm).toBe('ran');
+    expect([cold, warm]).toEqual(['ran', 'ran']);
+    expect(firstLoad).toHaveBeenCalledTimes(1);
+    expect(secondLoad).not.toHaveBeenCalled();
   });
 
   it('carries back what the invocation spent', async () => {
@@ -125,7 +131,7 @@ describe('the runner service, through the remote runner', () => {
     await remote.invoke({
       bundle: {
         id: 'bundle-usage',
-        code: 'export default { tasks: [{ namespace: "probe", action: "run", run: () => 1 }] };'
+        load: () => Promise.resolve('export default { tasks: [{ namespace: "probe", action: "run", run: () => 1 }] };')
       },
       invocation,
       limits: LIMITS,
@@ -158,7 +164,10 @@ describe('the runner service, through the remote runner', () => {
     const controller = new AbortController();
     const bundle = {
       id: 'bundle-that-waits',
-      code: 'export default { tasks: [{ namespace: "probe", action: "run", run: () => new Promise(() => {}) }] };'
+      load: () =>
+        Promise.resolve(
+          'export default { tasks: [{ namespace: "probe", action: "run", run: () => new Promise(() => {}) }] };'
+        )
     };
     const invoked = remote.invoke({
       bundle,
@@ -172,6 +181,32 @@ describe('the runner service, through the remote runner', () => {
 
     expect(failure).toBeInstanceOf(FunctionFailure);
     expect(failure instanceof FunctionFailure && failure.reason).toBe('aborted');
+  });
+
+  it('gives up on a runner that stops answering, and closes the connection', async () => {
+    const silent = new WebSocketServer({ port: 0, host: '127.0.0.1' });
+    const closed = new Promise<void>(resolve => {
+      silent.on('connection', socket => socket.on('close', () => resolve()));
+    });
+    await new Promise<void>(resolve => silent.on('listening', () => resolve()));
+    const address = silent.address();
+    const port = address && typeof address === 'object' ? address.port : 0;
+    const hung = createRemoteRunner({ url: `ws://127.0.0.1:${String(port)}`, secret: SECRET, graceMs: 50 });
+    const started = Date.now();
+    const failure: unknown = await hung
+      .invoke({
+        bundle: { id: 'x', load: () => Promise.resolve('') },
+        invocation,
+        limits: { ...LIMITS, wallMs: 100 },
+        answer: () => Promise.resolve(null),
+        signal: new AbortController().signal
+      })
+      .catch((error: unknown) => error);
+    await closed;
+    silent.close();
+
+    expect(failure instanceof FunctionFailure && failure.reason).toBe('wall');
+    expect(Date.now() - started).toBeLessThan(2000);
   });
 
   it('needs a real secret to start', async () => {
