@@ -178,6 +178,29 @@ zip is dropped under Resources: added, or the plugin already there moved to the 
 `--api` (or `PLITZI_API_URL`) points it at another platform, a self-hosted or local one; the CLI trusts the
 certificate authorities the system trusts, as the browser beside it does.
 
+## `runtime`
+
+```bash
+plitzi runtime push                                   # pack src/runtime.ts and keep it as the space's draft runtime
+plitzi runtime status                                 # how each environment's runtime is, and its variables' names
+printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
+plitzi runtime vars unset REDIS_URL
+```
+
+A space's runtime is its own server code, run beside it on the platform — for what its functions cannot be: a
+connection kept open, memory that outlives a request, Node and its packages (`docs/en/runtimes.md`).
+
+**Its code lives in a project of yours** — a folder, usually a repository — and nowhere else: the builder shows how a
+runtime runs and sets its variables, but it does not hold its code and cannot change it. The project has
+`src/runtime.ts` (or `--entry`), whose default export is `defineRuntime(…)`, and `@plitzi/sdk-server` installed: a
+project from `plitzi create` in server mode has it; `examples/self-hosting/10-runtime` is the smallest one to start
+from, and it runs as a server of its own too.
+
+`push` packs the module with the project's own `@plitzi/sdk-server` — the module and every package it imports, bar
+`@plitzi/*` and React, which the platform provides — and sends it to the space `plitzi whoami` names. It becomes the
+draft's runtime, which starts on it; **publishing the space** from the builder takes it to the published site. A
+runtime is part of the plans that carry it; on another, the push is refused and says so.
+
 ## Credentials
 
 `create` never mints one. A cloud project's key comes from Credentials in the builder, is written to `.env`, and

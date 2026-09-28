@@ -59,6 +59,13 @@ anything under `/_`, `/auth`, `/.well-known`.
 
 ## 2. On the platform
 
+**Its code lives in a project of yours** — a folder, usually a repository — and is sent from there: the builder shows
+how a runtime runs and sets its variables, but it does not hold its code and cannot change it. The project needs
+`src/runtime.ts` (the module above) and `@plitzi/sdk-server` installed: one made with `plitzi create` in server mode
+has it, and [`examples/self-hosting/10-runtime`](../../examples/self-hosting/10-runtime) is the smallest one to start
+from — it also runs as a server of its own. From that project, signed in (`plitzi login`) with the space chosen
+(`plitzi space`):
+
 ```bash
 plitzi runtime push                  # packs src/runtime.ts (or --entry) and keeps it as the space's draft runtime
 plitzi runtime status                # how each environment's runtime is, and its variables' names

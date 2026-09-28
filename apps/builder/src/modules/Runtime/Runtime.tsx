@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
+import RuntimeCodeNote from './components/RuntimeCodeNote';
 import RuntimeEnvironments from './components/RuntimeEnvironments';
 import RuntimeVariables from './components/RuntimeVariables';
 
@@ -30,7 +31,8 @@ const refreshWhile =
 /**
  * The space's runtime: its own server code, run as a process of its own beside the platform — for what functions
  * cannot be (Node and its packages, connections that stay open, an agent's endpoint). Its code is pushed from the
- * project that holds it (`plitzi runtime push`); here is how each environment's is doing, and what it starts with.
+ * project that holds it (`plitzi runtime push`), which the panel says in so many words; here is how each environment's
+ * is doing, and what it starts with.
  */
 const Runtime = () => {
   const [watchUntil, setWatchUntil] = useState(0);
@@ -60,10 +62,9 @@ const Runtime = () => {
           </div>
           {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
           {!isLoading && environments.length === 0 && (
-            <span className="text-sm text-gray-500 dark:text-zinc-400">
-              This space has no runtime. Push one from the project that holds it: <code>plitzi runtime push</code>.
-            </span>
+            <span className="text-sm text-gray-500 dark:text-zinc-400">This space has no runtime yet.</span>
           )}
+          {!isLoading && <RuntimeCodeNote pushed={environments.length > 0} />}
           {environments.length > 0 && <RuntimeEnvironments environments={environments} onChange={handleChange} />}
           <RuntimeVariables names={data?.variables ?? []} onChange={handleChange} />
         </div>

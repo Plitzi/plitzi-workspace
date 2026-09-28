@@ -26,6 +26,12 @@ const STATUS: Record<
   failed: { label: 'Not running', intent: 'error' }
 };
 
+/**
+ * When it last started, as the clock on this wall reads it: to the second, because a restart on a laptop takes less than
+ * one — a new time is how a restart is seen at all.
+ */
+const clockOf = (seconds: number): string => new Date(seconds * 1000).toLocaleTimeString();
+
 /** Every environment's runtime: which code, how it is, and what it serves — and taking the runtime away. */
 const RuntimeEnvironments = ({ environments, onChange }: RuntimeEnvironmentsProps) => {
   const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
@@ -84,6 +90,7 @@ const RuntimeEnvironments = ({ environments, onChange }: RuntimeEnvironmentsProp
             <span className="text-xs text-gray-500 dark:text-zinc-400">
               {runtime.tasks.length} tasks
               {runtime.endpoints.length > 0 && ` · answers ${runtime.endpoints.join(', ')}`}
+              {runtime.startedAt !== null && ` · started ${clockOf(runtime.startedAt)}`}
             </span>
           )}
         </div>
