@@ -391,7 +391,8 @@ export const desktopShell: SpaceSpec = {
                       id: 'brand-mark',
                       class: brandMark,
                       src: 'https://cdn.plitzi.com/resources/img/favicon.svg',
-                      alt: ''
+                      // Beside the name it marks: the name says it, so the mark is left out of what is read.
+                      decorative: true
                     }),
                     text({ id: 'brand-name', class: brandName, content: 'Plitzi' })
                   ],
