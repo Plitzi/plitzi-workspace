@@ -77,7 +77,10 @@ export const exampleKv: ActionKvAdapter = {
       return Promise.resolve(false);
     }
 
-    entries.set(key, { value: next, ...(ttlSeconds === undefined ? {} : { expiresAt: Date.now() + ttlSeconds * 1000 }) });
+    entries.set(key, {
+      value: next,
+      ...(ttlSeconds === undefined ? {} : { expiresAt: Date.now() + ttlSeconds * 1000 })
+    });
 
     return Promise.resolve(true);
   }
