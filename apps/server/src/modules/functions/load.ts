@@ -5,6 +5,7 @@ import { readFunctionsSource } from '@plitzi/sdk-shared/actions';
 
 import { buildFunctions } from './build';
 
+import type { FunctionsSource } from './build';
 import type { FunctionsDefinition } from './contract';
 import type { FunctionsSourceReader } from '@plitzi/sdk-shared/actions';
 
@@ -39,6 +40,13 @@ const isFunctionsDefinition = (value: unknown): value is FunctionsDefinition => 
 };
 
 /**
+ * A `functions/` directory as a source — the files the platform's rule counts, by their path inside it: what a space's
+ * functions are saved as, and what `loadFunctions` builds.
+ */
+export const readFunctionsDir = (dir: string | URL): Promise<FunctionsSource> =>
+  readFunctionsSource(typeof dir === 'string' ? dir : fileURLToPath(dir), nodeReader);
+
+/**
  * A server's own functions from a directory — a project's `functions/`, the working copy `plitzi functions` keeps —
  * built exactly as the platform builds a space's (the same rules, one bundle) and loaded natively, for
  * `createServer({ functions: { native } })`. The same on `node src/main.ts` and on a compiled server: nothing here
@@ -46,7 +54,7 @@ const isFunctionsDefinition = (value: unknown): value is FunctionsDefinition => 
  * whose `index.ts` exports no definition, stops the server with where it is wrong.
  */
 export const loadFunctions = async (dir: string | URL): Promise<FunctionsDefinition[]> => {
-  const source = await readFunctionsSource(typeof dir === 'string' ? dir : fileURLToPath(dir), nodeReader);
+  const source = await readFunctionsDir(dir);
   if (!Object.keys(source).length) {
     return [];
   }

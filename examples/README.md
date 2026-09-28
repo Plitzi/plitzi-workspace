@@ -39,10 +39,13 @@ these build on.
 
 ## [`05-with-server-actions`](./05-with-server-actions) — it does work on the server
 
+A server action and a render action, on the platform with nothing of your own to run, are seeded spaces rather than
+examples here: `shipping-quote` (its step is the space's own function) and `cat-gallery` (an API fetched while the
+page renders), in `plitzi-sdk-server/prisma/mongo/seeds/spaces/examples`. What stays below is what needs a server of
+your own, or none at all.
+
 | | Example | What it is | Port |
 |---|---|---|---|
-| 01 | [actions](./05-with-server-actions/01-actions) | A declarative flow the server runs, called from a page | 4009 + 4010 |
-| 02 | [render](./05-with-server-actions/02-render) | The server fetches an API while the page renders | 4011 |
 | 03 | [no-server](./05-with-server-actions/03-no-server) | The same page with no server tier: every server-side step inert | 4012 |
 | 04 | [custom-trigger](./05-with-server-actions/04-custom-trigger) | A trigger of your own, over a store you already run | — |
 | 05 | [schedules](./05-with-server-actions/05-schedules) | Scheduled and delayed jobs over a durable queue in SQLite, across replicas | 4016 |
@@ -53,10 +56,10 @@ these build on.
 |---|---|---|---|
 | 01 | [blog](./06-full-examples/01-blog) | A front page, posts, a sidebar, sessions, and who may publish | 4013 |
 | 02 | [seismic](./06-full-examples/02-seismic) | One live screen: a WebGL globe of USGS earthquakes — filtered, replayed and explained by the space around it | 4014 |
-| 03 | [ceniza](./06-full-examples/03-ceniza) | A restaurant's website: live availability, bookings with email, a journal — no server code | 4015 |
 
 Everything above, assembled: this is the one to read when the question is not "how does X work" but "what does it
-take to build something".
+take to build something". Ceniza, a whole restaurant website whose server work is all documents, is a seeded space
+on the platform (`ceniza`, in `plitzi-sdk-server/prisma/mongo/seeds/spaces`).
 
 ## [`07-templates`](./07-templates) — publishing a piece of one
 

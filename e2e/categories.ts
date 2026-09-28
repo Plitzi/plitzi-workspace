@@ -39,12 +39,9 @@ const EXAMPLE_TARGETS = [
   'ssr-preview',
   'sessions',
   'mysql',
-  'server-actions',
-  'server-actions-render',
   'server-actions-no-server',
   'server-actions-schedules',
   'blog',
-  'ceniza',
   'seismic',
   'whiteboard',
   'whiteboard-replicas'
@@ -123,8 +120,7 @@ export const categories: Category[] = [
   {
     name: 'examples',
     what: 'Every example still does what its own README says',
-    // The sink is not an example: it is where ceniza's booking confirmation goes during a run.
-    targets: [...EXAMPLE_TARGETS, 'mail-sink'],
+    targets: EXAMPLE_TARGETS,
     subcategories: []
   }
 ];

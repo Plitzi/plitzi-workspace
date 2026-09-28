@@ -626,11 +626,10 @@ Everything above is configuration; the two extension points are code you own:
 - **Your own triggers** — mount a stage (or a queue consumer, or a CLI) and call the runner. Every check lives in
   the runner, so a trigger you add cannot end up with a weaker set of rules than the built-in ones.
 
-Both are wired end to end and runnable: **your own tasks**, the lookups and the versioning rule in
-[`01-actions`](../../examples/05-with-server-actions/01-actions); the render trigger — an action feeding a
-`runtime: 'server'` element while the page is built — in
-[`02-render`](../../examples/05-with-server-actions/02-render); and **your own trigger**, over a shared `kv`
-adapter written out in full, in
+Both are wired end to end and runnable. On the platform, as seeded spaces (`plitzi-sdk-server/prisma/mongo/seeds/spaces/examples`):
+an action whose step is the space's own function in `shippingQuote`, and the render trigger — an action feeding a
+`runtime: 'server'` element while the page is built — in `catGallery`. On a server of your own: **your own
+trigger**, over a shared `kv` adapter written out in full, in
 [`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger). **Scheduled and delayed jobs** over a
 queue and a `kv` the deployment keeps itself — both seams written out over one SQLite file, with two replicas
 sharing it — are in [`05-schedules`](../../examples/05-with-server-actions/05-schedules).

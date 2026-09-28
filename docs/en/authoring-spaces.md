@@ -804,7 +804,7 @@ and answers `{ exportName, files, corrections, differences }`.
 | --- | --- |
 | [`examples/shared-space/space.ts`](../../examples/shared-space/space.ts) | the whole shape, small: a page, a palette, a stylesheet |
 | [`examples/02-with-users/01-sessions`](../../examples/02-with-users/01-sessions) | two pages on one path, and an auth flow |
-| [`examples/05-with-server-actions/01-actions`](../../examples/05-with-server-actions/01-actions) | a form that runs a server action and shows the answer |
+| `plitzi-sdk-server/prisma/mongo/seeds/spaces/examples/shippingQuote` | a form that runs a server action — whose step is the space's own function — and shows the answer |
 | [`examples/06-full-examples/01-blog`](../../examples/06-full-examples/01-blog) | six pages, a custom element, bindings throughout |
 | [`examples/07-templates/01-authoring`](../../examples/07-templates/01-authoring) | a template authored and written out, in a project with one dependency |
 | `plitzi-sdk-server/prisma/mongo/seeds/spaces` | the demo spaces, seeded on every deployment — `website1` and `comingSoon` read back from JSON with `specFromSpace` |

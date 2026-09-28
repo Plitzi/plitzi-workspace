@@ -161,7 +161,7 @@ const actions = [listPosts, getPost, siteChrome, publishPost, updatePost, record
  *
  * A real deployment reads a row and takes `at` — the revision the calling page was published at — into account,
  * so a published site keeps running the flow it shipped with. This one serves a single live version and says so
- * by ignoring the argument; the sibling example [05-with-server-actions/01-actions] is where that rule is shown.
+ * by ignoring the argument; `docs/en/server-actions.md` is where that rule is explained.
  */
 export const lookups: ActionLookups = {
   getAction: (_spaceId, actionId) => Promise.resolve(actions.find(entry => entry.id === actionId)),

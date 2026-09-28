@@ -65,8 +65,6 @@ const reachableUrl = (url: string): boolean => {
   return up;
 };
 
-const catApiReachable = (): boolean => reachableUrl('https://api.thecatapi.com/v1/images/search');
-
 /** The Redis Pizarra's replicas share: `REDIS_URL`, or the local docker one (a database of the suite's own). */
 const PIZARRA_REDIS = process.env.REDIS_URL || 'redis://127.0.0.1:63790/9';
 
@@ -266,31 +264,6 @@ export const targets: Target[] = [
     }
   },
   {
-    id: 'server-actions',
-    workspace: '@plitzi/example-server-actions',
-    /** One command, TWO listeners: the example serves the PUBLISHED space on 5010 and its draft on 5011, which is
-     *  the only way to see the versioning rule rather than read about it. The spec derives the second origin from
-     *  this one — Playwright only ever waits on the first.
-     *
-     *  So this target owns 5010 AND 5011, and anything added below starts at 5012. Claiming a port it already
-     *  listens on is not a bind error anybody sees: Playwright's probe finds an open socket, calls the server
-     *  ready, and the specs run against the wrong site with no clue which one they hit. */
-    command: 'PORT=5010 yarn workspace @plitzi/example-server-actions start',
-    origin: 'http://127.0.0.1:5010',
-    what: 'A declarative flow the server runs, called from a page'
-  },
-  {
-    id: 'server-actions-render',
-    workspace: '@plitzi/example-server-actions-render',
-    command: 'PORT=5012 yarn workspace @plitzi/example-server-actions-render start',
-    origin: 'http://127.0.0.1:5012',
-    what: 'The server fetches an API while the page renders',
-    gate: {
-      open: catApiReachable,
-      hint: 'this example fetches api.thecatapi.com while it renders — connect to the internet'
-    }
-  },
-  {
     id: 'server-actions-no-server',
     workspace: '@plitzi/example-server-actions-no-server',
     command: 'yarn workspace @plitzi/example-server-actions-no-server start --port 5013',
@@ -314,14 +287,6 @@ export const targets: Target[] = [
     command: 'PORT=5014 yarn workspace @plitzi/example-blog start',
     origin: 'http://127.0.0.1:5014',
     what: 'A whole small blog — a front page, posts, sessions, and who may publish'
-  },
-  {
-    id: 'ceniza',
-    workspace: '@plitzi/example-ceniza',
-    // Its booking confirmation goes to the suite's mail sink rather than to a Mailpit the machine may not run.
-    command: 'PORT=5016 CENIZA_SMTP_PORT=5204 yarn workspace @plitzi/example-ceniza start',
-    origin: 'http://127.0.0.1:5016',
-    what: 'A whole restaurant website — live availability, bookings with a confirmation email, a journal, no server code'
   },
   {
     id: 'seismic',

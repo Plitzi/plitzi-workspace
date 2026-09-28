@@ -16,7 +16,7 @@ import {
 import type { AuthoredSpace, PageSpec } from '@plitzi/sdk-authoring';
 
 /**
- * The cat page from `02-render`, wired for a browser with no server behind it.
+ * The cat page of the `cat-gallery` seed, wired for a browser with no server behind it.
  *
  * The elements are the same ones — a `runtime: 'server'` provider naming an action, and a step that runs another —
  * because that is the point: the schema does not change when the deployment does. What changes is that nothing
@@ -64,7 +64,7 @@ const offlinePage: PageSpec = {
     }),
 
     /**
-     * The same provider as `02-render`, and this is where `mockData` earns its place.
+     * The same provider as the `cat-gallery` seed, and this is where `mockData` earns its place.
      *
      * A `runtime: 'server'` element resolves from the RSC payload — which only a server produces. With none, the
      * SDK does not request one: it renders the mock the author left, so the section keeps its shape in the

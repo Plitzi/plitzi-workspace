@@ -9,7 +9,7 @@ import type { FunctionTask } from '@plitzi/sdk-server/functions';
 import type { ActionJobQueue, ActionJobStatus } from '@plitzi/sdk-shared';
 
 /**
- * This deployment's own steps — the extension point `01-actions` introduces, used here for the work only a
+ * This deployment's own steps — its native functions (`docs/en/functions.md`), used here for the work only a
  * deployment can do: reach its own queue and its own activity log.
  *
  * Built by a factory because they close over those two, which are this process's and nobody else's. A flow never
