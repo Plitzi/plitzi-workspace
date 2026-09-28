@@ -1,7 +1,7 @@
 # No server tier, and nothing pretends otherwise
 
 The same page as the `cat-gallery` seed — a page fed by a `render` action, in
-`plitzi-sdk-server/prisma/mongo/seeds/spaces/examples` — rendered by the browser alone. The elements are identical: a
+`plitzi-sdk-server/prisma/seeds/spaces/examples` — rendered by the browser alone. The elements are identical: a
 `runtime: 'server'` provider naming an action, and a step that runs another — because a schema does not change
 when the deployment does.
 

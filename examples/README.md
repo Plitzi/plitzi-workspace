@@ -41,7 +41,7 @@ these build on.
 
 A server action and a render action, on the platform with nothing of your own to run, are seeded spaces rather than
 examples here: `shipping-quote` (its step is the space's own function) and `cat-gallery` (an API fetched while the
-page renders), in `plitzi-sdk-server/prisma/mongo/seeds/spaces/examples`. What stays below is what needs a server of
+page renders), in `plitzi-sdk-server/prisma/seeds/spaces/examples`. What stays below is what needs a server of
 your own, or none at all.
 
 | | Example | What it is | Port |
@@ -59,7 +59,7 @@ your own, or none at all.
 
 Everything above, assembled: this is the one to read when the question is not "how does X work" but "what does it
 take to build something". Ceniza, a whole restaurant website whose server work is all documents, is a seeded space
-on the platform (`ceniza`, in `plitzi-sdk-server/prisma/mongo/seeds/spaces`).
+on the platform (`ceniza`, in `plitzi-sdk-server/prisma/seeds/spaces/demo`).
 
 ## [`07-templates`](./07-templates) — publishing a piece of one
 

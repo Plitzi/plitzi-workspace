@@ -22,7 +22,7 @@ into a page (`SpaceAddTemplateMutation`, `SegmentAddTemplateMutation`). Those ar
 
 ## 2. What exists today
 
-- `src/services/templates` is a **code catalogue**: the demo specs in `prisma/mongo/seeds/spaces` (those with
+- `src/services/templates` is a **code catalogue**: the demo specs in `prisma/seeds/spaces/demo` (those with
   `template !== false`) are authored with `authorSpace` per request. `GET /spaces/templates` lists them, and
   `POST /spaces { template }` writes their documents into the new space.
 - Three screens read that listing: the *Create Space* modal (`layoutContainer-2.ts`, a select), the home's "Start from

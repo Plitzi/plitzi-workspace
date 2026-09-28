@@ -626,7 +626,7 @@ Everything above is configuration; the two extension points are code you own:
 - **Your own triggers** — mount a stage (or a queue consumer, or a CLI) and call the runner. Every check lives in
   the runner, so a trigger you add cannot end up with a weaker set of rules than the built-in ones.
 
-Both are wired end to end and runnable. On the platform, as seeded spaces (`plitzi-sdk-server/prisma/mongo/seeds/spaces/examples`):
+Both are wired end to end and runnable. On the platform, as seeded spaces (`plitzi-sdk-server/prisma/seeds/spaces/examples`):
 an action whose step is the space's own function in `shippingQuote`, and the render trigger — an action feeding a
 `runtime: 'server'` element while the page is built — in `catGallery`. On a server of your own: **your own
 trigger**, over a shared `kv` adapter written out in full, in

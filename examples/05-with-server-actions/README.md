@@ -15,7 +15,7 @@ carries.
 
 A page calling an action, and an action feeding a page while it renders, need no server of your own: they are
 seeded spaces on the platform — `shipping-quote` and `cat-gallery`, in
-`plitzi-sdk-server/prisma/mongo/seeds/spaces/examples`. What is left here is what a platform space cannot show.
+`plitzi-sdk-server/prisma/seeds/spaces/examples`. What is left here is what a platform space cannot show.
 
 The first takes the server away. The same page, rendered in the browser, where the step that would call an action
 and the element that would be fed by one both report themselves inert — without issuing a request. A page that
