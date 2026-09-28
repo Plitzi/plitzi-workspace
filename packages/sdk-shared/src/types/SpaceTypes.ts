@@ -77,10 +77,28 @@ export type SpaceRuntimeEnvironment = {
   /** Its tasks, as flows name them (`board.create`). */
   tasks: string[];
   startedAt: number | null;
+  /** The size it runs at — or will start at — by name (`SpaceRuntimeSizeOption['name']`). */
+  size: string;
+};
+
+/** A size a runtime may run at: what its pod may spend, and whether the space's plan includes it. */
+export type SpaceRuntimeSizeOption = {
+  name: string;
+  label: string;
+  /** As Kubernetes reads it: `250m` is a quarter of a core. */
+  cpu: string;
+  /** As Kubernetes reads it: `256Mi`. */
+  memory: string;
+  included: boolean;
 };
 
 /** A space's runtime: every environment's, and the names of the variables it starts with — never their values. */
-export type SpaceRuntime = { environments: SpaceRuntimeEnvironment[]; variables: string[] };
+export type SpaceRuntime = {
+  environments: SpaceRuntimeEnvironment[];
+  variables: string[];
+  /** Every size there is, smallest first. */
+  sizes: SpaceRuntimeSizeOption[];
+};
 
 export type SpaceDeployment = {
   id: number;

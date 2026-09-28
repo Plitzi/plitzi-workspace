@@ -7,11 +7,20 @@ import { use, useCallback } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
-import type { BuilderMutationsMap, BuilderQueriesMap, SpaceRuntimeEnvironment } from '@plitzi/sdk-shared';
+import RuntimeSize from '../RuntimeSize';
+
+import type {
+  BuilderMutationsMap,
+  BuilderQueriesMap,
+  SpaceRuntimeEnvironment,
+  SpaceRuntimeSizeOption
+} from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 export type RuntimeEnvironmentsProps = {
   environments: SpaceRuntimeEnvironment[];
+  /** Every size there is, and which the space's plan includes. */
+  sizes: SpaceRuntimeSizeOption[];
   /** Asked once something changed, to read the runtime again. */
   onChange: () => Promise<void>;
 };
@@ -33,7 +42,7 @@ const STATUS: Record<
 const clockOf = (seconds: number): string => new Date(seconds * 1000).toLocaleTimeString();
 
 /** Every environment's runtime: which code, how it is, and what it serves — and taking the runtime away. */
-const RuntimeEnvironments = ({ environments, onChange }: RuntimeEnvironmentsProps) => {
+const RuntimeEnvironments = ({ environments, sizes, onChange }: RuntimeEnvironmentsProps) => {
   const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
     BuilderQueriesMap,
     BuilderMutationsMap
@@ -81,6 +90,7 @@ const RuntimeEnvironments = ({ environments, onChange }: RuntimeEnvironmentsProp
               {STATUS[runtime.status].label}
             </Badge>
           </div>
+          <RuntimeSize environment={runtime.environment} size={runtime.size} sizes={sizes} onChange={onChange} />
           {runtime.error && (
             <Alert intent="error" size="xs" solid={false}>
               {runtime.error}

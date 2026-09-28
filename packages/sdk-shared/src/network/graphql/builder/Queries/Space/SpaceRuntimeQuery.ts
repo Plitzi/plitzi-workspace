@@ -16,8 +16,16 @@ const SpaceRuntimeQuery = gql`
         endpoints
         tasks
         startedAt
+        size
       }
       variables
+      sizes {
+        name
+        label
+        cpu
+        memory
+        included
+      }
     }
   }
 `;

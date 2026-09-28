@@ -52,6 +52,7 @@ import SpaceMoveResourceMutation from './Space/resources/SpaceMoveResourceMutati
 import SpaceRemoveResourceMutation from './Space/resources/SpaceRemoveResourceMutation';
 import SpaceRemoveRuntimeMutation from './Space/runtime/SpaceRemoveRuntimeMutation';
 import SpaceRemoveRuntimeVariableMutation from './Space/runtime/SpaceRemoveRuntimeVariableMutation';
+import SpaceSetRuntimeSizeMutation from './Space/runtime/SpaceSetRuntimeSizeMutation';
 import SpaceSetRuntimeVariableMutation from './Space/runtime/SpaceSetRuntimeVariableMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
@@ -173,6 +174,7 @@ export type BuilderMutationsMap = {
   SpaceAddVisitor: unknown;
   SpaceRemoveVisitor: unknown;
   SpaceSetRuntimeVariable: string[];
+  SpaceSetRuntimeSize: boolean;
   SpaceRemoveRuntimeVariable: string[];
   SpaceRemoveRuntime: boolean;
   SpacePublish: TSpacePublishMutation;
@@ -270,6 +272,7 @@ const BuilderMutations = {
   SpaceAddVisitor: SpaceAddVisitorMutation,
   SpaceRemoveVisitor: SpaceRemoveVisitorMutation,
   SpaceSetRuntimeVariable: SpaceSetRuntimeVariableMutation,
+  SpaceSetRuntimeSize: SpaceSetRuntimeSizeMutation,
   SpaceRemoveRuntimeVariable: SpaceRemoveRuntimeVariableMutation,
   SpaceRemoveRuntime: SpaceRemoveRuntimeMutation,
   SpacePublish: SpacePublishMutation,

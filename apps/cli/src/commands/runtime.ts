@@ -33,7 +33,11 @@ type Environment = {
   error?: string;
   endpoints: string[];
   tasks: string[];
+  size: string;
 };
+
+/** A size a runtime may run at, and whether the space's plan includes it. */
+type Size = { name: string; label: string; cpu: string; memory: string; included: boolean };
 
 const DEFAULT_ENTRY = path.join('src', 'runtime.ts');
 
@@ -125,11 +129,13 @@ export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
 const readRuntime = async (
   connection: Connection,
   spaceId: number
-): Promise<{ environments: Environment[]; variables: string[] } | undefined> => {
-  const answered = await authorizedRequest<{ environments?: Environment[]; variables?: string[]; error?: string }>(
-    connection,
-    `/spaces/${String(spaceId)}/runtime`
-  );
+): Promise<{ environments: Environment[]; variables: string[]; sizes: Size[] } | undefined> => {
+  const answered = await authorizedRequest<{
+    environments?: Environment[];
+    variables?: string[];
+    sizes?: Size[];
+    error?: string;
+  }>(connection, `/spaces/${String(spaceId)}/runtime`);
   if (!answered.ok) {
     fail(answered.error);
 
@@ -143,7 +149,11 @@ const readRuntime = async (
     return undefined;
   }
 
-  return { environments: reply.data.environments ?? [], variables: reply.data.variables ?? [] };
+  return {
+    environments: reply.data.environments ?? [],
+    variables: reply.data.variables ?? [],
+    sizes: reply.data.sizes ?? []
+  };
 };
 
 /** How each environment's runtime is, and the names of its variables. */
@@ -162,9 +172,14 @@ export const runtimeStatus = async (options: AccountOptions): Promise<void> => {
     console.log(`${connection.space.name} has no runtime. Push one: plitzi runtime push.`);
   }
 
-  runtime.environments.forEach(({ environment, revision, digest, status, error, endpoints, tasks }) => {
+  const spendOf = (name: string): string => {
+    const size = runtime.sizes.find(option => option.name === name);
+
+    return size ? `${size.label}, ${size.cpu} CPU / ${size.memory}` : name;
+  };
+  runtime.environments.forEach(({ environment, revision, digest, status, error, endpoints, tasks, size }) => {
     const version = revision === 0 ? 'draft' : `revision ${String(revision)}`;
-    console.log(`${chalk.bold(environment)} (${version}, ${digest.slice(0, 12)}): ${status}`);
+    console.log(`${chalk.bold(environment)} (${version}, ${digest.slice(0, 12)}): ${status} — ${spendOf(size)}`);
     if (error) {
       console.log(`  ${chalk.red(error)}`);
     }
@@ -174,6 +189,37 @@ export const runtimeStatus = async (options: AccountOptions): Promise<void> => {
     }
   });
   console.log(`Variables: ${runtime.variables.length ? runtime.variables.join(', ') : 'none'}`);
+  const included = runtime.sizes.filter(option => option.included).map(option => option.name);
+  console.log(`Sizes in this plan: ${included.length ? included.join(', ') : 'none'}`);
+};
+
+/** Chooses the size an environment's runtime runs at — one the space's plan includes — and it starts again at it. */
+export const setRuntimeSize = async (size: string, options: AccountOptions & { environment?: string }) => {
+  const connection = await connect(options, 'to configure');
+  if (!connection?.space) {
+    return;
+  }
+
+  const environment = options.environment ?? 'main';
+  const answered = await authorizedRequest<{ error?: string }>(
+    connection,
+    `/spaces/${String(connection.space.id)}/runtime/size`,
+    { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ size, environment }) }
+  );
+  if (!answered.ok) {
+    fail(answered.error);
+
+    return;
+  }
+
+  const { reply } = answered.value;
+  if (reply.status !== 204) {
+    fail(reply.data.error ?? `The size was not changed (${String(reply.status)}).`);
+
+    return;
+  }
+
+  console.log(`${chalk.green('✓')} ${environment} runs at ${size} — the runtime starts again at it.`);
 };
 
 /** Everything sent on standard input: a value piped in rather than typed where the shell history keeps it. */

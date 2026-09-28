@@ -843,6 +843,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceRemoveRuntimeVariableMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceRemoveRuntimeVariableMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeSizeMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeSizeMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeSizeMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeVariableMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeVariableMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeVariableMutation.mjs"

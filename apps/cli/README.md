@@ -185,6 +185,7 @@ plitzi runtime push                                   # pack src/runtime.ts and 
 plitzi runtime status                                 # how each environment's runtime is, and its variables' names
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
+plitzi runtime size medium                            # the size the draft runs at (--environment for a published one)
 ```
 
 A space's runtime is its own server code, run beside it on the platform — for what its functions cannot be: a
@@ -200,6 +201,10 @@ from, and it runs as a server of its own too.
 `@plitzi/*` and React, which the platform provides — and sends it to the space `plitzi whoami` names. It becomes the
 draft's runtime, which starts on it; **publishing the space** from the builder takes it to the published site. A
 runtime is part of the plans that carry it; on another, the push is refused and says so.
+
+**It runs at a size** — small (0.25 CPU, 256 MB), medium (0.5 CPU, 512 MB) or large (1 CPU, 1 GB) — chosen per
+environment among the sizes the space's plan includes. `status` says what each environment runs at and which sizes the
+plan includes; `size` chooses another, and that runtime starts again at it.
 
 ## Credentials
 

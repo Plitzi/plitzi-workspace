@@ -65,7 +65,9 @@ const Runtime = () => {
             <span className="text-sm text-gray-500 dark:text-zinc-400">This space has no runtime yet.</span>
           )}
           {!isLoading && <RuntimeCodeNote pushed={environments.length > 0} />}
-          {environments.length > 0 && <RuntimeEnvironments environments={environments} onChange={handleChange} />}
+          {environments.length > 0 && (
+            <RuntimeEnvironments environments={environments} sizes={data?.sizes ?? []} onChange={handleChange} />
+          )}
           <RuntimeVariables names={data?.variables ?? []} onChange={handleChange} />
         </div>
       </Card.Body>

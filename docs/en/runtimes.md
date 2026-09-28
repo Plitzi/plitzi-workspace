@@ -71,6 +71,7 @@ plitzi runtime push                  # packs src/runtime.ts (or --entry) and kee
 plitzi runtime status                # how each environment's runtime is, and its variables' names
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
+plitzi runtime size medium           # the size the draft's runtime runs at (--environment for a published one)
 ```
 
 - **Publishing is deploying.** A push is the draft's runtime (`main`); publishing the space copies its code into the
@@ -79,6 +80,9 @@ plitzi runtime vars unset REDIS_URL
 - **The builder shows it.** Runtime, in the left sidebar: each environment's code, whether it runs, why not, its tasks
   and endpoints — and the variables, by name. A value is written and never read back.
 - **It is part of the plans that carry `spaceRuntimes`.** A push on another plan is refused with the reason.
+- **It runs at a size** — small (0.25 CPU, 256 MB), medium (0.5 CPU, 512 MB) or large (1 CPU, 1 GB) — chosen per
+  environment among the sizes its plan includes: in the builder's Runtime panel, which shows what each environment runs
+  at, or with `plitzi runtime size <size> [--environment <name>]`. Changing it starts that runtime again at it.
 
 What is pushed is packed with the project's own `@plitzi/sdk-server` (`packRuntime`): the module and every package it
 imports, for Node, gzipped — at most 32 MB — except `@plitzi/*`, `react` and `react-dom`, which the runtime's host

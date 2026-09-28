@@ -1197,7 +1197,8 @@ A space can have its own server code: TypeScript whose **tasks** are steps in it
   driver for the sandbox and runtimes alike (`createFunctionsDriver`, printed into the guest). CLI: `plitzi runtime
   push | status | vars`. Builder: a Runtime panel — each environment's state, and write-only variables.
   `examples/self-hosting/10-runtime` is the smallest one — a task, a route and a stream held open — served by its own
-  `main.ts`; Pizarra, on the platform, is a whole product built this way. `reachSpaceInside` (the host's `insideUrl`)
+  `main.ts`; Pizarra, on the platform, is a whole product built this way. A runtime runs at a size — small, medium or large, each a plan feature
+  — shown and chosen per environment in the Runtime panel and with `plitzi runtime size`. `reachSpaceInside` (the host's `insideUrl`)
   sends a runtime's `fetch` and `WebSocket` to its own space's address to an inside one — a cluster's ingress — instead
   of out through the edge and back.
 - **Authoring writes one form of each**: a trigger that `whileRunning('skip', …)` is written as the default it is, and

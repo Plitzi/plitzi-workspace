@@ -6,7 +6,13 @@ import create from './commands/create';
 import createPlugin from './commands/createPlugin';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
 import packPluginCommand from './commands/packPlugin';
-import { pushRuntime, runtimeStatus, setRuntimeVariable, unsetRuntimeVariable } from './commands/runtime';
+import {
+  pushRuntime,
+  runtimeStatus,
+  setRuntimeSize,
+  setRuntimeVariable,
+  unsetRuntimeVariable
+} from './commands/runtime';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { PACKAGE_MANAGERS } from './scaffold';
 
@@ -193,6 +199,14 @@ runtime
   .description('How each environment’s runtime is, and the names of its variables')
   .option(...API_OPTION)
   .action((options: RuntimeOptions) => runtimeStatus(options));
+
+runtime
+  .command('size')
+  .description('Choose the size an environment’s runtime runs at, among those the space’s plan includes')
+  .argument('<size>', 'small, medium or large — plitzi runtime status says which the plan includes')
+  .option('--environment <name>', 'The environment: main (the draft) or a published one', 'main')
+  .option(...API_OPTION)
+  .action((size: string, options: RuntimeOptions & { environment?: string }) => setRuntimeSize(size, options));
 
 const vars = runtime.command('vars').description('What the runtime starts with — written, never read back');
 
