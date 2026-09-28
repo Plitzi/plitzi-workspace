@@ -1,6 +1,6 @@
 # A space with your own users, in your own MySQL
 
-The same space as [`01-sessions`](../01-sessions), and the same two pages. What changes is where the people come
+The same space as [`03-sessions`](../03-sessions), and the same two pages. What changes is where the people come
 from: not an array in a file, but a database you own — with the tables created for you.
 
 ```bash
@@ -274,5 +274,5 @@ permission list you pass is the list the role ends up with, so taking one away w
 ## Already have a user table?
 
 Then you do not want any of this. Implement the adapters against your own schema — that is
-[`01-sessions`](../01-sessions), and the schema document lists what each adapter has to be able to answer, so you
+[`03-sessions`](../03-sessions), and the schema document lists what each adapter has to be able to answer, so you
 can map an existing table onto it without reading the source.

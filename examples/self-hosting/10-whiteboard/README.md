@@ -200,7 +200,7 @@ that holds it from inside, with its client's address as the caller's, so its cha
   OpenCode run on the person's machine and reach a local one too.
 
 For working on Pizarra itself the same agent runs over stdio from a checkout —
-`claude mcp add pizarra -- node examples/06-full-examples/04-whiteboard/src/agent/main.ts`, where `PIZARRA_URL` is
+`claude mcp add pizarra -- node examples/self-hosting/10-whiteboard/src/agent/main.ts`, where `PIZARRA_URL` is
 where a bare id is looked for (`http://127.0.0.1:4016`) and `PIZARRA_AGENT_NAME` / `PIZARRA_AGENT_COLOR` who it is —
 and joins a board on any Pizarra it is given a link to.
 

@@ -121,7 +121,7 @@ The builder needs two, and they answer different questions:
   render token is read-only by construction — it is embedded in published sites, so it can be no stronger.
   A **server** that renders a space as its own uses a different one: a `host` token, secret rather than published,
   because the domain binding only means anything when a browser is the one claiming an origin. See
-  `examples/01-my-first-space/05-from-the-cloud`.
+  `examples/self-hosting/02-from-the-cloud`.
 - **`userKey`** is a *session*. It is the **actor**, and every write goes through
   `can(actor, space, permission)`. With only a `webKey`, the builder loads and can save nothing.
 

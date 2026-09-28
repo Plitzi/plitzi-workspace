@@ -19,7 +19,7 @@ and how to check a page the way these readers get it.
 
 ## 1. What a browser agent needs
 
-We learned this building [Pizarra](../../examples/06-full-examples/04-whiteboard), the whiteboard example, with
+We learned this building [Pizarra](../../examples/self-hosting/10-whiteboard), the whiteboard example, with
 Claude in Chrome working on real boards:
 
 - **It finds controls by their role and name.** A button called "Close" can be found. An unnamed `<i class="fa-xmark">`

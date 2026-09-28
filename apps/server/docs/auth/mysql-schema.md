@@ -314,7 +314,7 @@ Spread them on top: `adapters: { ...store.authAdapters, sendMail }`.
 
 ## Where to look next
 
-- A working deployment on these tables: [`examples/02-with-users/02-mysql`](../../../../examples/02-with-users/02-mysql).
-- The same pages over a store you wrote: [`examples/02-with-users/01-sessions`](../../../../examples/02-with-users/01-sessions).
+- A working deployment on these tables: [`examples/self-hosting/04-mysql`](../../../../examples/self-hosting/04-mysql).
+- The same pages over a store you wrote: [`examples/self-hosting/03-sessions`](../../../../examples/self-hosting/03-sessions).
 - The adapter types themselves: [`src/core/auth/api.ts`](../../src/core/auth/api.ts) and
   [`src/core/auth/identity.ts`](../../src/core/auth/identity.ts).

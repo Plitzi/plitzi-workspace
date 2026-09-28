@@ -25,8 +25,8 @@ the server never learns where a space came from.
 
 ## Next
 
-Give the space people: [02-with-users](../../02-with-users) — or give elements server-resolved data:
-[03-with-data](../../03-with-data).
+Give the space people: [sessions](../03-sessions) — or give elements server-resolved data:
+[server-components](../05-server-components).
 
 ## Testing it
 

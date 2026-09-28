@@ -163,8 +163,8 @@ API exactly as a consumer would.
 
 ## Examples
 
-Runnable setups live in [`examples/`](../../examples) — [04-with-an-agent/01](../../examples/04-with-an-agent/01-mcp-server) is a dedicated
-MCP server, [04-with-an-agent/02](../../examples/04-with-an-agent/02-ssr-preview) is the combined topology with draft preview. Each starts with
+Runnable setups live in [`examples/`](../../examples) — [self-hosting/06](../../examples/self-hosting/06-mcp-server) is a dedicated
+MCP server, [self-hosting/07](../../examples/self-hosting/07-ssr-preview) is the combined topology with draft preview. Each starts with
 `yarn start`.
 
 ## Entry points

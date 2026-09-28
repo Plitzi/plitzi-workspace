@@ -18,7 +18,7 @@ import { authorSpace, container, css, heading, image, onClick, setState } from '
 
 One package, and it installs nothing else: `@plitzi/sdk-authoring` has an empty dependency tree, no React and
 nothing that touches a browser. A server, a seed, a migration, a build script, a browser bundle authoring its own
-space (see `05-with-server-actions/03-no-server`) and a project that only publishes templates all depend on that
+space (see `browser/04-no-server`) and a project that only publishes templates all depend on that
 one name.
 
 Everything it exports is inside it — there is no second place to look:
@@ -817,7 +817,7 @@ and answers `{ exportName, files, corrections, differences }`.
 | Example | What it shows |
 | --- | --- |
 | [`examples/shared-space/space.ts`](../../examples/shared-space/space.ts) | the whole shape, small: a page, a palette, a stylesheet |
-| [`examples/02-with-users/01-sessions`](../../examples/02-with-users/01-sessions) | two pages on one path, and an auth flow |
+| [`examples/self-hosting/03-sessions`](../../examples/self-hosting/03-sessions) | two pages on one path, and an auth flow |
 | `plitzi-sdk-server/prisma/seeds/spaces/examples/shippingQuote` | a form that runs a server action — whose step is the space's own function — and shows the answer |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo/blog` | six pages, a custom element, visitor roles, bindings throughout |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo/saasLanding/pricingCard.ts` | a template: one subtree and the style it carries, uploaded to a space's CDN |

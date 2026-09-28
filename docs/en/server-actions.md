@@ -647,9 +647,9 @@ Both are wired end to end and runnable. On the platform, as seeded spaces (`plit
 an action whose step is the space's own function in `shippingQuote`, and the render trigger — an action feeding a
 `runtime: 'server'` element while the page is built — in `catGallery`. On a server of your own: **your own
 trigger**, over a shared `kv` adapter written out in full, in
-[`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger). **Scheduled and delayed jobs** over a
+[`08-custom-trigger`](../../examples/self-hosting/08-custom-trigger). **Scheduled and delayed jobs** over a
 queue and a `kv` the deployment keeps itself — both seams written out over one SQLite file, with two replicas
-sharing it — are in [`05-schedules`](../../examples/05-with-server-actions/05-schedules).
+sharing it — are in [`09-schedules`](../../examples/self-hosting/09-schedules).
 
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
 supplies a shared one), the database drivers `db.query` may use, the limits on what `email.send` may send, the
@@ -738,7 +738,7 @@ On MySQL a key is bytes (`VARBINARY`) — `Board` and `board` are two keys, as t
 `createTables: false`, run `mysqlJobSchemaUpgrades()` in your own migrations, once.
 
 Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store.
-[`05-schedules`](../../examples/05-with-server-actions/05-schedules) is one written out: every method of the queue
+[`09-schedules`](../../examples/self-hosting/09-schedules) is one written out: every method of the queue
 over SQLite, each rule above one place in the file, and a page to watch two replicas share it.
 
 **Close the server on SIGTERM.** A deploy stops a replica with a signal, and a process that simply exits leaves every

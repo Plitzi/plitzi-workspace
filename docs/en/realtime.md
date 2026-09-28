@@ -7,7 +7,7 @@ deployment chooses.
 
 The reasoning behind each rule lives beside the code that enforces it — the RFC this grew out of (0018) was deleted
 when it shipped, and is in the history (`git log -- docs/rfc`). The whole of it in use is
-[`examples/06-full-examples/04-whiteboard`](../../examples/06-full-examples/04-whiteboard).
+[`examples/self-hosting/10-whiteboard`](../../examples/self-hosting/10-whiteboard).
 
 ---
 

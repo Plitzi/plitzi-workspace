@@ -69,6 +69,7 @@ the failure mode is a section with mock cats and a status line, not a browser co
 
 ## Next
 
-The last one: [`04-custom-trigger`](../04-custom-trigger) mounts a way in that `sdk-server` does not ship, over
-a store it does not own — the two seams a self-hosted deployment actually reaches for. The mechanism is
-documented in [`server-actions.md`](../../../docs/en/server-actions.md).
+Give the page its server: [`self-hosting`](../../self-hosting) —
+[`08-custom-trigger`](../../self-hosting/08-custom-trigger) mounts a way in that `sdk-server` does not ship, over a
+store it does not own, the two seams a self-hosted deployment actually reaches for. The mechanism is documented in
+[`server-actions.md`](../../../docs/en/server-actions.md).

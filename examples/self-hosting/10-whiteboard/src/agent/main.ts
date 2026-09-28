@@ -7,7 +7,7 @@ import { COLLAB_COLOURS } from '../board/people.ts';
 /**
  * Pizarra for agents, over stdio, from a checkout of this example — for working on Pizarra itself:
  *
- *     claude mcp add pizarra -- node examples/06-full-examples/04-whiteboard/src/agent/main.ts
+ *     claude mcp add pizarra -- node examples/self-hosting/10-whiteboard/src/agent/main.ts
  *
  * The people on a board need none of this: every Pizarra serves the same agent at `/mcp` (`hosted.ts`), and its
  * invite panel says how to add it. This one runs on the developer's machine and joins a board on any Pizarra it is

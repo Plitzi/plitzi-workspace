@@ -976,8 +976,8 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 | `identity` | Your own hosts and origins — the floor for domain binding and framing |
 | `tokens.lifetimes` | How long each credential lives |
 
-Working examples are in [`examples/02-with-users`](../../examples/02-with-users): `01-sessions` over a store you
-write, `02-mysql` over one you do not.
+Working examples are in [`examples/self-hosting`](../../examples/self-hosting): `03-sessions` over a store you
+write, `04-mysql` over one you do not.
 
 ### Cross-site request forgery
 

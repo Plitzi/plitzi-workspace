@@ -55,4 +55,4 @@ Without it you get a white gutter around the render — the `body` margin every 
 
 ## Next
 
-Move the render to the server: [server-rendered](../04-server-rendered).
+Move the render to the server: [server-rendered](../../self-hosting/01-server-rendered).

@@ -181,6 +181,12 @@
 - The example plugin takes its props as attributes; in a client project its numbers come from `public/data/stats.json`
   through a provider — the offline-data pattern.
 
+## Examples: `browser` and `self-hosting`
+
+- `examples/` is two folders: `browser` (a space on your page, no server) and `self-hosting` (a server of your own,
+  from a server-rendered page to Pizarra). What a space on the platform does — Ceniza, Tremor, Fieldnotes, the
+  server and render actions, a template — is a seeded space on the platform rather than an example here.
+
 ## A space's visitors: signing in, and what they may do
 
 - `settings.visitorRoles`: a space declares its visitor roles and what each gives (`{ author: ['postPublish'] }`),
@@ -930,7 +936,7 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
 - Channel declarations are checked in one place, `channelProblems` (`@plitzi/sdk-shared/realtime`): authoring refuses,
   `lintSpace` reports `channel-declaration`, and the MCP's `patchSettings` takes `channels` (merged per pattern, `null`
   removes one) and answers with the same sentence. The agent's guide has a "Realtime channels" section.
-- New full example: `examples/06-full-examples/04-whiteboard` (Pizarra) — a collaborative whiteboard over WebSocket:
+- New full example: `examples/self-hosting/10-whiteboard` (Pizarra) — a collaborative whiteboard over WebSocket:
   arrows fixed to the anchors of what they connect (curved, following every move), labels in shapes, pads of sticky
   notes to drag from, a laser pointer, reactions, following a collaborator's view, groups, a toolbar authored in the
   space that the canvas lays beside the selection, pictures pasted from the clipboard, password-protected boards (on a

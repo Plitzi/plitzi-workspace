@@ -40,4 +40,4 @@ This code runs on the server only, so credentials and query cost never reach the
 
 ## Next
 
-Let an agent edit it: [04-with-an-agent](../../04-with-an-agent).
+Let an agent edit it: [mcp-server](../06-mcp-server).

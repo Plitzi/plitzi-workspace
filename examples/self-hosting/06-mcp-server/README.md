@@ -32,4 +32,4 @@ Writes land in a temp copy of the space, so a session never dirties the shared f
 
 ## Next
 
-Both surfaces at once, plus preview: [ssr-preview](../02-ssr-preview).
+Both surfaces at once, plus preview: [ssr-preview](../07-ssr-preview).

@@ -5,7 +5,7 @@ import { createMysqlStore } from '@plitzi/sdk-server/mysql';
 import { seed } from './seed.ts';
 // The same two pages as the sessions example. What changes here is not what gets rendered — it is where the people
 // come from, and copying two hundred lines of page definition across would bury the one difference that matters.
-import { offlineData } from '../../01-sessions/src/space.ts';
+import { offlineData } from '../../03-sessions/src/space.ts';
 
 const PORT = Number(process.env.PORT ?? 4008);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.
