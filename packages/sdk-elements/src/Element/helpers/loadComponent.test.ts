@@ -60,6 +60,20 @@ describe('loadComponent', () => {
     expect((await load('https://cdn.example.com/plugins/untyped.mjs')).default).toBe(NotFound);
   });
 
+  /** One module, several elements: each element of the plugin loads from the same URL and must get its own. */
+  it('hands an element that is not the main one its own component', async () => {
+    const toggle = Object.assign(() => null, { type: 'toggle' }) as unknown as ComponentPlugin;
+    generatePluginModule.mockResolvedValue({ ...plugin('map'), plugins: { toggle } });
+    const url = 'https://cdn.example.com/plugins/map';
+
+    expect((await loadComponent(url, vi.fn(), true, true, 'toggle')()).default).toBe(toggle);
+    expect((await loadComponent(url, vi.fn(), true, true, 'map')()).default.type).toBe('map');
+    expect((await loadComponent(url, vi.fn(), true, true, 'absent')()).default).toBe(NotFound);
+
+    const wrapped = (await loadComponent(url, vi.fn(), true, false, 'toggle')()).default;
+    expect(wrapped.type).toBe('toggle');
+  });
+
   it('fetches a URL once while a load of it is already in flight', async () => {
     generatePluginModule.mockResolvedValue(plugin('typed'));
 

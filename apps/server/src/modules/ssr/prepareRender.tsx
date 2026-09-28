@@ -250,7 +250,11 @@ export const prepareRender = async (
 
   const autoLoad = config.autoLoadSchemaPlugins !== false;
   const externalNames = autoLoad
-    ? await m('extPlugins', () => registerExternalPlugins(pluginManager, offlineData))
+    ? await m('extPlugins', () =>
+        registerExternalPlugins(pluginManager, offlineData, {
+          allowPrivateHosts: config.allowPrivatePluginHosts === true
+        })
+      )
     : [];
   const externalNamesFiltered = externalNames.filter(k => !pluginBaseNames.has(k.replace(/@[^@]*$/, '')));
 

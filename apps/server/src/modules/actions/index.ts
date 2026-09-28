@@ -140,6 +140,7 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
 
 export { ActionRefusal, ActionRunError } from './runtime/errors';
 export { precheckRun } from './runtime/precheck';
+export { spaceKvPatterns } from './runtime/namespaceKv';
 export { checkAction } from './runtime/check';
 export { DEFAULT_LIMITS, resolveLimits } from './runtime/limits';
 export { createRunGuards, deriveRunKey } from './runtime/guards';

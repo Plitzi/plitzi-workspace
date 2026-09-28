@@ -177,6 +177,7 @@ export const SCHEMA_SETTINGS = [
   'transientState',
   'paintedState',
   'customCss',
+  'visitorRoles',
   'userProvider',
   'tokenStorage',
   'loginUrl',

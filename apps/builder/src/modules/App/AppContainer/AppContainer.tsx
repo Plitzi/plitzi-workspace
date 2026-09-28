@@ -17,6 +17,7 @@ import ContainerDefault from './containers/ContainerDefault';
 import ContainerFunctions from './containers/ContainerFunctions';
 import ContainerSettings from './containers/ContainerSettings';
 import ContainerSitemap from './containers/ContainerSitemap';
+import ContainerVisitors from './containers/ContainerVisitors';
 import { getPopups } from '../helpers/utils';
 
 import type { PopupInstance, PopupPlacement, PopupUpdateState } from '@plitzi/plitzi-ui/Popup';
@@ -92,13 +93,14 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
                 />
               )}
               <div className="flex grow basis-0 flex-col overflow-hidden">
-                {!['actions', 'functions', 'connectors', 'credentials', 'settings', 'sitemap'].includes(
+                {!['actions', 'functions', 'connectors', 'credentials', 'visitors', 'settings', 'sitemap'].includes(
                   popupsActiveLeft[0]
                 ) && <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />}
                 {popupsActiveLeft[0] === 'actions' && <ContainerActions />}
                 {popupsActiveLeft[0] === 'functions' && <ContainerFunctions />}
                 {popupsActiveLeft[0] === 'connectors' && <ContainerConnectors />}
                 {popupsActiveLeft[0] === 'credentials' && <ContainerCredentials />}
+                {popupsActiveLeft[0] === 'visitors' && <ContainerVisitors />}
                 {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}
                 {popupsActiveLeft[0] === 'settings' && <ContainerSettings />}
               </div>

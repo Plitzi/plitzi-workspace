@@ -48,12 +48,15 @@ const writeDiskEntry = async (dir: string, resource: string, entry: ManifestCach
   }
 };
 
-const fetchAndStore = async (dir: string, resource: string): Promise<PluginManifest | null> => {
+/** Where a plugin may be read from: anywhere public, and — on a development machine only — a private address too. */
+type ManifestReach = { allowPrivateHosts: boolean };
+
+const fetchAndStore = async (dir: string, resource: string, reach: ManifestReach): Promise<PluginManifest | null> => {
   try {
     const url = `${resource}/plugin-manifest.json`;
     // The resource is written by whoever edits the space and fetched from inside the cluster, so it answers to the
     // same outbound rule as a flow's `http.request`; a refusal lands in the catch below like any other failed fetch.
-    const res = await fetchOutbound(fetch, new URL(url));
+    const res = reach.allowPrivateHosts ? await fetch(url) : await fetchOutbound(fetch, new URL(url));
     if (!res.ok) {
       serverLog.warn('SSR', `Failed to fetch plugin manifest from ${url}: HTTP ${res.status}`);
       return null;
@@ -71,29 +74,33 @@ const fetchAndStore = async (dir: string, resource: string): Promise<PluginManif
   }
 };
 
-const revalidate = (dir: string, resource: string): void => {
+const revalidate = (dir: string, resource: string, reach: ManifestReach): void => {
   if (refreshing.has(resource)) {
     return;
   }
 
   refreshing.add(resource);
-  void fetchAndStore(dir, resource).finally(() => refreshing.delete(resource));
+  void fetchAndStore(dir, resource, reach).finally(() => refreshing.delete(resource));
 };
 
-const fetchManifest = async (pluginManager: PluginManager, resource: string): Promise<PluginManifest | null> => {
+const fetchManifest = async (
+  pluginManager: PluginManager,
+  resource: string,
+  reach: ManifestReach
+): Promise<PluginManifest | null> => {
   const dir = manifestCacheDir(pluginManager);
 
   const cached = manifestCache.get(resource) ?? (await readDiskEntry(dir, resource)) ?? undefined;
   if (cached) {
     manifestCache.set(resource, cached);
     if (cached.expiresAt <= Date.now()) {
-      revalidate(dir, resource);
+      revalidate(dir, resource, reach);
     }
 
     return cached.manifest;
   }
 
-  return fetchAndStore(dir, resource);
+  return fetchAndStore(dir, resource, reach);
 };
 
 const resolveAssetUrl = (resource: string, asset: PluginManifest['assets'][string]): string | null => {
@@ -116,12 +123,16 @@ const findAsset = (manifest: PluginManifest, type: 'script' | 'style', resource:
 
 const isAbsoluteUrl = (url: string): boolean => url.startsWith('http://') || url.startsWith('https://');
 
-const registerPlugin = async (pluginManager: PluginManager, plugin: PluginRaw): Promise<string | null> => {
+const registerPlugin = async (
+  pluginManager: PluginManager,
+  plugin: PluginRaw,
+  reach: ManifestReach
+): Promise<string | null> => {
   if (!plugin.resource || !isAbsoluteUrl(plugin.resource)) {
     return null;
   }
 
-  const manifest = await fetchManifest(pluginManager, plugin.resource);
+  const manifest = await fetchManifest(pluginManager, plugin.resource, reach);
   if (!manifest) {
     return null;
   }
@@ -152,13 +163,14 @@ const registerPlugin = async (pluginManager: PluginManager, plugin: PluginRaw): 
  */
 export const registerExternalPlugins = async (
   pluginManager: PluginManager,
-  offlineData: OfflineDataRaw | undefined
+  offlineData: OfflineDataRaw | undefined,
+  reach: ManifestReach = { allowPrivateHosts: false }
 ): Promise<string[]> => {
   const plugins = offlineData?.plugins;
   if (!plugins || plugins.length === 0) {
     return [];
   }
 
-  const results = await Promise.all(plugins.map(p => registerPlugin(pluginManager, p)));
+  const results = await Promise.all(plugins.map(p => registerPlugin(pluginManager, p, reach)));
   return results.filter((k): k is string => k !== null);
 };

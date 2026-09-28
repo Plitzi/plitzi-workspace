@@ -154,6 +154,7 @@ const ContainerSettings = () => {
             placeholder="None"
           >
             <option value="basic">Basic</option>
+            <option value="server">Page server — sign in by redirect (Plitzi accounts)</option>
           </Select>
           <Select
             size="sm"

@@ -70,6 +70,8 @@ import SpaceUpdateSettingsMutation from './Space/SpaceUpdateSettingsMutation';
 import SpaceAddVariableMutation from './Space/variables/SpaceAddVariableMutation';
 import SpaceRemoveVariableMutation from './Space/variables/SpaceRemoveVariableMutation';
 import SpaceUpdateVariableMutation from './Space/variables/SpaceUpdateVariableMutation';
+import SpaceAddVisitorMutation from './Space/visitors/SpaceAddVisitorMutation';
+import SpaceRemoveVisitorMutation from './Space/visitors/SpaceRemoveVisitorMutation';
 import StyleAddFontMutation from './Style/fonts/StyleAddFontMutation';
 import StyleRemoveFontMutation from './Style/fonts/StyleRemoveFontMutation';
 import StyleUpdateFontMutation from './Style/fonts/StyleUpdateFontMutation';
@@ -165,6 +167,8 @@ export type BuilderMutationsMap = {
   SpaceAddCredential: unknown;
   SpaceUpdateCredential: unknown;
   SpaceRemoveCredential: unknown;
+  SpaceAddVisitor: unknown;
+  SpaceRemoveVisitor: unknown;
   SpacePublish: TSpacePublishMutation;
   SpaceFixIssues: TSpaceFixIssuesMutation;
   SpaceDeploy: TSpaceDeployMutation;
@@ -257,6 +261,8 @@ const BuilderMutations = {
   SpaceAddCredential: SpaceAddCredentialMutation,
   SpaceUpdateCredential: SpaceUpdateCredentialMutation,
   SpaceRemoveCredential: SpaceRemoveCredentialMutation,
+  SpaceAddVisitor: SpaceAddVisitorMutation,
+  SpaceRemoveVisitor: SpaceRemoveVisitorMutation,
   SpacePublish: SpacePublishMutation,
   SpaceFixIssues: SpaceFixIssuesMutation,
   SpaceDeploy: SpaceDeployMutation,

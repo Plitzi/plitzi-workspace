@@ -1,4 +1,5 @@
 import { exchangeStage } from './exchangeRoute';
+import { signInStage } from './signInRoute';
 import { clearSessionCookies, writeSessionCookies } from '../../auth/session';
 import { readRawBody } from '../../requestParser';
 import { isNavigation, safeRedirectTarget } from '../navigation';
@@ -105,4 +106,4 @@ export const logoutStage: Stage = async ctx => {
   return true;
 };
 
-export const authRoutesStages: Stage[] = [loginStage, logoutStage, exchangeStage];
+export const authRoutesStages: Stage[] = [loginStage, logoutStage, exchangeStage, signInStage];

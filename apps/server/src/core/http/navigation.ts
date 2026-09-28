@@ -9,9 +9,12 @@ import type { SSRRequest } from '@plitzi/sdk-shared';
  */
 export const isNavigation = (req: SSRRequest): boolean => req.headers['sec-fetch-mode'] === 'navigate';
 
-/** Same-origin only: absolute URLs and protocol-relative `//host` are refused, to avoid an open redirect. */
-export const safeRedirectTarget = (req: SSRRequest): string => {
-  const redirectParam = req.query['redirect'];
+/**
+ * Same-origin only: absolute URLs and protocol-relative `//host` are refused, to avoid an open redirect — and so is
+ * `/\host`, which a browser reads as `//host`.
+ */
+export const safeRedirectTarget = (req: SSRRequest, param = 'redirect'): string => {
+  const target = req.query[param];
 
-  return redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/';
+  return target && target.startsWith('/') && !/^\/[\\/]/u.test(target) ? target : '/';
 };

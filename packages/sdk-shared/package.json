@@ -70,6 +70,10 @@
       "types": "./dist/auth/index.d.ts",
       "import": "./dist/auth/index.mjs"
     },
+    "./auth/visitorRoles": {
+      "types": "./dist/auth/visitorRoles.d.ts",
+      "import": "./dist/auth/visitorRoles.mjs"
+    },
     "./authoring": {
       "types": "./dist/authoring/index.d.ts",
       "import": "./dist/authoring/index.mjs"
@@ -843,6 +847,14 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/variables/SpaceUpdateVariableMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/variables/SpaceUpdateVariableMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/visitors/SpaceAddVisitorMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/visitors/SpaceAddVisitorMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/visitors/SpaceAddVisitorMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/visitors/SpaceRemoveVisitorMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/visitors/SpaceRemoveVisitorMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/visitors/SpaceRemoveVisitorMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Style/StyleUpdateMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Style/StyleUpdateMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Style/StyleUpdateMutation.mjs"
@@ -978,6 +990,10 @@
     "./network/graphql/builder/Queries/Space/SpaceResourcesQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceResourcesQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceResourcesQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceVisitorsQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceVisitorsQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceVisitorsQuery.mjs"
     },
     "./network/graphql/builder/Queries/index": {
       "types": "./dist/network/graphql/builder/Queries/index.d.ts",

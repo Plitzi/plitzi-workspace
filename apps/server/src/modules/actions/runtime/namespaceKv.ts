@@ -1,3 +1,5 @@
+import { DEFAULT_KV_PREFIX, LIST_SEGMENT } from './kvStore';
+
 import type { ActionKvStore } from '../types';
 
 /**
@@ -7,8 +9,10 @@ import type { ActionKvStore } from '../types';
  * cross-tenant leak this whole design exists to avoid. Done at the runner rather than in each task so a
  * deployment's own tasks inherit it too.
  */
+const spaceScope = (spaceId: number): string => `action:${spaceId}:`;
+
 export const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStore => {
-  const scoped = (key: string) => `action:${spaceId}:${key}`;
+  const scoped = (key: string) => `${spaceScope(spaceId)}${key}`;
 
   return {
     get: key => store.get(scoped(key)),
@@ -21,3 +25,12 @@ export const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStor
     listRemove: (list, id) => store.listRemove(scoped(list), id)
   };
 };
+
+/**
+ * Every key a space's store holds, as patterns over the adapter's keys (`createKvStore`'s `prefix`, `kv:` unless it was
+ * given another) — for whoever has to let all of them go at once: a space that is deleted, or reset to how it started.
+ */
+export const spaceKvPatterns = (spaceId: number, prefix = DEFAULT_KV_PREFIX): string[] => [
+  `${prefix}${spaceScope(spaceId)}*`,
+  `${prefix}${LIST_SEGMENT}${spaceScope(spaceId)}*`
+];

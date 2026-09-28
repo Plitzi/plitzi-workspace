@@ -87,9 +87,20 @@ const renderConsent = (res: SSRResponseHelpers, view: OAuthConsentView): void =>
  * Rebuilt from the params rather than read off `req.url` because the two can differ — a proxy may rewrite the
  * path — and what has to survive the round trip is the QUERY, which is the authorization request itself.
  */
+/**
+ * Where `/authorize` is, for this server: its issuer and the path, joined — the issuer may carry a path of its own when
+ * the server is mounted under a prefix, which resolving `/authorize` against it would drop. The same joining the
+ * discovery document publishes the endpoint by.
+ */
+const authorizeEndpoint = (config: OAuthConfig, req: SSRRequest): URL =>
+  new URL(`${(config.issuer ?? `https://${req.headers.host ?? ''}`).replace(/\/+$/u, '')}${AUTHORIZE_PATH}`);
+
+/** The same endpoint, as the path the grant screen's form posts to — this server's own origin, whatever it is. */
+const authorizeAction = (config: OAuthConfig): string =>
+  config.issuer ? `${new URL(config.issuer).pathname.replace(/\/+$/u, '')}${AUTHORIZE_PATH}` : AUTHORIZE_PATH;
+
 const authorizeUrl = (config: OAuthConfig, req: SSRRequest, params: OAuthParams): string => {
-  const base = config.issuer ?? `https://${req.headers.host ?? ''}`;
-  const url = new URL(AUTHORIZE_PATH, base);
+  const url = authorizeEndpoint(config, req);
   for (const [key, value] of Object.entries(params)) {
     if (typeof value === 'string') {
       url.searchParams.set(key, value);
@@ -137,8 +148,7 @@ const signInWithReturn = (config: OAuthConfig, req: SSRRequest, params: OAuthPar
  * both paths already carry, instead of from whichever shape they came in.
  */
 const authorizeUrlFor = (config: OAuthConfig, req: SSRRequest, request: AuthorizationRequest): string => {
-  const base = config.issuer ?? `https://${req.headers.host ?? ''}`;
-  const url = new URL(AUTHORIZE_PATH, base);
+  const url = authorizeEndpoint(config, req);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('client_id', request.clientId);
   url.searchParams.set('redirect_uri', request.redirectUri);
@@ -235,7 +245,7 @@ const completeGrant = async (
   const issued = await config.adapters.issueToken(
     user,
     target,
-    await issueContextFor(config, request.clientId, { req })
+    await issueContextFor(config, request.clientId, { req, redirectUri: request.redirectUri })
   );
   if (!issued) {
     redirectWithError(
@@ -306,7 +316,7 @@ const askForTarget = async (
   });
 
   renderConsent(res, {
-    action: AUTHORIZE_PATH,
+    action: authorizeAction(config),
     hidden: hiddenFieldsFor(request, pendingId),
     targets,
     user,
@@ -350,7 +360,7 @@ export const handleAuthorizeStart = async (
 
   if (config.guest) {
     renderConsent(res, {
-      action: AUTHORIZE_PATH,
+      action: authorizeAction(config),
       hidden: hiddenFieldsFor(request),
       targets: [],
       guest: guestView(config.guest),

@@ -930,6 +930,11 @@ export type SSRServerConfig = {
   /** Where a browser-obtained credential is handed over. Defaults to `/auth/exchange`; served only when the
    *  `exchangeCredential` adapter is supplied. */
   exchangePath?: string | false;
+  /**
+   * Signing visitors in by redirect, through an OAuth 2.1 authorization server — see {@link SSRSignInConfig}. Served
+   * only with the `exchangeCredential` adapter, which is what turns what comes back into a session on this host.
+   */
+  signIn?: SSRSignInConfig;
   /** Naming and scope of the session cookies this server writes. See {@link SSRAuthCookie}. */
   authCookie?: SSRAuthCookie;
   templateFn?: SSRTemplateFn;
@@ -938,6 +943,13 @@ export type SSRServerConfig = {
   pluginsTtlMs?: number;
   /** Auto-download and cache plugins declared in the schema's offlineData.plugins list. Default: true. */
   autoLoadSchemaPlugins?: boolean;
+  /**
+   * Whether a schema plugin may be read from a private address — `localhost`, the network this server runs in. A
+   * plugin's address is typed by whoever edits a space and read from inside this server, so it answers to the rule
+   * every authored request does and is refused there; turn this on only on a development machine whose bucket is on
+   * localhost. Default: false.
+   */
+  allowPrivatePluginHosts?: boolean;
   /** Where this deployment serves the font files a space uploaded — see {@link SSRFontsConfig}. */
   fonts?: SSRFontsConfig;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
@@ -1046,6 +1058,29 @@ export type SSRServerConfig = {
  *  `createServer` from `@plitzi/sdk-server` takes and what the SSR stages are handed, so a page stage reaches
  *  `getOfflineData` without asking whether it is there — while a stage typed to the bare context (anything from
  *  `@plitzi/sdk-mcp`, which also runs in servers that have neither) still has to check. */
+/**
+ * A visitor signs in somewhere else and comes back signed in HERE: `GET <path>?return=/somewhere` sends them to the
+ * authorization server, and `GET <path>/callback` takes the code it answers with, redeems it server to server and
+ * hands the token to `exchangeCredential` — which is what makes the session, on this host, for this space.
+ *
+ * This server registers itself with the authorization server (RFC 7591) as the host the visitor is on, and proves the
+ * exchange with PKCE. The state travels in a `__Host-` cookie, which no sibling host can set: a sign-in somebody else
+ * started cannot be finished in this browser.
+ */
+export type SSRSignInConfig = {
+  /** What `exchangeCredential` knows the tokens by. */
+  provider: string;
+  /** Where the visitor's browser is sent: the authorization server's `/authorize`, as the public reaches it. */
+  authorizeUrl: string;
+  /** Where this server registers itself and redeems codes — reachable from here, which may be a private address. */
+  registerUrl: string;
+  tokenUrl: string;
+  /** What to ask for, for the space being signed into. */
+  scope: (spaceId: number) => string;
+  /** Where the flow answers. Default `/auth/sign-in`; the authorization server sends people back to `<path>/callback`. */
+  path?: string;
+};
+
 export type SSRPageServerConfig = SSRServerConfig & { adapters: SSRPageAdapters };
 
 /** Which surfaces a page server mounts. Only what the page pipeline itself owns: the MCP endpoint and
@@ -1194,6 +1229,12 @@ export type OAuthIssueContext = {
     softwareId?: string;
   };
   request?: { userAgent?: string; ip?: string };
+  /**
+   * Where the code of THIS grant is sent: the `redirect_uri` of the authorization request, at consent. A deployment
+   * whose credential is only good at certain addresses checks it here — registering a client is open to anybody, and
+   * the address it names is the one thing that says who will receive what the person agreed to. Absent on a renewal.
+   */
+  redirectUri?: string;
   /**
    * The credential this grant last issued, on a renewal. A deployment that keeps a row per credential updates that
    * row rather than adding one, so a device renewing every hour stays one device.

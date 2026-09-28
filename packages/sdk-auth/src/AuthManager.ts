@@ -1,4 +1,5 @@
 import BasicAuthProvider from './providers/BasicAuthProvider';
+import ServerAuthProvider from './providers/ServerAuthProvider';
 
 import type AuthProvider from './AuthProvider';
 import type { AuthBootstrap, AuthEventListener } from './AuthProvider';
@@ -9,7 +10,11 @@ export type AuthProviderFactory<U = Record<string, unknown>> = (settings: AuthPr
 
 // A factory rather than a constructor, so a provider that needs something the settings do not carry — an SDK client,
 // a shared instance — closes over it instead of forcing it into everyone else's signature.
-const providers = new Map<string, AuthProviderFactory>([['basic', settings => new BasicAuthProvider(settings)]]);
+const providers = new Map<string, AuthProviderFactory>([
+  ['basic', settings => new BasicAuthProvider(settings)],
+  // Signing in through the page server by redirect — see `ServerAuthProvider`.
+  ['server', settings => new ServerAuthProvider(settings)]
+]);
 
 /**
  * Adds an auth provider a space can then select by name in its settings. Spaces run against whichever backend their

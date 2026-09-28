@@ -74,6 +74,10 @@
       "types": "./dist/providers/BasicAuthProvider.d.ts",
       "import": "./dist/providers/BasicAuthProvider.mjs"
     },
+    "./providers/ServerAuthProvider": {
+      "types": "./dist/providers/ServerAuthProvider.d.ts",
+      "import": "./dist/providers/ServerAuthProvider.mjs"
+    },
     "./types": {
       "types": "./dist/types.d.ts"
     }

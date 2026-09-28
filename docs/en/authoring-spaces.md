@@ -634,6 +634,20 @@ request, and past a few kilobytes it is not written (the dev-tools say so). Neve
 also transient. The cookie carries its owner like the kept state does: written by another account, the page drops
 what it rendered with it as soon as auth has settled.
 
+### Visitors who sign in, and what they may do
+
+A space whose visitors sign in with their Plitzi account says so, and declares what each of its roles gives:
+
+```ts
+settings: { userProvider: 'server', visitorRoles: { author: ['postPublish'], editor: ['postPublish', 'postEdit'] } }
+```
+
+`userProvider: 'server'` signs people in through the page server — a link to `/auth/sign-in?return=/` (`mode:
+'external'`, a real navigation) sends them to sign in and brings them back signed in on the space's host; `authLogout`
+ends it. The roles are published and exported with the space; an action's `access: 'role'` and a page's `can()` ask for
+the permissions. `authorSpace` refuses a role or a permission that is not a plain name, a role with no permissions and
+a permission named twice. Who holds each role is given by email in the builder, never written into the space.
+
 ### Pages that see each other
 
 When "every few seconds" is too slow — cursors, presence, a shared board — the space declares `channels` and a page
@@ -805,6 +819,6 @@ and answers `{ exportName, files, corrections, differences }`.
 | [`examples/shared-space/space.ts`](../../examples/shared-space/space.ts) | the whole shape, small: a page, a palette, a stylesheet |
 | [`examples/02-with-users/01-sessions`](../../examples/02-with-users/01-sessions) | two pages on one path, and an auth flow |
 | `plitzi-sdk-server/prisma/seeds/spaces/examples/shippingQuote` | a form that runs a server action — whose step is the space's own function — and shows the answer |
-| [`examples/06-full-examples/01-blog`](../../examples/06-full-examples/01-blog) | six pages, a custom element, bindings throughout |
-| [`examples/07-templates/01-authoring`](../../examples/07-templates/01-authoring) | a template authored and written out, in a project with one dependency |
+| `plitzi-sdk-server/prisma/seeds/spaces/demo/blog` | six pages, a custom element, visitor roles, bindings throughout |
+| `plitzi-sdk-server/prisma/seeds/spaces/demo/saasLanding/pricingCard.ts` | a template: one subtree and the style it carries, uploaded to a space's CDN |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo` | the demo spaces, seeded on every deployment — `website1` and `comingSoon` read back from JSON with `specFromSpace` |

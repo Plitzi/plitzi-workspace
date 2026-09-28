@@ -92,6 +92,23 @@ It writes exactly what the builder would, and three things stop being written tw
 Write a step's `params` whenever it takes anything else — a constant, an earlier step's result, a value
 interpolated into a larger string.
 
+### Whose permissions `role` asks about
+
+`access: { mode: 'role', permissions: [...] }` is answered from the permissions of whoever the server says is calling.
+A self-hosted server answers with its own accounts. On the Plitzi platform a visitor holds exactly the permissions of
+the **visitor roles** the space gave them — never those of their Plitzi account:
+
+```ts
+settings: {
+  userProvider: 'server',                     // visitors sign in with their Plitzi account, on the space's own host
+  visitorRoles: { author: ['postPublish'] }   // what each role gives; who holds it is given by email in the builder
+}
+```
+
+Who holds a role is not in the space: it is given by email from the builder's **Visitors** panel, and waits for that
+address to sign in, verified. Editing the space gives no role. A page reads the same answer: `can('postPublish')`, and
+the `auth` source's `permissions`.
+
 ### The output step
 
 End the flow with an **Output** step naming what the caller gets back. That step is the contract:
@@ -348,7 +365,7 @@ that differs between two signed-out readers would sooner or later be handed to t
 request and never cached.
 
 That is a page-load flow rather than one more field on the read the page already does: `onPageLoad` → the action →
-`setState`, which is what [the blog example](../../examples/06-full-examples/01-blog) does to arrive with its
+`setState`, which is what the Fieldnotes blog (`plitzi-sdk-server/prisma/seeds/spaces/demo/blog`) does to arrive with its
 "I have seen one" button already switched off for a reader who has pressed it before.
 
 ---

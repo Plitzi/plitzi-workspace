@@ -49,6 +49,19 @@ export type SpaceCredential = {
   updatedAt: number;
 };
 
+/**
+ * A person given one of the space's visitor roles (`settings.visitorRoles`), by email. `claimed` says whether an
+ * account has taken it yet: a role given to an address waits for somebody to sign in with it, verified.
+ */
+export type SpaceVisitor = {
+  id: number;
+  email: string;
+  role: string;
+  claimed: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type SpaceDeployment = {
   id: number;
   environment: Environment;

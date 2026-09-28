@@ -41,8 +41,6 @@ const EXAMPLE_TARGETS = [
   'mysql',
   'server-actions-no-server',
   'server-actions-schedules',
-  'blog',
-  'seismic',
   'whiteboard',
   'whiteboard-replicas'
 ];

@@ -42,29 +42,6 @@ const mysqlReachable = (): boolean => {
 /** The prebuilt bundle the no-build example loads straight from a script tag. */
 const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
 
-/** Whether a public URL an example fetches can be reached from this machine.
- *
- *  An example whose subject is data from a third party has nothing to assert offline — and a suite that goes red on a
- *  train is one people learn to ignore. Asked once per URL, like every other gate, with the request the example makes. */
-const reachable = new Map<string, boolean>();
-const reachableUrl = (url: string): boolean => {
-  const known = reachable.get(url);
-  if (known !== undefined) {
-    return known;
-  }
-
-  let up = true;
-  try {
-    execSync(`curl -sfI --max-time 3 ${url}`, { stdio: 'ignore' });
-  } catch {
-    up = false;
-  }
-
-  reachable.set(url, up);
-
-  return up;
-};
-
 /** The Redis Pizarra's replicas share: `REDIS_URL`, or the local docker one (a database of the suite's own). */
 const PIZARRA_REDIS = process.env.REDIS_URL || 'redis://127.0.0.1:63790/9';
 
@@ -280,24 +257,6 @@ export const targets: Target[] = [
     command: 'PORT=5017 QUEUE_DB="$(mktemp -d)/queue.db" yarn workspace @plitzi/example-server-actions-schedules start',
     origin: 'http://127.0.0.1:5017',
     what: 'Scheduled and delayed jobs over a durable queue the server keeps in SQLite'
-  },
-  {
-    id: 'blog',
-    workspace: '@plitzi/example-blog',
-    command: 'PORT=5014 yarn workspace @plitzi/example-blog start',
-    origin: 'http://127.0.0.1:5014',
-    what: 'A whole small blog — a front page, posts, sessions, and who may publish'
-  },
-  {
-    id: 'seismic',
-    workspace: '@plitzi/example-seismic',
-    command: 'PORT=5019 yarn workspace @plitzi/example-seismic start',
-    origin: 'http://127.0.0.1:5019',
-    what: 'Tremor — every earthquake the USGS publishes, on a globe, with a display authored around it',
-    gate: {
-      open: () => reachableUrl('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson'),
-      hint: 'this example reads the USGS earthquake feed — connect to the internet'
-    }
   },
   {
     id: 'whiteboard',

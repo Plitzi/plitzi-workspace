@@ -66,7 +66,7 @@ const pluginSelector = ({
 
   const remoteSettings = getRemoteSettings({ type, plugins });
   if (remoteSettings) {
-    return <PluginRemote key={key} url={remoteSettings.url} internalProps={internalProps} />;
+    return <PluginRemote key={key} url={remoteSettings.url} type={type} internalProps={internalProps} />;
   }
 
   return PluginNotFound;

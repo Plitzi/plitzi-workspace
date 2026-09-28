@@ -1,6 +1,7 @@
 import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
+import { checkVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
@@ -174,6 +175,7 @@ class SpaceAuthor {
     this.assertChannels();
     this.assertTransientState();
     this.assertPaintedState();
+    this.assertVisitorRoles();
     const pageFolders = this.buildPageFolders();
     layouts.forEach(layout => this.addLayout(layout));
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
@@ -767,6 +769,22 @@ class SpaceAuthor {
           '`settings.paintedState` names kept keys for the server to draw with, but `settings.keepState` is not on — nothing is kept, so there is nothing to draw with. Turn `keepState` on, or remove `paintedState`.',
         details: { keys: painted }
       });
+    }
+  }
+
+  /**
+   * The visitors' roles and what each gives (`checkVisitorRoles`). Refused rather than repaired — a role written wrong
+   * is a person who cannot do what they were given, or one who can do what they were not, and neither says so anywhere.
+   */
+  private assertVisitorRoles(): void {
+    const roles: unknown = this.spec.settings?.visitorRoles;
+    if (roles === undefined) {
+      return;
+    }
+
+    const checked = checkVisitorRoles(roles);
+    if (!checked.ok) {
+      throw new Error(checked.problem);
     }
   }
 

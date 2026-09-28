@@ -14,7 +14,7 @@ import type { OAuthConfig, OAuthIssueContext, SSRRequest } from '@plitzi/sdk-sha
 export const issueContextFor = async (
   config: OAuthConfig,
   clientId: string,
-  extra: { req?: SSRRequest; replaces?: string } = {}
+  extra: { req?: SSRRequest; replaces?: string; redirectUri?: string } = {}
 ): Promise<OAuthIssueContext> => {
   const client = await getClient(config.adapters.store, clientId);
   const userAgent = extra.req?.headers['user-agent'];
@@ -31,6 +31,7 @@ export const issueContextFor = async (
       ...(client?.softwareId ? { softwareId: client.softwareId } : {})
     },
     ...(request.userAgent || request.ip ? { request } : {}),
-    ...(extra.replaces ? { replaces: extra.replaces } : {})
+    ...(extra.replaces ? { replaces: extra.replaces } : {}),
+    ...(extra.redirectUri ? { redirectUri: extra.redirectUri } : {})
   };
 };

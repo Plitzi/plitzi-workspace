@@ -830,6 +830,11 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   endpoints and the \`detailsPath\`/\`tokenPath\`/\`refreshTokenPath\`/\`expirationTimePath\` mapping that says where the
   values sit in their responses. \`sessionHintCookie\` is worth setting whenever the backend can: it names a readable
   cookie carrying only expiries, which is what lets a page answer "nobody is signed in" without a request.
+  On the Plitzi platform, \`userProvider: "server"\` signs visitors in with their Plitzi account on the space's own
+  host: a \`link\` with \`mode: "external"\` to \`/auth/sign-in?return=/\` starts it, \`authLogout\` ends it.
+- \`visitorRoles\` — what each visitor role gives, \`{ "author": ["postPublish"] }\`: the permissions an action's
+  \`access: { mode: "role" }\` and a page's \`can()\` ask for. A visitor holds ONLY the permissions of their roles here,
+  never their account's. Who holds a role is given by email in the builder's Visitors panel — never in settings.
 - \`channels\` — the realtime channels, by topic pattern (see **Realtime channels**). Merged pattern by pattern;
   \`null\` removes one.
   Example — inject a keyframe globally:

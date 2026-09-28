@@ -38,9 +38,18 @@ export type KvStoreConfig = {
  * somebody did. Every adapter can do that much, so lists work on all of them without a command of their own. They
  * live under `list:` rather than beside the values, so no key a flow writes can be one.
  */
-export const createKvStore = (adapter: ActionKvAdapter, { prefix = 'kv:' }: KvStoreConfig = {}): ActionKvStore => {
+/** What every key is prefixed with unless the store was given another. */
+export const DEFAULT_KV_PREFIX = 'kv:';
+
+/** Where a list lives, after the prefix: its own segment, so a list and a value of the same name never meet. */
+export const LIST_SEGMENT = 'list:';
+
+export const createKvStore = (
+  adapter: ActionKvAdapter,
+  { prefix = DEFAULT_KV_PREFIX }: KvStoreConfig = {}
+): ActionKvStore => {
   const prefixed = (key: string) => `${prefix}${key}`;
-  const listKey = (list: string) => `${prefix}list:${list}`;
+  const listKey = (list: string) => `${prefix}${LIST_SEGMENT}${list}`;
 
   /** Applies `change` to the list and writes it back unless somebody wrote first — then reads again. */
   const changeList = async (list: string, change: (entries: KvListEntry[]) => KvListEntry[] | undefined) => {

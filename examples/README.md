@@ -54,20 +54,18 @@ your own, or none at all.
 
 | | Example | What it is | Port |
 |---|---|---|---|
-| 01 | [blog](./06-full-examples/01-blog) | A front page, posts, a sidebar, sessions, and who may publish | 4013 |
-| 02 | [seismic](./06-full-examples/02-seismic) | One live screen: a WebGL globe of USGS earthquakes — filtered, replayed and explained by the space around it | 4014 |
+| 04 | [whiteboard](./06-full-examples/04-whiteboard) | Pizarra: a collaborative whiteboard — every stroke through a server action, every cursor and saved shape through realtime channels | 4016 |
 
 Everything above, assembled: this is the one to read when the question is not "how does X work" but "what does it
 take to build something". Ceniza, a whole restaurant website whose server work is all documents, is a seeded space
-on the platform (`ceniza`, in `plitzi-sdk-server/prisma/seeds/spaces/demo`).
+on the platform (`ceniza`, in `plitzi-sdk-server/prisma/seeds/spaces/demo`); so is Tremor (`tremor`), a live WebGL
+globe of USGS earthquakes whose globe is a plugin on the space's CDN and whose server code is its functions; and so is
+Fieldnotes (`blog`), a whole blog whose visitors sign in with their Plitzi account and whose author role the space
+declares and gives by email.
 
-## [`07-templates`](./07-templates) — publishing a piece of one
-
-| | Example | What it is | Port |
-|---|---|---|---|
-| 01 | [authoring](./07-templates/01-authoring) | A template authored and written out as JSON — one dependency, no server | — |
-
-The odd one out on purpose: a template is a file, not a running thing, so this one builds and exits.
+A template — one subtree and its style, published as a JSON a builder instantiates — is not a running thing, so it has
+no example here: the pricing card on `saas-landing`'s CDN is one, authored with `authorTemplate`
+(`plitzi-sdk-server/prisma/seeds/spaces/demo/saasLanding/pricingCard.ts`).
 
 Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone — bar
 the ones that need pages of their own: `02-with-users`, because a space with people in it has somewhere to sign in,

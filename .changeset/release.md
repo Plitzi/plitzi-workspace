@@ -154,6 +154,10 @@
 - An `image` accepts `loadMode: 'auto'`, which the builder offers.
 - `getStateManager()` gains `subscribe`.
 - Routes: a slug with more than one `{{param}}` matches (only the first was converted).
+- A plugin with several elements (`plitzi pack plugin` with more than one folder) draws each of them: every element but
+  the main one rendered the main element's component, since all of them load from the one module.
+- `createServer({ allowPrivatePluginHosts })`: a schema plugin may be read from a private address — a development
+  machine's bucket on localhost. Off by default: a plugin's address is typed by whoever edits a space.
 - Dev tools: with the panel collapsed, the page scrolls the document as it does in production.
 - The base stylesheet has no invalid declarations: `markdown` fills its box (`height`/`width: 100%` were quoted
   strings the browser dropped), and `text` no longer declares a size it never applied — it still inherits its own.
@@ -176,6 +180,21 @@
 - The generated visual test skips list rows and providers with no tag.
 - The example plugin takes its props as attributes; in a client project its numbers come from `public/data/stats.json`
   through a provider — the offline-data pattern.
+
+## A space's visitors: signing in, and what they may do
+
+- `settings.visitorRoles`: a space declares its visitor roles and what each gives (`{ author: ['postPublish'] }`),
+  published and exported with it. `authorSpace` refuses a malformed one; `checkVisitorRoles` / `visitorAccess`
+  (`@plitzi/sdk-shared/auth/visitorRoles`) are the one reading of them.
+- `userProvider: 'server'` (`ServerAuthProvider`): a space whose people sign in THROUGH its page server, by redirect —
+  the session is a cookie on the space's host; `login` goes out, `logout` asks the server.
+- `createServer({ signIn })`: `GET /auth/sign-in` and its callback — register this host with an OAuth 2.1 authorization
+  server, PKCE, state in a `__Host-` cookie, the code redeemed server to server and handed to `exchangeCredential`.
+- OAuth: `issueToken` is told the grant's `redirectUri`; a server mounted under a prefix sends people back to, and posts
+  its grant screen to, its own `/authorize` (it resolved `/authorize` against the issuer and dropped the prefix).
+- `safeRedirectTarget` refuses `/\host`, which a browser reads as `//host`.
+- `spaceKvPatterns(spaceId)` (`@plitzi/sdk-server/actions`): every key a space's `kv` holds, to let them all go.
+- Builder: a **Visitors** panel — the space's roles, and who holds them, given by email.
 
 ## MCP: what the agent is told
 
