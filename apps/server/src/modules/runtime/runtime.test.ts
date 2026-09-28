@@ -244,3 +244,47 @@ describe('a packed runtime', () => {
     await expect(loadRuntime(new Uint8Array(bytes), path.join(work, 'evil'))).rejects.toThrow('not a file');
   });
 });
+
+/**
+ * A runtime stopped while it is being listened to — an agent's stream open through the platform, the platform's own
+ * connection held — still stops: what never ends by itself is ended, so whatever is stopping it is never left waiting.
+ */
+describe('a space runtime being stopped', () => {
+  const PORT = 39353;
+
+  it('stops with a stream still open on it', async () => {
+    const listening = defineRuntime({
+      start: () => ({
+        endpoints: {
+          '/mcp': () =>
+            // Open, said once, and never ended — an agent's app listening.
+            new Response(
+              new ReadableStream<Uint8Array>({
+                start: controller => controller.enqueue(new TextEncoder().encode(': open\n\n'))
+              }),
+              { headers: { 'content-type': 'text/event-stream' } }
+            )
+        }
+      })
+    });
+    const stopping = await startSpaceRuntime({
+      runtime: listening,
+      secret: SECRET,
+      port: PORT,
+      host: '127.0.0.1',
+      env: {},
+      publicUrl: 'http://127.0.0.1'
+    });
+    const stream = await fetch(`http://127.0.0.1:${String(PORT)}/mcp`, {
+      headers: { authorization: `Bearer ${SECRET}`, accept: 'text/event-stream' }
+    });
+    expect(stream.status).toBe(200);
+
+    const stopped = await Promise.race([
+      stopping.close().then(() => 'stopped'),
+      new Promise(resolve => setTimeout(() => resolve('still waiting'), 5000))
+    ]);
+
+    expect(stopped).toBe('stopped');
+  });
+});

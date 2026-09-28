@@ -4,6 +4,7 @@ import http from 'node:http';
 import { WebSocketServer } from 'ws';
 
 import { readRequestMessage } from './messages';
+import { watchConnections } from '../../../core/server/drain';
 import { serverLog } from '../../../helpers/serverLog';
 import { frameText } from '../../../helpers/wsFrame';
 import { FUNCTIONS_PROTOCOL, FunctionFailure } from '../protocol';
@@ -250,6 +251,11 @@ export const startFunctionsRunnerService = async ({
     sockets.handleUpgrade(req, socket, head, ws => serveConnection(ws, engine));
   });
 
+  // Drained, not only closed, when it stops: the platform keeps a socket and keep-alive connections to it for as long
+  // as it runs — and a runtime's streams (an agent listening) never end by themselves — so `server.close()` alone waited
+  // for ever, and whatever was stopping it with it.
+  const connections = watchConnections(server);
+
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, host, () => {
@@ -270,7 +276,7 @@ export const startFunctionsRunnerService = async ({
     },
     close: async () => {
       sockets.clients.forEach(client => client.terminate());
-      await new Promise<void>(resolve => server.close(() => resolve()));
+      await connections.drain('Functions');
       await engine.close?.();
     }
   };
