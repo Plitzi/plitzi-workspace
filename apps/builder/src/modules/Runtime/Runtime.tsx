@@ -64,9 +64,14 @@ const Runtime = () => {
           {!isLoading && environments.length === 0 && (
             <span className="text-sm text-gray-500 dark:text-zinc-400">This space has no runtime yet.</span>
           )}
-          {!isLoading && <RuntimeCodeNote pushed={environments.length > 0} />}
+          {!isLoading && <RuntimeCodeNote pushed={environments.length > 0} idleMinutes={data?.idleMinutes ?? 0} />}
           {environments.length > 0 && (
-            <RuntimeEnvironments environments={environments} sizes={data?.sizes ?? []} onChange={handleChange} />
+            <RuntimeEnvironments
+              environments={environments}
+              sizes={data?.sizes ?? []}
+              idleMinutes={data?.idleMinutes ?? 0}
+              onChange={handleChange}
+            />
           )}
           <RuntimeVariables names={data?.variables ?? []} onChange={handleChange} />
         </div>

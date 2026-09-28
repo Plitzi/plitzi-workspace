@@ -186,6 +186,8 @@ plitzi runtime status                                 # how each environment's r
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
 plitzi runtime size medium                            # the size the draft runs at (--environment for a published one)
+plitzi runtime stop                                   # stopped, and kept stopped until started
+plitzi runtime start                                  # started again — stopped by hand, or for going unused
 ```
 
 A space's runtime is its own server code, run beside it on the platform — for what its functions cannot be: a
@@ -205,6 +207,10 @@ runtime is part of the plans that carry it; on another, the push is refused and 
 **It runs at a size** — small (0.25 CPU, 256 MB), medium (0.5 CPU, 512 MB) or large (1 CPU, 1 GB) — chosen per
 environment among the sizes the space's plan includes. `status` says what each environment runs at and which sizes the
 plan includes; `size` chooses another, and that runtime starts again at it.
+
+**An unused runtime stops by itself** — nothing sent to its endpoints and no task run on it for a while — so it spends
+nothing idle, and stays stopped until `start`, the builder, a push or a publish starts it again. `status` says when a
+running one would stop, and why a stopped one is.
 
 ## Credentials
 

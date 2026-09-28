@@ -34,6 +34,8 @@ type Environment = {
   endpoints: string[];
   tasks: string[];
   size: string;
+  stoppedReason?: 'idle' | 'manual';
+  idleStopsAt?: number;
 };
 
 /** A size a runtime may run at, and whether the space's plan includes it. */
@@ -177,9 +179,20 @@ export const runtimeStatus = async (options: AccountOptions): Promise<void> => {
 
     return size ? `${size.label}, ${size.cpu} CPU / ${size.memory}` : name;
   };
-  runtime.environments.forEach(({ environment, revision, digest, status, error, endpoints, tasks, size }) => {
+  runtime.environments.forEach(({ environment, revision, digest, status, error, endpoints, tasks, size, ...rest }) => {
     const version = revision === 0 ? 'draft' : `revision ${String(revision)}`;
     console.log(`${chalk.bold(environment)} (${version}, ${digest.slice(0, 12)}): ${status} — ${spendOf(size)}`);
+    if (status === 'stopped') {
+      const why = rest.stoppedReason === 'idle' ? 'unused for too long' : 'stopped by hand';
+      console.log(
+        `  ${chalk.yellow(`Stopped (${why}): plitzi runtime start${environment === 'main' ? '' : ` --environment ${environment}`}`)}`
+      );
+    }
+
+    if (rest.idleStopsAt) {
+      console.log(`  Stops by itself at ${new Date(rest.idleStopsAt * 1000).toLocaleTimeString()} if nothing uses it`);
+    }
+
     if (error) {
       console.log(`  ${chalk.red(error)}`);
     }
@@ -191,6 +204,39 @@ export const runtimeStatus = async (options: AccountOptions): Promise<void> => {
   console.log(`Variables: ${runtime.variables.length ? runtime.variables.join(', ') : 'none'}`);
   const included = runtime.sizes.filter(option => option.included).map(option => option.name);
   console.log(`Sizes in this plan: ${included.length ? included.join(', ') : 'none'}`);
+};
+
+/** Starts an environment's runtime again, or stops it — kept stopped until started. */
+export const powerRuntime = async (power: 'start' | 'stop', options: AccountOptions & { environment?: string }) => {
+  const connection = await connect(options, 'to configure');
+  if (!connection?.space) {
+    return;
+  }
+
+  const environment = options.environment ?? 'main';
+  const answered = await authorizedRequest<{ error?: string }>(
+    connection,
+    `/spaces/${String(connection.space.id)}/runtime/${power}`,
+    { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ environment }) }
+  );
+  if (!answered.ok) {
+    fail(answered.error);
+
+    return;
+  }
+
+  const { reply } = answered.value;
+  if (reply.status !== 204) {
+    fail(
+      reply.data.error ?? `The runtime was not ${power === 'start' ? 'started' : 'stopped'} (${String(reply.status)}).`
+    );
+
+    return;
+  }
+
+  console.log(
+    `${chalk.green('✓')} ${environment} ${power === 'start' ? 'starts in a moment' : 'stops, and stays stopped until started'}.`
+  );
 };
 
 /** Chooses the size an environment's runtime runs at — one the space's plan includes — and it starts again at it. */

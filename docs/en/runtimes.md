@@ -72,6 +72,8 @@ plitzi runtime status                # how each environment's runtime is, and it
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
 plitzi runtime size medium           # the size the draft's runtime runs at (--environment for a published one)
+plitzi runtime stop                  # stopped, and kept stopped until started (--environment as above)
+plitzi runtime start                 # started again — one stopped by hand, or for going unused
 ```
 
 - **Publishing is deploying.** A push is the draft's runtime (`main`); publishing the space copies its code into the
@@ -83,6 +85,10 @@ plitzi runtime size medium           # the size the draft's runtime runs at (--e
 - **It runs at a size** — small (0.25 CPU, 256 MB), medium (0.5 CPU, 512 MB) or large (1 CPU, 1 GB) — chosen per
   environment among the sizes its plan includes: in the builder's Runtime panel, which shows what each environment runs
   at, or with `plitzi runtime size <size> [--environment <name>]`. Changing it starts that runtime again at it.
+- **An unused runtime stops by itself**, so it spends nothing idle: nothing forwarded to its endpoints and no task run
+  on it for a while (an hour on the platform), and it is stopped until somebody starts it again — the builder's Start,
+  `plitzi runtime start`, or a push or a publish. The builder's header says so ten minutes before, with a way to keep
+  it running. While stopped, its endpoints answer 503 and its tasks refuse, each saying it is stopped.
 
 What is pushed is packed with the project's own `@plitzi/sdk-server` (`packRuntime`): the module and every package it
 imports, for Node, gzipped — at most 32 MB — except `@plitzi/*`, `react` and `react-dom`, which the runtime's host

@@ -113,6 +113,8 @@ const schema: Schema = {
 };
 
 let host: SpaceRuntimeHost;
+// What the page server told of each request it forwarded — its runtime being used.
+const forwarded: string[] = [];
 let description: SpaceRuntimeDescription;
 let page: SSRServer;
 
@@ -142,7 +144,8 @@ beforeAll(async () => {
               url: `http://127.0.0.1:${String(RUNTIME_PORT)}`,
               secret: SECRET,
               endpoints: description.endpoints
-            })
+            }),
+          onForward: space => forwarded.push(space.endpoint)
         })
       ]
     }
@@ -204,12 +207,15 @@ describe('a space runtime', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('set-cookie')).toBeNull();
     expect(await response.text()).toBe('cookie=none;auth=none\npath=/mcp/sessions?page=2\n');
+    expect(forwarded).toContain('/mcp');
   });
 
-  it('leaves the space’s other paths to the page server', async () => {
+  it('leaves the space’s other paths to the page server, and does not count them as the runtime used', async () => {
+    const before = forwarded.length;
     const response = await fetch(`http://127.0.0.1:${String(PAGE_PORT)}/mcpish`);
 
     expect(await response.text()).not.toContain('cookie=');
+    expect(forwarded).toHaveLength(before);
   });
 });
 

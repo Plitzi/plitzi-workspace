@@ -73,6 +73,11 @@ export type RuntimeTarget = {
 export type RuntimeProxyConfig = {
   /** The runtime serving a space and environment — or none, for a space the platform serves alone. */
   lookup: (space: { spaceId: number; environment: string }) => Promise<RuntimeTarget | undefined>;
+  /**
+   * Told each time a request is forwarded to a space's runtime — not for every request of the space, most of which are
+   * its pages: what counts as a runtime being used, for a deployment that stops the ones nobody uses.
+   */
+  onForward?: (space: { spaceId: number; environment: string; endpoint: string }) => void;
 };
 
 const HOP_BY_HOP = ['connection', 'keep-alive', 'transfer-encoding', 'upgrade'];
@@ -93,7 +98,7 @@ const NOT_ANSWERED = new Set([...HOP_BY_HOP, 'set-cookie']);
  * A data stage: after the auth chain, so the space is known, and before the space's `/api/` routes and its pages.
  */
 export const createRuntimeProxyStage =
-  ({ lookup }: RuntimeProxyConfig): Stage<SSRContext> =>
+  ({ lookup, onForward }: RuntimeProxyConfig): Stage<SSRContext> =>
   async ctx => {
     const { spaceId, environment = 'main' } = ctx.req.ctx.spaceDeployment ?? {};
     if (typeof spaceId !== 'number') {
@@ -107,6 +112,7 @@ export const createRuntimeProxyStage =
     }
 
     ctx.operation = `runtime ${endpoint}`;
+    onForward?.({ spaceId, environment, endpoint });
     const headers: http.OutgoingHttpHeaders = {};
     Object.entries(ctx.raw.headers).forEach(([name, value]) => {
       if (!name.startsWith(':') && !NOT_FORWARDED.has(name) && value !== undefined) {

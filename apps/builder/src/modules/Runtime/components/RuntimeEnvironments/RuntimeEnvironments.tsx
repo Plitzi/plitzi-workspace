@@ -7,6 +7,7 @@ import { use, useCallback } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import RuntimePower from '../RuntimePower';
 import RuntimeSize from '../RuntimeSize';
 
 import type {
@@ -21,6 +22,8 @@ export type RuntimeEnvironmentsProps = {
   environments: SpaceRuntimeEnvironment[];
   /** Every size there is, and which the space's plan includes. */
   sizes: SpaceRuntimeSizeOption[];
+  /** How long a runtime may go unused before it is stopped; 0 when the platform never stops one. */
+  idleMinutes: number;
   /** Asked once something changed, to read the runtime again. */
   onChange: () => Promise<void>;
 };
@@ -32,7 +35,8 @@ const STATUS: Record<
   ready: { label: 'Running', intent: 'success' },
   starting: { label: 'Starting', intent: 'info' },
   waiting: { label: 'Waiting to start', intent: 'default' },
-  failed: { label: 'Not running', intent: 'error' }
+  failed: { label: 'Not running', intent: 'error' },
+  stopped: { label: 'Stopped', intent: 'default' }
 };
 
 /**
@@ -42,7 +46,7 @@ const STATUS: Record<
 const clockOf = (seconds: number): string => new Date(seconds * 1000).toLocaleTimeString();
 
 /** Every environment's runtime: which code, how it is, and what it serves — and taking the runtime away. */
-const RuntimeEnvironments = ({ environments, sizes, onChange }: RuntimeEnvironmentsProps) => {
+const RuntimeEnvironments = ({ environments, sizes, idleMinutes, onChange }: RuntimeEnvironmentsProps) => {
   const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
     BuilderQueriesMap,
     BuilderMutationsMap
@@ -90,7 +94,14 @@ const RuntimeEnvironments = ({ environments, sizes, onChange }: RuntimeEnvironme
               {STATUS[runtime.status].label}
             </Badge>
           </div>
-          <RuntimeSize environment={runtime.environment} size={runtime.size} sizes={sizes} onChange={onChange} />
+          <RuntimePower runtime={runtime} idleMinutes={idleMinutes} onChange={onChange} />
+          <RuntimeSize
+            environment={runtime.environment}
+            size={runtime.size}
+            status={runtime.status}
+            sizes={sizes}
+            onChange={onChange}
+          />
           {runtime.error && (
             <Alert intent="error" size="xs" solid={false}>
               {runtime.error}

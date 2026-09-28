@@ -7,6 +7,7 @@ import createPlugin from './commands/createPlugin';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
 import packPluginCommand from './commands/packPlugin';
 import {
+  powerRuntime,
   pushRuntime,
   runtimeStatus,
   setRuntimeSize,
@@ -199,6 +200,19 @@ runtime
   .description('How each environment’s runtime is, and the names of its variables')
   .option(...API_OPTION)
   .action((options: RuntimeOptions) => runtimeStatus(options));
+
+for (const power of ['start', 'stop'] as const) {
+  runtime
+    .command(power)
+    .description(
+      power === 'start'
+        ? 'Start an environment’s runtime again — one stopped for being unused, or by hand'
+        : 'Stop an environment’s runtime, and keep it stopped until it is started'
+    )
+    .option('--environment <name>', 'The environment: main (the draft) or a published one', 'main')
+    .option(...API_OPTION)
+    .action((options: RuntimeOptions & { environment?: string }) => powerRuntime(power, options));
+}
 
 runtime
   .command('size')

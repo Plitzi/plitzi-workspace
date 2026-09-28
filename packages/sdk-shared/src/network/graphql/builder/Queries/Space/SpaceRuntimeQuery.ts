@@ -13,12 +13,15 @@ const SpaceRuntimeQuery = gql`
         digest
         status
         error
+        stoppedReason
+        idleStopsAt
         endpoints
         tasks
         startedAt
         size
       }
       variables
+      idleMinutes
       sizes {
         name
         label

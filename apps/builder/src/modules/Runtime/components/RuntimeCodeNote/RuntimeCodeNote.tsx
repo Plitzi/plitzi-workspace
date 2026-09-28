@@ -1,13 +1,15 @@
 export type RuntimeCodeNoteProps = {
   /** Whether the space has a runtime yet: without one, what a runtime is comes first. */
   pushed: boolean;
+  /** How long a runtime may go unused before it is stopped; 0 when the platform never stops one. */
+  idleMinutes: number;
 };
 
 /**
  * Where a runtime's code comes from, said where the question comes up: nothing in the builder changes it. It is a
  * project of the space owner's own — Node, its packages — packed and pushed from there, and published with the space.
  */
-const RuntimeCodeNote = ({ pushed }: RuntimeCodeNoteProps) => (
+const RuntimeCodeNote = ({ pushed, idleMinutes }: RuntimeCodeNoteProps) => (
   <div className="flex flex-col gap-2 rounded-sm border border-gray-200 px-3 py-2 text-sm text-gray-600 dark:border-zinc-700 dark:text-zinc-300">
     {!pushed && (
       <p>
@@ -32,6 +34,12 @@ const RuntimeCodeNote = ({ pushed }: RuntimeCodeNoteProps) => (
       Here: how it runs, and the variables it starts with. A project made with <code>plitzi create</code> in server mode
       has what a push needs; any other, <code>npm install @plitzi/sdk-server</code>.
     </p>
+    {idleMinutes > 0 && (
+      <p>
+        A runtime nobody uses for {idleMinutes} minutes — no request to its endpoints, no task run — stops by itself, so
+        it spends nothing while idle. Start it again here; a push or a publish starts it too.
+      </p>
+    )}
   </div>
 );
 

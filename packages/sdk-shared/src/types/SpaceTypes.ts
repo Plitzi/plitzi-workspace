@@ -69,9 +69,13 @@ export type SpaceRuntimeEnvironment = {
   revision: number;
   /** The packed code it runs, by what its bytes are. */
   digest: string;
-  status: 'waiting' | 'starting' | 'ready' | 'failed';
+  status: 'waiting' | 'starting' | 'ready' | 'failed' | 'stopped';
   /** Why it is not running, for whoever manages the space. */
   error: string | null;
+  /** Why it is kept stopped: `idle` (unused for too long) or `manual`. */
+  stoppedReason: 'idle' | 'manual' | null;
+  /** When a running one stops for being unused, unless something uses it before — unix seconds. */
+  idleStopsAt: number | null;
   /** The paths of the space it answers itself (`/mcp`). */
   endpoints: string[];
   /** Its tasks, as flows name them (`board.create`). */
@@ -98,6 +102,8 @@ export type SpaceRuntime = {
   variables: string[];
   /** Every size there is, smallest first. */
   sizes: SpaceRuntimeSizeOption[];
+  /** How long a runtime may go unused before it is stopped; 0 when the platform never stops one. */
+  idleMinutes: number;
 };
 
 export type SpaceDeployment = {
