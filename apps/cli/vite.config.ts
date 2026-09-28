@@ -26,6 +26,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts']
+    include: ['src/**/*.test.ts'],
+    // As `plitzi functions dev` runs itself: the isolates need Node's startup snapshot off.
+    execArgv: ['--no-node-snapshot']
   }
 });

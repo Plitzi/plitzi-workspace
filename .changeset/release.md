@@ -1173,7 +1173,8 @@ A space can have its own server code: TypeScript whose **tasks** are steps in it
   first isolate; `createRemoteRunner` — the page server's client, one WebSocket per invocation with the code's calls
   answered on it, abandoned past the invocation's wall time plus `graceMs` (5 s) even when the runner never answers;
   `createIsolateRunner({ concurrency, cacheBytes })` — compiled bundles kept by size (64 MB), least recently used out;
-  `createLocalFunctions`.
+  `createLocalFunctions`. Isolates need Node started with `--no-node-snapshot` (isolated-vm crashes beside Node's
+  startup snapshot): without it they refuse to start, naming the flag; `plitzi functions dev` re-runs itself with it.
 - **A run carries the bundle by reference**: `FunctionsBundleRef { id, load }` in `FunctionInvokeRequest` and
   `SpaceFunctions` — a runner asks for the code (`needBundle`) only when it does not keep that bundle, so a lookup never
   reads it on the way to one. `functionsInHand` makes one from a bundle already in memory.

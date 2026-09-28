@@ -200,6 +200,10 @@ the old `action.tasks`: a deployment's own tasks and a space's are written the s
 | `createIsolateRunner()` | The isolates in the page server's own process — for tests, or a deployment whose process holds nothing a space must not reach |
 | `createLocalFunctions()` | What `plitzi functions dev` runs: build, check and try a source on this machine |
 
+Wherever isolates run, Node must start with **`--no-node-snapshot`** (`NODE_OPTIONS=--no-node-snapshot`):
+isolated-vm crashes beside Node's own startup snapshot, so the runner refuses to start without it and says so.
+`plitzi functions dev` runs itself again with it. The page servers that only hand code to a remote runner need nothing.
+
 A space's functions reach a run through `action.lookups.getFunctions(spaceId, at)` — the bundle and what it declared
 when it was saved, as of the revision the run belongs to. `actions.prepareFunctions(source)` is the one way to make
 one: built, read by the runner and checked. `functions.limits` sets the per-invocation ceilings; `functions.admit` and

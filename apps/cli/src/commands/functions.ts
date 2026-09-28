@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { watch } from 'node:fs';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -399,11 +400,34 @@ export interface FunctionsDevOptions {
   watch?: boolean;
 }
 
+const NO_NODE_SNAPSHOT = '--no-node-snapshot';
+
+/**
+ * The isolates `dev` runs need Node's startup snapshot off, and a process cannot turn it off once started: `dev` runs
+ * itself again with it, and answers with that run's exit code.
+ */
+const rerunWithoutNodeSnapshot = (): Promise<number> =>
+  new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [...process.execArgv, NO_NODE_SNAPSHOT, ...process.argv.slice(1)], {
+      stdio: 'inherit'
+    });
+    child.once('error', reject);
+    child.once('exit', code => {
+      resolve(code ?? 1);
+    });
+  });
+
 /**
  * `plitzi functions dev <task>`: the task run from `functions/` on this machine, as the platform would run it — and,
  * with `--watch`, again every time a file is saved. Nothing reaches the space: its draft is what `push` sends.
  */
 export const devFunction = async (task: string, options: FunctionsDevOptions): Promise<void> => {
+  if (!process.execArgv.includes(NO_NODE_SNAPSHOT)) {
+    process.exitCode = await rerunWithoutNodeSnapshot();
+
+    return;
+  }
+
   const params = paramsOf(options.params);
   const root = await rootOf();
   const runner = params ? await projectRunner(root) : undefined;

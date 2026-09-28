@@ -60,7 +60,25 @@ const ISOLATE_TIMEOUT = 'Script execution timed out.';
 /** How long code that listens to `ctx.signal` gets to stop by itself before the isolate is disposed under it. */
 const ABORT_GRACE_MS = 50;
 
+const NO_NODE_SNAPSHOT = '--no-node-snapshot';
+
+/**
+ * Since Node 20 the process starts from Node's own V8 snapshot, and isolated-vm's isolates crash beside it — not always,
+ * which is why this refuses up front rather than letting a process run until the one invocation that brings it down.
+ */
+const nodeSnapshotOff = (): boolean =>
+  Number(process.versions.node.split('.')[0]) < 20 ||
+  process.execArgv.includes(NO_NODE_SNAPSHOT) ||
+  (process.env.NODE_OPTIONS ?? '').split(/\s+/).includes(NO_NODE_SNAPSHOT);
+
 const loadIvm = async (): Promise<Ivm> => {
+  if (!nodeSnapshotOff()) {
+    throw new Error(
+      `Running space functions in isolates needs Node started with ${NO_NODE_SNAPSHOT} ` +
+        `(e.g. NODE_OPTIONS=${NO_NODE_SNAPSHOT}): isolated-vm crashes beside Node's startup snapshot`
+    );
+  }
+
   try {
     return (await import('isolated-vm')).default;
   } catch {
