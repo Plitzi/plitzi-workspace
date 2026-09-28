@@ -1231,6 +1231,16 @@ A space can have its own server code: TypeScript whose **tasks** are steps in it
   every concurrent edit needs, now one (lists stand on it too; the sandbox runs the same function). **`ctx.rateLimit`**
   counts with `flow.rateLimit`'s counter and answers `{ allowed, count, remaining }`. **`ctx.sign` / `ctx.verify`**:
   HMAC with a per-space, per-environment key derived from the new `action.signingSecret`, which the code never holds.
+- **Space runtimes**, `@plitzi/sdk-server/runtime` ([docs](../docs/en/runtimes.md)): a space's own server code run as a
+  process of its own beside the platform — `defineRuntime({ start })` answers its `functions` (run with the platform's
+  `ctx` over the runners' protocol) and `endpoints` (web handlers, streamed). `startSpaceRuntime` hosts one,
+  `createRuntimeProxyStage` forwards a space's endpoints to it, `serveRuntime` loads one into a server of its own;
+  `packRuntime` / `inspectRuntime` / `loadRuntime`; `SpaceFunctions.runner` sends a space's tasks to its runtime. One
+  driver for the sandbox and runtimes alike (`createFunctionsDriver`, printed into the guest). CLI: `plitzi runtime
+  push | status | vars`. Builder: a Runtime panel — each environment's state, and write-only variables. Pizarra is
+  one: `src/runtime.ts`, served by its own `main.ts` and by the platform.
+- **Authoring writes one form of each**: a trigger that `whileRunning('skip', …)` is written as the default it is, and
+  `bind: []` writes no `bindings` — a document read back into code is the one written.
 - **Shared types**: `FunctionsManifest`, `FunctionsDraft`, `FunctionsProblem`, `FunctionsSaveResult`; the builder's
   `SpaceFunctions`, `SpaceSaveFunctions`, `SpaceRemoveFunctions`, `SpaceTryFunction`; `ChangeDocument` `functions`
   with entries of kind `file`; `SSRAdapters.getFunctions` / `saveFunctions` / `tryFunction`.

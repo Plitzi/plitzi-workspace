@@ -1,57 +1,12 @@
 /**
- * What no class can say: the document itself, the custom properties the plugins read, and the inside of widgets
- * whose markup is not the space's.
+ * What no class can say: the document itself, states and keyframes, and the inside of widgets whose markup is not the
+ * space's.
  *
  * Every other rule is a `styles()` declaration beside the element it dresses.
  */
 export const customCss = `
 html, body { margin: 0; background: var(--paper); overscroll-behavior: none; }
 body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antialiased; }
-
-/* ── The canvas's palette ──────────────────────────────────────────────────────────────────────────────────────────
-   The board ships no colours: it paints with these, pointed here at the space's tokens. A theme switch changes the
-   tokens, the canvas reads them again, and every drawing recolours with the page. */
-.boardCanvas, .thumbCanvas, .sandboxBoard {
-  --board-paper: var(--paper);
-  --board-dots: var(--dots);
-  --board-accent: var(--accent);
-  --board-surface: var(--surface);
-  --board-edge: var(--edge);
-  --board-muted: var(--muted);
-  --board-ink: var(--ink);
-  --board-red: var(--red);
-  --board-orange: var(--orange);
-  --board-green: var(--green);
-  --board-blue: var(--blue);
-  --board-violet: var(--violet);
-  --board-fill-red: var(--fill-red);
-  --board-fill-orange: var(--fill-orange);
-  --board-fill-yellow: var(--fill-yellow);
-  --board-fill-green: var(--fill-green);
-  --board-fill-blue: var(--fill-blue);
-  --board-fill-violet: var(--fill-violet);
-  --board-sticky-yellow: var(--sticky-yellow);
-  --board-sticky-red: var(--sticky-red);
-  --board-sticky-orange: var(--sticky-orange);
-  --board-sticky-green: var(--sticky-green);
-  --board-sticky-blue: var(--sticky-blue);
-  --board-sticky-violet: var(--sticky-violet);
-  --board-laser: var(--laser);
-  --board-guide: var(--guide);
-  --board-font: var(--hand);
-  --board-ui-font: var(--ui);
-}
-
-/* The sticky pads: the same paper the notes are drawn on. */
-.stickyStack {
-  --stack-yellow: var(--sticky-yellow);
-  --stack-red: var(--sticky-red);
-  --stack-orange: var(--sticky-orange);
-  --stack-green: var(--sticky-green);
-  --stack-blue: var(--sticky-blue);
-  --stack-violet: var(--sticky-violet);
-  --stack-focus: var(--accent);
-}
 
 /* A board in its last hour says so in the danger colour. */
 .boardLeft[data-state='ending'] { color: var(--danger); }
@@ -137,22 +92,6 @@ body { font-family: var(--ui); color: var(--ink); -webkit-font-smoothing: antial
 @keyframes wb-orbit { from { transform: rotate(0deg) translateX(48px); } to { transform: rotate(360deg) translateX(48px); } }
 @media (prefers-reduced-motion: reduce) {
   [class*='motion'], .heroHighlight { animation: none !important; opacity: 1 !important; }
-}
-
-/* The texts to copy: the field and the button in the space's colours. */
-.copyText {
-  --copy-field: var(--surface-2);
-  --copy-accent: var(--accent);
-  --copy-on-accent: var(--on-accent);
-}
-
-/* The share card's QR code stays dark on light in both schemes: a code is read by contrast. */
-.shareCard {
-  --share-accent: var(--accent);
-  --share-on-accent: var(--on-accent);
-  --share-field: var(--surface-2);
-  --share-ink: #16161c;
-  --share-paper: #ffffff;
 }
 
 /* ── Fields ────────────────────────────────────────────────────────────────────────────────────────────────────────

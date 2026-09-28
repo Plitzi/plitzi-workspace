@@ -24,6 +24,11 @@ export type FunctionsRunnerServiceOptions = IsolateRunnerOptions & {
    * runs — this service keeps none of its own — and asks the platform for one it does not have.
    */
   runner?: FunctionRunner;
+  /**
+   * What answers plain HTTP besides `/health` — a space runtime's endpoints — behind the same secret as the protocol.
+   * Answers whether it took the request; one it did not take is a 404.
+   */
+  http?: (req: http.IncomingMessage, res: http.ServerResponse) => Promise<boolean>;
 };
 
 export type FunctionsRunnerService = {
@@ -175,6 +180,7 @@ export const startFunctionsRunnerService = async ({
   port = 8790,
   host = '0.0.0.0',
   runner,
+  http: answerHttp,
   ...isolate
 }: FunctionsRunnerServiceOptions): Promise<FunctionsRunnerService> => {
   if (secret.length < 32) {
@@ -193,9 +199,46 @@ export const startFunctionsRunnerService = async ({
   }
 
   const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME_BYTES });
+  const notFound = (res: http.ServerResponse): void => {
+    res.writeHead(404, { 'content-type': 'text/plain' });
+    res.end('');
+  };
   const server = http.createServer((req, res) => {
-    res.writeHead(req.method === 'GET' && req.url === '/health' ? 200 : 404, { 'content-type': 'text/plain' });
-    res.end(req.url === '/health' ? 'ok' : '');
+    if (req.method === 'GET' && req.url === '/health') {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.end('ok');
+
+      return;
+    }
+
+    if (!answerHttp) {
+      notFound(res);
+
+      return;
+    }
+
+    if (!authorised(req.headers.authorization, secret)) {
+      res.writeHead(401, { 'content-type': 'text/plain' });
+      res.end('');
+
+      return;
+    }
+
+    answerHttp(req, res).then(
+      taken => {
+        if (!taken) {
+          notFound(res);
+        }
+      },
+      (error: unknown) => {
+        serverLog.error('Functions', 'an HTTP request failed', error);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'content-type': 'text/plain' });
+        }
+
+        res.end('');
+      }
+    );
   });
   server.on('upgrade', (req, socket, head) => {
     if (!authorised(req.headers.authorization, secret)) {

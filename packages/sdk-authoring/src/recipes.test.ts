@@ -225,6 +225,38 @@ describe('the skill’s recipes', () => {
     expect(() => whileRunning('queue', delay(1000))).toThrow('wraps a flow');
   });
 
+  it('writes a trigger that skips as one that says nothing: skipping is the default, with one way to say it', () => {
+    const { schema } = authorSpace({
+      name: 'Skip',
+      permanentUrl: 'skip',
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          isDefault: true,
+          body: [button({ id: 'go', content: 'Go', flows: [[whileRunning('skip', onClick()), delay(1000)]] })]
+        }
+      ]
+    });
+    const trigger = Object.values(schema.flat.go.definition.interactions ?? {}).find(node => node.type === 'trigger');
+
+    expect(trigger).toBeDefined();
+    expect(trigger).not.toHaveProperty('whileRunning');
+  });
+
+  it('writes an element bound to nothing as one with no bindings: an empty list is no bindings, said one way', () => {
+    const { schema } = authorSpace({
+      name: 'Unbound',
+      permanentUrl: 'unbound',
+      pages: [
+        { id: 'home', name: 'Home', slug: '', isDefault: true, body: [button({ id: 'go', content: 'Go', bind: [] })] }
+      ]
+    });
+
+    expect(schema.flat.go.definition).not.toHaveProperty('bindings');
+  });
+
   it('a realtime channel authors with no warning, and a channel nobody can use is refused where it is written', () => {
     const { schema, warnings } = authorSpace({
       name: 'Board',

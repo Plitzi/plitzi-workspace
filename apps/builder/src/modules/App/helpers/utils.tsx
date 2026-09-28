@@ -193,6 +193,22 @@ export const getPopups = ({
       }
     },
     {
+      id: 'runtime',
+      component: undefined,
+      active: activeIds.includes('runtime'),
+      placementSettings: { left: { position: 8, multi: false } },
+      settings: {
+        icon: 'fa-solid fa-server',
+        title: 'Runtime',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
       id: 'visitors',
       component: undefined,
       active: activeIds.includes('visitors'),

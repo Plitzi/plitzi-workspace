@@ -96,7 +96,7 @@ const underTheHood = (): BoardElement[] => {
         fill: 'green',
         text: 'Realtime hub /_realtime (WebSocket)'
       },
-      box(middleware, -820, -360, 'Middleware — /board-assets, the mark'),
+      box(middleware, -820, -360, 'Routes — /api/board-assets, the mark'),
       box(mcp, -500, -360, 'Agent MCP (stdio) — a client like a browser', { fill: 'yellow', fillStyle: 'cross' }),
       comment(-120, -560, 'What stops two commits losing one?', 'Leo', [
         ['Mia', 'A lock in the kv itself — first increment wins'],

@@ -143,8 +143,9 @@ export type ActionLookups = {
   getCredential?: (spaceId: number, identifier: string) => Promise<ActionCredential | undefined>;
   getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<ConnectorManifest | undefined>;
   /**
-   * The space's own functions as of that revision — the bundle and what it declared when saved. Only asked when a
-   * runner is configured and a run names a task the deployment does not have.
+   * The space's own functions as of that revision — the bundle and what it declared when saved, run by the deployment's
+   * sandbox (`functions.runner`), or by the space's own runtime when it answers one with a `runner` of its own. Only
+   * asked when a run names a task the deployment does not have, or a request a path under `/api/`.
    */
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<SpaceFunctions | undefined>;
 };

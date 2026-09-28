@@ -98,6 +98,8 @@ export default defineConfig(({ mode }) => {
           functions: path.resolve(root, 'src/functions.ts'),
           // What runs the spaces' functions: the runner service, the platform's client to it, the isolates.
           functionsRunner: path.resolve(root, 'src/functionsRunner.ts'),
+          // Space runtimes: a space's own server code beside the platform — the contract, the host, packing, the stages.
+          runtime: path.resolve(root, 'src/runtime.ts'),
           // Ready-made request handlers for the auth flows. Depends on no framework — see src/handlers.ts —
           // but keeping it out of the barrels is what makes it opt-in rather than something a page server drags in.
           handlers: path.resolve(root, 'src/handlers.ts')

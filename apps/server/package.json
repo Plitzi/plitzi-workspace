@@ -65,6 +65,11 @@
       "import": "./dist/functionsRunner.js",
       "default": "./dist/functionsRunner.js"
     },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js",
+      "default": "./dist/runtime.js"
+    },
     "./functions-api.d.ts": "./dist/functions-api.d.ts"
   },
   "repository": {

@@ -1,8 +1,16 @@
 /**
  * Pizarra's mark: a board in the accent, a sticky note on it, a stroke drawn by hand, and a collaborator's cursor —
- * what the tool is, in one square. One SVG, served by the example (`/brand/pizarra.svg`) and shown wherever the name is.
+ * what the tool is, in one square. One SVG, served by its runtime's routes and shown wherever the name is.
  */
-export const BRAND_PATH = '/brand/pizarra.svg';
+export const BRAND_ROUTE = '/brand/pizarra.svg';
+
+/** Where the page reads it: a runtime's routes answer under `/api`. */
+export const BRAND_PATH = `/api${BRAND_ROUTE}`;
+
+/** Where a board's pictures are served — `<route>/<board>/<asset>` — and where the page reads them. */
+export const ASSETS_ROUTE = '/board-assets';
+
+export const ASSETS_PATH = `/api${ASSETS_ROUTE}`;
 
 export const BRAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>

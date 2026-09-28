@@ -505,7 +505,15 @@ const codeRow = styles('shareCodeRow', {
 });
 
 /** The card's class — and, in `css.ts`, where its `--share-*` colours are set. */
-const shareCardClass = styles('shareCard', { color: 'var(--ink)' });
+/** The QR code stays dark on light in both schemes: a code is read by contrast. */
+const shareCardClass = styles('shareCard', {
+  color: 'var(--ink)',
+  '--share-accent': 'var(--accent)',
+  '--share-on-accent': 'var(--on-accent)',
+  '--share-field': 'var(--surface-2)',
+  '--share-ink': '#16161c',
+  '--share-paper': '#ffffff'
+});
 
 const shareButton = styles('shareButton', {
   css: {

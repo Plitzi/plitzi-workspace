@@ -261,7 +261,8 @@ Lambda per bundle — that implements `describe` and `invoke` over the same mess
 
 ## 9. What still needs a server of your own
 
-Functions answer a step or a request and are done. What does not fit that is a self-hosted `@plitzi/sdk-server`'s:
+Functions answer a step or a request and are done. What does not fit that is a [runtime](./runtimes.md) of the space's
+own — a process beside the platform, on it — or a self-hosted `@plitzi/sdk-server`'s:
 
 - anything that holds a connection or state across requests — an agent session living on one replica, a game loop,
   a long-running import;

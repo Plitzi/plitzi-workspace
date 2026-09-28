@@ -132,7 +132,7 @@ export const createSpaceRegistries = (base: ActionTaskRegistry, config: Function
 
   return {
     registryFor: functions => {
-      const { runner } = config;
+      const runner = functions?.runner ?? config.runner;
       if (!functions || !runner) {
         return base;
       }

@@ -1010,7 +1010,7 @@ class SpaceAuthor {
         items: [],
         styleSelectors: { base: this.selectorFor(path, { type: 'layoutContainer', ...layout }) },
         initialState: { visibility: true },
-        ...(bindings ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
+        ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
         ...(layout.flows ? { interactions: authorFlows(layout.flows, layout.id) } : {})
       }
     };
@@ -1152,7 +1152,7 @@ class SpaceAuthor {
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
         ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),
-        ...(bindings ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
+        ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
         ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})
       }
     };

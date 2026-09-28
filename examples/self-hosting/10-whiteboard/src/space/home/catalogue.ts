@@ -20,6 +20,7 @@ import {
 } from '@plitzi/sdk-authoring';
 
 import { CREATE_ACTION } from '../../actions.ts';
+import { ASSETS_PATH } from '../../board/brand.ts';
 import { GALLERY_PAGE } from '../../board/store.ts';
 import { templateElements } from '../../board/templates.ts';
 import declaration from '../../plugins/Board/declaration.ts';
@@ -36,6 +37,7 @@ import {
   sectionHead,
   sectionLead
 } from './section.ts';
+import { boardPalette } from '../tokens.ts';
 
 import type { Template } from '../../board/templates.ts';
 import type { BoardAttributes } from '../../plugins/Board/declaration.ts';
@@ -48,7 +50,7 @@ import type { CssProps, ElementSpec, StepSpec } from '@plitzi/sdk-authoring';
 
 const thumbnail = defineElement<BoardAttributes>(declaration);
 
-export const thumbCanvas = styles('thumbCanvas', { position: 'absolute', inset: '0px' });
+export const thumbCanvas = styles('thumbCanvas', { position: 'absolute', inset: '0px', ...boardPalette });
 
 const blockHead = styles('blockHead', {
   display: 'flex',
@@ -229,7 +231,7 @@ const card = (listId: string, frameClass: ReturnType<typeof frame>, featured: bo
                 bind: [
                   { to: 'boardId', source: `${listId}.item.id` },
                   { to: 'elements', source: `${listId}.item.preview` },
-                  bindTemplate('assetBase', `${listId}.item.id`, '/board-assets/{{ source }}'),
+                  bindTemplate('assetBase', `${listId}.item.id`, `${ASSETS_PATH}/{{ source }}`),
                   { to: 'scheme', source: 'theme.resolved' }
                 ]
               }),

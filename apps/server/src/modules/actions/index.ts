@@ -7,6 +7,7 @@ import { namespaceKv } from './runtime/namespaceKv';
 import { createActionRunner } from './runtime/runAction';
 import { createTaskRegistry } from './tasks/registry';
 import { fleetStore } from '../../core/server/fleet/link';
+import { readManifest } from '../functions/manifest';
 import { createRoutes } from '../functions/routes';
 import { createSpaceRegistries, prepareFunctions } from '../functions/space';
 
@@ -23,6 +24,7 @@ import type {
   SpaceRevision
 } from './types';
 import type { FunctionsSource } from '../functions/build';
+import type { ManifestReading } from '../functions/manifest';
 import type { RouteHandler, RouteVisit } from '../functions/routes';
 import type { PreparedFunctions } from '../functions/space';
 import type { ActionDocument } from '@plitzi/sdk-shared';
@@ -40,6 +42,11 @@ export type ActionsModule = ActionRunner & {
    * one way a space's functions become storable; refused when this server has no runner.
    */
   prepareFunctions: (source: FunctionsSource) => Promise<PreparedFunctions>;
+  /**
+   * What a space's code declares, read by every rule a saved space's functions meet — for code that is not built here:
+   * a space runtime's, described by the runtime itself when it starts. The manifest, and the problems that refuse it.
+   */
+  readManifest: (declared: unknown) => ManifestReading;
   /**
    * The function that answers `method path` under `/api/` for this visit — the deployment's own routes, then the space's
    * — or none, and the page server answers as it would have.
@@ -89,10 +96,9 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
   const registry = createTaskRegistry(config.functions?.native, { db: (config.dbDrivers?.length ?? 0) > 0 });
   const spaceRegistries = createSpaceRegistries(registry, config.functions);
   const reserved = new Set(registry.list().map(task => task.namespace));
+  // Asked whenever the deployment answers it: a space's code may run in the sandbox or in a runtime of its own.
   const registryFor = async (spaceId: number, at?: SpaceRevision): Promise<ActionTaskRegistry> =>
-    spaceRegistries.registryFor(
-      config.functions?.runner ? await config.lookups.getFunctions?.(spaceId, at) : undefined
-    );
+    spaceRegistries.registryFor(await config.lookups.getFunctions?.(spaceId, at));
   // A run whose every step is the deployment's never asks for the space's functions: most runs, and no lookup.
   const registryForRun = (request: ActionRunRequest): ActionTaskRegistry | Promise<ActionTaskRegistry> =>
     Object.values(request.entry.document.nodes).every(
@@ -126,6 +132,7 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
         ? prepareFunctions(source, runner, reserved)
         : Promise.resolve({ ok: false, problems: [{ message: 'This server runs no space functions' }] });
     },
+    readManifest: declared => readManifest(declared, reserved),
     guards,
     kv: spaceId => namespaceKv(kv, spaceId),
     limitsFor

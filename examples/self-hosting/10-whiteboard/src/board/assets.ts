@@ -32,6 +32,9 @@ const KINDS: readonly Kind[] = [
 ];
 
 /** One picture: the browser downscales before it sends, so this is a ceiling for the odd one that could not. */
+/** A picture's id as the server makes it: what a route may be asked for. */
+export const ASSET_ID = /^[A-Za-z0-9_-]{16,32}$/;
+
 export const MAX_ASSET_BYTES = 700 * 1024;
 
 /** Per board: enough for a moodboard, not a photo library in a demo's memory. */

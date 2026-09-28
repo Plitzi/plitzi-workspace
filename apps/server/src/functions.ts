@@ -33,4 +33,5 @@ export type {
   SpaceFunctions
 } from './modules/functions/protocol';
 export type { PreparedFunctions } from './modules/functions/space';
+export type { ManifestReading } from './modules/functions/manifest';
 export { functionTryEntry, TRY_STEP } from './modules/functions/tryEntry';

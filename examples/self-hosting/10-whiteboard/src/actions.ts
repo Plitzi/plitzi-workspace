@@ -533,7 +533,8 @@ const templateRemove = defineAction({
   output: libraryAnswer()
 });
 
-const actions = [
+/** Every action of the space, as the platform seeds it and this server looks it up — one list for both. */
+export const actions = [
   list,
   load,
   open,

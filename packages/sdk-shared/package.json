@@ -835,6 +835,18 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/resources/SpaceRemoveResourceMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/resources/SpaceRemoveResourceMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/runtime/SpaceRemoveRuntimeMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceRemoveRuntimeMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceRemoveRuntimeMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/runtime/SpaceRemoveRuntimeVariableMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceRemoveRuntimeVariableMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceRemoveRuntimeVariableMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeVariableMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeVariableMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/runtime/SpaceSetRuntimeVariableMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/variables/SpaceAddVariableMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/variables/SpaceAddVariableMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/variables/SpaceAddVariableMutation.mjs"
@@ -990,6 +1002,10 @@
     "./network/graphql/builder/Queries/Space/SpaceResourcesQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceResourcesQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceResourcesQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceRuntimeQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceRuntimeQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceRuntimeQuery.mjs"
     },
     "./network/graphql/builder/Queries/Space/SpaceVisitorsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceVisitorsQuery.d.ts",

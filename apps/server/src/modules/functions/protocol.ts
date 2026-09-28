@@ -134,6 +134,11 @@ export type SpaceFunctions = {
   bundle: FunctionsBundleRef;
   manifest: FunctionsManifest;
   limits?: Partial<FunctionLimits>;
+  /**
+   * What runs them, when it is not the deployment's sandbox: the space's own runtime (`createRemoteRunner` to it). Its
+   * bundle id then names that runtime's code, so a registry built for one never answers for another.
+   */
+  runner?: FunctionRunner;
 };
 
 /** The messages of one runner connection (our own runner service), each side's in turn. */

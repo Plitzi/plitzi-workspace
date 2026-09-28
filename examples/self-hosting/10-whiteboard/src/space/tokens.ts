@@ -96,3 +96,39 @@ export const notifications: SpaceSpec['notifications'] = {
   danger: 'var(--danger)',
   radius: '12px'
 };
+
+/**
+ * The canvas's palette. The board ships no colours: it paints with these custom properties, pointed here at the space's
+ * tokens — so a theme switch changes the tokens, the canvas reads them again, and every drawing recolours with the page.
+ * Every class a board is drawn in carries them: the board's own, the gallery's thumbnails and the hero's sandbox.
+ */
+export const boardPalette = {
+  '--board-paper': 'var(--paper)',
+  '--board-dots': 'var(--dots)',
+  '--board-accent': 'var(--accent)',
+  '--board-surface': 'var(--surface)',
+  '--board-edge': 'var(--edge)',
+  '--board-muted': 'var(--muted)',
+  '--board-ink': 'var(--ink)',
+  '--board-red': 'var(--red)',
+  '--board-orange': 'var(--orange)',
+  '--board-green': 'var(--green)',
+  '--board-blue': 'var(--blue)',
+  '--board-violet': 'var(--violet)',
+  '--board-fill-red': 'var(--fill-red)',
+  '--board-fill-orange': 'var(--fill-orange)',
+  '--board-fill-yellow': 'var(--fill-yellow)',
+  '--board-fill-green': 'var(--fill-green)',
+  '--board-fill-blue': 'var(--fill-blue)',
+  '--board-fill-violet': 'var(--fill-violet)',
+  '--board-sticky-yellow': 'var(--sticky-yellow)',
+  '--board-sticky-red': 'var(--sticky-red)',
+  '--board-sticky-orange': 'var(--sticky-orange)',
+  '--board-sticky-green': 'var(--sticky-green)',
+  '--board-sticky-blue': 'var(--sticky-blue)',
+  '--board-sticky-violet': 'var(--sticky-violet)',
+  '--board-laser': 'var(--laser)',
+  '--board-guide': 'var(--guide)',
+  '--board-font': 'var(--hand)',
+  '--board-ui-font': 'var(--ui)'
+};

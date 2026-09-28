@@ -72,6 +72,49 @@ const optionalNumber = (value: unknown, what: string): number | undefined =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const headerPairsOf = (value: unknown): [string, string][] =>
+  Array.isArray(value)
+    ? value.flatMap((pair: unknown) =>
+        Array.isArray(pair) && typeof pair[0] === 'string' && typeof pair[1] === 'string'
+          ? [[pair[0], pair[1]] satisfies [string, string]]
+          : []
+      )
+    : [];
+
+const wireBodyFrom = (value: unknown): WireBody | null => {
+  const body = isRecord(value) ? value : undefined;
+
+  return body && typeof body.text === 'string'
+    ? { text: body.text }
+    : body && typeof body.base64 === 'string'
+      ? { base64: body.base64 }
+      : null;
+};
+
+/** An answer that crossed a boundary as a wire response — from a space's code, or from the platform — read, not trusted. */
+export const wireResponseFrom = (value: unknown): WireResponse => {
+  const answer = isRecord(value) ? value : {};
+
+  return {
+    status: typeof answer.status === 'number' && answer.status >= 200 && answer.status <= 599 ? answer.status : 500,
+    statusText: typeof answer.statusText === 'string' ? answer.statusText : '',
+    headers: headerPairsOf(answer.headers),
+    body: wireBodyFrom(answer.body)
+  };
+};
+
+/** A request that crossed as a wire request, as a web `Request` again — what a route handler outside the sandbox takes. */
+export const requestFromWire = (value: unknown): Request => {
+  const wire = isRecord(value) ? value : {};
+  const method = typeof wire.method === 'string' ? wire.method : 'GET';
+
+  return new Request(typeof wire.url === 'string' ? wire.url : 'http://runtime.invalid/', {
+    method,
+    headers: headerPairsOf(wire.headers),
+    body: method === 'GET' || method === 'HEAD' ? null : bodyOf(wireBodyFrom(wire.body))
+  });
+};
+
 const recordArg = (value: unknown, what: string): Record<string, unknown> => {
   if (!isRecord(value)) {
     throw new CallError(`${what} is an object`);

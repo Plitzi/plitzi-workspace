@@ -4,23 +4,29 @@ import { fileURLToPath } from 'node:url';
 import { authorSpace } from '@plitzi/sdk-authoring';
 import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
+import { serveRuntime } from '@plitzi/sdk-server/runtime';
 
 import { lookups } from './actions.ts';
-import { AGENT_PATH, createAgentEndpoint } from './agent/hosted.ts';
-import { BRAND_PATH, BRAND_SVG } from './board/brand.ts';
-import { deploymentFrom } from './deployment.ts';
+import { AGENT_PATH } from './agent/hosted.ts';
+import { serverStoresFrom } from './deployment.ts';
+import pizarra from './runtime.ts';
 import { PLUGINS, space } from './space/index.ts';
-import { createBoardFunctions } from './tasks.ts';
-
-import type { SSRMiddleware } from '@plitzi/sdk-shared';
 
 const PORT = Number(process.env.PORT ?? 4016);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on.
 const HOST = process.env.HOST ?? '127.0.0.1';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-/** One process in memory, or one replica of several over Redis — decided by the environment (`deployment.ts`). */
-const deployment = deploymentFrom(process.env);
+/** Where people reach this Pizarra: `PIZARRA_PUBLIC_URL` behind a proxy, its own address otherwise. */
+const publicUrl = (process.env.PIZARRA_PUBLIC_URL ?? `http://127.0.0.1:${String(PORT)}`).replace(/\/+$/, '');
+
+/**
+ * Pizarra self-hosted: the server the platform would be — the boards' `kv`, the channels, the key things are signed
+ * with — decided by the environment (`deployment.ts`), and Pizarra's own runtime loaded into it, the same module the
+ * platform runs beside a space (`runtime.ts`).
+ */
+const stores = serverStoresFrom(process.env);
+const runtime = await serveRuntime(pizarra, { env: process.env, publicUrl });
 
 /**
  * The elements this space ships itself: the canvas; the share card — a QR code and the clipboard, which are the
@@ -36,58 +42,6 @@ const plugins = {
   copyText: { js: path.resolve(here, 'plugins/CopyText/index.ts'), action: 'compile' as const }
 };
 
-/** `/board-assets/<board>/<asset>`: the picture an image element names, as its board keeps it. */
-const ASSET_PATH = /^\/board-assets\/([a-z0-9]{10})\/([A-Za-z0-9_-]{16,32})$/;
-
-/**
- * The pictures pasted onto boards, served beside the pages. Only an id the server made, only the type the bytes were
- * checked to be, and headers that keep a browser from reading them as anything else. Cached for good: an asset never
- * changes — a new picture is a new id.
- */
-const serveAssets: SSRMiddleware = async (req, res, next) => {
-  // The mark, beside the pictures: one file that never changes but with the example itself.
-  if (req.method === 'GET' && req.path === BRAND_PATH) {
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.send(BRAND_SVG);
-
-    return undefined;
-  }
-
-  const match = req.method === 'GET' ? ASSET_PATH.exec(req.path) : null;
-  if (!match) {
-    return next();
-  }
-
-  const asset = await deployment.assets.read(match[1], match[2]);
-  if (!asset) {
-    res.setStatus(404);
-    res.send('');
-
-    return undefined;
-  }
-
-  res.setHeader('Content-Type', asset.mime);
-  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Content-Security-Policy', "default-src 'none'");
-  res.send(asset.bytes);
-
-  return undefined;
-};
-
-/**
- * Pizarra's agent, at `/mcp`: what anyone on a board adds to their own agent — Claude, OpenCode, anything that speaks
- * MCP — to bring it onto the board as a collaborator (`agent/hosted.ts`).
- */
-const agents = createAgentEndpoint({
-  directory: deployment.agents,
-  host: HOST,
-  port: PORT,
-  ...(process.env.PIZARRA_PUBLIC_URL ? { publicUrl: process.env.PIZARRA_PUBLIC_URL } : {})
-});
-
 /** Authored at boot from `src/space`: saving a file and letting `start:dev` restart the process is the whole loop. */
 const offlineData = authorSpace(space, { plugins: PLUGINS });
 
@@ -95,8 +49,8 @@ const offlineData = authorSpace(space, { plugins: PLUGINS });
  * A collaborative whiteboard, in one server and no account.
  *
  * Everything that makes it collaborative is two settings. `action` keeps the boards — the `board.*` tasks over the
- * action `kv` — and `realtime` carries what changed to everyone looking. The one middleware serves the pictures pasted
- * onto them.
+ * action `kv` — and `realtime` carries what changed to everyone looking. The runtime's routes serve the pictures pasted
+ * onto them, and its endpoint is the agents'.
  */
 const server = createServer(
   {
@@ -109,15 +63,14 @@ const server = createServer(
       deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames: Object.keys(plugins) }
     }),
     plugins,
-    middlewares: [serveAssets],
-    functions: { native: [createBoardFunctions({ assets: deployment.assets })] },
+    functions: { native: runtime.native },
     action: {
       lookups,
-      kv: deployment.kv,
+      kv: stores.kv,
       // Nothing here runs on a clock.
       jobs: false,
       // What a board's keys are signed with — through `ctx.sign`, so the board code never holds it.
-      signingSecret: deployment.signingSecret,
+      signingSecret: stores.signingSecret,
       onRun: createRunLogger(consoleLogger),
       onReject: createRejectLogger(consoleLogger)
     },
@@ -126,7 +79,7 @@ const server = createServer(
      * somebody whose page is connected to one replica is drawn on a page connected to another.
      */
     realtime: {
-      pubsub: deployment.pubsub,
+      pubsub: stores.pubsub,
       /**
        * A socket per page rather than a stream and a request per message: twenty cursor updates a second from every
        * person on a board are frames on a connection that is already open, not twenty requests. A page falls back to
@@ -135,17 +88,17 @@ const server = createServer(
       transport: 'websocket'
     }
   },
-  { preAuth: [agents.stage] }
+  { preAuth: [runtime.stage] }
 );
 
 server.listen(PORT, HOST);
 closeOnSignals(server, {
   afterClose: async () => {
-    await agents.close();
-    await deployment.close();
+    await runtime.close();
+    await stores.close();
   }
 });
 
-console.log(`[whiteboard] the boards on http://127.0.0.1:${PORT}/ — ${deployment.describe}`);
+console.log(`[whiteboard] the boards on http://127.0.0.1:${String(PORT)}/ — ${stores.describe}`);
 console.log('[whiteboard] open a board in two windows — every stroke, cursor and rename reaches the other');
-console.log(`[whiteboard] agents join at http://127.0.0.1:${PORT}${AGENT_PATH} — the ✦ on a board says how`);
+console.log(`[whiteboard] agents join at ${publicUrl}${AGENT_PATH} — the ✦ on a board says how`);

@@ -50,6 +50,9 @@ import SpaceUpdatePageMutation from './Space/pages/SpaceUpdatePageMutation';
 import SpaceAddResourceMutation from './Space/resources/SpaceAddResourceMutation';
 import SpaceMoveResourceMutation from './Space/resources/SpaceMoveResourceMutation';
 import SpaceRemoveResourceMutation from './Space/resources/SpaceRemoveResourceMutation';
+import SpaceRemoveRuntimeMutation from './Space/runtime/SpaceRemoveRuntimeMutation';
+import SpaceRemoveRuntimeVariableMutation from './Space/runtime/SpaceRemoveRuntimeVariableMutation';
+import SpaceSetRuntimeVariableMutation from './Space/runtime/SpaceSetRuntimeVariableMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
 import SpaceAddTemplateMutation from './Space/SpaceAddTemplateMutation';
@@ -169,6 +172,9 @@ export type BuilderMutationsMap = {
   SpaceRemoveCredential: unknown;
   SpaceAddVisitor: unknown;
   SpaceRemoveVisitor: unknown;
+  SpaceSetRuntimeVariable: string[];
+  SpaceRemoveRuntimeVariable: string[];
+  SpaceRemoveRuntime: boolean;
   SpacePublish: TSpacePublishMutation;
   SpaceFixIssues: TSpaceFixIssuesMutation;
   SpaceDeploy: TSpaceDeployMutation;
@@ -263,6 +269,9 @@ const BuilderMutations = {
   SpaceRemoveCredential: SpaceRemoveCredentialMutation,
   SpaceAddVisitor: SpaceAddVisitorMutation,
   SpaceRemoveVisitor: SpaceRemoveVisitorMutation,
+  SpaceSetRuntimeVariable: SpaceSetRuntimeVariableMutation,
+  SpaceRemoveRuntimeVariable: SpaceRemoveRuntimeVariableMutation,
+  SpaceRemoveRuntime: SpaceRemoveRuntimeMutation,
   SpacePublish: SpacePublishMutation,
   SpaceFixIssues: SpaceFixIssuesMutation,
   SpaceDeploy: SpaceDeployMutation,

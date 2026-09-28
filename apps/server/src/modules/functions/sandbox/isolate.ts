@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 import { installGuest } from './guest';
 import { guestPrelude } from './prelude';
 import { changeKv } from '../../actions/runtime/kvChange';
+import { createFunctionsDriver, describeFunctions } from '../driver';
 import { FunctionFailure } from '../protocol';
 
 import type { GuestDriver } from './guest';
@@ -203,7 +204,7 @@ const BOOTSTRAP = `(() => {
     sleep: ms => refs.sleep.apply(undefined, [ms], transfer),
     random: length => refs.random(length),
     crypto: message => refs.crypto.apply(undefined, [message], transfer)
-  }, { changeKv: ${changeKv.toString()} });
+  }, { changeKv: ${changeKv.toString()}, describeFunctions: ${describeFunctions.toString()}, createFunctionsDriver: ${createFunctionsDriver.toString()} });
 })()`;
 
 type Cached = { code: string; bytes: number; cachedData?: IsolatedVM.ExternalCopy<ArrayBuffer> };

@@ -49,7 +49,7 @@ export type BoardProps = {
   roomGrant?: string;
   /** The board's name: what an exported image is called. */
   title?: string;
-  /** Where the board's pictures are served from: `/board-assets/<board>`. */
+  /** Where the board's pictures are served from: `/api/board-assets/<board>`. */
   assetBase?: string;
   /** The id this visitor keeps: their votes are counted by it, and lit on the badges. */
   voter?: string;

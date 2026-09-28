@@ -72,8 +72,10 @@ import { identity } from './state.ts';
 import { boardAction, stylePanel } from './stylePanel.ts';
 import { hearTemplates, TEMPLATES, templateSaveFlow } from './templates.ts';
 import { timerButton, timerPanel, timerPill } from './timer.ts';
+import { boardPalette } from './tokens.ts';
 import { toolbar, toolFlyouts } from './toolbar.ts';
 import { bottomTray, followBanner, reactionPicker, stampPicker } from './tray.ts';
+import { ASSETS_PATH } from '../board/brand.ts';
 import declaration from '../plugins/Board/declaration.ts';
 
 import type { BoardAttributes } from '../plugins/Board/declaration.ts';
@@ -138,7 +140,7 @@ export const screen = styles('screen', {
 const stage = styles('stage', { position: 'absolute', inset: '0px' });
 
 /** The canvas's one class — and, in `css.ts`, where its `--board-*` colours are pointed at the space's tokens. */
-export const canvasClass = styles('boardCanvas', { position: 'absolute', inset: '0px' });
+export const canvasClass = styles('boardCanvas', { position: 'absolute', inset: '0px', ...boardPalette });
 
 /**
  * The chrome sits over the canvas and lets the pointer through everywhere it is not: a full-bleed layer that
@@ -440,7 +442,7 @@ const canvas = (): ElementSpec =>
       bindTemplate('roomTopic', BOARD_PROVIDER, TOPIC('room')),
       bindTemplate('grant', BOARD_PROVIDER, GRANT('board')),
       bindTemplate('roomGrant', BOARD_PROVIDER, GRANT('room')),
-      bindTemplate('assetBase', `${BOARD_PROVIDER}.id`, '/board-assets/{{ source }}'),
+      bindTemplate('assetBase', `${BOARD_PROVIDER}.id`, `${ASSETS_PATH}/{{ source }}`),
       { to: 'voter', source: 'computed.visitor' },
       { to: 'tool', source: 'computed.tool' },
       { to: 'stroke', source: 'computed.stroke' },

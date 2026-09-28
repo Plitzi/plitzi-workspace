@@ -62,6 +62,26 @@ export type SpaceVisitor = {
   updatedAt: number;
 };
 
+/** One environment's runtime — the space's own server code run beside the platform — and how it last was. */
+export type SpaceRuntimeEnvironment = {
+  environment: string;
+  /** 0 for the draft. */
+  revision: number;
+  /** The packed code it runs, by what its bytes are. */
+  digest: string;
+  status: 'waiting' | 'starting' | 'ready' | 'failed';
+  /** Why it is not running, for whoever manages the space. */
+  error: string | null;
+  /** The paths of the space it answers itself (`/mcp`). */
+  endpoints: string[];
+  /** Its tasks, as flows name them (`board.create`). */
+  tasks: string[];
+  startedAt: number | null;
+};
+
+/** A space's runtime: every environment's, and the names of the variables it starts with — never their values. */
+export type SpaceRuntime = { environments: SpaceRuntimeEnvironment[]; variables: string[] };
+
 export type SpaceDeployment = {
   id: number;
   environment: Environment;

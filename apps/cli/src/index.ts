@@ -6,6 +6,7 @@ import create from './commands/create';
 import createPlugin from './commands/createPlugin';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
 import packPluginCommand from './commands/packPlugin';
+import { pushRuntime, runtimeStatus, setRuntimeVariable, unsetRuntimeVariable } from './commands/runtime';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { PACKAGE_MANAGERS } from './scaffold';
 
@@ -15,6 +16,7 @@ import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
 import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
 import type { PackPluginOptions } from './commands/packPlugin';
+import type { RuntimeOptions } from './commands/runtime';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 
 /**
@@ -174,5 +176,39 @@ functions
   .option('--params <json>', 'Its params, as a JSON object')
   .option('-w, --watch', 'Run it again every time a file of functions/ is saved')
   .action((task: string, options: FunctionsDevOptions) => devFunction(task, options));
+
+const runtime = program
+  .command('runtime')
+  .description('The space’s runtime: its own server code, run as a process of its own beside the platform');
+
+runtime
+  .command('push')
+  .description('Pack this project’s runtime module and keep it as the space’s draft runtime')
+  .option('--entry <path>', 'The module whose default export is defineRuntime(…)', 'src/runtime.ts')
+  .option(...API_OPTION)
+  .action((options: RuntimeOptions) => pushRuntime(options));
+
+runtime
+  .command('status')
+  .description('How each environment’s runtime is, and the names of its variables')
+  .option(...API_OPTION)
+  .action((options: RuntimeOptions) => runtimeStatus(options));
+
+const vars = runtime.command('vars').description('What the runtime starts with — written, never read back');
+
+vars
+  .command('set')
+  .argument('<name>', 'The variable, in capitals: REDIS_URL')
+  .argument('[value]', 'Its value — read from standard input when left out, which keeps it out of the shell history')
+  .option(...API_OPTION)
+  .action((name: string, value: string | undefined, options: RuntimeOptions) =>
+    setRuntimeVariable(name, value, options)
+  );
+
+vars
+  .command('unset')
+  .argument('<name>', 'The variable')
+  .option(...API_OPTION)
+  .action((name: string, options: RuntimeOptions) => unsetRuntimeVariable(name, options));
 
 program.parse(process.argv);

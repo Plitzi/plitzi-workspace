@@ -44,6 +44,8 @@ export interface FakePlatform {
   functions: { files: Record<string, string>; version: string };
   /** Every task tried, with its params. */
   tried: { task: string; params: unknown }[];
+  /** Space 3's runtime: every push as it arrived, and its variables — a value the platform keeps and never shows. */
+  runtime: { pushed: FakeUpload[]; variables: Map<string, string> };
   close: () => Promise<void>;
 }
 
@@ -165,6 +167,36 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
             manifest: { hosts: [], tasks: [{ namespace: 'feed', action: 'read' }], routes: [] }
           });
         }
+      } else if (url.pathname === '/spaces/3/runtime' && req.method === 'PUT') {
+        platform.runtime.pushed.push({
+          path: url.pathname,
+          contentType: req.headers['content-type'] ?? '',
+          bytes: body.byteLength
+        });
+        json(res, 200, { ok: true, digest: 'd'.repeat(64), size: body.byteLength });
+      } else if (url.pathname === '/spaces/3/runtime' && req.method === 'GET') {
+        json(res, 200, {
+          environments: [
+            {
+              environment: 'main',
+              revision: 0,
+              digest: 'd'.repeat(64),
+              status: 'ready',
+              endpoints: ['/mcp'],
+              tasks: ['board.create']
+            }
+          ],
+          variables: [...platform.runtime.variables.keys()].sort()
+        });
+      } else if (url.pathname.startsWith('/spaces/3/runtime/variables/')) {
+        const name = decodeURIComponent(url.pathname.slice('/spaces/3/runtime/variables/'.length));
+        if (req.method === 'PUT') {
+          platform.runtime.variables.set(name, (JSON.parse(body.toString()) as { value: string }).value);
+        } else {
+          platform.runtime.variables.delete(name);
+        }
+
+        res.writeHead(204).end();
       } else if (url.pathname === '/spaces/3/functions/try' && req.method === 'POST') {
         const sent = JSON.parse(body.toString()) as { task: string; params: unknown };
         platform.tried.push(sent);
@@ -198,6 +230,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     expiresIn: 3600,
     functions: { files: {}, version: 'v0' },
     tried: [],
+    runtime: { pushed: [], variables: new Map() },
     browser: url => {
       const asked = new URL(url).searchParams;
       const scope = asked.get('scope') ?? '';

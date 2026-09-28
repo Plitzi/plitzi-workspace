@@ -15,6 +15,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Connectors](./connectors.md) | Reading from (and writing to) a CMS or any REST API: the manifest, the provider element, paging and SSR preloading |
 | [Server actions](./server-actions.md) | Work a page cannot do in the browser: authoring flows the server runs, and calling them from a page |
 | [Functions](./functions.md) | A space's own server code: TypeScript tasks and `/api/` routes the platform runs in a sandbox, written in the builder, a project or by an agent |
+| [Space runtimes](./runtimes.md) | A space's own server code as a process of its own beside the platform: Node and its packages, open connections, endpoints that stream |
 | [Realtime channels](./realtime.md) | Pages that see each other: declaring channels, the `channel` element and `useChannel`, publishing from a server action, and the pub/sub adapter a deployment picks |
 | [Accessibility and browser agents](./accessibility.md) | Pages screen readers and browser agents (Claude in Chrome) can use: what the elements do, what an author says, the linter's rules, canvases, and checking a page |
 | [AI agents (MCP)](./mcp.md) | Connecting Claude or any MCP client to a space: what an agent can do, how it works a space, and what the server guarantees |

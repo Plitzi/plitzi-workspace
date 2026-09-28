@@ -97,7 +97,9 @@ export const authorFlow = (
       flowId,
       enabled: step.enabled ?? true,
       ...(step.when ? { when: step.when } : {}),
-      ...(step.whileRunning ? { whileRunning: step.whileRunning } : {})
+      // `skip` is what a trigger does unless told otherwise: written down, it would be a second way to say the default,
+      // and the document read back into code (`specFromSpace`) would not be the one written.
+      ...(step.whileRunning && step.whileRunning !== 'skip' ? { whileRunning: step.whileRunning } : {})
     };
 
     return flow;

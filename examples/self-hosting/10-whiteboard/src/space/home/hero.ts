@@ -22,6 +22,7 @@ import declaration from '../../plugins/Board/declaration.ts';
 import { newBoardFlow, primaryButton } from '../board.ts';
 import { BUTTON_RESET, FLOAT, ICON_BUTTON, icon, iconGlyph } from '../kit.ts';
 import { quickPrivateBoard } from '../reach.ts';
+import { boardPalette } from '../tokens.ts';
 
 import type { CollabColour } from '../../board/people.ts';
 import type { Tool } from '../../plugins/Board/controller.ts';
@@ -498,7 +499,7 @@ const sandboxBoard = (): ElementSpec =>
   board({
     id: 'sandbox-canvas',
     runtime: 'client',
-    class: styles('sandboxBoard', { position: 'absolute', inset: '0px' }),
+    class: styles('sandboxBoard', { position: 'absolute', inset: '0px', ...boardPalette }),
     boardId: 'sandbox',
     mode: 'edit',
     elements: welcome(),

@@ -68,7 +68,7 @@ export type ControllerProps = {
   strokeWidth: StrokeWidth;
   mode: BoardMode;
   title: string;
-  /** Where the board's pictures are served from: `/board-assets/<board>`. */
+  /** Where the board's pictures are served from: `/api/board-assets/<board>`. */
   assetBase: string;
   /** The id this visitor keeps, which their votes are counted by. */
   voter: string;

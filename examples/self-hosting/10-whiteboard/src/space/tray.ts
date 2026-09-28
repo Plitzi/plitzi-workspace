@@ -59,7 +59,18 @@ const tray = styles('tray', {
 });
 
 /** The pads' papers, and the class `css.ts` points them from. */
-const stack = styles('stickyStack', { display: 'flex', 'padding-top': '6px' });
+// The pads, in the same paper the notes are drawn on.
+const stack = styles('stickyStack', {
+  display: 'flex',
+  'padding-top': '6px',
+  '--stack-yellow': 'var(--sticky-yellow)',
+  '--stack-red': 'var(--sticky-red)',
+  '--stack-orange': 'var(--sticky-orange)',
+  '--stack-green': 'var(--sticky-green)',
+  '--stack-blue': 'var(--sticky-blue)',
+  '--stack-violet': 'var(--sticky-violet)',
+  '--stack-focus': 'var(--accent)'
+});
 
 const reactButton = styles('reactButton', {
   css: { ...ICON_BUTTON, 'font-size': '18px' },

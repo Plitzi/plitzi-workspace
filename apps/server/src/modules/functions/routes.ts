@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { answerCall, readCall, responseOf, wireRequestOf } from './capabilities';
+import { answerCall, readCall, responseOf, wireRequestOf, wireResponseFrom } from './capabilities';
 import { functionLimitsFor } from './config';
 import { functionContextFor } from './context';
 import { parseRouteKey } from './manifest';
@@ -11,7 +11,7 @@ import { ActionRefusal } from '../actions/runtime/errors';
 import type { FunctionsConfig } from './config';
 import type { FunctionContext, FunctionRoute, FunctionsDefinition } from './contract';
 import type { RouteKey } from './manifest';
-import type { FunctionUsage, SpaceFunctions, WireResponse } from './protocol';
+import type { FunctionUsage, SpaceFunctions } from './protocol';
 import type { TaskContextSource } from '../actions/runtime/runAction';
 import type { Environment, SpaceRevision, SSRUser } from '@plitzi/sdk-shared';
 
@@ -94,35 +94,6 @@ const withoutCookies = (response: Response): Response => {
   headers.delete('set-cookie');
 
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-/** A route's answer from the sandbox, read rather than trusted: it crossed from the space's code and a runner. */
-const wireResponseFrom = (value: unknown): WireResponse => {
-  const answer = isRecord(value) ? value : {};
-  const status =
-    typeof answer.status === 'number' && answer.status >= 200 && answer.status <= 599 ? answer.status : 500;
-  const body = isRecord(answer.body) ? answer.body : undefined;
-
-  return {
-    status,
-    statusText: typeof answer.statusText === 'string' ? answer.statusText : '',
-    headers: Array.isArray(answer.headers)
-      ? answer.headers.flatMap((pair: unknown) =>
-          Array.isArray(pair) && typeof pair[0] === 'string' && typeof pair[1] === 'string'
-            ? [[pair[0], pair[1]] satisfies [string, string]]
-            : []
-        )
-      : [],
-    body:
-      body && typeof body.text === 'string'
-        ? { text: body.text }
-        : body && typeof body.base64 === 'string'
-          ? { base64: body.base64 }
-          : null
-  };
 };
 
 /**
@@ -223,8 +194,8 @@ export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources
   };
 
   const spaceRoute = async (visit: RouteVisit, method: string, path: string): Promise<RouteHandler | undefined> => {
-    const { runner } = config;
-    const functions = runner ? await getFunctions?.(visit.spaceId, visit.at) : undefined;
+    const functions = await getFunctions?.(visit.spaceId, visit.at);
+    const runner = functions?.runner ?? config.runner;
     const match = functions ? matchRoute(functions.manifest.routes, method, path) : undefined;
     if (!runner || !functions || !match) {
       return undefined;

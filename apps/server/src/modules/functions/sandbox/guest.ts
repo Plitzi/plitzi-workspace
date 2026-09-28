@@ -1,4 +1,5 @@
 import type { changeKv } from '../../actions/runtime/kvChange';
+import type { createFunctionsDriver, describeFunctions } from '../driver';
 
 /** What the runner hands the guest: calls into the runner's own process, the only way out of the isolate. */
 export type GuestHost = {
@@ -20,6 +21,10 @@ export type GuestHost = {
 export type GuestShared = {
   /** `ctx.kv.change`: the read-change-write loop, over the guest's own `get` and `swap` calls. */
   changeKv: typeof changeKv;
+  /** What a definition declares, as a manifest. */
+  describeFunctions: typeof describeFunctions;
+  /** An invocation of a definition with its `ctx` — the same driver a space runtime runs. */
+  createFunctionsDriver: typeof createFunctionsDriver;
 };
 
 /** What the runner drives the guest with, once installed. */
@@ -62,8 +67,6 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost, sh
   const isRefusal = (error: unknown): boolean => error instanceof Error && error.name === REFUSAL;
 
   const refusal = (message: string): Error => Object.assign(new Error(message), { name: REFUSAL });
-
-  const isCallable = (value: unknown): value is (...args: unknown[]) => unknown => typeof value === 'function';
 
   // ---- bytes ----------------------------------------------------------------------------------------------------
 
@@ -903,22 +906,40 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost, sh
     return answer.value;
   };
 
-  /** A value as the wire can carry it; how a line reads is the platform's (`lineOf`), not the guest's. */
-  const wireValue = (value: unknown): unknown => {
-    if (value instanceof Error) {
-      return `${value.name}: ${value.message}`;
-    }
+  const run = new GuestAbortController();
 
-    if (value === undefined || typeof value === 'function' || typeof value === 'symbol' || typeof value === 'bigint') {
-      return typeof value;
-    }
+  const driver = shared.createFunctionsDriver({
+    call,
+    signal: run.signal,
+    responseOf: wire =>
+      new GuestResponse(bodyOfWire(wire.body), {
+        status: typeof wire.status === 'number' ? wire.status : 502,
+        statusText: typeof wire.statusText === 'string' ? wire.statusText : '',
+        headers: headerPairs(wire.headers)
+      }),
+    requestOf: wire =>
+      new GuestRequest(String(wire.url), {
+        method: String(wire.method),
+        headers: headerPairs(wire.headers),
+        body: wire.method === 'GET' || wire.method === 'HEAD' ? null : bodyOfWire(wire.body),
+        signal: run.signal
+      }),
+    wireOfResponse: response =>
+      Promise.resolve(
+        response instanceof GuestResponse
+          ? {
+              status: response.status,
+              statusText: response.statusText,
+              headers: [...response.headers],
+              body: wireOf(response)
+            }
+          : undefined
+      ),
+    changeKv: shared.changeKv,
+    refusal
+  });
 
-    return value;
-  };
-
-  const log = (...values: unknown[]): void => {
-    call({ op: 'log', values: values.map(wireValue) }).catch(() => undefined);
-  };
+  const { log } = driver;
 
   const refuseFetch = (): Promise<never> =>
     Promise.reject(
@@ -949,130 +970,8 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost, sh
 
   // ---- the driver -----------------------------------------------------------------------------------------------
 
-  const run = new GuestAbortController();
-
-  const listOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-
-  const describe = (definition: unknown): string => {
-    const found = isRecord(definition) ? definition : {};
-    const allow = isRecord(found.allow) ? found.allow : {};
-
-    return JSON.stringify({
-      ok: true,
-      value: {
-        hosts: listOf(allow.hosts),
-        tasks: listOf(found.tasks).map(task =>
-          isRecord(task)
-            ? {
-                namespace: task.namespace,
-                action: task.action,
-                title: task.title,
-                description: task.description,
-                params: task.params
-              }
-            : {}
-        ),
-        routes: isRecord(found.routes) ? Object.keys(found.routes) : []
-      }
-    });
-  };
-
-  const contextOf = (invocation: Record<string, unknown>) => {
-    const facts = isRecord(invocation.context) ? invocation.context : {};
-
-    const kvCall =
-      (method: string) =>
-      (...args: unknown[]): Promise<unknown> =>
-        call({ op: 'kv', method, args });
-    const kv = {
-      get: kvCall('get'),
-      set: kvCall('set'),
-      delete: kvCall('delete'),
-      increment: kvCall('increment'),
-      swap: (key: string, expected: unknown, next: unknown, ttlSeconds?: number): Promise<boolean> =>
-        kvCall('swap')(key, expected, next, ttlSeconds).then(written => written === true),
-      listPut: kvCall('listPut'),
-      listRange: kvCall('listRange'),
-      listRemove: kvCall('listRemove'),
-      change: (
-        key: string,
-        change: (current: unknown) => unknown,
-        lifetime?: number | ((next: unknown) => number | undefined)
-      ): Promise<unknown> => shared.changeKv(kv, key, change, { lifetime, refusal })
-    };
-
-    return {
-      ...facts,
-      kv,
-      fetch: async (url: string | URL, init: Record<string, unknown> = {}) => {
-        const answer = await call({ op: 'fetch', url: String(url), init });
-        const response = isRecord(answer) ? answer : {};
-
-        return new GuestResponse(bodyOfWire(response.body), {
-          status: typeof response.status === 'number' ? response.status : 502,
-          statusText: typeof response.statusText === 'string' ? response.statusText : '',
-          headers: headerPairs(response.headers)
-        });
-      },
-      publish: async (topic: string, type: string, data: unknown) => {
-        await call({ op: 'publish', topic, type, data });
-      },
-      grant: (topic: string, ttlSeconds?: number) => call({ op: 'grant', topic, ttlSeconds }),
-      revoke: async (topic: string, grant?: string) => {
-        await call({ op: 'revoke', topic, grant });
-      },
-      rateLimit: (bucket: string, limit: unknown) => call({ op: 'rateLimit', bucket, limit }),
-      sign: (value: string) => call({ op: 'sign', value }),
-      verify: (value: string, signature: string) => call({ op: 'verify', value, signature }),
-      log,
-      emit: (chunk: unknown) => {
-        call({ op: 'emit', chunk }).catch(() => undefined);
-      },
-      signal: run.signal
-    };
-  };
-
-  const dispatch = async (definition: unknown, invocation: Record<string, unknown>): Promise<unknown> => {
-    const found = isRecord(definition) ? definition : {};
-    const ctx = contextOf(invocation);
-    if (invocation.kind === 'task') {
-      const task = listOf(found.tasks).find(
-        entry => isRecord(entry) && `${String(entry.namespace)}.${String(entry.action)}` === invocation.name
-      );
-      if (!isRecord(task) || !isCallable(task.run)) {
-        throw new Error(`This space's functions have no task "${String(invocation.name)}"`);
-      }
-
-      const value: unknown = await task.run(isRecord(invocation.params) ? invocation.params : {}, ctx);
-
-      return value === undefined ? null : value;
-    }
-
-    const routes = isRecord(found.routes) ? found.routes : {};
-    const handler = routes[String(invocation.key)];
-    const wire = isRecord(invocation.request) ? invocation.request : {};
-    if (!isCallable(handler)) {
-      throw new Error(`This space's functions have no route "${String(invocation.key)}"`);
-    }
-
-    const request = new GuestRequest(String(wire.url), {
-      method: String(wire.method),
-      headers: headerPairs(wire.headers),
-      body: wire.method === 'GET' || wire.method === 'HEAD' ? null : bodyOfWire(wire.body),
-      signal: run.signal
-    });
-    const response: unknown = await handler(request, { ...ctx, params: invocation.params });
-    if (!(response instanceof GuestResponse)) {
-      throw new Error(`Route "${String(invocation.key)}" answered something that is not a Response`);
-    }
-
-    return {
-      status: response.status,
-      statusText: response.statusText,
-      headers: [...response.headers],
-      body: wireOf(response)
-    };
-  };
+  const describe = (definition: unknown): string =>
+    JSON.stringify({ ok: true, value: shared.describeFunctions(definition) });
 
   return {
     describe,
@@ -1080,7 +979,7 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost, sh
       let answer: Answer;
       try {
         const invocation: unknown = JSON.parse(invocationText);
-        answer = { ok: true, value: await dispatch(definition, isRecord(invocation) ? invocation : {}) };
+        answer = { ok: true, value: await driver.invoke(definition, isRecord(invocation) ? invocation : {}) };
       } catch (error) {
         answer = {
           ok: false,

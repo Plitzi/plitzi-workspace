@@ -9,10 +9,9 @@ import { colourOfName } from '../board/people.ts';
 import type { AgentServer } from './server.ts';
 import type { Door } from './session.ts';
 import type { AgentDirectory } from '../deployment.ts';
-import type { BaseContext, Stage } from '@plitzi/sdk-server';
 
 /**
- * Pizarra's agent, served by Pizarra: `/mcp`, over streamable HTTP — what the invite panel tells anyone on a board to
+ * Pizarra's agent, served by Pizarra's runtime: `/mcp`, over streamable HTTP — what the invite panel tells anyone on a board to
  * add to their agent, with nothing else to install or run. `claude mcp add --scope user --transport http pizarra <origin>/mcp`,
  * `opencode mcp add pizarra --url <origin>/mcp`, a custom connector in the Claude app.
  *
@@ -75,109 +74,71 @@ const CLIENT_NAMES: readonly [RegExp, string][] = [
 export const agentNameOf = (client: string | undefined): string =>
   CLIENT_NAMES.find(([pattern]) => client !== undefined && pattern.test(client))?.[1] ?? 'Agent';
 
-const firstOf = (value: string | string[] | undefined): string | undefined =>
-  (Array.isArray(value) ? value[0] : value)?.split(',')[0]?.trim() || undefined;
+const firstOf = (value: string | null): string | undefined => value?.split(',')[0]?.trim() || undefined;
 
 const jsonRpcError = (status: number, message: string): Response =>
   Response.json({ jsonrpc: '2.0', error: { code: -32000, message }, id: null }, { status });
 
 /** A request's body, whole: small enough to hold, and read once whether it is answered here or passed on. */
-const readBody = (ctx: BaseContext): Promise<Buffer | undefined> =>
-  new Promise((resolve, reject) => {
-    const { raw } = ctx;
-    if (raw.method === 'GET' || raw.method === 'HEAD' || raw.method === 'DELETE' || raw.method === 'OPTIONS') {
-      resolve(undefined);
-
-      return;
-    }
-
-    const chunks: Buffer[] = [];
-    let size = 0;
-    raw.on('data', (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > MAX_BODY_BYTES) {
-        reject(new Error('too large'));
-        raw.destroy();
-
-        return;
-      }
-
-      chunks.push(chunk);
-    });
-    raw.on('end', () => resolve(Buffer.concat(chunks)));
-    raw.on('error', reject);
-  });
-
-const headersOf = (ctx: BaseContext): Headers => {
-  const headers = new Headers();
-  for (const [name, value] of Object.entries(ctx.raw.headers)) {
-    for (const one of Array.isArray(value) ? value : value === undefined ? [] : [value]) {
-      headers.append(name, one);
-    }
+const readBody = async (request: Request): Promise<Uint8Array<ArrayBuffer> | undefined> => {
+  if (['GET', 'HEAD', 'DELETE', 'OPTIONS'].includes(request.method)) {
+    return undefined;
   }
 
-  return headers;
+  const body = new Uint8Array(await request.arrayBuffer());
+  if (body.byteLength > MAX_BODY_BYTES) {
+    throw new Error('too large');
+  }
+
+  return body;
 };
 
-/** What to do once an answer has gone out — or its client has stopped taking it: a stream that ends. */
-const ended = new WeakMap<Response, () => void>();
+/** What every answer says to a browser-based client: anyone may ask, and may read the session it was given. */
+const CORS = { 'access-control-allow-origin': '*', 'access-control-expose-headers': 'Mcp-Session-Id' };
 
-/** The answer, onto the wire: its status, its headers, and its body as it comes — an event stream stays open. */
-const send = async (ctx: BaseContext, response: Response): Promise<void> => {
-  const { rawRes, signal } = ctx;
-  const headers: Record<string, string> = {
-    'access-control-allow-origin': '*',
-    'access-control-expose-headers': 'Mcp-Session-Id'
-  };
-  response.headers.forEach((value, name) => {
-    headers[name] = value;
-  });
-  rawRes.writeHead(response.status, headers);
+/**
+ * The answer, with `onEnd` called once its body is over — read to the end, or given up by its client. An event stream
+ * stays open for as long as the app listens, and its end is how the agent learns the app went away.
+ */
+const endingWith = (response: Response, onEnd: () => void): Response => {
+  const headers = new Headers(response.headers);
+  Object.entries(CORS).forEach(([name, value]) => headers.set(name, value));
   if (!response.body) {
-    rawRes.end();
+    onEnd();
 
-    return;
+    return new Response(null, { status: response.status, statusText: response.statusText, headers });
   }
 
   const reader = response.body.getReader();
-  const stop = (): void => {
-    void reader.cancel();
-  };
-  signal.addEventListener('abort', stop, { once: true });
-  try {
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-
-      rawRes.write(Buffer.from(value));
+  let over = false;
+  const finish = (): void => {
+    if (!over) {
+      over = true;
+      onEnd();
     }
-  } catch {
-    // The client left mid-answer: nothing is waiting for the rest.
-  } finally {
-    signal.removeEventListener('abort', stop);
-    rawRes.end();
-  }
-};
+  };
+  const body = new ReadableStream<Uint8Array>({
+    pull: async controller => {
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          controller.close();
+          finish();
+        } else {
+          controller.enqueue(value);
+        }
+      } catch (error) {
+        controller.error(error);
+        finish();
+      }
+    },
+    cancel: async reason => {
+      finish();
+      await reader.cancel(reason);
+    }
+  });
 
-/** Where this replica calls itself: its own port, on loopback unless it listens on one address only. */
-const insideOrigin = (host: string, port: number): string =>
-  `http://${host === '0.0.0.0' || host === '::' || host === 'localhost' ? '127.0.0.1' : host}:${port}`;
-
-/**
- * This Pizarra's address as the agent's client reached it — what links on it look like. `PIZARRA_PUBLIC_URL` when a
- * proxy in front says nothing of it.
- */
-const publicOriginOf = (ctx: BaseContext, configured: string | undefined): string => {
-  if (configured) {
-    return configured.replace(/\/+$/, '');
-  }
-
-  const proto = firstOf(ctx.req.headers['x-forwarded-proto']) ?? ctx.req.protocol;
-  const host = firstOf(ctx.req.headers['x-forwarded-host']) ?? firstOf(ctx.req.headers.host) ?? ctx.req.hostname;
-
-  return `${proto}://${host}`;
+  return new Response(body, { status: response.status, statusText: response.statusText, headers });
 };
 
 const WHAT_THIS_IS =
@@ -186,26 +147,22 @@ const WHAT_THIS_IS =
   'or a custom connector in the Claude app — then send it a board’s link.';
 
 export type AgentEndpoint = {
-  stage: Stage<BaseContext>;
+  /** `/mcp`, as a web handler: the runtime's endpoint on the platform, a stage on a server of its own. */
+  handle: (request: Request) => Promise<Response>;
   /** Every agent off its board: the server is going away. */
   close: () => Promise<void>;
 };
 
 export const createAgentEndpoint = ({
   directory,
-  host,
-  port,
   publicUrl
 }: {
   directory: AgentDirectory;
-  /** Where this server listens, so a hosted agent calls it from inside. */
-  host: string;
-  port: number;
-  /** This Pizarra's public address, when a proxy in front of it does not say. */
-  publicUrl?: string;
+  /** This Pizarra's address — where its boards' links point, and where a hosted agent calls the boards' actions. */
+  publicUrl: string;
 }): AgentEndpoint => {
   const held = new Map<string, Held>();
-  const inside = insideOrigin(host, port);
+  const publicOrigin = publicUrl.replace(/\/+$/, '');
 
   const drop = async (session: string, reason: string): Promise<void> => {
     const entry = held.get(session);
@@ -238,28 +195,26 @@ export const createAgentEndpoint = ({
     }
   };
 
-  /** Its app listening: the stream is counted while it is open, and its end starts the wait for the app to be back. */
-  const listening = (session: string, entry: Held, response: Response): Response => {
+  /**
+   * Its app listening: the stream is counted while it is open — what this answers is called when it ends — and its end
+   * starts the wait for the app to be back.
+   */
+  const listening = (session: string, entry: Held): (() => void) => {
     entry.streams += 1;
     entry.listened = true;
     clearTimeout(entry.gone);
-    ended.set(response, () => {
+
+    return () => {
       entry.streams -= 1;
       unheard(session, entry);
-    });
-
-    return response;
+    };
   };
 
   /** A new agent: its server, and the transport that makes it a session once its client says `initialize`. */
-  const open = (ctx: BaseContext): Held => {
-    const publicOrigin = publicOriginOf(ctx, publicUrl);
-    // Who is asking, for what the board counts against a caller: the agent's client, not this replica's loopback.
-    const door: Door = {
-      origin: inside,
-      publicOrigin,
-      ...(ctx.req.ip ? { headers: { 'x-forwarded-for': ctx.req.ip } } : {})
-    };
+  const open = (request: Request): Held => {
+    const ip = firstOf(request.headers.get('x-forwarded-for'));
+    // Who is asking, for what the board counts against a caller: the agent's client, not this runtime.
+    const door: Door = { origin: publicOrigin, publicOrigin, ...(ip ? { headers: { 'x-forwarded-for': ip } } : {}) };
     const agent = createAgentServer({
       home: door,
       locate: link => {
@@ -301,33 +256,34 @@ export const createAgentEndpoint = ({
   };
 
   /** A session another replica holds: passed on to it, and its answer passed back — or, when it is gone, said so. */
-  const passOn = async (ctx: BaseContext, session: string, body: Buffer | undefined): Promise<Response> => {
-    const owner = ctx.req.headers[FORWARDED] ? undefined : await directory.ownerOf(session);
+  const passOn = async (
+    request: Request,
+    session: string,
+    body: Uint8Array<ArrayBuffer> | undefined
+  ): Promise<Response> => {
+    const owner = request.headers.get(FORWARDED) ? undefined : await directory.ownerOf(session);
     if (!owner || owner === directory.self) {
       // Gone with a replica that stopped, or forgotten after a long quiet: the client starts a new session.
       return jsonRpcError(404, 'Session not found — connect again');
     }
 
-    const headers = headersOf(ctx);
+    const headers = new Headers(request.headers);
     for (const name of ['host', 'connection', 'content-length', 'transfer-encoding']) {
       headers.delete(name);
     }
 
     headers.set(FORWARDED, '1');
-    if (ctx.req.ip && !headers.has('x-forwarded-for')) {
-      headers.set('x-forwarded-for', ctx.req.ip);
-    }
-
+    const url = new URL(request.url);
     try {
-      return await fetch(new URL(ctx.raw.url ?? AGENT_PATH, owner), {
-        method: ctx.raw.method ?? 'POST',
+      return await fetch(new URL(`${url.pathname}${url.search}`, owner), {
+        method: request.method,
         headers,
-        ...(body ? { body: new Uint8Array(body) } : {}),
-        signal: ctx.signal
+        ...(body ? { body } : {}),
+        signal: request.signal
       });
     } catch {
       // Its own client leaving is not the owner failing: the session is still there, for when it comes back.
-      if (ctx.signal.aborted) {
+      if (request.signal.aborted) {
         return new Response(null, { status: 499 });
       }
 
@@ -337,10 +293,12 @@ export const createAgentEndpoint = ({
     }
   };
 
-  const answer = async (ctx: BaseContext): Promise<Response> => {
-    const { raw } = ctx;
-    if (raw.method === 'OPTIONS') {
-      return new Response(null, {
+  /** An answer, and what to do once its body is over — for the stream an app listens on. */
+  type Answered = { response: Response; onEnd?: () => void };
+
+  const answer = async (request: Request): Promise<Answered> => {
+    if (request.method === 'OPTIONS') {
+      const response = new Response(null, {
         status: 204,
         headers: {
           'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
@@ -348,31 +306,38 @@ export const createAgentEndpoint = ({
           'access-control-max-age': '86400'
         }
       });
+
+      return { response };
     }
 
-    const session = firstOf(ctx.req.headers['mcp-session-id']);
+    const session = firstOf(request.headers.get('mcp-session-id'));
     // Somebody opened the address in a browser: what it is, and what to do with it.
-    if (raw.method === 'GET' && !session && !firstOf(ctx.req.headers.accept)?.includes('text/event-stream')) {
-      return new Response(WHAT_THIS_IS, { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    if (
+      request.method === 'GET' &&
+      !session &&
+      !firstOf(request.headers.get('accept'))?.includes('text/event-stream')
+    ) {
+      return { response: new Response(WHAT_THIS_IS, { headers: { 'content-type': 'text/plain; charset=utf-8' } }) };
     }
 
-    let body: Buffer | undefined;
+    let body: Uint8Array<ArrayBuffer> | undefined;
     try {
-      body = await readBody(ctx);
+      body = await readBody(request);
     } catch {
-      return jsonRpcError(413, 'That request is too large');
+      return { response: jsonRpcError(413, 'That request is too large') };
     }
 
-    const request = new Request(new URL(raw.url ?? AGENT_PATH, inside), {
-      method: raw.method ?? 'POST',
-      headers: headersOf(ctx),
-      ...(body ? { body: new Uint8Array(body) } : {})
+    // Read once above — for passing on too — so the transport is handed a request with the body back in it.
+    const asked = new Request(request.url, {
+      method: request.method,
+      headers: request.headers,
+      ...(body ? { body } : {})
     });
 
     if (session) {
       const entry = held.get(session);
       if (!entry) {
-        return passOn(ctx, session, body);
+        return { response: await passOn(request, session, body) };
       }
 
       entry.lastSeen = Date.now();
@@ -380,52 +345,39 @@ export const createAgentEndpoint = ({
       // Whatever it asks, its app is there: the wait for it to listen again starts over.
       unheard(session, entry);
       try {
-        const response = await entry.transport.handleRequest(request);
+        const response = await entry.transport.handleRequest(asked);
 
-        return raw.method === 'GET' && response.ok && response.body ? listening(session, entry, response) : response;
+        return request.method === 'GET' && response.ok && response.body
+          ? { response, onEnd: listening(session, entry) }
+          : { response };
       } finally {
         entry.lastSeen = Date.now();
       }
     }
 
     if (held.size >= MAX_AGENTS) {
-      return jsonRpcError(503, 'This Pizarra has as many agents as it can take right now — try again in a while');
+      return {
+        response: jsonRpcError(503, 'This Pizarra has as many agents as it can take right now — try again in a while')
+      };
     }
 
     // No session yet: this should be an `initialize`, which makes one. Anything else is refused by the transport, and
     // the agent it would have been never starts.
-    const entry = open(ctx);
+    const entry = open(request);
     await entry.agent.connect(entry.transport);
-    const response = await entry.transport.handleRequest(request);
+    const response = await entry.transport.handleRequest(asked);
     if (entry.transport.sessionId === undefined) {
       await entry.transport.close();
     }
 
-    return response;
+    return { response };
   };
 
   return {
-    stage: async ctx => {
-      if (ctx.req.path.startsWith('/.well-known/oauth-')) {
-        // An MCP client asking how to sign in, before it connects: nobody signs in to reach a board's agent.
-        await send(ctx, new Response(null, { status: 404 }));
+    handle: async request => {
+      const { response, onEnd } = await answer(request);
 
-        return true;
-      }
-
-      if (ctx.req.path !== AGENT_PATH) {
-        return false;
-      }
-
-      ctx.operation = `mcp ${ctx.raw.method ?? ''}`;
-      const response = await answer(ctx);
-      try {
-        await send(ctx, response);
-      } finally {
-        ended.get(response)?.();
-      }
-
-      return true;
+      return endingWith(response, onEnd ?? (() => undefined));
     },
     close: async () => {
       clearInterval(sweep);

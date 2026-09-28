@@ -15,6 +15,7 @@ import SpaceIssuesQuery from './Space/SpaceIssuesQuery';
 import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
 import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
+import SpaceRuntimeQuery from './Space/SpaceRuntimeQuery';
 import SpaceVisitorsQuery from './Space/SpaceVisitorsQuery';
 
 import type { TInitQuery } from './InitQuery';
@@ -34,6 +35,7 @@ import type { TSpaceIssuesQuery } from './Space/SpaceIssuesQuery';
 import type { TSpaceLatestRevisionQuery } from './Space/SpaceLatestRevisionQuery';
 import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
 import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
+import type { TSpaceRuntimeQuery } from './Space/SpaceRuntimeQuery';
 import type { TSpaceVisitorsQuery } from './Space/SpaceVisitorsQuery';
 
 // The quota shape is read by whatever renders it (the builder's own meter today), so it travels with the query.
@@ -58,6 +60,7 @@ export type BuilderQueriesMap = {
   SpaceConnectors: TSpaceConnectorsQuery;
   SpaceCredentials: TSpaceCredentialsQuery;
   SpaceVisitors: TSpaceVisitorsQuery;
+  SpaceRuntime: TSpaceRuntimeQuery;
   Segment: TSegmentQuery;
   Segments: TSegmentsQuery;
 };
@@ -79,6 +82,7 @@ const BuilderQueries = {
   SpaceConnectors: SpaceConnectorsQuery,
   SpaceCredentials: SpaceCredentialsQuery,
   SpaceVisitors: SpaceVisitorsQuery,
+  SpaceRuntime: SpaceRuntimeQuery,
   Segment: SegmentQuery,
   Segments: SegmentsQuery
 };

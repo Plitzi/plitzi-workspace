@@ -1,6 +1,8 @@
 import { ActionRefusal } from '@plitzi/sdk-server/functions';
 import { defineFunctions } from '@plitzi/sdk-server/functions';
 
+import { ASSET_ID } from './board/assets.ts';
+import { ASSETS_ROUTE, BRAND_ROUTE, BRAND_SVG } from './board/brand.ts';
 import { createSigner } from './board/locks.ts';
 import { isBoardId } from './board/model.ts';
 import {
@@ -356,6 +358,39 @@ export const createBoardFunctions = ({ assets }: Pick<BoardStores, 'assets'>): F
       templateSaveTask,
       templateAddTask,
       templateRemoveTask
-    ]
+    ],
+    routes: {
+      /**
+       * The picture an image element names, as its board keeps it — only an id the server made, only the type the bytes
+       * were checked to be, with headers that keep a browser from reading it as anything else. Kept for good: a new
+       * picture is a new id.
+       */
+      [`GET ${ASSETS_ROUTE}/:board/:asset`]: async (_request, ctx) => {
+        const { board, asset } = ctx.params;
+        const found =
+          board && asset && ASSET_ID.test(asset) && isBoardId(board) ? await assets.read(board, asset) : undefined;
+        if (!found) {
+          return new Response(null, { status: 404 });
+        }
+
+        return new Response(new Uint8Array(found.bytes), {
+          headers: {
+            'content-type': found.mime,
+            'cache-control': 'public, max-age=31536000, immutable',
+            'x-content-type-options': 'nosniff',
+            'content-security-policy': "default-src 'none'"
+          }
+        });
+      },
+      /** The mark, beside the pictures: one file that never changes but with the example itself. */
+      [`GET ${BRAND_ROUTE}`]: () =>
+        new Response(BRAND_SVG, {
+          headers: {
+            'content-type': 'image/svg+xml',
+            'cache-control': 'public, max-age=86400',
+            'x-content-type-options': 'nosniff'
+          }
+        })
+    }
   });
 };
