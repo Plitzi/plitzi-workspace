@@ -53,7 +53,7 @@ const Runtime = () => {
   return (
     <Card className="relative flex grow basis-0" rounded="none">
       <Card.Body grow>
-        <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-6 p-4">
+        <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-6 overflow-y-auto p-4">
           <div className="flex items-center justify-between gap-2">
             <Heading as="h5">Runtime</Heading>
             <Button size="sm" intent="secondary" onClick={handleRefresh}>

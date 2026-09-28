@@ -31,7 +31,7 @@ const ActionList = ({ actions, onSelect, onRemove, onCreate }: ActionListProps) 
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col p-4">
+    <div className="mx-auto flex min-h-0 w-full max-w-4xl grow basis-0 flex-col p-4">
       <div className="mb-4 flex w-full items-center justify-between">
         <Heading as="h5">Server Actions</Heading>
         <Button size="sm" onClick={onCreate}>
@@ -44,7 +44,7 @@ const ActionList = ({ actions, onSelect, onRemove, onCreate }: ActionListProps) 
           The credentials never leave the server.
         </div>
       )}
-      <div className="flex flex-col gap-2 overflow-auto">
+      <div className="flex min-h-0 grow basis-0 flex-col gap-2 overflow-y-auto">
         {actions.map(action => (
           <div
             key={action.identifier}
