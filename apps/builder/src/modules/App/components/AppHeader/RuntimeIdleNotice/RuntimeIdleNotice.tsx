@@ -4,13 +4,18 @@ import { memo, use, useCallback, useEffect, useState } from 'react';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
+import timeLeftOf from './timeLeftOf';
+
 import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
-/** How soon before a runtime stops for being unused the header says so. */
-const WARN_SECONDS = 10 * 60;
+/**
+ * How soon before a runtime stops for being unused the header says so: a day, for an idle time counted in days — ten
+ * minutes would warn nobody, since whoever left it unused for a week is rarely in the builder in those ten.
+ */
+const WARN_SECONDS = 24 * 60 * 60;
 
-/** How often the header reads the runtime again: a minute's countdown stays near enough to the truth. */
+/** How often the header reads the runtime again: a countdown in minutes stays near enough to the truth. */
 const READ_EVERY_MS = 30_000;
 
 const READ = { refreshInterval: READ_EVERY_MS };
@@ -54,8 +59,6 @@ const RuntimeIdleNotice = () => {
     return null;
   }
 
-  const minutes = Math.max(1, Math.ceil((closing.idleStopsAt - now) / 60));
-
   return (
     <button
       id="header-runtime-idle"
@@ -70,7 +73,7 @@ const RuntimeIdleNotice = () => {
     >
       <i className="fa-solid fa-power-off text-[10px]" />
       <span className="font-medium">
-        {keeping ? 'Keeping it running…' : `Runtime stops in ${String(minutes)} min · Keep running`}
+        {keeping ? 'Keeping it running…' : `Runtime stops in ${timeLeftOf(closing.idleStopsAt - now)} · Keep running`}
       </span>
     </button>
   );

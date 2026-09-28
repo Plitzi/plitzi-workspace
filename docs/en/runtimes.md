@@ -86,9 +86,9 @@ plitzi runtime start                 # started again — one stopped by hand, or
   environment among the sizes its plan includes: in the builder's Runtime panel, which shows what each environment runs
   at, or with `plitzi runtime size <size> [--environment <name>]`. Changing it starts that runtime again at it.
 - **An unused runtime stops by itself**, so it spends nothing idle: nothing forwarded to its endpoints and no task run
-  on it for a while (an hour on the platform), and it is stopped until somebody starts it again — the builder's Start,
-  `plitzi runtime start`, or a push or a publish. The builder's header says so ten minutes before, with a way to keep
-  it running. While stopped, its endpoints answer 503 and its tasks refuse, each saying it is stopped.
+  on it for a while (a week on the platform, where runtimes come with the paying plans), and it is stopped until
+  somebody starts it again — the builder's Start, `plitzi runtime start`, or a push or a publish. The builder's header
+  says so a day before, with a way to keep it running. While stopped, its endpoints answer 503 and its tasks refuse, each saying it is stopped.
 
 What is pushed is packed with the project's own `@plitzi/sdk-server` (`packRuntime`): the module and every package it
 imports, for Node, gzipped — at most 32 MB — except `@plitzi/*`, `react` and `react-dom`, which the runtime's host

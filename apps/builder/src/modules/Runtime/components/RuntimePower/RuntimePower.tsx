@@ -3,6 +3,9 @@ import { use, useCallback, useState } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
+import idleDurationOf from '../../helpers/idleDurationOf';
+import stopMomentOf from '../../helpers/stopMomentOf';
+
 import type { BuilderMutationsMap, BuilderQueriesMap, SpaceRuntimeEnvironment } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
@@ -13,9 +16,6 @@ export type RuntimePowerProps = {
   /** Asked once it was started or stopped, to read the runtime again. */
   onChange: () => Promise<void>;
 };
-
-const clockOf = (seconds: number): string =>
-  new Date(seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 /**
  * Starting and stopping an environment's runtime — and saying when it stops by itself: a runtime nobody uses for a while
@@ -46,11 +46,11 @@ const RuntimePower = ({ runtime, idleMinutes, onChange }: RuntimePowerProps) => 
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="text-xs text-gray-500 dark:text-zinc-400">
-        {stopped && runtime.stoppedReason === 'idle' && `Stopped after ${String(idleMinutes)} minutes without use.`}
+        {stopped && runtime.stoppedReason === 'idle' && `Stopped after ${idleDurationOf(idleMinutes)} without use.`}
         {stopped && runtime.stoppedReason === 'manual' && 'Stopped by hand.'}
         {runtime.status === 'ready' &&
           runtime.idleStopsAt !== null &&
-          `Stops by itself at ${clockOf(runtime.idleStopsAt)} if nothing uses it.`}
+          `Stops by itself on ${stopMomentOf(runtime.idleStopsAt)} if nothing uses it.`}
       </span>
       {stopped && (
         <Button size="xs" intent="primary" onClick={handleStart} disabled={busy}>

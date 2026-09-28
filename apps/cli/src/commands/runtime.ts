@@ -190,7 +190,7 @@ export const runtimeStatus = async (options: AccountOptions): Promise<void> => {
     }
 
     if (rest.idleStopsAt) {
-      console.log(`  Stops by itself at ${new Date(rest.idleStopsAt * 1000).toLocaleTimeString()} if nothing uses it`);
+      console.log(`  Stops by itself on ${new Date(rest.idleStopsAt * 1000).toLocaleString()} if nothing uses it`);
     }
 
     if (error) {

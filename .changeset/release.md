@@ -1195,12 +1195,12 @@ A space can have its own server code: TypeScript whose **tasks** are steps in it
   `createRuntimeProxyStage` forwards a space's endpoints to it, `serveRuntime` loads one into a server of its own;
   `packRuntime` / `inspectRuntime` / `loadRuntime`; `SpaceFunctions.runner` sends a space's tasks to its runtime. One
   driver for the sandbox and runtimes alike (`createFunctionsDriver`, printed into the guest). CLI: `plitzi runtime
-  push | status | vars`. Builder: a Runtime panel — each environment's state, and write-only variables.
+push | status | vars`. Builder: a Runtime panel — each environment's state, and write-only variables.
   `examples/self-hosting/10-runtime` is the smallest one — a task, a route and a stream held open — served by its own
   `main.ts`; Pizarra, on the platform, is a whole product built this way. A runtime runs at a size — small, medium or large, each a plan feature
-  — shown and chosen per environment in the Runtime panel and with `plitzi runtime size`. One nobody uses stops by
-  itself until started again (Start in the panel, `plitzi runtime start | stop`, a push or a publish); the builder's
-  header warns ten minutes before, with a way to keep it running. `createRuntimeProxyStage` takes `onForward`, told of
+  — shown and chosen per environment in the Runtime panel and with `plitzi runtime size`. One nobody uses for a
+  week — on the platform — stops by itself until started again (Start in the panel, `plitzi runtime start | stop`, a
+  push or a publish); the builder's header warns a day before, with a way to keep it running. `createRuntimeProxyStage` takes `onForward`, told of
   each request it forwards — what counts as a runtime used. `reachSpaceInside` (the host's `insideUrl`)
   sends a runtime's `fetch` and `WebSocket` to its own space's address to an inside one — a cluster's ingress — instead
   of out through the edge and back.

@@ -1,3 +1,5 @@
+import idleDurationOf from '../../helpers/idleDurationOf';
+
 export type RuntimeCodeNoteProps = {
   /** Whether the space has a runtime yet: without one, what a runtime is comes first. */
   pushed: boolean;
@@ -36,8 +38,8 @@ const RuntimeCodeNote = ({ pushed, idleMinutes }: RuntimeCodeNoteProps) => (
     </p>
     {idleMinutes > 0 && (
       <p>
-        A runtime nobody uses for {idleMinutes} minutes — no request to its endpoints, no task run — stops by itself, so
-        it spends nothing while idle. Start it again here; a push or a publish starts it too.
+        A runtime nobody uses for {idleDurationOf(idleMinutes)} — no request to its endpoints, no task run — stops by
+        itself, so it spends nothing while idle. Start it again here; a push or a publish starts it too.
       </p>
     )}
   </div>
