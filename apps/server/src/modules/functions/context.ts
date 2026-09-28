@@ -1,6 +1,7 @@
 import { processTwigParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { fetchOutbound } from '../../helpers/outboundGuard';
+import { countRate } from '../actions/runtime/rateLimit';
 
 import type { FunctionContext, FunctionFetch, FunctionUser } from './contract';
 import type { ActionTaskContext } from '../actions/types';
@@ -95,6 +96,8 @@ export const lineOf = (values: readonly unknown[]): string =>
 
 const unavailable = (what: string) => () => Promise.reject(new Error(`This server has no realtime channels (${what})`));
 
+const unsigned = () => Promise.reject(new Error('This server signs nothing: its actions were given no signingSecret'));
+
 /**
  * What a space's code is handed, built from the run's own context: the one place a {@link FunctionContext} is made.
  * A self-hosted server hands it to the code directly; the platform answers the sandbox's calls with it.
@@ -107,6 +110,9 @@ export const functionContextFor = (ctx: ActionTaskContext, hosts: readonly strin
   callerId: ctx.callerId,
   ...(ctx.user ? { user: userOf(ctx.user) } : {}),
   kv: ctx.kv,
+  rateLimit: (bucket, limit) => countRate(ctx.kv, ctx.callerId, bucket, limit),
+  sign: ctx.sign ?? unsigned,
+  verify: ctx.verify ?? unsigned,
   fetch: functionFetch(ctx, hosts),
   publish: ctx.publish ?? unavailable('publish'),
   grant: ctx.grant ?? unavailable('grant'),

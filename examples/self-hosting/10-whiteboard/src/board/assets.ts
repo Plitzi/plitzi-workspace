@@ -1,6 +1,6 @@
-import { randomBytes } from 'node:crypto';
+import { ActionRefusal } from '@plitzi/sdk-server/functions';
 
-import { ActionRefusal } from '@plitzi/sdk-server/actions';
+import { randomToken } from './crypto.ts';
 
 import type { Redis } from 'ioredis';
 
@@ -72,7 +72,7 @@ export const keepAsset = async (store: AssetStore, board: string, data: unknown)
     throw new ActionRefusal(`A picture is at most ${Math.round(MAX_ASSET_BYTES / 1024)} KB — try a smaller one`);
   }
 
-  const id = randomBytes(16).toString('base64url');
+  const id = randomToken(16);
   if (!(await store.add(board, id, { mime: kind.mime, bytes }))) {
     throw new ActionRefusal('This board holds as many pictures as it can');
   }

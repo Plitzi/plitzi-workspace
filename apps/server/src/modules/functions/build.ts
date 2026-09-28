@@ -4,7 +4,7 @@ import esbuild from 'esbuild';
 
 import { isFunctionsSourcePath } from '@plitzi/sdk-shared/actions';
 
-import { defineFunctions } from './contract';
+import { ActionRefusal, defineFunctions } from './contract';
 
 import type { FunctionsProblem } from '@plitzi/sdk-shared';
 
@@ -36,10 +36,13 @@ export const MAX_FUNCTIONS_BYTES = 1_000_000;
 const CONTRACT_SPECIFIER = '@plitzi/sdk-server/functions';
 
 /**
- * What that import is inside a bundle: the contract's own `defineFunctions`, printed from the function itself so there
- * is one definition of it — an identity, which is all the run time ever needed of it.
+ * What that import is inside a bundle: the contract's own `defineFunctions` and `ActionRefusal`, each printed from
+ * itself so there is one definition of it — an identity, and the class a refusal is told apart by (its name).
  */
-const CONTRACT_MODULE = `export const defineFunctions = ${defineFunctions.toString()};`;
+const CONTRACT_MODULE = [
+  `export const defineFunctions = ${defineFunctions.toString()};`,
+  `export const ActionRefusal = ${ActionRefusal.toString()};`
+].join('\n');
 
 const normalize = (file: string): string => path.posix.normalize(file).replace(/^\.\//, '');
 

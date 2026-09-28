@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
 import { Redis } from 'ioredis';
 
@@ -6,19 +6,17 @@ import { createMemoryPubSub, createRedisPubSub } from '@plitzi/sdk-server';
 import { createRedisKv } from '@plitzi/sdk-server/actions';
 
 import { createMemoryAssets, createRedisAssets } from './board/assets.ts';
-import { createSigner } from './board/locks.ts';
 
 import type { AssetStore } from './board/assets.ts';
-import type { BoardSigner } from './board/locks.ts';
 import type { PubSubAdapter } from '@plitzi/sdk-server';
 import type { ActionKvAdapter } from '@plitzi/sdk-server/actions';
 
 /**
  * What decides whether this is one server or one of several: where the boards, the pictures and the channels live,
- * and what keys and topics are signed with.
+ * and the secret the server signs keys with.
  *
  * - **One process** (no `REDIS_URL`): everything in memory. A restart starts over.
- * - **Replicas** (`REDIS_URL` and `BOARD_SECRET`): the boards in the action `kv`, the pictures and every channel's
+ * - **Replicas** (`REDIS_URL` and `SIGNING_SECRET`): the boards in the action `kv`, the pictures and every channel's
  *   messages in one Redis they all reach, and one secret they all sign with. A person on one replica and a person on
  *   another are on the same board: they see each other's cursors, and neither's commit is lost to the other's. An
  *   agent connected over HTTP is held by the replica it reached first, which says so in Redis under its own address
@@ -46,7 +44,8 @@ export type Deployment = {
   kv?: ActionKvAdapter;
   pubsub: PubSubAdapter;
   assets: AssetStore;
-  signer: BoardSigner;
+  /** The server's `action.signingSecret`: what `ctx.sign` derives the space's key from, the same on every replica. */
+  signingSecret: string;
   agents: AgentDirectory;
   /** What the log says this is. */
   describe: string;
@@ -94,9 +93,6 @@ const replicaAddress = (env: NodeJS.ProcessEnv): string | undefined => {
   return host === '127.0.0.1' || host === 'localhost' ? `http://127.0.0.1:${env.PORT ?? '4016'}` : undefined;
 };
 
-/** The secret as the signer takes it: any length of text in, 32 bytes out. */
-const secretFrom = (text: string): Buffer => createHash('sha256').update(text).digest();
-
 export const deploymentFrom = (env: NodeJS.ProcessEnv): Deployment => {
   const url = env.REDIS_URL;
   if (!url) {
@@ -104,7 +100,7 @@ export const deploymentFrom = (env: NodeJS.ProcessEnv): Deployment => {
       pubsub: createMemoryPubSub(),
       assets: createMemoryAssets(),
       // Made at boot unless given: the boards are in this process's memory too, so nothing signed outlives it.
-      signer: createSigner(env.BOARD_SECRET ? secretFrom(env.BOARD_SECRET) : randomBytes(32)),
+      signingSecret: env.SIGNING_SECRET ?? randomBytes(32).toString('base64url'),
       agents: soloAgents,
       describe: 'one process, everything in memory',
       close: () => Promise.resolve()
@@ -113,8 +109,8 @@ export const deploymentFrom = (env: NodeJS.ProcessEnv): Deployment => {
 
   // Refused rather than made up: each replica would sign with its own, and a locked board opened on one would be
   // locked again on the next.
-  if (!env.BOARD_SECRET) {
-    throw new Error('Replicas share REDIS_URL and BOARD_SECRET: set BOARD_SECRET to the same value on every one');
+  if (!env.SIGNING_SECRET) {
+    throw new Error('Replicas share REDIS_URL and SIGNING_SECRET: set SIGNING_SECRET to the same value on every one');
   }
 
   // A connection in subscriber mode can do nothing else — hence the second one.
@@ -126,7 +122,7 @@ export const deploymentFrom = (env: NodeJS.ProcessEnv): Deployment => {
     kv: createRedisKv(redis, { prefix: `${PREFIX}kv:` }),
     pubsub: createRedisPubSub({ publisher: redis, subscriber, prefix: `${PREFIX}rt:` }),
     assets: createRedisAssets(redis, PREFIX),
-    signer: createSigner(secretFrom(env.BOARD_SECRET)),
+    signingSecret: env.SIGNING_SECRET,
     agents: createRedisAgents(redis, self),
     describe: self
       ? `a replica at ${self}, sharing ${new URL(url).host}`

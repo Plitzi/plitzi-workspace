@@ -10,6 +10,7 @@ import { resolveLimits } from './limits';
 import { createMemoryKv } from './memoryKv';
 import { precheckRun } from './precheck';
 import { createRedactor, projectUser } from './scope';
+import { createSigning } from './signing';
 import { createRunFetch, taskContextFor } from './taskContext';
 import { onAbort } from '../../../helpers/onAbort';
 import { serverLog } from '../../../helpers/serverLog';
@@ -271,6 +272,7 @@ export const createActionRunner = (
   const kv = createKvStore(config.kv ?? createMemoryKv());
   // Over the server's own store rather than a space's: the counter that limits a flow is not a key the flow can reach.
   const emailSender = createEmailSender({ ...config.email, kv });
+  const signing = config.signingSecret ? createSigning(config.signingSecret) : undefined;
 
   /** Never allowed to fail a run: a logging outage must not take an action down, the same rule metering follows. */
   const record = async (entry: ActionRunRecord) => {
@@ -318,7 +320,7 @@ export const createActionRunner = (
      * reach the outside world after the flow's signal was aborted or its request budget spent.
      */
     const contextFor = (signal: AbortSignal, runFetch: typeof fetch) =>
-      taskContextFor(config, { kv, email: emailSender, redactor }, request, signal, runFetch);
+      taskContextFor(config, { kv, email: emailSender, redactor, signing }, request, signal, runFetch);
     const buildContext = contextFor(controller.signal, createRunFetch(baseFetch, controller.signal, limits, lineage));
 
     const trace: InteractionNode[] = [];
@@ -653,7 +655,7 @@ export const createActionRunner = (
   const taskContext: TaskContextSource = (contextRequest, signal, lineage) =>
     taskContextFor(
       config,
-      { kv, email: emailSender, redactor: createRedactor() },
+      { kv, email: emailSender, redactor: createRedactor(), signing },
       contextRequest,
       signal,
       createRunFetch(baseFetch, signal, resolveLimits(config.limits, undefined), lineage)

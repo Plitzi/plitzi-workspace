@@ -1,8 +1,7 @@
-import { randomInt } from 'node:crypto';
-
-import { ActionRefusal } from '@plitzi/sdk-server/actions';
+import { ActionRefusal } from '@plitzi/sdk-server/functions';
 
 import { keepAsset } from './assets.ts';
+import { randomInt } from './crypto.ts';
 import { FEATURED } from './featured.ts';
 import { lockWith, passwordOpens, passwordProblem, topicFor } from './locks.ts';
 import {
@@ -27,6 +26,7 @@ import type { SavedTemplate } from './savedTemplates.ts';
 import type { BoardSession } from './sessions.ts';
 import type { Template } from './templates.ts';
 import type { ActionKvStore, KvListEntry } from '@plitzi/sdk-server/actions';
+import type { FunctionContext } from '@plitzi/sdk-server/functions';
 
 /**
  * Where boards live: the action `kv` — this process's memory for one server, Redis for several (`deployment.ts`).
@@ -37,7 +37,13 @@ import type { ActionKvStore, KvListEntry } from '@plitzi/sdk-server/actions';
  */
 
 /** What the board functions work over: the action `kv`, where pictures are kept, and what keys and topics are signed with. */
-export type BoardStores = { kv: ActionKvStore; assets: AssetStore; signer: BoardSigner };
+/** What the board tasks work with: the run's own store, limits and signer — each the space's — and the pictures. */
+export type BoardStores = {
+  kv: ActionKvStore;
+  assets: AssetStore;
+  signer: BoardSigner;
+  rateLimit: FunctionContext['rateLimit'];
+};
 
 /** A countdown everyone on a board sees: when it ends, by the server's clock, and how long it was set for. */
 export type BoardTimer = { endsAt: number; seconds: number };
@@ -199,7 +205,7 @@ const PREVIEW_CELLS = 96;
 const PREVIEW_POINTS = 120;
 
 /** Passwords one visitor may try on one board in five minutes: enough for typos, too few to guess one. */
-const ATTEMPTS_PER_WINDOW = 10;
+const PASSWORD_TRIES = { most: 10, perSeconds: 300 };
 
 /** The longest a timer may run: an hour is a workshop; more is a board left counting down for nobody. */
 const MAX_TIMER_SECONDS = 3600;
@@ -237,40 +243,8 @@ const expired = (board: { expiresAt?: number | null }, now = Date.now()): boolea
 const lifetimeOf = (board: StoredBoard): number | undefined =>
   board.expiresAt === undefined ? undefined : Math.max(1, Math.ceil((board.expiresAt - Date.now()) / 1000));
 
-/** How many times a write reads again after somebody else wrote first, before it gives up and says so. */
-const WRITE_ATTEMPTS = 20;
-
-const pause = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * One change to one value, across every replica sharing the store: read it, change it, and write it back only if it
- * is still what was read (`swap`). Whoever wrote in between makes this read again and change what they left — so two
- * commits never drop one another, and a busy board holds up nobody else's. `change` may run more than once, so it
- * only computes; answering `undefined` writes nothing.
- */
-const changeValue = async <T>(
-  kv: ActionKvStore,
-  key: string,
-  change: (value: unknown) => Promise<T | undefined> | T | undefined,
-  lifetime: (next: T) => number | undefined = () => undefined
-): Promise<T | undefined> => {
-  for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
-    const read = await kv.get(key);
-    const next = await change(read);
-    if (next === undefined) {
-      return undefined;
-    }
-
-    if (await kv.swap(key, read, next, lifetime(next))) {
-      return next;
-    }
-
-    // Spread out, so the writers that lost to the same one do not all come back at the same instant.
-    await pause(Math.random() * Math.min(5 + attempt * 5, 50));
-  }
-
-  throw new ActionRefusal('Many people are changing this at once — try that again in a moment');
-};
+/** How many ids a new board draws before it gives up: past two, something other than chance is at work. */
+const ID_DRAWS = 20;
 
 const ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
 
@@ -333,8 +307,8 @@ const existing = async (kv: ActionKvStore, id: string): Promise<StoredBoard> => 
 };
 
 /** A locked board is read only by whoever opened it: everything asked of it carries the key opening it answered. */
-const assertOpen = (signer: BoardSigner, board: StoredBoard, key: unknown): void => {
-  if (board.lock && !signer.keyOpens(board.id, board.lock, key)) {
+const assertOpen = async (signer: BoardSigner, board: StoredBoard, key: unknown): Promise<void> => {
+  if (board.lock && !(await signer.keyOpens(board.id, board.lock, key))) {
     throw new ActionRefusal('This board is locked: open it with its password first');
   }
 };
@@ -349,9 +323,9 @@ export type Pass = { key: unknown; owner?: unknown };
  * Changed only by whoever may: an open board, or a locked one opened — and a read-only one only by whoever made it,
  * who made it read-only for everyone else.
  */
-const assertWritable = (signer: BoardSigner, board: StoredBoard, { key, owner }: Pass): void => {
-  assertOpen(signer, board, key);
-  if (board.readOnly && !signer.ownerOpens(board.id, owner)) {
+const assertWritable = async (signer: BoardSigner, board: StoredBoard, { key, owner }: Pass): Promise<void> => {
+  await assertOpen(signer, board, key);
+  if (board.readOnly && !(await signer.ownerOpens(board.id, owner))) {
     throw new ActionRefusal('This board is read-only — use it as a template to get a copy you can change');
   }
 };
@@ -469,8 +443,7 @@ const writeSummary = async ({ kv, assets }: BoardStores, board: StoredBoard): Pr
     { keep: board.featured ? FEATURED.length : MAX_BOARDS - FEATURED.length, higherOnly: true }
   );
   await Promise.all(put.dropped.map(entry => forget(kv, assets, entry.id)));
-  await changeValue(
-    kv,
+  await kv.change(
     previewKey(board.id),
     value => {
       const kept = asPreview(value);
@@ -497,19 +470,18 @@ const forget = async (kv: ActionKvStore, assets: AssetStore, id: string): Promis
 const changeBoard = async <T>(
   stores: BoardStores,
   id: string,
-  change: (board: StoredBoard) => { board: StoredBoard; result: T }
+  change: (board: StoredBoard) => Promise<{ board: StoredBoard; result: T }>
 ): Promise<T> => {
   let answer: { result: T } | undefined;
-  const written = await changeValue(
-    stores.kv,
+  const written = await stores.kv.change(
     boardKey(id),
-    value => {
+    async value => {
       const board = asBoard(value);
       if (!board) {
         throw new ActionRefusal('This board no longer exists');
       }
 
-      const changed = change(board);
+      const changed = await change(board);
       answer = { result: changed.result };
 
       return changed.board;
@@ -527,7 +499,7 @@ const changeBoard = async <T>(
 
 /** A new board, under an id nobody else has — drawn again in the unlikely case another replica drew the same. */
 const createStored = async (stores: BoardStores, draft: Omit<StoredBoard, 'id'>): Promise<StoredBoard> => {
-  for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
+  for (let attempt = 0; attempt < ID_DRAWS; attempt += 1) {
     const board: StoredBoard = { ...draft, id: newBoardId() };
     if (await stores.kv.swap(boardKey(board.id), undefined, board, lifetimeOf(board))) {
       await writeSummary(stores, board);
@@ -641,7 +613,7 @@ const opened = async (
   elements: Object.values(board.elements),
   topic: topicFor(board.id, board.lock),
   grants: await grantsFor(grant, topicFor(board.id, board.lock)),
-  key: board.lock ? keyFor(board.id, board.lock) : '',
+  key: board.lock ? await keyFor(board.id, board.lock) : '',
   timer: runningTimer(board),
   session: board.session ?? null,
   unlisted: board.unlisted === true,
@@ -688,10 +660,9 @@ export const loadBoard = async (stores: BoardStores, id: string, grant: Granter)
  * so guessing is slow whether the guesses are passwords or keys.
  */
 export const openBoard = async (
-  { kv, signer }: BoardStores,
+  { kv, signer, rateLimit }: BoardStores,
   id: string,
   { password, key }: { password: unknown; key: unknown },
-  callerId: string,
   grant: Granter
 ): Promise<OpenedBoard> => {
   const board = await existing(kv, id);
@@ -700,16 +671,15 @@ export const openBoard = async (
     return opened(signer, grant, board, chat, templates);
   }
 
-  if (signer.keyOpens(board.id, board.lock, key)) {
+  if (await signer.keyOpens(board.id, board.lock, key)) {
     return opened(signer, grant, board, chat, templates);
   }
 
-  const attempts = await kv.increment(`attempts:${id}:${callerId}:${Math.floor(Date.now() / 300_000)}`, 1, 330);
-  if (attempts > ATTEMPTS_PER_WINDOW) {
+  if (!(await rateLimit(`board-open:${id}`, PASSWORD_TRIES)).allowed) {
     throw new ActionRefusal('Too many tries — wait a few minutes and try again');
   }
 
-  if (typeof password !== 'string' || !password || !passwordOpens(board.lock, password)) {
+  if (typeof password !== 'string' || !password || !(await passwordOpens(board.lock, password))) {
     throw new ActionRefusal('That is not this board’s password');
   }
 
@@ -751,7 +721,7 @@ export const createBoard = async (
     ...reach(options)
   });
 
-  return { id: board.id, title: board.title, owner: stores.signer.ownerKeyFor(board.id) };
+  return { id: board.id, title: board.title, owner: await stores.signer.ownerKeyFor(board.id) };
 };
 
 /**
@@ -764,7 +734,7 @@ export const copyBoard = async (
   key: unknown
 ): Promise<{ id: string; title: string; owner: string }> => {
   const source = await existing(stores.kv, id);
-  assertOpen(stores.signer, source, key);
+  await assertOpen(stores.signer, source, key);
   const now = Date.now();
   const elements = live(source).map(({ votes: _votes, ...element }) => element);
   const board = await createStored(stores, {
@@ -781,7 +751,7 @@ export const copyBoard = async (
     elements.flatMap(element => (element.asset ? [element.asset] : []))
   );
 
-  return { id: board.id, title: board.title, owner: stores.signer.ownerKeyFor(board.id) };
+  return { id: board.id, title: board.title, owner: await stores.signer.ownerKeyFor(board.id) };
 };
 
 /**
@@ -794,9 +764,9 @@ export const setReadOnly = (
   pass: Pass,
   readOnly: unknown
 ): Promise<{ id: string; topic: string; readOnly: boolean }> =>
-  changeBoard(stores, id, board => {
-    assertOpen(stores.signer, board, pass.key);
-    if (!stores.signer.ownerOpens(id, pass.owner)) {
+  changeBoard(stores, id, async board => {
+    await assertOpen(stores.signer, board, pass.key);
+    if (!(await stores.signer.ownerOpens(id, pass.owner))) {
       throw new ActionRefusal('Only whoever made this board can make it read-only');
     }
 
@@ -829,8 +799,8 @@ export const setAgentSettings = (
     throw new ActionRefusal(`An agent listens for ${AGENT_LISTENS.join(' or ')}`);
   }
 
-  return changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  return changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     const next = {
       ...board,
       ...(quiet === undefined ? {} : { agentQuietMinutes: quiet }),
@@ -856,8 +826,8 @@ export const renameBoard = (
   title: unknown,
   pass: Pass
 ): Promise<{ id: string; title: string; topic: string }> =>
-  changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     const renamed = { ...board, title: cleanTitle(title), updatedAt: Date.now() };
 
     return { board: renamed, result: { id, title: renamed.title, topic: topicFor(id, board.lock) } };
@@ -881,13 +851,13 @@ export const lockBoard = (
   }
 
   // Hashed once, outside the change: it is slow on purpose, and a change that has to be read again is not re-hashed.
-  const lockFrom = (previous: BoardLock | undefined) => (text ? lockWith(text, previous) : undefined);
+  const lockFrom = async (previous: BoardLock | undefined) => (text ? await lockWith(text, previous) : undefined);
   let hashed: { previous: BoardLock | undefined; lock: BoardLock | undefined } | undefined;
 
-  return changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  return changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     if (!hashed || hashed.previous?.version !== board.lock?.version) {
-      hashed = { previous: board.lock, lock: lockFrom(board.lock) };
+      hashed = { previous: board.lock, lock: await lockFrom(board.lock) };
     }
 
     const { lock: _previous, ...rest } = board;
@@ -900,7 +870,7 @@ export const lockBoard = (
         locked: next.lock !== undefined,
         // What the page says depends on it: a password set, changed — or removed, which only a board that had one can be.
         wasLocked: board.lock !== undefined,
-        key: next.lock ? keyFor(id, next.lock) : '',
+        key: next.lock ? await keyFor(id, next.lock) : '',
         topic: topicFor(id, next.lock),
         previousTopic: topicFor(id, board.lock)
       }
@@ -919,7 +889,7 @@ export const deleteBoard = async (
 ): Promise<{ id: string; topic: string }> => {
   const { kv, assets, signer } = stores;
   const board = await existing(kv, id);
-  assertWritable(signer, board, pass);
+  await assertWritable(signer, board, pass);
   await forget(kv, assets, id);
   await kv.listRemove(board.featured ? FEATURED_LIST : BOARDS_LIST, id);
 
@@ -979,8 +949,8 @@ export const applyToBoard = async (
   const { signer } = stores;
   const incoming = elementsOf(ops);
 
-  return changeBoard(stores, id, board => {
-    assertWritable(signer, board, pass);
+  return changeBoard(stores, id, async board => {
+    await assertWritable(signer, board, pass);
     const merged = mergeElements(
       board.elements,
       incoming.map(element => withKept(element, board.elements[element.id]))
@@ -1008,8 +978,8 @@ export const voteOn = (
   voter: unknown,
   pass: Pass
 ): Promise<{ settled: BoardElement[]; topic: string }> =>
-  changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     const element = typeof elementId === 'string' ? board.elements[elementId] : undefined;
     if (!element || element.deleted || isLinear(element.type)) {
       throw new ActionRefusal('There is nothing to vote for there');
@@ -1043,8 +1013,8 @@ export const setTimer = (
   seconds: unknown,
   pass: Pass
 ): Promise<{ board: string; timer: BoardTimer | null; topic: string }> =>
-  changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     const span = Math.round(Number(seconds));
     if (!Number.isFinite(span) || span < 0 || span > MAX_TIMER_SECONDS) {
       throw new ActionRefusal(`A timer runs from 1 second to ${MAX_TIMER_SECONDS / 60} minutes`);
@@ -1070,8 +1040,8 @@ export const runSession = (
   host: unknown,
   pass: Pass
 ): Promise<{ board: string; session: BoardSession | null; topic: string }> =>
-  changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     const now = Date.now();
     const at = (session: Omit<BoardSession, 'endsAt'>): BoardSession => ({
       ...session,
@@ -1120,7 +1090,7 @@ export const uploadToBoard = async (
   pass: Pass
 ): Promise<{ asset: string }> => {
   const board = await existing(kv, id);
-  assertWritable(signer, board, pass);
+  await assertWritable(signer, board, pass);
 
   return { asset: await keepAsset(assets, id, data) };
 };
@@ -1135,8 +1105,8 @@ export const setReach = (
   pass: Pass,
   choice: { visibility: unknown; hours: unknown }
 ): Promise<{ id: string; topic: string; unlisted: boolean; expiresAt: number | null }> =>
-  changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     const { unlisted: _unlisted, expiresAt: _expiresAt, ...rest } = board;
     // A lifetime left as it was is not restarted: "5 hours" chosen again does not add five more.
     const kept = choice.hours === 'keep' ? { ...(board.expiresAt ? { expiresAt: board.expiresAt } : {}) } : {};
@@ -1172,7 +1142,7 @@ export const sayOn = async (
 
   const board = await existing(kv, id);
   // Talking about a board is not changing it: a read-only one has a chat too.
-  assertOpen(signer, board, pass.key);
+  await assertOpen(signer, board, pass.key);
   const message: ChatMessage = {
     id: newBoardId(),
     name: typeof said.name === 'string' && said.name.trim() ? said.name.trim().slice(0, 24) : 'Someone',
@@ -1182,8 +1152,7 @@ export const sayOn = async (
     by: typeof said.by === 'string' ? said.by.slice(0, 32) : '',
     ...(said.agent === true || said.agent === 'true' ? { agent: true } : {})
   };
-  await changeValue(
-    kv,
+  await kv.change(
     chatKey(id),
     value => [...(Array.isArray(value) ? (value as ChatMessage[]) : []), message].slice(-CHAT_KEPT),
     () => lifetimeOf(board)
@@ -1202,8 +1171,8 @@ export const replyTo = (
   pass: Pass,
   { element: elementId, author, text }: { element: unknown; author: unknown; text: unknown }
 ): Promise<{ settled: BoardElement[]; topic: string }> =>
-  changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     const comment = typeof elementId === 'string' ? board.elements[elementId] : undefined;
     if (comment?.type !== 'comment' || comment.deleted) {
       throw new ActionRefusal('There is no comment there to answer');
@@ -1241,8 +1210,8 @@ const changeLibrary = async (
   pass: Pass,
   pick: (board: StoredBoard) => string[]
 ): Promise<BoardTemplates> => {
-  const { ids, topic } = await changeBoard(stores, id, board => {
-    assertWritable(stores.signer, board, pass);
+  const { ids, topic } = await changeBoard(stores, id, async board => {
+    await assertWritable(stores.signer, board, pass);
     const listed = pick(board);
 
     return {
@@ -1290,7 +1259,7 @@ export const saveTemplate = async (
   }
 
   const current = await existing(kv, id);
-  assertWritable(signer, current, pass);
+  await assertWritable(signer, current, pass);
   // Refused before anything is kept, when the shelf is already full: a template nobody lists is kept for nobody.
   shelved(current, '');
   const template: SavedTemplate = {

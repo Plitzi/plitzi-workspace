@@ -1220,6 +1220,17 @@ A space can have its own server code: TypeScript whose **tasks** are steps in it
   than overwritten in either direction; `dev` runs it on the machine with the project's own `@plitzi/sdk-server`.
 - **MCP**: the `upsertFunctionFile` / `deleteFunctionFile` operations (saved first in a batch, so a problem refuses
   it all), `plitzi://functions/{env}` and `/{+path}`, and `plitzi_try_function`.
+- **`crypto.subtle` derives keys**: PBKDF2 (`importKey('raw', password, 'PBKDF2')`, `deriveBits`, `deriveKey` to an
+  HMAC key) beside digests and HMAC, so a space can keep a password. The runner derives, at most 1,000,000 iterations
+  and 1024 bits a call, and charges what it took to the run's CPU. A key is held to the usages it was imported for.
+- **`ActionRefusal` from `@plitzi/sdk-server/functions`**: a function refuses with a reason for whoever asked — the
+  page reads it as `{{ step.error }}`, a route answers `400 { error }` — natively and in the sandbox alike (the bundle
+  prints the platform's class; a refusal crosses the runner as `FunctionFailure` reason `refused`). Anything else a
+  function throws still stays in the run's record.
+- **`ctx.kv.change(key, change, lifetime)`**: read, change and write back, again when somebody wrote first — the loop
+  every concurrent edit needs, now one (lists stand on it too; the sandbox runs the same function). **`ctx.rateLimit`**
+  counts with `flow.rateLimit`'s counter and answers `{ allowed, count, remaining }`. **`ctx.sign` / `ctx.verify`**:
+  HMAC with a per-space, per-environment key derived from the new `action.signingSecret`, which the code never holds.
 - **Shared types**: `FunctionsManifest`, `FunctionsDraft`, `FunctionsProblem`, `FunctionsSaveResult`; the builder's
   `SpaceFunctions`, `SpaceSaveFunctions`, `SpaceRemoveFunctions`, `SpaceTryFunction`; `ChangeDocument` `functions`
   with entries of kind `file`; `SSRAdapters.getFunctions` / `saveFunctions` / `tryFunction`.

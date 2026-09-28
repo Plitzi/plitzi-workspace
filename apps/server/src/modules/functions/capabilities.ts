@@ -1,6 +1,7 @@
 import type { FunctionContext, FunctionFetchInit } from './contract';
 import type { FunctionCall, WireBody, WireRequest, WireResponse } from './protocol';
 import type { KvListEntry, KvListPutOptions, KvListRange } from '../actions/runtime/kvList';
+import type { RateLimit } from '../actions/runtime/rateLimit';
 import type { ActionKvStore } from '../actions/types';
 
 const TEXTUAL = /^(text\/|application\/([\w.+-]*\+)?(json|xml|javascript|x-www-form-urlencoded))/i;
@@ -165,6 +166,17 @@ const fetchInitOf = (value: unknown): FunctionFetchInit => {
 const optionalString = (value: unknown, what: string): string | undefined =>
   value === undefined || value === null ? undefined : stringArg(value, what);
 
+/** A limit's numbers are checked where it is counted (`countRate`); here only that they are what they claim. */
+const rateLimitOf = (value: unknown): RateLimit => {
+  const limit = recordArg(value, 'A rate limit');
+
+  return {
+    most: numberArg(limit.most, 'most'),
+    perSeconds: numberArg(limit.perSeconds, 'perSeconds'),
+    ...(limit.per === 'everyone' || limit.per === 'caller' ? { per: limit.per } : {})
+  };
+};
+
 /**
  * A call as the code sent it, read into what it claims to be — every field checked, because it was written by the
  * space's code and carried by a runner, and neither is trusted here. The only place a call is read.
@@ -201,6 +213,16 @@ export const readCall = (value: unknown): FunctionCall => {
 
       return { op: 'revoke', topic: stringArg(call.topic, 'A topic'), ...(grant === undefined ? {} : { grant }) };
     }
+    case 'rateLimit':
+      return { op: 'rateLimit', bucket: stringArg(call.bucket, 'A bucket'), limit: rateLimitOf(call.limit) };
+    case 'sign':
+      return { op: 'sign', value: stringArg(call.value, 'A value') };
+    case 'verify':
+      return {
+        op: 'verify',
+        value: stringArg(call.value, 'A value'),
+        signature: stringArg(call.signature, 'A signature')
+      };
     case 'log':
       return { op: 'log', values: Array.isArray(call.values) ? call.values : [] };
     case 'emit':
@@ -226,6 +248,12 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
       return ctx.grant(call.topic, call.ttlSeconds);
     case 'revoke':
       return ctx.revoke(call.topic, call.grant);
+    case 'rateLimit':
+      return ctx.rateLimit(call.bucket, call.limit);
+    case 'sign':
+      return ctx.sign(call.value);
+    case 'verify':
+      return ctx.verify(call.value, call.signature);
     case 'log':
       ctx.log(...call.values);
 

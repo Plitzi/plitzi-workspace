@@ -3,7 +3,7 @@ import type {
   FunctionInvocation,
   FunctionLimits,
   FunctionsBundle,
-  FunctionStopReason,
+  FunctionFailureReason,
   FunctionUsage,
   RunnerRequestMessage,
   RunnerResponseMessage
@@ -197,18 +197,18 @@ export const readRequestMessage = (data: string): RunnerRequestMessage | undefin
   }
 };
 
-const STOP_REASONS: readonly (FunctionStopReason | 'error')[] = [
+const FAILURE_REASONS: readonly FunctionFailureReason[] = [
   'cpu',
   'wall',
   'memory',
   'output',
   'calls',
   'aborted',
-  'error'
+  'error',
+  'refused'
 ];
 
-const reasonOf = (value: unknown): FunctionStopReason | 'error' =>
-  STOP_REASONS.find(reason => reason === value) ?? 'error';
+const reasonOf = (value: unknown): FunctionFailureReason => FAILURE_REASONS.find(reason => reason === value) ?? 'error';
 
 const usageOf = (value: unknown): { usage: FunctionUsage } | Record<string, never> => {
   if (!isRecord(value)) {

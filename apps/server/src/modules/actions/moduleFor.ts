@@ -40,6 +40,7 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     jobs: config.action?.jobs,
     rateLimit: config.action?.rateLimit,
     idempotency: config.action?.idempotency,
+    signingSecret: config.action?.signingSecret,
     dbDrivers: config.action?.dbDrivers as ActionsConfig['dbDrivers'],
     email: config.action?.email,
     onRun: config.action?.onRun,

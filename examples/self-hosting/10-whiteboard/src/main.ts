@@ -110,12 +110,14 @@ const server = createServer(
     }),
     plugins,
     middlewares: [serveAssets],
-    functions: { native: [createBoardFunctions(deployment)] },
+    functions: { native: [createBoardFunctions({ assets: deployment.assets })] },
     action: {
       lookups,
       kv: deployment.kv,
       // Nothing here runs on a clock.
       jobs: false,
+      // What a board's keys are signed with — through `ctx.sign`, so the board code never holds it.
+      signingSecret: deployment.signingSecret,
       onRun: createRunLogger(consoleLogger),
       onReject: createRejectLogger(consoleLogger)
     },

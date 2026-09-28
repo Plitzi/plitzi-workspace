@@ -1,9 +1,10 @@
-import { createHash, createHmac } from 'node:crypto';
+import { createHash, createHmac, pbkdf2Sync } from 'node:crypto';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { createIsolateRunner } from './isolate';
+import { createIsolateRunner, PBKDF2_MAX_ITERATIONS } from './isolate';
 import { createActionsModule } from '../../actions';
+import { createSigning } from '../../actions/runtime/signing';
 import { functionsInHand } from '../space';
 
 import type { FunctionsConfig } from '../config';
@@ -50,6 +51,8 @@ const USER: SSRUser = {
   roles: []
 };
 
+const SIGNING_SECRET = 'the-deployment-signing-secret-32c';
+
 /** A space whose `functions/index.ts` declares one task, `probe.run`, running `body` with `(params, ctx)`. */
 const sourceOf = (body: string, { hosts = [] as string[], extra = '' } = {}) => ({
   'index.ts': `import { defineFunctions } from '@plitzi/sdk-server/functions';
@@ -61,7 +64,9 @@ export default defineFunctions({
 });
 
 type Space = {
-  run: (params?: Record<string, unknown>) => Promise<{ status: string; value: unknown; error: string; logs: string[] }>;
+  run: (
+    params?: Record<string, unknown>
+  ) => Promise<{ status: string; value: unknown; error: string; refusal: string | undefined; logs: string[] }>;
   module: ReturnType<typeof createActionsModule>;
 };
 
@@ -72,13 +77,16 @@ const spaceWith = async (
     credential,
     limits,
     admit,
-    onUsage
+    onUsage,
+    unsigned
   }: {
     fetchImpl?: typeof fetch;
     credential?: Record<string, string>;
     limits?: Partial<FunctionLimits>;
     admit?: FunctionsConfig['admit'];
     onUsage?: FunctionsConfig['onUsage'];
+    /** A server that was given no signing secret. */
+    unsigned?: boolean;
   } = {}
 ): Promise<Space> => {
   const probe = createActionsModule({
@@ -98,6 +106,7 @@ const spaceWith = async (
       getFunctions: () => Promise.resolve(functions)
     },
     functions: { runner, ...(admit ? { admit } : {}), ...(onUsage ? { onUsage } : {}) },
+    ...(unsigned ? {} : { signingSecret: SIGNING_SECRET }),
     ...(fetchImpl ? { fetchImpl } : {})
   });
 
@@ -120,6 +129,7 @@ const spaceWith = async (
         status: result.status,
         logs: result.steps.find(step => step.id === 'probe')?.logs ?? [],
         value: result.output.value,
+        refusal: result.error,
         error:
           failed && typeof failed.result === 'object' && failed.result && 'error' in failed.result
             ? String(failed.result.error)
@@ -283,6 +293,112 @@ describe('a space’s task, run in an isolate', () => {
     });
   });
 
+  it('derives from a password with PBKDF2, as bits or as an HMAC key', async () => {
+    const space = await spaceWith(
+      sourceOf(`
+        const encode = text => new TextEncoder().encode(text);
+        const hex = buffer => [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, '0')).join('');
+        const password = await crypto.subtle.importKey('raw', encode('hunter2'), 'PBKDF2', false, ['deriveBits', 'deriveKey']);
+        const pbkdf2 = { name: 'PBKDF2', hash: 'SHA-256', salt: encode('salt'), iterations: 1000 };
+        const signing = await crypto.subtle.deriveKey(pbkdf2, password, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign']);
+        return {
+          bits: hex(await crypto.subtle.deriveBits(pbkdf2, password, 256)),
+          signed: hex(await crypto.subtle.sign('HMAC', signing, encode('board')))
+        };`)
+    );
+    const derived = pbkdf2Sync('hunter2', 'salt', 1000, 32, 'sha256');
+
+    expect((await space.run()).value).toEqual({
+      bits: derived.toString('hex'),
+      signed: createHmac('sha256', derived).update('board').digest('hex')
+    });
+  });
+
+  it('refuses a key used for what it was not imported for, and a derivation past the runner’s bounds', async () => {
+    const attempt = (body: string) =>
+      spaceWith(
+        sourceOf(`
+          const encode = text => new TextEncoder().encode(text);
+          const pbkdf2 = iterations => ({ name: 'PBKDF2', hash: 'SHA-256', salt: encode('salt'), iterations });
+          try { ${body} } catch (error) { return error.name + ': ' + error.message; }`)
+      ).then(space => space.run());
+    const password = 'await crypto.subtle.importKey("raw", encode("pw"), "PBKDF2", false, ["deriveBits"])';
+    const hmac =
+      'await crypto.subtle.importKey("raw", encode("k"), { name: "HMAC", hash: "SHA-256" }, false, ["verify"])';
+
+    expect((await attempt(`await crypto.subtle.deriveBits(pbkdf2(1000), ${hmac}, 256);`)).value).toBe(
+      'InvalidAccessError: deriveBits takes a PBKDF2 key, from crypto.subtle.importKey'
+    );
+    expect((await attempt(`await crypto.subtle.sign('HMAC', ${hmac}, encode('x'));`)).value).toBe(
+      'InvalidAccessError: The key was not imported for sign'
+    );
+    expect(
+      (await attempt('await crypto.subtle.importKey("raw", encode("pw"), "PBKDF2", true, ["deriveBits"]);')).value
+    ).toBe('SyntaxError: A PBKDF2 key is never extractable');
+    expect(
+      (await attempt(`await crypto.subtle.deriveBits(pbkdf2(${String(PBKDF2_MAX_ITERATIONS + 1)}), ${password}, 256);`))
+        .value
+    ).toBe(`OperationError: PBKDF2 iterations is a whole number from 1 to ${String(PBKDF2_MAX_ITERATIONS)}`);
+    expect((await attempt(`await crypto.subtle.deriveBits(pbkdf2(1000), ${password}, 12);`)).value).toBe(
+      'OperationError: A PBKDF2 length is a multiple of 8 bits'
+    );
+  });
+
+  it('changes a value without losing a writer that got there first', async () => {
+    const space = await spaceWith(
+      sourceOf(`
+        await Promise.all(Array.from({ length: 10 }, () =>
+          ctx.kv.change('tally', current => ({ n: (current?.n ?? 0) + 1 }), 60)));
+        const untouched = await ctx.kv.change('tally', () => undefined);
+        return { tally: await ctx.kv.get('tally'), untouched: untouched === undefined };`)
+    );
+
+    expect((await space.run()).value).toEqual({ tally: { n: 10 }, untouched: true });
+  });
+
+  it('counts a rate limit, and leaves what to answer past it to the code', async () => {
+    const space = await spaceWith(
+      sourceOf(`
+        const tries = [];
+        for (let i = 0; i < 3; i++) { tries.push((await ctx.rateLimit('open', { most: 2, perSeconds: 60 })).allowed); }
+        return tries;`)
+    );
+
+    expect((await space.run()).value).toEqual([true, true, false]);
+  });
+
+  it('signs with the space’s own key, which the code never holds', async () => {
+    const space = await spaceWith(
+      sourceOf(`
+        const signature = await ctx.sign('owner:board');
+        return { signature, holds: await ctx.verify('owner:board', signature), other: await ctx.verify('owner:else', signature) };`)
+    );
+    const { value } = await space.run();
+    const { signature, holds, other } = value as { signature: string; holds: boolean; other: boolean };
+
+    expect({ holds, other }).toEqual({ holds: true, other: false });
+    expect(
+      await createSigning(SIGNING_SECRET)({ spaceId: 3, environment: 'main' }).verify('owner:board', signature)
+    ).toBe(true);
+  });
+
+  it('is refused signing on a server given no signing secret', async () => {
+    const space = await spaceWith(sourceOf('return await ctx.sign("x");'), { unsigned: true });
+
+    expect((await space.run()).error).toContain('signs nothing');
+  });
+
+  it('refuses with a reason the caller reads, and keeps whatever else it threw to the run', async () => {
+    const extra = 'import { ActionRefusal } from "@plitzi/sdk-server/functions";';
+    const refused = await spaceWith(
+      sourceOf('throw new ActionRefusal("That is not this board’s password");', { extra })
+    );
+    const broken = await spaceWith(sourceOf('throw new Error("select * from boards where secret = 42");'));
+
+    expect((await refused.run()).refusal).toBe('That is not this board’s password');
+    expect((await broken.run()).refusal).toBeUndefined();
+  });
+
   it('logs onto its step, one line per call, as the run records it', async () => {
     const space = await spaceWith(
       sourceOf('ctx.log("checking", { n: 1 }, new Error("late")); console.warn("from the console"); return 1;')
@@ -312,6 +428,24 @@ describe('an invocation’s limits', () => {
     expect(result.status).toBe('failed');
     expect(result.error).toContain('ms of CPU');
     expect(Date.now() - started).toBeLessThan(2000);
+  });
+
+  // The runner derives outside the isolate's clock: what it took is the run's all the same.
+  it('stops a run whose PBKDF2 derivations take more CPU than it may', async () => {
+    const space = await spaceWith(
+      sourceOf(`
+        const encode = text => new TextEncoder().encode(text);
+        const password = await crypto.subtle.importKey('raw', encode('pw'), 'PBKDF2', false, ['deriveBits']);
+        const pbkdf2 = { name: 'PBKDF2', hash: 'SHA-512', salt: encode('salt'), iterations: ${String(PBKDF2_MAX_ITERATIONS)} };
+        await crypto.subtle.deriveBits(pbkdf2, password, 512);
+        await crypto.subtle.deriveBits(pbkdf2, password, 512);
+        return 'derived';`),
+      { limits: { cpuMs: 20 } }
+    );
+    const result = await space.run();
+
+    expect(result.status).toBe('failed');
+    expect(result.error).toContain('ms of CPU');
   });
 
   it('stops code that takes more memory than it may, and the next one runs', async () => {

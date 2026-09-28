@@ -1,7 +1,9 @@
 import type { ActionEmailSender } from './runtime/email';
 import type { FunctionsConfig } from '../functions/config';
 import type { SpaceFunctions } from '../functions/protocol';
+import type { KvChangeLifetime } from './runtime/kvChange';
 import type { KvListEntry, KvListPut, KvListPutOptions, KvListRange } from './runtime/kvList';
+import type { SpaceSigning } from './runtime/signing';
 import type {
   ActionEmailConfig,
   ActionJobQueue,
@@ -106,6 +108,16 @@ export type ActionKvStore = {
   listRange: (list: string, range?: KvListRange) => Promise<KvListEntry[]>;
   /** Takes the entry with `id` out of the list, and answers whether it was there. */
   listRemove: (list: string, id: string) => Promise<boolean>;
+  /**
+   * Reads the key, hands its value to `change` and writes back what that answers — reading and asking again when
+   * somebody wrote in between, so no writer undoes another. `change` answering `undefined` writes nothing. Answers what
+   * was written. `lifetime` is seconds, or worked out from the value written.
+   */
+  change: <T>(
+    key: string,
+    change: (current: unknown) => T | undefined | Promise<T | undefined>,
+    lifetime?: KvChangeLifetime<T>
+  ) => Promise<T | undefined>;
 };
 
 /** Re-exported so the module's files import one place. One type for actions and connectors: it is one concept. */
@@ -194,6 +206,9 @@ export type ActionTaskContext = {
   grant?: (topic: string, ttlSeconds?: number) => Promise<string>;
   /** Revokes `grant` for `topic` — or every grant for it, naming none — and lets go whoever is on it with one. */
   revoke?: (topic: string, grant?: string) => Promise<void>;
+  /** Signs with the space's own key (`ActionsConfig.signingSecret`) — `undefined` when the deployment gave none. */
+  sign?: SpaceSigning['sign'];
+  verify?: SpaceSigning['verify'];
 };
 
 /** How the actions module reaches the server's realtime channels. Set by `createServer`, never by a deployment. */
@@ -296,6 +311,12 @@ export type ActionsConfig = {
   fetchImpl?: typeof fetch;
   /** The server's realtime channels, for the `realtime.publish` task. Set by `createServer`. */
   realtime?: ActionRealtime;
+  /**
+   * What each space's signatures are made from (`ctx.sign` / `ctx.verify` in its functions): at least 32 characters,
+   * the SAME on every replica — a key one signed is checked by whichever the next request reaches. Each space and
+   * environment signs with a key derived from it, so none can vouch for another. Absent, spaces sign nothing.
+   */
+  signingSecret?: string;
 };
 
 /**

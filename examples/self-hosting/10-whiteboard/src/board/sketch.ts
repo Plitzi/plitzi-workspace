@@ -1,5 +1,4 @@
-import { randomInt } from 'node:crypto';
-
+import { randomInt } from './crypto.ts';
 import { FONT_SIZES, fitsInFrame, LINE_HEIGHT } from './model.ts';
 
 import type {

@@ -5,6 +5,8 @@ import { answerCall, readCall } from './capabilities';
 import { functionLimitsFor } from './config';
 import { functionContextFor } from './context';
 import { readManifest } from './manifest';
+import { FunctionFailure } from './protocol';
+import { ActionRefusal } from '../actions/runtime/errors';
 import { taskName } from '../actions/tasks/registry';
 
 import type { FunctionsSource } from './build';
@@ -79,6 +81,13 @@ export const spaceTasks = (
           ok = true;
 
           return value;
+        } catch (error) {
+          // What the code refused with was written for whoever asked: it reaches them, as a platform step's refusal does.
+          if (error instanceof FunctionFailure && error.reason === 'refused') {
+            throw new ActionRefusal(error.message);
+          }
+
+          throw error;
         } finally {
           if (spent) {
             onUsage?.({ spaceId: ctx.spaceId, task: name, ok, usage: spent });

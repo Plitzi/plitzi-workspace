@@ -790,6 +790,14 @@ Two things your adapter does owe:
 - **Throw when the store is unreachable.** Nothing above catches, deliberately: this is not a cache, and a miss
   here means the rate limit did not count and the idempotency key was not seen.
 
+### Signing
+
+`signingSecret` (on the actions' config — `createServer({ action: { signingSecret } })`) is what a space's functions
+sign with: `ctx.sign` and `ctx.verify`. At least 32 characters, and the **same on every replica**, since a key one of
+them signed is verified by whichever the next request reaches. Each space and environment signs with a key derived
+from it, so the secret itself signs nothing and no space can vouch for another. Without it a space's `ctx.sign` is
+refused with the reason, rather than signing with a key each replica made up for itself.
+
 ### Email
 
 `email.send` is shipped and offered by every server, because the mail account is the **space's**, not the

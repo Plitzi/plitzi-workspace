@@ -1,17 +1,32 @@
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomToken, sameText, toBase64url } from './crypto.ts';
+
+import type { FunctionContext } from '@plitzi/sdk-server/functions';
 
 /**
  * A board's password, and what opening it hands out.
  *
- * The password is kept as a salted scrypt hash and never leaves the server. Opening the board answers a KEY, signed
+ * The password is kept as a salted PBKDF2 hash and never leaves the server. Opening the board answers a KEY, signed
  * with a secret the deployment holds, which every change to the board must carry — and GRANTS to its channels, which
  * the platform keeps: nobody who has not opened the board can subscribe to what it says, however well they know its
  * name. Changing the password changes the key and the topic, so whoever had the old one is locked out.
  */
 
-export type BoardLock = { salt: string; hash: string; version: number };
+/** `iterations` is kept with the hash, so raising {@link PASSWORD_ITERATIONS} leaves the boards locked before it working. */
+export type BoardLock = { salt: string; hash: string; iterations: number; version: number };
 
-const derive = (password: string, salt: string): Buffer => scryptSync(password, salt, 32, { N: 16384, r: 8, p: 1 });
+/** PBKDF2-HMAC-SHA-512 at OWASP's count for it: slow on purpose, and the one derivation Web Crypto has everywhere. */
+const PASSWORD_ITERATIONS = 210_000;
+
+const derive = async (password: string, salt: string, iterations: number): Promise<string> => {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-512', salt: new TextEncoder().encode(salt), iterations },
+    key,
+    256
+  );
+
+  return toBase64url(new Uint8Array(bits));
+};
 
 export const MIN_PASSWORD = 6;
 
@@ -70,17 +85,19 @@ export const passwordProblem = (text: string): string | undefined => {
   return undefined;
 };
 
-export const lockWith = (password: string, previous?: BoardLock): BoardLock => {
-  const salt = randomBytes(16).toString('base64url');
+export const lockWith = async (password: string, previous?: BoardLock): Promise<BoardLock> => {
+  const salt = randomToken(16);
 
-  return { salt, hash: derive(password, salt).toString('base64url'), version: (previous?.version ?? 0) + 1 };
+  return {
+    salt,
+    hash: await derive(password, salt, PASSWORD_ITERATIONS),
+    iterations: PASSWORD_ITERATIONS,
+    version: (previous?.version ?? 0) + 1
+  };
 };
 
-export const passwordOpens = (lock: BoardLock, password: string): boolean => {
-  const expected = Buffer.from(lock.hash, 'base64url');
-
-  return timingSafeEqual(derive(password, lock.salt), expected);
-};
+export const passwordOpens = async (lock: BoardLock, password: string): Promise<boolean> =>
+  sameText(await derive(password, lock.salt, lock.iterations), lock.hash);
 
 /**
  * The part of a board's topics after `board:` and `room:`. What keeps a locked board's channels to whoever opened it is
@@ -93,42 +110,25 @@ export const topicFor = (board: string, lock: BoardLock | undefined): string =>
 export type BoardSigner = ReturnType<typeof createSigner>;
 
 /**
- * What a board's keys are signed with. Every replica must hold the SAME secret: a key one of them handed out is checked
- * by whichever one the next change reaches.
+ * What a board's keys are: signatures with the space's own key (`ctx.sign`), which the server keeps and every replica
+ * shares — a key one of them handed out is checked by whichever the next change reaches, and this code never holds
+ * what they are signed with.
  */
-export const createSigner = (secret: Buffer) => {
-  const sign = (value: string): string => createHmac('sha256', secret).update(value).digest('base64url');
-
+export const createSigner = ({ sign, verify }: Pick<FunctionContext, 'sign' | 'verify'>) => {
   /** What changes to a locked board carry: bound to its password's version, so a new password voids it. */
-  const keyFor = (board: string, lock: BoardLock): string => sign(`key:${board}:${lock.version}`).slice(0, 32);
+  const keyFor = (board: string, lock: BoardLock): Promise<string> => sign(`key:${board}:${String(lock.version)}`);
 
-  const keyOpens = (board: string, lock: BoardLock, key: unknown): boolean => {
-    if (typeof key !== 'string') {
-      return false;
-    }
-
-    const expected = Buffer.from(keyFor(board, lock));
-    const given = Buffer.from(key);
-
-    return given.length === expected.length && timingSafeEqual(given, expected);
-  };
+  const keyOpens = async (board: string, lock: BoardLock, key: unknown): Promise<boolean> =>
+    typeof key === 'string' && key !== '' && (await verify(`key:${board}:${String(lock.version)}`, key));
 
   /**
    * What whoever made a board holds: the one thing that may make it read-only for everyone else, and still change it
    * while it is. Handed out once — to the page that created or copied the board — and never stored.
    */
-  const ownerKeyFor = (board: string): string => sign(`owner:${board}`).slice(0, 32);
+  const ownerKeyFor = (board: string): Promise<string> => sign(`owner:${board}`);
 
-  const ownerOpens = (board: string, key: unknown): boolean => {
-    if (typeof key !== 'string' || !key) {
-      return false;
-    }
-
-    const expected = Buffer.from(ownerKeyFor(board));
-    const given = Buffer.from(key);
-
-    return given.length === expected.length && timingSafeEqual(given, expected);
-  };
+  const ownerOpens = async (board: string, key: unknown): Promise<boolean> =>
+    typeof key === 'string' && key !== '' && (await verify(`owner:${board}`, key));
 
   return { keyFor, keyOpens, ownerKeyFor, ownerOpens };
 };

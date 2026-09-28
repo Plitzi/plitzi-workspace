@@ -1,5 +1,6 @@
 import { onAbort } from '../../../helpers/onAbort';
 import { ActionRefusal } from '../runtime/errors';
+import { countRate } from '../runtime/rateLimit';
 
 import type { ActionTask } from '../types';
 
@@ -169,21 +170,17 @@ const rateLimit: ActionTask<{
     }
   },
   run: async ({ bucket, limit, windowSeconds, per, message }, ctx) => {
-    const most = Number(limit);
-    const seconds = Number(windowSeconds);
-    if (!bucket || !Number.isInteger(most) || most < 1 || !Number.isInteger(seconds) || seconds < 1) {
-      throw new Error('A rate limit names what it counts, and allows a whole number of runs over whole seconds');
+    const perSeconds = Number(windowSeconds);
+    const { allowed, count, remaining } = await countRate(ctx.kv, ctx.callerId, bucket, {
+      most: Number(limit),
+      perSeconds,
+      per: per === 'everyone' ? 'everyone' : 'caller'
+    });
+    if (!allowed) {
+      throw new ActionRefusal(message || `Too many at once — try again in ${String(perSeconds)} seconds`);
     }
 
-    const window = Math.floor(Date.now() / (seconds * 1000));
-    const who = per === 'everyone' ? 'everyone' : ctx.callerId;
-    // The window's own key, living a little past it so a counter is never read after it has started over.
-    const count = await ctx.kv.increment(`$rate:${bucket}:${who}:${String(window)}`, 1, seconds + 1);
-    if (count > most) {
-      throw new ActionRefusal(message || `Too many at once — try again in ${String(seconds)} seconds`);
-    }
-
-    return { count, remaining: most - count };
+    return { count, remaining };
   }
 };
 

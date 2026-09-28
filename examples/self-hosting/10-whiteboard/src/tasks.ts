@@ -1,6 +1,7 @@
-import { ActionRefusal } from '@plitzi/sdk-server/actions';
+import { ActionRefusal } from '@plitzi/sdk-server/functions';
 import { defineFunctions } from '@plitzi/sdk-server/functions';
 
+import { createSigner } from './board/locks.ts';
 import { isBoardId } from './board/model.ts';
 import {
   addTemplate,
@@ -29,8 +30,7 @@ import {
 import { TEMPLATES, isTemplate } from './board/templates.ts';
 
 import type { BoardStores } from './board/store.ts';
-import type { ActionKvStore } from '@plitzi/sdk-server/actions';
-import type { FunctionsDefinition, FunctionTask } from '@plitzi/sdk-server/functions';
+import type { FunctionContext, FunctionsDefinition, FunctionTask } from '@plitzi/sdk-server/functions';
 
 /**
  * What this deployment can do on the server: keep boards.
@@ -62,11 +62,16 @@ const ownerParam = text('Owner key (from creating or copying the board)');
 type Passed = { key: string; owner: string };
 
 /**
- * The tasks, over where this deployment keeps pictures and what it signs keys and topics with — the `kv` is each run's
- * own, handed in by the server already narrowed to the space.
+ * The tasks, over where this deployment keeps pictures. Everything else is the run's own — its `kv`, its limits and
+ * what it signs keys with — handed in by the server already narrowed to the space.
  */
-export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>): FunctionsDefinition => {
-  const on = (kv: ActionKvStore): BoardStores => ({ kv, assets, signer });
+export const createBoardFunctions = ({ assets }: Pick<BoardStores, 'assets'>): FunctionsDefinition => {
+  const on = (ctx: FunctionContext): BoardStores => ({
+    kv: ctx.kv,
+    assets,
+    signer: createSigner(ctx),
+    rateLimit: ctx.rateLimit
+  });
 
   const boardListTask: FunctionTask<{ q: string; limit: string }> = {
     namespace: 'board',
@@ -76,7 +81,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       'The featured boards and the ones touched last — those whose name holds `q` — the first `limit` of them, each ' +
       'with a preview of its drawing.',
     params: { q: text('Search'), limit: text('How many') },
-    run: ({ q, limit }, ctx) => listBoards(on(ctx.kv), { q, limit })
+    run: ({ q, limit }, ctx) => listBoards(on(ctx), { q, limit })
   };
 
   const boardLoadTask: FunctionTask<{ id: string }> = {
@@ -86,8 +91,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     description: 'One board: its title and every element on it — or, locked, only that it exists.',
     params: { id: boardParam },
     // An id that is not one is a board that does not exist — the page says so — rather than an error page.
-    run: ({ id }, ctx) =>
-      isBoardId(id) ? loadBoard(on(ctx.kv), id, topic => ctx.grant(topic)) : missingBoard(String(id))
+    run: ({ id }, ctx) => (isBoardId(id) ? loadBoard(on(ctx), id, topic => ctx.grant(topic)) : missingBoard(String(id)))
   };
 
   const boardOpenTask: FunctionTask<{ id: string; password: string; key: string }> = {
@@ -96,9 +100,8 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     title: 'Open Board',
     description: 'A locked board, opened with its password or a key kept from the last time.',
     params: { id: boardParam, password: text('Password'), key: keyParam },
-    // `callerId` is who is asking as the transport saw them: what password attempts are counted against.
-    run: ({ id, password, key }, ctx) =>
-      openBoard(on(ctx.kv), boardId(id), { password, key }, ctx.callerId, topic => ctx.grant(topic))
+    // Password attempts are counted per caller — who is asking as the transport saw them.
+    run: ({ id, password, key }, ctx) => openBoard(on(ctx), boardId(id), { password, key }, topic => ctx.grant(topic))
   };
 
   const boardCreateTask: FunctionTask<{ title: string; template: string; visibility: string; hours: string }> = {
@@ -112,7 +115,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       hours: text('Lasts (hours: 1 | 5 | 24 | 168 — empty or 0 for good)')
     },
     run: ({ title, template, visibility, hours }, ctx) =>
-      createBoard(on(ctx.kv), title, isTemplate(template) ? template : 'blank', { visibility, hours })
+      createBoard(on(ctx), title, isTemplate(template) ? template : 'blank', { visibility, hours })
   };
 
   const boardReachTask: FunctionTask<{ board: string; visibility: string; hours: string } & Passed> = {
@@ -128,7 +131,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       hours: text('Lasts (hours: 0 | 1 | 5 | 24 | 168, or keep)')
     },
     run: ({ board, key, owner, visibility, hours }, ctx) =>
-      setReach(on(ctx.kv), boardId(board), { key, owner }, { visibility, hours })
+      setReach(on(ctx), boardId(board), { key, owner }, { visibility, hours })
   };
 
   const boardReplyTask: FunctionTask<{ board: string; element: string; author: string; text: string } & Passed> = {
@@ -145,7 +148,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       text: text('The answer')
     },
     run: ({ board, key, owner, element, author, text: said }, ctx) =>
-      replyTo(on(ctx.kv), boardId(board), { key, owner }, { element, author, text: said })
+      replyTo(on(ctx), boardId(board), { key, owner }, { element, author, text: said })
   };
 
   const boardChatTask: FunctionTask<
@@ -166,7 +169,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       agent: text('Said by an agent (true | empty)')
     },
     run: ({ board, key, owner, name, color, text: said, by, agent }, ctx) =>
-      sayOn(on(ctx.kv), boardId(board), { key, owner }, { name, color, text: said, by, agent })
+      sayOn(on(ctx), boardId(board), { key, owner }, { name, color, text: said, by, agent })
   };
 
   const boardCopyTask: FunctionTask<{ board: string; key: string }> = {
@@ -175,7 +178,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     title: 'Copy Board',
     description: 'A new board drawn like another — a read-only example, or any board — for the caller to change.',
     params: { board: boardParam, key: keyParam },
-    run: ({ board, key }, ctx) => copyBoard(on(ctx.kv), boardId(board), key)
+    run: ({ board, key }, ctx) => copyBoard(on(ctx), boardId(board), key)
   };
 
   const boardRenameTask: FunctionTask<{ board: string; title: string } & Passed> = {
@@ -183,7 +186,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     action: 'rename',
     title: 'Rename Board',
     params: { board: boardParam, title: text('Title'), key: keyParam, owner: ownerParam },
-    run: ({ board, title, key, owner }, ctx) => renameBoard(on(ctx.kv), boardId(board), title, { key, owner })
+    run: ({ board, title, key, owner }, ctx) => renameBoard(on(ctx), boardId(board), title, { key, owner })
   };
 
   const boardLockTask: FunctionTask<{ board: string; password: string } & Passed> = {
@@ -192,7 +195,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     title: 'Lock Board',
     description: 'Sets, changes or — given no password — removes a board’s password.',
     params: { board: boardParam, password: text('Password (empty removes it)'), key: keyParam, owner: ownerParam },
-    run: ({ board, password, key, owner }, ctx) => lockBoard(on(ctx.kv), boardId(board), password, { key, owner })
+    run: ({ board, password, key, owner }, ctx) => lockBoard(on(ctx), boardId(board), password, { key, owner })
   };
 
   const boardDeleteTask: FunctionTask<{ board: string } & Passed> = {
@@ -201,7 +204,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     title: 'Delete Board',
     description: 'Removes a board — never a read-only one — with its pictures.',
     params: { board: boardParam, key: keyParam, owner: ownerParam },
-    run: ({ board, key, owner }, ctx) => deleteBoard(on(ctx.kv), boardId(board), { key, owner })
+    run: ({ board, key, owner }, ctx) => deleteBoard(on(ctx), boardId(board), { key, owner })
   };
 
   const boardApplyTask: FunctionTask<{ board: string; ops: unknown } & Passed> = {
@@ -215,7 +218,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       key: keyParam,
       owner: ownerParam
     },
-    run: ({ board, ops, key, owner }, ctx) => applyToBoard(on(ctx.kv), boardId(board), ops, { key, owner })
+    run: ({ board, ops, key, owner }, ctx) => applyToBoard(on(ctx), boardId(board), ops, { key, owner })
   };
 
   const boardVoteTask: FunctionTask<{ board: string; element: string; voter: string } & Passed> = {
@@ -230,8 +233,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       key: keyParam,
       owner: ownerParam
     },
-    run: ({ board, element, voter, key, owner }, ctx) =>
-      voteOn(on(ctx.kv), boardId(board), element, voter, { key, owner })
+    run: ({ board, element, voter, key, owner }, ctx) => voteOn(on(ctx), boardId(board), element, voter, { key, owner })
   };
 
   const boardTimerTask: FunctionTask<{ board: string; seconds: string } & Passed> = {
@@ -239,7 +241,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     action: 'timer',
     title: 'Set Board Timer',
     params: { board: boardParam, seconds: text('Seconds (0 stops it)'), key: keyParam, owner: ownerParam },
-    run: ({ board, seconds, key, owner }, ctx) => setTimer(on(ctx.kv), boardId(board), seconds, { key, owner })
+    run: ({ board, seconds, key, owner }, ctx) => setTimer(on(ctx), boardId(board), seconds, { key, owner })
   };
 
   const boardSessionTask: FunctionTask<{ board: string; command: string; script: string; host: string } & Passed> = {
@@ -256,7 +258,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       owner: ownerParam
     },
     run: ({ board, command, script, host, key, owner }, ctx) =>
-      runSession(on(ctx.kv), boardId(board), command, script, host, { key, owner })
+      runSession(on(ctx), boardId(board), command, script, host, { key, owner })
   };
 
   const boardUploadTask: FunctionTask<{ board: string; data: string } & Passed> = {
@@ -265,7 +267,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     title: 'Upload Picture',
     description: 'Keeps a picture (a data URL) beside a board, and answers the asset id an image element names.',
     params: { board: boardParam, data: text('Picture (data URL)'), key: keyParam, owner: ownerParam },
-    run: ({ board, data, key, owner }, ctx) => uploadToBoard(on(ctx.kv), boardId(board), data, { key, owner })
+    run: ({ board, data, key, owner }, ctx) => uploadToBoard(on(ctx), boardId(board), data, { key, owner })
   };
 
   const boardReadOnlyTask: FunctionTask<{ board: string; readOnly: string } & Passed> = {
@@ -274,7 +276,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     title: 'Set Board Read-Only',
     description: 'Makes a board read-only for everyone but whoever made it, or opens it again. Only its creator may.',
     params: { board: boardParam, key: keyParam, owner: ownerParam, readOnly: text('Read-only (true | false)') },
-    run: ({ board, key, owner, readOnly }, ctx) => setReadOnly(on(ctx.kv), boardId(board), { key, owner }, readOnly)
+    run: ({ board, key, owner, readOnly }, ctx) => setReadOnly(on(ctx), boardId(board), { key, owner }, readOnly)
   };
 
   const boardAgentsTask: FunctionTask<{ board: string; minutes: string; listens: string } & Passed> = {
@@ -292,7 +294,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       listens: text('What wakes it (named | changes)')
     },
     run: ({ board, key, owner, minutes, listens }, ctx) =>
-      setAgentSettings(on(ctx.kv), boardId(board), { key, owner }, { minutes, listens })
+      setAgentSettings(on(ctx), boardId(board), { key, owner }, { minutes, listens })
   };
 
   const templateSaveTask: FunctionTask<{ board: string; title: string; elements: unknown } & Passed> = {
@@ -310,7 +312,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
       owner: ownerParam
     },
     run: ({ board, title, elements, key, owner }, ctx) =>
-      saveTemplate(on(ctx.kv), boardId(board), { title, elements }, { key, owner })
+      saveTemplate(on(ctx), boardId(board), { title, elements }, { key, owner })
   };
 
   const templateAddTask: FunctionTask<{ board: string; code: string } & Passed> = {
@@ -319,7 +321,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     title: 'Add Template',
     description: 'Adds a template another board keeps to this board’s library, by its code.',
     params: { board: boardParam, code: text('Template code'), key: keyParam, owner: ownerParam },
-    run: ({ board, code, key, owner }, ctx) => addTemplate(on(ctx.kv), boardId(board), code, { key, owner })
+    run: ({ board, code, key, owner }, ctx) => addTemplate(on(ctx), boardId(board), code, { key, owner })
   };
 
   const templateRemoveTask: FunctionTask<{ board: string; code: string } & Passed> = {
@@ -328,7 +330,7 @@ export const createBoardFunctions = ({ assets, signer }: Omit<BoardStores, 'kv'>
     title: 'Remove Template',
     description: 'Takes a template out of this board’s library; the other boards that list it keep it.',
     params: { board: boardParam, code: text('Template code'), key: keyParam, owner: ownerParam },
-    run: ({ board, code, key, owner }, ctx) => removeTemplate(on(ctx.kv), boardId(board), code, { key, owner })
+    run: ({ board, code, key, owner }, ctx) => removeTemplate(on(ctx), boardId(board), code, { key, owner })
   };
 
   return defineFunctions({

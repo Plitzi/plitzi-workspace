@@ -1,3 +1,4 @@
+import type { RateCount, RateLimit } from '../actions/runtime/rateLimit';
 import type { ActionKvStore } from '../actions/types';
 import type { Environment, InteractionCallbackParam } from '@plitzi/sdk-shared';
 
@@ -43,8 +44,25 @@ export type FunctionContext = {
   /** `user:<id>` for a session, `ip:<address>` for everyone else — what a limit per person keys on. */
   callerId: string;
   user?: FunctionUser;
-  /** The space's own key/value store: `get`, `set`, `swap`, `increment`, lists. */
+  /**
+   * The space's own key/value store: `get`, `set`, `swap`, `increment`, lists — and `change`, to read, change and write
+   * a value back without undoing a writer that got there first.
+   */
   kv: ActionKvStore;
+  /**
+   * Counts one more of `bucket` — per caller unless `per: 'everyone'` — and says whether it was within `most` in every
+   * `perSeconds`. The same count as a flow's `flow.rateLimit` step on that bucket. What to answer when it is not is the
+   * code's.
+   */
+  rateLimit: (bucket: string, limit: RateLimit) => Promise<RateCount>;
+  /**
+   * Signs `value` with a key of the space's own that the platform keeps and the code never sees: HMAC-SHA-256,
+   * base64url. What a link, an invitation or a key handed to a page is made of. Refused on a server with no signing
+   * secret.
+   */
+  sign: (value: string) => Promise<string>;
+  /** Whether `signature` is what `sign` answered for `value`, compared in constant time. */
+  verify: (value: string, signature: string) => Promise<boolean>;
   /** To the hosts the space declared (`allow.hosts`) — and, with `credential`, with one of its secrets written in. */
   fetch: FunctionFetch;
   /** Says something on one of the space's realtime channels, as the server. */
@@ -93,6 +111,14 @@ export type FunctionsDefinition = {
   /** `'GET /board-assets/:board/:asset'` → a handler, served at `/api/board-assets/…`. */
   routes?: Record<string, FunctionRoute>;
 };
+
+/**
+ * What a function throws to refuse, with a reason written for whoever asked — a wrong password, a board that is
+ * read-only. Its message reaches the page as the step's error (`{{ step.error }}`), and a route answers it with a 400;
+ * anything else a function throws stays in the run's record, since an error can carry what a visitor must not read.
+ * The platform's own class: the same natively and, printed into the bundle, in the sandbox.
+ */
+export { ActionRefusal } from '../actions/runtime/errors';
 
 /**
  * Declares a space's functions. An identity at run time: it is here for the types, and so the same file is valid

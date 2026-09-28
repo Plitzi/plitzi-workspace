@@ -54,8 +54,15 @@ export default defineFunctions({
   Node built-in (`fs`, `process`, `Buffer`). Saving refuses anything else, with the file and line.
 - **Web-standard only.** `Request`, `Response`, `Headers`, `URL`, `URLSearchParams`, `TextEncoder`/`TextDecoder`,
   `AbortController`/`AbortSignal`, `setTimeout`, `structuredClone`, `atob`/`btoa`, `crypto.randomUUID`,
-  `crypto.getRandomValues` and `crypto.subtle` (digests and HMAC — what verifying a webhook needs). A body is text or
-  bytes: there are no streams, `Blob` or `FormData`. That is what lets the same bundle run on any runner (§8).
+  `crypto.getRandomValues` and `crypto.subtle` — digests, HMAC (what verifying a webhook needs) and PBKDF2
+  (`deriveBits`, or `deriveKey` to an HMAC key: what keeping a password needs). A body is text or bytes: there are no
+  streams, `Blob` or `FormData`. That is what lets the same bundle run on any runner (§8).
+- **A derivation is the run's CPU.** The runner does PBKDF2 outside the isolate, so what it takes is added to the
+  run's CPU time and counts against its limit and the plan's budget; one derivation is at most 1,000,000 iterations
+  and 1024 bits. Pick the iterations that fit the budget on the machine the runner is on: the cost is linear in them,
+  so time one call (`Date.now()` before and after) and scale.
+- **A password hash is compared in constant time**: `crypto.subtle` has no `timingSafeEqual`, so XOR every byte and
+  check the total is zero — or derive an HMAC key and let `crypto.subtle.verify` compare.
 - **A task is a step.** `params` are drawn in the action editor the way any step's are — static ones only: a computed
   `type`, `when` or `options` is code, and the builder never runs a space's code. A namespace the platform uses (`kv`,
   `list`, `http`, `flow`, `realtime`, `email`, …) is refused.
@@ -67,7 +74,9 @@ Everything a function does besides computing goes through `ctx` — the same obj
 
 | | |
 |---|---|
-| `ctx.kv` | The space's key/value store: `get`, `set`, `delete`, `increment`, `swap` (compare-and-set), and scored lists (`listPut`, `listRange`, `listRemove`) — the same store the `kv.*` and `list.*` steps use |
+| `ctx.kv` | The space's key/value store: `get`, `set`, `delete`, `increment`, `swap` (compare-and-set), `change` (read, change and write back — again when somebody wrote first) and scored lists (`listPut`, `listRange`, `listRemove`) — the same store the `kv.*` and `list.*` steps use |
+| `ctx.rateLimit(bucket, { most, perSeconds, per })` | Counts one more and answers `{ allowed, count, remaining }` — per caller, or `per: 'everyone'`. The same count as `flow.rateLimit` on that bucket; what to answer past it is the code's |
+| `ctx.sign(value)`, `ctx.verify(value, signature)` | HMAC-SHA-256 with a key of the space's own that the platform keeps: a link, an invitation, a key handed to a page. The code never holds the key, and what one space or environment signed no other verifies |
 | `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare |
 | `ctx.publish`, `ctx.grant`, `ctx.revoke` | The space's realtime channels, as the server — see [Realtime channels](./realtime.md) |
 | `ctx.user` | Who asked — `id`, `username`, `email`, `verified`, `roles`, `permissions` — never their session |
@@ -75,6 +84,31 @@ Everything a function does besides computing goes through `ctx` — the same obj
 | `ctx.log(...)` | A line on the step that ran it: shown by Try, and in the run history |
 | `ctx.emit(chunk)` | Progress for a caller that asked for a stream |
 | `ctx.signal` | Aborted when the run is — cancelled, or out of time |
+
+**Changing a value two people may change at once** is `ctx.kv.change`: it reads, hands the value to your function, and
+writes back what it answers only if nobody wrote in between — otherwise it reads again and asks again. Answer
+`undefined` to write nothing; the lifetime may be worked out from what is written:
+
+```ts
+const board = await ctx.kv.change(`board:${id}`, current => ({ ...asBoard(current), title }), next => ttlOf(next));
+```
+
+The function may run more than once, so it only computes: anything it must do once goes after.
+
+**Refusing is `ActionRefusal`**, from `@plitzi/sdk-server/functions`: throw it with a reason written for whoever
+asked, and the page reads it as the step's error (`{{ step.error }}`) — a route answers it with a `400` and
+`{ "error": … }`. Anything else a function throws stays in the run's record and the caller only learns that it failed:
+an error can carry a query, a URL or a credential's name, and a page is read by anybody.
+
+```ts
+import { ActionRefusal, defineFunctions } from '@plitzi/sdk-server/functions';
+
+if (!(await ctx.rateLimit(`open:${id}`, { most: 10, perSeconds: 300 })).allowed) {
+  throw new ActionRefusal('Too many tries — wait a few minutes and try again');
+}
+```
+
+`ctx.kv.change` refuses the same way when others kept winning the value: `Many people are changing this at once`.
 
 **Secrets are named, never read.** A function cannot see a credential's value. It names the credential, and the
 platform writes its keys into the request where it says `{{ credential.<key> }}` — in the URL, a header or the body:

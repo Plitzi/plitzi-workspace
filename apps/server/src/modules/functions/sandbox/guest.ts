@@ -1,3 +1,5 @@
+import type { changeKv } from '../../actions/runtime/kvChange';
+
 /** What the runner hands the guest: calls into the runner's own process, the only way out of the isolate. */
 export type GuestHost = {
   /** A {@link FunctionCall} for the platform, as JSON; answers a `FunctionAnswer`, as JSON. */
@@ -9,6 +11,15 @@ export type GuestHost = {
   /** A `crypto.subtle` operation the runner does with its own implementation: `{ op, … }` → a `FunctionAnswer` whose
    *  value is the bytes, base64. */
   crypto: (message: string) => Promise<string>;
+};
+
+/**
+ * Functions of the platform's the guest runs as they are, printed in beside it (`isolate.ts`) — one implementation for
+ * native code and the sandbox alike. Each is self-contained by contract, as the guest is.
+ */
+export type GuestShared = {
+  /** `ctx.kv.change`: the read-change-write loop, over the guest's own `get` and `swap` calls. */
+  changeKv: typeof changeKv;
 };
 
 /** What the runner drives the guest with, once installed. */
@@ -27,18 +38,30 @@ export type GuestDriver = {
  *
  * It is installed by PRINTING this function into the isolate (`installGuest.toString()`), after the prelude that brings
  * `URL`, `atob`, `structuredClone` and `DOMException`. So it may use nothing from outside its own body — no import,
- * no helper beside it — and all it has of the runner is `host`. Streams are not provided: a body is text or bytes.
+ * no helper beside it — and all it has of the runner is `host`, and the functions in `shared`. Streams are not
+ * provided: a body is text or bytes.
  */
-export const installGuest = (scope: Record<string, unknown>, host: GuestHost): GuestDriver => {
+export const installGuest = (scope: Record<string, unknown>, host: GuestHost, shared: GuestShared): GuestDriver => {
   type Bytes = Uint8Array<ArrayBuffer>;
   type Listener = (event: GuestEvent) => void;
   type HeadersInput = GuestHeaders | [string, string][] | Record<string, string>;
   type BodySource = { text: string } | { bytes: Bytes } | null;
   type WireBody = { text: string } | { base64: string };
-  type Answer = { ok: true; value: unknown } | { ok: false; error: string };
+  type Answer = { ok: true; value: unknown } | { ok: false; error: string; refused?: true };
 
   const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
+
+  /**
+   * A refusal: what the code threw to tell whoever asked — a wrong password, a full board — rather than a fault. It is
+   * `ActionRefusal` from `@plitzi/sdk-server/functions`, known here by its name: the bundle carries its own copy of the
+   * class, printed from the platform's (`build.ts`).
+   */
+  const REFUSAL = 'ActionRefusal';
+
+  const isRefusal = (error: unknown): boolean => error instanceof Error && error.name === REFUSAL;
+
+  const refusal = (message: string): Error => Object.assign(new Error(message), { name: REFUSAL });
 
   const isCallable = (value: unknown): value is (...args: unknown[]) => unknown => typeof value === 'function';
 
@@ -676,27 +699,43 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost): G
 
   const HASHES = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'];
 
-  const hashOf = (algorithm: unknown): string => {
+  const nameOf = (algorithm: unknown): string => {
     const name = typeof algorithm === 'string' ? algorithm : isRecord(algorithm) ? algorithm.name : undefined;
-    const upper = typeof name === 'string' ? name.toUpperCase() : '';
+
+    return typeof name === 'string' ? name.toUpperCase() : '';
+  };
+
+  const hashOf = (algorithm: unknown): string => {
+    const upper = nameOf(algorithm);
     if (!HASHES.includes(upper)) {
-      throw new DOMException(`${String(name)} is not a supported hash (${HASHES.join(', ')})`, 'NotSupportedError');
+      throw new DOMException(
+        `${upper || String(algorithm)} is not a supported hash (${HASHES.join(', ')})`,
+        'NotSupportedError'
+      );
     }
 
     return upper;
   };
 
-  /** An HMAC key: the one kind of key this runtime's `crypto.subtle` makes — what signing a webhook needs. */
+  /** An HMAC key's length when its algorithm names none: the hash's block, as Web Crypto has it. */
+  const blockBitsOf = (hash: string): number => (hash === 'SHA-384' || hash === 'SHA-512' ? 1024 : 512);
+
+  type KeyAlgorithm = { name: 'HMAC'; hash: { name: string } } | { name: 'PBKDF2' };
+
+  /**
+   * The two kinds of key this runtime's `crypto.subtle` makes: HMAC, what signing a webhook needs, and PBKDF2, a
+   * password to derive from — what keeping a password needs.
+   */
   class GuestCryptoKey {
     readonly type = 'secret';
-    readonly algorithm: { name: 'HMAC'; hash: { name: string } };
+    readonly algorithm: KeyAlgorithm;
     readonly extractable: boolean;
     readonly usages: string[];
     readonly raw: Bytes;
 
-    constructor(raw: Bytes, hash: string, extractable: boolean, usages: string[]) {
+    constructor(raw: Bytes, algorithm: KeyAlgorithm, extractable: boolean, usages: string[]) {
       this.raw = raw;
-      this.algorithm = { name: 'HMAC', hash: { name: hash } };
+      this.algorithm = algorithm;
       this.extractable = extractable;
       this.usages = usages;
     }
@@ -722,17 +761,86 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost): G
     return base64ToBytes(answer.value);
   };
 
-  const hmacOf = (key: unknown, data: unknown): Promise<Bytes> => {
-    if (!(key instanceof GuestCryptoKey)) {
-      return Promise.reject(new TypeError('An HMAC key comes from crypto.subtle.importKey'));
+  type KeyOf<N extends KeyAlgorithm['name']> = GuestCryptoKey & { algorithm: Extract<KeyAlgorithm, { name: N }> };
+
+  const isKeyOf = <N extends KeyAlgorithm['name']>(key: unknown, name: N): key is KeyOf<N> =>
+    key instanceof GuestCryptoKey && key.algorithm.name === name;
+
+  /** The key an operation was handed, when it is of the kind the operation takes and was imported for it. */
+  const keyFor = <N extends KeyAlgorithm['name']>(key: unknown, name: N, usage: string): KeyOf<N> => {
+    if (!isKeyOf(key, name)) {
+      throw new DOMException(`${usage} takes a ${name} key, from crypto.subtle.importKey`, 'InvalidAccessError');
     }
+
+    if (!key.usages.includes(usage)) {
+      throw new DOMException(`The key was not imported for ${usage}`, 'InvalidAccessError');
+    }
+
+    return key;
+  };
+
+  const hmacOf = (key: unknown, usage: 'sign' | 'verify', data: unknown): Promise<Bytes> => {
+    const { algorithm, raw } = keyFor(key, 'HMAC', usage);
 
     return cryptoCall({
       op: 'hmac',
-      hash: key.algorithm.hash.name,
-      key: bytesToBase64(key.raw),
+      hash: algorithm.hash.name,
+      key: bytesToBase64(raw),
       data: bytesToBase64(bytesOf(data))
     });
+  };
+
+  /** How many rounds and bits a derivation may take is the runner's to say: it is the one doing the work. */
+  const pbkdf2Of = (algorithm: unknown, baseKey: unknown, bits: unknown, usage: string): Promise<Bytes> => {
+    if (!isRecord(algorithm) || nameOf(algorithm) !== 'PBKDF2') {
+      throw new DOMException('This runtime derives with PBKDF2 only', 'NotSupportedError');
+    }
+
+    const { raw } = keyFor(baseKey, 'PBKDF2', usage);
+    if (typeof algorithm.iterations !== 'number' || typeof bits !== 'number') {
+      throw new TypeError('PBKDF2 takes { name, hash, salt, iterations } and a length in bits');
+    }
+
+    return cryptoCall({
+      op: 'pbkdf2',
+      hash: hashOf(algorithm.hash),
+      key: bytesToBase64(raw),
+      salt: bytesToBase64(bytesOf(algorithm.salt)),
+      iterations: String(algorithm.iterations),
+      bits: String(bits)
+    });
+  };
+
+  /** The key `importKey` makes — thrown, not answered, when it is none this runtime has. */
+  const importedKey = (
+    format: string,
+    keyData: unknown,
+    algorithm: unknown,
+    extractable: boolean,
+    usages: string[]
+  ): GuestCryptoKey => {
+    const name = nameOf(algorithm);
+    if (format === 'raw' && name === 'HMAC' && isRecord(algorithm)) {
+      return new GuestCryptoKey(
+        bytesOf(keyData),
+        { name, hash: { name: hashOf(algorithm.hash) } },
+        extractable,
+        usages
+      );
+    }
+
+    if (format === 'raw' && name === 'PBKDF2') {
+      if (extractable) {
+        throw new DOMException('A PBKDF2 key is never extractable', 'SyntaxError');
+      }
+
+      return new GuestCryptoKey(bytesOf(keyData), { name }, false, usages);
+    }
+
+    throw new DOMException(
+      'This runtime imports raw keys for HMAC and PBKDF2 only (format "raw", { name: "HMAC", hash } or "PBKDF2")',
+      'NotSupportedError'
+    );
   };
 
   const subtle = {
@@ -744,22 +852,14 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost): G
       algorithm: unknown,
       extractable: boolean,
       usages: string[]
-    ): Promise<GuestCryptoKey> => {
-      if (format !== 'raw' || !isRecord(algorithm) || algorithm.name !== 'HMAC') {
-        return Promise.reject(
-          new DOMException(
-            'This runtime imports raw HMAC keys only (format "raw", { name: "HMAC" })',
-            'NotSupportedError'
-          )
-        );
-      }
-
-      return Promise.resolve(new GuestCryptoKey(bytesOf(keyData), hashOf(algorithm.hash), extractable, usages));
-    },
+    ): Promise<GuestCryptoKey> =>
+      new Promise(resolve => {
+        resolve(importedKey(format, keyData, algorithm, extractable, usages));
+      }),
     sign: async (_algorithm: unknown, key: unknown, data: unknown): Promise<ArrayBuffer> =>
-      (await hmacOf(key, data)).buffer,
+      (await hmacOf(key, 'sign', data)).buffer,
     verify: async (_algorithm: unknown, key: unknown, signature: unknown, data: unknown): Promise<boolean> => {
-      const expected = await hmacOf(key, data);
+      const expected = await hmacOf(key, 'verify', data);
       const given = bytesOf(signature);
       let difference = expected.length ^ given.length;
       expected.forEach((byte, index) => {
@@ -767,6 +867,26 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost): G
       });
 
       return difference === 0;
+    },
+    deriveBits: async (algorithm: unknown, baseKey: unknown, length: unknown): Promise<ArrayBuffer> =>
+      (await pbkdf2Of(algorithm, baseKey, length, 'deriveBits')).buffer,
+    /** Derives an HMAC key — the one other kind this runtime has. */
+    deriveKey: async (
+      algorithm: unknown,
+      baseKey: unknown,
+      derivedKeyAlgorithm: unknown,
+      extractable: boolean,
+      usages: string[]
+    ): Promise<GuestCryptoKey> => {
+      if (!isRecord(derivedKeyAlgorithm) || nameOf(derivedKeyAlgorithm) !== 'HMAC') {
+        throw new DOMException('This runtime derives HMAC keys only', 'NotSupportedError');
+      }
+
+      const hash = hashOf(derivedKeyAlgorithm.hash);
+      const length = derivedKeyAlgorithm.length ?? blockBitsOf(hash);
+      const raw = await pbkdf2Of(algorithm, baseKey, length, 'deriveKey');
+
+      return new GuestCryptoKey(raw, { name: 'HMAC', hash: { name: hash } }, extractable, usages);
     }
   };
 
@@ -860,17 +980,30 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost): G
   const contextOf = (invocation: Record<string, unknown>) => {
     const facts = isRecord(invocation.context) ? invocation.context : {};
 
+    const kvCall =
+      (method: string) =>
+      (...args: unknown[]): Promise<unknown> =>
+        call({ op: 'kv', method, args });
+    const kv = {
+      get: kvCall('get'),
+      set: kvCall('set'),
+      delete: kvCall('delete'),
+      increment: kvCall('increment'),
+      swap: (key: string, expected: unknown, next: unknown, ttlSeconds?: number): Promise<boolean> =>
+        kvCall('swap')(key, expected, next, ttlSeconds).then(written => written === true),
+      listPut: kvCall('listPut'),
+      listRange: kvCall('listRange'),
+      listRemove: kvCall('listRemove'),
+      change: (
+        key: string,
+        change: (current: unknown) => unknown,
+        lifetime?: number | ((next: unknown) => number | undefined)
+      ): Promise<unknown> => shared.changeKv(kv, key, change, { lifetime, refusal })
+    };
+
     return {
       ...facts,
-      kv: new Proxy(
-        {},
-        {
-          get:
-            (_target, method) =>
-            (...args: unknown[]) =>
-              call({ op: 'kv', method: String(method), args })
-        }
-      ),
+      kv,
       fetch: async (url: string | URL, init: Record<string, unknown> = {}) => {
         const answer = await call({ op: 'fetch', url: String(url), init });
         const response = isRecord(answer) ? answer : {};
@@ -888,6 +1021,9 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost): G
       revoke: async (topic: string, grant?: string) => {
         await call({ op: 'revoke', topic, grant });
       },
+      rateLimit: (bucket: string, limit: unknown) => call({ op: 'rateLimit', bucket, limit }),
+      sign: (value: string) => call({ op: 'sign', value }),
+      verify: (value: string, signature: string) => call({ op: 'verify', value, signature }),
       log,
       emit: (chunk: unknown) => {
         call({ op: 'emit', chunk }).catch(() => undefined);
@@ -946,7 +1082,11 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost): G
         const invocation: unknown = JSON.parse(invocationText);
         answer = { ok: true, value: await dispatch(definition, isRecord(invocation) ? invocation : {}) };
       } catch (error) {
-        answer = { ok: false, error: error instanceof Error ? error.message : String(error) };
+        answer = {
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+          ...(isRefusal(error) ? { refused: true as const } : {})
+        };
       }
 
       try {

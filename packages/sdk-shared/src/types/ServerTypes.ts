@@ -622,6 +622,11 @@ export type SSRActionConfig = {
    */
   idempotency?: { replayTtlMs?: number };
   /**
+   * What each space's functions sign with (`ctx.sign` / `ctx.verify`): at least 32 characters, the same on every
+   * replica. Each space and environment signs with a key derived from it. Absent, spaces sign nothing.
+   */
+  signingSecret?: string;
+  /**
    * Where the `kv` tasks keep things — shaped as `ActionKvAdapter` in `@plitzi/sdk-server/actions`.
    *
    * Six operations over strings, with no rule to obey: Redis, Memcached, a table, whatever this deployment

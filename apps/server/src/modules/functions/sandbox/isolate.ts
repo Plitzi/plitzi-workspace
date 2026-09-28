@@ -1,7 +1,9 @@
-import { createHash, createHmac, randomBytes } from 'node:crypto';
+import { createHash, createHmac, pbkdf2, randomBytes } from 'node:crypto';
+import { promisify } from 'node:util';
 
 import { installGuest } from './guest';
 import { guestPrelude } from './prelude';
+import { changeKv } from '../../actions/runtime/kvChange';
 import { FunctionFailure } from '../protocol';
 
 import type { GuestDriver } from './guest';
@@ -112,19 +114,71 @@ const stopMessage = (reason: FunctionStopReason, limits: FunctionLimits): string
   }
 };
 
-/** The one `crypto.subtle` a guest cannot do by itself, done with the runner's own: digests and HMAC. */
-const cryptoAnswer = (message: string): string => {
+/**
+ * The most a PBKDF2 derivation may ask for. The runner does the work, outside the isolate's clock, so each is bounded
+ * here and its time is charged to the run's CPU: a million rounds is past any password guidance, and 1024 bits past
+ * any key.
+ */
+export const PBKDF2_MAX_ITERATIONS = 1_000_000;
+export const PBKDF2_MAX_BITS = 1024;
+
+const derive = promisify(pbkdf2);
+
+const cryptoField = (request: Record<string, unknown>, name: string): string => {
+  const value = request[name];
+  if (typeof value !== 'string') {
+    throw new Error(`The operation has no ${name}`);
+  }
+
+  return value;
+};
+
+const boundedInteger = (text: string, what: string, max: number): number => {
+  const value = Number(text);
+  if (!Number.isInteger(value) || value < 1 || value > max) {
+    throw new Error(`${what} is a whole number from 1 to ${String(max)}`);
+  }
+
+  return value;
+};
+
+/**
+ * The `crypto.subtle` a guest cannot do by itself, done with the runner's own: digests, HMAC and PBKDF2. A derivation
+ * is the one that costs, and `charge` is handed what it took.
+ */
+const cryptoAnswer = async (message: string, charge: (ms: number) => void): Promise<string> => {
   try {
     const request: unknown = JSON.parse(message);
-    if (typeof request !== 'object' || request === null || !('op' in request) || !('hash' in request)) {
+    if (typeof request !== 'object' || request === null || Array.isArray(request)) {
       throw new Error('Not a crypto operation');
     }
 
-    const hash = String(request.hash).replace('-', '').toLowerCase();
-    const data = Buffer.from('data' in request ? String(request.data) : '', 'base64');
-    const key = Buffer.from('key' in request ? String(request.key) : '', 'base64');
+    const fields: Record<string, unknown> = { ...request };
+    const hash = cryptoField(fields, 'hash').replace('-', '').toLowerCase();
+    const bytes = (name: string): Buffer => Buffer.from(cryptoField(fields, name), 'base64');
+    const op = cryptoField(fields, 'op');
+    if (op === 'pbkdf2') {
+      const iterations = boundedInteger(cryptoField(fields, 'iterations'), 'PBKDF2 iterations', PBKDF2_MAX_ITERATIONS);
+      const bits = boundedInteger(cryptoField(fields, 'bits'), 'A PBKDF2 length in bits', PBKDF2_MAX_BITS);
+      if (bits % 8 !== 0) {
+        throw new Error('A PBKDF2 length is a multiple of 8 bits');
+      }
+
+      const started = performance.now();
+      const derived = await derive(bytes('key'), bytes('salt'), iterations, bits / 8, hash);
+      charge(performance.now() - started);
+
+      return JSON.stringify({ ok: true, value: derived.toString('base64') });
+    }
+
+    if (op !== 'hmac' && op !== 'digest') {
+      throw new Error(`${op} is not a crypto operation`);
+    }
+
     const digest =
-      request.op === 'hmac' ? createHmac(hash, key).update(data).digest() : createHash(hash).update(data).digest();
+      op === 'hmac'
+        ? createHmac(hash, bytes('key')).update(bytes('data')).digest()
+        : createHash(hash).update(bytes('data')).digest();
 
     return JSON.stringify({ ok: true, value: digest.toString('base64') });
   } catch (error) {
@@ -134,7 +188,8 @@ const cryptoAnswer = (message: string): string => {
 
 /**
  * Sets the guest up in a fresh context: the runner's four calls, taken off the global the moment they are captured,
- * and the guest printed from its own source. Answers the driver.
+ * and the guest printed from its own source — with the platform's functions it runs as they are (`GuestShared`),
+ * printed from theirs. Answers the driver.
  */
 const BOOTSTRAP = `(() => {
   const refs = { call: __plitziCall, sleep: __plitziSleep, random: __plitziRandom, crypto: __plitziCrypto };
@@ -148,7 +203,7 @@ const BOOTSTRAP = `(() => {
     sleep: ms => refs.sleep.apply(undefined, [ms], transfer),
     random: length => refs.random(length),
     crypto: message => refs.crypto.apply(undefined, [message], transfer)
-  });
+  }, { changeKv: ${changeKv.toString()} });
 })()`;
 
 type Cached = { code: string; bytes: number; cachedData?: IsolatedVM.ExternalCopy<ArrayBuffer> };
@@ -242,13 +297,15 @@ export const createIsolateRunner = ({
     let calls = 0;
     const startedAt = Date.now();
     /** The CPU the isolate used, kept as it is read: a disposed isolate has none left to ask. */
-    let cpuMs = 0;
+    let isolateCpuMs = 0;
+    /** What the runner spent on the run's behalf — a PBKDF2 derivation — which the isolate's clock never sees. */
+    let hostCpuMs = 0;
     const readCpu = (): number => {
       if (!isolate.isDisposed) {
-        cpuMs = Number(isolate.cpuTime) / 1e6;
+        isolateCpuMs = Number(isolate.cpuTime) / 1e6;
       }
 
-      return cpuMs;
+      return isolateCpuMs + hostCpuMs;
     };
     const stop = (reason: FunctionStopReason): void => {
       stopped ??= reason;
@@ -317,7 +374,17 @@ export const createIsolateRunner = ({
         '__plitziRandom',
         new ivm.Callback((length: number) => [...randomBytes(Math.min(Math.max(0, length), 65536))])
       );
-      global.setSync('__plitziCrypto', new ivm.Reference((message: string) => Promise.resolve(cryptoAnswer(message))));
+      global.setSync(
+        '__plitziCrypto',
+        new ivm.Reference((message: string) =>
+          cryptoAnswer(message, ms => {
+            hostCpuMs += ms;
+            if (readCpu() > limits.cpuMs) {
+              stop('cpu');
+            }
+          })
+        )
+      );
 
       const guestScript = isolate.compileScriptSync(BOOTSTRAP, {
         filename: 'plitzi:guest',
@@ -362,7 +429,10 @@ export const createIsolateRunner = ({
       }
 
       if (outcome.ok !== true) {
-        throw new FunctionFailure('error', 'error' in outcome ? String(outcome.error) : 'The function failed');
+        throw new FunctionFailure(
+          'refused' in outcome && outcome.refused === true ? 'refused' : 'error',
+          'error' in outcome ? String(outcome.error) : 'The function failed'
+        );
       }
 
       return 'value' in outcome ? outcome.value : null;

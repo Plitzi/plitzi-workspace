@@ -22,7 +22,8 @@ export const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStor
     swap: (key, expected, next, ttlSeconds) => store.swap(scoped(key), expected, next, ttlSeconds),
     listPut: (list, entry, options) => store.listPut(scoped(list), entry, options),
     listRange: (list, range) => store.listRange(scoped(list), range),
-    listRemove: (list, id) => store.listRemove(scoped(list), id)
+    listRemove: (list, id) => store.listRemove(scoped(list), id),
+    change: (key, change, lifetime) => store.change(scoped(key), change, lifetime)
   };
 };
 

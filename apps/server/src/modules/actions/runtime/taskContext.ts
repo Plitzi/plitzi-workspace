@@ -3,6 +3,7 @@ import { namespaceKv } from './namespaceKv';
 
 import type { createEmailSender } from './email';
 import type { createRedactor } from './scope';
+import type { createSigning } from './signing';
 import type { ActionKvStore, ActionRunRequest, ActionsConfig, ActionTaskContext, ResolvedActionLimits } from '../types';
 
 /**
@@ -86,6 +87,8 @@ export type TaskContextDeps = {
   kv: ActionKvStore;
   email: ReturnType<typeof createEmailSender>;
   redactor: ReturnType<typeof createRedactor>;
+  /** Absent when the deployment gave no `signingSecret`: its spaces then sign nothing. */
+  signing?: ReturnType<typeof createSigning>;
 };
 
 /** Who and what the context is for — a run's request, or anything shaped like one (a function's route). */
@@ -102,7 +105,7 @@ export type TaskContextRequest = Pick<
 export const taskContextFor =
   (
     config: ActionsConfig,
-    { kv, email, redactor }: TaskContextDeps,
+    { kv, email, redactor, signing }: TaskContextDeps,
     request: TaskContextRequest,
     signal: AbortSignal,
     runFetch: typeof fetch
@@ -157,6 +160,7 @@ export const taskContextFor =
       dbDrivers: config.dbDrivers ?? [],
       email,
       emit: chunk => request.emit?.(redactor.redact(chunk)),
+      ...signing?.({ spaceId: request.spaceId, environment: request.environment }),
       ...(realtime
         ? {
             publish: (topic: string, type: string, data: unknown) =>

@@ -35,7 +35,8 @@ adapter behind them, and the split between what must be validated and kept (a sh
 | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`src/board/model.ts`](./src/board/model.ts)                                                    | What a board is made of, read by the browser, the server and the agent alike: the element types, their styles, their validation, the merge                                                                                                                                                         |
 | [`src/board/store.ts`](./src/board/store.ts)                                                    | Boards kept in the action `kv`: one value per board, a preview per board, its chat, the list the front page reads — every write under one lock that holds across replicas                                                                                                                          |
-| [`src/board/locks.ts`](./src/board/locks.ts)                                                    | A board's password: a scrypt hash, and the key and secret topic opening it hands out, signed with the deployment's secret                                                                                                                                                                          |
+| [`src/board/locks.ts`](./src/board/locks.ts)                                                    | A board's password: a PBKDF2 hash, and the key and secret topic opening it hands out, signed with the space's own key (`ctx.sign`)                                                                                                                                                                 |
+| [`src/board/crypto.ts`](./src/board/crypto.ts)                                                  | Randomness, base64url and constant-time comparison from the web's `crypto`: the board code runs in the platform's sandbox as it is                                                                                                                                                                 |
 | [`src/board/assets.ts`](./src/board/assets.ts)                                                  | Pasted pictures: checked by their bytes, capped per picture and per board, kept in memory or in Redis                                                                                                                                                                                              |
 | [`src/board/templates.ts`](./src/board/templates.ts) · [`featured.ts`](./src/board/featured.ts) | What a new board starts as, and the two boards drawn at start                                                                                                                                                                                                                                      |
 | [`src/deployment.ts`](./src/deployment.ts)                                                      | One process or one replica of several: where the boards, the pictures and the channels live, what keys are signed with, and which replica holds each agent                                                                                                                                         |
@@ -234,21 +235,22 @@ their calls do too. Each replica's own port (4101, 4102, 4103) pins a browser to
 REDIS_URL=redis://127.0.0.1:6379 yarn workspace @plitzi/example-whiteboard start:replicas
 ```
 
-Deployed, each replica is started with the same `REDIS_URL` and `BOARD_SECRET`, and its own `REPLICA_URL` — the
+Deployed, each replica is started with the same `REDIS_URL` and `SIGNING_SECRET`, and its own `REPLICA_URL` — the
 address the other replicas reach it at (a pod's IP, a container's name) — plus `PIZARRA_PUBLIC_URL` when the proxy in
 front does not say which address people use:
 
 ```bash
-REDIS_URL=redis://redis:6379 BOARD_SECRET=… REPLICA_URL=http://10.0.3.7:4016 HOST=0.0.0.0 yarn workspace @plitzi/example-whiteboard start
+REDIS_URL=redis://redis:6379 SIGNING_SECRET=… REPLICA_URL=http://10.0.3.7:4016 HOST=0.0.0.0 yarn workspace @plitzi/example-whiteboard start
 ```
 
 - **The channels** — `createRedisPubSub`: a cursor moved by somebody connected to one replica is drawn on a page
   connected to another.
-- **The boards and the pictures** — an `ActionKvAdapter` and an asset store over Redis. Every write takes a lock in the
-  `kv` itself (the first `increment` of its key wins; it expires on its own), so two commits through two replicas
-  never lose one of them — the difference between 42 and 90 of 90 commits kept in the test below.
-- **The secret** — `BOARD_SECRET`, the same on every replica: a locked board's key and topic, handed out by one, are
-  checked by whichever the next request reaches. A replica refuses to start without it.
+- **The boards and the pictures** — an `ActionKvAdapter` and an asset store over Redis. Every write is a
+  `ctx.kv.change`: read, change, and write back only if nobody wrote in between — else read again — so two commits
+  through two replicas never lose one of them — the difference between 42 and 90 of 90 commits kept in the test below.
+- **The secret** — `SIGNING_SECRET`, the server's `action.signingSecret`, the same on every replica: a locked board's
+  key and its creator's key are `ctx.sign` signatures, and whichever replica the next request reaches checks them with
+  `ctx.verify`. The board code never holds the secret. A replica refuses to start without it.
 - **The agents** — which replica holds each agent's session, so a call for it reaching another is passed on
   ([Agents](#agents)). Without `REPLICA_URL` a replica listening beyond loopback cannot be found by the others, and
   says so as it starts: then the balancer has to pin `/mcp` to one replica by the `Mcp-Session-Id` header.

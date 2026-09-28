@@ -34,7 +34,9 @@ const schema: Schema = {
 };
 
 const SPACE_SOURCE = {
-  'index.ts': `export default {
+  'index.ts': `import { ActionRefusal } from '@plitzi/sdk-server/functions';
+
+export default {
   routes: {
     'GET /boards/:board': async (request, ctx) => {
       const hits = await ctx.kv.increment('hits:' + ctx.params.board, 1);
@@ -47,7 +49,9 @@ const SPACE_SOURCE = {
       }, { headers: { 'set-cookie': 'session=stolen', 'x-board': ctx.params.board } });
     },
     'POST /echo': async request => new Response(await request.arrayBuffer(), { headers: { 'content-type': 'application/octet-stream' } }),
-    'GET /spin': () => { while (true) {} }
+    'GET /spin': () => { while (true) {} },
+    'GET /read-only': () => { throw new ActionRefusal('This board is read-only'); },
+    'GET /broken': () => { throw new Error('select * from boards where secret = 42'); }
   }
 };`
 };
@@ -124,6 +128,14 @@ describe('functions under /api/', () => {
 
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: 'This route ran out of what it may spend' });
+  });
+
+  it('answer a refusal with its reason, and anything else thrown with nothing of what it said', async () => {
+    const refused = await fetch(`${BASE}/api/read-only`);
+    const broken = await fetch(`${BASE}/api/broken`);
+
+    expect([refused.status, await refused.json()]).toEqual([400, { error: 'This board is read-only' }]);
+    expect([broken.status, await broken.json()]).toEqual([500, { error: 'This route failed' }]);
   });
 
   // Answered exactly as the same path outside `/api` is: by the page server, whatever it makes of it.

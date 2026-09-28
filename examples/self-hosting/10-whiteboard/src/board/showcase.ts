@@ -141,7 +141,7 @@ const underTheHood = (): BoardElement[] => {
         fill: 'red',
         text: 'Redis — pictures'
       },
-      caption(180, -250, 'REDIS_URL + BOARD_SECRET: every replica agrees on boards, pictures, keys and channels')
+      caption(180, -250, 'REDIS_URL + SIGNING_SECRET: every replica agrees on boards, pictures, keys and channels')
     ]),
     connect(balancer, 's', replicaA, 'n'),
     connect(balancer, 's', replicaB, 'n'),
@@ -286,7 +286,7 @@ const sprint = (): BoardElement[] => {
       ['Ana', 'Moving the PDF export back to Backlog']
     ]),
     comment(350, -600, 'Can QA use two replicas locally?', 'Sam', [
-      ['Leo', 'Yes — REDIS_URL, BOARD_SECRET, two ports']
+      ['Leo', 'Yes — REDIS_URL, SIGNING_SECRET, two ports']
     ]),
 
     // The burndown, drawn by hand in a frame beside the board.

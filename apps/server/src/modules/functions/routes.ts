@@ -6,6 +6,7 @@ import { functionContextFor } from './context';
 import { parseRouteKey } from './manifest';
 import { FunctionFailure } from './protocol';
 import { serverLog } from '../../helpers/serverLog';
+import { ActionRefusal } from '../actions/runtime/errors';
 
 import type { FunctionsConfig } from './config';
 import type { FunctionContext, FunctionRoute, FunctionsDefinition } from './contract';
@@ -124,8 +125,15 @@ const wireResponseFrom = (value: unknown): WireResponse => {
   };
 };
 
-/** A route that threw or was stopped: the visitor gets that it failed, the server's log gets why. */
+/**
+ * A route that refused, threw or was stopped. A refusal's message was written for the visitor, who gets it with a 400;
+ * of anything else the visitor gets that it failed, and the server's log gets why.
+ */
 const failed = (visit: RouteVisit, key: string, error: unknown): Response => {
+  if (error instanceof ActionRefusal || (error instanceof FunctionFailure && error.reason === 'refused')) {
+    return Response.json({ error: error.message }, { status: 400 });
+  }
+
   serverLog.error('Functions', `route ${key} of space ${String(visit.spaceId)} failed`, error);
   const stopped = error instanceof FunctionFailure && error.reason !== 'error';
 

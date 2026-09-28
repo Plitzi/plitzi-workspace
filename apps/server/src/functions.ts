@@ -3,7 +3,7 @@
  * self-hosted server loads it natively or the platform runs it in its sandbox. Its own entry so a space's code imports
  * the contract alone, and nothing that runs it.
  */
-export { defineFunctions } from './modules/functions/contract';
+export { ActionRefusal, defineFunctions } from './modules/functions/contract';
 export type {
   FunctionContext,
   FunctionFetch,

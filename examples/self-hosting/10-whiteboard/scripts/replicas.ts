@@ -17,7 +17,7 @@ import type { ChildProcess } from 'node:child_process';
  * - `REDIS_URL`: the Redis they share. Default `redis://127.0.0.1:6379`.
  * - `REPLICAS`: how many. Default 3.
  * - `PORT`: the balancer's. Default 4016; the replicas take the ports after `REPLICA_PORT` (default 4100).
- * - `BOARD_SECRET`: what they all sign with. A development one when not given.
+ * - `SIGNING_SECRET`: what they all sign with. A development one when not given.
  *
  * A replica's own port is open too, to pin a browser to one: `http://127.0.0.1:4101/b/…`.
  */
@@ -29,7 +29,7 @@ const port = Number(process.env.PORT ?? 4016);
 const first = Number(process.env.REPLICA_PORT ?? 4100) + 1;
 const host = '127.0.0.1';
 const redis = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const secret = process.env.BOARD_SECRET ?? 'pizarra-replicas-on-one-machine';
+const secret = process.env.SIGNING_SECRET ?? 'pizarra-replicas-on-one-machine-only';
 const ports = Array.from({ length: count }, (_, index) => first + index);
 
 const replicas: ChildProcess[] = ports.map(replicaPort => {
@@ -39,7 +39,7 @@ const replicas: ChildProcess[] = ports.map(replicaPort => {
       PORT: String(replicaPort),
       HOST: host,
       REDIS_URL: redis,
-      BOARD_SECRET: secret,
+      SIGNING_SECRET: secret,
       REPLICA_URL: `http://${host}:${replicaPort}`,
       // Links an agent is handed are to the balancer's address: that is this Pizarra's, not a replica's.
       PIZARRA_PUBLIC_URL: `http://${host}:${port}`

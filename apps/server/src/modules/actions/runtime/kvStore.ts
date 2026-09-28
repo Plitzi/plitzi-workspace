@@ -1,12 +1,9 @@
+import { ActionRefusal } from './errors';
+import { changeKv } from './kvChange';
 import { listIdProblem, parseList, rangeOf, withEntry } from './kvList';
 
 import type { KvListEntry, KvListPut } from './kvList';
 import type { ActionKvAdapter, ActionKvStore } from '../types';
-
-/** How many times a list write reads again after losing a race, before it says the list is busy. */
-const LIST_ATTEMPTS = 25;
-
-const pause = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 export type KvStoreConfig = {
   /**
@@ -44,6 +41,8 @@ export const DEFAULT_KV_PREFIX = 'kv:';
 /** Where a list lives, after the prefix: its own segment, so a list and a value of the same name never meet. */
 export const LIST_SEGMENT = 'list:';
 
+const refusal = (message: string): Error => new ActionRefusal(message);
+
 export const createKvStore = (
   adapter: ActionKvAdapter,
   { prefix = DEFAULT_KV_PREFIX }: KvStoreConfig = {}
@@ -52,27 +51,25 @@ export const createKvStore = (
   const listKey = (list: string) => `${prefix}${LIST_SEGMENT}${list}`;
 
   /** Applies `change` to the list and writes it back unless somebody wrote first — then reads again. */
-  const changeList = async (list: string, change: (entries: KvListEntry[]) => KvListEntry[] | undefined) => {
-    const key = listKey(list);
-    for (let attempt = 0; attempt < LIST_ATTEMPTS; attempt += 1) {
-      const raw = await adapter.get(key);
-      const next = change(parseList(raw));
-      if (!next) {
-        return false;
-      }
+  const changeList = async (
+    list: string,
+    change: (entries: KvListEntry[]) => KvListEntry[] | undefined
+  ): Promise<boolean> => {
+    const written = await changeKv(
+      adapter,
+      listKey(list),
+      raw => {
+        const next = change(parseList(raw));
 
-      if (await adapter.swap(key, raw, JSON.stringify(next))) {
-        return true;
-      }
+        return next ? JSON.stringify(next) : undefined;
+      },
+      { refusal }
+    );
 
-      // Spread out, so the writers that lost to the same one do not all come back at the same instant.
-      await pause(Math.random() * Math.min(5 + attempt * 5, 50));
-    }
-
-    throw new Error(`The list "${list}" is being written by many at once — try again in a moment`);
+    return written !== undefined;
   };
 
-  return {
+  const store: ActionKvStore = {
     get: async key => {
       const raw = await adapter.get(prefixed(key));
       if (raw === undefined) {
@@ -128,6 +125,9 @@ export const createKvStore = (
     listRemove: (list, id) =>
       changeList(list, entries =>
         entries.some(entry => entry.id === id) ? entries.filter(entry => entry.id !== id) : undefined
-      )
+      ),
+    change: (key, change, lifetime) => changeKv(store, key, change, { lifetime, refusal })
   };
+
+  return store;
 };

@@ -160,6 +160,32 @@ describe('the runner service, through the remote runner', () => {
     expect(String(failure)).toContain('unreachable');
   });
 
+  // A refusal is the code's answer, not a fault: across the wire it stays a refusal, with its reason.
+  it('carries back a refusal as one', async () => {
+    const bundle = {
+      id: 'bundle-that-refuses',
+      load: () =>
+        Promise.resolve(
+          'class ActionRefusal extends Error { constructor(m) { super(m); this.name = "ActionRefusal"; } }\n' +
+            'export default { tasks: [{ namespace: "probe", action: "run", run: () => { throw new ActionRefusal("Board is full"); } }] };'
+        )
+    };
+    const failure: unknown = await remote
+      .invoke({
+        bundle,
+        invocation,
+        limits: LIMITS,
+        answer: () => Promise.resolve(null),
+        signal: new AbortController().signal
+      })
+      .catch((error: unknown) => error);
+
+    expect(failure instanceof FunctionFailure && [failure.reason, failure.message]).toEqual([
+      'refused',
+      'Board is full'
+    ]);
+  });
+
   it('stops an invocation the run aborted', async () => {
     const controller = new AbortController();
     const bundle = {

@@ -1,4 +1,5 @@
 import type { FunctionContext, FunctionFetchInit } from './contract';
+import type { RateLimit } from '../actions/runtime/rateLimit';
 import type { FunctionsManifest } from '@plitzi/sdk-shared';
 
 /**
@@ -68,6 +69,9 @@ export type FunctionCall =
   | { op: 'publish'; topic: string; type: string; data: unknown }
   | { op: 'grant'; topic: string; ttlSeconds?: number }
   | { op: 'revoke'; topic: string; grant?: string }
+  | { op: 'rateLimit'; bucket: string; limit: RateLimit }
+  | { op: 'sign'; value: string }
+  | { op: 'verify'; value: string; signature: string }
   /** Each value as the guest could send it: JSON, with what JSON cannot say already said as text. */
   | { op: 'log'; values: unknown[] }
   | { op: 'emit'; chunk: unknown };
@@ -105,11 +109,17 @@ export type FunctionInvokeRequest = {
   onUsage?: (usage: FunctionUsage) => void;
 };
 
-/** An invocation that did not answer: the code threw (`error`), or the runner stopped it (a {@link FunctionStopReason}). */
-export class FunctionFailure extends Error {
-  readonly reason: FunctionStopReason | 'error';
+/**
+ * Why an invocation did not answer: the code refused (`refused` — an `ActionRefusal`, its message written for whoever
+ * asked), it threw (`error`), or the runner stopped it (a {@link FunctionStopReason}).
+ */
+export type FunctionFailureReason = FunctionStopReason | 'error' | 'refused';
 
-  constructor(reason: FunctionStopReason | 'error', message: string) {
+/** An invocation that did not answer, and why ({@link FunctionFailureReason}). */
+export class FunctionFailure extends Error {
+  readonly reason: FunctionFailureReason;
+
+  constructor(reason: FunctionFailureReason, message: string) {
     super(message);
     this.name = 'FunctionFailure';
     this.reason = reason;
@@ -139,4 +149,4 @@ export type RunnerResponseMessage =
   /** As the code sent it: the platform reads it, trusting no runner to have. */
   | { type: 'call'; id: number; call: unknown }
   | { type: 'done'; value: unknown; usage?: FunctionUsage }
-  | { type: 'failed'; reason: FunctionStopReason | 'error'; error: string; usage?: FunctionUsage };
+  | { type: 'failed'; reason: FunctionFailureReason; error: string; usage?: FunctionUsage };
