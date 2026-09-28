@@ -707,6 +707,8 @@ any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\`
   \`allow.hosts\` names (\`*.example.com\` for subdomains), \`ctx.publish/grant/revoke\` (channels), \`ctx.log\`,
   \`ctx.user\` (who asked, never their session). A secret is NAMED, never read: \`ctx.fetch(url, { credential: "stripe",
   headers: { authorization: "Bearer {{ credential.apiKey }}" } })\`.
+- **Stateless:** nothing a function keeps in memory outlives the call — a module-level cache or counter starts empty
+  every time, on whichever instance runs it. What must last goes in \`ctx.kv\`. A call gets 100 ms of CPU and 10 s.
 - **Saving builds and checks** the files: the batch is refused with each problem where it is (file and line). A
   namespace the platform uses (\`kv\`, \`http\`, \`flow\`…) is refused.
 - **Try it** with \`plitzi_try_function { task, params }\` before a page relies on it: the value, the logs, the error.
