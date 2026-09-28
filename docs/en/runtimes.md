@@ -82,8 +82,9 @@ A runtime runs in its own box. On the platform's cluster that is a pod of its ow
 
 - **sandboxed by gVisor** — the space's code talks to a kernel in user space, not the node's;
 - **reached by the platform alone** — the roles that forward to it and run its tasks, behind a secret of its own;
-- **reaching** DNS, the platform's api (for its own code, and nothing else of it) and the Internet — no private
-  range, so none of the cluster: not the databases, not the platform's roles, not another space's runtime;
+- **reaching** DNS, the platform's api (for its own code, and nothing else of it), the ingress (its own space, as the
+  Internet reaches it — without leaving through the edge to come back) and the Internet — no private range, so none of
+  the cluster: not the databases, not the platform's roles, not another space's runtime;
 - **holding** its launch, its secret and its variables — never the platform's configuration, keys or a token for the
   cluster's API. Its filesystem is read-only but for the directory its code is written to.
 
@@ -125,7 +126,8 @@ A deployment of the platform runs the runtimes with an orchestrator, in its api 
 
 | | |
 |---|---|
-| `startSpaceRuntime({ runtime, secret, env, publicUrl })` | The host: starts a runtime and serves it — its tasks over the functions runners' protocol (`createRemoteRunner` reaches it), its endpoints as HTTP, both behind `secret` |
+| `startSpaceRuntime({ runtime, secret, env, publicUrl, insideUrl? })` | The host: starts a runtime and serves it — its tasks over the functions runners' protocol (`createRemoteRunner` reaches it), its endpoints as HTTP, both behind `secret` |
+| `await reachSpaceInside({ publicUrl, insideUrl })` | What `insideUrl` does: every `fetch` and `WebSocket` the process opens to the space's host connects to `insideUrl` instead — plain HTTP, the host and `X-Forwarded-Proto` kept. The space's code keeps writing its public address; the request stops going out through the edge to come back. It loads `undici` only when called — importing the package replaces the process's dispatcher, which the page server that loads this entry must keep |
 | `createRuntimeProxyStage({ lookup })` | A page-server stage: a space's declared endpoints forwarded to its runtime, streamed both ways |
 | `SpaceFunctions.runner` | A space's functions answered by its runtime instead of the sandbox: `lookups.getFunctions` hands one per space |
 | `packRuntime` / `inspectRuntime` / `loadRuntime` | A runtime packed, read without running it, and loaded where the host resolves its packages |

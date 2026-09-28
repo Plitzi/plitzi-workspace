@@ -1238,7 +1238,9 @@ A space can have its own server code: TypeScript whose **tasks** are steps in it
   `packRuntime` / `inspectRuntime` / `loadRuntime`; `SpaceFunctions.runner` sends a space's tasks to its runtime. One
   driver for the sandbox and runtimes alike (`createFunctionsDriver`, printed into the guest). CLI: `plitzi runtime
   push | status | vars`. Builder: a Runtime panel — each environment's state, and write-only variables. Pizarra is
-  one: `src/runtime.ts`, served by its own `main.ts` and by the platform.
+  one: `src/runtime.ts`, served by its own `main.ts` and by the platform. `reachSpaceInside` (the host's `insideUrl`)
+  sends a runtime's `fetch` and `WebSocket` to its own space's address to an inside one — a cluster's ingress — instead
+  of out through the edge and back.
 - **Authoring writes one form of each**: a trigger that `whileRunning('skip', …)` is written as the default it is, and
   `bind: []` writes no `bindings` — a document read back into code is the one written.
 - **Shared types**: `FunctionsManifest`, `FunctionsDraft`, `FunctionsProblem`, `FunctionsSaveResult`; the builder's

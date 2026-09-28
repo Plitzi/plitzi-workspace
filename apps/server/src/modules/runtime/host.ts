@@ -1,4 +1,5 @@
 import { endpointFor, endpointProblem } from './contract';
+import { reachSpaceInside } from './inside';
 import { createRuntimeRunner } from './runner';
 import { webRequestOf, writeWebResponse } from '../../core/http/webExchange';
 import { describeFunctions } from '../functions/driver';
@@ -26,6 +27,11 @@ export type SpaceRuntimeHostOptions = {
   env: Readonly<Record<string, string | undefined>>;
   /** Where people reach the space. */
   publicUrl: string;
+  /**
+   * Where the space is reached from inside the network this runtime runs in — the platform's ingress, over plain HTTP.
+   * Given, the runtime's requests to its own space go there rather than out to the edge and back (`reachSpaceInside`).
+   */
+  insideUrl?: string | undefined;
 };
 
 export type SpaceRuntimeHost = {
@@ -45,8 +51,14 @@ export const startSpaceRuntime = async ({
   port = 8791,
   host = '0.0.0.0',
   env,
-  publicUrl
+  publicUrl,
+  insideUrl
 }: SpaceRuntimeHostOptions): Promise<SpaceRuntimeHost> => {
+  // Before the space's code runs: whatever it opens to its own address, from its first request, goes the inside way.
+  if (insideUrl) {
+    await reachSpaceInside({ publicUrl, insideUrl });
+  }
+
   const parts = await runtime.start({ env, publicUrl });
   const endpoints = parts.endpoints ?? {};
   const paths = Object.keys(endpoints);

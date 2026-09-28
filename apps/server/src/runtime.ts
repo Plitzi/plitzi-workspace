@@ -20,6 +20,7 @@ export {
   packRuntime,
   runtimeBundleId
 } from './modules/runtime/bundle';
+export { reachSpaceInside } from './modules/runtime/inside';
 export { createRuntimeRunner } from './modules/runtime/runner';
 export { createRuntimeProxyStage, runtimeEndpointsStage, serveRuntime } from './modules/runtime/stages';
 export type { RuntimeProxyConfig, RuntimeTarget, ServedRuntime } from './modules/runtime/stages';
