@@ -33,15 +33,14 @@ the rest: a space on a page of your own, and a server of your own.
 | 07 | [ssr-preview](./self-hosting/07-ssr-preview) | MCP and pages on one port, plus draft preview | 4006 |
 | 08 | [custom-trigger](./self-hosting/08-custom-trigger) | A trigger of your own, over a store you already run | — |
 | 09 | [schedules](./self-hosting/09-schedules) | Scheduled and delayed jobs over a durable queue in SQLite, across replicas | 4016 |
-| 10 | [whiteboard](./self-hosting/10-whiteboard) | Pizarra: a collaborative whiteboard — every stroke through a server action, every cursor and saved shape through realtime channels | 4016 |
+| 10 | [runtime](./self-hosting/10-runtime) | A space's runtime — a task, a route and a stream held open, in one module — loaded into a server of your own | 4017 |
 
 Ordered as a space actually grows: render it on the server, give it people, give it data, let an agent edit it,
-have it do work on its own — and then all of it at once, in a whole small product.
+have it do work on its own — and give it server code of its own, beside it.
 
 Every example renders [`shared-space`](./shared-space), so the difference between any two is the wiring alone — bar
 the ones that need pages of their own: `sessions` and `mysql`, because a space with people in it has somewhere to
-sign in, `no-server`, `custom-trigger` and `schedules`, because something has to press the button, and
-`whiteboard`, which is a space of its own by definition. Only `mysql` needs a database; everywhere else a real
+sign in, and `no-server`, `custom-trigger`, `schedules` and `runtime`, because something has to press the button. Only `mysql` needs a database; everywhere else a real
 deployment reads rows and these hand the server static data through the same adapters, which is exactly how your
 own store plugs in.
 

@@ -7,8 +7,9 @@ its own.
 
 The platform keeps serving the space: its pages, the flows authored in the builder, its credentials, its visitors, its
 run history. The runtime only runs code — its tasks and routes, with the **platform's** `ctx`, and the paths it answers
-itself. Pizarra (`examples/self-hosting/10-whiteboard`) is the reference: one module that runs as a space's runtime on
-the platform and loads, unchanged, into a server of its own.
+itself. [`examples/self-hosting/10-runtime`](../../examples/self-hosting/10-runtime) is the smallest one — a task, a
+route and a stream held open — loaded into a server of its own; Pizarra, the collaborative whiteboard on the platform
+(`pizarra.plitzi.app`), is a whole product built this way.
 
 ## 1. What you write
 
@@ -117,8 +118,8 @@ const server = createServer(
 );
 ```
 
-Pizarra's `main.ts` is exactly this: the server the platform would be (the boards' `kv`, the channels, the signing
-secret) decided by its environment, and its runtime loaded into it.
+`examples/self-hosting/10-runtime`'s `main.ts` is exactly this: the server the platform would be (its `kv`, its
+actions) and its runtime loaded into it, its variables this process's environment.
 
 ## 6. For a deployment
 

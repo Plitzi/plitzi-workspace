@@ -18,7 +18,7 @@ it do work on its own. Each one is the previous one plus the next thing a real d
 | 07 | [ssr-preview](./07-ssr-preview) | MCP and pages on one port, plus draft preview | 4006 |
 | 08 | [custom-trigger](./08-custom-trigger) | A way in this deployment mounts itself — a queue consumer — over a store it already runs | — |
 | 09 | [schedules](./09-schedules) | Scheduled and delayed jobs over a durable queue in SQLite, across replicas | 4016 |
-| 10 | [whiteboard](./10-whiteboard) | Pizarra: a collaborative whiteboard — every stroke through a server action, every cursor and saved shape through realtime channels | 4016 |
+| 10 | [runtime](./10-runtime) | A space's runtime — a task, a route and a stream held open, in one module — loaded into a server of your own | 4017 |
 
 ## Rendered on the server
 
@@ -65,13 +65,11 @@ due in five seconds — and the durable queue that makes it survive a restart, a
 half-way through. It is also the self-hosted shape of the whole thing: every store the server needs is one the
 deployment brings.
 
-## A whole product
+## Server code of its own
 
-**10** — Pizarra, everything above assembled. The others each show a single decision and stop; this is the one to
-read when the question is not "how does X work" but "what does it take to build something". It is allowed to be
-opinionated where the others are not — it picks a route shape, a permission name, a place to keep its data —
-because a product has to. What it may not do is hide a step: everything it configures is configured the way the
-single-decision examples show it.
+**10** — a space's runtime: its own server code as one module, for what functions cannot be — a stream held open,
+memory that outlives a request. The same module the platform runs beside a space, loaded here with `serveRuntime`.
+A whole product built this way is Pizarra, the collaborative whiteboard the platform seeds at `pizarra.plitzi.app`.
 
 ## Next
 

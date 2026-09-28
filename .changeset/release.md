@@ -184,8 +184,8 @@
 ## Examples: `browser` and `self-hosting`
 
 - `examples/` is two folders: `browser` (a space on your page, no server) and `self-hosting` (a server of your own,
-  from a server-rendered page to Pizarra). What a space on the platform does — Ceniza, Tremor, Fieldnotes, the
-  server and render actions, a template — is a seeded space on the platform rather than an example here.
+  from a server-rendered page to a space's runtime). What a space on the platform does — Ceniza, Tremor, Fieldnotes,
+  Pizarra, the server and render actions, a template — is a seeded space on the platform rather than an example here.
 
 ## A space's visitors: signing in, and what they may do
 
@@ -936,51 +936,9 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
 - Channel declarations are checked in one place, `channelProblems` (`@plitzi/sdk-shared/realtime`): authoring refuses,
   `lintSpace` reports `channel-declaration`, and the MCP's `patchSettings` takes `channels` (merged per pattern, `null`
   removes one) and answers with the same sentence. The agent's guide has a "Realtime channels" section.
-- New full example: `examples/self-hosting/10-whiteboard` (Pizarra) — a collaborative whiteboard over WebSocket:
-  arrows fixed to the anchors of what they connect (curved, following every move), labels in shapes, pads of sticky
-  notes to drag from, a laser pointer, reactions, following a collaborator's view, groups, a toolbar authored in the
-  space that the canvas lays beside the selection, pictures pasted from the clipboard, password-protected boards (on a
-  topic only whoever opened the board can name), votes, a shared timer, cursor chat and "bring everyone here". The front
-  page is a board to try before starting one — with scripted collaborators already drawing on it — templates, and two
-  large featured boards that are read-only (looked around together, then "Use as template"). Frames that hold what is
-  put in them — a column frame is a kanban lane that lays out its cards, with the drop shown as it is dragged — task
-  cards made in a column (a title and a description, the whole of it shown when a card is selected — no double-click to
-  read one — and the cards under it moved down to make room, never covered) and a column that is the team's Done (a card
-  moved into it is ticked off, and open again moved out), panels that come out of the button that opens them and leave
-  quicker than they came, their items one after another, a corner that folds away to the way home, smart guides that
-  snap what is dragged to the edges and middles of what stays still, the others' cursors drawn a moment behind so they
-  move as smoothly as a hand whatever the network does, a search with tags (`#word` written in anything; ⌘F dims what it
-  does not find), duties an agent keeps doing in a frame, sessions with a script (a retro's private writing step keeps
-  the others' notes face down), branches of a frame to try another way and take back, agents that present a board a
-  frame at a time, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style,
-  sloppiness, edges, opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or
-  private and temporary boards (in Board settings, beside the title), boards their creator makes read-only for everyone
-  else, an elements library built from one registry (searchable, with favourites), texts resized by their handles,
-  stamps, elements locked in place, and sounds. The gallery previews a crowded board whole, coarsened on a grid. It
-  carries its own bench (`yarn bench`, `--cpu 4` for slower hardware): boards of a thousand and four thousand elements
-  opened, panned, zoomed, drawn on, selected, moved, pasted, deleted and undone, and crowds of fifty collaborators on
-  them. AI agents join as collaborators through the MCP server every Pizarra serves at `/mcp` (streamable HTTP, mounted
-  as a `preAuth` pipeline stage): anyone on a board adds it to Claude Code, OpenCode or the Claude app from the invite
-  panel, with nothing to install, and a guide at `/agents` walks through it — Claude first — and what to do when it does
-  not connect; it joins only that Pizarra's boards, and is a client of the board's server like a browser. The people see
-  what an agent is doing — working, thinking, listening — at its cursor and on its avatar; it stays while they work and
-  leaves by itself when asked (✕ on its avatar), when nobody is on the board, after the board's quiet time (Board
-  settings), or when the board's password changes, when its app has gone (its listening stream closed and not back
-  within a minute) or its connection to the board is lost; a locked board's invite carries a key that opens it for the
-  agent. It acts as the team's facilitator — about their work, never its tools — and closes what it runs with the
-  outcome. Cursors off screen show at the edge of the view, and a board's code sits beside its name, a click from the
-  clipboard. The front page shows a dozen boards and a "Load more", and its search asks the server across every board.
-  Templates of a team's own: what is selected kept, with what its frames hold, in the board's library — put down again
-  from there, dragged or clicked, and on any other board by its code (people and agents alike). Cards that wait on other
-  cards: a red "Blocked" tab while any is open, a dashed line to each when selected, a warning when one is moved on
-  anyway — which a guardian agent hears too — and `is:blocked` in the search. A List view (⇧L): the board as a list with
-  a
-  button for every change, always in the page for a screen reader or Claude in Chrome, which reads the accessibility tree
-  and not a canvas. It runs on several replicas over Redis
-  (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action `kv` shared by all
-  of them, and which replica holds each agent's session — a call reaching another is passed on to it (`REPLICA_URL`), so
-  no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine, and the
-  `whiteboard-replicas` browser test spreads people and an agent across them. See `docs/en/realtime.md`.
+- Pizarra, a collaborative whiteboard built on all of the above — channels, server actions, a canvas plugin, an agent at
+  `/mcp` — is a seeded space on the platform (`pizarra.plitzi.app`) whose server code is its runtime, not an example
+  here. See `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
 
 ## A page on its way out keeps what it showed
@@ -1237,8 +1195,9 @@ A space can have its own server code: TypeScript whose **tasks** are steps in it
   `createRuntimeProxyStage` forwards a space's endpoints to it, `serveRuntime` loads one into a server of its own;
   `packRuntime` / `inspectRuntime` / `loadRuntime`; `SpaceFunctions.runner` sends a space's tasks to its runtime. One
   driver for the sandbox and runtimes alike (`createFunctionsDriver`, printed into the guest). CLI: `plitzi runtime
-  push | status | vars`. Builder: a Runtime panel — each environment's state, and write-only variables. Pizarra is
-  one: `src/runtime.ts`, served by its own `main.ts` and by the platform. `reachSpaceInside` (the host's `insideUrl`)
+  push | status | vars`. Builder: a Runtime panel — each environment's state, and write-only variables.
+  `examples/self-hosting/10-runtime` is the smallest one — a task, a route and a stream held open — served by its own
+  `main.ts`; Pizarra, on the platform, is a whole product built this way. `reachSpaceInside` (the host's `insideUrl`)
   sends a runtime's `fetch` and `WebSocket` to its own space's address to an inside one — a cluster's ingress — instead
   of out through the edge and back.
 - **Authoring writes one form of each**: a trigger that `whileRunning('skip', …)` is written as the default it is, and

@@ -7,7 +7,7 @@ deployment chooses.
 
 The reasoning behind each rule lives beside the code that enforces it — the RFC this grew out of (0018) was deleted
 when it shipped, and is in the history (`git log -- docs/rfc`). The whole of it in use is
-[`examples/self-hosting/10-whiteboard`](../../examples/self-hosting/10-whiteboard).
+[Pizarra](https://pizarra.plitzi.app), the collaborative whiteboard on the platform.
 
 ---
 
@@ -301,8 +301,7 @@ environment before they reach the adapter.
 replica holds it. The Server-Sent Events transport needs **affinity** on the realtime path: a stream's publishes are
 `POST`s carrying the stream's token, which only the replica holding the stream knows — sent to another replica, they
 are answered `401 not_connected`. A page that falls back from a socket to the stream behind a balancer without
-affinity cannot publish. The whiteboard example runs on WebSockets across three replicas behind a round-robin
-balancer; see its README.
+affinity cannot publish.
 
 ---
 

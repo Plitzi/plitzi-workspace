@@ -19,7 +19,7 @@ and how to check a page the way these readers get it.
 
 ## 1. What a browser agent needs
 
-We learned this building [Pizarra](../../examples/self-hosting/10-whiteboard), the whiteboard example, with
+We learned this building [Pizarra](https://pizarra.plitzi.app), the collaborative whiteboard on the platform, with
 Claude in Chrome working on real boards:
 
 - **It finds controls by their role and name.** A button called "Close" can be found. An unnamed `<i class="fa-xmark">`
@@ -104,7 +104,7 @@ A plugin that draws owns its own markup, and what the linter can't see is up to 
 
 - Render what the canvas shows as real elements too: a list, a table, a named row for each item. Give each row a
   button for each thing a person can do to it, named after the item ("Mark done: Ship the beta"). See Pizarra's
-  `Board/components/Outline`.
+  List view (Shift+L).
 - Keep that view visible when someone asks for it: a toolbar button, a shortcut, or `:focus-within`. A list that
   exists only for screen readers can't be clicked by an agent that clicks by position.
 - Name the canvas itself (`aria-label`) and say in the name where the list is.

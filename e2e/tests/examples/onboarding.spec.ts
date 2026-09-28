@@ -310,3 +310,36 @@ describeTarget('ssr-preview', subject => {
     expect(afterwards, 'the README says the token is one-shot').not.toContain('Draft title');
   });
 });
+
+describeTarget('runtime', subject => {
+  /** The README's three promises: the page counts through the runtime's task, the count is a route too, and the pulse
+   *  is a stream held open — each answered by the one module the platform would run beside a space. */
+  test('the page shows the count and a visit adds one, through the runtime’s own task', async ({ page }) => {
+    await page.goto(subject.origin);
+    const count = page.locator('[data-plitzi-el="visits-count"]');
+    await expect(count).toHaveText(/^\d+ visits so far$/);
+    const before = Number.parseInt((await count.textContent()) ?? '', 10);
+
+    await page.getByRole('button', { name: 'Count me' }).click();
+
+    await expect(count).toHaveText(`${String(before + 1)} visits so far`);
+  });
+
+  test('the count is a route as well, under /api/', async ({ request }) => {
+    const answer = (await (await request.get(`${subject.origin}/api/visits`)).json()) as { visits: number };
+
+    expect(answer.visits).toBeGreaterThanOrEqual(0);
+  });
+
+  test('the pulse is a stream held open, saying who is listening', async () => {
+    const controller = new AbortController();
+    const response = await fetch(`${subject.origin}/pulse`, { signal: controller.signal });
+
+    expect(response.headers.get('content-type')).toContain('text/event-stream');
+    const reader = response.body?.getReader();
+    const first = new TextDecoder().decode((await reader?.read())?.value);
+    controller.abort();
+
+    expect(JSON.parse(first.replace(/^data: /, ''))).toMatchObject({ listening: 1 });
+  });
+});

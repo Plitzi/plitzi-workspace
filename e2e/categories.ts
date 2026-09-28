@@ -41,8 +41,7 @@ const EXAMPLE_TARGETS = [
   'mysql',
   'server-actions-no-server',
   'server-actions-schedules',
-  'whiteboard',
-  'whiteboard-replicas'
+  'runtime'
 ];
 
 export const categories: Category[] = [
