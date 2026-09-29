@@ -33,6 +33,18 @@ const digestOf = async (files: readonly string[]): Promise<string> => {
 };
 
 /**
+ * Whether a key is this plugin — every version of it, or with `version` that one release — counting the sources a
+ * render named under it (`name@1.0.0+<identity>`, see {@link PluginManager.ensure}).
+ */
+const isKeyOf = (key: string, name: string, version?: string): boolean => {
+  if (version) {
+    return key === `${name}@${version}` || key.startsWith(`${name}@${version}+`);
+  }
+
+  return key === name || key.startsWith(`${name}@`);
+};
+
+/**
  * How often a dev server re-asks whether a cached plugin is still current.
  *
  * The check is a handful of `stat`s and this runs on every render, so it is throttled rather than free — a second is
@@ -79,14 +91,29 @@ export class PluginManager {
   }
 
   /**
-   * Registers a plugin only if it is not yet known under its effective key.
-   * Returns the effective key (`name@version` when version is set, `name` otherwise)
-   * so the caller can pass it directly to getEntries().
+   * Keeps a source a render names, and returns the key to pass to getEntries(): `name@version+<identity>`, or
+   * `name@<identity>` without a version.
+   *
+   * The identity is what the source IS — where its files are, how they are served, the props it carries — because a
+   * name and a version are only what its author said about it. Keyed on those alone, the first source to arrive held
+   * the key for as long as the process ran: a plugin published again under the same version kept its old, now missing
+   * URLs, and two spaces each with a `board@1.0.0` of their own were served whichever this process had met first.
+   * Worked out from the source rather than handed out in order of arrival, so every worker names one source the same
+   * way — the key is also the folder a built bundle is written to, and all of them share it.
+   *
+   * Never taken as what a bare name means: {@link resolveKey} answers for the plugins this server was set up with, not
+   * for whichever space rendered last.
    */
   ensure(name: string, source: PluginSource): string {
-    const key = source.version ? `${name}@${source.version}` : name;
+    const identity = createHash('sha256')
+      .update(
+        JSON.stringify([source.js, source.css, isComponentSource(source) ? undefined : source.action, source.props])
+      )
+      .digest('hex')
+      .slice(0, 12);
+    const key = `${name}@${source.version ? `${source.version}+` : ''}${identity}`;
     if (!(key in this.plugins)) {
-      this.register(key, source);
+      this.plugins[key] = source;
     }
 
     return key;
@@ -512,22 +539,9 @@ export class PluginManager {
       return;
     }
 
-    if (version) {
-      const key = `${name}@${version}`;
-      this.mem.delete(key);
-      this.failed.delete(key);
-      if (this.nameIndex.get(name) === key) {
-        this.nameIndex.delete(name);
-      }
-
-      return;
-    }
-
-    // Every version: the exact name and every name@* variant
-    const prefix = `${name}@`;
-    const keysToEvict = new Set<string>([name]);
-    for (const key of [...Object.keys(this.plugins), ...this.mem.keys()]) {
-      if (key.startsWith(prefix)) {
+    const keysToEvict = new Set<string>();
+    for (const key of [...Object.keys(this.plugins), ...this.mem.keys(), ...this.failed]) {
+      if (isKeyOf(key, name, version)) {
         keysToEvict.add(key);
       }
     }
@@ -537,7 +551,10 @@ export class PluginManager {
       this.failed.delete(key);
     }
 
-    this.nameIndex.delete(name);
+    const indexed = this.nameIndex.get(name);
+    if (indexed !== undefined && isKeyOf(indexed, name, version)) {
+      this.nameIndex.delete(name);
+    }
   }
 
   async invalidate(name?: string, version?: string): Promise<void> {
@@ -548,19 +565,12 @@ export class PluginManager {
       return;
     }
 
-    if (version) {
-      await fs.rm(this.pluginDir(`${name}@${version}`), { recursive: true, force: true });
-
-      return;
-    }
-
-    const prefix = `${name}@`;
     try {
       const entries = await fs.readdir(this.outputDir);
       await Promise.all(
         entries
-          .filter(e => e === name || e.startsWith(prefix))
-          .map(e => fs.rm(path.join(this.outputDir, e), { recursive: true, force: true }))
+          .filter(entry => isKeyOf(entry, name, version))
+          .map(entry => fs.rm(path.join(this.outputDir, entry), { recursive: true, force: true }))
       );
     } catch {
       // outputDir doesn't exist yet — nothing to clean

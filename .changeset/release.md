@@ -377,6 +377,13 @@
   content digest of every file a bundle was built from and compares it when a process first finds the bundle — in
   production as in development. A deployment rebuilt from new source under the same version used to serve the
   previous bundle. Bundles cached before this are built once more.
+- **A space's plugins are kept by what they are, not by their name and version.** The page server kept every plugin a
+  render named — a space's external plugins, a deployment's `pluginSources` — under `name@version`, and the first
+  source to arrive held that key while the process ran: a plugin published again under the same version was served
+  from its old, missing URLs until a restart, and two spaces each with a `board@1.0.0` of their own were both served
+  whichever the process had met first. The key now carries the source's identity (`name@version+<digest>` of where
+  its files are, how they are served and its props); invalidating a release covers those keys too, and a plugin named
+  by a render never answers for a bare name, which stays the plugins the server was set up with.
 - **The examples are linted** with the packages' rules (`examples/eslint.config.mjs`, a `lint` script in each), and
   what the rules found is fixed — among it, index reads the types called defined, a hook-named step helper, and the
   Permissions API assumed present. `docs/` and the skills' markdown are hand-wrapped and listed in `.prettierignore`.

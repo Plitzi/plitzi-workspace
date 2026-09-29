@@ -556,7 +556,7 @@ const getSpaceDeployment = async (req): Promise<SSRSpaceDeployment> => {
 };
 ```
 
-Plugins listed in `pluginSources` are registered into the plugin manager on-the-fly using `ensure()`, which only triggers a rebuild if the plugin is new or its `version` has changed. Both `pluginNames` and `pluginSources` entries are resolved in parallel before the HTML is rendered.
+Plugins listed in `pluginSources` — and the external plugins a space's schema lists — are registered into the plugin manager on-the-fly using `ensure()`, under a key that carries the source's identity as well as its name and version (`name@1.0.0+<digest>` of its `js`, `css`, `action` and `props`). A plugin published again under the same version, or another space's plugin with the same name and version, is therefore a source of its own rather than whichever this process met first, and is built only once. Both `pluginNames` and `pluginSources` entries are resolved in parallel before the HTML is rendered.
 
 ### Plugin sources
 

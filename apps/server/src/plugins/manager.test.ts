@@ -228,3 +228,52 @@ describe('PluginManager forget and invalidate', () => {
     expect(await exists(path.join(cache, 'widget'))).toBe(false);
   });
 });
+
+describe('PluginManager sources a render names', () => {
+  const cdn = (js: string) => ({ js, action: 'cdn' as const, version: '1.0.0' });
+
+  it('keeps one source under one key, however often a render names it', () => {
+    const manager = new PluginManager({}, undefined, 60_000, false);
+
+    expect(manager.ensure('board', cdn('https://a.example/board.js'))).toBe(
+      manager.ensure('board', cdn('https://a.example/board.js'))
+    );
+  });
+
+  it('serves each space its own plugin when two share a name and a version', async () => {
+    const manager = new PluginManager({}, undefined, 60_000, false);
+    const mine = manager.ensure('board', cdn('https://a.example/board.js'));
+    const theirs = manager.ensure('board', cdn('https://b.example/board.js'));
+
+    expect(mine).not.toBe(theirs);
+    expect((await manager.prepare(mine))?.js).toBe('https://a.example/board.js');
+    expect((await manager.prepare(theirs))?.js).toBe('https://b.example/board.js');
+  });
+
+  it('serves a plugin published again under the same version from where it is now', async () => {
+    const manager = new PluginManager({}, undefined, 60_000, false);
+    manager.ensure('board', cdn('https://a.example/old/board.js'));
+    const again = manager.ensure('board', cdn('https://a.example/new/board.js'));
+
+    expect((await manager.getEntries([again]))[0]?.js).toBe('https://a.example/new/board.js');
+    expect(again.replace(/@[^@]*$/, '')).toBe('board');
+  });
+
+  it('never answers for a bare name, which means a plugin this server was set up with', () => {
+    const manager = new PluginManager({}, undefined, 60_000, false);
+    manager.ensure('board', cdn('https://a.example/board.js'));
+
+    expect(manager.hasPlugin('board')).toBe(false);
+  });
+
+  it('removes a release built for a render when that release is invalidated', async () => {
+    const { entry, cache } = await workspace();
+    const manager = new PluginManager({}, cache, 60_000, false);
+    const key = manager.ensure('widget', { js: entry, action: 'compile', version: '1.0.0' });
+    await manager.prepare(key);
+
+    await manager.invalidate('widget', '1.0.0');
+
+    await expect(fs.access(path.join(cache, key))).rejects.toThrow();
+  });
+});
