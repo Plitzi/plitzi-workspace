@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 /** One allowance and what has been spent of it. Both planes answer in this shape. */
 export type TQuotaPlane = {

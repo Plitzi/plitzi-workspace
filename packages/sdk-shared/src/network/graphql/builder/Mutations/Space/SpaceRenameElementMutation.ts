@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 /** The ids, under their new names, of every element the rename touched — the one renamed plus everything repointed
  *  onto it. */

@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SegmentUpdateElementsMutation = gql`
   mutation SegmentUpdateElementsMutation($environment: String!, $elements: [Json!]!, $contextId: String!) {

@@ -1,5 +1,24 @@
 # @plitzi/sdk-plugins
 
+## 0.37.4
+
+### Patch Changes
+
+- cadd1b9: ## `@plitzi/sdk-shared` loads without Apollo
+
+  - **The root entry no longer needs `@apollo/client`.** It re-exported every builder query, mutation and subscription,
+    written with `gql` from `@apollo/client/core` — a package it never declared. Inside the monorepo the builder's copy
+    answered for it; a server installing the published packages (`@plitzi/sdk-server` and anything else that imports
+    `@plitzi/sdk-shared`) failed at boot with `ERR_MODULE_NOT_FOUND: @apollo/client`. The documents are now written with
+    `graphql-tag`, which Apollo's `gql` already was, and `graphql` is a dependency.
+  - **The two helpers that do run Apollo leave the barrels**: `createAuthFailureLink` is imported from
+    `@plitzi/sdk-shared/auth/authFailureLink` (no longer from `@plitzi/sdk-shared/auth` or the root) and
+    `createStripTypenameLink` from `@plitzi/sdk-shared/helpers/stripTypename`. `@apollo/client` is an optional peer, for
+    those two alone.
+
+- Updated dependencies [cadd1b9]
+  - @plitzi/sdk-shared@0.37.4
+
 ## 0.37.3
 
 ### Patch Changes

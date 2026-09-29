@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 import type { PageInfo, SegmentRaw } from '../../../../../types';
 

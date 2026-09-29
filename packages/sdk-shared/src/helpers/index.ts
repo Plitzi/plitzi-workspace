@@ -13,6 +13,7 @@ export * from './syntaxHighlight';
 export * from './twigWrapper';
 export * from './utils';
 export * from './security';
-export * from './stripTypename';
+// `createStripTypenameLink` is imported from `@plitzi/sdk-shared/helpers/stripTypename`, not from here: it needs
+// `@apollo/client`, an optional peer, and this barrel is part of the root every server consumer loads.
 
 export { fetchManifest, generateFacade, syntaxHighlight };

@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SegmentSpaceRemoveVariableMutation = gql`
   mutation SegmentSpaceRemoveVariableMutation($environment: String!, $contextId: String!, $name: String!) {

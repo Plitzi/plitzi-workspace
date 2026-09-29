@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SpaceRemovePluginMutation = gql`
   mutation SpaceRemovePluginMutation($environment: String!, $pluginType: String!) {

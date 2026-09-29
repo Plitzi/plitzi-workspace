@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const StyleUpdateVariableMutation = gql`
   mutation StyleUpdateVariableMutation($environment: String!, $category: String!, $name: String!, $value: Json!) {

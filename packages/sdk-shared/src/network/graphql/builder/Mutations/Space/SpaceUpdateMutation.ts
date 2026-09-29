@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SpaceUpdateMutation = gql`
   mutation SpaceUpdate($environment: String!, $schema: Json!, $styleId: String!, $style: Json!) {

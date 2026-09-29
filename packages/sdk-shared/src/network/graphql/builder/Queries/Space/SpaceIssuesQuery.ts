@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 /** One thing the saved space would render wrong; `elementId` is the element to take someone to, when it has one. */
 export type TSpaceIssue = { code: string; message: string; elementId: string | null; fixable: boolean };

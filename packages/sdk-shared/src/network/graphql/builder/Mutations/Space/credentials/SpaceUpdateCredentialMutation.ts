@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SpaceUpdateCredentialMutation = gql`
   mutation SpaceUpdateCredentialMutation($identifier: String!, $name: String!, $provider: String!, $data: Json!) {

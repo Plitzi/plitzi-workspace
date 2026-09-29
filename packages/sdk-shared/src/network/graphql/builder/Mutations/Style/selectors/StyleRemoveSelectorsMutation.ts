@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const StyleRemoveSelectorsMutation = gql`
   mutation StyleRemoveSelectorsMutation($environment: String!, $displayMode: String, $selectors: [String!]!) {

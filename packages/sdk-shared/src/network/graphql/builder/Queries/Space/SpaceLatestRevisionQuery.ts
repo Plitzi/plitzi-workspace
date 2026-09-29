@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 export type TSpaceLatestRevisionQuery = {
   SpaceLatestRevision: { snapshot: { revision: number; publishedAt: Date; description: string } | null } | null;

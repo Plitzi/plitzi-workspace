@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SpaceSetRuntimeVariableMutation = gql`
   mutation SpaceSetRuntimeVariableMutation($name: String!, $value: String!) {

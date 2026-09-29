@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SegmentStyleRemoveSelectorsMutation = gql`
   mutation SegmentStyleRemoveSelectorsMutation($environment: String!, $selectors: [String!]!, $contextId: String!) {

@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SpaceStopRuntimeMutation = gql`
   mutation SpaceStopRuntimeMutation($environment: String!) {

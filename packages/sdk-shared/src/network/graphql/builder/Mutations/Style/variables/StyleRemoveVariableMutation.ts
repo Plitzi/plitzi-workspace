@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const StyleRemoveVariableMutation = gql`
   mutation StyleRemoveVariableMutation($environment: String!, $category: String!, $name: String!) {

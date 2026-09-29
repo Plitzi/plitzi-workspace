@@ -4499,6 +4499,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@plitzi/sdk-shared@workspace:packages/sdk-shared"
   dependencies:
+    "@apollo/client": "npm:^4.3.1"
     "@babel/cli": "npm:^8.0.6"
     "@babel/core": "npm:^8.0.6"
     "@babel/eslint-parser": "npm:^7.29.9"
@@ -4536,6 +4537,7 @@ __metadata:
     eslint-plugin-react-refresh: "npm:^0.5.7"
     eslint-plugin-storybook: "npm:^10.6.0"
     globals: "npm:^17.12.0"
+    graphql: "npm:^16.0.0 || ^17.0.0"
     graphql-tag: "npm:^2.12.7"
     immer: "npm:^11.1.18"
     jsdom: "npm:^30.1.1"
@@ -4554,8 +4556,12 @@ __metadata:
     vitest-fetch-mock: "npm:^0.4.5"
     zod: "npm:^4.6.5"
   peerDependencies:
+    "@apollo/client": ^4.3.1
     react: ^19
     react-dom: ^19
+  peerDependenciesMeta:
+    "@apollo/client":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -10806,7 +10812,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:^17.0.2":
+"graphql@npm:^16.0.0 || ^17.0.0, graphql@npm:^17.0.2":
   version: 17.0.2
   resolution: "graphql@npm:17.0.2"
   checksum: 10c0/766546216b891439ed09fd8584963df2013e26f2f79f096036eaaa2788c38964e049c8a142d68e3afdabdd8bbe70042639e83f0f4b82edbc7c6850421f072bb6

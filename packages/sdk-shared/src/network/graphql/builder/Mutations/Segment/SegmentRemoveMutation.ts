@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client/core';
+import { gql } from 'graphql-tag';
 
 const SegmentRemoveMutation = gql`
   mutation SegmentRemoveMutation($id: String!) {
