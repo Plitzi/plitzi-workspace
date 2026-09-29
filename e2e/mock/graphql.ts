@@ -166,6 +166,11 @@ const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined>
    *  `true` is nothing, and Apollo reports the missing field as an error the page guard catches. A mocked space is one
    *  the linter finds nothing in. */
   SpaceIssuesQuery: () => ({ data: { SpaceIssues: { errors: [], warnings: [], __typename: 'SpaceIssues' } } }),
+  /** The header's idle notice asks at boot, and every half minute after. A mocked space has no server code, so no
+   *  runtime: no environments, and nothing for the notice to warn about. */
+  SpaceRuntimeQuery: () => ({
+    data: { SpaceRuntime: { environments: [], variables: [], idleMinutes: 0, sizes: [], __typename: 'SpaceRuntime' } }
+  }),
   SpaceDeploymentsQuery: () => ({
     data: {
       SpaceDeployments: {
