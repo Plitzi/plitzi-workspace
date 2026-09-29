@@ -16,6 +16,7 @@ import PluginInUse from './components/PluginInUse';
 import ResourceFile from './subTypes/ResourceFile';
 import ResourceMedia from './subTypes/ResourceMedia';
 import ResourcePlugin from './subTypes/ResourcePlugin/ResourcePlugin';
+import ResourceServerCode from './subTypes/ResourceServerCode';
 import ResourceTemplate from './subTypes/ResourceTemplate';
 
 import type { PluginManifest, ResourceType as TResourceType } from '@plitzi/sdk-shared';
@@ -29,6 +30,8 @@ export type ResourceProps = {
   src?: string;
   title?: string;
   metadata?: PluginManifest;
+  /** For server code, the versions of the space that run it. */
+  usedBy?: string[];
   directoryName?: string;
   isLoading?: boolean;
   onRemove?: (id: string) => void;
@@ -42,6 +45,7 @@ const Resource = ({
   src = '',
   title = '',
   metadata,
+  usedBy,
   directoryName = '',
   isLoading = false,
   onRemove
@@ -64,7 +68,7 @@ const Resource = ({
   }, [addToast, src]);
 
   const handleClick = useCallback(() => {
-    if (type === 'plugin') {
+    if (type === 'plugin' || type === 'server') {
       return;
     }
 
@@ -182,6 +186,18 @@ const Resource = ({
 
     case 'plugin':
       return <ResourcePlugin {...sharedProps} src={src} metadata={metadata} />;
+
+    case 'server':
+      return (
+        <ResourceServerCode
+          className={className}
+          id={id}
+          usedBy={usedBy}
+          removing={removing}
+          isLoading={isLoading}
+          onRemove={handleClickRemove}
+        />
+      );
 
     default:
       return <ResourceFile {...sharedProps} type={type} />;

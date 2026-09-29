@@ -10,6 +10,9 @@ const SpaceFunctionsQuery = /* GraphQL */ `
       files
       version
       manifest
+      offer {
+        template
+      }
     }
   }
 `;

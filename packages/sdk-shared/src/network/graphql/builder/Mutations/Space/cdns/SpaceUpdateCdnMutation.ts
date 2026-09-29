@@ -6,7 +6,8 @@ const SpaceUpdateCdnMutation = /* GraphQL */ `
   mutation SpaceUpdateCdnMutation(
     $identifier: String!
     $name: String!
-    $domain: String!
+    $domain: String
+    $visibility: String
     $provider: String!
     $region: String!
     $endpoint: String
@@ -16,6 +17,7 @@ const SpaceUpdateCdnMutation = /* GraphQL */ `
       identifier: $identifier
       name: $name
       domain: $domain
+      visibility: $visibility
       provider: $provider
       region: $region
       endpoint: $endpoint
@@ -23,6 +25,8 @@ const SpaceUpdateCdnMutation = /* GraphQL */ `
     ) {
       name
       identifier
+      domain
+      visibility
       provider
       region
       endpoint

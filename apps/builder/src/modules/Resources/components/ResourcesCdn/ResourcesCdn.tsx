@@ -12,12 +12,15 @@ import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import SpaceCredentialSelectorModal from '@pmodules/Space/components/SpaceCredentialSelectorModal';
 
 import { mainPluginOf } from '../../helpers';
+import ResourceCdnForm from '../../Models/ResourceCdnForm';
 import ResourceManager from '../ResourceManager';
 import ResourcesList from '../ResourcesList';
 
 import type {
   BuilderMutationsMap,
   BuilderQueriesMap,
+  Cdn,
+  CdnVisibility,
   ComponentDefinition,
   NetworkContextValue,
   ResourceFile,
@@ -27,6 +30,8 @@ import type {
 import type { MouseEvent } from 'react';
 
 export type ResourcesCdnProps = {
+  /** The CDN as the space's list gives it — what its settings open with. */
+  cdn: Cdn;
   identifier: string;
   name: string;
   prefix: string;
@@ -40,6 +45,7 @@ export type ResourcesCdnProps = {
 const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
 const ResourcesCdn = ({
+  cdn,
   identifier,
   name,
   prefix,
@@ -50,7 +56,8 @@ const ResourcesCdn = ({
   onRemove
 }: ResourcesCdnProps) => {
   const { addToast } = useToast();
-  const { showDialog } = useModal();
+  const { showDialog, showModal } = useModal();
+  const isPrivate = cdn.visibility === 'private';
   const [removing, setRemoving] = useState(false);
   const { plugins, remove, add } = use(PluginsContext);
   const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
@@ -145,6 +152,52 @@ const ResourcesCdn = ({
     [identifier, mutate, mutateNetwork, onChange]
   );
 
+  const handleClickSettings = useCallback(
+    async (e: MouseEvent) => {
+      e.stopPropagation();
+      const response = await showModal<{
+        name: string;
+        domain: string;
+        visibility: CdnVisibility;
+        provider: 's3' | 'r2';
+        region?: string;
+        endpoint?: string;
+        bucketName: string;
+      }>(
+        <Modal.Header>
+          <h4>CDN settings</h4>
+        </Modal.Header>,
+        ({ onSubmit, onClose }) => (
+          <Modal.Body>
+            <ResourceCdnForm
+              name={cdn.name}
+              domain={cdn.domain}
+              visibility={cdn.visibility}
+              provider={cdn.provider}
+              region={cdn.region}
+              endpoint={cdn.endpoint}
+              bucketName={cdn.bucketName}
+              onSubmit={onSubmit}
+              onClose={onClose}
+            />
+          </Modal.Body>
+        )
+      );
+      if (!response) {
+        return;
+      }
+
+      const updated = await mutateNetwork('SpaceUpdateCdn', { identifier, ...response });
+      if (!updated.success) {
+        return;
+      }
+
+      onChange?.(identifier);
+      void mutate();
+    },
+    [cdn, identifier, mutate, mutateNetwork, onChange, showModal]
+  );
+
   const handleClickRemove = useCallback(
     async (e: MouseEvent) => {
       e.stopPropagation();
@@ -179,9 +232,24 @@ const ResourcesCdn = ({
         iconCollapsed={<Icon icon="fa-solid fa-angle-down" />}
         iconExpanded={<Icon icon="fa-solid fa-angle-up" />}
       >
+        {isPrivate && (
+          <div
+            className="flex items-center gap-1 rounded border border-amber-400 px-1 text-xs text-amber-700 dark:border-amber-700 dark:text-amber-400"
+            title="Private: no public address — Plitzi reads it with its credential, for the space’s server code"
+          >
+            <Icon icon="fa-solid fa-lock" size="xs" />
+            Private
+          </div>
+        )}
         <div className="rounded border border-gray-400 px-1 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
           {finalResources.length}
         </div>
+        <Icon
+          icon="fa-solid fa-gear"
+          className="hidden cursor-pointer group-hover:block"
+          title="Settings"
+          onClick={handleClickSettings}
+        />
         <SpaceCredentialSelectorModal
           providersSupported={['r2', 's3']}
           selected={credentialIdentifier}
@@ -198,7 +266,13 @@ const ResourcesCdn = ({
         />
       </ContainerCollapsable.Header>
       <ContainerCollapsable.Content className="flex flex-col gap-3 py-2">
-        {!removing && (
+        {isPrivate && !removing && (
+          <p className="text-xs text-gray-500 dark:text-zinc-400">
+            Where this space keeps its server code — its functions and runtime, written when they are saved or pushed.
+            Its files have no public address, so plugins, images and templates go on a public CDN.
+          </p>
+        )}
+        {!isPrivate && !removing && (
           <ResourceManager
             className="shrink-0"
             cdnIdentifier={identifier}

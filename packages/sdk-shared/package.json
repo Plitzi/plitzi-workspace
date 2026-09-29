@@ -795,6 +795,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/folders/SpaceUpdatePageFolderMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/folders/SpaceUpdatePageFolderMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/functions/SpaceInstallTemplateFunctionsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceInstallTemplateFunctionsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceInstallTemplateFunctionsMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/functions/SpaceRemoveFunctionsMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceRemoveFunctionsMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/functions/SpaceRemoveFunctionsMutation.mjs"

@@ -14,7 +14,7 @@ import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/Netw
 
 /** What saving answered, read from the one shape GraphQL carries it in — the three answers the platform gives. */
 const saveResultOf = (
-  answer: BuilderMutationsMap['SpaceSaveFunctions'] | undefined
+  answer: BuilderMutationsMap['SpaceSaveFunctions' | 'SpaceInstallTemplateFunctions'] | undefined
 ): FunctionsSaveResult | undefined => {
   if (!answer) {
     return undefined;
@@ -51,6 +51,15 @@ const useFunctions = () => {
     [data?.version, mutate, mutateNetwork]
   );
 
+  const install = useCallback(async (): Promise<FunctionsSaveResult | undefined> => {
+    const result = saveResultOf((await mutateNetwork('SpaceInstallTemplateFunctions', {})).result);
+    if (result?.ok) {
+      await mutate();
+    }
+
+    return result;
+  }, [mutate, mutateNetwork]);
+
   const remove = useCallback(async () => {
     await mutateNetwork('SpaceRemoveFunctions', {});
     await mutate();
@@ -63,8 +72,8 @@ const useFunctions = () => {
   );
 
   return useMemo(
-    () => ({ draft: data, error: error?.message ?? '', isLoading, save, remove, tryTask }),
-    [data, error, isLoading, save, remove, tryTask]
+    () => ({ draft: data, error: error?.message ?? '', isLoading, save, install, remove, tryTask }),
+    [data, error, isLoading, save, install, remove, tryTask]
   );
 };
 

@@ -14,6 +14,7 @@ const SpaceResourcesQuery = /* GraphQL */ `
         type
         size
         path
+        usedBy
         createdAt
         updatedAt
       }

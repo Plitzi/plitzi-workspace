@@ -11,6 +11,7 @@ import AppContext from '@pmodules/App/AppContext';
 
 import FunctionsDeclared from './components/FunctionsDeclared';
 import FunctionsFiles from './components/FunctionsFiles';
+import FunctionsOffer from './components/FunctionsOffer';
 import FunctionsProblems from './components/FunctionsProblems';
 import FunctionsTry from './components/FunctionsTry';
 import useFunctionsTypeScript from './editor/useFunctionsTypeScript';
@@ -28,7 +29,7 @@ const EMPTY_FILES: Record<string, string> = {};
  */
 const Functions = () => {
   const { functionsWorkerUrl } = use(AppContext);
-  const { draft, error, isLoading, save, remove, tryTask } = useFunctions();
+  const { draft, error, isLoading, save, install, remove, tryTask } = useFunctions();
   const { showDialog } = useModal();
   const { resolvedTheme } = useTheme();
   const saved = draft?.files ?? EMPTY_FILES;
@@ -37,6 +38,7 @@ const Functions = () => {
   const [problems, setProblems] = useState<FunctionsProblem[]>([]);
   const [refusal, setRefusal] = useState<FunctionsRefusal | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
   const typescript = useFunctionsTypeScript(functionsWorkerUrl, files);
 
   // The saved files are the starting point every time they change underneath — a save of ours, or one from elsewhere.
@@ -88,6 +90,17 @@ const Functions = () => {
     }
   }, [files, save]);
 
+  const handleInstall = useCallback(async () => {
+    setIsInstalling(true);
+    try {
+      const result = await install();
+      setProblems(result && !result.ok && 'problems' in result ? result.problems : []);
+      setRefusal(result && !result.ok && 'refusal' in result ? result.refusal : undefined);
+    } finally {
+      setIsInstalling(false);
+    }
+  }, [install]);
+
   const handleRemoveAll = useCallback(async () => {
     const confirmed = await showDialog(
       <Modal.Header>
@@ -132,7 +145,10 @@ const Functions = () => {
         </div>
         {error && <Alert intent="error">{error}</Alert>}
         {refusal && <Alert intent="warning">{refusal.error}</Alert>}
-        {!isLoading && !hasFiles && (
+        {!isLoading && !hasFiles && draft?.offer && (
+          <FunctionsOffer template={draft.offer.template} isInstalling={isInstalling} onInstall={handleInstall} />
+        )}
+        {!isLoading && !hasFiles && !draft?.offer && (
           <div className="m-4 flex flex-col items-center gap-3 rounded-sm border-2 border-dashed border-gray-300 p-6 text-center text-sm text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
             <span>
               When no step does what a flow needs — parse a feed, call an API with its own shape, compute something —

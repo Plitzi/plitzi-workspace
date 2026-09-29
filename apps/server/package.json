@@ -125,7 +125,7 @@
     "eslint-plugin-import": "^2.32.0",
     "ioredis": "^6.0.0",
     "isolated-vm": "^7.0.1",
-    "mongodb": "^7.6.0",
+    "mongodb": "^7.7.0",
     "mysql2": "^3.24.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

@@ -82,6 +82,11 @@ plitzi runtime start                 # started again — one stopped by hand, or
 - **The builder shows it.** Runtime, in the left sidebar: each environment's code, whether it runs, why not, its tasks
   and endpoints — and the variables, by name. A value is written and never read back.
 - **It is part of the plans that carry `spaceRuntimes`.** A push on another plan is refused with the reason.
+- **Its code is kept on the space's private CDN.** Server code never goes on a public one: add a CDN in the builder's
+  Resources and set its visibility to **Private** — a bucket with no public access, which the platform reads with its
+  credential. A push to a space without one is refused, saying so. The code is named there by what it holds, so a
+  publish copies a name, not the code; Resources lists it under **Server code** with the versions that run it, and what
+  no version runs any more can be removed from there.
 - **It runs at a size** — small (0.25 CPU, 256 MB), medium (0.5 CPU, 512 MB) or large (1 CPU, 1 GB) — chosen per
   environment among the sizes its plan includes: in the builder's Runtime panel, which shows what each environment runs
   at, or with `plitzi runtime size <size> [--environment <name>]`. Changing it starts that runtime again at it.

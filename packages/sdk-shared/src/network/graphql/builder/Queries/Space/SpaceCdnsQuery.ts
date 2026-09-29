@@ -11,6 +11,7 @@ const SpaceCdnsQuery = /* GraphQL */ `
         identifier
         name
         domain
+        visibility
         provider
         region
         endpoint

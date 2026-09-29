@@ -40,6 +40,7 @@ import SpaceUpdateCredentialMutation from './Space/credentials/SpaceUpdateCreden
 import SpaceAddPageFolderMutation from './Space/folders/SpaceAddPageFolderMutation';
 import SpaceRemovePageFolderMutation from './Space/folders/SpaceRemovePageFolderMutation';
 import SpaceUpdatePageFolderMutation from './Space/folders/SpaceUpdatePageFolderMutation';
+import SpaceInstallTemplateFunctionsMutation from './Space/functions/SpaceInstallTemplateFunctionsMutation';
 import SpaceRemoveFunctionsMutation from './Space/functions/SpaceRemoveFunctionsMutation';
 import SpaceSaveFunctionsMutation from './Space/functions/SpaceSaveFunctionsMutation';
 import SpaceTryFunctionMutation from './Space/functions/SpaceTryFunctionMutation';
@@ -112,6 +113,7 @@ import type { TSpaceUpdateConnectorMutation } from './Space/connectors/SpaceUpda
 import type { TSpaceAddPageFolderMutation } from './Space/folders/SpaceAddPageFolderMutation';
 import type { TSpaceRemovePageFolderMutation } from './Space/folders/SpaceRemovePageFolderMutation';
 import type { TSpaceUpdatePageFolderMutation } from './Space/folders/SpaceUpdatePageFolderMutation';
+import type { TSpaceInstallTemplateFunctionsMutation } from './Space/functions/SpaceInstallTemplateFunctionsMutation';
 import type { TSpaceRemoveFunctionsMutation } from './Space/functions/SpaceRemoveFunctionsMutation';
 import type { TSpaceSaveFunctionsMutation } from './Space/functions/SpaceSaveFunctionsMutation';
 import type { TSpaceTryFunctionMutation } from './Space/functions/SpaceTryFunctionMutation';
@@ -166,6 +168,7 @@ export type BuilderMutationsMap = {
   SpaceRunAction: TSpaceRunActionMutation;
   SpaceSaveFunctions: TSpaceSaveFunctionsMutation;
   SpaceRemoveFunctions: TSpaceRemoveFunctionsMutation;
+  SpaceInstallTemplateFunctions: TSpaceInstallTemplateFunctionsMutation;
   SpaceTryFunction: TSpaceTryFunctionMutation;
   SpaceAddConnector: TSpaceAddConnectorMutation;
   SpaceUpdateConnector: TSpaceUpdateConnectorMutation;
@@ -266,6 +269,7 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceRunAction: SpaceRunActionMutation,
   SpaceSaveFunctions: SpaceSaveFunctionsMutation,
   SpaceRemoveFunctions: SpaceRemoveFunctionsMutation,
+  SpaceInstallTemplateFunctions: SpaceInstallTemplateFunctionsMutation,
   SpaceTryFunction: SpaceTryFunctionMutation,
   SpaceAddConnector: SpaceAddConnectorMutation,
   SpaceUpdateConnector: SpaceUpdateConnectorMutation,

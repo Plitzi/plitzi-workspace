@@ -32,10 +32,19 @@ export type FunctionsDraft = {
   /** Hand it back as `base` when saving: a draft that moved on since is refused rather than overwritten. */
   version: string;
   manifest: FunctionsManifest | null;
+  /**
+   * The functions the space's template brought, not installed yet: server code is kept on the space's own private CDN,
+   * and a space created from a template has none at first. `template` names it, for the notice that offers to install
+   * them.
+   */
+  offer: { template: string } | null;
 };
 
-/** Why nothing was built: the draft moved on since the copy this save started from. */
-export type FunctionsRefusal = { status: 409; error: string; limit: 'version' };
+/**
+ * Why nothing was saved: `version`, the draft moved on since the copy this save started from; `storage`, the space has
+ * no private CDN to keep server code on (the error says how to add one).
+ */
+export type FunctionsRefusal = { status: 409; error: string; limit: 'version' | 'storage' };
 
 export type FunctionsSaveResult =
   | { ok: true; version: string; manifest: FunctionsManifest }

@@ -156,6 +156,16 @@ see [AI agents](./mcp.md).
 
 Every save is in the space's [change history](./history.md), file by file, with who made it.
 
+**Where they are kept**: on the space's **private CDN**, like its [runtime](./runtimes.md)'s code — the source and what
+was built from it, named by what they hold, so a publish copies a name and not the files. Server code never goes on a
+public CDN: add one in the builder's Resources with its visibility set to **Private** (a bucket with no public access,
+read by the platform with its credential); until then a save is refused, saying so. Resources lists the files under
+**Server code** with the versions that run each, and what none runs any more can be removed from there.
+
+**A space made from a template** does not get the template's functions copied — it has no private CDN yet. The Functions
+panel offers them instead: once the space has a private CDN, **Install the template's functions** saves the template's
+source as the space's own, built and checked like any save.
+
 ## 4. Trying it, and what ships
 
 **Try** runs one task of the saved draft, in the sandbox, as you: the value, what it logged, how long it took, why it

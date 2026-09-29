@@ -5,7 +5,8 @@ export type TSpaceAddCdnMutation = Cdn;
 const SpaceAddCdnMutation = /* GraphQL */ `
   mutation SpaceAddCdnMutation(
     $name: String!
-    $domain: String!
+    $domain: String
+    $visibility: String
     $provider: String!
     $region: String!
     $endpoint: String
@@ -14,6 +15,7 @@ const SpaceAddCdnMutation = /* GraphQL */ `
     SpaceAddCdn(
       name: $name
       domain: $domain
+      visibility: $visibility
       provider: $provider
       region: $region
       endpoint: $endpoint
@@ -21,6 +23,8 @@ const SpaceAddCdnMutation = /* GraphQL */ `
     ) {
       name
       identifier
+      domain
+      visibility
       provider
       region
       endpoint

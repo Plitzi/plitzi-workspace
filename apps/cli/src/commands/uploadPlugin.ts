@@ -30,6 +30,8 @@ interface Cdn {
   name: string;
   domain: string;
   provider: string;
+  /** A private CDN has no public address: it keeps the space's server code, and no page could load a plugin from it. */
+  visibility?: 'public' | 'private';
 }
 
 interface Manifest {
@@ -117,20 +119,30 @@ const manifestOf = (zip: Uint8Array): Manifest | undefined => {
   }
 };
 
-const chooseCdn = async (cdns: Cdn[], given: string | undefined, spaceName: string): Promise<Cdn | undefined> => {
-  if (cdns.length === 0) {
-    fail(`${spaceName} has no CDN to put a plugin on. Add one in the builder, under the space's settings.`);
-
-    return undefined;
-  }
-
+const chooseCdn = async (listed: Cdn[], given: string | undefined, spaceName: string): Promise<Cdn | undefined> => {
+  // A plugin is loaded by pages from its CDN's public address: a private CDN, which keeps server code, has none.
+  const cdns = listed.filter(cdn => cdn.visibility !== 'private');
   if (given) {
-    const named = cdns.find(cdn => cdn.identifier === given);
+    const named = listed.find(cdn => cdn.identifier === given);
     if (!named) {
-      fail(`${spaceName} has no CDN "${given}". Its CDNs: ${cdns.map(cdn => cdn.identifier).join(', ')}.`);
+      fail(`${spaceName} has no CDN "${given}". Its CDNs: ${listed.map(cdn => cdn.identifier).join(', ')}.`);
+    } else if (named.visibility === 'private') {
+      fail(
+        `"${given}" is a private CDN: it keeps ${spaceName}'s server code and has no public address, so no page could load a plugin from it. Use a public one${cdns.length ? `: ${cdns.map(cdn => cdn.identifier).join(', ')}` : ''}.`
+      );
+
+      return undefined;
     }
 
     return named;
+  }
+
+  if (cdns.length === 0) {
+    fail(
+      `${spaceName} has no public CDN to put a plugin on. Add one in the builder, under Resources${listed.length ? ' (its only CDNs are private, for server code)' : ''}.`
+    );
+
+    return undefined;
   }
 
   if (cdns.length === 1) {

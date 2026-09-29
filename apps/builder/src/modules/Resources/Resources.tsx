@@ -11,7 +11,7 @@ import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import ResourcesCdn from './components/ResourcesCdn';
 import ResourceCdnForm from './Models/ResourceCdnForm';
 
-import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
+import type { BuilderMutationsMap, BuilderQueriesMap, CdnVisibility } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 const Resources = () => {
@@ -33,6 +33,7 @@ const Resources = () => {
     const response = await showModal<{
       name: string;
       domain: string;
+      visibility: CdnVisibility;
       provider?: 's3' | 'r2';
       region?: string;
       endpoint?: string;
@@ -52,9 +53,17 @@ const Resources = () => {
       return;
     }
 
-    const { name, domain, provider, region, endpoint, bucketName } = response;
+    const { name, domain, visibility, provider, region, endpoint, bucketName } = response;
 
-    const responseMutation = await mutate('SpaceAddCdn', { name, domain, provider, region, endpoint, bucketName });
+    const responseMutation = await mutate('SpaceAddCdn', {
+      name,
+      domain,
+      visibility,
+      provider,
+      region,
+      endpoint,
+      bucketName
+    });
     if (!responseMutation.success) {
       return;
     }
@@ -79,6 +88,7 @@ const Resources = () => {
           {data?.SpaceCdns.edges.map((cdn, i) => (
             <ResourcesCdn
               key={i}
+              cdn={cdn}
               identifier={cdn.identifier}
               name={cdn.name}
               prefix={`${cdn.prefix}/assets`}

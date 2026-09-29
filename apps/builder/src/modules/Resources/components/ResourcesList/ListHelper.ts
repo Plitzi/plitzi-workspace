@@ -3,7 +3,14 @@ import type { Resource } from '@plitzi/sdk-shared';
 
 const defaultFolderName = 'All Resources';
 
+/** A private CDN's server code — the space's functions and runtime — written by saves and pushes, never by hand. */
+const serverCodeFolderName = 'Server code';
+
 const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
+  if (a.name === serverCodeFolderName || b.name === serverCodeFolderName) {
+    return a.name === serverCodeFolderName ? 1 : -1;
+  }
+
   if (a.name === defaultFolderName) {
     return -1;
   }
@@ -49,6 +56,16 @@ const getDirectories = (
       return;
     }
 
+    if (type === 'server') {
+      if (!(directoriesMap[serverCodeFolderName] as undefined | Resource[])) {
+        directoriesMap[serverCodeFolderName] = [];
+      }
+
+      directoriesMap[serverCodeFolderName].push(item);
+
+      return;
+    }
+
     if (type === 'template') {
       if (!(directoriesMap['Templates'] as undefined | Resource[])) {
         directoriesMap['Templates'] = [];
@@ -72,9 +89,15 @@ const getDirectories = (
 
   return Object.entries(directoriesMap)
     .map(([name, items]) => {
-      const isDefault = [defaultFolderName, 'Plugins', 'Templates'].includes(name);
+      const isDefault = [defaultFolderName, 'Plugins', 'Templates', serverCodeFolderName].includes(name);
 
-      return { name, items, canDrop: !['Plugins', 'Templates'].includes(name), canRemove: !isDefault, isDefault };
+      return {
+        name,
+        items,
+        canDrop: !['Plugins', 'Templates', serverCodeFolderName].includes(name),
+        canRemove: !isDefault,
+        isDefault
+      };
     })
     .sort(sortDirectories);
 };

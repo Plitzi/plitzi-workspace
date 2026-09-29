@@ -194,6 +194,7 @@ const ResourceDirectory = ({
                 title={resource.name}
                 src={resource.path}
                 metadata={resource.type === 'plugin' ? resource.metadata : undefined}
+                usedBy={resource.usedBy}
                 directoryName={name}
                 isLoading={draggingFile?.id === resource.id && isFileMoving}
                 onRemove={handleResourceRemoved}

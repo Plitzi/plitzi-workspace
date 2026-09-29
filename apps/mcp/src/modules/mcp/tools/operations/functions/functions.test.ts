@@ -11,7 +11,7 @@ import type { ActionRunReport, FunctionsSaveResult } from '@plitzi/sdk-shared';
 
 const withFunctions = (files: Record<string, string> = { 'index.ts': 'export default {};' }): Space => ({
   ...buildSpace(),
-  functions: { files, version: 'v1', manifest: { hosts: [], tasks: [], routes: [] } }
+  functions: { files, version: 'v1', manifest: { hosts: [], tasks: [], routes: [] }, offer: null }
 });
 
 const saving = (answer: FunctionsSaveResult) => {
