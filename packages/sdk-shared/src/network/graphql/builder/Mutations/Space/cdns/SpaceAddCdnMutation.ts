@@ -1,38 +1,14 @@
+import { CDN_FIELDS } from '../../../fragments/cdnFields';
+
 import type { Cdn } from '../../../../../../types';
 
 export type TSpaceAddCdnMutation = Cdn;
 
+/** A CDN — the customer's storage account — with its buckets, each with its own configuration. */
 const SpaceAddCdnMutation = /* GraphQL */ `
-  mutation SpaceAddCdnMutation(
-    $name: String!
-    $domain: String
-    $visibility: String
-    $provider: String!
-    $region: String!
-    $endpoint: String
-    $bucketName: String!
-  ) {
-    SpaceAddCdn(
-      name: $name
-      domain: $domain
-      visibility: $visibility
-      provider: $provider
-      region: $region
-      endpoint: $endpoint
-      bucketName: $bucketName
-    ) {
-      name
-      identifier
-      domain
-      visibility
-      provider
-      region
-      endpoint
-      bucketName
-      prefix
-      credential {
-        identifier
-      }
+  mutation SpaceAddCdnMutation($name: String!, $provider: String!, $endpoint: String, $buckets: [SpaceCdnBucketInput!]!) {
+    SpaceAddCdn(name: $name, provider: $provider, endpoint: $endpoint, buckets: $buckets) {
+      ${CDN_FIELDS}
     }
   }
 `;

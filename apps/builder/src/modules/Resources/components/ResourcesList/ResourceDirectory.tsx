@@ -28,6 +28,7 @@ export type ResourcesDirectoryProps = {
   canDrop?: boolean;
   canRemove?: boolean;
   cdnIdentifier: string;
+  bucketIdentifier: string;
   onChange?: () => void;
   onRemove?: (item: TResource) => void;
   onRemoveDirectory?: (name?: string) => void;
@@ -41,6 +42,7 @@ const ResourceDirectory = ({
   canRemove = true,
   canDrop = true,
   cdnIdentifier,
+  bucketIdentifier,
   onChange,
   onRemove,
   onRemoveDirectory
@@ -103,7 +105,7 @@ const ResourceDirectory = ({
       try {
         await mutate(
           'SpaceMoveResource',
-          { cdnIdentifier, identifier: draggingFile.id, prefix: isDefault ? '' : name },
+          { cdnIdentifier, bucketIdentifier, identifier: draggingFile.id, prefix: isDefault ? '' : name },
           false,
           false,
           { customFetch: true }
@@ -117,7 +119,18 @@ const ResourceDirectory = ({
         setIsFileMoving(false);
       }
     },
-    [canDrop, draggingFile, name, setIsFileMoving, mutate, cdnIdentifier, isDefault, onChange, addToast]
+    [
+      canDrop,
+      draggingFile,
+      name,
+      setIsFileMoving,
+      mutate,
+      cdnIdentifier,
+      bucketIdentifier,
+      isDefault,
+      onChange,
+      addToast
+    ]
   );
 
   const handleFolderDragLeave = useCallback(
@@ -190,6 +203,7 @@ const ResourceDirectory = ({
                 key={resource.id}
                 id={resource.id}
                 cdnIdentifier={resource.cdnIdentifier}
+                bucketIdentifier={resource.bucketIdentifier}
                 type={resource.type}
                 title={resource.name}
                 src={resource.path}

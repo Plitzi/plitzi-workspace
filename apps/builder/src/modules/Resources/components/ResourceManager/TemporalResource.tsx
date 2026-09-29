@@ -21,6 +21,7 @@ import type {
 export type TemporalResourceProps = {
   className?: string;
   cdnIdentifier?: string;
+  bucketIdentifier?: string;
   id?: string;
   file?: ResourceFile;
   type?: TResourceType;
@@ -33,6 +34,7 @@ export type TemporalResourceProps = {
 
 const TemporalResource = ({
   cdnIdentifier = '',
+  bucketIdentifier = '',
   id = '',
   type = 'image',
   title = '',
@@ -98,7 +100,7 @@ const TemporalResource = ({
     setUploading(true);
     const response = await mutate(
       'SpaceAddResource',
-      { cdnIdentifier, resource: file, type, compression: type === 'plugin' ? 'gzip' : undefined },
+      { cdnIdentifier, bucketIdentifier, resource: file, type, compression: type === 'plugin' ? 'gzip' : undefined },
       false,
       false,
       { customFetch: true, onProgress, onAbortPossible, onError }
@@ -118,7 +120,19 @@ const TemporalResource = ({
     setUploading(false);
     setProcessing(false);
     abortHandler.current = null;
-  }, [addToast, cdnIdentifier, file, isUploaded, mutate, onAbortPossible, onError, onProgress, onUploaded, type]);
+  }, [
+    addToast,
+    bucketIdentifier,
+    cdnIdentifier,
+    file,
+    isUploaded,
+    mutate,
+    onAbortPossible,
+    onError,
+    onProgress,
+    onUploaded,
+    type
+  ]);
 
   useEffect(() => {
     return () => {

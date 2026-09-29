@@ -147,7 +147,8 @@ upload
   .command('plugin')
   .argument('[zip]', 'The zip plitzi pack plugin built. Left out: the one packed in this project.')
   .description('Upload a packed plugin to a CDN of the space you work in, and install it there')
-  .option('--cdn <identifier>', 'Which of the space’s CDNs. Asked for when it has several.')
+  .option('--cdn <identifier>', 'Which of the space’s CDNs the bucket is in.')
+  .option('--bucket <identifier>', 'Which public bucket the plugin goes in. Asked for when there are several.')
   .option(...API_OPTION)
   .action((zip: string | undefined, options: UploadPluginOptions) => uploadPluginCommand(zip, options));
 

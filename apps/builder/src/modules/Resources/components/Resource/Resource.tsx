@@ -26,6 +26,7 @@ export type ResourceProps = {
   className?: string;
   id: string;
   cdnIdentifier: string;
+  bucketIdentifier: string;
   type?: TResourceType;
   src?: string;
   title?: string;
@@ -41,6 +42,7 @@ const Resource = ({
   className = '',
   id,
   cdnIdentifier,
+  bucketIdentifier,
   type = 'image',
   src = '',
   title = '',
@@ -156,12 +158,12 @@ const Resource = ({
 
       if (response) {
         setRemoving(true);
-        await mutate('SpaceRemoveResource', { identifier: id, cdnIdentifier });
+        await mutate('SpaceRemoveResource', { identifier: id, cdnIdentifier, bucketIdentifier });
         setRemoving(false);
         onRemove?.(id);
       }
     },
-    [type, metadata, plugins, getSchemaFlat, showDialog, id, mutate, cdnIdentifier, onRemove]
+    [type, metadata, plugins, getSchemaFlat, showDialog, id, mutate, cdnIdentifier, bucketIdentifier, onRemove]
   );
 
   const sharedProps = {

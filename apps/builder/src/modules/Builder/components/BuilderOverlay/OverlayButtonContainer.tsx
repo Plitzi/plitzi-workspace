@@ -14,6 +14,7 @@ import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
+import type { TemplateFormValues } from '../../Models/TemplateForm';
 import type { Element, SegmentsContextValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
@@ -86,7 +87,7 @@ const OverlayButtonContainer = ({
   }, [addPopup, existsPopup, mode]);
 
   const handleClickAsTemplate = useCallback(async () => {
-    const response = await showModal<{ name: string; description?: string; cdnIdentifier: string }>(
+    const response = await showModal<TemplateFormValues>(
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
@@ -98,8 +99,15 @@ const OverlayButtonContainer = ({
     );
 
     if (response) {
-      const { name, description, cdnIdentifier } = response;
-      void elementAsTemplate(cdnIdentifier, getSchema(), getStyle(), name, description ?? '', element);
+      const { name, description, cdnIdentifier, bucketIdentifier } = response;
+      void elementAsTemplate(
+        { cdnIdentifier, bucketIdentifier },
+        getSchema(),
+        getStyle(),
+        name,
+        description ?? '',
+        element
+      );
       addToast(
         <div>
           Template <b>{name}</b> Created

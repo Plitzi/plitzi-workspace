@@ -1,9 +1,9 @@
 import type { ResourceDirectory } from './ResourcesList';
-import type { Resource } from '@plitzi/sdk-shared';
+import type { CdnVisibility, Resource } from '@plitzi/sdk-shared';
 
 const defaultFolderName = 'All Resources';
 
-/** A private CDN's server code — the space's functions and runtime — written by saves and pushes, never by hand. */
+/** A private bucket's server code — the space's functions and runtime — kept by saves and pushes, not by hand. */
 const serverCodeFolderName = 'Server code';
 
 const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
@@ -38,11 +38,16 @@ const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
   return a.name.localeCompare(b.name);
 };
 
+/** A private bucket takes no upload, so it opens on its server code alone; a public one on where uploads go. */
+const foldersShownFor = (visibility: CdnVisibility): { [key: string]: Resource[] } =>
+  visibility === 'private' ? { [serverCodeFolderName]: [] } : { [defaultFolderName]: [], Templates: [], Plugins: [] };
+
 const getDirectories = (
   prefix: string = 'https://cdn.plitzi.com/website/assets/',
-  items: Resource[] = []
+  items: Resource[] = [],
+  visibility: CdnVisibility = 'public'
 ): ResourceDirectory[] => {
-  const directoriesMap: { [key: string]: Resource[] } = { [defaultFolderName]: [], Templates: [], Plugins: [] };
+  const directoriesMap = foldersShownFor(visibility);
 
   items.forEach(item => {
     const { id, type } = item;

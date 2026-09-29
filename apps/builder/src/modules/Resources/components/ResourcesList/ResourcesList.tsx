@@ -12,13 +12,16 @@ import { getDirectories, sortDirectories } from './ListHelper';
 import ResourcesDirectory from './ResourceDirectory';
 import ResourcesListProvider from './ResourcesListProvider';
 
-import type { Resource as TResource } from '@plitzi/sdk-shared';
+import type { CdnVisibility, Resource as TResource } from '@plitzi/sdk-shared';
 
 export type ResourcesListProps = {
   className?: string;
   items: TResource[];
   prefix: string;
   cdnIdentifier: string;
+  bucketIdentifier: string;
+  /** A private bucket takes no upload: it lists its server code, and offers no folder to add. */
+  visibility?: CdnVisibility;
   onChange?: () => void;
   onRemove?: (item: TResource) => void;
 };
@@ -31,14 +34,23 @@ export type ResourceDirectory = {
   canRemove: boolean;
 };
 
-const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onChange, onRemove }: ResourcesListProps) => {
+const ResourcesList = ({
+  className,
+  prefix = '',
+  items,
+  cdnIdentifier,
+  bucketIdentifier,
+  visibility = 'public',
+  onChange,
+  onRemove
+}: ResourcesListProps) => {
   const { showModal } = useModal();
   const { addToast } = useToast();
-  const [directories, setDirectories] = useState<ResourceDirectory[]>(() => getDirectories(prefix, items));
+  const [directories, setDirectories] = useState<ResourceDirectory[]>(() => getDirectories(prefix, items, visibility));
 
   useDidUpdateEffect(() => {
-    setDirectories(getDirectories(prefix, items));
-  }, [prefix, items]);
+    setDirectories(getDirectories(prefix, items, visibility));
+  }, [prefix, items, visibility]);
 
   const handleAddDirectory = useCallback(async () => {
     const response = await showModal<{ name: string }>(
@@ -87,9 +99,11 @@ const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onChange,
 
   return (
     <div className={clsx('flex w-full flex-col gap-4 overflow-y-auto', className)}>
-      <Button size="sm" onClick={handleAddDirectory}>
-        Add Directory
-      </Button>
+      {visibility === 'public' && (
+        <Button size="sm" onClick={handleAddDirectory}>
+          Add Directory
+        </Button>
+      )}
       <ResourcesListProvider>
         {directories.map(directory => (
           <ResourcesDirectory
@@ -100,6 +114,7 @@ const ResourcesList = ({ className, prefix = '', items, cdnIdentifier, onChange,
             canRemove={directory.canRemove}
             canDrop={directory.canDrop}
             cdnIdentifier={cdnIdentifier}
+            bucketIdentifier={bucketIdentifier}
             onRemoveDirectory={handleClickRemoveDirectory}
             onChange={onChange}
             onRemove={onRemove}

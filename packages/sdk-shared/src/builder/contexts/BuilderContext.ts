@@ -32,8 +32,9 @@ export type BuilderContextValue = {
     attributeValue: unknown,
     category?: 'attributes' | 'definition'
   ) => void;
+  /** Saves an element as a template file in a public bucket of one of the space's CDNs. */
   elementAsTemplate: (
-    cdnIdentifier: string,
+    target: { cdnIdentifier: string; bucketIdentifier: string },
     schema: Schema,
     style: Style,
     name: string,

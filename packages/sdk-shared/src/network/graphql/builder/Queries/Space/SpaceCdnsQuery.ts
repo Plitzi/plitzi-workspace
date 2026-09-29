@@ -1,3 +1,5 @@
+import { CDN_FIELDS } from '../../fragments/cdnFields';
+
 import type { Cdn, PageInfo } from '../../../../../types';
 
 export type TSpaceCdnsQuery = {
@@ -8,18 +10,7 @@ const SpaceCdnsQuery = /* GraphQL */ `
   query SpaceCdnsQuery($filter: CdnInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceCdns(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {
-        identifier
-        name
-        domain
-        visibility
-        provider
-        region
-        endpoint
-        bucketName
-        prefix
-        credential {
-          identifier
-        }
+        ${CDN_FIELDS}
         createdAt
         updatedAt
       }

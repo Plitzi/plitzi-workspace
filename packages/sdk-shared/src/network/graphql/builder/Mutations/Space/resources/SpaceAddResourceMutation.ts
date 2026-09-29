@@ -5,6 +5,7 @@ export type TSpaceAddResourceMutation = Resource;
 const SpaceAddResourceMutation = /* GraphQL */ `
   mutation SpaceAddResourceMutation(
     $cdnIdentifier: String!
+    $bucketIdentifier: String!
     $resource: Upload!
     $type: String!
     $compression: String
@@ -12,6 +13,7 @@ const SpaceAddResourceMutation = /* GraphQL */ `
   ) {
     SpaceAddResource(
       cdnIdentifier: $cdnIdentifier
+      bucketIdentifier: $bucketIdentifier
       resource: $resource
       type: $type
       compression: $compression

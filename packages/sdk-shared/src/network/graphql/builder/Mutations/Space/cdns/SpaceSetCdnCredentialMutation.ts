@@ -1,3 +1,5 @@
+import { CDN_FIELDS } from '../../../fragments/cdnFields';
+
 import type { Cdn } from '../../../../../../types';
 
 export type TSpaceSetCdnCredentialMutation = Cdn;
@@ -5,16 +7,7 @@ export type TSpaceSetCdnCredentialMutation = Cdn;
 const SpaceSetCdnCredentialMutation = /* GraphQL */ `
   mutation SpaceSetCdnCredentialMutation($identifier: String!, $credentialIdentifier: String!) {
     SpaceSetCdnCredential(identifier: $identifier, credentialIdentifier: $credentialIdentifier) {
-      name
-      identifier
-      provider
-      region
-      endpoint
-      bucketName
-      prefix
-      credential {
-        identifier
-      }
+      ${CDN_FIELDS}
     }
   }
 `;

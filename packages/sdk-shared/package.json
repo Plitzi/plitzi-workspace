@@ -743,9 +743,17 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceUpdateActionMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/actions/SpaceUpdateActionMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnBucketMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnBucketMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnBucketMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceAddCdnMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/cdns/SpaceRemoveCdnBucketMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceRemoveCdnBucketMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceRemoveCdnBucketMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/cdns/SpaceRemoveCdnMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceRemoveCdnMutation.d.ts",
@@ -754,6 +762,10 @@
     "./network/graphql/builder/Mutations/Space/cdns/SpaceSetCdnCredentialMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceSetCdnCredentialMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceSetCdnCredentialMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnBucketMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnBucketMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnBucketMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/cdns/SpaceUpdateCdnMutation.d.ts",
@@ -1042,6 +1054,10 @@
     "./network/graphql/builder/Subscriptions/index": {
       "types": "./dist/network/graphql/builder/Subscriptions/index.d.ts",
       "import": "./dist/network/graphql/builder/Subscriptions/index.mjs"
+    },
+    "./network/graphql/builder/fragments/cdnFields": {
+      "types": "./dist/network/graphql/builder/fragments/cdnFields.d.ts",
+      "import": "./dist/network/graphql/builder/fragments/cdnFields.mjs"
     },
     "./network/graphql/builder/index": {
       "types": "./dist/network/graphql/builder/index.d.ts",

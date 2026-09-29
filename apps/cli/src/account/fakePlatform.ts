@@ -31,7 +31,12 @@ export interface FakePlatform {
   /** What each client registered as. */
   registrations: Record<string, unknown>[];
   uploads: FakeUpload[];
-  cdns: { identifier: string; name: string; domain: string; provider: string }[];
+  cdns: {
+    identifier: string;
+    name: string;
+    provider: string;
+    buckets: { identifier: string; name: string; visibility: 'public' | 'private'; domain: string }[];
+  }[];
   /** Access tokens the platform accepts; emptied to have it answer 401. */
   valid: Set<string>;
   /** Answers 401 to every access token, the ones it has just renewed included. */
@@ -223,7 +228,17 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     revoked: [],
     registrations: [],
     uploads: [],
-    cdns: [{ identifier: 'cdn-main', name: 'Main', domain: 'https://cdn.example.com', provider: 'aws' }],
+    cdns: [
+      {
+        identifier: 'cdn-main',
+        name: 'Main',
+        provider: 'r2',
+        buckets: [
+          { identifier: 'main-files', name: 'Files', visibility: 'public', domain: 'https://cdn.example.com' },
+          { identifier: 'main-code', name: 'Code', visibility: 'private', domain: '' }
+        ]
+      }
+    ],
     valid: new Set(),
     refuseAll: false,
     renewable: new Set(),

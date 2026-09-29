@@ -360,7 +360,7 @@ const BuilderProvider = ({
 
   const elementAsTemplate = useCallback(
     async (
-      cdnIdentifier: string,
+      { cdnIdentifier, bucketIdentifier }: { cdnIdentifier: string; bucketIdentifier: string },
       schema: Schema,
       style: Style,
       name: string,
@@ -384,7 +384,7 @@ const BuilderProvider = ({
       });
       await mutate(
         'SpaceAddResource',
-        { cdnIdentifier, resource: file, type: 'template', compression: undefined },
+        { cdnIdentifier, bucketIdentifier, resource: file, type: 'template', compression: undefined },
         false,
         false,
         { customFetch: true }

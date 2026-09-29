@@ -172,8 +172,9 @@ up in the live one because of a flag.
 `upload plugin` takes the zip named, or the one `pack plugin` left in the project (the newest, when there are several —
 asked at a terminal). It is checked for its `plugin-manifest.json` before anything is sent. Without a connection, or
 without a space, the browser opens for what is missing, so the first upload is one command too. It goes on one of the
-space's CDNs — `--cdn <identifier>`, or asked when there are several — and is installed, as the builder does when a
-zip is dropped under Resources: added, or the plugin already there moved to the new version with its settings kept.
+space's public buckets — `--bucket <identifier>` (narrowed to one CDN with `--cdn <identifier>`), or asked when there
+are several; a private bucket is refused, since no page could load from it — and is installed, as the builder does when
+a zip is dropped under Resources: added, or the plugin already there moved to the new version with its settings kept.
 
 `--api` (or `PLITZI_API_URL`) points it at another platform, a self-hosted or local one; the CLI trusts the
 certificate authorities the system trusts, as the browser beside it does.

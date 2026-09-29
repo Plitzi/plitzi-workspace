@@ -11,7 +11,8 @@ import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import ResourcesCdn from './components/ResourcesCdn';
 import ResourceCdnForm from './Models/ResourceCdnForm';
 
-import type { BuilderMutationsMap, BuilderQueriesMap, CdnVisibility } from '@plitzi/sdk-shared';
+import type { ResourceCdnFormValues } from './Models/ResourceCdnForm';
+import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
 import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 const Resources = () => {
@@ -30,15 +31,7 @@ const Resources = () => {
   );
 
   const handleClickAddCdn = useCallback(async () => {
-    const response = await showModal<{
-      name: string;
-      domain: string;
-      visibility: CdnVisibility;
-      provider?: 's3' | 'r2';
-      region?: string;
-      endpoint?: string;
-      bucketName?: string;
-    }>(
+    const response = await showModal<ResourceCdnFormValues>(
       <Modal.Header>
         <h4>Add CDN Provider</h4>
       </Modal.Header>,
@@ -53,16 +46,12 @@ const Resources = () => {
       return;
     }
 
-    const { name, domain, visibility, provider, region, endpoint, bucketName } = response;
-
+    const { name, provider, endpoint, bucketName, region, visibility, domain } = response;
     const responseMutation = await mutate('SpaceAddCdn', {
       name,
-      domain,
-      visibility,
       provider,
-      region,
       endpoint,
-      bucketName
+      buckets: [{ bucketName, region, visibility, domain }]
     });
     if (!responseMutation.success) {
       return;
@@ -85,14 +74,10 @@ const Resources = () => {
       </Flex>
       {!isLoading && (
         <div className="flex flex-col gap-4">
-          {data?.SpaceCdns.edges.map((cdn, i) => (
+          {data?.SpaceCdns.edges.map(cdn => (
             <ResourcesCdn
-              key={i}
+              key={cdn.identifier}
               cdn={cdn}
-              identifier={cdn.identifier}
-              name={cdn.name}
-              prefix={`${cdn.prefix}/assets`}
-              credentialIdentifier={cdn.credential?.identifier}
               isCollapsed={collapsedCache[cdn.identifier] ?? true}
               onCollapse={handleChangeCollapse}
               onChange={handleChange}

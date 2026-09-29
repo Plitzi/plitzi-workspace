@@ -13,6 +13,7 @@ import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
 
+import type { TemplateFormValues } from '../../Models/TemplateForm';
 import type { SegmentsContextValue } from '@plitzi/sdk-shared';
 
 export type BuilderContextMenuProps = {
@@ -167,7 +168,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   };
 
   const handleClickAsTemplate = async () => {
-    const response = await showModal<{ name: string; description?: string; cdnIdentifier: string }>(
+    const response = await showModal<TemplateFormValues>(
       <Modal.Header>
         <h4>Add Template</h4>
       </Modal.Header>,
@@ -179,8 +180,15 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     );
 
     if (response && element) {
-      const { name, description, cdnIdentifier } = response;
-      void elementAsTemplate(cdnIdentifier, getSchema(), getStyle(), name, description ?? '', element);
+      const { name, description, cdnIdentifier, bucketIdentifier } = response;
+      void elementAsTemplate(
+        { cdnIdentifier, bucketIdentifier },
+        getSchema(),
+        getStyle(),
+        name,
+        description ?? '',
+        element
+      );
     }
   };
 

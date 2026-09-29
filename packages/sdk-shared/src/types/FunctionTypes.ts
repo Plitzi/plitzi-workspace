@@ -33,16 +33,16 @@ export type FunctionsDraft = {
   version: string;
   manifest: FunctionsManifest | null;
   /**
-   * The functions the space's template brought, not installed yet: server code is kept on the space's own private CDN,
-   * and a space created from a template has none at first. `template` names it, for the notice that offers to install
-   * them.
+   * The functions the space's template brought, not installed yet: server code is kept in the space's own private
+   * bucket, and a space created from a template has none at first. `template` names it, for the notice that offers to
+   * install them.
    */
   offer: { template: string } | null;
 };
 
 /**
  * Why nothing was saved: `version`, the draft moved on since the copy this save started from; `storage`, the space has
- * no private CDN to keep server code on (the error says how to add one).
+ * no private bucket to keep server code in (the error says how to add one).
  */
 export type FunctionsRefusal = { status: 409; error: string; limit: 'version' | 'storage' };
 

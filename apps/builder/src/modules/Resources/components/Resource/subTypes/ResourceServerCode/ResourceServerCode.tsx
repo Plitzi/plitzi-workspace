@@ -17,9 +17,9 @@ export type ResourceServerCodeProps = {
 };
 
 /**
- * A file of the space's server code on its private CDN — its functions or its runtime, kept by saves and pushes and
- * named by what it holds. No preview and no address: a private CDN serves nothing. What it shows is which versions run
- * it, so what nothing runs any more can be cleared from here.
+ * A file of the space's server code in its private bucket — its functions or its runtime, kept by saves and pushes
+ * and named by what it holds. No preview and no address: a private bucket serves nothing. What it shows is which
+ * versions run it, so what nothing runs any more can be cleared from here.
  */
 const ResourceServerCode = ({
   className,

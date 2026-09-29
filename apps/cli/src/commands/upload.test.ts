@@ -77,7 +77,7 @@ describe('plitzi upload plugin', () => {
     expect(platform.scopes).toEqual(['space']);
     expect(platform.uploads).toEqual([
       {
-        path: '/spaces/3/cdns/cdn-main/plugins?filename=seat-picker-1.2.0.zip',
+        path: '/spaces/3/cdns/cdn-main/plugins?filename=seat-picker-1.2.0.zip&bucket=main-files',
         contentType: 'application/zip',
         bytes: expect.any(Number) as number
       }
@@ -119,18 +119,28 @@ describe('plitzi upload plugin', () => {
     expect(process.exitCode).toBe(1);
   });
 
-  it('puts the choice of CDN to the person, not to whoever ran it, when the space has several', async () => {
-    platform.cdns.push({ identifier: 'cdn-eu', name: 'Europe', domain: 'https://eu.example.com', provider: 'aws' });
+  it('puts the choice of bucket to the person, not to whoever ran it, when the space has several public ones', async () => {
+    platform.cdns.push({
+      identifier: 'cdn-eu',
+      name: 'Europe',
+      provider: 'r2',
+      buckets: [{ identifier: 'eu-files', name: 'Files', visibility: 'public', domain: 'https://eu.example.com' }]
+    });
 
     await uploadPluginCommand(await pluginZip(), { api: platform.api });
 
-    expect(said.err).toContain('--cdn cdn-main | cdn-eu');
+    expect(said.err).toContain('--bucket main-files | eu-files');
     expect(platform.uploads).toHaveLength(0);
     expect(process.exitCode).toBe(1);
   });
 
   it('uploads to the CDN named, and says which there are when it names none of them', async () => {
-    platform.cdns.push({ identifier: 'cdn-eu', name: 'Europe', domain: 'https://eu.example.com', provider: 'aws' });
+    platform.cdns.push({
+      identifier: 'cdn-eu',
+      name: 'Europe',
+      provider: 'r2',
+      buckets: [{ identifier: 'eu-files', name: 'Files', visibility: 'public', domain: 'https://eu.example.com' }]
+    });
     const zip = await pluginZip();
 
     await uploadPluginCommand(zip, { api: platform.api, cdn: 'cdn-eu' });
@@ -139,6 +149,17 @@ describe('plitzi upload plugin', () => {
     await uploadPluginCommand(zip, { api: platform.api, cdn: 'cdn-us' });
     expect(said.err).toContain('Its CDNs: cdn-main, cdn-eu');
     expect(platform.uploads).toHaveLength(1);
+  });
+
+  it('uploads to the bucket named, and never to a private one no page could load it from', async () => {
+    const zip = await pluginZip();
+
+    await uploadPluginCommand(zip, { api: platform.api, bucket: 'main-code' });
+    expect(said.err).toContain('"main-code" is a private bucket');
+    expect(platform.uploads).toHaveLength(0);
+
+    await uploadPluginCommand(zip, { api: platform.api, bucket: 'main-files' });
+    expect(platform.uploads[0].path).toContain('bucket=main-files');
   });
 
   it('finds the zip plitzi pack plugin left in the project when none is named', async () => {

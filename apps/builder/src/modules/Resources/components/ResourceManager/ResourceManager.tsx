@@ -13,6 +13,8 @@ const defaultUploadTypes = ['jpg', 'jpeg', 'png'];
 export type ResourceManagerProps = {
   className?: string;
   cdnIdentifier?: string;
+  /** Which of the CDN's buckets the files go in — a public one. */
+  bucketIdentifier?: string;
   uploadTypes?: string[];
   onUploaded?: (resource: ResourceWithFile) => void;
   onUploadAdded?: (file: ResourceFile) => boolean;
@@ -21,6 +23,7 @@ export type ResourceManagerProps = {
 const ResourceManager = ({
   className,
   cdnIdentifier,
+  bucketIdentifier,
   uploadTypes = defaultUploadTypes,
   onUploaded,
   onUploadAdded
@@ -126,6 +129,7 @@ const ResourceManager = ({
                 <TemporalResource
                   key={file.id}
                   cdnIdentifier={cdnIdentifier}
+                  bucketIdentifier={bucketIdentifier}
                   file={file}
                   type={file.resourceType}
                   title={file.name}

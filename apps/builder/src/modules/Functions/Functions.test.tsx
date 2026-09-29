@@ -109,9 +109,9 @@ describe('the Functions panel', () => {
     });
   });
 
-  /** Server code is kept on the space's private CDN: without one the save is refused with how to add it. */
-  it('says how to add a private CDN when the space has none', async () => {
-    const error = 'This space has no private CDN to keep its server code on. Add a CDN in Resources…';
+  /** Server code is kept in the space's private bucket: without one the save is refused with how to add it. */
+  it('says how to add a private bucket when the space has none', async () => {
+    const error = 'This space has no private bucket to keep its server code in. In Resources, add a bucket…';
     draft = { files: {}, version: 'v0', manifest: null, offer: { template: 'Shipping quote' } };
     install.mockResolvedValue({ ok: false, refusal: { status: 409, limit: 'storage', error } });
     renderPanel();

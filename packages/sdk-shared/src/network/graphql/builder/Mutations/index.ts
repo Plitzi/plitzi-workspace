@@ -27,9 +27,12 @@ import SpaceAddActionMutation from './Space/actions/SpaceAddActionMutation';
 import SpaceRemoveActionMutation from './Space/actions/SpaceRemoveActionMutation';
 import SpaceRunActionMutation from './Space/actions/SpaceRunActionMutation';
 import SpaceUpdateActionMutation from './Space/actions/SpaceUpdateActionMutation';
+import SpaceAddCdnBucketMutation from './Space/cdns/SpaceAddCdnBucketMutation';
 import SpaceAddCdnMutation from './Space/cdns/SpaceAddCdnMutation';
+import SpaceRemoveCdnBucketMutation from './Space/cdns/SpaceRemoveCdnBucketMutation';
 import SpaceRemoveCdnMutation from './Space/cdns/SpaceRemoveCdnMutation';
 import SpaceSetCdnCredentialMutation from './Space/cdns/SpaceSetCdnCredentialMutation';
+import SpaceUpdateCdnBucketMutation from './Space/cdns/SpaceUpdateCdnBucketMutation';
 import SpaceUpdateCdnMutation from './Space/cdns/SpaceUpdateCdnMutation';
 import SpaceAddConnectorMutation from './Space/connectors/SpaceAddConnectorMutation';
 import SpaceRemoveConnectorMutation from './Space/connectors/SpaceRemoveConnectorMutation';
@@ -103,9 +106,12 @@ import type { TSpaceAddActionMutation } from './Space/actions/SpaceAddActionMuta
 import type { TSpaceRemoveActionMutation } from './Space/actions/SpaceRemoveActionMutation';
 import type { TSpaceRunActionMutation } from './Space/actions/SpaceRunActionMutation';
 import type { TSpaceUpdateActionMutation } from './Space/actions/SpaceUpdateActionMutation';
+import type { TSpaceAddCdnBucketMutation } from './Space/cdns/SpaceAddCdnBucketMutation';
 import type { TSpaceAddCdnMutation } from './Space/cdns/SpaceAddCdnMutation';
+import type { TSpaceRemoveCdnBucketMutation } from './Space/cdns/SpaceRemoveCdnBucketMutation';
 import type { TSpaceRemoveCdnMutation } from './Space/cdns/SpaceRemoveCdnMutation';
 import type { TSpaceSetCdnCredentialMutation } from './Space/cdns/SpaceSetCdnCredentialMutation';
+import type { TSpaceUpdateCdnBucketMutation } from './Space/cdns/SpaceUpdateCdnBucketMutation';
 import type { TSpaceUpdateCdnMutation } from './Space/cdns/SpaceUpdateCdnMutation';
 import type { TSpaceAddConnectorMutation } from './Space/connectors/SpaceAddConnectorMutation';
 import type { TSpaceRemoveConnectorMutation } from './Space/connectors/SpaceRemoveConnectorMutation';
@@ -162,6 +168,9 @@ export type BuilderMutationsMap = {
   SpaceUpdateCdn: TSpaceUpdateCdnMutation;
   SpaceSetCdnCredential: TSpaceSetCdnCredentialMutation;
   SpaceRemoveCdn: TSpaceRemoveCdnMutation;
+  SpaceAddCdnBucket: TSpaceAddCdnBucketMutation;
+  SpaceUpdateCdnBucket: TSpaceUpdateCdnBucketMutation;
+  SpaceRemoveCdnBucket: TSpaceRemoveCdnBucketMutation;
   SpaceAddAction: TSpaceAddActionMutation;
   SpaceUpdateAction: TSpaceUpdateActionMutation;
   SpaceRemoveAction: TSpaceRemoveActionMutation;
@@ -263,6 +272,9 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceUpdateCdn: SpaceUpdateCdnMutation,
   SpaceSetCdnCredential: SpaceSetCdnCredentialMutation,
   SpaceRemoveCdn: SpaceRemoveCdnMutation,
+  SpaceAddCdnBucket: SpaceAddCdnBucketMutation,
+  SpaceUpdateCdnBucket: SpaceUpdateCdnBucketMutation,
+  SpaceRemoveCdnBucket: SpaceRemoveCdnBucketMutation,
   SpaceAddAction: SpaceAddActionMutation,
   SpaceUpdateAction: SpaceUpdateActionMutation,
   SpaceRemoveAction: SpaceRemoveActionMutation,

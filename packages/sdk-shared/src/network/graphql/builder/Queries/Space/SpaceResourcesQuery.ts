@@ -5,11 +5,26 @@ export type TSpaceResourcesQuery = {
 };
 
 const SpaceResourcesQuery = /* GraphQL */ `
-  query SpaceResourcesQuery($cdnIdentifier: String!, $filter: ResourceInput, $page: Int, $pageSize: Int, $offset: Int) {
-    SpaceResources(cdnIdentifier: $cdnIdentifier, filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
+  query SpaceResourcesQuery(
+    $cdnIdentifier: String!
+    $bucketIdentifier: String!
+    $filter: ResourceInput
+    $page: Int
+    $pageSize: Int
+    $offset: Int
+  ) {
+    SpaceResources(
+      cdnIdentifier: $cdnIdentifier
+      bucketIdentifier: $bucketIdentifier
+      filter: $filter
+      page: $page
+      pageSize: $pageSize
+      offset: $offset
+    ) {
       resources {
         id
         cdnIdentifier
+        bucketIdentifier
         name
         type
         size

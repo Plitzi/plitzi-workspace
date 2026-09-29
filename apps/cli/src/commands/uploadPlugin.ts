@@ -23,15 +23,28 @@ import type { AccountOptions } from './account';
 
 export interface UploadPluginOptions extends AccountOptions {
   cdn?: string;
+  bucket?: string;
+}
+
+interface Bucket {
+  identifier: string;
+  name: string;
+  /** A private bucket has no public address: it keeps the space's server code, and no page could load a plugin from it. */
+  visibility: 'public' | 'private';
+  domain: string;
 }
 
 interface Cdn {
   identifier: string;
   name: string;
-  domain: string;
   provider: string;
-  /** A private CDN has no public address: it keeps the space's server code, and no page could load a plugin from it. */
-  visibility?: 'public' | 'private';
+  buckets: Bucket[];
+}
+
+/** Where a plugin can go: a public bucket of one of the space's CDNs. */
+interface Target {
+  cdn: Cdn;
+  bucket: Bucket;
 }
 
 interface Manifest {
@@ -119,17 +132,34 @@ const manifestOf = (zip: Uint8Array): Manifest | undefined => {
   }
 };
 
-const chooseCdn = async (listed: Cdn[], given: string | undefined, spaceName: string): Promise<Cdn | undefined> => {
-  // A plugin is loaded by pages from its CDN's public address: a private CDN, which keeps server code, has none.
-  const cdns = listed.filter(cdn => cdn.visibility !== 'private');
-  if (given) {
-    const named = listed.find(cdn => cdn.identifier === given);
+/**
+ * The public bucket a plugin goes in — the one `--cdn` and `--bucket` name, the only one there is, or the one picked.
+ * A private bucket keeps server code and has no public address, so it is never one.
+ */
+const chooseTarget = async (
+  cdns: Cdn[],
+  { cdn: givenCdn, bucket: givenBucket }: { cdn?: string; bucket?: string },
+  spaceName: string
+): Promise<Target | undefined> => {
+  if (givenCdn && !cdns.some(cdn => cdn.identifier === givenCdn)) {
+    fail(`${spaceName} has no CDN "${givenCdn}". Its CDNs: ${cdns.map(cdn => cdn.identifier).join(', ')}.`);
+
+    return undefined;
+  }
+
+  const candidates = cdns
+    .filter(cdn => !givenCdn || cdn.identifier === givenCdn)
+    .flatMap(cdn => cdn.buckets.map(bucket => ({ cdn, bucket })));
+  if (givenBucket) {
+    const named = candidates.find(({ bucket }) => bucket.identifier === givenBucket);
     if (!named) {
-      fail(`${spaceName} has no CDN "${given}". Its CDNs: ${listed.map(cdn => cdn.identifier).join(', ')}.`);
-    } else if (named.visibility === 'private') {
-      fail(
-        `"${given}" is a private CDN: it keeps ${spaceName}'s server code and has no public address, so no page could load a plugin from it. Use a public one${cdns.length ? `: ${cdns.map(cdn => cdn.identifier).join(', ')}` : ''}.`
-      );
+      fail(`${spaceName} has no bucket "${givenBucket}"${givenCdn ? ` in the CDN "${givenCdn}"` : ''}.`);
+
+      return undefined;
+    }
+
+    if (named.bucket.visibility === 'private') {
+      fail(`"${givenBucket}" is a private bucket: it has no public address, so no page could load a plugin from it.`);
 
       return undefined;
     }
@@ -137,16 +167,15 @@ const chooseCdn = async (listed: Cdn[], given: string | undefined, spaceName: st
     return named;
   }
 
-  if (cdns.length === 0) {
-    fail(
-      `${spaceName} has no public CDN to put a plugin on. Add one in the builder, under Resources${listed.length ? ' (its only CDNs are private, for server code)' : ''}.`
-    );
+  const targets = candidates.filter(({ bucket }) => bucket.visibility === 'public');
+  if (targets.length === 0) {
+    fail(`${spaceName} has no public bucket to put a plugin in. Add one to a CDN in the builder, under Resources.`);
 
     return undefined;
   }
 
-  if (cdns.length === 1) {
-    return cdns[0];
+  if (targets.length === 1) {
+    return targets[0];
   }
 
   if (!atTerminal()) {
@@ -154,12 +183,12 @@ const chooseCdn = async (listed: Cdn[], given: string | undefined, spaceName: st
       'upload',
       [
         {
-          flag: '--cdn',
-          choices: cdns.map(cdn => cdn.identifier),
-          question: `Which of ${spaceName}'s CDNs does the plugin go on?`
+          flag: '--bucket',
+          choices: targets.map(({ bucket }) => bucket.identifier),
+          question: `Which of ${spaceName}'s public buckets does the plugin go in? (narrow with --cdn)`
         }
       ],
-      'plitzi upload plugin stopped before uploading anything: which CDN serves the plugin is a choice'
+      'plitzi upload plugin stopped before uploading anything: which bucket serves the plugin is a choice'
     );
 
     return undefined;
@@ -169,8 +198,11 @@ const chooseCdn = async (listed: Cdn[], given: string | undefined, spaceName: st
   try {
     return await askPick(
       rl,
-      `Which of ${spaceName}'s CDNs does the plugin go on?`,
-      cdns.map(cdn => ({ label: `${cdn.name} ${chalk.dim(`${cdn.identifier} · ${cdn.domain}`)}`, value: cdn }))
+      `Which of ${spaceName}'s public buckets does the plugin go in?`,
+      targets.map(target => ({
+        label: `${target.cdn.name} — ${target.bucket.name} ${chalk.dim(`${target.bucket.identifier} · ${target.bucket.domain}`)}`,
+        value: target
+      }))
     );
   } finally {
     rl.close();
@@ -221,14 +253,16 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
     return;
   }
 
-  const cdn = await chooseCdn(listed.value.reply.data.cdns ?? [], options.cdn, space.name);
-  if (!cdn) {
+  const target = await chooseTarget(listed.value.reply.data.cdns ?? [], options, space.name);
+  if (!target) {
     return;
   }
 
+  const { cdn, bucket } = target;
+
   const label = `${manifest.root}${manifest.version ? ` ${manifest.version}` : ''}`;
-  console.log(`\nUploading ${chalk.bold(label)} to ${chalk.bold(space.name)}, on ${cdn.name}…`);
-  const query = new URLSearchParams({ filename: path.basename(zipPath) });
+  console.log(`\nUploading ${chalk.bold(label)} to ${chalk.bold(space.name)}, in ${cdn.name} — ${bucket.name}…`);
+  const query = new URLSearchParams({ filename: path.basename(zipPath), bucket: bucket.identifier });
   const uploaded = await authorizedRequest<{
     resource?: { path?: string };
     installed?: 'added' | 'updated';
