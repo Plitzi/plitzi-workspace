@@ -18,7 +18,8 @@ export type RuntimePowerProps = {
 };
 
 /**
- * Starting and stopping an environment's runtime — and saying when it stops by itself: a runtime nobody uses for a while
+ * Starting and stopping an environment's runtime — the buttons held while a request is on its way and while the runtime
+ * is starting or stopping, which its status says — and saying when it stops by itself: a runtime nobody uses for a while
  * is stopped so it spends nothing, and stays stopped until somebody starts it again, here or with a push or a publish.
  */
 const RuntimePower = ({ runtime, idleMinutes, onChange }: RuntimePowerProps) => {
@@ -26,22 +27,22 @@ const RuntimePower = ({ runtime, idleMinutes, onChange }: RuntimePowerProps) => 
     BuilderQueriesMap,
     BuilderMutationsMap
   >;
-  // Asked, and not yet reflected: the orchestrator takes it up on its next round.
-  const [asked, setAsked] = useState<SpaceRuntimeEnvironment['status'] | undefined>(undefined);
-  const busy = asked !== undefined && asked !== runtime.status;
+  // Only while the request is on its way: what follows it — starting, stopping — is the runtime's status to say.
+  const [asking, setAsking] = useState(false);
+  const passing = runtime.status === 'starting' || runtime.status === 'stopping';
   const stopped = runtime.status === 'stopped';
 
-  const handleStart = useCallback(async () => {
-    setAsked('ready');
-    await mutateNetwork('SpaceStartRuntime', { environment: runtime.environment });
-    await onChange();
-  }, [mutateNetwork, onChange, runtime.environment]);
-
-  const handleStop = useCallback(async () => {
-    setAsked('stopped');
-    await mutateNetwork('SpaceStopRuntime', { environment: runtime.environment });
-    await onChange();
-  }, [mutateNetwork, onChange, runtime.environment]);
+  const ask = useCallback(
+    async (mutation: 'SpaceStartRuntime' | 'SpaceStopRuntime') => {
+      setAsking(true);
+      await mutateNetwork(mutation, { environment: runtime.environment });
+      await onChange();
+      setAsking(false);
+    },
+    [mutateNetwork, onChange, runtime.environment]
+  );
+  const handleStart = useCallback(() => ask('SpaceStartRuntime'), [ask]);
+  const handleStop = useCallback(() => ask('SpaceStopRuntime'), [ask]);
 
   return (
     <div className="flex items-center justify-between gap-2">
@@ -52,14 +53,14 @@ const RuntimePower = ({ runtime, idleMinutes, onChange }: RuntimePowerProps) => 
           runtime.idleStopsAt !== null &&
           `Stops by itself on ${stopMomentOf(runtime.idleStopsAt)} if nothing uses it.`}
       </span>
-      {stopped && (
-        <Button size="xs" intent="primary" onClick={handleStart} disabled={busy}>
-          {busy ? 'Starting…' : 'Start'}
+      {(stopped || runtime.status === 'stopping') && (
+        <Button size="xs" intent="primary" onClick={handleStart} disabled={asking || passing}>
+          Start
         </Button>
       )}
-      {runtime.status === 'ready' && (
-        <Button size="xs" intent="secondary" onClick={handleStop} disabled={busy}>
-          {busy ? 'Stopping…' : 'Stop'}
+      {(runtime.status === 'ready' || runtime.status === 'starting') && (
+        <Button size="xs" intent="secondary" onClick={handleStop} disabled={asking || passing}>
+          Stop
         </Button>
       )}
     </div>

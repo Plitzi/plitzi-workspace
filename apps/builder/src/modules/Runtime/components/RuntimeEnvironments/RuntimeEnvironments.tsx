@@ -36,6 +36,7 @@ const STATUS: Record<
   starting: { label: 'Starting', intent: 'info' },
   waiting: { label: 'Waiting to start', intent: 'default' },
   failed: { label: 'Not running', intent: 'error' },
+  stopping: { label: 'Stopping', intent: 'info' },
   stopped: { label: 'Stopped', intent: 'default' }
 };
 

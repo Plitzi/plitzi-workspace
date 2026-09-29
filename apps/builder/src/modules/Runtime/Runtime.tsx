@@ -14,17 +14,20 @@ import type { BuilderQueriesMap } from '@plitzi/sdk-shared';
 /** How often the panel asks again while a runtime is on its way somewhere. */
 const WATCH_MS = 2000;
 
+/** What a runtime is only on its way through: while one is in either, the panel keeps asking. */
+const PASSING = new Set<string>(['starting', 'stopping']);
+
 /**
  * How long after a change the panel keeps asking even though nothing says `starting` yet: the orchestrator takes a
  * change up on its next round, so the first answer after one is usually still the old state.
  */
 const SETTLE_MS = 20_000;
 
-/** Asking again while a runtime starts — or a change may still be on its way to it — and not otherwise. */
+/** Asking again while a runtime starts or stops — or a change may still be on its way to it — and not otherwise. */
 const refreshWhile =
   (watchUntil: number) =>
   (latest?: BuilderQueriesMap['SpaceRuntime']): number =>
-    latest?.SpaceRuntime.environments.some(environment => environment.status === 'starting') || Date.now() < watchUntil
+    latest?.SpaceRuntime.environments.some(environment => PASSING.has(environment.status)) || Date.now() < watchUntil
       ? WATCH_MS
       : 0;
 

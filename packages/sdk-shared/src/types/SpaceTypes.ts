@@ -69,7 +69,7 @@ export type SpaceRuntimeEnvironment = {
   revision: number;
   /** The packed code it runs, by what its bytes are. */
   digest: string;
-  status: 'waiting' | 'starting' | 'ready' | 'failed' | 'stopped';
+  status: 'waiting' | 'starting' | 'ready' | 'failed' | 'stopping' | 'stopped';
   /** Why it is not running, for whoever manages the space. */
   error: string | null;
   /** Why it is kept stopped: `idle` (unused for too long) or `manual`. */
