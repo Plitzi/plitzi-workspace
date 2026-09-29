@@ -1,5 +1,24 @@
 # @plitzi/sdk-navigation
 
+## 0.37.5
+
+### Patch Changes
+
+- a32a5a2: ## `@plitzi/sdk-shared`'s GraphQL documents are text
+
+  - **Every document is a plain string marked `/* GraphQL */`**, the builder's as the SDK's already were, and the client
+    parses what it sends — the builder with Apollo's `gql`. A server importing the package no longer loads a GraphQL
+    parser or parses 115 documents at boot; `graphql` and `graphql-tag` are no longer dependencies.
+  - `BuilderQueries` and `BuilderMutations` are typed `Record<keyof …Map, string>`, and every operation is named as its
+    file is: `SpacePublish`, `SpaceDeploy`, `SpaceFixIssues`, `SpaceUpdate`, `SpaceUpdateSchema`, `SpaceUpdateElement(s)`,
+    `SpaceRemoveElement`, `StyleUpdate` and `SegmentPublish` gain their `Mutation` suffix, and the space's subscription,
+    anonymous until now, is `SpaceEventSubscription`.
+  - **Breaking:** `BuilderQueries`, `BuilderMutations` and `SpaceEventSubscription` are strings, not `DocumentNode`s —
+    pass them through `gql` for Apollo.
+
+- Updated dependencies [a32a5a2]
+  - @plitzi/sdk-shared@0.37.5
+
 ## 0.37.4
 
 ### Patch Changes
