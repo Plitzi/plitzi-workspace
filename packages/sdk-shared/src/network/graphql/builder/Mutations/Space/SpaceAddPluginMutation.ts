@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { PluginRaw } from '../../../../../types';
 
 export type TSpaceAddPluginMutation = { plugins: PluginRaw[] };
 
-const SpaceAddPluginMutation = gql`
+const SpaceAddPluginMutation = /* GraphQL */ `
   mutation SpaceAddPluginMutation($environment: String!, $pluginType: String!, $resource: String!, $override: Boolean) {
     SpaceAddPlugin(environment: $environment, pluginType: $pluginType, resource: $resource, override: $override) {
       plugins {

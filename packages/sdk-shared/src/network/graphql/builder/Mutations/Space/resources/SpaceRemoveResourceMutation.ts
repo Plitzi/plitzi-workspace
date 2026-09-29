@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { Resource } from '../../../../../../types';
 
 export type TSpaceRemoveResourceMutation = Resource;
 
-const SpaceRemoveResourceMutation = gql`
+const SpaceRemoveResourceMutation = /* GraphQL */ `
   mutation SpaceRemoveResourceMutation($identifier: String!, $cdnIdentifier: String!) {
     SpaceRemoveResource(identifier: $identifier, cdnIdentifier: $cdnIdentifier) {
       id

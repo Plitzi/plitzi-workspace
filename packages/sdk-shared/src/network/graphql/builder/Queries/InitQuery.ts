@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 import type { PluginRaw, SchemaRaw, SegmentRaw, Style } from '../../../../types';
 
 export type TInitQuery = {
@@ -12,7 +10,7 @@ export type TInitQuery = {
   };
 };
 
-const InitQuery = gql`
+const InitQuery = /* GraphQL */ `
   query InitQuery($environment: String!, $revision: Int) {
     Space(environment: $environment, revision: $revision) {
       definition {

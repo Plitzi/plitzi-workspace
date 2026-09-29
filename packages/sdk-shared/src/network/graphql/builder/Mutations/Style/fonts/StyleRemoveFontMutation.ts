@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const StyleRemoveFontMutation = gql`
+const StyleRemoveFontMutation = /* GraphQL */ `
   mutation StyleRemoveFontMutation($environment: String!, $family: String!) {
     StyleRemoveFont(environment: $environment, family: $family) {
       family

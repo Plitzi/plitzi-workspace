@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceStartRuntimeMutation = gql`
+const SpaceStartRuntimeMutation = /* GraphQL */ `
   mutation SpaceStartRuntimeMutation($environment: String!) {
     SpaceStartRuntime(environment: $environment)
   }

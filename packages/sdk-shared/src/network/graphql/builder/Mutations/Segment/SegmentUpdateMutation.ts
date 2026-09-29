@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { SegmentRaw } from '../../../../../types';
 
 export type TSegmentUpdateMutation = SegmentRaw;
 
-const SegmentUpdateMutation = gql`
+const SegmentUpdateMutation = /* GraphQL */ `
   mutation SegmentUpdateMutation($id: String!, $segment: Json!) {
     SegmentUpdate(id: $id, segment: $segment) {
       id

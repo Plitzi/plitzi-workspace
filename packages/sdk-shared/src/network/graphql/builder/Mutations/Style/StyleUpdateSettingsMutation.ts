@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const StyleUpdateSettingsMutation = gql`
+const StyleUpdateSettingsMutation = /* GraphQL */ `
   mutation StyleUpdateSettingsMutation($environment: String!, $path: String!, $value: String!) {
     StyleUpdateSettings(environment: $environment, path: $path, value: $value) {
       id

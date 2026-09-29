@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceConnector } from '../../../../../../types';
 
 /**
@@ -8,7 +6,7 @@ import type { SpaceConnector } from '../../../../../../types';
  */
 export type TSpaceRemoveConnectorMutation = Pick<SpaceConnector, 'id' | 'identifier'>;
 
-const SpaceRemoveConnectorMutation = gql`
+const SpaceRemoveConnectorMutation = /* GraphQL */ `
   mutation SpaceRemoveConnectorMutation($identifier: String!) {
     SpaceRemoveConnector(identifier: $identifier) {
       id

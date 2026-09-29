@@ -1,7 +1,5 @@
-import { gql } from 'graphql-tag';
-
-const SpaceRemoveElementMutation = gql`
-  mutation SpaceRemoveElement($environment: String!, $elementId: String!) {
+const SpaceRemoveElementMutation = /* GraphQL */ `
+  mutation SpaceRemoveElementMutation($environment: String!, $elementId: String!) {
     SpaceRemoveElement(environment: $environment, elementId: $elementId) {
       id
       definition {

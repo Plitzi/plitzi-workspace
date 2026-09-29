@@ -1,7 +1,5 @@
-import { gql } from 'graphql-tag';
-
-const SpaceUpdateSchemaMutation = gql`
-  mutation SpaceUpdateSchema($environment: String!, $schema: Json!) {
+const SpaceUpdateSchemaMutation = /* GraphQL */ `
+  mutation SpaceUpdateSchemaMutation($environment: String!, $schema: Json!) {
     SpaceUpdateSchema(environment: $environment, schema: $schema) {
       schema {
         settings

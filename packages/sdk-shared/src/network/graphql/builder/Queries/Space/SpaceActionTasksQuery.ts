@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { ActionTaskDescriptor } from '../../../../../types';
 
 export type TSpaceActionTasksQuery = {
   SpaceActionTasks: ActionTaskDescriptor[];
 };
 
-const SpaceActionTasksQuery = gql`
+const SpaceActionTasksQuery = /* GraphQL */ `
   query SpaceActionTasksQuery {
     SpaceActionTasks {
       name

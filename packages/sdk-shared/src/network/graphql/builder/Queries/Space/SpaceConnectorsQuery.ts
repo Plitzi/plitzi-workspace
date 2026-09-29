@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceConnector, PageInfo } from '../../../../../types';
 
 export type TSpaceConnectorsQuery = {
   SpaceConnectors: { edges: SpaceConnector[]; pageInfo: PageInfo };
 };
 
-const SpaceConnectorsQuery = gql`
+const SpaceConnectorsQuery = /* GraphQL */ `
   query SpaceConnectorsQuery($filter: ConnectorInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceConnectors(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {

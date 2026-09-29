@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SegmentStyleRemoveSelectorMutation = gql`
+const SegmentStyleRemoveSelectorMutation = /* GraphQL */ `
   mutation SegmentStyleRemoveSelectorMutation($environment: String!, $selector: String!, $contextId: String!) {
     SegmentStyleRemoveSelector(environment: $environment, selector: $selector, contextId: $contextId) {
       displayMode

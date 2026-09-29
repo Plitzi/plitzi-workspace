@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceUpdateCredentialMutation = gql`
+const SpaceUpdateCredentialMutation = /* GraphQL */ `
   mutation SpaceUpdateCredentialMutation($identifier: String!, $name: String!, $provider: String!, $data: Json!) {
     SpaceUpdateCredential(identifier: $identifier, name: $name, provider: $provider, data: $data) {
       name

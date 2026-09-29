@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { PageFolder } from '../../../../../../types';
 
 export type TSpaceAddPageFolderMutation = PageFolder;
 
-const SpaceAddPageFolderMutation = gql`
+const SpaceAddPageFolderMutation = /* GraphQL */ `
   mutation SpaceAddPageFolderMutation($environment: String!, $name: String!, $slug: String!, $parentId: String) {
     SpaceAddPageFolder(environment: $environment, name: $name, slug: $slug, parentId: $parentId) {
       id

@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { ActionEvent, PageInfo } from '../../../../../types';
 
 export type TSpaceActionEventsQuery = {
   SpaceActionEvents: { edges: ActionEvent[]; pageInfo: PageInfo };
 };
 
-const SpaceActionEventsQuery = gql`
+const SpaceActionEventsQuery = /* GraphQL */ `
   query SpaceActionEventsQuery($actionId: String, $page: Int, $pageSize: Int) {
     SpaceActionEvents(actionId: $actionId, page: $page, pageSize: $pageSize) {
       edges {

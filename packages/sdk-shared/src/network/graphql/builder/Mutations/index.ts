@@ -229,7 +229,7 @@ export type BuilderMutationsMap = {
   SegmentPublish: TSegmentPublishMutation;
 };
 
-const BuilderMutations = {
+const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceUpdate: SpaceUpdateMutation,
   SpaceUpdateSchema: SpaceUpdateSchemaMutation,
   SpaceAddPage: SpaceAddPageMutation,

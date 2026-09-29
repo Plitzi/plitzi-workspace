@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceAction, PageInfo } from '../../../../../types';
 
 export type TSpaceActionsQuery = {
   SpaceActions: { edges: SpaceAction[]; pageInfo: PageInfo };
 };
 
-const SpaceActionsQuery = gql`
+const SpaceActionsQuery = /* GraphQL */ `
   query SpaceActionsQuery($filter: ActionInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceActions(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {

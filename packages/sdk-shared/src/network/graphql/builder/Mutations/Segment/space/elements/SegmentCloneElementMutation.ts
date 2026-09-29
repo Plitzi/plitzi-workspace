@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SegmentCloneElementMutation = gql`
+const SegmentCloneElementMutation = /* GraphQL */ `
   mutation SegmentCloneElementMutation(
     $environment: String!
     $element: Json!

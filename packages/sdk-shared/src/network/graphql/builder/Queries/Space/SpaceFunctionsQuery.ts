@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { FunctionsDraft } from '../../../../../types';
 
 export type TSpaceFunctionsQuery = {
   SpaceFunctions: FunctionsDraft;
 };
 
-const SpaceFunctionsQuery = gql`
+const SpaceFunctionsQuery = /* GraphQL */ `
   query SpaceFunctionsQuery {
     SpaceFunctions {
       files

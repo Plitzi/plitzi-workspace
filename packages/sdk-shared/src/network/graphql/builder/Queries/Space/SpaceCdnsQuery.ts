@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { Cdn, PageInfo } from '../../../../../types';
 
 export type TSpaceCdnsQuery = {
   SpaceCdns: { edges: Cdn[]; pageInfo: PageInfo };
 };
 
-const SpaceCdnsQuery = gql`
+const SpaceCdnsQuery = /* GraphQL */ `
   query SpaceCdnsQuery($filter: CdnInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceCdns(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {

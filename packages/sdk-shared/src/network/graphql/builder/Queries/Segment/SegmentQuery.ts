@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { SegmentRaw } from '../../../../../types';
 
 export type TSegmentQuery = {
   Segment: SegmentRaw;
 };
 
-const SegmentQuery = gql`
+const SegmentQuery = /* GraphQL */ `
   query SegmentQuery($id: String, $identifier: String, $environment: String!) {
     Segment(id: $id, identifier: $identifier, environment: $environment) {
       id

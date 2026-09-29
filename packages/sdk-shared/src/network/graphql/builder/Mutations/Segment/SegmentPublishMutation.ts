@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 import type { Environment } from '../../../../../types';
 
 export type TSegmentPublishMutation = {
@@ -8,8 +6,8 @@ export type TSegmentPublishMutation = {
   description: string;
 };
 
-const SegmentPublishMutation = gql`
-  mutation SegmentPublish($environment: String!, $description: String!, $contextId: String!) {
+const SegmentPublishMutation = /* GraphQL */ `
+  mutation SegmentPublishMutation($environment: String!, $description: String!, $contextId: String!) {
     SegmentPublish(environment: $environment, description: $description, contextId: $contextId) {
       environment
       description

@@ -1,7 +1,5 @@
-import { gql } from 'graphql-tag';
-
-const SpaceUpdateElementMutation = gql`
-  mutation SpaceUpdateElement($environment: String!, $element: Json!) {
+const SpaceUpdateElementMutation = /* GraphQL */ `
+  mutation SpaceUpdateElementMutation($environment: String!, $element: Json!) {
     SpaceUpdateElement(environment: $environment, element: $element) {
       id
       definition {

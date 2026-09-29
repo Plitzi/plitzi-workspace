@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 /** One allowance and what has been spent of it. Both planes answer in this shape. */
 export type TQuotaPlane = {
   views: number;
@@ -29,7 +27,7 @@ export type TSpaceQuota = {
 
 export type TSpaceQuotaQuery = { SpaceQuota: TSpaceQuota | null };
 
-const SpaceQuotaQuery = gql`
+const SpaceQuotaQuery = /* GraphQL */ `
   query SpaceQuotaQuery {
     SpaceQuota {
       planName

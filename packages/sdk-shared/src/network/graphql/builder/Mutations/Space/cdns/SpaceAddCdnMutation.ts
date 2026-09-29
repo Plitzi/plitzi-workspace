@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { Cdn } from '../../../../../../types';
 
 export type TSpaceAddCdnMutation = Cdn;
 
-const SpaceAddCdnMutation = gql`
+const SpaceAddCdnMutation = /* GraphQL */ `
   mutation SpaceAddCdnMutation(
     $name: String!
     $domain: String!

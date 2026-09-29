@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 export type TSpaceLatestRevisionQuery = {
   SpaceLatestRevision: { snapshot: { revision: number; publishedAt: Date; description: string } | null } | null;
 };
 
-const SpaceLatestRevisionQuery = gql`
+const SpaceLatestRevisionQuery = /* GraphQL */ `
   query SpaceLatestRevisionQuery($environment: String!) {
     SpaceLatestRevision(environment: $environment) {
       snapshot {

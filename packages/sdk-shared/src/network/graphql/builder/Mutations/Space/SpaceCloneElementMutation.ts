@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceCloneElementMutation = gql`
+const SpaceCloneElementMutation = /* GraphQL */ `
   mutation SpaceCloneElementMutation(
     $environment: String!
     $element: Json!

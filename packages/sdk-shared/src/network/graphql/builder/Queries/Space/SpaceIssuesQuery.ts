@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 /** One thing the saved space would render wrong; `elementId` is the element to take someone to, when it has one. */
 export type TSpaceIssue = { code: string; message: string; elementId: string | null; fixable: boolean };
 
@@ -8,7 +6,7 @@ export type TSpaceIssues = { errors: TSpaceIssue[]; warnings: TSpaceIssue[] };
 
 export type TSpaceIssuesQuery = { SpaceIssues: TSpaceIssues | null };
 
-const SpaceIssuesQuery = gql`
+const SpaceIssuesQuery = /* GraphQL */ `
   query SpaceIssuesQuery($environment: String!) {
     SpaceIssues(environment: $environment) {
       errors {

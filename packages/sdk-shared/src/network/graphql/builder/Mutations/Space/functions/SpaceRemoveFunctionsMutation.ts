@@ -1,8 +1,6 @@
-import { gql } from 'graphql-tag';
-
 export type TSpaceRemoveFunctionsMutation = boolean;
 
-const SpaceRemoveFunctionsMutation = gql`
+const SpaceRemoveFunctionsMutation = /* GraphQL */ `
   mutation SpaceRemoveFunctionsMutation {
     SpaceRemoveFunctions
   }

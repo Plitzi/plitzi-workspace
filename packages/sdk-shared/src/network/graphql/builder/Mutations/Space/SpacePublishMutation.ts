@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 export type TSpacePublishMutation = {
   revision: number;
   environment: string;
@@ -7,8 +5,8 @@ export type TSpacePublishMutation = {
   publishedAt: number;
 };
 
-const SpacePublishMutation = gql`
-  mutation SpacePublish($environment: String!, $description: String!) {
+const SpacePublishMutation = /* GraphQL */ `
+  mutation SpacePublishMutation($environment: String!, $description: String!) {
     SpacePublish(environment: $environment, description: $description) {
       environment
       description

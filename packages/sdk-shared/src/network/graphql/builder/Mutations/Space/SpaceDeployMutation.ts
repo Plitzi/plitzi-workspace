@@ -1,11 +1,9 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceDeployment } from '../../../../../types';
 
 export type TSpaceDeployMutation = SpaceDeployment;
 
-const SpaceDeployMutation = gql`
-  mutation SpaceDeploy($environment: String!, $domain: String!, $revision: Int, $credentialIdentifier: String) {
+const SpaceDeployMutation = /* GraphQL */ `
+  mutation SpaceDeployMutation($environment: String!, $domain: String!, $revision: Int, $credentialIdentifier: String) {
     SpaceDeploy(
       environment: $environment
       domain: $domain

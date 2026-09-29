@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceAction } from '../../../../../../types';
 
 export type TSpaceUpdateActionMutation = SpaceAction;
 
-const SpaceUpdateActionMutation = gql`
+const SpaceUpdateActionMutation = /* GraphQL */ `
   mutation SpaceUpdateActionMutation($identifier: String!, $name: String!, $document: Json!) {
     SpaceUpdateAction(identifier: $identifier, name: $name, document: $document) {
       id

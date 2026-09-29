@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceVisitor } from '../../../../../types';
 
 export type TSpaceVisitorsQuery = { SpaceVisitors: SpaceVisitor[] };
 
-const SpaceVisitorsQuery = gql`
+const SpaceVisitorsQuery = /* GraphQL */ `
   query SpaceVisitorsQuery {
     SpaceVisitors {
       id

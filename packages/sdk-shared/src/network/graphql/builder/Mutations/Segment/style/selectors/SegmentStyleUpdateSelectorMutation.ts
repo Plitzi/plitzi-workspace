@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SegmentStyleUpdateSelectorMutation = gql`
+const SegmentStyleUpdateSelectorMutation = /* GraphQL */ `
   mutation SegmentStyleUpdateSelectorMutation(
     $environment: String!
     $displayMode: String!

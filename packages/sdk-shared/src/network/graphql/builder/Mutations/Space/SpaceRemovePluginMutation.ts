@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceRemovePluginMutation = gql`
+const SpaceRemovePluginMutation = /* GraphQL */ `
   mutation SpaceRemovePluginMutation($environment: String!, $pluginType: String!) {
     SpaceRemovePlugin(environment: $environment, pluginType: $pluginType) {
       plugins {

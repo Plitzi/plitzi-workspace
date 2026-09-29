@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 import type { FunctionsManifest, FunctionsProblem, FunctionsRefusal } from '../../../../../../types';
 
 /** As GraphQL carries it: one shape with every field, `ok` saying which of them mean something. */
@@ -11,7 +9,7 @@ export type TSpaceSaveFunctionsMutation = {
   refusal: FunctionsRefusal | null;
 };
 
-const SpaceSaveFunctionsMutation = gql`
+const SpaceSaveFunctionsMutation = /* GraphQL */ `
   mutation SpaceSaveFunctionsMutation($files: Json!, $base: String) {
     SpaceSaveFunctions(files: $files, base: $base) {
       ok

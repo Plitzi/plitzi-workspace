@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceRemoveRuntimeMutation = gql`
+const SpaceRemoveRuntimeMutation = /* GraphQL */ `
   mutation SpaceRemoveRuntimeMutation {
     SpaceRemoveRuntime
   }

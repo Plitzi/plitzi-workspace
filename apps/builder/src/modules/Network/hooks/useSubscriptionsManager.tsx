@@ -1,3 +1,4 @@
+import { gql } from '@apollo/client/core';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
@@ -71,7 +72,7 @@ const useSubscriptionsManager = ({ onMessage, client, environment, disabled }: U
     }
 
     stream.current = client
-      .subscribe<TSpaceEventSubscription>({ query: SpaceEventSubscription, variables: { environment } })
+      .subscribe<TSpaceEventSubscription>({ query: gql(SpaceEventSubscription), variables: { environment } })
       .subscribe({
         next: dispatch,
         error: err => onMessage?.(`Subscription Error: ${err}`, 'error')

@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceChange } from '../../../../../history';
 
 /**
@@ -23,7 +21,7 @@ export type TSpaceChanges = {
 
 export type TSpaceChangesQuery = { SpaceChanges: TSpaceChanges };
 
-const SpaceChangesQuery = gql`
+const SpaceChangesQuery = /* GraphQL */ `
   query SpaceChangesQuery(
     $environment: String!
     $before: Int

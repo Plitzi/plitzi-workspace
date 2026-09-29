@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceConnector } from '../../../../../../types';
 
 /**
@@ -8,7 +6,7 @@ import type { SpaceConnector } from '../../../../../../types';
  */
 export type TSpaceUpdateConnectorMutation = SpaceConnector;
 
-const SpaceUpdateConnectorMutation = gql`
+const SpaceUpdateConnectorMutation = /* GraphQL */ `
   mutation SpaceUpdateConnectorMutation($identifier: String!, $name: String!, $manifest: Json!) {
     SpaceUpdateConnector(identifier: $identifier, name: $name, manifest: $manifest) {
       id

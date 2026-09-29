@@ -1,4 +1,4 @@
-import { CombinedGraphQLErrors } from '@apollo/client/core';
+import { CombinedGraphQLErrors, gql } from '@apollo/client/core';
 import { useApolloClient } from '@apollo/client/react';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
@@ -25,7 +25,6 @@ import type {
   SpaceEventMap,
   NetworkInternalContextValue
 } from '@plitzi/sdk-shared';
-import type { DocumentNode } from 'graphql';
 import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {
@@ -61,8 +60,9 @@ const NetworkContextProvider = ({
       fetchPolicy: FetchPolicy = 'network-only',
       silentError = false
     ): Promise<{ success: boolean; result?: BuilderQueriesMap[T]; error?: string | Error }> => {
-      const document = BuilderQueries[queryKey];
-      if (!(document as DocumentNode | undefined)) {
+      // Typed as always there, and not for a key that reaches here from outside the compiler — a plugin, the console.
+      const document = BuilderQueries[queryKey] as string | undefined;
+      if (!document) {
         addToast('Query not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
 
         throw new Error(`Query ${queryKey} not found`);
@@ -71,7 +71,7 @@ const NetworkContextProvider = ({
       let result: ApolloClient.QueryResult<BuilderQueriesMap[T]>;
       try {
         result = await client.query<BuilderQueriesMap[T]>({
-          query: document,
+          query: gql(document),
           variables: { environment, ...variables },
           fetchPolicy
         });
@@ -115,7 +115,9 @@ const NetworkContextProvider = ({
       includeEnvironment = true,
       uploadOptions = {}
     ): Promise<{ success: boolean; result?: BuilderMutationsMap[T]; error?: string | Error }> => {
-      if (!(BuilderMutations[mutationKey] as DocumentNode | undefined)) {
+      // Typed as always there, and not for a key that reaches here from outside the compiler — a plugin, the console.
+      const document = BuilderMutations[mutationKey] as string | undefined;
+      if (!document) {
         addToast('Mutation not found', { appeareance: 'error', autoDismiss: true, placement: 'top-right' });
 
         return { success: false, result: undefined, error: 'Mutation Not Found' };
@@ -124,7 +126,7 @@ const NetworkContextProvider = ({
       let result: ApolloClient.MutateResult<BuilderMutationsMap[T]>;
       try {
         result = await client.mutate<BuilderMutationsMap[T]>({
-          mutation: BuilderMutations[mutationKey],
+          mutation: gql(document),
           variables: includeEnvironment ? { environment, ...variables } : variables,
           context: {
             fetchOptions: {

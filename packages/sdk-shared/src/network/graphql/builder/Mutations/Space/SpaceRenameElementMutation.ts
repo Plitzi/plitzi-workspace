@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 /** The ids, under their new names, of every element the rename touched — the one renamed plus everything repointed
  *  onto it. */
 export type TSpaceRenameElementMutation = string[];
 
-const SpaceRenameElementMutation = gql`
+const SpaceRenameElementMutation = /* GraphQL */ `
   mutation SpaceRenameElementMutation($environment: String!, $elementId: String!, $id: String!) {
     SpaceRenameElement(environment: $environment, elementId: $elementId, id: $id)
   }

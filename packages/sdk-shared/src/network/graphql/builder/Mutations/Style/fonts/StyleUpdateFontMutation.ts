@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const StyleUpdateFontMutation = gql`
+const StyleUpdateFontMutation = /* GraphQL */ `
   mutation StyleUpdateFontMutation($environment: String!, $family: String!, $font: Json!) {
     StyleUpdateFont(environment: $environment, family: $family, font: $font) {
       family

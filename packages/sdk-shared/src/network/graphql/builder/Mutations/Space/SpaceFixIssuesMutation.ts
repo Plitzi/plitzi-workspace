@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 import type { SchemaRaw } from '../../../../../types';
 
 /** One change the fix made, keyed by the issue it settles. */
@@ -8,8 +6,8 @@ export type TSpaceFix = { code: string; elementId: string | null; message: strin
 /** What was changed, and the schema as it is now stored — `flat` as a list, the shape the live channel carries. */
 export type TSpaceFixIssuesMutation = { applied: TSpaceFix[]; schema: SchemaRaw };
 
-const SpaceFixIssuesMutation = gql`
-  mutation SpaceFixIssues($environment: String!) {
+const SpaceFixIssuesMutation = /* GraphQL */ `
+  mutation SpaceFixIssuesMutation($environment: String!) {
     SpaceFixIssues(environment: $environment) {
       applied {
         code

@@ -1,5 +1,3 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceEventName } from '../../../spaceEvents';
 
 /**
@@ -11,8 +9,8 @@ import type { SpaceEventName } from '../../../spaceEvents';
  * once. What gives it a shape again is `SpaceEventMap` in `network/spaceEvents` — the same module the server reads
  * the event names from, so publisher and consumer cannot drift.
  */
-const SpaceEventSubscription = gql`
-  subscription ($environment: String!) {
+const SpaceEventSubscription = /* GraphQL */ `
+  subscription SpaceEventSubscription($environment: String!) {
     SpaceEvent(environment: $environment) {
       event
       data

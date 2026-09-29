@@ -65,7 +65,7 @@ export type BuilderQueriesMap = {
   Segments: TSegmentsQuery;
 };
 
-const BuilderQueries = {
+const BuilderQueries: Record<keyof BuilderQueriesMap, string> = {
   Init: InitQuery,
   SpaceLatestRevision: SpaceLatestRevisionQuery,
   SpaceQuota: SpaceQuotaQuery,

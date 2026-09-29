@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceRemoveVisitorMutation = gql`
+const SpaceRemoveVisitorMutation = /* GraphQL */ `
   mutation SpaceRemoveVisitorMutation($id: Int!) {
     SpaceRemoveVisitor(id: $id) {
       id

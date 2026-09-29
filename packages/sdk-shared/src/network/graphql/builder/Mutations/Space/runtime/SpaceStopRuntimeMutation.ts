@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceStopRuntimeMutation = gql`
+const SpaceStopRuntimeMutation = /* GraphQL */ `
   mutation SpaceStopRuntimeMutation($environment: String!) {
     SpaceStopRuntime(environment: $environment)
   }

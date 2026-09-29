@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceCredential, PageInfo } from '../../../../../types';
 
 export type TSpaceCredentialsQuery = {
   SpaceCredentials: { edges: SpaceCredential[]; pageInfo: PageInfo };
 };
 
-const SpaceCredentialsQuery = gql`
+const SpaceCredentialsQuery = /* GraphQL */ `
   query SpaceCredentialsQuery($filter: CredentialInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceCredentials(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {

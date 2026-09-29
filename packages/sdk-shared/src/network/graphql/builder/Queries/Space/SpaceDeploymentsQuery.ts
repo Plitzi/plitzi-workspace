@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { PageInfo, SpaceDeployment } from '../../../../../types';
 
 export type TSpaceDeploymentsQuery = {
   SpaceDeployments: { edges: SpaceDeployment[]; pageInfo: PageInfo };
 };
 
-const SpaceDeploymentsQuery = gql`
+const SpaceDeploymentsQuery = /* GraphQL */ `
   query SpaceDeploymentsQuery($filter: DeploymentInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceDeployments(filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       edges {

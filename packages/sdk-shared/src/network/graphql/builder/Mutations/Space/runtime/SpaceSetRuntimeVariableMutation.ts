@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceSetRuntimeVariableMutation = gql`
+const SpaceSetRuntimeVariableMutation = /* GraphQL */ `
   mutation SpaceSetRuntimeVariableMutation($name: String!, $value: String!) {
     SpaceSetRuntimeVariable(name: $name, value: $value)
   }

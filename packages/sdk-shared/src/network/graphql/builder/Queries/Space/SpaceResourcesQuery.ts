@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { Resource } from '../../../../../types';
 
 export type TSpaceResourcesQuery = {
   SpaceResources: { resources: Resource[] };
 };
 
-const SpaceResourcesQuery = gql`
+const SpaceResourcesQuery = /* GraphQL */ `
   query SpaceResourcesQuery($cdnIdentifier: String!, $filter: ResourceInput, $page: Int, $pageSize: Int, $offset: Int) {
     SpaceResources(cdnIdentifier: $cdnIdentifier, filter: $filter, page: $page, pageSize: $pageSize, offset: $offset) {
       resources {

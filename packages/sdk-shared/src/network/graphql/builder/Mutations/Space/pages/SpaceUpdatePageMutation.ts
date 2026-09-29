@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { Element } from '../../../../../../types';
 
 export type TSpaceUpdatePageMutation = Element;
 
-const SpaceUpdatePageMutation = gql`
+const SpaceUpdatePageMutation = /* GraphQL */ `
   mutation SpaceUpdatePageMutation($environment: String!, $page: Json!) {
     SpaceUpdatePage(environment: $environment, page: $page) {
       id

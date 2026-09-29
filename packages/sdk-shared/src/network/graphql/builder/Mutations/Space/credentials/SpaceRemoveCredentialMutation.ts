@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SpaceRemoveCredentialMutation = gql`
+const SpaceRemoveCredentialMutation = /* GraphQL */ `
   mutation SpaceRemoveCredentialMutation($identifier: String!) {
     SpaceRemoveCredential(identifier: $identifier) {
       identifier

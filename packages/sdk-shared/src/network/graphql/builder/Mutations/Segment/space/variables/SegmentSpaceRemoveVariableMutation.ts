@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-const SegmentSpaceRemoveVariableMutation = gql`
+const SegmentSpaceRemoveVariableMutation = /* GraphQL */ `
   mutation SegmentSpaceRemoveVariableMutation($environment: String!, $contextId: String!, $name: String!) {
     SegmentSpaceRemoveVariable(environment: $environment, contextId: $contextId, name: $name) {
       name

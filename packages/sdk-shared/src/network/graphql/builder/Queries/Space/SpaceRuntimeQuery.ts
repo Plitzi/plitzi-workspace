@@ -1,10 +1,8 @@
-import { gql } from 'graphql-tag';
-
 import type { SpaceRuntime } from '../../../../../types';
 
 export type TSpaceRuntimeQuery = { SpaceRuntime: SpaceRuntime };
 
-const SpaceRuntimeQuery = gql`
+const SpaceRuntimeQuery = /* GraphQL */ `
   query SpaceRuntimeQuery {
     SpaceRuntime {
       environments {

@@ -1,12 +1,10 @@
-import { gql } from 'graphql-tag';
-
 import type { ActionCheckReport } from '../../../../../types';
 
 export type TSpaceCheckActionQuery = {
   SpaceCheckAction: ActionCheckReport;
 };
 
-const SpaceCheckActionQuery = gql`
+const SpaceCheckActionQuery = /* GraphQL */ `
   query SpaceCheckActionQuery($identifier: String!) {
     SpaceCheckAction(identifier: $identifier) {
       valid
