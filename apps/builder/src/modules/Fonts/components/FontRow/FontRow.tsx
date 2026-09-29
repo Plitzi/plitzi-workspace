@@ -26,7 +26,7 @@ const SOURCE_LABEL: Record<SpaceFont['source'], string> = {
 
 const FontRow = ({ font, uses, canMirror = false, mirroring = false, onRemove, onMirror }: FontRowProps) => {
   return (
-    <Flex direction="column" gap={1} className="border-grayviolet-200 rounded border p-2">
+    <Flex direction="column" gap={1} className="rounded border border-gray-200 p-2 dark:border-zinc-700">
       <Flex justify="between" alignItems="center" gap={2}>
         {/* Drawn in the family it names — the point of loading the space's fonts into the editor document. */}
         <span className="truncate text-sm" style={{ fontFamily: fontFamilyStack(font) }}>
@@ -57,7 +57,7 @@ const FontRow = ({ font, uses, canMirror = false, mirroring = false, onRemove, o
           )}
         </Flex>
       </Flex>
-      <Flex gap={2} className="text-grayviolet-500 text-[10px]">
+      <Flex gap={2} className="text-[10px] text-gray-500 dark:text-zinc-400">
         <span>{font.weights.join(' · ')}</span>
         {font.styles.includes('italic') && <span>italic</span>}
         {uses > 0 && <span className="ml-auto">{uses} in use</span>}

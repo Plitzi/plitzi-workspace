@@ -58,7 +58,7 @@ const AddRemoteFont = ({ onAdd }: AddRemoteFontProps) => {
     <Flex direction="column" gap={2}>
       <Flex direction="column" gap={1}>
         <Input size="xs" label="Family" placeholder="Founders Grotesk" value={family} onChange={setFamily} />
-        <span className="text-grayviolet-500 text-[10px]">
+        <span className="text-[10px] text-gray-500 dark:text-zinc-400">
           Exactly as the stylesheet names it — this is what font-family will say.
         </span>
       </Flex>
@@ -70,12 +70,14 @@ const AddRemoteFont = ({ onAdd }: AddRemoteFontProps) => {
           value={stylesheet}
           onChange={setStylesheet}
         />
-        <span className="text-grayviolet-500 text-[10px]">An https URL that declares the @font-face rules.</span>
+        <span className="text-[10px] text-gray-500 dark:text-zinc-400">
+          An https URL that declares the @font-face rules.
+        </span>
       </Flex>
       <Input size="xs" label="Weights" placeholder="400, 700" value={weights} onChange={setWeights} />
       <Flex direction="column" gap={1}>
         <Input size="xs" label="Fallback" placeholder="system-ui, sans-serif" value={fallback} onChange={setFallback} />
-        <span className="text-grayviolet-500 text-[10px]">What renders until the face arrives.</span>
+        <span className="text-[10px] text-gray-500 dark:text-zinc-400">What renders until the face arrives.</span>
       </Flex>
       <Flex gap={2} alignItems="center">
         <Button size="xs" intent={italic ? 'primary' : 'secondary'} onClick={() => setItalic(state => !state)}>
@@ -86,11 +88,11 @@ const AddRemoteFont = ({ onAdd }: AddRemoteFontProps) => {
         </Button>
       </Flex>
       {error && (
-        <Alert intent="error" className="text-xs">
+        <Alert intent="error" size="xs" solid={false}>
           {error}
         </Alert>
       )}
-      <span className="text-grayviolet-500 text-[10px]">
+      <span className="text-[10px] text-gray-500 dark:text-zinc-400">
         Plitzi links this stylesheet as it is: it is fetched by the visitor from that origin, and never proxied or
         cached here.
       </span>

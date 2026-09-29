@@ -39,7 +39,7 @@ const AddSystemFont = ({ onAdd }: AddSystemFontProps) => {
       <Input size="xs" label="Family" placeholder="Helvetica Neue" value={family} onChange={setFamily} />
       <Flex direction="column" gap={1}>
         <Input size="xs" label="Fallback" placeholder="system-ui, sans-serif" value={fallback} onChange={setFallback} />
-        <span className="text-grayviolet-500 text-[10px]">
+        <span className="text-[10px] text-gray-500 dark:text-zinc-400">
           What everyone without the font installed will read, which on the web is most people.
         </span>
       </Flex>
@@ -47,7 +47,7 @@ const AddSystemFont = ({ onAdd }: AddSystemFontProps) => {
         Add stack
       </Button>
       {error && (
-        <Alert intent="error" className="text-xs">
+        <Alert intent="error" size="xs" solid={false}>
           {error}
         </Alert>
       )}

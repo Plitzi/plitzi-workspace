@@ -71,7 +71,7 @@ const AddGoogleFont = ({ declared, onAdd }: AddGoogleFontProps) => {
 
   if (unavailable) {
     return (
-      <Alert intent="warning" className="text-xs">
+      <Alert intent="warning" size="xs" solid={false} className="self-start">
         This server has no Google Fonts API key, so it cannot list what families exist. Add one with
         <b> GOOGLE_FONTS_API_KEY</b>, or declare a family by hand under <b>External</b>.
       </Alert>
@@ -84,18 +84,23 @@ const AddGoogleFont = ({ declared, onAdd }: AddGoogleFontProps) => {
         <Input.Icon icon="fa-solid fa-magnifying-glass" />
       </Input>
       {error && (
-        <Alert intent="error" className="text-xs">
+        <Alert intent="error" size="xs" solid={false}>
           {error}
         </Alert>
       )}
       <Flex direction="column" gap={1} className="min-h-0 grow basis-0 overflow-y-auto">
-        {loading && fonts.length === 0 && <span className="text-grayviolet-500 text-xs">Searching…</span>}
+        {loading && fonts.length === 0 && <span className="text-xs text-gray-500 dark:text-zinc-400">Searching…</span>}
         {fonts.map(entry => (
-          <Flex key={entry.family} direction="column" gap={1} className="border-grayviolet-200 rounded border p-2">
+          <Flex
+            key={entry.family}
+            direction="column"
+            gap={1}
+            className="rounded border border-gray-200 p-2 dark:border-zinc-700"
+          >
             <Flex justify="between" alignItems="center" gap={2}>
               <span className="truncate text-sm">{entry.family}</span>
               {declaredSet.has(entry.family) ? (
-                <span className="text-grayviolet-500 text-[10px]">Declared</span>
+                <span className="text-[10px] text-gray-500 dark:text-zinc-400">Declared</span>
               ) : (
                 <Button size="xs" intent="secondary" onClick={() => handleExpand(entry)}>
                   {expanded === entry.family ? 'Cancel' : 'Choose weights'}
@@ -133,7 +138,7 @@ const AddGoogleFont = ({ declared, onAdd }: AddGoogleFontProps) => {
           </Flex>
         ))}
         {!loading && fonts.length === 0 && query && (
-          <span className="text-grayviolet-500 text-xs">Nothing matched “{query}”.</span>
+          <span className="text-xs text-gray-500 dark:text-zinc-400">Nothing matched “{query}”.</span>
         )}
       </Flex>
     </Flex>

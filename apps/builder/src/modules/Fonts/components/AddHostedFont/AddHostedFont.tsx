@@ -124,18 +124,18 @@ const AddHostedFont = ({ fonts, onAdd, onUpdate }: AddHostedFontProps) => {
       </Flex>
       <Flex direction="column" gap={1}>
         <Input size="xs" label="Fallback" placeholder="system-ui, sans-serif" value={fallback} onChange={setFallback} />
-        <span className="text-grayviolet-500 text-[10px]">What renders until the face arrives.</span>
+        <span className="text-[10px] text-gray-500 dark:text-zinc-400">What renders until the face arrives.</span>
       </Flex>
       <input ref={inputRef} type="file" accept=".woff2,.woff,font/woff2,font/woff" className="text-xs" />
       <Button size="xs" className="ml-auto" loading={busy} disabled={!family || busy} onClick={handleUpload}>
         Upload face
       </Button>
       {error && (
-        <Alert intent="error" className="text-xs">
+        <Alert intent="error" size="xs" solid={false}>
           {error}
         </Alert>
       )}
-      <span className="text-grayviolet-500 text-[10px]">
+      <span className="text-[10px] text-gray-500 dark:text-zinc-400">
         One file per weight and slant. You are responsible for holding a licence that allows this font to be served from
         your site.
       </span>
