@@ -53,9 +53,9 @@ import SpaceRemoveResourceMutation from './Space/resources/SpaceRemoveResourceMu
 import SpaceRemoveRuntimeMutation from './Space/runtime/SpaceRemoveRuntimeMutation';
 import SpaceRemoveRuntimeVariableMutation from './Space/runtime/SpaceRemoveRuntimeVariableMutation';
 import SpaceSetRuntimeSizeMutation from './Space/runtime/SpaceSetRuntimeSizeMutation';
+import SpaceSetRuntimeVariableMutation from './Space/runtime/SpaceSetRuntimeVariableMutation';
 import SpaceStartRuntimeMutation from './Space/runtime/SpaceStartRuntimeMutation';
 import SpaceStopRuntimeMutation from './Space/runtime/SpaceStopRuntimeMutation';
-import SpaceSetRuntimeVariableMutation from './Space/runtime/SpaceSetRuntimeVariableMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
 import SpaceAddTemplateMutation from './Space/SpaceAddTemplateMutation';
