@@ -1,5 +1,28 @@
 # @plitzi/sdk-style
 
+## 0.37.6
+
+### Patch Changes
+
+- d6c2a21: ## Server code on a private CDN
+
+  - **A CDN has a visibility**: `public` (the default — its files served at its domain: plugins, images, templates) or
+    `private` (no domain, read only by the platform with its credential). The builder's CDN form asks for it, and every
+    CDN now has **Settings** in Resources to change its configuration — until now a CDN could not be edited at all.
+  - **A space's server code is kept on its private CDN**, not in the platform's database: its functions' source and
+    bundle, and its runtime's packed code, named by what they hold. Saving functions or pushing a runtime to a space with
+    no private CDN is refused with how to add one (`FunctionsRefusal.limit: 'storage'`). Resources lists them under
+    **Server code** with the versions that run each (`Resource.usedBy`, `ResourceType` `server`); one in use cannot be
+    removed. A private CDN cannot take a page's file, and `plitzi upload plugin` offers only public CDNs.
+  - **A space made from a template** gets the template's functions as an offer (`FunctionsDraft.offer`): the Functions
+    panel installs them (`SpaceInstallTemplateFunctions`) once the space has a private CDN.
+  - Types: `Cdn.visibility`, `CdnVisibility`; `SpaceAddCdn` / `SpaceUpdateCdn` take `visibility` and a nullable `domain`.
+
+- Updated dependencies [d6c2a21]
+  - @plitzi/sdk-plugins@0.37.6
+  - @plitzi/sdk-shared@0.37.6
+  - @plitzi/sdk-variables@0.37.6
+
 ## 0.37.5
 
 ### Patch Changes
