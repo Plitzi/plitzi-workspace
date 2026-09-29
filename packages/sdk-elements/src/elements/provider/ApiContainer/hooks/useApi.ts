@@ -59,14 +59,22 @@ const request = async (
     return { status: 400, data: 'URL is required' };
   }
 
+  /**
+   * A read is kept a SIMPLE cross-origin request: `Accept` says what is wanted, and `Content-Type` goes only with a body
+   * to describe. On a GET it made the browser ask the host's permission first, and a host that allows plain reads — a
+   * bucket's usual CORS, the space's own CDN among them — refused that preflight, so a file sitting right there failed.
+   */
   const headers = new Headers(customHeaders);
-  if (!headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
+  if (!headers.has('Accept')) {
+    headers.set('Accept', 'application/json');
   }
 
   const init: RequestInit = { method, credentials, headers, signal };
   if (method !== 'get') {
     init.body = '{}';
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
   }
 
   try {

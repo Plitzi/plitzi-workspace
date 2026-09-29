@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-mcp",
-  "version": "0.37.7",
+  "version": "0.37.8",
   "license": "AGPL-3.0",
   "files": [
     "dist",

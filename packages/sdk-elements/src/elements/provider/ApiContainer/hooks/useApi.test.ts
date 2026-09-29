@@ -210,6 +210,44 @@ describe('useApi', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('keeps a read a simple request, so a host that allows plain reads is not asked a preflight', async () => {
+    fetchMock.mockResolvedValue(answers({ land: [] }));
+
+    renderHook(() => useApi({ url: 'https://cdn.test/tremor/assets/world.json' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    // The mock is untyped — it answers with partial responses — so its calls are read as what fetch was given.
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+
+    expect(headers.get('Accept')).toBe('application/json');
+    expect(headers.has('Content-Type')).toBe(false);
+    expect(init.body).toBeUndefined();
+  });
+
+  it('describes the body it sends, unless the author already did', async () => {
+    fetchMock.mockResolvedValue(answers({ ok: true }));
+
+    renderHook(() => useApi({ url: 'https://api.test/a', method: 'post' }));
+    renderHook(() =>
+      useApi({ url: 'https://api.test/b', method: 'put', customHeaders: { 'Content-Type': 'text/plain' } })
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    // As above: what fetch was given, read off an untyped mock.
+    const sent = (fetchMock.mock.calls as [string, RequestInit][]).map(([url, init]) => [
+      url,
+      new Headers(init.headers).get('Content-Type')
+    ]);
+
+    expect(sent).toEqual(
+      expect.arrayContaining([
+        ['https://api.test/a', 'application/json'],
+        ['https://api.test/b', 'text/plain']
+      ])
+    );
+  });
+
   it('stays idle when disabled', () => {
     const { result } = renderHook(() => useApi({ url: 'https://api.test/x', enabled: false }));
 

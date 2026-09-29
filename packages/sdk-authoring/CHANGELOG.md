@@ -1,5 +1,20 @@
 # @plitzi/sdk-authoring
 
+## 0.37.8
+
+### Patch Changes
+
+- 4d10e0a: ## Fixed: an api container could not read a file from a CDN
+
+  - **What happened:** the api container sent `Content-Type: application/json` on every request, including a GET with no
+    body to describe. That made every read a non-simple cross-origin request, so the browser asked the host's
+    permission first.
+  - **Who it hit:** hosts that allow plain cross-origin reads (GET and HEAD from any origin, the usual CORS of a public
+    bucket, the space's own CDN among them) refused that preflight. The file never loaded. Tremor's world outlines on
+    `cdn-dev.plitzi.com` are one example.
+  - **What changes:** a read now sends `Accept: application/json`, and `Content-Type` goes only with a body, unless the
+    author set their own. Headers the author adds still make the request non-simple, as they must.
+
 ## 0.37.7
 
 ### Patch Changes
