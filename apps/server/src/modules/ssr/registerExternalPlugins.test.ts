@@ -39,6 +39,19 @@ describe('registerExternalPlugins', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  /** A development machine's bucket is on localhost, and a server told so reads a plugin from there. */
+  it('reads a plugin from a private host only where the server allows it', async () => {
+    const manifest = { version: '1.0.0', assets: { main: { type: 'script', isMain: true, src: 'widget.mjs' } } };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(() => Promise.resolve(Response.json(manifest)))
+    );
+    const local = spaceWith('http://localhost:9000/bucket/widget');
+
+    expect(await registerExternalPlugins(pluginManager(), local)).toEqual([]);
+    expect(await registerExternalPlugins(pluginManager(), local, { allowPrivateHosts: true })).toEqual(['widget']);
+  });
+
   it('registers a plugin published on a public host', async () => {
     const manifest = { version: '1.0.0', assets: { main: { type: 'script', isMain: true, src: 'widget.mjs' } } };
     vi.stubGlobal(

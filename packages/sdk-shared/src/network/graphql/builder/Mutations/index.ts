@@ -40,6 +40,9 @@ import SpaceUpdateCredentialMutation from './Space/credentials/SpaceUpdateCreden
 import SpaceAddPageFolderMutation from './Space/folders/SpaceAddPageFolderMutation';
 import SpaceRemovePageFolderMutation from './Space/folders/SpaceRemovePageFolderMutation';
 import SpaceUpdatePageFolderMutation from './Space/folders/SpaceUpdatePageFolderMutation';
+import SpaceRemoveFunctionsMutation from './Space/functions/SpaceRemoveFunctionsMutation';
+import SpaceSaveFunctionsMutation from './Space/functions/SpaceSaveFunctionsMutation';
+import SpaceTryFunctionMutation from './Space/functions/SpaceTryFunctionMutation';
 import SpaceAddPageMutation from './Space/pages/SpaceAddPageMutation';
 import SpaceHomePageMutation from './Space/pages/SpaceHomePageMutation';
 import SpaceRemovePageMutation from './Space/pages/SpaceRemovePageMutation';
@@ -47,6 +50,12 @@ import SpaceUpdatePageMutation from './Space/pages/SpaceUpdatePageMutation';
 import SpaceAddResourceMutation from './Space/resources/SpaceAddResourceMutation';
 import SpaceMoveResourceMutation from './Space/resources/SpaceMoveResourceMutation';
 import SpaceRemoveResourceMutation from './Space/resources/SpaceRemoveResourceMutation';
+import SpaceRemoveRuntimeMutation from './Space/runtime/SpaceRemoveRuntimeMutation';
+import SpaceRemoveRuntimeVariableMutation from './Space/runtime/SpaceRemoveRuntimeVariableMutation';
+import SpaceSetRuntimeSizeMutation from './Space/runtime/SpaceSetRuntimeSizeMutation';
+import SpaceStartRuntimeMutation from './Space/runtime/SpaceStartRuntimeMutation';
+import SpaceStopRuntimeMutation from './Space/runtime/SpaceStopRuntimeMutation';
+import SpaceSetRuntimeVariableMutation from './Space/runtime/SpaceSetRuntimeVariableMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
 import SpaceAddTemplateMutation from './Space/SpaceAddTemplateMutation';
@@ -67,6 +76,8 @@ import SpaceUpdateSettingsMutation from './Space/SpaceUpdateSettingsMutation';
 import SpaceAddVariableMutation from './Space/variables/SpaceAddVariableMutation';
 import SpaceRemoveVariableMutation from './Space/variables/SpaceRemoveVariableMutation';
 import SpaceUpdateVariableMutation from './Space/variables/SpaceUpdateVariableMutation';
+import SpaceAddVisitorMutation from './Space/visitors/SpaceAddVisitorMutation';
+import SpaceRemoveVisitorMutation from './Space/visitors/SpaceRemoveVisitorMutation';
 import StyleAddFontMutation from './Style/fonts/StyleAddFontMutation';
 import StyleRemoveFontMutation from './Style/fonts/StyleRemoveFontMutation';
 import StyleUpdateFontMutation from './Style/fonts/StyleUpdateFontMutation';
@@ -101,6 +112,9 @@ import type { TSpaceUpdateConnectorMutation } from './Space/connectors/SpaceUpda
 import type { TSpaceAddPageFolderMutation } from './Space/folders/SpaceAddPageFolderMutation';
 import type { TSpaceRemovePageFolderMutation } from './Space/folders/SpaceRemovePageFolderMutation';
 import type { TSpaceUpdatePageFolderMutation } from './Space/folders/SpaceUpdatePageFolderMutation';
+import type { TSpaceRemoveFunctionsMutation } from './Space/functions/SpaceRemoveFunctionsMutation';
+import type { TSpaceSaveFunctionsMutation } from './Space/functions/SpaceSaveFunctionsMutation';
+import type { TSpaceTryFunctionMutation } from './Space/functions/SpaceTryFunctionMutation';
 import type { TSpaceAddPageMutation } from './Space/pages/SpaceAddPageMutation';
 import type { TSpaceHomePageMutation } from './Space/pages/SpaceHomePageMutation';
 import type { TSpaceRemovePageMutation } from './Space/pages/SpaceRemovePageMutation';
@@ -150,12 +164,23 @@ export type BuilderMutationsMap = {
   SpaceUpdateAction: TSpaceUpdateActionMutation;
   SpaceRemoveAction: TSpaceRemoveActionMutation;
   SpaceRunAction: TSpaceRunActionMutation;
+  SpaceSaveFunctions: TSpaceSaveFunctionsMutation;
+  SpaceRemoveFunctions: TSpaceRemoveFunctionsMutation;
+  SpaceTryFunction: TSpaceTryFunctionMutation;
   SpaceAddConnector: TSpaceAddConnectorMutation;
   SpaceUpdateConnector: TSpaceUpdateConnectorMutation;
   SpaceRemoveConnector: TSpaceRemoveConnectorMutation;
   SpaceAddCredential: unknown;
   SpaceUpdateCredential: unknown;
   SpaceRemoveCredential: unknown;
+  SpaceAddVisitor: unknown;
+  SpaceRemoveVisitor: unknown;
+  SpaceSetRuntimeVariable: string[];
+  SpaceSetRuntimeSize: boolean;
+  SpaceStartRuntime: boolean;
+  SpaceStopRuntime: boolean;
+  SpaceRemoveRuntimeVariable: string[];
+  SpaceRemoveRuntime: boolean;
   SpacePublish: TSpacePublishMutation;
   SpaceFixIssues: TSpaceFixIssuesMutation;
   SpaceDeploy: TSpaceDeployMutation;
@@ -239,12 +264,23 @@ const BuilderMutations = {
   SpaceUpdateAction: SpaceUpdateActionMutation,
   SpaceRemoveAction: SpaceRemoveActionMutation,
   SpaceRunAction: SpaceRunActionMutation,
+  SpaceSaveFunctions: SpaceSaveFunctionsMutation,
+  SpaceRemoveFunctions: SpaceRemoveFunctionsMutation,
+  SpaceTryFunction: SpaceTryFunctionMutation,
   SpaceAddConnector: SpaceAddConnectorMutation,
   SpaceUpdateConnector: SpaceUpdateConnectorMutation,
   SpaceRemoveConnector: SpaceRemoveConnectorMutation,
   SpaceAddCredential: SpaceAddCredentialMutation,
   SpaceUpdateCredential: SpaceUpdateCredentialMutation,
   SpaceRemoveCredential: SpaceRemoveCredentialMutation,
+  SpaceAddVisitor: SpaceAddVisitorMutation,
+  SpaceRemoveVisitor: SpaceRemoveVisitorMutation,
+  SpaceSetRuntimeVariable: SpaceSetRuntimeVariableMutation,
+  SpaceSetRuntimeSize: SpaceSetRuntimeSizeMutation,
+  SpaceStartRuntime: SpaceStartRuntimeMutation,
+  SpaceStopRuntime: SpaceStopRuntimeMutation,
+  SpaceRemoveRuntimeVariable: SpaceRemoveRuntimeVariableMutation,
+  SpaceRemoveRuntime: SpaceRemoveRuntimeMutation,
   SpacePublish: SpacePublishMutation,
   SpaceFixIssues: SpaceFixIssuesMutation,
   SpaceDeploy: SpaceDeployMutation,

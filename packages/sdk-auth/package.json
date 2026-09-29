@@ -74,6 +74,10 @@
       "types": "./dist/providers/BasicAuthProvider.d.ts",
       "import": "./dist/providers/BasicAuthProvider.mjs"
     },
+    "./providers/ServerAuthProvider": {
+      "types": "./dist/providers/ServerAuthProvider.d.ts",
+      "import": "./dist/providers/ServerAuthProvider.mjs"
+    },
     "./types": {
       "types": "./dist/types.d.ts"
     }
@@ -92,7 +96,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.3.1",
-    "@plitzi/plitzi-ui": "^1.6.23",
+    "@plitzi/plitzi-ui": "^1.6.24",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"

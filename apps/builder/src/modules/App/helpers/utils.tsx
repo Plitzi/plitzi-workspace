@@ -145,6 +145,22 @@ export const getPopups = ({
       }
     },
     {
+      id: 'functions',
+      component: undefined,
+      active: activeIds.includes('functions'),
+      placementSettings: { left: { position: 7, multi: false } },
+      settings: {
+        icon: 'fa-solid fa-code',
+        title: 'Functions',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
       id: 'connectors',
       component: undefined,
       active: activeIds.includes('connectors'),
@@ -168,6 +184,38 @@ export const getPopups = ({
       settings: {
         icon: 'fa-solid fa-key',
         title: 'Credentials',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
+      id: 'runtime',
+      component: undefined,
+      active: activeIds.includes('runtime'),
+      placementSettings: { left: { position: 8, multi: false } },
+      settings: {
+        icon: 'fa-solid fa-server',
+        title: 'Runtime',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: false,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
+      id: 'visitors',
+      component: undefined,
+      active: activeIds.includes('visitors'),
+      placementSettings: { left: { position: 8, multi: false } },
+      settings: {
+        icon: 'fa-solid fa-user-shield',
+        title: 'Visitors',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,

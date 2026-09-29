@@ -1,6 +1,7 @@
 import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
+import { checkVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
@@ -174,6 +175,7 @@ class SpaceAuthor {
     this.assertChannels();
     this.assertTransientState();
     this.assertPaintedState();
+    this.assertVisitorRoles();
     const pageFolders = this.buildPageFolders();
     layouts.forEach(layout => this.addLayout(layout));
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
@@ -770,6 +772,22 @@ class SpaceAuthor {
     }
   }
 
+  /**
+   * The visitors' roles and what each gives (`checkVisitorRoles`). Refused rather than repaired — a role written wrong
+   * is a person who cannot do what they were given, or one who can do what they were not, and neither says so anywhere.
+   */
+  private assertVisitorRoles(): void {
+    const roles: unknown = this.spec.settings?.visitorRoles;
+    if (roles === undefined) {
+      return;
+    }
+
+    const checked = checkVisitorRoles(roles);
+    if (!checked.ok) {
+      throw new Error(checked.problem);
+    }
+  }
+
   /** The element about to be placed under `parentId`, and everything that one is nested in. */
   private ancestorsOf(parentId: string): Set<string> {
     return Object.hasOwn(this.flatMap.flat, parentId)
@@ -992,7 +1010,7 @@ class SpaceAuthor {
         items: [],
         styleSelectors: { base: this.selectorFor(path, { type: 'layoutContainer', ...layout }) },
         initialState: { visibility: true },
-        ...(bindings ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
+        ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
         ...(layout.flows ? { interactions: authorFlows(layout.flows, layout.id) } : {})
       }
     };
@@ -1134,7 +1152,7 @@ class SpaceAuthor {
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
         ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),
-        ...(bindings ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
+        ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
         ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})
       }
     };

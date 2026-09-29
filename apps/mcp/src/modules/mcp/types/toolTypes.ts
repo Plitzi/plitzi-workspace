@@ -1,6 +1,6 @@
 import type { AIDefinition, AIElementDetail, ValidationError } from './aiSchema';
 import type { Operation } from '../tools/operations';
-import type { ActionEntry, ConnectorEntry, Schema, Style } from '@plitzi/sdk-shared';
+import type { ActionEntry, ConnectorEntry, FunctionsSaveResult, Schema, Style } from '@plitzi/sdk-shared';
 
 // I/O contracts for the MCP tools (apply / validate / search / read) and the write engine. The runtime logic
 // lives under tools/; only the data shapes live here, so a tool file reads as just its behavior.
@@ -18,6 +18,8 @@ export interface Persisters {
   deleteConnector?: (connectorId: string) => Promise<void>;
   saveAction?: (entry: ActionEntry) => Promise<void>;
   deleteAction?: (actionId: string) => Promise<void>;
+  /** Saves the functions' files whole, against the version the batch read; answers what is wrong where it is. */
+  saveFunctions?: (files: Record<string, string>, base: string) => Promise<FunctionsSaveResult>;
 }
 
 export interface Conflict {
@@ -67,6 +69,8 @@ export interface MutationOutcome {
   /** The same, for actions: one row each, so a batch writes exactly the ones it touched. */
   changedActions: string[];
   deletedActions: string[];
+  /** The functions' files changed: they are saved whole, as one store. */
+  changedFunctions: boolean;
 }
 
 // --- plitzi_apply ---

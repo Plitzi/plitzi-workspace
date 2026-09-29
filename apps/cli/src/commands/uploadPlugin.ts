@@ -5,13 +5,12 @@ import readline from 'node:readline/promises';
 import chalk from 'chalk';
 import { unzipSync } from 'fflate';
 
-import { apiFor, chooseSpace, fail } from './account';
+import { apiFor, connectionWithSpace, fail } from './account';
 import { findProject } from './existingProject';
 import { askPick, atTerminal, refuseWithoutTerminal } from './terminal';
-import { authorizedRequest, currentConnection } from '../account/session';
+import { authorizedRequest } from '../account/session';
 
 import type { AccountOptions } from './account';
-import type { Connection } from '../account/connection';
 
 /**
  * `plitzi upload plugin`: a packed plugin put on one of the connected space's CDNs, and installed there — what the
@@ -118,30 +117,6 @@ const manifestOf = (zip: Uint8Array): Manifest | undefined => {
   }
 };
 
-/** The connection to upload through: the one there is when it has a space, else one made in the browser now. */
-const connectionWithSpace = async (api: string): Promise<Connection | undefined> => {
-  const current = await currentConnection(api);
-  if (!current.ok) {
-    fail(current.error);
-
-    return undefined;
-  }
-
-  if (current.value?.space) {
-    return current.value;
-  }
-
-  console.log(current.value ? '\nChoose the space to upload to.' : '\nSign in, and choose the space to upload to.');
-  const chosen = await chooseSpace(api);
-  if (!chosen.ok) {
-    fail(chosen.error);
-
-    return undefined;
-  }
-
-  return chosen.value;
-};
-
 const chooseCdn = async (cdns: Cdn[], given: string | undefined, spaceName: string): Promise<Cdn | undefined> => {
   if (cdns.length === 0) {
     fail(`${spaceName} has no CDN to put a plugin on. Add one in the builder, under the space's settings.`);
@@ -215,7 +190,7 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
     return;
   }
 
-  const connection = await connectionWithSpace(api);
+  const connection = await connectionWithSpace(api, 'to upload to');
   if (!connection?.space) {
     return;
   }

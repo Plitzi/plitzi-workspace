@@ -92,6 +92,23 @@ It writes exactly what the builder would, and three things stop being written tw
 Write a step's `params` whenever it takes anything else — a constant, an earlier step's result, a value
 interpolated into a larger string.
 
+### Whose permissions `role` asks about
+
+`access: { mode: 'role', permissions: [...] }` is answered from the permissions of whoever the server says is calling.
+A self-hosted server answers with its own accounts. On the Plitzi platform a visitor holds exactly the permissions of
+the **visitor roles** the space gave them — never those of their Plitzi account:
+
+```ts
+settings: {
+  userProvider: 'server',                     // visitors sign in with their Plitzi account, on the space's own host
+  visitorRoles: { author: ['postPublish'] }   // what each role gives; who holds it is given by email in the builder
+}
+```
+
+Who holds a role is not in the space: it is given by email from the builder's **Visitors** panel, and waits for that
+address to sign in, verified. Editing the space gives no role. A page reads the same answer: `can('postPublish')`, and
+the `auth` source's `permissions`.
+
 ### The output step
 
 End the flow with an **Output** step naming what the caller gets back. That step is the contract:
@@ -286,7 +303,7 @@ The ones `sdk-server` ships:
 | `stream` | `emit` — progress for a streaming caller |
 
 Plus whatever the deployment registered. On Plitzi's own: `ai.complete`, and `db.query` when a database driver is
-available.
+available. And the space's own: the tasks its [functions](./functions.md) declare, in the same catalog.
 
 ### Two people at once: `setIf`, lists and rate limits
 
@@ -348,7 +365,7 @@ that differs between two signed-out readers would sooner or later be handed to t
 request and never cached.
 
 That is a page-load flow rather than one more field on the read the page already does: `onPageLoad` → the action →
-`setState`, which is what [the blog example](../../examples/06-full-examples/01-blog) does to arrive with its
+`setState`, which is what the Fieldnotes blog (`plitzi-sdk-server/prisma/seeds/spaces/demo/blog`) does to arrive with its
 "I have seen one" button already switched off for a reader who has pressed it before.
 
 ---
@@ -618,20 +635,21 @@ Four decisions that are open rather than forgotten, so nobody re-derives them fr
 
 Everything above is configuration; the two extension points are code you own:
 
-- **Your own tasks** — `createServer({ action: { tasks: [...] } })`. They appear in your builder's catalog with no
-  fork, because the catalog is served rather than hardcoded. A task declares its parameters the same way an
-  interaction callback does.
+- **Your own tasks** — `createServer({ functions: { native: [defineFunctions({ tasks: [...] })] } })`, from
+  `@plitzi/sdk-server/functions`. They appear in your builder's catalog with no fork, because the catalog is served
+  rather than hardcoded. A task declares its parameters the same way an interaction callback does, and runs with a
+  function's context (`kv`, `fetch`, `publish`, `user`, …) — the same code a space runs in the platform's sandbox. See
+  [Functions](./functions.md) — and for a space's own, written in the builder and run in the sandbox.
 - **Your own triggers** — mount a stage (or a queue consumer, or a CLI) and call the runner. Every check lives in
   the runner, so a trigger you add cannot end up with a weaker set of rules than the built-in ones.
 
-Both are wired end to end and runnable: **your own tasks**, the lookups and the versioning rule in
-[`01-actions`](../../examples/05-with-server-actions/01-actions); the render trigger — an action feeding a
-`runtime: 'server'` element while the page is built — in
-[`02-render`](../../examples/05-with-server-actions/02-render); and **your own trigger**, over a shared `kv`
-adapter written out in full, in
-[`04-custom-trigger`](../../examples/05-with-server-actions/04-custom-trigger). **Scheduled and delayed jobs** over a
+Both are wired end to end and runnable. On the platform, as seeded spaces (`plitzi-sdk-server/prisma/seeds/spaces/examples`):
+an action whose step is the space's own function in `shippingQuote`, and the render trigger — an action feeding a
+`runtime: 'server'` element while the page is built — in `catGallery`. On a server of your own: **your own
+trigger**, over a shared `kv` adapter written out in full, in
+[`08-custom-trigger`](../../examples/self-hosting/08-custom-trigger). **Scheduled and delayed jobs** over a
 queue and a `kv` the deployment keeps itself — both seams written out over one SQLite file, with two replicas
-sharing it — are in [`05-schedules`](../../examples/05-with-server-actions/05-schedules).
+sharing it — are in [`09-schedules`](../../examples/self-hosting/09-schedules).
 
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
 supplies a shared one), the database drivers `db.query` may use, the limits on what `email.send` may send, the
@@ -720,7 +738,7 @@ On MySQL a key is bytes (`VARBINARY`) — `Board` and `board` are two keys, as t
 `createTables: false`, run `mysqlJobSchemaUpgrades()` in your own migrations, once.
 
 Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store.
-[`05-schedules`](../../examples/05-with-server-actions/05-schedules) is one written out: every method of the queue
+[`09-schedules`](../../examples/self-hosting/09-schedules) is one written out: every method of the queue
 over SQLite, each rule above one place in the file, and a page to watch two replicas share it.
 
 **Close the server on SIGTERM.** A deploy stops a replica with a signal, and a process that simply exits leaves every
@@ -771,6 +789,14 @@ Two things your adapter does owe:
   insert that ignores a key already there — comparing bytes, not a collation that ignores case.
 - **Throw when the store is unreachable.** Nothing above catches, deliberately: this is not a cache, and a miss
   here means the rate limit did not count and the idempotency key was not seen.
+
+### Signing
+
+`signingSecret` (on the actions' config — `createServer({ action: { signingSecret } })`) is what a space's functions
+sign with: `ctx.sign` and `ctx.verify`. At least 32 characters, and the **same on every replica**, since a key one of
+them signed is verified by whichever the next request reaches. Each space and environment signs with a key derived
+from it, so the secret itself signs nothing and no space can vouch for another. Without it a space's `ctx.sign` is
+refused with the reason, rather than signing with a key each replica made up for itself.
 
 ### Email
 

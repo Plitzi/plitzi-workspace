@@ -1,7 +1,7 @@
 # @plitzi/example-space
 
 The sample space the examples render: one page with a handful of elements, plus three RSC elements
-(`rsc-server`, `rsc-client`, `rsc-shared`) that [`03-ssr-rsc`](../03-ssr-rsc) feeds from the server.
+(`rsc-server`, `rsc-client`, `rsc-shared`) that [`self-hosting/05-server-components`](../self-hosting/05-server-components) feeds from the server.
 
 It is declared in [`space.ts`](./space.ts) as a `SpaceSpec` — a tree, some CSS and a palette — and
 `offline-data.json` is written from it by `yarn author`. The JSON is checked in because two ways of reading it

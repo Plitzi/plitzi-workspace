@@ -10,10 +10,13 @@ import SpaceCheckActionQuery from './Space/SpaceCheckActionQuery';
 import SpaceConnectorsQuery from './Space/SpaceConnectorsQuery';
 import SpaceCredentialsQuery from './Space/SpaceCredentialsQuery';
 import SpaceDeploymentsQuery from './Space/SpaceDeploymentsQuery';
+import SpaceFunctionsQuery from './Space/SpaceFunctionsQuery';
 import SpaceIssuesQuery from './Space/SpaceIssuesQuery';
 import SpaceLatestRevisionQuery from './Space/SpaceLatestRevisionQuery';
 import SpaceQuotaQuery from './Space/SpaceQuotaQuery';
 import SpaceResourcesQuery from './Space/SpaceResourcesQuery';
+import SpaceRuntimeQuery from './Space/SpaceRuntimeQuery';
+import SpaceVisitorsQuery from './Space/SpaceVisitorsQuery';
 
 import type { TInitQuery } from './InitQuery';
 import type { TSegmentQuery } from './Segment/SegmentQuery';
@@ -27,10 +30,13 @@ import type { TSpaceCheckActionQuery } from './Space/SpaceCheckActionQuery';
 import type { TSpaceConnectorsQuery } from './Space/SpaceConnectorsQuery';
 import type { TSpaceCredentialsQuery } from './Space/SpaceCredentialsQuery';
 import type { TSpaceDeploymentsQuery } from './Space/SpaceDeploymentsQuery';
+import type { TSpaceFunctionsQuery } from './Space/SpaceFunctionsQuery';
 import type { TSpaceIssuesQuery } from './Space/SpaceIssuesQuery';
 import type { TSpaceLatestRevisionQuery } from './Space/SpaceLatestRevisionQuery';
 import type { TSpaceQuotaQuery } from './Space/SpaceQuotaQuery';
 import type { TSpaceResourcesQuery } from './Space/SpaceResourcesQuery';
+import type { TSpaceRuntimeQuery } from './Space/SpaceRuntimeQuery';
+import type { TSpaceVisitorsQuery } from './Space/SpaceVisitorsQuery';
 
 // The quota shape is read by whatever renders it (the builder's own meter today), so it travels with the query.
 export type { TQuotaPlane, TSpaceQuota } from './Space/SpaceQuotaQuery';
@@ -50,8 +56,11 @@ export type BuilderQueriesMap = {
   SpaceActionEvents: TSpaceActionEventsQuery;
   SpaceCheckAction: TSpaceCheckActionQuery;
   SpaceActionTasks: TSpaceActionTasksQuery;
+  SpaceFunctions: TSpaceFunctionsQuery;
   SpaceConnectors: TSpaceConnectorsQuery;
   SpaceCredentials: TSpaceCredentialsQuery;
+  SpaceVisitors: TSpaceVisitorsQuery;
+  SpaceRuntime: TSpaceRuntimeQuery;
   Segment: TSegmentQuery;
   Segments: TSegmentsQuery;
 };
@@ -69,8 +78,11 @@ const BuilderQueries = {
   SpaceActionEvents: SpaceActionEventsQuery,
   SpaceCheckAction: SpaceCheckActionQuery,
   SpaceActionTasks: SpaceActionTasksQuery,
+  SpaceFunctions: SpaceFunctionsQuery,
   SpaceConnectors: SpaceConnectorsQuery,
   SpaceCredentials: SpaceCredentialsQuery,
+  SpaceVisitors: SpaceVisitorsQuery,
+  SpaceRuntime: SpaceRuntimeQuery,
   Segment: SegmentQuery,
   Segments: SegmentsQuery
 };

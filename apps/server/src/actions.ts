@@ -15,7 +15,7 @@
  * from somewhere else — a queue consumer, or the API role answering a builder's test run. Same runner, same
  * checks: a trigger that skipped them would be a weaker path to the same work.
  */
-export { createActionsModule } from './modules/actions';
+export { createActionsModule, spaceKvPatterns } from './modules/actions';
 
 /**
  * Scheduled runs: a durable queue, a leaderless producer and the workers that drain it.

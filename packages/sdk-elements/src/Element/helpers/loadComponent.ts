@@ -14,11 +14,17 @@ type RemoteCacheEntry = {
 
 const remoteModuleCache = new Map<string, RemoteCacheEntry>();
 
+/**
+ * A remote plugin's component, loaded from its module — the one of `type` when the element is not the plugin's main
+ * one. A plugin packs several elements into one module (the main as `default`, the others under `plugins`), and every
+ * element of it is loaded from the same URL: handing each the main component rendered the main element in all of them.
+ */
 const loadComponent = (
   url: string,
   registerCallback: ComponentContextValue['register'],
   autoRegister = true,
-  plitziJsxSkipHOC = false
+  plitziJsxSkipHOC = false,
+  type?: string
 ) => {
   return async () => {
     // Only cache in-flight promises (dedupe concurrent loads)
@@ -50,10 +56,10 @@ const loadComponent = (
       return { default: NotFound as ComponentPluginWithHOC };
     }
 
-    const { type, pluginSettings } = get(Module, 'default', {} as ComponentPlugin);
+    const { type: mainType, pluginSettings } = get(Module, 'default', {} as ComponentPlugin);
     const { version, initialItems, plugins } = Module;
 
-    if (!type) {
+    if (!mainType) {
       return { default: NotFound as ComponentPluginWithHOC };
     }
 
@@ -64,7 +70,7 @@ const loadComponent = (
 
     plitziComponent.version = version;
     plitziComponent.origin = 'remote';
-    plitziComponent.type = type;
+    plitziComponent.type = mainType;
     plitziComponent.initialItems = initialItems;
     plitziComponent.pluginSettings = pluginSettings;
     plitziComponent.plugins = nestedInject(plugins, 'remote');
@@ -72,7 +78,13 @@ const loadComponent = (
       registerCallback(plitziComponent);
     }
 
-    return { default: plitziComponent };
+    if (!type || type === mainType) {
+      return { default: plitziComponent };
+    }
+
+    const element = plitziJsxSkipHOC ? plugins?.[type] : plitziComponent.plugins[type];
+
+    return { default: (element ?? NotFound) as ComponentPluginWithHOC };
   };
 };
 

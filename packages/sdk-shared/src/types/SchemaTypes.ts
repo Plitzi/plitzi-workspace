@@ -159,6 +159,15 @@ export type Schema = {
      */
     paintedState?: string[];
     customCss: string;
+    /**
+     * The roles a signed-in visitor may hold in this space, each with the permissions it gives:
+     * `{ author: ['postPublish'] }`. They are what an action's `access: 'role'` and a page's `can()` are answered from
+     * — a visitor holds exactly the permissions of their roles here, never those of their account anywhere else.
+     *
+     * Declared by the space, so they are published, versioned and exported with it. WHO holds which is not: that is a
+     * list of people, kept by the platform the space runs on, and never part of a document anybody can read.
+     */
+    visitorRoles?: Record<string, string[]>;
     /** `basic` covers any HTTP+JSON backend by configuration; anything else is a name someone registered. */
     userProvider?: 'basic' | 'custom' | '' | (string & {});
     tokenStorage?: 'localStorage' | 'sessionStorage' | '';

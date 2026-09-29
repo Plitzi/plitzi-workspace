@@ -166,11 +166,13 @@ serve it — worth running over anything that arrives as a file.
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `loginPath` | `string \| false` | `'/auth/login'` | Path for the built-in login endpoint. Set to `false` to disable it entirely. |
 | `logoutPath` | `string \| false` | `'/auth/logout'` | Path for the built-in logout endpoint. Set to `false` to disable it entirely. |
+| `signIn` | `SSRSignInConfig` | — | Sign visitors in by redirect through an OAuth 2.1 authorization server: `GET /auth/sign-in?return=/x` registers this host as a client, sends the browser out with PKCE (state in a `__Host-` cookie), and `/auth/sign-in/callback` redeems the code server to server and hands the token to `exchangeCredential`, which makes the session here. Needs the `exchangeCredential` adapter. |
 | `templateFn` | `SSRTemplateFn` | built-in EJS template | Custom render function. Receives all template params and returns an HTML string. |
 | `plugins` | `Record<string, PluginSource>` | — | Named plugin definitions. Compiled or copied on first use and cached for `pluginsTtlMs`. |
 | `pluginsCacheDir` | `string` | `.sdk-plugins` | Directory where compiled plugin files are stored. |
 | `pluginsTtlMs` | `number` | `604800000` | TTL in milliseconds for compiled plugins (default: 1 week). |
 | `autoLoadSchemaPlugins` | `boolean` | `true` | Auto-download and cache plugins declared in the schema's `offlineData.plugins` list. Set to `false` to manage plugin loading manually. |
+| `allowPrivatePluginHosts` | `boolean` | `false` | Read a schema plugin from a private address (`localhost`, this server's own network). A plugin's address is typed by whoever edits a space, so leave it off anywhere but a development machine whose bucket is local. |
 | `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
 | `ssrOnly` | `boolean` | `false` | Omit client-side JS from the rendered page. Useful for verifying SSR HTML without hydration. |
@@ -554,7 +556,7 @@ const getSpaceDeployment = async (req): Promise<SSRSpaceDeployment> => {
 };
 ```
 
-Plugins listed in `pluginSources` are registered into the plugin manager on-the-fly using `ensure()`, which only triggers a rebuild if the plugin is new or its `version` has changed. Both `pluginNames` and `pluginSources` entries are resolved in parallel before the HTML is rendered.
+Plugins listed in `pluginSources` — and the external plugins a space's schema lists — are registered into the plugin manager on-the-fly using `ensure()`, under a key that carries the source's identity as well as its name and version (`name@1.0.0+<digest>` of its `js`, `css`, `action` and `props`). A plugin published again under the same version, or another space's plugin with the same name and version, is therefore a source of its own rather than whichever this process met first, and is built only once. Both `pluginNames` and `pluginSources` entries are resolved in parallel before the HTML is rendered.
 
 ### Plugin sources
 
@@ -974,8 +976,8 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 | `identity` | Your own hosts and origins — the floor for domain binding and framing |
 | `tokens.lifetimes` | How long each credential lives |
 
-Working examples are in [`examples/02-with-users`](../../examples/02-with-users): `01-sessions` over a store you
-write, `02-mysql` over one you do not.
+Working examples are in [`examples/self-hosting`](../../examples/self-hosting): `03-sessions` over a store you
+write, `04-mysql` over one you do not.
 
 ### Cross-site request forgery
 

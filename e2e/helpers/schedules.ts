@@ -1,7 +1,7 @@
 import type { APIRequestContext } from '@playwright/test';
 
 /**
- * The schedules example (`examples/05-with-server-actions/05-schedules`) as a spec reads it: its board, and the actions
+ * The schedules example (`examples/self-hosting/09-schedules`) as a spec reads it: its board, and the actions
  * its page presses. One replica or two, the questions are the same, so both specs ask them through here.
  */
 

@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { handleActionCall } from './callHandler';
+import { tasksOf } from '../../functions/testing/tasksOf';
 import { createActionsModule } from '../index';
 
+import type { FunctionTask } from '../../functions/contract';
 import type { ActionsModule } from '../index';
-import type { ActionTask } from '../types';
 import type {
   ActionDocument,
   ActionEntry,
@@ -266,14 +267,17 @@ describe('handleActionCall', () => {
   /** A run that died on its deadline is the one somebody is most likely to be debugging, and the failure used to
    *  carry nothing at all about how far it got. */
   it('tells a debugger which step a dead run was on when it stopped', async () => {
-    const stuck: ActionTask<Record<string, never>> = {
+    const stuck: FunctionTask<Record<string, never>> = {
       namespace: 'test',
       action: 'stuck',
       title: 'Never returns',
       params: {},
       run: () => new Promise(() => undefined)
     };
-    const module = createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) }, tasks: [stuck] });
+    const module = createActionsModule({
+      lookups: { getAction: () => Promise.resolve(undefined) },
+      functions: tasksOf(stuck)
+    });
     const hanging = entry({
       limits: { timeoutMs: 40 },
       nodes: {
@@ -380,7 +384,7 @@ describe('handleActionCall', () => {
     };
     const module = createActionsModule({
       lookups: { getAction: () => Promise.resolve(undefined) },
-      tasks: [slow]
+      functions: tasksOf(slow)
     });
     const config = buildConfig(
       entry({
@@ -596,7 +600,7 @@ describe('handleActionCall (streaming)', () => {
     };
     const module = createActionsModule({
       lookups: { getAction: () => Promise.resolve(undefined) },
-      tasks: [emitting]
+      functions: tasksOf(emitting)
     });
     const config = buildConfig(
       entry({

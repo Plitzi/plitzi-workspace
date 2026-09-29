@@ -4,7 +4,16 @@ import { login, logout, space, whoami } from './commands/account';
 import addPlugin from './commands/addPlugin';
 import create from './commands/create';
 import createPlugin from './commands/createPlugin';
+import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
 import packPluginCommand from './commands/packPlugin';
+import {
+  powerRuntime,
+  pushRuntime,
+  runtimeStatus,
+  setRuntimeSize,
+  setRuntimeVariable,
+  unsetRuntimeVariable
+} from './commands/runtime';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { PACKAGE_MANAGERS } from './scaffold';
 
@@ -12,7 +21,9 @@ import type { AccountOptions } from './commands/account';
 import type { AddPluginOptions } from './commands/addPlugin';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
+import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
 import type { PackPluginOptions } from './commands/packPlugin';
+import type { RuntimeOptions } from './commands/runtime';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 
 /**
@@ -139,5 +150,93 @@ upload
   .option('--cdn <identifier>', 'Which of the space’s CDNs. Asked for when it has several.')
   .option(...API_OPTION)
   .action((zip: string | undefined, options: UploadPluginOptions) => uploadPluginCommand(zip, options));
+
+const functions = program
+  .command('functions')
+  .description('The space’s own server code: functions/ in this project is a working copy of it');
+
+functions
+  .command('pull')
+  .description('Write the space’s functions into functions/ — refused when that would overwrite what is not pushed')
+  .option('-f, --force', 'Overwrite what is not pushed, or a copy of another space')
+  .option(...API_OPTION)
+  .action((options: FunctionsOptions) => pullFunctions(options));
+
+functions
+  .command('push')
+  .description('Save functions/ as the space’s draft: built and checked on the platform, refused if it moved on since')
+  .option(...API_OPTION)
+  .action((options: FunctionsOptions) => pushFunctions(options));
+
+functions
+  .command('try')
+  .argument('<task>', 'The task, <namespace>.<action>')
+  .description('Run one task of the draft in the sandbox: its value, what it logged, and why it failed')
+  .option('--params <json>', 'Its params, as a JSON object')
+  .option(...API_OPTION)
+  .action((task: string, options: FunctionsOptions) => tryFunction(task, options));
+
+functions
+  .command('dev')
+  .argument('<task>', 'The task, <namespace>.<action>')
+  .description('Run one task from functions/ on this machine, as the platform runs it — nothing reaches the space')
+  .option('--params <json>', 'Its params, as a JSON object')
+  .option('-w, --watch', 'Run it again every time a file of functions/ is saved')
+  .action((task: string, options: FunctionsDevOptions) => devFunction(task, options));
+
+const runtime = program
+  .command('runtime')
+  .description('The space’s runtime: its own server code, run as a process of its own beside the platform');
+
+runtime
+  .command('push')
+  .description('Pack this project’s runtime module and keep it as the space’s draft runtime')
+  .option('--entry <path>', 'The module whose default export is defineRuntime(…)', 'src/runtime.ts')
+  .option(...API_OPTION)
+  .action((options: RuntimeOptions) => pushRuntime(options));
+
+runtime
+  .command('status')
+  .description('How each environment’s runtime is, and the names of its variables')
+  .option(...API_OPTION)
+  .action((options: RuntimeOptions) => runtimeStatus(options));
+
+for (const power of ['start', 'stop'] as const) {
+  runtime
+    .command(power)
+    .description(
+      power === 'start'
+        ? 'Start an environment’s runtime again — one stopped for being unused, or by hand'
+        : 'Stop an environment’s runtime, and keep it stopped until it is started'
+    )
+    .option('--environment <name>', 'The environment: main (the draft) or a published one', 'main')
+    .option(...API_OPTION)
+    .action((options: RuntimeOptions & { environment?: string }) => powerRuntime(power, options));
+}
+
+runtime
+  .command('size')
+  .description('Choose the size an environment’s runtime runs at, among those the space’s plan includes')
+  .argument('<size>', 'small, medium or large — plitzi runtime status says which the plan includes')
+  .option('--environment <name>', 'The environment: main (the draft) or a published one', 'main')
+  .option(...API_OPTION)
+  .action((size: string, options: RuntimeOptions & { environment?: string }) => setRuntimeSize(size, options));
+
+const vars = runtime.command('vars').description('What the runtime starts with — written, never read back');
+
+vars
+  .command('set')
+  .argument('<name>', 'The variable, in capitals: REDIS_URL')
+  .argument('[value]', 'Its value — read from standard input when left out, which keeps it out of the shell history')
+  .option(...API_OPTION)
+  .action((name: string, value: string | undefined, options: RuntimeOptions) =>
+    setRuntimeVariable(name, value, options)
+  );
+
+vars
+  .command('unset')
+  .argument('<name>', 'The variable')
+  .option(...API_OPTION)
+  .action((name: string, options: RuntimeOptions) => unsetRuntimeVariable(name, options));
 
 program.parse(process.argv);

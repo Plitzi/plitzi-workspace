@@ -54,7 +54,23 @@
       "types": "./dist/actions.d.ts",
       "import": "./dist/actions.js",
       "default": "./dist/actions.js"
-    }
+    },
+    "./functions": {
+      "types": "./dist/functions.d.ts",
+      "import": "./dist/functions.js",
+      "default": "./dist/functions.js"
+    },
+    "./functions-runner": {
+      "types": "./dist/functionsRunner.d.ts",
+      "import": "./dist/functionsRunner.js",
+      "default": "./dist/functionsRunner.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js",
+      "default": "./dist/runtime.js"
+    },
+    "./functions-api.d.ts": "./dist/functions-api.d.ts"
   },
   "repository": {
     "type": "https",
@@ -69,15 +85,24 @@
     "esbuild": "^0.28.2",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^10.0.10",
+    "undici": "^8.11.2",
     "ws": "^8.21.1"
   },
   "peerDependencies": {
+    "core-js": "^3.50.0",
+    "isolated-vm": "^7.0.1",
     "mongodb": "^6 || ^7",
     "mysql2": "^3",
     "react": "^19",
     "react-dom": "^19"
   },
   "peerDependenciesMeta": {
+    "core-js": {
+      "optional": true
+    },
+    "isolated-vm": {
+      "optional": true
+    },
     "mongodb": {
       "optional": true
     },
@@ -86,6 +111,7 @@
     }
   },
   "devDependencies": {
+    "@microsoft/api-extractor": "^7.59.2",
     "@types/ejs": "^3.1.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.2",
@@ -94,9 +120,11 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.1.1",
     "@vitest/coverage-v8": "^5.0.1",
+    "core-js": "^3.50.0",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "ioredis": "^6.0.0",
+    "isolated-vm": "^7.0.1",
     "mongodb": "^7.6.0",
     "mysql2": "^3.24.4",
     "react": "^19.3.0",
@@ -113,8 +141,8 @@
     "start": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx dev/main.ts",
     "start:watch": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --watch dev/main.ts",
     "start:inspect": "TSX_TSCONFIG_PATH=tsconfig.app.json node --import tsx --inspect dev/main.ts",
-    "build:dev": "vite build --mode development",
-    "build:prod": "vite build",
+    "build:dev": "vite build --mode development && node scripts/functions-api.mjs",
+    "build:prod": "vite build && node scripts/functions-api.mjs",
     "lint": "TIMING=1 eslint ./src ./dev",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",

@@ -73,6 +73,7 @@ export type PlitziBuilderProps = {
   externalStyle?: string;
   state?: object;
   debugMode?: boolean;
+  functionsWorkerUrl?: AppProps['functionsWorkerUrl'];
 };
 
 const PlitziBuilder = (props: PlitziBuilderProps) => {

@@ -24,7 +24,7 @@ const ConnectorList = ({ connectors, onSelect, onRemove, onCreate }: ConnectorLi
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col p-4">
+    <div className="mx-auto flex min-h-0 w-full max-w-4xl grow basis-0 flex-col p-4">
       <div className="mb-4 flex w-full items-center justify-between">
         <Heading as="h5">Connectors</Heading>
         <Button size="sm" onClick={onCreate}>
@@ -36,7 +36,7 @@ const ConnectorList = ({ connectors, onSelect, onRemove, onCreate }: ConnectorLi
           Connect the CMS you already run. A connector holds the endpoints; the credential stays on the server.
         </div>
       )}
-      <div className="flex flex-col gap-2 overflow-auto">
+      <div className="flex min-h-0 grow basis-0 flex-col gap-2 overflow-y-auto">
         {connectors.map(connector => (
           <div
             key={connector.identifier}

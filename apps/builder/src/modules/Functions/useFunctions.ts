@@ -1,0 +1,71 @@
+import { use, useCallback, useMemo } from 'react';
+
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
+
+import type {
+  ActionRunReport,
+  BuilderMutationsMap,
+  BuilderQueriesMap,
+  FunctionsDraft,
+  FunctionsSaveResult
+} from '@plitzi/sdk-shared';
+import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+
+/** What saving answered, read from the one shape GraphQL carries it in — the three answers the platform gives. */
+const saveResultOf = (
+  answer: BuilderMutationsMap['SpaceSaveFunctions'] | undefined
+): FunctionsSaveResult | undefined => {
+  if (!answer) {
+    return undefined;
+  }
+
+  if (answer.ok && answer.version && answer.manifest) {
+    return { ok: true, version: answer.version, manifest: answer.manifest };
+  }
+
+  return answer.refusal ? { ok: false, refusal: answer.refusal } : { ok: false, problems: answer.problems };
+};
+
+/**
+ * The space's functions draft, and the three things the panel does to it — save, remove, try — through the same
+ * operations a project's CLI and an agent use (`SpaceSaveFunctions`, `SpaceRemoveFunctions`, `SpaceTryFunction`).
+ */
+const useFunctions = () => {
+  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
+    BuilderQueriesMap,
+    BuilderMutationsMap
+  >;
+  const { data, error, isLoading, mutate } = useGraphQL('SpaceFunctions', answer => answer?.SpaceFunctions);
+
+  const save = useCallback(
+    async (files: FunctionsDraft['files']): Promise<FunctionsSaveResult | undefined> => {
+      const response = await mutateNetwork('SpaceSaveFunctions', { files, base: data?.version });
+      const result = saveResultOf(response.result);
+      if (result?.ok) {
+        await mutate();
+      }
+
+      return result;
+    },
+    [data?.version, mutate, mutateNetwork]
+  );
+
+  const remove = useCallback(async () => {
+    await mutateNetwork('SpaceRemoveFunctions', {});
+    await mutate();
+  }, [mutate, mutateNetwork]);
+
+  const tryTask = useCallback(
+    async (task: string, params: Record<string, unknown>): Promise<ActionRunReport | undefined> =>
+      (await mutateNetwork('SpaceTryFunction', { task, params })).result,
+    [mutateNetwork]
+  );
+
+  return useMemo(
+    () => ({ draft: data, error: error?.message ?? '', isLoading, save, remove, tryTask }),
+    [data, error, isLoading, save, remove, tryTask]
+  );
+};
+
+export default useFunctions;

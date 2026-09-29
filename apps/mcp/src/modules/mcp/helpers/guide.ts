@@ -210,6 +210,8 @@ Never download a whole tree you do not need.
   input/output contract a caller is held to. \`/{ref}\` opens one flow in full. See *Server actions* below.
 - \`plitzi://actions/{env}/tasks\` — the **server tasks this deployment can run**, each with its params: the steps an
   action may be built from.
+- \`plitzi://functions/{env}\` — the space's **functions**, its own server code: which files, and the tasks, routes and
+  hosts they declare. \`plitzi://functions/{env}/{+path}\` reads one file whole. See *Functions* below.
 - \`plitzi://changes/{env}\` — the space's **change history**, read-only and newest first: who made each change (a
   person in the builder, an agent, the autofix), when, and every element, class, token or font it touched, whole, before
   and after. \`/{id}\` for the history of one of them — how you find what changed an element you are asked about, or
@@ -691,6 +693,28 @@ Four rules worth knowing before you write:
 
 \`deleteAction { ref }\` removes one; every \`runServerAction\` step that names it stops resolving, so confirm first.
 
+## Functions
+When no server task does what a flow needs — parse a feed, call an API with its own shape, compute something — the
+space can have its own: **functions**, TypeScript the platform builds and runs in a sandbox. Their tasks are steps like
+any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\` once saved.
+
+- **Write** files with \`upsertFunctionFile { path, content }\` (whole files; \`deleteFunctionFile { path }\` removes
+  one). \`index.ts\` default-exports the definition:
+  \`export default defineFunctions({ allow: { hosts: ["api.example.com"] }, tasks: [{ namespace, action, title, params, run: async (params, ctx) => … }] })\`,
+  \`defineFunctions\` from \`@plitzi/sdk-server/functions\`. Files import each other by relative path — no package,
+  no Node built-in.
+- **\`ctx\` is all a function reaches:** \`ctx.kv\` (the space's store), \`ctx.fetch(url, init)\` to the hosts
+  \`allow.hosts\` names (\`*.example.com\` for subdomains), \`ctx.publish/grant/revoke\` (channels), \`ctx.log\`,
+  \`ctx.user\` (who asked, never their session). A secret is NAMED, never read: \`ctx.fetch(url, { credential: "stripe",
+  headers: { authorization: "Bearer {{ credential.apiKey }}" } })\`.
+- **Stateless:** nothing a function keeps in memory outlives the call — a module-level cache or counter starts empty
+  every time, on whichever instance runs it. What must last goes in \`ctx.kv\`. A call gets 100 ms of CPU and 10 s.
+- **Saving builds and checks** the files: the batch is refused with each problem where it is (file and line). A
+  namespace the platform uses (\`kv\`, \`http\`, \`flow\`…) is refused.
+- **Try it** with \`plitzi_try_function { task, params }\` before a page relies on it: the value, the logs, the error.
+  The live site runs what the space was last published with, never the draft. Running functions is part of the paid
+  plans: on another plan they save, and a run answers why it did not start — tell the user rather than work around it.
+
 ## Realtime channels
 Pages that see each other — cursors, presence, a shared board, a game. Three parts, all needed:
 
@@ -806,6 +830,11 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   endpoints and the \`detailsPath\`/\`tokenPath\`/\`refreshTokenPath\`/\`expirationTimePath\` mapping that says where the
   values sit in their responses. \`sessionHintCookie\` is worth setting whenever the backend can: it names a readable
   cookie carrying only expiries, which is what lets a page answer "nobody is signed in" without a request.
+  On the Plitzi platform, \`userProvider: "server"\` signs visitors in with their Plitzi account on the space's own
+  host: a \`link\` with \`mode: "external"\` to \`/auth/sign-in?return=/\` starts it, \`authLogout\` ends it.
+- \`visitorRoles\` — what each visitor role gives, \`{ "author": ["postPublish"] }\`: the permissions an action's
+  \`access: { mode: "role" }\` and a page's \`can()\` ask for. A visitor holds ONLY the permissions of their roles here,
+  never their account's. Who holds a role is given by email in the builder's Visitors panel — never in settings.
 - \`channels\` — the realtime channels, by topic pattern (see **Realtime channels**). Merged pattern by pattern;
   \`null\` removes one.
   Example — inject a keyframe globally:

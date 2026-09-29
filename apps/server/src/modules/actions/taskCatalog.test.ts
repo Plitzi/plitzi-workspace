@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { createActionsModule } from './index';
 import { describeCatalog, describeTask } from './taskCatalog';
+import { tasksOf } from '../functions/testing/tasksOf';
 
-import type { ActionTask } from './types';
+import type { FunctionTask } from '../functions/contract';
 
 const registry = () => createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) } }).registry;
 
@@ -30,10 +31,10 @@ describe('task catalog', () => {
   });
 
   it('never carries the task’s code', () => {
-    const task = { namespace: 'x', action: 'y', title: 'Y', params: {}, run: () => ({}) } as ActionTask<never>;
+    const task = { namespace: 'x', action: 'y', title: 'Y', params: {}, run: () => ({}) } as FunctionTask<never>;
     const { registry: withCustom } = createActionsModule({
       lookups: { getAction: () => Promise.resolve(undefined) },
-      tasks: [task]
+      functions: tasksOf(task)
     });
     const registered = withCustom.get('x.y');
     const described = describeTask(registered as NonNullable<typeof registered>);

@@ -163,5 +163,5 @@ proportion to what CHANGED, not to what is there:
   (`Emulation.setCPUThrottlingRate`) and reports script time per frame, not only frames per second — and a test that
   counts WORK (full repaints, strokes drawn during a drag), which holds on any machine where a timing does not.
 
-`examples/06-full-examples/04-whiteboard` does all of it; its README's Performance section and its `bench/` are the
-worked example.
+Pizarra, the collaborative whiteboard on the platform (`pizarra.plitzi.app`), does all of it on a board of thousands
+of elements.

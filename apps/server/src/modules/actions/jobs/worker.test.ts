@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createMemoryJobQueue } from './memoryQueue';
 import { createJobWorker } from './worker';
+import { tasksOf } from '../../functions/testing/tasksOf';
 import { createActionsModule } from '../index';
 
-import type { ActionTask } from '../types';
+import type { FunctionTask } from '../../functions/contract';
 import type { ActionEntry, ActionJobInput, ElementInteraction } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
@@ -48,16 +49,16 @@ const jobInput = (over: Partial<ActionJobInput> = {}): ActionJobInput => ({
 });
 
 /** One queue, one module, and a task the test drives. */
-const world = (run: ActionTask['run'], entries = [entry()]) => {
+const world = (run: FunctionTask['run'], entries = [entry()]) => {
   let now = MIDNIGHT;
   const queue = createMemoryJobQueue({ clock: () => now });
   const lookups = {
     getAction: (_spaceId: number, actionId: string) => Promise.resolve(entries.find(item => item.id === actionId)),
     listActions: () => Promise.resolve(entries)
   };
-  const task: ActionTask = { namespace: 'test', action: 'work', title: 'Work', params: {}, run };
+  const task: FunctionTask = { namespace: 'test', action: 'work', title: 'Work', params: {}, run };
   // `jobs: false` so the module builds no scheduler of its own; the test drives the worker directly.
-  const module = createActionsModule({ lookups, tasks: [task], jobs: false });
+  const module = createActionsModule({ lookups, functions: tasksOf(task), jobs: false });
 
   return {
     queue,

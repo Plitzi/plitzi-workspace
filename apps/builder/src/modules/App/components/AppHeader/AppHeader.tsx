@@ -22,6 +22,7 @@ import IssuesButton from './IssuesButton';
 import PageHeader from './PageHeader';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
+import RuntimeIdleNotice from './RuntimeIdleNotice';
 import ZoomButtons from './ZoomButtons';
 import { FORM_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
 import DeployForm from '../../models/DeployForm';
@@ -189,6 +190,7 @@ const AppHeader = () => {
           })}
         </div>
         <PreviewModeButtons />
+        <RuntimeIdleNotice />
         <IssuesButton />
         <QuotaMeter />
         <button

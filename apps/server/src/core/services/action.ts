@@ -65,7 +65,12 @@ export const actionStage: Stage<SSRContext> = async ctx => {
       return true;
     }
 
-    handleActionCatalog({ res: ctx.res, module: actions });
+    const { spaceId, environment = 'main', revision = 0 } = req.ctx.spaceDeployment ?? {};
+    await handleActionCatalog({
+      res: ctx.res,
+      module: actions,
+      ...(typeof spaceId === 'number' ? { spaceId, at: { environment, revision } } : {})
+    });
 
     return true;
   }

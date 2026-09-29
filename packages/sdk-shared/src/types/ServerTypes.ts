@@ -7,12 +7,14 @@ import type {
   ActionRunSummary,
   ActionRejectRecord,
   ActionRunRecord,
+  ActionRunReport,
   ActionRunStatus,
   ActionTaskDescriptor,
   ActionTriggerType
 } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
+import type { FunctionsDraft, FunctionsSaveResult } from './FunctionTypes';
 import type { SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
@@ -387,6 +389,25 @@ export type SSRAdapters = {
   saveAction?: (spaceId: number, entry: ActionEntry) => Promise<void>;
   /** Remove one action by its identifier. Omitted alongside `saveAction` for a read-only deployment. */
   deleteAction?: (spaceId: number, actionId: string) => Promise<void>;
+  /** The space's own functions: the draft's source files, which copy of them it is and what they declare.
+   *  Server-side code like the actions it serves — never a browser payload. When omitted, the MCP offers no functions
+   *  resource and refuses the function ops. */
+  getFunctions?: (spaceId: number) => Promise<FunctionsDraft | undefined>;
+  /** Save the draft's functions, whole. The deployment builds and checks them and answers what is wrong where it is;
+   *  `base` is the version the agent read, and a draft that moved on since is refused rather than overwritten. */
+  saveFunctions?: (
+    spaceId: number,
+    files: Record<string, string>,
+    base: string,
+    write: SSRWriteContext
+  ) => Promise<FunctionsSaveResult>;
+  /** Run one task of the draft's functions in the sandbox for the person behind the agent — the builder's Try. */
+  tryFunction?: (
+    spaceId: number,
+    task: string,
+    params: Record<string, unknown>,
+    write: SSRWriteContext
+  ) => Promise<ActionRunReport>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
   saveSchema?: (spaceId: number, environment: Environment, schema: Schema, write: SSRWriteContext) => Promise<void>;
   /** Persist the style document mutated by the MCP `apply` tool — store it as given. `style.cache` arrives already
@@ -537,6 +558,8 @@ export type ActionLookupsConfig = {
   listScheduledSpaces?: () => Promise<number[]>;
   getCredential?: (spaceId: number, identifier: string) => Promise<Record<string, string> | undefined>;
   getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
+  /** The space's own functions as of that revision — `SpaceFunctions` in `@plitzi/sdk-server/functions`. */
+  getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
 };
 
 export type SSRActionConfig = {
@@ -547,8 +570,6 @@ export type SSRActionConfig = {
    * the endpoint keeps answering element-addressed connector writes alone.
    */
   lookups?: ActionLookupsConfig;
-  /** Deployment-owned tasks, shaped as `ActionTask` in `@plitzi/sdk-server/actions`. Validated at boot. */
-  tasks?: unknown[];
   /** Ceilings for every run this server accepts. A document may tighten them, never widen them. */
   limits?: ActionLimits;
   /**
@@ -600,6 +621,11 @@ export type SSRActionConfig = {
    * is going; this is for the one that arrives after it finished, which is how every provider retries.
    */
   idempotency?: { replayTtlMs?: number };
+  /**
+   * What each space's functions sign with (`ctx.sign` / `ctx.verify`): at least 32 characters, the same on every
+   * replica. Each space and environment signs with a key derived from it. Absent, spaces sign nothing.
+   */
+  signingSecret?: string;
   /**
    * Where the `kv` tasks keep things — shaped as `ActionKvAdapter` in `@plitzi/sdk-server/actions`.
    *
@@ -909,6 +935,11 @@ export type SSRServerConfig = {
   /** Where a browser-obtained credential is handed over. Defaults to `/auth/exchange`; served only when the
    *  `exchangeCredential` adapter is supplied. */
   exchangePath?: string | false;
+  /**
+   * Signing visitors in by redirect, through an OAuth 2.1 authorization server — see {@link SSRSignInConfig}. Served
+   * only with the `exchangeCredential` adapter, which is what turns what comes back into a session on this host.
+   */
+  signIn?: SSRSignInConfig;
   /** Naming and scope of the session cookies this server writes. See {@link SSRAuthCookie}. */
   authCookie?: SSRAuthCookie;
   templateFn?: SSRTemplateFn;
@@ -917,6 +948,13 @@ export type SSRServerConfig = {
   pluginsTtlMs?: number;
   /** Auto-download and cache plugins declared in the schema's offlineData.plugins list. Default: true. */
   autoLoadSchemaPlugins?: boolean;
+  /**
+   * Whether a schema plugin may be read from a private address — `localhost`, the network this server runs in. A
+   * plugin's address is typed by whoever edits a space and read from inside this server, so it answers to the rule
+   * every authored request does and is refused there; turn this on only on a development machine whose bucket is on
+   * localhost. Default: false.
+   */
+  allowPrivatePluginHosts?: boolean;
   /** Where this deployment serves the font files a space uploaded — see {@link SSRFontsConfig}. */
   fonts?: SSRFontsConfig;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
@@ -933,6 +971,12 @@ export type SSRServerConfig = {
   rsc?: SSRRscConfig;
   /** Write endpoint for server-driven providers. Absent means the server serves reads only. */
   action?: SSRActionConfig;
+  /**
+   * Code of this server's own, and the sandbox for the spaces' — shaped as `FunctionsConfig` in
+   * `@plitzi/sdk-server/functions`. `native` is trusted code loaded in the process (a self-hosted server's tasks, or a
+   * platform's own); `runner` runs each space's functions, isolated.
+   */
+  functions?: { native?: unknown[]; runner?: unknown; limits?: Record<string, number> };
   /** Realtime channels the spaces declare — see {@link SSRRealtimeConfig}. On, in memory, when absent. */
   realtime?: SSRRealtimeConfig;
   /** Connector manifest and credential lookups — see {@link ConnectorLookupsConfig}. They serve the RSC read path
@@ -1019,6 +1063,29 @@ export type SSRServerConfig = {
  *  `createServer` from `@plitzi/sdk-server` takes and what the SSR stages are handed, so a page stage reaches
  *  `getOfflineData` without asking whether it is there — while a stage typed to the bare context (anything from
  *  `@plitzi/sdk-mcp`, which also runs in servers that have neither) still has to check. */
+/**
+ * A visitor signs in somewhere else and comes back signed in HERE: `GET <path>?return=/somewhere` sends them to the
+ * authorization server, and `GET <path>/callback` takes the code it answers with, redeems it server to server and
+ * hands the token to `exchangeCredential` — which is what makes the session, on this host, for this space.
+ *
+ * This server registers itself with the authorization server (RFC 7591) as the host the visitor is on, and proves the
+ * exchange with PKCE. The state travels in a `__Host-` cookie, which no sibling host can set: a sign-in somebody else
+ * started cannot be finished in this browser.
+ */
+export type SSRSignInConfig = {
+  /** What `exchangeCredential` knows the tokens by. */
+  provider: string;
+  /** Where the visitor's browser is sent: the authorization server's `/authorize`, as the public reaches it. */
+  authorizeUrl: string;
+  /** Where this server registers itself and redeems codes — reachable from here, which may be a private address. */
+  registerUrl: string;
+  tokenUrl: string;
+  /** What to ask for, for the space being signed into. */
+  scope: (spaceId: number) => string;
+  /** Where the flow answers. Default `/auth/sign-in`; the authorization server sends people back to `<path>/callback`. */
+  path?: string;
+};
+
 export type SSRPageServerConfig = SSRServerConfig & { adapters: SSRPageAdapters };
 
 /** Which surfaces a page server mounts. Only what the page pipeline itself owns: the MCP endpoint and
@@ -1167,6 +1234,12 @@ export type OAuthIssueContext = {
     softwareId?: string;
   };
   request?: { userAgent?: string; ip?: string };
+  /**
+   * Where the code of THIS grant is sent: the `redirect_uri` of the authorization request, at consent. A deployment
+   * whose credential is only good at certain addresses checks it here — registering a client is open to anybody, and
+   * the address it names is the one thing that says who will receive what the person agreed to. Absent on a renewal.
+   */
+  redirectUri?: string;
   /**
    * The credential this grant last issued, on a renewal. A deployment that keeps a row per credential updates that
    * row rather than adding one, so a device renewing every hour stays one device.

@@ -49,6 +49,63 @@ export type SpaceCredential = {
   updatedAt: number;
 };
 
+/**
+ * A person given one of the space's visitor roles (`settings.visitorRoles`), by email. `claimed` says whether an
+ * account has taken it yet: a role given to an address waits for somebody to sign in with it, verified.
+ */
+export type SpaceVisitor = {
+  id: number;
+  email: string;
+  role: string;
+  claimed: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/** One environment's runtime — the space's own server code run beside the platform — and how it last was. */
+export type SpaceRuntimeEnvironment = {
+  environment: string;
+  /** 0 for the draft. */
+  revision: number;
+  /** The packed code it runs, by what its bytes are. */
+  digest: string;
+  status: 'waiting' | 'starting' | 'ready' | 'failed' | 'stopping' | 'stopped';
+  /** Why it is not running, for whoever manages the space. */
+  error: string | null;
+  /** Why it is kept stopped: `idle` (unused for too long) or `manual`. */
+  stoppedReason: 'idle' | 'manual' | null;
+  /** When a running one stops for being unused, unless something uses it before — unix seconds. */
+  idleStopsAt: number | null;
+  /** The paths of the space it answers itself (`/mcp`). */
+  endpoints: string[];
+  /** Its tasks, as flows name them (`board.create`). */
+  tasks: string[];
+  startedAt: number | null;
+  /** The size it runs at — or will start at — by name (`SpaceRuntimeSizeOption['name']`). */
+  size: string;
+};
+
+/** A size a runtime may run at: what its pod may spend, and whether the space's plan includes it. */
+export type SpaceRuntimeSizeOption = {
+  name: string;
+  label: string;
+  /** As Kubernetes reads it: `250m` is a quarter of a core. */
+  cpu: string;
+  /** As Kubernetes reads it: `256Mi`. */
+  memory: string;
+  included: boolean;
+};
+
+/** A space's runtime: every environment's, and the names of the variables it starts with — never their values. */
+export type SpaceRuntime = {
+  environments: SpaceRuntimeEnvironment[];
+  variables: string[];
+  /** Every size there is, smallest first. */
+  sizes: SpaceRuntimeSizeOption[];
+  /** How long a runtime may go unused before it is stopped; 0 when the platform never stops one. */
+  idleMinutes: number;
+};
+
 export type SpaceDeployment = {
   id: number;
   environment: Environment;

@@ -50,6 +50,14 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('page-route-taken');
     });
 
+    it('page-route-reserved', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat[schema.pages[1]].attributes.slug = 'api';
+      });
+
+      expect(errorsOf(documents)).toContain('page-route-reserved');
+    });
+
     it('page-target-unknown', () => {
       const documents = withChange(({ schema }) => {
         schema.flat['to-about'].attributes.href = 'abuot';

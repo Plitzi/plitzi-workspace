@@ -40,6 +40,12 @@ export interface FakePlatform {
   renewable: Set<string>;
   /** Seconds each access token lives. */
   expiresIn: number;
+  /** Space 3's functions draft: saved whole, a new version each time; a file containing `BROKEN` does not build. */
+  functions: { files: Record<string, string>; version: string };
+  /** Every task tried, with its params. */
+  tried: { task: string; params: unknown }[];
+  /** Space 3's runtime: every push as it arrived, and its variables — a value the platform keeps and never shows. */
+  runtime: { pushed: FakeUpload[]; variables: Map<string, string> };
   close: () => Promise<void>;
 }
 
@@ -141,6 +147,64 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
           plugin: { root: 'seatPicker', version: '1.2.0' },
           installed: 'added'
         });
+      } else if (url.pathname === '/spaces/3/functions' && req.method === 'GET') {
+        json(res, 200, { ...platform.functions, manifest: { hosts: [], tasks: [], routes: [] } });
+      } else if (url.pathname === '/spaces/3/functions' && req.method === 'PUT') {
+        const sent = JSON.parse(body.toString()) as { files: Record<string, string>; base?: string };
+        const broken = Object.entries(sent.files).find(([, text]) => text.includes('BROKEN'));
+        if (sent.base !== undefined && sent.base !== platform.functions.version) {
+          json(res, 409, { ok: false, refusal: { status: 409, error: 'moved on', limit: 'version' } });
+        } else if (broken) {
+          json(res, 422, { ok: false, problems: [{ file: broken[0], line: 2, message: 'Expected ";"' }] });
+        } else {
+          platform.functions = {
+            files: sent.files,
+            version: `v${String(Number(platform.functions.version.slice(1)) + 1)}`
+          };
+          json(res, 200, {
+            ok: true,
+            version: platform.functions.version,
+            manifest: { hosts: [], tasks: [{ namespace: 'feed', action: 'read' }], routes: [] }
+          });
+        }
+      } else if (url.pathname === '/spaces/3/runtime' && req.method === 'PUT') {
+        platform.runtime.pushed.push({
+          path: url.pathname,
+          contentType: req.headers['content-type'] ?? '',
+          bytes: body.byteLength
+        });
+        json(res, 200, { ok: true, digest: 'd'.repeat(64), size: body.byteLength });
+      } else if (url.pathname === '/spaces/3/runtime' && req.method === 'GET') {
+        json(res, 200, {
+          environments: [
+            {
+              environment: 'main',
+              revision: 0,
+              digest: 'd'.repeat(64),
+              status: 'ready',
+              endpoints: ['/mcp'],
+              tasks: ['board.create']
+            }
+          ],
+          variables: [...platform.runtime.variables.keys()].sort()
+        });
+      } else if (url.pathname.startsWith('/spaces/3/runtime/variables/')) {
+        const name = decodeURIComponent(url.pathname.slice('/spaces/3/runtime/variables/'.length));
+        if (req.method === 'PUT') {
+          platform.runtime.variables.set(name, (JSON.parse(body.toString()) as { value: string }).value);
+        } else {
+          platform.runtime.variables.delete(name);
+        }
+
+        res.writeHead(204).end();
+      } else if (url.pathname === '/spaces/3/functions/try' && req.method === 'POST') {
+        const sent = JSON.parse(body.toString()) as { task: string; params: unknown };
+        platform.tried.push(sent);
+        json(res, 200, {
+          status: 'completed',
+          output: { value: { echoed: sent.params } },
+          steps: [{ id: 'task', action: sent.task, startTime: 1, endTime: 5, logs: ['reading'] }]
+        });
       } else {
         json(res, 404, { error: 'Not found' });
       }
@@ -164,6 +228,9 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     refuseAll: false,
     renewable: new Set(),
     expiresIn: 3600,
+    functions: { files: {}, version: 'v0' },
+    tried: [],
+    runtime: { pushed: [], variables: new Map() },
     browser: url => {
       const asked = new URL(url).searchParams;
       const scope = asked.get('scope') ?? '';

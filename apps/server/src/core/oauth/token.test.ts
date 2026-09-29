@@ -186,7 +186,8 @@ describe('who a credential is issued to', () => {
 
     expect(issueToken).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ value: 'account' }), {
       client: { clientId: 'cli', name: 'Plitzi CLI on carlos-mbp', softwareId: 'plitzi-cli' },
-      request: { userAgent: 'Mozilla/5.0 (Macintosh) Chrome/140', ip: '203.0.113.7' }
+      request: { userAgent: 'Mozilla/5.0 (Macintosh) Chrome/140', ip: '203.0.113.7' },
+      redirectUri: 'http://127.0.0.1:4567/callback'
     });
   });
 

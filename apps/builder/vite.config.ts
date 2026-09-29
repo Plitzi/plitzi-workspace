@@ -14,6 +14,8 @@ import dts from 'vite-plugin-dts';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import mkcert from 'vite-plugin-mkcert';
 
+import { typescriptLibAlias } from './vite.functions-worker.config';
+
 import type { Plugin } from 'vite';
 
 const require = createRequire(import.meta.url);
@@ -82,6 +84,7 @@ function ejsPlugin(devMode?: boolean): Plugin {
             reactJsx: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
             reactDom: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
             reactDomClient: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
+            functionsWorkerPath: '/plitzi-functions-worker.js',
             version: PACKAGE.version
           },
           { async: false }
@@ -132,6 +135,8 @@ export default defineConfig(({ mode, command }) => {
         reactJsx: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
         reactDom: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
         reactDomClient: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
+        // The dev server serves the worker from source; a build ships it beside the builder.
+        functionsWorkerPath: devMode ? '/src/modules/Functions/editor/typescriptWorker.ts' : '/plitzi-functions-worker.js',
         version: PACKAGE.version
       }),
       command === 'build' && ejsPlugin(devMode),
@@ -223,6 +228,8 @@ export default defineConfig(({ mode, command }) => {
           './src/patches/useSyncExternalStoreWithSelector.ts'
         ),
         'use-sync-external-store/shim': 'react',
+        // The Functions panel's worker, which the dev server serves from source.
+        ...typescriptLibAlias,
         ...(devMode ? packages : {})
       },
       extensions: ['.js', '.mjs', '.ts', '.tsx']

@@ -74,6 +74,23 @@ describe('pluginCatalog', () => {
     expect(catalog.acmeGone).toEqual({ custom: true });
   });
 
+  it('lists every element a plugin declares, each a type of its own', async () => {
+    respondWith(
+      manifest({
+        pluginSchema: {
+          board: { attributes: {}, definition: { label: 'Board' }, defaultStyle: {} },
+          // Nothing but attributes and a label: a manifest is somebody's JSON, and a missing block is not a crash.
+          shareCard: { attributes: { url: '' }, definition: { label: 'Share card' } }
+        }
+      })
+    );
+
+    const catalog = await pluginCatalog({ board: { resource: 'https://cdn.test/acme/5' } });
+
+    expect(Object.keys(catalog)).toEqual(['board', 'shareCard']);
+    expect(catalog.shareCard).toMatchObject({ label: 'Share card', custom: true, attributes: ['url'] });
+  });
+
   it('does not re-fetch a manifest it already holds', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(manifest()) });
     vi.stubGlobal('fetch', fetchMock);

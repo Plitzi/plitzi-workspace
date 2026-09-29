@@ -11,6 +11,8 @@ import type { InternalPropsSTG1 } from '@plitzi/sdk-shared';
 
 export type PluginRemoteProps = {
   url: string;
+  /** The element's type, when it is not the plugin's main one: a plugin's other elements load from the same URL. */
+  type?: string;
   internalProps: InternalPropsSTG1;
   autoRegister?: boolean;
   plitziJsxSkipHOC?: boolean;
@@ -19,6 +21,7 @@ export type PluginRemoteProps = {
 
 const PluginRemote = ({
   url = '',
+  type,
   internalProps,
   autoRegister = true,
   // Props from JSX
@@ -41,9 +44,9 @@ const PluginRemote = ({
   useEffect(() => setMounted(true), []);
 
   const Component = useMemo(
-    () => lazy(loadComponent(url, register, autoRegister, plitziJsxSkipHOC)),
+    () => lazy(loadComponent(url, register, autoRegister, plitziJsxSkipHOC, type)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [url]
+    [url, type]
   );
 
   if (!mounted) {

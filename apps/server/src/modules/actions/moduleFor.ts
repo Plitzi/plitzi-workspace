@@ -33,13 +33,14 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
   // become this package's own contract.
   const module = createActionsModule({
     lookups: lookups as ActionLookups,
-    tasks: config.action?.tasks as ActionsConfig['tasks'],
+    functions: config.functions as ActionsConfig['functions'],
     limits: config.action?.limits,
     concurrency: config.action?.concurrency,
     kv: config.action?.kv,
     jobs: config.action?.jobs,
     rateLimit: config.action?.rateLimit,
     idempotency: config.action?.idempotency,
+    signingSecret: config.action?.signingSecret,
     dbDrivers: config.action?.dbDrivers as ActionsConfig['dbDrivers'],
     email: config.action?.email,
     onRun: config.action?.onRun,

@@ -2,6 +2,7 @@ import { fail } from '../../helpers';
 import { isStyleOp } from '../operations';
 import * as actions from '../operations/actions';
 import * as connectors from '../operations/connectors';
+import * as functions from '../operations/functions';
 import * as schema from '../operations/schema';
 import * as style from '../operations/style';
 
@@ -90,6 +91,10 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return actions.patchAction(space, env, op);
     case 'deleteAction':
       return actions.deleteAction(space, env, op);
+    case 'upsertFunctionFile':
+      return functions.upsertFunctionFile(space, env, op);
+    case 'deleteFunctionFile':
+      return functions.deleteFunctionFile(space, env, op);
     default:
       return fail('type', `Unknown operation "${(op as { type: string }).type}"`, 'See the Operation union');
   }
@@ -110,7 +115,8 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
     changedConnectors: [],
     deletedConnectors: [],
     changedActions: [],
-    deletedActions: []
+    deletedActions: [],
+    changedFunctions: false
   };
   const stale = new Set<string>();
   const elements = new Set<string>();
@@ -148,6 +154,10 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
       case 'deleteAction':
         savedActions.delete(op.ref);
         droppedActions.add(op.ref);
+        break;
+      case 'upsertFunctionFile':
+      case 'deleteFunctionFile':
+        outcome.changedFunctions = true;
         break;
       default:
         if (isStyleOp(op.type)) {

@@ -154,6 +154,10 @@
 - An `image` accepts `loadMode: 'auto'`, which the builder offers.
 - `getStateManager()` gains `subscribe`.
 - Routes: a slug with more than one `{{param}}` matches (only the first was converted).
+- A plugin with several elements (`plitzi pack plugin` with more than one folder) draws each of them: every element but
+  the main one rendered the main element's component, since all of them load from the one module.
+- `createServer({ allowPrivatePluginHosts })`: a schema plugin may be read from a private address — a development
+  machine's bucket on localhost. Off by default: a plugin's address is typed by whoever edits a space.
 - Dev tools: with the panel collapsed, the page scrolls the document as it does in production.
 - The base stylesheet has no invalid declarations: `markdown` fills its box (`height`/`width: 100%` were quoted
   strings the browser dropped), and `text` no longer declares a size it never applied — it still inherits its own.
@@ -176,6 +180,27 @@
 - The generated visual test skips list rows and providers with no tag.
 - The example plugin takes its props as attributes; in a client project its numbers come from `public/data/stats.json`
   through a provider — the offline-data pattern.
+
+## Examples: `browser` and `self-hosting`
+
+- `examples/` is two folders: `browser` (a space on your page, no server) and `self-hosting` (a server of your own,
+  from a server-rendered page to a space's runtime). What a space on the platform does — Ceniza, Tremor, Fieldnotes,
+  Pizarra, the server and render actions, a template — is a seeded space on the platform rather than an example here.
+
+## A space's visitors: signing in, and what they may do
+
+- `settings.visitorRoles`: a space declares its visitor roles and what each gives (`{ author: ['postPublish'] }`),
+  published and exported with it. `authorSpace` refuses a malformed one; `checkVisitorRoles` / `visitorAccess`
+  (`@plitzi/sdk-shared/auth/visitorRoles`) are the one reading of them.
+- `userProvider: 'server'` (`ServerAuthProvider`): a space whose people sign in THROUGH its page server, by redirect —
+  the session is a cookie on the space's host; `login` goes out, `logout` asks the server.
+- `createServer({ signIn })`: `GET /auth/sign-in` and its callback — register this host with an OAuth 2.1 authorization
+  server, PKCE, state in a `__Host-` cookie, the code redeemed server to server and handed to `exchangeCredential`.
+- OAuth: `issueToken` is told the grant's `redirectUri`; a server mounted under a prefix sends people back to, and posts
+  its grant screen to, its own `/authorize` (it resolved `/authorize` against the issuer and dropped the prefix).
+- `safeRedirectTarget` refuses `/\host`, which a browser reads as `//host`.
+- `spaceKvPatterns(spaceId)` (`@plitzi/sdk-server/actions`): every key a space's `kv` holds, to let them all go.
+- Builder: a **Visitors** panel — the space's roles, and who holds them, given by email.
 
 ## MCP: what the agent is told
 
@@ -352,6 +377,13 @@
   content digest of every file a bundle was built from and compares it when a process first finds the bundle — in
   production as in development. A deployment rebuilt from new source under the same version used to serve the
   previous bundle. Bundles cached before this are built once more.
+- **A space's plugins are kept by what they are, not by their name and version.** The page server kept every plugin a
+  render named — a space's external plugins, a deployment's `pluginSources` — under `name@version`, and the first
+  source to arrive held that key while the process ran: a plugin published again under the same version was served
+  from its old, missing URLs until a restart, and two spaces each with a `board@1.0.0` of their own were both served
+  whichever the process had met first. The key now carries the source's identity (`name@version+<digest>` of where
+  its files are, how they are served and its props); invalidating a release covers those keys too, and a plugin named
+  by a render never answers for a bare name, which stays the plugins the server was set up with.
 - **The examples are linted** with the packages' rules (`examples/eslint.config.mjs`, a `lint` script in each), and
   what the rules found is fixed — among it, index reads the types called defined, a hook-named step helper, and the
   Permissions API assumed present. `docs/` and the skills' markdown are hand-wrapped and listed in `.prettierignore`.
@@ -911,51 +943,9 @@ legend,price-tag`, or asked): the first is published as the plugin, the rest as 
 - Channel declarations are checked in one place, `channelProblems` (`@plitzi/sdk-shared/realtime`): authoring refuses,
   `lintSpace` reports `channel-declaration`, and the MCP's `patchSettings` takes `channels` (merged per pattern, `null`
   removes one) and answers with the same sentence. The agent's guide has a "Realtime channels" section.
-- New full example: `examples/06-full-examples/04-whiteboard` (Pizarra) — a collaborative whiteboard over WebSocket:
-  arrows fixed to the anchors of what they connect (curved, following every move), labels in shapes, pads of sticky
-  notes to drag from, a laser pointer, reactions, following a collaborator's view, groups, a toolbar authored in the
-  space that the canvas lays beside the selection, pictures pasted from the clipboard, password-protected boards (on a
-  topic only whoever opened the board can name), votes, a shared timer, cursor chat and "bring everyone here". The front
-  page is a board to try before starting one — with scripted collaborators already drawing on it — templates, and two
-  large featured boards that are read-only (looked around together, then "Use as template"). Frames that hold what is
-  put in them — a column frame is a kanban lane that lays out its cards, with the drop shown as it is dragged — task
-  cards made in a column (a title and a description, the whole of it shown when a card is selected — no double-click to
-  read one — and the cards under it moved down to make room, never covered) and a column that is the team's Done (a card
-  moved into it is ticked off, and open again moved out), panels that come out of the button that opens them and leave
-  quicker than they came, their items one after another, a corner that folds away to the way home, smart guides that
-  snap what is dragged to the edges and middles of what stays still, the others' cursors drawn a moment behind so they
-  move as smoothly as a hand whatever the network does, a search with tags (`#word` written in anything; ⌘F dims what it
-  does not find), duties an agent keeps doing in a frame, sessions with a script (a retro's private writing step keeps
-  the others' notes face down), branches of a frame to try another way and take back, agents that present a board a
-  frame at a time, comments with threads, a board chat, Excalidraw-style properties (fill style, stroke style,
-  sloppiness, edges, opacity, layers), eight pen brushes, more shapes, a minimap, presenting the frames, public or
-  private and temporary boards (in Board settings, beside the title), boards their creator makes read-only for everyone
-  else, an elements library built from one registry (searchable, with favourites), texts resized by their handles,
-  stamps, elements locked in place, and sounds. The gallery previews a crowded board whole, coarsened on a grid. It
-  carries its own bench (`yarn bench`, `--cpu 4` for slower hardware): boards of a thousand and four thousand elements
-  opened, panned, zoomed, drawn on, selected, moved, pasted, deleted and undone, and crowds of fifty collaborators on
-  them. AI agents join as collaborators through the MCP server every Pizarra serves at `/mcp` (streamable HTTP, mounted
-  as a `preAuth` pipeline stage): anyone on a board adds it to Claude Code, OpenCode or the Claude app from the invite
-  panel, with nothing to install, and a guide at `/agents` walks through it — Claude first — and what to do when it does
-  not connect; it joins only that Pizarra's boards, and is a client of the board's server like a browser. The people see
-  what an agent is doing — working, thinking, listening — at its cursor and on its avatar; it stays while they work and
-  leaves by itself when asked (✕ on its avatar), when nobody is on the board, after the board's quiet time (Board
-  settings), or when the board's password changes, when its app has gone (its listening stream closed and not back
-  within a minute) or its connection to the board is lost; a locked board's invite carries a key that opens it for the
-  agent. It acts as the team's facilitator — about their work, never its tools — and closes what it runs with the
-  outcome. Cursors off screen show at the edge of the view, and a board's code sits beside its name, a click from the
-  clipboard. The front page shows a dozen boards and a "Load more", and its search asks the server across every board.
-  Templates of a team's own: what is selected kept, with what its frames hold, in the board's library — put down again
-  from there, dragged or clicked, and on any other board by its code (people and agents alike). Cards that wait on other
-  cards: a red "Blocked" tab while any is open, a dashed line to each when selected, a warning when one is moved on
-  anyway — which a guardian agent hears too — and `is:blocked` in the search. A List view (⇧L): the board as a list with
-  a
-  button for every change, always in the page for a screen reader or Claude in Chrome, which reads the accessibility tree
-  and not a canvas. It runs on several replicas over Redis
-  (`REDIS_URL`, `BOARD_SECRET`): the channels, the boards, the pictures, a write lock in the action `kv` shared by all
-  of them, and which replica holds each agent's session — a call reaching another is passed on to it (`REPLICA_URL`), so
-  no affinity is needed. `start:replicas` runs three behind a round-robin balancer on one machine, and the
-  `whiteboard-replicas` browser test spreads people and an agent across them. See `docs/en/realtime.md`.
+- Pizarra, a collaborative whiteboard built on all of the above — channels, server actions, a canvas plugin, an agent at
+  `/mcp` — is a seeded space on the platform (`pizarra.plitzi.app`) whose server code is its runtime, not an example
+  here. See `docs/en/realtime.md`.
 - `lintSpace`'s `channel-topic` skips an element whose `topic` is bound: its topic is only known on the page.
 
 ## A page on its way out keeps what it showed
@@ -1150,3 +1140,80 @@ example, was built on the lack of them and is simpler for it.
   its rate limits are `flow.rateLimit` steps in its actions; its board and room channels are private, opened with the
   grant `board-load`/`board-open` answer — a locked board's topic no longer carries a secret, only its password's
   version.
+
+## Functions: a space's own server code
+
+A space can have its own server code: TypeScript whose **tasks** are steps in its actions and whose
+**routes** answer under `/api/` on its host, run by the platform in a sandbox. See `docs/en/functions.md`.
+
+- **The contract**, `@plitzi/sdk-server/functions`: `defineFunctions({ allow: { hosts }, tasks, routes })`, `ctx`
+  (`kv`, `fetch` to declared hosts only — a credential NAMED and written in by the platform, its value never in the code
+  —, `publish`/`grant`/`revoke`, `user` without its session, `log`, `emit`, `signal`), web-standard only.
+  `dist/functions-api.d.ts` is the contract rolled up in one file, for editors (`@plitzi/sdk-server/functions-api.d.ts`).
+- **Breaking: `action.tasks` is gone.** A deployment's own tasks are functions loaded natively:
+  `createServer({ functions: { native: [defineFunctions({ tasks })] } })` — the same shape a space's are. Their routes
+  are served too.
+- **`loadFunctions(dir)`** (`@plitzi/sdk-server`): a `functions/` folder built as the platform builds a space's and
+  loaded natively — what a self-hosted server passes to `functions.native`, and what a `plitzi create` server project
+  now does with its own `functions/`. Which files are the source is one rule, `readFunctionsSource` /
+  `isFunctionsSourcePath` in `@plitzi/sdk-shared/actions`, used by it, the build and the CLI.
+- **The runner**, `@plitzi/sdk-server/functions-runner` (`isolated-vm` and `core-js@3` are optional peers):
+  `startFunctionsRunnerService` — its own process, one V8 isolate per invocation from a snapshot (~2 ms), CPU / wall /
+  memory / output / calls limits that hold, behind a shared secret, warmed before it listens so no request pays the
+  first isolate; `createRemoteRunner` — the page server's client, one WebSocket per invocation with the code's calls
+  answered on it, abandoned past the invocation's wall time plus `graceMs` (5 s) even when the runner never answers;
+  `createIsolateRunner({ concurrency, cacheBytes })` — compiled bundles kept by size (64 MB), least recently used out;
+  `createLocalFunctions`. Isolates need Node started with `--no-node-snapshot` (isolated-vm crashes beside Node's
+  startup snapshot): without it they refuse to start, naming the flag; `plitzi functions dev` re-runs itself with it.
+- **A run carries the bundle by reference**: `FunctionsBundleRef { id, load }` in `FunctionInvokeRequest` and
+  `SpaceFunctions` — a runner asks for the code (`needBundle`) only when it does not keep that bundle, so a lookup never
+  reads it on the way to one. `functionsInHand` makes one from a bundle already in memory.
+- **Wired into actions**: `lookups.getFunctions(spaceId, at)`; `registryFor(spaceId, at)` — the catalog, the check and
+  the runs of a space see its tasks; `prepareFunctions(source)` builds, reads and checks a source before it is stored;
+  `functions.limits`, `functions.admit`, `functions.onUsage` for a deployment's ceilings and budget. A run only asks for
+  a space's functions when a step names a task the deployment does not have.
+- **`ctx.log`** for every task: a step's lines are kept on it (`ActionRunStep.logs`, redacted, at most 100), shown by
+  a Try and in the run history. Builder test runs return `steps`.
+- **Routes** under `/api/`: the visitor's `cookie`/`authorization` never reach the code, `Set-Cookie` is dropped, a
+  failure answers 500/503 with its reason in the server log only. `lintSpace` refuses a page under `/api`
+  (`page-route-reserved`); the prefix is `FUNCTION_ROUTES_PREFIX` in `@plitzi/sdk-shared/actions`.
+- **Builder**: a Functions panel — the files, TypeScript that knows `ctx` in a worker of its own
+  (`dist/plitzi-functions-worker.js`, loaded only when the panel opens; the host passes `functionsWorkerUrl`), Save with
+  the problems where they are, what the code declares, and Try. Needs `@plitzi/plitzi-ui` 1.6.24 (`CodeMirror`
+  `mode="ts"` and `extensions`).
+- **CLI**: `plitzi functions pull | push | try | dev` — `functions/` as a working copy of the space's, refused rather
+  than overwritten in either direction; `dev` runs it on the machine with the project's own `@plitzi/sdk-server`.
+- **MCP**: the `upsertFunctionFile` / `deleteFunctionFile` operations (saved first in a batch, so a problem refuses
+  it all), `plitzi://functions/{env}` and `/{+path}`, and `plitzi_try_function`.
+- **`crypto.subtle` derives keys**: PBKDF2 (`importKey('raw', password, 'PBKDF2')`, `deriveBits`, `deriveKey` to an
+  HMAC key) beside digests and HMAC, so a space can keep a password. The runner derives, at most 1,000,000 iterations
+  and 1024 bits a call, and charges what it took to the run's CPU. A key is held to the usages it was imported for.
+- **`ActionRefusal` from `@plitzi/sdk-server/functions`**: a function refuses with a reason for whoever asked — the
+  page reads it as `{{ step.error }}`, a route answers `400 { error }` — natively and in the sandbox alike (the bundle
+  prints the platform's class; a refusal crosses the runner as `FunctionFailure` reason `refused`). Anything else a
+  function throws still stays in the run's record.
+- **`ctx.kv.change(key, change, lifetime)`**: read, change and write back, again when somebody wrote first — the loop
+  every concurrent edit needs, now one (lists stand on it too; the sandbox runs the same function). **`ctx.rateLimit`**
+  counts with `flow.rateLimit`'s counter and answers `{ allowed, count, remaining }`. **`ctx.sign` / `ctx.verify`**:
+  HMAC with a per-space, per-environment key derived from the new `action.signingSecret`, which the code never holds.
+- **Space runtimes**, `@plitzi/sdk-server/runtime` ([docs](../docs/en/runtimes.md)): a space's own server code run as a
+  process of its own beside the platform — `defineRuntime({ start })` answers its `functions` (run with the platform's
+  `ctx` over the runners' protocol) and `endpoints` (web handlers, streamed). `startSpaceRuntime` hosts one,
+  `createRuntimeProxyStage` forwards a space's endpoints to it, `serveRuntime` loads one into a server of its own;
+  `packRuntime` / `inspectRuntime` / `loadRuntime`; `SpaceFunctions.runner` sends a space's tasks to its runtime. One
+  driver for the sandbox and runtimes alike (`createFunctionsDriver`, printed into the guest). CLI: `plitzi runtime
+push | status | vars`. Builder: a Runtime panel — each environment's state, and write-only variables.
+  `examples/self-hosting/10-runtime` is the smallest one — a task, a route and a stream held open — served by its own
+  `main.ts`; Pizarra, on the platform, is a whole product built this way. A runtime runs at a size — small, medium or large, each a plan feature
+  — shown and chosen per environment in the Runtime panel and with `plitzi runtime size`. One nobody uses for a
+  week — on the platform — stops by itself until started again (Start in the panel, `plitzi runtime start | stop`, a
+  push or a publish) — its status says `starting` or `stopping` meanwhile; the builder's header warns a day before,
+  with a way to keep it running. `createRuntimeProxyStage` takes `onForward`, told of
+  each request it forwards — what counts as a runtime used. `reachSpaceInside` (the host's `insideUrl`)
+  sends a runtime's `fetch` and `WebSocket` to its own space's address to an inside one — a cluster's ingress — instead
+  of out through the edge and back.
+- **Authoring writes one form of each**: a trigger that `whileRunning('skip', …)` is written as the default it is, and
+  `bind: []` writes no `bindings` — a document read back into code is the one written.
+- **Shared types**: `FunctionsManifest`, `FunctionsDraft`, `FunctionsProblem`, `FunctionsSaveResult`; the builder's
+  `SpaceFunctions`, `SpaceSaveFunctions`, `SpaceRemoveFunctions`, `SpaceTryFunction`; `ChangeDocument` `functions`
+  with entries of kind `file`; `SSRAdapters.getFunctions` / `saveFunctions` / `tryFunction`.

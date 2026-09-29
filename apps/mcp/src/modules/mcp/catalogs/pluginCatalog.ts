@@ -83,7 +83,10 @@ const entryFromManifest = (type: string, manifest: PluginManifest): ComponentCat
   // Element['definition'] type, so it is read defensively.
   const label = strOrUndefined(elementDef?.label) ?? strOrUndefined(manifest.definition.name);
   const description = strOrUndefined((elementDef as { description?: unknown } | undefined)?.description);
-  const bindingsAllowed = pluginSchema?.defaultStyle.bindingsAllowed;
+  // A manifest is an untrusted external JSON snapshot, and an element of it may carry no `defaultStyle` at all: read
+  // through an optional view rather than the required PluginSchema shape, as the base declarations below are.
+  const bindingsAllowed = (pluginSchema?.defaultStyle as Partial<PluginSchema['defaultStyle']> | undefined)
+    ?.bindingsAllowed;
   const attributesTargets = pathsOf(bindingsAllowed?.attributes);
   const initialStateTargets = pathsOf(bindingsAllowed?.initialState);
   // A manifest is an untrusted external JSON snapshot: its `defaultStyle.style` may be absent, so read the base
@@ -110,9 +113,12 @@ const entryFromManifest = (type: string, manifest: PluginManifest): ComponentCat
 /**
  * Builds the plugin half of a component catalog from a space's installed plugins, keyed by schema `type`.
  *
- * A plugin whose manifest cannot be read yields `{ custom: true }` with no metadata rather than failing the whole
- * catalog — the agent then sees the type exists but learns nothing more about it, which is strictly better than
- * being told the space has no plugins at all.
+ * One entry per element a plugin DECLARES (its manifest's `pluginSchema`), not per plugin: a package installed under
+ * one name registers every element it ships — a canvas and the cards beside it — and each is a type of its own.
+ *
+ * A plugin whose manifest cannot be read yields `{ custom: true }` under its own name, with no metadata, rather than
+ * failing the whole catalog — the agent then sees the type exists but learns nothing more about it, which is strictly
+ * better than being told the space has no plugins at all.
  */
 export const pluginCatalog = async (
   plugins: Record<string, { resource: string }> | undefined
@@ -123,14 +129,19 @@ export const pluginCatalog = async (
   }
 
   const entries = await Promise.all(
-    Object.entries(plugins).map(async ([type, { resource }]): Promise<[string, ComponentCatalogEntry]> => {
+    Object.entries(plugins).map(async ([name, { resource }]): Promise<[string, ComponentCatalogEntry][]> => {
       const manifest = await fetchManifest(resource);
+      if (!manifest) {
+        return [[name, { custom: true }]];
+      }
 
-      return [type, manifest ? entryFromManifest(type, manifest) : { custom: true }];
+      const declared = Object.keys(manifest.pluginSchema);
+
+      return (declared.length > 0 ? declared : [name]).map(type => [type, entryFromManifest(type, manifest)]);
     })
   );
 
-  for (const [type, entry] of entries) {
+  for (const [type, entry] of entries.flat()) {
     catalog[type] = entry;
   }
 

@@ -11,6 +11,7 @@ const SpaceRunActionMutation = gql`
       status
       output
       trace
+      steps
     }
   }
 `;

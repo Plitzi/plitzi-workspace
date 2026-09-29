@@ -46,6 +46,7 @@ const JsxManager = ({
       <PluginRemote
         internalProps={internalProps}
         url={remoteSettings.url}
+        type={type}
         plitziJsxSkipHOC={plitziJsxSkipHOC}
         plitziJsxProps={plitziJsxProps}
       />

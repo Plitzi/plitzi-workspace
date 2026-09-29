@@ -7,6 +7,7 @@ import type {
   ComponentCatalog,
   ConnectorEntry,
   Element,
+  FunctionsDraft,
   PageFolder,
   Schema,
   Style
@@ -25,6 +26,9 @@ export interface Space {
   /** The server tasks this deployment can run. Read-only reference data like `catalog`, not persisted: it is what
    *  the server has, not what the space owns, and an action authored against a task it lacks cannot run. */
   actionTasks?: ActionTaskDescriptor[];
+  /** The space's own functions — their source files, which copy of them this is, and what they declare. Absent when
+   *  the deployment offers no functions: then there is nothing to read and every function op is refused. */
+  functions?: FunctionsDraft;
   catalog?: ComponentCatalog;
 }
 
@@ -35,6 +39,7 @@ export const cloneSpace = (space: Space): Space => ({
   style: structuredClone(space.style),
   connectors: structuredClone(space.connectors),
   actions: structuredClone(space.actions),
+  ...(space.functions ? { functions: structuredClone(space.functions) } : {}),
   ...(space.actionTasks ? { actionTasks: space.actionTasks } : {}),
   ...(space.catalog ? { catalog: space.catalog } : {})
 });

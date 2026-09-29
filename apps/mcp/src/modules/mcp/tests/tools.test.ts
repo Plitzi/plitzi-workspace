@@ -19,6 +19,7 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
       'plitzi_render',
       'plitzi_screenshot',
       'plitzi_search',
+      'plitzi_try_function',
       'plitzi_validate'
     ]);
     expect(tools.every(t => typeof t.execute === 'function')).toBe(true);

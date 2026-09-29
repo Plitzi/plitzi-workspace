@@ -225,6 +225,8 @@ export type ActionRunReport = {
   status: ActionRunStatus;
   output: Record<string, unknown>;
   trace: Record<string, unknown>[];
+  /** Each step as it ran — status, timing, error, and what it logged. */
+  steps: ActionRunStep[];
 };
 
 /**
@@ -362,6 +364,8 @@ export type ActionRunStep = {
   endTime: number;
   /** Why it failed, redacted of every credential value the run resolved. */
   error?: string;
+  /** What the step logged (`ctx.log`), redacted the same way; at most a hundred lines of a thousand characters. */
+  logs?: string[];
 };
 
 /**

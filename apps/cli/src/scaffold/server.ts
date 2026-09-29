@@ -44,7 +44,7 @@ const pluginNames = Object.keys(plugins);`;
 const localMain = (): string => `import { readdirSync } from 'node:fs';
 import path from 'node:path';
 
-import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { closeOnSignals, consoleLogger, createJsonAdapters, createServer, loadFunctions } from '@plitzi/sdk-server';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
@@ -73,6 +73,13 @@ for (const warning of warnings) {
 ${PLUGINS}
 
 /**
+ * This project's own server code: \`functions/\` — what \`plitzi functions pull\` writes and \`push\` sends — built
+ * the way Plitzi builds a space's and run here, in this process. Nothing there, no functions; code that does not build
+ * stops the server with the file and line.
+ */
+const functions = await loadFunctions(new URL('../functions/', import.meta.url));
+
+/**
  * Where the server gets a space from, and the only line that knows.
  *
  * \`createJsonAdapters\` is the file-backed shortcut: hand it a \`{ schema, style }\` and it answers every read a
@@ -87,6 +94,7 @@ const server = createServer({
     deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames }
   }),
   plugins,
+  functions: { native: functions },
   logger: consoleLogger
 });
 
@@ -104,7 +112,7 @@ closeOnSignals(server);
 const cloudMain = (): string => `import { readdirSync } from 'node:fs';
 import path from 'node:path';
 
-import { closeOnSignals, consoleLogger, createCloudAdapters, createServer } from '@plitzi/sdk-server';
+import { closeOnSignals, consoleLogger, createCloudAdapters, createServer, loadFunctions } from '@plitzi/sdk-server';
 
 const PORT = Number(process.env.PORT ?? 8080);
 // Loopback unless told otherwise: a container publishes a port only from an address it listens on (\`HOST=0.0.0.0\`).
@@ -125,6 +133,13 @@ const HOST_KEY = process.env.PLITZI_HOST_KEY ?? '';
 if (!HOST_KEY) {
   throw new Error('Set PLITZI_HOST_KEY in .env — Credentials, in the builder.');
 }
+
+/**
+ * This project's own server code: \`functions/\` — what \`plitzi functions pull\` writes and \`push\` sends — built
+ * the way Plitzi builds a space's and run here, in this process. Nothing there, no functions; code that does not build
+ * stops the server with the file and line.
+ */
+const functions = await loadFunctions(new URL('../functions/', import.meta.url));
 
 /**
  * The space stays in Plitzi; the SERVER is this one.
@@ -148,6 +163,7 @@ const server = createServer({
     deployment: { pluginNames }
   }),
   plugins,
+  functions: { native: functions },
   logger: consoleLogger
 });
 

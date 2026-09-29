@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { ActionRefusal } from './errors';
 import { createKvStore } from './kvStore';
 import { createMemoryKv } from './memoryKv';
 
@@ -245,5 +246,59 @@ describe('createKvStore lists', () => {
 
     expect(await kv.get('scores')).toBe(1);
     expect(calls.find(call => call.method === 'swap')?.args[0]).toBe('kv:list:scores');
+  });
+});
+
+describe('createKvStore change', () => {
+  it('loses no write to writers changing the same value at once', async () => {
+    const slow = createMemoryKv();
+    const kv = createKvStore({
+      ...slow,
+      get: async key => {
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 3));
+
+        return slow.get(key);
+      }
+    });
+    await Promise.all(
+      Array.from({ length: 20 }, () =>
+        kv.change('tally', current => ({
+          n: (typeof current === 'object' && current && 'n' in current ? Number(current.n) : 0) + 1
+        }))
+      )
+    );
+
+    expect(await kv.get('tally')).toEqual({ n: 20 });
+  });
+
+  it('writes nothing when the change answers nothing, and says so', async () => {
+    const kv = createKvStore(createMemoryKv());
+    await kv.set('kept', 'as it was');
+
+    expect(await kv.change('kept', () => undefined)).toBeUndefined();
+    expect(await kv.get('kept')).toBe('as it was');
+  });
+
+  it('refuses, naming no key, when somebody else wins every time', async () => {
+    const inner = createMemoryKv();
+    const kv = createKvStore({ ...inner, swap: () => Promise.resolve(false) });
+    const change = kv.change('board:abc', () => ({ n: 1 }));
+
+    await expect(change).rejects.toBeInstanceOf(ActionRefusal);
+    await expect(change).rejects.toThrow('Many people are changing this at once — try again in a moment');
+  });
+
+  it('writes with the lifetime worked out from what it writes', async () => {
+    const { adapter, calls } = spyAdapter();
+    const kv = createKvStore(adapter);
+
+    expect(
+      await kv.change(
+        'board',
+        () => ({ hours: 2 }),
+        next => next.hours * 3600
+      )
+    ).toEqual({ hours: 2 });
+    expect(calls.find(call => call.method === 'swap')?.args).toEqual(['kv:board', undefined, '{"hours":2}', 7200]);
   });
 });

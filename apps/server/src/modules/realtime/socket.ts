@@ -1,5 +1,6 @@
 import { admit, answer, connectionFor, publishFrom } from './handlers';
 import { requestOrigin } from '../../core/requestParser';
+import { frameText } from '../../helpers/wsFrame';
 
 import type { ChannelResolver } from './declarations';
 import type { RealtimeGrants } from './grants';
@@ -47,16 +48,9 @@ const originAllowed = (raw: IncomingMessage, req: SSRRequest, allowed: readonly 
 type Incoming = { id?: unknown; topic?: unknown; type?: unknown; data?: unknown };
 
 /** A frame's text, whichever of the shapes `ws` hands a frame over in. */
-const textOf = (frame: RawData): string =>
-  Buffer.isBuffer(frame)
-    ? frame.toString('utf8')
-    : Array.isArray(frame)
-      ? Buffer.concat(frame).toString('utf8')
-      : Buffer.from(frame).toString('utf8');
-
 const parse = (frame: RawData): Incoming | undefined => {
   try {
-    const value: unknown = JSON.parse(textOf(frame));
+    const value: unknown = JSON.parse(frameText(frame));
 
     return typeof value === 'object' && value !== null ? value : undefined;
   } catch {

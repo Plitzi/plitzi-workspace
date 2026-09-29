@@ -3,12 +3,14 @@ import { z } from 'zod';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
+import { functionFileUri, functionsUri } from '../../helpers';
 import { environment, operations } from '../operations';
 import { draftBatch } from '../shared/draftBatch';
 import { defineTool } from '../shared/tool';
 
 import type { Space } from '../../helpers';
-import type { ApplyInput, Env, Persisters, WriteResponse } from '../../types';
+import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../../types';
+import type { FunctionsSaveResult } from '@plitzi/sdk-shared';
 
 export const applyShape = {
   environment,
@@ -27,6 +29,22 @@ export const applyShape = {
 };
 
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
+
+/** Why the platform did not save the functions, as the batch's errors: each problem where it is, or the refusal. */
+const functionsErrors = (saved: Exclude<FunctionsSaveResult, { ok: true }>, env: Env): ValidationError[] =>
+  'problems' in saved
+    ? saved.problems.map(problem => ({
+        path: problem.file ? `functions/${problem.file}${problem.line ? `:${String(problem.line)}` : ''}` : 'functions',
+        message: problem.message,
+        hint: `Fix it with upsertFunctionFile; read ${functionFileUri(env, problem.file ?? 'index.ts')} for the file`
+      }))
+    : [
+        {
+          path: 'functions',
+          message: saved.refusal.error,
+          hint: `Read ${functionsUri(env)} again and redo the change on the current files`
+        }
+      ];
 
 export const apply = async (input: ApplyInput, space: Space, persisters?: Persisters): Promise<WriteResponse> => {
   const env = (input.environment ?? 'main') as Env;
@@ -72,8 +90,28 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     };
   }
 
-  // Persist each schema that changed to its own store; unsaved when a changed schema has no persister.
+  // The functions first: they are built and checked as they are saved, so this is where a batch can still be refused —
+  // and it has to be before anything else is written, or a refusal here would leave the rest of the batch saved.
   let persisted = true;
+  if (outcome.changedFunctions && draft.functions) {
+    if (persisters?.saveFunctions) {
+      const saved = await persisters.saveFunctions(draft.functions.files, space.functions?.version ?? '');
+      if (!saved.ok) {
+        return {
+          applied: false,
+          persisted: false,
+          summary: { created: 0, updated: 0, deleted: 0 },
+          changed: [],
+          errors: functionsErrors(saved, env),
+          warnings: noWarnings(warnings)
+        };
+      }
+    } else {
+      persisted = false;
+    }
+  }
+
+  // Persist each schema that changed to its own store; unsaved when a changed schema has no persister.
   if (outcome.changedSchema) {
     if (persisters?.schema) {
       await persisters.schema(draft.schema);

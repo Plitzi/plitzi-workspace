@@ -18,7 +18,7 @@ import type { ChildProcess } from 'node:child_process';
  * needs a process this spec can kill, and a queue file nobody else is writing to.
  */
 
-const EXAMPLE_DIR = path.resolve(import.meta.dirname, '../../../examples/05-with-server-actions/05-schedules');
+const EXAMPLE_DIR = path.resolve(import.meta.dirname, '../../../examples/self-hosting/09-schedules');
 
 type Replica = { name: string; origin: string; process: ChildProcess; output: string[] };
 

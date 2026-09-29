@@ -4,6 +4,7 @@ import { readTool } from './read';
 import { renderTool } from './render';
 import { screenshotTool } from './screenshot';
 import { searchTool } from './search';
+import { tryFunctionTool } from './tryFunction';
 import { validateTool } from './validate';
 
 import type { ToolDef } from './shared/tool';
@@ -28,7 +29,8 @@ export const tools: ToolDef[] = [
   readTool,
   renderTool,
   previewTool,
-  screenshotTool
+  screenshotTool,
+  tryFunctionTool
 ];
 
 export type { ToolContext, ToolDef } from './shared/tool';

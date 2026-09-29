@@ -96,7 +96,8 @@ const KIND_NOUN: Record<Exclude<ChangeKind, 'element'>, string> = {
   globalStyle: 'global style for',
   idStyle: 'id style',
   token: 'token',
-  font: 'font'
+  font: 'font',
+  file: 'function file'
 };
 
 const VERB: Record<ChangeEntry['op'], string> = { add: 'Added', update: 'Changed', remove: 'Removed' };

@@ -214,6 +214,52 @@ describe('the grant screen / native clients only', () => {
   });
 });
 
+/**
+ * Registering a client is open to anybody, so the address a grant's code is sent to is the one thing that says who
+ * receives what the person agreed to. A deployment whose credential is only good at certain addresses is told it.
+ */
+describe('the grant screen / where the grant is sent', () => {
+  it('hands issueToken the redirect of this authorization', async () => {
+    const { config, store } = setup();
+    const issueToken = vi.fn(() => Promise.resolve({ token: 't' }));
+    config.adapters.issueToken = issueToken;
+    store.put('oauth:pending:p2', JSON.stringify({ clientId: CLIENT.clientId, user: { id: '7', label: 'ada' } }));
+
+    await handleAuthorizeSubmit(config, capture().res, { ...params, pending: 'p2', target: 'space-1' }, request);
+
+    expect(issueToken).toHaveBeenCalledOnce();
+    expect(issueToken.mock.calls[0]).toEqual([
+      { id: '7', label: 'ada' },
+      { value: 'space-1', label: 'Website' },
+      expect.objectContaining({ redirectUri: 'https://host.test/cb' })
+    ]);
+  });
+});
+
+/** A server mounted under a prefix is reached there: the address to come back to keeps the issuer's own path. */
+describe('the grant screen / mounted under a prefix', () => {
+  it('sends a signed-out visitor back to the prefixed /authorize', async () => {
+    const { config } = setup();
+    const prefixed = { ...config, issuer: 'https://api.plitzi.test/space-auth' };
+    prefixed.adapters = { ...config.adapters, identify: () => Promise.resolve(undefined) };
+    const { res, sent } = capture();
+
+    await handleAuthorizeStart(prefixed, res, params, request);
+
+    const back = new URL(new URL(sent.headers['Location']).searchParams.get('redirect') ?? '');
+    expect(back.origin + back.pathname).toBe('https://api.plitzi.test/space-auth/authorize');
+  });
+
+  it('posts the grant to the prefixed /authorize', async () => {
+    const { config } = setup();
+    const { res, sent } = capture();
+
+    await handleAuthorizeStart({ ...config, issuer: 'https://api.plitzi.test/space-auth' }, res, params, request);
+
+    expect(sent.body).toContain('action="/space-auth/authorize"');
+  });
+});
+
 describe('the grant screen / markup', () => {
   it('escapes what a deployment puts around the form', () => {
     const markup = renderConsentPage({

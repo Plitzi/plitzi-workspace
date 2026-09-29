@@ -1,0 +1,333 @@
+import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+import chalk from 'chalk';
+
+import { apiFor, connectionWithSpace, fail } from './account';
+import { findProject } from './existingProject';
+import { authorizedRequest } from '../account/session';
+
+import type { AccountOptions } from './account';
+import type { Connection } from '../account/connection';
+
+/**
+ * `plitzi runtime push | status | vars`: a space's runtime — its own server code, run as a process of its own beside
+ * the platform (`@plitzi/sdk-server/runtime`) — pushed from the project that holds it, and the variables it starts with.
+ *
+ * The code is packed with the project's own `@plitzi/sdk-server`, at the version the project runs: what the platform
+ * runs is what the project would have run itself.
+ */
+
+export interface RuntimeOptions extends AccountOptions {
+  /** The runtime module: whose default export is `defineRuntime(…)`. `src/runtime.ts` by default. */
+  entry?: string;
+}
+
+type Environment = {
+  environment: string;
+  revision: number;
+  digest: string;
+  status: string;
+  error?: string;
+  endpoints: string[];
+  tasks: string[];
+  size: string;
+  stoppedReason?: 'idle' | 'manual';
+  idleStopsAt?: number;
+};
+
+/** A size a runtime may run at, and whether the space's plan includes it. */
+type Size = { name: string; label: string; cpu: string; memory: string; included: boolean };
+
+const DEFAULT_ENTRY = path.join('src', 'runtime.ts');
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+type Packer = { packRuntime: (entry: string) => Promise<Uint8Array> };
+
+const isPacker = (value: unknown): value is Packer => isRecord(value) && typeof value.packRuntime === 'function';
+
+/** This project's own packer — read, since it is the project's. */
+const projectPacker = async (root: string): Promise<Packer | undefined> => {
+  try {
+    const entry = createRequire(path.join(root, 'package.json')).resolve('@plitzi/sdk-server/runtime');
+    const loaded: unknown = await import(pathToFileURL(entry).href);
+    if (isPacker(loaded)) {
+      return loaded;
+    }
+  } catch {
+    // Said below: the one way to have it is to install it.
+  }
+
+  fail('plitzi runtime packs it with this project’s own @plitzi/sdk-server:\n  npm install @plitzi/sdk-server');
+
+  return undefined;
+};
+
+const connect = async (options: AccountOptions, doing: string): Promise<Connection | undefined> => {
+  const api = await apiFor(options);
+
+  return api ? connectionWithSpace(api, doing) : undefined;
+};
+
+/** Packs the project's runtime module and keeps it as the space's draft runtime — which a publish takes live. */
+export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
+  const connection = await connect(options, 'to push to');
+  if (!connection?.space) {
+    return;
+  }
+
+  const root = (await findProject(process.cwd()))?.root ?? process.cwd();
+  const entry = path.resolve(root, options.entry ?? DEFAULT_ENTRY);
+  try {
+    await fs.access(entry);
+  } catch {
+    fail(`There is no ${path.relative(root, entry)}: the module whose default export is defineRuntime({ start }).`);
+
+    return;
+  }
+
+  const packer = await projectPacker(root);
+  if (!packer) {
+    return;
+  }
+
+  let bytes: Uint8Array;
+  try {
+    bytes = await packer.packRuntime(entry);
+  } catch (error) {
+    fail(`It does not pack: ${error instanceof Error ? error.message : String(error)}`);
+
+    return;
+  }
+
+  const answered = await authorizedRequest<{ ok?: boolean; digest?: string; size?: number; error?: string }>(
+    connection,
+    `/spaces/${String(connection.space.id)}/runtime`,
+    { method: 'PUT', headers: { 'content-type': 'application/octet-stream' }, body: new Uint8Array(bytes) }
+  );
+  if (!answered.ok) {
+    fail(answered.error);
+
+    return;
+  }
+
+  const { reply } = answered.value;
+  if (reply.status !== 200 || !reply.data.digest) {
+    fail(reply.data.error ?? `The runtime was not kept (${String(reply.status)}).`);
+
+    return;
+  }
+
+  console.log(
+    `${chalk.green('✓')} ${connection.space.name}’s draft runtime is ${reply.data.digest.slice(0, 12)} ` +
+      `(${(bytes.byteLength / 1024).toFixed(0)} KB). It starts in a moment; publish the space to take it live.`
+  );
+};
+
+const readRuntime = async (
+  connection: Connection,
+  spaceId: number
+): Promise<{ environments: Environment[]; variables: string[]; sizes: Size[] } | undefined> => {
+  const answered = await authorizedRequest<{
+    environments?: Environment[];
+    variables?: string[];
+    sizes?: Size[];
+    error?: string;
+  }>(connection, `/spaces/${String(spaceId)}/runtime`);
+  if (!answered.ok) {
+    fail(answered.error);
+
+    return undefined;
+  }
+
+  const { reply } = answered.value;
+  if (reply.status !== 200) {
+    fail(reply.data.error ?? `Could not read the runtime (${String(reply.status)}).`);
+
+    return undefined;
+  }
+
+  return {
+    environments: reply.data.environments ?? [],
+    variables: reply.data.variables ?? [],
+    sizes: reply.data.sizes ?? []
+  };
+};
+
+/** How each environment's runtime is, and the names of its variables. */
+export const runtimeStatus = async (options: AccountOptions): Promise<void> => {
+  const connection = await connect(options, 'to read');
+  if (!connection?.space) {
+    return;
+  }
+
+  const runtime = await readRuntime(connection, connection.space.id);
+  if (!runtime) {
+    return;
+  }
+
+  if (!runtime.environments.length) {
+    console.log(`${connection.space.name} has no runtime. Push one: plitzi runtime push.`);
+  }
+
+  const spendOf = (name: string): string => {
+    const size = runtime.sizes.find(option => option.name === name);
+
+    return size ? `${size.label}, ${size.cpu} CPU / ${size.memory}` : name;
+  };
+  runtime.environments.forEach(({ environment, revision, digest, status, error, endpoints, tasks, size, ...rest }) => {
+    const version = revision === 0 ? 'draft' : `revision ${String(revision)}`;
+    console.log(`${chalk.bold(environment)} (${version}, ${digest.slice(0, 12)}): ${status} — ${spendOf(size)}`);
+    if (status === 'stopped') {
+      const why = rest.stoppedReason === 'idle' ? 'unused for too long' : 'stopped by hand';
+      console.log(
+        `  ${chalk.yellow(`Stopped (${why}): plitzi runtime start${environment === 'main' ? '' : ` --environment ${environment}`}`)}`
+      );
+    }
+
+    if (rest.idleStopsAt) {
+      console.log(`  Stops by itself on ${new Date(rest.idleStopsAt * 1000).toLocaleString()} if nothing uses it`);
+    }
+
+    if (error) {
+      console.log(`  ${chalk.red(error)}`);
+    }
+
+    if (status === 'ready') {
+      console.log(`  ${String(tasks.length)} tasks${endpoints.length ? `, answers ${endpoints.join(', ')}` : ''}`);
+    }
+  });
+  console.log(`Variables: ${runtime.variables.length ? runtime.variables.join(', ') : 'none'}`);
+  const included = runtime.sizes.filter(option => option.included).map(option => option.name);
+  console.log(`Sizes in this plan: ${included.length ? included.join(', ') : 'none'}`);
+};
+
+/** Starts an environment's runtime again, or stops it — kept stopped until started. */
+export const powerRuntime = async (power: 'start' | 'stop', options: AccountOptions & { environment?: string }) => {
+  const connection = await connect(options, 'to configure');
+  if (!connection?.space) {
+    return;
+  }
+
+  const environment = options.environment ?? 'main';
+  const answered = await authorizedRequest<{ error?: string }>(
+    connection,
+    `/spaces/${String(connection.space.id)}/runtime/${power}`,
+    { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ environment }) }
+  );
+  if (!answered.ok) {
+    fail(answered.error);
+
+    return;
+  }
+
+  const { reply } = answered.value;
+  if (reply.status !== 204) {
+    fail(
+      reply.data.error ?? `The runtime was not ${power === 'start' ? 'started' : 'stopped'} (${String(reply.status)}).`
+    );
+
+    return;
+  }
+
+  console.log(
+    `${chalk.green('✓')} ${environment} ${power === 'start' ? 'starts in a moment' : 'stops, and stays stopped until started'}.`
+  );
+};
+
+/** Chooses the size an environment's runtime runs at — one the space's plan includes — and it starts again at it. */
+export const setRuntimeSize = async (size: string, options: AccountOptions & { environment?: string }) => {
+  const connection = await connect(options, 'to configure');
+  if (!connection?.space) {
+    return;
+  }
+
+  const environment = options.environment ?? 'main';
+  const answered = await authorizedRequest<{ error?: string }>(
+    connection,
+    `/spaces/${String(connection.space.id)}/runtime/size`,
+    { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ size, environment }) }
+  );
+  if (!answered.ok) {
+    fail(answered.error);
+
+    return;
+  }
+
+  const { reply } = answered.value;
+  if (reply.status !== 204) {
+    fail(reply.data.error ?? `The size was not changed (${String(reply.status)}).`);
+
+    return;
+  }
+
+  console.log(`${chalk.green('✓')} ${environment} runs at ${size} — the runtime starts again at it.`);
+};
+
+/** Everything sent on standard input: a value piped in rather than typed where the shell history keeps it. */
+const readStdin = async (): Promise<string> => {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+  }
+
+  return Buffer.concat(chunks)
+    .toString('utf8')
+    .replace(/\r?\n$/, '');
+};
+
+/**
+ * Sets one of the runtime's variables — the runtime starts again with it. Without a value it is read from standard
+ * input (`printf %s "$URL" | plitzi runtime vars set REDIS_URL`), which keeps a secret out of the shell's history.
+ */
+export const setRuntimeVariable = async (name: string, value: string | undefined, options: AccountOptions) => {
+  const connection = await connect(options, 'to configure');
+  if (!connection?.space) {
+    return;
+  }
+
+  const given = value ?? (await readStdin());
+  const answered = await authorizedRequest<{ error?: string }>(
+    connection,
+    `/spaces/${String(connection.space.id)}/runtime/variables/${encodeURIComponent(name)}`,
+    { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ value: given }) }
+  );
+  if (!answered.ok) {
+    fail(answered.error);
+
+    return;
+  }
+
+  const { reply } = answered.value;
+  if (reply.status !== 204) {
+    fail(reply.data.error ?? `${name} was not set (${String(reply.status)}).`);
+
+    return;
+  }
+
+  console.log(`${chalk.green('✓')} ${name} set — the runtime starts again with it.`);
+};
+
+export const unsetRuntimeVariable = async (name: string, options: AccountOptions) => {
+  const connection = await connect(options, 'to configure');
+  if (!connection?.space) {
+    return;
+  }
+
+  const answered = await authorizedRequest<{ error?: string }>(
+    connection,
+    `/spaces/${String(connection.space.id)}/runtime/variables/${encodeURIComponent(name)}`,
+    { method: 'DELETE' }
+  );
+  if (!answered.ok) {
+    fail(answered.error);
+
+    return;
+  }
+
+  console.log(`${chalk.green('✓')} ${name} removed — the runtime starts again without it.`);
+};

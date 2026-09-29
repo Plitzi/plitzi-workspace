@@ -42,49 +42,6 @@ const mysqlReachable = (): boolean => {
 /** The prebuilt bundle the no-build example loads straight from a script tag. */
 const VENDOR_BUNDLE = path.resolve(import.meta.dirname, '../apps/sdk/dist/plitzi-sdk-vendor.js');
 
-/** Whether a public URL an example fetches can be reached from this machine.
- *
- *  An example whose subject is data from a third party has nothing to assert offline — and a suite that goes red on a
- *  train is one people learn to ignore. Asked once per URL, like every other gate, with the request the example makes. */
-const reachable = new Map<string, boolean>();
-const reachableUrl = (url: string): boolean => {
-  const known = reachable.get(url);
-  if (known !== undefined) {
-    return known;
-  }
-
-  let up = true;
-  try {
-    execSync(`curl -sfI --max-time 3 ${url}`, { stdio: 'ignore' });
-  } catch {
-    up = false;
-  }
-
-  reachable.set(url, up);
-
-  return up;
-};
-
-const catApiReachable = (): boolean => reachableUrl('https://api.thecatapi.com/v1/images/search');
-
-/** The Redis Pizarra's replicas share: `REDIS_URL`, or the local docker one (a database of the suite's own). */
-const PIZARRA_REDIS = process.env.REDIS_URL || 'redis://127.0.0.1:63790/9';
-
-let redisUp: boolean | undefined;
-const redisReachable = (): boolean => {
-  if (redisUp === undefined) {
-    const url = new URL(PIZARRA_REDIS);
-    try {
-      execSync(`nc -z -w 2 ${url.hostname} ${url.port || '6379'}`, { stdio: 'ignore' });
-      redisUp = true;
-    } catch {
-      redisUp = false;
-    }
-  }
-
-  return redisUp;
-};
-
 export type TargetGate = {
   /** Whether this machine can run the target at all — asked, not declared, so there is no flag to remember. */
   open: () => boolean;
@@ -266,31 +223,6 @@ export const targets: Target[] = [
     }
   },
   {
-    id: 'server-actions',
-    workspace: '@plitzi/example-server-actions',
-    /** One command, TWO listeners: the example serves the PUBLISHED space on 5010 and its draft on 5011, which is
-     *  the only way to see the versioning rule rather than read about it. The spec derives the second origin from
-     *  this one — Playwright only ever waits on the first.
-     *
-     *  So this target owns 5010 AND 5011, and anything added below starts at 5012. Claiming a port it already
-     *  listens on is not a bind error anybody sees: Playwright's probe finds an open socket, calls the server
-     *  ready, and the specs run against the wrong site with no clue which one they hit. */
-    command: 'PORT=5010 yarn workspace @plitzi/example-server-actions start',
-    origin: 'http://127.0.0.1:5010',
-    what: 'A declarative flow the server runs, called from a page'
-  },
-  {
-    id: 'server-actions-render',
-    workspace: '@plitzi/example-server-actions-render',
-    command: 'PORT=5012 yarn workspace @plitzi/example-server-actions-render start',
-    origin: 'http://127.0.0.1:5012',
-    what: 'The server fetches an API while the page renders',
-    gate: {
-      open: catApiReachable,
-      hint: 'this example fetches api.thecatapi.com while it renders — connect to the internet'
-    }
-  },
-  {
     id: 'server-actions-no-server',
     workspace: '@plitzi/example-server-actions-no-server',
     command: 'yarn workspace @plitzi/example-server-actions-no-server start --port 5013',
@@ -309,50 +241,11 @@ export const targets: Target[] = [
     what: 'Scheduled and delayed jobs over a durable queue the server keeps in SQLite'
   },
   {
-    id: 'blog',
-    workspace: '@plitzi/example-blog',
-    command: 'PORT=5014 yarn workspace @plitzi/example-blog start',
-    origin: 'http://127.0.0.1:5014',
-    what: 'A whole small blog — a front page, posts, sessions, and who may publish'
-  },
-  {
-    id: 'ceniza',
-    workspace: '@plitzi/example-ceniza',
-    // Its booking confirmation goes to the suite's mail sink rather than to a Mailpit the machine may not run.
-    command: 'PORT=5016 CENIZA_SMTP_PORT=5204 yarn workspace @plitzi/example-ceniza start',
-    origin: 'http://127.0.0.1:5016',
-    what: 'A whole restaurant website — live availability, bookings with a confirmation email, a journal, no server code'
-  },
-  {
-    id: 'seismic',
-    workspace: '@plitzi/example-seismic',
-    command: 'PORT=5019 yarn workspace @plitzi/example-seismic start',
-    origin: 'http://127.0.0.1:5019',
-    what: 'Tremor — every earthquake the USGS publishes, on a globe, with a display authored around it',
-    gate: {
-      open: () => reachableUrl('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson'),
-      hint: 'this example reads the USGS earthquake feed — connect to the internet'
-    }
-  },
-  {
-    id: 'whiteboard',
-    workspace: '@plitzi/example-whiteboard',
-    // In memory: every run starts from the featured boards and nothing else.
-    command: 'PORT=5018 REDIS_URL= yarn workspace @plitzi/example-whiteboard start',
+    id: 'runtime',
+    workspace: '@plitzi/example-runtime',
+    command: 'PORT=5018 PULSE_SECONDS=1 yarn workspace @plitzi/example-runtime start',
     origin: 'http://127.0.0.1:5018',
-    what: 'Pizarra — a collaborative whiteboard over WebSocket, drawn on a canvas, with its own bench'
-  },
-  {
-    id: 'whiteboard-replicas',
-    workspace: '@plitzi/example-whiteboard',
-    // Three replicas (5021–5023) over one Redis, behind a round-robin balancer with no affinity at 5020.
-    command: `PORT=5020 REPLICA_PORT=5020 REDIS_URL=${PIZARRA_REDIS} yarn workspace @plitzi/example-whiteboard start:replicas`,
-    origin: 'http://127.0.0.1:5020',
-    what: 'Pizarra as three replicas behind a balancer with no affinity — people and agents spread across them',
-    gate: {
-      open: redisReachable,
-      hint: 'start a Redis on 127.0.0.1:63790 (the services compose of plitzi-sdk-server has one), or set REDIS_URL'
-    }
+    what: 'A space runtime self-hosted: its task, its route and its held-open stream, loaded with serveRuntime'
   },
   {
     id: 'builder',

@@ -1,5 +1,5 @@
-/** Which of a space's two documents a change was made to. */
-export type ChangeDocument = 'schema' | 'style';
+/** Which of a space's documents a change was made to: its schema, its style, or its functions' source. */
+export type ChangeDocument = 'schema' | 'style' | 'functions';
 
 /**
  * Where a change came from: a person in the builder, an agent over MCP, the builder's co-worker, the autofix, a GraphQL
@@ -11,10 +11,10 @@ export type ChangeOrigin = 'builder' | 'mcp' | 'coworker' | 'autofix' | 'api' | 
  * What one entry is about. Schema: an element (pages and layouts are elements too), a page folder, a schema variable,
  * a setting (`settings.<key>`, `definition.<key>`, the page order `pages`). Style: a class selector, a global style
  * (a bare element selector), an id style, a design token (`<category>/<name>`), a font family, a style setting
- * (`theme`, `mode`).
+ * (`theme`, `mode`). Functions: a file of their source, by its path (`index.ts`, `lib/feed.ts`).
  */
 export type ChangeKind =
-  'element' | 'folder' | 'variable' | 'setting' | 'selector' | 'globalStyle' | 'idStyle' | 'token' | 'font';
+  'element' | 'folder' | 'variable' | 'setting' | 'selector' | 'globalStyle' | 'idStyle' | 'token' | 'font' | 'file';
 
 /** One entity that changed, whole, before and after: the field-level difference is derived from the two. */
 export type ChangeEntry = {

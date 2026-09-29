@@ -28,7 +28,7 @@ const parseCookieHeader = (cookieHeader: string): Record<string, string> => {
   return cookies;
 };
 
-const readCookies = (carrier: CredentialCarrier): Record<string, string> => {
+export const readCookies = (carrier: CredentialCarrier): Record<string, string> => {
   if (carrier.cookies) {
     return carrier.cookies;
   }

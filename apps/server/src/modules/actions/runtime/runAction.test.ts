@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { tasksOf } from '../../functions/testing/tasksOf';
 import { createActionsModule } from '../index';
 
 import type { ActionRunError } from './errors';
-import type { ActionRunRecord, ActionRunRequest, ActionTask } from '../types';
+import type { FunctionTask } from '../../functions/contract';
+import type { ActionRunRecord, ActionRunRequest } from '../types';
 import type { ActionDocument, ActionEntry, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
@@ -93,7 +95,7 @@ describe('runAction', () => {
     /** Records what each step was asked to do, in order: the property under test is WHICH steps ran. */
     const recorder = () => {
       const labels: string[] = [];
-      const task: ActionTask<{ label: string }> = {
+      const task: FunctionTask<{ label: string }> = {
         namespace: 'test',
         action: 'record',
         title: 'Record',
@@ -128,7 +130,7 @@ describe('runAction', () => {
 
     it('gives back what was taken, and still answers as failed', async () => {
       const { labels, task } = recorder();
-      const { runAction } = createActionsModule({ lookups, tasks: [task] });
+      const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
       const entry = bookingEntry({
         mail: node('mail', { action: 'flow.fail', params: { message: 'mail refused' }, afterNode: 'out' })
       });
@@ -150,7 +152,7 @@ describe('runAction', () => {
      */
     it('outlines the run without what any step was given or returned', async () => {
       const { task } = recorder();
-      const { runAction } = createActionsModule({ lookups, tasks: [task] });
+      const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
       const entry = bookingEntry({
         mail: node('mail', { action: 'flow.fail', params: { message: 'mail refused' }, afterNode: 'out' })
       });
@@ -171,7 +173,7 @@ describe('runAction', () => {
 
     it('ends at On Failure when nothing failed', async () => {
       const { labels, task } = recorder();
-      const { runAction } = createActionsModule({ lookups, tasks: [task] });
+      const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
 
       const result = await runAction(request(bookingEntry({})));
 
@@ -183,7 +185,7 @@ describe('runAction', () => {
     /** The failure came before anything was taken, so there is nothing to give back — and giving back is a write. */
     it('asks each undo step its own when', async () => {
       const { labels, task } = recorder();
-      const { runAction } = createActionsModule({ lookups, tasks: [task] });
+      const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
       const entry = bookingEntry(
         { check: node('check', { action: 'flow.fail', params: { message: 'no such day' }, afterNode: 'take' }) },
         'check'
@@ -200,7 +202,7 @@ describe('runAction', () => {
     it('keeps the failure it had when undoing fails too', async () => {
       const { task } = recorder();
       const onRun = vi.fn();
-      const { runAction } = createActionsModule({ lookups, tasks: [task], onRun });
+      const { runAction } = createActionsModule({ lookups, functions: tasksOf(task), onRun });
       const entry = bookingEntry({
         mail: node('mail', { action: 'flow.fail', params: { message: 'mail refused' }, afterNode: 'out' })
       });
@@ -217,14 +219,14 @@ describe('runAction', () => {
     /** A run that hit its deadline took its seats just the same, and its own clock is what ran out. */
     it('gives back what a run that hit its deadline took', async () => {
       const { labels, task } = recorder();
-      const stuck: ActionTask<Record<string, never>> = {
+      const stuck: FunctionTask<Record<string, never>> = {
         namespace: 'test',
         action: 'stuck',
         title: 'Never returns',
         params: {},
         run: () => new Promise(() => undefined)
       };
-      const { runAction } = createActionsModule({ lookups, tasks: [task, stuck] });
+      const { runAction } = createActionsModule({ lookups, functions: tasksOf(task, stuck) });
       const entry = bookingEntry({ hang: node('hang', { action: 'test.stuck', afterNode: 'out' }) });
       entry.document.limits = { timeoutMs: 40 };
 
@@ -240,14 +242,14 @@ describe('runAction', () => {
      */
     it('names the step that was still running as where a dead run stopped', async () => {
       const { task } = recorder();
-      const stuck: ActionTask<Record<string, never>> = {
+      const stuck: FunctionTask<Record<string, never>> = {
         namespace: 'test',
         action: 'stuck',
         title: 'Never returns',
         params: {},
         run: () => new Promise(() => undefined)
       };
-      const { runAction } = createActionsModule({ lookups, tasks: [task, stuck] });
+      const { runAction } = createActionsModule({ lookups, functions: tasksOf(task, stuck) });
       const entry = bookingEntry({ hang: node('hang', { action: 'test.stuck', afterNode: 'out' }) });
       entry.document.limits = { timeoutMs: 40 };
 
@@ -290,7 +292,7 @@ describe('runAction', () => {
    * in the process able to tell it apart from work in progress.
    */
   it('ends a run whose step never returns, and says why', async () => {
-    const stuck: ActionTask<Record<string, never>> = {
+    const stuck: FunctionTask<Record<string, never>> = {
       namespace: 'test',
       action: 'stuck',
       title: 'Never returns',
@@ -306,7 +308,7 @@ describe('runAction', () => {
         out: node('out', { action: 'flow.output', params: { values: '{}' } })
       }
     });
-    const { runAction } = createActionsModule({ lookups, tasks: [stuck] });
+    const { runAction } = createActionsModule({ lookups, functions: tasksOf(stuck) });
 
     await expect(runAction(request(entry))).rejects.toMatchObject({ reason: 'timeout' });
   });
@@ -315,7 +317,7 @@ describe('runAction', () => {
    *  because the refusal was rethrown before the record was written. */
   it('records a run that hit its deadline instead of vanishing', async () => {
     const onRun = vi.fn();
-    const stuck: ActionTask<Record<string, never>> = {
+    const stuck: FunctionTask<Record<string, never>> = {
       namespace: 'test',
       action: 'stuck',
       title: 'Never returns',
@@ -330,7 +332,7 @@ describe('runAction', () => {
         out: node('out', { action: 'flow.output', params: { values: '{}' } })
       }
     });
-    const { runAction } = createActionsModule({ lookups, tasks: [stuck], onRun });
+    const { runAction } = createActionsModule({ lookups, functions: tasksOf(stuck), onRun });
 
     await expect(runAction(request(entry))).rejects.toThrow(/40ms budget/);
     const recorded = onRun.mock.calls[0][0] as ActionRunRecord;
@@ -340,7 +342,7 @@ describe('runAction', () => {
 
   /** A document may only ever TIGHTEN what the deployment allows: an authored ceiling is customer input. */
   it('takes the tighter of the deployment’s budget and the document’s', async () => {
-    const slow: ActionTask<Record<string, never>> = {
+    const slow: FunctionTask<Record<string, never>> = {
       namespace: 'test',
       action: 'slow',
       title: 'Slow',
@@ -357,7 +359,7 @@ describe('runAction', () => {
     });
     const { runAction } = createActionsModule({
       lookups,
-      tasks: [slow],
+      functions: tasksOf(slow),
       limits: { timeoutMs: 40 }
     });
 
@@ -484,7 +486,7 @@ describe('runAction', () => {
 
   it('does not let a step read a credential out of the flow scope', async () => {
     const secret = 'sk-live-01234567890';
-    const echo: ActionTask<{ value: string }> = {
+    const echo: FunctionTask<{ value: string }> = {
       namespace: 'test',
       action: 'echo',
       title: 'Echo',
@@ -499,7 +501,7 @@ describe('runAction', () => {
     });
     const { runAction } = createActionsModule({
       lookups: { ...lookups, getCredential: () => Promise.resolve({ apiKey: secret }) },
-      tasks: [echo]
+      functions: tasksOf(echo)
     });
 
     const result = await runAction(request(entry));
@@ -511,28 +513,32 @@ describe('runAction', () => {
 
   it('redacts a secret a task returned, wherever it ended up', async () => {
     const secret = 'sk-live-01234567890';
-    const leaky: ActionTask<Record<string, never>> = {
-      namespace: 'test',
-      action: 'leak',
-      title: 'Leak',
-      params: {},
-      // A task legitimately holding a credential can still put it somewhere it should not be — in a header it
-      // built, or in an error a provider echoed back. Redaction is keyed on the VALUE for exactly that reason.
-      run: async (_params, ctx) => ({ echoed: (await ctx.credential('stripe'))?.apiKey })
-    };
+    // A task legitimately holding a credential can still put it somewhere it should not be — a provider that echoes
+    // the header it was sent, or an error quoting it. Redaction is keyed on the VALUE for exactly that reason.
+    const fetchImpl = vi.fn((_url: string | URL | Request, init?: RequestInit) =>
+      Promise.resolve(new Response(JSON.stringify({ echoed: new Headers(init?.headers).get('authorization') })))
+    );
     const entry = buildEntry({
       nodes: {
         start: callTrigger({}, 'call'),
-        call: node('call', { action: 'test.leak' })
+        call: node('call', {
+          action: 'http.request',
+          params: {
+            url: 'https://api.example.com/charges',
+            credential: 'stripe',
+            headers: '{"authorization": "Bearer {{ credential.apiKey }}"}'
+          }
+        })
       }
     });
     const { runAction } = createActionsModule({
       lookups: { ...lookups, getCredential: () => Promise.resolve({ apiKey: secret }) },
-      tasks: [leaky]
+      fetchImpl
     });
 
     const result = await runAction(request(entry));
 
+    expect(fetchImpl).toHaveBeenCalled();
     expect(JSON.stringify(result.trace)).not.toContain(secret);
     expect(JSON.stringify(result.trace)).toContain('«redacted»');
   });
@@ -565,7 +571,9 @@ describe('runAction', () => {
   it('refuses a custom task that shadows a built-in namespace', () => {
     const shadow = { namespace: 'flow', action: 'delay', title: 'Nope', params: {}, run: () => ({}) };
 
-    expect(() => createActionsModule({ lookups, tasks: [shadow as unknown as ActionTask<never>] })).toThrow(/reserved/);
+    expect(() =>
+      createActionsModule({ lookups, functions: tasksOf(shadow as unknown as FunctionTask<never>) })
+    ).toThrow(/reserved/);
   });
 });
 
@@ -617,7 +625,7 @@ describe('run records', () => {
    */
   it('redacts a credential out of the record, even one resolved after the step that echoed it', async () => {
     const secret = 'sk-live-late-0123456789';
-    const echo: ActionTask<Record<string, never>> = {
+    const echo: FunctionTask<Record<string, never>> = {
       namespace: 'test',
       action: 'echo',
       title: 'Echo',
@@ -625,24 +633,22 @@ describe('run records', () => {
       // Echoes the value before anything in the run has resolved it as a credential — a provider answering with it.
       run: () => Promise.resolve({ echoed: secret })
     };
-    const resolve: ActionTask<Record<string, never>> = {
-      namespace: 'test',
-      action: 'resolve',
-      title: 'Resolve',
-      params: {},
-      run: async (_params, ctx) => ({ has: Boolean(await ctx.credential('stripe')) })
-    };
     const entry = buildEntry({
       nodes: {
         start: callTrigger({}, 'first'),
         first: node('first', { action: 'test.echo', afterNode: 'second' }),
-        second: node('second', { action: 'test.resolve' })
+        // Resolves the credential — the moment the run first learns the value is a secret.
+        second: node('second', {
+          action: 'http.request',
+          params: { url: 'https://api.example.com/ping', credential: 'stripe', headers: '{}' }
+        })
       }
     });
 
     const [record] = await recordsOf(entry, {
       lookups: { ...lookups, getCredential: () => Promise.resolve({ apiKey: secret }) },
-      tasks: [echo, resolve]
+      functions: tasksOf(echo),
+      fetchImpl: () => Promise.resolve(new Response('{}'))
     });
 
     expect(JSON.stringify(record)).not.toContain(secret);

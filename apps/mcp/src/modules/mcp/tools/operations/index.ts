@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { actionOps } from './actions';
 import { connectorOps } from './connectors';
+import { functionOps } from './functions';
 import { elementOps } from './schema';
 import { registerSharedSchemaIds } from './schemaIds';
 import { styleOps } from './style';
@@ -57,7 +58,7 @@ const documentOps = [
 
 export const documentOperation = z.discriminatedUnion('type', documentOps);
 
-// The full write vocabulary: the two schemas plus the connector and action stores, which are neither of them
+// The full write vocabulary: the two schemas plus the connector, action and functions stores, which are neither of them
 // (their own rows, their own persisters). Only the tools that can actually reach those stores offer these.
 export const operation = z.discriminatedUnion('type', [
   ...documentOps,
@@ -66,7 +67,9 @@ export const operation = z.discriminatedUnion('type', [
   connectorOps.deleteConnector,
   actionOps.upsertAction,
   actionOps.patchAction,
-  actionOps.deleteAction
+  actionOps.deleteAction,
+  functionOps.upsertFunctionFile,
+  functionOps.deleteFunctionFile
 ]);
 
 export type Operation = z.infer<typeof operation>;
