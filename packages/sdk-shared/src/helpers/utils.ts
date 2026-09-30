@@ -33,7 +33,8 @@ export const getPathsFromObeject = (
       return [...acum, path];
     }
 
-    if (Array.isArray(object[key]) && skipArray) {
+    // Performance optimization: if the value is an array and we want to skip arrays or the array is too long, we don't go deeper into it.
+    if (Array.isArray(object[key]) && (skipArray || (object[key] as unknown[]).length > 5)) {
       return [...acum, path];
     }
 
