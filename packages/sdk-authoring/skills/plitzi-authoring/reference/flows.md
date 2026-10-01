@@ -39,7 +39,7 @@ never a nested tree. Use the step builders — they fill in where a step runs an
 
 ## What a trigger hands the flow
 
-Name the trigger (`named('changed', onChange())`) and read its payload as `{{ changed.<field> }}`:
+Name the trigger (`named('changed', on('onChange'))`) and read its payload as `{{ changed.<field> }}`:
 
 | Trigger                                                                                                | Payload                                                 |
 | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
