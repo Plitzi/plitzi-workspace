@@ -38,14 +38,13 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const [[schemaSettings, styleCache, currentPageId, variables = emptyObject, fonts = NO_FONTS]] =
-    useSdkStore([
-      'schema.settings',
-      'style.cache',
-      'navigation.currentPageId',
-      'runtime.sources.variables',
-      'style.fonts'
-    ]);
+  const [[schemaSettings, styleCache, currentPageId, variables = emptyObject, fonts = NO_FONTS]] = useSdkStore([
+    'schema.settings',
+    'style.cache',
+    'navigation.currentPageId',
+    'runtime.sources.variables',
+    'style.fonts'
+  ]);
   const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);

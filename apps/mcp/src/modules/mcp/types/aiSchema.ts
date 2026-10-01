@@ -62,7 +62,10 @@ export interface AIComponentSummary {
   ref: string;
   label: string;
   /** What an instance hands in, each an attribute of the instance and read inside as `{{ props.<name> }}`. */
-  props: Record<string, { type: string; description: string; required?: boolean; default?: unknown; options?: string[] }>;
+  props: Record<
+    string,
+    { type: string; description: string; required?: boolean; default?: unknown; options?: string[] }
+  >;
   /** Elements of its tree an instance fills with its children, each child naming the one it fills (`slot`). */
   slots: string[];
   /** The root of its tree: `pageRef` for every element op inside it is the component's ref. */
