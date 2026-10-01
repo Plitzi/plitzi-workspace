@@ -40,7 +40,7 @@ const visitsRead: FunctionTask<Record<string, never>> = {
 export const functions = defineFunctions({
   tasks: [visitsCount, visitsRead],
   routes: {
-    /** The same number for anything that is not a page — answered under `/api/`, as every function route is. */
+    /** The same number for anything that is not a page — answered under `/fn/`, as every function route is. */
     'GET /visits': async (_request, ctx) => Response.json({ visits: await readVisits(ctx.kv) })
   }
 });

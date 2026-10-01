@@ -42,5 +42,5 @@ server.listen(PORT, HOST);
 closeOnSignals(server, { afterClose: () => runtime.close() });
 
 console.log(
-  `[runtime] the page on ${publicUrl}/ — its count at ${publicUrl}/api/visits, its pulse at ${publicUrl}/pulse`
+  `[runtime] the page on ${publicUrl}/ — its count at ${publicUrl}/fn/visits, its pulse at ${publicUrl}/pulse`
 );

@@ -11,7 +11,7 @@ yarn start:dev   # the same, reloading on save, while you edit it
 ```
 
 ```
-[runtime] the page on http://127.0.0.1:4017/ — its count at http://127.0.0.1:4017/api/visits, its pulse at http://127.0.0.1:4017/pulse
+[runtime] the page on http://127.0.0.1:4017/ — its count at http://127.0.0.1:4017/fn/visits, its pulse at http://127.0.0.1:4017/pulse
 ```
 
 Open the page and press **Count me**; open `/pulse` in two tabs and watch the number of listeners.
@@ -21,7 +21,7 @@ Open the page and press **Count me**; open `/pulse` in two tabs and watch the nu
 | File | |
 |---|---|
 | `src/runtime.ts` | The module: `start({ env, publicUrl })` answers its `functions`, its `endpoints` and how to `close` |
-| `src/functions.ts` | A task (`visits.count`, `visits.read`) and a route (`GET /api/visits`), written as any space's functions are — with the server's `ctx.kv` |
+| `src/functions.ts` | A task (`visits.count`, `visits.read`) and a route (`GET /visits`, served at `/fn/visits`), written as any space's functions are — with the server's `ctx.kv` |
 | `src/pulse.ts` | `/pulse`: an event stream held open for as long as someone listens, saying how many are — what a function cannot be |
 | `src/actions.ts`, `src/space.ts` | The page and its two actions, documents like any space's: they name the tasks, and nothing else of the runtime |
 | `src/main.ts` | A server of your own: `serveRuntime` gives the runtime's functions to it (`native`) and its endpoints as a stage |

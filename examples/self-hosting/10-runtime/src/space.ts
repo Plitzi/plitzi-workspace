@@ -58,7 +58,7 @@ const page: PageSpec = {
     container({
       class: 'pulseLinks',
       children: [
-        link({ mode: 'external', href: '/api/visits', label: 'The count, as JSON', children: [text('/api/visits')] }),
+        link({ mode: 'external', href: '/fn/visits', label: 'The count, as JSON', children: [text('/fn/visits')] }),
         text(' · '),
         link({ mode: 'external', href: '/pulse', label: 'Who is listening, live', children: [text('/pulse')] })
       ]

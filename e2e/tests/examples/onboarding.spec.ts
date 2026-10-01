@@ -325,8 +325,8 @@ describeTarget('runtime', subject => {
     await expect(count).toHaveText(`${String(before + 1)} visits so far`);
   });
 
-  test('the count is a route as well, under /api/', async ({ request }) => {
-    const answer = (await (await request.get(`${subject.origin}/api/visits`)).json()) as { visits: number };
+  test('the count is a route as well, under /fn/', async ({ request }) => {
+    const answer = (await (await request.get(`${subject.origin}/fn/visits`)).json()) as { visits: number };
 
     expect(answer.visits).toBeGreaterThanOrEqual(0);
   });
