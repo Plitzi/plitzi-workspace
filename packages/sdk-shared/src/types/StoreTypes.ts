@@ -145,6 +145,15 @@ export type RenderSettings = {
    * has to keep in step with the document by hand.
    */
   testAttributes?: boolean;
+  /**
+   * Whether the page may write the document's head — its SEO title and description. On, as a page's own document is.
+   *
+   * Off where the page is drawn in a frame of a host whose document is not the page's: the builder's canvas. A head
+   * manager writes the head of the document its code runs in, which there is the editor's — and the builder is itself
+   * mounted in a page that manages that head, so a second manager under it rewrote the host's tags and took the
+   * builder's own stylesheet away the moment a preview showed a page with SEO.
+   */
+  ownsHead?: boolean;
 };
 
 // `enabled` is the single answer to "is RSC live in this render": the schema asking for it is not enough, a server

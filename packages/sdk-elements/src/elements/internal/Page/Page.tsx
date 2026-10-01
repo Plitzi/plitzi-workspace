@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import { useSdkStore } from '@plitzi/sdk-shared/store';
+import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -75,6 +75,8 @@ const Page = ({
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
+  // Written only into a head that is the page's own — never the builder's, around the canvas this page is drawn in.
+  const { ownsHead } = useRenderSettings();
   const [[routeParams, queryParams]] = useSdkStore(['navigation.routeParams', 'navigation.queryParams']);
 
   const layoutChain = useLayoutChain(layout, layoutContainer);
@@ -111,7 +113,7 @@ const Page = ({
       className={clsx('plitzi-component__page', className)}
       interactionTriggers={declaration.triggers}
     >
-      {seoEnabled && previewMode && (
+      {seoEnabled && previewMode && ownsHead && (
         <Helmet>
           {!!seoPageTitle && <title>{seoPageTitle}</title>}
           {!!seoPageDescription && <meta name="description" content={seoPageDescription} />}

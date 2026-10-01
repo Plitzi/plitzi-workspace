@@ -73,6 +73,18 @@ platform's **Tasks**. The other headings now read Callbacks, Global callbacks an
   `SpaceActionTasks` carry it (`ActionTaskDescriptor.origin`).
 - `@plitzi/sdk-shared`: an `InteractionCallback` may name the `group` the picker lists it under.
 
+## Fixed: preview no longer breaks a builder that is embedded in a page
+
+When the builder is mounted inside a Plitzi page (the platform's `/spaces/:id/update`), going to preview with a page
+that has SEO turned on left the builder unstyled. The previewed page wrote its title and description through a head
+manager of the builder's own, and that manager rewrote the host page's head, removing the builder's own stylesheet.
+
+- `@plitzi/sdk-shared`: a new render setting, `ownsHead`, says whether the page may write the document head. It is on
+  by default (`DEFAULT_RENDER_SETTINGS`).
+- `@plitzi/sdk-elements`: `Page` writes its SEO only where `ownsHead` is on.
+- Builder: sets `ownsHead: false` for its canvas. A page drawn there is in a frame, and the document head is the
+  editor's. The canvas's own `HelmetProvider` is gone.
+
 ## Dev tools hear about the render run the page stopped waiting for
 
 When a server element's action ran past the section's budget, the page was answered without it. The run ended a moment

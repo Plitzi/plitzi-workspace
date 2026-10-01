@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import { HelmetProvider } from '@dr.pogodin/react-helmet';
+import { render, waitFor } from '@testing-library/react';
 import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
@@ -110,5 +111,39 @@ describe('Page Tests', () => {
 
     expect(container.querySelector('[data-layout]')).toBeNull();
     expect(container.querySelector('p')?.textContent).toBe('body');
+  });
+
+  it('writes its SEO into a head that is its own', async () => {
+    document.title = 'Host';
+    render(
+      <HelmetProvider>
+        <StoreProvider value={{ navigation }}>
+          <ElementContext value={skipHocEntry()}>
+            <Page seoEnabled seoPageTitle="Tremor" seoPageDescription="Earthquakes" />
+          </ElementContext>
+        </StoreProvider>
+      </HelmetProvider>
+    );
+
+    await waitFor(() => expect(document.title).toBe('Tremor'));
+  });
+
+  /**
+   * The builder's canvas: the page is drawn in a frame, and the head its code would write is the editor's. A second
+   * head manager there rewrote the host page's tags — the builder's own stylesheet with them — on every preview.
+   */
+  it('leaves a head that is not its own alone, with no head manager needed at all', async () => {
+    document.title = 'Builder';
+    render(
+      <StoreProvider value={{ navigation, render: { ownsHead: false } }}>
+        <ElementContext value={skipHocEntry()}>
+          <Page seoEnabled seoPageTitle="Tremor" seoPageDescription="Earthquakes" />
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    expect(document.title).toBe('Builder');
+    expect(document.head.querySelector('meta[name="description"]')).toBeNull();
   });
 });

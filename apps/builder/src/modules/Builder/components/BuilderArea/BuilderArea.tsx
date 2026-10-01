@@ -1,4 +1,3 @@
-import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';
@@ -201,14 +200,12 @@ const BuilderArea = ({
                 >
                   <SpaceContainer>
                     <PlitziServiceProvider value={plitziContextValue}>
-                      <HelmetProvider>
-                        {/* No key on the base element: a key here remounts the whole canvas on every page
+                      {/* No key on the base element: a key here remounts the whole canvas on every page
                             switch, and the layout shell is rendered inside the page — so two pages naming the
                             same `layoutContainer` rebuilt it anyway. `Plugin` is resolved per base element, so
                             switching to a root of a different KIND still changes the component type and remounts;
                             page to page keeps the shell and swaps only the body. */}
-                        <Plugin internalProps={baseElementValueMemo} />
-                      </HelmetProvider>
+                      <Plugin internalProps={baseElementValueMemo} />
                     </PlitziServiceProvider>
                   </SpaceContainer>
 

@@ -349,13 +349,14 @@ const App = (props: AppProps) => {
     [client, debugMode, instanceId, localComponents, props, server, webId]
   );
 
-  // Same floor as the SDK, minus the one thing the builder is not: an editor opens in edit mode, not preview.
-  // `AppMain` syncs the live values (its preview toggle, debugMode, environment) over this.
+  // Same floor as the SDK, minus what the builder is not: an editor opens in edit mode, not preview, and the head of the
+  // document is the editor's, never the page's on its canvas. `AppMain` syncs the live values (its preview toggle,
+  // debugMode, environment) over this.
   const storeValue = useMemo(
     () => ({
       styleSelector: 'base',
       collaboration: { collaborators: [] },
-      render: { ...DEFAULT_RENDER_SETTINGS, previewMode: false }
+      render: { ...DEFAULT_RENDER_SETTINGS, previewMode: false, ownsHead: false }
     }),
     []
   );
