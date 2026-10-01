@@ -117,3 +117,27 @@ export type SpaceDeployment = {
   createdAt: number;
   updatedAt: number;
 };
+
+/**
+ * What one version of a space is made of: the draft (`main`) a snapshot would freeze, or a snapshot as it was frozen.
+ * Counts and names, never contents — what the builder shows before a snapshot is made, and what `plitzi create --from`
+ * says it is taking out.
+ */
+export type SpaceVersionContents = {
+  environment: Environment;
+  /** 0 for the draft. */
+  revision: number;
+  /** A snapshot's own words and moment; none for the draft. */
+  snapshot: { description: string; publishedAt: string } | null;
+  pages: number;
+  layouts: number;
+  elements: number;
+  /** Every plugin installed, and whether the source it was built from is kept with this version. */
+  plugins: { type: string; source: boolean }[];
+  actions: number;
+  connectors: number;
+  /** What the space's functions declare, or none when it has none. */
+  functions: { tasks: number; routes: number } | null;
+  /** Its runtime, and whether the source it was packed from is kept with this version — none when it has none. */
+  runtime: { source: boolean } | null;
+};

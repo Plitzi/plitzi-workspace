@@ -1039,6 +1039,10 @@
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceRuntimeQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceRuntimeQuery.mjs"
     },
+    "./network/graphql/builder/Queries/Space/SpaceVersionContentsQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceVersionContentsQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceVersionContentsQuery.mjs"
+    },
     "./network/graphql/builder/Queries/Space/SpaceVisitorsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceVisitorsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceVisitorsQuery.mjs"

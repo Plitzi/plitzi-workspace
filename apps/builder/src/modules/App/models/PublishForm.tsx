@@ -4,6 +4,8 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
+import VersionContents from '../components/VersionContents';
+
 import type { Environment } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
@@ -34,6 +36,7 @@ const PublishForm = ({ environment = 'development', description = '', onClose, o
         <Alert className="mb-4 text-white" intent="info">
           Make a snapshot and save it into an environment to later publish it
         </Alert>
+        <VersionContents environment="main" title="This snapshot will freeze" />
         <Form.Select name="environment" label="Environment" size="sm">
           <option value="development">Development</option>
           <option value="staging">Staging</option>

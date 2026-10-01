@@ -65,4 +65,13 @@ describe('plitzi create --from', () => {
 
     expect(process.exitCode).toBe(1);
   });
+
+  it('refuses a revision of the draft before asking for anything', async () => {
+    const target = path.join(home, 'draft-revision');
+
+    await create(target, { ...options, api: platform.api, from: 'pizarra', revision: '3' });
+
+    expect(process.exitCode).toBe(1);
+    await expect(fs.access(target)).rejects.toThrow();
+  });
 });

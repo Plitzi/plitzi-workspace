@@ -9,6 +9,7 @@ import { formatFromNow } from '@plitzi/sdk-shared';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import InputEnvironment from './InputEnvironment';
+import VersionContents from '../../components/VersionContents';
 
 import type { Environment } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -92,6 +93,13 @@ const DeployForm = ({
           <Alert intent="warning" size="sm" solid={false}>
             This environment don&apos;t have any snapshot, please make a snapshot first
           </Alert>
+        )}
+        {watchEnvironment !== 'main' && latestRevision && (
+          <VersionContents
+            environment={watchEnvironment}
+            revision={latestRevision.revision}
+            title={`${watchEnvironment} r${String(latestRevision.revision)} holds`}
+          />
         )}
         {(latestRevision || watchEnvironment === 'main') && (
           <Form.Select

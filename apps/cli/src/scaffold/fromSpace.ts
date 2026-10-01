@@ -35,6 +35,9 @@ export type ProjectFromSpace = {
 
 const TEXT = /\.((m|c)?(t|j)sx?|json|css|scss|sass|less|md|txt|html|svg|ya?ml|xml|csv|graphql)$/i;
 
+/** Whether a file of the project is text — written, compared and formatted as such — rather than bytes. */
+export const isTextFile = (path: string): boolean => TEXT.test(path);
+
 /** The example plugin and space `create` writes for a project of its own, which one made from a space replaces. */
 const EXAMPLE = ['src/plugins/StatCard/StatCard.tsx', 'src/plugins/StatCard/index.ts'];
 
@@ -350,10 +353,14 @@ const settingsLines = (exported: SpaceExport): string[] => [
  * left for whoever has the values. Read from Plitzi, the key it is read with comes first, as a project of its own has
  * it. Written once, by `create`: it is the project's, and nothing pulled ever touches it.
  */
-export const envFromSpace = (exported: SpaceExport, answers: CreateAnswers, signingSecret: string): string =>
-  `${answers.source === 'cloud' ? `${envFile(answers)}\n` : ''}${settingsLines(exported)
+export const envFromSpace = (exported: SpaceExport, answers: CreateAnswers, signingSecret: string): string => {
+  const settings = settingsLines(exported)
     .join('\n')
-    .replace('PLITZI_SIGNING_SECRET=', `PLITZI_SIGNING_SECRET=${signingSecret}`)}`;
+    .replace('PLITZI_SIGNING_SECRET=', `PLITZI_SIGNING_SECRET=${signingSecret}`);
+
+  // Read from Plitzi, the key it is read with and the version it serves come first — the port with them.
+  return answers.source === 'cloud' ? `${envFile(answers)}\n${settings}\n` : `${settings}\nPORT=8080\n`;
+};
 
 /** What a project made from a space holds, from what the platform answered for it — the same for `create` and `pull`. */
 export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswers['source']): ProjectFromSpace => {
@@ -366,7 +373,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
   const files: ProjectFiles = {};
   const binaries: Record<string, string> = {};
   Object.entries(source.files).forEach(([path, content]) => {
-    if (TEXT.test(path)) {
+    if (isTextFile(path)) {
       files[place(path)] = local(decode(content));
     } else {
       binaries[place(path)] = content;
@@ -438,7 +445,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
       .map(name => [name, SDK_VERSION])
   );
   const variables = [...exported.variables, ...exported.credentials.map(({ identifier }) => identifier)];
-  files['.env.example'] = settingsLines(exported).join('\n');
+  files['.env.example'] = `${settingsLines(exported).join('\n')}\nPORT=8080\n`;
   // What was downloaded is served as it came: a built plugin's bytes are what its manifest's integrity names.
   files['.prettierignore'] = `${prettierignore(PROJECT_OUTPUTS)}public\nvendor\n`;
 

@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { gunzipSync } from 'node:zlib';
 
+import type { Environment } from '@plitzi/sdk-shared';
+import type { SpaceExport } from '@plitzi/sdk-shared/source';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
@@ -54,10 +56,19 @@ export interface FakePlatform {
   tried: { task: string; params: unknown }[];
   /** Space 3's runtime: every push as it arrived, and its variables — a value the platform keeps and never shows. */
   runtime: { pushed: FakeUpload[]; variables: Map<string, string> };
-  /** Space 3 (Pizarra) as its export gives it: its pages as code, by path, and the packages its code asks for. */
-  pizarra: { pages: Record<string, string>; dependencies: Record<string, string> };
+  /**
+   * Space 3 (Pizarra) as its export gives it: its pages as code, by path, and the packages its code asks for — the
+   * draft's, and each published environment's by revision.
+   */
+  pizarra: {
+    pages: Record<string, string>;
+    dependencies: Record<string, string>;
+    snapshots: Partial<Record<string, Record<number, { pages: Record<string, string>; description: string }>>>;
+  };
   close: () => Promise<void>;
 }
+
+const ENVIRONMENTS: readonly Environment[] = ['main', 'development', 'staging', 'production'];
 
 const readBody = async (req: IncomingMessage): Promise<Buffer> => {
   const chunks: Buffer[] = [];
@@ -181,24 +192,8 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
           });
         }
       } else if (url.pathname === '/spaces/pizarra/export' || url.pathname === '/spaces/3/export') {
-        json(res, 200, {
-          format: 1,
-          space: { id: 3, name: 'Pizarra', permanentUrl: 'pizarra' },
-          authoring:
-            url.searchParams.get('source') === 'cloud'
-              ? null
-              : { exportName: 'pizarra', files: platform.pizarra.pages },
-          actions: [],
-          connectors: [],
-          functions: platform.functions,
-          source: { files: {}, dependencies: platform.pizarra.dependencies, runtime: null, plugins: [] },
-          builtOnly: { plugins: [], runtime: null },
-          assets: [{ url: `${platform.api}/files/pizarra/assets/world.json`, path: 'assets/world.json' }],
-          variables: [],
-          credentials: [],
-          visitorRoles: [],
-          report: { conflicts: [], rangeConflicts: [], corrections: [] }
-        });
+        const exported = pizarraExport(url);
+        json(res, exported.status, exported.body);
       } else if (url.pathname === '/spaces/locked/export') {
         json(res, 403, { error: 'Taking a space out as a project is for whoever may change it' });
       } else if (url.pathname === '/spaces/3/sources' && req.method === 'PUT') {
@@ -253,6 +248,52 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     server.listen(0, '127.0.0.1', () => done());
   });
 
+  /** What `GET /spaces/:id/export` answers for Pizarra: the draft, or a published environment's snapshot. */
+  const pizarraExport = (url: URL): { status: number; body: SpaceExport | { error: string } } => {
+    const askedEnvironment = url.searchParams.get('environment') ?? 'main';
+    const environment = ENVIRONMENTS.find(candidate => candidate === askedEnvironment);
+    if (!environment) {
+      return { status: 400, body: { error: `"${askedEnvironment}" is not an environment` } };
+    }
+
+    const asked = url.searchParams.get('revision');
+    const revisions = platform.pizarra.snapshots[environment] ?? {};
+    const revision = asked ? Number(asked) : Math.max(0, ...Object.keys(revisions).map(Number));
+    const snapshot = environment === 'main' ? undefined : revisions[revision];
+    if (environment !== 'main' && !snapshot) {
+      return { status: 404, body: { error: `${environment} has no snapshot to take out` } };
+    }
+
+    const pages = snapshot?.pages ?? platform.pizarra.pages;
+    const version: SpaceExport['version'] = snapshot
+      ? {
+          environment,
+          revision,
+          snapshot: { description: snapshot.description, publishedAt: '2026-10-01T00:00:00.000Z' }
+        }
+      : { environment: 'main', revision: 0, snapshot: null };
+
+    return {
+      status: 200,
+      body: {
+        format: 1,
+        space: { id: 3, name: 'Pizarra', permanentUrl: 'pizarra' },
+        version,
+        authoring: url.searchParams.get('source') === 'cloud' ? null : { exportName: 'pizarra', files: pages },
+        actions: [],
+        connectors: [],
+        functions: platform.functions,
+        source: { files: {}, dependencies: platform.pizarra.dependencies, runtime: null, plugins: [] },
+        builtOnly: { plugins: [], runtime: null },
+        assets: [{ url: `${platform.api}/files/pizarra/assets/world.json`, path: 'assets/world.json' }],
+        variables: [],
+        credentials: [],
+        visitorRoles: [],
+        report: { conflicts: [], rangeConflicts: [], corrections: [] }
+      }
+    };
+  };
+
   const platform: FakePlatform = {
     // A listening server always has an address object; only a pipe's is a string.
     api: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
@@ -280,7 +321,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     functions: { files: {}, version: 'v0' },
     tried: [],
     runtime: { pushed: [], variables: new Map() },
-    pizarra: { pages: { 'index.ts': 'export const pizarra = {};\n' }, dependencies: {} },
+    pizarra: { pages: { 'index.ts': 'export const pizarra = {};\n' }, dependencies: {}, snapshots: {} },
     browser: url => {
       const asked = new URL(url).searchParams;
       const scope = asked.get('scope') ?? '';

@@ -149,14 +149,24 @@ keeps it in step with the space. See `docs/en/projects-from-spaces.md`.
   `vendor/plugins/`, and the report says to upload it again.
 - **The end of `create`** says what came across differently, including a space whose visitors sign in with Plitzi.
 - `--source cloud` keeps the pages on Plitzi and runs the rest locally.
+- **Any version:** `--environment` and `--revision` take out a published snapshot — its latest, or one revision pinned
+  — instead of the draft, with the source its plugins and runtime were built from then. A cloud project serves that
+  revision pinned.
 - **`plitzi pull`** writes what changed on the space, keeps what changed in the project, and writes nothing when a
   file changed on both — naming them, with `--force` to take the space's copy. It never touches `.env`, only adds to
-  `package.json`, and keeps `plitzi functions push` working from the project.
+  `package.json`, and keeps `plitzi functions push` working from the project. It follows the version the project was
+  made from, and `--environment`/`--revision` move it.
 - `@plitzi/sdk-authoring`:
   - `actionSpecFromEntry` reads an action document back into its `defineAction` declaration, only when the round trip
     is exact, and `actionToSource` writes it as a module.
   - `defineAction` takes `limits`.
   - `specToSource` takes `importExtension: '.ts'`, for split files that Node imports as they are.
+
+## The builder shows what a snapshot holds
+
+**Make Snapshot** lists what it will freeze — pages, layouts and elements, server actions, connectors, functions, the
+runtime and the plugins, each with whether its source is kept — and what no snapshot freezes: the space's files, its
+variables and credentials, and its segments. **Publish Snapshot** lists what the chosen environment's snapshot holds.
 
 ## Fixed: a space read from Plitzi kept its server elements
 

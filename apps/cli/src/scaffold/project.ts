@@ -323,7 +323,7 @@ ${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi add plugin')
  * prefix — ship a server credential to every visitor. The two modes therefore name different variables, because
  * they hold different keys.
  */
-export const envFile = ({ key, environment, mode }: CreateAnswers): string =>
+export const envFile = ({ key, environment, revision, mode }: CreateAnswers): string =>
   mode === 'server'
     ? `# The space's self-hosting key. Secret: never commit it, never ship it in a page.
 # Credentials, in the builder.
@@ -332,7 +332,7 @@ PLITZI_HOST_KEY=${key}
 # Which version this serves. 'main' is what the builder is editing; a published environment serves the latest
 # release, and PLITZI_REVISION pins one exact version.
 PLITZI_ENVIRONMENT=${environment}
-# PLITZI_REVISION=12
+${revision ? `PLITZI_REVISION=${String(revision)}` : '# PLITZI_REVISION=12'}
 
 PORT=8080
 `

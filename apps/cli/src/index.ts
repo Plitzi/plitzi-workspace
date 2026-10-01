@@ -67,7 +67,15 @@ program
     ).choices(['local', 'cloud'])
   )
   .option('-k, --key <key>', 'Cloud only: the space key (asked for when omitted)')
-  .option('-e, --environment <environment>', 'Which version to serve: main, or a published environment', 'main')
+  .option(
+    '-e, --environment <environment>',
+    'Which version: main (the draft), or a published environment — what --from takes out, and what a cloud project serves',
+    'main'
+  )
+  .option(
+    '--revision <n>',
+    'A published environment’s revision, pinned rather than its latest (with --from or --source cloud)'
+  )
   .addOption(
     new Option(
       '-p, --package-manager <manager>',
@@ -110,6 +118,11 @@ program
     'Bring a project made with create --from up to date with its space: what changed there is written, what changed here is kept'
   )
   .option('-f, --force', 'Where a file changed both here and on the space, take the space’s copy')
+  .option(
+    '-e, --environment <environment>',
+    'Follow another version from now on: main (the draft), or a published environment'
+  )
+  .option('--revision <n>', 'Pin a published revision of it, or latest to follow its newest again')
   .option(...API_OPTION)
   .action((options: PullOptions) => pull(options));
 

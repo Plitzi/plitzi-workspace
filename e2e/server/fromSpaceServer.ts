@@ -55,6 +55,7 @@ const exportOf = (source: 'local' | 'cloud'): SpaceExport => {
   return {
     format: 1,
     space: { id: 7, name: 'Tally', permanentUrl: 'tally' },
+    version: { environment: 'main', revision: 0, snapshot: null },
     authoring:
       source === 'local'
         ? {

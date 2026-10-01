@@ -1,3 +1,5 @@
+import type { SpaceVersionContents } from '../types';
+
 /**
  * A space taken back out as a project (docs/en/projects-from-spaces.md): everything it is made of that Plitzi keeps, as
  * `GET /spaces/:spaceId/export` answers it and `plitzi create --from` writes it. One shape for both ends.
@@ -25,6 +27,8 @@ export type SpaceExportConflict = {
 export type SpaceExport = {
   format: typeof SPACE_EXPORT_FORMAT;
   space: { id: number; name: string; permanentUrl: string };
+  /** The version taken out: the draft (`main`, revision 0), or a snapshot an environment holds. */
+  version: Pick<SpaceVersionContents, 'environment' | 'revision' | 'snapshot'>;
   /** The space as authoring code, by path (`index.ts`, a file per page): none for a project that reads it from Plitzi. */
   authoring: { exportName: string; files: Record<string, string> } | null;
   /**

@@ -9,7 +9,8 @@ It closes a circle. The CLI already puts a project's work on Plitzi (`upload plu
 push`); this is the way back, for a space that moves to its own server.
 
 ```bash
-plitzi create my-board --from pizarra                 # the space as code, served self-hosted
+plitzi create my-board --from pizarra                 # the draft, as code, served self-hosted
+plitzi create my-board --from pizarra --environment production --revision 3   # a snapshot, as it was frozen
 plitzi create my-board --from pizarra --source cloud  # the pages stay on Plitzi; everything else runs here
 cd my-board && plitzi pull                            # later: what changed on the space, brought in
 ```
@@ -56,6 +57,10 @@ credential check live there alone, read by the CLI that packs one and the platfo
 **Where.** In the space's private bucket, as server code of kind `source` (`server/sources/<sha256>.json.gz`), named
 by its bytes. `space_source` records the latest one of each plugin and of the runtime.
 
+**Versions.** `main`/0 holds the latest kept. Making a snapshot (`SpacePublish`) copies them to that environment and
+revision, with the schema, style, actions, connectors, functions and runtime it freezes — so a snapshot taken out
+later comes with the source it was made with, not whatever was uploaded since.
+
 **When.**
 
 - `plitzi pack plugin` writes the snapshot beside the zip (`<name>.source.json.gz`), and `plitzi upload plugin` keeps it
@@ -74,10 +79,22 @@ by its bytes. `space_source` records the latest one of each plugin and of the ru
 - A refused source never undoes the upload or push it rides on: the CLI says why, and the space keeps that artifact
   built only.
 
+## Versions, and what a snapshot holds
+
+A space has a draft (`main`) and, for each published environment (`development`, `staging`, `production`), the
+snapshots made of it, by revision. `plitzi-sdk-server`'s `services/versions` is the one reading of a version:
+`resolveVersion` finds it (an environment's latest unless a revision is named) and `versionContents` counts what it
+holds — pages, layouts, elements, the plugins installed and whether each one's source is kept, actions, connectors,
+what the functions declare, the runtime and whether its source is kept. The builder shows it, through the
+`SpaceVersionContents` query, in **Make Snapshot** (the draft: what the snapshot will freeze) and in **Publish Snapshot**
+(the snapshot chosen). Every version shares, and no snapshot freezes: the space's files on its CDN, its variables and
+credentials, and its segments, which are published on their own.
+
 ## The export
 
-`GET /spaces/:spaceId/export?source=local|cloud` (`plitzi-sdk-server`'s `services/export`) takes the space's id or
-permanent URL. It is for a signed-in person who may **change** the space — its owner, an administrator or a writer;
+`GET /spaces/:spaceId/export?source=local|cloud&environment=main&revision=N` (`plitzi-sdk-server`'s `services/export`)
+takes the space's id or permanent URL, and a version: the draft by default, a published environment's latest, or one
+of its revisions — a `404` that names what is missing when there is none. It is for a signed-in person who may **change** the space — its owner, an administrator or a writer;
 reading it is not enough. It answers `SpaceExport` (`@plitzi/sdk-shared/source`, the one shape both ends read):
 
 - the pages as split authoring code with `.ts` imports (`specToSource`'s `importExtension`, since Node runs the project
@@ -112,6 +129,8 @@ written with `defineAction` always does.
 
 - It needs a signed-in CLI (`plitzi login`) and asks for the export before writing anything: a space that cannot be had
   leaves no half-made project.
+- `--environment` and `--revision` choose the version: the draft by default; a published environment's latest; or one
+  revision of it, pinned. A cloud project with a revision serves it pinned (`PLITZI_REVISION`).
 - It writes the server project, the source tree under `src/` (unless it already was a project's `src/`), the pages,
   actions, connectors and functions, `main.ts`, and `package.json` with every package the source imports — the SDK and
   React at this CLI's versions, since plugins are rebuilt against the project's own.
@@ -137,9 +156,11 @@ files — runs locally. A plugin the project registers is never looked for on th
 
 ## `plitzi pull`
 
-`pull`, run in the project, asks the platform for the space again and compares every file the space gives with what
-`.plitzi/space.json` says it gave last time and with what is on disk now — the space's copy formatted with the
-project's Prettier first, as `create` left it:
+`pull`, run in the project, asks the platform for the version the project follows again — the draft, an environment's
+latest, or a pinned revision, as `.plitzi/space.json` records — and compares every file the space gives with what it
+gave last time and with what is on disk now. Both sides are compared as the project's Prettier writes them, and a file
+recorded before the project had a formatter still counts as unchanged when only formatting moved it. `--environment`
+and `--revision` follow another version from then on (`--revision latest` lets go of a pin).
 
 | On the space | Here | What `pull` does |
 |---|---|---|
@@ -170,6 +191,14 @@ The functions' working copy is refreshed with them, unless a change here to one 
   repeats it. Writing that sign-in for the project is a separate decision.
 
 ## Where it is tested
+
+**The cycle, whole:** `plitzi-sdk-server`'s `test/e2e/flows/spaces/space-as-project.e2e.test.ts`, with nothing stubbed
+— the API and its databases, the seeds' buckets, the built CLI, the generated project run by Node. A project made with
+`plitzi create` and `plitzi add plugin` puts its plugin, runtime and functions on Plitzi; `create --from` takes the
+space back out, every source file byte for byte, the action as code and the pages authoring the same documents; that
+project serves it with nothing of Plitzi's; a snapshot comes out as it was frozen after the draft moved on; `pull` keeps
+a change made in the project, writes the space's, and stops on a file changed on both; and the self-hosted project's own
+change goes back up for the next project to take out. A step a later change breaks fails there, named.
 
 - `apps/cli`: `pack/source.test.ts` (the closure and guards), `scaffold/fromSpace.test.ts` (what a project holds),
   `commands/createFrom.test.ts` and `commands/pull.test.ts` (against the CLI's fake platform).

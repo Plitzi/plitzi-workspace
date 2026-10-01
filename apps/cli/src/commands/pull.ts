@@ -4,11 +4,11 @@ import path from 'node:path';
 import chalk from 'chalk';
 
 import { apiFor, fail } from './account';
-import { download, fetchExport, functionsOnDisk, notFetched } from './createFrom';
+import { download, fetchExport, functionsOnDisk, notFetched, versionLabel } from './createFrom';
 import { findProject } from './existingProject';
 import { writeFunctionsState } from './functions';
 import { projectFormatter } from './projectFormatter';
-import { digest, digestOnDisk, readOrigin, writeOrigin } from './spaceOrigin';
+import { digest, digestsOf, readOrigin, writeOrigin } from './spaceOrigin';
 import { installCommand } from '../scaffold';
 import { projectFromSpace } from '../scaffold/fromSpace';
 
@@ -28,7 +28,37 @@ import type { PackageManager } from '../scaffold';
 
 export interface PullOptions extends AccountOptions {
   force?: boolean;
+  /** Follow another version from now on: the draft (`main`) or a published environment. */
+  environment?: string;
+  /** Pin a published revision; `latest` follows the environment's newest again. */
+  revision?: string;
 }
+
+/** The version a pull asks for: the one the project follows, or the one it is told to follow from now on. */
+const versionToPull = (
+  options: PullOptions,
+  followed: SpaceOrigin['version']
+): { ok: true; version: SpaceOrigin['version'] } | { ok: false; error: string } => {
+  const environment = options.environment ?? followed.environment;
+  // A pin holds while the environment does: a different one starts from its latest unless a revision comes with it.
+  const kept = environment === followed.environment ? followed.revision : undefined;
+  if (options.revision === undefined || options.revision === 'latest') {
+    const revision = options.revision === 'latest' ? undefined : kept;
+
+    return { ok: true, version: { environment, ...(revision ? { revision } : {}) } };
+  }
+
+  const revision = Number(options.revision);
+  if (environment === 'main') {
+    return { ok: false, error: 'The draft (main) has no revisions: name a published environment with --environment.' };
+  }
+
+  if (!Number.isInteger(revision) || revision < 1) {
+    return { ok: false, error: `--revision takes a revision number from 1, or latest — not "${options.revision}".` };
+  }
+
+  return { ok: true, version: { environment, revision } };
+};
 
 /** A file's digest as the space gives it now (`given`), as it was last given (`was`), and as it is here (`here`). */
 export type FileState = { given?: string; was?: string; here?: string };
@@ -141,7 +171,18 @@ export const pull = async (options: PullOptions): Promise<void> => {
     return;
   }
 
-  const exported = await fetchExport(api, String(origin.space.id), origin.source, origin.space.name);
+  const asked = versionToPull(options, origin.version);
+  if (!asked.ok) {
+    fail(asked.error);
+
+    return;
+  }
+
+  const exported = await fetchExport(api, String(origin.space.id), {
+    source: origin.source,
+    version: asked.version,
+    name: origin.space.name
+  });
   if (!exported) {
     return;
   }
@@ -160,7 +201,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
   const missing: string[] = [];
   const untouched = new Set<string>();
   for (const { url, to } of next.downloads) {
-    if (origin.downloads[to] === url && (await digestOnDisk(root, to)) !== undefined) {
+    if (origin.downloads[to] === url && (await digestsOf(root, to, format)) !== undefined) {
       untouched.add(to);
       continue;
     }
@@ -177,12 +218,17 @@ export const pull = async (options: PullOptions): Promise<void> => {
   const verdicts = new Map<string, Verdict>();
   for (const file of paths) {
     const bytes = given.get(file);
+    const here = await digestsOf(root, file, format);
+    const was = origin.files[file];
+    // Unchanged since it was given — as it was recorded, or only formatted since: recorded before the project had a
+    // formatter, a file was recorded as its bytes were.
+    const unchanged = here !== undefined && (here.raw === was || here.formatted === was);
     verdicts.set(
       file,
       verdictOf({
         given: bytes ? digest(bytes) : undefined,
-        was: origin.files[file],
-        here: await digestOnDisk(root, file)
+        was: unchanged ? here.formatted : was,
+        here: here?.formatted
       })
     );
   }
@@ -225,6 +271,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
     ...origin,
     api,
     space: exported.space,
+    version: asked.version,
     files,
     downloads: Object.fromEntries(
       next.downloads.flatMap(({ url, to }) => {
@@ -254,7 +301,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
   const kept = of('keep');
   console.log(
     chalk.green(
-      `\nPulled ${exported.space.name}: ${plural(written.length, 'file')} written, ${plural(removed.length, 'file')} removed.`
+      `\nPulled ${exported.space.name} (${versionLabel(exported.version)}): ${plural(written.length, 'file')} written, ${plural(removed.length, 'file')} removed.`
     )
   );
   if (written.length > 0) {

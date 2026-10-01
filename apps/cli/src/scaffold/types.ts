@@ -11,6 +11,8 @@ export interface CreateAnswers {
   /** Cloud only: the self-hosting key (server) or the public render key (client). */
   key: string;
   environment: string;
+  /** A published environment's revision to serve, pinned; its latest when left out. */
+  revision?: number;
   /**
    * Which package manager the project is written for.
    *

@@ -5,6 +5,7 @@ import chalk from 'chalk';
 
 import { signedIn } from './account';
 import { writeFunctionsState } from './functions';
+import { projectFormatter } from './projectFormatter';
 import { digestsOnDisk, writeOrigin } from './spaceOrigin';
 import { authorizedRequest } from '../account/session';
 
@@ -24,6 +25,7 @@ const isExport = (value: unknown): value is SpaceExport =>
   isRecord(value) &&
   value.format === 1 &&
   isRecord(value.space) &&
+  isRecord(value.version) &&
   isRecord(value.source) &&
   isRecord(value.builtOnly) &&
   isRecord(value.report) &&
@@ -32,23 +34,41 @@ const isExport = (value: unknown): value is SpaceExport =>
   Array.isArray(value.assets) &&
   Array.isArray(value.visitorRoles);
 
-/** The space named — its id or its permanent URL — put together as a project, or why not, said and `undefined`. */
+/** Which version of a space: the draft (`main`), or a published environment's snapshot — its latest unless pinned. */
+export type SpaceVersionAsked = { environment: string; revision?: number };
+
+/** How a version is said: `the draft`, `production (latest)`, `production r3`. */
+export const versionLabel = ({ environment, revision }: SpaceVersionAsked): string => {
+  if (environment === 'main') {
+    return 'the draft';
+  }
+
+  return revision ? `${environment} r${String(revision)}` : `${environment} (latest)`;
+};
+
+/**
+ * A version of the space named — its id or its permanent URL — put together as a project, or why not, said and
+ * `undefined`. `name` is what it is called in what is printed: `from`, unless a pull names it by its id.
+ */
 export const fetchExport = async (
   api: string,
   from: string,
-  source: 'local' | 'cloud',
-  /** What the space is called in what is printed: `from`, unless a pull names it by its id and knows its name. */
-  name: string = from
+  { source, version, name = from }: { source: 'local' | 'cloud'; version: SpaceVersionAsked; name?: string }
 ): Promise<SpaceExport | undefined> => {
   const connection = await signedIn(api, `to take ${from} out of Plitzi`);
   if (!connection) {
     return undefined;
   }
 
-  console.log(`\nTaking ${chalk.bold(name)} out of ${api}…`);
+  console.log(`\nTaking ${chalk.bold(name)} (${versionLabel(version)}) out of ${api}…`);
+  const query = new URLSearchParams({
+    source,
+    environment: version.environment,
+    ...(version.revision ? { revision: String(version.revision) } : {})
+  });
   const answered = await authorizedRequest<unknown>(
     connection,
-    `/spaces/${encodeURIComponent(from)}/export?source=${source}`
+    `/spaces/${encodeURIComponent(from)}/export?${query.toString()}`
   );
   if (!answered.ok) {
     console.error(chalk.red(answered.error));
@@ -65,7 +85,7 @@ export const fetchExport = async (
   const said = isRecord(data) && typeof data.error === 'string' ? data.error : undefined;
   const why: Partial<Record<number, string>> = {
     403: `You may not take ${from} out: it takes being able to change it — its owner, an administrator or a writer.`,
-    404: `There is no space ${from} you can reach.`
+    404: said ?? `There is no space ${from} you can reach.`
   };
   console.error(chalk.red(why[status] ?? said ?? `The platform would not hand ${from} over (${String(status)}).`));
   process.exitCode = 1;
@@ -129,19 +149,31 @@ export const recordOrigin = async (
     api,
     exported,
     source,
+    pinned,
     project
-  }: { api: string; exported: SpaceExport; source: 'local' | 'cloud'; project: ProjectFromSpace }
+  }: {
+    api: string;
+    exported: SpaceExport;
+    source: 'local' | 'cloud';
+    /** Whether the revision was asked for: pinned, a pull keeps to it; not, it follows the environment's latest. */
+    pinned: boolean;
+    project: ProjectFromSpace;
+  }
 ): Promise<void> => {
-  const files = await digestsOnDisk(root, [
-    ...Object.keys(project.files),
-    ...Object.keys(project.binaries),
-    ...project.downloads.map(({ to }) => to)
-  ]);
+  const files = await digestsOnDisk(
+    root,
+    [...Object.keys(project.files), ...Object.keys(project.binaries), ...project.downloads.map(({ to }) => to)],
+    await projectFormatter(root)
+  );
   await writeOrigin(root, {
     format: 1,
     api,
     space: exported.space,
     source,
+    version: {
+      environment: exported.version.environment,
+      ...(pinned ? { revision: exported.version.revision } : {})
+    },
     files,
     downloads: Object.fromEntries(
       project.downloads.filter(({ to }) => Object.hasOwn(files, to)).map(({ url, to }) => [to, url])

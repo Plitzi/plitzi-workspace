@@ -5,7 +5,7 @@ import readline from 'node:readline/promises';
 import chalk from 'chalk';
 
 import { apiFor } from './account';
-import { fetchExport, recordOrigin, writeFromSpace } from './createFrom';
+import { fetchExport, recordOrigin, versionLabel, writeFromSpace } from './createFrom';
 import {
   INSTALL_HINTS,
   ask,
@@ -45,6 +45,8 @@ export interface CreateOptions {
   source?: string;
   key?: string;
   environment?: string;
+  /** A published environment's revision: pinned, rather than its latest. With `--from` or `--source cloud`. */
+  revision?: string;
   packageManager?: string;
   install?: boolean;
   force?: boolean;
@@ -167,12 +169,35 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     return;
   }
 
+  const environment = options.environment ?? 'main';
+  const revision = options.revision === undefined ? undefined : Number(options.revision);
+  if (revision !== undefined && (!Number.isInteger(revision) || revision < 1 || environment === 'main')) {
+    console.error(
+      chalk.red(
+        environment === 'main'
+          ? 'The draft (main) has no revisions: name a published environment with --environment, then --revision.'
+          : `--revision takes a revision number from 1, not "${options.revision ?? ''}".`
+      )
+    );
+    process.exitCode = 1;
+
+    return;
+  }
+
   const decisions = await resolveDecisions(options.from ? { ...options, mode: 'server' } : options);
   if (!decisions) {
     return;
   }
 
   const { packageManager, mode, source } = decisions;
+
+  // A project of its own carries its space: there is no published version for it to pin.
+  if (revision !== undefined && !options.from && source === 'local') {
+    console.error(chalk.red('--revision pins a published version: it goes with --from, or with --source cloud.'));
+    process.exitCode = 1;
+
+    return;
+  }
 
   // A cloud project is nothing without its credential, so it is the one thing worth stopping to ask for.
   if (source === 'cloud' && !options.key && !atTerminal()) {
@@ -194,14 +219,18 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     mode,
     source,
     key,
-    environment: options.environment ?? 'main',
+    environment,
+    ...(revision ? { revision } : {}),
     packageManager,
     managerVersion: detectManagerVersion(packageManager, await nearestExisting(target))
   };
 
   // Asked for before anything is written: a space that cannot be had leaves no half-made project behind.
   const api = options.from ? await apiFor(options) : undefined;
-  const exported = options.from && api ? await fetchExport(api, options.from, source) : undefined;
+  const exported =
+    options.from && api
+      ? await fetchExport(api, options.from, { source, version: { environment, ...(revision ? { revision } : {}) } })
+      : undefined;
   if (options.from && !exported) {
     return;
   }
@@ -253,7 +282,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   }
 
   if (api && exported && fromSpace) {
-    await recordOrigin(target, { api, exported, source, project: fromSpace });
+    await recordOrigin(target, { api, exported, source, pinned: revision !== undefined, project: fromSpace });
   }
 
   const where = cdPrefix(target);
@@ -277,6 +306,12 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   );
   if (source === 'cloud') {
     console.log(chalk.dim('.env holds the key and is already git-ignored.'));
+  }
+
+  if (exported) {
+    const { version } = exported;
+    const said = version.snapshot ? ` — “${version.snapshot.description}”, made ${version.snapshot.publishedAt}` : '';
+    console.log(chalk.dim(`Taken from ${versionLabel(version)}${said}.`));
   }
 
   const notes = [...(fromSpace?.report ?? []), ...missing];

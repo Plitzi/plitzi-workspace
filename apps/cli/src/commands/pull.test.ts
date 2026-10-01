@@ -149,4 +149,49 @@ describe('plitzi pull', () => {
 
     expect(process.exitCode).toBe(1);
   });
+
+  it('follows the version it was told: a pinned snapshot stays, `latest` and another environment move it', async () => {
+    platform.pizarra.snapshots.production = {
+      1: { description: 'Launch', pages: { 'index.ts': '// production r1\nexport const pizarra = {};\n' } }
+    };
+    const pinned = path.join(home, 'pinned');
+    await create(pinned, {
+      source: 'local',
+      packageManager: 'npm',
+      install: false,
+      api: platform.api,
+      from: 'pizarra',
+      environment: 'production',
+      revision: '1'
+    });
+    vi.spyOn(process, 'cwd').mockReturnValue(pinned);
+    const at = (file: string) => fs.readFile(path.join(pinned, file), 'utf-8');
+
+    expect(await at('src/space/index.ts')).toContain('production r1');
+    expect((await readOrigin(pinned))?.version).toEqual({ environment: 'production', revision: 1 });
+
+    platform.pizarra.snapshots.production[2] = {
+      description: 'Fixes',
+      pages: { 'index.ts': '// production r2\nexport const pizarra = {};\n' }
+    };
+    await pull({});
+    expect(await at('src/space/index.ts')).toContain('production r1');
+
+    await pull({ revision: 'latest' });
+    expect(await at('src/space/index.ts')).toContain('production r2');
+    expect((await readOrigin(pinned))?.version).toEqual({ environment: 'production' });
+
+    await pull({ environment: 'main' });
+    expect(await at('src/space/index.ts')).toContain('homePage');
+    expect((await readOrigin(pinned))?.version).toEqual({ environment: 'main' });
+  });
+
+  it('refuses a revision of the draft, and a snapshot that is not there', async () => {
+    await pull({ revision: '2' });
+    expect(process.exitCode).toBe(1);
+
+    process.exitCode = undefined;
+    await pull({ environment: 'staging' });
+    expect(process.exitCode).toBe(1);
+  });
 });

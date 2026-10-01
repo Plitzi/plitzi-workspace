@@ -2,6 +2,10 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { isTextFile } from '../scaffold/fromSpace';
+
+import type { Formatter } from './projectFormatter';
+
 /**
  * Where a project `plitzi create --from` made came from, and what the space gave it: `.plitzi/space.json`, committed
  * with the project so everyone working on it pulls from the same point.
@@ -20,6 +24,11 @@ export type SpaceOrigin = {
   space: { id: number; name: string; permanentUrl: string };
   /** Whether the pages are in the project (`local`) or read from Plitzi (`cloud`). */
   source: 'local' | 'cloud';
+  /**
+   * Which version of the space it follows: the draft (`main`), or a published environment — its latest, or the
+   * revision named when one was (`create --revision`, `pull --revision`).
+   */
+  version: { environment: string; revision?: number };
   /** Every file the space gave the project, by path: the sha256 of what was written. */
   files: Record<string, string>;
   /** The files fetched from the space's CDN, by path: the address each one was fetched from. */
@@ -36,13 +45,26 @@ const isStrings = (value: unknown): value is Record<string, string> =>
 
 export const digest = (bytes: Uint8Array | string): string => createHash('sha256').update(bytes).digest('hex');
 
-/** The digest of a file as it is on disk, or `undefined` when there is none. */
-export const digestOnDisk = async (root: string, file: string): Promise<string | undefined> => {
+/**
+ * A file of the project as a pull compares it: the digest of what the project's formatter makes of it — so a file only
+ * formatted since is not a file changed — and of its bytes as they are, which is what a project recorded before it had
+ * a formatter. Nothing when there is no such file.
+ */
+export const digestsOf = async (
+  root: string,
+  file: string,
+  format: Formatter
+): Promise<{ formatted: string; raw: string } | undefined> => {
+  let bytes: Buffer;
   try {
-    return digest(await fs.readFile(path.join(root, file)));
+    bytes = await fs.readFile(path.join(root, file));
   } catch {
     return undefined;
   }
+
+  const raw = digest(bytes);
+
+  return { formatted: isTextFile(file) ? digest(await format(file, bytes.toString('utf-8'))) : raw, raw };
 };
 
 /** The project's origin, or `undefined` when it has none — it was not made from a space, or the file is not one. */
@@ -58,6 +80,9 @@ export const readOrigin = async (root: string): Promise<SpaceOrigin | undefined>
       typeof value.space.name !== 'string' ||
       typeof value.space.permanentUrl !== 'string' ||
       (value.source !== 'local' && value.source !== 'cloud') ||
+      !isRecord(value.version) ||
+      typeof value.version.environment !== 'string' ||
+      (value.version.revision !== undefined && typeof value.version.revision !== 'number') ||
       !isStrings(value.files) ||
       !isStrings(value.downloads) ||
       !isStrings(value.dependencies)
@@ -70,6 +95,10 @@ export const readOrigin = async (root: string): Promise<SpaceOrigin | undefined>
       api: value.api,
       space: { id: value.space.id, name: value.space.name, permanentUrl: value.space.permanentUrl },
       source: value.source,
+      version: {
+        environment: value.version.environment,
+        ...(typeof value.version.revision === 'number' ? { revision: value.version.revision } : {})
+      },
       files: value.files,
       downloads: value.downloads,
       dependencies: value.dependencies
@@ -100,9 +129,15 @@ export const writeOrigin = async (root: string, origin: SpaceOrigin): Promise<vo
   );
 };
 
-/** The digest of each of these files as it is on disk now: what the project was given, once it is written. */
-export const digestsOnDisk = async (root: string, files: readonly string[]): Promise<Record<string, string>> => {
-  const digests = await Promise.all(files.map(async file => [file, await digestOnDisk(root, file)] as const));
+/** What the project was given, once it is on disk: each file's digest, formatted as the project formats it. */
+export const digestsOnDisk = async (
+  root: string,
+  files: readonly string[],
+  format: Formatter
+): Promise<Record<string, string>> => {
+  const digests = await Promise.all(
+    files.map(async file => [file, (await digestsOf(root, file, format))?.formatted] as const)
+  );
 
   return Object.fromEntries(digests.filter((entry): entry is [string, string] => entry[1] !== undefined));
 };

@@ -31,6 +31,7 @@ handWritten.document.nodes.cleared.title = 'Wipe everything';
 const exported = (overrides: Partial<SpaceExport> = {}): SpaceExport => ({
   format: 1,
   space: { id: 42, name: 'Pizarra', permanentUrl: 'pizarra' },
+  version: { environment: 'main', revision: 0, snapshot: null },
   authoring: {
     exportName: 'pizarra',
     files: {
