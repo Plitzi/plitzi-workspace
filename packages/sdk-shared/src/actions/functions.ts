@@ -1,8 +1,9 @@
 /**
- * Where a space's functions answer HTTP: `GET /feed/:id` declared, `GET /api/feed/42` served. The path is
- * the functions' and never a page's — the page server and the page linter both read it from here.
+ * Where a space's functions answer HTTP: `GET /feed/:id` declared, `GET /fn/feed/42` served. The path is the functions'
+ * and never a page's — the page server and the page linter both read it from here. `/fn`, not `/api`: a space's pages
+ * are its own to name, and `api` is a slug a site wants for a page about its API.
  */
-export const FUNCTION_ROUTES_PREFIX = '/api';
+export const FUNCTION_ROUTES_PREFIX = '/fn';
 
 /** Whether a page at `path` would sit where the space's functions answer. */
 export const isFunctionRoutePath = (path: string): boolean =>

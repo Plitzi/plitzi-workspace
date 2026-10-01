@@ -55,7 +55,11 @@ describe('createGraphqlClient', () => {
   it('fails with the status of a refusal, and tells the session a 401 about it', async () => {
     answer(401, { reason: 'revoked' });
     const signals: unknown[] = [];
-    const stop = onAuthFailure(signal => signals.push(signal));
+    const stop = onAuthFailure(signal => {
+      signals.push(signal);
+
+      return undefined;
+    });
 
     const error = await failureOf(createGraphqlClient(URI, 'key').request('query { a }'));
     stop();
@@ -68,7 +72,11 @@ describe('createGraphqlClient', () => {
   it('keeps a refusal that is not about the session away from it', async () => {
     answer(403, { reason: 'missing' });
     const signals: unknown[] = [];
-    const stop = onAuthFailure(signal => signals.push(signal));
+    const stop = onAuthFailure(signal => {
+      signals.push(signal);
+
+      return undefined;
+    });
 
     const error = await failureOf(createGraphqlClient(URI, 'key').request('query { a }'));
     stop();

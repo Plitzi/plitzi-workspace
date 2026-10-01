@@ -264,6 +264,43 @@ describe('createActionResolver', () => {
     expect(req.ctx.actionRuns?.[0].steps.map(step => [step.id, step.status])).toEqual([['load', 'failed']]);
   });
 
+  /**
+   * The run a debugger needs most is the slow one: the page stops waiting, is answered without it, and the run ends
+   * later — when nobody is left to hear. So it is left on the request the moment the page stops waiting, while the page
+   * still has its runs to send.
+   */
+  it('leaves a run the page stopped waiting for on the request at once', async () => {
+    const controller = new AbortController();
+    const slow: ActionEntry = {
+      ...entry,
+      document: {
+        ...entry.document,
+        nodes: {
+          ...entry.document.nodes,
+          load: { ...entry.document.nodes.load, action: 'flow.delay', params: { milliseconds: '2000' } }
+        }
+      }
+    };
+    const req = buildReq();
+    const pending = render(resolverFor(slow), { action: 'post-page' }, controller.signal, req);
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    controller.abort();
+
+    // Synchronously: the abort is the page giving up, and what it sends next is decided right after.
+    expect(req.ctx.actionRuns).toMatchObject([
+      {
+        actionId: 'post-page',
+        status: 'aborted',
+        elementId: 'provider1',
+        error: expect.stringContaining('page stopped waiting') as unknown
+      }
+    ]);
+    await expect(pending).rejects.toThrow(/aborted/);
+    // Told once: how the run ended afterwards adds nothing the page could still send.
+    expect(req.ctx.actionRuns).toHaveLength(1);
+  });
+
   it('leaves an element that names no action alone', async () => {
     expect(await resolve({ connector: 'cms' })).toBeUndefined();
   });

@@ -37,16 +37,27 @@ describe('authFailureFromResponse', () => {
 });
 
 describe('the failure channel', () => {
-  it('hands every report to every listener until it unsubscribes', () => {
-    const listener = vi.fn();
+  it('hands every report to every listener until it unsubscribes', async () => {
+    const listener = vi.fn(() => undefined);
     const unsubscribe = onAuthFailure(listener);
 
-    reportAuthFailure({ reason: 'revoked', url: 'https://api.example.com/profile' });
+    await reportAuthFailure({ reason: 'revoked', url: 'https://api.example.com/profile' });
     unsubscribe();
-    reportAuthFailure({ reason: 'revoked' });
+    await reportAuthFailure({ reason: 'revoked' });
 
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledWith({ reason: 'revoked', url: 'https://api.example.com/profile' });
+  });
+
+  /** What lets the refused request be asked again: whether anything renewed the session because of it. */
+  it('answers whether the session was renewed because of the report', async () => {
+    const stopQuiet = onAuthFailure(() => undefined);
+    const stopRenewing = onAuthFailure(({ reason }) => Promise.resolve(reason === 'expired'));
+
+    expect(await reportAuthFailure({ reason: 'expired' })).toBe(true);
+    expect(await reportAuthFailure({ reason: 'revoked' })).toBe(false);
+    stopQuiet();
+    stopRenewing();
   });
 
   it('matches backends of one site by registrable domain', () => {

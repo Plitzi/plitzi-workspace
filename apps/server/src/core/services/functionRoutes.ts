@@ -5,9 +5,9 @@ import { clientIp, readRawBytes, requestOrigin } from '../requestParser';
 import type { SSRContext, Stage } from '../http/types';
 
 /**
- * The space's functions answering HTTP under `/api/`: a request there that a declared route answers is run
+ * The space's functions answering HTTP under `/fn/`: a request there that a declared route answers is run
  * by it — the deployment's own routes first, then the space's, in the sandbox — and anything else goes on to the page
- * server, which answers as it would have. `/api` is never a page: its slug is refused, so the path is the functions'.
+ * server, which answers as it would have. `/fn` is never a page: its slug is refused, so the path is the functions'.
  *
  * After the auth chain, so `ctx.user` is who the session says; the session itself never reaches the code.
  */

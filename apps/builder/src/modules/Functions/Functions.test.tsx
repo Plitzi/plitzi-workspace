@@ -57,6 +57,25 @@ describe('the Functions panel', () => {
     });
   });
 
+  it('opens another file without marking either as changed', async () => {
+    draft = {
+      files: { 'index.ts': 'export default {};\n', 'lib/feed.ts': 'export const feed = 1;\n' },
+      version: 'v1',
+      manifest: { hosts: [], tasks: [], routes: [] },
+      offer: null
+    };
+    const { container } = renderPanel();
+    await waitFor(() => expect(container.querySelector('.cm-content')?.textContent).toBe('export default {};'));
+
+    fireEvent.click(screen.getByText('feed.ts'));
+    await waitFor(() => expect(container.querySelector('.cm-content')?.textContent).toBe('export const feed = 1;'));
+    fireEvent.click(screen.getByText('index.ts'));
+    await waitFor(() => expect(container.querySelector('.cm-content')?.textContent).toBe('export default {};'));
+
+    expect(screen.queryByText('●')).toBeNull();
+    expect(screen.getByText('Save').closest('button')?.disabled).toBe(true);
+  });
+
   it('shows where the saved code is wrong', async () => {
     draft = {
       files: { 'index.ts': 'export default {};' },
@@ -67,8 +86,12 @@ describe('the Functions panel', () => {
     save.mockResolvedValue({ ok: false, problems: [{ file: 'lib/feed.ts', line: 3, message: 'Expected ";"' }] });
     renderPanel();
 
-    fireEvent.change(screen.getByPlaceholderText('lib/feed.ts'), { target: { value: 'lib/feed.ts' } });
-    fireEvent.click(screen.getByText('Add'));
+    // A new file is named where the list starts, and Enter adds it — its folder with it.
+    fireEvent.click(screen.getByTitle('New file'));
+    const name = screen.getByPlaceholderText('lib/feed.ts');
+    fireEvent.change(name, { target: { value: 'lib/feed.ts' } });
+    fireEvent.keyDown(name, { key: 'Enter' });
+    expect(screen.getByText('lib')).toBeDefined();
     fireEvent.click(screen.getByText('Save'));
 
     await waitFor(() => {
@@ -77,22 +100,47 @@ describe('the Functions panel', () => {
     });
   });
 
-  it('shows what the saved code declares, and tries only what was saved', () => {
+  it('shows what the saved code declares, and tries only what was saved', async () => {
     draft = {
       files: { 'index.ts': 'export default {};' },
       version: 'v1',
       manifest: {
         hosts: ['api.example.com'],
-        tasks: [{ namespace: 'feed', action: 'read', title: 'Read', params: {} }],
+        tasks: [
+          {
+            namespace: 'feed',
+            action: 'read',
+            title: 'Read',
+            params: {
+              window: {
+                type: 'select',
+                label: 'Window',
+                defaultValue: 'day',
+                options: [
+                  { label: 'Day', value: 'day' },
+                  { label: 'Week', value: 'week' }
+                ]
+              }
+            },
+            limits: { cpuMs: 1000 }
+          }
+        ],
         routes: ['GET /feed/:id']
       },
       offer: null
     };
+    tryTask.mockResolvedValue({ status: 'completed', steps: [], output: { value: { ok: true } } });
     renderPanel();
 
     expect(screen.getByText('api.example.com')).toBeDefined();
-    expect(screen.getByText('GET /feed/:id')).toBeDefined();
-    expect(screen.queryByText('Try runs the saved draft: save your changes first.')).toBeNull();
+    expect(screen.getByText('/fn/feed/:id')).toBeDefined();
+    expect(screen.getByText('1000 ms CPU')).toBeDefined();
+    expect(screen.queryByText(/save your changes first/)).toBeNull();
+
+    // Its params are drawn as its step draws them, starting from their defaults.
+    fireEvent.change(screen.getByLabelText('Window'), { target: { value: 'week' } });
+    fireEvent.click(screen.getByText('Run'));
+    await waitFor(() => expect(tryTask).toHaveBeenCalledWith('feed.read', { window: 'week' }));
   });
 
   it('offers the functions the space’s template brought, and installs them', async () => {

@@ -1,40 +1,70 @@
+import { FUNCTION_ROUTES_PREFIX } from '@plitzi/sdk-shared/actions';
+
+import TaskCard from './components/TaskCard';
+import { limitsLabel, routeParts, taskNameOf } from '../../helpers';
+
 import type { FunctionsManifest } from '@plitzi/sdk-shared';
 
 export type FunctionsDeclaredProps = {
   manifest: FunctionsManifest;
+  /** The task Try is set to. */
+  selected: string;
+  onTry: (task: string) => void;
 };
 
 /**
  * What the saved code declares — its steps, its routes and every host it may reach — so whoever reviews the space sees
- * what it does and where it goes without reading the code.
+ * what it does and where it goes without reading the code. A step is a click from being tried.
  */
-const FunctionsDeclared = ({ manifest }: FunctionsDeclaredProps) => (
-  <div className="flex flex-col gap-2 rounded-sm border border-gray-300 p-3 text-xs dark:border-zinc-600">
-    <span className="text-sm font-medium">Declared</span>
-    <div className="flex flex-col gap-1">
-      <span className="text-gray-500 dark:text-zinc-400">Steps, in the action editor’s catalog</span>
-      {manifest.tasks.length === 0 && <span className="text-gray-500 dark:text-zinc-400">None</span>}
+const FunctionsDeclared = ({ manifest, selected, onTry }: FunctionsDeclaredProps) => (
+  <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col">
+        <span className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400">Tasks</span>
+        <span className="text-[11px] text-gray-500 dark:text-zinc-400">Steps in the action editor’s catalog</span>
+      </div>
+      {manifest.tasks.length === 0 && (
+        <span className="text-xs text-gray-500 dark:text-zinc-400">None yet: each one in tasks becomes a step.</span>
+      )}
       {manifest.tasks.map(task => (
-        <span key={`${task.namespace}.${task.action}`}>
-          <code>
-            {task.namespace}.{task.action}
-          </code>{' '}
-          — {task.title}
+        <TaskCard
+          key={taskNameOf(task)}
+          name={taskNameOf(task)}
+          title={task.title}
+          description={task.description}
+          limits={limitsLabel(task, manifest)}
+          selected={taskNameOf(task) === selected}
+          onTry={onTry}
+        />
+      ))}
+    </div>
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400">Routes</span>
+      {manifest.routes.length === 0 && (
+        <span className="text-xs text-gray-500 dark:text-zinc-400">
+          None — routes answer HTTP under {FUNCTION_ROUTES_PREFIX}
         </span>
-      ))}
-    </div>
-    <div className="flex flex-col gap-1">
-      <span className="text-gray-500 dark:text-zinc-400">Routes, under /api</span>
-      {manifest.routes.length === 0 && <span className="text-gray-500 dark:text-zinc-400">None</span>}
+      )}
       {manifest.routes.map(route => (
-        <code key={route}>{route}</code>
+        <div key={route} className="flex items-center gap-2 text-xs">
+          <span className="rounded-sm bg-gray-100 px-1 py-0.5 font-mono text-[10px] font-semibold dark:bg-zinc-800">
+            {routeParts(route, FUNCTION_ROUTES_PREFIX).method}
+          </span>
+          <code className="truncate">{routeParts(route, FUNCTION_ROUTES_PREFIX).path}</code>
+        </div>
       ))}
     </div>
-    <div className="flex flex-col gap-1">
-      <span className="text-gray-500 dark:text-zinc-400">Hosts it may reach</span>
-      {manifest.hosts.length === 0 && <span className="text-gray-500 dark:text-zinc-400">None — no fetch leaves</span>}
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400">
+        Hosts it may reach
+      </span>
+      {manifest.hosts.length === 0 && (
+        <span className="text-xs text-gray-500 dark:text-zinc-400">None — no fetch leaves</span>
+      )}
       {manifest.hosts.map(host => (
-        <code key={host}>{host}</code>
+        <code key={host} className="text-xs">
+          {host}
+        </code>
       ))}
     </div>
   </div>

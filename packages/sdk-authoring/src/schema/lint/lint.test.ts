@@ -52,10 +52,19 @@ describe('lintSpace', () => {
 
     it('page-route-reserved', () => {
       const documents = withChange(({ schema }) => {
-        schema.flat[schema.pages[1]].attributes.slug = 'api';
+        schema.flat[schema.pages[1]].attributes.slug = 'fn';
       });
 
       expect(errorsOf(documents)).toContain('page-route-reserved');
+    });
+
+    // `/api` is a space's own to use for a page now — its functions answer under `/fn`.
+    it('lets a page be at /api', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat[schema.pages[1]].attributes.slug = 'api';
+      });
+
+      expect(errorsOf(documents)).not.toContain('page-route-reserved');
     });
 
     it('page-target-unknown', () => {

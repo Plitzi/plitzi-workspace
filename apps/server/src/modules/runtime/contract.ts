@@ -19,7 +19,7 @@ export type SpaceRuntimeEndpoint = (request: Request) => Response | Promise<Resp
 
 /** What a started runtime is made of. */
 export type SpaceRuntimeParts = {
-  /** Its tasks and `/api/` routes, run with a `ctx` that is the platform's — the space's `kv`, its channels, its key. */
+  /** Its tasks and `/fn/` routes, run with a `ctx` that is the platform's — the space's `kv`, its channels, its key. */
   functions?: FunctionsDefinition;
   /** Paths it answers itself, each with everything beneath it (`/mcp` answers `/mcp/…`) — see {@link endpointProblem}. */
   endpoints?: Record<string, SpaceRuntimeEndpoint>;

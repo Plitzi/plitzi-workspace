@@ -229,7 +229,7 @@ export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources
                 ...(fnCtx.user ? { user: fnCtx.user } : {})
               }
             },
-            limits: functionLimitsFor(config.limits, functions.limits),
+            limits: functionLimitsFor(config.limits, functions.limits, functions.manifest.limits),
             answer: call => answerCall(fnCtx, readCall(call)),
             signal: visit.signal,
             onUsage: usage => {
@@ -251,7 +251,7 @@ export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources
   };
 
   return {
-    /** The route that answers `method path` (the path after `/api`), for this visit — or none. */
+    /** The route that answers `method path` (the path after `/fn`), for this visit — or none. */
     routeFor: async (visit: RouteVisit, method: string, path: string): Promise<RouteHandler | undefined> =>
       nativeRoute(visit, method, path) ?? (await spaceRoute(visit, method, path))
   };

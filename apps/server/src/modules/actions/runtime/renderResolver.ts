@@ -90,6 +90,8 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
     const key = shareKey([spaceId, at.environment, at.revision, entry.id, user?.id ?? null, values]);
 
     const callerId = user ? `user:${user.id}` : 'render';
+    // The run this render started, when it was the one that started it rather than joining another.
+    let ownRunId: string | undefined;
 
     const startRun = async (): Promise<RenderRun> => {
       /**
@@ -110,6 +112,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
         kind: 'render',
         ttlMs: module.limitsFor(entry.document).timeoutMs
       });
+      ownRunId = run.runId;
 
       /**
        * The render giving up ends the run, not just the wait for it.
@@ -188,9 +191,33 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
     };
 
     // Every render that reads the run is told about it, a joined or reused one included: it is what fed this page.
+    // Once: a run the page stopped waiting for was told about then, and how it ends afterwards reaches nobody.
+    let told = false;
     const record = (summary: ActionRunSummary) => {
-      (req.ctx.actionRuns ??= []).push({ ...summary, elementId: element.id });
+      if (!told) {
+        told = true;
+        (req.ctx.actionRuns ??= []).push({ ...summary, elementId: element.id });
+      }
     };
+
+    /**
+     * The page stopped waiting — the section's budget ran out — and is answered without it: said NOW, while the page
+     * still has the request's runs to send. The run itself ends a moment later, aborted, when the page has gone; told
+     * then, a debugger would never hear of the one run it needed to — the slow one.
+     */
+    const askedAt = Date.now();
+    const stopWaiting = onAbort(signal, () => {
+      record({
+        actionId: entry.id,
+        runId: ownRunId ?? `render:${randomUUID()}`,
+        trigger: 'render',
+        status: 'aborted',
+        startedAt: askedAt,
+        endedAt: Date.now(),
+        steps: [],
+        error: 'Still running when the page stopped waiting for it: it took longer than a section is given'
+      });
+    });
 
     /**
      * Everyone asking the same question at once gets one run, and its answer.
@@ -211,6 +238,8 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
       }
 
       throw error;
+    } finally {
+      stopWaiting();
     }
   };
 };

@@ -172,7 +172,7 @@ const reportRefusal = (status: number, payload: ActionResponse, url: string) => 
 
   const reason = authFailureFromResponse(status, payload);
   if (reason) {
-    reportAuthFailure({ reason, url });
+    void reportAuthFailure({ reason, url });
   }
 };
 

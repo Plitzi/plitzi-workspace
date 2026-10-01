@@ -49,12 +49,12 @@ It answers what the runtime serves:
 
 | | |
 |---|---|
-| `functions` | A `defineFunctions(…)` definition: tasks and `/api/` routes, exactly as [functions](./functions.md) are written. Their `ctx` is the platform's — the space's `kv`, its channels, `ctx.sign`, `ctx.rateLimit` — over the same protocol the sandbox uses |
+| `functions` | A `defineFunctions(…)` definition: tasks and `/fn/` routes, exactly as [functions](./functions.md) are written. Their `ctx` is the platform's — the space's `kv`, its channels, `ctx.sign`, `ctx.rateLimit` — over the same protocol the sandbox uses |
 | `endpoints` | Paths the runtime answers itself, each a web handler `(request: Request) => Response`, streaming if it likes. A path answers everything beneath it (`/mcp` answers `/mcp/…`) |
 | `close` | Called when it is stopped |
 
 An endpoint never receives the visitor's `Cookie` or `Authorization`, nor a platform credential in the query
-(`access-token`): the host's session is the platform's. It may not take a path the server answers itself — `/api`,
+(`access-token`): the host's session is the platform's. It may not take a path the server answers itself — `/fn`,
 anything under `/_`, `/auth`, `/.well-known`.
 
 ## 2. On the platform

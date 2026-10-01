@@ -6,7 +6,8 @@ export type AuthFailureSignal = {
   url?: string;
 };
 
-export type AuthFailureListener = (signal: AuthFailureSignal) => void;
+/** Hears a refusal, and answers whether it renewed the session because of it — or nothing, for a listener that did not. */
+export type AuthFailureListener = (signal: AuthFailureSignal) => Promise<boolean> | boolean | undefined;
 
 const listeners = new Set<AuthFailureListener>();
 
@@ -14,11 +15,16 @@ const listeners = new Set<AuthFailureListener>();
  * Says that a backend refused a credential. A session can end between two checks — revoked from another device, an
  * account deactivated — and the first thing that notices is whatever request got refused, not a timer. Reporting it
  * here is how the network layers tell auth that reality moved on, without either knowing about the other.
+ *
+ * Answers whether the session was renewed because of it: a refusal that only meant "this credential expired" — a tab
+ * coming back after its token's life — is answered by a renewal, and the request that was refused can be asked again,
+ * once, instead of leaving its section in an error a reload would have cleared. A refused request never ran, so asking
+ * it again repeats nothing.
  */
-export const reportAuthFailure = (signal: AuthFailureSignal): void => {
-  for (const listener of listeners) {
-    listener(signal);
-  }
+export const reportAuthFailure = async (signal: AuthFailureSignal): Promise<boolean> => {
+  const answers = await Promise.all([...listeners].map(async listener => listener(signal)));
+
+  return answers.some(answer => answer === true);
 };
 
 export const onAuthFailure = (listener: AuthFailureListener): (() => void) => {

@@ -1,6 +1,7 @@
 import { taskName, taskNameProblem } from '../actions/tasks/registry';
 
-import type { FunctionsManifest, FunctionTaskManifest } from '@plitzi/sdk-shared';
+import type { FunctionLimits } from './protocol';
+import type { FunctionsManifest, FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
 
 type TaskParam = FunctionTaskManifest['params'][string];
 
@@ -15,7 +16,7 @@ const SEGMENT = /^(:[a-zA-Z][a-zA-Z0-9]*|[A-Za-z0-9._~-]+)$/;
 const isRouteMethod = (method: string): method is RouteMethod => ROUTE_METHODS.some(known => known === method);
 
 /**
- * A route key, `'<METHOD> /<path>'`: literal segments and `:params`, served under `/api/`. Anything else — a query, a
+ * A route key, `'<METHOD> /<path>'`: literal segments and `:params`, served under `/fn/`. Anything else — a query, a
  * wildcard, `..` — is not a key, so what a space may answer is only ever a path it spelled out.
  */
 export const parseRouteKey = (key: string): RouteKey | undefined => {
@@ -99,14 +100,66 @@ const paramOf = (value: unknown): TaskParam | string => {
 
 export type ManifestReading = { manifest: FunctionsManifest; problems: string[] };
 
+/** What each asked limit is, in words a problem is written in. */
+const LIMIT_WORDS: Record<keyof FunctionTimeLimits, string> = { cpuMs: 'of CPU', wallMs: 'to finish' };
+
+/**
+ * What `where` asks for beyond the default, read: whole milliseconds above nothing — and never more than `ceilings`, which
+ * is said rather than quietly cut down, so the author knows what the code will get.
+ */
+const limitsOf = (
+  value: unknown,
+  where: string,
+  ceilings: FunctionLimits,
+  problems: string[]
+): FunctionTimeLimits | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!isRecord(value)) {
+    problems.push(`${where}: limits is not an object like { cpuMs: 1000, wallMs: 20000 }`);
+
+    return undefined;
+  }
+
+  const limits: FunctionTimeLimits = {};
+  (['cpuMs', 'wallMs'] as const).forEach(key => {
+    const asked = value[key];
+    if (asked === undefined) {
+      return;
+    }
+
+    if (typeof asked !== 'number' || !Number.isInteger(asked) || asked <= 0) {
+      problems.push(`${where}: limits.${key} is not a whole number of milliseconds above 0`);
+    } else if (asked > ceilings[key]) {
+      problems.push(
+        `${where}: asks for ${String(asked)} ms ${LIMIT_WORDS[key]}, and this server allows at most ${String(ceilings[key])} ms`
+      );
+    } else {
+      limits[key] = asked;
+    }
+  });
+  Object.keys(value)
+    .filter(key => key !== 'cpuMs' && key !== 'wallMs')
+    .forEach(key => problems.push(`${where}: limits.${key} is not a limit a function asks for (cpuMs, wallMs)`));
+
+  return Object.keys(limits).length ? limits : undefined;
+};
+
 /**
  * Reads what a bundle said it declares, and every rule it must meet — the one validator, at save and nowhere else
  * afterwards, because what is stored is only ever what passed it.
  *
  * `reserved` is every namespace this deployment's own tasks use: a space's task may take none of them, so a step that
- * names a platform task always runs the platform's.
+ * names a platform task always runs the platform's. `ceilings` is the most this deployment gives one invocation: what a
+ * task may ask for.
  */
-export const readManifest = (value: unknown, reserved: ReadonlySet<string>): ManifestReading => {
+export const readManifest = (
+  value: unknown,
+  reserved: ReadonlySet<string>,
+  ceilings: FunctionLimits
+): ManifestReading => {
   const problems: string[] = [];
   const raw = isRecord(value) ? value : {};
 
@@ -155,7 +208,15 @@ export const readManifest = (value: unknown, reserved: ReadonlySet<string>): Man
     });
 
     const description = stringOf(task.description);
-    tasks.push({ namespace, action, title, ...(description ? { description } : {}), params });
+    const limits = limitsOf(task.limits, where, ceilings, problems);
+    tasks.push({
+      namespace,
+      action,
+      title,
+      ...(description ? { description } : {}),
+      params,
+      ...(limits ? { limits } : {})
+    });
   });
 
   const routes = Array.isArray(raw.routes) ? raw.routes.filter(route => typeof route === 'string') : [];
@@ -177,5 +238,7 @@ export const readManifest = (value: unknown, reserved: ReadonlySet<string>): Man
     routed.add(shape);
   });
 
-  return { manifest: { hosts, tasks, routes }, problems };
+  const limits = limitsOf(raw.limits, 'The functions', ceilings, problems);
+
+  return { manifest: { hosts, tasks, routes, ...(limits ? { limits } : {}) }, problems };
 };

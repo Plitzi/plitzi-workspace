@@ -7,6 +7,7 @@ import { namespaceKv } from './runtime/namespaceKv';
 import { createActionRunner } from './runtime/runAction';
 import { createTaskRegistry } from './tasks/registry';
 import { fleetStore } from '../../core/server/fleet/link';
+import { functionCeilings } from '../functions/config';
 import { readManifest } from '../functions/manifest';
 import { createRoutes } from '../functions/routes';
 import { createSpaceRegistries, prepareFunctions } from '../functions/space';
@@ -129,10 +130,10 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
       const runner = config.functions?.runner;
 
       return runner
-        ? prepareFunctions(source, runner, reserved)
+        ? prepareFunctions(source, runner, reserved, functionCeilings(config.functions?.limits))
         : Promise.resolve({ ok: false, problems: [{ message: 'This server runs no space functions' }] });
     },
-    readManifest: declared => readManifest(declared, reserved),
+    readManifest: declared => readManifest(declared, reserved, functionCeilings(config.functions?.limits)),
     guards,
     kv: spaceId => namespaceKv(kv, spaceId),
     limitsFor

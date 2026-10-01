@@ -2,7 +2,7 @@
 
 When no server task does what a flow needs — parse a feed, call an API with its own shape, compute something — a
 space can have its own: **functions**, TypeScript the platform builds and runs in a sandbox. A function's **tasks** are
-steps like any other (`<namespace>.<action>` in an action's flow); its **routes** answer HTTP under `/api/` on the
+steps like any other (`<namespace>.<action>` in an action's flow); its **routes** answer HTTP under `/fn/` on the
 space's own host.
 
 Running them is part of the paid plans (Lifetime included); on any plan they can be written and saved, and a run
@@ -12,7 +12,7 @@ answers why it did not start.
 - [2. What a function can do: `ctx`](#2-what-a-function-can-do-ctx)
 - [3. Where you write it](#3-where-you-write-it)
 - [4. Trying it, and what ships](#4-trying-it-and-what-ships)
-- [5. Routes under `/api/`](#5-routes-under-api)
+- [5. Routes under `/fn/`](#5-routes-under-fn)
 - [6. Limits](#6-limits)
 - [7. Security: why one space cannot reach another](#7-security-why-one-space-cannot-reach-another)
 - [8. For a deployment](#8-for-a-deployment)
@@ -177,10 +177,10 @@ failed. It is a real run — its fetches and writes happen, it counts against th
 The draft is what the builder, its preview and Try use. **Publishing the space freezes its functions with it**: the
 live site runs what it was published with, never the draft, and rolling back is publishing an earlier revision.
 
-## 5. Routes under `/api/`
+## 5. Routes under `/fn/`
 
 A route is a web-standard handler — `(request, ctx) => Response` — keyed by method and path:
-`'GET /boards/:board'` answers `GET /api/boards/kanban` with `ctx.params.board === 'kanban'`. Literal segments and
+`'GET /boards/:board'` answers `GET /fn/boards/kanban` with `ctx.params.board === 'kanban'`. Literal segments and
 `:params`; methods `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
 
 - **The visitor's credentials never reach it**: the `cookie` and `authorization` headers are removed. `ctx.user`
@@ -189,7 +189,7 @@ A route is a web-standard handler — `(request, ctx) => Response` — keyed by 
 - An answer is `Cache-Control: no-store` unless the route says otherwise.
 - A route that throws answers `500 {"error":"This route failed"}`; one stopped by a limit `503`. The reason is in the
   server's log, not in the answer.
-- `/api` is never a page: a page (or folder) whose path falls under it is refused (`page-route-reserved`).
+- `/fn` is never a page: a page (or folder) whose path falls under it is refused (`page-route-reserved`).
 
 ## 6. Limits
 
@@ -206,6 +206,23 @@ Per invocation — a task step or a route request:
 Past one, the invocation stops and says which ("Stopped after 100 ms of CPU"). On top of them, an **account's
 functions share a CPU budget per minute** (30 s by default): past it the next invocation is refused until the minute
 turns, so one space's loop slows its own account and nobody else. Each deployment sets both (§8).
+
+**Asking for more time.** A task that needs more — it reshapes a big feed, it waits on a slow API — says so with
+`limits`, in milliseconds; `defineFunctions({ limits })` asks it for every task and route at once, and a task's own
+wins over it:
+
+```ts
+const feed: FunctionTask<{ window: string }> = {
+  namespace: 'seismic',
+  action: 'feed',
+  // …
+  limits: { cpuMs: 1000, wallMs: 20_000 },
+  run: ({ window }, ctx) => report(window, ctx.fetch)
+};
+```
+
+Up to the server's ceiling — 2 s of CPU and 30 s of time unless it sets other ones — and the space's plan. Asking for
+more is a problem when the functions are saved, never quietly cut down; the builder shows each task's time beside it.
 
 ## 7. Security: why one space cannot reach another
 
@@ -235,7 +252,7 @@ createServer({ /* … */ functions: { native: functions } });
 
 A server project made by `plitzi create` already does this, so the files `plitzi functions pull` brings run there as
 they run on the platform. A `defineFunctions({ … })` written in the server's own code goes in `native` the same way.
-Their tasks join the catalog and their routes answer under `/api/` on every space the server serves. This replaces
+Their tasks join the catalog and their routes answer under `/fn/` on every space the server serves. This replaces
 the old `action.tasks`: a deployment's own tasks and a space's are written the same way.
 
 **The spaces' functions** need a runner — `functions.runner`, any `FunctionRunner`:
@@ -253,8 +270,9 @@ isolated-vm crashes beside Node's own startup snapshot, so the runner refuses to
 
 A space's functions reach a run through `action.lookups.getFunctions(spaceId, at)` — the bundle and what it declared
 when it was saved, as of the revision the run belongs to. `actions.prepareFunctions(source)` is the one way to make
-one: built, read by the runner and checked. `functions.limits` sets the per-invocation ceilings; `functions.admit` and
-`functions.onUsage` are how a deployment budgets CPU across a space's account.
+one: built, read by the runner and checked. `functions.limits` sets the per-invocation ceilings — what a task may ask
+for in CPU and time (`DEFAULT_FUNCTION_CEILINGS` for each unset one), and what every invocation gets of the rest;
+`functions.admit` and `functions.onUsage` are how a deployment budgets CPU across a space's account.
 
 **What a runner keeps, and what it does not.** A function is stateless, like a Lambda: everything it needs comes in its
 params and `ctx`, and anything that must outlive the invocation goes to `ctx.kv` — so any runner, any replica, can run

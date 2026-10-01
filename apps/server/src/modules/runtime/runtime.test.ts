@@ -13,6 +13,7 @@ import { createServer } from '../../core/createServer';
 import { createActionsModule } from '../actions';
 import { ActionRefusal } from '../actions/runtime/errors';
 import { createSigning } from '../actions/runtime/signing';
+import { DEFAULT_FUNCTION_CEILINGS } from '../functions/config';
 import { defineFunctions } from '../functions/contract';
 import { readManifest } from '../functions/manifest';
 import { createRemoteRunner } from '../functions/runner/remote';
@@ -164,13 +165,15 @@ describe('a space runtime', () => {
 
     expect(stranger.status).toBe(401);
     expect(description.endpoints).toEqual(['/mcp']);
-    expect(readManifest(description.functions, new Set()).manifest.tasks.map(task => task.action)).toEqual(['open']);
+    expect(
+      readManifest(description.functions, new Set(), DEFAULT_FUNCTION_CEILINGS).manifest.tasks.map(task => task.action)
+    ).toEqual(['open']);
   });
 
   it('runs its tasks for the platform’s flows, with the platform’s store and key, and refuses as a step does', async () => {
     const functions: SpaceFunctions = {
       bundle: { id: 'runtime:3:main', load: () => Promise.reject(new Error('a runtime holds its own code')) },
-      manifest: readManifest(description.functions, new Set()).manifest,
+      manifest: readManifest(description.functions, new Set(), DEFAULT_FUNCTION_CEILINGS).manifest,
       runner: createRemoteRunner({ url: `ws://127.0.0.1:${String(RUNTIME_PORT)}`, secret: SECRET })
     };
     const actions = createActionsModule({

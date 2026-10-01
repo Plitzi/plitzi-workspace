@@ -95,7 +95,7 @@ const NOT_ANSWERED = new Set([...HOP_BY_HOP, 'set-cookie']);
  * The page server forwarding a space's endpoints to its runtime: the request as it came, streamed both ways — an agent's
  * event stream included — without the visitor's cookies or `Authorization`, and with who asked in `X-Forwarded-*`.
  *
- * A data stage: after the auth chain, so the space is known, and before the space's `/api/` routes and its pages.
+ * A data stage: after the auth chain, so the space is known, and before the space's `/fn/` routes and its pages.
  */
 export const createRuntimeProxyStage =
   ({ lookup, onForward }: RuntimeProxyConfig): Stage<SSRContext> =>

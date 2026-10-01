@@ -490,19 +490,24 @@ abstract class AuthProvider<U = Record<string, unknown>> {
    * anything terminal ends the session here and now, without waiting for a timer to notice.
    */
   invalidate(reason: AuthFailureReason = 'expired'): void {
+    void this.recover(reason);
+  }
+
+  /** What a refusal does to the session — and whether it was renewed because of it, so the request may be asked again. */
+  private async recover(reason: AuthFailureReason): Promise<boolean> {
     if (reason === 'network') {
       this.offline = true;
 
-      return;
+      return false;
     }
 
-    if (reason === 'expired' && this.capabilities.renew) {
-      void this.renew();
-
-      return;
+    if (this.renewable(reason)) {
+      return this.renew();
     }
 
     this.endSession(reason);
+
+    return false;
   }
 
   async logout(): Promise<void> {
@@ -577,7 +582,7 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     if (!result.ok) {
       // `this.renewal` guards the one loop this could enter: a renewal that asks for identity, whose refusal asks
       // for a renewal.
-      if (result.reason === 'expired' && this.capabilities.renew && !this.renewal) {
+      if (this.renewable(result.reason) && !this.renewal) {
         return this.renew();
       }
 
@@ -645,6 +650,35 @@ abstract class AuthProvider<U = Record<string, unknown>> {
   /** Unix seconds this session's access token dies at, from what the backend said or, failing that, from the token. */
   private expiresAt(): number | undefined {
     return toSeconds(this.session.token?.expiresAt) ?? tokenExpiresAt(this.session.token?.accessToken);
+  }
+
+  /**
+   * Whether a refusal is one a renewal answers: the access credential expired — or it is MISSING while this browser can
+   * still renew, which is the same thing seen from the other side. A cookie carrying the access token lives exactly as
+   * long as the token, so the browser drops it the moment it expires; a tab that was in the background past that, its
+   * renewal timer frozen, sends nothing at all and is told `missing`. Ending the session there signed people out of a
+   * page they only had to come back to — and a reload, which renews on the server, put them right back in.
+   */
+  private renewable(reason: AuthFailureReason): boolean {
+    if (!this.capabilities.renew) {
+      return false;
+    }
+
+    if (reason === 'expired') {
+      return true;
+    }
+
+    if (reason !== 'missing') {
+      return false;
+    }
+
+    if (this.session.token?.refreshToken) {
+      return true;
+    }
+
+    const hint = readSessionHint(this.hintCookie);
+
+    return hint !== undefined && (hint.refreshExpiresAt === undefined || hint.refreshExpiresAt > nowInSeconds());
   }
 
   private hasLiveToken(): boolean {
@@ -753,9 +787,10 @@ abstract class AuthProvider<U = Record<string, unknown>> {
     // Whatever request just got refused knows about this session sooner than any timer does.
     const unsubscribeFailures = onAuthFailure(({ reason, url }) => {
       const endpoints = this.endpoints.filter(Boolean);
-      if (endpoints.length === 0 || endpoints.some(endpoint => sameRegistrableDomain(endpoint, url))) {
-        this.invalidate(reason);
-      }
+
+      return endpoints.length === 0 || endpoints.some(endpoint => sameRegistrableDomain(endpoint, url))
+        ? this.recover(reason)
+        : false;
     });
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('online', onOnline);

@@ -21,7 +21,7 @@ import type {
   SpaceFunctions
 } from './protocol';
 import type { ActionTask, ActionTaskRegistry, RegisteredTask } from '../actions/types';
-import type { FunctionsManifest, FunctionsProblem } from '@plitzi/sdk-shared';
+import type { FunctionsManifest, FunctionsProblem, FunctionTimeLimits } from '@plitzi/sdk-shared';
 
 const invocationContextOf = ({
   spaceId,
@@ -41,16 +41,18 @@ const invocationContextOf = ({
 
 /**
  * A space's tasks as the registry holds them — each run by the runner, answering the code's calls with the run's own
- * {@link FunctionContext}: the same one native functions get, built by the same function.
+ * {@link FunctionContext}: the same one native functions get, built by the same function. Each is given what
+ * `limitsFor` answers for what it asked: its own limits, over its functions'.
  */
 export const spaceTasks = (
   functions: SpaceFunctions,
   runner: FunctionRunner,
-  limits: FunctionLimits,
+  limitsFor: (asked: FunctionTimeLimits) => FunctionLimits,
   { admit, onUsage }: Pick<FunctionsConfig, 'admit' | 'onUsage'> = {}
 ): ActionTask<Record<string, unknown>>[] =>
   functions.manifest.tasks.map(task => {
     const name = taskName(task);
+    const limits = limitsFor({ ...functions.manifest.limits, ...task.limits });
 
     return {
       namespace: task.namespace,
@@ -137,14 +139,15 @@ export const createSpaceRegistries = (base: ActionTaskRegistry, config: Function
         return base;
       }
 
-      const limits = functionLimitsFor(config.limits, functions.limits);
-      const key = `${functions.bundle.id}:${JSON.stringify(limits)}`;
+      // What each task asked is in the bundle; what bounds it is the space's plan and the deployment's.
+      const key = `${functions.bundle.id}:${JSON.stringify(functions.limits ?? {})}`;
       const found = cache.get(key);
       if (found) {
         return found;
       }
 
-      const registry = composeRegistry(base, spaceTasks(functions, runner, limits, config));
+      const limitsFor = (asked: FunctionTimeLimits) => functionLimitsFor(config.limits, functions.limits, asked);
+      const registry = composeRegistry(base, spaceTasks(functions, runner, limitsFor, config));
       cache.set(key, registry);
       if (cache.size > REGISTRY_CACHE) {
         const oldest = cache.keys().next().value;
@@ -174,12 +177,14 @@ export type PreparedFunctions =
 
 /**
  * A space's source made ready to save: built, read by the runner, and checked — the only way a space's functions are
- * stored, so what is stored always passed every rule. `reserved` is every namespace the deployment's own tasks use.
+ * stored, so what is stored always passed every rule. `reserved` is every namespace the deployment's own tasks use;
+ * `ceilings`, the most it gives one invocation — what a task may ask for.
  */
 export const prepareFunctions = async (
   source: FunctionsSource,
   runner: FunctionRunner,
-  reserved: ReadonlySet<string>
+  reserved: ReadonlySet<string>,
+  ceilings: FunctionLimits
 ): Promise<PreparedFunctions> => {
   let code: string;
   try {
@@ -203,7 +208,7 @@ export const prepareFunctions = async (
     };
   }
 
-  const { manifest, problems } = readManifest(declared, reserved);
+  const { manifest, problems } = readManifest(declared, reserved, ceilings);
 
   return problems.length
     ? { ok: false, problems: problems.map(message => ({ file: 'index.ts', message })) }

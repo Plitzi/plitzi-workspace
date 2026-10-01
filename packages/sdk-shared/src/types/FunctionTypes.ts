@@ -5,6 +5,13 @@ import type { InteractionCallbackParam } from './InteractionTypes';
  * platform that stores them. The contract the code itself is written against is `@plitzi/sdk-server/functions`.
  */
 
+/**
+ * What a task — or every task and route, declared once for all of them — asks to be given beyond an invocation's
+ * default: CPU time, awaits not counted, and wall time, from the moment it starts. Never more than the server allows;
+ * asking for more is a problem when the functions are saved.
+ */
+export type FunctionTimeLimits = { cpuMs?: number; wallMs?: number };
+
 /** One task the functions declare: everything but its code — what the catalog shows and a step is drawn from. */
 export type FunctionTaskManifest = {
   namespace: string;
@@ -12,6 +19,8 @@ export type FunctionTaskManifest = {
   title: string;
   description?: string;
   params: Record<string, InteractionCallbackParam<Record<string, unknown>>>;
+  /** What it asks for beyond the default — over what the functions ask for all of their tasks. */
+  limits?: FunctionTimeLimits;
 };
 
 /** What a space's functions declare, read from the bundle when it is saved: its tasks, routes and reachable hosts. */
@@ -20,6 +29,8 @@ export type FunctionsManifest = {
   tasks: FunctionTaskManifest[];
   /** The route keys, `'GET /board-assets/:board/:asset'`, as declared. */
   routes: string[];
+  /** What every task and route asks for beyond the default, unless a task asks for its own. */
+  limits?: FunctionTimeLimits;
 };
 
 /** One reason functions were not saved, where it is — what an editor underlines. */

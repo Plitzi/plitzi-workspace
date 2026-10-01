@@ -1,6 +1,6 @@
 import type { RateCount, RateLimit } from '../actions/runtime/rateLimit';
 import type { ActionKvStore } from '../actions/types';
-import type { Environment, InteractionCallbackParam } from '@plitzi/sdk-shared';
+import type { Environment, FunctionTimeLimits, InteractionCallbackParam } from '@plitzi/sdk-shared';
 
 /**
  * Who started the run, as a space's own code may know them: everything a function decides by — who, their roles and
@@ -90,6 +90,11 @@ export type FunctionTask<T extends Record<string, unknown> = Record<string, unkn
   title: string;
   description?: string;
   params: Record<keyof T, InteractionCallbackParam<T>>;
+  /**
+   * More CPU or time than an invocation gets by default — `{ cpuMs: 1000 }` for a task that reshapes a big feed — up to
+   * what the server allows. Over the functions' own `limits`, for this task.
+   */
+  limits?: FunctionTimeLimits;
   run: (params: T, ctx: FunctionContext) => unknown;
 };
 
@@ -97,7 +102,7 @@ export type FunctionTask<T extends Record<string, unknown> = Record<string, unkn
 export type FunctionRouteContext = FunctionContext & { params: Record<string, string> };
 
 /**
- * An HTTP endpoint of the space, under `/api/`: a web-standard handler, the shape every edge runtime runs. The request
+ * An HTTP endpoint of the space, under `/fn/`: a web-standard handler, the shape every edge runtime runs. The request
  * carries no credentials — `ctx.user` says who is asking — and the response sets no cookies: the host's are the
  * platform's.
  */
@@ -108,8 +113,10 @@ export type FunctionsDefinition = {
   /** The hosts `ctx.fetch` may reach. Anything else is refused before it leaves. */
   allow?: { hosts?: string[] };
   tasks?: FunctionTask<never>[];
-  /** `'GET /board-assets/:board/:asset'` → a handler, served at `/api/board-assets/…`. */
+  /** `'GET /board-assets/:board/:asset'` → a handler, served at `/fn/board-assets/…`. */
   routes?: Record<string, FunctionRoute>;
+  /** More CPU or time than an invocation gets by default, for every task and route — a task may ask for its own. */
+  limits?: FunctionTimeLimits;
 };
 
 /**

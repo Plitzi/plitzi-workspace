@@ -71,7 +71,7 @@ const useNetwork = ({ initLoading = false, server, webKey, internalUsage = true,
         // left for a timer to discover. Auth ignores refusals from backends that are not its own.
         const reason = authFailureFromResponse(res.status, data);
         if (reason) {
-          reportAuthFailure({ reason, url: `${baseURL}${url}` });
+          void reportAuthFailure({ reason, url: `${baseURL}${url}` });
         }
 
         return data;

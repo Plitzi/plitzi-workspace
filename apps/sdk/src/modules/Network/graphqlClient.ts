@@ -67,7 +67,7 @@ export const createGraphqlClient = (uri: string, webKey: string): GraphqlClient 
     if (!response.ok) {
       const reason = authFailureFromResponse(response.status, body);
       if (reason) {
-        reportAuthFailure({ reason, url: uri });
+        void reportAuthFailure({ reason, url: uri });
       }
 
       throw new GraphqlRequestError(

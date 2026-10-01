@@ -1,9 +1,10 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import Input from '@plitzi/plitzi-ui/Input';
-import clsx from 'clsx';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import type { MouseEvent } from 'react';
+import FileItem from './components/FileItem';
+import FolderItem from './components/FolderItem';
+import NewFile from './components/NewFile';
+import { fileRows } from '../../helpers';
 
 export type FunctionsFilesProps = {
   files: string[];
@@ -15,62 +16,53 @@ export type FunctionsFilesProps = {
   onRemove: (file: string) => void;
 };
 
+/**
+ * The functions' files as a tree: folders once, before what is in them, and every file a click from the editor. A new
+ * one is named where the list starts, and a file with unsaved changes says so.
+ */
 const FunctionsFiles = ({ files, selected, modified, onSelect, onAdd, onRemove }: FunctionsFilesProps) => {
-  const [name, setName] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const rows = useMemo(() => fileRows(files), [files]);
 
-  const handleSelect = useCallback((file: string) => () => onSelect(file), [onSelect]);
+  const handleStartAdding = useCallback(() => setIsAdding(true), []);
 
-  const handleRemove = useCallback(
-    (file: string) => (e: MouseEvent) => {
-      e.stopPropagation();
-      onRemove(file);
+  const handleStopAdding = useCallback(() => setIsAdding(false), []);
+
+  const handleAdd = useCallback(
+    (file: string) => {
+      onAdd(file);
+      setIsAdding(false);
     },
-    [onRemove]
+    [onAdd]
   );
 
-  const handleAdd = useCallback(() => {
-    const file = name.trim();
-    if (!file) {
-      return;
-    }
-
-    onAdd(file);
-    setName('');
-  }, [name, onAdd]);
-
   return (
-    <div className="flex w-56 shrink-0 flex-col gap-2 border-r border-gray-300 p-2 dark:border-zinc-600">
-      <span className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400">Files</span>
-      <div className="flex flex-col gap-1 overflow-auto">
-        {files.map(file => (
-          <div
-            key={file}
-            className={clsx(
-              'group flex cursor-pointer items-center justify-between rounded-sm px-2 py-1 font-mono text-xs',
-              {
-                'bg-blue-100 text-blue-900 dark:bg-zinc-700 dark:text-zinc-100': file === selected,
-                'hover:bg-gray-100 dark:hover:bg-zinc-800': file !== selected
-              }
-            )}
-            onClick={handleSelect(file)}
-          >
-            <span className="truncate">
-              {file}
-              {modified.includes(file) && <span className="ml-1 text-amber-600 dark:text-amber-400">●</span>}
-            </span>
-            {file !== 'index.ts' && (
-              <Button size="xs" intent="danger" className="invisible group-hover:visible" onClick={handleRemove(file)}>
-                <i className="fa-solid fa-trash" />
-              </Button>
+    <div className="flex w-56 shrink-0 flex-col gap-2 border-r border-gray-200 p-2 dark:border-zinc-700">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400">Files</span>
+        <Button size="xs" intent="secondary" title="New file" onClick={handleStartAdding}>
+          <i className="fa-solid fa-plus" />
+        </Button>
+      </div>
+      {isAdding && <NewFile onAdd={handleAdd} onCancel={handleStopAdding} />}
+      <div className="flex flex-col gap-0.5 overflow-auto">
+        {rows.map(row => (
+          <div key={`${row.kind}:${row.path}`}>
+            {row.kind === 'folder' && <FolderItem name={row.path.split('/').pop() ?? row.path} depth={row.depth} />}
+            {row.kind === 'file' && (
+              <FileItem
+                path={row.path}
+                name={row.name}
+                depth={row.depth}
+                selected={row.path === selected}
+                modified={modified.includes(row.path)}
+                removable={row.path !== 'index.ts'}
+                onSelect={onSelect}
+                onRemove={onRemove}
+              />
             )}
           </div>
         ))}
-      </div>
-      <div className="mt-auto flex gap-1">
-        <Input size="xs" value={name} placeholder="lib/feed.ts" onChange={setName} />
-        <Button size="xs" disabled={!name.trim()} onClick={handleAdd}>
-          Add
-        </Button>
       </div>
     </div>
   );

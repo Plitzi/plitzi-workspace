@@ -15,7 +15,7 @@ export type {
   FunctionUser
 } from './modules/functions/contract';
 export type { FunctionsConfig, FunctionUsageRecord } from './modules/functions/config';
-export { DEFAULT_FUNCTION_LIMITS } from './modules/functions/config';
+export { DEFAULT_FUNCTION_CEILINGS, DEFAULT_FUNCTION_LIMITS } from './modules/functions/config';
 /**
  * What the platform keeps of a space's functions, and what it hands a runner: the built bundle and what it declared
  * when it was saved (`prepareFunctions` on the actions module is the one way to make one).

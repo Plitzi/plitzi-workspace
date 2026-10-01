@@ -53,7 +53,9 @@ const request = async (
   method: NonNullable<UseApiProps['method']>,
   credentials: RequestCredentials,
   customHeaders: Record<string, string>,
-  signal: AbortSignal
+  signal: AbortSignal,
+  /** Whether this is the one second asking, after a refusal that renewed the session. */
+  retried = false
 ): Promise<ApiResponse> => {
   if (!url) {
     return { status: 400, data: 'URL is required' };
@@ -82,10 +84,12 @@ const request = async (
     const data: unknown = await res.json();
     // The request a page makes on its own behalf is often the first to learn that the session behind it ended.
     // Reporting it renews or ends the session now rather than at the next revalidation; auth ignores refusals from
-    // backends that are not its own, so pointing this element at a third-party API costs nothing.
+    // backends that are not its own, so pointing this element at a third-party API costs nothing. Renewed because of
+    // it — a tab back after its credential's life — it is asked again, once, rather than showing a refusal a reload
+    // would not have.
     const reason = authFailureFromResponse(res.status, data);
-    if (reason) {
-      reportAuthFailure({ reason, url });
+    if (reason && (await reportAuthFailure({ reason, url })) && !retried && !signal.aborted) {
+      return await request(url, method, credentials, customHeaders, signal, true);
     }
 
     return { status: res.status, data };

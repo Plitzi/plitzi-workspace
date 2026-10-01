@@ -15,7 +15,7 @@ import FunctionsOffer from './components/FunctionsOffer';
 import FunctionsProblems from './components/FunctionsProblems';
 import FunctionsTry from './components/FunctionsTry';
 import useFunctionsTypeScript from './editor/useFunctionsTypeScript';
-import { STARTER_FILES } from './helpers';
+import { isSaveKey, saveStatus, STARTER_FILES, taskNameOf } from './helpers';
 import useFunctions from './useFunctions';
 
 import type { FunctionsProblem, FunctionsRefusal } from '@plitzi/sdk-shared';
@@ -39,7 +39,11 @@ const Functions = () => {
   const [refusal, setRefusal] = useState<FunctionsRefusal | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
+  // The task Try is set to — the first one declared until another is picked.
+  const [picked, setPicked] = useState('');
   const typescript = useFunctionsTypeScript(functionsWorkerUrl, files);
+  const tasks = useMemo(() => draft?.manifest?.tasks ?? [], [draft?.manifest]);
+  const tried = tasks.some(task => taskNameOf(task) === picked) ? picked : tasks[0] ? taskNameOf(tasks[0]) : '';
 
   // The saved files are the starting point every time they change underneath — a save of ours, or one from elsewhere.
   useEffect(() => {
@@ -53,6 +57,8 @@ const Functions = () => {
   );
   const extensions = useMemo(() => typescript.extensionsFor(selected), [typescript, selected]);
   const hasFiles = names.length > 0;
+  const canSave = !isSaving && hasFiles && modified.length > 0;
+  const status = saveStatus(modified.length, Boolean(draft?.manifest));
 
   const handleChange = useCallback(
     (code: string) => setFiles(current => ({ ...current, [selected]: code })),
@@ -80,6 +86,10 @@ const Functions = () => {
   }, []);
 
   const handleSave = useCallback(async () => {
+    if (!canSave) {
+      return;
+    }
+
     setIsSaving(true);
     try {
       const result = await save(files);
@@ -88,7 +98,20 @@ const Functions = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [files, save]);
+  }, [canSave, files, save]);
+
+  // ⌘S / Ctrl+S saves, as in every editor — and never asks the browser to save the page.
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (isSaveKey(event)) {
+        event.preventDefault();
+        void handleSave();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [handleSave]);
 
   const handleInstall = useCallback(async () => {
     setIsInstalling(true);
@@ -125,20 +148,31 @@ const Functions = () => {
   return (
     <Card className="relative flex grow basis-0" rounded="none">
       <Card.Body grow className="flex flex-col">
-        <div className="flex items-center justify-between border-b border-gray-300 px-4 py-2 dark:border-zinc-600">
-          <div className="flex flex-col">
+        <div className="flex items-center justify-between gap-4 border-b border-gray-200 px-4 py-2 dark:border-zinc-700">
+          <div className="flex min-w-0 flex-col">
             <Heading as="h5">Functions</Heading>
             <span className="text-xs text-gray-500 dark:text-zinc-400">
-              The space’s own server code: its tasks are steps in any action, its routes answer under /api.
+              The space’s own server code: its tasks are steps in any action, its routes answer under /fn.
             </span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex shrink-0 items-center gap-3">
+            {status && (
+              <span
+                className={
+                  modified.length > 0
+                    ? 'text-xs text-amber-700 dark:text-amber-400'
+                    : 'text-xs text-gray-500 dark:text-zinc-400'
+                }
+              >
+                {status}
+              </span>
+            )}
             {draft?.manifest && (
-              <Button size="sm" intent="danger" onClick={handleRemoveAll}>
-                Remove
+              <Button size="sm" intent="secondary" title="Remove the space’s functions" onClick={handleRemoveAll}>
+                <i className="fa-regular fa-trash-can" />
               </Button>
             )}
-            <Button size="sm" disabled={isSaving || !hasFiles || modified.length === 0} onClick={handleSave}>
+            <Button size="sm" disabled={!canSave} title="Save — ⌘S" onClick={handleSave}>
               {isSaving ? 'Saving…' : 'Save'}
             </Button>
           </div>
@@ -171,7 +205,9 @@ const Functions = () => {
             />
             <div className="flex grow basis-0 flex-col overflow-hidden">
               <div className="grow basis-0 overflow-auto">
+                {/* One editor per file: its own undo history, and nothing typed in one ever lands in another. */}
                 <CodeMirror
+                  key={selected}
                   mode="ts"
                   theme={resolvedTheme}
                   value={files[selected] ?? ''}
@@ -181,13 +217,16 @@ const Functions = () => {
               </div>
               {problems.length > 0 && <FunctionsProblems problems={problems} onSelect={setSelected} />}
             </div>
-            <div className="flex w-80 shrink-0 flex-col gap-3 overflow-auto border-l border-gray-300 p-3 dark:border-zinc-600">
-              {draft?.manifest && <FunctionsDeclared manifest={draft.manifest} />}
+            <div className="flex w-80 shrink-0 flex-col gap-5 overflow-auto border-l border-gray-200 p-3 dark:border-zinc-700">
               <FunctionsTry
-                tasks={draft?.manifest?.tasks ?? []}
-                disabledReason={modified.length > 0 ? 'Try runs the saved draft: save your changes first.' : ''}
+                key={tried}
+                tasks={tasks}
+                task={tried}
+                disabledReason={modified.length > 0 ? 'Try runs the saved draft: save your changes first (⌘S).' : ''}
+                onTaskChange={setPicked}
                 onTry={tryTask}
               />
+              {draft?.manifest && <FunctionsDeclared manifest={draft.manifest} selected={tried} onTry={setPicked} />}
             </div>
           </div>
         )}

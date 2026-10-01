@@ -193,6 +193,37 @@ describe('BasicAuthProvider boot', () => {
     expect(provider.getState()).toBe('authenticated');
   });
 
+  /**
+   * A tab left in the background past its access token's life: the browser dropped the cookie that carried it, the
+   * renewal timer never ran, and the first check on coming back is told `missing`. The session is still there to renew
+   * — the hint says so — and signing out there was what a reload undid.
+   */
+  it('renews a session whose access cookie the browser dropped, rather than signing it out', async () => {
+    document.cookie = `plitzi_auth_hint=${inSeconds(-60)}.${inSeconds(7200)}`;
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionHintCookie: 'plitzi_auth_hint' });
+    await provider.init({ user: { id: 1, username: 'ada' }, accessToken: 'ssr', expiresAt: inSeconds(3600) });
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ error: 'Authentication required', reason: 'missing' }, 401))
+      .mockResolvedValueOnce(jsonResponse(session(inSeconds(3600))));
+
+    await provider.revalidate(true);
+
+    expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([plitziApi.userUrl, plitziApi.refreshUrl]);
+    expect(provider.getState()).toBe('authenticated');
+  });
+
+  it('ends a session told missing once nothing in the browser can renew it', async () => {
+    document.cookie = `plitzi_auth_hint=${inSeconds(-7200)}.${inSeconds(-60)}`;
+    const provider = new BasicAuthProvider({ ...plitziApi, sessionHintCookie: 'plitzi_auth_hint' });
+    await provider.init({ user: { id: 1, username: 'ada' }, accessToken: 'ssr', expiresAt: inSeconds(3600) });
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'Authentication required', reason: 'missing' }, 401));
+
+    await provider.revalidate(true);
+
+    expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([plitziApi.userUrl]);
+    expect(provider.getState()).toBe('guest');
+  });
+
   it('trusts a server-rendered identity over everything, and stores it', async () => {
     const provider = new BasicAuthProvider({ ...plitziApi });
 

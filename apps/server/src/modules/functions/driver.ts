@@ -39,11 +39,13 @@ export const describeFunctions = (definition: unknown): Record<string, unknown> 
             action: task.action,
             title: task.title,
             description: task.description,
-            params: task.params
+            params: task.params,
+            limits: task.limits
           }
         : {}
     ),
-    routes: isRecord(found.routes) ? Object.keys(found.routes) : []
+    routes: isRecord(found.routes) ? Object.keys(found.routes) : [],
+    limits: found.limits
   };
 };
 

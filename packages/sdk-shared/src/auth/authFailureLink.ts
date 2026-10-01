@@ -26,6 +26,6 @@ export const createAuthFailureLink = (uri?: string): ErrorLink =>
 
     const reason = authFailureFromResponse(error.statusCode, parseBody(error.bodyText));
     if (reason) {
-      reportAuthFailure({ reason, url: uri });
+      void reportAuthFailure({ reason, url: uri });
     }
   });

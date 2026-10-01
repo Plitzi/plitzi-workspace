@@ -1,9 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Whether auth renews the session when told of a refusal: what decides if a refused read is asked again.
+const auth = vi.hoisted(() => ({ renews: false }));
+
 vi.mock('@plitzi/sdk-shared/auth', () => ({
-  authFailureFromResponse: () => undefined,
-  reportAuthFailure: () => undefined
+  authFailureFromResponse: (status: number) => (status === 401 ? 'expired' : undefined),
+  reportAuthFailure: () => Promise.resolve(auth.renews)
 }));
 
 const { default: useApi } = await import('./useApi');
@@ -13,6 +16,7 @@ const fetchMock = vi.fn();
 
 beforeEach(async () => {
   fetchMock.mockReset();
+  auth.renews = false;
   vi.stubGlobal('fetch', fetchMock);
   // One cache for the page, so one for the file: every test starts from a page nobody has asked anything on yet.
   await queryCache.reset();
@@ -246,6 +250,29 @@ describe('useApi', () => {
         ['https://api.test/b', 'text/plain']
       ])
     );
+  });
+
+  /** A tab back after its credential's life: the read was refused, the session renewed, and the read asked again. */
+  it('asks a refused read again, once, when the session was renewed because of it', async () => {
+    auth.renews = true;
+    fetchMock
+      .mockResolvedValueOnce({ status: 401, json: () => Promise.resolve({ reason: 'missing' }) })
+      .mockResolvedValueOnce(answers({ members: [1] }));
+
+    const { result } = renderHook(() => useApi({ url: 'https://api.test/members' }));
+
+    await waitFor(() => expect(result.current.data).toEqual({ status: 200, data: { members: [1] } }));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the refusal when nothing renewed the session', async () => {
+    fetchMock.mockResolvedValue({ status: 401, json: () => Promise.resolve({ reason: 'revoked' }) });
+
+    const { result } = renderHook(() => useApi({ url: 'https://api.test/members' }));
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data?.status).toBe(401);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('stays idle when disabled', () => {

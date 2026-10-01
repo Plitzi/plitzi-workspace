@@ -57,7 +57,9 @@ export const refreshRsc = async (
    * navigation asks for the destination BEFORE it commits. Absent means where the visitor already is, which is
    * every other caller: the initial load, a pager, an element refreshing itself.
    */
-  location?: string
+  location?: string,
+  /** Whether this is the one second asking, after a refusal that renewed the session. */
+  retried = false
 ): Promise<void> => {
   const { enabled, endpoint } = store.get('rsc') ?? {};
   if (!enabled || !endpoint || typeof window === 'undefined') {
@@ -99,9 +101,11 @@ export const refreshRsc = async (
       // makes most often — so it is usually the first thing to find out. Told here, auth renews or signs the visitor
       // out at once instead of leaving it for the next revalidation timer. Refusals from a backend that is not its
       // own are ignored on the other side.
+      // Renewed because of it, the refresh is asked again, once: a section refreshed as the tab came back is not left
+      // stale over a credential that had only expired.
       const reason = authFailureFromResponse(res.status, await res.json().catch(() => undefined));
-      if (reason) {
-        reportAuthFailure({ reason, url: endpoint });
+      if (reason && (await reportAuthFailure({ reason, url: endpoint })) && !retried) {
+        return await refreshRsc(store, ids, params, location, true);
       }
 
       store.set('rsc.stale', true);

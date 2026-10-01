@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_FUNCTION_CEILINGS, functionLimitsFor } from './config';
 import { parseRouteKey, readManifest } from './manifest';
 
 const RESERVED = new Set(['kv', 'flow']);
+
+const CEILINGS = DEFAULT_FUNCTION_CEILINGS;
 
 describe('a route key', () => {
   it('is a method and a path of literal segments and params', () => {
@@ -38,7 +41,8 @@ describe('reading what a bundle declared', () => {
         ],
         routes: ['GET /feed/:id']
       },
-      RESERVED
+      RESERVED,
+      CEILINGS
     );
 
     expect(manifest.tasks[0]?.params).toEqual({
@@ -59,7 +63,8 @@ describe('reading what a bundle declared', () => {
         ],
         routes: ['GET /a/:x', 'GET /a/:y']
       },
-      RESERVED
+      RESERVED,
+      CEILINGS
     );
 
     expect(problems).toEqual([
@@ -69,5 +74,42 @@ describe('reading what a bundle declared', () => {
       'Task "feed.read" is declared twice',
       'Route "GET /a/:y" answers the same requests as another one'
     ]);
+  });
+});
+
+describe('what a task asks for beyond the default', () => {
+  const task = (limits: unknown) => ({ namespace: 'feed', action: 'read', title: 'Read', params: {}, limits });
+
+  it('is kept, for one task or for all of them, within what the server allows', () => {
+    const { manifest, problems } = readManifest(
+      { tasks: [task({ cpuMs: 1000 })], routes: [], limits: { wallMs: 20_000 } },
+      RESERVED,
+      CEILINGS
+    );
+
+    expect(problems).toEqual([]);
+    expect(manifest.tasks[0].limits).toEqual({ cpuMs: 1000 });
+    expect(manifest.limits).toEqual({ wallMs: 20_000 });
+  });
+
+  it('is said to be too much rather than quietly cut down, and refused when it is not a time', () => {
+    const { problems } = readManifest(
+      { tasks: [task({ cpuMs: 60_000, wallMs: -1, timeout: 5 })], routes: [] },
+      RESERVED,
+      CEILINGS
+    );
+
+    expect(problems).toEqual([
+      'Task "feed.read": asks for 60000 ms of CPU, and this server allows at most 2000 ms',
+      'Task "feed.read": limits.wallMs is not a whole number of milliseconds above 0',
+      'Task "feed.read": limits.timeout is not a limit a function asks for (cpuMs, wallMs)'
+    ]);
+  });
+
+  it('is given — the default when nothing was asked — never above the plan nor the server', () => {
+    expect(functionLimitsFor({}, {}, {})).toMatchObject({ cpuMs: 100, wallMs: 10_000 });
+    expect(functionLimitsFor({}, {}, { cpuMs: 1000 })).toMatchObject({ cpuMs: 1000, wallMs: 10_000 });
+    expect(functionLimitsFor({ cpuMs: 500 }, {}, { cpuMs: 1000 })).toMatchObject({ cpuMs: 500 });
+    expect(functionLimitsFor({}, { cpuMs: 300 }, { cpuMs: 1000 })).toMatchObject({ cpuMs: 300 });
   });
 });

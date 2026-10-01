@@ -43,7 +43,7 @@ const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone 
         // renews and the retry succeeds, or the visitor is signed out now instead of on the next timer.
         const reason = authFailureFromResponse(response.status, await response.json().catch(() => undefined));
         if (reason) {
-          reportAuthFailure({ reason, url: actionPath });
+          void reportAuthFailure({ reason, url: actionPath });
         }
 
         throw new Error(`Write failed with status ${response.status}`);
