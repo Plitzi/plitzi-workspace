@@ -1,9 +1,20 @@
+import type { FunctionTimeLimits } from '../types/FunctionTypes';
+
 /**
  * Where a space's functions answer HTTP: `GET /feed/:id` declared, `GET /fn/feed/42` served. The path is the functions'
  * and never a page's — the page server and the page linter both read it from here. `/fn`, not `/api`: a space's pages
  * are its own to name, and `api` is a slug a site wants for a page about its API.
  */
 export const FUNCTION_ROUTES_PREFIX = '/fn';
+
+/**
+ * The CPU and time an invocation gets when its task asks for none: what the server runs it with, and what the builder
+ * shows as "default". A task asks for more in its `limits`, up to what its deployment allows.
+ */
+export const DEFAULT_FUNCTION_TIME_LIMITS = {
+  cpuMs: 100,
+  wallMs: 10_000
+} as const satisfies Required<FunctionTimeLimits>;
 
 /** Whether a page at `path` would sit where the space's functions answer. */
 export const isFunctionRoutePath = (path: string): boolean =>

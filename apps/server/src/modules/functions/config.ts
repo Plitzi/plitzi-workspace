@@ -1,3 +1,5 @@
+import { DEFAULT_FUNCTION_TIME_LIMITS } from '@plitzi/sdk-shared/actions';
+
 import type { FunctionsDefinition } from './contract';
 import type { FunctionLimits, FunctionRunner, FunctionUsage } from './protocol';
 import type { FunctionTimeLimits } from '@plitzi/sdk-shared';
@@ -34,8 +36,7 @@ export type FunctionsConfig = {
 
 /** What an invocation gets unless its task asks for more CPU or time. */
 export const DEFAULT_FUNCTION_LIMITS: FunctionLimits = {
-  cpuMs: 100,
-  wallMs: 10_000,
+  ...DEFAULT_FUNCTION_TIME_LIMITS,
   memoryMb: 64,
   outputBytes: 1_000_000,
   calls: 100

@@ -1,7 +1,13 @@
 export { accessRefusal } from './access';
 export { cronFiresBetween, cronMatches, cronNextFire, isKnownTimeZone, parseCron, zonedClock } from './cron';
 export { FAILURE_HANDLER_TASK } from './failureHandler';
-export { FUNCTION_ROUTES_PREFIX, isFunctionRoutePath, isFunctionsSourcePath, readFunctionsSource } from './functions';
+export {
+  DEFAULT_FUNCTION_TIME_LIMITS,
+  FUNCTION_ROUTES_PREFIX,
+  isFunctionRoutePath,
+  isFunctionsSourcePath,
+  readFunctionsSource
+} from './functions';
 export { triggerAccess, triggerCacheMs, triggerHasStaleVerify, triggerInput, triggerVerify } from './triggerParams';
 export { actionName, actionTriggers, isActionEnabled } from './triggers';
 export { validateActionDocument } from './validateDocument';

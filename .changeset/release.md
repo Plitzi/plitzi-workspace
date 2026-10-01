@@ -37,17 +37,29 @@ own. A page under `/fn` is refused instead (`page-route-reserved`).
 
 ## The builder's Functions panel
 
-- **Editor:** each file has its own, with its own undo history. Opening another file no longer marks the one you
-  left as changed. Before this, it could also write the newly opened file's text into the one you left. The cause was
-  in `@plitzi/plitzi-ui`'s CodeMirror, fixed in 1.6.25, which every package now depends on. That release also sets
-  code editors (several lines) in a monospaced face again.
-- **Header:** says whether there are unsaved changes, and in how many files. ⌘S saves. Removing the functions is a
-  quiet button beside Save, no longer a red one.
-- **File list:** files are grouped by folder. A new one is named where the list starts (Enter adds it, Escape cancels).
-- **Tasks:** each is a card with its title, what it does and how much time it gets, one click from Try.
-- **Routes:** shown with their method and their `/fn` address.
-- **Try:** fills a task's params the way its step does, from their defaults: a select, a switch or text. JSON stays a
-  toggle away.
+Rebuilt around the code. The panel reads `defineFunctions` as it is typed and writes into it, so the code stays the one
+place a function is declared.
+
+- **Layout:** the tasks, routes and files on the left, the code in the middle, the selected task on the right.
+- **Live list:** tasks and routes are listed as the code declares them, including tasks imported from another file.
+  A task you have written but not saved says so. Tasks built by calling something are counted, and listed once saved.
+- **Code and panel follow each other:** clicking a task or a route opens its file at its line. Putting the cursor inside
+  a task's code selects that task.
+- **New task:** + in Tasks asks for its namespace, action and title. The task is written into `defineFunctions` with a
+  `run` to start from, in the file's own quotes, and the editor opens on it.
+- **Time limit:** each task gets a slider from 100 ms to 1 s of CPU per run, with presets. The value is written into
+  the task as `limits: { cpuMs }`. "Use default" takes it out. `DEFAULT_FUNCTION_TIME_LIMITS` in
+  `@plitzi/sdk-shared/actions` is the default both the panel and the server use.
+- **Test:** fills a task's params the way its step does, from their defaults: a select, a switch or text. JSON stays a
+  toggle away. With unsaved changes, the button reads "Save & run": it saves, then runs. If the save fails, it says why.
+- **Header:** shows Saved, Unsaved (and in how many files) or the number of problems the last save found. ⌘S saves.
+  Removing the functions is a quiet button beside Save.
+- **Problems:** clicking one opens its file at its line.
+- **Editor:** each file has its own editor and undo history. Opening another file no longer marks the one you left as
+  changed. Before this, it could also write the newly opened file's text into the one you left. The cause was in
+  `@plitzi/plitzi-ui`'s CodeMirror, fixed in 1.6.25, which every package now depends on. That release also sets code
+  editors (several lines) in a monospaced face again. Long lines scroll inside the editor, and the line numbers stay
+  in place.
 
 ## Dev tools hear about the render run the page stopped waiting for
 

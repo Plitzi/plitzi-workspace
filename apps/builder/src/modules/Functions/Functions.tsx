@@ -1,31 +1,45 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
-import Button from '@plitzi/plitzi-ui/Button';
 import Card from '@plitzi/plitzi-ui/Card';
-import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import AppContext from '@pmodules/App/AppContext';
 
-import FunctionsDeclared from './components/FunctionsDeclared';
-import FunctionsFiles from './components/FunctionsFiles';
+import FunctionInspector from './components/FunctionInspector';
+import FunctionsEditor from './components/FunctionsEditor';
+import FunctionsGuide from './components/FunctionsGuide';
+import FunctionsHeader from './components/FunctionsHeader';
 import FunctionsOffer from './components/FunctionsOffer';
 import FunctionsProblems from './components/FunctionsProblems';
-import FunctionsTry from './components/FunctionsTry';
+import FunctionsSidebar from './components/FunctionsSidebar';
+import FunctionsWelcome from './components/FunctionsWelcome';
 import useFunctionsTypeScript from './editor/useFunctionsTypeScript';
-import { isSaveKey, saveStatus, STARTER_FILES, taskNameOf } from './helpers';
+import {
+  isSaveKey,
+  limitsBlockedBy,
+  listedHosts,
+  listedRoutes,
+  listedTasks,
+  saveState,
+  STARTER_FILES,
+  taskAt,
+  taskNameOf,
+  withCpu
+} from './helpers';
 import useFunctions from './useFunctions';
 
-import type { FunctionsProblem, FunctionsRefusal } from '@plitzi/sdk-shared';
+import type { NewTask, SourceEdit, SourcePlace } from './editor/source';
+import type { EditorTarget, ListedTask } from './helpers';
+import type { ActionRunReport, FunctionsProblem, FunctionsRefusal, FunctionsSaveResult } from '@plitzi/sdk-shared';
 
 const EMPTY_FILES: Record<string, string> = {};
 
 /**
- * The space's own server code: its files, edited with TypeScript that knows the contract, saved as the draft
- * — built and checked on the platform, problems shown where they are — and tried in the sandbox. The live site runs
- * what the space was last published with. A project's `plitzi functions pull` edits the same files.
+ * The space's own server code: its tasks and routes as the code declares them — listed as it is typed — its files,
+ * edited with TypeScript that knows the contract, and the selected task's time limit and test run beside them. Saved as
+ * the draft, built and checked on the platform; the live site runs what the space was last published with. A
+ * project's `plitzi functions pull` edits the same files.
  */
 const Functions = () => {
   const { functionsWorkerUrl } = use(AppContext);
@@ -33,17 +47,26 @@ const Functions = () => {
   const { showDialog } = useModal();
   const { resolvedTheme } = useTheme();
   const saved = draft?.files ?? EMPTY_FILES;
+  const manifest = draft?.manifest ?? null;
   const [files, setFiles] = useState<Record<string, string>>(EMPTY_FILES);
-  const [selected, setSelected] = useState('index.ts');
+  const [selectedFile, setSelectedFile] = useState('index.ts');
+  // The task the inspector shows — the first one declared until another is picked.
+  const [picked, setPicked] = useState('');
+  const [target, setTarget] = useState<EditorTarget | undefined>(undefined);
+  // A task just written for us: brought into view once the code is read with it.
+  const [awaited, setAwaited] = useState('');
   const [problems, setProblems] = useState<FunctionsProblem[]>([]);
   const [refusal, setRefusal] = useState<FunctionsRefusal | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
-  // The task Try is set to — the first one declared until another is picked.
-  const [picked, setPicked] = useState('');
+  const jumps = useRef(0);
   const typescript = useFunctionsTypeScript(functionsWorkerUrl, files);
-  const tasks = useMemo(() => draft?.manifest?.tasks ?? [], [draft?.manifest]);
-  const tried = tasks.some(task => taskNameOf(task) === picked) ? picked : tasks[0] ? taskNameOf(tasks[0]) : '';
+  const { source } = typescript;
+  const tasks = useMemo(() => listedTasks(source, manifest), [source, manifest]);
+  const routes = useMemo(() => listedRoutes(source, manifest), [source, manifest]);
+  const hosts = useMemo(() => listedHosts(source, manifest), [source, manifest]);
+  const sharedLimits = source?.defined ? source.limits : manifest?.limits;
+  const selectedTask = tasks.find(task => taskNameOf(task) === picked) ?? tasks.at(0);
 
   // The saved files are the starting point every time they change underneath — a save of ours, or one from elsewhere.
   useEffect(() => {
@@ -55,74 +78,183 @@ const Functions = () => {
     () => [...new Set([...names, ...Object.keys(saved)])].filter(file => files[file] !== saved[file]),
     [files, names, saved]
   );
-  const extensions = useMemo(() => typescript.extensionsFor(selected), [typescript, selected]);
+  const extensions = useMemo(() => typescript.extensionsFor(selectedFile), [typescript, selectedFile]);
   const hasFiles = names.length > 0;
   const canSave = !isSaving && hasFiles && modified.length > 0;
-  const status = saveStatus(modified.length, Boolean(draft?.manifest));
+
+  const jumpTo = useCallback((place: Pick<SourcePlace, 'file' | 'line'>, focus = true) => {
+    jumps.current += 1;
+    setSelectedFile(place.file);
+    setTarget({ file: place.file, line: place.line, key: jumps.current, focus });
+  }, []);
+
+  const applyEdit = useCallback((edit: SourceEdit | undefined) => {
+    if (edit) {
+      setFiles(current => ({ ...current, [edit.file]: edit.code }));
+    }
+
+    return Boolean(edit);
+  }, []);
+
+  useEffect(() => {
+    const written = awaited ? tasks.find(task => taskNameOf(task) === awaited) : undefined;
+    if (written?.at) {
+      setAwaited('');
+      jumpTo(written.at);
+    }
+  }, [awaited, jumpTo, tasks]);
 
   const handleChange = useCallback(
-    (code: string) => setFiles(current => ({ ...current, [selected]: code })),
-    [selected]
+    (code: string) => setFiles(current => ({ ...current, [selectedFile]: code })),
+    [selectedFile]
   );
 
-  const handleAdd = useCallback((file: string) => {
+  const handleSelectTask = useCallback(
+    (name: string) => {
+      setPicked(name);
+      const place = tasks.find(task => taskNameOf(task) === name)?.at;
+      if (place) {
+        jumpTo(place);
+      }
+    },
+    [jumpTo, tasks]
+  );
+
+  // The code leads: a cursor put inside a task shows that task, without moving the code under it.
+  const handleCursor = useCallback(
+    (file: string, offset: number) => {
+      const task = taskAt(tasks, file, offset);
+      if (task) {
+        setPicked(taskNameOf(task));
+      }
+    },
+    [tasks]
+  );
+
+  const handleCreateTask = useCallback(
+    async (task: NewTask) => {
+      if (applyEdit(await typescript.addTask(task))) {
+        setPicked(taskNameOf(task));
+        setAwaited(taskNameOf(task));
+      }
+    },
+    [applyEdit, typescript]
+  );
+
+  const handleSelectRoute = useCallback(
+    (key: string) => {
+      const place = routes.find(route => route.key === key)?.at;
+      if (place) {
+        jumpTo(place);
+      }
+    },
+    [jumpTo, routes]
+  );
+
+  const handleSelectProblem = useCallback(
+    (file: string, line?: number) => {
+      if (line) {
+        jumpTo({ file, line });
+      } else {
+        setSelectedFile(file);
+      }
+    },
+    [jumpTo]
+  );
+
+  // Written into the task's code, and the code shown where it changed — without taking the keyboard off the slider.
+  const handleLimitsChange = useCallback(
+    async (task: ListedTask, cpuMs: number | undefined) => {
+      if (task.at && applyEdit(await typescript.setTaskLimits(task.at, withCpu(task.limits, cpuMs)))) {
+        jumpTo(task.at, false);
+      }
+    },
+    [applyEdit, jumpTo, typescript]
+  );
+
+  const handleAddFile = useCallback((file: string) => {
     setFiles(current => (Object.hasOwn(current, file) ? current : { ...current, [file]: '' }));
-    setSelected(file);
+    setSelectedFile(file);
   }, []);
 
   const handleRemoveFile = useCallback(
     (file: string) => {
       setFiles(current => Object.fromEntries(Object.entries(current).filter(([name]) => name !== file)));
-      if (selected === file) {
-        setSelected('index.ts');
+      if (selectedFile === file) {
+        setSelectedFile('index.ts');
       }
     },
-    [selected]
+    [selectedFile]
   );
 
   const handleStart = useCallback(() => {
     setFiles(STARTER_FILES);
-    setSelected('index.ts');
+    setSelectedFile('index.ts');
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (!canSave) {
-      return;
+  const showResult = useCallback((result: FunctionsSaveResult | undefined) => {
+    setProblems(result && !result.ok && 'problems' in result ? result.problems : []);
+    setRefusal(result && !result.ok && 'refusal' in result ? result.refusal : undefined);
+  }, []);
+
+  /** Saves what changed, and answers whether the draft now holds it — `true` with nothing to save. */
+  const saveChanges = useCallback(async (): Promise<boolean> => {
+    if (!hasFiles || isSaving) {
+      return false;
+    }
+
+    if (modified.length === 0) {
+      return true;
     }
 
     setIsSaving(true);
     try {
       const result = await save(files);
-      setProblems(result && !result.ok && 'problems' in result ? result.problems : []);
-      setRefusal(result && !result.ok && 'refusal' in result ? result.refusal : undefined);
+      showResult(result);
+
+      return result?.ok === true;
     } finally {
       setIsSaving(false);
     }
-  }, [canSave, files, save]);
+  }, [files, hasFiles, isSaving, modified.length, save, showResult]);
+
+  const handleSave = useCallback(() => {
+    void saveChanges();
+  }, [saveChanges]);
 
   // ⌘S / Ctrl+S saves, as in every editor — and never asks the browser to save the page.
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if (isSaveKey(event)) {
         event.preventDefault();
-        void handleSave();
+        void saveChanges();
       }
     };
     window.addEventListener('keydown', handleKey);
 
     return () => window.removeEventListener('keydown', handleKey);
-  }, [handleSave]);
+  }, [saveChanges]);
+
+  // A run is of the saved draft: what changed is saved first, and a save that fails is why nothing ran.
+  const handleRun = useCallback(
+    async (task: string, params: Record<string, unknown>): Promise<ActionRunReport | undefined> => {
+      if (!(await saveChanges())) {
+        throw new Error('Not run: the save did not go through — what it found is shown under the code.');
+      }
+
+      return tryTask(task, params);
+    },
+    [saveChanges, tryTask]
+  );
 
   const handleInstall = useCallback(async () => {
     setIsInstalling(true);
     try {
-      const result = await install();
-      setProblems(result && !result.ok && 'problems' in result ? result.problems : []);
-      setRefusal(result && !result.ok && 'refusal' in result ? result.refusal : undefined);
+      showResult(await install());
     } finally {
       setIsInstalling(false);
     }
-  }, [install]);
+  }, [install, showResult]);
 
   const handleRemoveAll = useCallback(async () => {
     const confirmed = await showDialog(
@@ -140,94 +272,72 @@ const Functions = () => {
     );
     if (confirmed) {
       await remove();
-      setProblems([]);
-      setRefusal(undefined);
+      showResult(undefined);
     }
-  }, [remove, showDialog]);
+  }, [remove, showDialog, showResult]);
 
   return (
     <Card className="relative flex grow basis-0" rounded="none">
       <Card.Body grow className="flex flex-col">
-        <div className="flex items-center justify-between gap-4 border-b border-gray-200 px-4 py-2 dark:border-zinc-700">
-          <div className="flex min-w-0 flex-col">
-            <Heading as="h5">Functions</Heading>
-            <span className="text-xs text-gray-500 dark:text-zinc-400">
-              The space’s own server code: its tasks are steps in any action, its routes answer under /fn.
-            </span>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            {status && (
-              <span
-                className={
-                  modified.length > 0
-                    ? 'text-xs text-amber-700 dark:text-amber-400'
-                    : 'text-xs text-gray-500 dark:text-zinc-400'
-                }
-              >
-                {status}
-              </span>
-            )}
-            {draft?.manifest && (
-              <Button size="sm" intent="secondary" title="Remove the space’s functions" onClick={handleRemoveAll}>
-                <i className="fa-regular fa-trash-can" />
-              </Button>
-            )}
-            <Button size="sm" disabled={!canSave} title="Save — ⌘S" onClick={handleSave}>
-              {isSaving ? 'Saving…' : 'Save'}
-            </Button>
-          </div>
-        </div>
+        <FunctionsHeader
+          state={saveState(modified.length, problems.length, Boolean(manifest))}
+          canSave={canSave}
+          isSaving={isSaving}
+          canRemove={Boolean(manifest)}
+          onSave={handleSave}
+          onRemove={handleRemoveAll}
+        />
         {error && <Alert intent="error">{error}</Alert>}
         {refusal && <Alert intent="warning">{refusal.error}</Alert>}
         {!isLoading && !hasFiles && draft?.offer && (
           <FunctionsOffer template={draft.offer.template} isInstalling={isInstalling} onInstall={handleInstall} />
         )}
-        {!isLoading && !hasFiles && !draft?.offer && (
-          <div className="m-4 flex flex-col items-center gap-3 rounded-sm border-2 border-dashed border-gray-300 p-6 text-center text-sm text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
-            <span>
-              When no step does what a flow needs — parse a feed, call an API with its own shape, compute something —
-              the space can have its own, in TypeScript, run by Plitzi in a sandbox.
-            </span>
-            <Button size="sm" onClick={handleStart}>
-              Start with an example
-            </Button>
-          </div>
-        )}
+        {!isLoading && !hasFiles && !draft?.offer && <FunctionsWelcome onStart={handleStart} />}
         {hasFiles && (
           <div className="flex grow basis-0 overflow-hidden">
-            <FunctionsFiles
+            <FunctionsSidebar
+              tasks={tasks}
+              sharedLimits={sharedLimits}
+              selectedTask={selectedTask ? taskNameOf(selectedTask) : ''}
+              unreadable={source?.unreadable.length ?? 0}
+              canCreateTask={typescript.ready && source?.defined === true}
+              routes={routes}
               files={names}
-              selected={selected}
+              selectedFile={selectedFile}
               modified={modified}
-              onSelect={setSelected}
-              onAdd={handleAdd}
-              onRemove={handleRemoveFile}
+              onSelectTask={handleSelectTask}
+              onCreateTask={handleCreateTask}
+              onSelectRoute={handleSelectRoute}
+              onSelectFile={setSelectedFile}
+              onAddFile={handleAddFile}
+              onRemoveFile={handleRemoveFile}
             />
-            <div className="flex grow basis-0 flex-col overflow-hidden">
-              <div className="grow basis-0 overflow-auto">
-                {/* One editor per file: its own undo history, and nothing typed in one ever lands in another. */}
-                <CodeMirror
-                  key={selected}
-                  mode="ts"
-                  theme={resolvedTheme}
-                  value={files[selected] ?? ''}
-                  extensions={extensions}
-                  onChange={handleChange}
-                />
-              </div>
-              {problems.length > 0 && <FunctionsProblems problems={problems} onSelect={setSelected} />}
-            </div>
-            <div className="flex w-80 shrink-0 flex-col gap-5 overflow-auto border-l border-gray-200 p-3 dark:border-zinc-700">
-              <FunctionsTry
-                key={tried}
-                tasks={tasks}
-                task={tried}
-                disabledReason={modified.length > 0 ? 'Try runs the saved draft: save your changes first (⌘S).' : ''}
-                onTaskChange={setPicked}
-                onTry={tryTask}
+            <div className="flex min-w-0 grow basis-0 flex-col overflow-hidden">
+              <FunctionsEditor
+                file={selectedFile}
+                value={files[selectedFile] ?? ''}
+                modified={modified.includes(selectedFile)}
+                theme={resolvedTheme}
+                extensions={extensions}
+                checking={typescript.ready}
+                target={target}
+                onChange={handleChange}
+                onCursor={handleCursor}
               />
-              {draft?.manifest && <FunctionsDeclared manifest={draft.manifest} selected={tried} onTry={setPicked} />}
+              {problems.length > 0 && <FunctionsProblems problems={problems} onSelect={handleSelectProblem} />}
             </div>
+            {selectedTask && (
+              <FunctionInspector
+                task={selectedTask}
+                sharedLimits={sharedLimits}
+                hosts={hosts}
+                limitsDisabledReason={limitsBlockedBy(typescript.ready, selectedTask)}
+                modified={modified.length > 0}
+                onLimitsChange={handleLimitsChange}
+                onRun={handleRun}
+              />
+            )}
+            {!selectedTask && <FunctionsGuide hasTasks={tasks.length > 0} />}
           </div>
         )}
       </Card.Body>
