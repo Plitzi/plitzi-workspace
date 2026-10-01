@@ -5,13 +5,12 @@ import type { Source } from './DataSourceTypes';
 import type { QueryParams, RouteParams } from './NavigationTypes';
 import type { RealtimeTransport } from './RealtimeTypes';
 import type { Schema, Element } from './SchemaTypes';
-import type { Segment } from './SegmentTypes';
 import type { SpaceConnector } from './SpaceTypes';
 import type { DisplayMode, Style, StyleState } from './StyleTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
 
 // Real VALUES of the global data sources, published at runtime and read by element bindings. Grouped under
-// `runtime.sources` so all source data lives together, separate from the document state (schema/style/segments)
+// `runtime.sources` so all source data lives together, separate from the document state (schema/style)
 // and from the top-level `sources` registry (which only holds authoring definitions). See RFC §4 A.2.
 export type RuntimeSourceValues = {
   variables?: Record<string, unknown>;
@@ -28,11 +27,9 @@ export type RuntimeSourceValues = {
 };
 
 export type CommonState = {
-  prevSchema?: Schema;
   schema: Schema;
   pageDefinitions: Record<string, Element>;
   style: Style;
-  segments: Record<string, Segment>;
   // Runtime: real source DATA, all under `runtime.sources.*` — globals (typed) plus scoped per-instance sources
   // (dynamic keys), combined by the store's deep-merge scope chain. `runtime.state` holds the user/application state
   // (writable at runtime via interactions), separate from source values. `runtime.elements` holds each element's
@@ -259,6 +256,11 @@ export type BuilderState = CommonState & {
   styleAncestor?: string;
   elementHovered?: string;
   elementSelected?: string;
+  /**
+   * The component open in the canvas instead of a page, by id. Editor-only: what the author is editing, never part
+   * of the document — the canvas, the layers and the element tools then read the component's tree.
+   */
+  componentOpen?: string;
   setHovered: (elementId?: string) => void;
   setSelected: (elementId?: string, iframeDOM?: HTMLIFrameElement | null, force?: boolean) => void;
 };

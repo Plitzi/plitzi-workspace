@@ -10,6 +10,7 @@ const contents = (over: Partial<SpaceVersionContents> = {}): SpaceVersionContent
   snapshot: null,
   pages: 3,
   layouts: 1,
+  components: 2,
   elements: 120,
   plugins: [],
   actions: 18,
@@ -22,7 +23,7 @@ const contents = (over: Partial<SpaceVersionContents> = {}): SpaceVersionContent
 describe('what a version holds, line by line', () => {
   it('counts each part, in words a person reads', () => {
     expect(contentsRows(contents())).toEqual([
-      { label: 'Pages', value: '3 pages · 1 layout · 120 elements' },
+      { label: 'Pages', value: '3 pages · 1 layout · 2 components · 120 elements' },
       { label: 'Server actions', value: '18 actions' },
       { label: 'Connectors', value: 'None' },
       { label: 'Functions', value: '6 tasks · 1 route' },

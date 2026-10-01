@@ -63,11 +63,4 @@ describe('what a payload has to look like', () => {
     expect(validateSpaceEvent('STYLE_UPDATED', { platform: {}, variables: {}, cache: '.a{}' }).ok).toBe(true);
     expect(validateSpaceEvent('STYLE_UPDATED', { platform: {}, variables: {} }).ok).toBe(false);
   });
-
-  it('pins a segment variable removal to the name alone', () => {
-    expect(validateSpaceEvent('SEGMENT_SPACE_REMOVE_VARIABLE', { contextId: 's1', variable: { name: 'x' } }).ok).toBe(
-      true
-    );
-    expect(validateSpaceEvent('SEGMENT_SPACE_REMOVE_VARIABLE', { contextId: 's1', variable: {} }).ok).toBe(false);
-  });
 });

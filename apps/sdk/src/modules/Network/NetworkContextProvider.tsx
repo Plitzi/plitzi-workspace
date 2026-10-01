@@ -1,4 +1,4 @@
-import { get, cloneDeep } from '@plitzi/plitzi-ui/helpers';
+import { cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useEffect, useMemo, useState, useCallback, use } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
@@ -72,10 +72,10 @@ const NetworkContextProvider = ({
   const { components } = use(ComponentContext);
   const [internalData, setInternalData] = useState<NetworkInternalContextValue>(() => {
     if (offlineDataAvailable && offlineDataType === 'json') {
-      return { ...offlineData, plugins: {}, segments: {} };
+      return { ...offlineData, plugins: {} };
     }
 
-    return { plugins: {}, segments: {} } as NetworkInternalContextValue;
+    return { plugins: {} } as NetworkInternalContextValue;
   });
 
   const query = useCallback(
@@ -172,17 +172,7 @@ const NetworkContextProvider = ({
           flat: Space.schema.flat.reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
         },
         plugins,
-        style: Space.style,
-        segments:
-          Space.segments
-            ?.map(segment => ({
-              ...segment,
-              schema: {
-                ...get(segment, 'schema'),
-                flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
-              }
-            }))
-            .reduce((obj, segment) => ({ ...obj, [segment.identifier]: segment }), {}) ?? {}
+        style: Space.style
       });
     }
 

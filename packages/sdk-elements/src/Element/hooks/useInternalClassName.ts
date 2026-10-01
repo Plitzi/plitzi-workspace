@@ -40,7 +40,7 @@ const useInternalClassName = ({
           with__container: !previewMode && !!items,
           'container--empty': !previewMode && !!items && items.length === 0 && !plitziElementLayout,
           'container--base-element': !previewMode && !!items && baseElementId === id,
-          'plitzi-component--layout-body': plitziElementLayout && id === plitziElementLayout.containerId
+          'plitzi-component--layout-body': plitziElementLayout?.slots.includes(id)
         },
         definition.styleSelectors.base
       ),

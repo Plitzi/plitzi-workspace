@@ -1,3 +1,4 @@
+import { documentIds } from '@plitzi/sdk-schema/helpers/components';
 import { elementIdConflict, isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 
@@ -30,7 +31,11 @@ export const collectInputRefs = (input: ElementInput): string[] => [
  *  it. Both rules are sdk-schema's `elementIdConflict` — never restated here, so the MCP cannot drift from what
  *  the builder and the schema validator enforce. Null when the name is usable. */
 export const guardNewRef = (space: Space, ref: string, field: string): OpResult | null => {
-  const conflict = elementIdConflict(space.schema.flat, ref);
+  // Free of the tree being written AND of every other one: ids are one namespace across the pages and each component.
+  const elsewhere = documentIds(space.document ?? space.schema).has(ref)
+    ? `"${ref}" is already used by another element here`
+    : null;
+  const conflict = elementIdConflict(space.schema.flat, ref) ?? elsewhere;
   if (!conflict) {
     return null;
   }

@@ -29,13 +29,14 @@ A record holds:
 | `entries` | Each entity changed: `{ kind, id, op, before?, after? }` |
 | `summary` | What it did, one line per thing (`describeChange`), e.g. `Added text “hero” to page “test”` |
 
-An entry is one whole **entity** — an element (pages and layouts are elements too), a page folder, a schema variable, a
+An entry is one whole **entity** — an element (pages and layouts are elements too, and so is everything inside a
+component), a component's declaration (its props, slots and label), a page folder, a schema variable, a
 setting (`settings.<key>`, `definition.<key>`, the page order `pages`), a class, a global style, an id style, a design
 token (`<category>/<name>`) or a font. A selector is one entity across the display modes, so "only on tablet" reads as
 one change to it. The field-level difference is derived when it is shown.
 
 **Not recorded:** a document written for the first time (a new space has nothing behind it), a published revision
-(it is a copy, never the draft), segments, connectors and server actions. A save that changes nothing records nothing.
+(it is a copy, never the draft), connectors and server actions. A save that changes nothing records nothing.
 A change too large to store whole — a whole-schema replacement of a very large space — names what it touched and is
 marked `truncated`.
 

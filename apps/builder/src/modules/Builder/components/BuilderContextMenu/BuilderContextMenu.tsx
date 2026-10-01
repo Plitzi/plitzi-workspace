@@ -5,8 +5,8 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 
 import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
@@ -14,7 +14,6 @@ import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
 
 import type { TemplateFormValues } from '../../Models/TemplateForm';
-import type { SegmentsContextValue } from '@plitzi/sdk-shared';
 
 export type BuilderContextMenuProps = {
   width?: number;
@@ -35,7 +34,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   const [yPos, setYPos] = useState('0px');
   const [showMenu, setShowMenu] = useState(false);
   const { builderElementPermissions, builderHandler, elementAsTemplate } = use(BuilderContext);
-  const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
+  const saveAsComponent = useSaveAsComponent();
   const componentConfig = useMemo(
     () => (element ? builderElementPermissions(element) : {}),
     [element, builderElementPermissions]
@@ -167,6 +166,13 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     setShowMenu(false);
   };
 
+  const handleClickAsComponent = async () => {
+    setShowMenu(false);
+    if (element) {
+      await saveAsComponent(element);
+    }
+  };
+
   const handleClickAsTemplate = async () => {
     const response = await showModal<TemplateFormValues>(
       <Modal.Header>
@@ -189,24 +195,6 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
         description ?? '',
         element
       );
-    }
-  };
-
-  const handleClickAsSegment = async () => {
-    const response = await showModal<{ name: string; description?: string }>(
-      <Modal.Header>
-        <h4>Add Template</h4>
-      </Modal.Header>,
-      ({ onSubmit, onClose }) => (
-        <Modal.Body>
-          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
-        </Modal.Body>
-      )
-    );
-
-    if (response && element) {
-      const { name, description } = response;
-      void builderSegmentsContext.elementAsSegment(getSchema(), getStyle(), name, description ?? '', element);
     }
   };
 
@@ -302,9 +290,9 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
               <i className="fas fa-cube" />
             </BuilderContextMenuItem>
           )}
-          {!!items && canTemplate && (
-            <BuilderContextMenuItem title="Save As Segment" shortcut="CTRL +" onClick={handleClickAsSegment}>
-              <i className="fas fa-cube" />
+          {canDelete && !!element?.definition.parentId && (
+            <BuilderContextMenuItem title="Save As Component" shortcut="CTRL +" onClick={handleClickAsComponent}>
+              <i className="fa-solid fa-cube" />
             </BuilderContextMenuItem>
           )}
           <BuilderContextMenuItem title="Duplicate Element" shortcut="CTRL +" onClick={handleClickDuplicate}>

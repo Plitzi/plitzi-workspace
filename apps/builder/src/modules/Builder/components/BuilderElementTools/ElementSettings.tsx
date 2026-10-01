@@ -14,10 +14,10 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import AppContext from '@pmodules/App/AppContext';
+import InstanceTools from '@pmodules/Components/components/InstanceTools';
 
 import type { ComponentPlugin, ElementRuntime } from '@plitzi/sdk-shared';
 import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
@@ -76,7 +76,6 @@ const ElementSettings = ({
         ComponentContext,
         NetworkContext,
         PluginsContext,
-        SegmentsContext,
         EventBridgeContext,
         InteractionsContext
       }
@@ -86,6 +85,11 @@ const ElementSettings = ({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Settings = (Plugin?.pluginSettings ?? defaultElementsSettings[type]) as FC<any> | undefined;
+  // An instance of one of the space's components: what places it is the builder's, not the element's own settings.
+  const componentId =
+    type === 'reference' && attributes.referenceType === 'component' && typeof attributes.referenceId === 'string'
+      ? attributes.referenceId
+      : undefined;
 
   const children = useMemo(
     () => (
@@ -97,13 +101,14 @@ const ElementSettings = ({
                 Settings
               </Heading>
               <Settings {...attributes} id={id} runtime={runtime} variables={variables} onUpdate={handleChange} />
+              {componentId && <InstanceTools instanceId={id} componentId={componentId} />}
             </div>
           )}
           {!Settings && <div className="element-tools--empty">Settings not available.</div>}
         </ErrorBoundary>
       </PlitziServiceProvider>
     ),
-    [plitziContextValue, Settings, resolvedTheme, attributes, id, runtime, variables, handleChange]
+    [plitziContextValue, Settings, resolvedTheme, attributes, id, runtime, variables, handleChange, componentId]
   );
 
   if (Plugin && pluginSettingsStyles?.[type] && pluginSettingsStyles[type].length > 0) {

@@ -10,7 +10,6 @@ import NetworkSubscriptionsContextProvider from '@pmodules/Network/NetworkSubscr
 import PluginsContextProvider from '@pmodules/Plugins/PluginsContextProvider';
 import QueueContextProvider from '@pmodules/Queue/QueueContextProvider';
 import SchemaContextProvider from '@pmodules/Schema/SchemaContextProvider';
-import SegmentsContextProvider from '@pmodules/Segments/SegmentsContextProvider';
 import StyleContextProvider from '@pmodules/Style/StyleContextProvider';
 import UndoableContextProducer from '@pmodules/Undoable/UndoableContextProducer';
 
@@ -58,23 +57,21 @@ const AppProvider = ({
         <QueueContextProvider includeSubscriptions={includeSubscriptions}>
           <UndoableContextProducer>
             <EventBridgeContextProvider debugMode={debugMode}>
-              <SegmentsContextProvider>
-                <ConnectorsContextProvider>
-                  <ActionsContextProvider>
-                    <PluginsContextProvider>
-                      <ModalProvider>
-                        <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
-                          <StyleContextProvider includeSubscriptions={includeSubscriptions}>
-                            <AuthContextProvider server={server}>
-                              <NavigationProvider>{children}</NavigationProvider>
-                            </AuthContextProvider>
-                          </StyleContextProvider>
-                        </SchemaContextProvider>
-                      </ModalProvider>
-                    </PluginsContextProvider>
-                  </ActionsContextProvider>
-                </ConnectorsContextProvider>
-              </SegmentsContextProvider>
+              <ConnectorsContextProvider>
+                <ActionsContextProvider>
+                  <PluginsContextProvider>
+                    <ModalProvider>
+                      <SchemaContextProvider includeSubscriptions={includeSubscriptions}>
+                        <StyleContextProvider includeSubscriptions={includeSubscriptions}>
+                          <AuthContextProvider server={server}>
+                            <NavigationProvider>{children}</NavigationProvider>
+                          </AuthContextProvider>
+                        </StyleContextProvider>
+                      </SchemaContextProvider>
+                    </ModalProvider>
+                  </PluginsContextProvider>
+                </ActionsContextProvider>
+              </ConnectorsContextProvider>
             </EventBridgeContextProvider>
           </UndoableContextProducer>
         </QueueContextProvider>

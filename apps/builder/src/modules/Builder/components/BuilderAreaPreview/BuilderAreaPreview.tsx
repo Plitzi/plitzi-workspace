@@ -16,7 +16,6 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
@@ -80,7 +79,6 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
         PluginsContext,
         NetworkContext,
         InteractionsContext,
-        SegmentsContext,
         EventBridgeContext
       }
     }),

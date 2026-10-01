@@ -14,6 +14,7 @@ const SpaceVersionContentsQuery = /* GraphQL */ `
       }
       pages
       layouts
+      components
       elements
       plugins {
         type

@@ -11,6 +11,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Development](./development.md) | Stack, commands, and contribution workflow |
 | [Testing](./testing.md) | Vitest for units, Playwright for what a browser opens |
 | [Releases](./releases.md) | Versioning and publishing with Changesets |
+| [Components](./components.md) | Reusable subtrees: where they live in the schema, how an instance renders, the operations every writer shares, and what is left open |
 | [Authoring spaces](./authoring-spaces.md) | Writing a space — or a publishable template — as TypeScript instead of exported JSON: elements, style, bindings and flows |
 | [Connectors](./connectors.md) | Reading from (and writing to) a CMS or any REST API: the manifest, the provider element, paging and SSR preloading |
 | [Server actions](./server-actions.md) | Work a page cannot do in the browser: authoring flows the server runs, and calling them from a page |

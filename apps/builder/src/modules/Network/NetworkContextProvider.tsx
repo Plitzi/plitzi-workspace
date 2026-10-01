@@ -1,6 +1,5 @@
 import { CombinedGraphQLErrors, gql } from '@apollo/client/core';
 import { useApolloClient } from '@apollo/client/react';
-import { get } from '@plitzi/plitzi-ui/helpers';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
@@ -190,17 +189,7 @@ const NetworkContextProvider = ({
             definition: Space.definition
           },
           plugins,
-          style: Space.style,
-          segments:
-            Space.segments
-              ?.map(segment => ({
-                ...segment,
-                schema: {
-                  ...get(segment, 'schema'),
-                  flat: get(segment, 'schema.flat', []).reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
-                }
-              }))
-              .reduce((obj, segment) => ({ ...obj, [segment.identifier]: segment }), {}) ?? {}
+          style: Space.style
         });
       }
     } catch (e: unknown) {

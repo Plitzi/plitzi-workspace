@@ -209,3 +209,44 @@ export const element = <A extends object = never, T extends string = string>(
   type: T,
   props?: ElementProps<[A] extends [never] ? AttributesForType<T> : A>
 ): ElementSpec => buildSpec(type, declarationsByType.get(type), (props ?? {}) as ElementProps<Record<string, unknown>>);
+
+/** How an instance is authored: what it hands in, what fills its slots, and the authoring fields any element takes. */
+export type ComponentInstanceProps = Pick<
+  AuthoringProps,
+  'id' | 'class' | 'css' | 'states' | 'selector' | 'bind' | 'visible' | 'flows' | 'meta'
+> & {
+  /** The props the component declares, by name. A prop is an attribute of the instance: `bind` can land on one too. */
+  props?: Record<string, unknown>;
+  /** What fills the slots: a list, for a component with one slot, or one list per slot it declares. */
+  children?: ElementSpec[] | Record<string, ElementSpec[]>;
+};
+
+/**
+ * An instance of one of the space's components (`SpaceSpec.components`): the component's tree, rendered here with
+ * these props.
+ *
+ * ```ts
+ * component('product-card', { props: { title: 'Lamp' }, children: { 'product-card-actions': [button('Buy')] } })
+ * ```
+ *
+ * Checked when the space is written: a component the space does not declare, a prop it does not declare, a required
+ * one left out, a value of the wrong kind and a slot it does not have are each refused, by name.
+ */
+export const component = (componentId: string, instance: ComponentInstanceProps = {}): ElementSpec => {
+  const { props, children, ...authoring } = instance;
+  const filled = Array.isArray(children)
+    ? children
+    : Object.entries(children ?? {}).flatMap(([slot, specs]) =>
+        specs.map(spec => ({ ...spec, attributes: { ...spec.attributes, slot } }))
+      );
+  const spec = buildSpec('reference', declarationsByType.get('reference'), {
+    ...authoring,
+    ...(filled.length > 0 ? { children: filled } : {})
+  });
+
+  // After the authoring fields are read, never among them: a prop called `bind` is the component's, not the binding's.
+  return {
+    ...spec,
+    attributes: { ...spec.attributes, referenceType: 'component', referenceId: componentId, ...props }
+  };
+};

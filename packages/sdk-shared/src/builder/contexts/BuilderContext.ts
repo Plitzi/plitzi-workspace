@@ -12,7 +12,7 @@ import type {
 import type { Dispatch, SetStateAction } from 'react';
 
 export type BuilderContextValue = {
-  mode: 'normal' | 'template' | 'segment';
+  mode: 'normal' | 'template';
   schemaName: string;
   setMultiPagesMode: Dispatch<SetStateAction<boolean>>;
   multiPagesMode: boolean;

@@ -26,3 +26,4 @@ export * from './interactions/upsertInteractionFlow';
 export * from './interactions/patchInteractionNode';
 export * from './interactions/deleteInteraction';
 export * from './settings/patchSettings';
+export * from './components';

@@ -18,7 +18,7 @@ const runtimeValue = (runtime: SpaceVersionContents['runtime']): string => {
 export const contentsRows = (contents: SpaceVersionContents): ContentsRow[] => [
   {
     label: 'Pages',
-    value: `${counted(contents.pages, 'page')} · ${counted(contents.layouts, 'layout')} · ${counted(contents.elements, 'element')}`
+    value: `${counted(contents.pages, 'page')} · ${counted(contents.layouts, 'layout')} · ${counted(contents.components, 'component')} · ${counted(contents.elements, 'element')}`
   },
   { label: 'Server actions', value: contents.actions > 0 ? counted(contents.actions, 'action') : 'None' },
   { label: 'Connectors', value: contents.connectors > 0 ? counted(contents.connectors, 'connector') : 'None' },

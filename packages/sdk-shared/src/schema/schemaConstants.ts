@@ -11,8 +11,9 @@ export const EMPTY_SCHEMA: { schema: Schema; style: Style; definition: { rootId:
     variables: [],
     settings: { customCss: '' },
     pages: [],
-    pageFolders: []
+    pageFolders: [],
+    components: {}
   },
   style: EMPTY_STYLE_SCHEMA,
-  definition: { rootId: '' } // for segments and templates
+  definition: { rootId: '' } // for templates
 };

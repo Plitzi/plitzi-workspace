@@ -266,6 +266,10 @@
       "types": "./dist/elements/advanced/Reference/index.d.ts",
       "import": "./dist/elements/advanced/Reference/index.mjs"
     },
+    "./elements/advanced/Reference/PropField": {
+      "types": "./dist/elements/advanced/Reference/PropField.d.ts",
+      "import": "./dist/elements/advanced/Reference/PropField.mjs"
+    },
     "./elements/advanced/Reference/Reference": {
       "types": "./dist/elements/advanced/Reference/Reference.d.ts",
       "import": "./dist/elements/advanced/Reference/Reference.mjs"

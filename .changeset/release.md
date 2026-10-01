@@ -18,6 +18,42 @@
 '@plitzi/sdk-server': patch
 ---
 
+## Components replace segments
+
+- **What a component is:** a reusable block written once and placed anywhere as an instance. An edit to the component
+  is an edit to every instance.
+- **Where it lives:** in the space document, as `schema.components`, one tree per component and never in
+  `schema.flat`. It is published, rolled back, copied by templates and exported with the space.
+- **Props and slots:**
+  - A component declares props (`type`, `description`, `required`, `default`, `options`). An instance hands them in
+    as its own attributes, so templates and bindings reach them. Inside, they are read as `{{ props.<name> }}`.
+  - Slots are elements an instance fills; each child names its slot in `attributes.slot`.
+- **Closed scope:** inside, a component reads only its props and the globals. The validator, `lintSpace` and
+  `authorSpace` each refuse a read of the page around an instance. Components nest, and a cycle is refused.
+- **Where to use them:**
+  - In code (`@plitzi/sdk-authoring`): `SpaceSpec.components` and `component(id, { props, children })`.
+    `specFromSpace` and `specToSource` read and write both.
+  - In the builder:
+    - a Components panel lists them, and an open component becomes the canvas;
+    - an element becomes a component with **Save as component**;
+    - in an instance's settings, an instance gets its props and slots, or is **detached** back into a copy.
+  - In the MCP: `upsertComponent` and `deleteComponent`. Element ops work inside a component through `pageRef`.
+- **Schema helpers:** `@plitzi/sdk-schema` gains `addComponent`, `updateComponent`, `removeComponent`,
+  `detachInstance`, `renameElement`, `treeOf`, `flatMapOf` and `documentIds`.
+- **GraphQL and live events:** `SpaceAddComponent`, `SpaceUpdateComponent`, `SpaceRemoveComponent` and
+  `SpaceDetachInstance`, each with a live event. History records a declaration change as a `component` entry.
+- **Breaking: segments are removed.** This covers:
+  - `@plitzi/sdk-shared`'s segment types, queries, mutations, context and `SEGMENT_*` events;
+  - `referenceType: 'segment'`;
+  - the `Segments` builder module;
+  - `Space.segments` and the `Segment`/`Segments` queries;
+  - `CommonState.prevSchema`.
+- **Breaking: `ElementLayout` and `LayoutBody` change shape.**
+  - `ElementLayout` is `{ slots, rootId, type }`; it was `{ containerId }`.
+  - `LayoutBody` takes `bodies` keyed by slot.
+  - `reference`'s `referenceContainer` attribute is removed.
+- Guide: `docs/en/components.md`.
+
 ## Functions ask for the time they need
 
 - **What changes:** a task can ask for more CPU or wall time than the default with `limits`, in milliseconds. Example:
@@ -109,7 +145,7 @@ and interactions.
 - `@plitzi/sdk-shared` gains `sharedContext(name, default)`: a context made once per page and handed to every copy of
   the runtime that asks for it.
 - The runtime's contexts now go through it, so a provider from any copy reaches a consumer from any copy:
-  - `@plitzi/sdk-shared`: service, component, schema, segments, network, theme scope, dev tools, builder.
+  - `@plitzi/sdk-shared`: service, component, schema, network, theme scope, dev tools, builder.
   - `@plitzi/sdk-elements`: element, element parent, layout body.
   - interactions, plugins, event bridge, auth, variables and style.
 - The store's contexts need `@plitzi/nexus` 1.4.0, which does the same. Every `@plitzi/*` package now asks for
@@ -166,7 +202,7 @@ keeps it in step with the space. See `docs/en/projects-from-spaces.md`.
 
 **Make Snapshot** lists what it will freeze — pages, layouts and elements, server actions, connectors, functions, the
 runtime and the plugins, each with whether its source is kept — and what no snapshot freezes: the space's files, its
-variables and credentials, and its segments. **Publish Snapshot** lists what the chosen environment's snapshot holds.
+variables and credentials. A space's components are part of its document, so they are frozen with its pages. **Publish Snapshot** lists what the chosen environment's snapshot holds.
 
 ## Fixed: a space read from Plitzi kept its server elements
 

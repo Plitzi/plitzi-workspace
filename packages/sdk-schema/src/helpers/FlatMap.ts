@@ -18,9 +18,14 @@ export type FlatMapProps = {
   variables?: Schema['variables'];
   /**
    * The document's page list. Given, a page rename rewrites it too — a page renamed without it is a page the space
-   * no longer lists. Left out for a map that holds no pages (a segment, a template being cut).
+   * no longer lists. Left out for a map that holds no pages (a component's tree, a template being cut).
    */
   pages?: Schema['pages'];
+  /**
+   * The ids the rest of the document holds, for a map over one of its trees: ids are one namespace across the space's
+   * `flat` and every component's, so a name free in this tree may still be taken in another.
+   */
+  takenElsewhere?: (id: Element['id']) => boolean;
   /**
    * How an id is minted for an element nobody named. Defaults to the random minter, which is what a live document
    * wants: the builder and the MCP write concurrently, and a counter has two writers pick the same name. An
@@ -34,9 +39,10 @@ class FlatMap {
   variables: Schema['variables'];
   pages: Schema['pages'];
   mintId: MintElementId;
+  takenElsewhere: (id: Element['id']) => boolean;
 
   constructor(props: FlatMapProps = {}) {
-    const { flat, variables, pages, mintId } = props;
+    const { flat, variables, pages, mintId, takenElsewhere } = props;
     if (!flat) {
       throw new Error('Flat is required');
     }
@@ -45,13 +51,17 @@ class FlatMap {
     this.variables = variables ?? [];
     this.pages = pages ?? [];
     this.mintId = mintId ?? randomElementId;
+    this.takenElsewhere = takenElsewhere ?? (() => false);
   }
 
   /** A free id for a new element of `type`, minted through this map's minter and unique against what it holds. */
   nextId = (type: string, alsoTaken: (candidate: string) => boolean = () => false) => {
     const taken = takenIds(this.flat);
 
-    return this.mintId(type, candidate => taken.has(candidate) || alsoTaken(candidate));
+    return this.mintId(
+      type,
+      candidate => taken.has(candidate) || this.takenElsewhere(candidate) || alsoTaken(candidate)
+    );
   };
 
   /** Inserts an element, minting its id when the caller did not name it. Nothing else in the codebase mints an
@@ -66,7 +76,12 @@ class FlatMap {
     // The name has to be well formed and free — of the document AND of the rest of this insert. Refused rather
     // than uniquified: a caller that named an element meant that name, and silently storing it under another one
     // is how a binding written against it resolves to nothing.
-    if (!this.isValidElement(data) || !elementIdsFree(this.flat, [data, ...Object.values(initialItems)])) {
+    const incoming = [data, ...Object.values(initialItems)];
+    if (
+      !this.isValidElement(data) ||
+      !elementIdsFree(this.flat, incoming) ||
+      incoming.some(element => this.takenElsewhere(element.id))
+    ) {
       return false;
     }
 
@@ -148,7 +163,7 @@ class FlatMap {
       return [];
     }
 
-    if (elementIdConflict(this.flat, to)) {
+    if (elementIdConflict(this.flat, to) || this.takenElsewhere(to)) {
       return false;
     }
 
@@ -224,7 +239,7 @@ class FlatMap {
     for (const id of ids) {
       // Derived from the name being copied, not minted from the type: a copy of `hero` is `hero-2`, which still
       // says what it is.
-      const copyId = uniqueElementId(id, candidate => taken.has(candidate));
+      const copyId = uniqueElementId(id, candidate => taken.has(candidate) || this.takenElsewhere(candidate));
       taken.add(copyId);
       mapIds[id] = copyId;
     }

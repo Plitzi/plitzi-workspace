@@ -79,11 +79,11 @@ describe('useInternalClassName', () => {
     expect(result.current).toContain('container--base-element');
   });
 
-  it('marks the layout body when id matches the layout containerId', () => {
+  it('marks the layout body when the element is one of the layout slots', () => {
     const { result } = render({
       plitziElementLayout: {
         rootId: 'root',
-        containerId: 'el1',
+        slots: ['el1'],
         type: 'layout'
       }
     });

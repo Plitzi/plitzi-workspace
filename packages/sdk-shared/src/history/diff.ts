@@ -76,7 +76,27 @@ const settingsOf = (prefix: string, value: object | undefined): Record<string, u
   Object.fromEntries(Object.entries(value ?? {}).map(([key, setting]) => [`${prefix}.${key}`, setting]));
 
 /** The part of a schema a history reads: what is stored, never what the runtime derives from it. */
-export type HistorySchema = Pick<Schema, 'flat' | 'pages' | 'pageFolders' | 'variables' | 'settings' | 'definition'>;
+export type HistorySchema = Pick<
+  Schema,
+  'flat' | 'pages' | 'pageFolders' | 'variables' | 'settings' | 'definition' | 'components'
+>;
+
+/**
+ * Every element of the document, in whichever tree it is. Ids are one namespace across the pages' tree and every
+ * component's, so an element inside a component is the same kind of entry as one on a page.
+ */
+const elementsOf = (schema: Partial<HistorySchema>): Record<string, unknown> =>
+  Object.fromEntries(
+    [schema.flat ?? {}, ...Object.values(schema.components ?? {}).map(component => component.flat)].flatMap(flat =>
+      Object.entries(flat)
+    )
+  );
+
+/** What each component declares — its tree's elements are entries of their own. */
+const declarationsOf = (schema: Partial<HistorySchema>): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(schema.components ?? {}).map(([id, { flat: _flat, ...declaration }]) => [id, declaration])
+  );
 
 /**
  * What changed between two versions of a schema, entity by entity.
@@ -85,7 +105,8 @@ export type HistorySchema = Pick<Schema, 'flat' | 'pages' | 'pageFolders' | 'var
  * the entry carries it whole, before and after. Pages are elements; their ORDER is the setting `pages`.
  */
 export const diffSchema = (before: Partial<HistorySchema>, after: Partial<HistorySchema>): ChangeEntry[] => [
-  ...diffKeyed('element', before.flat ?? {}, after.flat ?? {}),
+  ...diffKeyed('element', elementsOf(before), elementsOf(after)),
+  ...diffKeyed('component', declarationsOf(before), declarationsOf(after)),
   ...diffKeyed(
     'folder',
     byKey(before.pageFolders, folder => folder.id),

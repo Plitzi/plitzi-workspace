@@ -115,19 +115,9 @@ const SPACE_QUERY = `query InitQuery($environment: String!, $revision: Int) {
       rsc
       flat { id definition { label type initialState styleSelectors bindings interactions parentId rootId items runtime loadStrategy } attributes }
       pages
+      components
       pageFolders { id name slug parentId }
       variables { name type value subValues { when value } }
-    }
-    segments {
-      id
-      identifier
-      definition
-      schema {
-        settings
-        variables { name type value subValues { value when } }
-        flat { id definition { label type initialState styleSelectors bindings interactions parentId rootId items runtime loadStrategy } attributes }
-      }
-      style { cache }
     }
     plugins { type resource settings }
     style { variables cache }
@@ -153,7 +143,7 @@ type LatestRevisionPayload = {
 };
 
 type SpacePayload = {
-  data?: { Space?: { schema?: SchemaRaw; style?: Style; plugins?: PluginRaw[]; segments?: unknown[] } };
+  data?: { Space?: { schema?: SchemaRaw; style?: Style; plugins?: PluginRaw[] } };
   errors?: { message: string }[];
 };
 
@@ -181,21 +171,6 @@ const byElementId = (flat: Element[] | Record<string, Element> | undefined): Rec
 
 /** The runtime shape of a schema: the wire's `flat` list, keyed. */
 const toSchema = (schema: SchemaRaw): Schema => ({ ...schema, flat: byElementId(schema.flat) });
-
-/**
- * Segments arrive as a list and are read by identifier, which is how every other reader of a space holds them. Each
- * one carries a schema of its own, so its `flat` needs the same keying the space's does.
- */
-const byIdentifier = (segments: unknown[] | undefined): OfflineDataRaw['segments'] =>
-  (segments ?? []).reduce<Record<string, never>>((acum, segment) => {
-    const entry = segment as { identifier?: string; schema?: SchemaRaw };
-    const identifier = entry.identifier;
-    if (!identifier || identifier in acum) {
-      return acum;
-    }
-
-    return { ...acum, [identifier]: { ...entry, ...(entry.schema && { schema: toSchema(entry.schema) }) } as never };
-  }, {});
 
 /**
  * The `scope` claim, read without verifying anything.
@@ -316,8 +291,7 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
     return {
       schema: toSchema(space.schema),
       style: space.style as Style,
-      plugins: space.plugins,
-      segments: byIdentifier(space.segments)
+      plugins: space.plugins
     };
   };
 

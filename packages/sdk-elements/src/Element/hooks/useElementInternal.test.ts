@@ -120,7 +120,7 @@ describe('getProps (element resolution)', () => {
       ...internal,
       plitziElementLayout: {
         rootId: 'layoutRoot',
-        containerId: 'c1',
+        slots: ['c1'],
         type: 'layout'
       }
     });

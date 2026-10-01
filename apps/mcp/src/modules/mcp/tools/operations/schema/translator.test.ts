@@ -37,7 +37,8 @@ const schema: Schema = {
   variables: [],
   settings: { customCss: '' },
   pages: ['home'],
-  pageFolders: []
+  pageFolders: [],
+  components: {}
 };
 
 const style: Style = {

@@ -4,7 +4,15 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { BUILTIN_GLOBAL_CALLBACKS, elementAncestorTypes, lintSpace } from '../../index';
+import {
+  BUILTIN_GLOBAL_CALLBACKS,
+  authorSpace,
+  component,
+  container,
+  elementAncestorTypes,
+  lintSpace,
+  text
+} from '../../index';
 import {
   addElement,
   addForm,
@@ -979,6 +987,73 @@ describe('lintSpace', () => {
         .map(issue => issue.elementId);
 
       expect(flagged).toEqual(['fine-print']);
+    });
+  });
+
+  describe('components', () => {
+    /** A page placing a card that requires its title, and the card reading it. */
+    const placed = () => {
+      const { schema, style } = authorSpace({
+        name: 'Cards',
+        permanentUrl: 'cards',
+        components: [
+          {
+            id: 'card',
+            props: {
+              title: { type: 'text', description: 'The heading', required: true },
+              wide: { type: 'boolean', description: 'Spans the row' }
+            },
+            root: container({
+              id: 'card-root',
+              children: [text({ id: 'card-title', bind: { content: 'props.title' } })]
+            })
+          }
+        ],
+        pages: [{ name: 'Home', slug: '', body: [component('card', { id: 'card-1', props: { title: 'Lamp' } })] }]
+      });
+
+      return { schema, style };
+    };
+
+    it('finds nothing in a component placed as declared', () => {
+      expect(lintSpace(placed())).toEqual({ errors: [], warnings: [] });
+    });
+
+    it('props-outside-component', () => {
+      const documents = placed();
+      documents.schema.flat['card-1'].definition.bindings = {
+        attributes: [{ id: 'b1', to: 'title', source: 'props.title' }]
+      };
+
+      expect(errorsOf(documents)).toContain('props-outside-component');
+    });
+
+    it('prop-unknown', () => {
+      const documents = placed();
+      documents.schema.components.card.flat['card-title'].attributes.content = '{{ props.subtitle }}';
+
+      expect(errorsOf(documents)).toContain('prop-unknown');
+    });
+
+    it('prop-missing', () => {
+      const documents = placed();
+      delete documents.schema.flat['card-1'].attributes.title;
+
+      expect(errorsOf(documents)).toContain('prop-missing');
+    });
+
+    it('prop-value', () => {
+      const documents = placed();
+      documents.schema.flat['card-1'].attributes.wide = 'true';
+
+      expect(errorsOf(documents)).toContain('prop-value');
+    });
+
+    it('reads a component closed: a binding onto the page it is placed on is out of its reach', () => {
+      const documents = placed();
+      documents.schema.components.card.flat['card-title'].attributes.content = '{{ apiContainer_feed.data }}';
+
+      expect(errorsOf(documents)).toContain('template-unknown-name');
     });
   });
 

@@ -3,9 +3,8 @@ import { createContext } from 'react';
 
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
-import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
-import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 import type { ActionDispatch } from 'react';
 
 export type QueueItem<TState = any, TDispatchAction = any> = {
@@ -16,10 +15,7 @@ export type QueueItem<TState = any, TDispatchAction = any> = {
 };
 
 export type QueueContextValue = {
-  enqueueMiddleware: ReducerMiddlewareCallback<
-    Schema | Style | Record<string, Segment>,
-    [action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions]
-  >;
+  enqueueMiddleware: ReducerMiddlewareCallback<Schema | Style, [action: StyleReducerActions | SchemaReducerActions]>;
 };
 
 const queueContextDefaultValue: QueueContextValue = { enqueueMiddleware: () => {} };

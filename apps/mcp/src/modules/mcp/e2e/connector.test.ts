@@ -58,7 +58,12 @@ const widgetOperations = [
 // Raised from 190k for space functions, a write domain of its own — the space's server code: two file ops
 // across the four tools that carry the op union, and plitzi_try_function. ~1.5k, with every description cut to one
 // line and what an agent needs to write them in the guide, which is read once rather than carried on every request.
-const TOOLS_BUDGET_BYTES = 192_000;
+//
+// Raised from 192k for components, a write domain of their own — reusable subtrees: two ops (upsertComponent,
+// deleteComponent) across the four tools that carry the op union, ~4.2k. Every element op already works inside a
+// component through `pageRef`, so nothing else grew; a prop's shape is checked when the op runs and explained in the
+// guide, and detaching an instance is the builder's alone.
+const TOOLS_BUDGET_BYTES = 195_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

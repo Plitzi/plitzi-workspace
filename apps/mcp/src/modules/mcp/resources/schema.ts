@@ -1,6 +1,12 @@
+import { treeOf } from '@plitzi/sdk-schema/helpers/components';
+
 import {
   afterPrefix,
+  componentSummariesToAI,
+  componentView,
+  componentsUri,
   dataSourcesUri,
+  findComponentByRef,
   elementUri,
   findElementByRef,
   findRootByRef,
@@ -45,6 +51,10 @@ export const readSchemaResource = (
     return envelope(layoutSummariesToAI(space.schema));
   }
 
+  if (uri === componentsUri(env)) {
+    return envelope(componentSummariesToAI(space.schema));
+  }
+
   if (uri === foldersUri(env)) {
     return envelope(foldersToAI(space.schema));
   }
@@ -60,26 +70,33 @@ export const readSchemaResource = (
   if (pageItem !== undefined) {
     // `findRootByRef`, so `pages/{ref}` reads a LAYOUT shell as readily as a page: it is the same skeleton of the
     // same kind of tree, and an agent that just read `layout: "main"` off a page has one obvious thing to do next.
-    if (pageItem.endsWith('/styles')) {
-      const ref = pageItem.slice(0, -'/styles'.length);
-      const page = findRootByRef(space.schema, ref);
-
-      return page ? envelope(pageStylesToAI(space.schema, space.style, page)) : null;
+    // A component is a root too, read through the view an op addressed to it edits.
+    const styles = pageItem.endsWith('/styles');
+    const ref = styles ? pageItem.slice(0, -'/styles'.length) : pageItem;
+    const component = findComponentByRef(space.schema, ref);
+    const target = component ? componentView(space, component) : space;
+    const page = findRootByRef(target.schema, component ? component.rootId : ref);
+    if (!page) {
+      return null;
     }
 
-    const page = findRootByRef(space.schema, pageItem);
-
-    return page ? envelope(pageSkeletonToAI(space.schema, page, space.style)) : null;
+    return envelope(
+      styles ? pageStylesToAI(target.schema, target.style, page) : pageSkeletonToAI(target.schema, page, target.style)
+    );
   }
 
   const elementRef = afterPrefix(uri, elementUri(env, ''));
   if (elementRef !== undefined) {
-    const el = findElementByRef(space.schema, elementRef);
+    // Ids are one namespace, so an element is found wherever it is — inside a component, through its view.
+    const componentId = treeOf(space.schema, elementRef)?.componentId;
+    const component = componentId ? findComponentByRef(space.schema, componentId) : undefined;
+    const target = component ? componentView(space, component) : space;
+    const el = findElementByRef(target.schema, elementRef);
     if (!el) {
       return null;
     }
 
-    const view = elementView(space.schema, el, space.style);
+    const view = elementView(target.schema, el, target.style);
 
     return { stateVersion: view.version, data: view.detail };
   }

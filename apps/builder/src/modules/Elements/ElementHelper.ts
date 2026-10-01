@@ -1,5 +1,6 @@
 import { set, pick, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 
+import { documentIds } from '@plitzi/sdk-schema/helpers/components';
 import { randomElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
 import type { ComponentDefinition, Element, Schema } from '@plitzi/sdk-shared';
@@ -9,9 +10,10 @@ import type { ComponentDefinition, Element, Schema } from '@plitzi/sdk-shared';
  *  A drop can insert a whole sub-tree at once, and each element of it needs a name that is free of the document AND
  *  of its siblings in the same drop — which is why the taken set is carried across the burst rather than re-read
  *  per element. The random minter, not the positional one: the builder and the MCP write the same document
- *  concurrently, and a counter has both mint `heading-3`. */
-export const makeIdMinter = (flat: Schema['flat']) => {
-  const taken = new Set(Object.keys(flat));
+ *  concurrently, and a counter has both mint `heading-3`. Free of every tree — the pages' and each component's — since
+ *  ids are one namespace across them. */
+export const makeIdMinter = (schema: Pick<Schema, 'flat' | 'components'>) => {
+  const taken = documentIds(schema);
 
   return (type: string) => {
     const id = randomElementId(type, candidate => taken.has(candidate));

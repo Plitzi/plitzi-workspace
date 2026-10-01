@@ -3,7 +3,7 @@ import * as factories from '../elements/elements';
 import { isRuleSetSpec, isStyleDeclaration } from '../style';
 import { camel, deepEqual, keyLiteral, literal, RESERVED, withSuffix } from './literal';
 
-import type { ElementSpec, LayoutSpec, PageSpec, SpaceSpec } from '../schema';
+import type { ComponentSpec, ElementSpec, LayoutSpec, PageSpec, SpaceSpec } from '../schema';
 import type { StyleDeclaration, StyleSpec } from '../style';
 
 /**
@@ -80,6 +80,7 @@ export const SPACE_FIELDS = [
   'rsc',
   'pageFolders',
   'layouts',
+  'components',
   'pages'
 ] as const satisfies readonly (keyof SpaceSpec)[];
 
@@ -212,6 +213,7 @@ class SourceWriter {
     const layouts = (this.spec.layouts ?? []).map(layout =>
       this.root(layout, 'LayoutSpec', main, `layouts/${layout.id}`)
     );
+    const components = (this.spec.components ?? []).map(component => this.component(component, main));
     const pages = this.spec.pages.map(page =>
       this.root(page, 'PageSpec', main, `pages/${page.id ?? (page.slug || 'home')}`)
     );
@@ -220,6 +222,7 @@ class SourceWriter {
     const written: Partial<Record<keyof SpaceSpec, string>> = {
       classes,
       layouts: layouts.length > 0 ? `[${layouts.join(', ')}]` : undefined,
+      components: components.length > 0 ? `[${components.join(', ')}]` : undefined,
       pages: `[${pages.join(', ')}]`
     };
     const space = SPACE_FIELDS.flatMap(key => {
@@ -274,6 +277,8 @@ class SourceWriter {
       root.body.forEach(walk);
     }
 
+    (this.spec.components ?? []).forEach(component => walk(component.root));
+
     return new Set(Object.keys(this.spec.classes ?? {}).filter(name => named.has(name)));
   }
 
@@ -321,6 +326,8 @@ class SourceWriter {
       add(root.class);
       root.body.forEach(walk);
     }
+
+    (this.spec.components ?? []).forEach(component => walk(component.root));
 
     return stacked;
   }
@@ -426,7 +433,79 @@ class SourceWriter {
     return variable;
   }
 
+  /** A component, written beside the pages: its own file when split, inline otherwise. */
+  private component(spec: ComponentSpec, main: FileImports): string {
+    const imports = this.options.split ? new FileImports() : main;
+    const { root, ...fields } = spec;
+    const parts = Object.entries(fields).map(([key, value]) => `${keyLiteral(key)}: ${literal(value)}`);
+    parts.push(`root: ${this.element(root, imports)}`);
+    const object = `{ ${parts.join(', ')} }`;
+
+    if (!this.options.split) {
+      return object;
+    }
+
+    const variable = this.names.claim(withSuffix(camel(spec.id), 'Component'));
+    imports.types.add('ComponentSpec');
+    this.files[`components/${spec.id}.ts`] =
+      `${imports.render(this.packageName)}\n\nexport const ${variable}: ComponentSpec = ${object};\n`;
+    main.local(this.relative(`./components/${spec.id}`), variable);
+
+    return variable;
+  }
+
+  /**
+   * An instance, as the call that places it: `component('card', { props, children })`. What fills its slots is
+   * written by slot whenever a child names one, each child without the attribute that said so.
+   */
+  private instance(spec: ElementSpec, meta: { label: string } | undefined, imports: FileImports): string {
+    const { referenceType: _referenceType, referenceId, ...props } = spec.attributes ?? {};
+    const declared = (this.spec.components ?? []).find(component => component.id === referenceId);
+    const fallback = declared?.slots?.[0];
+    const children = spec.children ?? [];
+    const slotted = children.some(child => typeof child.attributes?.slot === 'string');
+    const unslot = (child: ElementSpec): ElementSpec => {
+      const { slot: _slot, ...attributes } = child.attributes ?? {};
+
+      return { ...child, attributes };
+    };
+
+    let filled: string | undefined;
+    if (slotted) {
+      const bySlot = new Map<string, string[]>();
+      for (const child of children) {
+        const named = child.attributes?.slot;
+        const slot = typeof named === 'string' ? named : (fallback ?? '');
+        bySlot.set(slot, [...(bySlot.get(slot) ?? []), this.element(unslot(child), imports)]);
+      }
+
+      filled = `{ ${[...bySlot].map(([slot, specs]) => `${keyLiteral(slot)}: [${specs.join(', ')}]`).join(', ')} }`;
+    } else if (children.length > 0) {
+      filled = `[${children.map(child => this.element(child, imports)).join(', ')}]`;
+    }
+
+    const fields = [
+      ...(spec.id === undefined ? [] : [`id: ${literal(spec.id)}`]),
+      ...(Object.keys(props).length > 0 ? [`props: ${literal(props)}`] : []),
+      ...this.authoringFields(spec, meta, imports),
+      ...(filled ? [`children: ${filled}`] : [])
+    ];
+    imports.values.add('component');
+
+    return `component(${literal(referenceId)}${fields.length > 0 ? `, { ${fields.join(', ')} }` : ''})`;
+  }
+
   private element(spec: ElementSpec, imports: FileImports): string {
+    if (spec.type === 'reference' && spec.attributes?.referenceType === 'component') {
+      const label = spec.meta?.label;
+
+      return this.instance(
+        spec,
+        label !== undefined && label !== defaultLabel(spec.type) ? { label } : undefined,
+        imports
+      );
+    }
+
     const isFactory = FACTORY_NAMES.has(spec.type);
     const defaults = defaultAttributes(spec.type);
     const attributes = Object.fromEntries(

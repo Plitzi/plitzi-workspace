@@ -33,12 +33,12 @@ vi.mock('../LayoutContainer', async () => {
     default: function LayoutContainerMock({
       internalProps
     }: {
-      internalProps: { id: string; plitziElementLayout: { containerId: string } };
+      internalProps: { id: string; plitziElementLayout: { slots: string[] } };
     }) {
-      const body = useLayoutBody(true);
+      const body = useLayoutBody(internalProps.plitziElementLayout.slots[0]);
 
       return (
-        <div data-layout={internalProps.id} data-slot={internalProps.plitziElementLayout.containerId}>
+        <div data-layout={internalProps.id} data-slot={internalProps.plitziElementLayout.slots[0]}>
           {body}
         </div>
       );

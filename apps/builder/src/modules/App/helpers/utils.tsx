@@ -5,11 +5,11 @@ import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 import StyleAdvanceEditor from '@plitzi/sdk-style/StyleAdvanceEditor';
 import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
+import Components from '@pmodules/Components';
 import Elements from '@pmodules/Elements';
 import Fonts from '@pmodules/Fonts';
 import History from '@pmodules/History';
 import Resources from '@pmodules/Resources';
-import Segments from '@pmodules/Segments';
 import StateManager from '@pmodules/StateManager/StateManager';
 import Variables from '@pmodules/Variables';
 
@@ -225,13 +225,13 @@ export const getPopups = ({
       }
     },
     {
-      id: 'segments',
-      component: <Segments />,
-      active: activeIds.includes('segments'),
+      id: 'components',
+      component: <Components />,
+      active: activeIds.includes('components'),
       placementSettings: { left: { position: 9, minSize: 200 } },
       settings: {
-        icon: 'fa-solid fa-diamond',
-        title: 'Segments',
+        icon: 'fa-solid fa-cube',
+        title: 'Components',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,

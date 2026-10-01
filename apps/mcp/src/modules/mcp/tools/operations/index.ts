@@ -40,6 +40,8 @@ const documentOps = [
   elementOps.patchInteractionNode,
   elementOps.deleteInteraction,
   elementOps.patchSettings,
+  elementOps.upsertComponent,
+  elementOps.deleteComponent,
   styleOps.upsertDefinition,
   styleOps.upsertDefinitions,
   styleOps.patchDefinition,

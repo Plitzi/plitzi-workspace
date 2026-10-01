@@ -15,12 +15,8 @@ import type { SSRRequest } from '@plitzi/sdk-shared';
 const space = {
   schema: { settings: {}, flat: {}, pages: [], pageFolders: [], variables: [] },
   style: { cache: '', variables: {} },
-  plugins: [],
-  segments: []
+  plugins: []
 };
-
-/** What the adapter answers: the same space with its segments keyed by identifier, which is how readers hold them. */
-const stored = { ...space, segments: {} };
 
 type Call = { query: string; variables: Record<string, unknown> };
 
@@ -152,7 +148,7 @@ describe('createCloudAdapters', () => {
       const plitzi = cloud(() => 7);
       const built = adapters(plitzi.fetchImpl, { environment: 'production' });
 
-      await expect(read(built, 'production')).resolves.toEqual(stored);
+      await expect(read(built, 'production')).resolves.toEqual(space);
       expect(plitzi.lastSpaceRevision()).toBe(7);
     });
 
@@ -181,7 +177,7 @@ describe('createCloudAdapters', () => {
 
       await read(built, 'production');
 
-      await expect(read(built, 'production')).resolves.toEqual(stored);
+      await expect(read(built, 'production')).resolves.toEqual(space);
     });
 
     it('reports the revision it discovered to the page server', async () => {
@@ -203,8 +199,8 @@ describe('createCloudAdapters', () => {
     await read(built, 'production');
     plitzi.fail();
 
-    await expect(read(built, 'production')).resolves.toEqual(stored);
-    await expect(read(built, 'production')).resolves.toEqual(stored);
+    await expect(read(built, 'production')).resolves.toEqual(space);
+    await expect(read(built, 'production')).resolves.toEqual(space);
   });
 
   it('answers nothing when the very first read fails, rather than half a space', async () => {
@@ -236,7 +232,7 @@ describe('createCloudAdapters', () => {
     // A second replica — its own adapters, its own memory, the same cache.
     const second = cloud();
     const built = adapters(second.fetchImpl, { environment: 'production', revision: 12, cache });
-    await expect(read(built, 'production')).resolves.toEqual(stored);
+    await expect(read(built, 'production')).resolves.toEqual(space);
     expect(second.spaces()).toBe(0);
   });
 });
@@ -286,17 +282,7 @@ describe('the shape it hands to the renderer', () => {
       ]
     },
     style: { cache: '', variables: {} },
-    plugins: [],
-    segments: [
-      {
-        identifier: 'header',
-        schema: {
-          settings: {},
-          variables: [],
-          flat: [{ id: 'nav-1', definition: { type: 'container' }, attributes: {} }]
-        }
-      }
-    ]
+    plugins: []
   };
 
   const serving = (payload: unknown) =>
@@ -310,13 +296,6 @@ describe('the shape it hands to the renderer', () => {
 
     expect(data?.schema.flat).toMatchObject({ home: { id: 'home' }, 'text-1': { id: 'text-1' } });
     expect(Array.isArray(data?.schema.flat)).toBe(false);
-  });
-
-  it('keys a segment’s own element list too, since it is read the same way', async () => {
-    const built = createCloudAdapters({ webKey: 'key', fetchImpl: serving(onWire) });
-    const data = await built.getOfflineData(1, 'main');
-
-    expect(data?.segments?.header.schema.flat).toMatchObject({ 'nav-1': { id: 'nav-1' } });
   });
 
   // A schema already keyed (a cache round-trip, a test double) must survive untouched rather than being re-indexed

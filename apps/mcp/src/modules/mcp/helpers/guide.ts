@@ -176,6 +176,8 @@ Never download a whole tree you do not need.
 - \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
 - \`plitzi://schema/{env}/layouts\` — the shared **layout shells** (header/sidebar/footer) and the pages rendered
   inside each. Read one like a page. See *Shared layouts* below.
+- \`plitzi://schema/{env}/components\` — the space's **components** (reusable subtrees): their props, slots, root and
+  how many places render each. Read one like a page. See *Components* below.
 - \`plitzi://folders/{env}\` — page **folders** (the sidebar tree): ref, name, slug, parentId. \`/{ref}\` for one.
 - \`plitzi://schema/{env}/pages/{ref}\` — one page as a **skeleton tree**: each node is \`ref/type/label\` **plus the
   style classes it attaches** (\`base\`, and \`slots\` for non-base slots) — names only, no CSS. So you can map every
@@ -778,6 +780,47 @@ vocabulary:
 **Where does this element belong?** If the user asks for something "on every page" — a nav item, a banner, a footer
 link, an upgrade prompt in the sidebar — it belongs in the LAYOUT, not in the page you happen to have open. Check
 the page's \`layout\` first; if the element you are looking for is not in the page's own tree, it is in the shell.
+
+## Components — a subtree written once, placed anywhere
+A **component** is a reusable subtree: a product card, a pricing tier, a testimonial — written once and placed on
+any page as an **instance**. It is part of the space, so it is published, versioned and copied with it. Its tree is
+not inside any page: it is a root of its own, like a layout, and **editing it changes every instance** — say so
+before you touch one.
+
+It is **closed**. Inside, a binding or a template reads **\`props\`** — what each instance hands in — and the globals
+(\`state\`, \`auth\`, \`navigation\`, \`theme\`, \`variables\`, \`computed\`), never the page an instance sits on. A
+component that needs a list row's record gets it as a prop: the INSTANCE binds it (\`item: "{{ list_rows.item }}"\`),
+the component reads \`{{ props.item.name }}\`.
+
+**Reading them.** \`plitzi://schema/{env}/components\` lists them: \`ref\`, \`label\`, \`props\`, \`slots\`, \`rootRef\`,
+\`instances\`. Read one like a page: \`plitzi://schema/{env}/pages/{componentRef}\` (and \`/styles\`).
+
+**Writing them.**
+- \`upsertComponent { ref, label?, props?, slots? }\` declares one — with nothing in it but its root, \`{ref}-root\`, a
+  container — or updates the declaration of one that exists (\`props\` is REPLACED whole). Fill it with every
+  element/binding/interaction op you already know, with **\`pageRef: "<componentRef>"\`**:
+  \`\`\`json
+  { "type": "upsertElement", "pageRef": "product-card", "parentRef": "product-card-root",
+    "element": { "ref": "product-card-title", "type": "heading" } }
+  \`\`\`
+- \`upsertComponent { ref, fromRef, instanceRef }\` makes a component OF an element that already exists: the element
+  and everything inside it become the component, and an instance named \`instanceRef\` takes its place, so the page
+  renders what it did. The way to turn a repeated block into one.
+- A **prop** is \`{ type, description, required?, default?, options? }\`, \`type\` one of \`text\`, \`textarea\`,
+  \`number\`, \`boolean\`, \`select\` (with \`options\`), \`scalar\`, \`json\`. Its name is read as \`{{ props.<name> }}\`, so
+  letters, digits and \`_\` — and never one an instance already has (\`referenceId\`, \`referenceType\`, \`slot\`…).
+- A **slot** is an element of the component's tree (usually an empty container) an instance fills with children.
+- \`deleteComponent { ref }\` removes one nothing places; while instances remain it is refused, naming them.
+
+**Placing one** is an element: a \`reference\` whose props say which component and hand in its props, one attribute each:
+\`\`\`json
+{ "type": "upsertElement", "pageRef": "shop", "parentRef": "grid",
+  "element": { "ref": "lamp-card", "type": "reference",
+    "props": { "referenceType": "component", "referenceId": "product-card", "title": "Lamp" },
+    "children": [ { "ref": "lamp-buy", "type": "button", "props": { "content": "Buy", "slot": "product-card-actions" } } ] } }
+\`\`\`
+A required prop left out, a prop the component does not declare, a value of the wrong kind or a child naming a slot
+the component does not have is reported by \`plitzi_validate\` — fix it before applying.
 
 ## Pages & folders
 - **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a

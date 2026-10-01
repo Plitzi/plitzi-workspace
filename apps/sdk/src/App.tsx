@@ -132,7 +132,6 @@ const App = ({
   // `AppMain` syncs the values this render actually has over it, and keeps them true as debugMode toggles.
   const storeValue = useMemo<Partial<SdkState>>(
     () => ({
-      segments: {},
       runtime: { sources: {}, state: initialState ?? {} },
       render: DEFAULT_RENDER_SETTINGS
     }),

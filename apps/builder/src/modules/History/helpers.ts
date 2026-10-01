@@ -143,6 +143,7 @@ export const originFilterLabel = (origin: '' | ChangeOrigin): string => (origin 
 
 export const KIND_LABEL: Record<ChangeKind, string> = {
   element: 'Element',
+  component: 'Component',
   folder: 'Folder',
   variable: 'Variable',
   setting: 'Setting',

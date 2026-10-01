@@ -1,7 +1,10 @@
+import { propNameProblem } from '@plitzi/sdk-schema/helpers/components';
+import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 import { checkVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
+import { invalidParams } from '@plitzi/sdk-shared/authoring/paramSpec';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
@@ -10,9 +13,17 @@ import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { BREAKPOINTS, classNames, classRefs, isStyleDeclaration, sameBlocks, toBlocks } from '../style';
-import { GLOBAL_SOURCES, groupBindings, hasVisibilityBinding, withVisibility } from './bindings';
+import {
+  COMPONENT_SOURCES,
+  GLOBAL_SOURCES,
+  groupBindings,
+  hasVisibilityBinding,
+  toBindingSpecs,
+  withVisibility
+} from './bindings';
 import { authorFlows } from './flows';
 import {
+  COMPONENT_SPEC_KEYS,
   ELEMENT_SPEC_KEYS,
   ELEMENT_STYLE_SPEC_KEYS,
   LAYOUT_SPEC_KEYS,
@@ -35,6 +46,7 @@ import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
+  ComponentSpec,
   ElementSpec,
   ElementStyleSpec,
   LayoutRef,
@@ -46,7 +58,22 @@ import type {
 } from './types';
 import type { ClassList, CssSpec, ResponsiveBlock, StatesSpec } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
-import type { DropPosition, Element, PageFolder, Schema, SpaceFont, Style, StyleItem } from '@plitzi/sdk-shared';
+import type {
+  DropPosition,
+  Element,
+  PageFolder,
+  Schema,
+  SpaceComponent,
+  SpaceFont,
+  Style,
+  StyleItem
+} from '@plitzi/sdk-shared';
+
+/**
+ * Where an element is written: the pages' tree, or one component's — with the sources an element there can read. A
+ * component is closed, so its index holds only what its own tree publishes, and `props` is one of its globals.
+ */
+type AuthorTree = { map: FlatMap; sources: SourceIndex; globals: readonly string[] };
 
 /**
  * Authoring a space without the builder.
@@ -110,6 +137,12 @@ class SpaceAuthor {
   /** Every element in this space that publishes a data source, by id, and the name it publishes it under. */
   private readonly sources: SourceIndex = new Map();
 
+  /** The pages' tree — layouts included — which is where everything not inside a component is written. */
+  private readonly pagesTree: AuthorTree = { map: this.flatMap, sources: this.sources, globals: GLOBAL_SOURCES };
+
+  /** Each component's tree, by component id. */
+  private readonly componentTrees = new Map<string, AuthorTree>();
+
   /** Rules that render, and render differently from what they plainly mean — see `warnTabletOnly`. */
   private readonly styleWarnings: SchemaValidationError[] = [];
 
@@ -140,15 +173,28 @@ class SpaceAuthor {
     }
 
     const layouts = this.spec.layouts ?? [];
+    const components = this.spec.components ?? [];
 
     // Before the tree is written, so the stylesheet is whole by the time anything names a class and a name that
     // means two different things is refused at the declaration rather than at whichever use happened to be second.
+    components.forEach(component =>
+      this.collectDeclarations(undefined, [component.root], `Component "${component.id}"`)
+    );
     layouts.forEach(layout => this.collectDeclarations(layout.class, layout.body, `Layout "${layout.id}"`));
     this.spec.pages.forEach(page => this.collectDeclarations(page.class, page.body, `Page "${page.name}"`));
 
     // Same reason, for the other thing an element names by a name declared elsewhere: a binding may read a
     // provider written further down the page than the element reading it. The author's own names are collected in
     // the same pass, so a derived `<type>-<n>` never claims a name written further down.
+    components.forEach(component => {
+      const sources: SourceIndex = new Map();
+      this.collectSources(component.root, sources);
+      this.componentTrees.set(component.id, {
+        map: new FlatMap({ flat: {}, variables: [] }),
+        sources,
+        globals: COMPONENT_SOURCES
+      });
+    });
     layouts.forEach(layout => {
       this.authorNames.add(layout.id);
       layout.body.forEach(child => this.collectSources(child));
@@ -177,6 +223,7 @@ class SpaceAuthor {
     this.assertPaintedState();
     this.assertVisitorRoles();
     const pageFolders = this.buildPageFolders();
+    const declared = components.map(component => this.addComponent(component));
     layouts.forEach(layout => this.addLayout(layout));
     const pages = this.spec.pages.map((page, index) => this.addPage(page, index));
     // After every root is written, because a slot is an element INSIDE a layout and a layout may be named by one
@@ -215,7 +262,8 @@ class SpaceAuthor {
       },
       ...(this.spec.rsc ? { rsc: this.spec.rsc } : {}),
       pages,
-      pageFolders
+      pageFolders,
+      components: Object.fromEntries(declared.map(component => [component.id, component]))
     };
 
     // The gate, and the same one anybody else's documents go through. An authored space that cannot pass it is a
@@ -368,7 +416,7 @@ class SpaceAuthor {
    * moment an element was added above it, which is why nothing is meant to refer to one. Naming the element is how
    * an author says "this is a thing other parts of the space point at".
    */
-  private collectSources(spec: ElementSpec): void {
+  private collectSources(spec: ElementSpec, index: SourceIndex = this.sources): void {
     if (spec.id) {
       this.authorNames.add(spec.id);
     }
@@ -384,10 +432,10 @@ class SpaceAuthor {
         );
       }
 
-      this.sources.set(spec.id, prefix);
+      index.set(spec.id, prefix);
     }
 
-    spec.children?.forEach(child => this.collectSources(child));
+    spec.children?.forEach(child => this.collectSources(child, index));
   }
 
   /**
@@ -576,7 +624,7 @@ class SpaceAuthor {
    * belonged to authors perfectly well. The reason it is nearly always declined is a name two elements share,
    * and a name written twice is worth hearing about at the line that wrote it.
    */
-  private insert(element: Element, to: string, position: DropPosition, path = to): void {
+  private insert(element: Element, to: string, position: DropPosition, path = to, tree = this.pagesTree): void {
     const earlier = this.authoredAt.get(element.id);
     if (earlier !== undefined) {
       throw new Error(
@@ -584,7 +632,7 @@ class SpaceAuthor {
       );
     }
 
-    if (!this.flatMap.addElement(element, to, position)) {
+    if (!tree.map.addElement(element, to, position)) {
       throw new Error(
         `Could not author element "${element.id}" (${element.definition.type}) at ${path}: the schema refused it`
       );
@@ -616,6 +664,33 @@ class SpaceAuthor {
     for (const layout of this.spec.layouts ?? []) {
       assertKnownKeys(layout, LAYOUT_SPEC_KEYS, `Layout "${layout.id}"`);
       assertId(layout.id, `Layout "${layout.id}"`);
+    }
+
+    const componentIds = new Set<string>();
+    for (const component of this.spec.components ?? []) {
+      const where = `Component "${component.id}"`;
+      assertKnownKeys(component, COMPONENT_SPEC_KEYS, where);
+      // Read as what reached here, not what the type promises: a spec is often assembled by hand or by an agent.
+      const id: unknown = component.id;
+      if (typeof id !== 'string' || !isValidElementId(id)) {
+        throw new Error(
+          `${where} needs an \`id\` that starts with a letter, then letters, numbers, hyphens and underscores — it is the name an instance places it by: \`component('${String(id)}')\`.`
+        );
+      }
+
+      if (componentIds.has(component.id)) {
+        throw new Error(
+          `Two components are called "${component.id}". A component's id is the one name it is placed by.`
+        );
+      }
+
+      componentIds.add(component.id);
+      for (const name of Object.keys(component.props ?? {})) {
+        const problem = propNameProblem(name);
+        if (problem) {
+          throw new Error(`${where}: ${problem}.`);
+        }
+      }
     }
 
     for (const page of this.spec.pages) {
@@ -789,10 +864,8 @@ class SpaceAuthor {
   }
 
   /** The element about to be placed under `parentId`, and everything that one is nested in. */
-  private ancestorsOf(parentId: string): Set<string> {
-    return Object.hasOwn(this.flatMap.flat, parentId)
-      ? new Set([parentId, ...parentChain(this.flatMap.flat, parentId)])
-      : new Set();
+  private ancestorsOf(parentId: string, flat: Schema['flat']): Set<string> {
+    return Object.hasOwn(flat, parentId) ? new Set([parentId, ...parentChain(flat, parentId)]) : new Set();
   }
 
   /**
@@ -976,6 +1049,107 @@ class SpaceAuthor {
   }
 
   /**
+   * A component: its tree written into a `flat` of its own, rooted at its root element, and its declaration held to
+   * that tree — every slot one of its elements.
+   */
+  private addComponent(component: ComponentSpec): SpaceComponent {
+    const where = `Component "${component.id}"`;
+    const tree = this.componentTrees.get(component.id);
+    if (!tree) {
+      throw new Error(`${where} was not collected before it was written`);
+    }
+
+    const rootId = this.addElement(
+      component.root,
+      `${this.spec.permanentUrl}/component:${component.id}`,
+      '',
+      '',
+      false,
+      tree
+    );
+    const ids = Object.keys(tree.map.flat);
+    for (const slot of component.slots ?? []) {
+      if (!ids.includes(slot)) {
+        throw new Error(
+          `${where} declares the slot "${slot}", which is not an element of its tree${didYouMean(slot, ids) || '.'} A slot is an element inside the component — usually an empty container — that an instance fills.`
+        );
+      }
+    }
+
+    return {
+      id: component.id,
+      ...(component.label ? { label: component.label } : {}),
+      ...(component.folder ? { folder: component.folder } : {}),
+      ...(component.props ? { props: component.props } : {}),
+      ...(component.slots ? { slots: component.slots } : {}),
+      rootId,
+      flat: tree.map.flat
+    };
+  }
+
+  /**
+   * An instance against the component it places, before it is written: the component exists, every prop it hands in
+   * is declared and of the declared kind, none it requires is missing, and every child fills a slot it has.
+   */
+  private assertInstance(spec: ElementSpec, where: string): void {
+    const declared = this.spec.components ?? [];
+    const componentId = spec.attributes?.referenceId;
+    const target = declared.find(candidate => candidate.id === componentId);
+    if (!target) {
+      throw new Error(
+        `${where} places component "${String(componentId)}", which this space does not declare${
+          typeof componentId === 'string'
+            ? didYouMean(
+                componentId,
+                declared.map(candidate => candidate.id)
+              ) || '.'
+            : '.'
+        } Declare it in \`components\`.`
+      );
+    }
+
+    const props = target.props ?? {};
+    const names = Object.keys(props);
+    const given = Object.fromEntries(
+      Object.entries(spec.attributes ?? {}).filter(([name]) => name !== 'referenceType' && name !== 'referenceId')
+    );
+    for (const name of Object.keys(given)) {
+      if (!names.includes(name)) {
+        throw new Error(
+          `${where} hands component "${target.id}" "${name}", which it does not declare${didYouMean(name, names) || '.'} It declares ${names.length > 0 ? names.join(', ') : 'no props'}.`
+        );
+      }
+    }
+
+    const bound = new Set(spec.bind === undefined ? [] : toBindingSpecs(spec.bind).map(binding => binding.to));
+    for (const [name, prop] of Object.entries(props)) {
+      if (prop.required && given[name] === undefined && !bound.has(name)) {
+        throw new Error(
+          `${where} places component "${target.id}" without "${name}", which it requires${prop.description ? ` — ${prop.description}` : ''}. Hand it in: \`component('${target.id}', { props: { ${name}: … } })\`, or bind it.`
+        );
+      }
+    }
+
+    const invalid = invalidParams(given, given, props).at(0);
+    if (invalid) {
+      throw new Error(
+        `${where} hands component "${target.id}" "${invalid.key}" as ${invalid.got}, and it is declared ${invalid.expected}${invalid.options ? ` — one of ${invalid.options.map(option => `'${option}'`).join(', ')}` : ''}.`
+      );
+    }
+
+    const slots = target.slots ?? [];
+    for (const child of spec.children ?? []) {
+      const named = child.attributes?.slot;
+      const slot = typeof named === 'string' ? named : slots.length === 1 ? slots[0] : undefined;
+      if (slot === undefined || !slots.includes(slot)) {
+        throw new Error(
+          `${where} puts a "${child.type}" in ${slot === undefined ? 'no slot' : `the slot "${slot}"`}, but component "${target.id}" declares ${slots.length > 0 ? `the slots ${slots.map(name => `"${name}"`).join(', ')} — hand children in by slot: \`children: { '${slots[0]}': [ … ] }\`` : 'no slots, so an instance of it takes no children'}.`
+        );
+      }
+    }
+  }
+
+  /**
    * A shell pages render inside: a root of its own, written like a page but listed as none.
    *
    * It is inserted with no parent, the way a page is, and its elements carry it as their `rootId` — which is what
@@ -1100,22 +1274,30 @@ class SpaceAuthor {
     }
   }
 
+  /** An element and everything under it, into `tree`. With no parent it is the tree's root, and rooted at itself. */
   private addElement(
     spec: ElementSpec,
     path: string,
     rootId: string,
     parentId: string,
-    insideCondition = false
+    insideCondition = false,
+    tree = this.pagesTree
   ): string {
     this.assertElementShape(spec, path);
     const id = spec.id ?? this.nextId(spec.type);
     const where = `Element "${spec.type}" (${id}) at ${path}`;
     this.assertFlowShapes(spec.flows, where);
+    if (spec.type === 'reference' && spec.attributes?.referenceType === 'component') {
+      this.assertInstance(spec, where);
+    }
+
+    const isRoot = parentId === '';
+    const ownRootId = isRoot ? id : rootId;
     const bindings = withVisibility(spec);
     const conditional = insideCondition || spec.visible !== undefined || hasVisibilityBinding(bindings);
-    const ancestors = this.ancestorsOf(parentId);
+    const ancestors = this.ancestorsOf(parentId, tree.map.flat);
     bindings?.forEach(binding => assertBindingShape(binding, where));
-    const sourceIndex = this.options.sourceTypes ? this.sources : undefined;
+    const sourceIndex = this.options.sourceTypes ? tree.sources : undefined;
 
     const element: Element = {
       id,
@@ -1123,8 +1305,8 @@ class SpaceAuthor {
       definition: {
         label: spec.meta?.label ?? spec.type,
         type: spec.type,
-        rootId,
-        parentId,
+        rootId: ownRootId,
+        ...(isRoot ? {} : { parentId }),
         items: [],
         // A slot names a class outright: it dresses a part of an element that already exists, and a selector of
         // its own per control would write the same rule once per input on the page.
@@ -1152,12 +1334,12 @@ class SpaceAuthor {
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
         ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),
-        ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
+        ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where, tree.globals) } : {}),
         ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})
       }
     };
 
-    this.insert(element, parentId, 'inside', path);
+    this.insert(element, parentId, isRoot ? 'custom' : 'inside', path, tree);
 
     this.recordHandle({
       id,
@@ -1166,13 +1348,15 @@ class SpaceAuthor {
       selector: selectorFor(id),
       named: spec.id !== undefined,
       ...(conditional ? { conditional: true } : {}),
-      ...([...ancestors].some(ancestor => this.flatMap.flat[ancestor].definition.type === 'list')
+      ...([...ancestors].some(ancestor => tree.map.flat[ancestor].definition.type === 'list')
         ? { repeated: true }
         : {}),
       ...(rendersNoTag(element) ? { boxless: true } : {})
     });
 
-    spec.children?.forEach((child, index) => this.addElement(child, `${path}/${index}`, rootId, id, conditional));
+    spec.children?.forEach((child, index) =>
+      this.addElement(child, `${path}/${index}`, ownRootId, id, conditional, tree)
+    );
 
     return id;
   }

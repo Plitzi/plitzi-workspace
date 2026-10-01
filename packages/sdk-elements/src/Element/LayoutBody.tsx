@@ -5,51 +5,54 @@ import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 import type { ReactNode } from 'react';
 
-type BodyStore = { current: ReactNode; listeners: Set<() => void> };
+type BodyStore = { current: Record<string, ReactNode>; listeners: Set<() => void> };
 
 const LayoutBodyContext = sharedContext<BodyStore | undefined>('LayoutBodyContext', undefined);
 
 const noopUnsubscribe = () => undefined;
 
 export type LayoutBodyProps = {
-  /** What the slot of the shell below renders: the page's content, or the shell nested inside this one. */
-  body: ReactNode;
+  /**
+   * What each slot of the shell below renders, by the slot's id: a layout's one slot holds the page's content (or the
+   * shell nested inside this one), and a component instance's slots hold the children that name them.
+   */
+  bodies: Record<string, ReactNode>;
   children: ReactNode;
 };
 
 /**
- * Hands a shell's slot its body without handing it to every element of the shell.
+ * Hands a shell's slots their bodies without handing them to every element of the shell.
  *
  * The body used to travel inside `plitziElementLayout`, which every element of the shell receives as a prop. The body
  * is a new node on every navigation — it IS the page — so the whole shell rendered again each time, sidebar and all,
- * to show the one container that holds the page. Here the value every element reads never changes; only the slot
+ * to show the one container that holds the page. Here the value every element reads never changes; only a slot
  * subscribes to what it holds.
  *
- * `current` is the body as of the first render, which is what the server renders and what hydration reads. Later
- * bodies are announced after the commit, and the slot renders them before the browser paints.
+ * `current` is the bodies as of the first render, which is what the server renders and what hydration reads. Later
+ * ones are announced after the commit, and the slots render them before the browser paints.
  */
-const LayoutBody = ({ body, children }: LayoutBodyProps) => {
-  const [store] = useState<BodyStore>(() => ({ current: body, listeners: new Set() }));
+const LayoutBody = ({ bodies, children }: LayoutBodyProps) => {
+  const [store] = useState<BodyStore>(() => ({ current: bodies, listeners: new Set() }));
 
   useLayoutEffect(() => {
-    if (store.current === body) {
+    if (store.current === bodies) {
       return;
     }
 
-    store.current = body;
+    store.current = bodies;
     store.listeners.forEach(listener => listener());
-  }, [body, store]);
+  }, [bodies, store]);
 
   return <LayoutBodyContext value={store}>{children}</LayoutBodyContext>;
 };
 
-/** The body of the nearest shell, for the element that is its slot; nothing, and no subscription, for any other. */
-export const useLayoutBody = (isSlot: boolean): ReactNode => {
+/** The body of the nearest shell's slot `slotId`; nothing, and no subscription, for an element that is not a slot. */
+export const useLayoutBody = (slotId: string | undefined): ReactNode => {
   const store = use(LayoutBodyContext);
 
   const subscribe = useCallback(
     (listener: () => void) => {
-      if (!isSlot || !store) {
+      if (slotId === undefined || !store) {
         return noopUnsubscribe;
       }
 
@@ -59,9 +62,12 @@ export const useLayoutBody = (isSlot: boolean): ReactNode => {
         store.listeners.delete(listener);
       };
     },
-    [isSlot, store]
+    [slotId, store]
   );
-  const getSnapshot = useCallback(() => (isSlot && store ? store.current : undefined), [isSlot, store]);
+  const getSnapshot = useCallback(
+    () => (slotId !== undefined && store ? store.current[slotId] : undefined),
+    [slotId, store]
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };

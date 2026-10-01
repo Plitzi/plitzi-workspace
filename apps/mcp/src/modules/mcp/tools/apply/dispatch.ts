@@ -1,4 +1,4 @@
-import { fail } from '../../helpers';
+import { componentView, fail, findComponentByRef, pageUri } from '../../helpers';
 import { isStyleOp } from '../operations';
 import * as actions from '../operations/actions';
 import * as connectors from '../operations/connectors';
@@ -10,6 +10,33 @@ import type { OpResult } from '../../helpers';
 import type { Space } from '../../helpers';
 import type { Env, MutationOutcome } from '../../types';
 import type { Operation } from '../operations';
+
+/** An op that names the root it works in. */
+type RootedOperation = Extract<Operation, { pageRef: string }>;
+
+const isRooted = (op: Operation): op is RootedOperation => 'pageRef' in op;
+
+/**
+ * An element op names its root with `pageRef`, and a component is one: the op runs on the component's tree as if it
+ * were the space's only one — rooted at the component's root — so every element op works inside a component with no
+ * code of its own. What it made stale is the component, read as `pages/<component>`.
+ */
+const executeRooted = (space: Space, env: Env, op: Operation): OpResult => {
+  const component = isRooted(op) ? findComponentByRef(space.schema, op.pageRef) : undefined;
+  if (!component || !isRooted(op)) {
+    return executeOp(space, env, op);
+  }
+
+  const retargeted: RootedOperation = { ...op, pageRef: component.rootId };
+  const result = executeOp(componentView(space, component), env, retargeted);
+
+  return {
+    ...result,
+    staleResources: result.staleResources.map(uri =>
+      uri === pageUri(env, component.rootId) ? pageUri(env, component.id) : uri
+    )
+  };
+};
 
 const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
   switch (op.type) {
@@ -51,6 +78,10 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.deleteInteraction(space, env, op);
     case 'patchSettings':
       return schema.patchSettings(space, env, op);
+    case 'upsertComponent':
+      return schema.upsertComponent(space, env, op);
+    case 'deleteComponent':
+      return schema.deleteComponent(space, env, op);
     case 'upsertDefinition':
       return style.upsertDefinition(space, env, op);
     case 'upsertDefinitions':
@@ -127,7 +158,7 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
 
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
-    const result = executeOp(space, env, op);
+    const result = executeRooted(space, env, op);
     if (result.errors) {
       outcome.errors.push(...result.errors.map(e => ({ ...e, path: `operations[${i}].${e.path}` })));
       continue;

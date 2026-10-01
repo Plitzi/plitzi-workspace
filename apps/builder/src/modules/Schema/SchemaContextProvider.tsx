@@ -7,7 +7,7 @@ import { useMemo, useCallback, use, useEffect } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import { flatMapOf } from '@plitzi/sdk-schema/helpers/components';
 import SchemaReducer, { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -32,6 +32,8 @@ import type {
   Schema,
   SchemaRaw,
   SchemaVariable,
+  SpaceComponent,
+  SpaceComponentDeclaration,
   Style
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -70,7 +72,7 @@ const SchemaContextProvider = ({
     SpaceEventMap
   >;
   useBuilderStoreSync('schema', schema);
-  const getSchemaFlat = useBuilderStoreGetter('schema.flat');
+  const getSchema = useBuilderStoreGetter('schema');
   const [[elementSelected, setSelectedElement]] = useBuilderStore(['elementSelected', 'setSelected']);
 
   const pageDefinitions = useValueMemo(
@@ -149,8 +151,9 @@ const SchemaContextProvider = ({
 
   const schemaCloneElement = useCallback(
     (elementId: string, targetId?: string, fromSubscriptions = false) => {
-      const elements = FlatMap.cloneElements(getSchemaFlat(), elementId, targetId);
-      if (!elements.item) {
+      // Cloned in the tree the element is in — a page's or a component's — with names free across all of them.
+      const elements = flatMapOf(getSchema(), elementId)?.cloneElements(elementId, targetId);
+      if (!elements?.item) {
         return;
       }
 
@@ -167,12 +170,41 @@ const SchemaContextProvider = ({
         fromSubscriptions
       });
     },
-    [dispatchSchema, getSchemaFlat]
+    [dispatchSchema, getSchema]
   );
 
   const schemaRemoveElement = useCallback(
     (elementId: string, fromSubscriptions = false) =>
       dispatchSchema({ type: SchemaActions.SCHEMA_REMOVE_ELEMENT, elementId, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
+  // Components
+
+  const schemaAddComponent = useCallback(
+    (
+      component: SpaceComponent,
+      from?: { elementId: Element['id']; instanceId: Element['id'] },
+      fromSubscriptions = false
+    ) => dispatchSchema({ type: SchemaActions.SCHEMA_ADD_COMPONENT, component, from, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
+  const schemaUpdateComponent = useCallback(
+    (componentId: SpaceComponent['id'], declaration: SpaceComponentDeclaration, fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_UPDATE_COMPONENT, componentId, declaration, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
+  const schemaRemoveComponent = useCallback(
+    (componentId: SpaceComponent['id'], fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_REMOVE_COMPONENT, componentId, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
+  const schemaDetachInstance = useCallback(
+    (instanceId: Element['id'], fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_DETACH_INSTANCE, instanceId, fromSubscriptions }),
     [dispatchSchema]
   );
 
@@ -348,6 +380,18 @@ const SchemaContextProvider = ({
       )
     );
 
+    // Components — replayed as the call that made them, like a rename: this connection holds the same document.
+    subscriptionManager.subscribe('SPACE_ADD_COMPONENT', ({ component, from }) =>
+      schemaAddComponent(component, from, true)
+    );
+    subscriptionManager.subscribe('SPACE_UPDATE_COMPONENT', ({ componentId, declaration }) =>
+      schemaUpdateComponent(componentId, declaration, true)
+    );
+    subscriptionManager.subscribe('SPACE_REMOVE_COMPONENT', ({ componentId }) =>
+      schemaRemoveComponent(componentId, true)
+    );
+    subscriptionManager.subscribe('SPACE_DETACH_INSTANCE', ({ instanceId }) => schemaDetachInstance(instanceId, true));
+
     // Others
     subscriptionManager.subscribe('SPACE_UPDATED', ({ schema }) => schemaUpdate(schema, true));
     subscriptionManager.subscribe('SPACE_UPDATE_SETTINGS', ({ value, path }) =>
@@ -385,9 +429,14 @@ const SchemaContextProvider = ({
           'SPACE_ADD_ELEMENT',
           'SPACE_UPDATE_ELEMENT',
           'SPACE_UPDATE_ELEMENTS',
+          'SPACE_RENAME_ELEMENT',
           'SPACE_REMOVE_ELEMENT',
           'SPACE_MOVE_ELEMENT',
           'SPACE_CLONE_ELEMENT',
+          'SPACE_ADD_COMPONENT',
+          'SPACE_UPDATE_COMPONENT',
+          'SPACE_REMOVE_COMPONENT',
+          'SPACE_DETACH_INSTANCE',
           'SPACE_UPDATED',
           'SPACE_UPDATE_SETTINGS',
           'SPACE_ADD_TEMPLATE'
@@ -415,7 +464,11 @@ const SchemaContextProvider = ({
     schemaRemoveElement,
     schemaMoveElement,
     schemaUpdate,
-    schemaAddTemplate
+    schemaAddTemplate,
+    schemaAddComponent,
+    schemaUpdateComponent,
+    schemaRemoveComponent,
+    schemaDetachInstance
   ]);
 
   // When type = 'main'
@@ -461,7 +514,11 @@ const SchemaContextProvider = ({
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
-      schemaAddTemplate
+      schemaAddTemplate,
+      schemaAddComponent,
+      schemaUpdateComponent,
+      schemaRemoveComponent,
+      schemaDetachInstance
     }),
     [
       schemaUpdate,
@@ -472,7 +529,11 @@ const SchemaContextProvider = ({
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
-      schemaAddTemplate
+      schemaAddTemplate,
+      schemaAddComponent,
+      schemaUpdateComponent,
+      schemaRemoveComponent,
+      schemaDetachInstance
     ]
   );
 
@@ -500,7 +561,11 @@ const SchemaContextProvider = ({
       schemaUpdateVariable,
       schemaRemoveVariable,
       schemaAddTemplate,
-      schemaUpdateSettings
+      schemaUpdateSettings,
+      schemaAddComponent,
+      schemaUpdateComponent,
+      schemaRemoveComponent,
+      schemaDetachInstance
     };
   }, [
     dispatchSchema,
@@ -523,7 +588,11 @@ const SchemaContextProvider = ({
     schemaRemovePageFolder,
     schemaAddVariable,
     schemaUpdateVariable,
-    schemaRemoveVariable
+    schemaRemoveVariable,
+    schemaAddComponent,
+    schemaUpdateComponent,
+    schemaRemoveComponent,
+    schemaDetachInstance
   ]);
 
   return <SchemaContext value={valueMemo}>{children}</SchemaContext>;

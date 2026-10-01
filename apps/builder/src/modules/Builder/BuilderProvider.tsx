@@ -35,7 +35,7 @@ import type {
 export type BuilderProviderProps = {
   children: React.ReactNode;
   baseElementId: string;
-  mode?: 'normal' | 'template' | 'segment';
+  mode?: 'normal' | 'template';
   schemaName?: string;
 
   onHandler?: (event: EventBridgeEvent, data: unknown[]) => void;
@@ -60,7 +60,11 @@ const BuilderProvider = ({
     'elementHovered',
     'elementSelected'
   ]);
-  const [getElement, getElementSelected] = useBuilderStoreGetter(['schema.flat', 'elementSelected']);
+  const [getElement, getElementSelected, getSchema] = useBuilderStoreGetter([
+    'schema.flat',
+    'elementSelected',
+    'schema'
+  ]);
 
   // Builder Methods
 
@@ -315,7 +319,7 @@ const BuilderProvider = ({
           } else if ((typeArr[0] as string) === 'add') {
             // The name is minted here, against the document being dropped into — not by whatever started the drag,
             // which has no idea what this space already holds.
-            const mintId = makeIdMinter(getElement());
+            const mintId = makeIdMinter(getSchema());
             const element = {
               ...pick(dataParsed.element, ['attributes', 'definition']),
               id: mintId(type),
@@ -355,7 +359,7 @@ const BuilderProvider = ({
       return false;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getElement, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected]
+    [getElement, getSchema, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected]
   );
 
   const elementAsTemplate = useCallback(

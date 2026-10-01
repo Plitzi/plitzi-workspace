@@ -7,7 +7,6 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
 import useRealtimeSync from '@plitzi/sdk-shared/server/actions/useRealtimeSync';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
@@ -39,11 +38,10 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const [[schemaSettings, styleCache, segments, currentPageId, variables = emptyObject, fonts = NO_FONTS]] =
+  const [[schemaSettings, styleCache, currentPageId, variables = emptyObject, fonts = NO_FONTS]] =
     useSdkStore([
       'schema.settings',
       'style.cache',
-      'segments',
       'navigation.currentPageId',
       'runtime.sources.variables',
       'style.fonts'
@@ -66,14 +64,13 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   );
 
   const css = useMemo(() => {
-    const segmentsCss = Object.values(segments).map(segment => segment.style.cache);
     const cssVariables = schemaVariablesToCss(variables);
     const cacheParsed = processCssTokens(styleCache, variables);
     // Marked so a server-rendered page can leave the cache out of its payload and read it back from here.
-    const cssParsed = `.plitzi-sdk{${cssVariables}}\n${markStyleCache(cacheParsed)}${segmentsCss.join('')}\n${schemaSettings.customCss}\n${externalStyle}`;
+    const cssParsed = `.plitzi-sdk{${cssVariables}}\n${markStyleCache(cacheParsed)}\n${schemaSettings.customCss}\n${externalStyle}`;
 
     return `@layer plitzi-sdk-runtime{${cssParsed}}`;
-  }, [segments, variables, styleCache, schemaSettings.customCss, externalStyle]);
+  }, [variables, styleCache, schemaSettings.customCss, externalStyle]);
 
   // The canvas renders into an iframe, whose head only the rail can reach.
   const iframeAssets = useMemo(() => ({ ...assets, ...fontLinkAssets(fontHead) }), [assets, fontHead]);
@@ -119,7 +116,6 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
       customContexts: {},
       contexts: {
         ComponentContext,
-        SegmentsContext,
         NetworkContext,
         PluginsContext,
         EventBridgeContext,

@@ -1199,6 +1199,42 @@ describe('isIntegrityError', () => {
       }
     };
 
+    // An instance of a component that was removed, and a child filling a slot its component no longer declares.
+    const instance = (id: string, referenceId: string, items: string[] = []): Element => ({
+      ...createElement(id, 'reference'),
+      attributes: { referenceType: 'component', referenceId },
+      definition: { ...createElement(id, 'reference').definition, parentId: 'page-1', items }
+    });
+    schema.flat['page-1'].definition.items?.push('ghost-instance', 'card-instance');
+    schema.flat['ghost-instance'] = instance('ghost-instance', 'ghost');
+    schema.flat['card-instance'] = instance('card-instance', 'card', ['card-filler']);
+    schema.flat['card-filler'] = {
+      ...createElement('card-filler', 'text'),
+      attributes: { slot: 'card-gone' },
+      definition: { ...createElement('card-filler', 'text').definition, parentId: 'card-instance' }
+    };
+    schema.components = {
+      card: {
+        id: 'card',
+        rootId: 'card-root',
+        slots: ['card-body'],
+        flat: {
+          'card-root': {
+            ...createElement('card-root', 'container', 'card-root'),
+            definition: { ...createElement('card-root', 'container', 'card-root').definition, items: ['card-body'] }
+          },
+          'card-body': {
+            ...createElement('card-body', 'container', 'card-root'),
+            definition: {
+              ...createElement('card-body', 'container', 'card-root').definition,
+              parentId: 'card-root',
+              items: []
+            }
+          }
+        }
+      }
+    };
+
     const { errors } = validateSchema(schema, { sourceTypes: { apiContainer: 'apiContainer', form: 'apiContainer' } });
 
     expect(new Set(errors.map(error => error.code))).toEqual(REFERENCE_ERROR_CODES);

@@ -14,10 +14,11 @@ export type UseDragElementProps = {
   type: string;
   variables?: object[];
   manifest?: Template;
-  onParentRefresh?: (identifier: string, segment: object) => void;
+  /** What the dropped element is called in the builder's tree, instead of its type's default label. */
+  label?: string;
 };
 
-const useDragElement = ({ attributes, type, variables, manifest }: UseDragElementProps) => {
+const useDragElement = ({ attributes, type, variables, manifest, label }: UseDragElementProps) => {
   const { componentDefinitions } = use(ComponentContext);
   const { eventBridge } = use(EventBridgeContext);
 
@@ -58,10 +59,16 @@ const useDragElement = ({ attributes, type, variables, manifest }: UseDragElemen
         });
       }
 
+      if (label) {
+        element = produce(element, draft => {
+          set(draft, 'definition.label', label);
+        });
+      }
+
       // No id: the document being dropped into mints the name, since only it knows what is already taken.
       e.dataTransfer.setData(`add##${type}`, JSON.stringify({ element, variables }));
     },
-    [attributes, componentDefinitions, type, variables]
+    [attributes, componentDefinitions, type, variables, label]
   );
 
   const onDragTemplate = useCallback(

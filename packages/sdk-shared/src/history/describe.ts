@@ -89,6 +89,7 @@ const listOf = (names: string[], max = 3): string =>
   names.length > max ? `${names.slice(0, max).join(', ')} and ${names.length - max} more` : names.join(', ');
 
 const KIND_NOUN: Record<Exclude<ChangeKind, 'element'>, string> = {
+  component: 'component',
   folder: 'folder',
   variable: 'variable',
   setting: 'setting',

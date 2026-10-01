@@ -84,11 +84,11 @@ later comes with the source it was made with, not whatever was uploaded since.
 A space has a draft (`main`) and, for each published environment (`development`, `staging`, `production`), the
 snapshots made of it, by revision. `plitzi-sdk-server`'s `services/versions` is the one reading of a version:
 `resolveVersion` finds it (an environment's latest unless a revision is named) and `versionContents` counts what it
-holds — pages, layouts, elements, the plugins installed and whether each one's source is kept, actions, connectors,
+holds — pages, layouts, components, elements, the plugins installed and whether each one's source is kept, actions, connectors,
 what the functions declare, the runtime and whether its source is kept. The builder shows it, through the
 `SpaceVersionContents` query, in **Make Snapshot** (the draft: what the snapshot will freeze) and in **Publish Snapshot**
 (the snapshot chosen). Every version shares, and no snapshot freezes: the space's files on its CDN, its variables and
-credentials, and its segments, which are published on their own.
+credentials. A space's components are part of its schema, so each version has the ones it was published with.
 
 ## The export
 

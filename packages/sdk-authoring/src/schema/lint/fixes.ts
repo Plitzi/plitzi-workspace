@@ -270,28 +270,41 @@ export const fixSpace = (
   const wanted = new Set(codes);
   const only = elements ? new Set(elements) : undefined;
   const applied: AppliedFix[] = [];
-  const changed: Schema['flat'] = {};
-  // A fixer changes the element it is handed and nothing else, so each is fixed on a copy of its own, and the space
-  // is copied only around the ones that changed — a fix on one element of thousands no longer clones them all.
-  for (const element of Object.values(schema.flat)) {
-    if (only && !only.has(element.id)) {
-      continue;
-    }
+  // A fixer changes the element it is handed and nothing else, so each is fixed on a copy of its own, and a tree is
+  // copied only around the ones that changed — a fix on one element of thousands no longer clones them all. Every
+  // tree: an element inside a component is fixed the way one on a page is.
+  const fixTree = (flat: Schema['flat']): Schema['flat'] => {
+    const changed: Schema['flat'] = {};
+    for (const element of Object.values(flat)) {
+      if (only && !only.has(element.id)) {
+        continue;
+      }
 
-    const draft = structuredClone(element);
-    const before = applied.length;
-    for (const [code, fix] of Object.entries(FIXERS)) {
-      if (wanted.has(code)) {
-        fix(draft, catalogs, message => applied.push({ code, elementId: element.id, message }));
+      const draft = structuredClone(element);
+      const before = applied.length;
+      for (const [code, fix] of Object.entries(FIXERS)) {
+        if (wanted.has(code)) {
+          fix(draft, catalogs, message => applied.push({ code, elementId: element.id, message }));
+        }
+      }
+
+      if (applied.length > before) {
+        changed[element.id] = draft;
       }
     }
 
-    if (applied.length > before) {
-      changed[element.id] = draft;
-    }
-  }
+    return Object.keys(changed).length > 0 ? { ...flat, ...changed } : flat;
+  };
 
-  const next = Object.keys(changed).length > 0 ? { ...schema, flat: { ...schema.flat, ...changed } } : schema;
+  const flat = fixTree(schema.flat);
+  const components = Object.fromEntries(
+    Object.entries(schema.components).map(([id, component]) => {
+      const fixed = fixTree(component.flat);
+
+      return [id, fixed === component.flat ? component : { ...component, flat: fixed }];
+    })
+  );
+  const next = applied.length > 0 ? { ...schema, flat, components } : schema;
 
   return { schema: next, style, applied };
 };

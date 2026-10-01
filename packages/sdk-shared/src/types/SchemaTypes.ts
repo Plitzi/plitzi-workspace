@@ -1,6 +1,7 @@
 import type { InteractionCallbackParamValues, InteractionCallbackType } from './InteractionTypes';
 import type { ChannelDeclarations } from './RealtimeTypes';
 import type { Style } from './StyleTypes';
+import type { BuiltinParam } from '../authoring/paramSpec';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
 // RSC
@@ -137,6 +138,40 @@ export type SchemaVariable =
 
 export type PageFolder = { id: string; name: string; slug: string; parentId?: PageFolder['id'] };
 
+/**
+ * A prop a component declares, as the document stores it: the part of a `BuiltinParam` that survives JSON — no `when`
+ * guard and no `builderType` worked out from other params, which are functions and only ever live in code.
+ */
+export type ComponentProp = Pick<
+  BuiltinParam,
+  'type' | 'description' | 'default' | 'options' | 'required' | 'label' | 'optionLabels' | 'elementType'
+>;
+
+/**
+ * A reusable subtree of the space: declared once, placed on any page as an instance (a `reference` element with
+ * `referenceType: 'component'`), and versioned, published and copied with the space because it is part of it.
+ *
+ * Its tree is a `flat` of its own rather than roots inside `schema.flat`: that one is the tree of the pages, and a
+ * component belongs to none. Ids are still one namespace across every tree, so an id alone says which tree it is in.
+ */
+export type SpaceComponent = {
+  /** The key it is stored under, and what an instance names in `referenceId`. */
+  id: string;
+  label?: string;
+  /** The page folder the builder files it under. It routes nothing: a component has no URL of its own. */
+  folder?: string;
+  /** What an instance hands in, each as an attribute of the instance; read inside as `{{ props.<name> }}`. */
+  props?: Record<string, ComponentProp>;
+  /** Elements of `flat` an instance fills with its children, each child naming the one it goes in (`slot`). */
+  slots?: Element['id'][];
+  rootId: Element['id'];
+  /** `rootId` with no parent, and everything under it. */
+  flat: Record<Element['id'], Element>;
+};
+
+/** What a component declares, apart from its tree: the part an update may change. */
+export type SpaceComponentDeclaration = Pick<SpaceComponent, 'label' | 'folder' | 'props' | 'slots'>;
+
 export type Schema = {
   flat: Record<string, Element>;
   definition: { name: string; permanentUrl: string };
@@ -234,10 +269,11 @@ export type Schema = {
   rsc?: SchemaRsc;
   pages: Element['id'][];
   pageFolders: PageFolder[];
+  components: Record<SpaceComponent['id'], SpaceComponent>;
 };
 
 export type SchemaContextValue = {
-  definition?: { rootId: string }; // for segments and templates
+  definition?: { rootId: string }; // for templates
   // When is main Schema in builder
   dispatchSchema?: unknown;
   schemaUpdate?: (newSchema: SchemaRaw, fromSubscriptions?: boolean) => void;
@@ -261,6 +297,18 @@ export type SchemaContextValue = {
   ) => void;
   schemaCloneElement?: (elementId: string, targetId?: string, fromSubscriptions?: boolean) => void;
   schemaRemoveElement?: (elementId: string, fromSubscriptions?: boolean) => void;
+  schemaAddComponent?: (
+    component: SpaceComponent,
+    from?: { elementId: Element['id']; instanceId: Element['id'] },
+    fromSubscriptions?: boolean
+  ) => void;
+  schemaUpdateComponent?: (
+    componentId: SpaceComponent['id'],
+    declaration: SpaceComponentDeclaration,
+    fromSubscriptions?: boolean
+  ) => void;
+  schemaRemoveComponent?: (componentId: SpaceComponent['id'], fromSubscriptions?: boolean) => void;
+  schemaDetachInstance?: (instanceId: Element['id'], fromSubscriptions?: boolean) => void;
   schemaAddPage?: (page: Element, fromSubscriptions?: boolean) => Promise<void>;
   schemaHomePage?: (pageId: string, fromSubscriptions?: boolean) => void;
   schemaUpdatePage?: (page: Element, fromSubscriptions?: boolean) => void;
@@ -293,4 +341,5 @@ export type SchemaRaw = {
   rsc?: Schema['rsc'];
   pages: Element['id'][];
   pageFolders: PageFolder[];
+  components: Schema['components'];
 };

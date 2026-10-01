@@ -63,7 +63,8 @@ const scopeSpace = (): Space => ({
     variables: [],
     settings: { customCss: '' },
     pages: ['home'],
-    pageFolders: []
+    pageFolders: [],
+    components: {}
   },
   style: {
     platform: { desktop: {}, tablet: {}, mobile: {} },

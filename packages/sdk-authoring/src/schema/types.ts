@@ -6,6 +6,7 @@ import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaVal
 import type {
   BindingCategory,
   ChannelDeclarations,
+  ComponentProp,
   ElementBinding,
   ElementInteraction,
   ElementLoadStrategy,
@@ -284,6 +285,44 @@ export interface LayoutSpec {
 }
 
 /**
+ * A reusable subtree of the space: written once, placed anywhere with {@link component}, and published, versioned and
+ * copied with the space because it is part of it.
+ *
+ * It is CLOSED. Inside, a binding or a template reads `props` — what each instance hands in, declared here — and the
+ * globals, never the page an instance sits on: a component that read its surroundings would render differently
+ * wherever it was placed, and could not be checked until it was. What it needs from there comes in as a prop.
+ *
+ * ```ts
+ * components: [{
+ *   id: 'product-card',
+ *   props: { title: { type: 'text', description: 'The heading', required: true } },
+ *   slots: ['product-card-actions'],
+ *   root: container({ id: 'product-card-root', children: [
+ *     heading({ id: 'product-card-title', bind: { content: 'props.title' } }),
+ *     container({ id: 'product-card-actions' })
+ *   ] })
+ * }]
+ * ```
+ */
+export interface ComponentSpec {
+  /** The name an instance places it by. */
+  id: string;
+  /** What the builder shows. Defaults to the id. */
+  label?: string;
+  /** The page folder the builder files it under. It routes nothing: a component has no URL of its own. */
+  folder?: string;
+  /**
+   * What an instance hands in, each as an attribute of the instance and read inside as `{{ props.<name> }}`. Declared
+   * as a step's params are — a type, what it is for, a default, whether it is required — and checked the same way.
+   */
+  props?: Record<string, ComponentProp>;
+  /** Elements of the tree an instance fills with its children, each child naming the one it goes in. */
+  slots?: string[];
+  /** The tree. Its root is what an instance renders, and ids inside it are names the whole space shares. */
+  root: ElementSpec;
+}
+
+/**
  * Per element *type* defaults — what `.plitzi__heading` resolves to before any class applies.
  *
  * `slots` dresses the type's OTHER selectors — a modal's `rootContainer`, a form control's `input` — for every
@@ -378,6 +417,8 @@ export interface SpaceSpec {
   pageFolders?: PageFolderSpec[];
   /** Shells pages render inside. See {@link LayoutSpec}. */
   layouts?: LayoutSpec[];
+  /** Reusable subtrees, placed with {@link component}. See {@link ComponentSpec}. */
+  components?: ComponentSpec[];
   pages: PageSpec[];
 }
 

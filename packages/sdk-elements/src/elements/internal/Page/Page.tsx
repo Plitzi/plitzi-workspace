@@ -34,7 +34,7 @@ export type PageProps = {
 type ChainLink = LayoutLink & { plitziElementLayout: ElementLayout };
 
 const toLinks = (chain: LayoutLink[]): ChainLink[] =>
-  chain.map(link => ({ ...link, plitziElementLayout: { containerId: link.slot, rootId: link.slot, type: 'layout' } }));
+  chain.map(link => ({ ...link, plitziElementLayout: { slots: [link.slot], rootId: link.slot, type: 'layout' } }));
 
 /**
  * The page's body inside its shells, the outermost one at the top.
@@ -51,7 +51,7 @@ const toLinks = (chain: LayoutLink[]): ChainLink[] =>
 const wrapInLayouts = (links: ChainLink[], pageId: string, children: ReactNode): ReactNode =>
   links.reduce<ReactNode>(
     (body, { layout, slot, plitziElementLayout }) => (
-      <LayoutBody key={slot} body={body}>
+      <LayoutBody key={slot} bodies={{ [slot]: body }}>
         {/* Everything in a shell belongs to the page it is rendered for, which is what a binding resolves against. */}
         <LayoutContainer internalProps={{ id: layout, rootId: pageId, plitziElementLayout }} />
       </LayoutBody>

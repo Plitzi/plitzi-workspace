@@ -10,6 +10,8 @@ import type {
   Schema,
   SchemaRaw,
   SchemaVariable,
+  SpaceComponent,
+  SpaceComponentDeclaration,
   SpaceFont,
   Style,
   StyleCategory,
@@ -48,6 +50,11 @@ export const schemaFromWire = (raw: SchemaRaw): Schema => ({
   ...raw,
   flat: Object.fromEntries(raw.flat.map(item => [item.id, item]))
 });
+
+const spaceComponent = z.custom<SpaceComponent>(
+  value => isRecord(value) && typeof value.id === 'string' && isRecord(value.flat),
+  { message: 'expected a component with an id and a flat' }
+);
 
 const schemaRaw = z.custom<SchemaRaw>(value => isRecord(value) && Array.isArray(value.flat), {
   message: 'expected a schema whose `flat` is a list of elements'
@@ -94,9 +101,6 @@ const selectorParams = z.object({
 
 /** Updating a selector always names the one being updated; creating one does not have it yet. */
 const selectorUpdateParams = selectorParams.extend({ styleSelector: z.string() });
-
-/** What a segment edit carries on top of the space edit it mirrors: which segment it belongs to. */
-const segmentScope = { contextId: z.string() };
 
 const variablePayload = z.object({ variable: schemaVariable });
 const selectorVariablePayload = z.object({
@@ -204,70 +208,18 @@ export const spaceEventSchemas = {
   STYLE_UPDATE_FONT: z.object({ family: z.string(), font: spaceFont }),
   STYLE_REMOVE_FONT: z.object({ family: z.string() }),
 
-  SEGMENT_ADD_ELEMENT: z.object({
-    ...segmentScope,
-    element,
-    dropPosition,
-    to: z.string(),
-    initialItems: elements.optional(),
-    variables: z.array(schemaVariable).optional()
+  // A component edit travels as the call that made it, as a rename does: re-applying it on the receiver is exactly
+  // what the writer did, and moving a subtree into a component touches more of the document than it would name.
+  SPACE_ADD_COMPONENT: z.object({
+    component: spaceComponent,
+    from: z.object({ elementId: z.string(), instanceId: z.string() }).optional()
   }),
-  SEGMENT_UPDATE_ELEMENT: z.object({ ...segmentScope, element }),
-  SEGMENT_RENAME_ELEMENT: z.object({ ...segmentScope, elementId: z.string(), id: z.string() }),
-  SEGMENT_UPDATE_ELEMENTS: z.object({ ...segmentScope, elements }),
-  SEGMENT_REMOVE_ELEMENT: z.object({ ...segmentScope, elementId: z.string() }),
-  SEGMENT_MOVE_ELEMENT: z.object({
-    ...segmentScope,
-    elementId: z.string(),
-    from: z.string(),
-    to: z.string(),
-    dropPosition
+  SPACE_UPDATE_COMPONENT: z.object({
+    componentId: z.string(),
+    declaration: z.custom<SpaceComponentDeclaration>(isRecord)
   }),
-  SEGMENT_CLONE_ELEMENT: z.object({
-    ...segmentScope,
-    element,
-    dropPosition,
-    to: z.string(),
-    initialItems: elements.optional()
-  }),
-  SEGMENT_ADD_TEMPLATE: z.object({
-    ...segmentScope,
-    element,
-    style: z.custom<Style>(isRecord),
-    to: z.string(),
-    dropPosition,
-    initialItems: elements.optional(),
-    variables: z.array(schemaVariable).optional()
-  }),
-  SEGMENT_SPACE_ADD_VARIABLE: z.object({ ...segmentScope, variable: schemaVariable }),
-  SEGMENT_SPACE_UPDATE_VARIABLE: z.object({ ...segmentScope, variable: schemaVariable }),
-  // A removal only names the variable that went; there is no value left to send.
-  SEGMENT_SPACE_REMOVE_VARIABLE: z.object({ ...segmentScope, variable: z.object({ name: z.string() }) }),
-  SEGMENT_STYLE_ADD_SELECTOR: z.object({
-    ...segmentScope,
-    displayMode,
-    selector: z.string(),
-    type: tagType,
-    path: styleCategory.optional(),
-    style: styleAttributes.optional(),
-    params: selectorParams
-  }),
-  SEGMENT_STYLE_UPDATE_SELECTOR: z.object({
-    ...segmentScope,
-    displayMode,
-    selector: z.string(),
-    path: styleCategory.optional(),
-    style: styleAttributes.optional(),
-    params: selectorUpdateParams
-  }),
-  SEGMENT_STYLE_REMOVE_SELECTOR: z.object({ ...segmentScope, displayMode, selector: z.string() }),
-  SEGMENT_STYLE_REMOVE_SELECTORS: z.object({ ...segmentScope, displayMode, selectors: z.array(z.string()) }),
-  SEGMENT_STYLE_ADD_SELECTOR_VARIABLE: selectorVariablePayload.extend(segmentScope),
-  SEGMENT_STYLE_UPDATE_SELECTOR_VARIABLE: selectorVariablePayload.extend(segmentScope),
-  SEGMENT_STYLE_REMOVE_SELECTOR_VARIABLE: removeSelectorVariablePayload.extend(segmentScope),
-  SEGMENT_STYLE_ADD_VARIABLE: stylePayload.extend(segmentScope),
-  SEGMENT_STYLE_UPDATE_VARIABLE: stylePayload.extend(segmentScope),
-  SEGMENT_STYLE_REMOVE_VARIABLE: z.object({ ...segmentScope, category: variableCategory, name: z.string() })
+  SPACE_REMOVE_COMPONENT: z.object({ componentId: z.string() }),
+  SPACE_DETACH_INSTANCE: z.object({ instanceId: z.string() })
 } as const;
 
 export type SpaceEventName = keyof typeof spaceEventSchemas;

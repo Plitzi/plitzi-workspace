@@ -4,7 +4,7 @@ import { BINDING_CATEGORIES, LOAD_STRATEGIES, RUNTIMES, paramIssue } from '../gu
 import { didYouMean } from '../suggest';
 import { textOf } from './context';
 import { checkPageTarget } from './pages';
-import { checkTemplate } from './templates';
+import { checkPropsRead, checkTemplate } from './templates';
 
 import type { LintContext } from './context';
 import type { Element, ElementBinding } from '@plitzi/sdk-shared';
@@ -62,7 +62,7 @@ const checkAncestor = (ctx: LintContext, element: Element, where: string): void 
 const checkAttributes = (ctx: LintContext, element: Element, where: string): void => {
   // A `custom` host is held to the component it hosts, when that component was declared.
   const type = ctx.catalogType(element) ?? element.definition.type;
-  const names = ctx.attributeNames(type);
+  const names = ctx.attributeNamesFor(element);
   const enums = ctx.catalogs.attributeValues?.[type] ?? {};
   const defaults = ctx.catalogs.defaultAttributes?.[type] ?? {};
   for (const [name, value] of Object.entries(element.attributes)) {
@@ -152,7 +152,7 @@ const checkChildren = (ctx: LintContext, element: Element, where: string): void 
 const checkBindings = (ctx: LintContext, element: Element, where: string): void => {
   const catalog = ctx.catalogs.transformers;
   const defaults = ctx.catalogs.defaultAttributes?.[element.definition.type] ?? {};
-  const names = ctx.attributeNames(element.definition.type);
+  const names = ctx.attributeNamesFor(element);
   const scope = ctx.scope(element.id);
   for (const { category, binding } of bindingsOf(element)) {
     const at = `${where}: the binding of "${binding.to}"`;
@@ -168,6 +168,7 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
     // An element's source reaches only the elements inside it; bound from anywhere else it resolves to nothing. The
     // name itself — that some element publishes it — is the structural validator's.
     const head = binding.source.split('.')[0];
+    checkPropsRead(ctx, binding.source, at, element.id);
     const providerId = head.slice(head.indexOf('_') + 1);
     const prefix = ctx.sources.get(providerId);
     if (prefix && head === `${prefix}_${providerId}` && !scope.has(providerId)) {

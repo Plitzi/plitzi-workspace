@@ -79,7 +79,7 @@ const renderItems = (
             componentDefinitions: { current: definitions }
           } as unknown as ComponentContextValue
         },
-        createElement(LayoutBody, { body: layoutBody, children: createElement(Harness, props) })
+        createElement(LayoutBody, { bodies: { X: layoutBody }, children: createElement(Harness, props) })
       )
     )
   );
@@ -184,7 +184,7 @@ describe('useInternalItems', () => {
       {
         id: 'X',
         definition: def(['a']),
-        plitziElementLayout: { containerId: 'X', rootId: 'root', type: 'layout' },
+        plitziElementLayout: { slots: ['X'], rootId: 'root', type: 'layout' },
         children: undefined,
         previewMode: false
       },
@@ -205,7 +205,7 @@ describe('useInternalItems', () => {
       {
         id: 'sidebar',
         definition: def(['a']),
-        plitziElementLayout: { containerId: 'X', rootId: 'root', type: 'layout' },
+        plitziElementLayout: { slots: ['X'], rootId: 'root', type: 'layout' },
         children: undefined,
         previewMode: false
       },

@@ -20,6 +20,9 @@ import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
  */
 export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state', 'host', 'theme', 'computed'];
 
+/** What an element inside a component can read besides its own tree: the globals, and what its instance hands in. */
+export const COMPONENT_SOURCES = [...GLOBAL_SOURCES, 'props'];
+
 /** What an element publishes: the source prefix its type registers under, by the id it was given. */
 export type SourceIndex = Map<string, string>;
 
@@ -33,20 +36,26 @@ export type SourceIndex = Map<string, string>;
  * Both halves being wrong is the same failure and it is the quietest one this surface has: the binding resolves
  * to nothing, the element renders its placeholder, and every layer below considers the document perfectly valid.
  */
-export const resolveSource = (source: string, index: SourceIndex, where: string): string => {
+export const resolveSource = (
+  source: string,
+  index: SourceIndex,
+  where: string,
+  globals: readonly string[] = GLOBAL_SOURCES
+): string => {
   const [head, ...rest] = source.split('.');
   const field = rest.join('.');
   const separator = head.indexOf('_');
 
   if (separator === -1) {
-    if (GLOBAL_SOURCES.includes(head)) {
+    if (globals.includes(head)) {
       return source;
     }
 
     const prefix = index.get(head);
     if (!prefix) {
+      const inComponent = globals.includes('props');
       throw new Error(
-        `${where} binds to "${source}", but nothing in this space answers to "${head}"${didYouMean(head, [...index.keys(), ...GLOBAL_SOURCES]) || '.'} A source names an element by its id, or one of the globals: ${GLOBAL_SOURCES.join(', ')}.`
+        `${where} binds to "${source}", but nothing ${inComponent ? 'in this component' : 'in this space'} answers to "${head}"${didYouMean(head, [...index.keys(), ...globals]) || '.'} A source names an element by its id, or one of the globals: ${globals.join(', ')}.${inComponent ? ' A component is closed: what it needs from where it is placed comes in as a prop.' : ''}`
       );
     }
 
@@ -245,11 +254,12 @@ export const groupBindings = (
   path: string,
   bind: BindingsSpec,
   sources?: SourceIndex,
-  where = path
+  where = path,
+  globals: readonly string[] = GLOBAL_SOURCES
 ): Partial<Record<BindingCategory, ElementBinding[]>> =>
   toBindingSpecs(bind).reduce<Partial<Record<BindingCategory, ElementBinding[]>>>((groups, spec, index) => {
     const category = spec.category ?? 'attributes';
-    const resolved = sources ? { ...spec, source: resolveSource(spec.source, sources, where) } : spec;
+    const resolved = sources ? { ...spec, source: resolveSource(spec.source, sources, where, globals) } : spec;
     groups[category] = [...(groups[category] ?? []), authorBinding(index, resolved)];
 
     return groups;

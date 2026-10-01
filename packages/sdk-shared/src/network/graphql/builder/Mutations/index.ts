@@ -1,28 +1,3 @@
-import SegmentAddMutation from './Segment/SegmentAddMutation';
-import SegmentAddTemplateMutation from './Segment/SegmentAddTemplateMutation';
-import SegmentPublishMutation from './Segment/SegmentPublishMutation';
-import SegmentRemoveMutation from './Segment/SegmentRemoveMutation';
-import SegmentUpdateMutation from './Segment/SegmentUpdateMutation';
-import SegmentAddElementMutation from './Segment/space/elements/SegmentAddElementMutation';
-import SegmentCloneElementMutation from './Segment/space/elements/SegmentCloneElementMutation';
-import SegmentMoveElementMutation from './Segment/space/elements/SegmentMoveElementMutation';
-import SegmentRemoveElementMutation from './Segment/space/elements/SegmentRemoveElementMutation';
-import SegmentRenameElementMutation from './Segment/space/elements/SegmentRenameElementMutation';
-import SegmentUpdateElementMutation from './Segment/space/elements/SegmentUpdateElementMutation';
-import SegmentUpdateElementsMutation from './Segment/space/elements/SegmentUpdateElementsMutation';
-import SegmentSpaceAddVariableMutation from './Segment/space/variables/SegmentSpaceAddVariableMutation';
-import SegmentSpaceRemoveVariableMutation from './Segment/space/variables/SegmentSpaceRemoveVariableMutation';
-import SegmentSpaceUpdateVariableMutation from './Segment/space/variables/SegmentSpaceUpdateVariableMutation';
-import SegmentStyleAddSelectorMutation from './Segment/style/selectors/SegmentStyleAddSelectorMutation';
-import SegmentStyleRemoveSelectorMutation from './Segment/style/selectors/SegmentStyleRemoveSelectorMutation';
-import SegmentStyleRemoveSelectorsMutation from './Segment/style/selectors/SegmentStyleRemoveSelectorsMutation';
-import SegmentStyleUpdateSelectorMutation from './Segment/style/selectors/SegmentStyleUpdateSelectorMutation';
-import SegmentStyleAddSelectorVariableMutation from './Segment/style/selectorVariables/SegmentStyleAddSelectorVariableMutation';
-import SegmentStyleRemoveSelectorVariableMutation from './Segment/style/selectorVariables/SegmentStyleRemoveSelectorVariableMutation';
-import SegmentStyleUpdateSelectorVariableMutation from './Segment/style/selectorVariables/SegmentStyleUpdateSelectorVariableMutation';
-import SegmentStyleAddVariableMutation from './Segment/style/variables/SegmentStyleAddVariableMutation';
-import SegmentStyleRemoveVariableMutation from './Segment/style/variables/SegmentStyleRemoveVariableMutation';
-import SegmentStyleUpdateVariableMutation from './Segment/style/variables/SegmentStyleUpdateVariableMutation';
 import SpaceAddActionMutation from './Space/actions/SpaceAddActionMutation';
 import SpaceRemoveActionMutation from './Space/actions/SpaceRemoveActionMutation';
 import SpaceRunActionMutation from './Space/actions/SpaceRunActionMutation';
@@ -34,6 +9,10 @@ import SpaceRemoveCdnMutation from './Space/cdns/SpaceRemoveCdnMutation';
 import SpaceSetCdnCredentialMutation from './Space/cdns/SpaceSetCdnCredentialMutation';
 import SpaceUpdateCdnBucketMutation from './Space/cdns/SpaceUpdateCdnBucketMutation';
 import SpaceUpdateCdnMutation from './Space/cdns/SpaceUpdateCdnMutation';
+import SpaceAddComponentMutation from './Space/components/SpaceAddComponentMutation';
+import SpaceDetachInstanceMutation from './Space/components/SpaceDetachInstanceMutation';
+import SpaceRemoveComponentMutation from './Space/components/SpaceRemoveComponentMutation';
+import SpaceUpdateComponentMutation from './Space/components/SpaceUpdateComponentMutation';
 import SpaceAddConnectorMutation from './Space/connectors/SpaceAddConnectorMutation';
 import SpaceRemoveConnectorMutation from './Space/connectors/SpaceRemoveConnectorMutation';
 import SpaceUpdateConnectorMutation from './Space/connectors/SpaceUpdateConnectorMutation';
@@ -98,10 +77,6 @@ import StyleAddVariableMutation from './Style/variables/StyleAddVariableMutation
 import StyleRemoveVariableMutation from './Style/variables/StyleRemoveVariableMutation';
 import StyleUpdateVariableMutation from './Style/variables/StyleUpdateVariableMutation';
 
-import type { TSegmentAddMutation } from './Segment/SegmentAddMutation';
-import type { TSegmentPublishMutation } from './Segment/SegmentPublishMutation';
-import type { TSegmentUpdateMutation } from './Segment/SegmentUpdateMutation';
-import type { TSegmentRenameElementMutation } from './Segment/space/elements/SegmentRenameElementMutation';
 import type { TSpaceAddActionMutation } from './Space/actions/SpaceAddActionMutation';
 import type { TSpaceRemoveActionMutation } from './Space/actions/SpaceRemoveActionMutation';
 import type { TSpaceRunActionMutation } from './Space/actions/SpaceRunActionMutation';
@@ -113,6 +88,10 @@ import type { TSpaceRemoveCdnMutation } from './Space/cdns/SpaceRemoveCdnMutatio
 import type { TSpaceSetCdnCredentialMutation } from './Space/cdns/SpaceSetCdnCredentialMutation';
 import type { TSpaceUpdateCdnBucketMutation } from './Space/cdns/SpaceUpdateCdnBucketMutation';
 import type { TSpaceUpdateCdnMutation } from './Space/cdns/SpaceUpdateCdnMutation';
+import type { TSpaceAddComponentMutation } from './Space/components/SpaceAddComponentMutation';
+import type { TSpaceDetachInstanceMutation } from './Space/components/SpaceDetachInstanceMutation';
+import type { TSpaceRemoveComponentMutation } from './Space/components/SpaceRemoveComponentMutation';
+import type { TSpaceUpdateComponentMutation } from './Space/components/SpaceUpdateComponentMutation';
 import type { TSpaceAddConnectorMutation } from './Space/connectors/SpaceAddConnectorMutation';
 import type { TSpaceRemoveConnectorMutation } from './Space/connectors/SpaceRemoveConnectorMutation';
 import type { TSpaceUpdateConnectorMutation } from './Space/connectors/SpaceUpdateConnectorMutation';
@@ -157,6 +136,10 @@ export type BuilderMutationsMap = {
   SpaceRemoveElement: unknown;
   SpaceMoveElement: unknown;
   SpaceCloneElement: unknown;
+  SpaceAddComponent: TSpaceAddComponentMutation;
+  SpaceUpdateComponent: TSpaceUpdateComponentMutation;
+  SpaceRemoveComponent: TSpaceRemoveComponentMutation;
+  SpaceDetachInstance: TSpaceDetachInstanceMutation;
   SpaceAddTemplate: unknown;
   SpaceAddPlugin: TSpaceAddPluginMutation;
   SpaceUpdatePlugin: TSpaceUpdatePluginMutation;
@@ -213,32 +196,6 @@ export type BuilderMutationsMap = {
   StyleRemoveVariable: unknown;
   StyleUpdate: unknown;
   StyleUpdateSettings: unknown;
-
-  SegmentAdd: TSegmentAddMutation;
-  SegmentUpdate: TSegmentUpdateMutation;
-  SegmentRemove: unknown;
-  SegmentAddElement: unknown;
-  SegmentUpdateElement: unknown;
-  SegmentRenameElement: TSegmentRenameElementMutation;
-  SegmentUpdateElements: unknown;
-  SegmentRemoveElement: unknown;
-  SegmentMoveElement: unknown;
-  SegmentCloneElement: unknown;
-  SegmentAddTemplate: unknown;
-  SegmentSpaceAddVariable: unknown;
-  SegmentSpaceUpdateVariable: unknown;
-  SegmentSpaceRemoveVariable: unknown;
-  SegmentStyleAddSelector: unknown;
-  SegmentStyleUpdateSelector: unknown;
-  SegmentStyleRemoveSelector: unknown;
-  SegmentStyleRemoveSelectors: unknown;
-  SegmentStyleAddSelectorVariable: unknown;
-  SegmentStyleRemoveSelectorVariable: unknown;
-  SegmentStyleUpdateSelectorVariable: unknown;
-  SegmentStyleAddVariable: unknown;
-  SegmentStyleUpdateVariable: unknown;
-  SegmentStyleRemoveVariable: unknown;
-  SegmentPublish: TSegmentPublishMutation;
 };
 
 const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
@@ -261,6 +218,10 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceRemoveElement: SpaceRemoveElementMutation,
   SpaceMoveElement: SpaceMoveElementMutation,
   SpaceCloneElement: SpaceCloneElementMutation,
+  SpaceAddComponent: SpaceAddComponentMutation,
+  SpaceUpdateComponent: SpaceUpdateComponentMutation,
+  SpaceRemoveComponent: SpaceRemoveComponentMutation,
+  SpaceDetachInstance: SpaceDetachInstanceMutation,
   SpaceAddTemplate: SpaceAddTemplateMutation,
   SpaceAddPlugin: SpaceAddPluginMutation,
   SpaceUpdatePlugin: SpaceUpdatePluginMutation,
@@ -316,33 +277,7 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   StyleUpdateVariable: StyleUpdateVariableMutation,
   StyleRemoveVariable: StyleRemoveVariableMutation,
   StyleUpdate: StyleUpdateMutation,
-  StyleUpdateSettings: StyleUpdateSettingsMutation,
-
-  SegmentAdd: SegmentAddMutation,
-  SegmentUpdate: SegmentUpdateMutation,
-  SegmentRemove: SegmentRemoveMutation,
-  SegmentAddElement: SegmentAddElementMutation,
-  SegmentUpdateElement: SegmentUpdateElementMutation,
-  SegmentRenameElement: SegmentRenameElementMutation,
-  SegmentUpdateElements: SegmentUpdateElementsMutation,
-  SegmentRemoveElement: SegmentRemoveElementMutation,
-  SegmentMoveElement: SegmentMoveElementMutation,
-  SegmentCloneElement: SegmentCloneElementMutation,
-  SegmentAddTemplate: SegmentAddTemplateMutation,
-  SegmentSpaceAddVariable: SegmentSpaceAddVariableMutation,
-  SegmentSpaceRemoveVariable: SegmentSpaceRemoveVariableMutation,
-  SegmentSpaceUpdateVariable: SegmentSpaceUpdateVariableMutation,
-  SegmentStyleAddSelector: SegmentStyleAddSelectorMutation,
-  SegmentStyleUpdateSelector: SegmentStyleUpdateSelectorMutation,
-  SegmentStyleRemoveSelector: SegmentStyleRemoveSelectorMutation,
-  SegmentStyleRemoveSelectors: SegmentStyleRemoveSelectorsMutation,
-  SegmentStyleAddSelectorVariable: SegmentStyleAddSelectorVariableMutation,
-  SegmentStyleRemoveSelectorVariable: SegmentStyleRemoveSelectorVariableMutation,
-  SegmentStyleUpdateSelectorVariable: SegmentStyleUpdateSelectorVariableMutation,
-  SegmentStyleAddVariable: SegmentStyleAddVariableMutation,
-  SegmentStyleUpdateVariable: SegmentStyleUpdateVariableMutation,
-  SegmentStyleRemoveVariable: SegmentStyleRemoveVariableMutation,
-  SegmentPublish: SegmentPublishMutation
+  StyleUpdateSettings: StyleUpdateSettingsMutation
 };
 
 export default BuilderMutations;

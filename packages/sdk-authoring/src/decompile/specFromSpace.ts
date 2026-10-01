@@ -1,3 +1,5 @@
+import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/components';
+
 import {
   defaultAttributes,
   elementAttributeNames,
@@ -6,7 +8,7 @@ import {
   elementTriggers
 } from '../elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
-import { authorFlows, GLOBAL_SOURCES } from '../schema';
+import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../schema';
 import { css } from '../style';
 import { foldCustomCss } from './customCss';
 import { categoryOf, definitionOf, isRecord, withNamedIds } from './documents';
@@ -14,6 +16,7 @@ import { readSelector, unwritableCss } from './styles';
 
 import type {
   BindingSpec,
+  ComponentSpec,
   ElementSpec,
   LayoutRef,
   LayoutSpec,
@@ -35,7 +38,8 @@ import type {
   Style,
   StyleAncestor,
   StyleBlock,
-  StyleObject
+  StyleObject,
+  SpaceComponent
 } from '@plitzi/sdk-shared';
 
 /** The class names a selector joins with a space — one for most, several where the builder stacked them. */
@@ -214,6 +218,9 @@ const ATTRIBUTE_VALUE_FIXES: Record<string, Record<string, Record<string, string
 /** The same table, read by any type name — a document's types are strings, not the literal keys it is built from. */
 const ATTRIBUTE_NAMES: Readonly<Record<string, readonly string[] | null>> = elementAttributeNames;
 
+/** What a document's trees hang off: its pages, its layout shells and its components. */
+type Roots = { pages: Element[]; layouts: Element[]; components: SpaceComponent[] };
+
 const BINDING_CATEGORIES: readonly BindingCategory[] = ['attributes', 'initialState', 'style'];
 
 const isEmpty = (value: object | null | undefined): boolean => !value || Object.keys(value).length === 0;
@@ -303,6 +310,8 @@ class SpecReader {
   private readonly corrections: SpecCorrection[] = [];
 
   private readonly flat: Record<string, Element>;
+  /** The elements of every component's tree: closed, so what they read besides their own tree is `props`. */
+  private readonly componentElements: Set<string>;
 
   private readonly references: Set<string>;
 
@@ -351,7 +360,16 @@ class SpecReader {
     }
 
     this.documents = { ...documents, schema };
-    this.flat = schema.flat;
+    // Every tree at once: ids are one namespace across the pages' tree and each component's, so a lookup by id needs
+    // no tree to be named, and what a component's element points at reads the same as a page's.
+    this.flat = Object.fromEntries(
+      [schema.flat, ...Object.values(schema.components).map(component => component.flat)].flatMap(flat =>
+        Object.entries(flat)
+      )
+    );
+    this.componentElements = new Set(
+      Object.values(schema.components).flatMap(component => Object.keys(component.flat))
+    );
     this.pluginTypes = new Set(options.pluginTypes ?? []);
     this.references = tokensOf(
       JSON.stringify([
@@ -391,6 +409,7 @@ class SpecReader {
     this.derived = this.derivedIds(roots);
 
     const elements = this.readElementDefaults(style.mode);
+    const components = roots.components.map(component => this.readComponent(component));
     const layouts = roots.layouts.map(layout => this.readLayout(layout));
     const pages = roots.pages.map((page, index) => this.readPage(page, index));
     this.reportDroppedFields();
@@ -421,6 +440,7 @@ class SpecReader {
       ...(schema.rsc ? { rsc: schema.rsc } : {}),
       ...(pageFolders.length > 0 ? { pageFolders } : {}),
       ...(layouts.length > 0 ? { layouts } : {}),
+      ...(components.length > 0 ? { components } : {}),
       pages
     };
 
@@ -595,15 +615,18 @@ class SpecReader {
    * Looking like one is not enough. `container-117` has the shape of a derived id, but authoring numbers `<type>-<n>`
    * by position, per type, stepping over every name written out anywhere — so an id that is not the one its position
    * would get is a name the author chose, and dropping it renames the element. Walked in authoring's own order
-   * (layouts, then pages, parents before their children). Keeping one id changes what the others would be, since
+   * (components, then layouts, then pages, parents before their children). Keeping one id changes what the others would be, since
    * authoring steps over it, so the pass repeats until nothing more has to be kept; it only ever keeps more, so it ends.
    */
-  private derivedIds(roots: { pages: Element[]; layouts: Element[] }): Set<string> {
+  private derivedIds(roots: Roots): Set<string> {
     const order: Element[] = [];
     const visit = (element: Element): void => {
       order.push(element);
       this.childrenOf(element, false).forEach(visit);
     };
+    // A component's root is an element like any other — authoring derives its name when none was written — and the
+    // components are written first.
+    this.componentRoots(roots).forEach(visit);
     [...roots.layouts, ...roots.pages].forEach(root => this.childrenOf(root, false).forEach(visit));
 
     const authoredType = ({ definition: { type } }: Element): string =>
@@ -645,7 +668,7 @@ class SpecReader {
     }
   }
 
-  private countSelectorUses(roots: { pages: Element[]; layouts: Element[] }): void {
+  private countSelectorUses(roots: Roots): void {
     const visit = (element: Element): void => {
       for (const selector of Object.values(element.definition.styleSelectors)) {
         for (const name of selector ? classesOf(selector) : []) {
@@ -656,7 +679,7 @@ class SpecReader {
       this.childrenOf(element, false).forEach(visit);
     };
 
-    [...roots.layouts, ...roots.pages].forEach(visit);
+    [...this.componentRoots(roots), ...roots.layouts, ...roots.pages].forEach(visit);
   }
 
   private readReporting(name: string, blocks: SelectorBlocks): ReadSelector {
@@ -833,7 +856,7 @@ class SpecReader {
 
   // ---------------------------------------------------------------- tree
 
-  private collectRoots(): { pages: Element[]; layouts: Element[] } {
+  private collectRoots(): Roots {
     const { schema } = this.documents;
     const pages = schema.pages.flatMap(id => {
       const page = this.flat[id] as Element | undefined;
@@ -853,7 +876,32 @@ class SpecReader {
     );
     layouts.forEach(layout => this.layoutIds.add(layout.id));
 
-    return { pages, layouts };
+    return { pages, layouts, components: Object.values(schema.components) };
+  }
+
+  /** The root element of each component, where the document holds one. */
+  private componentRoots(roots: Roots): Element[] {
+    return roots.components.flatMap(component =>
+      Object.hasOwn(component.flat, component.rootId) ? [component.flat[component.rootId]] : []
+    );
+  }
+
+  private readComponent(component: SpaceComponent): ComponentSpec {
+    const root = Object.hasOwn(component.flat, component.rootId) ? component.flat[component.rootId] : undefined;
+    if (!root) {
+      throw new Error(
+        `Component "${component.id}" is rooted at "${component.rootId}", which its tree does not hold — there is nothing to write out.`
+      );
+    }
+
+    return {
+      id: component.id,
+      ...(component.label ? { label: component.label } : {}),
+      ...(component.folder ? { folder: component.folder } : {}),
+      ...(component.props && !isEmpty(component.props) ? { props: component.props } : {}),
+      ...(component.slots && component.slots.length > 0 ? { slots: component.slots } : {}),
+      root: this.readElement(root)
+    };
   }
 
   private childrenOf(element: Element, report = true): Element[] {
@@ -1078,7 +1126,11 @@ class SpecReader {
     const { type, legacy } = this.typeOf(element);
     // Some documents store an element with no attributes as an empty ARRAY, which reads as an object with none.
     const stored = isRecord(element.attributes) ? element.attributes : {};
-    const attributes = this.readAttributes(type, legacy ? legacy.attributes(stored) : stored);
+    const attributes = this.readAttributes(
+      type,
+      legacy ? legacy.attributes(stored) : stored,
+      this.placedNames(element)
+    );
     const keepId = this.options.keepIds === true || !this.derived.has(element.id);
 
     const { base: baseSelector, ...slotSelectors } = definition.styleSelectors;
@@ -1131,11 +1183,33 @@ class SpecReader {
    * `loadMode`) or a control nobody renders any more — and nothing reads it. A type the SDK does not ship keeps all
    * of its attributes, since nothing here knows what its component reads.
    */
-  private readAttributes(type: string, attributes: Record<string, unknown>): Record<string, unknown> {
-    const names = Object.hasOwn(ATTRIBUTE_NAMES, type) ? ATTRIBUTE_NAMES[type] : undefined;
-    if (!names) {
+  /**
+   * The attributes an element has because of where it is: an instance carries the props its component declares, and
+   * a child of an instance names the slot it fills.
+   */
+  private placedNames(element: Element): string[] {
+    const { referenceId } = element.attributes;
+    const component =
+      isInstance(element) && typeof referenceId === 'string'
+        ? componentNamed(this.documents.schema, referenceId)
+        : undefined;
+    const parentId = element.definition.parentId;
+    const parent = parentId && Object.hasOwn(this.flat, parentId) ? this.flat[parentId] : undefined;
+
+    return [...Object.keys(component?.props ?? {}), ...(parent && isInstance(parent) ? ['slot'] : [])];
+  }
+
+  private readAttributes(
+    type: string,
+    attributes: Record<string, unknown>,
+    placed: readonly string[] = []
+  ): Record<string, unknown> {
+    const declared = Object.hasOwn(ATTRIBUTE_NAMES, type) ? ATTRIBUTE_NAMES[type] : undefined;
+    if (!declared) {
       return attributes;
     }
+
+    const names = [...declared, ...placed];
 
     const defaults = defaultAttributes(type);
     const fixes = Object.hasOwn(ATTRIBUTE_VALUE_FIXES, type) ? ATTRIBUTE_VALUE_FIXES[type] : undefined;
@@ -1233,10 +1307,10 @@ class SpecReader {
    * what authoring resolves again. A prefix that does not match what the element publishes names a source nothing
    * registers, so it is corrected rather than kept.
    */
-  private sourceOf(source: string, at: string): string | undefined {
+  private sourceOf(source: string, at: string, globals: readonly string[] = GLOBAL_SOURCES): string | undefined {
     const [head, ...rest] = source.split('.');
     const field = rest.length > 0 ? `.${rest.join('.')}` : '';
-    if (GLOBAL_SOURCES.includes(head)) {
+    if (globals.includes(head)) {
       return source;
     }
 
@@ -1303,7 +1377,8 @@ class SpecReader {
 
     for (const [index, { category, raw }] of ordered.entries()) {
       const at = `"${element.id}"`;
-      const source = this.sourceOf(raw.source, at);
+      const globals = this.componentElements.has(element.id) ? COMPONENT_SOURCES : GLOBAL_SOURCES;
+      const source = this.sourceOf(raw.source, at, globals);
       if (!source) {
         this.correct(
           'broken-binding',

@@ -31,6 +31,7 @@ lost, it simply stops being read as a plan.
 |---|---|---|---|
 | [0016](./0016-space-templates.md) | Space templates | Implemented | `plitzi-sdk-server`, `sdk-mcp` preview |
 | [0017](./0017-native-mobile-apps.md) | Native mobile apps (Android / iOS) | Proposal | new `mobile/` project, `sdk-authoring`, servers |
+| [0021](./0021-components-replace-segments.md) | Components replace segments | Implemented | `sdk-shared`, `sdk-schema`, `sdk-elements`, `sdk-authoring`, `sdk-server`, builder, sdk, `plitzi-sdk-server` |
 
 ## Conventions
 

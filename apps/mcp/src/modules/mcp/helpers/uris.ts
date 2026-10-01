@@ -20,6 +20,8 @@ export const pageUri = (env: Env, ref: string): string => `plitzi://schema/${env
 /** The shared layout shells. One of them is read as a page is — `pages/{ref}` resolves either root. */
 export const layoutsUri = (env: Env): string => `plitzi://schema/${env}/layouts`;
 export const elementUri = (env: Env, ref: string): string => `plitzi://schema/${env}/elements/${ref}`;
+/** The components. One of them is read as a page is — `pages/{ref}` resolves it — and edited with `pageRef: <ref>`. */
+export const componentsUri = (env: Env): string => `plitzi://schema/${env}/components`;
 export const schemaVarsUri = (env: Env): string => `plitzi://schema-variables/${env}`;
 export const settingsUri = (env: Env): string => `plitzi://settings/${env}`;
 export const interactionsUri = (env: Env): string => `plitzi://interactions/${env}`;

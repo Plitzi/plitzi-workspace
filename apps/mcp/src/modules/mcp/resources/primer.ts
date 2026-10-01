@@ -8,6 +8,8 @@ import {
   cssShorthands
 } from '../catalogs';
 import {
+  componentSummariesToAI,
+  componentsUri,
   connectorsUri,
   dataSourcesUri,
   defsUri,
@@ -136,6 +138,9 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
       // The shells those pages render inside. In the cold-start bundle because a space's header and sidebar are in
       // one, and an agent that has only seen the page list has not seen them at all.
       { key: 'layouts', value: layoutSummariesToAI(space.schema), read: layoutsUri(env) },
+      // The space's reusable subtrees: what each takes and how many places render it — so an agent places one
+      // rather than writing the same card again.
+      { key: 'components', value: componentSummariesToAI(space.schema), read: componentsUri(env) },
       { key: 'folders', value: foldersToAI(space.schema), read: foldersUri(env) },
       // The vocabulary every write is spelled in. Bounded by the number of element TYPES rather than by the size
       // of the schema, so it is near its ceiling already on a modest space and rarely the section that grows.

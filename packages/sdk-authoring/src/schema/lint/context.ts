@@ -1,9 +1,10 @@
+import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/components';
 import { parentChain, renderContext } from '@plitzi/sdk-schema/helpers/elementTree';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 
 import type { AuthorSpaceOptions } from '../types';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
-import type { Element, Schema, Style } from '@plitzi/sdk-shared';
+import type { Element, Schema, SpaceComponent, Style } from '@plitzi/sdk-shared';
 
 /**
  * What the linter reads besides the documents: the vocabularies the elements, the interactions and the transformers
@@ -23,8 +24,10 @@ export const textOf = (value: unknown, fallback = ''): string => (typeof value =
 /**
  * One reading of a space, shared by every rule: who is where, who publishes what, and the words to name them with.
  *
- * Built once per lint. Rules push into `errors` — what renders something other than what was written — and `warnings`
- * — what renders, and probably not as meant.
+ * Built once per lint for the pages' tree, and once per component for its own: a component is closed, so what its
+ * elements can read is what its own tree publishes — and `props` — never the page an instance of it sits on. Rules
+ * push into `errors` — what renders something other than what was written — and `warnings` — what renders, and
+ * probably not as meant.
  */
 export class LintContext {
   readonly errors: LintIssue[] = [];
@@ -43,19 +46,21 @@ export class LintContext {
   constructor(
     readonly schema: Schema,
     readonly style: Style,
-    readonly catalogs: LintCatalogs
+    readonly catalogs: LintCatalogs,
+    /** The component whose tree this reads; absent for the pages' tree. */
+    readonly component?: SpaceComponent
   ) {
-    this.flat = schema.flat;
-    this.pageIds = new Set(schema.pages);
+    this.flat = component ? component.flat : schema.flat;
+    this.pageIds = new Set(component ? [] : schema.pages);
     this.layoutIds = new Set(
-      Object.values(schema.flat)
+      Object.values(this.flat)
         .filter(element => !element.definition.parentId && element.definition.type === 'layoutContainer')
         .map(element => element.id)
         .filter(id => !this.pageIds.has(id))
     );
     const sourceTypes = catalogs.sourceTypes ?? {};
     this.sources = new Map(
-      Object.values(schema.flat)
+      Object.values(this.flat)
         .filter(element => Object.hasOwn(sourceTypes, element.definition.type))
         .map(element => [element.id, sourceTypes[element.definition.type]])
     );
@@ -64,7 +69,7 @@ export class LintContext {
   }
 
   error(code: string, message: string, elementId?: string): void {
-    this.errors.push({ code, message, ...(elementId === undefined ? {} : { elementId }) });
+    this.errors.push({ code, message, ...(elementId === undefined ? {} : { elementId }), ...this.componentField() });
   }
 
   warn(code: string, message: string, elementId?: string, details?: Record<string, unknown>): void {
@@ -72,8 +77,22 @@ export class LintContext {
       code,
       message,
       ...(elementId === undefined ? {} : { elementId }),
-      ...(details ? { details } : {})
+      ...(details ? { details } : {}),
+      ...this.componentField()
     });
+  }
+
+  private componentField(): { componentId?: string } {
+    return this.component ? { componentId: this.component.id } : {};
+  }
+
+  /** The component an instance places, when the space declares it. */
+  instanceOf(element: Element): SpaceComponent | undefined {
+    const { referenceId } = element.attributes;
+
+    return isInstance(element) && typeof referenceId === 'string'
+      ? componentNamed(this.schema, referenceId)
+      : undefined;
   }
 
   element(id: string): Element | undefined {
@@ -107,6 +126,22 @@ export class LintContext {
     return attributeNames && Object.hasOwn(attributeNames, type) ? attributeNames[type] : null;
   }
 
+  /**
+   * The attributes this element reads: its type's, and what being where it is adds — an instance reads the props its
+   * component declares, each an attribute of its own, and a child of an instance names the slot it fills.
+   */
+  attributeNamesFor(element: Element): readonly string[] | null {
+    const names = this.attributeNames(this.catalogType(element) ?? element.definition.type);
+    const parentId = element.definition.parentId;
+    const parent = parentId ? this.element(parentId) : undefined;
+    const extra = [
+      ...Object.keys(this.instanceOf(element)?.props ?? {}),
+      ...(parent && isInstance(parent) ? ['slot'] : [])
+    ];
+
+    return names && extra.length > 0 ? [...names, ...extra] : names;
+  }
+
   /** How a message names an element: its type and id, and the page or layout it is on. */
   describe(id: string): string {
     const element = this.element(id);
@@ -124,11 +159,13 @@ export class LintContext {
 
     const rootId = element.definition.rootId;
     const root = this.element(rootId);
-    const place = this.pageIds.has(rootId)
-      ? ` on page "${textOf(root?.attributes.name, rootId)}"`
-      : this.layoutIds.has(rootId)
-        ? ` in layout "${rootId}"`
-        : '';
+    const place = this.component
+      ? ` in component "${this.component.id}"`
+      : this.pageIds.has(rootId)
+        ? ` on page "${textOf(root?.attributes.name, rootId)}"`
+        : this.layoutIds.has(rootId)
+          ? ` in layout "${rootId}"`
+          : '';
 
     return `Element "${element.definition.type}" (${id})${place}`;
   }

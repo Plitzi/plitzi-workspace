@@ -108,6 +108,7 @@ const schema: Schema = {
   },
   pages: ['home'],
   pageFolders: [],
+  components: {},
   definition: { name: 'test', permanentUrl: 'test' },
   variables: [],
   settings: { customCss: '' }

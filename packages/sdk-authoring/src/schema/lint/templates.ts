@@ -22,6 +22,36 @@ const BINDING_NAMES = new Set(['source', 'sourceTo']);
 const shorten = (template: string): string => (template.length > 80 ? `${template.slice(0, 77)}…` : template);
 
 /**
+ * A read of `props.<name>`: there is no `props` outside a component — it is what an instance hands in — and inside
+ * one it holds exactly what the component declares, so a name it does not declare reads nothing.
+ */
+export const checkPropsRead = (ctx: LintContext, path: string, where: string, id?: string): void => {
+  const [head, name] = path.split('.');
+  if (head !== 'props') {
+    return;
+  }
+
+  if (!ctx.component) {
+    ctx.error(
+      'props-outside-component',
+      `${where} reads "${path}", but \`props\` exists only inside a component — it is what an instance of it hands in. Read the value from where it comes from, or make this part of a component.`,
+      id
+    );
+
+    return;
+  }
+
+  const declared = Object.keys(ctx.component.props ?? {});
+  if (name && !declared.includes(name)) {
+    ctx.error(
+      'prop-unknown',
+      `${where} reads "props.${name}", which component "${ctx.component.id}" does not declare${didYouMean(name, declared) || '.'} Declare it: \`props: { ${name}: { type: 'text', description: '…' } }\`.`,
+      id
+    );
+  }
+};
+
+/**
  * Every `computed.<name>` a template reads has to be one the space declares — and, inside a computed value, one
  * declared above it: they are evaluated in order, so a later one is not there yet.
  */
@@ -53,7 +83,7 @@ const checkName = (
   scope: ReadonlySet<string>,
   id?: string
 ): void => {
-  if (GLOBAL_SOURCES.includes(name) || ctx.variables.has(name)) {
+  if (GLOBAL_SOURCES.includes(name) || ctx.variables.has(name) || (name === 'props' && ctx.component)) {
     return;
   }
 
@@ -132,6 +162,10 @@ export const checkTemplate = (
 
   const { issues, freeNames } = inspectTemplate(template);
   checkComputedReads(ctx, template, where, site, id);
+  // A root, not a field: `item.props.title` reads a record's own `props`.
+  for (const [path] of template.matchAll(/(?<![\w.])props\.[A-Za-z_][A-Za-z0-9_]*/g)) {
+    checkPropsRead(ctx, path, where, id);
+  }
   if (issues.length > 0) {
     ctx.error(
       'template-unreadable',

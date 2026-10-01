@@ -3,16 +3,14 @@ import { useCallback, useMemo, useReducer, useRef } from 'react';
 import { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
 import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
-import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 
 import UndoableContext from './UndoableContext';
 import UndoableReducer, { initialState } from './UndoableReducer';
 
 import type { UndoableContextValue, UndoableItem } from './UndoableContext';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
-import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
-import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 import type { ReactNode } from 'react';
 
 export type UndoableContextProducerProps = {
@@ -25,13 +23,7 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
   undoableRef.current = undoable;
 
   const processItem = useCallback(
-    (
-      item:
-        | UndoableItem<Schema, SchemaReducerActions>
-        | UndoableItem<Style, StyleReducerActions>
-        | UndoableItem<Record<string, Segment>, SegmentsReducerActions>,
-      isUndo = true
-    ) => {
+    (item: UndoableItem<Schema, SchemaReducerActions> | UndoableItem<Style, StyleReducerActions>, isUndo = true) => {
       switch (item.action.type) {
         case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
           const schemaItem = item as UndoableItem<Schema, SchemaReducerActions>;
@@ -47,18 +39,6 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
           styleItem.dispatch({
             type: StyleActions.STYLE_UPDATE,
             style: isUndo ? styleItem.prevState : styleItem.nextState
-          });
-          return;
-        }
-
-        case SegmentsActions[item.action.type as keyof typeof SegmentsActions]: {
-          const segmentsItem = item as UndoableItem<Record<string, Segment>, SegmentsReducerActions>;
-          const segmentId = (segmentsItem.prevState as unknown as SegmentsReducerActions).segmentId;
-
-          segmentsItem.dispatch({
-            type: SegmentsActions.SEGMENTS_UPDATE,
-            segment: isUndo ? segmentsItem.prevState[segmentId] : segmentsItem.nextState[segmentId],
-            segmentId
           });
           return;
         }

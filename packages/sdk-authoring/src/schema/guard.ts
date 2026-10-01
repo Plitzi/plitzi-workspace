@@ -5,6 +5,7 @@ import { didYouMean } from './suggest';
 
 import type {
   BindingSpec,
+  ComponentSpec,
   ElementSpec,
   ElementStyleSpec,
   LayoutSpec,
@@ -43,8 +44,18 @@ export const SPACE_SPEC_KEYS = [
   'fonts',
   'pageFolders',
   'layouts',
+  'components',
   'pages'
 ] as const satisfies readonly (keyof SpaceSpec)[];
+
+export const COMPONENT_SPEC_KEYS = [
+  'id',
+  'label',
+  'folder',
+  'props',
+  'slots',
+  'root'
+] as const satisfies readonly (keyof ComponentSpec)[];
 
 export const PAGE_SPEC_KEYS = [
   'name',

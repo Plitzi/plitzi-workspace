@@ -4,16 +4,14 @@ import { useCallback, useMemo, useEffect, useState } from 'react';
 import { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
 import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
-import { SegmentsActions } from '@pmodules/Segments/SegmentsReducer';
 
 import { worthRetrying, writeFailed } from '../helpers';
 
 import type { QueueItem } from '../QueueContext';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
-import type { BuilderMutationsMap, BuilderQueriesMap, Element, Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { BuilderMutationsMap, BuilderQueriesMap, Element, Schema, Style } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
-import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 
 export type UseQueueManagerProps = {
   delay?: number;
@@ -34,12 +32,7 @@ const useQueueManager = ({
   const [processing, setProcessing] = useState(false);
 
   const processItem = useCallback(
-    async (
-      item:
-        | QueueItem<Schema, SchemaReducerActions>
-        | QueueItem<Style, StyleReducerActions>
-        | QueueItem<Record<string, Segment>, SegmentsReducerActions>
-    ) => {
+    async (item: QueueItem<Schema, SchemaReducerActions> | QueueItem<Style, StyleReducerActions>) => {
       switch (item.action.type) {
         // Schema
 
@@ -164,6 +157,30 @@ const useQueueManager = ({
           });
         }
 
+        case SchemaActions.SCHEMA_ADD_COMPONENT: {
+          const { component, from } = item.action;
+
+          return mutate('SpaceAddComponent', { component, from });
+        }
+
+        case SchemaActions.SCHEMA_UPDATE_COMPONENT: {
+          const { componentId, declaration } = item.action;
+
+          return mutate('SpaceUpdateComponent', { componentId, declaration });
+        }
+
+        case SchemaActions.SCHEMA_REMOVE_COMPONENT: {
+          const { componentId } = item.action;
+
+          return mutate('SpaceRemoveComponent', { componentId });
+        }
+
+        case SchemaActions.SCHEMA_DETACH_INSTANCE: {
+          const { instanceId } = item.action;
+
+          return mutate('SpaceDetachInstance', { instanceId });
+        }
+
         case SchemaActions.SCHEMA_UPDATE_SETTINGS: {
           const { value, path } = item.action;
 
@@ -279,205 +296,6 @@ const useQueueManager = ({
           });
         }
 
-        // segments
-
-        case SegmentsActions.SEGMENTS_REMOVE: {
-          const { segmentId } = item.action;
-
-          return mutate('SegmentRemove', { id: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_ADD_ELEMENT: {
-          const { data, to, dropPosition, initialItems, variables, segmentId } = item.action;
-
-          return mutate('SegmentAddElement', {
-            element: data,
-            to,
-            dropPosition,
-            initialItems: Object.values(initialItems),
-            variables,
-            contextId: segmentId
-          });
-        }
-
-        case SegmentsActions.SEGMENTS_UPDATE_ELEMENT: {
-          const { element, segmentId } = item.action;
-
-          return mutate('SegmentUpdateElement', { element, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_RENAME_ELEMENT: {
-          const { elementId, id, segmentId } = item.action;
-
-          return mutate('SegmentRenameElement', { elementId, id, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_UPDATE_ELEMENTS: {
-          const { elements, segmentId } = item.action;
-
-          return mutate('SegmentUpdateElements', { elements, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_REMOVE_ELEMENT: {
-          const { elementId, segmentId } = item.action;
-
-          return mutate('SegmentRemoveElement', { elementId, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_MOVE_ELEMENT: {
-          const { elementId, from, to, dropPosition, segmentId } = item.action;
-
-          return mutate('SegmentMoveElement', { elementId, from, to, dropPosition, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_SPACE_ADD_VARIABLE: {
-          const { segmentId, variable } = item.action;
-
-          return mutate('SegmentSpaceAddVariable', { contextId: segmentId, variable });
-        }
-
-        case SegmentsActions.SEGMENTS_SPACE_UPDATE_VARIABLE: {
-          const { segmentId, variable } = item.action;
-
-          return mutate('SegmentSpaceUpdateVariable', { contextId: segmentId, variable });
-        }
-
-        case SegmentsActions.SEGMENTS_SPACE_REMOVE_VARIABLE: {
-          const { segmentId, name } = item.action;
-
-          return mutate('SegmentSpaceRemoveVariable', { contextId: segmentId, name });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR: {
-          const { displayMode, selector, selectorType, path, value, params, segmentId } = item.action;
-
-          return mutate('SegmentStyleAddSelector', {
-            displayMode,
-            selector,
-            type: selectorType,
-            path,
-            style: value,
-            params,
-            contextId: segmentId
-          });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR: {
-          const { displayMode, selector, path, value, params, segmentId } = item.action;
-
-          return mutate('SegmentStyleUpdateSelector', {
-            displayMode,
-            selector,
-            path,
-            style: value,
-            params,
-            contextId: segmentId
-          });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTOR: {
-          const { selector, segmentId } = item.action;
-
-          return mutate('SegmentStyleRemoveSelector', { selector, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTORS: {
-          const { selectors, segmentId } = item.action;
-
-          return mutate('SegmentStyleRemoveSelectors', { selectors, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_ADD_SELECTOR_VARIABLE: {
-          const { segmentId, displayMode, selector, category, name, value } = item.action;
-
-          return mutate('SegmentStyleAddSelectorVariable', {
-            contextId: segmentId,
-            displayMode,
-            selector,
-            category,
-            name,
-            value
-          });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_UPDATE_SELECTOR_VARIABLE: {
-          const { segmentId, displayMode, selector, category, name, value } = item.action;
-
-          return mutate('SegmentStyleUpdateSelectorVariable', {
-            contextId: segmentId,
-            displayMode,
-            selector,
-            category,
-            name,
-            value
-          });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_REMOVE_SELECTOR_VARIABLE: {
-          const { segmentId, displayMode, selector, category, name } = item.action;
-
-          return mutate('SegmentStyleRemoveSelectorVariable', {
-            contextId: segmentId,
-            displayMode,
-            selector,
-            category,
-            name
-          });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_ADD_VARIABLE: {
-          const { category, name, value, segmentId } = item.action;
-
-          return mutate('SegmentStyleAddVariable', { category, name, value, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_UPDATE_VARIABLE: {
-          const { category, name, value, segmentId } = item.action;
-
-          return mutate('SegmentStyleUpdateVariable', { category, name, value, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_STYLE_REMOVE_VARIABLE: {
-          const { category, name, segmentId } = item.action;
-
-          return mutate('SegmentStyleRemoveVariable', { category, name, contextId: segmentId });
-        }
-
-        case SegmentsActions.SEGMENTS_ADD_TEMPLATE: {
-          const { data, dropPosition, initialItems, to, templatePlatform, variables, segmentId } = item.action;
-
-          return mutate('SegmentAddTemplate', {
-            element: data,
-            styles: templatePlatform,
-            to,
-            dropPosition,
-            initialItems: Object.values(initialItems),
-            variables,
-            contextId: segmentId
-          });
-        }
-
-        case SegmentsActions.SEGMENTS_CLONE_ELEMENT: {
-          const { data, to, dropPosition, initialItems, segmentId } = item.action;
-
-          return mutate('SegmentCloneElement', {
-            element: data,
-            to,
-            dropPosition,
-            initialItems: Object.values(initialItems),
-            contextId: segmentId
-          });
-        }
-
-        case SegmentsActions.SEGMENTS_UPDATE: {
-          const { segment } = item.action;
-          if (!segment?.id) {
-            return null;
-          }
-
-          return mutate('SegmentUpdate', { id: segment.id, segment });
-        }
-
         default:
           return null;
       }
@@ -489,12 +307,7 @@ const useQueueManager = ({
   // middlewares (`isUserEdit`): the user did not make this change, so it is not undoable, and re-queueing it would
   // send the server the very state it just refused.
   const revertItem = useCallback(
-    (
-      item:
-        | QueueItem<Schema, SchemaReducerActions>
-        | QueueItem<Style, StyleReducerActions>
-        | QueueItem<Record<string, Segment>, SegmentsReducerActions>
-    ) => {
+    (item: QueueItem<Schema, SchemaReducerActions> | QueueItem<Style, StyleReducerActions>) => {
       switch (item.action.type) {
         case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
           const schemaItem = item as QueueItem<Schema, SchemaReducerActions>;
@@ -506,19 +319,6 @@ const useQueueManager = ({
         case StyleActions[item.action.type as keyof typeof StyleActions]: {
           const styleItem = item as QueueItem<Style, StyleReducerActions>;
           styleItem.dispatch({ type: StyleActions.STYLE_UPDATE, style: styleItem.prevState, queryFailed: true });
-
-          return;
-        }
-
-        case SegmentsActions[item.action.type as keyof typeof SegmentsActions]: {
-          const segmentsItem = item as QueueItem<Record<string, Segment>, SegmentsReducerActions>;
-          const segmentId = (segmentsItem.prevState as unknown as SegmentsReducerActions).segmentId;
-          segmentsItem.dispatch({
-            type: SegmentsActions.SEGMENTS_UPDATE,
-            segment: segmentsItem.prevState[segmentId],
-            segmentId,
-            queryFailed: true
-          });
 
           return;
         }

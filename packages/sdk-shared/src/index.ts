@@ -10,7 +10,6 @@ export * from './dataSource';
 export * from './connectors';
 export * from './network';
 export * from './network/graphql';
-export * from './segments';
 export * from './websockets';
 export * from './devTools';
 export * from './theme';

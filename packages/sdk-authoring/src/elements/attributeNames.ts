@@ -385,7 +385,7 @@ export const elementAttributeNames = {
     'windowSize'
   ],
   paragraph: ['content'],
-  reference: ['referenceContainer', 'referenceId', 'referenceType'],
+  reference: ['referenceId', 'referenceType'],
   richText: ['content', 'format', 'mediaBaseUrl'],
   tabContainer: [],
   tabContainerBody: [],

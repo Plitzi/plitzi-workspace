@@ -27,7 +27,8 @@ const buildSpace = (): Space => {
     variables: [{ name: 'apiUrl', category: 'general', type: 'text', value: 'https://api', subValues: [] }],
     settings: { customCss: '' },
     pages: ['home'],
-    pageFolders: []
+    pageFolders: [],
+    components: {}
   };
 
   const style = {
@@ -153,7 +154,8 @@ const scopeSpace = (): Space => ({
     variables: [],
     settings: { customCss: '' },
     pages: ['home'],
-    pageFolders: []
+    pageFolders: [],
+    components: {}
   },
   style: {
     platform: { desktop: {}, tablet: {}, mobile: {} },
@@ -212,7 +214,8 @@ const malformedSpace = (): Space => ({
     variables: [],
     settings: { customCss: '' },
     pages: ['home'],
-    pageFolders: []
+    pageFolders: [],
+    components: {}
   },
   style: {
     platform: { desktop: {}, tablet: {}, mobile: {} },

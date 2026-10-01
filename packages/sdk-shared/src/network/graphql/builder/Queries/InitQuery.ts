@@ -1,4 +1,4 @@
-import type { PluginRaw, SchemaRaw, SegmentRaw, Style } from '../../../../types';
+import type { PluginRaw, SchemaRaw, Style } from '../../../../types';
 
 export type TInitQuery = {
   Space?: {
@@ -6,7 +6,6 @@ export type TInitQuery = {
     plugins: PluginRaw[];
     schema: SchemaRaw;
     style: Style;
-    segments?: SegmentRaw[];
   };
 };
 
@@ -38,6 +37,7 @@ const InitQuery = /* GraphQL */ `
           attributes
         }
         pages
+        components
         pageFolders {
           id
           name
@@ -53,46 +53,6 @@ const InitQuery = /* GraphQL */ `
             when
             value
           }
-        }
-      }
-      segments {
-        id
-        identifier
-        definition
-        schema {
-          variables {
-            name
-            category
-            type
-            value
-            subValues {
-              value
-              when
-            }
-          }
-          flat {
-            id
-            definition {
-              label
-              type
-              initialState
-              styleSelectors
-              bindings
-              interactions
-              parentId
-              rootId
-              items
-              runtime
-              loadStrategy
-            }
-            attributes
-          }
-        }
-        style {
-          platform
-          variables
-          mode
-          cache
         }
       }
       plugins {

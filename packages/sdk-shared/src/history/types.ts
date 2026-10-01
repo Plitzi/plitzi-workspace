@@ -14,7 +14,17 @@ export type ChangeOrigin = 'builder' | 'mcp' | 'coworker' | 'autofix' | 'api' | 
  * (`theme`, `mode`). Functions: a file of their source, by its path (`index.ts`, `lib/feed.ts`).
  */
 export type ChangeKind =
-  'element' | 'folder' | 'variable' | 'setting' | 'selector' | 'globalStyle' | 'idStyle' | 'token' | 'font' | 'file';
+  | 'element'
+  | 'component'
+  | 'folder'
+  | 'variable'
+  | 'setting'
+  | 'selector'
+  | 'globalStyle'
+  | 'idStyle'
+  | 'token'
+  | 'font'
+  | 'file';
 
 /** One entity that changed, whole, before and after: the field-level difference is derived from the two. */
 export type ChangeEntry = {

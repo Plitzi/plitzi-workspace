@@ -30,6 +30,11 @@ export interface Space {
    *  the deployment offers no functions: then there is nothing to read and every function op is refused. */
   functions?: FunctionsDraft;
   catalog?: ComponentCatalog;
+  /**
+   * The whole document, when `schema` is a view of one tree of it — a component's, which an op addressed to a
+   * component edits as if it were the space's only tree. What a new name has to be free of is still all of it.
+   */
+  document?: Schema;
 }
 
 // The three mutable documents are deep-copied for the all-or-nothing draft. The catalog is read-only reference data
@@ -53,7 +58,8 @@ export const emptySpace = (): Space => ({
     variables: [],
     settings: { customCss: '' },
     pages: [],
-    pageFolders: []
+    pageFolders: [],
+    components: {}
   },
   style: {
     platform: { desktop: {}, tablet: {}, mobile: {} },

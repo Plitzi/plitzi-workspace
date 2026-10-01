@@ -1,6 +1,7 @@
 import { deleteBindingOp } from './bindings/deleteBinding';
 import { patchBindingOp } from './bindings/patchBinding';
 import { upsertBindingOp } from './bindings/upsertBinding';
+import { deleteComponentOp, upsertComponentOp } from './components';
 import { deleteElementOp } from './elements/deleteElement';
 import { moveElementOp } from './elements/moveElement';
 import { patchElementOp } from './elements/patchElement';
@@ -40,5 +41,7 @@ export const elementOps = {
   upsertInteractionFlow: upsertInteractionFlowOp,
   patchInteractionNode: patchInteractionNodeOp,
   deleteInteraction: deleteInteractionOp,
-  patchSettings: patchSettingsOp
+  patchSettings: patchSettingsOp,
+  upsertComponent: upsertComponentOp,
+  deleteComponent: deleteComponentOp
 };

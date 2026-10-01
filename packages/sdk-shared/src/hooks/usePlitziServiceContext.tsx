@@ -11,8 +11,7 @@ import type {
   EventBridgeContextValue,
   InteractionsContextValue,
   PluginsContextValue,
-  ColorScheme,
-  SegmentsContextValue
+  ColorScheme
 } from '../types';
 import type { Context, ReactNode, RefObject } from 'react';
 
@@ -32,7 +31,6 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
   };
   customContexts: Record<string, Context<any>>;
   contexts: {
-    SegmentsContext: Context<SegmentsContextValue>;
     ComponentContext: Context<ComponentContextValue>;
     EventBridgeContext: Context<EventBridgeContextValue<TEventBridge>>;
     PluginsContext: Context<PluginsContextValue>;

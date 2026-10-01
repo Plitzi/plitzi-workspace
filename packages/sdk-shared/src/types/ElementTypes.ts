@@ -1,16 +1,17 @@
 import type { Asset, PluginManifest, PluginSchema } from './PluginTypes';
 import type { Element } from './SchemaTypes';
 
-export type ElementLayoutType = 'layout' | 'segment' | 'element' | 'reference';
+export type ElementLayoutType = 'layout' | 'component';
 
 /**
- * Which shell an element is rendered inside, and which of its containers is the slot.
+ * Which shell an element is rendered inside, and which of its containers are slots.
  *
- * Every element of the shell carries it, so it holds nothing that changes with the page: the body itself reaches the
- * slot through `LayoutBody` in `@plitzi/sdk-elements`.
+ * A layout has one slot, where the page goes; a component instance has the slots its component declares, each filled
+ * with the instance's children that name it. Every element of the shell carries this, so it holds nothing that changes
+ * with what fills the slots: that reaches each slot through `LayoutBody` in `@plitzi/sdk-elements`.
  */
 export type ElementLayout = {
-  containerId: string;
+  slots: Element['id'][];
   rootId: string;
   type: ElementLayoutType;
 };

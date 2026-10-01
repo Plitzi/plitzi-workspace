@@ -1,7 +1,7 @@
 import type { SpaceEventName } from '../../../spaceEvents';
 
 /**
- * The single live channel of a space. Every edit — elements, pages, variables, styles, segments — arrives on this
+ * The single live channel of a space. Every edit — elements, pages, variables, styles — arrives on this
  * one subscription and is told apart by `event`, instead of one operation (and one Redis channel, and one websocket
  * subscription) per kind of edit.
  *

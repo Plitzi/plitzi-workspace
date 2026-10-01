@@ -83,9 +83,9 @@ const initQuery = (space: OfflineDataRaw) => {
           // one: an empty OBJECT is read as a single record missing every field the query selected.
           pageFolders: asList(schema.pageFolders).map(folder => ({ ...folder, __typename: 'SpacePageFolder' })),
           variables: asList(schema.variables),
+          components: schema.components,
           __typename: 'SpaceSchema'
         },
-        segments: [],
         // No remote plugins: every element in the sample space is one the SDK ships, and a resource fetched from
         // a CDN is the one thing a run without network cannot have.
         plugins: [],

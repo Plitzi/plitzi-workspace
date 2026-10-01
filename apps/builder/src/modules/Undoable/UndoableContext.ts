@@ -4,9 +4,8 @@ import { createContext } from 'react';
 import type { UndoableReducerActions } from './UndoableReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
-import type { Schema, Segment, Style } from '@plitzi/sdk-shared';
+import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
-import type { SegmentsReducerActions } from '@pmodules/Segments/SegmentsReducer';
 import type { ActionDispatch } from 'react';
 
 export type UndoableItem<TState = any, TDispatchAction = any> = {
@@ -29,10 +28,7 @@ export type UndoableContextValue = {
   undoableUndo: () => void;
   undoableRedo: () => void;
   undoableClearHistory: () => void;
-  undoableMiddleware: ReducerMiddlewareCallback<
-    Schema | Style | Record<string, Segment>,
-    [action: StyleReducerActions | SchemaReducerActions | SegmentsReducerActions]
-  >;
+  undoableMiddleware: ReducerMiddlewareCallback<Schema | Style, [action: StyleReducerActions | SchemaReducerActions]>;
 };
 
 const undoableContextDefaultValue = {} as UndoableContextValue;

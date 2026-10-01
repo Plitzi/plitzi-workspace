@@ -1,5 +1,6 @@
 import { lintAccessibility } from './accessibility';
 import { lintChannels } from './channels';
+import { lintInstances } from './components';
 import { LintContext } from './context';
 import { lintElements } from './elements';
 import { lintFlows } from './flows';
@@ -38,10 +39,25 @@ export const lintSpace = (
   lintPages(ctx);
   lintComputed(ctx);
   lintElements(ctx);
+  lintInstances(ctx);
   lintChannels(ctx);
   lintFlows(ctx);
   lintStyle(ctx);
   lintAccessibility(ctx);
 
-  return { errors: ctx.errors, warnings: ctx.warnings };
+  // Each component's tree, read as what it is: closed, with nothing around it but `props` and the globals. The rules
+  // that are about the whole space — pages, computed values, channels, the stylesheet — were read above, once.
+  const errors = [...ctx.errors];
+  const warnings = [...ctx.warnings];
+  for (const component of Object.values(schema.components)) {
+    const own = new LintContext(schema, style, catalogs, component);
+    lintElements(own);
+    lintInstances(own);
+    lintFlows(own);
+    lintAccessibility(own);
+    errors.push(...own.errors);
+    warnings.push(...own.warnings);
+  }
+
+  return { errors, warnings };
 };

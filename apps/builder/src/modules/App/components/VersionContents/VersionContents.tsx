@@ -44,8 +44,7 @@ const VersionContents = ({ environment, revision, title }: VersionContentsProps)
         </dl>
       )}
       <p className={`text-[11px] ${MUTED}`}>
-        Not frozen with it — every version shares them: the space’s files on its CDN, its variables and credentials, and
-        its segments, which are published on their own.
+        Not frozen with it — every version shares them: the space’s files on its CDN, its variables and credentials.
       </p>
     </section>
   );

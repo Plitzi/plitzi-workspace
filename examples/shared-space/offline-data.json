@@ -698,7 +698,8 @@
     "pages": [
       "home"
     ],
-    "pageFolders": []
+    "pageFolders": [],
+    "components": {}
   },
   "style": {
     "platform": {

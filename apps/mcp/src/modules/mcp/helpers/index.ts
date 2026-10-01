@@ -1,4 +1,5 @@
 export * from './agentPrompt';
+export * from './components';
 export * from './computeVersion';
 export * from './space';
 export * from './uris';

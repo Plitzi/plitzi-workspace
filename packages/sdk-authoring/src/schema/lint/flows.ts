@@ -254,7 +254,7 @@ const checkCallbackKey = (ctx: LintContext, node: ElementInteraction, where: str
   const target = node.elementId ?? hostId;
   const targetElement = ctx.element(target);
   const type = targetElement && ctx.catalogType(targetElement);
-  const names = type === undefined ? null : ctx.attributeNames(type);
+  const names = type === undefined || !targetElement ? null : ctx.attributeNamesFor(targetElement);
   if (typeof key !== 'string' || key === '' || hasTemplateSyntax(key) || type === undefined || !names) {
     return;
   }

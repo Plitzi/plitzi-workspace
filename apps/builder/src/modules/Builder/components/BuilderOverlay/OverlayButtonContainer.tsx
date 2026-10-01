@@ -5,9 +5,8 @@ import clsx from 'clsx';
 import { memo, useCallback, use, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
-import SegmentForm from '@pmodules/Segments/models/SegmentForm';
+import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 
 import OverlayButton from './OverlayButton';
 import TemplateForm from '../../Models/TemplateForm';
@@ -15,7 +14,7 @@ import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
 import type { TemplateFormValues } from '../../Models/TemplateForm';
-import type { Element, SegmentsContextValue } from '@plitzi/sdk-shared';
+import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type OverlayButtonContainerProps = {
@@ -46,7 +45,6 @@ const OverlayButtonContainer = ({
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const builderSegmentsContext = use(SegmentsContext) as SegmentsContextValue<'builder'>;
   const { builderHandler, builderElementPermissions, mode, elementAsTemplate } = use(BuilderContext);
   const {
     definition: { items }
@@ -121,33 +119,8 @@ const OverlayButtonContainer = ({
     }
   }, [addToast, element, elementAsTemplate, getSchema, getStyle, showModal]);
 
-  const handleClickAsSegment = useCallback(async () => {
-    const response = await showModal<{ name: string; description: string }>(
-      <Modal.Header>
-        <h4>Add Segment</h4>
-      </Modal.Header>,
-      ({ onSubmit, onClose }) => (
-        <Modal.Body>
-          <SegmentForm onSubmit={onSubmit} onClose={onClose} />
-        </Modal.Body>
-      )
-    );
-
-    if (response) {
-      const { name, description } = response;
-      void builderSegmentsContext.elementAsSegment(getSchema(), getStyle(), name, description, element);
-      addToast(
-        <div>
-          Segment <b>{name}</b> Created
-        </div>,
-        {
-          appeareance: 'success',
-          autoDismiss: true,
-          placement: 'top-right'
-        }
-      );
-    }
-  }, [addToast, builderSegmentsContext, element, getSchema, getStyle, showModal]);
+  const saveAsComponent = useSaveAsComponent();
+  const handleClickAsComponent = useCallback(() => void saveAsComponent(element), [saveAsComponent, element]);
 
   const handleMouseEnter = useCallback(() => setHovered(undefined), [setHovered]);
 
@@ -239,9 +212,9 @@ const OverlayButtonContainer = ({
           <i className="fas fa-cube" />
         </OverlayButton>
       )}
-      {!!items && canTemplate && (
-        <OverlayButton title="Save as segment" isRemoving={hoverRemove} onClick={handleClickAsSegment}>
-          <i className="fa-solid fa-diamond" />
+      {canDelete && !!element.definition.parentId && (
+        <OverlayButton title="Save as component" isRemoving={hoverRemove} onClick={handleClickAsComponent}>
+          <i className="fa-solid fa-cube" />
         </OverlayButton>
       )}
       {canDelete && (

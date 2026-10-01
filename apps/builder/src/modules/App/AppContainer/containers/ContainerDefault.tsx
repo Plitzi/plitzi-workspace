@@ -1,8 +1,9 @@
 import { PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
-import { useMemo } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Builder from '@pmodules/Builder';
+import { useOpenComponent } from '@pmodules/Components';
+import ComponentBanner from '@pmodules/Components/components/ComponentBanner';
 
 export type ContainerDefaultProps = {
   previewMode?: boolean;
@@ -10,19 +11,16 @@ export type ContainerDefaultProps = {
 };
 
 const ContainerDefault = ({ previewMode = false, externalStyle = '' }: ContainerDefaultProps) => {
-  const [[settings, pages, segments]] = useBuilderStore(['schema.settings', 'schema.pages', 'segments']);
-  const customCss = useMemo(() => {
-    let css = settings.customCss;
-    if (typeof css !== 'string') {
-      css = '';
-    }
-
-    return [css, ...Object.values(segments).map(symbol => symbol.style.cache)].join('\n');
-  }, [settings.customCss, segments]);
+  const [[storedCss, pages]] = useBuilderStore(['schema.settings.customCss', 'schema.pages']);
+  const customCss = typeof storedCss === 'string' ? storedCss : '';
+  const { component } = useOpenComponent();
 
   return (
     <div className="flex w-full grow">
-      <Builder externalStyle={externalStyle} customCss={customCss} pages={pages} />
+      <div className="flex grow basis-0 flex-col">
+        {component && !previewMode && <ComponentBanner component={component} />}
+        <Builder externalStyle={externalStyle} customCss={customCss} pages={pages} />
+      </div>
       {!previewMode && (
         <PopupSidePanel
           className="max-h-[calc(100vh-48px)] overflow-y-auto"

@@ -1,6 +1,4 @@
 import InitQuery from './InitQuery';
-import SegmentQuery from './Segment/SegmentQuery';
-import SegmentsQuery from './Segment/SegmentsQuery';
 import SpaceActionEventsQuery from './Space/SpaceActionEventsQuery';
 import SpaceActionsQuery from './Space/SpaceActionsQuery';
 import SpaceActionTasksQuery from './Space/SpaceActionTasksQuery';
@@ -20,8 +18,6 @@ import SpaceVersionContentsQuery from './Space/SpaceVersionContentsQuery';
 import SpaceVisitorsQuery from './Space/SpaceVisitorsQuery';
 
 import type { TInitQuery } from './InitQuery';
-import type { TSegmentQuery } from './Segment/SegmentQuery';
-import type { TSegmentsQuery } from './Segment/SegmentsQuery';
 import type { TSpaceActionEventsQuery } from './Space/SpaceActionEventsQuery';
 import type { TSpaceActionsQuery } from './Space/SpaceActionsQuery';
 import type { TSpaceActionTasksQuery } from './Space/SpaceActionTasksQuery';
@@ -64,8 +60,6 @@ export type BuilderQueriesMap = {
   SpaceVersionContents: TSpaceVersionContentsQuery;
   SpaceVisitors: TSpaceVisitorsQuery;
   SpaceRuntime: TSpaceRuntimeQuery;
-  Segment: TSegmentQuery;
-  Segments: TSegmentsQuery;
 };
 
 const BuilderQueries: Record<keyof BuilderQueriesMap, string> = {
@@ -86,9 +80,7 @@ const BuilderQueries: Record<keyof BuilderQueriesMap, string> = {
   SpaceCredentials: SpaceCredentialsQuery,
   SpaceVersionContents: SpaceVersionContentsQuery,
   SpaceVisitors: SpaceVisitorsQuery,
-  SpaceRuntime: SpaceRuntimeQuery,
-  Segment: SegmentQuery,
-  Segments: SegmentsQuery
+  SpaceRuntime: SpaceRuntimeQuery
 };
 
 export default BuilderQueries;

@@ -7,7 +7,6 @@ import NetworkContextProvider from '@modules/Network/NetworkContextProvider';
 import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import Sdk from '@modules/Sdk';
-import SegmentsContextProvider from '@modules/Segments/SegmentsContextProvider';
 import { StoreContext } from '@plitzi/nexus/react';
 import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
@@ -170,27 +169,25 @@ const AppMain = ({
         <PluginsContextProvider sdkStylePath={styleUrl ? styleUrl : sdkStylePath}>
           <SdkStyleContextProvider>
             <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
-              <SegmentsContextProvider>
-                <AuthContextProvider server={server}>
-                  <NavigationProvider currentPageId={currentPageId}>
-                    <AnalyticsReporter analytics={analytics} />
-                    <GlobalSources>
-                      <InteractionsSourcesProvider hostActions={hostActions}>
-                        <DevToolsContainer
-                          enabled={debugMode}
-                          instanceId={instanceId}
-                          devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
-                          renderMode="shadow"
-                          scroll="document"
-                          innerClassName={clsx({ flex: renderMode === 'iframe' })}
-                        >
-                          <Sdk sdkStylePath={styleUrl ? styleUrl : sdkStylePath} server={server} {...sdkProps} />
-                        </DevToolsContainer>
-                      </InteractionsSourcesProvider>
-                    </GlobalSources>
-                  </NavigationProvider>
-                </AuthContextProvider>
-              </SegmentsContextProvider>
+              <AuthContextProvider server={server}>
+                <NavigationProvider currentPageId={currentPageId}>
+                  <AnalyticsReporter analytics={analytics} />
+                  <GlobalSources>
+                    <InteractionsSourcesProvider hostActions={hostActions}>
+                      <DevToolsContainer
+                        enabled={debugMode}
+                        instanceId={instanceId}
+                        devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
+                        renderMode="shadow"
+                        scroll="document"
+                        innerClassName={clsx({ flex: renderMode === 'iframe' })}
+                      >
+                        <Sdk sdkStylePath={styleUrl ? styleUrl : sdkStylePath} server={server} {...sdkProps} />
+                      </DevToolsContainer>
+                    </InteractionsSourcesProvider>
+                  </GlobalSources>
+                </NavigationProvider>
+              </AuthContextProvider>
             </EventBridgeContextProvider>
           </SdkStyleContextProvider>
         </PluginsContextProvider>

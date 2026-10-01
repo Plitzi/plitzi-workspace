@@ -98,15 +98,15 @@ const useInternalItems = ({
    * page) is deliberately NOT part of this: it is what made a navigation count as a different layout.
    */
   const layoutKeyIdentifier = plitziElementLayout
-    ? `${plitziElementLayout.type}:${plitziElementLayout.rootId}:${plitziElementLayout.containerId}`
+    ? `${plitziElementLayout.type}:${plitziElementLayout.rootId}:${plitziElementLayout.slots.join(',')}`
     : '';
 
   // useSyncExternalStore with getServerSnapshot: React uses the server snapshot during
   // hydration (false → client elements excluded, matching server HTML), then transitions
   // to the client snapshot (true) synchronously before the browser paints — no flicker.
   const mounted = useSyncExternalStore(storeSubscriber, snapshot, serverSnapshot);
-  const isSlot = plitziElementLayout?.containerId === id;
-  const layoutBody = useLayoutBody(isSlot);
+  const isSlot = plitziElementLayout?.slots.includes(id) ?? false;
+  const layoutBody = useLayoutBody(isSlot ? id : undefined);
 
   return useMemo<ReactNode | undefined>(() => {
     if (!hasItems || !mountItems) {

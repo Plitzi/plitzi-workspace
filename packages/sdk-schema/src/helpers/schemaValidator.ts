@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { findLayoutCycle } from '@plitzi/sdk-shared/schema/layoutChain';
 
+import { isInstance, propNameProblem } from './components';
 import { isValidElementId } from './elementId';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export type SchemaValidationOptions = {
+  /** Validates `flat` as a fragment hung off this element — a component's tree — instead of as the pages' tree. */
   baseElementId?: string;
   /**
    * Element type → the source name it publishes under.
@@ -21,6 +23,8 @@ export type SchemaValidationError = {
   code: string;
   message: string;
   elementId?: string;
+  /** The component whose tree the error is in; absent for the pages' tree. */
+  componentId?: string;
   details?: unknown;
 };
 
@@ -42,16 +46,19 @@ export type SchemaValidationResult = {
 export const REFERENCE_ERROR_CODES: ReadonlySet<string> = new Set([
   'UNRESOLVED_BINDING_SOURCE',
   'MISMATCHED_BINDING_SOURCE',
-  'UNRESOLVED_INTERACTION_TARGET'
+  'UNRESOLVED_INTERACTION_TARGET',
+  'UNRESOLVED_COMPONENT',
+  'UNKNOWN_COMPONENT_SLOT'
 ]);
 
 /** Whether an error is the document itself being broken, as opposed to a reference an edit left dangling. */
 export const isIntegrityError = (error: SchemaValidationError): boolean => !REFERENCE_ERROR_CODES.has(error.code);
 
-const createValidator = (schema: Schema) => {
+const createValidator = (schema: Schema, options?: SchemaValidationOptions) => {
   const errors: SchemaValidationError[] = [];
   const warnings: SchemaValidationError[] = [];
-  const { flat, pages, pageFolders, variables } = schema;
+  const { flat, pages, pageFolders, variables, components } = schema;
+  const baseElementId = options?.baseElementId;
 
   // Helper: check if element exists in flat
   const elementExists = (id: string): boolean => !!flat[id];
@@ -72,8 +79,10 @@ const createValidator = (schema: Schema) => {
       .filter(element => element?.definition?.type === 'layoutContainer' && !element.definition.parentId)
       .map(element => element.id);
 
-  /** Every root of the document: its pages, and its layout shells. Both anchor a tree; neither is inside one. */
-  const rootIds = (): string[] => [...pages, ...layoutRootIds()];
+  /** Every root of the document: its pages, its layout shells and, for a fragment, the element it hangs off. */
+  const rootIds = (): string[] => [
+    ...new Set([...pages, ...layoutRootIds(), ...(baseElementId ? [baseElementId] : [])])
+  ];
 
   // 1. Validate basic schema structure
   const validateStructure = () => {
@@ -91,6 +100,13 @@ const createValidator = (schema: Schema) => {
     }
     if (!Array.isArray(variables)) {
       errors.push({ code: 'INVALID_VARIABLES', message: 'Schema.variables must be an array' });
+      return false;
+    }
+    if (!components || typeof components !== 'object') {
+      errors.push({
+        code: 'INVALID_COMPONENTS',
+        message: 'Schema.components must be a Record<string, SpaceComponent>'
+      });
       return false;
     }
     return true;
@@ -353,12 +369,16 @@ const createValidator = (schema: Schema) => {
         return;
       }
 
-      // All descendants should have rootId = the root they hang off
+      // All descendants should have rootId = the root they hang off. Visited once each: a circle is reported on its
+      // own (CIRCULAR_REFERENCE), and walking it here would never end.
+      const visited = new Set<string>([rootId]);
       const checkDescendants = (elementId: string) => {
         const element = getElement(elementId);
-        if (!element?.definition) {
+        if (!element?.definition || visited.has(elementId)) {
           return;
         }
+
+        visited.add(elementId);
 
         if (element.definition.rootId !== rootId) {
           errors.push({
@@ -428,7 +448,7 @@ const createValidator = (schema: Schema) => {
   };
 
   // 8. Detect orphaned elements (elements not reachable from any root)
-  const validateOrphanedElements = (baseElementId?: string) => {
+  const validateOrphanedElements = () => {
     const reachable = new Set<string>();
 
     // Mark all elements reachable from the roots
@@ -754,9 +774,163 @@ const createValidator = (schema: Schema) => {
     });
   };
 
+  /**
+   * The components: each tree held to the same rules as the pages' — as a fragment hung off its root, which is what
+   * keeps a component closed (a binding or a step inside one resolves against its own tree, never the page it is
+   * placed on) — and what only the whole document can answer: that an id is in one tree only, that a declaration
+   * names elements its tree has, that every instance names a component, and that no component places itself.
+   */
+  const validateComponents = () => {
+    const owners = new Map<string, string>(Object.keys(flat).map(id => [id, '']));
+    const ownerName = (owner: string) => (owner ? `component "${owner}"` : 'the pages');
+    const places = new Map<string, Set<string>>();
+
+    Object.entries(components).forEach(([key, component]) => {
+      const where = `Component "${key}"`;
+      if (component.id !== key) {
+        errors.push({
+          code: 'COMPONENT_ID_MISMATCH',
+          message: `${where} has id "${component.id}"`,
+          componentId: key
+        });
+      }
+
+      if (!isValidElementId(key)) {
+        errors.push({
+          code: 'INVALID_COMPONENT_ID',
+          message: `${where} has a name that must start with a letter, then letters, numbers, hyphens and underscores`,
+          componentId: key
+        });
+      }
+
+      const root = component.flat[component.rootId] as Element | undefined;
+      if (!root) {
+        errors.push({
+          code: 'COMPONENT_ROOT_MISSING',
+          message: `${where} is rooted at "${component.rootId}", which is not an element of its tree`,
+          componentId: key
+        });
+
+        return;
+      }
+
+      if (root.definition.parentId) {
+        errors.push({
+          code: 'COMPONENT_ROOT_HAS_PARENT',
+          message: `${where} is rooted at "${component.rootId}", which names a parent — a component's root has none`,
+          elementId: component.rootId,
+          componentId: key
+        });
+      }
+
+      Object.keys(component.flat).forEach(id => {
+        const owner = owners.get(id);
+        if (owner !== undefined) {
+          errors.push({
+            code: 'DUPLICATE_ELEMENT_ID',
+            message: `"${id}" names an element of ${ownerName(owner)} and one of ${ownerName(key)} — an id is one element in the whole space`,
+            elementId: id,
+            componentId: key
+          });
+        } else {
+          owners.set(id, key);
+        }
+      });
+
+      Object.keys(component.props ?? {}).forEach(name => {
+        const problem = propNameProblem(name);
+        if (problem) {
+          errors.push({ code: 'INVALID_COMPONENT_PROP', message: `${where}: ${problem}`, componentId: key });
+        }
+      });
+
+      (component.slots ?? []).forEach(slot => {
+        if (!Object.hasOwn(component.flat, slot)) {
+          errors.push({
+            code: 'MISSING_COMPONENT_SLOT',
+            message: `${where} declares slot "${slot}", which is not an element of its tree`,
+            componentId: key
+          });
+        }
+      });
+
+      const fragment = createValidator(
+        { ...schema, flat: component.flat, pages: [], pageFolders: [], components: {} },
+        { baseElementId: component.rootId, sourceTypes: options?.sourceTypes }
+      ).validate();
+      fragment.errors.forEach(error =>
+        errors.push({ ...error, message: `${where}: ${error.message}`, componentId: key })
+      );
+      fragment.warnings.forEach(warning =>
+        warnings.push({ ...warning, message: `${where}: ${warning.message}`, componentId: key })
+      );
+    });
+
+    const trees: [string, Schema['flat']][] = [
+      ['', flat],
+      ...Object.entries(components).map(([key, component]) => [key, component.flat] as [string, Schema['flat']])
+    ];
+    trees.forEach(([owner, tree]) => {
+      Object.values(tree).forEach(element => {
+        if (!(element as Element | undefined) || !isInstance(element)) {
+          return;
+        }
+
+        const componentId = element.attributes.referenceId;
+        const component = typeof componentId === 'string' ? components[componentId] : undefined;
+        if (!component || typeof componentId !== 'string') {
+          errors.push({
+            code: 'UNRESOLVED_COMPONENT',
+            message: `Instance "${element.id}" places component "${String(componentId)}", which this space does not declare`,
+            elementId: element.id,
+            ...(owner ? { componentId: owner } : {})
+          });
+
+          return;
+        }
+
+        if (owner) {
+          places.set(owner, (places.get(owner) ?? new Set()).add(componentId));
+        }
+
+        (element.definition.items ?? []).forEach(childId => {
+          const slot = tree[childId]?.attributes.slot ?? component.slots?.[0];
+          if (typeof slot !== 'string' || !component.slots?.includes(slot)) {
+            errors.push({
+              code: 'UNKNOWN_COMPONENT_SLOT',
+              message: `"${childId}" fills ${typeof slot === 'string' ? `slot "${slot}"` : 'a slot'} of instance "${element.id}", but component "${componentId}" declares ${component.slots?.length ? `only ${component.slots.map(name => `"${name}"`).join(', ')}` : 'no slots'}`,
+              elementId: childId,
+              ...(owner ? { componentId: owner } : {})
+            });
+          }
+        });
+      });
+    });
+
+    const reported = new Set<string>();
+    const walk = (componentId: string, path: string[]): void => {
+      if (path.includes(componentId)) {
+        const cycle = [...path.slice(path.indexOf(componentId)), componentId];
+        if (!cycle.some(id => reported.has(id))) {
+          cycle.forEach(id => reported.add(id));
+          errors.push({
+            code: 'COMPONENT_CYCLE',
+            message: `Components place each other in a circle: ${cycle.join(' → ')}`,
+            componentId,
+            details: { cycle }
+          });
+        }
+
+        return;
+      }
+
+      places.get(componentId)?.forEach(next => walk(next, [...path, componentId]));
+    };
+    Object.keys(components).forEach(componentId => walk(componentId, []));
+  };
+
   // Run all validations
-  const validate = (options?: SchemaValidationOptions): SchemaValidationResult => {
-    const { baseElementId } = options ?? {};
+  const validate = (): SchemaValidationResult => {
     if (!validateStructure()) {
       return { valid: false, errors, warnings };
     }
@@ -768,12 +942,15 @@ const createValidator = (schema: Schema) => {
     validateRootConsistency();
     validatePageFolders();
     validateLayoutCycles();
-    validateOrphanedElements(baseElementId);
+    validateOrphanedElements();
     validateVariables();
     validateElementIds();
     validateBindingSources(options?.sourceTypes);
     validateBindings();
     validateInteractions();
+    if (!baseElementId) {
+      validateComponents();
+    }
 
     return {
       valid: errors.length === 0,
@@ -787,7 +964,7 @@ const createValidator = (schema: Schema) => {
 
 // Export the validator function
 export const validateSchema = (schema: Schema, options?: SchemaValidationOptions): SchemaValidationResult => {
-  return createValidator(schema).validate(options);
+  return createValidator(schema, options).validate();
 };
 
 // Convenience function: throws if schema is invalid

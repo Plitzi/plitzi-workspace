@@ -36,13 +36,8 @@ export const renderSpace = async (
 ): Promise<void> => {
   // Only the documents cross into the page: an authored space also carries its handles, whose lookups are functions
   // and cannot be serialized — and the harness has no use for them anyway.
-  const { schema, style, plugins, segments } = offlineData;
-  const documents: OfflineDataRaw = {
-    schema,
-    style,
-    ...(plugins ? { plugins } : {}),
-    ...(segments ? { segments } : {})
-  };
+  const { schema, style, plugins } = offlineData;
+  const documents: OfflineDataRaw = { schema, style, ...(plugins ? { plugins } : {}) };
   await page.evaluate(
     async ([data, renderOptions]) => {
       const harness = window.plitziHarness;

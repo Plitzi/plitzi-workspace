@@ -12,13 +12,12 @@ const declaration = elementDeclaration<ReferenceAttributes>()({
   content: {
     attributes: {
       referenceType: 'element',
-      referenceId: '',
-      referenceContainer: ''
+      referenceId: ''
     },
     definition: {
       label: 'Reference',
       type: 'reference',
-      description: 'Reuses another element or template by id, rendering it in place.',
+      description: 'Renders another element of the space by id, in place.',
       items: [],
       bindings: {},
       styleSelectors: {

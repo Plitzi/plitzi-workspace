@@ -1,7 +1,16 @@
 import { get, set, has } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
-import { remapCollidingIds, takenIds } from './helpers/elementId';
+import {
+  addComponent,
+  detachInstance,
+  documentIds,
+  flatMapOf,
+  removeComponent,
+  renameElement,
+  updateComponent
+} from './helpers/components';
+import { remapCollidingIds } from './helpers/elementId';
 import FlatMap from './helpers/FlatMap';
 
 import type {
@@ -11,6 +20,8 @@ import type {
   Schema,
   SchemaVariable,
   DropPosition,
+  SpaceComponent,
+  SpaceComponentDeclaration,
   Style
 } from '@plitzi/sdk-shared';
 
@@ -48,7 +59,11 @@ export const SchemaActions = {
   SCHEMA_RENAME_ELEMENT: 'SCHEMA_RENAME_ELEMENT',
   SCHEMA_UPDATE_ELEMENTS: 'SCHEMA_UPDATE_ELEMENTS',
   SCHEMA_ADD_TEMPLATE: 'SCHEMA_ADD_TEMPLATE',
-  SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS'
+  SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS',
+  SCHEMA_ADD_COMPONENT: 'SCHEMA_ADD_COMPONENT',
+  SCHEMA_UPDATE_COMPONENT: 'SCHEMA_UPDATE_COMPONENT',
+  SCHEMA_REMOVE_COMPONENT: 'SCHEMA_REMOVE_COMPONENT',
+  SCHEMA_DETACH_INSTANCE: 'SCHEMA_DETACH_INSTANCE'
 } as const;
 
 // `queryFailed` marks the save queue putting back the state a rejected mutation left behind — see `isUserEdit`.
@@ -99,6 +114,14 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
         path: string;
         value: string | number | boolean;
       }
+    | {
+        type: 'SCHEMA_ADD_COMPONENT';
+        component: SpaceComponent;
+        from?: { elementId: Element['id']; instanceId: Element['id'] };
+      }
+    | { type: 'SCHEMA_UPDATE_COMPONENT'; componentId: SpaceComponent['id']; declaration: SpaceComponentDeclaration }
+    | { type: 'SCHEMA_REMOVE_COMPONENT'; componentId: SpaceComponent['id'] }
+    | { type: 'SCHEMA_DETACH_INSTANCE'; instanceId: Element['id'] }
   );
 
 const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
@@ -233,7 +256,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
-        FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
+        flatMapOf(draft, to)?.addElement(data, to, dropPosition, initialItems);
         appendVariables(draft, variables);
       });
     }
@@ -250,12 +273,12 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
         // Only the colliding names are changed, and everything that pointed at one is repointed with it. Copied
         // first: the payload belongs to whoever dispatched the action.
         const arriving = structuredClone({ [data.id]: data, ...initialItems });
-        const taken = takenIds(draft.flat);
+        const taken = documentIds(draft);
         const renamed = remapCollidingIds(arriving, candidate => taken.has(candidate));
         const rootId = renamed[data.id] ?? data.id;
         const { [rootId]: element, ...items } = arriving;
 
-        FlatMap.addElement(draft.flat, element, to, dropPosition, items);
+        flatMapOf(draft, to)?.addElement(element, to, dropPosition, items);
         appendVariables(draft, variables);
       });
     }
@@ -264,7 +287,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { elementId } = action;
 
       return produce(state, draft => {
-        FlatMap.removeElement(draft.flat, elementId);
+        flatMapOf(draft, elementId)?.removeElement(elementId);
       });
     }
 
@@ -272,7 +295,11 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { from, to, elementId, dropPosition } = action;
 
       return produce(state, draft => {
-        FlatMap.moveElement(draft.flat, from, to, elementId, dropPosition);
+        // A move stays inside one tree: taking a subtree into a component, or out of one, is its own operation.
+        const map = flatMapOf(draft, elementId);
+        if (map && Object.hasOwn(map.flat, to)) {
+          map.moveElement(from, to, elementId, dropPosition);
+        }
       });
     }
 
@@ -280,7 +307,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { to, data, dropPosition, initialItems } = action;
 
       return produce(state, draft => {
-        FlatMap.addElement(draft.flat, data, to, dropPosition, initialItems);
+        flatMapOf(draft, to)?.addElement(data, to, dropPosition, initialItems);
       });
     }
 
@@ -288,7 +315,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { element } = action;
 
       return produce(state, draft => {
-        FlatMap.updateElement(draft.flat, element);
+        flatMapOf(draft, element.id)?.updateElement(element);
       });
     }
 
@@ -296,9 +323,9 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { elementId, id } = action;
 
       return produce(state, draft => {
-        // The whole document, not just `flat`: a page renamed without its entry in `pages` is a page the space no
-        // longer lists.
-        FlatMap.renameElement(draft, elementId, id);
+        // The whole document, not just the element's tree: a page renamed without its entry in `pages` is a page the
+        // space no longer lists, and a component's tree can name it too.
+        renameElement(draft, elementId, id);
       });
     }
 
@@ -306,7 +333,7 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { elements } = action;
 
       return produce(state, draft => {
-        elements.forEach(element => FlatMap.updateElement(draft.flat, element));
+        elements.forEach(element => flatMapOf(draft, element.id)?.updateElement(element));
       });
     }
 
@@ -319,6 +346,38 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
         } else if (!path) {
           set(draft, 'settings', value);
         }
+      });
+    }
+
+    case SchemaActions.SCHEMA_ADD_COMPONENT: {
+      const { component, from } = action;
+
+      return produce(state, draft => {
+        addComponent(draft, structuredClone(component), from);
+      });
+    }
+
+    case SchemaActions.SCHEMA_UPDATE_COMPONENT: {
+      const { componentId, declaration } = action;
+
+      return produce(state, draft => {
+        updateComponent(draft, componentId, declaration);
+      });
+    }
+
+    case SchemaActions.SCHEMA_REMOVE_COMPONENT: {
+      const { componentId } = action;
+
+      return produce(state, draft => {
+        removeComponent(draft, componentId);
+      });
+    }
+
+    case SchemaActions.SCHEMA_DETACH_INSTANCE: {
+      const { instanceId } = action;
+
+      return produce(state, draft => {
+        detachInstance(draft, instanceId);
       });
     }
 

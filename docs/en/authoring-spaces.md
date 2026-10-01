@@ -117,6 +117,26 @@ one list of pages (id, slug, title, summary, order) that the menu, the page titl
 and the page's content. This site's own docs are built that way: sixteen pages that used to carry the whole sidebar
 each (some 900 elements) are one layout, one list and sixteen calls.
 
+### Components
+
+A block placed many times with different content — a product card, a testimonial — is a **component**: declared once
+in `components` and placed with `component(id, { props, children })`. The document holds one tree, so an edit to it, in
+code or in the builder, is an edit to every instance. It is closed: inside, it reads `props` (what each instance hands
+in, declared like a step's params) and the globals, never the page around an instance.
+
+```ts
+components: [{
+  id: 'product-card',
+  props: { title: { type: 'text', description: 'The product name', required: true } },
+  slots: ['product-card-actions'],
+  root: container({ id: 'product-card-root', children: [heading({ id: 'product-card-title', bind: { content: 'props.title' } }), container({ id: 'product-card-actions' })] })
+}],
+pages: [{ name: 'Shop', slug: 'shop', body: [component('product-card', { props: { title: 'Lamp' }, children: [button('Buy')] })] }]
+```
+
+An undeclared component or prop, a required prop left out, a value of the wrong kind and a child for a slot the
+component does not have are refused by name. How it works underneath is [Components](./components.md).
+
 ---
 
 ## 3. Elements

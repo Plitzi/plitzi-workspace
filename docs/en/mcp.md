@@ -96,7 +96,7 @@ calls as a small one:
 | `plitzi_render` | Show the user an offline widget; never touches the space |
 | `plitzi_try_function` | Run one task of the space's [functions](./functions.md) against the draft, in the sandbox: its value, logs and error |
 
-The resources (`plitzi://…`) are the catalog the agent browses: pages and layouts, element types, style classes,
+The resources (`plitzi://…`) are the catalog the agent browses: pages, layouts and components, element types, style classes,
 tokens, fonts, variables, settings, the interaction and data-source vocabularies, connectors, server actions and the
 space's functions (written with the `upsertFunctionFile` / `deleteFunctionFile` operations of `plitzi_apply`). The
 full list, with what each one answers, is the agent's manual at `plitzi://guide`.

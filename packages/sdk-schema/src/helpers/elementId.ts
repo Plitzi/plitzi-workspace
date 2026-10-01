@@ -32,9 +32,9 @@ export const slugifyElementId = (value: string): string =>
     .replace(/^[^A-Za-z]+/, '')
     .replace(/-+$/, '');
 
-/** Every id currently in use, so a new one can be checked or minted against it. Uniqueness is per DOCUMENT — a
- *  space schema, and each segment separately — which is what makes a lookup a `flat` key access. A segment used on
- *  several pages repeats its ids in the rendered tree; `rootId`/`referenceId` are what tell those apart. */
+/** Every id in use in one tree, so a new one can be checked or minted against it. Uniqueness spans the DOCUMENT —
+ *  the space's `flat` and every component's (`documentIds`) — which is what makes a lookup a `flat` key access. A
+ *  component placed several times repeats its ids in the rendered tree; each instance's scope tells those apart. */
 export const takenIds = (flat: Record<Element['id'], Element>): Set<string> => new Set(Object.keys(flat));
 
 /** Why `id` cannot be used in this document, phrased for a person, or null when it is free and well formed.
@@ -144,8 +144,6 @@ export const uniqueElementId = (desired: string, isTaken: (candidate: string) =>
  */
 const ID_ATTRIBUTES: Record<string, { attribute: string; when?: (attributes: Element['attributes']) => boolean }[]> = {
   page: [{ attribute: 'layout' }, { attribute: 'layoutContainer' }],
-  // `referenceContainer` is deliberately absent: it names an element inside the OTHER document this one points at,
-  // so a rename here can never be the rename it needs.
   reference: [{ attribute: 'referenceId', when: attributes => attributes.referenceType === 'element' }],
   link: [{ attribute: 'href', when: attributes => attributes.mode === 'page' }]
 };
@@ -297,6 +295,13 @@ export const repointIds = (
         (attributes as Record<string, unknown>)[attribute] = map[value];
         changed = true;
       }
+    }
+
+    // An instance's child names the slot it fills, whatever its own type is.
+    const { slot } = attributes;
+    if (typeof slot === 'string' && map[slot]) {
+      (attributes as Record<string, unknown>).slot = map[slot];
+      changed = true;
     }
 
     for (const bindings of Object.values(definition.bindings ?? {})) {

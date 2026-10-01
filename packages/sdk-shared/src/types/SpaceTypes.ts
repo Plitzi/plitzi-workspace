@@ -131,6 +131,8 @@ export type SpaceVersionContents = {
   snapshot: { description: string; publishedAt: string } | null;
   pages: number;
   layouts: number;
+  /** The space's components, each its own tree — frozen with the version like the pages. */
+  components: number;
   elements: number;
   /** Every plugin installed, and whether the source it was built from is kept with this version. */
   plugins: { type: string; source: boolean }[];

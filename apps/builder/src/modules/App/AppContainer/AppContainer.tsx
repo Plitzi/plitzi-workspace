@@ -2,10 +2,12 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { use, useMemo, useCallback } from 'react';
 
+import { StoreProvider } from '@plitzi/nexus/react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import BuilderSearch from '@pmodules/Builder/components/BuilderSearch';
+import { useOpenComponent } from '@pmodules/Components';
 import FontPreviews from '@pmodules/Fonts/FontPreviews';
 
 import AppContext from '../AppContext';
@@ -34,6 +36,12 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const { previewMode } = use(AppContext);
   const { eventBridge } = use(EventBridgeContext);
   const [currentPageId] = useBuilderStore('navigation.currentPageId');
+  // A component open in the canvas is its root — and the whole builder below is drawn in its scope, so the layers, the
+  // element tools and the canvas find its elements by id like a page's. Keyed by the component: a scope applies a new
+  // value after the render that hands it over, and the canvas resolves its root DURING that render, so opening one
+  // into a scope already mounted drew nothing. A fresh scope holds the component's tree from its first render.
+  const { component, scope } = useOpenComponent();
+  const baseElementId = component ? component.rootId : currentPageId;
   const [popupsActiveLeft, setPopupsActiveLeft] = useStorage<string[]>(
     'builder-state.popupSidePanel.popupsActive.left',
     []
@@ -70,54 +78,56 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
       <FontPreviews />
       <BuilderSearch>
         <AppHeader />
-        <BuilderProvider baseElementId={currentPageId} onHandler={builderHandler}>
-          <PopupProvider
-            popups={popups}
-            multi
-            multiExpanded
-            onChange={handleChangePopups}
-            renderLeftPopup={false}
-            renderRightPopup={false}
-            renderFloatingPopup={!previewMode}
-          >
-            <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
-              {!previewMode && (
-                <PopupSidePanel
-                  size="md"
-                  className="max-h-[calc(100vh-48px)] overflow-y-auto"
-                  placementTabs="left"
-                  placement="left"
-                  separatorsBefore={separatorsBefore}
-                  minWidth={335}
-                  maxWidth={800}
-                  canHide
-                />
-              )}
-              <div className="flex grow basis-0 flex-col overflow-hidden">
-                {![
-                  'actions',
-                  'functions',
-                  'runtime',
-                  'connectors',
-                  'credentials',
-                  'visitors',
-                  'settings',
-                  'sitemap'
-                ].includes(popupsActiveLeft[0]) && (
-                  <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
+        <StoreProvider key={component?.id ?? ''} inherit="live" name="OpenComponent" value={scope}>
+          <BuilderProvider baseElementId={baseElementId} onHandler={builderHandler}>
+            <PopupProvider
+              popups={popups}
+              multi
+              multiExpanded
+              onChange={handleChangePopups}
+              renderLeftPopup={false}
+              renderRightPopup={false}
+              renderFloatingPopup={!previewMode}
+            >
+              <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
+                {!previewMode && (
+                  <PopupSidePanel
+                    size="md"
+                    className="max-h-[calc(100vh-48px)] overflow-y-auto"
+                    placementTabs="left"
+                    placement="left"
+                    separatorsBefore={separatorsBefore}
+                    minWidth={335}
+                    maxWidth={800}
+                    canHide
+                  />
                 )}
-                {popupsActiveLeft[0] === 'actions' && <ContainerActions />}
-                {popupsActiveLeft[0] === 'functions' && <ContainerFunctions />}
-                {popupsActiveLeft[0] === 'runtime' && <ContainerRuntime />}
-                {popupsActiveLeft[0] === 'connectors' && <ContainerConnectors />}
-                {popupsActiveLeft[0] === 'credentials' && <ContainerCredentials />}
-                {popupsActiveLeft[0] === 'visitors' && <ContainerVisitors />}
-                {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}
-                {popupsActiveLeft[0] === 'settings' && <ContainerSettings />}
+                <div className="flex grow basis-0 flex-col overflow-hidden">
+                  {![
+                    'actions',
+                    'functions',
+                    'runtime',
+                    'connectors',
+                    'credentials',
+                    'visitors',
+                    'settings',
+                    'sitemap'
+                  ].includes(popupsActiveLeft[0]) && (
+                    <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
+                  )}
+                  {popupsActiveLeft[0] === 'actions' && <ContainerActions />}
+                  {popupsActiveLeft[0] === 'functions' && <ContainerFunctions />}
+                  {popupsActiveLeft[0] === 'runtime' && <ContainerRuntime />}
+                  {popupsActiveLeft[0] === 'connectors' && <ContainerConnectors />}
+                  {popupsActiveLeft[0] === 'credentials' && <ContainerCredentials />}
+                  {popupsActiveLeft[0] === 'visitors' && <ContainerVisitors />}
+                  {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}
+                  {popupsActiveLeft[0] === 'settings' && <ContainerSettings />}
+                </div>
               </div>
-            </div>
-          </PopupProvider>
-        </BuilderProvider>
+            </PopupProvider>
+          </BuilderProvider>
+        </StoreProvider>
       </BuilderSearch>
     </div>
   );

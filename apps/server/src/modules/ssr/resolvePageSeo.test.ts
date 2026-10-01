@@ -14,6 +14,7 @@ const schema = (pages: Record<string, Element>): Schema => ({
   flat: pages,
   pages: Object.keys(pages),
   pageFolders: [],
+  components: {},
   definition: { name: 'test', permanentUrl: 'test' },
   variables: [],
   settings: { customCss: '' }

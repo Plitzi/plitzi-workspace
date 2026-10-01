@@ -11,7 +11,6 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SegmentsContext from '@plitzi/sdk-shared/segments/SegmentsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
@@ -129,7 +128,6 @@ const BuilderArea = ({
       contexts: {
         ComponentContext,
         ContainerRootContext,
-        SegmentsContext,
         NetworkContext,
         PluginsContext,
         InteractionsContext,

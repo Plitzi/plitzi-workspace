@@ -1,3 +1,4 @@
+import { treeOf } from '@plitzi/sdk-schema/helpers/components';
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
 import {
@@ -16,6 +17,8 @@ import { checkInteractionNode } from './interactions';
 import { checkRef } from './refs';
 import { elementTypeNames, observedDataSources, observedInteractionActions } from '../../../catalogs';
 import {
+  componentView,
+  findComponentByRef,
   findElementByRef,
   findFolderByRef,
   findPageByRef,
@@ -86,9 +89,9 @@ const buildValidationCtx = (space: Space, ops: Operation[], mode: ValidationMode
     knownTypes: new Set([...Object.keys(registry.types), ...elementTypeNames]),
     typeProps: new Map(Object.entries(registry.types).map(([type, info]) => [type, new Set(Object.keys(info.props))])),
     typeMeta: buildTypeMeta(space.catalog),
-    elementType: ref => (findElementByRef(space.schema, ref) ?? findPageByRef(space.schema, ref))?.definition.type,
-    elementExists: ref =>
-      batchElements.has(ref) || Boolean(findElementByRef(space.schema, ref) ?? findPageByRef(space.schema, ref)),
+    // Ids are one namespace across the pages and each component, so an element is found in whichever tree holds it.
+    elementType: ref => treeOf(space.schema, ref)?.flat[ref]?.definition.type,
+    elementExists: ref => batchElements.has(ref) || treeOf(space.schema, ref) !== undefined,
     schemaVars: new Set([
       ...space.schema.variables.map(v => v.name),
       ...routeParamNames(space.schema),
@@ -133,6 +136,9 @@ export const validateOperations = (
 
   ops.forEach((op, i) => {
     const base = `operations[${i}]`;
+    // The tree an element op works on: a component's when its `pageRef` names one, read through the same view apply uses.
+    const component = 'pageRef' in op ? findComponentByRef(space.schema, op.pageRef) : undefined;
+    const scoped = component ? componentView(space, component).schema : space.schema;
 
     if (
       (op.type === 'upsertElement' ||
@@ -149,15 +155,16 @@ export const validateOperations = (
     ) {
       // A layout shell is addressed here exactly as a page is — the header and the sidebar of a space live in one,
       // and editing them is the same operation on a different root.
-      if (!findRootByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
+      if (!component && !findRootByRef(space.schema, op.pageRef) && !batchPages.has(op.pageRef)) {
         const validRefs = [
           ...getPageElements(space.schema).map(page => page.id),
-          ...getLayoutElements(space.schema).map(layout => layout.id)
+          ...getLayoutElements(space.schema).map(layout => layout.id),
+          ...Object.keys(space.schema.components)
         ];
         ctx.errors.push({
           path: `${base}.pageRef`,
-          message: `Page or layout "${op.pageRef}" does not exist`,
-          hint: 'Use an existing page or layout ref, or create the page with upsertPage earlier in the same batch',
+          message: `Page, layout or component "${op.pageRef}" does not exist`,
+          hint: 'Use an existing page, layout or component ref, or create it earlier in the same batch',
           validValues: validRefs
         });
       }
@@ -171,8 +178,8 @@ export const validateOperations = (
         break;
       case 'patchElement': {
         checkRef(op.ref, `${base}.ref`, ctx);
-        const page = findRootByRef(space.schema, op.pageRef);
-        const target = page ? resolveRef(space.schema, page, op.ref) : undefined;
+        const page = findRootByRef(scoped, component ? component.rootId : op.pageRef);
+        const target = page ? resolveRef(scoped, page, op.ref) : undefined;
         if (op.props && target && target.id !== page?.id) {
           checkRawMarkup(target.definition.type, op.props, base, ctx);
           checkTypeProps(target.definition.type, op.props, base, ctx);
@@ -382,7 +389,7 @@ export const validateOperations = (
         // Validate the MERGED node (stored params ∪ the patch), not just the keys the agent touched: a patch merges
         // onto the existing params, so a half-fixed node (one param corrected, others still malformed) must be caught.
         // When the node cannot be resolved, fall back to the lightweight action check (apply reports the missing node).
-        const existing = findElementByRef(space.schema, op.ref)?.definition.interactions?.[op.nodeId];
+        const existing = findElementByRef(scoped, op.ref)?.definition.interactions?.[op.nodeId];
         if (existing) {
           const merged: InteractionNodeInput = {
             id: existing.id,

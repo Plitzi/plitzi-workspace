@@ -1,8 +1,8 @@
 ---
 name: plitzi-authoring
 description: >-
-  Write or change a Plitzi space or template in TypeScript with @plitzi/sdk-authoring — pages, layouts, elements,
-  CSS classes, data bindings, providers and flows — instead of hand-writing schema JSON. Use whenever the task is to
+  Write or change a Plitzi space or template in TypeScript with @plitzi/sdk-authoring — pages, layouts, components,
+  elements, CSS classes, data bindings, providers and flows — instead of hand-writing schema JSON. Use whenever the task is to
   create, extend, restyle or fix a space: adding a page or a section, sharing a header across pages, binding an
   element to data, showing or hiding something, wiring what happens on click, or turning an exported JSON into code.
 ---
@@ -52,10 +52,12 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
 1. **Name what is referred to.** Give an `id` to every element a binding, a flow or a test addresses. Ids are ONE
    namespace for the whole space — layouts and every page share it — so an element built by a helper that runs more
    than once gets its id prefixed by what it is for: `` `${pageId}-foot` ``.
-2. **Share with classes and layouts, never with copies.** A look used twice is a `styles()` class. Chrome shown on
-   several pages — a header, a sidebar, a footer — is a **layout** the pages name, written once. A menu, a card grid,
-   a list of steps is DATA mapped to elements (`entries.map(entry => link(…))`), not a block pasted per item. See
-   [layouts and duplication](reference/layouts.md).
+2. **Share with classes, layouts and components, never with copies.** A look used twice is a `styles()` class.
+   Chrome shown on several pages — a header, a sidebar, a footer — is a **layout** the pages name, written once. A block
+   placed many times with different content — a product card, a testimonial — is a **component** placed with
+   `component(id, { props })`. A menu, a card grid, a list of steps is DATA mapped to elements
+   (`entries.map(entry => link(…))`), not a block pasted per item. See [layouts and duplication](reference/layouts.md)
+   and [components](reference/components.md).
 3. **One element, one base selector.** An element takes a shared `class` OR its own `css`, never both — authoring
    refuses the pair. A look that never changes is its own class.
 4. **Visible by default; decide which way the logic flips.** An element is on screen unless something hides it. When
@@ -158,6 +160,7 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | --- | --- |
 | [elements-and-styles.md](reference/elements-and-styles.md) | Any element or CSS: factories, fields, classes, states, variants, tokens, fonts, lists, links |
 | [layouts.md](reference/layouts.md) | Anything shown on more than one page; menus; reducing duplication of elements and styles |
+| [components.md](reference/components.md) | One block placed many times — a card, a tier, a testimonial: props, slots, binding a row into one, why it is closed |
 | [data-and-visibility.md](reference/data-and-visibility.md) | Bindings, providers, offline data, loading/empty/error states, live data, caching, showing and hiding, kept state |
 | [lists.md](reference/lists.md) | Rendering rows, filtering and sorting them, a detail page for one record |
 | [validation.md](reference/validation.md) | How `authorSpace` checks, the loop that wastes no attempts, and what it cannot see |

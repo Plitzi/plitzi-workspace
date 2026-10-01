@@ -18,6 +18,10 @@
       "types": "./dist/helpers/FlatMap.d.ts",
       "import": "./dist/helpers/FlatMap.mjs"
     },
+    "./helpers/components": {
+      "types": "./dist/helpers/components.d.ts",
+      "import": "./dist/helpers/components.mjs"
+    },
     "./helpers/elementId": {
       "types": "./dist/helpers/elementId.d.ts",
       "import": "./dist/helpers/elementId.mjs"
