@@ -1,0 +1,199 @@
+/* eslint-disable quotes */
+import { describe, expect, it } from 'vitest';
+
+import { defineAction } from '@plitzi/sdk-authoring';
+
+import { envFromSpace, projectFromSpace } from './fromSpace';
+import { SDK_VERSION } from './project';
+
+import type { CreateAnswers } from './types';
+import type { SpaceExport } from '@plitzi/sdk-shared/source';
+
+const encode = (text: string): string => Buffer.from(text).toString('base64');
+
+const WORLD = 'https://cdn.example.com/pizarra/assets/a_world.json';
+const CHART = 'https://cdn.example.com/pizarra/plugins/oldChart/1.0.0';
+
+const boardCreate = defineAction({
+  id: 'board-create',
+  name: 'Create a board',
+  trigger: { type: 'call', access: 'public', input: { title: { type: 'text' } } },
+  steps: [{ id: 'board', task: 'board.create', params: { title: '{{ input.title }}', map: WORLD } }]
+});
+const handWritten = defineAction({
+  id: 'board-clear',
+  name: 'Clear a board',
+  trigger: { type: 'call', access: 'session' },
+  steps: [{ id: 'cleared', task: 'board.clear' }]
+});
+handWritten.document.nodes.cleared.title = 'Wipe everything';
+
+const exported = (overrides: Partial<SpaceExport> = {}): SpaceExport => ({
+  format: 1,
+  space: { id: 42, name: 'Pizarra', permanentUrl: 'pizarra' },
+  authoring: {
+    exportName: 'pizarra',
+    files: {
+      'index.ts': "import { homePage } from './pages/home.ts';\n",
+      'pages/home.ts': `export const homePage = { src: '${WORLD}' };\n`
+    }
+  },
+  actions: [
+    { identifier: 'board-create', name: 'Create a board', document: boardCreate.document },
+    { identifier: 'board-clear', name: 'Clear a board', document: handWritten.document }
+  ],
+  connectors: [],
+  functions: { version: 'v1', files: { 'index.ts': 'export default {};\n' } },
+  source: {
+    files: {
+      'runtime.ts': encode("import { model } from './board/model.ts';\nexport default model;\n"),
+      'board/model.ts': encode('export const model = 1;\n'),
+      'plugins/Board/index.ts': encode('export {};\n'),
+      'plugins/Board/declaration.ts': encode('export default {};\n'),
+      'plugins/Board/hand.woff2': Buffer.from([0, 1, 2]).toString('base64')
+    },
+    dependencies: { zod: '^4.0.0', '@plitzi/sdk-shared': '^0.30.0', react: '19.0.0' },
+    runtime: { entries: ['runtime.ts'] },
+    plugins: [{ type: 'board', entries: ['plugins/Board/index.ts'] }]
+  },
+  builtOnly: {
+    plugins: [{ type: 'oldChart', files: [{ url: `${CHART}/plugin-manifest.json`, path: 'plugin-manifest.json' }] }],
+    runtime: null
+  },
+  assets: [{ url: WORLD, path: 'assets/a_world.json' }],
+  variables: ['REDIS_URL'],
+  credentials: [{ identifier: 'smtp-main', name: 'Mail', provider: 'smtp' }],
+  visitorRoles: ['editor'],
+  report: {
+    conflicts: [{ path: 'board/model.ts', kept: 'the plugin board', others: ['the runtime'] }],
+    rangeConflicts: [],
+    corrections: []
+  },
+  ...overrides
+});
+
+const answers = (source: CreateAnswers['source'] = 'local'): CreateAnswers => ({
+  name: 'my-board',
+  mode: 'server',
+  source,
+  key: source === 'cloud' ? 'host-key' : '',
+  environment: 'main',
+  packageManager: 'npm'
+});
+
+const SECRET = 's'.repeat(64);
+
+describe('a project made from a space', () => {
+  const project = projectFromSpace(exported(), 'local');
+
+  it('holds the source its plugins and runtime were built from, under src/, bytes and all', () => {
+    expect(project.files['src/runtime.ts']).toContain("from './board/model.ts'");
+    expect(project.files['src/board/model.ts']).toBe('export const model = 1;\n');
+    expect(project.binaries['src/plugins/Board/hand.woff2']).toBe(Buffer.from([0, 1, 2]).toString('base64'));
+    expect(project.files['src/plugins/declarations.ts']).toContain("from './Board/declaration.ts'");
+    expect(project.omit).toContain('src/plugins/StatCard/index.ts');
+  });
+
+  it('holds the space as code, serving its files from the project instead of Plitzi’s CDN', () => {
+    expect(project.files['src/space.ts']).toContain("export { pizarra as space } from './space/index.ts';");
+    expect(project.files['src/space/pages/home.ts']).toContain("src: '/assets/a_world.json'");
+    expect(project.downloads).toEqual([
+      { url: WORLD, to: 'public/assets/a_world.json' },
+      { url: `${CHART}/plugin-manifest.json`, to: 'vendor/plugins/oldChart/plugin-manifest.json' }
+    ]);
+  });
+
+  it('runs a plugin it has no source of as it was built, on its server and authored as a plugin’s', () => {
+    const main = project.files['src/main.ts'];
+
+    expect(main).toContain("path.resolve(import.meta.dirname, '../vendor/plugins')");
+    expect(main).toContain('authorSpace(space, { plugins: declarations, pluginTypes: builtTypes })');
+    expect(main).toContain('plugins: { ...plugins, ...builtPlugins }');
+    expect(main).toContain('pluginNames: [...pluginNames, ...Object.keys(builtPlugins)]');
+  });
+
+  it('says what its visitors need of a server of its own, where its auth would go', () => {
+    expect(project.files['src/main.ts']).toContain('The space declares visitor roles (editor).');
+  });
+
+  it('runs its actions, functions and runtime on its own server, signing with a key of its own', () => {
+    expect(project.files['src/actions/board-create.ts']).toContain(
+      "import { defineAction } from '@plitzi/sdk-authoring';\n\nexport const boardCreateAction = defineAction({ id: 'board-create'"
+    );
+    expect(project.files['src/actions/board-create.ts']).toContain("map: '/assets/a_world.json'");
+    expect(project.files['src/actions/board-clear.json']).toContain('"id": "board-clear"');
+    expect(project.files['src/actions.ts']).toContain("import { boardCreateAction } from './actions/board-create.ts';");
+    expect(project.files['src/actions.ts']).toContain('const SPACE_ID = 1;');
+    expect(project.files['functions/index.ts']).toBe('export default {};\n');
+
+    const main = project.files['src/main.ts'];
+    expect(main).toContain("import spaceRuntime from './runtime.ts';");
+    expect(main).toContain('await serveRuntime(spaceRuntime, { env: process.env, publicUrl })');
+    expect(main).toContain('functions: { native: [...functions, ...runtime.native] }');
+    expect(main).toContain("publicDir: path.join(PROJECT_ROOT, 'public')");
+    expect(main).toContain('signingSecret: process.env.PLITZI_SIGNING_SECRET');
+    expect(main).toContain("process.loadEnvFile(new URL('../.env', import.meta.url))");
+
+    const env = envFromSpace(exported(), answers(), SECRET);
+    expect(env).toContain(`PLITZI_SIGNING_SECRET=${SECRET}`);
+    expect(env).toContain('REDIS_URL=');
+    expect(project.files['.env']).toBeUndefined();
+    expect(project.files['.env.example']).toContain('PLITZI_SIGNING_SECRET=\n');
+    expect(project.functions).toEqual({ version: 'v1', files: { 'index.ts': 'export default {};\n' } });
+  });
+
+  it('installs what the source imports, on this CLI’s SDK and React', () => {
+    const { dependencies } = project;
+
+    expect(dependencies).toMatchObject({ zod: '^4.0.0', '@plitzi/sdk-shared': SDK_VERSION });
+    expect(dependencies.react).not.toBe('19.0.0');
+  });
+
+  it('says what came across differently, or not at all', () => {
+    expect(project.report).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('src/board/model.ts: the plugin board and the runtime held different copies'),
+        expect.stringContaining(
+          `@plitzi/sdk-shared: the source was written against ^0.30.0, and the project runs ${SDK_VERSION}`
+        ),
+        expect.stringContaining('oldChart: no source of this plugin was kept, so it runs as it was built'),
+        'src/actions/board-clear.json stays JSON: the step "cleared" is titled "Wipe everything", and code titles a step by its task',
+        expect.stringContaining('REDIS_URL, smtp-main'),
+        expect.stringContaining('Its visitors (editor) signed in with Plitzi')
+      ])
+    );
+  });
+});
+
+describe('a project made from a space it reads from Plitzi', () => {
+  const project = projectFromSpace(exported({ authoring: null }), 'cloud');
+
+  it('writes no pages, reads them with its key, and watches the space by the name its adapters give it', () => {
+    expect(project.files['src/space.ts']).toBeUndefined();
+    expect(project.files['src/main.ts']).toContain('createCloudAdapters');
+    const env = envFromSpace(exported({ authoring: null }), answers('cloud'), SECRET);
+    expect(env).toContain('PLITZI_HOST_KEY=host-key');
+    expect(env).toContain(`PLITZI_SIGNING_SECRET=${SECRET}`);
+    expect(project.files['src/actions.ts']).toContain('const SPACE_ID = 1;');
+  });
+});
+
+describe('the source of a project that already had a src/', () => {
+  it('keeps its paths as they were', () => {
+    const project = projectFromSpace(
+      exported({
+        source: {
+          files: { 'src/plugins/Card/index.ts': encode('export {};\n') },
+          dependencies: {},
+          runtime: null,
+          plugins: [{ type: 'card', entries: ['src/plugins/Card/index.ts'] }]
+        }
+      }),
+      'local'
+    );
+
+    expect(project.files['src/plugins/Card/index.ts']).toBe('export {};\n');
+    expect(project.files['src/src/plugins/Card/index.ts']).toBeUndefined();
+    expect(project.files['src/main.ts']).not.toContain('serveRuntime');
+  });
+});

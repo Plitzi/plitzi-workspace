@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 /**
  * What an element needs from the element around it: whether that one is on screen, and its tracing identity.
@@ -9,7 +9,6 @@ import { createContext } from 'react';
  */
 export type ElementParentContextValue = { visible: boolean; traceId: string };
 
-const ElementParentContext = createContext<ElementParentContextValue | undefined>(undefined);
-ElementParentContext.displayName = 'ElementParentContext';
+const ElementParentContext = sharedContext<ElementParentContextValue | undefined>('ElementParentContext', undefined);
 
 export default ElementParentContext;

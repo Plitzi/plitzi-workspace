@@ -1,6 +1,7 @@
-import { createContext, use } from 'react';
+import { use } from 'react';
 
 import themeStore from './themeStore';
+import { sharedContext } from '../helpers/sharedContext';
 
 import type { ThemeStoreInstance } from './themeStore';
 
@@ -16,7 +17,7 @@ import type { ThemeStoreInstance } from './themeStore';
  * Deliberately NOT the way ordinary consumers reach the theme: a panel in a shadow root and an editor in a portal
  * are under no provider at all, and they still have to get an answer. That is what the fall-through is for.
  */
-const ThemeScopeContext = createContext<ThemeStoreInstance | undefined>(undefined);
+const ThemeScopeContext = sharedContext<ThemeStoreInstance | undefined>('ThemeScopeContext', undefined);
 
 export const useThemeStore = (): ThemeStoreInstance => use(ThemeScopeContext) ?? themeStore;
 

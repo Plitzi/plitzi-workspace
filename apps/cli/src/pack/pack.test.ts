@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { gunzipSync } from 'node:zlib';
 
 import { unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
@@ -131,6 +132,62 @@ describe('packing element folders', () => {
       expect((await fs.readdir(outDir)).sort()).toEqual(['plugin-manifest.json', 'seat-picker.css', 'seat-picker.mjs']);
       expect(await fs.readFile(path.join(outDir, 'seat-picker.mjs'), 'utf-8')).toContain('data:image/svg+xml');
       expect((await readManifest(outDir)).assets['seat-picker.css']).toMatchObject({ type: 'style', isMain: true });
+    });
+  });
+});
+
+describe('the source a plugin is packed from', () => {
+  /** Kept beside the zip, so `plitzi upload plugin` keeps it on the space with the plugin. */
+  it('is written beside the zip, every file its elements reach', async () => {
+    // Inside this package, so the project's TypeScript resolves to the workspace's as a real project's would.
+    const parent = path.join(import.meta.dirname, '../../node_modules/.tmp');
+    await fs.mkdir(parent, { recursive: true });
+    const dir = await fs.mkdtemp(path.join(parent, 'pack-'));
+    try {
+      await fs.writeFile(
+        path.join(dir, 'package.json'),
+        JSON.stringify({ name: 'site', dependencies: { react: '^19.0.0', '@plitzi/plitzi-sdk': '^0.37.0' } })
+      );
+      await element(dir, 'seat-picker', 'Seats');
+      const zip = path.join(dir, 'dist/plugins/seat-picker-1.0.0.zip');
+
+      const result = await packPlugin({
+        root: dir,
+        source: { kind: 'elements', folders: [path.join(dir, 'src/plugins/SeatPicker')] },
+        base: 'seat-picker',
+        version: '1.0.0',
+        outDir: path.join(dir, 'dist/plugins/seat-picker'),
+        zip
+      });
+
+      const file = path.join(dir, 'dist/plugins/seat-picker-1.0.0.source.json.gz');
+      expect(result.source).toEqual({ file });
+      const snapshot = JSON.parse(gunzipSync(await fs.readFile(file)).toString('utf-8')) as {
+        name: string;
+        entries: string[];
+        files: Record<string, string>;
+      };
+      expect(snapshot.name).toBe('seatPicker');
+      expect(snapshot.entries).toEqual(['src/plugins/SeatPicker/index.ts']);
+      expect(Object.keys(snapshot.files)).toContain('src/plugins/SeatPicker/declaration.ts');
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('is said to be missing, without failing the pack, where the project has no TypeScript to read it with', async () => {
+    await inTemp(async dir => {
+      await element(dir, 'seat-picker', 'Seats');
+
+      const result = await packPlugin({
+        root: dir,
+        source: { kind: 'elements', folders: [path.join(dir, 'src/plugins/SeatPicker')] },
+        base: 'seat-picker',
+        version: '1.0.0',
+        outDir: path.join(dir, 'dist/plugins/seat-picker')
+      });
+
+      expect(result.source).toEqual({ problem: expect.stringContaining('npm install -D typescript') as string });
     });
   });
 });

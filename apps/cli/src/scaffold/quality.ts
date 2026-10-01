@@ -29,9 +29,9 @@ const prettierrc = (): string =>
   )}\n`;
 
 /** What a project writes that is nobody's to format or lint: its builds, its authored documents, its test output. */
-const PROJECT_OUTPUTS = ['dist', 'space', '.sdk-plugins', 'visual/.results', 'visual/screenshots'];
+export const PROJECT_OUTPUTS = ['dist', 'space', '.sdk-plugins', 'visual/.results', 'visual/screenshots'];
 
-const prettierignore = (outputs: readonly string[]): string =>
+export const prettierignore = (outputs: readonly string[]): string =>
   `${['node_modules', ...outputs.filter(output => output !== '.sdk-plugins')].join('\n')}\n`;
 
 /**

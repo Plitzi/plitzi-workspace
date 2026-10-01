@@ -1,12 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, use, useCallback, useLayoutEffect, useState, useSyncExternalStore } from 'react';
+import { use, useCallback, useLayoutEffect, useState, useSyncExternalStore } from 'react';
+
+import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 import type { ReactNode } from 'react';
 
 type BodyStore = { current: ReactNode; listeners: Set<() => void> };
 
-const LayoutBodyContext = createContext<BodyStore | undefined>(undefined);
-LayoutBodyContext.displayName = 'LayoutBodyContext';
+const LayoutBodyContext = sharedContext<BodyStore | undefined>('LayoutBodyContext', undefined);
 
 const noopUnsubscribe = () => undefined;
 

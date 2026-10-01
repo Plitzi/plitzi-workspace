@@ -495,6 +495,16 @@ describe('specToSource', () => {
     expect(compareSpaces(documents, authorSpace(await load(files, 'richSplit')))).toEqual([]);
   });
 
+  /** `plitzi create --from`: Node runs the project by stripping types, and imports a file only by its full name. */
+  it('names the files a split export imports by their extension, for a project Node runs as it is', () => {
+    const { spec } = specFromSpace(authorSpace(rich));
+    const files = specToSource(spec, { exportName: 'richSplit', packageName, split: true, importExtension: '.ts' });
+
+    expect(files['pages/home.ts']).toContain("import { card } from '../styles.ts';");
+    expect(files['index.ts']).toContain("from './pages/home.ts';");
+    expect(Object.values(files).join('\n')).not.toMatch(/from '\.{1,2}\/[^']*(?<!\.ts)'/);
+  });
+
   it('names a page whose id already says page without saying it twice', () => {
     const spec: SpaceSpec = {
       name: 'Named',

@@ -32,7 +32,7 @@
     "@codemirror/state": "^6",
     "@codemirror/view": "^6",
     "@fortawesome/fontawesome-free": "^7.3.1",
-    "@plitzi/nexus": "^1.3.1",
+    "@plitzi/nexus": "^1.4.0",
     "@plitzi/plitzi-sdk": "workspace:*",
     "@plitzi/plitzi-ui": "^1.6.25",
     "@plitzi/sdk-auth": "workspace:*",

@@ -98,6 +98,78 @@ manager of the builder's own, and that manager rewrote the host page's head, rem
   the builder and the SDK kept every space's persisted state under the same key on a host. Pages served without a
   `webKey` (SSR) still decode as 0, which is what their painted-state cookie is named after.
 
+## Fixed: a remote plugin in the builder reads the canvas it sits in
+
+The builder carries its own copy of the Plitzi runtime. A remote plugin imports `@plitzi/plitzi-sdk`, which the page's
+import map resolves to the SDK's copy. Each copy made its own React contexts, so on the builder's canvas a plugin read
+none of the canvas's providers. In the builder embedded in Plitzi's site, it read the site around the builder instead:
+the site's element as its own, the site's live mode (so it stayed interactive while being edited), and the site's store
+and interactions.
+
+- `@plitzi/sdk-shared` gains `sharedContext(name, default)`: a context made once per page and handed to every copy of
+  the runtime that asks for it.
+- The runtime's contexts now go through it, so a provider from any copy reaches a consumer from any copy:
+  - `@plitzi/sdk-shared`: service, component, schema, segments, network, theme scope, dev tools, builder.
+  - `@plitzi/sdk-elements`: element, element parent, layout body.
+  - interactions, plugins, event bridge, auth, variables and style.
+- The store's contexts need `@plitzi/nexus` 1.4.0, which does the same. Every `@plitzi/*` package now asks for
+  `^1.4.0`, which is published.
+
+## The source of plugins and runtimes is kept on the space
+
+What a plugin or a runtime is built from now goes up with it, so a space can be taken back out as a project
+(`plitzi create --from`, below).
+
+- `@plitzi/cli`:
+  - `plitzi pack plugin` writes the plugin's source beside its zip: every file of the project its elements import,
+    `import type` included, and the packages they need. `--source-root` names the project those paths are relative to.
+  - `plitzi upload plugin` and `plitzi runtime push` keep that source on the space, in its private bucket.
+  - `plitzi pack source` writes it to a file.
+  - A source that cannot be kept (a file outside the project, an undeclared package, a credential in the code) never
+    stops the upload or the push: they say why, and the artifact is kept built only.
+- `@plitzi/sdk-shared/source`: the snapshot's format, the paths it may hold and the credential check, shared by the CLI
+  and the platform.
+
+## `plitzi create --from` and `plitzi pull`: a space on Plitzi as a project of your own
+
+The way back from everything the CLI puts on Plitzi. `plitzi create my-board --from pizarra` writes a server project
+holding what the space is made of, and runs it with nothing of Plitzi's: neither its servers nor its CDN. `plitzi pull`
+keeps it in step with the space. See `docs/en/projects-from-spaces.md`.
+
+- **What lands in the project:**
+  - its pages as authoring code;
+  - its server actions as `defineAction` code — JSON, with the reason said, for one that would not read back exactly;
+  - its plugins and runtime as the source they were uploaded from, and its functions;
+  - its files, downloaded into `public/`, with every CDN address rewritten to the project's.
+- **`src/main.ts`** serves all of it, the runtime in the same process.
+- **`.env`** gets a key made for the project's actions to sign with, and the names of the variables and credentials
+  the space had. Their values stay on Plitzi.
+- **Who may run it:** the person must be signed in and able to change the space (owner, administrator or writer).
+- **Plugins** are rebuilt against the project's SDK. One uploaded before sources were kept runs as it was built, from
+  `vendor/plugins/`, and the report says to upload it again.
+- **The end of `create`** says what came across differently, including a space whose visitors sign in with Plitzi.
+- `--source cloud` keeps the pages on Plitzi and runs the rest locally.
+- **`plitzi pull`** writes what changed on the space, keeps what changed in the project, and writes nothing when a
+  file changed on both — naming them, with `--force` to take the space's copy. It never touches `.env`, only adds to
+  `package.json`, and keeps `plitzi functions push` working from the project.
+- `@plitzi/sdk-authoring`:
+  - `actionSpecFromEntry` reads an action document back into its `defineAction` declaration, only when the round trip
+    is exact, and `actionToSource` writes it as a module.
+  - `defineAction` takes `limits`.
+  - `specToSource` takes `importExtension: '.ts'`, for split files that Node imports as they are.
+
+## Fixed: a space read from Plitzi kept its server elements
+
+- **What happened:** a page server reading its space from Plitzi (`createCloudAdapters`) never ran an element's
+  `render` action, and a browser-rendered space ignored `loadStrategy`. The space's GraphQL answered neither
+  `runtime` nor `loadStrategy` of an element, nor the space's `rsc` settings.
+- **Now:** the platform answers them, and the SDK, the builder and the cloud adapters ask for them.
+
+## A plugin the deployment registers is not looked for elsewhere
+
+`@plitzi/sdk-server` used to fetch the manifest of every plugin the space lists on its CDN, even one the deployment
+registers itself, and logged a warning when the CDN was out of reach. It now asks only for the ones it does not have.
+
 ## Dev tools hear about the render run the page stopped waiting for
 
 When a server element's action ran past the section's budget, the page was answered without it. The run ended a moment

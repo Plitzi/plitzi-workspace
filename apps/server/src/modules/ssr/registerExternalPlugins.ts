@@ -160,13 +160,18 @@ const registerPlugin = async (
 /**
  * Reads plugins listed in offlineData.plugins, fetches their manifests, downloads and caches
  * JS/CSS via the PluginManager, and returns the effective plugin keys to pass to getEntries().
+ *
+ * `registered`: the types this deployment registers itself — a project's own build of a plugin the space also lists
+ * on its CDN. Those are never looked for elsewhere: the deployment's copy is the one rendered, and asking the CDN for a
+ * manifest nobody will use is a request, and a warning, for nothing.
  */
 export const registerExternalPlugins = async (
   pluginManager: PluginManager,
   offlineData: OfflineDataRaw | undefined,
-  reach: ManifestReach = { allowPrivateHosts: false }
+  reach: ManifestReach = { allowPrivateHosts: false },
+  registered: ReadonlySet<string> = new Set()
 ): Promise<string[]> => {
-  const plugins = offlineData?.plugins;
+  const plugins = offlineData?.plugins?.filter(plugin => !registered.has(plugin.type));
   if (!plugins || plugins.length === 0) {
     return [];
   }

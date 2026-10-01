@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 import { strToU8, zipSync } from 'fflate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -170,5 +171,24 @@ describe('plitzi upload plugin', () => {
     await uploadPluginCommand(undefined, { api: platform.api });
 
     expect(platform.uploads[0].path).toContain('filename=seat-picker-1.2.0.zip');
+  });
+
+  /** What `plitzi pack plugin` wrote beside the zip goes up too, so the space can be taken back out. */
+  it('keeps the plugin’s source on the space when it was packed beside the zip', async () => {
+    const zip = await pluginZip();
+    const snapshot = { format: 1, kind: 'plugin', name: 'seatPicker', entries: ['a.ts'], files: {}, dependencies: {} };
+    await fs.writeFile(zip.replace(/\.zip$/, '.source.json.gz'), gzipSync(JSON.stringify(snapshot)));
+
+    await uploadPluginCommand(zip, { api: platform.api });
+
+    expect(platform.sources).toEqual([snapshot]);
+    expect(said.out).toContain('Its source too (2 files)');
+  });
+
+  it('goes up built only when there is no source beside the zip', async () => {
+    await uploadPluginCommand(await pluginZip(), { api: platform.api });
+
+    expect(platform.uploads).toHaveLength(1);
+    expect(platform.sources).toEqual([]);
   });
 });

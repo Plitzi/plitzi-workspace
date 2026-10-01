@@ -18,6 +18,7 @@ import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export * from './actions';
 export * from './flowReads';
+export * from './fromSpace';
 export * from './keptState';
 export * from './keys';
 export * from './minimal';

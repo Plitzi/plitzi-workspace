@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, use } from 'react';
+import { use } from 'react';
+
+import { sharedContext } from '../helpers/sharedContext';
 
 import type { BuilderContextValue } from '../builder';
 import type { NetworkContextValue } from '../network';
@@ -42,8 +44,10 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
 
 const plitziServiceContextDefaultValue = {} as PlitziServiceContextValue;
 
-const PlitziServiceContext = createContext<PlitziServiceContextValue>(plitziServiceContextDefaultValue);
-PlitziServiceContext.displayName = 'PlitziServiceContext';
+const PlitziServiceContext = sharedContext<PlitziServiceContextValue>(
+  'PlitziServiceContext',
+  plitziServiceContextDefaultValue
+);
 
 const usePlitziServiceContext = <TEventBridge = any, TInteractions = any>() => {
   const context = use(PlitziServiceContext) as PlitziServiceContextValue<TEventBridge, TInteractions> | undefined;

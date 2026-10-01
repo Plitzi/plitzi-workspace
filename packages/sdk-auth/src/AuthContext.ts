@@ -1,10 +1,9 @@
-import { createContext } from 'react';
+import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 import type { AuthContextValue } from '@plitzi/sdk-shared';
 
 const authContextDefaultValue = {} as AuthContextValue;
 
-export const AuthContext = createContext(authContextDefaultValue);
-AuthContext.displayName = 'AuthContext';
+export const AuthContext = sharedContext('AuthContext', authContextDefaultValue);
 
 export default AuthContext;

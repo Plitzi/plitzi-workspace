@@ -1,5 +1,6 @@
 // Package
-import { createContext } from 'react';
+
+import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 import type InteractionsManager from './InteractionsManager';
 import type { InteractionsContextValue as InteractionsContextValueShared } from '@plitzi/sdk-shared';
@@ -8,7 +9,6 @@ export type InteractionsContextValue = InteractionsContextValueShared<InstanceTy
 
 const InteractionsContextDefaultValue = {} as InteractionsContextValue;
 
-const InteractionsContext = createContext(InteractionsContextDefaultValue);
-InteractionsContext.displayName = 'InteractionsContext';
+const InteractionsContext = sharedContext('InteractionsContext', InteractionsContextDefaultValue);
 
 export default InteractionsContext;

@@ -1,8 +1,11 @@
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
+import { apiFor } from './account';
+import { fetchExport, recordOrigin, writeFromSpace } from './createFrom';
 import {
   INSTALL_HINTS,
   ask,
@@ -23,6 +26,8 @@ import {
   runCommand,
   scaffold
 } from '../scaffold';
+import { envFromSpace, projectFromSpace } from '../scaffold/fromSpace';
+import { packageJson } from '../scaffold/project';
 
 import type { Question } from './terminal';
 import type { CreateAnswers, PackageManager } from '../scaffold';
@@ -45,6 +50,13 @@ export interface CreateOptions {
   force?: boolean;
   /** At a terminal, take the defaults for whatever was not passed instead of asking. Without one it answers nothing. */
   yes?: boolean;
+  /**
+   * A space on Plitzi to make the project from (docs/en/projects-from-spaces.md): its id or permanent URL. The project then holds what the
+   * space is made of — pages, actions, functions, runtime, plugins and files — and serves it on its own.
+   */
+  from?: string;
+  /** The platform `--from` reads the space from. */
+  api?: string;
 }
 
 const MODES = ['server', 'client'] as const;
@@ -145,7 +157,17 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     return;
   }
 
-  const decisions = await resolveDecisions(options);
+  // A space taken out of Plitzi is served by a server of the project's own: there is no browser-only form of it.
+  if (options.from && options.mode === 'client') {
+    console.error(
+      chalk.red('A project made from a space runs its own server: leave out --mode, or pass --mode server.')
+    );
+    process.exitCode = 1;
+
+    return;
+  }
+
+  const decisions = await resolveDecisions(options.from ? { ...options, mode: 'server' } : options);
   if (!decisions) {
     return;
   }
@@ -177,7 +199,29 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     managerVersion: detectManagerVersion(packageManager, await nearestExisting(target))
   };
 
-  await writeFiles(target, scaffold(answers));
+  // Asked for before anything is written: a space that cannot be had leaves no half-made project behind.
+  const api = options.from ? await apiFor(options) : undefined;
+  const exported = options.from && api ? await fetchExport(api, options.from, source) : undefined;
+  if (options.from && !exported) {
+    return;
+  }
+
+  const fromSpace = exported ? projectFromSpace(exported, source) : undefined;
+  const files = Object.fromEntries(
+    Object.entries(scaffold(answers)).filter(([file]) => !fromSpace?.omit.includes(file))
+  );
+  await writeFiles(
+    target,
+    exported && fromSpace
+      ? {
+          ...files,
+          ...fromSpace.files,
+          'package.json': packageJson(answers, fromSpace.dependencies),
+          '.env': envFromSpace(exported, answers, randomBytes(32).toString('hex'))
+        }
+      : files
+  );
+  const missing = fromSpace ? await writeFromSpace(target, fromSpace) : [];
 
   const wantsInstall = options.install !== false;
   const installed = wantsInstall && (await install(packageManager, target));
@@ -208,6 +252,10 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     await runScript(packageManager, 'format', target);
   }
 
+  if (api && exported && fromSpace) {
+    await recordOrigin(target, { api, exported, source, project: fromSpace });
+  }
+
   const where = cdPrefix(target);
 
   console.log(
@@ -229,6 +277,12 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   );
   if (source === 'cloud') {
     console.log(chalk.dim('.env holds the key and is already git-ignored.'));
+  }
+
+  const notes = [...(fromSpace?.report ?? []), ...missing];
+  if (exported && notes.length > 0) {
+    console.log(chalk.yellow(`\nWhat to know about ${exported.space.name} here:`));
+    notes.forEach(note => console.log(chalk.yellow(`  - ${note}`)));
   }
 
   console.log('');

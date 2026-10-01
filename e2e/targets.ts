@@ -139,6 +139,13 @@ export const targets: Target[] = [
     what: 'A plugin as `plitzi create --plugin` writes it, built and published, loaded by a page from its manifest'
   },
   {
+    id: 'from-space-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:from-space',
+    origin: 'http://127.0.0.1:5209',
+    what: 'A space taken out of a platform with `plitzi create --from`, served by the project the CLI wrote alone'
+  },
+  {
     id: 'mail-sink',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:mail',

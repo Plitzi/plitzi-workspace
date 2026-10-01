@@ -1,10 +1,9 @@
-import { createContext } from 'react';
+import { sharedContext } from '../helpers/sharedContext';
 
 import type { ComponentContextValue } from '../types';
 
 const componentContextDefaultValue = {};
 
-const ComponentContext = createContext(componentContextDefaultValue as ComponentContextValue);
-ComponentContext.displayName = 'ComponentContext';
+const ComponentContext = sharedContext('ComponentContext', componentContextDefaultValue as ComponentContextValue);
 
 export default ComponentContext;

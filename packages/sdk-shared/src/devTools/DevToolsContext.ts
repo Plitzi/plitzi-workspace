@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { sharedContext } from '../helpers/sharedContext';
 
 import type { Log, ProviderCallback } from '../types';
 import type { Dispatch, SetStateAction } from 'react';
@@ -13,7 +13,6 @@ export type DevToolsContextValue = {
 
 const devToolsContextDefaultValue = { logs: [], providers: {} };
 
-const DevToolsContext = createContext<DevToolsContextValue>(devToolsContextDefaultValue);
-DevToolsContext.displayName = 'DevToolsContext';
+const DevToolsContext = sharedContext<DevToolsContextValue>('DevToolsContext', devToolsContextDefaultValue);
 
 export default DevToolsContext;

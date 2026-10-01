@@ -1,8 +1,7 @@
-import { createContext } from 'react';
+import { sharedContext } from '../helpers/sharedContext';
 
 import type { SegmentsContextValue } from '../types';
 
-const SegmentsContext = createContext({} as SegmentsContextValue);
-SegmentsContext.displayName = 'SegmentsContext';
+const SegmentsContext = sharedContext('SegmentsContext', {} as SegmentsContextValue);
 
 export default SegmentsContext;

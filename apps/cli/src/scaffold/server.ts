@@ -8,7 +8,7 @@ import type { CreateAnswers, ProjectFiles } from './types';
  */
 
 /** Written into both entry points, because how a plugin is registered does not change with where the space lives. */
-const PLUGINS = `/**
+export const PLUGINS = `/**
  * The project's own components: every folder of \`src/plugins\` is one, registered under its name in camelCase —
  * \`src/plugins/StatCard\` is what a space's \`custom({ renderType: 'statCard' })\` renders. \`plitzi add plugin\` writes
  * a new one there; the next start registers it.

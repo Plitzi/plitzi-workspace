@@ -50,6 +50,8 @@ const asElement = (id: string, node: Record<string, unknown>) => {
       parentId: definition.parentId ?? null,
       rootId: definition.rootId ?? null,
       items: definition.items ?? [],
+      runtime: definition.runtime ?? null,
+      loadStrategy: definition.loadStrategy ?? null,
       __typename: 'SpaceElementDefinition'
     },
     __typename: 'SpaceElement'
@@ -74,6 +76,7 @@ const initQuery = (space: OfflineDataRaw) => {
         definition: { name: 'E2E Space', permanentUrl: 'e2e-space', __typename: 'SpaceDefinition' },
         schema: {
           settings: schema.settings,
+          rsc: schema.rsc ?? null,
           flat,
           pages: schema.pages,
           // Lists over the wire, both of them. A space that declares neither still has to answer with an empty

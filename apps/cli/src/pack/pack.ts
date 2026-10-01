@@ -5,6 +5,7 @@ import path from 'node:path';
 import { build } from 'esbuild';
 import { zipSync } from 'fflate';
 
+import { packSource } from './source';
 import { emitTypeDeclarations } from './typeDeclarations';
 
 import type { TypesOutcome } from './typeDeclarations';
@@ -50,6 +51,11 @@ export interface PackOptions {
   /** Where to write the zip, or nothing for a build alone. */
   zip?: string;
   /**
+   * The project its source is kept relative to (docs/en/projects-from-spaces.md): `root` unless the elements are a project of their own inside
+   * it — a seeded space in the repository that seeds it.
+   */
+  sourceRoot?: string;
+  /**
    * Write the package's type declarations into `types/`, for a project that installs it. A plugin package's; elements
    * packed out of a project are for the builder, which reads no types.
    */
@@ -65,6 +71,11 @@ export interface PackResult {
   zip?: string;
   /** Whether the type declarations were written, when they were asked for. */
   typesOutcome?: TypesOutcome;
+  /**
+   * The source snapshot written beside the zip, for `plitzi upload plugin` to keep on the space — or why there is none:
+   * then the plugin is kept built only, and a project taken from the space gets the build, not its source.
+   */
+  source: { file: string } | { problem: string };
 }
 
 /** One built file as a page loads it: its name, what it is, and the hash the browser checks it against. */
@@ -214,6 +225,35 @@ const integrityOf = async (file: string): Promise<string> => {
   return `sha384-${createHash('sha384').update(content).digest('base64')}`;
 };
 
+/** The files a plugin is built from: the package's entry, or each element's index. */
+const sourceEntries = (source: PackSource): string[] =>
+  source.kind === 'package' ? [source.entry] : source.folders.map(folder => path.join(folder, 'index.ts'));
+
+/** Where the source snapshot of a plugin goes: beside its zip, named after it. */
+export const sourceFileOf = (zip: string): string => zip.replace(/\.zip$/, '.source.json.gz');
+
+/**
+ * The plugin's source snapshot written beside its zip — or, when it cannot be kept, why: the plugin still packs, and
+ * goes up built only.
+ */
+const writeSource = async (
+  name: string,
+  source: PackSource,
+  root: string,
+  zip: string
+): Promise<PackResult['source']> => {
+  try {
+    const { bytes } = await packSource({ root, kind: 'plugin', name, entries: sourceEntries(source) });
+    const file = sourceFileOf(zip);
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, bytes);
+
+    return { file };
+  } catch (error) {
+    return { problem: error instanceof Error ? error.message : String(error) };
+  }
+};
+
 export const packPlugin = async ({
   root,
   source,
@@ -221,6 +261,7 @@ export const packPlugin = async ({
   version,
   outDir,
   zip,
+  sourceRoot = root,
   types = false
 }: PackOptions): Promise<PackResult> => {
   const relative = path.relative(root, outDir);
@@ -318,5 +359,12 @@ export const packPlugin = async ({
   // After the zip, which carries what a page loads and not what a compiler reads.
   const typesOutcome = types ? writeTypes(root, outDir) : undefined;
 
-  return { root: main.type, types: declarations.map(declaration => declaration.type), files, zip, typesOutcome };
+  return {
+    root: main.type,
+    types: declarations.map(declaration => declaration.type),
+    files,
+    zip,
+    typesOutcome,
+    source: await writeSource(main.type, source, sourceRoot, zip ?? path.join(outDir, `${base}.zip`))
+  };
 };

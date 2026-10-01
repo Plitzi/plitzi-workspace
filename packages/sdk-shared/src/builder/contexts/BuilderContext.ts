@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { sharedContext } from '../../helpers/sharedContext';
 
 import type {
   ComponentPluginWithHOC,
@@ -106,7 +106,6 @@ export type BuilderContextValue = {
 
 const builderContextDefaultValue: BuilderContextValue = {} as BuilderContextValue;
 
-const BuilderContext = createContext<BuilderContextValue>(builderContextDefaultValue);
-BuilderContext.displayName = 'BuilderContext';
+const BuilderContext = sharedContext<BuilderContextValue>('BuilderContext', builderContextDefaultValue);
 
 export default BuilderContext;

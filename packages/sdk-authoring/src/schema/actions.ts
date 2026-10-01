@@ -7,6 +7,7 @@ import type {
   ActionAccess,
   ActionEntry,
   ActionField,
+  ActionLimits,
   ActionTriggerParams,
   ElementInteraction
 } from '@plitzi/sdk-shared';
@@ -110,6 +111,8 @@ export interface ActionSpec {
    * names. An unquoted token keeps its type (`{{ rate.total }}` is a number), a quoted one is text.
    */
   output?: string;
+  /** Ceilings for one run, tighter than the deployment's own: a per-action value can only lower them. */
+  limits?: ActionLimits;
 }
 
 const accessParams = (access: AccessSpec | undefined): Partial<ActionTriggerParams> => {
@@ -279,7 +282,8 @@ export const defineAction = (spec: ActionSpec): ActionEntry => {
     document: {
       name: spec.name,
       ...(spec.description ? { description: spec.description } : {}),
-      nodes: withDoors(authorFlow(steps), otherDoors)
+      nodes: withDoors(authorFlow(steps), otherDoors),
+      ...(spec.limits ? { limits: spec.limits } : {})
     }
   };
 };

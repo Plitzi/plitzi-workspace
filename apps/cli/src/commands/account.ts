@@ -188,3 +188,25 @@ export const connectionWithSpace = async (api: string, doing = 'to work in'): Pr
 
   return chosen.value;
 };
+
+/**
+ * A signed-in connection, whichever space it works in — or none: signing in in the browser when there is no session.
+ * What a command that names its space itself needs (`plitzi create --from`), since the session reaches every space the
+ * person can.
+ */
+export const signedIn = async (api: string, doing: string): Promise<Connection | undefined> => {
+  const current = await currentConnection(api);
+  if (current.ok && current.value) {
+    return current.value;
+  }
+
+  console.log(`\nSign in ${doing}.`);
+  const connected = await connect(api, { open: openInBrowser });
+  if (!connected.ok) {
+    fail(connected.error);
+
+    return undefined;
+  }
+
+  return connected.value;
+};

@@ -251,14 +251,16 @@ export const prepareRender = async (
   const autoLoad = config.autoLoadSchemaPlugins !== false;
   const externalNames = autoLoad
     ? await m('extPlugins', () =>
-        registerExternalPlugins(pluginManager, offlineData, {
-          allowPrivateHosts: config.allowPrivatePluginHosts === true
-        })
+        registerExternalPlugins(
+          pluginManager,
+          offlineData,
+          { allowPrivateHosts: config.allowPrivatePluginHosts === true },
+          pluginBaseNames
+        )
       )
     : [];
-  const externalNamesFiltered = externalNames.filter(k => !pluginBaseNames.has(k.replace(/@[^@]*$/, '')));
 
-  const allPluginNames = [...pluginNames, ...dynamicNames, ...externalNamesFiltered];
+  const allPluginNames = [...pluginNames, ...dynamicNames, ...externalNames];
   const entries = allPluginNames.length > 0 ? await pluginManager.getEntries(allPluginNames) : [];
 
   const pluginComponents = await m('plugins', () => loadPluginComponents(entries, pluginManager.getComponents()));

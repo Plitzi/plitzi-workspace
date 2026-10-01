@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { sharedContext } from '../helpers/sharedContext';
 
 import type { Environment, Server } from '../types';
 import type { FetchPolicy } from '@apollo/client/core';
@@ -74,7 +74,6 @@ const networkContextDefaultValue: NetworkContextValue = {
   environment: 'development'
 } as unknown as NetworkContextValue;
 
-const NetworkContext = createContext<NetworkContextValue>(networkContextDefaultValue);
-NetworkContext.displayName = 'NetworkContext';
+const NetworkContext = sharedContext<NetworkContextValue>('NetworkContext', networkContextDefaultValue);
 
 export default NetworkContext;

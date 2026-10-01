@@ -116,7 +116,12 @@ const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
   shot: 'node scripts/shot.ts'
 });
 
-export const packageJson = (answers: CreateAnswers): string =>
+/**
+ * `extra` is what a project made from a space needs besides (`plitzi create --from`): the packages its plugins and
+ * runtime import. The scaffold's own win where both name one — the SDK and React are this CLI's versions, which the
+ * project's plugins are rebuilt against.
+ */
+export const packageJson = (answers: CreateAnswers, extra: Record<string, string> = {}): string =>
   `${JSON.stringify(
     {
       name: answers.name,
@@ -124,7 +129,9 @@ export const packageJson = (answers: CreateAnswers): string =>
       private: true,
       type: 'module',
       scripts: scripts(answers),
-      dependencies: dependencies(answers),
+      dependencies: Object.fromEntries(
+        Object.entries({ ...extra, ...dependencies(answers) }).sort(([a], [b]) => a.localeCompare(b))
+      ),
       devDependencies: devDependencies(answers),
       engines: NODE_ENGINES,
       ...managerPackageFields(answers.packageManager)

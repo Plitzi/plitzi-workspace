@@ -1,7 +1,7 @@
-/* eslint-disable quotes */
 import { defaultAttributes, defaultLabel } from '../elements';
 import * as factories from '../elements/elements';
 import { isRuleSetSpec, isStyleDeclaration } from '../style';
+import { camel, deepEqual, keyLiteral, literal, RESERVED, withSuffix } from './literal';
 
 import type { ElementSpec, LayoutSpec, PageSpec, SpaceSpec } from '../schema';
 import type { StyleDeclaration, StyleSpec } from '../style';
@@ -25,6 +25,11 @@ export interface SpecSourceOptions {
    * thousands of elements wants: a page is then something one can open.
    */
   split?: boolean;
+  /**
+   * What a split file's import of another one ends in: nothing for a bundler, which resolves `./styles` itself; `.ts`
+   * for a project Node runs by stripping the types, which imports a file by its name (`plitzi create --from`).
+   */
+  importExtension?: '' | '.ts';
 }
 
 /** Source files by path, relative to wherever they are written. The space itself is `index.ts`. */
@@ -85,69 +90,6 @@ const AUTHORING_FIELDS = new Set<string>(ELEMENT_FIELDS.filter(field => field !=
 const STRUCTURAL_FIELDS = new Set<string>(['type', 'id', 'attributes', 'meta', 'children']);
 
 const FACTORY_NAMES = new Set(Object.keys(factories));
-
-const RESERVED = new Set(
-  (
-    'break case catch class const continue debugger default delete do else enum export extends false finally for ' +
-    'function if import in instanceof new null return super switch this throw true try typeof var void while with ' +
-    'yield let static implements interface package private protected public await element styles'
-  ).split(' ')
-);
-
-const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-
-const deepEqual = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
-
-const camel = (value: string): string => {
-  const words = value.split(/[^A-Za-z0-9]+/).filter(Boolean);
-  const joined = words
-    .map((word, index) =>
-      index === 0 ? word.charAt(0).toLowerCase() + word.slice(1) : word.charAt(0).toUpperCase() + word.slice(1)
-    )
-    .join('');
-
-  return /^[0-9]/.test(joined) || !joined ? `c${joined}` : joined;
-};
-
-/** A name with a suffix it does not already end in — `docsPage`, never `analyticsPagePage`. */
-const withSuffix = (name: string, suffix: string): string => (name.endsWith(suffix) ? name : `${name}${suffix}`);
-
-/** A string as a literal: a template literal when it spans lines — a stylesheet, a head snippet — and quotes when not. */
-const stringLiteral = (value: string): string =>
-  value.includes('\n')
-    ? `\`${value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')}\``
-    : `'${JSON.stringify(value).slice(1, -1).replace(/\\"/g, '"').replace(/'/g, "\\'")}'`;
-
-const keyLiteral = (key: string): string => (IDENTIFIER.test(key) ? key : stringLiteral(key));
-
-/** Anything JSON-shaped, as a TypeScript literal. */
-const literal = (value: unknown): string => {
-  if (value === null || value === undefined) {
-    return 'null';
-  }
-
-  if (typeof value === 'string') {
-    return stringLiteral(value);
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-
-  if (Array.isArray(value)) {
-    return `[${value.map(literal).join(', ')}]`;
-  }
-
-  if (typeof value === 'object') {
-    const entries = Object.entries(value).filter(([, inner]) => inner !== undefined);
-
-    return entries.length === 0
-      ? '{}'
-      : `{ ${entries.map(([key, inner]) => `${keyLiteral(key)}: ${literal(inner)}`).join(', ')} }`;
-  }
-
-  return 'null';
-};
 
 /** A class's rules as a literal, with each ancestor keyed as `ancestorKey` writes it. */
 const ruleSetLiteral = (rules: StyleSpec, ancestorKey: (name: string) => string): string => {
@@ -242,6 +184,11 @@ class SourceWriter {
   ) {
     this.packageName = options.packageName ?? '@plitzi/sdk-authoring';
     this.names.claim(options.exportName);
+  }
+
+  /** Another file of the split export, as an import names it. */
+  private relative(path: string): string {
+    return `${path}${this.options.importExtension ?? ''}`;
   }
 
   write(): SpecSourceFiles {
@@ -447,7 +394,7 @@ class SourceWriter {
     // Split, a class is named from a page or a layout file one folder below the shared `styles.ts`, or from the
     // space's own `index.ts` beside it.
     if (this.options.split) {
-      imports.local(stylesPath, variable);
+      imports.local(this.relative(stylesPath), variable);
     }
 
     return variable;
@@ -474,7 +421,7 @@ class SourceWriter {
     imports.types.add(type);
     this.files[`${path}.ts`] =
       `${imports.render(this.packageName)}\n\nexport const ${variable}: ${type} = ${object};\n`;
-    main.local(`./${path}`, variable);
+    main.local(this.relative(`./${path}`), variable);
 
     return variable;
   }

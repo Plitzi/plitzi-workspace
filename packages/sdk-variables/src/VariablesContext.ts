@@ -1,8 +1,7 @@
-import { createContext } from 'react';
+import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 const variablesContextDefaultValue = undefined;
 
-const VariablesContext = createContext(variablesContextDefaultValue);
-VariablesContext.displayName = 'VariablesContext';
+const VariablesContext = sharedContext('VariablesContext', variablesContextDefaultValue);
 
 export default VariablesContext;

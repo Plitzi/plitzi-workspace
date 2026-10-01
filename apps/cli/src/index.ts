@@ -6,6 +6,8 @@ import create from './commands/create';
 import createPlugin from './commands/createPlugin';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
 import packPluginCommand from './commands/packPlugin';
+import packSourceCommand from './commands/packSource';
+import { pull } from './commands/pull';
 import {
   powerRuntime,
   pushRuntime,
@@ -23,6 +25,8 @@ import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
 import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
 import type { PackPluginOptions } from './commands/packPlugin';
+import type { PackSourceOptions } from './commands/packSource';
+import type { PullOptions } from './commands/pull';
 import type { RuntimeOptions } from './commands/runtime';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 
@@ -38,6 +42,11 @@ program.name('plitzi').description('Plitzi command line');
 
 /** The flags that shape a PROJECT: given with `--plugin`, they are a mistake worth saying rather than ignoring. */
 const PROJECT_ONLY = ['mode', 'source', 'key'] as const;
+
+const API_OPTION = [
+  '--api <url>',
+  'The platform’s API. Defaults to PLITZI_API_URL, else the one signed in to, else https://api.plitzi.com.'
+] as const;
 
 program
   .command('create')
@@ -65,6 +74,11 @@ program
       'The package manager the project is written for. Asked for when left out.'
     ).choices([...PACKAGE_MANAGERS])
   )
+  .option(
+    '--from <space>',
+    'Make it from a space on Plitzi (its id or permanent URL): its pages, actions, functions, runtime, plugins and files, served by the project alone. Signs in as you; the space must be one you can change.'
+  )
+  .option(...API_OPTION)
   .option('--plugin', 'A plugin package instead: one element any space can load, with a preview and a build')
   .option('--name <name>', 'Plugin only: its package name (plitzi-plugin-seat-picker). Asked for when left out.')
   .option('--title <title>', 'Plugin only: what the builder calls the element')
@@ -90,6 +104,15 @@ program
     return createPlugin(directory, options);
   });
 
+program
+  .command('pull')
+  .description(
+    'Bring a project made with create --from up to date with its space: what changed there is written, what changed here is kept'
+  )
+  .option('-f, --force', 'Where a file changed both here and on the space, take the space’s copy')
+  .option(...API_OPTION)
+  .action((options: PullOptions) => pull(options));
+
 const add = program.command('add').description('Add something to the project you are in');
 
 add
@@ -111,12 +134,23 @@ pack
   .option('-o, --out <folder>', 'Where the build goes. Emptied first; it must be inside the project.')
   .option('--no-zip', 'Build without the zip')
   .option('--plugin-version <version>', 'The version the manifest carries. Defaults to the one in package.json.')
+  .option(
+    '--source-root <folder>',
+    'The project its source is kept relative to, when the elements are a project of their own inside this one'
+  )
   .action((folders: string[], options: PackPluginOptions) => packPluginCommand(folders, options));
 
-const API_OPTION = [
-  '--api <url>',
-  'The platform’s API. Defaults to PLITZI_API_URL, else the one signed in to, else https://api.plitzi.com.'
-] as const;
+pack
+  .command('source')
+  .argument('<entries...>', 'The files the build starts from: a runtime module, or each element’s index')
+  .description('Write the source snapshot plitzi upload and plitzi runtime push keep beside what they send')
+  .addOption(
+    new Option('--kind <kind>', 'What it is the source of').choices(['plugin', 'runtime']).makeOptionMandatory()
+  )
+  .requiredOption('--name <name>', 'The plugin’s type, or runtime')
+  .option('--root <folder>', 'The project the paths are relative to. Defaults to the nearest package.json’s folder.')
+  .requiredOption('-o, --out <file>', 'Where the gzipped snapshot goes')
+  .action((entries: string[], options: PackSourceOptions) => packSourceCommand(entries, options));
 
 program
   .command('login')

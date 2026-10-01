@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 import type { Element, ElementLayout } from '@plitzi/sdk-shared';
 import type { CSSProperties } from 'react';
@@ -41,9 +41,9 @@ export type ElementContextValue<T extends 'skipHOC' | 'full' = 'full'> = {
       ) => boolean;
     });
 
-const ElementContext = createContext<ElementContextValue | ElementContextValue<'skipHOC'>>(
+const ElementContext = sharedContext<ElementContextValue | ElementContextValue<'skipHOC'>>(
+  'ElementContext',
   undefined as unknown as ElementContextValue
 );
-ElementContext.displayName = 'ElementContext';
 
 export default ElementContext;

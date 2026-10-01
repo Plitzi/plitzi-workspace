@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
+import { gunzipSync } from 'node:zlib';
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -31,6 +32,8 @@ export interface FakePlatform {
   /** What each client registered as. */
   registrations: Record<string, unknown>[];
   uploads: FakeUpload[];
+  /** Every source snapshot kept (`PUT /spaces/:id/sources`), read back as JSON. */
+  sources: unknown[];
   cdns: {
     identifier: string;
     name: string;
@@ -51,6 +54,8 @@ export interface FakePlatform {
   tried: { task: string; params: unknown }[];
   /** Space 3's runtime: every push as it arrived, and its variables — a value the platform keeps and never shows. */
   runtime: { pushed: FakeUpload[]; variables: Map<string, string> };
+  /** Space 3 (Pizarra) as its export gives it: its pages as code, by path, and the packages its code asks for. */
+  pizarra: { pages: Record<string, string>; dependencies: Record<string, string> };
   close: () => Promise<void>;
 }
 
@@ -133,6 +138,9 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
       } else if (url.pathname === '/revoke') {
         platform.revoked.push(form.get('token') ?? '');
         json(res, 200, {});
+      } else if (url.pathname === '/files/pizarra/assets/world.json') {
+        // A public CDN's file: no session asked for, as a bucket serving a space's files asks none.
+        json(res, 200, { land: [] });
       } else if (!signedIn) {
         json(res, 401, { error: 'Not authenticated' });
       } else if (url.pathname === '/auth/session') {
@@ -172,6 +180,31 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
             manifest: { hosts: [], tasks: [{ namespace: 'feed', action: 'read' }], routes: [] }
           });
         }
+      } else if (url.pathname === '/spaces/pizarra/export' || url.pathname === '/spaces/3/export') {
+        json(res, 200, {
+          format: 1,
+          space: { id: 3, name: 'Pizarra', permanentUrl: 'pizarra' },
+          authoring:
+            url.searchParams.get('source') === 'cloud'
+              ? null
+              : { exportName: 'pizarra', files: platform.pizarra.pages },
+          actions: [],
+          connectors: [],
+          functions: platform.functions,
+          source: { files: {}, dependencies: platform.pizarra.dependencies, runtime: null, plugins: [] },
+          builtOnly: { plugins: [], runtime: null },
+          assets: [{ url: `${platform.api}/files/pizarra/assets/world.json`, path: 'assets/world.json' }],
+          variables: [],
+          credentials: [],
+          visitorRoles: [],
+          report: { conflicts: [], rangeConflicts: [], corrections: [] }
+        });
+      } else if (url.pathname === '/spaces/locked/export') {
+        json(res, 403, { error: 'Taking a space out as a project is for whoever may change it' });
+      } else if (url.pathname === '/spaces/3/sources' && req.method === 'PUT') {
+        const snapshot: unknown = JSON.parse(gunzipSync(body).toString('utf-8'));
+        platform.sources.push(snapshot);
+        json(res, 200, { ok: true, files: 2 });
       } else if (url.pathname === '/spaces/3/runtime' && req.method === 'PUT') {
         platform.runtime.pushed.push({
           path: url.pathname,
@@ -228,6 +261,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     revoked: [],
     registrations: [],
     uploads: [],
+    sources: [],
     cdns: [
       {
         identifier: 'cdn-main',
@@ -246,6 +280,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     functions: { files: {}, version: 'v0' },
     tried: [],
     runtime: { pushed: [], variables: new Map() },
+    pizarra: { pages: { 'index.ts': 'export const pizarra = {};\n' }, dependencies: {} },
     browser: url => {
       const asked = new URL(url).searchParams;
       const scope = asked.get('scope') ?? '';

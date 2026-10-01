@@ -53,7 +53,7 @@ export interface PluginPackage {
   components?: string[];
 }
 
-interface PackageJson {
+export interface PackageJson {
   workspaces?: string[] | { packages?: string[] };
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
@@ -76,7 +76,7 @@ const exists = async (file: string): Promise<boolean> => {
   }
 };
 
-const readPackageJson = async (dir: string): Promise<PackageJson | undefined> => {
+export const readPackageJson = async (dir: string): Promise<PackageJson | undefined> => {
   try {
     // A package.json is somebody's file: it is read for the three fields below and nothing is trusted beyond them.
     return JSON.parse(await fs.readFile(path.join(dir, 'package.json'), 'utf-8')) as PackageJson;
@@ -108,7 +108,7 @@ const workspaceGlobs = async (dir: string, packageJson: PackageJson): Promise<st
 };
 
 /** From every directory upward, the first that holds a `package.json`. */
-const nearestPackage = async (from: string): Promise<string | undefined> => {
+export const nearestPackage = async (from: string): Promise<string | undefined> => {
   let dir = from;
   for (;;) {
     if (await exists(path.join(dir, 'package.json'))) {

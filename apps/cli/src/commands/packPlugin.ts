@@ -25,6 +25,8 @@ export interface PackPluginOptions {
   out?: string;
   zip?: boolean;
   pluginVersion?: string;
+  /** The project the source is kept relative to, when the elements are a project of their own inside this one. */
+  sourceRoot?: string;
 }
 
 const hasElement = async (folder: string): Promise<boolean> => {
@@ -174,7 +176,16 @@ const packPluginCommand = async (foldersGiven: string[], options: PackPluginOpti
 
   try {
     // A package also gets its type declarations, for a project that installs it; elements of a project go to the builder.
-    const result = await packPlugin({ root: project.root, source, base, version, outDir, zip, types: inPackage });
+    const result = await packPlugin({
+      root: project.root,
+      source,
+      base,
+      version,
+      outDir,
+      zip,
+      sourceRoot: options.sourceRoot ? path.resolve(options.sourceRoot) : project.root,
+      types: inPackage
+    });
     console.log(chalk.green(`\n${result.types.join(', ')} — packed at ${path.relative(process.cwd(), outDir) || '.'}`));
     for (const file of result.files) {
       console.log(chalk.dim(`  ${file}`));
@@ -189,6 +200,17 @@ const packPluginCommand = async (foldersGiven: string[], options: PackPluginOpti
     if (result.zip) {
       console.log(`\n  ${path.relative(process.cwd(), result.zip)}`);
       console.log(chalk.dim('  Upload it in the builder under Resources, as a plugin.'));
+    }
+
+    if ('file' in result.source) {
+      console.log(
+        chalk.dim(`  ${path.relative(process.cwd(), result.source.file)} — its source, which plitzi upload keeps too`)
+      );
+    } else {
+      console.log(
+        chalk.yellow('\n  Its source is not kept, so the space can be taken back out with this plugin built only:')
+      );
+      console.log(chalk.yellow(`  ${result.source.problem.split('\n').join('\n  ')}`));
     }
 
     console.log('');

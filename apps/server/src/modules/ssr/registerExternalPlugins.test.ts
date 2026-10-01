@@ -63,4 +63,20 @@ describe('registerExternalPlugins', () => {
 
     expect(await registerExternalPlugins(manager, spaceWith('https://93.184.216.34/widget/1.0.0'))).toEqual(['widget']);
   });
+
+  /** A project's own build of a plugin the space also lists on its CDN (`plitzi create --from`) is the one rendered. */
+  it('never looks for a plugin the deployment registers itself', async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    expect(
+      await registerExternalPlugins(
+        pluginManager(),
+        spaceWith('https://93.184.216.34/widget/1.0.0'),
+        { allowPrivateHosts: false },
+        new Set(['widget'])
+      )
+    ).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

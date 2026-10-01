@@ -34,7 +34,8 @@ const FUNCTIONS_DIR = 'functions';
 const STATE_FILE = path.join('.plitzi', 'functions.json');
 
 type Files = Record<string, string>;
-type WorkingCopy = { space: number; version: string; files: Files };
+/** What `functions pull` last wrote into `functions/`, and the version of the space's functions it was. */
+export type WorkingCopy = { space: number; version: string; files: Files };
 type Draft = { files: Files; version: string; manifest: { tasks: { namespace: string; action: string }[] } | null };
 type Problem = { file?: string; line?: number; column?: number; message: string };
 
@@ -77,7 +78,7 @@ const readState = async (root: string): Promise<WorkingCopy | undefined> => {
   }
 };
 
-const writeState = async (root: string, state: WorkingCopy): Promise<void> => {
+export const writeFunctionsState = async (root: string, state: WorkingCopy): Promise<void> => {
   await fs.mkdir(path.join(root, '.plitzi'), { recursive: true });
   await fs.writeFile(path.join(root, STATE_FILE), `${JSON.stringify(state, null, 2)}\n`);
 };
@@ -155,7 +156,7 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
     await fs.writeFile(path.join(base, file), text);
   }
 
-  await writeState(root, { space: connection.space.id, version: draft.version, files: draft.files });
+  await writeFunctionsState(root, { space: connection.space.id, version: draft.version, files: draft.files });
   const count = Object.keys(draft.files).length;
   console.log(
     count
@@ -252,7 +253,7 @@ export const pushFunctions = async (options: FunctionsOptions): Promise<void> =>
     return;
   }
 
-  await writeState(root, { space: connection.space.id, version: reply.data.version, files: local });
+  await writeFunctionsState(root, { space: connection.space.id, version: reply.data.version, files: local });
   console.log(
     `Pushed to ${chalk.bold(connection.space.name)}’s draft — ${taskList({ manifest: reply.data.manifest ?? null })}. ` +
       chalk.dim('The live site runs them once the space is published.')

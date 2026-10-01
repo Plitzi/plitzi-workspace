@@ -16,6 +16,7 @@ const InitQuery = /* GraphQL */ `
     Space(environment: $environment, revision: $revision) {
       schema {
         settings
+        rsc
         flat {
           id
           definition {
@@ -28,6 +29,8 @@ const InitQuery = /* GraphQL */ `
             parentId
             rootId
             items
+            runtime
+            loadStrategy
           }
           attributes
         }
@@ -75,6 +78,8 @@ const InitQuery = /* GraphQL */ `
               parentId
               rootId
               items
+              runtime
+              loadStrategy
             }
             attributes
           }

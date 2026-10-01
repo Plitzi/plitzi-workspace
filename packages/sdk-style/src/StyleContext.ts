@@ -1,10 +1,9 @@
-import { createContext } from 'react';
+import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 import type { StyleContextValue } from '@plitzi/sdk-shared';
 
 const styleContextDefaultValue: StyleContextValue = {};
 
-const StyleContext = createContext(styleContextDefaultValue);
-StyleContext.displayName = 'StyleContext';
+const StyleContext = sharedContext('StyleContext', styleContextDefaultValue);
 
 export default StyleContext;

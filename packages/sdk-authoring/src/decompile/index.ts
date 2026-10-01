@@ -6,10 +6,11 @@
  * `specToSource` writes that spec out as the TypeScript a person would write, and `compareSpaces` proves the round
  * trip: author the spec again and nothing observable differs from what was read. `withNamedIds` is the one repair a
  * comparison needs to see too — a document keyed the old way is read under its elements' names, so it is compared
- * under them.
+ * under them. `actionSpecFromEntry` and `actionToSource` do the same for a server action.
  */
 
 export { withNamedIds } from './documents';
+export * from './actions';
 export type { ElementRename } from './documents';
 export * from './compareSpaces';
 export * from './specFromSpace';

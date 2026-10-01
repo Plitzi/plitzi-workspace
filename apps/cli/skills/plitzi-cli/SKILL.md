@@ -4,9 +4,10 @@ description: >-
   Use the Plitzi command line (@plitzi/cli, `plitzi …` or `npx @plitzi/cli …`) instead of hand-writing what it
   generates: scaffold a project that renders a space, add elements of your own (plugins) to it, create a plugin package,
   build a plugin into the module + manifest + zip the platform takes, sign in to upload and install it on a space, and
-  edit a space's own server code (its functions) in the project. Use whenever the task is to start a Plitzi project,
-  create or change a plugin/custom element, pack, upload or install one, pull/push/try a space's functions, or work out
-  which space the CLI is connected to.
+  edit a space's own server code (its functions) in the project, and take a space on Plitzi out as a self-hosted project
+  of its own (`create --from`, kept in step with `pull`). Use whenever the task is to start a Plitzi project, create or
+  change a plugin/custom element, pack, upload or install one, pull/push/try a space's functions, move a space to a
+  server of its own, or work out which space the CLI is connected to.
 ---
 
 # The Plitzi CLI
@@ -17,6 +18,8 @@ a signed-in upload. **Reach for it before writing any of those yourself.**
 
 ```bash
 npx @plitzi/cli create my-site                 # a project that renders a space
+npx @plitzi/cli create my-board --from pizarra # a space on Plitzi, as a project that serves it alone
+npx @plitzi/cli pull                           # that project brought up to date with its space
 npx @plitzi/cli add plugin seat-picker legend  # elements of your own, in the project you are in
 npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can load
 npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
@@ -63,6 +66,27 @@ What a project gives you, so you use it rather than rebuild it:
 
 The space itself is written with `@plitzi/sdk-authoring` — see the `plitzi-authoring` skill, which `create` copies into
 `.claude/skills/` beside this one.
+
+## A space on Plitzi, as a project (`create --from`, `pull`)
+
+`create --from <space>` (its permanent URL or id) writes a server project holding everything the space is made of, and
+serving it with nothing of Plitzi's — neither its servers nor its CDN:
+
+- its pages as authoring code in `src/space/` (`--source cloud` writes none: they stay on Plitzi, read with a key);
+- its actions in `src/actions/` — each a `defineAction` call where the document reads back exactly, JSON where it does
+  not (the report says why) — and its connectors as JSON;
+- its functions in `functions/`, its runtime and plugins as the source they were built from, under `src/`;
+- its files downloaded into `public/`, every CDN address rewritten to the project's own;
+- `.env` with a signing key made for it, and the names of the variables and credentials it needs — never their values.
+
+It takes a signed-in CLI and a space the person may change (owner, admin or writer). Read the report it prints: a
+plugin or runtime uploaded before Plitzi kept sources comes across built only (`vendor/`), and a space with visitor
+roles needs sign-in of its own (the note in `src/main.ts`).
+
+`pull` brings the project up to date: what changed on the space alone is written, what changed here alone is kept,
+and when one file changed on both it writes **nothing** and names them — keep your changes aside and pull again, or
+`--force` to take the space's copy. It never touches `.env`, and only adds to `package.json`. What the project was given
+is recorded in `.plitzi/space.json`: commit it.
 
 ## Elements of your own (`add plugin`)
 
@@ -121,14 +145,16 @@ plitzi upload plugin                            # the zip pack left, onto the sp
 `pack` writes one ES module (React and the SDK kept out — the page provides them), `plugin-manifest.json` from the
 declarations with integrity hashes, and the zip the builder takes under Resources. `upload` checks the manifest,
 sends the zip to one of the space's CDNs (`--cdn`) and installs it — a plugin already there moves to the new version with
-its settings kept. `--plugin-version` sets the version the manifest carries.
+its settings kept. `--plugin-version` sets the version the manifest carries. The plugin's source — every file it
+imports, followed from its entry — is kept beside it on the space (`runtime push` does the same for a runtime), which
+is what `create --from` brings back; `plitzi pack source` writes what would be kept to a file, to look at.
 
 A self-hosted page server does not need `pack`: it compiles a plugin from its source
 (`plugins: { seatPicker: { js: 'src/plugins/SeatPicker/index.ts', action: 'compile' } }` in `createServer`).
 
 ## A space's functions (`functions`)
 
-A space's own server code — TypeScript tasks its actions run as steps, and routes under `/api/` — lives in the space;
+A space's own server code — TypeScript tasks its actions run as steps, and routes under `/fn/` — lives in the space;
 `functions/` in a project is a **working copy** of it. The contract (`defineFunctions`, `ctx`) and every rule are in
 `docs/en/functions.md` of the workspace; what matters for the CLI:
 
@@ -152,3 +178,4 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 | A flow on the plugin's event is refused, or never runs | the event is not in `declaration.ts`, or the plugin is missing from `src/plugins/declarations.ts` |
 | `upload` opens a browser | there is no session, or no space chosen — the person completes it there |
 | The upload went to the wrong space | `plitzi space` chooses another; check `whoami` first |
+| `pull` wrote nothing and named files | they changed here and on the space — set your changes aside and pull again, or `--force` |

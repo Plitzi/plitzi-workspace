@@ -84,6 +84,10 @@ describe('plitzi runtime', () => {
     expect(platform.runtime.pushed[0]).toMatchObject({ contentType: 'application/octet-stream' });
     expect(said.out).toContain('draft runtime is dddddddddddd');
     expect(process.exitCode).toBeUndefined();
+    // No TypeScript in this project to read the runtime's imports with: pushed all the same, its source not kept, why said.
+    expect(platform.sources).toEqual([]);
+    expect(said.out).toContain('Its source is not kept');
+    expect(said.out).toContain('npm install -D typescript');
   });
 
   it('says where the module should be when there is none, and sends nothing', async () => {

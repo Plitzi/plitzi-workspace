@@ -7,7 +7,9 @@ import chalk from 'chalk';
 
 import { apiFor, connectionWithSpace, fail } from './account';
 import { findProject } from './existingProject';
+import { keepSource } from './keepSource';
 import { authorizedRequest } from '../account/session';
+import { packSource } from '../pack/source';
 
 import type { AccountOptions } from './account';
 import type { Connection } from '../account/connection';
@@ -126,6 +128,15 @@ export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
     `${chalk.green('✓')} ${connection.space.name}’s draft runtime is ${reply.data.digest.slice(0, 12)} ` +
       `(${(bytes.byteLength / 1024).toFixed(0)} KB). It starts in a moment; publish the space to take it live.`
   );
+
+  // Its source beside it (docs/en/projects-from-spaces.md): what it was packed from, so the space can be taken back out as a project.
+  try {
+    const source = await packSource({ root, kind: 'runtime', name: 'runtime', entries: [entry] });
+    await keepSource(answered.value.connection, connection.space.id, source.bytes);
+  } catch (error) {
+    console.log(chalk.yellow('  Its source is not kept, so a project taken from the space gets it built only:'));
+    console.log(chalk.yellow(`  ${error instanceof Error ? error.message : String(error)}`));
+  }
 };
 
 const readRuntime = async (

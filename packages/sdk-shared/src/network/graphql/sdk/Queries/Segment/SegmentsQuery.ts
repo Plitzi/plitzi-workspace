@@ -34,6 +34,8 @@ const SegmentsQuery = /* GraphQL */ `
               parentId
               rootId
               items
+              runtime
+              loadStrategy
             }
             attributes
           }

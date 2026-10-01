@@ -7,8 +7,10 @@ import { unzipSync } from 'fflate';
 
 import { apiFor, connectionWithSpace, fail } from './account';
 import { findProject } from './existingProject';
+import { keepSource } from './keepSource';
 import { askPick, atTerminal, refuseWithoutTerminal } from './terminal';
 import { authorizedRequest } from '../account/session';
+import { sourceFileOf } from '../pack/pack';
 
 import type { AccountOptions } from './account';
 
@@ -298,7 +300,15 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
     console.log(chalk.dim(`  ${data.resource.path}`));
   }
 
-  console.log(chalk.dim('  Any builder open on the space loads it now.\n'));
+  console.log(chalk.dim('  Any builder open on the space loads it now.'));
+
+  // Packed beside the zip by `plitzi pack plugin`, when its source could be: a zip from elsewhere goes up built only.
+  const source = await fs.readFile(sourceFileOf(zipPath)).catch(() => undefined);
+  if (source) {
+    await keepSource(uploaded.value.connection, space.id, source);
+  }
+
+  console.log('');
 };
 
 export default uploadPluginCommand;
