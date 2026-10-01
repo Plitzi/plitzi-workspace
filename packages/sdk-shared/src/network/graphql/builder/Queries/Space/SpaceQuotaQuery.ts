@@ -23,11 +23,6 @@ export type TSpaceQuota = {
   /** What the account may spend across every space it owns. */
   account: TQuotaPlane;
   overLimit: boolean;
-  /**
-   * The workspace whose allowance the account plane is — given only to a member of it, who may read where it went
-   * (`/workspaces/:id/usage`). Null for somebody editing the space as a guest of another workspace.
-   */
-  workspaceId: number | null;
 };
 
 export type TSpaceQuotaQuery = { SpaceQuota: TSpaceQuota | null };
@@ -65,7 +60,6 @@ const SpaceQuotaQuery = /* GraphQL */ `
         overLimit
       }
       overLimit
-      workspaceId
     }
   }
 `;

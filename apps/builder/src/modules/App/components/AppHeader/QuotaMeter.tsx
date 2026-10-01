@@ -47,7 +47,7 @@ const figure = (entry: QuotaReading) => (
  * went — is one nobody should have to leave the editor for.
  */
 const QuotaMeter = () => {
-  const { quota, readings, enforced, worst, featured, liveElements } = useSpaceQuota();
+  const { readings, enforced, worst, featured, liveElements } = useSpaceQuota();
   const { addToast } = useToast();
   const { showModal } = useModal();
   const { webId } = use(NetworkContext);
@@ -90,17 +90,12 @@ const QuotaMeter = () => {
         <h4>Plan usage</h4>
       </Modal.Header>,
       <Modal.Body>
-        <QuotaBreakdown
-          readings={readings}
-          spaceId={webId}
-          workspaceId={quota?.workspaceId ?? null}
-          liveElements={liveElements}
-        />
+        <QuotaBreakdown readings={readings} spaceId={webId} liveElements={liveElements} />
       </Modal.Body>,
       undefined,
       { size: 'md' }
     );
-  }, [showModal, readings, webId, quota?.workspaceId, liveElements]);
+  }, [showModal, readings, webId, liveElements]);
 
   if (!featured) {
     return null;

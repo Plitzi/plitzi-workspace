@@ -85,15 +85,18 @@ manager of the builder's own, and that manager rewrote the host page's head, rem
 - Builder: sets `ownsHead: false` for its canvas. A page drawn there is in a frame, and the document head is the
   editor's. The canvas's own `HelmetProvider` is gone.
 
-## Fixed: the builder's plan usage panel reads the workspace's usage
+## Fixed: the builder's plan usage panel shows the space being edited
 
-Opening Plan usage in the builder said "The account breakdown could not be read (The server answered 404.)". The panel
-still asked `/account/usage`, which went away when accounts became workspaces. It now reads
-`/workspaces/:id/usage`, taking the workspace from `SpaceQuota`'s new `workspaceId`.
-
-- `workspaceId` is given only to a member of the workspace, the one person the endpoint answers.
-- Someone editing the space as a guest of another workspace is told the breakdown is for its members, instead of seeing
-  an error.
+- **The 404 is gone.** Opening Plan usage said "The account breakdown could not be read (The server answered 404.)".
+  The panel asked `/account/usage`, which went away when accounts became workspaces.
+- **Only this space.** The panel listed every space of the workspace. It now reads `/spaces/:spaceId/usage`, which
+  now also answers the space's own `pages` (the heaviest ten), `pagesTotal` and `periodEndsAt`. The plan's ceilings
+  stay on top. Anyone who can edit the space can read it, including a guest of another workspace.
+- **It scrolls.** A long breakdown scrolls inside the modal, where it used to overflow.
+- **`getKeyDecoded(webKey, true)` reads the token's subject.** The function, in `@plitzi/sdk-shared`, looked for
+  `data.spaceId`, which space tokens no longer carry, so every space decoded as 0. The builder asked about space 0, and
+  the builder and the SDK kept every space's persisted state under the same key on a host. Pages served without a
+  `webKey` (SSR) still decode as 0, which is what their painted-state cookie is named after.
 
 ## Dev tools hear about the render run the page stopped waiting for
 

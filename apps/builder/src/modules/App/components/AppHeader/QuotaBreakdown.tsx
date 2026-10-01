@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 
 import { elementsByRoot } from '@plitzi/sdk-schema/helpers/elementTree';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import useAccountUsage from '@pmodules/Space/hooks/useAccountUsage';
 import { format, refillsPeriodically } from '@pmodules/Space/hooks/useSpaceQuota';
+import useSpaceUsage from '@pmodules/Space/hooks/useSpaceUsage';
 
 import type { QuotaLevel, QuotaReading } from '@pmodules/Space/hooks/useSpaceQuota';
 import type { ReactNode } from 'react';
@@ -47,25 +47,21 @@ const Section = ({ title, children }: { title: string; children: ReactNode }) =>
 );
 
 /**
- * One space: what it holds or spent, how much of the account that is, and the pages behind it.
- *
- * The bar is its share of the account TOTAL, not of the plan's ceiling — the question this answers is which of these
- * is the big one, and on a plan with room to spare every bar drawn against a ceiling would be the same empty sliver.
+ * A total and the pages behind it.
  *
  * A single row of detail is dropped: a one-page space's breakdown is its own total written twice.
  */
-const Space = ({ name, value, share, rows }: { name: string; value: number; share: number; rows: DetailRow[] }) => (
+const Breakdown = ({ name, value, rows }: { name: string; value: number; rows: DetailRow[] }) => (
   <div className="flex flex-col gap-1">
     <div className="flex items-baseline justify-between gap-3 text-xs">
       <span className="font-semibold text-zinc-800 dark:text-zinc-100">{name}</span>
       <span className="font-semibold tabular-nums">{format(value)}</span>
     </div>
-    <Track percent={share} />
     {rows.length > 1 && (
       <div className="flex flex-col gap-px pt-0.5 pl-3">
         {rows.map(row => (
           <div key={row.name} className={clsx('flex justify-between gap-3 text-[11px]', MUTED)}>
-            <span>{row.name}</span>
+            <span className="truncate">{row.name}</span>
             <span className="tabular-nums">{format(row.value)}</span>
           </div>
         ))}
@@ -78,36 +74,30 @@ export type QuotaBreakdownProps = {
   readings: QuotaReading[];
   /** The space being edited, so it is answered from the store rather than from the figure the server last saved. */
   spaceId: number;
-  /** The workspace the account plane is, when the person reading is a member of it — see `useAccountUsage`. */
-  workspaceId: number | null;
   liveElements: number;
 };
 
 /**
- * The number in the header, taken apart.
+ * The number in the header, taken apart — for the space being edited.
  *
- * The meter answers "how much room is left"; this answers what follows it — where the room went. Two breakdowns,
- * because the two ceilings are spent by different things: elements sit in pages, and page views are spent by
- * visitors on paths.
+ * The meter answers "how much room is left"; this answers what follows it — where this space's room went. Two
+ * breakdowns, because the two ceilings are spent by different things: elements sit in pages, and page views are spent by
+ * visitors on paths. The account's ceilings stay at the top, since the space spends them too; how the workspace's other
+ * spaces spent them is the dashboard's to show, to its members.
  *
- * The space being edited is answered entirely from the store, so it is on screen before any request is made, and it
- * is there even for someone whose account owns none of this. The rest of the account is what the request is for.
+ * Its elements are answered from the store, so they are on screen before any request is made. Its page views are what
+ * the request is for. Scrolls on its own: a space with many pages is longer than the window.
  */
-const QuotaBreakdown = ({ readings, spaceId, workspaceId, liveElements }: QuotaBreakdownProps) => {
-  const { usage, error, loading } = useAccountUsage(workspaceId);
+const QuotaBreakdown = ({ readings, spaceId, liveElements }: QuotaBreakdownProps) => {
+  const { usage, error, loading } = useSpaceUsage(spaceId);
   const [flat] = useBuilderStore('schema.flat');
 
   // Grouped here rather than in the meter's hook: the meter needs a count on every keystroke, this needs a grouping
   // only while somebody is reading it, and the panel is mounted only then.
   const livePages = useMemo(() => elementsByRoot(flat), [flat]);
 
-  // This space is answered from the store above, so it is dropped here rather than listed twice.
-  const others = usage?.spaces.filter(space => space.id !== spaceId) ?? [];
-  // A list of zeroes is the longest way to say nothing.
-  const spent = usage?.spaces.filter(space => space.views > 0) ?? [];
-
   return (
-    <div className="flex flex-col gap-4 py-1">
+    <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto py-1 pr-1">
       <div className="flex flex-col gap-2.5">
         {readings.map(entry => (
           <Allowance key={entry.id} entry={entry} />
@@ -115,65 +105,28 @@ const QuotaBreakdown = ({ readings, spaceId, workspaceId, liveElements }: QuotaB
       </div>
 
       <Section title="This space, by page">
-        <Space
+        <Breakdown
           name="Elements"
           value={liveElements}
-          share={100}
           rows={livePages.map(page => ({ name: page.page, value: page.elements }))}
         />
       </Section>
 
-      {loading && <div className={clsx('text-[11px]', MUTED)}>Reading the rest of the account…</div>}
-
-      {workspaceId === null && (
-        <div className={clsx('text-[11px]', MUTED)}>
-          This space belongs to a workspace you are not a member of, so where the rest of its allowance went is for its
-          members to see.
-        </div>
-      )}
+      {loading && <div className={clsx('text-[11px]', MUTED)}>Reading this space’s page views…</div>}
 
       {error && (
         <div className="text-[11px] text-red-600 dark:text-red-400">
-          The account breakdown could not be read ({error}). The figures above are unaffected — they come from the space
-          you are editing.
+          This space’s page views could not be read ({error}). The figures above are unaffected.
         </div>
       )}
 
-      {others.length > 0 && (
-        <Section title="Elements in your other spaces">
-          <div className="flex flex-col gap-2">
-            {[...others]
-              .sort((a, b) => b.elements - a.elements)
-              .map(space => (
-                <Space
-                  key={space.id}
-                  name={space.name}
-                  value={space.elements}
-                  share={space.elementsShare}
-                  rows={
-                    space.multiPage ? space.elementsByPage.map(page => ({ name: page.page, value: page.elements })) : []
-                  }
-                />
-              ))}
-          </div>
-        </Section>
-      )}
-
-      {spent.length > 0 && (
+      {usage && (
         <Section title="Page views this period">
-          <div className="flex flex-col gap-2">
-            {[...spent]
-              .sort((a, b) => b.views - a.views)
-              .map(space => (
-                <Space
-                  key={space.id}
-                  name={space.name}
-                  value={space.views}
-                  share={space.viewsShare}
-                  rows={space.pages.map(page => ({ name: page.path, value: page.views }))}
-                />
-              ))}
-          </div>
+          <Breakdown
+            name="Page views"
+            value={usage.space?.views ?? usage.pagesTotal}
+            rows={usage.pages.map(page => ({ name: page.path, value: page.views }))}
+          />
         </Section>
       )}
 

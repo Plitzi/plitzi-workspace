@@ -78,7 +78,15 @@ export function getKeyDecoded<T = unknown>(webKey: string, asWebId?: boolean): T
     return 0;
   }
 
-  return asWebId ? (get(payload, 'data.spaceId', 0) as number) : payload;
+  if (!asWebId) {
+    return payload;
+  }
+
+  // A space token names its space as the subject — `sub: "12"` — the way every token the platform signs names whom it is
+  // for. Read anywhere else, every space decoded as 0 and shared one another's kept state on a host.
+  const subject = Number(get(payload, 'sub', 0));
+
+  return Number.isInteger(subject) && subject > 0 ? subject : 0;
 }
 
 export function ParamsFromURL(query?: string) {
