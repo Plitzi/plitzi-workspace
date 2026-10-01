@@ -17,7 +17,7 @@ const declaration = elementDeclaration<ReferenceAttributes>()({
     definition: {
       label: 'Reference',
       type: 'reference',
-      description: 'Renders another element of the space by id, in place.',
+      description: 'Places one of the components of the space, or renders another of its elements by id, in place.',
       items: [],
       bindings: {},
       styleSelectors: {

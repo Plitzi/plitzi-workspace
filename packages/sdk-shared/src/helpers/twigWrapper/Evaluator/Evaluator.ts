@@ -36,6 +36,22 @@ const readsOneName = (expression: Expression): boolean =>
 const isUnresolved = (expression: Expression, value: unknown): boolean =>
   value === undefined || value === null || (value === '' && readsOneName(expression));
 
+/** The source an expression reads, when it reads one name: `props` in `{{ props.title|upper }}`. */
+const rootOf = (expression: Expression): string | undefined => {
+  if (expression.type === 'path') {
+    return expression.segments[0];
+  }
+
+  return expression.type === 'filter' ? rootOf(expression.subject) : undefined;
+};
+
+/**
+ * Which empty tokens a render hands back as their own text, for a later pass that knows more: none, every one, or
+ * every one but those reading a SETTLED source — one whose value is final when the render runs, so that nothing later
+ * will fill it in. A component's `props` is one: every declared prop is in it, and an empty one is an answer.
+ */
+export type KeepEmptyTokens = boolean | { settled: ReadonlySet<string> };
+
 /**
  * The test a right-hand side names, if it is one word: `defined`, `empty`… — and `null`/`none`, which are literals
  * everywhere else but, after `is`, the test (true for a value that was never set as much as for `null`).
@@ -68,7 +84,7 @@ const NO_ARGS: readonly unknown[] = [];
 export const evaluate = (
   nodes: readonly ASTNode[],
   context: Record<string, unknown>,
-  keepEmptyTokens = false,
+  keepEmptyTokens: KeepEmptyTokens = false,
   jsonStrings = false
 ): EvalResult => {
   const ctx = new Evaluator(context, keepEmptyTokens, jsonStrings);
@@ -93,7 +109,7 @@ type LoopState = {
 
 class Evaluator {
   readonly variables: Record<string, unknown>;
-  private readonly keepEmptyTokens: boolean;
+  private readonly keepEmptyTokens: KeepEmptyTokens;
   private readonly jsonStrings: boolean;
   /** Under `jsonStrings`: whether the text written so far has left a JSON string literal open, and a `\` pending in it. */
   private inString = false;
@@ -102,13 +118,23 @@ class Evaluator {
   private continueFlag = false;
   hasSet = false;
 
-  constructor(context: Record<string, unknown>, keepEmptyTokens = false, jsonStrings = false) {
+  constructor(context: Record<string, unknown>, keepEmptyTokens: KeepEmptyTokens = false, jsonStrings = false) {
     // Shallow own-property copy for scratch (loop/`set` vars). A plain object keeps every variable read as a
     // fast monomorphic own-property access — measurably faster than an `Object.create(context)` prototype
     // chain for the common small-context template, which more than pays for the one-time copy.
     this.variables = { ...context };
     this.keepEmptyTokens = keepEmptyTokens;
     this.jsonStrings = jsonStrings;
+  }
+
+  private keeps(expression: Expression): boolean {
+    if (typeof this.keepEmptyTokens === 'boolean') {
+      return this.keepEmptyTokens;
+    }
+
+    const root = rootOf(expression);
+
+    return root === undefined || !this.keepEmptyTokens.settled.has(root);
   }
 
   evalNodes(nodes: readonly ASTNode[]): string {
@@ -164,7 +190,7 @@ class Evaluator {
   private evalVariable(node: VariableNode): string {
     const value = this.evalExpression(node.expression);
 
-    if (this.keepEmptyTokens && isUnresolved(node.expression, value)) {
+    if (this.keeps(node.expression) && isUnresolved(node.expression, value)) {
       return node.source;
     }
 
@@ -229,7 +255,7 @@ class Evaluator {
     // keepEmptyTokens: an unresolved collection (undefined binding) keeps the whole block verbatim for a later
     // pass — the same contract as an unresolved `{{ token }}`. An empty array/object is a resolved value and
     // still renders nothing (or the else body), so only `undefined` triggers preservation.
-    if (node.source !== undefined && collection === undefined) {
+    if (node.source !== undefined && collection === undefined && this.keeps(node.collection)) {
       return node.source;
     }
 

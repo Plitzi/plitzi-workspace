@@ -84,6 +84,29 @@ describe('Element pipeline (golden)', () => {
     expect(getByText('Hello World')).toBeTruthy();
   });
 
+  /**
+   * A component's props are all there when its tree renders, so one an instance left out prints nothing. Any other
+   * empty token is kept for a later pass that knows more, as it always was.
+   */
+  it('prints nothing for a prop the instance left out, and keeps a token that is still waiting', () => {
+    const templated: Element = { ...element, attributes: { content: '{{ props.blurb }}|{{ redirect }}' } };
+    const { container } = render(
+      <StoreProvider value={{ schema: { flat: { el1: templated } }, runtime: { sources: { props: { blurb: null } } } }}>
+        <PlitziServiceContext value={serviceValue}>
+          <ComponentContext
+            value={
+              { components: { current: {} }, componentDefinitions: { current: {} } } as unknown as ComponentContextValue
+            }
+          >
+            <Text internalProps={{ id: 'el1', rootId: 'root' }} />
+          </ComponentContext>
+        </PlitziServiceContext>
+      </StoreProvider>
+    );
+
+    expect(container.querySelector('[data-plitzi-el="el1"]')?.textContent).toBe('|{{ redirect }}');
+  });
+
   it('applies the element base style selector class to the root node', () => {
     const { container } = renderTree(<Text internalProps={{ id: 'el1', rootId: 'root' }} />);
 

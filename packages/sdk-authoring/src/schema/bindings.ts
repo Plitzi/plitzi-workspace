@@ -1,3 +1,5 @@
+import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
+
 import { didYouMean } from './suggest';
 
 import type { BindingSpec, BindingsSpec } from './types';
@@ -21,7 +23,7 @@ import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
 export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state', 'host', 'theme', 'computed'];
 
 /** What an element inside a component can read besides its own tree: the globals, and what its instance hands in. */
-export const COMPONENT_SOURCES = [...GLOBAL_SOURCES, 'props'];
+export const COMPONENT_SOURCES = [...GLOBAL_SOURCES, COMPONENT_PROPS_SOURCE];
 
 /** What an element publishes: the source prefix its type registers under, by the id it was given. */
 export type SourceIndex = Map<string, string>;
@@ -53,7 +55,7 @@ export const resolveSource = (
 
     const prefix = index.get(head);
     if (!prefix) {
-      const inComponent = globals.includes('props');
+      const inComponent = globals.includes(COMPONENT_PROPS_SOURCE);
       throw new Error(
         `${where} binds to "${source}", but nothing ${inComponent ? 'in this component' : 'in this space'} answers to "${head}"${didYouMean(head, [...index.keys(), ...globals]) || '.'} A source names an element by its id, or one of the globals: ${globals.join(', ')}.${inComponent ? ' A component is closed: what it needs from where it is placed comes in as a prop.' : ''}`
       );

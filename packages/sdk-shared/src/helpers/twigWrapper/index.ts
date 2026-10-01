@@ -6,5 +6,6 @@ export { inspectTemplate } from './inspectTemplate';
 export { templatePaths, templateRootNames } from './templateRoots';
 export { filters } from './filters/filters';
 export type { ASTNode, Expression } from './AST';
+export type { KeepEmptyTokens } from './Evaluator';
 export type { TemplateInspection } from './inspectTemplate';
 export type { TwigFilter } from './filters/filters';

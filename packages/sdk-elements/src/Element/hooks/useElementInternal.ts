@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
 import { processTwig, hasValidToken, templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';
@@ -14,6 +15,7 @@ import parseStyleSelectors from '../helpers/parseStyleSelectors';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { Element, InternalPropsSTG1 } from '@plitzi/sdk-shared';
+import type { KeepEmptyTokens } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import type { ReactNode } from 'react';
 
 type TwigValues = Record<string, unknown>;
@@ -31,6 +33,13 @@ type TwigValues = Record<string, unknown>;
  * visitor's comment, a product name — and data that happens to contain `{{ auth.accessToken }}` must print those
  * characters, not evaluate them.
  */
+/**
+ * An empty token is kept for a later pass — `{{ redirect }}` before the query is read — except one reading a
+ * component's props, which are all there when the tree renders: a prop the instance left out prints nothing, not its
+ * own template.
+ */
+const KEEP_EMPTY_TOKENS: KeepEmptyTokens = { settled: new Set([COMPONENT_PROPS_SOURCE]) };
+
 const interpolateAttributes = (
   attributes: Element['attributes'],
   templated: string[],
@@ -59,7 +68,7 @@ const interpolateAttributes = (
   };
   const interpolated: Element['attributes'] = { ...attributes };
   for (const key of templated) {
-    interpolated[key] = processTwig(attributes[key] as string, data, true);
+    interpolated[key] = processTwig(attributes[key] as string, data, KEEP_EMPTY_TOKENS);
   }
 
   return interpolated;

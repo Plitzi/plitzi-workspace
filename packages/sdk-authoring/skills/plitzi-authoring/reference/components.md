@@ -41,6 +41,8 @@ pages: [{ name: 'Shop', slug: 'shop', body: [
 - **Props are attributes of the instance**, declared like a step's params (`type`, `description`, `required`,
   `default`, `options`) and read inside as `{{ props.<name> }}` — in a binding's `source`, a template or an attribute.
   A prop name is letters, digits and `_`, never one an instance already has (`referenceId`, `slot`, `className`…).
+  A prop an instance leaves out, with no `default`, is `null`: `{{ props.blurb }}` prints nothing and
+  `visible: 'props.featured'` keeps the element hidden.
 - **A prop can be bound** like any attribute: `component('product-card', { bind: [{ to: 'title', source: 'list_products.item.name' }] })`.
   That is how a list row hands its record to a card — bind the record, not each field, if the card reads several:
   a `json` prop `item`, read as `{{ props.item.name }}`.

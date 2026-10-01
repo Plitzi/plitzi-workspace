@@ -1,4 +1,5 @@
 import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import { GLOBAL_SOURCES } from '../bindings';
 import { didYouMean } from '../suggest';
@@ -27,7 +28,7 @@ const shorten = (template: string): string => (template.length > 80 ? `${templat
  */
 export const checkPropsRead = (ctx: LintContext, path: string, where: string, id?: string): void => {
   const [head, name] = path.split('.');
-  if (head !== 'props') {
+  if (head !== COMPONENT_PROPS_SOURCE) {
     return;
   }
 
@@ -83,7 +84,7 @@ const checkName = (
   scope: ReadonlySet<string>,
   id?: string
 ): void => {
-  if (GLOBAL_SOURCES.includes(name) || ctx.variables.has(name) || (name === 'props' && ctx.component)) {
+  if (GLOBAL_SOURCES.includes(name) || ctx.variables.has(name) || (name === COMPONENT_PROPS_SOURCE && ctx.component)) {
     return;
   }
 

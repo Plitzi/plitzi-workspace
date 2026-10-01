@@ -28,6 +28,10 @@
   - A component declares props (`type`, `description`, `required`, `default`, `options`). An instance hands them in
     as its own attributes, so templates and bindings reach them. Inside, they are read as `{{ props.<name> }}`.
   - Slots are elements an instance fills; each child names its slot in `attributes.slot`.
+- **A prop an instance leaves out prints nothing.** It is its `default`, or `null`. `props` is a settled source:
+  - `processTwig` takes `{ settled }` in place of `keepEmptyTokens: true`.
+  - Every other empty token is still kept for a later pass.
+  - `COMPONENT_PROPS_SOURCE` names the source.
 - **Closed scope:** inside, a component reads only its props and the globals. The validator, `lintSpace` and
   `authorSpace` each refuse a read of the page around an instance. Components nest, and a cycle is refused.
 - **Where to use them:**

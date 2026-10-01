@@ -5,6 +5,7 @@ import { useId, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -83,7 +84,13 @@ const ComponentInstance = ({ ref, className, componentId, previewMode }: Compone
   // A key read off the document: the instance may name a component that has since been removed.
   const known = Object.hasOwn(components, componentId) ? components[componentId] : undefined;
   const scope = useMemo(
-    () => (known ? { schema: { flat: known.flat }, runtime: { sources: { props: propsOf(known, attributes) } } } : {}),
+    () =>
+      known
+        ? {
+            schema: { flat: known.flat },
+            runtime: { sources: { [COMPONENT_PROPS_SOURCE]: propsOf(known, attributes) } }
+          }
+        : {},
     [known, attributes]
   );
   const layout = useMemo<ElementLayout>(

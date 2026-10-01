@@ -1,2 +1,2 @@
 export { evaluate, evaluateExpression } from './Evaluator';
-export type { EvalResult } from './Evaluator';
+export type { EvalResult, KeepEmptyTokens } from './Evaluator';

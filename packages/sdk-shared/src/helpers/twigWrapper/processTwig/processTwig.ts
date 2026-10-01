@@ -3,11 +3,12 @@ import { finalizeRaw, flattenContext, renderSimpleTokens } from './helpers';
 import { getNodes, resolveTokens } from '../TemplateCache';
 
 import type { Expression } from '../AST';
+import type { KeepEmptyTokens } from '../Evaluator';
 
 export const processTwig = (
   template: string,
   variables: Record<string, unknown> = {},
-  keepEmptyTokens = false,
+  keepEmptyTokens: KeepEmptyTokens = false,
   asRaw = false
 ): unknown => {
   if (typeof template !== 'string') {
@@ -26,12 +27,12 @@ export const processTwig = (
     }
 
     // Fast path: no tags and every token a simple/dotted path — render straight from the cached tokens.
-    if (!keepEmptyTokens && !entry.hasTags && entry.allSimpleOrDotted) {
+    if (keepEmptyTokens === false && !entry.hasTags && entry.allSimpleOrDotted) {
       const output = renderSimpleTokens(entry, context);
       return asRaw ? finalizeRaw(output) : output;
     }
 
-    const nodes = getNodes(entry, keepEmptyTokens);
+    const nodes = getNodes(entry, keepEmptyTokens !== false);
     if (!nodes) {
       return template;
     }
@@ -42,7 +43,7 @@ export const processTwig = (
       Object.assign(variables, updatedContext);
     }
 
-    if (keepEmptyTokens && output === template) {
+    if (keepEmptyTokens !== false && output === template) {
       return template;
     }
 

@@ -32,6 +32,19 @@ describe('AST processTwig — keepEmptyTokens', () => {
     expect(processTwig('{{ redirect|upper }}', { redirect: '' }, true)).toBe('{{ redirect|upper }}');
     expect(processTwig("{{ on ? missing : 'x' }}", { on: true }, true)).toBe("{{ on ? missing : 'x' }}");
   });
+
+  it('prints nothing for an empty token of a settled source, and keeps the others', () => {
+    const keep = { settled: new Set(['props']) };
+
+    expect(processTwig('{{ props.blurb }}', { props: { blurb: null } }, keep)).toBe('');
+    expect(processTwig('{{ props.blurb|upper }}', { props: { blurb: '' } }, keep)).toBe('');
+    expect(processTwig('{{ props.name }} {{ redirect }}', { props: { name: 'Lamp' } }, keep)).toBe(
+      'Lamp {{ redirect }}'
+    );
+    expect(processTwig('{% for tag in props.tags %}{{ tag }}{% endfor %}', { props: { tags: undefined } }, keep)).toBe(
+      ''
+    );
+  });
 });
 
 describe('AST processTwig — asRaw', () => {

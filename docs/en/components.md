@@ -70,7 +70,10 @@ with no mechanism of their own.
   so the same ids placed twice keep their own element state;
 - that scope's value: `schema.flat` = the component's tree (deep-merged over the page's, which is safe because ids are
   unique) and `runtime.sources.props` = every declared prop, from the instance's attribute, else the default, else
-  `null`. Every declared prop is always present, so an inner instance never reads an outer one's prop of the same name;
+  `null`. Every declared prop is always present, so an inner instance never reads an outer one's prop of the same name.
+  For the same reason `props` is a SETTLED source (`COMPONENT_PROPS_SOURCE`): attribute templates keep an empty token
+  for a later pass (`{{ redirect }}` before the query is read), but one reading `props` prints nothing — a prop an
+  instance left out is an answer, not a wait;
 - `LayoutBody`, with one body per slot. `ElementLayout.slots` is the list the slot renderer reads — a layout has one
   slot, a component the ones it declares — so layouts and components fill slots through the same code. Each child of
   the instance names its slot in `attributes.slot`; with one declared slot it may leave it out.

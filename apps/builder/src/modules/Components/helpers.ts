@@ -1,4 +1,4 @@
-import { isInstance } from '@plitzi/sdk-schema/helpers/components';
+import { instancesOf } from '@plitzi/sdk-schema/helpers/components';
 import { slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { makeIdMinter } from '@pmodules/Elements/ElementHelper';
 
@@ -45,17 +45,10 @@ export const componentLabel = (component: SpaceComponent): string => component.l
  */
 export const instanceCounts = (schema: Pick<Schema, 'flat' | 'components'>): Record<string, number> => {
   const owned = new Set(Object.values(schema.components).flatMap(component => Object.keys(component.flat)));
-  const pages = Object.values(schema.flat).filter(element => !owned.has(element.id));
-  const counts: Record<string, number> = {};
-  for (const element of [
-    ...pages,
-    ...Object.values(schema.components).flatMap(component => Object.values(component.flat))
-  ]) {
-    const { referenceId } = element.attributes;
-    if (isInstance(element) && typeof referenceId === 'string') {
-      counts[referenceId] = (counts[referenceId] ?? 0) + 1;
-    }
-  }
+  const document = {
+    flat: Object.fromEntries(Object.entries(schema.flat).filter(([id]) => !owned.has(id))),
+    components: schema.components
+  };
 
-  return counts;
+  return Object.fromEntries(Object.keys(schema.components).map(id => [id, instancesOf(document, id).length]));
 };
