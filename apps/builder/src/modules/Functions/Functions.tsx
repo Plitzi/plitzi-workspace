@@ -256,6 +256,30 @@ const Functions = () => {
     }
   }, [install, showResult]);
 
+  // Back to what was last saved, every file — or to nothing, for functions never saved.
+  const handleDiscard = useCallback(async () => {
+    const count = modified.length;
+    const confirmed = await showDialog(
+      <Modal.Header>
+        <h4>Discard changes</h4>
+      </Modal.Header>,
+      <Modal.Body>
+        <div className="px-3 py-2">
+          <h4>
+            {`The unsaved changes in ${String(count)} ${count === 1 ? 'file' : 'files'} are lost, and the code goes back to what was last saved. Discard them?`}
+          </h4>
+        </div>
+      </Modal.Body>
+    );
+    if (confirmed) {
+      setFiles(saved);
+      setSelectedFile(current => (Object.hasOwn(saved, current) ? current : 'index.ts'));
+      setTarget(undefined);
+      setAwaited('');
+      showResult(undefined);
+    }
+  }, [modified.length, saved, showDialog, showResult]);
+
   const handleRemoveAll = useCallback(async () => {
     const confirmed = await showDialog(
       <Modal.Header>
@@ -283,8 +307,10 @@ const Functions = () => {
           state={saveState(modified.length, problems.length, Boolean(manifest))}
           canSave={canSave}
           isSaving={isSaving}
+          canDiscard={!isSaving && modified.length > 0}
           canRemove={Boolean(manifest)}
           onSave={handleSave}
+          onDiscard={handleDiscard}
           onRemove={handleRemoveAll}
         />
         {error && <Alert intent="error">{error}</Alert>}

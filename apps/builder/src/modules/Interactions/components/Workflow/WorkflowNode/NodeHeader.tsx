@@ -6,9 +6,11 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import clsx from 'clsx';
 import { useCallback, useMemo, use } from 'react';
 
+import { nodeOptionGroups, nodeOptionValue, selectedNodeOption } from '../helpers/nodeOptions';
 import { WARNING_ICON, getNodeWarnings, worstLevel } from '../helpers/nodeWarnings';
 import WorkflowContext from '../WorkflowContext';
 
+import type { NodeOption } from '../helpers/nodeOptions';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { ElementInteraction, InteractionCallback, InteractionCallbackType } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
@@ -125,59 +127,35 @@ const NodeHeader = ({
     }
   }, [id]);
 
-  const optionsMemo = useMemo<Option[]>(() => {
-    if (!nodeDefinitions) {
-      return [];
-    }
+  const triggerOptions = useMemo<NodeOption[]>(
+    () =>
+      type === 'trigger'
+        ? (nodeDefinitions ?? [])
+            .filter(definition => definition.type === 'trigger')
+            .map(definition => ({
+              value: nodeOptionValue(definition),
+              label: definition.title,
+              type: definition.type,
+              elementId: definition.elementId
+            }))
+        : [],
+    [nodeDefinitions, type]
+  );
 
-    if (type === 'trigger') {
-      return Object.values(nodeDefinitions)
-        .filter(node => node.type === type)
-        .map(nodeDefinition => {
-          const { title, action, type, elementId } = nodeDefinition;
+  const groups = useMemo(
+    () => (type === 'trigger' ? [] : nodeOptionGroups(nodeDefinitions ?? [])),
+    [nodeDefinitions, type]
+  );
 
-          return { value: `${elementId ?? ''}_${action}`, label: title, type, elementId };
-        });
-    }
-
-    return Object.values(nodeDefinitions)
-      .filter(node => node.type !== 'trigger')
-      .reduce<(Option & { type: string; options: Option[] })[]>((acum, nodeDef) => {
-        const { title, elementId, action, type } = nodeDef;
-        const label = title;
-        // A utility definition has no elementId; encode it as an empty segment, never the text "undefined".
-        const value = `${elementId ?? ''}_${action}`;
-        const group = acum.find(node => node.type === nodeDef.type);
-        if (group) {
-          group.options.push({ value, label, type, elementId });
-
-          return acum;
-        }
-
-        return [...acum, { type, label: type, options: [{ value, label, type, elementId }] }];
-      }, []);
-  }, [nodeDefinitions, type]);
-
-  const optionValue = useMemo<Exclude<Option, OptionGroup> | undefined>(() => {
-    if (type === 'trigger') {
-      return (optionsMemo as Exclude<Option, OptionGroup>[]).find(
-        option => option.value === `${elementId}_${action}` && (option.elementId ?? '') === elementId
-      );
-    }
-
-    const group = (optionsMemo as Exclude<Option, OptionGroup>[]).find(group => group.type === type);
-    if (!group) {
-      return undefined;
-    }
-
-    if (type === 'callback') {
-      return (group.options as Exclude<Option, OptionGroup>[]).find(
-        option => option.value === `${elementId}_${action}` && (option.elementId ?? '') === elementId
-      );
-    }
-
-    return (group.options as Exclude<Option, OptionGroup>[]).find(option => option.value === `${elementId}_${action}`);
-  }, [optionsMemo, elementId, action, type]);
+  const optionValue = useMemo(
+    () =>
+      type === 'trigger'
+        ? triggerOptions.find(
+            option => option.value === `${elementId}_${action}` && (option.elementId ?? '') === elementId
+          )
+        : selectedNodeOption(groups, type, elementId, action),
+    [action, elementId, groups, triggerOptions, type]
+  );
 
   return (
     <div className={clsx('flex gap-2 p-2', className)}>
@@ -237,7 +215,7 @@ const NodeHeader = ({
           placeholder={`Select a ${type}`}
           value={optionValue}
           onChange={handleChangeAction}
-          options={optionsMemo}
+          options={type === 'trigger' ? triggerOptions : groups}
           size="xs"
         />
       </div>

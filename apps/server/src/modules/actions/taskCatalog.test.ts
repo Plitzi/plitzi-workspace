@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { createActionsModule } from './index';
 import { describeCatalog, describeTask } from './taskCatalog';
+import { createSpaceRegistries } from '../functions/space';
 import { tasksOf } from '../functions/testing/tasksOf';
 
 import type { FunctionTask } from '../functions/contract';
+import type { FunctionRunner } from '../functions/protocol';
 
 const registry = () => createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) } }).registry;
 
@@ -40,5 +42,22 @@ describe('task catalog', () => {
     const described = describeTask(registered as NonNullable<typeof registered>);
 
     expect('run' in described).toBe(false);
+  });
+
+  /** The editor lists them apart: the platform's steps, and the ones the space wrote. */
+  it('says whose each task is: the deployment’s, or the space’s own functions’', () => {
+    const runner: FunctionRunner = { describe: () => Promise.resolve({}), invoke: () => Promise.resolve(null) };
+    const spaceRegistry = createSpaceRegistries(registry(), { runner }).registryFor({
+      bundle: { id: 'b1', load: () => Promise.resolve('') },
+      manifest: {
+        hosts: [],
+        routes: [],
+        tasks: [{ namespace: 'seismic', action: 'feed', title: 'Seismic Feed', params: {} }]
+      }
+    });
+    const catalog = describeCatalog(spaceRegistry);
+
+    expect(catalog.find(task => task.name === 'http.request')?.origin).toBe('deployment');
+    expect(catalog.find(task => task.name === 'seismic.feed')?.origin).toBe('space');
   });
 });

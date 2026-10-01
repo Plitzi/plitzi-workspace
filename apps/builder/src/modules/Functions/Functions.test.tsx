@@ -20,6 +20,14 @@ vi.mock('./useFunctions', () => ({
   default: () => ({ draft, error: '', isLoading: false, save, install, remove, tryTask })
 }));
 
+// What the person answers a confirmation with.
+const dialog = vi.hoisted(() => ({ answer: true }));
+
+vi.mock('@plitzi/plitzi-ui/Modal', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/plitzi-ui/Modal')>()),
+  useModal: () => ({ showModal: () => undefined, showDialog: () => Promise.resolve(dialog.answer) })
+}));
+
 // The language service as the panel sees it: what the code declares, and the edits it writes. Its own reading and
 // writing of the code are `editor/source`'s, tested there.
 const typescript = vi.hoisted(() => ({
@@ -49,6 +57,7 @@ beforeEach(() => {
   tryTask.mockReset();
   install.mockReset();
   draft = { files: {}, version: 'v0', manifest: null, offer: null };
+  dialog.answer = true;
   typescript.ready = false;
   typescript.source = undefined;
   typescript.addTask.mockReset();
@@ -236,6 +245,43 @@ describe('the Functions panel', () => {
     fireEvent.click(screen.getByText('Use default'));
     await waitFor(() => expect(typescript.setTaskLimits).toHaveBeenLastCalledWith(at, { wallMs: 20000 }));
     expect(screen.getByText('Unsaved · 1 file')).toBeDefined();
+  });
+
+  it('discards every unsaved change, back to what was last saved', async () => {
+    draft = {
+      files: { 'index.ts': 'export default {};' },
+      version: 'v1',
+      manifest: { hosts: [], tasks: [], routes: [] },
+      offer: null
+    };
+    renderPanel();
+
+    fireEvent.click(screen.getByTitle('New file'));
+    const name = screen.getByPlaceholderText('lib/feed.ts');
+    fireEvent.change(name, { target: { value: 'lib/feed.ts' } });
+    fireEvent.keyDown(name, { key: 'Enter' });
+    expect(screen.getByText('Unsaved · 1 file')).toBeDefined();
+
+    // Kept when the person thinks better of it.
+    dialog.answer = false;
+    fireEvent.click(screen.getByText('Discard'));
+    await waitFor(() => expect(filesList().getByText('feed.ts')).toBeDefined());
+
+    dialog.answer = true;
+    fireEvent.click(screen.getByText('Discard'));
+    await waitFor(() => expect(filesList().queryByText('feed.ts')).toBeNull());
+    expect(screen.getByText('Saved')).toBeDefined();
+    expect(screen.queryByText('Discard')).toBeNull();
+  });
+
+  it('discards functions never saved back to where the space started', async () => {
+    renderPanel();
+
+    fireEvent.click(screen.getByText('Start with an example'));
+    fireEvent.click(await screen.findByText('Discard'));
+
+    await waitFor(() => expect(screen.getByText('Start with an example')).toBeDefined());
+    expect(save).not.toHaveBeenCalled();
   });
 
   it('offers the functions the space’s template brought, and installs them', async () => {

@@ -1,4 +1,4 @@
-import type { ActionTaskRegistry, RegisteredTask } from './types';
+import type { ActionTaskOrigin, ActionTaskRegistry, RegisteredTask } from './types';
 
 /**
  * A task as an editor renders it.
@@ -19,6 +19,8 @@ export type ActionTaskDescriptor = {
   action: string;
   title: string;
   description?: string;
+  /** The deployment's step, or one of the space's own functions. */
+  origin: ActionTaskOrigin;
   /** Serializable params only — see above. */
   params: Record<string, unknown>;
 };
@@ -53,6 +55,7 @@ export const describeTask = (task: RegisteredTask): ActionTaskDescriptor => ({
   action: task.action,
   title: task.title,
   description: task.description,
+  origin: task.origin,
   params: jsonSafe(task.params) as Record<string, unknown>
 });
 

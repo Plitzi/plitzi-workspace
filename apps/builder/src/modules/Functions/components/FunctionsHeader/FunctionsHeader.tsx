@@ -9,14 +9,26 @@ export type FunctionsHeaderProps = {
   state?: SaveState;
   canSave: boolean;
   isSaving: boolean;
+  /** Whether there are changes to discard. */
+  canDiscard: boolean;
   /** Whether there is a saved draft to remove. */
   canRemove: boolean;
   onSave: () => void;
+  onDiscard: () => void;
   onRemove: () => void;
 };
 
 /** The panel's name and what it is for, where the files stand, and saving them — the one thing done most. */
-const FunctionsHeader = ({ state, canSave, isSaving, canRemove, onSave, onRemove }: FunctionsHeaderProps) => (
+const FunctionsHeader = ({
+  state,
+  canSave,
+  isSaving,
+  canDiscard,
+  canRemove,
+  onSave,
+  onDiscard,
+  onRemove
+}: FunctionsHeaderProps) => (
   <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-4 dark:border-zinc-800">
     <div className="flex min-w-0 items-center gap-3">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
@@ -50,6 +62,18 @@ const FunctionsHeader = ({ state, canSave, isSaving, canRemove, onSave, onRemove
           />
           {state.label}
         </span>
+      )}
+      {canDiscard && (
+        <Button
+          size="sm"
+          intent="secondary"
+          iconPlacement="before"
+          title="Discard every unsaved change and go back to what was last saved"
+          onClick={onDiscard}
+        >
+          <i className="fa-solid fa-rotate-left" />
+          Discard
+        </Button>
       )}
       {canRemove && (
         <Button size="sm" intent="secondary" title="Remove the space’s functions" onClick={onRemove}>

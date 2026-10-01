@@ -90,6 +90,7 @@ export type {
   ActionsConfig,
   ActionTask,
   ActionTaskContext,
+  ActionTaskOrigin,
   ActionTaskRegistry,
   RegisteredTask,
   ResolvedConnector

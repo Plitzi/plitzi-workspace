@@ -108,7 +108,7 @@ const composeRegistry = (
   tasks.forEach(task => {
     const name = taskName(task);
     if (!base.get(name)) {
-      own.set(name, { ...task, name });
+      own.set(name, { ...task, name, origin: 'space' });
     }
   });
 

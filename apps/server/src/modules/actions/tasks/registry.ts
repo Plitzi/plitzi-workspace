@@ -56,7 +56,7 @@ export const createTaskRegistry = (
   // `db.query` is only real when this deployment registered an engine to run it against. Offering it otherwise would
   // put a step in the editor whose only possible outcome is "this server has no driver".
   const shipped = db ? [...builtinTasks, ...dbTasks] : builtinTasks;
-  shipped.forEach(task => tasks.set(taskName(task), { ...task, name: taskName(task) }));
+  shipped.forEach(task => tasks.set(taskName(task), { ...task, name: taskName(task), origin: 'deployment' }));
 
   nativeTasks(functions).forEach(task => {
     const problem = taskNameProblem(task);
@@ -69,7 +69,7 @@ export const createTaskRegistry = (
       throw new Error(`[Actions] Task "${name}" is registered twice`);
     }
 
-    tasks.set(name, { ...task, name });
+    tasks.set(name, { ...task, name, origin: 'deployment' });
   });
 
   return {

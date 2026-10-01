@@ -100,6 +100,11 @@ export type InteractionCallback<T extends Record<string, unknown> = Record<strin
   action: string;
   title: string;
   type: InteractionCallbackType;
+  /**
+   * The heading the editor's picker lists it under, when that is not its type's: a space's own functions are tasks to
+   * the run, and a category of their own to whoever picks a step.
+   */
+  group?: string;
   enabled?: boolean;
   params:
     | Record<keyof T, InteractionCallbackParam<T>>

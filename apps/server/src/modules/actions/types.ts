@@ -247,7 +247,13 @@ export type ActionTask<T extends Record<string, unknown> = Record<string, unknow
 };
 
 /** A task with its addressable name resolved, as the registry stores and lists it. */
-export type RegisteredTask = ActionTask<Record<string, unknown>> & { name: string };
+/**
+ * Whose task it is: the deployment's — shipped with the server, or its own native functions — or the space's, from the
+ * functions it saved. The run treats both alike; an editor lists them apart, as the platform's steps and the space's own.
+ */
+export type ActionTaskOrigin = 'deployment' | 'space';
+
+export type RegisteredTask = ActionTask<Record<string, unknown>> & { name: string; origin: ActionTaskOrigin };
 
 export type ActionTaskRegistry = {
   get: (name: string) => RegisteredTask | undefined;

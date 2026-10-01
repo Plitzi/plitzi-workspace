@@ -53,13 +53,25 @@ place a function is declared.
 - **Test:** fills a task's params the way its step does, from their defaults: a select, a switch or text. JSON stays a
   toggle away. With unsaved changes, the button reads "Save & run": it saves, then runs. If the save fails, it says why.
 - **Header:** shows Saved, Unsaved (and in how many files) or the number of problems the last save found. ⌘S saves.
-  Removing the functions is a quiet button beside Save.
+  **Discard** asks first, then puts every file back to what was last saved, or back to nothing for functions never
+  saved. Removing the functions is a quiet button beside Save.
 - **Problems:** clicking one opens its file at its line.
 - **Editor:** each file has its own editor and undo history. Opening another file no longer marks the one you left as
   changed. Before this, it could also write the newly opened file's text into the one you left. The cause was in
   `@plitzi/plitzi-ui`'s CodeMirror, fixed in 1.6.25, which every package now depends on. That release also sets code
   editors (several lines) in a monospaced face again. Long lines scroll inside the editor, and the line numbers stay
   in place.
+
+## A space's own functions are their own category of steps
+
+In the action editor's step picker, the space's own functions are listed under **Functions**, apart from the
+platform's **Tasks**. The other headings now read Callbacks, Global callbacks and Utilities. The saved step is still a
+`task` node.
+
+- `@plitzi/sdk-server`: every registered task has an `origin`, `'deployment'` (shipped with the server or a native
+  function) or `'space'` (from the space's functions). `describeCatalog`, `/_action/catalog` and the builder's
+  `SpaceActionTasks` carry it (`ActionTaskDescriptor.origin`).
+- `@plitzi/sdk-shared`: an `InteractionCallback` may name the `group` the picker lists it under.
 
 ## Dev tools hear about the render run the page stopped waiting for
 
