@@ -164,10 +164,10 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | [authoring-errors.md](reference/authoring-errors.md) | What `authorSpace` refuses or warns about, and what to write instead |
 | [templates.md](reference/templates.md) | Any `{{ … }}` or `{% … %}`: where it runs, naming sources, filters, tests, dates |
 | [flows.md](reference/flows.md) | Clicks, submits, page loads, server actions, realtime channels, modals, state |
-| [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, channels, registering |
+| [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, channels, registering, behaving in the builder |
 | [structure.md](reference/structure.md) | A space bigger than one screen: files, helpers, naming, keeping it short |
 | [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame, shortcuts, counting renders |
 | [performance.md](reference/performance.md) | A page with many elements, a busy flow, something that feels slow: what renders, what it costs, how to measure it |
-| [templates-and-export.md](reference/templates-and-export.md) | Publishing a template; turning an exported JSON into code |
+| [templates-and-export.md](reference/templates-and-export.md) | Publishing a template; turning an exported JSON — or a server action — into code |
 | [accessibility.md](reference/accessibility.md) | Icon buttons, fields, images, clickable cards, toggles, headings, landmarks, a canvas — anything a screen reader or a browser agent has to use |
 | [review-checklist.md](reference/review-checklist.md) | Before you say it is done |

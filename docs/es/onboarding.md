@@ -44,7 +44,7 @@ apps/
   sdk/       @plitzi/plitzi-sdk       el runtime que renderiza un space
   server/    @plitzi/sdk-server       servidor de páginas: SSR, RSC, plugins, conectores
   mcp/       @plitzi/sdk-mcp          la superficie de IA, construida sobre apps/server
-  cli/       @plitzi/cli              crea un proyecto o un paquete de plugin; añade elementos a un proyecto
+  cli/       @plitzi/cli              crea un proyecto o un paquete de plugin; sube plugins, functions y runtimes; saca un space (create --from, pull)
   desktop/   @plitzi/plitzi-desktop   el cliente de escritorio
 packages/
   sdk-*                               librerías compartidas, consumidas por las apps y entre sí

@@ -131,10 +131,21 @@ The global `fetch` refuses: the network is reached through `ctx.fetch`, which kn
 One source — the space's `functions/` files — and three editors of it. They never disagree silently: a save is
 refused when the space's copy changed since the editor read it.
 
-**In the builder** — the **Functions** panel: the files, an editor with TypeScript that knows `ctx` (completion,
-hover, errors as you type), **Save** (built and checked on the platform; what is wrong comes back under the file and
-line), **Try**, and what the saved code declares (its steps, routes and hosts). A space with none starts from one file
-and one task already written.
+**In the builder** — the **Functions** panel, built around the code: the tasks, routes and files on the left, the editor
+in the middle (TypeScript that knows `ctx`: completion, hover, errors as you type), the selected task on the right.
+
+- The list follows `defineFunctions` **as it is typed**, imported tasks included; a task written and not saved says so.
+  Clicking a task or route opens its file at its line, and moving the cursor into a task selects it.
+- **+** asks for a namespace, action and title and writes the task into `defineFunctions`, with a `run` to start from.
+- A slider sets a task's CPU per run, 100 ms to 1 s (`limits: { cpuMs }` written into the task; **Use default** takes it
+  out). `DEFAULT_FUNCTION_TIME_LIMITS` in `@plitzi/sdk-shared/actions` is the default both the panel and the server use.
+- **Test** fills a task's params the way its step does; with unsaved changes it reads **Save & run**.
+- The header says Saved, Unsaved (in how many files) or how many problems the last save found. **Save** (⌘S) builds and
+  checks on the platform — a problem opens its file at its line — and **Discard** puts every file back to what was last
+  saved.
+
+A space with none starts from one file and one task already written. In an action's step picker the space's functions
+are listed under **Functions**, apart from the platform's **Tasks** (the catalog's `origin`: `space` or `deployment`).
 
 **In a project**, with the CLI:
 

@@ -79,6 +79,11 @@ plitzi runtime start                 # started again — one stopped by hand, or
 - **Publishing is deploying.** A push is the draft's runtime (`main`); publishing the space copies its code into the
   revision, and the published site's runtime restarts on it — the pages, their flows and the code they call ship
   together.
+- **Its source goes up with it.** `plitzi runtime push` also keeps the source it was packed from — every file of the
+  project the module reaches, followed from its entry, and the packages they import — in the same private bucket, and
+  a publish freezes it with the code. That is what `plitzi create --from` brings back as `src/runtime.ts` and the files
+  it imports, run in the project's own process with `serveRuntime`: see [A space as a project](./projects-from-spaces.md).
+  A source that cannot be kept (a credential in it, a file outside the project) never undoes the push; the CLI says why.
 - **The builder shows it.** Runtime, in the left sidebar: each environment's code, whether it runs, why not, its tasks
   and endpoints — and the variables, by name. A value is written and never read back.
 - **It is part of the plans that carry `spaceRuntimes`.** A push on another plan is refused with the reason.

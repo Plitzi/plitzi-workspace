@@ -41,7 +41,7 @@ it is complete.
 | Category | App | Sub-categories |
 |---|---|---|
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` |
-| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth` |
+| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions`, `workers`, `plugins`, `fromSpace` |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` |
 | `builder` | `@plitzi/plitzi-builder` | `boot` |
 | `cross` | more than one app | `parity`, `agent`, `auth` |
@@ -52,6 +52,14 @@ Both levels are addressable: `yarn e2e --project=server` for the app, `yarn e2e 
 Everything but `examples` runs against **surfaces the suite owns**: a browser harness that renders any schema, a
 page server with pages, RSC, preview and MCP all on at once, and a second one with accounts and sessions. The examples are not those surfaces — they are written for a person, one wiring decision each, and
 bending one to make a test possible breaks what it exists to show.
+
+**The CLI's projects are run, not only written.** `plugins` builds a package `plitzi create --plugin` wrote and loads it
+from its manifest; `fromSpace` answers an export from a small platform of its own, runs the built CLI's `create --from`
+inside the workspace — so the project resolves the workspace's packages, never npm's — and serves the space from the
+project it wrote: its plugin rendered on the server, its runtime's route, its action running its function, its files.
+The same cycle against the real platform — API, databases, buckets, upload and push, snapshots, `pull` — is
+`plitzi-sdk-server`'s `test/e2e/flows/spaces/space-as-project.e2e.test.ts` (see
+[A space as a project](./projects-from-spaces.md#where-it-is-tested)).
 
 **The `examples` category has its own job.** An example a new user is told to run is a promise, and a promise
 nothing checks is a promise that breaks. Each one has a spec asserting what its own README claims, so a change

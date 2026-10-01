@@ -134,6 +134,18 @@ A plugin says what HAPPENED through its events (`onPick`, with the seat in the p
 decide what that means — write `state`, open a modal, call a server action. Prefer that to writing `state` from inside
 the component: the flow is visible in the space, the builder shows it, and the same act can come from a button too.
 
+## Behaving in the builder
+
+The builder draws the element on its canvas while somebody edits the page: a click selects it, a drag moves it, a key
+belongs to the editor.
+
+- **Outside preview, do nothing on your own.** `usePlitziServiceContext().settings.previewMode` is `false` while the
+  page is edited. Declared interactions are already held back then; your own click handlers, timers, global listeners,
+  permission prompts and map gestures are not — gate them on `previewMode`, and still render something to select.
+- **Never the global `window` or `document`.** The canvas is a frame of its own and the code runs in the builder's
+  window: listen, measure and go full screen through the node's own page (`ref.current.ownerDocument`, its
+  `defaultView`) or `usePlitziServiceContext().utils.getWindow()`. An `instanceof` check takes its class from there too.
+
 ## Components that draw into DOM they do not render
 
 A map, a chart library, anything that positions its own markers or popups: its roots are the library's to place. Never

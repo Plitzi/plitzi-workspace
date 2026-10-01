@@ -51,7 +51,7 @@ It is a setup project rather than a `globalSetup` for one reason: only the setup
 |---|---|---|---|
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports`, `theme` | harness |
 | `desktop` | `@plitzi/plitzi-desktop` | `theme` | the renderer's Vite server on 5180 |
-| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions` | e2e server + auth server + action server + mail sink |
+| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions`, `workers`, `plugins`, `fromSpace` | e2e server + auth server + action server + mail sink + the CLI's projects |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
 | `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (mocked backend unless a token is exported) |
 | `cross` | — more than one | `parity`, `agent`, `auth` | harness + both servers |
@@ -100,6 +100,15 @@ demonstrate.
   case where the server stops assembling one, so it can never show that a space with only actions still resolves
   its server elements. Its space also holds an SMTP credential, so `email.send` is checked the whole way out.
   `yarn workspace @plitzi/e2e start:actions`.
+
+- **`server/pluginServer.ts`** — a plugin package exactly as `plitzi create --plugin` writes it, built by the CLI and
+  published on a host of its own, loaded by a page from its manifest. On <http://127.0.0.1:5208> (the plugin's host on
+  5308). `yarn workspace @plitzi/e2e start:plugin`.
+
+- **`server/fromSpaceServer.ts`** — a space taken out with `plitzi create --from`: a small platform of its own on 5309
+  answers the export (`server/fromSpace/source.ts` is the code it keeps), the built CLI writes the project into
+  `.artifacts/from-space` — inside the workspace, so it runs on the workspace's packages — and the project's own
+  `src/main.ts` serves it on <http://127.0.0.1:5209>. `yarn workspace @plitzi/e2e start:from-space`.
 
 - **`server/mailSink.ts`** — the SMTP server the suite's spaces send through: SMTP on `127.0.0.1:5204`, and what
   it kept on <http://127.0.0.1:5203/messages?to=…>. A real server rather than a stubbed transport, so a spec reads the

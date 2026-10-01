@@ -708,7 +708,11 @@ any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\`
   \`ctx.user\` (who asked, never their session). A secret is NAMED, never read: \`ctx.fetch(url, { credential: "stripe",
   headers: { authorization: "Bearer {{ credential.apiKey }}" } })\`.
 - **Stateless:** nothing a function keeps in memory outlives the call — a module-level cache or counter starts empty
-  every time, on whichever instance runs it. What must last goes in \`ctx.kv\`. A call gets 100 ms of CPU and 10 s.
+  every time, on whichever instance runs it. What must last goes in \`ctx.kv\`. A call gets 100 ms of CPU and 10 s;
+  a task that needs more says so — \`limits: { cpuMs: 1000, wallMs: 20000 }\`, or \`defineFunctions({ limits })\` for
+  all — up to the plan's ceiling. Asking above it is refused at save, never quietly cut.
+- **Routes** answer HTTP on the space's own host under \`/fn/\`: \`routes: { "GET /boards/:board": (request, ctx) =>
+  Response.json(…) }\` answers \`/fn/boards/kanban\` (\`ctx.params.board\`). No page may live under \`/fn\`.
 - **Saving builds and checks** the files: the batch is refused with each problem where it is (file and line). A
   namespace the platform uses (\`kv\`, \`http\`, \`flow\`…) is refused.
 - **Try it** with \`plitzi_try_function { task, params }\` before a page relies on it: the value, the logs, the error.

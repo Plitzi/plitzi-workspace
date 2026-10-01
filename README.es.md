@@ -35,7 +35,7 @@ Plitzi es un **constructor de aplicaciones web** de código abierto pensado para
 │  ├─ builder/          # Interfaz y lógica del builder
 │  ├─ server/           # Servidor SSR / RSC
 │  ├─ mcp/              # Servidor MCP para agentes de IA
-│  ├─ cli/              # Crea un servidor que renderiza un space tuyo
+│  ├─ cli/              # Crea un proyecto o plugin, sube código a un space, saca un space como proyecto
 │  └─ desktop/          # Cliente de escritorio
 ├─ packages/
 │  ├─ sdk-auth/         # Autenticación

@@ -27,6 +27,12 @@ Never rewrite an exported space by hand. `specFromSpace({ schema, style })` read
 `compareSpaces(original, authorSpace(spec))` must list nothing but what `corrections` explains. The builder's
 **Export** does all three. Edit the code from then on — and tidy it as you go ([structure.md](structure.md)).
 
+A server action reads back the same way: `actionSpecFromEntry({ id, document })` gives the `defineAction` spec that writes
+it — only when that spec writes the very same document, otherwise `reason` says why and it stays JSON — and
+`actionToSource(spec)` writes the module. For the whole space as a project — pages, actions, functions, the source of
+its plugins and runtime, its files — use `plitzi create --from <space>` (and `plitzi pull` later) rather than exporting
+the parts by hand.
+
 For a document you did not author — an export, a JSON edited by hand — run the gate before serving it:
 `validateSpace({ schema, style })`.
 

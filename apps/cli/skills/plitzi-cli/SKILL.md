@@ -170,6 +170,8 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 - **`try` runs the saved draft for real** (its fetches and writes happen). `dev` runs `functions/` on this machine with
   the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
   nothing to the space; `PLITZI_FUNCTIONS_CREDENTIALS='{"stripe":{"apiKey":"…"}}'` gives it credentials to name.
+- **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or
+  `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
 - **The live site runs what the space was last published with.** A push changes the draft; publishing is the person's.
 
 ## When something does not work

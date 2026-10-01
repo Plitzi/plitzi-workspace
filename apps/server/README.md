@@ -155,6 +155,11 @@ adapters: createJsonAdapters({ offlineData: './space.json' })
 `validateSpace({ schema, style })` from `@plitzi/sdk-authoring` answers whether one is servable before you
 serve it — worth running over anything that arrives as a file.
 
+A space on Plitzi comes out whole, as a project wired to this server: `npx @plitzi/cli create my-site --from <space>`
+writes its pages as authoring code, its actions as `defineAction` code, its functions, the source of its plugins and
+runtime, and its files into `public/` — a draft, or any published snapshot (`--environment`, `--revision`) — and
+`plitzi pull` keeps it in step. See `docs/en/projects-from-spaces.md` in the workspace.
+
 ## Configuration
 
 | Option | Type | Default | Description |
@@ -171,7 +176,7 @@ serve it — worth running over anything that arrives as a file.
 | `plugins` | `Record<string, PluginSource>` | — | Named plugin definitions. Compiled or copied on first use and cached for `pluginsTtlMs`. |
 | `pluginsCacheDir` | `string` | `.sdk-plugins` | Directory where compiled plugin files are stored. |
 | `pluginsTtlMs` | `number` | `604800000` | TTL in milliseconds for compiled plugins (default: 1 week). |
-| `autoLoadSchemaPlugins` | `boolean` | `true` | Auto-download and cache plugins declared in the schema's `offlineData.plugins` list. Set to `false` to manage plugin loading manually. |
+| `autoLoadSchemaPlugins` | `boolean` | `true` | Auto-download and cache plugins declared in the schema's `offlineData.plugins` list. A type the deployment registers itself (`plugins`, named in `pluginNames`) is never looked for there: its own build is the one rendered. Set to `false` to manage plugin loading manually. |
 | `allowPrivatePluginHosts` | `boolean` | `false` | Read a schema plugin from a private address (`localhost`, this server's own network). A plugin's address is typed by whoever edits a space, so leave it off anywhere but a development machine whose bucket is local. |
 | `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |

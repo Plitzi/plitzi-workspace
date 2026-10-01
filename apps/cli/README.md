@@ -35,6 +35,22 @@ plitzi create my-site --yes                                           # at a ter
 plitzi create . --force --no-install --package-manager npm --mode server --source local   # into a directory that has work in it
 ```
 
+### From a space on Plitzi
+
+```bash
+plitzi create my-board --from pizarra                                        # the draft, as code
+plitzi create my-board --from pizarra --environment production --revision 3  # a snapshot, as it was frozen
+plitzi create my-board --from pizarra --source cloud                         # the pages stay on Plitzi
+```
+
+A server project holding everything the space is made of — its pages as authoring code, its actions as `defineAction`
+code (JSON, with the reason said, where one would not read back exactly), its functions, the source of its plugins and
+runtime, and its files downloaded into `public/` with every CDN address rewritten — served by the project with nothing
+of Plitzi's. `.env` gets a signing key made for it and the names of the variables and credentials the space had, never
+their values. It signs in as you and needs a space you may change; the end of `create` says what came across
+differently. What the project was given is recorded in `.plitzi/space.json` — commit it — for [`pull`](#pull). See
+`docs/en/projects-from-spaces.md`.
+
 ## The package manager
 
 `--package-manager npm|yarn|pnpm` says which one the project is written for: what it installs with, and what
@@ -89,6 +105,20 @@ when an install fails the CLI says which setting names it.
   commit, which is the only moment a repository's style is cheap to decide.
 - **The authoring skill**, in `.claude/skills/`, so an agent working in the project knows how a space is put
   together before it touches one.
+
+## `pull`
+
+```bash
+plitzi pull                                    # the space's changes in, yours kept
+plitzi pull --force                            # where a file changed on both sides, the space's copy wins
+plitzi pull --environment production --revision latest   # follow another version from now on
+```
+
+In a project `create --from` wrote: a file the space changed and you did not is written, one you changed and the space
+did not is kept, one the space no longer has is removed unless you changed it. A file changed on both makes the pull
+write **nothing** and name them. Both sides are compared as the project's Prettier writes them. `.env` is never touched;
+`package.json` only gains the packages the space's code now asks for. It follows the version the project was made from —
+the draft, an environment's latest, or a pinned revision.
 
 ## `add plugin`
 
@@ -149,6 +179,21 @@ Without folders, outside a package, it offers the elements in `src/plugins` — 
 what a manifest is written from. `--out` moves the build, `--no-zip` leaves the zip out, and `--plugin-version` sets the
 version the manifest carries (the project's own by default).
 
+Beside the zip it writes the plugin's **source** (`<name>.source.json.gz`): every file of the project its elements import
+— followed with the project's own TypeScript, `import type` included — and the packages they need. `upload plugin`
+keeps it on the space, which is what `create --from` brings back. `--source-root` names the project those paths are
+relative to, when the elements are not a project of their own. A file outside it, a credentials file or a credential
+in the code keeps it from being written — said, and never stopping the build.
+
+## `pack source`
+
+```bash
+plitzi pack source src/runtime.ts --kind runtime --name runtime -o runtime.source.json.gz
+```
+
+What `upload plugin` and `runtime push` keep, written to a file to look at: the closure of the entries named, gzipped.
+
+
 ## `login`, `space` and `upload plugin`
 
 ```bash
@@ -174,7 +219,8 @@ asked at a terminal). It is checked for its `plugin-manifest.json` before anythi
 without a space, the browser opens for what is missing, so the first upload is one command too. It goes on one of the
 space's public buckets — `--bucket <identifier>` (narrowed to one CDN with `--cdn <identifier>`), or asked when there
 are several; a private bucket is refused, since no page could load from it — and is installed, as the builder does when
-a zip is dropped under Resources: added, or the plugin already there moved to the new version with its settings kept.
+a zip is dropped under Resources: added, or the plugin already there moved to the new version with its settings kept. The
+source `pack plugin` wrote beside the zip goes up after it, into the space's private bucket.
 
 `--api` (or `PLITZI_API_URL`) points it at another platform, a self-hosted or local one; the CLI trusts the
 certificate authorities the system trusts, as the browser beside it does.
@@ -203,7 +249,8 @@ from, and it runs as a server of its own too.
 `push` packs the module with the project's own `@plitzi/sdk-server` — the module and every package it imports, bar
 `@plitzi/*` and React, which the platform provides — and sends it to the space `plitzi whoami` names. It becomes the
 draft's runtime, which starts on it; **publishing the space** from the builder takes it to the published site. A
-runtime is part of the plans that carry it; on another, the push is refused and says so.
+runtime is part of the plans that carry it; on another, the push is refused and says so. The source it was
+packed from is kept beside it, and a publish freezes it with the code.
 
 **It runs at a size** — small (0.25 CPU, 256 MB), medium (0.5 CPU, 512 MB) or large (1 CPU, 1 GB) — chosen per
 environment among the sizes the space's plan includes. `status` says what each environment runs at and which sizes the
@@ -212,6 +259,21 @@ plan includes; `size` chooses another, and that runtime starts again at it.
 **An unused runtime stops by itself** — nothing sent to its endpoints and no task run on it for a week, on the platform — so it spends
 nothing idle, and stays stopped until `start`, the builder, a push or a publish starts it again. `status` says when a
 running one would stop, and why a stopped one is.
+
+## `functions`
+
+```bash
+plitzi functions pull                                              # the space's functions into functions/
+plitzi functions push                                              # functions/ saved as the space's draft, built and checked
+plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'  # one task of the saved draft, in the sandbox
+plitzi functions dev seismic.feed --params '{}' --watch            # on this machine, as the platform runs it
+```
+
+A space's own server code — tasks its actions run as steps, routes under `/fn/` — and `functions/` is a working copy
+of it: `.plitzi/functions.json` keeps what was pulled, so `pull` refuses to overwrite what is not pushed (`--force`
+throws it away) and `push` refuses when the space moved on since. A problem comes back as
+`functions/<file>:<line> <message>`. `dev` runs with the project's own `@plitzi/sdk-server` (`isolated-vm` and
+`core-js` beside it); credentials come from `PLITZI_FUNCTIONS_CREDENTIALS`. See `docs/en/functions.md`.
 
 ## Credentials
 

@@ -92,6 +92,16 @@ It writes exactly what the builder would, and three things stop being written tw
 Write a step's `params` whenever it takes anything else — a constant, an earlier step's result, a value
 interpolated into a larger string.
 
+`limits` tightens the deployment's ceilings for this action alone (`limits: { timeoutMs: 2000 }`), and widens none.
+
+**Reading one back.** An action saved in the builder reads back into the declaration that writes it:
+`actionSpecFromEntry({ id, document })` answers the spec — only when `defineAction` of it writes the very same document,
+every step, chain link and param (the field map a trigger declares compared as JSON, the `output` derived on save left
+aside) — or the `reason` there is none: a flow code has no words for, like a branch or a step titled by hand, is never
+approximated. `actionToSource(spec)` writes the module (`export const updatePostAction = defineAction({ … })`). This is
+how `plitzi create --from` writes a space's actions into a project — see [A space as a project](./projects-from-spaces.md)
+— and every seed's actions are held to it.
+
 ### Whose permissions `role` asks about
 
 `access: { mode: 'role', permissions: [...] }` is answered from the permissions of whoever the server says is calling.

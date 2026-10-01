@@ -73,6 +73,10 @@ The server is stateless: it resolves the space per request and reads and writes 
 | `saveStyle(spaceId, env, style)` | for writes | Persist a mutated style document. |
 | `getChanges(spaceId, env, query)` | no | The space's change history, for the `plitzi://changes` resources. Writes arrive with an `SSRWriteContext` (`userId`, one `batch` per tool call) so a consumer can record them. |
 | `getOfflineData(spaceId, env, rev)` | for preview | Read side of draft-preview. Only the preview endpoint calls it. |
+| `getComponentCatalog(spaceId, env)` | no | The element types the space's plugins add, for the catalog resources. |
+| `getConnectors` / `saveConnector` / `deleteConnector` | for connectors | The space's connector manifests, read and written by the connector operations. |
+| `getActions` / `getActionTasks` / `saveAction` / `deleteAction` | for actions | The space's server actions, and the catalog of tasks a step may run — the deployment's and the space's own functions, each with its `origin`. |
+| `getFunctions` / `saveFunctions` / `tryFunction` | for functions | The space's functions: read for `plitzi://functions/{env}`, saved (built and checked, refused from an older copy) by `upsertFunctionFile` / `deleteFunctionFile`, and run by `plitzi_try_function`. |
 
 Schema and style are read as **separate documents** on purpose: `getOfflineData` is SSR-shaped and strips
 `style.platform`, which the style resources need.
@@ -92,6 +96,7 @@ resolves with `canWrite: false` reads everything and is refused at every write t
 | `plitzi_preview` | read | Render a draft to HTML through an SSR server |
 | `plitzi_screenshot` | read | Render a draft to a PNG (desktop, mobile or both) through the screenshot service |
 | `plitzi_render` | read | Render a self-contained UI widget, offline, with no space |
+| `plitzi_try_function` | write | Run one task of the space's functions against the draft, in the sandbox: its value, logs and error |
 
 Reads follow a filesystem model: list cheap, read one item in detail on demand. Agents are told never to
 hand-build a URI — every write and search response hands back the URI to use next.

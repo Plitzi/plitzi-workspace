@@ -41,7 +41,7 @@ antes de estar completa.
 | Categoría | App | Sub-categorías |
 |---|---|---|
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports` |
-| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth` |
+| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions`, `workers`, `plugins`, `fromSpace` |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` |
 | `builder` | `@plitzi/plitzi-builder` | `boot` |
 | `cross` | más de una app | `parity`, `agent`, `auth` |
@@ -53,6 +53,14 @@ Todas salvo `examples` corren contra **superficies propias de la suite**: un har
 cualquier schema, un servidor de páginas con pages, RSC, preview y MCP encendidos a la vez, y un segundo con
 cuentas y sesiones. Los examples no son esas superficies — están escritos para una persona, una decisión de
 cableado cada uno, y torcer uno para que un test sea posible rompe justo lo que ese example existe para enseñar.
+
+**Los proyectos del CLI se ejecutan, no solo se escriben.** `plugins` construye un paquete que escribió
+`plitzi create --plugin` y lo carga desde su manifest; `fromSpace` responde un export desde una plataforma pequeña propia,
+ejecuta el `create --from` del CLI compilado dentro del workspace — así el proyecto resuelve los paquetes del workspace,
+nunca los de npm — y sirve el space desde el proyecto que escribió: su plugin renderizado en el servidor, la ruta de su
+runtime, su acción ejecutando su function, sus archivos. El mismo ciclo contra la plataforma real — API, bases de datos,
+buckets, upload y push, snapshots, `pull` — es `test/e2e/flows/spaces/space-as-project.e2e.test.ts` de
+`plitzi-sdk-server` (ver [A space as a project](../en/projects-from-spaces.md#where-it-is-tested)).
 
 **La categoría `examples` tiene su propio trabajo.** Un example al que se manda a un usuario nuevo es una promesa,
 y una promesa que nadie comprueba es una promesa que se rompe. Cada uno tiene un spec que afirma lo que dice su

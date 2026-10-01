@@ -180,6 +180,12 @@ variables and credentials, and its segments. **Publish Snapshot** lists what the
 `@plitzi/sdk-server` used to fetch the manifest of every plugin the space lists on its CDN, even one the deployment
 registers itself, and logged a warning when the CDN was out of reach. It now asks only for the ones it does not have.
 
+## Fixed: inline code in Markdown carries nothing of the syntax tree
+
+A `markdown` element wrote every inline `` `code` `` as `<code node="[object Object]">`: `react-markdown` hands its
+renderers the syntax-tree node as a prop, and the inline branch spread it onto the tag. Fixed in
+`@plitzi/plitzi-ui` 1.6.26 (with a test), which every package now asks for.
+
 ## Dev tools hear about the render run the page stopped waiting for
 
 When a server element's action ran past the section's budget, the page was answered without it. The run ended a moment
