@@ -55,6 +55,9 @@ pages: [{ name: 'Shop', slug: 'shop', body: [
   or hand the value in as a prop.
 - **Ids are shared** with the whole space, like a layout's: name a component's elements after it (`product-card-title`).
   The same ids render once per instance, each with state of its own.
+- **State of its own per instance.** A flow inside a component that names one of its elements —
+  `toggleElement({ category: 'state', key: 'visibility' }, 'product-card-details')` — acts on THAT instance's copy.
+  Global state is shared: `toggleInState({ key: 'favourites', value: '{{ props.product.id }}' })` from any card.
 - **Components nest**: a component may place another. One that places itself, directly or through another, is refused.
 - **Checked when written**: a component the space does not declare, a prop it does not declare, a required one left out,
   a value of the wrong kind (`featured: 'true'` for a boolean) and a child for a slot it does not have each throw, by name.

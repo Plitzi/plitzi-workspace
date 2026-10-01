@@ -1,4 +1,4 @@
-import { propNameProblem } from '@plitzi/sdk-schema/helpers/components';
+import { propNameProblem, RESERVED_PROP_NAMES } from '@plitzi/sdk-schema/helpers/components';
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
@@ -1111,7 +1111,8 @@ class SpaceAuthor {
     const props = target.props ?? {};
     const names = Object.keys(props);
     const given = Object.fromEntries(
-      Object.entries(spec.attributes ?? {}).filter(([name]) => name !== 'referenceType' && name !== 'referenceId')
+      // What the instance answers to as an element — which component it is, the slot it sits in — is not a prop.
+      Object.entries(spec.attributes ?? {}).filter(([name]) => !RESERVED_PROP_NAMES.has(name))
     );
     for (const name of Object.keys(given)) {
       if (!names.includes(name)) {

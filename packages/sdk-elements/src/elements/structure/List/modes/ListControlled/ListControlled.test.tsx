@@ -91,4 +91,34 @@ describe('ListControlled', () => {
     expect(captured.a.state).toEqual({ selected: true });
     expect(captured.b.state).toEqual({});
   });
+
+  /** Filtered or reordered, a row keeps the state it holds with its record, never with the position it was in. */
+  it('keeps a row’s state with its record when the records around it change', () => {
+    const { rerender } = renderList([
+      { id: 'a', name: 'Alpha' },
+      { id: 'b', name: 'Beta' },
+      { id: 'c', name: 'Gamma' }
+    ]);
+
+    act(() => {
+      captured.b.setElementState({ open: true });
+    });
+
+    rerender(
+      <StoreProvider value={{}}>
+        <ListControlled
+          className=""
+          items={[
+            { id: 'b', name: 'Beta' },
+            { id: 'c', name: 'Gamma' }
+          ]}
+        >
+          <RowTemplate />
+        </ListControlled>
+      </StoreProvider>
+    );
+
+    expect(captured.b.state).toEqual({ open: true });
+    expect(captured.c.state).toEqual({});
+  });
 });

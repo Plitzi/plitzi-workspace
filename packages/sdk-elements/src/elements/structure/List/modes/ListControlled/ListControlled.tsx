@@ -16,6 +16,28 @@ import declaration from '../../declaration';
 import type { SourceField } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
+/**
+ * What tells one row from another across renders: each record's `id`, when every record has one and no two share it,
+ * else its position.
+ *
+ * A row holds state of its own — a panel it opened, a field it filled — and React gives that state to whichever row
+ * comes back under the same key. Keyed by position, filtering a list handed a row's state to the record that moved
+ * into its place: the details opened on one product showed open on another.
+ */
+const rowKeys = (items: unknown[]): (string | number)[] => {
+  const ids = items.map(item =>
+    item !== null &&
+    typeof item === 'object' &&
+    'id' in item &&
+    (typeof item.id === 'string' || typeof item.id === 'number')
+      ? item.id
+      : undefined
+  );
+  const unique = ids.every(key => key !== undefined) && new Set(ids).size === ids.length;
+
+  return unique ? ids.map(key => `id:${String(key)}`) : items.map((_item, index) => index);
+};
+
 export type ListControlledProps<T = unknown> = {
   ref?: RefObject<HTMLElement>;
   className: string;
@@ -39,6 +61,8 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
 
     return [];
   }, [items]);
+
+  const keys = useMemo(() => rowKeys(finalItems), [finalItems]);
 
   const sourceFields = useCallback(
     () =>
@@ -75,7 +99,7 @@ const ListControlled = ({ ref, className = '', children, items = [] }: ListContr
 
           return (
             <ListControlledItem
-              key={i}
+              key={keys[i]}
               index={i}
               isTemplate={i !== 0 && !previewMode}
               record={item}

@@ -67,6 +67,28 @@ describe('authoring components', () => {
     ).not.toThrow();
   });
 
+  it('places an instance in another instance’s slot, its `slot` no prop of its own', () => {
+    const badge: ComponentSpec = {
+      id: 'badge',
+      props: { label: { type: 'text', description: 'What it says', required: true } },
+      root: text({ id: 'badge-root', content: '{{ props.label }}' })
+    };
+    const { schema } = authorSpace(
+      space(
+        [
+          component('card', {
+            id: 'lamp',
+            props: { title: 'Lamp' },
+            children: { 'card-actions': [component('badge', { id: 'lamp-badge', props: { label: 'New' } })] }
+          })
+        ],
+        [card, badge]
+      )
+    );
+
+    expect(schema.flat['lamp-badge'].attributes).toMatchObject({ referenceId: 'badge', slot: 'card-actions' });
+  });
+
   it('refuses a child for a slot the component does not have', () => {
     expect(() =>
       authorSpace(space([component('card', { props: { title: 'Lamp' }, children: { 'card-footer': [text('x')] } })]))

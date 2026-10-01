@@ -32,6 +32,11 @@
   - `processTwig` takes `{ settled }` in place of `keepEmptyTokens: true`.
   - Every other empty token is still kept for a later pass.
   - `COMPONENT_PROPS_SOURCE` names the source.
+- **Fixed: a flow in a list row or a component instance acts on its own copy.** A step's target resolves in the
+  replica the flow fired in first, then outwards. It used to reach whichever copy registered last.
+- **Fixed: an instance's own `visible` hides it in preview.** The same goes for an element reference.
+- **Fixed: a list row keeps its state with its record.** Rows are keyed by each record's unique `id`, so filtering no
+  longer moves one row's state onto another.
 - **Closed scope:** inside, a component reads only its props and the globals. The validator, `lintSpace` and
   `authorSpace` each refuse a read of the page around an instance. Components nest, and a cycle is refused.
 - **Where to use them:**

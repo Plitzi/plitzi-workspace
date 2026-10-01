@@ -782,3 +782,68 @@ describe('a flow runs its synchronous steps without a turn between them', () => 
     expect(read).toHaveBeenCalledWith(expect.objectContaining({ s0: 'late' }), expect.anything());
   });
 });
+
+/**
+ * A list row or a component instance is a replica: its elements have the same ids as every other copy's. A step that
+ * names one of them means the copy beside the element that fired it — "Details" opens this card's panel, not the last
+ * card's.
+ */
+describe('InteractionsManager — a step naming an element every replica has', () => {
+  const opensPanel = (buttonId: string): Record<string, ElementInteraction> => ({
+    trig: { ...makeInteractions(buttonId, 'click', 'toggle').trig },
+    cb: { ...makeInteractions(buttonId, 'click', 'toggle').cb, elementId: 'panel' }
+  });
+
+  const replica = (root: InteractionsManager) => {
+    const manager = root.createChildManager();
+    const toggle = vi.fn();
+    manager.subscribe('button', opensPanel('button'), triggerDef);
+    manager.subscribe(
+      'panel',
+      {},
+      {},
+      {
+        toggle: { action: 'toggle', title: 'Toggle', type: 'callback', callback: toggle, params: {} }
+      }
+    );
+
+    return { manager, toggle };
+  };
+
+  it('runs the callback of the copy the flow fired in', async () => {
+    const root = new InteractionsManager('page1');
+    const first = replica(root);
+    const second = replica(root);
+
+    await first.manager.interactionTrigger('button', 'click', {});
+
+    expect(first.toggle).toHaveBeenCalledTimes(1);
+    expect(second.toggle).not.toHaveBeenCalled();
+  });
+
+  it('still reaches an element of the page around the replica', async () => {
+    const root = new InteractionsManager('page1');
+    const pageToggle = vi.fn();
+    root.subscribe(
+      'banner',
+      {},
+      {},
+      {
+        toggle: { action: 'toggle', title: 'Toggle', type: 'callback', callback: pageToggle, params: {} }
+      }
+    );
+    const manager = root.createChildManager();
+    manager.subscribe(
+      'button',
+      {
+        trig: { ...makeInteractions('button', 'click', 'toggle').trig },
+        cb: { ...makeInteractions('button', 'click', 'toggle').cb, elementId: 'banner' }
+      },
+      triggerDef
+    );
+
+    await manager.interactionTrigger('button', 'click', {});
+
+    expect(pageToggle).toHaveBeenCalledTimes(1);
+  });
+});

@@ -293,14 +293,30 @@ class InteractionsManager {
     return { ...callbacks, ...this.callbacksAvailables };
   }
 
+  /**
+   * Every callback a flow fired here can reach, by the id of the element it belongs to.
+   *
+   * A replica — a list row, a component instance — renders the same ids as every other copy of it, so an id alone
+   * names several elements. The one a flow means is the nearest: in the replica the flow fired in, else in the
+   * replicas around it, else anywhere on the page. Merged the other way, the copy that registered last answered for
+   * all of them, and a card's "Details" opened another card's panel.
+   */
   getCallbacksAvailables() {
     if (!this.parentManager) {
       return this.getCallbacksAvailablesInternal();
     }
 
-    const rootManager = this.getRootManager();
+    const around: InteractionsManager[] = [];
+    for (let manager: InteractionsManager | undefined = this.parentManager; manager; manager = manager.parentManager) {
+      around.unshift(manager);
+    }
 
-    return rootManager?.getCallbacksAvailablesInternal() ?? {};
+    let callbacks = this.getRootManager()?.getCallbacksAvailablesInternal() ?? {};
+    for (const manager of around) {
+      callbacks = { ...callbacks, ...manager.callbacksAvailables };
+    }
+
+    return { ...callbacks, ...this.getCallbacksAvailablesInternal() };
   }
 
   // `subscriptorId` is the firing element's id. Absent for a caller that passed none — it was never subscribed, so

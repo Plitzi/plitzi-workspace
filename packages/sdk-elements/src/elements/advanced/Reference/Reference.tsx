@@ -7,7 +7,9 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style/styleStates';
 
+import { isVisible } from '../../../Element/helpers/isVisible';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import useInternalItems from '../../../Element/hooks/useInternalItems';
@@ -37,6 +39,13 @@ const propsOf = (component: SpaceComponent, attributes: Element['attributes']): 
   Object.fromEntries(
     Object.entries(component.props ?? {}).map(([name, prop]) => [name, attributes[name] ?? prop.default ?? null])
   );
+
+/**
+ * The class a reference hands what it renders. In preview a reference draws no node of its own — what it renders IS
+ * the node — so its own class goes there, and so does what its own `visible` says.
+ */
+const replicaClassName = (base: string, elementState: Record<string, unknown>): string =>
+  clsx(base, { [HIDDEN_CLASS]: !isVisible(elementState.visibility) });
 
 type SlotItemsProps = {
   instance: Element['definition'];
@@ -73,6 +82,7 @@ const ComponentInstance = ({ ref, className, componentId, previewMode }: Compone
     attributes,
     definition,
     plitziElementLayout: outerLayout,
+    elementState,
     definition: { styleSelectors }
   } = useElement();
   const [components] = useCommonStore('schema.components');
@@ -119,9 +129,10 @@ const ComponentInstance = ({ ref, className, componentId, previewMode }: Compone
 
     return bySlot;
   }, [known?.slots, items, named, definition, id, outerLayout, previewMode]);
+  const replicaClass = replicaClassName(styleSelectors.base, elementState);
   const internalProps = useMemo(
-    () => ({ id: known?.rootId ?? '', rootId: id, className: styleSelectors.base }),
-    [known?.rootId, id, styleSelectors.base]
+    () => ({ id: known?.rootId ?? '', rootId: id, className: replicaClass }),
+    [known?.rootId, id, replicaClass]
   );
 
   const root = known ? known.flat[known.rootId] : undefined;
@@ -166,6 +177,7 @@ type ElementReferenceProps = {
 const ElementReference = ({ ref, className, referenceId, previewMode }: ElementReferenceProps) => {
   const {
     id,
+    elementState,
     definition: { rootId, styleSelectors }
   } = useElement();
   const [found] = useCommonStore(`schema.flat.${referenceId}`);
@@ -175,9 +187,10 @@ const ElementReference = ({ ref, className, referenceId, previewMode }: ElementR
   // keep apart the state they hold, and interactions run in a child manager of their own.
   const segment = useId();
 
+  const replicaClass = replicaClassName(styleSelectors.base, elementState);
   const internalPropsMemo = useMemo(
-    () => ({ id: element?.id ?? '', rootId, className: styleSelectors.base }),
-    [element?.id, rootId, styleSelectors.base]
+    () => ({ id: element?.id ?? '', rootId, className: replicaClass }),
+    [element?.id, rootId, replicaClass]
   );
 
   const replica = element && (

@@ -78,6 +78,15 @@ with no mechanism of their own.
   slot, a component the ones it declares — so layouts and components fill slots through the same code. Each child of
   the instance names its slot in `attributes.slot`; with one declared slot it may leave it out.
 
+- In preview an instance draws no node of its own: the component's root is what stands in the page, so the
+  instance's class and what its own `visible` says go on the root (`replicaClassName`, shared with an element
+  reference).
+- **A flow names the elements of its own instance.** Every instance renders the same ids, and the interactions
+  manager resolves a step's target nearest first — the instance (or list row) the flow fired in, then the ones around
+  it, then the page (`InteractionsManager.getCallbacksAvailables`). A card's "Details" opens that card's panel.
+- **A list row keeps its state with its record.** Rows are keyed by each record's `id` when every record has a unique
+  one, else by position, so filtering a list of instances does not hand one product's open panel to another.
+
 ## Closed scope
 
 Inside, a component reads `props` and the globals, never the page around an instance. The structural validator
