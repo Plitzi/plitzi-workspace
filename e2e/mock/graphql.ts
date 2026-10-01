@@ -157,6 +157,7 @@ const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined>
           space: unlimited,
           account: unlimited,
           overLimit: false,
+          workspaceId: null,
           __typename: 'SpaceQuota'
         }
       }

@@ -26,7 +26,8 @@ const quota = (space: Partial<TQuotaPlane>, account: Partial<TQuotaPlane> = {}):
   periodEnd: 0,
   space: plane(space),
   account: plane(account),
-  overLimit: false
+  overLimit: false,
+  workspaceId: 4
 });
 
 const find = (readings: ReturnType<typeof readingsFor>, id: string) => readings.find(entry => entry.id === id);

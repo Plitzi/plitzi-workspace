@@ -85,6 +85,16 @@ manager of the builder's own, and that manager rewrote the host page's head, rem
 - Builder: sets `ownsHead: false` for its canvas. A page drawn there is in a frame, and the document head is the
   editor's. The canvas's own `HelmetProvider` is gone.
 
+## Fixed: the builder's plan usage panel reads the workspace's usage
+
+Opening Plan usage in the builder said "The account breakdown could not be read (The server answered 404.)". The panel
+still asked `/account/usage`, which went away when accounts became workspaces. It now reads
+`/workspaces/:id/usage`, taking the workspace from `SpaceQuota`'s new `workspaceId`.
+
+- `workspaceId` is given only to a member of the workspace, the one person the endpoint answers.
+- Someone editing the space as a guest of another workspace is told the breakdown is for its members, instead of seeing
+  an error.
+
 ## Dev tools hear about the render run the page stopped waiting for
 
 When a server element's action ran past the section's budget, the page was answered without it. The run ended a moment

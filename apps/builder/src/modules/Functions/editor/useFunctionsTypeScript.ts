@@ -9,16 +9,13 @@ import {
 import { wrap } from 'comlink';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { FUNCTIONS_ROOT } from './source';
+import { workerPathOf } from './paths';
 
 import type { NewTask, SourceEdit, SourceFunctions, SourcePlace } from './source';
 import type { FunctionsWorker } from './typescriptWorker';
 import type { Extension } from '@codemirror/state';
 import type { FunctionTimeLimits } from '@plitzi/sdk-shared';
 import type { Remote } from 'comlink';
-
-/** Where a file of the space's functions lives in the worker — the same root the worker keeps them under. */
-export const workerPathOf = (file: string): string => `${FUNCTIONS_ROOT}${file}`;
 
 /** How long typing pauses before what the source declares is read again: a list that follows, not one that flickers. */
 const DESCRIBE_DELAY_MS = 250;

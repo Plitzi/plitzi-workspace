@@ -51,30 +51,33 @@ export interface AccountUsage {
 }
 
 /**
- * Where the account's allowance actually went — by space, and by page inside each one.
+ * Where the account's allowance actually went — by space, and by page inside each one. The account is the space's
+ * workspace, so this is `/workspaces/:id/usage`.
  *
  * The ceilings themselves come over GraphQL (`SpaceQuota`) and are what the header meter is made of: this space, this
  * account, and the two numbers each. This is the other half of the answer, and it is only worth a request when
- * somebody asks the question, which is why `enabled` exists — nothing is fetched until the panel is opened.
+ * somebody asks the question — the panel is mounted only then. `workspaceId` is what `SpaceQuota` answered, which is
+ * null for somebody who is not a member of the workspace: they edit the space as a guest, the allowance is not theirs to
+ * read, and nothing is asked.
  *
  * It reads the API role rather than the GraphQL one because that is where the endpoint lives and where the same
  * figures are already served to the dashboard; the builder's user token rides in the header every other call uses.
  * Fetched once per panel: these are period totals, not something that moves while somebody reads them.
  */
-const useAccountUsage = (enabled: boolean) => {
+const useAccountUsage = (workspaceId: number | null) => {
   const { server, userKey } = use(NetworkContext);
   const [usage, setUsage] = useState<AccountUsage>();
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    if (!enabled || usage || error) {
+    if (workspaceId === null || usage || error) {
       return undefined;
     }
 
     const controller = new AbortController();
     const load = async () => {
       try {
-        const response = await fetch(`${server.apiServer}/account/usage`, {
+        const response = await fetch(`${server.apiServer}/workspaces/${String(workspaceId)}/usage`, {
           signal: controller.signal,
           credentials: 'include',
           headers: { 'plitzi-access-token': userKey }
@@ -99,9 +102,9 @@ const useAccountUsage = (enabled: boolean) => {
     void load();
 
     return () => controller.abort();
-  }, [enabled, usage, error, server.apiServer, userKey]);
+  }, [workspaceId, usage, error, server.apiServer, userKey]);
 
-  return { usage, error, loading: enabled && !usage && !error };
+  return { usage, error, loading: workspaceId !== null && !usage && !error };
 };
 
 export default useAccountUsage;

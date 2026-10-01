@@ -78,6 +78,8 @@ export type QuotaBreakdownProps = {
   readings: QuotaReading[];
   /** The space being edited, so it is answered from the store rather than from the figure the server last saved. */
   spaceId: number;
+  /** The workspace the account plane is, when the person reading is a member of it — see `useAccountUsage`. */
+  workspaceId: number | null;
   liveElements: number;
 };
 
@@ -91,8 +93,8 @@ export type QuotaBreakdownProps = {
  * The space being edited is answered entirely from the store, so it is on screen before any request is made, and it
  * is there even for someone whose account owns none of this. The rest of the account is what the request is for.
  */
-const QuotaBreakdown = ({ readings, spaceId, liveElements }: QuotaBreakdownProps) => {
-  const { usage, error, loading } = useAccountUsage(true);
+const QuotaBreakdown = ({ readings, spaceId, workspaceId, liveElements }: QuotaBreakdownProps) => {
+  const { usage, error, loading } = useAccountUsage(workspaceId);
   const [flat] = useBuilderStore('schema.flat');
 
   // Grouped here rather than in the meter's hook: the meter needs a count on every keystroke, this needs a grouping
@@ -122,6 +124,13 @@ const QuotaBreakdown = ({ readings, spaceId, liveElements }: QuotaBreakdownProps
       </Section>
 
       {loading && <div className={clsx('text-[11px]', MUTED)}>Reading the rest of the account…</div>}
+
+      {workspaceId === null && (
+        <div className={clsx('text-[11px]', MUTED)}>
+          This space belongs to a workspace you are not a member of, so where the rest of its allowance went is for its
+          members to see.
+        </div>
+      )}
 
       {error && (
         <div className="text-[11px] text-red-600 dark:text-red-400">

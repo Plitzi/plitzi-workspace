@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { createFunctionsEnvironment } from './functionsEnvironment';
+import { workerPathOf } from './paths';
 import { describeSource, withNewTask, withTaskLimits } from './source';
-import { workerPathOf } from './useFunctionsTypeScript';
 
 const environmentWith = (files: Record<string, string>) => {
   const env = createFunctionsEnvironment();

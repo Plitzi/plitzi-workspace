@@ -1,5 +1,7 @@
 import ts from 'typescript';
 
+import { FUNCTIONS_ROOT } from './paths';
+
 import type { FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
 import type { VirtualTypeScriptEnvironment } from '@typescript/vfs';
 
@@ -32,9 +34,6 @@ export type SourceFunctions = {
   /** Entries that are there but cannot be read without running the code: what to look at, and where. */
   unreadable: { what: string; at: SourcePlace }[];
 };
-
-/** The root the worker keeps the space's files under — `/functions/lib/feed.ts` is `lib/feed.ts` to the panel. */
-export const FUNCTIONS_ROOT = '/functions/';
 
 const ENTRY = `${FUNCTIONS_ROOT}index.ts`;
 

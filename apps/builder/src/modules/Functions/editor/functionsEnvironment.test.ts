@@ -2,7 +2,7 @@ import { getAutocompletion, getLints } from '@valtown/codemirror-ts';
 import { describe, expect, it } from 'vitest';
 
 import { createFunctionsEnvironment } from './functionsEnvironment';
-import { workerPathOf } from './useFunctionsTypeScript';
+import { workerPathOf } from './paths';
 
 const INDEX = `import { defineFunctions } from '@plitzi/sdk-server/functions';
 import { label } from './lib/label';
