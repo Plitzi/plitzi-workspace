@@ -200,6 +200,12 @@ project serves it with nothing of Plitzi's; a snapshot comes out as it was froze
 a change made in the project, writes the space's, and stops on a file changed on both; and the self-hosted project's own
 change goes back up for the next project to take out. A step a later change breaks fails there, named.
 
+**The same cycle in CI:** `src/services/api/spaceAsProject.test.ts`, in `yarn test`, runs the same steps with the same
+fixtures (`test/e2e/helpers/tallyProject.ts`, `test/e2e/helpers/project.ts`) and only the platform's storage in memory
+(`test/mocks/memoryPlatform.ts`): the export and sources routes, the versions service and the model that freezes
+sources are the real ones, and so are the CLI and the project it writes and runs. It runs with the `@plitzi/cli` the
+platform installs: the workspace's build through the portals in development, the released one in the platform's CI.
+
 - `apps/cli`: `pack/source.test.ts` (the closure and guards), `scaffold/fromSpace.test.ts` (what a project holds),
   `commands/createFrom.test.ts` and `commands/pull.test.ts` (against the CLI's fake platform).
 - `sdk-authoring`: `decompile/actions.test.ts` (actions as code, and the module they are written as).
