@@ -4,6 +4,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import { useCallback } from 'react';
 
 import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
+import { REUSE } from '@pmodules/Builder/helpers/reuse';
 
 import { componentLabel } from '../../helpers';
 
@@ -25,7 +26,7 @@ const ComponentBanner = ({ component }: ComponentBannerProps) => {
       gap={2}
       className="border-b border-gray-200 bg-white px-3 py-1.5 dark:border-zinc-700 dark:bg-zinc-900"
     >
-      <Icon icon="fa-solid fa-cube" intent="primaryActive" />
+      <Icon icon={REUSE.component.icon} intent="primaryActive" />
       <span className="grow truncate text-sm">
         Editing component <b>{componentLabel(component)}</b> — every instance of it changes with what you edit here.
       </span>

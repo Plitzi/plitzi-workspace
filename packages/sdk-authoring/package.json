@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.59.2",
-    "@plitzi/plitzi-ui": "^1.6.26",
+    "@plitzi/plitzi-ui": "^1.6.27",
     "@plitzi/sdk-elements": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",

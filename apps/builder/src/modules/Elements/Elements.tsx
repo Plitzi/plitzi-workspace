@@ -4,6 +4,7 @@ import { use, useCallback, useRef, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { REUSE } from '@pmodules/Builder/helpers/reuse';
 import Components from '@pmodules/Components';
 
 import ElementCategory from './ElementCategory';
@@ -37,7 +38,7 @@ const Elements = () => {
           title="Go to the space's components, at the foot of the catalog"
           onClick={handleJumpToComponents}
         >
-          <Button.Icon icon="fa-solid fa-cube" />
+          <Button.Icon icon={REUSE.component.icon} />
         </Button>
       </div>
       {Object.keys(byCategory).map(category => (

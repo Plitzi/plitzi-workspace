@@ -8,6 +8,7 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 import { deleteKey, withModifier } from '@pmodules/Keyboard';
 
+import { REUSE } from '../../helpers/reuse';
 import useSaveAsSnippet from '../../hooks/useSaveAsSnippet';
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
@@ -273,13 +274,17 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
             <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
           )}
           {!!items && canSnippet && (
-            <BuilderContextMenuItem title="Save As Snippet" onClick={handleClickAsSnippet}>
-              <i className="fa-solid fa-bookmark" />
+            <BuilderContextMenuItem title="Save As Snippet" hint={REUSE.snippet.hint} onClick={handleClickAsSnippet}>
+              <i className={REUSE.snippet.icon} />
             </BuilderContextMenuItem>
           )}
           {canDelete && !!element?.definition.parentId && (
-            <BuilderContextMenuItem title="Save As Component" onClick={handleClickAsComponent}>
-              <i className="fa-solid fa-cube" />
+            <BuilderContextMenuItem
+              title="Save As Component"
+              hint={REUSE.component.hint}
+              onClick={handleClickAsComponent}
+            >
+              <i className={REUSE.component.icon} />
             </BuilderContextMenuItem>
           )}
           {canDelete && (

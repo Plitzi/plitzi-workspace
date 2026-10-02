@@ -7,6 +7,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 
 import OverlayButton from './OverlayButton';
+import { REUSE } from '../../helpers/reuse';
 import useSaveAsSnippet from '../../hooks/useSaveAsSnippet';
 import BuilderElementTools from '../BuilderElementTools';
 
@@ -170,13 +171,21 @@ const OverlayButtonContainer = ({
         <i className="fas fa-tools" />
       </OverlayButton>
       {!!items && canSnippet && (
-        <OverlayButton title="Save as snippet" isRemoving={hoverRemove} onClick={handleClickAsSnippet}>
-          <i className="fas fa-cube" />
+        <OverlayButton
+          title={`Save as snippet: ${REUSE.snippet.hint}`}
+          isRemoving={hoverRemove}
+          onClick={handleClickAsSnippet}
+        >
+          <i className={REUSE.snippet.icon} />
         </OverlayButton>
       )}
       {canDelete && !!element.definition.parentId && (
-        <OverlayButton title="Save as component" isRemoving={hoverRemove} onClick={handleClickAsComponent}>
-          <i className="fa-solid fa-cube" />
+        <OverlayButton
+          title={`Save as component: ${REUSE.component.hint}`}
+          isRemoving={hoverRemove}
+          onClick={handleClickAsComponent}
+        >
+          <i className={REUSE.component.icon} />
         </OverlayButton>
       )}
       {canDelete && (

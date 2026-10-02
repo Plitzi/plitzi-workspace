@@ -6,6 +6,8 @@ import type { HTMLAttributes, MouseEvent, ReactNode } from 'react';
 export type BuilderContextMenuItemProps = {
   id?: string;
   title?: string;
+  /** What the item does beyond its name, shown on hover. */
+  hint?: string;
   /** Only a shortcut that exists: a menu that shows one teaches it. */
   shortcut?: string;
   /** `danger` for what removes. */
@@ -18,6 +20,7 @@ export type BuilderContextMenuItemProps = {
 const BuilderContextMenuItem = ({
   id = '',
   title = 'Title',
+  hint,
   shortcut,
   intent = 'default',
   children,
@@ -38,6 +41,7 @@ const BuilderContextMenuItem = ({
         },
         className
       )}
+      title={hint && `${title}: ${hint}`}
       onClick={handleClick}
       {...otherProps}
     >

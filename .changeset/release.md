@@ -69,7 +69,9 @@ marks its dynamic segments and the page being edited. Fixed on the way: a page w
 What the builder saves from a subtree and drops into a page was called a template, the word a space's own starting
 point already goes by. It is a **snippet** now, everywhere, with no alias for the old names:
 
-- **Builder:** "Save as snippet" on an element, **Snippets** in the resources list.
+- **Builder:** "Save as snippet" on an element, **Snippets** in the resources list. A snippet has an icon of its own
+  (an object group) beside the component's cube, in the canvas overlay and the context menu alike, and each says on
+  hover what sets it apart: a component stays linked, a snippet is a copy.
 - **CDN:** a snippet is uploaded to `snippets/` in the space's folder, with the resource type `snippet`. A file already
   in `templates/` is no longer listed as one: upload it again.
 - **Authoring:** `authorSnippet`, `validateSnippet`, `SnippetSpec` and `AuthoredSnippet`, which returns `{ snippet,

@@ -8,6 +8,7 @@ import { useCallback, use } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
+import { REUSE } from '@pmodules/Builder/helpers/reuse';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import { componentLabel } from '../../helpers';
@@ -121,7 +122,7 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
       draggable={!open}
       onDragStart={onDragStart}
     >
-      <Icon icon="fa-solid fa-cube" intent="primaryActive" />
+      <Icon icon={REUSE.component.icon} intent="primaryActive" />
       <div className="flex grow basis-0 flex-col overflow-hidden">
         <div className="group-hover:text-primary-text truncate font-bold">{label}</div>
         <div className="truncate text-xs text-gray-500 dark:text-zinc-400">
