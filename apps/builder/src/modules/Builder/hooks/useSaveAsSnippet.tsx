@@ -4,6 +4,7 @@ import { useCallback, use } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
+import { REUSE } from '../helpers/reuse';
 import SnippetForm from '../Models/SnippetForm';
 
 import type { SnippetFormValues } from '../Models/SnippetForm';
@@ -27,6 +28,9 @@ const useSaveAsSnippet = () => {
         </Modal.Header>,
         ({ onSubmit, onClose }) => (
           <Modal.Body>
+            <p className="mb-3 text-sm text-gray-600 first-letter:uppercase dark:text-zinc-400">
+              {REUSE.snippet.hint}.
+            </p>
             <SnippetForm onSubmit={onSubmit} onClose={onClose} />
           </Modal.Body>
         )

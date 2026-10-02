@@ -817,6 +817,10 @@ any page as an **instance**. It is part of the space, so it is published, versio
 not inside any page: it is a root of its own, like a layout, and **editing it changes every instance** — say so
 before you touch one.
 
+It is not a **snippet**. The builder's *Save as snippet* keeps a copy of a block as a file people drop onto pages, and
+each drop is the page's own from then on. No operation here writes one: when someone wants a block that stays the same
+everywhere, that is a component.
+
 It is **closed**. Inside, a binding or a template reads **\`props\`** — what each instance hands in — and the globals
 (\`state\`, \`auth\`, \`navigation\`, \`theme\`, \`variables\`, \`computed\`), never the page an instance sits on. A
 component that needs a list row's record gets it as a prop: the INSTANCE binds it (\`item: "{{ list_rows.item }}"\`),

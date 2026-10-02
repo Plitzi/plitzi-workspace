@@ -3,7 +3,8 @@
 ## Publishing a snippet
 
 A snippet is ONE subtree, the style that dresses it and a name, published as a JSON someone drags onto a canvas you
-will never see.
+will never see. What lands is a copy, the page's own from then on — for a block that stays linked to every place it
+renders, write a component instead ([components.md](components.md)).
 
 ```ts
 import { authorSnippet } from '@plitzi/sdk-authoring';

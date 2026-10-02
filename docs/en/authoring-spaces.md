@@ -781,8 +781,9 @@ is inside the packages:
 
 ## 9. Snippets
 
-A **snippet** is the other artefact this surface produces, and it is not a space: one subtree, the style that
-dresses it and a name, published as a JSON. Somebody fetches it by URL, it appears in the builder's **Assets → Files**, and dragging it onto a canvas instantiates a copy of the subtree in a space you never see.
+A **snippet** is the other artefact this surface produces, and it is not a space — nor a component, which stays
+linked to every place it renders, where a dropped snippet is a copy (see `components.md`, *Components and snippets*):
+one subtree, the style that dresses it and a name, published as a JSON. Somebody fetches it by URL, it appears in the builder's **Assets → Files**, and dragging it onto a canvas instantiates a copy of the subtree in a space you never see.
 
 ```ts
 import { authorSnippet } from '@plitzi/sdk-authoring';

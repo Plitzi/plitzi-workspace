@@ -6,6 +6,11 @@ the document holds every copy, and a person who later edits one in the builder e
 block written ONCE: the document holds one tree, every placement is an instance of it, and an edit to it is an edit to
 all of them, in code and in the builder alike.
 
+Not a **snippet**. A snippet (`authorSnippet`, [snippets-and-export.md](snippets-and-export.md)) is a block published as
+a JSON file for any space to drop in: each drop is a COPY, the page's own from then on, and nothing links it back. Write
+a component for what must stay the same everywhere in this space; a snippet for a starting point people reshape, or
+carry to another space.
+
 ```ts
 import { component, container, heading, text } from '@plitzi/sdk-authoring';
 
