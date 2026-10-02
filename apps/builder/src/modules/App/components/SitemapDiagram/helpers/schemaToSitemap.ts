@@ -1,4 +1,4 @@
-import type { Template } from '../WorkflowDiagram';
+import type { SitemapEntry } from '../types';
 import type { Element, PageFolder } from '@plitzi/sdk-shared';
 
 export type ElementPage = Element<{
@@ -45,7 +45,7 @@ const schemaToSitemap = (pages: ElementPage[], folders: PageFolder[]) => {
 
   const walk = (folderId: string, folderPath = '') => {
     const items = children.get(folderId) || [];
-    const result: Template['nodes'] = [];
+    const result: SitemapEntry[] = [];
 
     for (const item of items) {
       if (item.type === 'page') {

@@ -44,6 +44,7 @@ import {
   switchTheme,
   textAreaTheme,
   textTheme,
+  treeCanvasTheme,
   treeTheme
 } from '@plitzi/plitzi-ui/components';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
@@ -117,6 +118,7 @@ const components = {
   Popup: popupTheme,
   Sidebar: sidebarTheme,
   Tree: treeTheme,
+  TreeCanvas: treeCanvasTheme,
   Accordion: accordionTheme,
   QueryBuilder: queriBuilderTheme,
   Alert: alertTheme,

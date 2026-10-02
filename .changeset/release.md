@@ -30,6 +30,10 @@ The builder is drawn with the website's design system: Geist and Geist Mono, the
 8 / 10 / 14px radii, from the tokens `@plitzi/plitzi-ui/theme.css` now ships. The published SDK stylesheet does not
 take them, so a space's own elements look as they did.
 
+The Sitemap is drawn by `TreeCanvas`, a new `@plitzi/plitzi-ui` component: the site laid out as a tree on its own, panned
+and zoomed like a design canvas, a page moved by dropping it onto a folder or onto the top level. `@xyflow/react` — and
+zustand and d3 with it — is no longer a dependency of the builder.
+
 ## Feature flags
 
 - **What they are:** `schema.flags`, a space's switches by name — a default and rules over the environment, the host,

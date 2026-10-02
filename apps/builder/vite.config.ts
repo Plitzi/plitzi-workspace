@@ -225,10 +225,7 @@ export default defineConfig(({ mode, command }) => {
           import.meta.dirname,
           '../../node_modules/decode-named-character-reference/index.js'
         ),
-        // these 2 are used due zustand depending on use-sync-external-store and it is only CJS (xyflow depends on zustand)
-        'use-sync-external-store/shim/with-selector.js': path.resolve(
-          './src/patches/useSyncExternalStoreWithSelector.ts'
-        ),
+        // swr imports `use-sync-external-store/shim`, which is CommonJS only; React 18+ ships the hook itself.
         'use-sync-external-store/shim': 'react',
         // The Functions panel's worker, which the dev server serves from source.
         ...typescriptLibAlias,
