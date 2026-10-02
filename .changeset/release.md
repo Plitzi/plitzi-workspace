@@ -33,6 +33,11 @@ take them, so a space's own elements look as they did.
 The Sitemap is drawn by `TreeCanvas`, a new `@plitzi/plitzi-ui` component: the site laid out as a tree on its own, panned
 and zoomed like a design canvas, a page moved by dropping it onto a folder or onto the top level. `@xyflow/react` — and
 zustand and d3 with it — is no longer a dependency of the builder.
+From the map a page is found (search lights it and the folders leading to it), opened in the canvas (double click,
+Enter or its card), and created inside a folder; folders fold away what they hold, remembered between visits; arrows walk
+it. Each card says who may open the page, its layout, the flag it exists under, where it sends somebody it refuses, and
+marks its dynamic segments and the page being edited. Fixed on the way: a page with no access level was labelled
+"Public", which in Plitzi means guests only — it is open to everyone, and now says so.
 
 ## Feature flags
 

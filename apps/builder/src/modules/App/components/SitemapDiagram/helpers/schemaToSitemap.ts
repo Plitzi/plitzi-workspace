@@ -1,88 +1,77 @@
-import type { SitemapEntry } from '../types';
+import type { AccessLevel, SitemapEntry } from '../types';
 import type { Element, PageFolder } from '@plitzi/sdk-shared';
 
-export type ElementPage = Element<{
-  folder: string;
-  name: string;
-  slug: string;
-  accessLevel?: 'none' | 'authenticated' | 'public';
-  seoPageDescription: string;
-  default?: boolean;
-}>;
+const text = (attributes: Record<string, unknown>, key: string): string => {
+  const value = attributes[key];
 
-const schemaToSitemap = (pages: ElementPage[], folders: PageFolder[]) => {
-  const children = new Map<string, ({ type: 'folder'; data: PageFolder } | { type: 'page'; data: ElementPage })[]>();
+  return typeof value === 'string' ? value : '';
+};
 
-  // Index folders
+const accessOf = (attributes: Record<string, unknown>): AccessLevel => {
+  switch (attributes.accessLevel) {
+    case 'public':
+      return 'guests';
+    case 'authenticated':
+      return 'signedIn';
+    default:
+      return 'everyone';
+  }
+};
+
+const joinPath = (folderPath: string, slug: string) => `${folderPath}/${slug.replace(/^\//, '')}`;
+
+/**
+ * The site's pages and folders as a tree: each folder holding what names it as its parent, folders and pages alike
+ * sorted by name, and every page with what its card shows — where it answers, who may open it, what wraps it.
+ *
+ * `layouts` names each layout by id: a page refers to its layout by id, and the map shows the name.
+ */
+const schemaToSitemap = (pages: Element[], folders: PageFolder[], layouts: Record<string, string> = {}) => {
+  type Child = { type: 'folder'; data: PageFolder; name: string } | { type: 'page'; data: Element; name: string };
+  const children = new Map<string, Child[]>();
+  const push = (parent: string, child: Child) => children.set(parent, [...(children.get(parent) ?? []), child]);
+  const pageNames = new Map(pages.map(page => [page.id, text(page.attributes, 'name') || page.id]));
+
   for (const folder of folders) {
-    const parent = folder.parentId || '';
-    if (!children.has(parent)) {
-      children.set(parent, []);
-    }
-
-    children.get(parent)?.push({ type: 'folder', data: folder });
+    push(folder.parentId || '', { type: 'folder', data: folder, name: folder.name });
   }
 
-  // Index pages per folder
-  for (const page of Object.values(pages)) {
-    const folder = page.attributes.folder || '';
-    if (!children.has(folder)) {
-      children.set(folder, []);
-    }
-
-    children.get(folder)?.push({ type: 'page', data: page });
+  for (const page of pages) {
+    push(text(page.attributes, 'folder'), { type: 'page', data: page, name: pageNames.get(page.id) ?? page.id });
   }
 
-  // Sort children by name
-  for (const list of children.values()) {
-    list.sort((a, b) => {
-      const A = a.type === 'page' ? a.data.attributes.name : a.data.name;
-      const B = b.type === 'page' ? b.data.attributes.name : b.data.name;
+  const walk = (folderId: string, folderPath: string): SitemapEntry[] =>
+    [...(children.get(folderId) ?? [])]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((child): SitemapEntry => {
+        if (child.type === 'folder') {
+          const { id, name, slug } = child.data;
+          const path = joinPath(folderPath, slug);
 
-      return A.localeCompare(B);
-    });
-  }
+          return { type: 'folder', id, title: name, path, children: walk(id, path) };
+        }
 
-  const walk = (folderId: string, folderPath = '') => {
-    const items = children.get(folderId) || [];
-    const result: SitemapEntry[] = [];
+        const { id, attributes, definition } = child.data;
+        const redirect = text(attributes, 'unauthorizedPageRedirect');
+        // `layout` is the layout; `layoutContainer` the slot inside it the page fills, which names nothing to an author.
+        const layoutId = text(attributes, 'layout');
 
-    for (const item of items) {
-      if (item.type === 'page') {
-        const {
+        return {
+          type: 'page',
           id,
-          attributes: {
-            name = 'Page',
-            slug = '',
-            accessLevel = 'public',
-            seoPageDescription = '',
-            default: isDefault = false
-          } = {}
-        } = item.data;
-        const path = `${folderPath}/${slug.replace(/^\//, '')}`;
-        result.push({ id, type: 'page', title: name, path, accessLevel, description: seoPageDescription, isDefault });
-      }
+          title: child.name,
+          path: joinPath(folderPath, text(attributes, 'slug')),
+          access: accessOf(attributes),
+          isDefault: attributes.default === true,
+          ...(layoutId ? { layout: layouts[layoutId] ?? layoutId } : {}),
+          ...(definition.flag ? { flag: definition.flag } : {}),
+          ...(text(attributes, 'unauthorizedBehaviour') === 'redirect' && redirect
+            ? { redirectTo: pageNames.get(redirect) ?? redirect }
+            : {})
+        };
+      });
 
-      if (item.type === 'folder') {
-        const { id, name, slug } = item.data;
-        const path = `${folderPath}/${slug.replace(/^\//, '')}`;
-
-        result.push({
-          id,
-          type: 'folder',
-          title: name,
-          path,
-          accessLevel: 'none',
-          description: '',
-          children: walk(id, path)
-        });
-      }
-    }
-
-    return result;
-  };
-
-  return walk('');
+  return walk('', '');
 };
 
 export default schemaToSitemap;

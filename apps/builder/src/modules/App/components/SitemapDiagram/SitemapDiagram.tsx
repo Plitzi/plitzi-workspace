@@ -1,25 +1,33 @@
-import Button from '@plitzi/plitzi-ui/Button';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import TreeCanvas from '@plitzi/plitzi-ui/TreeCanvas';
 import { useCallback, useMemo, useState } from 'react';
 
+import SitemapLegend from './components/SitemapLegend';
 import SitemapNode from './components/SitemapNode';
+import SitemapToolbar from './components/SitemapToolbar';
 import schemaToSitemap from './helpers/schemaToSitemap';
-import { ACCESS_LEVELS } from './types';
+import searchSitemap from './helpers/searchSitemap';
 
-import type { ElementPage } from './helpers/schemaToSitemap';
-import type { AccessLevel, SitemapEntry } from './types';
+import type { SitemapEntry } from './types';
 import type { TreeCanvasItem, TreeCanvasNodeState } from '@plitzi/plitzi-ui/TreeCanvas';
 import type { Element, PageFolder } from '@plitzi/sdk-shared';
 
 export type SitemapDiagramProps = {
   pages: Element[];
   pageFolders: PageFolder[];
-  onAddNode?: (nodeType: 'page' | 'folder') => void;
+  /** Each layout's name, by id — what a page's card says it renders inside. */
+  layouts?: Record<string, string>;
+  /** The page open in the canvas. */
+  currentPageId?: string;
+  /** A new page — inside a folder when one is given — or a new folder. */
+  onAddNode?: (nodeType: 'page' | 'folder', folderId?: string) => void;
   /** A page or folder dropped into a folder, or onto the top level (`null`). */
   onMove?: (entry: SitemapEntry, folderId: string | null) => void;
   onRemove?: (entry: SitemapEntry) => void;
+  /** A page opened in the canvas, from its card, a double click or Enter. */
+  onOpen?: (pageId: string) => void;
   /** Back to the canvas: the map replaces it, and the Pages panel that opened it may be closed by now. */
   onClose?: () => void;
 };
@@ -32,37 +40,91 @@ const toItems = (entries: SitemapEntry[]): TreeCanvasItem<SitemapEntry>[] =>
     children: entry.type === 'folder' ? toItems(entry.children) : undefined
   }));
 
-const findEntry = (entries: SitemapEntry[], id: string): SitemapEntry | undefined => {
-  for (const entry of entries) {
-    if (entry.id === id) {
-      return entry;
-    }
+const flatten = (entries: SitemapEntry[]): SitemapEntry[] =>
+  entries.flatMap(entry => [entry, ...(entry.type === 'folder' ? flatten(entry.children) : [])]);
 
-    const found = entry.type === 'folder' ? findEntry(entry.children, id) : undefined;
-    if (found) {
-      return found;
-    }
-  }
-
-  return undefined;
-};
-
-const LEGEND: AccessLevel[] = ['public', 'authenticated', 'none'];
+const NO_FOLDS: string[] = [];
 
 /**
- * The site as a map: every folder over what it holds, laid out on its own. A page moves by dropping it onto a folder,
- * or onto the top level; it is removed with its bin or Delete.
+ * The site as a map: every folder over what it holds, laid out on its own. From here a page is found, opened, moved by
+ * dropping it onto a folder, or removed; a folder folds away what it holds.
  */
-const SitemapDiagram = ({ pages, pageFolders, onAddNode, onMove, onRemove, onClose }: SitemapDiagramProps) => {
+const SitemapDiagram = ({
+  pages,
+  pageFolders,
+  layouts,
+  currentPageId,
+  onAddNode,
+  onMove,
+  onRemove,
+  onOpen,
+  onClose
+}: SitemapDiagramProps) => {
   const { addToast } = useToast();
   const { showDialog } = useModal();
   const [selectedId, setSelectedId] = useState<string>();
-  // The page definitions are the pages this map draws; their attributes carry the fields `schemaToSitemap` reads.
-  const entries = useMemo(() => schemaToSitemap(pages as ElementPage[], pageFolders), [pages, pageFolders]);
+  const [query, setQuery] = useState('');
+  const [matchIndex, setMatchIndex] = useState(0);
+  const [folded = NO_FOLDS, setFolded] = useStorage<string[]>('builder-state.sitemap.folded', NO_FOLDS);
+  const entries = useMemo(() => schemaToSitemap(pages, pageFolders, layouts), [layouts, pages, pageFolders]);
+  const byId = useMemo(() => new Map(flatten(entries).map(entry => [entry.id, entry])), [entries]);
   const items = useMemo(() => toItems(entries), [entries]);
+  const search = useMemo(() => searchSitemap(entries, query), [entries, query]);
+  // A folder holding a match is shown open, folded or not — a search that finds a page behind a fold has found nothing.
+  const collapsedIds = useMemo(
+    () => (search.ancestors.size > 0 ? folded.filter(id => !search.ancestors.has(id)) : folded),
+    [folded, search.ancestors]
+  );
+  const revealId = search.matches.at(matchIndex);
+  const counts = useMemo(() => {
+    const all = [...byId.values()];
+
+    return {
+      pages: all.filter(entry => entry.type === 'page').length,
+      folders: all.filter(e => e.type === 'folder').length
+    };
+  }, [byId]);
+
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    setMatchIndex(0);
+  }, []);
+
+  const handleNextMatch = useCallback(
+    (backwards: boolean) => {
+      const total = search.matches.length;
+      if (total === 0) {
+        return;
+      }
+
+      const next = (matchIndex + (backwards ? total - 1 : 1)) % total;
+      setMatchIndex(next);
+      setSelectedId(search.matches[next]);
+    },
+    [matchIndex, search.matches]
+  );
+
+  const handleToggle = useCallback(
+    (id: string) =>
+      setFolded(current => (current.includes(id) ? current.filter(item => item !== id) : [...current, id])),
+    [setFolded]
+  );
 
   const handleAddPage = useCallback(() => onAddNode?.('page'), [onAddNode]);
   const handleAddFolder = useCallback(() => onAddNode?.('folder'), [onAddNode]);
+  const handleAddPageIn = useCallback((folderId: string) => onAddNode?.('page', folderId), [onAddNode]);
+
+  const handleActivate = useCallback(
+    (id: string) => {
+      const entry = byId.get(id);
+      if (entry?.type === 'page') {
+        onOpen?.(id);
+      } else if (entry) {
+        handleToggle(id);
+      }
+    },
+    [byId, handleToggle, onOpen]
+  );
 
   const handleRemove = useCallback(
     async (entry: SitemapEntry) => {
@@ -101,29 +163,37 @@ const SitemapDiagram = ({ pages, pageFolders, onAddNode, onMove, onRemove, onClo
 
   const handleDelete = useCallback(
     (id: string) => {
-      const entry = findEntry(entries, id);
+      const entry = byId.get(id);
       if (entry) {
         void handleRemove(entry);
       }
     },
-    [entries, handleRemove]
+    [byId, handleRemove]
   );
 
   const handleMove = useCallback(
     (id: string, parentId: string | null) => {
-      const entry = findEntry(entries, id);
+      const entry = byId.get(id);
       if (entry) {
         onMove?.(entry, parentId);
       }
     },
-    [entries, onMove]
+    [byId, onMove]
   );
 
   const renderNode = useCallback(
     (item: TreeCanvasItem<SitemapEntry>, state: TreeCanvasNodeState) => (
-      <SitemapNode entry={item.data} selected={state.selected} dropTarget={state.dropTarget} onRemove={handleRemove} />
+      <SitemapNode
+        entry={item.data}
+        selected={state.selected}
+        dropTarget={state.dropTarget}
+        current={item.id === currentPageId}
+        onOpen={onOpen}
+        onAddPage={onAddNode ? handleAddPageIn : undefined}
+        onRemove={handleRemove}
+      />
     ),
-    [handleRemove]
+    [currentPageId, handleAddPageIn, handleRemove, onAddNode, onOpen]
   );
 
   return (
@@ -131,58 +201,37 @@ const SitemapDiagram = ({ pages, pageFolders, onAddNode, onMove, onRemove, onClo
       className="h-full w-full"
       ariaLabel="Sitemap"
       items={items}
-      nodeWidth={220}
-      nodeHeight={104}
+      nodeWidth={232}
+      nodeHeight={108}
       gapX={40}
-      gapY={56}
+      gapY={64}
       selectedId={selectedId}
       onSelect={setSelectedId}
+      onActivate={handleActivate}
       onMove={onMove ? handleMove : undefined}
       onDelete={onRemove ? handleDelete : undefined}
+      collapsedIds={collapsedIds}
+      onToggleCollapsed={handleToggle}
+      highlightIds={query.trim() ? search.visible : undefined}
+      revealId={revealId}
       renderNode={renderNode}
       rootDropLabel="Move to the top level"
     >
-      <div
-        className="absolute top-3 left-3 z-20 flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
-        onPointerDown={keepPress}
-      >
-        {onClose && (
-          <Button size="sm" intent="secondary" title="Back to the canvas" onClick={onClose} iconPlacement="before">
-            <Button.Icon icon="fa-solid fa-arrow-left" />
-            Canvas
-          </Button>
-        )}
-        <Button size="sm" onClick={handleAddPage} iconPlacement="before">
-          <Button.Icon icon="fa-solid fa-plus" />
-          Page
-        </Button>
-        <Button size="sm" intent="secondary" onClick={handleAddFolder} iconPlacement="before">
-          <Button.Icon icon="fa-solid fa-plus" />
-          Folder
-        </Button>
-        <span className="hidden pr-2 pl-1 text-xs text-gray-500 lg:inline dark:text-zinc-400">
-          Drag a page onto a folder to move it
-        </span>
-      </div>
-      <div
-        className="absolute top-3 right-3 z-20 flex flex-col gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
-        onPointerDown={keepPress}
-      >
-        <span className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
-          Access
-        </span>
-        {LEGEND.map(level => (
-          <span key={level} className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-            <span className={`size-2 rounded-full ${ACCESS_LEVELS[level].dot}`} />
-            {ACCESS_LEVELS[level].label}
-          </span>
-        ))}
-      </div>
+      <SitemapToolbar
+        pageCount={counts.pages}
+        folderCount={counts.folders}
+        query={query}
+        matchCount={search.matches.length}
+        matchIndex={matchIndex}
+        onQueryChange={handleQueryChange}
+        onNextMatch={handleNextMatch}
+        onAddPage={handleAddPage}
+        onAddFolder={handleAddFolder}
+        onClose={onClose}
+      />
+      <SitemapLegend />
     </TreeCanvas>
   );
 };
-
-// A press on the toolbar or the legend is theirs, not the start of panning the map under them.
-const keepPress = (e: { stopPropagation: () => void }) => e.stopPropagation();
 
 export default SitemapDiagram;

@@ -1,5 +1,6 @@
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -14,14 +15,38 @@ import type { SitemapEntry } from '@pmodules/App/components/SitemapDiagram';
 const ContainerSitemap = () => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
-  const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
+  const [[pageFolders, pageDefinitions, flat, currentPageId]] = useBuilderStore([
+    'schema.pageFolders',
+    'pageDefinitions',
+    'schema.flat',
+    'navigation.currentPageId'
+  ]);
   const pages = useMemo(() => Object.values(pageDefinitions), [pageDefinitions]);
+  const layouts = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.values(flat)
+          .filter(element => element.definition.type === 'layoutContainer')
+          .map(layout => [layout.id, layout.definition.label || layout.id])
+      ),
+    [flat]
+  );
   const [, setSitemapOpen] = useSitemapOpen();
+  const navigate = useNavigate();
 
   const handleClose = useCallback(() => setSitemapOpen(false), [setSitemapOpen]);
 
+  // A page is a route in this editor: opening one is going to it, and the canvas comes back to show it.
+  const handleOpen = useCallback(
+    (pageId: string) => {
+      void navigate(`/${pageId}`);
+      setSitemapOpen(false);
+    },
+    [navigate, setSitemapOpen]
+  );
+
   const handleAddNode = useCallback(
-    async (nodeType: 'page' | 'folder') => {
+    async (nodeType: 'page' | 'folder', folderId = '') => {
       if (nodeType === 'page') {
         const response = await showModal(
           <Modal.Header>
@@ -29,7 +54,7 @@ const ContainerSitemap = () => {
           </Modal.Header>,
           ({ onSubmit, onClose }) => (
             <Modal.Body>
-              <PageForm pageFolders={pageFolders} onSubmit={onSubmit} onClose={onClose} />
+              <PageForm pageFolder={folderId} pageFolders={pageFolders} onSubmit={onSubmit} onClose={onClose} />
             </Modal.Body>
           )
         );
@@ -97,6 +122,9 @@ const ContainerSitemap = () => {
       <SitemapDiagram
         pages={pages}
         pageFolders={pageFolders}
+        layouts={layouts}
+        currentPageId={currentPageId}
+        onOpen={handleOpen}
         onAddNode={handleAddNode}
         onMove={handleMove}
         onRemove={handleRemove}
