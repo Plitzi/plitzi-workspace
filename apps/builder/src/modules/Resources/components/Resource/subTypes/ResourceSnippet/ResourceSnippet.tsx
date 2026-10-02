@@ -2,9 +2,11 @@ import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
 import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
+import { isSnippet } from '@plitzi/sdk-shared/schema/snippet';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import SnippetContent from './SnippetContent';
+import UnreadableSnippet from './UnreadableSnippet';
 import ResourceLoading from '../../ResourceLoading';
 import ResourceName from '../../ResourceName';
 import ResourceRemoveButton from '../../ResourceRemoveButton';
@@ -36,9 +38,9 @@ const ResourceSnippet = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void fetchManifest<Snippet>(src)
+    void fetchManifest<object>(src)
       .then(result => {
-        setManifest(result);
+        setManifest(isSnippet(result) ? result : undefined);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -46,8 +48,12 @@ const ResourceSnippet = ({
 
   const { onDragStart } = useDragElement({ type: 'snippet', manifest });
 
-  if (loading || !manifest) {
+  if (loading) {
     return undefined;
+  }
+
+  if (!manifest) {
+    return <UnreadableSnippet className={className} title={title} onRemove={onRemove} />;
   }
 
   const { definition, schema, style } = manifest;

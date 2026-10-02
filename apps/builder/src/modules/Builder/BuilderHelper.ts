@@ -142,8 +142,8 @@ export const getClipboardDataProcessed = async (clipboardData?: DataTransfer) =>
  * A pasted element, named on the spot.
  *
  * `mintId` is positional and local to the payload being assembled: what comes out of here is a throwaway snippet
- * document that `SCHEMA_ADD_SNIPPET` drops into the real space, and that is where a name colliding with the space
- * is renamed. All this has to guarantee is that the paste does not collide with itself.
+ * document that `schemaAddSnippet` drops into the real space, and that is where a name colliding with the space
+ * is renamed (`fitSnippet`). All this has to guarantee is that the paste does not collide with itself.
  */
 export const getElementDefinition = (
   componentDefinitions: Record<string, ComponentDefinition>,

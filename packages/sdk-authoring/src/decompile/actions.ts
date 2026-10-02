@@ -1,4 +1,5 @@
 import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { camel, literal, withSuffix } from './literal';
 import { defineAction } from '../schema/actions';
@@ -29,9 +30,6 @@ class Unreadable extends Error {}
 const refuse = (reason: string): never => {
   throw new Unreadable(reason);
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const isTriggerType = (value: string): value is TriggerType => TRIGGER_TYPES.some(type => type === value);
 

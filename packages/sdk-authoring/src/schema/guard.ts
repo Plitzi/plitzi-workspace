@@ -1,5 +1,6 @@
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { invalidParams, missingRequiredParams, reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { didYouMean } from './suggest';
 
@@ -154,9 +155,6 @@ export const LOAD_STRATEGIES = ['eager', 'lazy', 'visible'] as const;
 export const BINDING_CATEGORIES = ['attributes', 'style', 'initialState'] as const;
 export const ACCESS_LEVELS = ['public', 'authenticated'] as const;
 export const STEP_TYPES = ['trigger', 'globalCallback', 'callback', 'utility'] as const;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** Refuses a field the spec does not take, naming the one it probably meant. */
 export function assertKnownKeys(

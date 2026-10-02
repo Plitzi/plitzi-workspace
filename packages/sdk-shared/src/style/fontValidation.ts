@@ -1,4 +1,5 @@
 import { isSafeFontUrl } from './fonts';
+import { isRecord } from '../helpers/isRecord';
 
 import type { FontDisplay, FontFace, FontStyle, SpaceFont } from '../types/StyleTypes';
 
@@ -36,9 +37,6 @@ export class FontValidationError extends Error {}
 const fail = (message: string): never => {
   throw new FontValidationError(message);
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const parseFamily = (value: unknown): string => {
   if (typeof value !== 'string') {

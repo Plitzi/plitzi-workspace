@@ -4,13 +4,11 @@ import { produce } from 'immer';
 import {
   addComponent,
   detachInstance,
-  documentIds,
   flatMapOf,
   removeComponent,
   renameElement,
   updateComponent
 } from './helpers/components';
-import { remapCollidingIds } from './helpers/elementId';
 import FlatMap from './helpers/FlatMap';
 
 import type {
@@ -18,12 +16,12 @@ import type {
   PageFolder,
   ReducerActionOrigin,
   Schema,
+  SnippetStyle,
   SchemaFlag,
   SchemaVariable,
   DropPosition,
   SpaceComponent,
-  SpaceComponentDeclaration,
-  Style
+  SpaceComponentDeclaration
 } from '@plitzi/sdk-shared';
 
 /** Variables a snippet brought with it, minus the ones this space already declares under the same name. */
@@ -94,7 +92,7 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
         dropPosition: DropPosition;
         initialItems: Record<string, Element>;
         variables?: SchemaVariable[];
-        style?: Style; // used when adding a snippet
+        style?: SnippetStyle; // used when adding a snippet
       }
     | { type: 'SCHEMA_REMOVE_ELEMENT'; elementId: string }
     | {
@@ -291,21 +289,13 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
-        // A snippet arrives from a document nobody here has seen, and the names it brought may not be free: two
-        // elements answering to one name makes every binding onto it ambiguous, so `addElement` refuses the whole
-        // subtree — a drag that silently drops nothing, which is what an authored snippet hits whenever this
-        // space already holds a `hero` or a `cta`.
-        //
-        // Only the colliding names are changed, and everything that pointed at one is repointed with it. Copied
-        // first: the payload belongs to whoever dispatched the action.
-        const arriving = structuredClone({ [data.id]: data, ...initialItems });
-        const taken = documentIds(draft);
-        const renamed = remapCollidingIds(arriving, candidate => taken.has(candidate));
-        const rootId = renamed[data.id] ?? data.id;
-        const { [rootId]: element, ...items } = arriving;
+        // Inserted under the names the action carries, as the server does: `fitSnippet` chose them where the snippet
+        // was dropped, so a name taken since is refused here too. Copied: the payload is the dispatcher's.
+        const { [data.id]: element, ...items } = structuredClone({ ...initialItems, [data.id]: data });
 
-        flatMapOf(draft, to)?.addElement(element, to, dropPosition, items);
-        appendVariables(draft, variables);
+        if (flatMapOf(draft, to)?.addElement(element, to, dropPosition, items)) {
+          appendVariables(draft, variables);
+        }
       });
     }
 

@@ -1,5 +1,6 @@
 import { BODYLESS_METHODS, CONNECTOR_HTTP_METHODS } from './constants';
 import { connectorTokens } from './manifestTokens';
+import { isRecord } from '../helpers/isRecord';
 
 import type { ConnectorTokenScope } from './manifestTokens';
 
@@ -48,9 +49,6 @@ const FIELD_TYPES = [
 ];
 
 const TOKEN = /\{\{\s*([^}]+?)\s*\}\}/g;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
 
 const isFilledString = (value: unknown): value is string => typeof value === 'string' && value.trim() !== '';
 

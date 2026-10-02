@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { StoreProvider, createStoreHook } from '@plitzi/nexus/react';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { Form } from './Form';
 import ElementContext from '../../../Element/ElementContext';
@@ -74,9 +75,6 @@ const control = (
   error: '',
   ...props
 });
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
 
 const asErrors = (value: unknown): Record<string, string> =>
   isRecord(value)

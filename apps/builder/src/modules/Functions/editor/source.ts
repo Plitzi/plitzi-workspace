@@ -1,5 +1,7 @@
 import ts from 'typescript';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { FUNCTIONS_ROOT } from './paths';
 
 import type { FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
@@ -51,9 +53,6 @@ const placeOf = (node: ts.Node): SourcePlace => {
     end: node.getEnd()
   };
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** A value as it is written, without what only wraps it: parentheses, `as`, `satisfies`, `!`. */
 const unwrapped = (node: ts.Expression): ts.Expression => {

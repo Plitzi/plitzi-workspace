@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { signedIn } from './account';
 import { writeFunctionsState } from './functions';
 import { projectFormatter } from './projectFormatter';
@@ -16,9 +18,6 @@ import type { SpaceExport } from '@plitzi/sdk-shared/source';
  * `plitzi create --from <space>`: the space as Plitzi keeps it (docs/en/projects-from-spaces.md), asked for as the person — who must be able
  * to change it — and the files of it the project serves itself, fetched once.
  */
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** What the platform answered is an export: of the format this CLI writes, with every part it reads. */
 const isExport = (value: unknown): value is SpaceExport =>

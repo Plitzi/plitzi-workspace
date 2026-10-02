@@ -1,5 +1,5 @@
 import type { Element, Schema } from './SchemaTypes';
-import type { Style } from './StyleTypes';
+import type { Style, StyleVariables } from './StyleTypes';
 
 /**
  * A published snippet: a subtree, the style that dresses it, and the element a builder instantiates.
@@ -23,3 +23,6 @@ export type Snippet = {
   schema: Pick<Schema, 'flat' | 'variables'>;
   style: Style;
 };
+
+/** The part of a style a snippet brings into a space: its rules, by display mode, and the tokens they read. */
+export type SnippetStyle = Pick<Style, 'platform'> & { variables?: Partial<StyleVariables> };

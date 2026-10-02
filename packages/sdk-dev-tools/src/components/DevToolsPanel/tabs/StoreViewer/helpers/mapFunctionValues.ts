@@ -9,7 +9,7 @@ export const readFunctionLabel = (value: string): string =>
 
 const isArray = (value: unknown): value is unknown[] => Array.isArray(value);
 
-const isRecord = (value: unknown): value is Record<string, unknown> => {
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
@@ -30,7 +30,7 @@ const mapValue = (value: unknown): unknown => {
     return mapped.every((item, index) => item === value[index]) ? value : mapped;
   }
 
-  if (!isRecord(value)) {
+  if (!isPlainObject(value)) {
     return value;
   }
 
@@ -52,7 +52,7 @@ const mapFunctionValues = (state?: Record<string, unknown>): Record<string, unkn
   const mapped = mapValue(state);
 
   // `mapValue` keeps a record a record; the guard only carries that fact through its `unknown` return type.
-  return isRecord(mapped) ? mapped : state;
+  return isPlainObject(mapped) ? mapped : state;
 };
 
 export default mapFunctionValues;

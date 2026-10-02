@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { isSchemaFlag } from '../flags/schemaFlag';
+import { isRecord } from '../helpers/isRecord';
 import { STYLE_STATES } from '../style/styleStates';
 import { StyleVariableCategory } from '../types/StyleTypes';
 
@@ -32,9 +33,6 @@ import type {
  * a second copy of them would be one more thing to drift. They are checked structurally — enough to catch a payload
  * of the wrong shape, which is the failure that actually happens — and keep their real type through `z.custom`.
  */
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 const element = z.custom<Element>(value => isRecord(value) && typeof value.id === 'string', {
   message: 'expected an element with an id'
 });

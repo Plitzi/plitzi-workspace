@@ -6,6 +6,8 @@ import { gunzipSync, gzipSync } from 'node:zlib';
 
 import esbuild from 'esbuild';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import type { SpaceRuntime } from './contract';
 
 /** What the runtime's host provides, and a bundle must not carry a copy of: the platform's packages and React. */
@@ -66,9 +68,6 @@ export const packRuntime = async (entry: string): Promise<Uint8Array> => {
 
   return new Uint8Array(bytes);
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** A packed runtime read back — refused whole when it is not one. */
 const unpack = (bytes: Uint8Array): PackedRuntime => {

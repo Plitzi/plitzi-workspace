@@ -1,3 +1,4 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 /** One entry of a list: what it is called, where it sorts, and what it carries. */
 export type KvListEntry = { id: string; score: number; value: unknown };
 
@@ -26,8 +27,6 @@ const ID = /^[A-Za-z0-9:_.@-]{1,128}$/;
 
 export const listIdProblem = (id: unknown): string | undefined =>
   typeof id === 'string' && ID.test(id) ? undefined : 'A list entry’s id is 1-128 of A-Z a-z 0-9 : _ . @ -';
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 const isEntry = (value: unknown): value is KvListEntry =>
   isRecord(value) && typeof value.id === 'string' && typeof value.score === 'number';

@@ -1,3 +1,4 @@
+import { isRecord } from '../helpers/isRecord';
 /**
  * A source snapshot: the files of a project that one artifact — a plugin, a runtime — was built from, as the platform
  * keeps them beside what was built, so the space can be taken back out as a project (`plitzi create --from`).
@@ -85,9 +86,6 @@ const isName = (value: unknown): value is string =>
 
 const isEntries = (value: unknown): value is string[] =>
   Array.isArray(value) && value.length > 0 && value.every(entry => typeof entry === 'string');
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const isStringRecord = (value: unknown): value is Record<string, string> =>
   isRecord(value) && Object.values(value).every(entry => typeof entry === 'string');

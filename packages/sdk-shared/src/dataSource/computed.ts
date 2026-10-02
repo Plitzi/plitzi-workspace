@@ -1,6 +1,7 @@
 import deepEqual from '@plitzi/plitzi-ui/utils/deepEqual';
 
 import { COMPUTED_GLOBALS } from './globalSources';
+import { isRecord } from '../helpers/isRecord';
 import { processTwigValue } from '../helpers/twigWrapper';
 
 /**
@@ -32,8 +33,6 @@ export const evaluateComputed = (
 
   return unchanged && previous ? previous : computed;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 const isDefinitions = (value: unknown): value is Record<string, string> =>
   isRecord(value) && Object.values(value).every(template => typeof template === 'string');

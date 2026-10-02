@@ -8,6 +8,7 @@ import { useMemo, useCallback, use, useEffect } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { flatMapOf } from '@plitzi/sdk-schema/helpers/components';
+import fitSnippet from '@plitzi/sdk-schema/helpers/fitSnippet';
 import SchemaReducer, { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
@@ -35,7 +36,7 @@ import type {
   SchemaVariable,
   SpaceComponent,
   SpaceComponentDeclaration,
-  Style
+  SnippetStyle
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -74,6 +75,7 @@ const SchemaContextProvider = ({
   >;
   useBuilderStoreSync('schema', schema);
   const getSchema = useBuilderStoreGetter('schema');
+  const getStyle = useBuilderStoreGetter('style');
   const [[elementSelected, setSelectedElement]] = useBuilderStore(['elementSelected', 'setSelected']);
 
   const pageDefinitions = useValueMemo(
@@ -306,24 +308,31 @@ const SchemaContextProvider = ({
       data: Element,
       dropPosition: DropPosition = 'inside',
       initialItems: Record<string, Element> = {},
-      style?: Style,
+      style?: SnippetStyle,
       variables: SchemaVariable[] = [],
       fromSubscriptions = false
     ) => {
+      // Named here, once, for the editor, the server and every collaborator alike; a broadcast already carries the
+      // names the server took, and is inserted under them.
+      const fitted = fromSubscriptions
+        ? { data, initialItems, style }
+        : fitSnippet({ schema: getSchema(), style: getStyle() }, { data, initialItems, style });
       dispatchSchema({
         type: SchemaActions.SCHEMA_ADD_SNIPPET,
         to,
-        data,
+        data: fitted.data,
         dropPosition,
-        initialItems,
+        initialItems: fitted.initialItems,
         variables,
-        style,
+        style: fitted.style,
         fromSubscriptions
       });
 
-      void eventBridge.emit('main', 'styleAddSnippet', style?.platform, true);
+      if (fitted.style) {
+        void eventBridge.emit('main', 'styleAddSnippet', fitted.style, true);
+      }
     },
-    [dispatchSchema, eventBridge]
+    [dispatchSchema, eventBridge, getSchema, getStyle]
   );
 
   const schemaUpdateSettings = useCallback(

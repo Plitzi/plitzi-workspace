@@ -5,6 +5,8 @@ import path from 'node:path';
 import { build } from 'esbuild';
 import { zipSync } from 'fflate';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { packSource } from './source';
 import { emitTypeDeclarations } from './typeDeclarations';
 
@@ -100,9 +102,6 @@ interface Declaration {
     defaultStyle: Record<string, unknown>;
   };
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** The declaration, or what is missing from it — named, so the fix is one edit away. */
 const checkDeclaration = (value: unknown, where: string): Declaration => {

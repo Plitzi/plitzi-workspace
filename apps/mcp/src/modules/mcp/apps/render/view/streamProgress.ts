@@ -1,3 +1,4 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 /** What the host has streamed of the tool call so far, reduced to the little a placeholder can honestly show.
  *
  *  The wait a user sees is almost entirely the model TYPING this batch — the server render takes milliseconds —
@@ -12,9 +13,6 @@
  *    change between notifications, so a frame that recovers less than the one before it must not shrink the
  *    placeholder, which the eye reads as flicker. */
 export type StreamProgress = { elements: number; title?: string; patch: boolean };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const asArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 

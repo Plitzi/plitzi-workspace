@@ -1,3 +1,5 @@
+import { isRecord } from '../helpers/isRecord';
+
 import type { ActionAccess, ActionField, ActionTriggerParams, ActionWebhookVerification } from '../types';
 
 /**
@@ -22,9 +24,6 @@ const parseJson = (raw: string | undefined): unknown => {
     return undefined;
   }
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
 
 /**
  * Who may start a run this way.

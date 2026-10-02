@@ -1,6 +1,7 @@
 import { isKnownTimeZone, parseCron } from './cron';
 import { FAILURE_HANDLER_TASK } from './failureHandler';
 import { triggerAccess, triggerHasStaleVerify, triggerVerify } from './triggerParams';
+import { isRecord } from '../helpers/isRecord';
 
 import type { ActionTriggerParams } from '../types';
 
@@ -41,9 +42,6 @@ const RESERVED_SCOPE_KEYS = new Set(['input', 'user', 'spaceId', 'environment', 
 
 /** `<namespace>.<action>`, which is how the registry addresses a task. */
 const TASK_NAME = /^[a-z][a-zA-Z0-9]*\.[a-z][a-zA-Z0-9]*$/;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
 
 const isFilledString = (value: unknown): value is string => typeof value === 'string' && value.trim() !== '';
 

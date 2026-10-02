@@ -1,4 +1,5 @@
 import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/components';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import {
   defaultAttributes,
@@ -12,7 +13,7 @@ import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../schema';
 import { flagSpecOf } from '../schema/flags';
 import { css } from '../style';
 import { foldCustomCss } from './customCss';
-import { categoryOf, definitionOf, isRecord, withNamedIds } from './documents';
+import { categoryOf, definitionOf, withNamedIds } from './documents';
 import { readSelector, unwritableCss } from './styles';
 
 import type {

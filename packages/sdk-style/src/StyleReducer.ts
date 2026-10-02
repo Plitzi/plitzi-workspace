@@ -1,11 +1,14 @@
-import { get, set } from '@plitzi/plitzi-ui/helpers';
+import { set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
+
+import { mergeSnippetStyle } from '@plitzi/sdk-shared/style/snippetStyle';
 
 import { generateCache } from './StyleHelper';
 import StyleMap from './StyleMap';
 
 import type {
   DisplayMode,
+  SnippetStyle,
   ReducerActionOrigin,
   SpaceFont,
   Style,
@@ -86,7 +89,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
     | { type: 'STYLE_ADD_FONT'; font: SpaceFont }
     | { type: 'STYLE_UPDATE_FONT'; family: string; font: SpaceFont }
     | { type: 'STYLE_REMOVE_FONT'; family: string }
-    | { type: 'STYLE_ADD_SNIPPET'; platform: Style['platform'] }
+    | { type: 'STYLE_ADD_SNIPPET'; style: SnippetStyle }
     | { type: 'STYLE_UPDATE_SETTINGS'; path: string; value: string }
   );
 
@@ -238,14 +241,13 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
     // Others
 
     case StyleActions.STYLE_ADD_SNIPPET: {
-      const { platform: newPlatform } = action;
+      const { style } = action;
 
       return produce(state, draft => {
-        const platform = get(draft, 'platform', {}) as Style['platform'];
-        (Object.keys(newPlatform) as DisplayMode[]).forEach(mode => {
-          platform[mode] = { ...get(platform, mode, {} as Record<string, StyleItem>), ...newPlatform[mode] };
-        });
+        // What the space holds stays as it is: the snippet adds the rules and tokens it lacks (`mergeSnippetStyle`).
+        const { platform, variables } = mergeSnippetStyle(draft, style);
         draft.platform = platform;
+        draft.variables = variables;
         draft.cache = generateCache(draft);
       });
     }

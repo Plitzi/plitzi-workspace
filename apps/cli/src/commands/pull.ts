@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { apiFor, fail } from './account';
 import { download, fetchExport, functionsOnDisk, notFetched, versionLabel } from './createFrom';
 import { findProject } from './existingProject';
@@ -102,9 +104,6 @@ export const verdictOf = ({ given, was, here }: FileState): Verdict => {
 
   return given === was ? 'keep' : 'conflict';
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * The packages the space's code asks for, added to the project's `package.json`: a package it does not list is added,

@@ -2,6 +2,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 /**
  * A file's text as the project's own Prettier writes it — the version it installed, its `.prettierrc` and its ignore
  * files — or as it is when the project has no Prettier installed.
@@ -21,8 +23,6 @@ type Prettier = {
     options: { ignorePath: string[]; resolveConfig: boolean }
   ) => Promise<{ ignored: boolean; inferredParser: string | null }>;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 const isPrettier = (value: unknown): value is Prettier =>
   isRecord(value) && ['format', 'resolveConfig', 'getFileInfo'].every(name => typeof value[name] === 'function');

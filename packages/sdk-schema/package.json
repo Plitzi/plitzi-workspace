@@ -30,6 +30,10 @@
       "types": "./dist/helpers/elementTree.d.ts",
       "import": "./dist/helpers/elementTree.mjs"
     },
+    "./helpers/fitSnippet": {
+      "types": "./dist/helpers/fitSnippet.d.ts",
+      "import": "./dist/helpers/fitSnippet.mjs"
+    },
     "./helpers/schemaValidator": {
       "types": "./dist/helpers/schemaValidator.d.ts",
       "import": "./dist/helpers/schemaValidator.mjs"

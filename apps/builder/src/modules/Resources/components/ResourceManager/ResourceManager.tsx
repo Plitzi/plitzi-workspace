@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
 import getPluginManifest from './helpers/getPluginManifest';
+import isSnippetFile from './helpers/isSnippetFile';
 import TemporalResource from './TemporalResource';
 
 import type { ResourceFile, ResourceWithFile } from '@plitzi/sdk-shared';
@@ -56,8 +57,11 @@ const ResourceManager = ({
           case 'video/mp4':
           case 'video/mpeg':
           case 'image/svg+xml':
-          case 'application/json':
             [file.resourceType] = type.split('/') as [ResourceFile['resourceType']];
+            break;
+
+          case 'application/json':
+            file.resourceType = (await isSnippetFile(file)) ? 'snippet' : 'application';
             break;
 
           // The same zip is `application/zip` from macOS and Linux, and `application/x-zip-compressed` from Windows.

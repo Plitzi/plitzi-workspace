@@ -1,6 +1,8 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { defaultAttributes } from '../elements';
 import { BREAKPOINTS, expandShorthand } from '../style';
-import { categoryOf, definitionOf, isRecord } from './documents';
+import { categoryOf, definitionOf } from './documents';
 
 import type { SpaceDocuments } from '../schema';
 import type {

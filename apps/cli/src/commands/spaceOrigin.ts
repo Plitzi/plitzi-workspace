@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { isTextFile } from '../scaffold/fromSpace';
 
 import type { Formatter } from './projectFormatter';
@@ -36,9 +38,6 @@ export type SpaceOrigin = {
   /** The packages the space's code asked for, at the ranges written into `package.json`. */
   dependencies: Record<string, string>;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const isStrings = (value: unknown): value is Record<string, string> =>
   isRecord(value) && Object.values(value).every(entry => typeof entry === 'string');

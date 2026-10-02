@@ -5,6 +5,8 @@ import { pathToFileURL } from 'node:url';
 
 import chalk from 'chalk';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { apiFor, connectionWithSpace, fail } from './account';
 import { findProject } from './existingProject';
 import { keepSource } from './keepSource';
@@ -44,9 +46,6 @@ type Environment = {
 type Size = { name: string; label: string; cpu: string; memory: string; included: boolean };
 
 const DEFAULT_ENTRY = path.join('src', 'runtime.ts');
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 type Packer = { packRuntime: (entry: string) => Promise<Uint8Array> };
 

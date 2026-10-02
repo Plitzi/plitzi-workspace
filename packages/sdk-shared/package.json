@@ -334,6 +334,10 @@
       "types": "./dist/helpers/isDate.d.ts",
       "import": "./dist/helpers/isDate.mjs"
     },
+    "./helpers/isRecord": {
+      "types": "./dist/helpers/isRecord.d.ts",
+      "import": "./dist/helpers/isRecord.mjs"
+    },
     "./helpers/keys": {
       "types": "./dist/helpers/keys.d.ts",
       "import": "./dist/helpers/keys.mjs"
@@ -1119,6 +1123,10 @@
       "types": "./dist/schema/serverElements.d.ts",
       "import": "./dist/schema/serverElements.mjs"
     },
+    "./schema/snippet": {
+      "types": "./dist/schema/snippet.d.ts",
+      "import": "./dist/schema/snippet.mjs"
+    },
     "./schema/wire": {
       "types": "./dist/schema/wire.d.ts",
       "import": "./dist/schema/wire.mjs"
@@ -1270,6 +1278,10 @@
     "./style/runtimeStyle": {
       "types": "./dist/style/runtimeStyle.d.ts",
       "import": "./dist/style/runtimeStyle.mjs"
+    },
+    "./style/snippetStyle": {
+      "types": "./dist/style/snippetStyle.d.ts",
+      "import": "./dist/style/snippetStyle.mjs"
     },
     "./style/styleConstants": {
       "types": "./dist/style/styleConstants.d.ts",

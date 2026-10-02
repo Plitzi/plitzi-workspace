@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import chalk from 'chalk';
 
 import { readFunctionsSource } from '@plitzi/sdk-shared/actions';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { apiFor, connectionWithSpace, fail } from './account';
 import { findProject } from './existingProject';
@@ -38,9 +39,6 @@ type Files = Record<string, string>;
 export type WorkingCopy = { space: number; version: string; files: Files };
 type Draft = { files: Files; version: string; manifest: { tasks: { namespace: string; action: string }[] } | null };
 type Problem = { file?: string; line?: number; column?: number; message: string };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** The project's root: where `functions/` and `.plitzi/` go. */
 const rootOf = async (): Promise<string> => (await findProject(process.cwd()))?.root ?? process.cwd();

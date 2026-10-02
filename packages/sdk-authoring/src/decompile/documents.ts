@@ -4,6 +4,7 @@ import {
   repointIds,
   uniqueElementId
 } from '@plitzi/sdk-schema/helpers/elementId';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import type { Schema } from '@plitzi/sdk-shared';
 
@@ -13,9 +14,6 @@ import type { Schema } from '@plitzi/sdk-shared';
  * The types describe what a document IS today. A document from before a field existed simply lacks it, and reading it
  * through the type would promise a value that is not there — so these read it as what it really is, `unknown`.
  */
-
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** The space's name and URL, where the document carries them. An older export carries no definition at all. */
 export const definitionOf = (schema: Schema): { name?: string; permanentUrl?: string } => {

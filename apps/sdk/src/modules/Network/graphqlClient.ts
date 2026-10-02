@@ -1,4 +1,5 @@
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth/failureChannel';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 /** Where a request stopped: never reached the server, refused by it, or answered with errors in place of data. */
 export type GraphqlFailure = 'network' | 'http' | 'graphql';
@@ -18,8 +19,6 @@ export class GraphqlRequestError extends Error {
 export type GraphqlClient = {
   request: <T>(document: string, variables?: Record<string, unknown>) => Promise<T>;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 const parseBody = (text: string): unknown => {
   try {

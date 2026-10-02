@@ -82,6 +82,20 @@ point already goes by. It is a **snippet** now, everywhere, with no alias for th
   `authorSnippet` wrote it or the builder saved it. Until now an authored one carried a whole space (`pages: []`, its
   settings), which the builder's preview laid over the space being edited, and one the builder saved failed
   `validateSnippet` (`INVALID_PAGES`).
+- **The same snippet, dropped twice:** the second drop renamed its elements in the editor while the server was sent
+  the names it arrived with, refused them as taken, and the drop was undone. The names are now fitted where the
+  snippet is dropped (`fitSnippet`, `@plitzi/sdk-schema/helpers/fitSnippet`) and carried by the insert to the server
+  and every collaborator; `SCHEMA_ADD_SNIPPET` inserts under them and refuses a name taken since, as the server does.
+  `SpaceAddSnippet` checks what it is sent against the `SPACE_ADD_SNIPPET` event before applying it.
+- **A snippet never restyles the space it lands in:** a class it brings under a name the space uses for something
+  else is renamed (`card` → `card-2`) on its rule, its elements and the rules naming it as an ancestor, and its CSS
+  recompiled; one that says the same is shared. The space keeps its rules for element types and its tokens, and a
+  snippet's tokens the space lacks are now added — the editor merged its rules only, and the server neither
+  (`mergeSnippetStyle`, `@plitzi/sdk-shared/style/snippetStyle`; `SnippetStyle`; `STYLE_ADD_SNIPPET` carries `style`).
+- **A snippet is known by what it holds:** `isSnippet` (`@plitzi/sdk-shared/schema/snippet`). A JSON uploaded in
+  **Assets** that is a snippet goes among the snippets — before, an authored one landed as a plain file — and an upload
+  declared a snippet that is not one is refused. A file among the snippets the builder cannot read is shown as such,
+  with a way to remove it, instead of breaking the panel.
 - **Saving says how it went:** "Save as snippet" announces the snippet once the upload answered, and says why when it
   did not — it used to report it created before knowing, and from the context menu said nothing at all.
 

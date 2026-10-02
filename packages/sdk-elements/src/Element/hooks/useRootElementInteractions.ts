@@ -5,6 +5,7 @@ import { use, useCallback, useContext, useEffect, useMemo } from 'react';
 import { StoreContext } from '@plitzi/nexus/react';
 import { liveSources } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import useElementInteractions from './useElementInteractions';
@@ -16,8 +17,6 @@ import type { ElementContextValue } from '../ElementContext';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { Context } from 'react';
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 /**
  * The events an element's trigger has already answered without propagating it.

@@ -20,6 +20,7 @@ import type {
   BuilderNetworkContextValue,
   BuilderQueriesMap,
   DisplayMode,
+  SnippetStyle,
   SpaceEventMap,
   SpaceFont,
   Style,
@@ -235,8 +236,8 @@ const BuilderStyleContextProvider = ({
   );
 
   const styleAddSnippet = useCallback(
-    (platform: Style['platform'], fromSubscriptions = false) =>
-      dispatchStyle({ type: StyleActions.STYLE_ADD_SNIPPET, platform, fromSubscriptions }),
+    (style: SnippetStyle, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_ADD_SNIPPET, style, fromSubscriptions }),
     [dispatchStyle]
   );
 

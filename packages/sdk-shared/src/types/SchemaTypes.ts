@@ -1,6 +1,6 @@
 import type { InteractionCallbackParamValues, InteractionCallbackType } from './InteractionTypes';
 import type { ChannelDeclarations } from './RealtimeTypes';
-import type { Style } from './StyleTypes';
+import type { SnippetStyle } from './SnippetTypes';
 import type { BuiltinParam } from '../authoring/paramSpec';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -363,7 +363,7 @@ export type SchemaContextValue = {
     data: Element,
     dropPosition?: DropPosition,
     initialItems?: Record<string, Element>,
-    snippetPlatform?: Style,
+    style?: SnippetStyle,
     variables?: SchemaVariable[],
     fromSubscriptions?: boolean
   ) => void;

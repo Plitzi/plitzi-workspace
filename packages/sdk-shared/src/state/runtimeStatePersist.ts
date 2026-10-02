@@ -9,6 +9,7 @@ import {
   writePaintedEntry
 } from './paintedState';
 import { pConsole } from '../devTools/utils/PlitziConsole';
+import { isRecord } from '../helpers/isRecord';
 
 import type { CommonState } from '../types';
 import type { PathOf, PersistStorage, StoreMiddleware } from '@plitzi/nexus';
@@ -101,9 +102,6 @@ const ownedStorage = (storage: Storage, owner: string): PersistStorage => ({
 
 /** The one path this module keeps. */
 const KEPT_PATH = 'runtime.state';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const omitKeys = (from: Record<string, unknown>, keys: ReadonlySet<string>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(from).filter(([key]) => !keys.has(key)));

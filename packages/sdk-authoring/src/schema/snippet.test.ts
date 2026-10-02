@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+import fitSnippet from '@plitzi/sdk-schema/helpers/fitSnippet';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaReducer from '@plitzi/sdk-schema/SchemaReducer';
+import { mergeSnippetStyle } from '@plitzi/sdk-shared/style/snippetStyle';
 
 import { elementSourceTypes } from '../elements';
 import { authorSpace, authorSnippet, validateSpace, validateSnippet } from './index';
 
 import type { ElementSpec, SnippetSpec } from './index';
-import type { Element, Schema, Snippet } from '@plitzi/sdk-shared';
+import type { Element, Schema, Snippet, Style } from '@plitzi/sdk-shared';
 
 const text = (content: string, extra: Partial<ElementSpec> = {}): ElementSpec => ({
   type: 'text',
@@ -251,9 +253,9 @@ describe('validateSnippet', () => {
  * The path a manifest actually travels, with nothing mocked but the drag itself.
  *
  * A snippet is fetched as JSON, carried as authored through the drag (`useDragElement`) and the drop
- * (`BuilderProvider`), and inserted by the schema reducer — which is the one place that renames anything, and only
- * the names the receiving space already holds. Worth holding authoring and instantiating together in a test: a
- * manifest that is perfectly consistent with itself can still land as nothing at all.
+ * (`BuilderProvider`), fitted to the space it lands in (`fitSnippet`) — the one place that renames anything, and only
+ * the names the receiving space already holds — and inserted by the schema reducer. Worth holding authoring and
+ * instantiating together in a test: a manifest that is perfectly consistent with itself can still land as nothing.
  */
 describe('a snippet, dropped into a space', () => {
   const host = () =>
@@ -263,7 +265,7 @@ describe('a snippet, dropped into a space', () => {
       pages: [{ name: 'Home', slug: '', body: [container([text('Existing')])] }]
     });
 
-  const droppedInto = (snippet: Snippet, space: Schema) => {
+  const droppedInto = (snippet: Snippet, space: Schema, spaceStyle: Style) => {
     const [pageId] = space.pages;
 
     // `fetchManifest` — a manifest arrives as JSON and nothing else.
@@ -284,26 +286,32 @@ describe('a snippet, dropped into a space', () => {
       Object.values(elements).map(el => [el.id, { ...el, definition: { ...el.definition, rootId: pageId } }])
     );
 
+    // `SchemaContextProvider`: renamed against the space before it is inserted anywhere — whatever the space already
+    // answers to — so the id it landed under is the page's newest child rather than the one the manifest carried.
+    const fitted = fitSnippet(
+      { schema: space, style: spaceStyle },
+      { data: item, initialItems, style: manifest.style }
+    );
     const schema = SchemaReducer(space, {
       type: 'SCHEMA_ADD_SNIPPET',
       to: pageId,
-      data: item,
+      data: fitted.data,
       dropPosition: 'inside',
-      initialItems,
+      initialItems: fitted.initialItems,
       variables: manifest.schema.variables
     });
 
-    // The reducer renames whatever the space already answers to, so the id it landed under is the page's newest
-    // child rather than the one the manifest carried.
     const items = schema.flat[pageId].definition.items ?? [];
+    // `STYLE_ADD_SNIPPET`: the rules and tokens the space lacks, added beside its own.
+    const style = { ...spaceStyle, ...mergeSnippetStyle(spaceStyle, fitted.style ?? manifest.style) };
 
-    return { schema, pageId, itemId: items[items.length - 1] };
+    return { schema, style, pageId, itemId: items[items.length - 1] };
   };
 
   it('lands as a subtree of the page, and leaves the space valid', () => {
     const { snippet } = authorSnippet(minimal());
-    const { schema: space, style } = host();
-    const { schema, pageId, itemId } = droppedInto(snippet, space);
+    const { schema: space, style: spaceStyle } = host();
+    const { schema, style, pageId, itemId } = droppedInto(snippet, space, spaceStyle);
 
     expect(schema.flat[pageId].definition.items).toContain(itemId);
     expect(Object.keys(schema.flat)).toHaveLength(6);
@@ -317,8 +325,8 @@ describe('a snippet, dropped into a space', () => {
    */
   it('is renamed against the space it lands in, rather than refused', () => {
     const { snippet } = authorSnippet(minimal());
-    const { schema: space } = host();
-    const { schema } = droppedInto(snippet, space);
+    const { schema: space, style: spaceStyle } = host();
+    const { schema } = droppedInto(snippet, space, spaceStyle);
     const refs = Object.values(schema.flat).map(element => element.id);
 
     expect(new Set(refs).size).toBe(refs.length);
@@ -328,8 +336,8 @@ describe('a snippet, dropped into a space', () => {
 
   it('brings its whole subtree, re-rooted on the page', () => {
     const { snippet } = authorSnippet(minimal());
-    const { schema: space } = host();
-    const { schema, pageId, itemId } = droppedInto(snippet, space);
+    const { schema: space, style: spaceStyle } = host();
+    const { schema, pageId, itemId } = droppedInto(snippet, space, spaceStyle);
     const children = schema.flat[itemId].definition.items ?? [];
 
     expect(children).toHaveLength(2);

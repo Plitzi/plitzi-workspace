@@ -1,3 +1,5 @@
+import { isRecord } from '../helpers/isRecord';
+
 import type { SchemaFlag } from '../types';
 
 const FLAG_NAME = '[A-Za-z_][A-Za-z0-9_]*';
@@ -12,9 +14,6 @@ export const FLAG_GATE_PATTERN = new RegExp(`^!?${FLAG_NAME}$`);
 const RESERVED_FLAG_NAMES = new Set(['__proto__', 'constructor', 'prototype']);
 
 export const isFlagName = (name: string): boolean => FLAG_NAME_PATTERN.test(name) && !RESERVED_FLAG_NAMES.has(name);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * Whether a value is a flag as the resolver reads it — what every writer checks before storing one: a mutation, the

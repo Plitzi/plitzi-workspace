@@ -1,3 +1,5 @@
+import { isRecord } from '../helpers/isRecord';
+
 import type { ChangeEntry, ChangeKind } from './types';
 
 export type FieldChange = { path: string; before?: unknown; after?: unknown };
@@ -7,9 +9,6 @@ export type ChangeAction = 'add' | 'remove' | 'move' | 'update' | 'reorder';
 
 /** One thing a save did, in words, and the element it is about when it is about one. */
 export type ChangeLine = { text: string; action: ChangeAction; elementId?: string };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * What changed inside one entity, field by field (`attributes.content`, `definition.items`). Objects are walked; a list

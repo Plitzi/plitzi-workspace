@@ -829,7 +829,24 @@ const { valid, errors, warnings } = validateSnippet(snippet);
 The builder's own "save as snippet" is the other direction and does not go through `authorSnippet`: it starts
 from a live schema and cuts a subtree out of it (`FlatMap.flatAsSnippet`), which is a different question — which
 of a space's rules and variables belong to this subtree — from the one here, where the answer is simply everything
-the declaration carries. Both produce the same artefact, and `validateSnippet` reads either.
+the declaration carries. Both produce the same artefact, and `validateSnippet` reads either: a definition, the
+elements and their variables (`schema.flat`, `schema.variables`), and the style — nothing else of a space travels.
+
+### Dropped into a space
+
+A snippet lands in a space that has names of its own, and **nothing the space already holds is changed by it**:
+
+| What the snippet brings | Where the space already has that name |
+| --- | --- |
+| an element id | the snippet's element is renamed (`hero` → `hero-2`), and everything in the snippet that pointed at it follows |
+| a class | kept and shared when it says the same; otherwise the snippet's is renamed (`card` → `card-2`), on its rule, on the elements that wear it and wherever another of its rules names it as an ancestor — the space's own `.card` is never restyled |
+| a rule for an element type | the space's is kept: how every text of the space looks is the space's |
+| a token (`variables`) | the space's is kept; one the space lacks is added |
+
+The names are fitted once, where the snippet is dropped (`fitSnippet`, `@plitzi/sdk-schema/helpers/fitSnippet`),
+and the editor, the server and every collaborator insert the same ones; the style is added by one rule on all of
+them (`mergeSnippetStyle`, `@plitzi/sdk-shared/style/snippetStyle`). A name taken by someone else in between is
+refused rather than stored under another one.
 
 ## 10. From a document back to code
 

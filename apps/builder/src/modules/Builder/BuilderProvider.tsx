@@ -268,8 +268,8 @@ const BuilderProvider = ({
         }
 
         // The payload is a throwaway copy of the snippet document, so nothing here has to be detached from an
-        // original — the names it brought are kept, and `SCHEMA_ADD_SNIPPET` renames only the ones this space
-        // already holds. Re-cloning first would have renamed all of them and thrown the authored names away.
+        // original — the names it brought are kept, and `schemaAddSnippet` renames only the ones this space already
+        // holds (`fitSnippet`). Re-cloning first would have renamed all of them and thrown the authored names away.
         const baseElement = {
           ...pick(dataParsed.baseElement, ['id', 'attributes', 'definition']),
           definition: { ...dataParsed.baseElement.definition, rootId: baseElementId, parentId: toElementId }

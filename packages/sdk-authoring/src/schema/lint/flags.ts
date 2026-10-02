@@ -1,12 +1,10 @@
 import { hasConditions, isFlagName } from '@plitzi/sdk-shared/flags';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { didYouMean } from '../suggest';
 
 import type { LintContext } from './context';
 import type { Element, Schema } from '@plitzi/sdk-shared';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** Every element of the space, in the pages' tree and in every component's. */
 const allElements = (schema: Schema): Element[] => [
