@@ -1,11 +1,11 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import Heading from '@plitzi/plitzi-ui/Heading';
-import { useCallback } from 'react';
 
 import { actionTriggers, isActionEnabled } from '@plitzi/sdk-shared/actions';
+import EmptyState from '@pmodules/App/components/EmptyState';
+import ResourceRow from '@pmodules/App/components/ResourceRow';
+import ViewPage from '@pmodules/App/components/ViewPage';
 
 import type { SpaceAction } from '@plitzi/sdk-shared';
-import type { MouseEvent } from 'react';
 
 export type ActionListProps = {
   actions: SpaceAction[];
@@ -14,57 +14,56 @@ export type ActionListProps = {
   onCreate: () => void;
 };
 
+const DESCRIPTION =
+  'Work a page cannot do in the browser: charge a card, send an email, read a system only the server can reach. The credentials never leave the server.';
+
 const triggerSummary = (action: SpaceAction) =>
   actionTriggers(action.document)
     .map(node => node.action)
     .join(', ') || 'no triggers';
 
 const ActionList = ({ actions, onSelect, onRemove, onCreate }: ActionListProps) => {
-  const handleSelect = useCallback((identifier: string) => () => onSelect(identifier), [onSelect]);
-
-  const handleRemove = useCallback(
-    (identifier: string) => (e: MouseEvent) => {
-      e.stopPropagation();
-      onRemove(identifier);
-    },
-    [onRemove]
+  const createButton = (
+    <Button size="sm" onClick={onCreate} iconPlacement="before">
+      <Button.Icon icon="fa-solid fa-plus" />
+      New Action
+    </Button>
   );
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-4xl grow basis-0 flex-col p-4">
-      <div className="mb-4 flex w-full items-center justify-between">
-        <Heading as="h5">Server Actions</Heading>
-        <Button size="sm" onClick={onCreate}>
-          New Action
-        </Button>
-      </div>
+    <ViewPage description={actions.length > 0 ? DESCRIPTION : undefined} actions={actions.length > 0 && createButton}>
       {actions.length === 0 && (
-        <div className="rounded-sm border-2 border-dashed border-gray-300 p-4 text-center text-sm text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
-          Work a page cannot do in the browser: charge a card, send an email, read a system only the server can reach.
-          The credentials never leave the server.
+        <EmptyState
+          icon="fa-solid fa-bolt"
+          title="No server actions yet"
+          description={DESCRIPTION}
+          action={createButton}
+        />
+      )}
+      {actions.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {actions.map(action => (
+            <ResourceRow
+              key={action.identifier}
+              id={action.identifier}
+              icon="fa-solid fa-bolt"
+              title={action.name}
+              subtitle={triggerSummary(action)}
+              badge={
+                !isActionEnabled(action.document) && (
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+                    Disabled
+                  </span>
+                )
+              }
+              removeTitle="Remove action"
+              onSelect={onSelect}
+              onRemove={onRemove}
+            />
+          ))}
         </div>
       )}
-      <div className="flex min-h-0 grow basis-0 flex-col gap-2 overflow-y-auto">
-        {actions.map(action => (
-          <div
-            key={action.identifier}
-            className="flex cursor-pointer items-center justify-between rounded-sm border border-gray-300 p-2 dark:border-zinc-600"
-            onClick={handleSelect(action.identifier)}
-          >
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">
-                {action.name}
-                {!isActionEnabled(action.document) && <span className="ml-2 text-xs text-amber-600">disabled</span>}
-              </span>
-              <span className="text-xs text-gray-500">{triggerSummary(action)}</span>
-            </div>
-            <Button size="xs" onClick={handleRemove(action.identifier)} title="Remove action">
-              <Button.Icon icon="fa-solid fa-trash" />
-            </Button>
-          </div>
-        ))}
-      </div>
-    </div>
+    </ViewPage>
   );
 };
 

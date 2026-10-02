@@ -119,7 +119,7 @@ const SchemaVariableForm = ({
         <Form.Input name="category" label="Category" size="xs" className="w-full grow basis-0" />
         <VariableValue valueType={watchType} hasSubValues={hasSubValues} name="value" />
         {hasSubValues && (
-          <Alert intent="info" className="text-xs text-white">
+          <Alert intent="info" size="xs">
             Based on the logic the variable will take one of these values from top to down
           </Alert>
         )}

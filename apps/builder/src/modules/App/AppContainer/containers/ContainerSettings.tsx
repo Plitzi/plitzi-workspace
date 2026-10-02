@@ -12,7 +12,7 @@ const SECTIONS: [PanelSection, ...PanelSection[]] = [
 
 /** The space's settings, and who may visit it: the roles it declares and who holds them. */
 const ContainerSettings = () => (
-  <div className="flex min-h-0 grow basis-0 flex-col bg-white dark:bg-zinc-800">
+  <div className="flex min-h-0 grow basis-0 flex-col bg-white dark:bg-zinc-900">
     <PanelSections name="settings" sections={SECTIONS} variant="page" />
   </div>
 );

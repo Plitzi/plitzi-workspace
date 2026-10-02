@@ -3,6 +3,8 @@ import Button from '@plitzi/plitzi-ui/Button';
 import { useCallback, useMemo, useState } from 'react';
 
 import { actionName, validateActionDocument } from '@plitzi/sdk-shared/actions';
+import ViewPage from '@pmodules/App/components/ViewPage';
+import ViewSection from '@pmodules/App/components/ViewSection';
 
 import Workflow from '../../../Interactions/components/Workflow';
 import ActionCheck from '../ActionCheck';
@@ -272,27 +274,46 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
     }
   }, [name, document, onSubmit]);
 
-  return (
-    <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 overflow-auto p-4">
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">The flow</span>
-        <Workflow
-          nodes={document.nodes}
-          nodeDefinitions={nodeDefinitions}
-          stepType="task"
-          defaultTrigger="call"
-          triggerTitle="When this happens..."
-          callbackTitle="The server does this..."
-          onChange={handleChangeNodes}
-        />
-        <span className="text-xs text-gray-500">
-          The trigger&apos;s own name is the action&apos;s — open it to rename both at once. End with an <b>Output</b>{' '}
-          step naming what the caller gets back: that step is the contract, and only the last one that runs is answered.
-        </span>
-      </div>
+  // A flow not started yet is not wrong yet: "no way in" on a blank canvas only repeats what the canvas already says.
+  const started = Object.keys(document.nodes).length > 0;
 
-      {report.errors.length > 0 && (
-        <Alert intent="error" size="sm">
+  return (
+    <ViewPage
+      onBack={onCancel}
+      backLabel="Actions"
+      title={name || (action ? action.name : 'New action')}
+      description="The trigger's own name is the action's — open it to rename both at once."
+      actions={
+        <>
+          <Button size="sm" intent="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button size="sm" disabled={isSaving || !report.valid || !name} onClick={handleSubmit}>
+            {action ? 'Save' : 'Create'}
+          </Button>
+        </>
+      }
+    >
+      <ViewSection title="Flow">
+        <div className="flex min-h-72 flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-800">
+          <Workflow
+            nodes={document.nodes}
+            nodeDefinitions={nodeDefinitions}
+            stepType="task"
+            defaultTrigger="call"
+            triggerTitle="When this happens..."
+            callbackTitle="The server does this..."
+            onChange={handleChangeNodes}
+          />
+        </div>
+        <span className="text-xs text-gray-500 dark:text-zinc-400">
+          End with an <b>Output</b> step naming what the caller gets back: that step is the contract, and only the last
+          one that runs is answered.
+        </span>
+      </ViewSection>
+
+      {started && report.errors.length > 0 && (
+        <Alert intent="error" size="sm" solid={false}>
           <ul className="list-inside list-disc text-xs">
             {report.errors.map(issue => (
               <li key={`${issue.path}-${issue.message}`}>
@@ -303,8 +324,8 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
           </ul>
         </Alert>
       )}
-      {report.warnings.length > 0 && (
-        <Alert intent="warning" size="sm">
+      {started && report.warnings.length > 0 && (
+        <Alert intent="warning" size="sm" solid={false}>
           <ul className="list-inside list-disc text-xs">
             {report.warnings.map(issue => (
               <li key={`${issue.path}-${issue.message}`}>
@@ -330,16 +351,7 @@ const ActionForm = ({ action, tasks, credentials, deployments, onRun, onSubmit, 
       )}
 
       {action && <ActionEvents actionId={action.identifier} />}
-
-      <div className="flex justify-end gap-2">
-        <Button size="sm" intent="secondary" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button size="sm" disabled={isSaving || !report.valid || !name} onClick={handleSubmit}>
-          {action ? 'Save' : 'Create'}
-        </Button>
-      </div>
-    </div>
+    </ViewPage>
   );
 };
 

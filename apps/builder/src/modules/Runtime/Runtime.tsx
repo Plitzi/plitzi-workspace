@@ -1,8 +1,9 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import Card from '@plitzi/plitzi-ui/Card';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import { useCallback, useMemo, useState } from 'react';
 
+import EmptyState from '@pmodules/App/components/EmptyState';
+import ViewPage from '@pmodules/App/components/ViewPage';
+import ViewSection from '@pmodules/App/components/ViewSection';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import RuntimeCodeNote from './components/RuntimeCodeNote';
@@ -13,6 +14,9 @@ import type { BuilderQueriesMap } from '@plitzi/sdk-shared';
 
 /** How often the panel asks again while a runtime is on its way somewhere. */
 const WATCH_MS = 2000;
+
+const DESCRIPTION =
+  'This space’s own server code, run beside it — for what its functions cannot be: a connection kept open, memory that outlives a request, Node and its packages.';
 
 /** What a runtime is only on its way through: while one is in either, the panel keeps asking. */
 const PASSING = new Set<string>(['starting', 'stopping']);
@@ -53,33 +57,37 @@ const Runtime = () => {
     await mutate();
   }, [mutate]);
 
+  const idleMinutes = data?.idleMinutes ?? 0;
+
   return (
-    <Card className="relative flex grow basis-0" rounded="none">
-      <Card.Body grow>
-        <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-6 overflow-y-auto p-4">
-          <div className="flex items-center justify-between gap-2">
-            <Heading as="h5">Runtime</Heading>
-            <Button size="sm" intent="secondary" onClick={handleRefresh}>
-              Refresh
-            </Button>
-          </div>
-          {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
-          {!isLoading && environments.length === 0 && (
-            <span className="text-sm text-gray-500 dark:text-zinc-400">This space has no runtime yet.</span>
-          )}
-          {!isLoading && <RuntimeCodeNote pushed={environments.length > 0} idleMinutes={data?.idleMinutes ?? 0} />}
-          {environments.length > 0 && (
-            <RuntimeEnvironments
-              environments={environments}
-              sizes={data?.sizes ?? []}
-              idleMinutes={data?.idleMinutes ?? 0}
-              onChange={handleChange}
-            />
-          )}
-          <RuntimeVariables names={data?.variables ?? []} onChange={handleChange} />
-        </div>
-      </Card.Body>
-    </Card>
+    <ViewPage
+      description={environments.length > 0 ? DESCRIPTION : undefined}
+      actions={
+        <Button size="sm" intent="secondary" onClick={handleRefresh} iconPlacement="before">
+          <Button.Icon icon="fa-solid fa-rotate" />
+          Refresh
+        </Button>
+      }
+    >
+      {isLoading && <span className="text-sm text-gray-500 dark:text-zinc-400">Loading…</span>}
+      {!isLoading && environments.length === 0 && (
+        <EmptyState icon="fa-solid fa-server" title="No runtime yet" description={DESCRIPTION} />
+      )}
+      {environments.length > 0 && (
+        <RuntimeEnvironments
+          environments={environments}
+          sizes={data?.sizes ?? []}
+          idleMinutes={idleMinutes}
+          onChange={handleChange}
+        />
+      )}
+      {!isLoading && (
+        <ViewSection title={environments.length > 0 ? 'Pushing new code' : 'How to push one'}>
+          <RuntimeCodeNote pushed={environments.length > 0} idleMinutes={idleMinutes} />
+        </ViewSection>
+      )}
+      <RuntimeVariables names={data?.variables ?? []} onChange={handleChange} />
+    </ViewPage>
   );
 };
 

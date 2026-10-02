@@ -33,7 +33,7 @@ const PublishForm = ({ environment = 'development', description = '', onClose, o
   return (
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body>
-        <Alert className="mb-4 text-white" intent="info">
+        <Alert className="mb-4" intent="info" size="sm">
           Make a snapshot and save it into an environment to later publish it
         </Alert>
         <VersionContents environment="main" title="This snapshot will freeze" />

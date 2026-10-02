@@ -80,7 +80,7 @@ const FlagForm = ({
         <Form.Input name="description" label="Description" placeholder="What it turns on" size="xs" />
         <Form.Switch name="value" label="On when no rule matches" size="xs" />
         {rules.length > 0 && (
-          <Alert intent="info" className="text-xs text-white">
+          <Alert intent="info" size="xs">
             Rules are read top to bottom: the first one that matches decides
           </Alert>
         )}

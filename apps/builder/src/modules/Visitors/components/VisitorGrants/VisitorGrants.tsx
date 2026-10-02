@@ -1,13 +1,13 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Badge from '@plitzi/plitzi-ui/Badge';
 import Button from '@plitzi/plitzi-ui/Button';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import Select from '@plitzi/plitzi-ui/Select';
 import { use, useCallback, useState } from 'react';
 
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import ViewSection from '@pmodules/App/components/ViewSection';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
@@ -79,8 +79,7 @@ const VisitorGrants = ({ roles }: VisitorGrantsProps) => {
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      <Heading as="h6">People</Heading>
+    <ViewSection title="People">
       {roles.length === 0 && (
         <span className="text-xs text-gray-500 dark:text-zinc-400">Declare a role above to give it to somebody.</span>
       )}
@@ -140,7 +139,7 @@ const VisitorGrants = ({ roles }: VisitorGrantsProps) => {
           </div>
         </div>
       ))}
-    </div>
+    </ViewSection>
   );
 };
 

@@ -28,22 +28,23 @@ const ContainerServer = () => {
   const [hasServerRendering] = useBuilderStore('hasServerRendering');
 
   return (
-    <div className="flex min-h-0 grow basis-0 flex-col bg-white dark:bg-zinc-800">
-      {!hasServerRendering && (
-        <div className="mx-auto w-full max-w-4xl px-4 pt-4">
-          <Alert intent="warning" size="sm" solid={false}>
-            <div className="flex flex-col gap-1 text-xs">
-              <span className="font-medium">This space has no server-rendered deployment.</span>
+    <div className="flex min-h-0 grow basis-0 flex-col bg-white dark:bg-zinc-900">
+      <PanelSections
+        name="server"
+        sections={SECTIONS}
+        variant="page"
+        notice={
+          !hasServerRendering && (
+            <Alert intent="warning" size="xs" solid={false}>
               <span>
-                What is here runs on a server or does not run: a step that calls an action reports itself inert rather
-                than doing the work in the browser, and connectors resolve only in the builder&apos;s preview.
+                <b className="font-semibold">No server-rendered deployment.</b> What is here runs on a server or not at
+                all: an action reports itself inert and connectors resolve only in this preview. Deploy the space with a
+                Plitzi SSR credential to reach visitors.
               </span>
-              <span>To reach visitors, deploy the space with a Plitzi SSR credential.</span>
-            </div>
-          </Alert>
-        </div>
-      )}
-      <PanelSections name="server" sections={SECTIONS} variant="page" />
+            </Alert>
+          )
+        }
+      />
     </div>
   );
 };

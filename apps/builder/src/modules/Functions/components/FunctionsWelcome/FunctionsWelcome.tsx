@@ -26,7 +26,7 @@ const POINTS = [
 const FunctionsWelcome = ({ onStart }: FunctionsWelcomeProps) => (
   <div className="flex grow items-center justify-center overflow-auto p-6">
     <div className="flex max-w-xl flex-col items-center gap-6 text-center">
-      <span className="flex size-12 items-center justify-center rounded-xl bg-gray-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
+      <span className="bg-primary-50 text-primary-600 dark:bg-primary-400/15 dark:text-primary-300 flex size-12 items-center justify-center rounded-xl">
         <i className="fa-solid fa-code" />
       </span>
       <div className="flex flex-col gap-2">

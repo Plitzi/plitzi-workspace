@@ -33,7 +33,7 @@ const PublishFlagsForm = ({ onClose, onSubmit }: PublishFlagsFormProps) => {
   return (
     <Form form={form} onSubmit={handleSubmit} className="gap-4">
       <Form.Body>
-        <Alert className="mb-4 text-white" intent="info">
+        <Alert className="mb-4" intent="info" size="sm">
           Sends the flags as the draft declares them now to the environment. Flags are kept apart from snapshots: no new
           snapshot is made, the pages the environment serves switch now, and nothing else you are editing goes with
           them.

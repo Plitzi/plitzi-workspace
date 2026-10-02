@@ -97,7 +97,7 @@ const ConnectorBasicEditor = ({ manifest, onChange }: ConnectorBasicEditorProps)
           <Label size="xs">Credential</Label>
           <div className="flex items-center gap-2">
             <div
-              className="flex h-7 grow items-center truncate rounded-sm border border-gray-300 px-2 text-xs dark:border-zinc-600"
+              className="flex h-7 grow items-center truncate rounded-sm border border-gray-300 px-2 text-xs dark:border-zinc-700"
               title={fieldDocs.credential}
             >
               {manifest.credential || <span className="text-gray-400">None — public API</span>}

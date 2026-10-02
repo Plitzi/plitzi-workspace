@@ -1,11 +1,11 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { checkVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
+import ViewSection from '@pmodules/App/components/ViewSection';
 
 import type { VisitorRoles as TVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
 
@@ -91,8 +91,7 @@ const VisitorRoles = ({ roles }: VisitorRolesProps) => {
   }, [newPermissions, newRole, save, texts]);
 
   return (
-    <div className="flex flex-col gap-3">
-      <Heading as="h6">Roles</Heading>
+    <ViewSection title="Roles">
       <span className="text-xs text-gray-500 dark:text-zinc-400">
         What a signed-in visitor may do here. An action asks for a permission (<code>access: role</code>); a role is the
         permissions it gives. Visitors hold only the permissions of the roles you give them below — never those of their
@@ -126,7 +125,7 @@ const VisitorRoles = ({ roles }: VisitorRolesProps) => {
           {problem}
         </Alert>
       )}
-    </div>
+    </ViewSection>
   );
 };
 

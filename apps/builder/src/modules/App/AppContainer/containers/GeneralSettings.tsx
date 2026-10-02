@@ -1,13 +1,14 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
-import Card from '@plitzi/plitzi-ui/Card';
 import Checkbox from '@plitzi/plitzi-ui/Checkbox';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, use, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+
+import ViewPage from '../../components/ViewPage';
+import ViewSection from '../../components/ViewSection';
 
 import type { ChangeEvent } from 'react';
 
@@ -141,247 +142,238 @@ const GeneralSettings = () => {
   );
 
   return (
-    <Card className="flex grow basis-0 flex-col" rounded="none">
-      <Card.Body className="overflow-y-auto" grow>
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4">
-          <section className="flex flex-col gap-4 border-b border-gray-200 pb-6 last:border-b-0 dark:border-zinc-700">
-            <Heading as="h5">User Settings</Heading>
-            <Select
-              size="sm"
-              name="userProvider"
-              value={userProvider}
-              onChange={handleChange('userProvider')}
-              label="User Provider"
-              placeholder="None"
-            >
-              <option value="basic">Basic</option>
-              <option value="server">Page server — sign in by redirect (Plitzi accounts)</option>
-            </Select>
-            <Select
-              size="sm"
-              name="tokenStorage"
-              value={tokenStorage}
-              onChange={handleChange('tokenStorage')}
-              label="Token Storage"
-              placeholder="None"
-            >
-              <option value="localStorage">Local Storage</option>
-              <option value="sessionStorage">Session Storage</option>
-            </Select>
-            {userProvider === 'basic' && (
-              <>
-                <Alert intent="info" size="xs" solid={false}>
-                  Every field below accepts schema variables, so one <code>{'{{baseUrl}}/auth/login'}</code> follows the
-                  environment its variable is defined for.
-                </Alert>
-                <Input
-                  size="sm"
-                  name="loginUrl"
-                  value={loginUrl}
-                  onChange={handleChange('loginUrl')}
-                  label="API Login Url"
-                />
-                <Input
-                  size="sm"
-                  name="userUrl"
-                  value={userUrl}
-                  onChange={handleChange('userUrl')}
-                  label="API User Profile Url"
-                />
-                <Input
-                  size="sm"
-                  name="refreshUrl"
-                  value={refreshUrl}
-                  onChange={handleChange('refreshUrl')}
-                  label="API Refresh Url (Optional)"
-                />
-                <Input
-                  size="sm"
-                  name="logoutUrl"
-                  value={logoutUrl}
-                  onChange={handleChange('logoutUrl')}
-                  label="API Logout Url"
-                />
-                <Input
-                  size="sm"
-                  name="mfaUrl"
-                  value={mfaUrl}
-                  onChange={handleChange('mfaUrl')}
-                  label="API Second Factor Url (Optional) - completes a sign-in that asked for a code"
-                />
-                <Input
-                  size="sm"
-                  name="sessionExchangeUrl"
-                  value={sessionExchangeUrl}
-                  onChange={handleChange('sessionExchangeUrl')}
-                  label="Session Exchange Url (Optional) - for a sign-in that happens in the browser"
-                />
-                <Input
-                  size="sm"
-                  name="detailsPath"
-                  value={detailsPath}
-                  onChange={handleChange('detailsPath')}
-                  label="API Details Object Path - Default: [details] - example: [user.details]"
-                />
-                <Input
-                  size="sm"
-                  name="tokenPath"
-                  value={tokenPath}
-                  onChange={handleChange('tokenPath')}
-                  label="API Token Object Path - Default: [access_token] - example: [user.access_token]"
-                />
-                <Input
-                  size="sm"
-                  name="refreshTokenPath"
-                  value={refreshTokenPath}
-                  onChange={handleChange('refreshTokenPath')}
-                  label="API Refresh Token Object Path - Default: [refresh_token]"
-                />
-                <Input
-                  size="sm"
-                  name="expirationTimePath"
-                  value={expirationTimePath}
-                  onChange={handleChange('expirationTimePath')}
-                  label="API Expiration Time Object Path - Default: [expire_at] - example: [user.expire_at]"
-                />
-                <Input
-                  size="sm"
-                  name="refreshExpirationTimePath"
-                  value={refreshExpirationTimePath}
-                  onChange={handleChange('refreshExpirationTimePath')}
-                  label="API Refresh Expiration Time Object Path - Default: [refresh_expire_at]"
-                />
-                <Alert intent="info" size="xs" solid={false}>
-                  Name a readable cookie your API sets beside its session cookie (value{' '}
-                  <code>expiry.refreshExpiry</code>, in seconds) and pages know whether anyone is signed in without
-                  asking — including when nobody is.
-                </Alert>
-                <Input
-                  size="sm"
-                  name="sessionHintCookie"
-                  value={sessionHintCookie}
-                  onChange={handleChange('sessionHintCookie')}
-                  label="Session Hint Cookie (Optional)"
-                />
-                <Select
-                  size="sm"
-                  name="sessionGate"
-                  value={sessionGate}
-                  onChange={handleChange('sessionGate')}
-                  label="Pages Requiring A Session"
-                >
-                  <option value="optimistic">Render from the stored session, confirm in background</option>
-                  <option value="strict">Wait for the API to confirm the session</option>
-                </Select>
-                <Input
-                  size="sm"
-                  type="number"
-                  name="sessionRevalidateSeconds"
-                  value={String(sessionRevalidateSeconds)}
-                  onChange={handleChangeNumber('sessionRevalidateSeconds')}
-                  label="Re-check The Session After (seconds) - Default: [300]"
-                />
-              </>
-            )}
-          </section>
-          <section className="flex flex-col gap-4 border-b border-gray-200 pb-6 last:border-b-0 dark:border-zinc-700">
-            <Heading as="h5">Style Settings</Heading>
+    <ViewPage className="gap-8">
+      <ViewSection title="Signed-in users">
+        <Select
+          size="sm"
+          name="userProvider"
+          value={userProvider}
+          onChange={handleChange('userProvider')}
+          label="User Provider"
+          placeholder="None"
+        >
+          <option value="basic">Basic</option>
+          <option value="server">Page server — sign in by redirect (Plitzi accounts)</option>
+        </Select>
+        <Select
+          size="sm"
+          name="tokenStorage"
+          value={tokenStorage}
+          onChange={handleChange('tokenStorage')}
+          label="Token Storage"
+          placeholder="None"
+        >
+          <option value="localStorage">Local Storage</option>
+          <option value="sessionStorage">Session Storage</option>
+        </Select>
+        {userProvider === 'basic' && (
+          <>
             <Alert intent="info" size="xs" solid={false}>
-              Keep on mind that changing this can impact your style
+              Every field below accepts schema variables, so one <code>{'{{baseUrl}}/auth/login'}</code> follows the
+              environment its variable is defined for.
             </Alert>
+            <Input
+              size="sm"
+              name="loginUrl"
+              value={loginUrl}
+              onChange={handleChange('loginUrl')}
+              label="API Login Url"
+            />
+            <Input
+              size="sm"
+              name="userUrl"
+              value={userUrl}
+              onChange={handleChange('userUrl')}
+              label="API User Profile Url"
+            />
+            <Input
+              size="sm"
+              name="refreshUrl"
+              value={refreshUrl}
+              onChange={handleChange('refreshUrl')}
+              label="API Refresh Url (Optional)"
+            />
+            <Input
+              size="sm"
+              name="logoutUrl"
+              value={logoutUrl}
+              onChange={handleChange('logoutUrl')}
+              label="API Logout Url"
+            />
+            <Input
+              size="sm"
+              name="mfaUrl"
+              value={mfaUrl}
+              onChange={handleChange('mfaUrl')}
+              label="API Second Factor Url (Optional) - completes a sign-in that asked for a code"
+            />
+            <Input
+              size="sm"
+              name="sessionExchangeUrl"
+              value={sessionExchangeUrl}
+              onChange={handleChange('sessionExchangeUrl')}
+              label="Session Exchange Url (Optional) - for a sign-in that happens in the browser"
+            />
+            <Input
+              size="sm"
+              name="detailsPath"
+              value={detailsPath}
+              onChange={handleChange('detailsPath')}
+              label="API Details Object Path - Default: [details] - example: [user.details]"
+            />
+            <Input
+              size="sm"
+              name="tokenPath"
+              value={tokenPath}
+              onChange={handleChange('tokenPath')}
+              label="API Token Object Path - Default: [access_token] - example: [user.access_token]"
+            />
+            <Input
+              size="sm"
+              name="refreshTokenPath"
+              value={refreshTokenPath}
+              onChange={handleChange('refreshTokenPath')}
+              label="API Refresh Token Object Path - Default: [refresh_token]"
+            />
+            <Input
+              size="sm"
+              name="expirationTimePath"
+              value={expirationTimePath}
+              onChange={handleChange('expirationTimePath')}
+              label="API Expiration Time Object Path - Default: [expire_at] - example: [user.expire_at]"
+            />
+            <Input
+              size="sm"
+              name="refreshExpirationTimePath"
+              value={refreshExpirationTimePath}
+              onChange={handleChange('refreshExpirationTimePath')}
+              label="API Refresh Expiration Time Object Path - Default: [refresh_expire_at]"
+            />
+            <Alert intent="info" size="xs" solid={false}>
+              Name a readable cookie your API sets beside its session cookie (value <code>expiry.refreshExpiry</code>,
+              in seconds) and pages know whether anyone is signed in without asking — including when nobody is.
+            </Alert>
+            <Input
+              size="sm"
+              name="sessionHintCookie"
+              value={sessionHintCookie}
+              onChange={handleChange('sessionHintCookie')}
+              label="Session Hint Cookie (Optional)"
+            />
             <Select
               size="sm"
-              name="mode"
-              value={styleMode}
-              onChange={handleChangeMode}
-              label="Style Mode (Breakpoint system)"
-              placeholder="None"
+              name="sessionGate"
+              value={sessionGate}
+              onChange={handleChange('sessionGate')}
+              label="Pages Requiring A Session"
             >
-              <option value="desktop-first">Desktop First</option>
-              <option value="mobile-first">Mobile First</option>
+              <option value="optimistic">Render from the stored session, confirm in background</option>
+              <option value="strict">Wait for the API to confirm the session</option>
             </Select>
-          </section>
-          <section className="flex flex-col gap-4 border-b border-gray-200 pb-6 last:border-b-0 dark:border-zinc-700">
-            <Heading as="h5">State Settings</Heading>
-            <Checkbox
+            <Input
               size="sm"
-              name="keepState"
-              checked={keepState}
-              onChange={handleChangeKeepState}
-              type="checkbox"
-              label="Keep State"
+              type="number"
+              name="sessionRevalidateSeconds"
+              value={String(sessionRevalidateSeconds)}
+              onChange={handleChangeNumber('sessionRevalidateSeconds')}
+              label="Re-check The Session After (seconds) - Default: [300]"
             />
-            {keepState && (
-              <Select
-                size="sm"
-                name="stateStorage"
-                value={stateStorage}
-                onChange={handleChange('stateStorage')}
-                label="State Storage"
-                placeholder="None"
-              >
-                <option value="localStorage">Local Storage</option>
-                <option value="sessionStorage">Session Storage</option>
-              </Select>
-            )}
-            {keepState && (
-              <Input
-                size="sm"
-                name="transientState"
-                value={keyTexts.transientState}
-                onChange={handleChangeStateKeys('transientState')}
-                label="Never keep these state keys"
-                placeholder="filter, tourStep, panelOpen"
-              />
-            )}
-            {keepState && (
-              <Input
-                size="sm"
-                name="paintedState"
-                value={keyTexts.paintedState}
-                onChange={handleChangeStateKeys('paintedState')}
-                label="Draw these kept keys on the server"
-                placeholder="toolPick, name"
-              />
-            )}
-            {keepState && (
-              <p className="text-xs text-gray-500 dark:text-zinc-400">
-                For what the first paint shows — the tool a toolbar shows, a name in an avatar. They are kept in a
-                cookie too, so a server-rendered page arrives with them instead of swapping them in. Small values only.
-              </p>
-            )}
-            {keepState && dottedKeys.length > 0 && (
-              <Alert intent="warning" size="xs" solid={false}>
-                {dottedKeys.join(', ')}: name the top-level key a Set State step writes, without dots — anything under
-                it goes with it.
-              </Alert>
-            )}
-            {keepState && bothKeys.length > 0 && (
-              <Alert intent="warning" size="xs" solid={false}>
-                {bothKeys.join(', ')}: in both lists. A key drawn on the server is kept; one never kept is not — remove
-                it from one of them.
-              </Alert>
-            )}
-          </section>
-          <section className="flex flex-col gap-4 border-b border-gray-200 pb-6 last:border-b-0 dark:border-zinc-700">
-            <Heading as="h5">Debugging</Heading>
-            <Alert intent="warning" size="xs" solid={false}>
-              For sites served with SSR — usually your <code>*.plitzi.app</code> address, or a custom domain pointed at
-              it. Anyone who opens the site can then open the dev tools (Shift+F12) and read its elements, state and
-              interactions. Switch it off when you are done.
-            </Alert>
-            <Checkbox
-              size="sm"
-              name="debugMode"
-              checked={debugMode}
-              onChange={handleChangeDebugMode}
-              type="checkbox"
-              label="Dev tools on the published SSR site (*.plitzi.app)"
-            />
-          </section>
-        </div>
-      </Card.Body>
-    </Card>
+          </>
+        )}
+      </ViewSection>
+      <ViewSection title="Style">
+        <Alert intent="info" size="xs" solid={false}>
+          Keep on mind that changing this can impact your style
+        </Alert>
+        <Select
+          size="sm"
+          name="mode"
+          value={styleMode}
+          onChange={handleChangeMode}
+          label="Style Mode (Breakpoint system)"
+          placeholder="None"
+        >
+          <option value="desktop-first">Desktop First</option>
+          <option value="mobile-first">Mobile First</option>
+        </Select>
+      </ViewSection>
+      <ViewSection title="State">
+        <Checkbox
+          size="sm"
+          name="keepState"
+          checked={keepState}
+          onChange={handleChangeKeepState}
+          type="checkbox"
+          label="Keep State"
+        />
+        {keepState && (
+          <Select
+            size="sm"
+            name="stateStorage"
+            value={stateStorage}
+            onChange={handleChange('stateStorage')}
+            label="State Storage"
+            placeholder="None"
+          >
+            <option value="localStorage">Local Storage</option>
+            <option value="sessionStorage">Session Storage</option>
+          </Select>
+        )}
+        {keepState && (
+          <Input
+            size="sm"
+            name="transientState"
+            value={keyTexts.transientState}
+            onChange={handleChangeStateKeys('transientState')}
+            label="Never keep these state keys"
+            placeholder="filter, tourStep, panelOpen"
+          />
+        )}
+        {keepState && (
+          <Input
+            size="sm"
+            name="paintedState"
+            value={keyTexts.paintedState}
+            onChange={handleChangeStateKeys('paintedState')}
+            label="Draw these kept keys on the server"
+            placeholder="toolPick, name"
+          />
+        )}
+        {keepState && (
+          <p className="text-xs text-gray-500 dark:text-zinc-400">
+            For what the first paint shows — the tool a toolbar shows, a name in an avatar. They are kept in a cookie
+            too, so a server-rendered page arrives with them instead of swapping them in. Small values only.
+          </p>
+        )}
+        {keepState && dottedKeys.length > 0 && (
+          <Alert intent="warning" size="xs" solid={false}>
+            {dottedKeys.join(', ')}: name the top-level key a Set State step writes, without dots — anything under it
+            goes with it.
+          </Alert>
+        )}
+        {keepState && bothKeys.length > 0 && (
+          <Alert intent="warning" size="xs" solid={false}>
+            {bothKeys.join(', ')}: in both lists. A key drawn on the server is kept; one never kept is not — remove it
+            from one of them.
+          </Alert>
+        )}
+      </ViewSection>
+      <ViewSection title="Debugging">
+        <Alert intent="warning" size="xs" solid={false}>
+          For sites served with SSR — usually your <code>*.plitzi.app</code> address, or a custom domain pointed at it.
+          Anyone who opens the site can then open the dev tools (Shift+F12) and read its elements, state and
+          interactions. Switch it off when you are done.
+        </Alert>
+        <Checkbox
+          size="sm"
+          name="debugMode"
+          checked={debugMode}
+          onChange={handleChangeDebugMode}
+          type="checkbox"
+          label="Dev tools on the published SSR site (*.plitzi.app)"
+        />
+      </ViewSection>
+    </ViewPage>
   );
 };
 

@@ -137,7 +137,7 @@ const ConnectorEndpointsEditor = ({ manifest, onChange }: ConnectorEndpointsEdit
         </Button>
       </div>
       {writes.length === 0 && (
-        <div className="rounded-sm border border-dashed border-gray-300 p-2 text-center text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
+        <div className="rounded-md border border-dashed border-gray-200 p-2 text-center text-xs text-gray-500 dark:border-zinc-700 dark:text-zinc-400">
           Read-only. Anything not declared here is refused by the server.
         </div>
       )}

@@ -1,5 +1,4 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import clsx from 'clsx';
 
 import type { SaveState } from '../../helpers';
@@ -29,18 +28,10 @@ const FunctionsHeader = ({
   onDiscard,
   onRemove
 }: FunctionsHeaderProps) => (
-  <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-4 dark:border-zinc-800">
-    <div className="flex min-w-0 items-center gap-3">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
-        <i className="fa-solid fa-code text-xs" />
-      </span>
-      <div className="flex min-w-0 flex-col">
-        <Heading as="h5">Functions</Heading>
-        <span className="truncate text-xs text-gray-500 dark:text-zinc-400">
-          Server code in TypeScript: tasks are steps any action runs, routes answer HTTP under /fn.
-        </span>
-      </div>
-    </div>
+  <header className="flex h-12 shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-6 dark:border-zinc-800">
+    <p className="min-w-0 truncate text-sm text-gray-600 dark:text-zinc-400">
+      Server code in TypeScript: tasks are steps any action runs, routes answer HTTP under <code>/fn</code>.
+    </p>
     <div className="flex shrink-0 items-center gap-2">
       {state && (
         <span

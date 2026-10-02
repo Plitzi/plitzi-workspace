@@ -258,11 +258,11 @@ const SpaceCredentialForm = ({
         </Form.Conditional>
       </Form.Body>
       <Form.Footer justify="end">
-        <Button onClick={onClose} size="sm">
+        <Button onClick={onClose} size="sm" intent="secondary">
           Cancel
         </Button>
         <Button type="submit" size="sm">
-          {editing ? 'Save' : 'Submit'}
+          {editing ? 'Save' : 'Create'}
         </Button>
       </Form.Footer>
     </Form>

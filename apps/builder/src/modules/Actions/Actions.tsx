@@ -1,6 +1,8 @@
-import Card from '@plitzi/plitzi-ui/Card';
+import Alert from '@plitzi/plitzi-ui/Alert';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo, useState } from 'react';
+
+import ViewPage from '@pmodules/App/components/ViewPage';
 
 import ActionsContext from './ActionsContext';
 import ActionForm from './components/ActionForm';
@@ -74,27 +76,31 @@ const Actions = () => {
   );
 
   return (
-    <Card className="relative flex grow basis-0" rounded="none">
-      <Card.Body grow>
-        {isLoading && <div className="p-4 text-sm text-gray-500">Loading actions…</div>}
-        {!isLoading && error && <div className="p-4 text-sm text-red-600">{error}</div>}
-        {!isLoading && !error && !isEditing && (
-          <ActionList actions={items} onSelect={setEditing} onRemove={handleRemove} onCreate={handleCreate} />
-        )}
-        {!isLoading && !error && isEditing && (
-          <ActionForm
-            key={action?.identifier ?? 'new'}
-            action={action}
-            tasks={tasks}
-            credentials={credentials}
-            deployments={deployments}
-            onRun={runAction}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-          />
-        )}
-      </Card.Body>
-    </Card>
+    <>
+      {isLoading && <ViewPage description="Loading actions…" />}
+      {!isLoading && error && (
+        <ViewPage>
+          <Alert intent="error" size="sm" solid={false}>
+            {error}
+          </Alert>
+        </ViewPage>
+      )}
+      {!isLoading && !error && !isEditing && (
+        <ActionList actions={items} onSelect={setEditing} onRemove={handleRemove} onCreate={handleCreate} />
+      )}
+      {!isLoading && !error && isEditing && (
+        <ActionForm
+          key={action?.identifier ?? 'new'}
+          action={action}
+          tasks={tasks}
+          credentials={credentials}
+          deployments={deployments}
+          onRun={runAction}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      )}
+    </>
   );
 };
 

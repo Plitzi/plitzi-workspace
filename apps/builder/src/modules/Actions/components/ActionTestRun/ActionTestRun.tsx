@@ -101,7 +101,7 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
   const fields = Object.entries(input);
 
   return (
-    <div className="flex flex-col gap-2 rounded-sm border border-gray-300 p-3 dark:border-zinc-600">
+    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Test run</span>
         <Button size="xs" disabled={disabled || isRunning || !selected} onClick={handleRun}>
@@ -186,7 +186,7 @@ const ActionTestRun = ({ document, disabled, disabledReason, onRun }: ActionTest
               return (
                 <div
                   key={`${String(node?.action)}-${index}`}
-                  className="flex flex-col rounded-sm border border-gray-200 px-2 py-1 text-xs dark:border-zinc-700"
+                  className="flex flex-col rounded-md border border-gray-200 px-3 py-2 text-xs dark:border-zinc-800"
                 >
                   <div className="flex items-center justify-between">
                     <span>{node?.title ?? node?.action ?? 'step'}</span>

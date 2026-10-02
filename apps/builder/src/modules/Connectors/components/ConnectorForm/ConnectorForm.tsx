@@ -5,6 +5,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useState } from 'react';
 
 import { connectorPresets, emptyManifest } from '@plitzi/sdk-shared/connectors';
+import ViewPage from '@pmodules/App/components/ViewPage';
 
 import { parseManifest } from '../../helpers/parseManifest';
 import { validateManifest } from '../../helpers/validateManifest';
@@ -99,19 +100,36 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
   }, [name, manifest, isAdvanced, draft, onSubmit]);
 
   return (
-    <div className="flex grow basis-0 flex-col">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 p-3 pb-2">
-        <div className="flex items-end gap-2">
-          <Input className="grow" value={name} label="Name" placeholder="Blog CMS" onChange={setName} size="xs" />
+    <ViewPage
+      scroll={false}
+      className="pb-0"
+      onBack={onCancel}
+      backLabel="Connectors"
+      title={name || connector?.name || 'New connector'}
+      description="The endpoints your CMS answers on. The credential it authenticates with stays on the server."
+      actions={
+        <>
           <Button
-            size="xs"
+            size="sm"
             intent="secondary"
             title={isAdvanced ? 'Back to the guided form' : 'Edit the stored manifest as JSON'}
             onClick={handleToggleAdvanced}
+            iconPlacement="before"
           >
             <Button.Icon icon={isAdvanced ? 'fa-solid fa-list-check' : 'fa-solid fa-code'} />
+            {isAdvanced ? 'Guided' : 'JSON'}
           </Button>
-        </div>
+          <Button size="sm" intent="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleSubmit} disabled={isSaving}>
+            {connector ? 'Save' : 'Create'}
+          </Button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
+        <Input value={name} label="Name" placeholder="Blog CMS" onChange={setName} size="xs" />
         {!connector && !isAdvanced && (
           <Select value="" label="Start from" onChange={handleChangePreset} size="xs">
             <option value="">Choose your API or CMS…</option>
@@ -123,43 +141,37 @@ const ConnectorForm = ({ connector, onSubmit, onCancel }: ConnectorFormProps) =>
           </Select>
         )}
       </div>
-      <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col overflow-auto px-3">
+      <div className="flex min-h-0 grow basis-0 flex-col overflow-auto">
         {isAdvanced && <ConnectorAdvancedEditor value={draft} onChange={setDraft} />}
         {!isAdvanced && <ConnectorBasicEditor manifest={manifest} onChange={setManifest} />}
       </div>
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 border-t border-gray-200 p-3 dark:border-zinc-700">
-        {errors.length > 0 && (
-          <Alert intent="error" size="sm" solid={false}>
-            <div className="flex flex-col gap-1">
-              {errors.map(error => (
-                <span key={error} className="text-xs">
-                  {error}
-                </span>
-              ))}
-            </div>
-          </Alert>
-        )}
-        {warnings.length > 0 && (
-          <Alert intent="warning" size="sm" solid={false}>
-            <div className="flex flex-col gap-1">
-              {warnings.map(warning => (
-                <span key={warning} className="text-xs">
-                  {warning}
-                </span>
-              ))}
-            </div>
-          </Alert>
-        )}
-        <div className="flex justify-end gap-2">
-          <Button size="sm" intent="secondary" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSubmit} disabled={isSaving}>
-            {connector ? 'Save' : 'Create'}
-          </Button>
+      {(errors.length > 0 || warnings.length > 0) && (
+        <div className="flex flex-col gap-2 border-t border-gray-200 py-3 dark:border-zinc-800">
+          {errors.length > 0 && (
+            <Alert intent="error" size="sm" solid={false}>
+              <div className="flex flex-col gap-1">
+                {errors.map(error => (
+                  <span key={error} className="text-xs">
+                    {error}
+                  </span>
+                ))}
+              </div>
+            </Alert>
+          )}
+          {warnings.length > 0 && (
+            <Alert intent="warning" size="sm" solid={false}>
+              <div className="flex flex-col gap-1">
+                {warnings.map(warning => (
+                  <span key={warning} className="text-xs">
+                    {warning}
+                  </span>
+                ))}
+              </div>
+            </Alert>
+          )}
         </div>
-      </div>
-    </div>
+      )}
+    </ViewPage>
   );
 };
 

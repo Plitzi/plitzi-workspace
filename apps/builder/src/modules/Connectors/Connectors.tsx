@@ -1,6 +1,8 @@
-import Card from '@plitzi/plitzi-ui/Card';
+import Alert from '@plitzi/plitzi-ui/Alert';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo, useState } from 'react';
+
+import ViewPage from '@pmodules/App/components/ViewPage';
 
 import ConnectorForm from './components/ConnectorForm';
 import ConnectorList from './components/ConnectorList';
@@ -64,23 +66,27 @@ const Connectors = () => {
   );
 
   return (
-    <Card className="relative flex grow basis-0" rounded="none">
-      <Card.Body grow>
-        {isLoading && <div className="p-4 text-sm text-gray-500">Loading connectors…</div>}
-        {!isLoading && error && <div className="p-4 text-sm text-red-600">{error}</div>}
-        {!isLoading && !error && !isEditing && (
-          <ConnectorList connectors={items} onSelect={setEditing} onRemove={handleRemove} onCreate={handleCreate} />
-        )}
-        {!isLoading && !error && isEditing && (
-          <ConnectorForm
-            key={connector?.identifier ?? 'new'}
-            connector={connector}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-          />
-        )}
-      </Card.Body>
-    </Card>
+    <>
+      {isLoading && <ViewPage description="Loading connectors…" />}
+      {!isLoading && error && (
+        <ViewPage>
+          <Alert intent="error" size="sm" solid={false}>
+            {error}
+          </Alert>
+        </ViewPage>
+      )}
+      {!isLoading && !error && !isEditing && (
+        <ConnectorList connectors={items} onSelect={setEditing} onRemove={handleRemove} onCreate={handleCreate} />
+      )}
+      {!isLoading && !error && isEditing && (
+        <ConnectorForm
+          key={connector?.identifier ?? 'new'}
+          connector={connector}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      )}
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 import Badge from '@plitzi/plitzi-ui/Badge';
-import { Heading, Icon } from '@plitzi/plitzi-ui/components';
+import { Icon } from '@plitzi/plitzi-ui/components';
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
@@ -73,16 +73,18 @@ const SpaceCredential = ({
 
   return (
     <div
-      className={clsx('group relative flex flex-col gap-2 rounded border p-2', {
-        'hover:bg-primary-100/30 border-gray-300 dark:border-zinc-700': !selected && isSupported,
-        'border-primary-400 bg-primary-100/50 dark:bg-primary-500/20': selected && isSupported,
+      className={clsx('group relative flex flex-col gap-2 rounded-lg border px-4 py-3 transition-colors duration-150', {
+        'hover:border-primary-300 dark:hover:border-primary-400/40 border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900':
+          !selected && isSupported,
+        'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-400/10': selected && isSupported,
         'cursor-pointer': isSupported,
-        'cursor-not-allowed border-gray-300 bg-gray-100 opacity-70 dark:border-zinc-700 dark:bg-zinc-800': !isSupported
+        'cursor-not-allowed border-gray-200 bg-gray-50 opacity-70 dark:border-zinc-800 dark:bg-zinc-800/40':
+          !isSupported
       })}
       onClick={handleClick}
     >
       <div className="flex items-center justify-between">
-        <Heading as="h6">{name}</Heading>
+        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{name}</span>
         {selected && (
           <div className="flex">
             <Icon size="2xl" intent="primaryActive" icon="fa-solid fa-circle-check" className="cursor-default" />

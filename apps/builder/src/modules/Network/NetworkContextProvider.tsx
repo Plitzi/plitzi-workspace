@@ -8,8 +8,8 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
-import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
 import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';

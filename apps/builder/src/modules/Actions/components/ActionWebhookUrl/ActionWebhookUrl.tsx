@@ -19,7 +19,7 @@ const ActionWebhookUrl = ({ identifier, deployments }: ActionWebhookUrlProps) =>
   );
 
   return (
-    <div className="flex flex-col gap-2 rounded-sm border border-gray-300 p-3 dark:border-zinc-600">
+    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
       <span className="text-sm font-medium">Where deliveries go</span>
       {deployments.length === 0 && (
         <span className="text-xs text-gray-500 dark:text-zinc-400">
