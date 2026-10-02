@@ -447,6 +447,36 @@ with no fields.
 Only for a real inverse. `cannotEdit: Boolean(post) && !canEdit` is three states, not two — the page shows nothing
 at all when there is no post — and a condition like that still belongs where the data is made.
 
+### Feature flags — what a person switches on
+
+Visibility is the page's own logic. What a PERSON decides is switched on — a feature still being built, a version for
+beta users, the old checkout kept during a rollout — is a feature flag, declared on the space and named by a gate:
+
+```ts
+authorSpace({
+  name: 'Shop',
+  permanentUrl: 'shop',
+  flags: {
+    newCheckout: {
+      description: 'The one-step checkout',
+      value: false,
+      rules: [{ when: { combinator: 'and', rules: [{ field: 'user.roles', operator: 'contains', value: 'beta' }] }, value: true }]
+    }
+  },
+  pages: [{ name: 'Checkout', slug: 'checkout', body: [
+    container({ id: 'checkout-new', flag: 'newCheckout', children: [ … ] }),
+    container({ id: 'checkout-old', flag: '!newCheckout', children: [ … ] })
+  ] }]
+});
+```
+
+A gated element whose flag disagrees is not rendered at all — not a hidden element, no markup and no server data — and
+a gated page answers 404. Its declaration still travels with the space's document, so a flag switches a feature off; it
+does not keep it secret. `{{ flags.newCheckout }}` reads one anywhere a source is read, a server action included, and
+`useFlag('newCheckout')` from a plugin. Above the space, the server rendering it, the SDK embedding it and a tester with
+the dev tools may each override a flag the space declares. The whole of it — layers, publishing, the builder — is in
+[Feature flags](./feature-flags.md).
+
 ---
 
 ## 6. Flows
@@ -700,7 +730,10 @@ inert specs. That is what keeps every guarantee about the finished document in o
 - a template feeding an attribute that holds a list or an object (`items`) that renders text
 - children on a type that holds none (`heading`, `text`, `image`, `formControl`…) — a heading made of parts is a
   `container` with an `h1`–`h6` tag
-- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `theme`)
+- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `host`, `theme`, `flags`,
+  `computed`)
+- a `flag` that is not a flag name, a gate on a flag the space does not declare (`flag-undeclared`), a template reading
+  one (`flag-unknown`), and a declaration whose `value` or a rule's is not `true` or `false`
 - a step target naming an element that is not there
 - two elements answering to one name — the error says where the first one was written
 - a flow whose chain points at a node that is not there
@@ -710,7 +743,9 @@ And it returns `warnings` for what is written and will not do what it says — `
 `condition-starts-visible` (a computed visibility that would show until its data answers), `template-never-resolved` (a condition in an ATTRIBUTE, which only resolves `{{ name|filter }}` tokens — against the sources around the element; conditions
 belong in a binding's template or a step's params, where Twig is evaluated in full), `state-key-has-runtime-prefix`,
 `FORM_SUBMIT_UNMANAGED`, `STYLE_WITHOUT_TAG`, `tablet-rule-skips-mobile` (write the rule under `compact` to reach
-both), `default-content-beside-children` (a `button` whose placeholder "Button" would print beside its children).
+both), `default-content-beside-children` (a `button` whose placeholder "Button" would print beside its children),
+`flag-unused` (a declared flag nothing gates on or reads) and `flag-rule-empty` (a flag rule with no conditions, which
+is skipped rather than read as "always").
 
 Documents you did NOT author here go through the same door:
 

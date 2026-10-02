@@ -16,7 +16,9 @@ button({
 ```
 
 A flow is a list: a trigger, then steps in order. "Only if" is on the step (`when`, `whenSucceeded`, `whenFailed`),
-never a nested tree. Use the step builders — they fill in where a step runs and what it takes:
+never a nested tree. A step that belongs to a feature still behind a [feature flag](feature-flags.md) reads it like any
+source — `when({ field: 'flags.newCheckout', operator: '=', value: true }, …)` — and a server action's steps see the
+same flags, decided on the server. Use the step builders — they fill in where a step runs and what it takes:
 
 - **Where it runs.** A global callback registers under its source MODULE (`state`, `auth`, `actions`), an element
   callback under an element's id, a utility under nothing. Naming either half wrong is a control that does nothing,

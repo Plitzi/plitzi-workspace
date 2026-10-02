@@ -126,6 +126,11 @@ text('Nothing here yet', { visible: { source: 'catalog.data.games', template: '{
 // A value used in many places: declare it once in the space, read it anywhere as computed.xp.
 computed: { xp: '{{ (state.favourites|length) * 10 }}' }
 
+// A feature behind a flag: declare it once in the space, gate both versions — exactly one is ever rendered.
+flags: { newCheckout: { description: 'The one-step checkout', value: false, rules: [] } }
+container({ id: 'checkout-new', flag: 'newCheckout', children: [ … ] })
+container({ id: 'checkout-old', flag: '!newCheckout', children: [ … ] })
+
 // A button that does something: a flow is [trigger, steps…].
 button({ content: 'Save', flows: [[onClick(), setState({ key: 'saved', type: 'boolean', value: true })]] })
 

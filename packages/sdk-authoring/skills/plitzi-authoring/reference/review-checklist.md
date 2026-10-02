@@ -15,6 +15,8 @@ of it; each line is something that has shipped broken before.
 - [ ] Nothing that is on screen by default disappears because a flag has not been set yet (a sidebar until it is
       folded). Checked on a fresh visit, with no state kept from before.
 - [ ] Empty states show only when the answer arrived and is empty — never while loading.
+- [ ] A feature still being built is gated by a [feature flag](feature-flags.md) (`flag: 'x'` / `'!x'`), not hidden
+      with `visible` — and checked with the flag on AND off. A flag whose feature shipped is removed, gate and all.
 - [ ] No hidden element leaves a hole: the element itself is hidden, not a wrapper around it.
 - [ ] Nothing shifts when the data lands: a loading area keeps its size, numbers use tabular figures.
 

@@ -8,6 +8,7 @@ import {
   button,
   channel,
   closeModal,
+  container,
   declaredCallback,
   declaredTrigger,
   defineElement,
@@ -57,6 +58,7 @@ describe('the skill’s recipes', () => {
         name: 'Recipes',
         permanentUrl: 'recipes',
         computed: { xp: '{{ (state.favourites|length) * 10 }}' },
+        flags: { newCheckout: { description: 'The one-step checkout', value: false, rules: [] } },
         pages: [
           {
             id: 'home',
@@ -101,6 +103,8 @@ describe('the skill’s recipes', () => {
                 ]
               }),
               text('', { bind: [bindTemplate('content', 'computed.xp', '{{ source }} XP')] }),
+              container({ id: 'checkout-new', flag: 'newCheckout', children: [text('New checkout')] }),
+              container({ id: 'checkout-old', flag: '!newCheckout', children: [text('Old checkout')] }),
               button({
                 content: 'Save',
                 flows: [[onClick(), setState({ key: 'saved', type: 'boolean', value: true })]]

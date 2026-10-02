@@ -35,6 +35,10 @@ would write. It names that break, and only that one: `authorSpace(spec, { allow:
 | `answers at /x for the same visitors as page` | two pages at one address | another slug — or `accessLevel` `'public'` on one and `'authenticated'` on the other |
 | `is not one CSS value` | an empty CSS value, or one with `;` or `{}` | one value per property; leave a property out instead of writing it empty |
 | `computed … declared after it` / `does not compute` | a computed value read before it is declared, or never declared | declare it in `computed`, above the one that reads it |
+| `` `flag` is "x". It names a flag `` | an element's or a page's `flag` that is not a flag name | `flag: 'newCheckout'`, or `flag: '!newCheckout'` for "only while off" |
+| `is gated on the feature flag "x", which the space does not declare` (`flag-undeclared`) | a gate on an undeclared flag — it reads as off, so the element never (or always) renders | declare it in `flags`, or remove the gate — see [feature flags](feature-flags.md) |
+| `reads "flags.x", which the space does not declare` (`flag-unknown`) | a template reading an undeclared flag | the declared name it suggests, or declare it |
+| `is not a name a template can read as flags.x` (`flag-name`) / `A flag is { value … }` (`flag-shape`, `flag-rule-shape`) | a flag whose name is not a template key, or whose `value` or a rule's is not `true`/`false` | letters, digits and `_`; `{ value: false, rules: [{ when, value: true }] }` |
 
 ## Warned
 
@@ -57,6 +61,8 @@ A warning means the space renders, and renders something you probably did not me
 | `form-control-unnamed` | a control in a form with no `name` — its value never reaches `values` | `formControl({ name: 'email', … })` |
 | `form-control-name-taken` | two controls in one form with one name — one overwrites the other | a name each |
 | `while-running` | `whileRunning` on a step that is not the trigger, or a value other than `skip`, `parallel`, `queue` | `[whileRunning('queue', onClick()), …]` |
+| `flag-unused` | a declared flag nothing gates on and no template reads — a switch with no effect | gate what it switches (`flag: 'x'`), or remove it once the feature has shipped |
+| `flag-rule-empty` | a flag rule with no conditions — skipped, never read as "always" | give it a condition, or set the flag's `value` instead |
 | `trigger-keys` | an `onKey` flow whose `keys` cannot fire: two keys in one shortcut, only modifiers, or a name that is not a key | `onKey('f')`, `onKey('shift+f')`, `onKey('mod+k, escape')` |
 | `state-toggled-in-branches` | two `setState` steps of one key, each under a `when` on that key — the second flips back what the first wrote | `toggleState({ key })`; for something shown by default, a key named for hiding it |
 | `form-value-compared-to-blank` | a `when` asking whether a submitted field (`….values.x`) `=` or `!=` `""` — a field nobody typed in is not sent, so it never matches | `operator: 'empty'` / `'notEmpty'` |

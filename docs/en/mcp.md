@@ -14,8 +14,8 @@ about using it.
 
 Two things, depending on what the connection was granted:
 
-- **A space.** The agent reads the space — pages, elements, styles, bindings, interactions, connectors, server
-  actions — finds what it is asked about, and edits it in batches the server validates and saves. It sees the result
+- **A space.** The agent reads the space — pages, elements, styles, bindings, interactions, feature flags,
+  connectors, server actions — finds what it is asked about, and edits it in batches the server validates and saves. It sees the result
   as HTML or as a screenshot before or after committing.
 - **Widgets only.** No space at all: the agent can still **show** the user a real rendered UI — a card, a pricing
   table, a checklist — built offline with `plitzi_render`. Nothing is read or stored anywhere.
@@ -97,8 +97,10 @@ calls as a small one:
 | `plitzi_try_function` | Run one task of the space's [functions](./functions.md) against the draft, in the sandbox: its value, logs and error |
 
 The resources (`plitzi://…`) are the catalog the agent browses: pages, layouts and components, element types, style classes,
-tokens, fonts, variables, settings, the interaction and data-source vocabularies, connectors, server actions and the
-space's functions (written with the `upsertFunctionFile` / `deleteFunctionFile` operations of `plitzi_apply`). The
+tokens, fonts, variables, [feature flags](./feature-flags.md) (`plitzi://flags/{env}`, written with `upsertFlag` /
+`deleteFlag` and gated with `flag` on an element or a page), settings, the interaction and data-source vocabularies,
+connectors, server actions and the space's functions (written with the `upsertFunctionFile` / `deleteFunctionFile`
+operations of `plitzi_apply`). The
 full list, with what each one answers, is the agent's manual at `plitzi://guide`.
 
 `plitzi_preview` and `plitzi_screenshot` need the deployment's SSR render service (and the screenshot service for

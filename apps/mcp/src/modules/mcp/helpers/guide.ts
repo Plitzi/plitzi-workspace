@@ -129,6 +129,9 @@ slugs prepend the path). A \`:name\` segment (\`"posts/:postId"\`) is a route pa
 source \`navigation.routeParams.name\` → build dynamic pages this way. To move between pages **prefer the \`Link\`
 element** (a container: \`mode\` "page"/"internal"/"external") over a \`navigate\` interaction.
 
+**Feature flags:** what a person switches on (a beta, a rollout) is \`upsertFlag\` plus \`flag: "x"\` / \`"!x"\` on the
+element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`.
+
 **Accessible by default:** screen readers and browser agents (Claude in Chrome) read the accessibility tree, so every
 button/link needs words (an icon-only button a \`title\`), every field a \`label\` (\`hideLabel: true\` hides it), every
 image an \`alt\` or \`decorative: true\`; clicks go on a \`button\`/\`link\`, never a container; headings step down one
@@ -319,6 +322,8 @@ You do not have to rewrite them.
 - \`deleteElement { pageRef, ref }\` removes an element **and everything under it**. A binding or an interaction
   elsewhere that named one of them is left pointing at nothing, and the save reports it — delete them in the same
   batch. Destructive: confirm first.
+- \`flag\` on \`upsertElement\` / \`patchElement\` gates an element on a feature flag (\`"newCheckout"\` or
+  \`"!newCheckout"\`) — not a visibility: gated off it is not rendered at all. See **Feature flags**.
 
 ## Styling (crosses both schemas)
 - **Mind the type's intrinsic default style.** A type renders with a base CSS *before* any class is attached — read
@@ -848,6 +853,8 @@ A required prop left out, a prop the component does not declare, a value of the 
 the component does not have is reported by \`plitzi_validate\` — fix it before applying.
 
 ## Pages & folders
+- **A page behind a feature flag**: \`upsertPage { flag: "labs" }\` answers 404 while the flag is off (see **Feature
+  flags**); \`flag: null\` removes it.
 - **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a
   clean, stable route (e.g. \`"pricing"\` or \`"posts/:postId"\`). Omit it and the page ref is used as the slug,
   and \`plitzi_validate\`/\`plitzi_apply\` warn so you remember to set a meaningful one.

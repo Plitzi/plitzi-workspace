@@ -39,8 +39,8 @@ A text template feeding `items` is refused: the list would receive the array wri
 ## Naming sources inside a template
 
 Always the full name — the element's kind, an underscore, its id: `apiContainer_stats`, `list_rows`,
-`modalContainer_credits`. The globals (`state`, `auth`, `navigation`, `variables`, `host`, `theme`, `computed`) are named
-as themselves. In a flow, an earlier step is read by the name given with `named('quote', …)`: `{{ quote.output.total }}`.
+`modalContainer_credits`. The globals (`state`, `auth`, `navigation`, `variables`, `host`, `theme`, `flags`, `computed`) are
+named as themselves — `{{ flags.newCheckout }}` is `true` or `false`, see [feature flags](feature-flags.md). In a flow, an earlier step is read by the name given with `named('quote', …)`: `{{ quote.output.total }}`.
 
 An id with a hyphen is one name inside a template — `{{ apiContainer_tn-data.data.total }}` reads that provider. So
 subtraction is written with spaces: `{{ total - used }}`, never `total-used`.
