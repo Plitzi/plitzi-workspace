@@ -286,6 +286,13 @@ export type SSRSpaceDeployment = {
   spaceId?: number | null;
   revision?: number;
   /**
+   * What this space's feature flags are at, for a deployment that keeps them apart from its revisions — a hash that
+   * changes exactly when they do. Part of every cache key a render is kept under (the page, its server data, the space
+   * read for it), so a flag turned in production reaches the next request while the revision stays the same. Absent,
+   * the flags change only with the revision, and the revision alone keys the caches.
+   */
+  flagsVersion?: string;
+  /**
    * This render is an author looking at their own work — the builder's preview — rather than a visitor being
    * served. Metering skips it: nobody should be billed for editing.
    *

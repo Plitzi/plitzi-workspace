@@ -404,9 +404,9 @@ export interface SpaceSpec {
    *
    * `value` is the answer when no rule matches; the first rule that matches decides otherwise. A rule sees
    * `environment`, `hostname`, `routeParams.*`, `queryParams.*` and the visitor (`user.authenticated`, `user.email`,
-   * `user.username`, `user.roles`). Published with the space, so a published site keeps its flags with Plitzi down;
-   * the server rendering it, the SDK embedding it and a tester with the dev tools may each override the answer — only
-   * for flags declared here. See `docs/en/feature-flags.md`.
+   * `user.username`, `user.roles`). Kept apart from the space's snapshots — one set per environment, turned without a
+   * new snapshot — and served with Plitzi down from a self-hosted server's cache. The server rendering it, the SDK
+   * embedding it and a tester with the dev tools may each override the answer — only for flags declared here. See `docs/en/feature-flags.md`.
    */
   flags?: Schema['flags'];
   /**

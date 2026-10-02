@@ -156,8 +156,9 @@ export type SchemaFlagRule = { when: RuleGroup; value: boolean };
 /**
  * A feature flag the space declares, under the name it is read by: `{{ flags.newCheckout }}`.
  *
- * Part of the document, so a published version carries the flags it was published with and serves them with Plitzi
- * unreachable; the draft (`main`) applies whatever it says now. Its rules see the environment, the host, the URL and
+ * Read with the document, stored apart from it: each environment has one set, shared by every revision it serves, so a
+ * flag is turned without a new revision and a rollback keeps the flags as they are. The draft (`main`) applies whatever
+ * it says now; a published environment, what was last published to it. Its rules see the environment, the host, the URL and
  * who is visiting (`user.authenticated`, `user.email`, `user.username`, `user.roles`). Whoever runs the space may
  * override the answer — the server it is rendered by, then the SDK embedding it, then a tester with the dev tools —
  * but only for flags declared here.

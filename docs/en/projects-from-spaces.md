@@ -130,7 +130,9 @@ written with `defineAction` always does.
 - It needs a signed-in CLI (`plitzi login`) and asks for the export before writing anything: a space that cannot be had
   leaves no half-made project.
 - `--environment` and `--revision` choose the version: the draft by default; a published environment's latest; or one
-  revision of it, pinned. A cloud project with a revision serves it pinned (`PLITZI_REVISION`).
+  revision of it, pinned. A cloud project with a revision serves it pinned (`PLITZI_REVISION`). The feature flags are
+  not part of a revision: a local project gets the environment's flags as they are now — its own to change from there
+  — and a cloud one follows them as they change (see [Feature flags](./feature-flags.md)).
 - It writes the server project, the source tree under `src/` (unless it already was a project's `src/`), the pages,
   actions, connectors and functions, `main.ts`, and `package.json` with every package the source imports — the SDK and
   React at this CLI's versions, since plugins are rebuilt against the project's own.

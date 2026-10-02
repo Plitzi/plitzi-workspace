@@ -70,7 +70,8 @@ export type CloudAdaptersConfig = {
    * revisions, it has whatever the builder last saved.
    *
    * Pinned to a number, this deployment serves that exact version until somebody changes the config: a revision
-   * cannot change, so it is fetched once and kept for the life of the process. That is what a deployment wants
+   * cannot change, so it is fetched once and kept for the life of the process. Its feature flags are not part of it
+   * and still follow the environment — a flag turned in production reaches a pinned deployment too. That is what a deployment wants
    * when it rolls forward on its own schedule, or when it has to be able to say precisely what it is serving.
    *
    * Left out, it serves the **latest** revision of that environment and notices when a new one is published: a
@@ -87,8 +88,9 @@ export type CloudAdaptersConfig = {
    * - A **pinned revision** never expires. Expiring an immutable document on a timer would be paying for a
    *   question whose answer is already known.
    *
-   * So this paces exactly one thing: the "which revision is current" probe, in latest mode. Even then it never
-   * sits in front of a visitor — the copy already held is served while the probe runs behind it.
+   * So this paces exactly one thing: the probe — "which revision is current" in latest mode, and in both modes "what
+   * are the flags at", whose answer is a hash and whose flags are fetched only when it moved. It never sits in front
+   * of a visitor: the copy already held is served while the probe runs behind it.
    */
   cacheSeconds?: number;
   /** Where fetched spaces are kept. Omitted, they are kept in this process only — see {@link CloudSpaceCache}. */
@@ -135,13 +137,28 @@ const SPACE_QUERY = `query InitQuery($environment: String!, $revision: Int) {
 const LATEST_REVISION_QUERY = `query SpaceLatestRevisionQuery($environment: String!) {
   SpaceLatestRevision(environment: $environment) {
     snapshot { revision }
+    flagsHash
   }
 }`;
 
+/**
+ * The environment's feature flags. Asked only when the probe's `flagsHash` moved: flags change apart from revisions —
+ * one set per environment, shared by every revision it serves — so they are fetched and kept on their own, and a flag
+ * turned in production costs this deployment a few hundred bytes rather than the space again.
+ */
+const FLAGS_QUERY = `query SpaceFlagsQuery($environment: String!) {
+  SpaceFlags(environment: $environment) { flags hash }
+}`;
+
 type LatestRevisionPayload = {
-  data?: { SpaceLatestRevision?: { snapshot?: { revision?: number } | null } | null };
+  data?: { SpaceLatestRevision?: { snapshot?: { revision?: number } | null; flagsHash?: string | null } | null };
   errors?: { message: string }[];
 };
+
+type FlagsPayload = { data?: { SpaceFlags?: HeldFlags | null } };
+
+/** An environment's flags as last fetched, and the hash Plitzi gave them — what the page server's caches are keyed by. */
+type HeldFlags = { hash: string; flags: NonNullable<Schema['flags']> };
 
 type SpacePayload = {
   data?: { Space?: { schema?: SchemaRaw; style?: Style; plugins?: PluginRaw[] } };
@@ -296,17 +313,84 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
     };
   };
 
-  const fetchLatestRevision = async (env: string): Promise<number | undefined> => {
+  /** Which revision is current, and what the flags are at — one small question for both halves of a served space. */
+  const probe = async (env: string): Promise<{ revision?: number; flagsHash?: string }> => {
     const data = await post<LatestRevisionPayload['data']>(
       LATEST_REVISION_QUERY,
       { environment: env },
       `latest revision of ${env}`
     );
+    const answer = data?.SpaceLatestRevision;
 
-    return data?.SpaceLatestRevision?.snapshot?.revision;
+    return { revision: answer?.snapshot?.revision, flagsHash: answer?.flagsHash ?? undefined };
   };
 
   const cacheKey = (env: string, rev: number) => `plitzi:space:${env}:${rev}`;
+  const flagsCacheKey = (env: string) => `plitzi:flags:${env}`;
+
+  /** Each environment's flags as last fetched, and when the probe last confirmed them. */
+  const heldFlags = new Map<string, HeldFlags & { checkedAt: number }>();
+
+  /** The flags this process last held, or — on a cold start — the shared cache's, so a restart with Plitzi down keeps
+   *  serving the flags it knew rather than the ones frozen into a cached revision. */
+  const restoreFlags = async (env: string): Promise<void> => {
+    if (heldFlags.has(env)) {
+      return;
+    }
+
+    try {
+      const stored = await cache?.get(flagsCacheKey(env));
+      if (stored) {
+        heldFlags.set(env, { ...(JSON.parse(stored) as HeldFlags), checkedAt: 0 });
+      }
+    } catch {
+      // Nothing usable kept: the next probe fetches them.
+    }
+  };
+
+  /** Brings the flags up to the hash the probe answered, fetching them only when it moved. A failed probe or fetch keeps
+   *  the flags already held. */
+  const syncFlags = async (env: string, hash: string | undefined): Promise<void> => {
+    if (hash === undefined) {
+      return;
+    }
+
+    const current = heldFlags.get(env);
+    if (current?.hash === hash) {
+      current.checkedAt = Date.now();
+
+      return;
+    }
+
+    const fetched = (await post<FlagsPayload['data']>(FLAGS_QUERY, { environment: env }, `flags of ${env}`))
+      ?.SpaceFlags;
+    if (!fetched) {
+      return;
+    }
+
+    heldFlags.set(env, { ...fetched, checkedAt: Date.now() });
+    await cache?.set(flagsCacheKey(env), JSON.stringify(fetched)).catch(() => undefined);
+  };
+
+  /** A served space with the flags held for its environment — the same object for the same pair, so the page server
+   *  serialises it once rather than per request. */
+  const combined = new WeakMap<OfflineDataRaw, { hash: string; data: OfflineDataRaw }>();
+  const withFlags = (env: string, data: OfflineDataRaw): OfflineDataRaw => {
+    const flags = heldFlags.get(env);
+    if (!flags) {
+      return data;
+    }
+
+    const known = combined.get(data);
+    if (known?.hash === flags.hash) {
+      return known.data;
+    }
+
+    const joined = { ...data, schema: { ...data.schema, flags: flags.flags } };
+    combined.set(data, { hash: flags.hash, data: joined });
+
+    return joined;
+  };
 
   /** The last good copy per environment, which revision it is, and when the probe last ran. */
   type Held = { revision: number; data: OfflineDataRaw; checkedAt: number };
@@ -366,7 +450,9 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
    * A probe that fails leaves `checkedAt` alone so the next request tries again, and leaves the held copy serving.
    */
   const refreshLatest = async (env: string): Promise<OfflineDataRaw | undefined> => {
-    const current = await fetchLatestRevision(env);
+    await restoreFlags(env);
+    const { revision: current, flagsHash } = await probe(env);
+    await syncFlags(env, flagsHash);
     const previous = held.get(env);
     if (current === undefined) {
       return previous?.data;
@@ -384,10 +470,32 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
   };
 
   /**
+   * A pinned revision's flags: waited for once — the first render must not go out with the flags frozen into the copy
+   * it fetched — and then checked behind the answer, on the window.
+   */
+  const refreshPinnedFlags = async (env: string): Promise<void> => {
+    await restoreFlags(env);
+    const flags = heldFlags.get(env);
+    if (!flags) {
+      await syncFlags(env, (await probe(env)).flagsHash);
+
+      return;
+    }
+
+    if (Date.now() - flags.checkedAt >= cacheSeconds * 1000) {
+      flags.checkedAt = Date.now();
+      void probe(env)
+        .then(({ flagsHash }) => syncFlags(env, flagsHash))
+        .catch(() => undefined);
+    }
+  };
+
+  /**
    * The space, and how hard this deployment leans on Plitzi to get it.
    *
    * - **`main`**: read live, every time. It is being edited; a cached answer is a wrong one.
-   * - **A pinned revision**: from cache forever after the first read. It cannot change.
+   * - **A pinned revision**: from cache forever after the first read. It cannot change — its flags can, so they are
+   *   probed on the same window as the latest mode's revision, and fetched only when they moved.
    * - **Latest**: the held copy is served immediately and a revision probe runs behind it once the window is up.
    *   After the first render no page ever waits on Plitzi, and a failed probe or fetch changes nothing — the last
    *   good copy keeps serving, because a self-hosted site going blank over somebody else's bad minute is not a
@@ -400,14 +508,18 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
 
     const pinned = rev ?? revision;
     if (pinned !== undefined && isPinned(env, pinned)) {
+      await refreshPinnedFlags(env);
       const already = held.get(env);
+      const data = already?.revision === pinned ? already.data : await loadRevision(env, pinned);
 
-      return already?.revision === pinned ? already.data : loadRevision(env, pinned);
+      return data && withFlags(env, data);
     }
 
     const current = held.get(env);
     if (!current) {
-      return refreshLatest(env);
+      const data = await refreshLatest(env);
+
+      return data && withFlags(env, data);
     }
 
     if (Date.now() - current.checkedAt >= cacheSeconds * 1000) {
@@ -417,7 +529,7 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
       void refreshLatest(env).catch(() => undefined);
     }
 
-    return current.data;
+    return withFlags(env, current.data);
   };
 
   /**
@@ -427,7 +539,7 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
    * builds two servers or supplies its own resolver — which is more honest than a lookup table that silently
    * serves the wrong space when a domain is added and this is not.
    *
-   * The revision it reports is the one actually being served, which in latest mode is whatever the last probe
+   * The revision it reports is the one actually being served, with what its flags are at, which in latest mode is whatever the last probe
    * found: a deployment reading `at: { environment, revision }` must be told the version its page was built from,
    * not the zero that means "whatever is live".
    */
@@ -436,15 +548,25 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
       return { ...deployment, spaceId, environment, revision: 0 };
     }
 
+    // What the flags are at goes with the revision: the page server keys its caches by both, and a flag turned in
+    // production changes the page while the revision does not.
+    const flagsVersion = (): { flagsVersion?: string } => {
+      const flags = heldFlags.get(environment);
+
+      return flags ? { flagsVersion: flags.hash } : {};
+    };
+
     if (isPinned(environment, revision)) {
-      return { ...deployment, spaceId, environment, revision };
+      await refreshPinnedFlags(environment);
+
+      return { ...deployment, spaceId, environment, revision, ...flagsVersion() };
     }
 
     if (!held.has(environment)) {
       await refreshLatest(environment);
     }
 
-    return { ...deployment, spaceId, environment, revision: held.get(environment)?.revision ?? 0 };
+    return { ...deployment, spaceId, environment, revision: held.get(environment)?.revision ?? 0, ...flagsVersion() };
   };
 
   return { getOfflineData, getSpaceDeployment };

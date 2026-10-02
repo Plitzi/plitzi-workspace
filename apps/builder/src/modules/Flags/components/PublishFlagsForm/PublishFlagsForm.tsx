@@ -19,8 +19,8 @@ export type PublishFlagsFormProps = {
 };
 
 /**
- * Where the draft's flags go, and why. Not the whole snapshot form: this one freezes nothing else, and saying so is
- * the point — an author turning a flag in production must know the half-finished page they are also editing stays.
+ * Where the draft's flags go, and why. Not the snapshot form: flags are no part of a snapshot, and saying so is the
+ * point — an author turning a flag in production must know the half-finished page they are also editing stays.
  */
 const PublishFlagsForm = ({ onClose, onSubmit }: PublishFlagsFormProps) => {
   const form = useForm({
@@ -34,8 +34,9 @@ const PublishFlagsForm = ({ onClose, onSubmit }: PublishFlagsFormProps) => {
     <Form form={form} onSubmit={handleSubmit} className="gap-4">
       <Form.Body>
         <Alert className="mb-4 text-white" intent="info">
-          Makes a new snapshot of the environment from its latest one, with the flags as the draft declares them now.
-          Nothing else you are editing goes with them.
+          Sends the flags as the draft declares them now to the environment. Flags are kept apart from snapshots: no new
+          snapshot is made, the pages the environment serves switch now, and nothing else you are editing goes with
+          them.
         </Alert>
         <Form.Select name="environment" label="Environment" size="sm">
           <option value="development">Development</option>

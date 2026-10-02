@@ -76,7 +76,10 @@ export const prepareRender = async (
   const m = <T,>(name: string, fn: () => T | Promise<T>): Promise<T> =>
     metrics ? metrics.measure(name, fn) : Promise.resolve(fn());
 
-  const offlineCacheKey = environment !== 'main' ? buildOfflineDataCacheKey(spaceId, environment, revision) : undefined;
+  const offlineCacheKey =
+    environment !== 'main'
+      ? buildOfflineDataCacheKey(spaceId, environment, revision, req.ctx.spaceDeployment?.flagsVersion)
+      : undefined;
   // A draft override (an unsaved preview) never touches the adapters or the shared offline-data cache — it is a
   // one-shot render of in-memory edits, so it must not read from nor pollute the persisted-state cache.
   const cachedOfflineStr =

@@ -37,6 +37,10 @@ const PublishForm = ({ environment = 'development', description = '', onClose, o
           Make a snapshot and save it into an environment to later publish it
         </Alert>
         <VersionContents environment="main" title="This snapshot will freeze" />
+        <Alert intent="info" size="sm" solid={false}>
+          Feature flags are kept apart from snapshots: this one sends the draft's flags to the environment, and rolling
+          back to an older snapshot later keeps the environment's flags as they are.
+        </Alert>
         <Form.Select name="environment" label="Environment" size="sm">
           <option value="development">Development</option>
           <option value="staging">Staging</option>

@@ -21,8 +21,11 @@
 ## Feature flags
 
 - **What they are:** `schema.flags`, a space's switches by name — a default and rules over the environment, the host,
-  the URL and the visitor. Part of the document, so a published version serves its flags with Plitzi unreachable.
-  See `docs/en/feature-flags.md`.
+  the URL and the visitor. Read with the document, stored apart from its snapshots: one set per environment, turned
+  without a new revision. See `docs/en/feature-flags.md`.
+- **Caches follow them:** `SSRSpaceDeployment.flagsVersion` (the flags' hash) keys the HTML, RSC and `offlineData`
+  caches of `@plitzi/sdk-server`; `createCloudAdapters` probes `flagsHash` and fetches `SpaceFlags` only when it moved
+  — a pinned revision included — and keeps the last flags in its shared cache for a cold start with Plitzi down.
 - **Who decides:** the space, then the server rendering it (`createServer({ flags })`), then the SDK embedding it (the
   `flags` prop), then a tester (the dev tools' Flags tab, only where debugging is authorized) — each only for flags the
   space declares.

@@ -1,17 +1,19 @@
-import type { TSpacePublishMutation } from '../SpacePublishMutation';
-
-export type TSpacePublishFlagsMutation = TSpacePublishMutation;
+export type TSpacePublishFlagsMutation = {
+  environment: string;
+  /** The content's hash: what every cache of the environment's pages is keyed by. */
+  hash: string;
+  publishedAt: string;
+};
 
 /**
- * Publishes the draft's flags and nothing else: a new revision of `environment` that is its latest one with the
- * flags `main` declares now. How a flag is turned in production without shipping whatever else is being edited.
+ * Publishes the draft's flags to an environment, and only them. Flags are not part of a snapshot — an environment has
+ * one set, shared by every revision it serves — so this makes no revision: the pages the environment serves now switch.
  */
 const SpacePublishFlagsMutation = /* GraphQL */ `
   mutation SpacePublishFlagsMutation($environment: String!, $description: String!) {
     SpacePublishFlags(environment: $environment, description: $description) {
       environment
-      description
-      revision
+      hash
       publishedAt
     }
   }

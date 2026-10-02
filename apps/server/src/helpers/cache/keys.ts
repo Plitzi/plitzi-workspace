@@ -5,12 +5,23 @@ import { themeFromCookies } from '@plitzi/sdk-shared/theme';
 import { ssrPaintedCookieName } from '../paintedCookie';
 import { readCookie } from '../readCookie';
 
+/** What a cache key reads off a request: where it is, and — from the resolved deployment — what the flags are at. */
+type CacheKeyRequest = {
+  hostname: string;
+  path: string;
+  search: string;
+  ctx?: { spaceDeployment?: { flagsVersion?: string } };
+};
+
+const flagsVersionOf = (req: CacheKeyRequest): string => req.ctx?.spaceDeployment?.flagsVersion ?? '';
+
 /** The fields of an HTML key, in the order they are joined. */
 const HTML_KEY_FIELDS = [
   'accessToken',
   'spaceId',
   'environment',
   'revision',
+  'flags',
   'theme',
   'painted',
   'debugHidden',
@@ -42,6 +53,9 @@ type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
  * the page is not everybody's, and a tester holding the cookie must never be handed a page drawn without it. Keyed
  * by its raw value, like the kept state.
  *
+ * So is what the space's flags are at (`flagsVersion` on the resolved deployment), for a deployment that changes them
+ * apart from its revisions: a flag turned in production must reach the next visitor, while the revision is the same.
+ *
  * Read from the request here rather than handed in, so a call site cannot key the page without it. Only those
  * cookies are read: keying the whole header would split the cache on every analytics cookie a visitor carries.
  */
@@ -50,13 +64,14 @@ export const buildHtmlCacheKey = (
   spaceId: number | string | null,
   environment: string,
   revision: number,
-  req: { hostname: string; path: string; search: string; headers: { cookie?: string; host?: string } }
+  req: CacheKeyRequest & { headers: { cookie?: string; host?: string } }
 ): string => {
   const fields: HtmlCacheKeyFields = {
     accessToken,
     spaceId: String(spaceId ?? 1),
     environment,
     revision: String(revision),
+    flags: flagsVersionOf(req),
     theme: themeFromCookies(req.headers.cookie) ?? '',
     painted: readCookie(req.headers.cookie, ssrPaintedCookieName(req.headers.host)) ?? '',
     debugHidden: readCookie(req.headers.cookie, debugCookieName(req.headers.host)) === 'false' ? 'debug-off' : '',
@@ -81,8 +96,13 @@ export const readHtmlCacheKey = (key: string): { spaceId: string; environment: s
   return { spaceId: at('spaceId'), environment: at('environment'), hostname: at('hostname') };
 };
 
-export const buildOfflineDataCacheKey = (spaceId: number, environment: string, revision: number): string =>
-  `${spaceId}|${environment}|${revision}`;
+/** The space as read for a render: its revision, and what its flags are at when they change apart from it. */
+export const buildOfflineDataCacheKey = (
+  spaceId: number,
+  environment: string,
+  revision: number,
+  flagsVersion: string | undefined
+): string => `${spaceId}|${environment}|${revision}|${flagsVersion ?? ''}`;
 
 // The request URL is part of the key because RSC slices are route-dependent: a connector compiles its filters
 // from routeParams/queryParams, so `/blog/a` and `/blog/b` resolve to different data under the same space,
@@ -94,6 +114,6 @@ export const buildRscCacheKey = (
   revision: number,
   userId: string | number | undefined,
   idsParam: string | undefined,
-  req: { hostname: string; path: string; search: string }
+  req: CacheKeyRequest
 ): string =>
-  `${spaceId}\0${environment}\0${revision}\0${userId ?? 'anon'}\0${idsParam ?? ''}\0${req.hostname}\0${req.path}\0${req.search}`;
+  `${spaceId}\0${environment}\0${revision}\0${flagsVersionOf(req)}\0${userId ?? 'anon'}\0${idsParam ?? ''}\0${req.hostname}\0${req.path}\0${req.search}`;

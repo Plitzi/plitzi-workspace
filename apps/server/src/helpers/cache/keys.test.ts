@@ -59,6 +59,18 @@ describe('buildHtmlCacheKey', () => {
     expect(html(painted({ toolPick: 'star' }))).not.toBe(html());
   });
 
+  /** A flag turned in production changes the page while the revision stays — the deployment says what they are at. */
+  it('separates two versions of the flags at one revision', () => {
+    const at = (flagsVersion?: string) =>
+      buildHtmlCacheKey(undefined, 1, 'production', 3, {
+        ...req('/'),
+        ...(flagsVersion ? { ctx: { spaceDeployment: { flagsVersion } } } : {})
+      });
+
+    expect(at('aaa')).not.toBe(at('bbb'));
+    expect(at('aaa')).toBe(at('aaa'));
+  });
+
   /** A tester's forced flags change what is drawn, and a tester must never be handed a page drawn without them. */
   it('separates a visitor who forced flags from one who did not', () => {
     expect(html('plitzi_flags=newCheckout%3A1')).not.toBe(html());

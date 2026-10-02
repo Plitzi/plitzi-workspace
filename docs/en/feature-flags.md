@@ -23,9 +23,16 @@ A rule's `when` is the `RuleGroup` variables and flows already use, evaluated wi
 `user.username`, `user.roles`. A group with no conditions is **skipped**, not read as "always": the evaluator reads an
 empty `and` as true, and an unfinished rule would otherwise turn the flag the moment it was added.
 
-Because they are part of the schema, flags travel with everything that carries a schema: a published snapshot, the
-`offlineData` a page server embeds, the cache a self-hosted server keeps of a space fetched from Plitzi. A published site
-keeps serving its flags with Plitzi unreachable.
+`schema.flags` is the shape every reader sees — GraphQL, the `offlineData` a page server embeds, authoring, the linter,
+an agent — but they are **stored apart from the space's documents**: one document per environment in Mongo's
+`space_flags` (`plitzi-sdk-server/src/services/flags/store.ts`), shared by every revision that environment serves. The
+`Space` model joins it to every space it reads (`afterLoad`) and writes it back only when a save changed it, so no
+reader has to know. Each document carries the hash of its content, which changes exactly when the flags do.
+
+Flags are therefore **not part of a snapshot**. A snapshot stays immutable; turning a flag in production rewrites a few
+bytes instead of copying the space; rolling a snapshot back keeps the environment's flags; and a space taken out as a
+project (`plitzi create --from`) brings the flags it has now — from then on the developer's own. A self-hosted server
+reading from Plitzi keeps the last flags it fetched in its cache, so it serves them with Plitzi unreachable.
 
 ## Who decides
 
@@ -73,11 +80,18 @@ with forced flags is never cached, and the HTML and RSC caches never serve a tes
 
 ## Publishing
 
-The draft (`main`) applies its flags at once. A published environment keeps the flags of the revision it serves until
-they are published again. `SpacePublishFlags(environment, description)` makes a new revision of that environment from
-its latest one with the draft's flags — and copies the actions, connectors, functions, runtime and sources of that
-revision, not the draft's, so turning a flag ships nothing else. It refuses when a published gate would name a flag the
-draft no longer declares. Self-hosted servers pick the revision up with the probe they already run.
+The draft (`main`) applies its flags at once. A published environment keeps its own until they are published again:
+
+- `SpacePublish` (a snapshot) copies the draft's flags to the environment along with everything else.
+- `SpacePublishFlags(environment, description)` copies only them, and makes no revision. It checks the revision being
+  served against them first — a gate naming a flag the draft no longer declares is refused — and records the change in
+  the space's history, which is where "who switched what, when" lives now that each environment has one document.
+
+**How a change reaches the pages.** The revision does not move, so every cache a render is kept under is keyed by the
+flags' hash too: `SSRSpaceDeployment.flagsVersion` (set per request by the deployment's `decorate`, never cached with
+the resolution), the HTML, RSC and `offlineData` cache keys in `apps/server`, and the stamp `getOfflineData` compares.
+A self-hosted server on `createCloudAdapters` asks `SpaceLatestRevision` on its window — which now also answers
+`flagsHash` — and fetches `SpaceFlags(environment)` only when that hash moved, for a pinned revision as well.
 
 ## In the builder and the dev tools
 

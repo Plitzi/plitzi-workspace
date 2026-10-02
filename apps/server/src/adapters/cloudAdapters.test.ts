@@ -20,13 +20,21 @@ const space = {
 
 type Call = { query: string; variables: Record<string, unknown> };
 
+type FlagsAnswer = { hash: string; flags: Record<string, { value: boolean; rules: [] }> };
+
+const FLAGS_A: FlagsAnswer = { hash: 'aaa', flags: { beta: { value: false, rules: [] } } };
+const FLAGS_B: FlagsAnswer = { hash: 'bbb', flags: { beta: { value: true, rules: [] } } };
+
+/** A served space as the page server receives it: the revision, with the environment's flags joined to it. */
+const served = (flags: FlagsAnswer) => ({ ...space, schema: { ...space.schema, flags: flags.flags } });
+
 /**
  * A Plitzi that answers both queries and counts each separately.
  *
  * Counting them apart is the point: latest mode is supposed to ask for a REVISION NUMBER on a timer and for a
  * SPACE only when that number moves, and a spy that lumped them together could not tell the difference.
  */
-const cloud = (latest: () => number | undefined = () => 7) => {
+const cloud = (latest: () => number | undefined = () => 7, flags: () => FlagsAnswer = () => FLAGS_A) => {
   const calls: Call[] = [];
   let failing = false;
 
@@ -39,18 +47,20 @@ const cloud = (latest: () => number | undefined = () => 7) => {
     }
 
     const data = body.query.includes('SpaceLatestRevision')
-      ? { SpaceLatestRevision: { snapshot: { revision: latest() } } }
-      : { Space: space };
+      ? { SpaceLatestRevision: { snapshot: { revision: latest() }, flagsHash: flags().hash } }
+      : body.query.includes('SpaceFlags')
+        ? { SpaceFlags: flags() }
+        : { Space: space };
 
     return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ data }) } as unknown as Response);
   }) as unknown as typeof fetch;
 
   return {
     fetchImpl,
-    spaces: () => calls.filter(call => !call.query.includes('SpaceLatestRevision')).length,
+    spaces: () => calls.filter(call => call.query.includes('InitQuery')).length,
     probes: () => calls.filter(call => call.query.includes('SpaceLatestRevision')).length,
-    lastSpaceRevision: () =>
-      calls.filter(call => !call.query.includes('SpaceLatestRevision')).at(-1)?.variables.revision,
+    flagReads: () => calls.filter(call => call.query.includes('SpaceFlags')).length,
+    lastSpaceRevision: () => calls.filter(call => call.query.includes('InitQuery')).at(-1)?.variables.revision,
     fail: () => {
       failing = true;
     }
@@ -124,8 +134,26 @@ describe('createCloudAdapters', () => {
 
       expect(plitzi.spaces()).toBe(1);
       expect(plitzi.lastSpaceRevision()).toBe(12);
-      // Nothing to discover: the deployment already said which version it serves.
-      expect(plitzi.probes()).toBe(0);
+    });
+
+    /** Its flags are not part of it: they follow the environment, probed on the window and fetched when they move. */
+    it('follows the environment’s flags without fetching the revision again', async () => {
+      let flags = FLAGS_A;
+      const plitzi = cloud(
+        () => 7,
+        () => flags
+      );
+      const built = adapters(plitzi.fetchImpl, { environment: 'production', revision: 12, cacheSeconds: 0 });
+
+      await expect(read(built, 'production')).resolves.toEqual(served(FLAGS_A));
+
+      flags = FLAGS_B;
+      await read(built, 'production');
+      await vi.waitFor(() => expect(plitzi.flagReads()).toBe(2));
+
+      await expect(read(built, 'production')).resolves.toEqual(served(FLAGS_B));
+      await expect(built.getSpaceDeployment(noRequest)).resolves.toMatchObject({ revision: 12, flagsVersion: 'bbb' });
+      expect(plitzi.spaces()).toBe(1);
     });
 
     it('reports the version it is serving to the page server', async () => {
@@ -148,7 +176,7 @@ describe('createCloudAdapters', () => {
       const plitzi = cloud(() => 7);
       const built = adapters(plitzi.fetchImpl, { environment: 'production' });
 
-      await expect(read(built, 'production')).resolves.toEqual(space);
+      await expect(read(built, 'production')).resolves.toEqual(served(FLAGS_A));
       expect(plitzi.lastSpaceRevision()).toBe(7);
     });
 
@@ -177,7 +205,27 @@ describe('createCloudAdapters', () => {
 
       await read(built, 'production');
 
-      await expect(read(built, 'production')).resolves.toEqual(space);
+      await expect(read(built, 'production')).resolves.toEqual(served(FLAGS_A));
+    });
+
+    it('asks for the flags only when their hash moves', async () => {
+      let flags = FLAGS_A;
+      const plitzi = cloud(
+        () => 7,
+        () => flags
+      );
+      const built = adapters(plitzi.fetchImpl, { environment: 'production', cacheSeconds: 0 });
+
+      await read(built, 'production');
+      await read(built, 'production');
+      await vi.waitFor(() => expect(plitzi.probes()).toBeGreaterThan(1));
+      expect(plitzi.flagReads()).toBe(1);
+
+      flags = FLAGS_B;
+      await read(built, 'production');
+      await vi.waitFor(() => expect(plitzi.flagReads()).toBe(2));
+      await expect(read(built, 'production')).resolves.toEqual(served(FLAGS_B));
+      expect(plitzi.spaces()).toBe(1);
     });
 
     it('reports the revision it discovered to the page server', async () => {
@@ -186,7 +234,8 @@ describe('createCloudAdapters', () => {
 
       await expect(built.getSpaceDeployment(noRequest)).resolves.toMatchObject({
         environment: 'production',
-        revision: 9
+        revision: 9,
+        flagsVersion: 'aaa'
       });
     });
   });
@@ -199,8 +248,8 @@ describe('createCloudAdapters', () => {
     await read(built, 'production');
     plitzi.fail();
 
-    await expect(read(built, 'production')).resolves.toEqual(space);
-    await expect(read(built, 'production')).resolves.toEqual(space);
+    await expect(read(built, 'production')).resolves.toEqual(served(FLAGS_A));
+    await expect(read(built, 'production')).resolves.toEqual(served(FLAGS_A));
   });
 
   it('answers nothing when the very first read fails, rather than half a space', async () => {
@@ -228,12 +277,21 @@ describe('createCloudAdapters', () => {
     await read(adapters(first.fetchImpl, { environment: 'production', revision: 12, cache }), 'production');
     expect(first.spaces()).toBe(1);
     expect(store.has('plitzi:space:production:12')).toBe(true);
+    expect(store.has('plitzi:flags:production')).toBe(true);
 
     // A second replica — its own adapters, its own memory, the same cache.
     const second = cloud();
     const built = adapters(second.fetchImpl, { environment: 'production', revision: 12, cache });
-    await expect(read(built, 'production')).resolves.toEqual(space);
+    await expect(read(built, 'production')).resolves.toEqual(served(FLAGS_A));
     expect(second.spaces()).toBe(0);
+    expect(second.flagReads()).toBe(0);
+
+    // A replica starting while Plitzi is down serves the space AND the flags it last knew.
+    const down = cloud();
+    down.fail();
+    const cold = adapters(down.fetchImpl, { environment: 'production', revision: 12, cache });
+    await expect(read(cold, 'production')).resolves.toEqual(served(FLAGS_A));
+    await expect(cold.getSpaceDeployment(noRequest)).resolves.toMatchObject({ flagsVersion: 'aaa' });
   });
 });
 

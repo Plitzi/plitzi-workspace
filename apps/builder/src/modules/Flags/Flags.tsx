@@ -1,3 +1,4 @@
+import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
@@ -22,9 +23,9 @@ const NONE: Record<string, boolean> = {};
 /**
  * The space's feature flags: declared and ruled here, previewed in the canvas, and published on their own.
  *
- * Forcing one here is the canvas's `qa` layer — what the author looks at, never saved. Publishing makes a snapshot of
- * an environment that changes its flags and nothing else, which is how a flag is turned in production without shipping
- * whatever else the draft holds.
+ * Forcing one here is the canvas's `qa` layer — what the author looks at, never saved. Flags are not part of a
+ * snapshot: each environment has one set, shared by every revision it serves, and publishing them switches what the
+ * environment serves now without shipping whatever else the draft holds.
  */
 const Flags = () => {
   const { showDialog, showModal } = useModal();
@@ -112,7 +113,7 @@ const Flags = () => {
     if (result) {
       addToast(
         <div>
-          Flags published as <b>{`${result.environment}:${result.revision}`}</b>
+          Flags published to <b>{result.environment}</b>
         </div>,
         { appeareance: 'success', autoDismiss: true, placement: 'top-right' }
       );
@@ -127,6 +128,10 @@ const Flags = () => {
 
   return (
     <div className="flex h-full w-full flex-col gap-2 p-2">
+      <Alert intent="info" size="sm" solid={false}>
+        Flags are kept apart from the space's snapshots. Each environment has one set, used by every snapshot it serves:
+        rolling a snapshot back keeps its flags, and Publish flags changes them without a new snapshot.
+      </Alert>
       <div className="flex items-center gap-2">
         <Input className="grow" placeholder="Search Flags" size="xs" value={filter} onChange={setFilter}>
           <Input.Icon icon="fa-solid fa-magnifying-glass" />
