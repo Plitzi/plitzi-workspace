@@ -1,4 +1,5 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
+import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state/paintedState';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
@@ -14,6 +15,7 @@ import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/r
 import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { authorizesDebugging } from '../../helpers/debugAuthorization';
+import { requestFlagOverrides } from '../../helpers/flagOverrides';
 import { hydrationPayload } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { ssrPaintedCookieName } from '../../helpers/paintedCookie';
@@ -109,7 +111,40 @@ export const prepareRender = async (
   // to decide and the two shipped ones disagree — `resolveRscData` reads it as on, `connectorRscData` as off — so
   // this gate skips on the one answer both of them agree about.
   const rscEnabled = rscPath !== undefined && schema !== undefined && schema.rsc?.enabled !== false;
-  const hasTargets = rscEnabled && pageMatch !== undefined && hasServerElements(schema, pageMatch.pageId);
+  // A `__pt` render exists to be looked at as a picture — a thumbnail, the agent's screenshot, the builder's
+  // preview pane. Nobody is at that keyboard to dismiss the dev-tools badge, and it would be baked into the
+  // capture, so debugging is off for it however the deployment and the cookie are set — and with it, a tester's
+  // forced flags. See `debugRendered` below for who may authorize it.
+  const isPreviewRender = Boolean(req.query[PREVIEW_TOKEN_PARAM]);
+  const debugAuthorized = !isPreviewRender && authorizesDebugging(config, schema?.settings);
+  const flagOverrides = await requestFlagOverrides(
+    config,
+    req,
+    {
+      spaceId: req.ctx.spaceDeployment?.spaceId ?? spaceId,
+      environment: req.ctx.spaceDeployment?.environment ?? environment
+    },
+    debugAuthorized
+  );
+  // Resolved here only to know whether a server element of this page is switched on; the page itself resolves them
+  // again as it renders, from the same layers.
+  const pageFlags =
+    schema !== undefined && pageMatch !== undefined
+      ? flagValues(
+          resolveFlags(
+            schema.flags,
+            {
+              environment: req.ctx.spaceDeployment?.environment ?? environment,
+              hostname: req.hostname,
+              routeParams: pageMatch.routeParams,
+              queryParams: req.query,
+              user: flagUserFromSSR(req.ctx.user)
+            },
+            flagOverrides
+          )
+        )
+      : undefined;
+  const hasTargets = rscEnabled && pageMatch !== undefined && hasServerElements(schema, pageMatch.pageId, pageFlags);
   // Timed around the adapter alone, and from after the schema is in hand. An RSC read opens by joining that read —
   // the whole point of sharing the loader — and those milliseconds are already billed to `schema`; timing from the
   // call would report one read under two names and make a page that resolved nothing look like it cost a pass.
@@ -122,7 +157,8 @@ export const prepareRender = async (
             environment: req.ctx.spaceDeployment?.environment ?? environment,
             revision: req.ctx.spaceDeployment?.revision ?? revision,
             user: req.ctx.user,
-            loadOfflineData
+            loadOfflineData,
+            flagOverrides
           })
         )
       : rscPath
@@ -148,10 +184,6 @@ export const prepareRender = async (
   const v = version ? `?v=${version}` : '';
   const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
 
-  // A `__pt` render exists to be looked at as a picture — a thumbnail, the agent's screenshot, the builder's
-  // preview pane. Nobody is at that keyboard to dismiss the dev-tools badge, and it would be baked into the
-  // capture, so debugging is off for it however the deployment and the cookie are set.
-  const isPreviewRender = Boolean(req.query[PREVIEW_TOKEN_PARAM]);
   /**
    * Two facts, and they have to leave this server separately.
    *
@@ -167,7 +199,6 @@ export const prepareRender = async (
    * so does the space itself (`settings.debugMode`) — an owner inspecting their own published site. The space is read
    * from what this server loaded, never from the request, so a visitor has no say in it.
    */
-  const debugAuthorized = !isPreviewRender && authorizesDebugging(config, schema?.settings);
   const debugRendered = resolveDebugMode(
     debugAuthorized,
     // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
@@ -221,6 +252,14 @@ export const prepareRender = async (
     ? paintedStateFor(req.headers.cookie, ssrPaintedCookieName(req.headers.host), paintedKeys(schema.settings))
     : undefined;
 
+  /**
+   * The two layers of the space's flags this server answers for. Its own (`config.flags`), asked per space when it
+   * serves several; and the ones a tester forced from the dev tools, read from their cookie — only for a page allowed
+   * to debug, or any visitor could switch on a feature still behind a flag. Both travel to the browser beside the
+   * page, so it hydrates with the flags it was drawn with.
+   */
+  const { server: serverFlags, qa: forcedFlags } = flagOverrides;
+
   const offlineDataStr = hydrationPayload(offlineData, {
     offlineMode: true,
     environment,
@@ -231,7 +270,9 @@ export const prepareRender = async (
     ...(paintedState ? { state: paintedState } : {}),
     ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
     ...(overQuota ? { overQuota } : {}),
-    ...(actionRuns ? { actionRuns } : {})
+    ...(actionRuns ? { actionRuns } : {}),
+    ...(serverFlags ? { serverFlags } : {}),
+    ...(forcedFlags ? { forcedFlags } : {})
   });
 
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
@@ -287,7 +328,9 @@ export const prepareRender = async (
       sdkDevToolsStylePath,
       overQuota,
       theme,
-      ...(paintedState ? { state: paintedState } : {})
+      ...(paintedState ? { state: paintedState } : {}),
+      ...(serverFlags ? { serverFlags } : {}),
+      ...(forcedFlags ? { forcedFlags } : {})
     },
     entries,
     templateParams: {
@@ -326,6 +369,7 @@ export const prepareRender = async (
       ssrOnly: config.ssrOnly === true,
       offlineData: offlineDataStr
     },
-    cacheable: actionRuns === undefined
+    // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page.
+    cacheable: actionRuns === undefined && forcedFlags === undefined
   };
 };

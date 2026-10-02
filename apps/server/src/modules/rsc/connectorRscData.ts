@@ -48,7 +48,7 @@ export const connectorRscData = (
     return attributes.action && resolveAction ? resolveAction(context) : undefined;
   };
 
-  return async ({ req, spaceId, environment, user, ids, loadOfflineData }) => {
+  return async ({ req, spaceId, environment, user, ids, loadOfflineData, flagOverrides }) => {
     // Joins the read the page render already started rather than asking for the document a second time.
     const offlineData = await loadOfflineData();
     if (!offlineData?.schema.rsc?.enabled) {
@@ -63,6 +63,7 @@ export const connectorRscData = (
       user,
       ids,
       resolveElement,
+      ...(flagOverrides ? { flagOverrides } : {}),
       ...(elementTimeoutMs === undefined ? {} : { timeoutMs: elementTimeoutMs })
     });
   };

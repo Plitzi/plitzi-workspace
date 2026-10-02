@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { isSchemaFlag } from '../flags/schemaFlag';
 import { STYLE_STATES } from '../style/styleStates';
 import { StyleVariableCategory } from '../types/StyleTypes';
 
@@ -8,6 +9,7 @@ import type {
   Element,
   PageFolder,
   Schema,
+  SchemaFlag,
   SchemaRaw,
   SchemaVariable,
   SpaceComponent,
@@ -67,6 +69,8 @@ const pageFolder = z.custom<PageFolder>(value => isRecord(value) && typeof value
 const schemaVariable = z.custom<SchemaVariable>(value => isRecord(value) && typeof value.name === 'string', {
   message: 'expected a variable with a name'
 });
+
+const schemaFlag = z.custom<SchemaFlag>(isSchemaFlag, { message: 'expected a flag with a value and its rules' });
 
 const styleAttributes = z.custom<StyleItem['attributes']>(isRecord, { message: 'expected a style attributes object' });
 
@@ -145,6 +149,8 @@ export const spaceEventSchemas = {
   SPACE_ADD_VARIABLE: variablePayload,
   SPACE_UPDATE_VARIABLE: variablePayload,
   SPACE_REMOVE_VARIABLE: z.object({ name: z.string() }),
+  SPACE_SET_FLAG: z.object({ name: z.string(), flag: schemaFlag }),
+  SPACE_REMOVE_FLAG: z.object({ name: z.string() }),
   SPACE_ADD_ELEMENT: z.object({
     element,
     dropPosition,

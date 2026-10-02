@@ -42,6 +42,8 @@ export class LintContext {
   readonly variables: ReadonlySet<string>;
   /** The space's computed values, in the order they are declared. */
   readonly computed: readonly string[];
+  /** The feature flags the space declares, by name. */
+  readonly flags: readonly string[];
 
   constructor(
     readonly schema: Schema,
@@ -66,6 +68,7 @@ export class LintContext {
     );
     this.variables = new Set(schema.variables.map(variable => variable.name));
     this.computed = Object.keys(schema.settings.computed ?? {});
+    this.flags = Object.keys(schema.flags ?? {});
   }
 
   error(code: string, message: string, elementId?: string): void {

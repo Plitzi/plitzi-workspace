@@ -21,6 +21,7 @@ import {
   toBindingSpecs,
   withVisibility
 } from './bindings';
+import { flagGateOf } from './flags';
 import { authorFlows } from './flows';
 import {
   COMPONENT_SPEC_KEYS,
@@ -254,6 +255,7 @@ class SpaceAuthor {
       definition: { name: this.spec.name, permanentUrl: this.spec.permanentUrl },
       flat: this.flatMap.flat,
       variables: this.spec.schemaVariables ?? [],
+      ...(this.spec.flags ? { flags: this.spec.flags } : {}),
       settings: {
         ...this.spec.settings,
         customCss: [this.spec.customCss ?? '', notificationsCss(this.spec.notifications)].filter(Boolean).join('\n\n'),
@@ -1022,7 +1024,8 @@ class SpaceAuthor {
         styleSelectors: {
           base: this.selectorFor(path, { type: 'page', css: page.css, class: page.class, selector: page.selector })
         },
-        ...(page.flows ? { interactions: authorFlows(page.flows, id) } : {})
+        ...(page.flows ? { interactions: authorFlows(page.flows, id) } : {}),
+        ...(page.flag === undefined ? {} : { flag: flagGateOf(page.flag, `Page "${page.name}"`) })
       }
     };
 
@@ -1335,6 +1338,7 @@ class SpaceAuthor {
         },
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
         ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),
+        ...(spec.flag === undefined ? {} : { flag: flagGateOf(spec.flag, where) }),
         ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where, tree.globals) } : {}),
         ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})
       }

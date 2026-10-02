@@ -104,6 +104,18 @@ const useQueueManager = ({
           return mutate('SpaceRemoveVariable', { name });
         }
 
+        case SchemaActions.SCHEMA_SET_FLAG: {
+          const { name, flag } = item.action;
+
+          return mutate('SpaceSetFlag', { name, flag });
+        }
+
+        case SchemaActions.SCHEMA_REMOVE_FLAG: {
+          const { name } = item.action;
+
+          return mutate('SpaceRemoveFlag', { name });
+        }
+
         case SchemaActions.SCHEMA_ADD_ELEMENT: {
           const { data, to, dropPosition, initialItems, variables } = item.action;
 

@@ -126,6 +126,80 @@ describe('lintSpace', () => {
     });
   });
 
+  describe('flags', () => {
+    const declare = (schema: Schema) => {
+      schema.flags = { newCheckout: { value: false, rules: [] } };
+      schema.flat.hello.definition.flag = { name: 'newCheckout', is: true };
+    };
+
+    it('reads a gated element on a declared flag as nothing to say', () => {
+      expect(lintSpace(withChange(({ schema }) => declare(schema)))).toEqual({ errors: [], warnings: [] });
+    });
+
+    it('flag-name', () => {
+      const documents = withChange(({ schema }) => {
+        declare(schema);
+        schema.flags = { ...schema.flags, 'new checkout': { value: true, rules: [] } };
+      });
+
+      expect(errorsOf(documents)).toContain('flag-name');
+    });
+
+    it('flag-shape', () => {
+      const documents = withChange(({ schema }) => {
+        declare(schema);
+        schema.flags = { newCheckout: { value: 'yes', rules: [] } as never };
+      });
+
+      expect(errorsOf(documents)).toContain('flag-shape');
+    });
+
+    it('flag-rule-shape', () => {
+      const documents = withChange(({ schema }) => {
+        declare(schema);
+        schema.flags = { newCheckout: { value: false, rules: [{ when: { combinator: 'and', rules: [] } }] as never } };
+      });
+
+      expect(errorsOf(documents)).toContain('flag-rule-shape');
+    });
+
+    it('flag-rule-empty', () => {
+      const documents = withChange(({ schema }) => {
+        declare(schema);
+        schema.flags = {
+          newCheckout: { value: false, rules: [{ when: { combinator: 'and', rules: [] }, value: true }] }
+        };
+      });
+
+      expect(warningsOf(documents)).toContain('flag-rule-empty');
+    });
+
+    it('flag-unused', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flags = { newCheckout: { value: false, rules: [] } };
+      });
+
+      expect(warningsOf(documents)).toContain('flag-unused');
+    });
+
+    it('flag-undeclared', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.hello.definition.flag = { name: 'newChekout', is: true };
+      });
+
+      expect(errorsOf(documents)).toContain('flag-undeclared');
+    });
+
+    it('flag-unknown', () => {
+      const documents = withChange(({ schema }) => {
+        declare(schema);
+        schema.flat.hello.attributes.content = '{{ flags.newChekout }}';
+      });
+
+      expect(errorsOf(documents)).toContain('flag-unknown');
+    });
+  });
+
   describe('templates', () => {
     it('template-unreadable', () => {
       const documents = withChange(({ schema }) => {

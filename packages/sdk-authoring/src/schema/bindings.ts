@@ -1,3 +1,4 @@
+import { GLOBAL_SOURCES as RUNTIME_GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource/globalSources';
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import { didYouMean } from './suggest';
@@ -7,7 +8,7 @@ import type { ClassRef } from '../style';
 import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
 
 /**
- * The sources that belong to nobody, registered once for the whole space.
+ * The sources that belong to nobody, registered once for the whole space — the runtime's own list.
  *
  * They are named as themselves rather than as `<type>_<id>`, which is what tells them apart from a source an
  * element publishes — and is why an element may not answer to one of these names.
@@ -18,9 +19,11 @@ import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
  *
  * `theme` is `{ mode, resolved }` — `resolved` is always `light` or `dark`, which is what a URL or a rule wants.
  *
+ * `flags` holds the space's feature flags (`SpaceSpec.flags`) as they resolved, by name: `true` or `false`.
+ *
  * `computed` holds the space's own computed values (`SpaceSpec.computed`), by name.
  */
-export const GLOBAL_SOURCES = ['variables', 'navigation', 'auth', 'state', 'host', 'theme', 'computed'];
+export const GLOBAL_SOURCES: readonly string[] = RUNTIME_GLOBAL_SOURCES;
 
 /** What an element inside a component can read besides its own tree: the globals, and what its instance hands in. */
 export const COMPONENT_SOURCES = [...GLOBAL_SOURCES, COMPONENT_PROPS_SOURCE];

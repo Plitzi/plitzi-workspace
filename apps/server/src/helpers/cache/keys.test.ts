@@ -59,6 +59,12 @@ describe('buildHtmlCacheKey', () => {
     expect(html(painted({ toolPick: 'star' }))).not.toBe(html());
   });
 
+  /** A tester's forced flags change what is drawn, and a tester must never be handed a page drawn without them. */
+  it('separates a visitor who forced flags from one who did not', () => {
+    expect(html('plitzi_flags=newCheckout%3A1')).not.toBe(html());
+    expect(html('plitzi_flags=newCheckout%3A1')).not.toBe(html('plitzi_flags=newCheckout%3A0'));
+  });
+
   it('reads the painted state cookie named for the port the page is served on', () => {
     const onPort = (cookie: string) =>
       buildHtmlCacheKey(undefined, 1, 'production', 3, req('/', '', 'site.test', cookie, 'site.test:4016'));

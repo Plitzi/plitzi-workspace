@@ -57,6 +57,8 @@ export interface AuthoringProps {
   runtime?: ElementRuntime;
   /** When the element's contents mount relative to its visibility. Left out, the element type decides. */
   loadStrategy?: ElementLoadStrategy;
+  /** The feature flag it exists under: `'newCheckout'` while on, `'!newCheckout'` while off. Not a visibility. */
+  flag?: string;
   children?: ElementSpec[];
   /** What the builder shows, not what the runtime reads. */
   meta?: SpecMeta;
@@ -98,6 +100,7 @@ const buildSpec = (
     flows,
     runtime,
     loadStrategy,
+    flag,
     children,
     meta,
     ...attributes
@@ -117,6 +120,7 @@ const buildSpec = (
     ...(flows === undefined ? {} : { flows }),
     ...(runtime === undefined ? {} : { runtime }),
     ...(loadStrategy === undefined ? {} : { loadStrategy }),
+    ...(flag === undefined ? {} : { flag }),
     ...(children === undefined ? {} : { children }),
     // The element's own defaults, with the author's values on top. Attributes MERGE rather than replace: a
     // declaration's defaults are what the element needs to render at all — a heading's `subType`, a list's

@@ -13,6 +13,7 @@ import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
 import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
+import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
 import { DEFAULT_RENDER_SETTINGS, useSdkStoreSync } from '@plitzi/sdk-shared/store';
 import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
 
@@ -53,6 +54,12 @@ export type AppMainProps = {
   overQuota?: boolean;
   analytics?: AnalyticsConfig;
   state?: Record<string, unknown>;
+  /** The flags this embedding decides — see `PlitziSdkProps`. */
+  flags?: Record<string, boolean>;
+  /** The flags the rendering server decides — see `PlitziSdkProps`. */
+  serverFlags?: Record<string, boolean>;
+  /** The flags a tester forced, already settled against whether this page may debug. */
+  forcedFlags?: Record<string, boolean>;
   /** What the embedding application hands this space — see `PlitziSdkProps`. */
   hostData?: Record<string, unknown>;
   /** What it is willing to be asked to do — see `PlitziSdkProps`. */
@@ -86,6 +93,9 @@ const AppMain = ({
   onInitEventBridge,
   hostData,
   hostActions,
+  flags,
+  serverFlags,
+  forcedFlags,
   onInitStateManager,
   ...sdkProps
 }: AppMainProps) => {
@@ -127,6 +137,16 @@ const AppMain = ({
    * shell authored as a space possible at all.
    */
   useSdkStoreSync(['runtime.host'], [hostData]);
+
+  /**
+   * The layers above the space that decide its flags, each under a path of its own: the dev tools write `qa` while the
+   * page is open, and a host re-rendering with new `flags` must not take a tester's choice away with it. Content-stable,
+   * because a host passing an inline object would otherwise re-resolve every flag on each of its renders.
+   */
+  useSdkStoreSync(
+    ['flags.overrides.server', 'flags.overrides.sdk', 'flags.overrides.qa'],
+    [useStableValue(serverFlags), useStableValue(flags), forcedFlags]
+  );
 
   // Expose the imperative runtime-state handle to the host (consumed by `getStateManager()`). A nexus base-path view
   // binds every read/write to `runtime.state`, so call sites concatenate nothing and the updater form type-checks.

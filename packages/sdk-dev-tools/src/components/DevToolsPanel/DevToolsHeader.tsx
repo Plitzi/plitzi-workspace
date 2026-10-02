@@ -16,6 +16,8 @@ const TABS = [
   { id: 'history', label: 'History', icon: 'fa-solid fa-clock-rotate-left' },
   { id: 'elements', label: 'Elements', icon: 'fa-solid fa-layer-group' },
   { id: 'variables', label: 'Variables', icon: 'fa-solid fa-code' },
+  // What each feature flag resolved to and which layer decided it — and the one place a tester forces one.
+  { id: 'flags', label: 'Flags', icon: 'fa-solid fa-flag' },
   { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' },
   { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' },
   // Own tab rather than a Logs filter: a run has input, output, progress and server steps — none is a log line.

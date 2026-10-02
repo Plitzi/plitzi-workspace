@@ -74,6 +74,22 @@ const checkComputedReads = (ctx: LintContext, template: string, where: string, s
   }
 };
 
+/**
+ * Every `flags.<name>` a template reads has to be a flag the space declares: one it does not resolves to nothing, so
+ * the binding or the condition reading it is silently off.
+ */
+const checkFlagReads = (ctx: LintContext, template: string, where: string, id?: string) => {
+  for (const [, name = ''] of template.matchAll(/(?<![\w.])flags\.([A-Za-z_][A-Za-z0-9_]*)/g)) {
+    if (!ctx.flags.includes(name)) {
+      ctx.error(
+        'flag-unknown',
+        `${where} reads "flags.${name}", which the space does not declare${didYouMean(name, ctx.flags) || '.'} Declare it in \`flags\`: { ${name}: { value: false, rules: [] } }.`,
+        id
+      );
+    }
+  }
+};
+
 /** One name a template reads, against what will be in scope where it renders. */
 const checkName = (
   ctx: LintContext,
@@ -163,6 +179,7 @@ export const checkTemplate = (
 
   const { issues, freeNames } = inspectTemplate(template);
   checkComputedReads(ctx, template, where, site, id);
+  checkFlagReads(ctx, template, where, id);
   // A root, not a field: `item.props.title` reads a record's own `props`.
   for (const [path] of template.matchAll(/(?<![\w.])props\.[A-Za-z_][A-Za-z0-9_]*/g)) {
     checkPropsRead(ctx, path, where, id);

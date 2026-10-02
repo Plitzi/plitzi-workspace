@@ -9,6 +9,7 @@ import {
 } from '../elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../schema';
+import { flagSpecOf } from '../schema/flags';
 import { css } from '../style';
 import { foldCustomCss } from './customCss';
 import { categoryOf, definitionOf, isRecord, withNamedIds } from './documents';
@@ -149,7 +150,8 @@ const DEFINITION_FIELDS = new Set([
   'interactions',
   'initialState',
   'runtime',
-  'loadStrategy'
+  'loadStrategy',
+  'flag'
 ]);
 
 const PAGE_ATTRIBUTES = new Set([
@@ -435,6 +437,7 @@ class SpecReader {
       ...(schema.variables.length > 0 ? { schemaVariables: this.readSchemaVariables(schema.variables) } : {}),
       ...(isEmpty(settings) ? {} : { settings }),
       ...(computed && !isEmpty(computed) ? { computed } : {}),
+      ...(schema.flags && !isEmpty(schema.flags) ? { flags: schema.flags } : {}),
       ...(channels && !isEmpty(channels) ? { channels } : {}),
       ...(customCss ? { customCss } : {}),
       ...(schema.rsc ? { rsc: schema.rsc } : {}),
@@ -1049,6 +1052,7 @@ class SpecReader {
       ...(redirect ? { unauthorizedRedirect: redirect } : {}),
       ...this.pageStyle(page.definition.styleSelectors.base),
       ...this.readFlows(page),
+      ...(page.definition.flag ? { flag: flagSpecOf(page.definition.flag) } : {}),
       body: this.childrenOf(page).map(child => this.readElement(child))
     };
   }
@@ -1171,6 +1175,7 @@ class SpecReader {
       ...this.readFlows(element),
       ...(definition.runtime ? { runtime: definition.runtime } : {}),
       ...(definition.loadStrategy ? { loadStrategy: definition.loadStrategy } : {}),
+      ...(definition.flag ? { flag: flagSpecOf(definition.flag) } : {}),
       meta: { label: definition.label },
       ...this.childrenSpec(element)
     };

@@ -8,6 +8,7 @@
 
 export * from './actions';
 export * from './bindings';
+export { flagGateOf, flagSpecOf } from './flags';
 export * from './flows';
 export * from './handles';
 export * from './ids';

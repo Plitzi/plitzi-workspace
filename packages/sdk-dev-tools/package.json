@@ -238,6 +238,26 @@
       "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/FlagsViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/FlagsViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/FlagsViewer/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/FlagsViewer/FlagSource": {
+      "types": "./dist/components/DevToolsPanel/tabs/FlagsViewer/FlagSource.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/FlagsViewer/FlagSource.mjs"
+    },
+    "./components/DevToolsPanel/tabs/FlagsViewer/FlagsListItem": {
+      "types": "./dist/components/DevToolsPanel/tabs/FlagsViewer/FlagsListItem.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/FlagsViewer/FlagsListItem.mjs"
+    },
+    "./components/DevToolsPanel/tabs/FlagsViewer/FlagsViewer": {
+      "types": "./dist/components/DevToolsPanel/tabs/FlagsViewer/FlagsViewer.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/FlagsViewer/FlagsViewer.mjs"
+    },
+    "./components/DevToolsPanel/tabs/FlagsViewer/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/FlagsViewer/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/FlagsViewer/index.mjs"
+    },
     "./components/DevToolsPanel/tabs/HistoryViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/HistoryViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/HistoryViewer/index.mjs"

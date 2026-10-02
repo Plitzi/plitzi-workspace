@@ -113,6 +113,12 @@ export const registerResources = (
     ['Style variables', `plitzi://style-variables/${env}`, 'Design tokens by category'],
     ['Fonts', `plitzi://fonts/${env}`, 'The font families the space loads, with their source and fallback'],
     ['Schema variables', `plitzi://schema-variables/${env}`, 'Space-level values referenced via {{name}}'],
+    [
+      'Feature flags',
+      `plitzi://flags/${env}`,
+      'The feature flags the space declares, each a default and its rules: read as {{ flags.<name> }}, named by the ' +
+        '`flag` of an element or a page'
+    ],
     ['Settings', `plitzi://settings/${env}`, 'Space-level settings: global customCss and state/auth configuration'],
     [
       'Interactions catalog',

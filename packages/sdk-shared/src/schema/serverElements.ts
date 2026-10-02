@@ -1,4 +1,5 @@
 import { resolveLayoutChain } from './layoutChain';
+import { passesFlagGate } from '../flags/resolveFlags';
 
 import type { Element, Schema } from '../types';
 
@@ -19,7 +20,16 @@ import type { Element, Schema } from '../types';
  * a provider in the dashboard's sidebar was never resolved: the payload came back empty, the element rendered with
  * nothing, and no layer reported it.
  */
-export const collectServerElements = (schema: Schema, pageId: string | undefined, ids?: string[]): Element[] => {
+/**
+ * Given the flags as they resolved, an element gated off by one is skipped with its whole subtree — it will not be
+ * rendered, so nothing in it wants data, and resolving it would put a feature that is off into the payload anyway.
+ */
+export const collectServerElements = (
+  schema: Schema,
+  pageId: string | undefined,
+  ids?: string[],
+  flags?: Record<string, boolean>
+): Element[] => {
   if (pageId === undefined) {
     return [];
   }
@@ -45,7 +55,7 @@ export const collectServerElements = (schema: Schema, pageId: string | undefined
 
     seen.add(id);
     const element = schema.flat[id] as Element | undefined;
-    if (!element) {
+    if (!element || (flags && !passesFlagGate(element.definition.flag, flags))) {
       continue;
     }
 
@@ -63,5 +73,8 @@ export const collectServerElements = (schema: Schema, pageId: string | undefined
 };
 
 /** Whether anything on this page consumes server data at all — the question both RSC gates actually ask. */
-export const hasServerElements = (schema: Schema, pageId: string | undefined): boolean =>
-  collectServerElements(schema, pageId).length > 0;
+export const hasServerElements = (
+  schema: Schema,
+  pageId: string | undefined,
+  flags?: Record<string, boolean>
+): boolean => collectServerElements(schema, pageId, undefined, flags).length > 0;

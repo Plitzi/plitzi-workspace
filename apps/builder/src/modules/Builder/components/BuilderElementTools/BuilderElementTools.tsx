@@ -44,6 +44,8 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   ]);
   const { componentDefinitions } = use(ComponentContext);
   const getSchemaFlat = useBuilderStoreGetter('schema.flat');
+  const [declaredFlags] = useBuilderStore('schema.flags');
+  const flagNames = useMemo(() => Object.keys(declaredFlags ?? {}), [declaredFlags]);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);
   const elementRef = useRef(element);
@@ -164,6 +166,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
               definition={tempDefinition}
               canHoldItems={Array.isArray(declared?.items)}
               declaredLoadStrategy={declared?.loadStrategy}
+              flagNames={flagNames}
               id={element.id}
               getNameConflict={getNameConflict}
               onUpdate={handleChange}

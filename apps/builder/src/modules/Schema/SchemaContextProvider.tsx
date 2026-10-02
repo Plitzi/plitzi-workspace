@@ -30,6 +30,7 @@ import type {
   Element,
   PageFolder,
   Schema,
+  SchemaFlag,
   SchemaRaw,
   SchemaVariable,
   SpaceComponent,
@@ -283,6 +284,20 @@ const SchemaContextProvider = ({
     [dispatchSchema]
   );
 
+  // Flags
+
+  const schemaSetFlag = useCallback(
+    (name: string, flag: SchemaFlag, fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_SET_FLAG, name, flag, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
+  const schemaRemoveFlag = useCallback(
+    (name: string, fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_REMOVE_FLAG, name, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
   // Others
 
   const schemaAddTemplate = useCallback(
@@ -343,6 +358,10 @@ const SchemaContextProvider = ({
     subscriptionManager.subscribe('SPACE_ADD_VARIABLE', ({ variable }) => schemaAddVariable(variable, true));
     subscriptionManager.subscribe('SPACE_UPDATE_VARIABLE', ({ variable }) => schemaUpdateVariable(variable, true));
     subscriptionManager.subscribe('SPACE_REMOVE_VARIABLE', ({ name }) => schemaRemoveVariable(name, true));
+
+    // Flags
+    subscriptionManager.subscribe('SPACE_SET_FLAG', ({ name, flag }) => schemaSetFlag(name, flag, true));
+    subscriptionManager.subscribe('SPACE_REMOVE_FLAG', ({ name }) => schemaRemoveFlag(name, true));
 
     // Elements
     subscriptionManager.subscribe(
@@ -426,6 +445,8 @@ const SchemaContextProvider = ({
           'SPACE_ADD_VARIABLE',
           'SPACE_UPDATE_VARIABLE',
           'SPACE_REMOVE_VARIABLE',
+          'SPACE_SET_FLAG',
+          'SPACE_REMOVE_FLAG',
           'SPACE_ADD_ELEMENT',
           'SPACE_UPDATE_ELEMENT',
           'SPACE_UPDATE_ELEMENTS',
@@ -456,6 +477,8 @@ const SchemaContextProvider = ({
     schemaAddVariable,
     schemaUpdateVariable,
     schemaRemoveVariable,
+    schemaSetFlag,
+    schemaRemoveFlag,
     schemaUpdateSettings,
     schemaAddElement,
     schemaUpdateElement,
@@ -484,6 +507,8 @@ const SchemaContextProvider = ({
       schemaAddVariable,
       schemaUpdateVariable,
       schemaRemoveVariable,
+      schemaSetFlag,
+      schemaRemoveFlag,
       schemaUpdateSettings
     }),
     [
@@ -497,6 +522,8 @@ const SchemaContextProvider = ({
       schemaAddVariable,
       schemaUpdateVariable,
       schemaRemoveVariable,
+      schemaSetFlag,
+      schemaRemoveFlag,
       schemaUpdateSettings
     ]
   );
@@ -560,6 +587,8 @@ const SchemaContextProvider = ({
       schemaAddVariable,
       schemaUpdateVariable,
       schemaRemoveVariable,
+      schemaSetFlag,
+      schemaRemoveFlag,
       schemaAddTemplate,
       schemaUpdateSettings,
       schemaAddComponent,
@@ -589,6 +618,8 @@ const SchemaContextProvider = ({
     schemaAddVariable,
     schemaUpdateVariable,
     schemaRemoveVariable,
+    schemaSetFlag,
+    schemaRemoveFlag,
     schemaAddComponent,
     schemaUpdateComponent,
     schemaRemoveComponent,

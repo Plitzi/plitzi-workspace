@@ -30,11 +30,16 @@ const InitQuery = /* GraphQL */ `
             items
             runtime
             loadStrategy
+            flag {
+              name
+              is
+            }
           }
           attributes
         }
         pages
         components
+        flags
         pageFolders {
           id
           name

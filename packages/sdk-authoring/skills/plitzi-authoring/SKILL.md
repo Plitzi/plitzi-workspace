@@ -65,7 +65,8 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
    `visible: 'source'`, or `visible: false` plus a binding for a computed condition — so it never flashes while data
    loads (`condition-starts-visible` warns). When a flag HIDES it (shown → hidden: a sidebar label until the sidebar
    is folded), it keeps the default and an absent flag must leave it shown. See
-   [data and visibility](reference/data-and-visibility.md).
+   [data and visibility](reference/data-and-visibility.md). What a PERSON switches on — a feature in beta, a rollout —
+   is a feature flag, not a visibility: gated off, it is not rendered at all. See [feature flags](reference/feature-flags.md).
 5. **Know where a template is evaluated.** A binding's template (`bindTemplate`) and a step's params evaluate full
    Twig. An ATTRIBUTE resolves a name with filters (`{{ list_games.item.slug }}`, `{{ post.slug|url_encode }}`) against
    the sources around the element; a condition there is used as written. Inside any template a source is spelled in
@@ -162,6 +163,7 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | [layouts.md](reference/layouts.md) | Anything shown on more than one page; menus; reducing duplication of elements and styles |
 | [components.md](reference/components.md) | One block placed many times — a card, a tier, a testimonial: props, slots, binding a row into one, why it is closed |
 | [data-and-visibility.md](reference/data-and-visibility.md) | Bindings, providers, offline data, loading/empty/error states, live data, caching, showing and hiding, kept state |
+| [feature-flags.md](reference/feature-flags.md) | Switching a part of the space on or off — a beta, a rollout, the old version kept until the new one ships |
 | [lists.md](reference/lists.md) | Rendering rows, filtering and sorting them, a detail page for one record |
 | [validation.md](reference/validation.md) | How `authorSpace` checks, the loop that wastes no attempts, and what it cannot see |
 | [authoring-errors.md](reference/authoring-errors.md) | What `authorSpace` refuses or warns about, and what to write instead |

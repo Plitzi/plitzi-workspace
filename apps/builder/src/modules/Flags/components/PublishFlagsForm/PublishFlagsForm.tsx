@@ -1,0 +1,59 @@
+import Alert from '@plitzi/plitzi-ui/Alert';
+import Button from '@plitzi/plitzi-ui/Button';
+import Form, { useForm } from '@plitzi/plitzi-ui/Form';
+import { useCallback } from 'react';
+import { z } from 'zod';
+
+import type { MouseEvent } from 'react';
+
+const publishFlagsSchema = z.object({
+  environment: z.enum(['development', 'staging', 'production']),
+  description: z.string().max(200, { message: 'Description must be less than 200 characters' })
+});
+
+export type PublishFlagsValues = z.infer<typeof publishFlagsSchema>;
+
+export type PublishFlagsFormProps = {
+  onClose?: (e?: MouseEvent) => void;
+  onSubmit?: (e: MouseEvent | undefined, values: PublishFlagsValues) => void;
+};
+
+/**
+ * Where the draft's flags go, and why. Not the whole snapshot form: this one freezes nothing else, and saying so is
+ * the point — an author turning a flag in production must know the half-finished page they are also editing stays.
+ */
+const PublishFlagsForm = ({ onClose, onSubmit }: PublishFlagsFormProps) => {
+  const form = useForm({
+    defaultValues: { environment: 'production' as const, description: 'Flags updated' },
+    config: { schema: publishFlagsSchema }
+  });
+
+  const handleSubmit = useCallback((values: PublishFlagsValues) => onSubmit?.(undefined, values), [onSubmit]);
+
+  return (
+    <Form form={form} onSubmit={handleSubmit} className="gap-4">
+      <Form.Body>
+        <Alert className="mb-4 text-white" intent="info">
+          Makes a new snapshot of the environment from its latest one, with the flags as the draft declares them now.
+          Nothing else you are editing goes with them.
+        </Alert>
+        <Form.Select name="environment" label="Environment" size="sm">
+          <option value="development">Development</option>
+          <option value="staging">Staging</option>
+          <option value="production">Production</option>
+        </Form.Select>
+        <Form.TextArea name="description" label="Description" placeholder="What changed..." size="sm" />
+      </Form.Body>
+      <Form.Footer justify="end">
+        <Button onClick={onClose} size="sm">
+          Cancel
+        </Button>
+        <Button type="submit" size="sm">
+          Publish flags
+        </Button>
+      </Form.Footer>
+    </Form>
+  );
+};
+
+export default PublishFlagsForm;

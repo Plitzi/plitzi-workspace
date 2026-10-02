@@ -19,6 +19,7 @@ import {
   layoutsUri,
   pagesUri,
   primerUri,
+  flagsUri,
   schemaVarsUri,
   settingsUri,
   styleVarsUri,
@@ -146,6 +147,8 @@ export const readPrimerResource = (space: Space, env: Env, uri: string): Resourc
       // of the schema, so it is near its ceiling already on a modest space and rarely the section that grows.
       { key: 'types', value: buildTypeRegistry(space.schema, space.catalog), read: typesUri },
       { key: 'schemaVariables', value: schemaVariablesToAI(space.schema, false), read: schemaVarsUri(env) },
+      // Names only: what an element's `flag` and a template's `flags.<name>` may say. The rules are a read away.
+      { key: 'flags', value: Object.keys(space.schema.flags ?? {}), read: flagsUri(env) },
       { key: 'styleVariables', value: styleVariablesToAI(space.style), read: styleVarsUri(env) },
       // A handful of entries, and the one section that reports a MISTAKE: a family named by the CSS that nothing
       // declares renders in a fallback silently, and an agent about to write typography should know before it adds

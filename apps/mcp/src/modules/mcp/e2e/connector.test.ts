@@ -63,7 +63,11 @@ const widgetOperations = [
 // deleteComponent) across the four tools that carry the op union, ~4.2k. Every element op already works inside a
 // component through `pageRef`, so nothing else grew; a prop's shape is checked when the op runs and explained in the
 // guide, and detaching an instance is the builder's alone.
-const TOOLS_BUDGET_BYTES = 195_000;
+//
+// Raised from 195k for feature flags, a write domain of their own: two ops (upsertFlag, deleteFlag) and the `flag`
+// gate on an element, a patch and a page, ~4k across the four tools that carry the op union — the gate registered
+// once (`ElementFlag`), a rule written in the `RuleGroup` already there, and what a rule may match in the guide.
+const TOOLS_BUDGET_BYTES = 199_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

@@ -85,6 +85,9 @@ editing; it is not a data source for the running page. Say on the page that demo
 
 ## Visibility
 
+What the page's own data or state shows and hides. What a person switches on — a feature in beta, the old version
+kept during a rollout — is a [feature flag](feature-flags.md): gated off, an element is not rendered at all.
+
 ```ts
 container({ visible: 'posts.hasPosts', … })     // shown while true
 container({ visible: '!posts.hasPosts', … })    // its inverse

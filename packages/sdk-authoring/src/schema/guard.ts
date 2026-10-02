@@ -36,6 +36,7 @@ export const SPACE_SPEC_KEYS = [
   'customCss',
   'notifications',
   'computed',
+  'flags',
   'channels',
   'settings',
   'rsc',
@@ -72,6 +73,7 @@ export const PAGE_SPEC_KEYS = [
   'selector',
   'class',
   'flows',
+  'flag',
   'body'
 ] as const satisfies readonly (keyof PageSpec)[];
 
@@ -105,6 +107,7 @@ export const ELEMENT_SPEC_KEYS = [
   'flows',
   'runtime',
   'loadStrategy',
+  'flag',
   'children',
   'meta'
 ] as const satisfies readonly (keyof ElementSpec)[];

@@ -57,6 +57,7 @@ export const ELEMENT_FIELDS = [
   'flows',
   'runtime',
   'loadStrategy',
+  'flag',
   'meta',
   'children'
 ] as const satisfies readonly (keyof ElementSpec)[];
@@ -74,6 +75,7 @@ export const SPACE_FIELDS = [
   'schemaVariables',
   'settings',
   'computed',
+  'flags',
   'channels',
   'customCss',
   'notifications',

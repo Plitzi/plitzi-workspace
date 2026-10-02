@@ -19,6 +19,9 @@ import SpaceUpdateConnectorMutation from './Space/connectors/SpaceUpdateConnecto
 import SpaceAddCredentialMutation from './Space/credentials/SpaceAddCredentialMutation';
 import SpaceRemoveCredentialMutation from './Space/credentials/SpaceRemoveCredentialMutation';
 import SpaceUpdateCredentialMutation from './Space/credentials/SpaceUpdateCredentialMutation';
+import SpacePublishFlagsMutation from './Space/flags/SpacePublishFlagsMutation';
+import SpaceRemoveFlagMutation from './Space/flags/SpaceRemoveFlagMutation';
+import SpaceSetFlagMutation from './Space/flags/SpaceSetFlagMutation';
 import SpaceAddPageFolderMutation from './Space/folders/SpaceAddPageFolderMutation';
 import SpaceRemovePageFolderMutation from './Space/folders/SpaceRemovePageFolderMutation';
 import SpaceUpdatePageFolderMutation from './Space/folders/SpaceUpdatePageFolderMutation';
@@ -95,6 +98,7 @@ import type { TSpaceUpdateComponentMutation } from './Space/components/SpaceUpda
 import type { TSpaceAddConnectorMutation } from './Space/connectors/SpaceAddConnectorMutation';
 import type { TSpaceRemoveConnectorMutation } from './Space/connectors/SpaceRemoveConnectorMutation';
 import type { TSpaceUpdateConnectorMutation } from './Space/connectors/SpaceUpdateConnectorMutation';
+import type { TSpacePublishFlagsMutation } from './Space/flags/SpacePublishFlagsMutation';
 import type { TSpaceAddPageFolderMutation } from './Space/folders/SpaceAddPageFolderMutation';
 import type { TSpaceRemovePageFolderMutation } from './Space/folders/SpaceRemovePageFolderMutation';
 import type { TSpaceUpdatePageFolderMutation } from './Space/folders/SpaceUpdatePageFolderMutation';
@@ -129,6 +133,8 @@ export type BuilderMutationsMap = {
   SpaceAddVariable: unknown;
   SpaceUpdateVariable: unknown;
   SpaceRemoveVariable: unknown;
+  SpaceSetFlag: unknown;
+  SpaceRemoveFlag: unknown;
   SpaceAddElement: unknown;
   SpaceUpdateElement: unknown;
   SpaceRenameElement: TSpaceRenameElementMutation;
@@ -177,6 +183,7 @@ export type BuilderMutationsMap = {
   SpaceRemoveRuntimeVariable: string[];
   SpaceRemoveRuntime: boolean;
   SpacePublish: TSpacePublishMutation;
+  SpacePublishFlags: TSpacePublishFlagsMutation;
   SpaceFixIssues: TSpaceFixIssuesMutation;
   SpaceDeploy: TSpaceDeployMutation;
   SpaceUpdateSettings: unknown;
@@ -211,6 +218,8 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceAddVariable: SpaceAddVariableMutation,
   SpaceUpdateVariable: SpaceUpdateVariableMutation,
   SpaceRemoveVariable: SpaceRemoveVariableMutation,
+  SpaceSetFlag: SpaceSetFlagMutation,
+  SpaceRemoveFlag: SpaceRemoveFlagMutation,
   SpaceAddElement: SpaceAddElementMutation,
   SpaceUpdateElement: SpaceUpdateElementMutation,
   SpaceRenameElement: SpaceRenameElementMutation,
@@ -259,6 +268,7 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceRemoveRuntimeVariable: SpaceRemoveRuntimeVariableMutation,
   SpaceRemoveRuntime: SpaceRemoveRuntimeMutation,
   SpacePublish: SpacePublishMutation,
+  SpacePublishFlags: SpacePublishFlagsMutation,
   SpaceFixIssues: SpaceFixIssuesMutation,
   SpaceDeploy: SpaceDeployMutation,
   SpaceUpdateSettings: SpaceUpdateSettingsMutation,

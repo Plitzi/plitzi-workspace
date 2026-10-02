@@ -18,6 +18,7 @@ import type {
   PageFolder,
   ReducerActionOrigin,
   Schema,
+  SchemaFlag,
   SchemaVariable,
   DropPosition,
   SpaceComponent,
@@ -51,6 +52,8 @@ export const SchemaActions = {
   SCHEMA_ADD_VARIABLE: 'SCHEMA_ADD_VARIABLE',
   SCHEMA_UPDATE_VARIABLE: 'SCHEMA_UPDATE_VARIABLE',
   SCHEMA_REMOVE_VARIABLE: 'SCHEMA_REMOVE_VARIABLE',
+  SCHEMA_SET_FLAG: 'SCHEMA_SET_FLAG',
+  SCHEMA_REMOVE_FLAG: 'SCHEMA_REMOVE_FLAG',
   SCHEMA_ADD_ELEMENT: 'SCHEMA_ADD_ELEMENT',
   SCHEMA_REMOVE_ELEMENT: 'SCHEMA_REMOVE_ELEMENT',
   SCHEMA_MOVE_ELEMENT: 'SCHEMA_MOVE_ELEMENT',
@@ -82,6 +85,8 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
     | { type: 'SCHEMA_ADD_VARIABLE'; variable: SchemaVariable }
     | { type: 'SCHEMA_UPDATE_VARIABLE'; variable: SchemaVariable }
     | { type: 'SCHEMA_REMOVE_VARIABLE'; name: string }
+    | { type: 'SCHEMA_SET_FLAG'; name: string; flag: SchemaFlag }
+    | { type: 'SCHEMA_REMOVE_FLAG'; name: string }
     | {
         type: 'SCHEMA_ADD_ELEMENT' | 'SCHEMA_ADD_TEMPLATE';
         to: string;
@@ -249,6 +254,27 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
 
       return produce(state, draft => {
         draft.variables = draft.variables.filter(variable => variable.name !== name);
+      });
+    }
+
+    // A flag is keyed by the name it is read by, so declaring one and changing it are the same write.
+    case SchemaActions.SCHEMA_SET_FLAG: {
+      const { name, flag } = action;
+
+      return produce(state, draft => {
+        draft.flags = { ...draft.flags, [name]: flag };
+      });
+    }
+
+    case SchemaActions.SCHEMA_REMOVE_FLAG: {
+      const { name } = action;
+      if (!state.flags || !Object.hasOwn(state.flags, name)) {
+        return state;
+      }
+
+      return produce(state, draft => {
+        const { [name]: _removed, ...rest } = draft.flags ?? {};
+        draft.flags = rest;
       });
     }
 

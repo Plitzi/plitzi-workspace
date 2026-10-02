@@ -19,7 +19,9 @@ import type {
   InteractionCallbackParam,
   InteractionNode,
   InteractionNodeStatus,
+  Schema,
   SpaceRevision,
+  SSRServerConfig,
   SSRUser
 } from '@plitzi/sdk-shared';
 
@@ -148,6 +150,11 @@ export type ActionLookups = {
    * asked when a run names a task the deployment does not have, or a request a path under `/api/`.
    */
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<SpaceFunctions | undefined>;
+  /**
+   * The feature flags the space declares as of that revision, for a flow that reads `{{ flags.<name> }}`. Only asked
+   * for a run whose document names `flags` at all. Absent, such a flow sees no flags — and the server says so.
+   */
+  getFlags?: (spaceId: number, at?: SpaceRevision) => Promise<Schema['flags']>;
 };
 
 /**
@@ -263,6 +270,8 @@ export type ActionTaskRegistry = {
 /** What a deployment hands to `createServer` under `actions`. Absent → the module is never constructed. */
 export type ActionsConfig = {
   lookups: ActionLookups;
+  /** The flags this deployment decides — the server's own `flags`, which a flow sees the way a page does. */
+  flags?: SSRServerConfig['flags'];
   /** Code of the server's own, and the sandbox for the spaces' — see `FunctionsConfig`. */
   functions?: FunctionsConfig;
   /** Ceilings a per-action document may tighten but never exceed. */
@@ -414,6 +423,12 @@ export type ActionRunRequest = {
    * miniature.
    */
   at?: SpaceRevision;
+  /**
+   * The flags a tester forced, for a run started from a page allowed to debug — the same `qa` layer the page was
+   * drawn with, so a forced feature is not on in the page and off in the flow behind it. Never what the SDK's own
+   * `flags` say: those are the browser's claim, and a flow does not take a claim as a fact.
+   */
+  forcedFlags?: Record<string, boolean>;
   emit?: (chunk: unknown) => void;
   /** Reports each step as it settles, for a caller watching the run happen. Absent for a plain request/response. */
   onNode?: (id: string, status: InteractionNodeStatus) => void;

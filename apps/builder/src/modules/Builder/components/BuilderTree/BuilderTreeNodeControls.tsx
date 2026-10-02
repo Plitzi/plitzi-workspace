@@ -56,6 +56,11 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
     return get(bindingData, 'definition.initialState.visibility', true);
   }, [dataSource, element]);
 
+  // Always on show, like a hidden element's eye: an element that exists only under a flag is one an author has to be
+  // able to tell apart at a glance, or the canvas missing it reads as a bug.
+  const gate = element?.definition.flag;
+  const gateTitle = gate ? `Rendered only while ${gate.name} is ${gate.is ? 'on' : 'off'}` : '';
+
   const handleClickTools = useCallback(
     (e: MouseEvent) => {
       e.stopPropagation();
@@ -110,10 +115,11 @@ const BuilderTreeNodeControls = ({ id, hovered, selected }: BuilderTreeNodeContr
   return (
     <div
       className={clsx('justify-end gap-2', {
-        flex: selected || !isVisible || hovered,
-        hidden: !selected && isVisible && !hovered
+        flex: selected || !isVisible || hovered || gate,
+        hidden: !selected && isVisible && !hovered && !gate
       })}
     >
+      {gate && <Icon icon="fa-solid fa-flag" title={gateTitle} size="sm" />}
       <Icon
         icon={isVisible ? 'fas fa-eye' : 'fas fa-eye-slash'}
         title={isVisible ? 'Hide' : 'Unhide'}

@@ -175,6 +175,12 @@ export interface ElementSpec {
   runtime?: ElementRuntime;
   /** When this element's contents mount relative to its visibility. Left out, the element type decides. */
   loadStrategy?: ElementLoadStrategy;
+  /**
+   * The feature flag this exists under: `'newCheckout'` exists only while the flag is on, `'!newCheckout'` only while
+   * it is off — the old version, kept until the new one ships. Not a visibility: gated off, it is not rendered at all,
+   * on the server or in the browser. The flag is one {@link SpaceSpec.flags} declares.
+   */
+  flag?: string;
   children?: ElementSpec[];
   meta?: SpecMeta;
 }
@@ -240,6 +246,8 @@ export interface PageSpec {
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
   class?: ClassList;
   flows?: StepSpec[][];
+  /** As {@link ElementSpec.flag}: a page whose flag says no is not found. */
+  flag?: string;
   body: ElementSpec[];
 }
 
@@ -377,6 +385,30 @@ export interface SpaceSpec {
    * element's source (a list row, a provider) is not readable here: bind that on the element.
    */
   computed?: Record<string, string>;
+  /**
+   * The space's feature flags, by the name each is read by — `{{ flags.newCheckout }}` in a binding or a `when`, and
+   * what an element's or a page's `flag` names:
+   *
+   * ```ts
+   * flags: {
+   *   newCheckout: {
+   *     description: 'The one-step checkout',
+   *     value: false,
+   *     rules: [
+   *       { when: { combinator: 'and', rules: [{ field: 'environment', operator: '=', value: 'staging' }] }, value: true },
+   *       { when: { combinator: 'and', rules: [{ field: 'user.roles', operator: 'contains', value: 'beta' }] }, value: true }
+   *     ]
+   *   }
+   * }
+   * ```
+   *
+   * `value` is the answer when no rule matches; the first rule that matches decides otherwise. A rule sees
+   * `environment`, `hostname`, `routeParams.*`, `queryParams.*` and the visitor (`user.authenticated`, `user.email`,
+   * `user.username`, `user.roles`). Published with the space, so a published site keeps its flags with Plitzi down;
+   * the server rendering it, the SDK embedding it and a tester with the dev tools may each override the answer — only
+   * for flags declared here. See `docs/en/feature-flags.md`.
+   */
+  flags?: Schema['flags'];
   /**
    * The realtime channels the space offers, by topic pattern — what a `channel` element's `topic` must match:
    *

@@ -1,9 +1,11 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, use, useMemo, useRef } from 'react';
+import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import { evaluateComputed, resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
+import { flagValues, undeclaredFlagOverrides } from '@plitzi/sdk-shared/flags';
+import useFlagResolution from '@plitzi/sdk-shared/flags/useFlagResolution';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
 import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
@@ -116,6 +118,40 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   useRegisterSource({ id: 'global', source: 'auth', name: 'Auth State', fields: authFields });
   useCommonStoreSync('runtime.sources.auth', authValue);
 
+  /**
+   * --- flags
+   *
+   * The space's feature flags, each as the layers above the space left it: `{{ flags.newCheckout }}` in a binding, a
+   * `when`, a computed value. The resolution — which layer decided, which rule matched — goes beside it for the dev
+   * tools; the source carries the answers alone. Published before `computed`, which may read them.
+   */
+  const flagResolution = useFlagResolution(auth);
+  const flagsValue = useMemo(() => flagValues(flagResolution), [flagResolution]);
+  const flagsFields = useCallback(
+    () =>
+      Object.keys(flagsValue).map((name): SourceField => ({
+        path: name,
+        name: `flags.${name}`,
+        inputType: 'checkbox'
+      })),
+    [flagsValue]
+  );
+  useRegisterSource({ id: 'global', source: 'flags', name: 'Feature Flags', fields: flagsFields });
+  useCommonStoreSync('runtime.sources.flags', flagsValue);
+  useCommonStoreSync('flags.resolved', flagResolution);
+  const [declaredFlags, flagOverrides] = useCommonStore(['schema.flags', 'flags.overrides'])[0];
+  // An override only ever answers for a flag the space declares. One that names another is a typo or a flag the
+  // space has since removed — either way whoever set it believes something that is not happening, so they are told.
+  // Once per change in WHAT is ignored: the overrides object is rebuilt whenever a layer is written again.
+  const ignoredOverrides = useStableValue(undeclaredFlagOverrides(declaredFlags, flagOverrides ?? {}));
+  useEffect(() => {
+    ignoredOverrides.forEach(({ layer, name }) =>
+      console.warn(
+        `[plitzi] The ${layer} sets the feature flag "${name}", which this space does not declare: the override is ignored. Declare the flag in the space, or remove the override.`
+      )
+    );
+  }, [ignoredOverrides]);
+
   // --- state (canonical runtime/application state) ---
   const [state] = useCommonStore('runtime.state');
   const stateFields = useCallback(
@@ -175,11 +211,12 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
           auth: authValue,
           state: state ?? {},
           host: host ?? {},
-          theme: themeValue
+          theme: themeValue,
+          flags: flagsValue
         },
         previousComputed.current
       ),
-    [definitions, variablesValue, navigationValue, authValue, state, host, themeValue]
+    [definitions, variablesValue, navigationValue, authValue, state, host, themeValue, flagsValue]
   );
   previousComputed.current = computedValue;
   const computedFields = useCallback(

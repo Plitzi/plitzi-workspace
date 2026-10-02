@@ -146,6 +146,7 @@ export const KIND_LABEL: Record<ChangeKind, string> = {
   component: 'Component',
   folder: 'Folder',
   variable: 'Variable',
+  flag: 'Feature flag',
   setting: 'Setting',
   selector: 'Class',
   globalStyle: 'Global style',

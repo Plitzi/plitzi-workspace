@@ -26,6 +26,8 @@ export type EventBridgeEvent =
   | 'schemaAddVariable'
   | 'schemaUpdateVariable'
   | 'schemaRemoveVariable'
+  | 'schemaSetFlag'
+  | 'schemaRemoveFlag'
   | 'schemaAddTemplate'
   | 'schemaAddComponent'
   | 'schemaUpdateComponent'

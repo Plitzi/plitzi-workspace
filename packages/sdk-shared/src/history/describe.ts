@@ -92,6 +92,7 @@ const KIND_NOUN: Record<Exclude<ChangeKind, 'element'>, string> = {
   component: 'component',
   folder: 'folder',
   variable: 'variable',
+  flag: 'feature flag',
   setting: 'setting',
   selector: 'class',
   globalStyle: 'global style for',

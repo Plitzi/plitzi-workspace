@@ -87,6 +87,18 @@ export type ElementInteraction<T extends Record<string, unknown> = Record<string
   whileRunning?: WhileRunning;
 };
 
+/**
+ * What a feature flag gates an element on: it exists only while the flag `name` resolves to `is`.
+ *
+ * Not a visibility. A hidden element is still rendered, its markup still in the page; a gated one whose flag says no
+ * is not rendered at all — not on the server, not in the browser, not its subtree — and the data of its server
+ * elements is not resolved. Its declaration still travels with the space's document, as every element's does, so a
+ * flag switches a feature off; it does not keep it secret. `is: false` is the other half of a rollout: the old
+ * version, shown until the flag turns on.
+ * On a page, a flag that says no makes the page not found.
+ */
+export type ElementFlagGate = { name: string; is: boolean };
+
 export type ElementDefinition = {
   rootId: Element['id'];
   label: string;
@@ -107,6 +119,8 @@ export type ElementDefinition = {
   runtime?: ElementRuntime;
   /** When this element's items are mounted, relative to its `visibility`. See {@link ElementLoadStrategy}. */
   loadStrategy?: ElementLoadStrategy;
+  /** The feature flag this element exists under. See {@link ElementFlagGate}. */
+  flag?: ElementFlagGate;
 };
 
 /**
@@ -135,6 +149,25 @@ export type SchemaVariable =
   | SchemaVariableBase<'number', number>
   | SchemaVariableBase<'checkbox' | 'switch', boolean>
   | SchemaVariableBase<'text' | 'email' | 'password' | 'select' | 'select2' | 'textarea' | 'color', string>;
+
+/** A value a flag takes where its `when` matches. The first rule that matches decides. */
+export type SchemaFlagRule = { when: RuleGroup; value: boolean };
+
+/**
+ * A feature flag the space declares, under the name it is read by: `{{ flags.newCheckout }}`.
+ *
+ * Part of the document, so a published version carries the flags it was published with and serves them with Plitzi
+ * unreachable; the draft (`main`) applies whatever it says now. Its rules see the environment, the host, the URL and
+ * who is visiting (`user.authenticated`, `user.email`, `user.username`, `user.roles`). Whoever runs the space may
+ * override the answer — the server it is rendered by, then the SDK embedding it, then a tester with the dev tools —
+ * but only for flags declared here.
+ */
+export type SchemaFlag = {
+  description?: string;
+  /** The answer when no rule matches. */
+  value: boolean;
+  rules: SchemaFlagRule[];
+};
 
 export type PageFolder = { id: string; name: string; slug: string; parentId?: PageFolder['id'] };
 
@@ -176,6 +209,8 @@ export type Schema = {
   flat: Record<string, Element>;
   definition: { name: string; permanentUrl: string };
   variables: SchemaVariable[];
+  /** Keyed by the name each is read by. A space that declares none has none — documents written before flags too. */
+  flags?: Record<string, SchemaFlag>;
   settings: {
     keepState?: boolean;
     stateStorage?: 'localStorage' | 'sessionStorage';
@@ -319,6 +354,8 @@ export type SchemaContextValue = {
   schemaAddVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => void;
   schemaUpdateVariable?: (variable: SchemaVariable, fromSubscriptions?: boolean) => void;
   schemaRemoveVariable?: (name: string, fromSubscriptions?: boolean) => void;
+  schemaSetFlag?: (name: string, flag: SchemaFlag, fromSubscriptions?: boolean) => void;
+  schemaRemoveFlag?: (name: string, fromSubscriptions?: boolean) => void;
   schemaAddTemplate?: (
     to: string,
     data: Element,
@@ -337,6 +374,7 @@ export type SchemaRaw = {
   definition: Schema['definition'];
   flat: Element[];
   variables: SchemaVariable[];
+  flags?: Schema['flags'];
   settings: Schema['settings'];
   rsc?: Schema['rsc'];
   pages: Element['id'][];

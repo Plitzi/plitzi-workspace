@@ -19,6 +19,7 @@ import type { SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
 import type { FontHead, Style } from './StyleTypes';
+import type { FlagOverrides } from '../flags/resolveFlags';
 import type { SpaceChange } from '../history/types';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
@@ -530,6 +531,12 @@ export interface SSRRscContext {
    * doing so. Awaiting this joins the read already under way; it never starts a second one.
    */
   loadOfflineData: () => Promise<OfflineDataRaw | undefined>;
+  /**
+   * What the layers above the space decide about its flags for this request: the server's own and, on a page allowed
+   * to debug, a tester's. An element gated off by a flag is not resolved — `resolveRscData` resolves the flags
+   * against the page it matched and skips it — so a feature that is off puts nothing in the payload.
+   */
+  flagOverrides?: FlagOverrides;
 }
 
 /**
@@ -560,6 +567,8 @@ export type ActionLookupsConfig = {
   getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
   /** The space's own functions as of that revision — `SpaceFunctions` in `@plitzi/sdk-server/functions`. */
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
+  /** The feature flags the space declares as of that revision — what a flow reads as `{{ flags.<name> }}`. */
+  getFlags?: (spaceId: number, at?: SpaceRevision) => Promise<Schema['flags']>;
 };
 
 export type SSRActionConfig = {
@@ -928,6 +937,14 @@ export type SSRServerConfig = {
    *  so does a space whose settings switched `devTools` on. Set, it decides for every space: `false` is a refusal
    *  no space can turn around. */
   debugMode?: boolean;
+  /**
+   * The feature flags this deployment decides, by name — the `server` layer: above what each space declares, below
+   * the SDK embedding a page and a tester with the dev tools. Only for flags a space declares; an override of one it
+   * does not is ignored, and the page says so in its console.
+   *
+   * A function when one server renders several spaces and they do not share their flags: it is asked per render.
+   */
+  flags?: Record<string, boolean> | ((space: { spaceId: number; environment: Environment }) => Record<string, boolean>);
   cacheTtlMs?: number;
   loginPath?: string | false;
   middlewares?: SSRMiddleware[];

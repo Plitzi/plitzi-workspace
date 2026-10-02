@@ -1,4 +1,5 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
+import { flagsCookieName } from '@plitzi/sdk-shared/flags';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';
 
 import { ssrPaintedCookieName } from '../paintedCookie';
@@ -13,6 +14,7 @@ const HTML_KEY_FIELDS = [
   'theme',
   'painted',
   'debugHidden',
+  'forcedFlags',
   'hostname',
   'path',
   'search'
@@ -36,6 +38,10 @@ type HtmlCacheKeyFields = Record<(typeof HTML_KEY_FIELDS)[number], string>;
  * values, so a page drawn with one visitor's toolbar must not be served to the next. Keyed by its raw value — this
  * key does not know which keys a space declares, and a space that declares none has no such cookie to split on.
  *
+ * So are the feature flags a tester forced from the dev tools, on a page that authorizes debugging: drawn with them,
+ * the page is not everybody's, and a tester holding the cookie must never be handed a page drawn without it. Keyed
+ * by its raw value, like the kept state.
+ *
  * Read from the request here rather than handed in, so a call site cannot key the page without it. Only those
  * cookies are read: keying the whole header would split the cache on every analytics cookie a visitor carries.
  */
@@ -54,6 +60,7 @@ export const buildHtmlCacheKey = (
     theme: themeFromCookies(req.headers.cookie) ?? '',
     painted: readCookie(req.headers.cookie, ssrPaintedCookieName(req.headers.host)) ?? '',
     debugHidden: readCookie(req.headers.cookie, debugCookieName(req.headers.host)) === 'false' ? 'debug-off' : '',
+    forcedFlags: readCookie(req.headers.cookie, flagsCookieName(req.headers.host)) ?? '',
     hostname: req.hostname,
     path: req.path,
     search: req.search

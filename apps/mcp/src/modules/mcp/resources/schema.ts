@@ -16,6 +16,7 @@ import {
   layoutsUri,
   pageUri,
   pagesUri,
+  flagsUri,
   schemaVarsUri,
   settingsUri
 } from '../helpers';
@@ -103,6 +104,10 @@ export const readSchemaResource = (
 
   if (uri === schemaVarsUri(env)) {
     return envelope(schemaVariablesToAI(space.schema));
+  }
+
+  if (uri === flagsUri(env)) {
+    return envelope(space.schema.flags ?? {});
   }
 
   if (uri === settingsUri(env)) {

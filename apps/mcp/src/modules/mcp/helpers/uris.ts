@@ -24,6 +24,7 @@ export const elementUri = (env: Env, ref: string): string => `plitzi://schema/${
 export const componentsUri = (env: Env): string => `plitzi://schema/${env}/components`;
 export const schemaVarsUri = (env: Env): string => `plitzi://schema-variables/${env}`;
 export const settingsUri = (env: Env): string => `plitzi://settings/${env}`;
+export const flagsUri = (env: Env): string => `plitzi://flags/${env}`;
 export const interactionsUri = (env: Env): string => `plitzi://interactions/${env}`;
 export const dataSourcesUri = (env: Env): string => `plitzi://data-sources/${env}`;
 

@@ -155,6 +155,11 @@ is what `create --from` brings back; `plitzi pack source` writes what would be k
 A self-hosted page server does not need `pack`: it compiles a plugin from its source
 (`plugins: { seatPicker: { js: 'src/plugins/SeatPicker/index.ts', action: 'compile' } }` in `createServer`).
 
+The same server decides its own say over the space's **feature flags**: `createServer({ flags: { newCheckout: true } })`
+(or a function of `{ spaceId, environment }` when it serves several). It overrides what the space declares — only for
+flags the space declares — and is overridden by the SDK's `flags` prop and a tester's dev tools. Declaring the flags
+themselves is the space's (`flags` in the spec; see the authoring skill's feature flags).
+
 ## A space's functions (`functions`)
 
 A space's own server code — TypeScript tasks its actions run as steps, and routes under `/fn/` — lives in the space;

@@ -7,21 +7,24 @@ import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Components from '@pmodules/Components';
 import Elements from '@pmodules/Elements';
+import Flags from '@pmodules/Flags';
 import Fonts from '@pmodules/Fonts';
 import History from '@pmodules/History';
 import Resources from '@pmodules/Resources';
 import StateManager from '@pmodules/StateManager/StateManager';
 import Variables from '@pmodules/Variables';
 
-import { featureFlag } from '../../../config';
 import AppDirectory from '../components/AppDirectory';
 
 import type { PopupInstance } from '@plitzi/plitzi-ui/components';
 
 export const getPopups = ({
-  activeIds = []
+  activeIds = [],
+  platformFlags = {}
 }: {
   activeIds?: string[];
+  /** The editor's own feature flags, as the platform resolved them for whoever opened it. */
+  platformFlags?: Record<string, boolean>;
 }): {
   left: PopupInstance[];
   right: PopupInstance[];
@@ -88,6 +91,22 @@ export const getPopups = ({
           </Sidebar.Icon>
         ),
         title: 'Variables',
+        width: 350,
+        allowLeftSide: true,
+        allowRightSide: false,
+        allowFloatingSide: true,
+        allowClose: false,
+        resizeHandles: ['se']
+      }
+    },
+    {
+      id: 'flags',
+      component: <Flags />,
+      active: activeIds.includes('flags'),
+      placementSettings: { left: { position: 4, minSize: 200 } },
+      settings: {
+        icon: 'fa-solid fa-flag',
+        title: 'Feature Flags',
         width: 350,
         allowLeftSide: true,
         allowRightSide: false,
@@ -328,13 +347,13 @@ export const getPopups = ({
     }
   ];
 
-  if (featureFlag.assistanceAI) {
+  if (platformFlags.assistanceAI) {
     left.push({
       id: 'assistant',
       component: <AiChat />,
       active: activeIds.includes('assistant'),
       settings: {
-        icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" title="Variables" />,
+        icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" title="Assistant" />,
         title: 'Assistant',
         width: 400,
         allowLeftSide: true,

@@ -24,6 +24,8 @@ const EventBridgeTypesPerModule: Record<EventBridgeModule, EventBridgeEvent[]> =
     'schemaAddVariable',
     'schemaUpdateVariable',
     'schemaRemoveVariable',
+    'schemaSetFlag',
+    'schemaRemoveFlag',
     'schemaAddTemplate',
     'schemaAddComponent',
     'schemaUpdateComponent',

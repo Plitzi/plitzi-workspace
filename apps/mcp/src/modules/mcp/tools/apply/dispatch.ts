@@ -64,6 +64,10 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return schema.upsertVariable(space, env, op);
     case 'deleteVariable':
       return schema.deleteVariable(space, env, op);
+    case 'upsertFlag':
+      return schema.upsertFlag(space, env, op);
+    case 'deleteFlag':
+      return schema.deleteFlag(space, env, op);
     case 'upsertBinding':
       return schema.upsertBinding(space, env, op);
     case 'patchBinding':

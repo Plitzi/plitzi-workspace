@@ -27,11 +27,3 @@ export const getEnvironmentServer = (server?: Partial<Server>): Server => {
 
   return config;
 };
-
-// Experimental Functionality Flag
-// @todo: make this based on the user later and add launchDarkly
-const featureFlag = {
-  assistanceAI: false
-};
-
-export { featureFlag };

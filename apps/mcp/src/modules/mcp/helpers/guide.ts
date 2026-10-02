@@ -198,6 +198,7 @@ Never download a whole tree you do not need.
 - \`plitzi://style-variables/{env}\` — design tokens by category. \`/{category}\` for one.
 - \`plitzi://fonts/{env}\` — the font **families the space loads**, with their source and fallback. \`/{family}\` for one.
 - \`plitzi://schema-variables/{env}\` — space-level values referenced in props as \`{{name}}\`.
+- \`plitzi://flags/{env}\` — the space's **feature flags**, each a default and its rules (see **Feature flags**).
 - \`plitzi://settings/{env}\` — space-level settings: the global \`customCss\` and the state/auth (user-provider) config.
 - \`plitzi://interactions/{env}\` — interaction **actions** observed in this space (grouped by node type): the
   vocabulary for interaction flows.
@@ -743,6 +744,30 @@ element binds \`grant\` to it. Without one the topic is refused however well its
 **Two writers at once**: read-change-write with \`kv.setIf\` (written only if the value is still the one read — empty
 \`expected\` = only if nothing is there yet), ordered lists with \`list.put\` / \`list.range\`, and put
 \`flow.rateLimit\` first in any public action that writes.
+
+## Feature flags
+A flag turns a part of the space on or off without anyone editing it: a feature still being built, a version for
+beta users, the old checkout kept until the new one ships. **Not a visibility** — visibility hides an element that is
+still rendered; a flag decides whether it exists at all.
+
+- **Declare** with \`upsertFlag { name, description?, value, rules? }\`. \`value\` is its answer when no rule matches;
+  \`rules\` are \`[{ when, value }]\` read top to bottom, the first match deciding. A rule's \`when\` is a rule group over
+  \`environment\` (\`main\`, \`development\`, \`staging\`, \`production\`), \`hostname\`, \`routeParams.<name>\`,
+  \`queryParams.<name>\` and the visitor: \`user.authenticated\`, \`user.email\`, \`user.username\`, \`user.roles\` (with
+  \`contains\`). A group with no rules is skipped, never read as "always". \`deleteFlag { name }\` removes one.
+- **Gate** an element with \`flag\` on \`upsertElement\` / \`patchElement\`: \`"newCheckout"\` exists only while the flag is
+  on, \`"!newCheckout"\` only while it is off — put both side by side for a rollout. On \`upsertPage\` a gated-off page
+  answers 404. \`null\` on a patch removes the gate. Gated off, it is not rendered and its server data is not
+  resolved — but the space's document, gated elements included, still reaches the browser: a flag is not a secret.
+- **Read** it anywhere a source is read: \`{{ flags.newCheckout }}\` in a binding, a \`when\` of a flow step, a computed
+  value — and in a server action's steps, where it is resolved on the server.
+
+A gate or a read naming a flag the space does not declare is an error (\`flag-undeclared\`, \`flag-unknown\`): an
+undeclared flag is off. A declared flag nothing reads is a warning (\`flag-unused\`) — remove it once the feature
+ships. The draft applies flags at once; a published environment keeps the flags it was published with (so it serves
+them with Plitzi unreachable) until they are published again — the builder's *Publish flags* does that without
+shipping anything else. Above the space, the server rendering it, the SDK embedding it and a tester with the dev tools
+may each override a flag; you only ever write the space's own.
 
 ## Shared layouts — the chrome a page does NOT contain
 A page's tree is usually **not the whole page**. The header, the sidebar and the footer normally live in a **layout

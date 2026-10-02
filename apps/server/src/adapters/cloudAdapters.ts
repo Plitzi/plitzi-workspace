@@ -113,9 +113,10 @@ const SPACE_QUERY = `query InitQuery($environment: String!, $revision: Int) {
     schema {
       settings
       rsc
-      flat { id definition { label type initialState styleSelectors bindings interactions parentId rootId items runtime loadStrategy } attributes }
+      flat { id definition { label type initialState styleSelectors bindings interactions parentId rootId items runtime loadStrategy flag { name is } } attributes }
       pages
       components
+      flags
       pageFolders { id name slug parentId }
       variables { name type value subValues { when value } }
     }

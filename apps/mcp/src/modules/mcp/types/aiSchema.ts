@@ -207,6 +207,8 @@ export interface AIElementDetail {
   /** Where this element renders, when it is not the default 'shared'. An apiContainer reading through a connector
    *  is 'server'; one showing 'client' (or nothing) fetches from the browser instead and ignores its connector. */
   runtime?: ElementRuntime;
+  /** The feature flag it exists under — 'name' while on, '!name' while off — when it is gated at all. */
+  flag?: string;
   /** Which variant/visibility this element applies today (element.definition.initialState). */
   initialState?: AIInitialState;
   /** Data bindings on this element, grouped by category. */

@@ -158,6 +158,10 @@
       "types": "./dist/dataSource/getBindingsDetails.d.ts",
       "import": "./dist/dataSource/getBindingsDetails.mjs"
     },
+    "./dataSource/globalSources": {
+      "types": "./dist/dataSource/globalSources.d.ts",
+      "import": "./dist/dataSource/globalSources.mjs"
+    },
     "./dataSource/helpers": {
       "types": "./dist/dataSource/helpers/index.d.ts",
       "import": "./dist/dataSource/helpers/index.mjs"
@@ -277,6 +281,30 @@
     "./elements/index": {
       "types": "./dist/elements/index.d.ts",
       "import": "./dist/elements/index.mjs"
+    },
+    "./flags": {
+      "types": "./dist/flags/index.d.ts",
+      "import": "./dist/flags/index.mjs"
+    },
+    "./flags/flagsCookie": {
+      "types": "./dist/flags/flagsCookie.d.ts",
+      "import": "./dist/flags/flagsCookie.mjs"
+    },
+    "./flags/index": {
+      "types": "./dist/flags/index.d.ts",
+      "import": "./dist/flags/index.mjs"
+    },
+    "./flags/resolveFlags": {
+      "types": "./dist/flags/resolveFlags.d.ts",
+      "import": "./dist/flags/resolveFlags.mjs"
+    },
+    "./flags/schemaFlag": {
+      "types": "./dist/flags/schemaFlag.d.ts",
+      "import": "./dist/flags/schemaFlag.mjs"
+    },
+    "./flags/useFlagResolution": {
+      "types": "./dist/flags/useFlagResolution.d.ts",
+      "import": "./dist/flags/useFlagResolution.mjs"
     },
     "./helpers": {
       "types": "./dist/helpers/index.d.ts",
@@ -714,6 +742,18 @@
     "./network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/flags/SpaceRemoveFlagMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/flags/SpaceRemoveFlagMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/flags/SpaceRemoveFlagMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/flags/SpaceSetFlagMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/flags/SpaceSetFlagMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/flags/SpaceSetFlagMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/folders/SpaceAddPageFolderMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/folders/SpaceAddPageFolderMutation.d.ts",

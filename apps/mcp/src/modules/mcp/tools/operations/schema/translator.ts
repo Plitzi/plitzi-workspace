@@ -1,3 +1,4 @@
+import { flagSpecOf } from '@plitzi/sdk-authoring';
 import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
 
 import {
@@ -329,6 +330,10 @@ export const elementDetailToAI = (schema: Schema, el: Element, style?: Style): A
   // case that matters — a provider reading through a connector, which only works on 'server'.
   if (el.definition.runtime) {
     detail.runtime = el.definition.runtime;
+  }
+
+  if (el.definition.flag) {
+    detail.flag = flagSpecOf(el.definition.flag);
   }
 
   const initialState = initialStateToAI(el);

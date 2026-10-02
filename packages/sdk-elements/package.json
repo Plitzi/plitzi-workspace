@@ -174,6 +174,10 @@
       "types": "./dist/dataSource/pathFields.d.ts",
       "import": "./dist/dataSource/pathFields.mjs"
     },
+    "./dataSource/useFlag": {
+      "types": "./dist/dataSource/useFlag.d.ts",
+      "import": "./dist/dataSource/useFlag.mjs"
+    },
     "./elements": {
       "types": "./dist/elements/index.d.ts",
       "import": "./dist/elements/index.mjs"

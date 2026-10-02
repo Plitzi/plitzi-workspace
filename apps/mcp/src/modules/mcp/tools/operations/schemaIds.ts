@@ -4,6 +4,7 @@ import { actionAccess, actionField, actionLimits, actionNode, actionTriggerParam
 import { connectorConnection, readEndpoint, writeEndpoint } from './connectors/manifest';
 import {
   bindingInput,
+  elementFlag,
   elementInput,
   initialStateInput,
   interactionNode,
@@ -43,6 +44,8 @@ import {
  *  the co-worker's own tool-schema converter alike. */
 const SHARED_SCHEMAS: [z.ZodType, string][] = [
   [elementInput, 'Element'],
+  // In every element, a page and a patch: pasted, its description is the size of a small op.
+  [elementFlag, 'ElementFlag'],
   [ruleGroup, 'RuleGroup'],
   [styleRefs, 'StyleRefs'],
   [initialStateInput, 'InitialState'],

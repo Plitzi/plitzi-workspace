@@ -42,4 +42,5 @@ export const defaultElements = {
 
 export { useRscData, elements, elementSettings, JsxManager };
 export { default as useChannel } from './realtime/useChannel';
+export { default as useFlag } from './dataSource/useFlag';
 export type { ChannelHandle, UseChannelOptions } from './realtime/useChannel';
