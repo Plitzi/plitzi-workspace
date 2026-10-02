@@ -1,5 +1,5 @@
-const SpaceAddTemplateMutation = /* GraphQL */ `
-  mutation SpaceAddTemplateMutation(
+const SpaceAddSnippetMutation = /* GraphQL */ `
+  mutation SpaceAddSnippetMutation(
     $environment: String!
     $element: Json!
     $style: Json
@@ -8,7 +8,7 @@ const SpaceAddTemplateMutation = /* GraphQL */ `
     $initialItems: [Json]!
     $variables: [SpaceVariableInput]
   ) {
-    SpaceAddTemplate(
+    SpaceAddSnippet(
       environment: $environment
       element: $element
       style: $style
@@ -34,4 +34,4 @@ const SpaceAddTemplateMutation = /* GraphQL */ `
   }
 `;
 
-export default SpaceAddTemplateMutation;
+export default SpaceAddSnippetMutation;

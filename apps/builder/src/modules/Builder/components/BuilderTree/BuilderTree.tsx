@@ -171,11 +171,11 @@ const BuilderTree = () => {
         return;
       }
 
-      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(getSchema(), getStyle(), elementSelected);
+      const { elements, elementsStyle, variables } = FlatMap.flatAsSnippet(getSchema(), getStyle(), elementSelected);
       e.clipboardData.setData(
         'application/json',
         JSON.stringify({
-          type: 'add##plitzi-template',
+          type: 'add##plitzi-snippet',
           payload: { elements, style: elementsStyle, assets: [], variables }
         })
       );

@@ -12,7 +12,7 @@ import type {
 import type { Dispatch, SetStateAction } from 'react';
 
 export type BuilderContextValue = {
-  mode: 'normal' | 'template';
+  mode: 'normal' | 'snippet';
   schemaName: string;
   setMultiPagesMode: Dispatch<SetStateAction<boolean>>;
   multiPagesMode: boolean;
@@ -32,8 +32,8 @@ export type BuilderContextValue = {
     attributeValue: unknown,
     category?: 'attributes' | 'definition'
   ) => void;
-  /** Saves an element as a template file in a public bucket of one of the space's CDNs. */
-  elementAsTemplate: (
+  /** Saves an element as a snippet file in a public bucket of one of the space's CDNs. */
+  elementAsSnippet: (
     target: { cdnIdentifier: string; bucketIdentifier: string },
     schema: Schema,
     style: Style,
@@ -46,7 +46,7 @@ export type BuilderContextValue = {
   ) => undefined | { data: Element; Plugin: ComponentPluginWithHOC | Record<string, ComponentPluginWithHOC> };
   builderDropElement: {
     (
-      type: 'add##plitzi-template',
+      type: 'add##plitzi-snippet',
       data: {
         elements: Record<string, Element>;
         baseElement?: Element;
@@ -58,7 +58,7 @@ export type BuilderContextValue = {
       rootId?: string
     ): boolean;
     <T extends string>(
-      type: `add##${Exclude<T, 'plitzi-template'>}`,
+      type: `add##${Exclude<T, 'plitzi-snippet'>}`,
       data: {
         id?: string;
         element: Element;
@@ -68,7 +68,7 @@ export type BuilderContextValue = {
       rootId?: string
     ): boolean;
     <T extends string>(
-      type: `move##${Exclude<T, 'plitzi-template'>}`,
+      type: `move##${Exclude<T, 'plitzi-snippet'>}`,
       data: {
         id: string;
         parentId: string;

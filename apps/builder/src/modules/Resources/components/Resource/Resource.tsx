@@ -17,7 +17,7 @@ import ResourceFile from './subTypes/ResourceFile';
 import ResourceMedia from './subTypes/ResourceMedia';
 import ResourcePlugin from './subTypes/ResourcePlugin/ResourcePlugin';
 import ResourceServerCode from './subTypes/ResourceServerCode';
-import ResourceTemplate from './subTypes/ResourceTemplate';
+import ResourceSnippet from './subTypes/ResourceSnippet';
 
 import type { PluginManifest, ResourceType as TResourceType } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -179,8 +179,8 @@ const Resource = ({
   };
 
   switch (type) {
-    case 'template':
-      return <ResourceTemplate {...sharedProps} src={src} />;
+    case 'snippet':
+      return <ResourceSnippet {...sharedProps} src={src} />;
 
     case 'image':
     case 'video':

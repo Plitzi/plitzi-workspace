@@ -774,13 +774,13 @@ describe('Testing FlatMap', () => {
     });
   });
 
-  // yarn test FlatMap.test.js -t flatAsTemplate
-  it('flatAsTemplate', () => {
+  // yarn test FlatMap.test.js -t flatAsSnippet
+  it('flatAsSnippet', () => {
     const instance = new FlatMap({
       flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
-    const { elements, elementsStyle, variables } = instance.flatAsTemplate(styleSchema1 as Style, 'wrapper');
+    const { elements, elementsStyle, variables } = instance.flatAsSnippet(styleSchema1 as Style, 'wrapper');
     expect({ elements, elementsStyle, variables }).toStrictEqual({
       elements: {
         acum: {
@@ -1000,12 +1000,12 @@ describe('Testing FlatMap', () => {
     });
   });
 
-  it('flatAsTemplate - non-container element', () => {
+  it('flatAsSnippet - non-container element', () => {
     const instance = new FlatMap({
       flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
-    const { elements, elementsStyle, variables } = instance.flatAsTemplate(styleSchema1 as Style, 'title');
+    const { elements, elementsStyle, variables } = instance.flatAsSnippet(styleSchema1 as Style, 'title');
     expect({ elements, elementsStyle, variables }).toStrictEqual({
       elements: {
         acum: {
@@ -1130,12 +1130,12 @@ describe('Testing FlatMap', () => {
     });
   });
 
-  it('flatAsTemplate - copies global element styles (type element)', () => {
+  it('flatAsSnippet - copies global element styles (type element)', () => {
     const instance = new FlatMap({
       flat: cloneDeep(schema1.flat) as Schema['flat'],
       variables: cloneDeep(schema1.variables) as Schema['variables']
     });
-    const { elementsStyle, variables } = instance.flatAsTemplate(styleSchema2 as Style, 'title');
+    const { elementsStyle, variables } = instance.flatAsSnippet(styleSchema2 as Style, 'title');
     expect({ elementsStyle, variables }).toStrictEqual({
       elementsStyle: {
         cache: '',
@@ -1240,8 +1240,8 @@ describe('Testing FlatMap', () => {
   });
 });
 
-describe('FlatMap.flatAsTemplate', () => {
-  it('flatAsTemplate carries every class of a stacked selector', () => {
+describe('FlatMap.flatAsSnippet', () => {
+  it('flatAsSnippet carries every class of a stacked selector', () => {
     const element = (id: string, parentId: string, type: string, base: string, items: string[] = []) => ({
       id,
       attributes: {},
@@ -1274,7 +1274,7 @@ describe('FlatMap.flatAsTemplate', () => {
       }
     };
 
-    const { elementsStyle } = instance.flatAsTemplate(style, 'card');
+    const { elementsStyle } = instance.flatAsSnippet(style, 'card');
 
     expect(Object.keys(elementsStyle.platform.desktop).sort()).toEqual(['accent', 'label', 'panel', 'wide']);
   });

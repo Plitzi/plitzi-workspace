@@ -5,10 +5,10 @@ import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import SchemaReducer from '@plitzi/sdk-schema/SchemaReducer';
 
 import { elementSourceTypes } from '../elements';
-import { authorSpace, authorTemplate, validateSpace, validateTemplate } from './index';
+import { authorSpace, authorSnippet, validateSpace, validateSnippet } from './index';
 
-import type { ElementSpec, TemplateSpec } from './index';
-import type { Element, Schema, Template } from '@plitzi/sdk-shared';
+import type { ElementSpec, SnippetSpec } from './index';
+import type { Element, Schema, Snippet } from '@plitzi/sdk-shared';
 
 const text = (content: string, extra: Partial<ElementSpec> = {}): ElementSpec => ({
   type: 'text',
@@ -23,7 +23,7 @@ const container = (children: ElementSpec[], extra: Partial<ElementSpec> = {}): E
   ...extra
 });
 
-const minimal = (overrides: Partial<TemplateSpec> = {}): TemplateSpec => ({
+const minimal = (overrides: Partial<SnippetSpec> = {}): SnippetSpec => ({
   name: 'Pricing card',
   description: 'A card with a price and a call to action.',
   classes: { card: { desktop: { display: 'flex', padding: '24px' } } },
@@ -31,42 +31,40 @@ const minimal = (overrides: Partial<TemplateSpec> = {}): TemplateSpec => ({
   ...overrides
 });
 
-describe('authorTemplate', () => {
+describe('authorSnippet', () => {
   it('produces a manifest the validator accepts', () => {
-    const { template, warnings } = authorTemplate(minimal());
+    const { snippet, warnings } = authorSnippet(minimal());
 
-    expect(template.definition.name).toBe('Pricing card');
-    expect(template.definition.description).toBe('A card with a price and a call to action.');
-    expect(Object.keys(template.schema.flat)).toHaveLength(3);
+    expect(snippet.definition.name).toBe('Pricing card');
+    expect(snippet.definition.description).toBe('A card with a price and a call to action.');
+    expect(Object.keys(snippet.schema.flat)).toHaveLength(3);
     expect(warnings).toEqual([]);
   });
 
   it('carries no page, and roots the subtree on its base element', () => {
-    const { template } = authorTemplate(minimal());
-    const { baseElementId } = template.definition;
-    const base = template.schema.flat[baseElementId];
+    const { snippet } = authorSnippet(minimal());
+    const { baseElementId } = snippet.definition;
+    const base = snippet.schema.flat[baseElementId];
 
-    expect(template.schema.pages).toEqual([]);
-    expect(Object.values(template.schema.flat).some(element => element.definition.type === 'page')).toBe(false);
+    expect(snippet.schema.pages).toEqual([]);
+    expect(Object.values(snippet.schema.flat).some(element => element.definition.type === 'page')).toBe(false);
     expect(base.definition.parentId).toBeUndefined();
-    expect(Object.values(template.schema.flat).every(element => element.definition.rootId === baseElementId)).toBe(
-      true
-    );
+    expect(Object.values(snippet.schema.flat).every(element => element.definition.rootId === baseElementId)).toBe(true);
   });
 
   it('carries the classes its subtree names', () => {
-    const { template } = authorTemplate(minimal());
+    const { snippet } = authorSnippet(minimal());
 
-    expect(template.style.platform.desktop.card.attributes.base.default).toMatchObject({ 'padding-top': '24px' });
-    expect(template.style.cache).toContain('.card');
+    expect(snippet.style.platform.desktop.card.attributes.base.default).toMatchObject({ 'padding-top': '24px' });
+    expect(snippet.style.cache).toContain('.card');
   });
 
   it('is deterministic — the same declaration authors a byte-identical manifest', () => {
-    expect(JSON.stringify(authorTemplate(minimal()).template)).toBe(JSON.stringify(authorTemplate(minimal()).template));
+    expect(JSON.stringify(authorSnippet(minimal()).snippet)).toBe(JSON.stringify(authorSnippet(minimal()).snippet));
   });
 
-  it('refuses a class the subtree names and the template does not declare', () => {
-    expect(() => authorTemplate(minimal({ classes: {} }))).toThrow(/does not declare/);
+  it('refuses a class the subtree names and the snippet does not declare', () => {
+    expect(() => authorSnippet(minimal({ classes: {} }))).toThrow(/does not declare/);
   });
 
   /**
@@ -74,98 +72,98 @@ describe('authorTemplate', () => {
    * regenerates every id and re-parents the root.
    */
   it('survives the instantiation path a builder drops it through', () => {
-    const { template } = authorTemplate(minimal());
-    const cloned = FlatMap.cloneElements(template.schema.flat, template.definition.baseElementId);
+    const { snippet } = authorSnippet(minimal());
+    const cloned = FlatMap.cloneElements(snippet.schema.flat, snippet.definition.baseElementId);
 
     expect(cloned.item).toBeDefined();
     expect(Object.keys(cloned.acum)).toHaveLength(3);
-    expect(cloned.item?.id).not.toBe(template.definition.baseElementId);
+    expect(cloned.item?.id).not.toBe(snippet.definition.baseElementId);
     expect(cloned.item?.definition.styleSelectors.base).toBe('card');
   });
 });
 
-describe('validateTemplate', () => {
-  const authored = (overrides: Partial<TemplateSpec> = {}): Template => authorTemplate(minimal(overrides)).template;
+describe('validateSnippet', () => {
+  const authored = (overrides: Partial<SnippetSpec> = {}): Snippet => authorSnippet(minimal(overrides)).snippet;
 
-  it('warns about the one class of a stacked selector the template does not carry, and only that one', () => {
-    const template = authored();
-    const base = template.schema.flat[template.definition.baseElementId];
+  it('warns about the one class of a stacked selector the snippet does not carry, and only that one', () => {
+    const snippet = authored();
+    const base = snippet.schema.flat[snippet.definition.baseElementId];
     base.definition.styleSelectors.base = `${base.definition.styleSelectors.base} ghost`;
-    const warned = validateTemplate(template)
-      .warnings.filter(warning => warning.code === 'TEMPLATE_SELECTOR_NOT_CARRIED')
+    const warned = validateSnippet(snippet)
+      .warnings.filter(warning => warning.code === 'SNIPPET_SELECTOR_NOT_CARRIED')
       .map(warning => warning.message);
 
     expect(warned).toHaveLength(1);
     expect(warned[0]).toContain('names the class "ghost"');
   });
 
-  it('carries a template whose root wears several classes', () => {
-    const { template, warnings } = authorTemplate(
+  it('carries a snippet whose root wears several classes', () => {
+    const { snippet, warnings } = authorSnippet(
       minimal({
         classes: { card: { padding: '24px' }, raised: { 'box-shadow': '0 1px 2px black' } },
         root: container([text('$19')], { class: ['card', 'raised'] })
       })
     );
 
-    expect(template.schema.flat[template.definition.baseElementId].definition.styleSelectors.base).toBe('card raised');
+    expect(snippet.schema.flat[snippet.definition.baseElementId].definition.styleSelectors.base).toBe('card raised');
     expect(warnings).toEqual([]);
   });
 
   it('refuses a base element that is not in the schema', () => {
-    const template = authored();
-    const result = validateTemplate({ ...template, definition: { ...template.definition, baseElementId: 'nope' } });
+    const snippet = authored();
+    const result = validateSnippet({ ...snippet, definition: { ...snippet.definition, baseElementId: 'nope' } });
 
     expect(result.valid).toBe(false);
-    expect(result.errors.map(error => error.code)).toContain('TEMPLATE_MISSING_BASE');
+    expect(result.errors.map(error => error.code)).toContain('SNIPPET_MISSING_BASE');
   });
 
   it('refuses a base element that answers to a parent', () => {
-    const template = authored();
-    const { baseElementId } = template.definition;
-    const base = template.schema.flat[baseElementId];
-    const withParent: Template = {
-      ...template,
+    const snippet = authored();
+    const { baseElementId } = snippet.definition;
+    const base = snippet.schema.flat[baseElementId];
+    const withParent: Snippet = {
+      ...snippet,
       schema: {
-        ...template.schema,
+        ...snippet.schema,
         flat: {
-          ...template.schema.flat,
+          ...snippet.schema.flat,
           [baseElementId]: { ...base, definition: { ...base.definition, parentId: 'somewhere-else' } }
         }
       }
     };
 
-    expect(validateTemplate(withParent).errors.map(error => error.code)).toContain('TEMPLATE_BASE_NOT_ROOT');
+    expect(validateSnippet(withParent).errors.map(error => error.code)).toContain('SNIPPET_BASE_NOT_ROOT');
   });
 
-  it('refuses a page inside a template', () => {
-    const template = authored();
-    const [first] = Object.values(template.schema.flat);
-    const withPage: Template = {
-      ...template,
+  it('refuses a page inside a snippet', () => {
+    const snippet = authored();
+    const [first] = Object.values(snippet.schema.flat);
+    const withPage: Snippet = {
+      ...snippet,
       schema: {
-        ...template.schema,
+        ...snippet.schema,
         flat: {
-          ...template.schema.flat,
+          ...snippet.schema.flat,
           [first.id]: { ...first, definition: { ...first.definition, type: 'page' } }
         }
       }
     };
 
-    expect(validateTemplate(withPage).errors.map(error => error.code)).toContain('TEMPLATE_CONTAINS_PAGE');
+    expect(validateSnippet(withPage).errors.map(error => error.code)).toContain('SNIPPET_CONTAINS_PAGE');
   });
 
-  /** The failure a template author cannot see: the provider stays behind and the binding is dead on arrival. */
+  /** The failure a snippet author cannot see: the provider stays behind and the binding is dead on arrival. */
   it('refuses a binding onto a provider outside the subtree', () => {
-    const template = authored();
-    const { baseElementId } = template.definition;
-    const [childId] = template.schema.flat[baseElementId].definition.items ?? [];
-    const child = template.schema.flat[childId];
-    const bound: Template = {
-      ...template,
+    const snippet = authored();
+    const { baseElementId } = snippet.definition;
+    const [childId] = snippet.schema.flat[baseElementId].definition.items ?? [];
+    const child = snippet.schema.flat[childId];
+    const bound: Snippet = {
+      ...snippet,
       schema: {
-        ...template.schema,
+        ...snippet.schema,
         flat: {
-          ...template.schema.flat,
+          ...snippet.schema.flat,
           [childId]: {
             ...child,
             definition: {
@@ -179,23 +177,23 @@ describe('validateTemplate', () => {
 
     // Read with the source catalogue too, which makes the same binding a name the structural pass cannot resolve: the
     // one problem is told once, by the reading that says what to do about it.
-    for (const result of [validateTemplate(bound), validateTemplate(bound, { sourceTypes: elementSourceTypes })]) {
+    for (const result of [validateSnippet(bound), validateSnippet(bound, { sourceTypes: elementSourceTypes })]) {
       expect(result.valid).toBe(false);
-      expect(result.errors.map(error => error.code)).toEqual(['TEMPLATE_BINDING_OUT_OF_SCOPE']);
+      expect(result.errors.map(error => error.code)).toEqual(['SNIPPET_BINDING_OUT_OF_SCOPE']);
     }
   });
 
   it('leaves a binding onto a global alone — the space registers those, whichever space it is', () => {
-    const template = authored();
-    const { baseElementId } = template.definition;
-    const [childId] = template.schema.flat[baseElementId].definition.items ?? [];
-    const child = template.schema.flat[childId];
-    const bound: Template = {
-      ...template,
+    const snippet = authored();
+    const { baseElementId } = snippet.definition;
+    const [childId] = snippet.schema.flat[baseElementId].definition.items ?? [];
+    const child = snippet.schema.flat[childId];
+    const bound: Snippet = {
+      ...snippet,
       schema: {
-        ...template.schema,
+        ...snippet.schema,
         flat: {
-          ...template.schema.flat,
+          ...snippet.schema.flat,
           [childId]: {
             ...child,
             definition: {
@@ -207,39 +205,39 @@ describe('validateTemplate', () => {
       }
     };
 
-    expect(validateTemplate(bound).valid).toBe(true);
+    expect(validateSnippet(bound).valid).toBe(true);
   });
 
   /** A class named and not carried renders unstyled, and only the author can tell that from an empty selector. */
-  it('warns about a class the template names but does not carry', () => {
-    const template = authored();
-    const stripped: Template = {
-      ...template,
-      style: { ...template.style, platform: { desktop: {}, tablet: {}, mobile: {} } }
+  it('warns about a class the snippet names but does not carry', () => {
+    const snippet = authored();
+    const stripped: Snippet = {
+      ...snippet,
+      style: { ...snippet.style, platform: { desktop: {}, tablet: {}, mobile: {} } }
     };
 
-    const result = validateTemplate(stripped);
+    const result = validateSnippet(stripped);
 
     expect(result.valid).toBe(true);
-    expect(result.warnings.map(warning => warning.code)).toContain('TEMPLATE_SELECTOR_NOT_CARRIED');
+    expect(result.warnings.map(warning => warning.code)).toContain('SNIPPET_SELECTOR_NOT_CARRIED');
   });
 
   it('says nothing about an element whose own selector simply carries no rules', () => {
-    const { warnings } = authorTemplate(minimal({ classes: {}, root: container([text('Plain')]) }));
+    const { warnings } = authorSnippet(minimal({ classes: {}, root: container([text('Plain')]) }));
 
-    expect(warnings.map(warning => warning.code)).not.toContain('TEMPLATE_SELECTOR_NOT_CARRIED');
+    expect(warnings.map(warning => warning.code)).not.toContain('SNIPPET_SELECTOR_NOT_CARRIED');
   });
 });
 
 /**
  * The path a manifest actually travels, with nothing mocked but the drag itself.
  *
- * A template is fetched as JSON, carried as authored through the drag (`useDragElement`) and the drop
+ * A snippet is fetched as JSON, carried as authored through the drag (`useDragElement`) and the drop
  * (`BuilderProvider`), and inserted by the schema reducer — which is the one place that renames anything, and only
  * the names the receiving space already holds. Worth holding authoring and instantiating together in a test: a
  * manifest that is perfectly consistent with itself can still land as nothing at all.
  */
-describe('a template, dropped into a space', () => {
+describe('a snippet, dropped into a space', () => {
   const host = () =>
     authorSpace({
       name: 'Host',
@@ -247,11 +245,11 @@ describe('a template, dropped into a space', () => {
       pages: [{ name: 'Home', slug: '', body: [container([text('Existing')])] }]
     });
 
-  const droppedInto = (template: Template, space: Schema) => {
+  const droppedInto = (snippet: Snippet, space: Schema) => {
     const [pageId] = space.pages;
 
     // `fetchManifest` — a manifest arrives as JSON and nothing else.
-    const manifest = JSON.parse(JSON.stringify(template)) as Template;
+    const manifest = JSON.parse(JSON.stringify(snippet)) as Snippet;
 
     // `useDragElement`: the base element travels beside its descendants rather than among them, as authored.
     const baseElement = manifest.schema.flat[manifest.definition.baseElementId];
@@ -269,7 +267,7 @@ describe('a template, dropped into a space', () => {
     );
 
     const schema = SchemaReducer(space, {
-      type: 'SCHEMA_ADD_TEMPLATE',
+      type: 'SCHEMA_ADD_SNIPPET',
       to: pageId,
       data: item,
       dropPosition: 'inside',
@@ -285,9 +283,9 @@ describe('a template, dropped into a space', () => {
   };
 
   it('lands as a subtree of the page, and leaves the space valid', () => {
-    const { template } = authorTemplate(minimal());
+    const { snippet } = authorSnippet(minimal());
     const { schema: space, style } = host();
-    const { schema, pageId, itemId } = droppedInto(template, space);
+    const { schema, pageId, itemId } = droppedInto(snippet, space);
 
     expect(schema.flat[pageId].definition.items).toContain(itemId);
     expect(Object.keys(schema.flat)).toHaveLength(6);
@@ -300,9 +298,9 @@ describe('a template, dropped into a space', () => {
    * appears to work and drops nothing.
    */
   it('is renamed against the space it lands in, rather than refused', () => {
-    const { template } = authorTemplate(minimal());
+    const { snippet } = authorSnippet(minimal());
     const { schema: space } = host();
-    const { schema } = droppedInto(template, space);
+    const { schema } = droppedInto(snippet, space);
     const refs = Object.values(schema.flat).map(element => element.id);
 
     expect(new Set(refs).size).toBe(refs.length);
@@ -311,15 +309,15 @@ describe('a template, dropped into a space', () => {
   });
 
   it('brings its whole subtree, re-rooted on the page', () => {
-    const { template } = authorTemplate(minimal());
+    const { snippet } = authorSnippet(minimal());
     const { schema: space } = host();
-    const { schema, pageId, itemId } = droppedInto(template, space);
+    const { schema, pageId, itemId } = droppedInto(snippet, space);
     const children = schema.flat[itemId].definition.items ?? [];
 
     expect(children).toHaveLength(2);
     expect(children.every(childId => schema.flat[childId].definition.rootId === pageId)).toBe(true);
     expect(children.map(childId => schema.flat[childId].definition.styleSelectors.base)).toEqual(
-      Object.values(template.schema.flat)
+      Object.values(snippet.schema.flat)
         .filter(element => element.definition.parentId)
         .map(element => element.definition.styleSelectors.base)
     );

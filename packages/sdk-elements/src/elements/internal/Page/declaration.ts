@@ -50,7 +50,7 @@ const declaration = elementDeclaration<PageAttributes>()({
       canSelect: true,
       canDragDrop: false,
       canMove: false,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

@@ -300,7 +300,7 @@ const SchemaContextProvider = ({
 
   // Others
 
-  const schemaAddTemplate = useCallback(
+  const schemaAddSnippet = useCallback(
     (
       to: string,
       data: Element,
@@ -311,7 +311,7 @@ const SchemaContextProvider = ({
       fromSubscriptions = false
     ) => {
       dispatchSchema({
-        type: SchemaActions.SCHEMA_ADD_TEMPLATE,
+        type: SchemaActions.SCHEMA_ADD_SNIPPET,
         to,
         data,
         dropPosition,
@@ -321,7 +321,7 @@ const SchemaContextProvider = ({
         fromSubscriptions
       });
 
-      void eventBridge.emit('main', 'styleAddTemplate', style?.platform, true);
+      void eventBridge.emit('main', 'styleAddSnippet', style?.platform, true);
     },
     [dispatchSchema, eventBridge]
   );
@@ -417,9 +417,9 @@ const SchemaContextProvider = ({
       schemaUpdateSettings(value, path, true)
     );
     subscriptionManager.subscribe(
-      'SPACE_ADD_TEMPLATE',
+      'SPACE_ADD_SNIPPET',
       ({ element, style, to, dropPosition, initialItems = [], variables = [] }) =>
-        schemaAddTemplate(
+        schemaAddSnippet(
           to,
           element,
           dropPosition,
@@ -460,7 +460,7 @@ const SchemaContextProvider = ({
           'SPACE_DETACH_INSTANCE',
           'SPACE_UPDATED',
           'SPACE_UPDATE_SETTINGS',
-          'SPACE_ADD_TEMPLATE'
+          'SPACE_ADD_SNIPPET'
         ],
         true
       );
@@ -487,7 +487,7 @@ const SchemaContextProvider = ({
     schemaRemoveElement,
     schemaMoveElement,
     schemaUpdate,
-    schemaAddTemplate,
+    schemaAddSnippet,
     schemaAddComponent,
     schemaUpdateComponent,
     schemaRemoveComponent,
@@ -541,7 +541,7 @@ const SchemaContextProvider = ({
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
-      schemaAddTemplate,
+      schemaAddSnippet,
       schemaAddComponent,
       schemaUpdateComponent,
       schemaRemoveComponent,
@@ -556,7 +556,7 @@ const SchemaContextProvider = ({
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
-      schemaAddTemplate,
+      schemaAddSnippet,
       schemaAddComponent,
       schemaUpdateComponent,
       schemaRemoveComponent,
@@ -589,7 +589,7 @@ const SchemaContextProvider = ({
       schemaRemoveVariable,
       schemaSetFlag,
       schemaRemoveFlag,
-      schemaAddTemplate,
+      schemaAddSnippet,
       schemaUpdateSettings,
       schemaAddComponent,
       schemaUpdateComponent,
@@ -606,7 +606,7 @@ const SchemaContextProvider = ({
     schemaMoveElement,
     schemaCloneElement,
     schemaRemoveElement,
-    schemaAddTemplate,
+    schemaAddSnippet,
     schemaUpdateSettings,
     schemaAddPage,
     schemaHomePage,

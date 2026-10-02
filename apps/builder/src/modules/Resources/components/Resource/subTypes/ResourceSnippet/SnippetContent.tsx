@@ -9,13 +9,13 @@ import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview'
 
 import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
 
-export type TemplateContentProps = {
+export type SnippetContentProps = {
   baseElementId: string;
   schema: Schema;
   style: Style;
 };
 
-const TemplateContent = ({ baseElementId, schema, style }: TemplateContentProps) => {
+const SnippetContent = ({ baseElementId, schema, style }: SnippetContentProps) => {
   const [[mainSchema, pageDefinitions]] = useBuilderStore(['schema', 'pageDefinitions']);
 
   const storeValue = useMemo(
@@ -26,7 +26,7 @@ const TemplateContent = ({ baseElementId, schema, style }: TemplateContentProps)
   return (
     <div className="flex h-full w-full flex-col gap-2 overflow-hidden">
       <div className="relative flex flex-col overflow-hidden">
-        <StoreProvider value={storeValue} middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('template'))]}>
+        <StoreProvider value={storeValue} middlewares={[loggerMw(createStoreDevToolsLogger<BuilderState>('snippet'))]}>
           <ContainerAutoScale className="flex min-h-46 w-full items-center justify-center overflow-hidden">
             <BuilderAreaPreview id={baseElementId} className="h-full w-full" previewMode />
           </ContainerAutoScale>
@@ -36,4 +36,4 @@ const TemplateContent = ({ baseElementId, schema, style }: TemplateContentProps)
   );
 };
 
-export default TemplateContent;
+export default SnippetContent;

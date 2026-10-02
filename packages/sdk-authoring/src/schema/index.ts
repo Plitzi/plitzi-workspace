@@ -15,6 +15,6 @@ export * from './ids';
 export * from './lint';
 export * from './notifications';
 export * from './space';
-export * from './template';
+export * from './snippet';
 export * from './validate';
 export type * from './types';

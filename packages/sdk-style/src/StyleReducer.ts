@@ -32,7 +32,7 @@ export const StyleActions = {
   STYLE_ADD_FONT: 'STYLE_ADD_FONT',
   STYLE_UPDATE_FONT: 'STYLE_UPDATE_FONT',
   STYLE_REMOVE_FONT: 'STYLE_REMOVE_FONT',
-  STYLE_ADD_TEMPLATE: 'STYLE_ADD_TEMPLATE',
+  STYLE_ADD_SNIPPET: 'STYLE_ADD_SNIPPET',
   STYLE_UPDATE_SETTINGS: 'STYLE_UPDATE_SETTINGS'
 } as const;
 
@@ -86,7 +86,7 @@ export type StyleReducerActions = StyleReducerActionsBase &
     | { type: 'STYLE_ADD_FONT'; font: SpaceFont }
     | { type: 'STYLE_UPDATE_FONT'; family: string; font: SpaceFont }
     | { type: 'STYLE_REMOVE_FONT'; family: string }
-    | { type: 'STYLE_ADD_TEMPLATE'; platform: Style['platform'] }
+    | { type: 'STYLE_ADD_SNIPPET'; platform: Style['platform'] }
     | { type: 'STYLE_UPDATE_SETTINGS'; path: string; value: string }
   );
 
@@ -237,7 +237,7 @@ const StyleReducer = (state: Style, action: StyleReducerActions) => {
 
     // Others
 
-    case StyleActions.STYLE_ADD_TEMPLATE: {
+    case StyleActions.STYLE_ADD_SNIPPET: {
       const { platform: newPlatform } = action;
 
       return produce(state, draft => {

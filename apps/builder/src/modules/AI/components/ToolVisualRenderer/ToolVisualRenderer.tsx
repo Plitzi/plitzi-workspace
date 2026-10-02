@@ -1,7 +1,7 @@
 import AIBrandPreview from '@pmodules/AI/components/ChatMessage/components/AIBrandPreview';
 import AIColorPalettePreview from '@pmodules/AI/components/ChatMessage/components/AIColorPalettePreview';
+import AISnippetPreview from '@pmodules/AI/components/ChatMessage/components/AISnippetPreview';
 import AIStyleGuidePreview from '@pmodules/AI/components/ChatMessage/components/AIStyleGuidePreview';
-import AITemplatePreview from '@pmodules/AI/components/ChatMessage/components/AITemplatePreview';
 import AIWireframePreview from '@pmodules/AI/components/ChatMessage/components/AIWireframePreview';
 import SdkElementPreview from '@pmodules/AI/components/ChatMessage/components/SdkElementPreview';
 
@@ -39,7 +39,7 @@ const ToolVisualRenderer = ({ visual, mode, previewConceptVersion, wireframeVers
   }
 
   return (
-    <AITemplatePreview
+    <AISnippetPreview
       baseElementId={visual.data.baseElementId}
       schema={visual.data.schema}
       style={visual.data.style}

@@ -18,7 +18,7 @@ import { authorSpace, container, css, heading, image, onClick, setState } from '
 
 One package, and it installs nothing else: `@plitzi/sdk-authoring` has an empty dependency tree, no React and
 nothing that touches a browser. A server, a seed, a migration, a build script, a browser bundle authoring its own
-space (see `browser/04-no-server`) and a project that only publishes templates all depend on that
+space (see `browser/04-no-server`) and a project that only publishes snippets all depend on that
 one name.
 
 Everything it exports is inside it — there is no second place to look:
@@ -29,7 +29,7 @@ Everything it exports is inside it — there is no second place to look:
 | the element factories | one per element, plus `element`, `defineElement`, `elementsFromManifest`, triggers |
 | the interaction vocabulary | what a step can do: `setState`, `navigate`, `runServerAction`, `delay`… |
 | the binding transformers | and the shape a declared param has |
-| assembly and validation | `authorSpace`, `authorTemplate`, `validateSpace`, `validateTemplate`, the spec types |
+| assembly and validation | `authorSpace`, `authorSnippet`, `validateSpace`, `validateSnippet`, the spec types |
 
 It used to be a `/authoring` fragment inside each of five packages, composed at the end. Each fragment read its own
 package's internals, which is what keeps a factory honest — but it also meant five places to look for one answer,
@@ -779,16 +779,16 @@ is inside the packages:
 
 ---
 
-## 9. Templates
+## 9. Snippets
 
-A **template** is the other artefact this surface produces, and it is not a space: one subtree, the style that
+A **snippet** is the other artefact this surface produces, and it is not a space: one subtree, the style that
 dresses it and a name, published as a JSON. Somebody fetches it by URL, it appears in the builder's **Assets → Files**, and dragging it onto a canvas instantiates a copy of the subtree in a space you never see.
 
 ```ts
-import { authorTemplate } from '@plitzi/sdk-authoring';
+import { authorSnippet } from '@plitzi/sdk-authoring';
 import { writeFile } from 'node:fs/promises';
 
-const { template, warnings } = authorTemplate({
+const { snippet, warnings } = authorSnippet({
   name: 'Pricing card',
   description: 'A price, a list of features and a call to action.',
   classes: {
@@ -801,35 +801,35 @@ const { template, warnings } = authorTemplate({
   })
 });
 
-await writeFile('pricing-card.json', JSON.stringify(template, null, 2));
+await writeFile('pricing-card.json', JSON.stringify(snippet, null, 2));
 ```
 
 That file is the whole deliverable. Host it anywhere, and add it to a space as an `application/json` resource —
-uploading it lands it in `templates/` on that space's CDN, and **Assets → Files** picks it up from there.
+uploading it lands it in `snippets/` on that space's CDN, and **Assets → Files** picks it up from there.
 
-`root` is a single element and its subtree: the root is the template's `baseElementId`, so nobody writes an id.
+`root` is a single element and its subtree: the root is the snippet's `baseElementId`, so nobody writes an id.
 Everything else — `classes`, `elements`, `variables`, `schemaVariables` — is declared exactly as a space declares
-it, and for the same reason it matters more here: **what the template names, the template has to carry**.
+it, and for the same reason it matters more here: **what the snippet names, the snippet has to carry**.
 
-Two checks exist only for templates, because a template leaves the space it was written in:
+Two checks exist only for snippets, because a snippet leaves the space it was written in:
 
 | Refused / warned | Why |
 | --- | --- |
-| a binding whose source is outside the subtree | the element publishing it stays behind, so the binding resolves to nothing wherever the template lands — bring the provider into the template, or bind to a global (`variables`, `navigation`, `auth`, `state`) |
+| a binding whose source is outside the subtree | the element publishing it stays behind, so the binding resolves to nothing wherever the snippet lands — bring the provider into the snippet, or bind to a global (`variables`, `navigation`, `auth`, `state`) |
 | a class named but not carried (warning) | the element keeps the class, finds no rules in the space it was dropped into and renders unstyled |
-| a page inside a template | a template is a subtree dropped onto a canvas; a page has nowhere to go |
+| a page inside a snippet | a snippet is a subtree dropped onto a canvas; a page has nowhere to go |
 | a base element with a parent | the base element is the root of what travels |
 
 For a manifest authored elsewhere — exported by the builder, edited by hand — the same gate runs on its own:
 
 ```ts
-const { valid, errors, warnings } = validateTemplate(template);
+const { valid, errors, warnings } = validateSnippet(snippet);
 ```
 
-The builder's own "save as template" is the other direction and does not go through `authorTemplate`: it starts
-from a live schema and cuts a subtree out of it (`FlatMap.flatAsTemplate`), which is a different question — which
+The builder's own "save as snippet" is the other direction and does not go through `authorSnippet`: it starts
+from a live schema and cuts a subtree out of it (`FlatMap.flatAsSnippet`), which is a different question — which
 of a space's rules and variables belong to this subtree — from the one here, where the answer is simply everything
-the declaration carries. Both produce the same artefact, and `validateTemplate` reads either.
+the declaration carries. Both produce the same artefact, and `validateSnippet` reads either.
 
 ## 10. From a document back to code
 
@@ -874,5 +874,5 @@ and answers `{ exportName, files, corrections, differences }`.
 | [`examples/self-hosting/03-sessions`](../../examples/self-hosting/03-sessions) | two pages on one path, and an auth flow |
 | `plitzi-sdk-server/prisma/seeds/spaces/examples/shippingQuote` | a form that runs a server action — whose step is the space's own function — and shows the answer |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo/blog` | six pages, a custom element, visitor roles, bindings throughout |
-| `plitzi-sdk-server/prisma/seeds/spaces/demo/saasLanding/pricingCard.ts` | a template: one subtree and the style it carries, uploaded to a space's CDN |
+| `plitzi-sdk-server/prisma/seeds/spaces/demo/saasLanding/pricingCard.ts` | a snippet: one subtree and the style it carries, uploaded to a space's CDN |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo` | the demo spaces, seeded on every deployment — `website1` and `comingSoon` read back from JSON with `specFromSpace` |

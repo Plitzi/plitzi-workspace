@@ -4,7 +4,7 @@ import { MODES } from '../../helpers';
 import type { DisplayMode } from '@plitzi/sdk-shared';
 import type { AiMode } from '@pmodules/AI/types';
 
-export type AITemplateHeaderProps = {
+export type AISnippetHeaderProps = {
   baseElementId: string;
   displayMode: DisplayMode;
   onDisplayMode: (mode: DisplayMode) => void;
@@ -16,7 +16,7 @@ export type AITemplateHeaderProps = {
   version?: number;
 };
 
-const AITemplateHeader = ({
+const AISnippetHeader = ({
   baseElementId,
   displayMode,
   onDisplayMode,
@@ -26,7 +26,7 @@ const AITemplateHeader = ({
   hasHtml,
   mode,
   version
-}: AITemplateHeaderProps) => (
+}: AISnippetHeaderProps) => (
   <div className="flex items-center justify-between gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-1 font-mono text-xs text-zinc-600 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-400">
     <div className="flex min-w-0 items-center gap-1.5">
       <span className="shrink-0 rounded border border-zinc-300 px-1 text-[9px] tracking-wider uppercase dark:border-zinc-600">
@@ -68,4 +68,4 @@ const AITemplateHeader = ({
   </div>
 );
 
-export default AITemplateHeader;
+export default AISnippetHeader;

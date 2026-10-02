@@ -26,7 +26,7 @@ import type {
   Style
 } from '@plitzi/sdk-shared';
 
-/** Variables a template brought with it, minus the ones this space already declares under the same name. */
+/** Variables a snippet brought with it, minus the ones this space already declares under the same name. */
 const appendVariables = (draft: Schema, variables: SchemaVariable[]): void => {
   if (variables.length === 0) {
     return;
@@ -61,7 +61,7 @@ export const SchemaActions = {
   SCHEMA_UPDATE_ELEMENT: 'SCHEMA_UPDATE_ELEMENT',
   SCHEMA_RENAME_ELEMENT: 'SCHEMA_RENAME_ELEMENT',
   SCHEMA_UPDATE_ELEMENTS: 'SCHEMA_UPDATE_ELEMENTS',
-  SCHEMA_ADD_TEMPLATE: 'SCHEMA_ADD_TEMPLATE',
+  SCHEMA_ADD_SNIPPET: 'SCHEMA_ADD_SNIPPET',
   SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS',
   SCHEMA_ADD_COMPONENT: 'SCHEMA_ADD_COMPONENT',
   SCHEMA_UPDATE_COMPONENT: 'SCHEMA_UPDATE_COMPONENT',
@@ -88,13 +88,13 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
     | { type: 'SCHEMA_SET_FLAG'; name: string; flag: SchemaFlag }
     | { type: 'SCHEMA_REMOVE_FLAG'; name: string }
     | {
-        type: 'SCHEMA_ADD_ELEMENT' | 'SCHEMA_ADD_TEMPLATE';
+        type: 'SCHEMA_ADD_ELEMENT' | 'SCHEMA_ADD_SNIPPET';
         to: string;
         data: Element;
         dropPosition: DropPosition;
         initialItems: Record<string, Element>;
         variables?: SchemaVariable[];
-        style?: Style; // used when adding a template
+        style?: Style; // used when adding a snippet
       }
     | { type: 'SCHEMA_REMOVE_ELEMENT'; elementId: string }
     | {
@@ -287,13 +287,13 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       });
     }
 
-    case SchemaActions.SCHEMA_ADD_TEMPLATE: {
+    case SchemaActions.SCHEMA_ADD_SNIPPET: {
       const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
-        // A template arrives from a document nobody here has seen, and the names it brought may not be free: two
+        // A snippet arrives from a document nobody here has seen, and the names it brought may not be free: two
         // elements answering to one name makes every binding onto it ambiguous, so `addElement` refuses the whole
-        // subtree — a drag that silently drops nothing, which is what an authored template hits whenever this
+        // subtree — a drag that silently drops nothing, which is what an authored snippet hits whenever this
         // space already holds a `hero` or a `cta`.
         //
         // Only the colliding names are changed, and everything that pointed at one is repointed with it. Copied

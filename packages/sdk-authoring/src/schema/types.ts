@@ -16,7 +16,7 @@ import type {
   SpaceFont,
   Style,
   StyleVariables,
-  Template
+  Snippet
 } from '@plitzi/sdk-shared';
 import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
 
@@ -613,21 +613,21 @@ export interface AuthoredSpace {
 }
 
 /**
- * What a template author declares: a name, a description and a subtree.
+ * What a snippet author declares: a name, a description and a subtree.
  *
  * The style half is declared exactly as a space declares it — the classes the subtree names, the element defaults
- * it relies on, the variables its rules read — because that is precisely what has to TRAVEL with it. A template
+ * it relies on, the variables its rules read — because that is precisely what has to TRAVEL with it. A snippet
  * that names a class the space it lands in happens not to declare renders unstyled, so anything the subtree reads
  * is carried in the manifest rather than assumed.
  */
-export interface TemplateSpec {
+export interface SnippetSpec {
   name: string;
   description: string;
   /**
-   * What this template's ids are derived from, as `permanentUrl` is for a space. Defaults to a slug of the name.
+   * What this snippet's ids are derived from, as `permanentUrl` is for a space. Defaults to a slug of the name.
    *
-   * Ids are re-generated when the template is dropped into a space, so this decides nothing at run time — it
-   * decides only that authoring the same template twice writes the same file.
+   * Ids are re-generated when the snippet is dropped into a space, so this decides nothing at run time — it
+   * decides only that authoring the same snippet twice writes the same file.
    */
   key?: string;
   variables?: Partial<StyleVariables>;
@@ -641,13 +641,13 @@ export interface TemplateSpec {
   root: ElementSpec;
 }
 
-export interface AuthoredTemplate {
+export interface AuthoredSnippet {
   /** The manifest as it is published: `JSON.stringify` it and host it. */
-  template: Template;
+  snippet: Snippet;
   /**
-   * What the validators had to say that was not fatal — a class the template names but does not carry, a step
+   * What the validators had to say that was not fatal — a class the snippet names but does not carry, a step
    * naming an action no built-in source declares. Beside the manifest rather than inside it: what ships is a
-   * document a builder fetches, and it carries nothing that is not part of the template.
+   * document a builder fetches, and it carries nothing that is not part of the snippet.
    */
   warnings: SchemaValidationError[];
 }

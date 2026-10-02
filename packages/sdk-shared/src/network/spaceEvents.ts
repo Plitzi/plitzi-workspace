@@ -159,7 +159,7 @@ export const spaceEventSchemas = {
   SPACE_REMOVE_ELEMENT: z.object({ elementId: z.string() }),
   SPACE_MOVE_ELEMENT: z.object({ from: z.string(), to: z.string(), elementId: z.string(), dropPosition }),
   SPACE_CLONE_ELEMENT: z.object({ to: z.string(), element, dropPosition, initialItems: elements }),
-  SPACE_ADD_TEMPLATE: z.object({
+  SPACE_ADD_SNIPPET: z.object({
     element,
     style: z.custom<Style>(isRecord),
     to: z.string(),

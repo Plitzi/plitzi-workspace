@@ -9,12 +9,12 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 import { deleteKey, withModifier } from '@pmodules/Keyboard';
 
-import TemplateForm from '../../Models/TemplateForm';
+import SnippetForm from '../../Models/SnippetForm';
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
 
-import type { TemplateFormValues } from '../../Models/TemplateForm';
+import type { SnippetFormValues } from '../../Models/SnippetForm';
 
 export type BuilderContextMenuProps = {
   width?: number;
@@ -34,7 +34,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   const [xPos, setXPos] = useState('0px');
   const [yPos, setYPos] = useState('0px');
   const [showMenu, setShowMenu] = useState(false);
-  const { builderElementPermissions, builderHandler, elementAsTemplate } = use(BuilderContext);
+  const { builderElementPermissions, builderHandler, elementAsSnippet } = use(BuilderContext);
   const saveAsComponent = useSaveAsComponent();
   const componentConfig = useMemo(
     () => (element ? builderElementPermissions(element) : {}),
@@ -174,21 +174,21 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     }
   };
 
-  const handleClickAsTemplate = async () => {
-    const response = await showModal<TemplateFormValues>(
+  const handleClickAsSnippet = async () => {
+    const response = await showModal<SnippetFormValues>(
       <Modal.Header>
-        <h4>Add Template</h4>
+        <h4>Add Snippet</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
-          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
+          <SnippetForm onSubmit={onSubmit} onClose={onClose} />
         </Modal.Body>
       )
     );
 
     if (response && element) {
       const { name, description, cdnIdentifier, bucketIdentifier } = response;
-      void elementAsTemplate(
+      void elementAsSnippet(
         { cdnIdentifier, bucketIdentifier },
         getSchema(),
         getStyle(),
@@ -260,7 +260,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     );
   }
 
-  const { canDelete = true, canTemplate = true } = componentConfig;
+  const { canDelete = true, canSnippet = true } = componentConfig;
   const items = get(element, 'definition.items');
 
   return (
@@ -290,11 +290,11 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
           <BuilderContextMenuItem title="Open Tools" onClick={handleClickTools}>
             <i className="fas fa-tools" />
           </BuilderContextMenuItem>
-          {((!!items && canTemplate) || (canDelete && !!element?.definition.parentId)) && (
+          {((!!items && canSnippet) || (canDelete && !!element?.definition.parentId)) && (
             <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
           )}
-          {!!items && canTemplate && (
-            <BuilderContextMenuItem title="Save As Template" onClick={handleClickAsTemplate}>
+          {!!items && canSnippet && (
+            <BuilderContextMenuItem title="Save As Snippet" onClick={handleClickAsSnippet}>
               <i className="fa-solid fa-bookmark" />
             </BuilderContextMenuItem>
           )}

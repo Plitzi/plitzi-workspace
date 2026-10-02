@@ -39,7 +39,7 @@ export type ResourcesCdnBucketProps = {
 const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
 /**
- * One bucket of a CDN and the space's files in it. A public one takes uploads — plugins, images, templates — and serves
+ * One bucket of a CDN and the space's files in it. A public one takes uploads — plugins, images, snippets — and serves
  * them at its domain; a private one keeps the space's server code, written when it is saved or pushed, and serves
  * nothing.
  */
@@ -223,7 +223,7 @@ const ResourcesCdnBucket = ({ cdnIdentifier, provider, bucket, prefix, onChange 
       {isPrivate && (
         <p className="text-xs text-gray-500 dark:text-zinc-400">
           Where this space keeps its server code — its functions and runtime, written when they are saved or pushed. Its
-          files have no public address, so plugins, images and templates go in a public bucket.
+          files have no public address, so plugins, images and snippets go in a public bucket.
         </p>
       )}
       {!isPrivate && !removing && (

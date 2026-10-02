@@ -295,10 +295,10 @@ const useQueueManager = ({
           return mutate('StyleUpdateSettings', { path, value });
         }
 
-        case SchemaActions.SCHEMA_ADD_TEMPLATE: {
+        case SchemaActions.SCHEMA_ADD_SNIPPET: {
           const { data, dropPosition, initialItems, to, variables, style } = item.action;
 
-          return mutate('SpaceAddTemplate', {
+          return mutate('SpaceAddSnippet', {
             element: data,
             style,
             to,

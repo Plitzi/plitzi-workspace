@@ -129,8 +129,8 @@ A component's elements are `element` entries like a page's, and its declaration 
 
 - **A workspace library**: sharing components across spaces. The intended shape is a library space whose components
   are COPIED into another space with `source: { spaceId, revision, componentId }`, updated on demand, never linked
-  live — a live link would make a revision depend on another space's state. The element-template manifest
-  (`TemplateSpec`) already carries a subtree with the style it reads.
+  live — a live link would make a revision depend on another space's state. The snippet manifest
+  (`SnippetSpec`) already carries a subtree with the style it reads.
 - **Outward events**: a component declaring callbacks an instance binds flows to (`onSelect`). Today a component writes
   `runtime.state`.
 - **Per-instance style** beyond a class on the instance: variants are driven by props.

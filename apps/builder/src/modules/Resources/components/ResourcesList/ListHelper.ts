@@ -27,11 +27,11 @@ const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
     return -1;
   }
 
-  if (a.name === 'Templates' && b.name !== 'Templates') {
+  if (a.name === 'Snippets' && b.name !== 'Snippets') {
     return 1;
   }
 
-  if (b.name === 'Templates' && a.name !== 'Templates') {
+  if (b.name === 'Snippets' && a.name !== 'Snippets') {
     return -1;
   }
 
@@ -40,7 +40,7 @@ const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
 
 /** A private bucket takes no upload, so it opens on its server code alone; a public one on where uploads go. */
 const foldersShownFor = (visibility: CdnVisibility): { [key: string]: Resource[] } =>
-  visibility === 'private' ? { [serverCodeFolderName]: [] } : { [defaultFolderName]: [], Templates: [], Plugins: [] };
+  visibility === 'private' ? { [serverCodeFolderName]: [] } : { [defaultFolderName]: [], Snippets: [], Plugins: [] };
 
 const getDirectories = (
   prefix: string = 'https://cdn.plitzi.com/website/assets/',
@@ -71,12 +71,12 @@ const getDirectories = (
       return;
     }
 
-    if (type === 'template') {
-      if (!(directoriesMap['Templates'] as undefined | Resource[])) {
-        directoriesMap['Templates'] = [];
+    if (type === 'snippet') {
+      if (!(directoriesMap['Snippets'] as undefined | Resource[])) {
+        directoriesMap['Snippets'] = [];
       }
 
-      directoriesMap['Templates'].push(item);
+      directoriesMap['Snippets'].push(item);
 
       return;
     }
@@ -94,12 +94,12 @@ const getDirectories = (
 
   return Object.entries(directoriesMap)
     .map(([name, items]) => {
-      const isDefault = [defaultFolderName, 'Plugins', 'Templates', serverCodeFolderName].includes(name);
+      const isDefault = [defaultFolderName, 'Plugins', 'Snippets', serverCodeFolderName].includes(name);
 
       return {
         name,
         items,
-        canDrop: !['Plugins', 'Templates', serverCodeFolderName].includes(name),
+        canDrop: !['Plugins', 'Snippets', serverCodeFolderName].includes(name),
         canRemove: !isDefault,
         isDefault
       };

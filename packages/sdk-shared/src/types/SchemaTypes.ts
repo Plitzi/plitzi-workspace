@@ -310,7 +310,7 @@ export type Schema = {
 };
 
 export type SchemaContextValue = {
-  definition?: { rootId: string }; // for templates
+  definition?: { rootId: string }; // for snippets
   // When is main Schema in builder
   dispatchSchema?: unknown;
   schemaUpdate?: (newSchema: SchemaRaw, fromSubscriptions?: boolean) => void;
@@ -358,12 +358,12 @@ export type SchemaContextValue = {
   schemaRemoveVariable?: (name: string, fromSubscriptions?: boolean) => void;
   schemaSetFlag?: (name: string, flag: SchemaFlag, fromSubscriptions?: boolean) => void;
   schemaRemoveFlag?: (name: string, fromSubscriptions?: boolean) => void;
-  schemaAddTemplate?: (
+  schemaAddSnippet?: (
     to: string,
     data: Element,
     dropPosition?: DropPosition,
     initialItems?: Record<string, Element>,
-    templatePlatform?: Style,
+    snippetPlatform?: Style,
     variables?: SchemaVariable[],
     fromSubscriptions?: boolean
   ) => void;

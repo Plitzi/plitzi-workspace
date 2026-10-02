@@ -44,7 +44,7 @@ import SpaceStartRuntimeMutation from './Space/runtime/SpaceStartRuntimeMutation
 import SpaceStopRuntimeMutation from './Space/runtime/SpaceStopRuntimeMutation';
 import SpaceAddElementMutation from './Space/SpaceAddElementMutation';
 import SpaceAddPluginMutation from './Space/SpaceAddPluginMutation';
-import SpaceAddTemplateMutation from './Space/SpaceAddTemplateMutation';
+import SpaceAddSnippetMutation from './Space/SpaceAddSnippetMutation';
 import SpaceCloneElementMutation from './Space/SpaceCloneElementMutation';
 import SpaceDeployMutation from './Space/SpaceDeployMutation';
 import SpaceFixIssuesMutation from './Space/SpaceFixIssuesMutation';
@@ -146,7 +146,7 @@ export type BuilderMutationsMap = {
   SpaceUpdateComponent: TSpaceUpdateComponentMutation;
   SpaceRemoveComponent: TSpaceRemoveComponentMutation;
   SpaceDetachInstance: TSpaceDetachInstanceMutation;
-  SpaceAddTemplate: unknown;
+  SpaceAddSnippet: unknown;
   SpaceAddPlugin: TSpaceAddPluginMutation;
   SpaceUpdatePlugin: TSpaceUpdatePluginMutation;
   SpaceRemovePlugin: unknown;
@@ -231,7 +231,7 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceUpdateComponent: SpaceUpdateComponentMutation,
   SpaceRemoveComponent: SpaceRemoveComponentMutation,
   SpaceDetachInstance: SpaceDetachInstanceMutation,
-  SpaceAddTemplate: SpaceAddTemplateMutation,
+  SpaceAddSnippet: SpaceAddSnippetMutation,
   SpaceAddPlugin: SpaceAddPluginMutation,
   SpaceUpdatePlugin: SpaceUpdatePluginMutation,
   SpaceRemovePlugin: SpaceRemovePluginMutation,

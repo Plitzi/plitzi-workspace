@@ -139,7 +139,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: false,
+      canSnippet: false,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

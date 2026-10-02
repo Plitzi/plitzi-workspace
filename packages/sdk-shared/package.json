@@ -599,9 +599,9 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceAddPluginMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceAddPluginMutation.mjs"
     },
-    "./network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation": {
-      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation.d.ts",
-      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation.mjs"
+    "./network/graphql/builder/Mutations/Space/SpaceAddSnippetMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceAddSnippetMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceAddSnippetMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/SpaceCloneElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceCloneElementMutation.d.ts",
@@ -1378,6 +1378,9 @@
     "./types/ServerTypes": {
       "types": "./dist/types/ServerTypes.d.ts"
     },
+    "./types/SnippetTypes": {
+      "types": "./dist/types/SnippetTypes.d.ts"
+    },
     "./types/SpaceTypes": {
       "types": "./dist/types/SpaceTypes.d.ts"
     },
@@ -1390,9 +1393,6 @@
     "./types/StyleTypes": {
       "types": "./dist/types/StyleTypes.d.ts",
       "import": "./dist/types/StyleTypes.mjs"
-    },
-    "./types/TemplateTypes": {
-      "types": "./dist/types/TemplateTypes.d.ts"
     },
     "./types/ThemeTypes": {
       "types": "./dist/types/ThemeTypes.d.ts"

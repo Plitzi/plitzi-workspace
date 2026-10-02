@@ -4,15 +4,15 @@ import { useEffect, useState } from 'react';
 import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
-import TemplateContent from './TemplateContent';
+import SnippetContent from './SnippetContent';
 import ResourceLoading from '../../ResourceLoading';
 import ResourceName from '../../ResourceName';
 import ResourceRemoveButton from '../../ResourceRemoveButton';
 
-import type { Template } from '@plitzi/sdk-shared';
+import type { Snippet } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
-export type ResourceTemplateProps = {
+export type ResourceSnippetProps = {
   className?: string;
   id: string;
   src: string;
@@ -23,7 +23,7 @@ export type ResourceTemplateProps = {
   onRemove?: (e: MouseEvent) => void;
 };
 
-const ResourceTemplate = ({
+const ResourceSnippet = ({
   className,
   title,
   src,
@@ -31,12 +31,12 @@ const ResourceTemplate = ({
   isLoading = false,
   onClick,
   onRemove
-}: ResourceTemplateProps) => {
-  const [manifest, setManifest] = useState<Template | undefined>();
+}: ResourceSnippetProps) => {
+  const [manifest, setManifest] = useState<Snippet | undefined>();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void fetchManifest<Template>(src)
+    void fetchManifest<Snippet>(src)
       .then(result => {
         setManifest(result);
         setLoading(false);
@@ -44,7 +44,7 @@ const ResourceTemplate = ({
       .catch(() => setLoading(false));
   }, [src]);
 
-  const { onDragStart } = useDragElement({ type: 'template', manifest });
+  const { onDragStart } = useDragElement({ type: 'snippet', manifest });
 
   if (loading || !manifest) {
     return undefined;
@@ -62,7 +62,7 @@ const ResourceTemplate = ({
       )}
       onClick={onClick}
     >
-      <TemplateContent baseElementId={definition.baseElementId} schema={schema} style={style} />
+      <SnippetContent baseElementId={definition.baseElementId} schema={schema} style={style} />
       <ResourceRemoveButton onRemove={onRemove} />
       {(isLoading || removing) && <ResourceLoading />}
       <ResourceName name={definition.name ? definition.name : title} />
@@ -70,4 +70,4 @@ const ResourceTemplate = ({
   );
 };
 
-export default ResourceTemplate;
+export default ResourceSnippet;

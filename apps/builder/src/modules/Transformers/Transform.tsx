@@ -67,7 +67,7 @@ const Transform = () => {
 
   const handleClickImport = useCallback(() => {
     if (!elementSelected) {
-      addToast('Select an element before import the template', {
+      addToast('Select the element to import into first', {
         appeareance: 'info',
         autoDismiss: true,
         placement: 'top-right'
@@ -81,7 +81,7 @@ const Transform = () => {
     const elements = get(preview, 'schema.flat', undefined);
     const stylePlatform = get(preview, 'style.platform', undefined);
     if (!rootId || !baseElement || !elements || !stylePlatform) {
-      addToast('The template seems to be empty or something is missing', {
+      addToast('Nothing to import: the result is empty or incomplete', {
         appeareance: 'info',
         autoDismiss: true,
         placement: 'top-right'
@@ -98,7 +98,7 @@ const Transform = () => {
     set(baseElement, 'definition.parentId', elementSelected);
 
     builderHandler(
-      'schemaAddTemplate',
+      'schemaAddSnippet',
       elementSelected,
       pick(baseElement, ['id', 'definition', 'attributes']),
       'inside',

@@ -18,7 +18,7 @@ export type FlatMapProps = {
   variables?: Schema['variables'];
   /**
    * The document's page list. Given, a page rename rewrites it too — a page renamed without it is a page the space
-   * no longer lists. Left out for a map that holds no pages (a component's tree, a template being cut).
+   * no longer lists. Left out for a map that holds no pages (a component's tree, a snippet being cut).
    */
   pages?: Schema['pages'];
   /**
@@ -371,7 +371,7 @@ class FlatMap {
     return true;
   };
 
-  flatAsTemplate = (style: Style, elementId: Element['id'], excludeRoot = false) => {
+  flatAsSnippet = (style: Style, elementId: Element['id'], excludeRoot = false) => {
     const elementsStyle: Style = { ...EMPTY_STYLE_SCHEMA, platform: { desktop: {}, tablet: {}, mobile: {} } };
     let variables: SchemaVariable[] = [];
     if (!elementId) {
@@ -416,7 +416,7 @@ class FlatMap {
       }
     });
 
-    // The base of a template answers to no parent: it is placed wherever the template is dropped.
+    // The base of a snippet answers to no parent: it is placed wherever the snippet is dropped.
     delete elements.acum[elements.item.id].definition.parentId;
 
     if (excludeRoot) {
@@ -524,10 +524,10 @@ class FlatMap {
 
   // Extra Methods - Static
 
-  static flatAsTemplate = (schema: Schema, style: Style, elementId: Element['id'], excludeRoot = false) => {
+  static flatAsSnippet = (schema: Schema, style: Style, elementId: Element['id'], excludeRoot = false) => {
     const { flat, variables } = schema;
 
-    return this.getInstance({ flat, variables }).flatAsTemplate(style, elementId, excludeRoot);
+    return this.getInstance({ flat, variables }).flatAsSnippet(style, elementId, excludeRoot);
   };
 }
 

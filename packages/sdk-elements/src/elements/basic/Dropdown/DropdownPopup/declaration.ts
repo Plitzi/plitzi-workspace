@@ -28,7 +28,7 @@ const declaration = elementDeclaration<DropdownPopupAttributes>()({
       canSelect: true,
       canDragDrop: false,
       canMove: false,
-      canTemplate: false,
+      canSnippet: false,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

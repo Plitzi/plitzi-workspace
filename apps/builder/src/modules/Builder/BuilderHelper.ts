@@ -56,7 +56,7 @@ const processResource = async (clipboardData: DataTransfer) => {
   return { file: new File([file], file.name, { type: file.type }), metadata: {} };
 };
 
-const processPlitziTemplate = (clipboardData: DataTransfer) => {
+const processPlitziSnippet = (clipboardData: DataTransfer) => {
   const data = clipboardData.getData('application/json');
   if (!data) {
     return undefined;
@@ -85,7 +85,7 @@ const processPlitziTemplate = (clipboardData: DataTransfer) => {
     return undefined;
   }
 
-  if (dataParsed.type !== 'add##plitzi-template') {
+  if (dataParsed.type !== 'add##plitzi-snippet') {
     return undefined;
   }
 
@@ -107,13 +107,13 @@ export const getClipboardDataProcessed = async (clipboardData?: DataTransfer) =>
   }
 
   let data: unknown;
-  let dataType: 'text' | 'resource' | 'template' = 'text';
+  let dataType: 'text' | 'resource' | 'snippet' = 'text';
   if (clipboardData.types.includes('Files')) {
     dataType = 'resource';
     data = await processResource(clipboardData);
   } else if (clipboardData.types.includes('application/json')) {
-    dataType = 'template';
-    data = processPlitziTemplate(clipboardData);
+    dataType = 'snippet';
+    data = processPlitziSnippet(clipboardData);
   } else {
     dataType = 'text';
     data = processText(clipboardData);
@@ -127,7 +127,7 @@ export const getClipboardDataProcessed = async (clipboardData?: DataTransfer) =>
     | { dataType: 'text'; data: string[] }
     | { dataType: 'resource'; data: { file: File; metadata: { size?: { height: number; width: number } } } }
     | {
-        dataType: 'template';
+        dataType: 'snippet';
         data: {
           payload: {
             elements: { acum: Record<string, Element>; item: Element };
@@ -141,8 +141,8 @@ export const getClipboardDataProcessed = async (clipboardData?: DataTransfer) =>
 /**
  * A pasted element, named on the spot.
  *
- * `mintId` is positional and local to the payload being assembled: what comes out of here is a throwaway template
- * document that `SCHEMA_ADD_TEMPLATE` drops into the real space, and that is where a name colliding with the space
+ * `mintId` is positional and local to the payload being assembled: what comes out of here is a throwaway snippet
+ * document that `SCHEMA_ADD_SNIPPET` drops into the real space, and that is where a name colliding with the space
  * is renamed. All this has to guarantee is that the paste does not collide with itself.
  */
 export const getElementDefinition = (
@@ -250,7 +250,7 @@ export const processPaste = async (
     return id;
   };
   let result = false;
-  let templateData: {
+  let snippetData: {
     elements: Record<string, Element>;
     baseElement?: Element;
     style: Style;
@@ -288,7 +288,7 @@ export const processPaste = async (
 
     if (size && selector) {
       set(
-        templateData,
+        snippetData,
         `style.platform.desktop.${selector}`,
         generateStyleSelector(
           selector,
@@ -297,16 +297,16 @@ export const processPaste = async (
           {}
         )
       );
-      set(templateData, 'style.cache', generateCache(templateData.style));
+      set(snippetData, 'style.cache', generateCache(snippetData.style));
     }
 
-    set(templateData, 'baseElement', elementDefinition);
-  } else if (dataType === 'template') {
+    set(snippetData, 'baseElement', elementDefinition);
+  } else if (dataType === 'snippet') {
     const {
       payload: { elements, style, variables }
     } = data;
     delete elements.acum[elements.item.id];
-    templateData = { elements: elements.acum, baseElement: elements.item, style, variables };
+    snippetData = { elements: elements.acum, baseElement: elements.item, style, variables };
   } else if (Array.isArray(data) && data.length > 1) {
     // dataType is Text
     const elementContainerDefinition = getElementDefinition(componentDefinitions, mintId, 'container');
@@ -320,22 +320,22 @@ export const processPaste = async (
         elementContainerDefinition?.id
       );
       if (elementDefinition && elementContainerDefinition) {
-        templateData.elements[elementDefinition.id] = elementDefinition;
+        snippetData.elements[elementDefinition.id] = elementDefinition;
         set(elementContainerDefinition, 'definition.items', [
           ...(get(elementContainerDefinition, 'definition.items', []) as string[]),
           elementDefinition.id
         ]);
       }
     });
-    set(templateData, 'baseElement', elementContainerDefinition);
+    set(snippetData, 'baseElement', elementContainerDefinition);
   } else if (Array.isArray(data) && data.length === 1) {
     // dataType is Text
     const elementDefinition = getElementDefinition(componentDefinitions, mintId, 'paragraph', { content: data[0] });
-    set(templateData, 'baseElement', elementDefinition);
+    set(snippetData, 'baseElement', elementDefinition);
   }
 
-  if (templateData.baseElement) {
-    result = builderDropElement('add##plitzi-template', templateData, 'inside', elementSelected, baseElementId);
+  if (snippetData.baseElement) {
+    result = builderDropElement('add##plitzi-snippet', snippetData, 'inside', elementSelected, baseElementId);
   }
 
   return result;

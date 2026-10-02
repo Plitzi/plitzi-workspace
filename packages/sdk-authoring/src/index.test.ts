@@ -19,8 +19,8 @@ describe('the authoring surface', () => {
     expect(typeof authoring.setState).toBe('function');
     expect(typeof authoring.authorSpace).toBe('function');
     expect(typeof authoring.validateSpace).toBe('function');
-    expect(typeof authoring.authorTemplate).toBe('function');
-    expect(typeof authoring.validateTemplate).toBe('function');
+    expect(typeof authoring.authorSnippet).toBe('function');
+    expect(typeof authoring.validateSnippet).toBe('function');
   });
 
   it('authors a space end to end, in Node, with no browser anywhere', () => {
@@ -42,8 +42,8 @@ describe('the authoring surface', () => {
     expect(warnings).toEqual([]);
   });
 
-  it('authors a template, and it is a manifest a builder can fetch', () => {
-    const { template, warnings } = authoring.authorTemplate({
+  it('authors a snippet, and it is a manifest a builder can fetch', () => {
+    const { snippet, warnings } = authoring.authorSnippet({
       name: 'Pricing card',
       description: 'A price and a call to action.',
       classes: { card: { padding: '24px', 'border-radius': '8px' } },
@@ -54,9 +54,9 @@ describe('the authoring surface', () => {
     });
 
     expect(warnings).toEqual([]);
-    expect(template.schema.pages).toEqual([]);
-    expect(template.schema.flat[template.definition.baseElementId].definition.parentId).toBeUndefined();
-    expect(JSON.parse(JSON.stringify(template))).toEqual(template);
+    expect(snippet.schema.pages).toEqual([]);
+    expect(snippet.schema.flat[snippet.definition.baseElementId].definition.parentId).toBeUndefined();
+    expect(JSON.parse(JSON.stringify(snippet))).toEqual(snippet);
   });
 });
 

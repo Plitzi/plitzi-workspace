@@ -1,14 +1,14 @@
-# Templates, exports, and what authoring refuses
+# Snippets, exports, and what authoring refuses
 
-## Publishing a template
+## Publishing a snippet
 
-A template is ONE subtree, the style that dresses it and a name, published as a JSON someone drags onto a canvas you
+A snippet is ONE subtree, the style that dresses it and a name, published as a JSON someone drags onto a canvas you
 will never see.
 
 ```ts
-import { authorTemplate } from '@plitzi/sdk-authoring';
+import { authorSnippet } from '@plitzi/sdk-authoring';
 
-const { template, warnings } = authorTemplate({
+const { snippet, warnings } = authorSnippet({
   name: 'Pricing card',
   description: 'A price, a list of features and a call to action.',
   classes: { card: { padding: '24px', 'border-radius': '12px', 'background-color': 'var(--surface)' } },
@@ -17,8 +17,8 @@ const { template, warnings } = authorTemplate({
 ```
 
 - **Everything it names, it carries.** A class declared in the space it was cut from does not travel: declare every
-  rule the subtree names (`validateTemplate` warns about one it does not carry).
-- **A binding may not point outside the subtree.** Bring the provider into the template, or bind to a global.
+  rule the subtree names (`validateSnippet` warns about one it does not carry).
+- **A binding may not point outside the subtree.** Bring the provider into the snippet, or bind to a global.
 
 ## From an exported JSON
 

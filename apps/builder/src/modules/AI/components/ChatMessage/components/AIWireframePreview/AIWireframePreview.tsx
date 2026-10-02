@@ -269,7 +269,7 @@ const AIWireframePreview = ({
             title="Coming soon"
             className="cursor-not-allowed rounded border border-zinc-200 px-2.5 py-1 font-mono text-zinc-400 dark:border-zinc-700 dark:text-zinc-600"
           >
-            Save as Template
+            Save as Snippet
           </button>
         </div>
       )}

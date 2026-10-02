@@ -9,13 +9,13 @@ import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
-import AITemplateHeader from './components/AITemplateHeader';
+import AISnippetHeader from './components/AISnippetHeader';
 import ConfirmPanel from './components/ConfirmPanel';
 
 import type { BuilderState, DisplayMode, Schema, Style } from '@plitzi/sdk-shared';
 import type { AiMode } from '@pmodules/AI/types';
 
-export type AITemplatePreviewProps = {
+export type AISnippetPreviewProps = {
   baseElementId: string;
   schema?: Pick<Schema, 'flat'>;
   style?: Pick<Style, 'platform' | 'cache'>;
@@ -24,7 +24,7 @@ export type AITemplatePreviewProps = {
   version?: number;
 };
 
-const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }: AITemplatePreviewProps) => {
+const AISnippetPreview = ({ baseElementId, schema, style, html, mode, version }: AISnippetPreviewProps) => {
   const { resolvedTheme } = useTheme();
   const { addPopup } = usePopup();
   const { onSendMessage, elementSelected } = useAiChatContext();
@@ -77,7 +77,7 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
 
   return (
     <div className="mt-2 overflow-hidden rounded-md border border-zinc-200 text-xs dark:border-zinc-700/60">
-      <AITemplateHeader
+      <AISnippetHeader
         baseElementId={baseElementId}
         displayMode={displayMode}
         onDisplayMode={setDisplayMode}
@@ -117,4 +117,4 @@ const AITemplatePreview = ({ baseElementId, schema, style, html, mode, version }
   );
 };
 
-export default AITemplatePreview;
+export default AISnippetPreview;

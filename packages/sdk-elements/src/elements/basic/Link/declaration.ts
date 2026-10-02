@@ -40,7 +40,7 @@ const declaration = elementDeclaration<LinkAttributes>()({
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: ['link']
     },

@@ -87,7 +87,7 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

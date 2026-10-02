@@ -38,7 +38,7 @@ export type AiLiveStep =
   | { type: 'text'; text: string };
 
 // elementId = element already in schema (post-creation)
-// baseElementId = proposed template preview, elements injected via StoreProvider overlay
+// baseElementId = proposed snippet preview, elements injected via StoreProvider overlay
 // Note: preview_concept is now processed in the backend, which validates schemas before sending
 export type AiMessagePreview =
   | { elementId: string; baseElementId?: never }

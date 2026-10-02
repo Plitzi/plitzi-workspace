@@ -9,11 +9,11 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 
 import OverlayButton from './OverlayButton';
-import TemplateForm from '../../Models/TemplateForm';
+import SnippetForm from '../../Models/SnippetForm';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { TemplateFormValues } from '../../Models/TemplateForm';
+import type { SnippetFormValues } from '../../Models/SnippetForm';
 import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
@@ -45,14 +45,14 @@ const OverlayButtonContainer = ({
   const { showModal } = useModal();
   const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const { builderHandler, builderElementPermissions, mode, elementAsTemplate } = use(BuilderContext);
+  const { builderHandler, builderElementPermissions, mode, elementAsSnippet } = use(BuilderContext);
   const {
     definition: { items }
   } = element;
 
   const componentConfig = useMemo(() => builderElementPermissions(element), [element, builderElementPermissions]);
 
-  const { canDelete = true, canTemplate = true } = componentConfig;
+  const { canDelete = true, canSnippet = true } = componentConfig;
 
   const handleMouseRemoveEnter = useCallback(() => onHoverRemove?.(true), [onHoverRemove]);
 
@@ -84,21 +84,21 @@ const OverlayButtonContainer = ({
     }
   }, [addPopup, existsPopup, mode]);
 
-  const handleClickAsTemplate = useCallback(async () => {
-    const response = await showModal<TemplateFormValues>(
+  const handleClickAsSnippet = useCallback(async () => {
+    const response = await showModal<SnippetFormValues>(
       <Modal.Header>
-        <h4>Add Template</h4>
+        <h4>Add Snippet</h4>
       </Modal.Header>,
       ({ onSubmit, onClose }) => (
         <Modal.Body>
-          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
+          <SnippetForm onSubmit={onSubmit} onClose={onClose} />
         </Modal.Body>
       )
     );
 
     if (response) {
       const { name, description, cdnIdentifier, bucketIdentifier } = response;
-      void elementAsTemplate(
+      void elementAsSnippet(
         { cdnIdentifier, bucketIdentifier },
         getSchema(),
         getStyle(),
@@ -108,7 +108,7 @@ const OverlayButtonContainer = ({
       );
       addToast(
         <div>
-          Template <b>{name}</b> Created
+          Snippet <b>{name}</b> Created
         </div>,
         {
           appeareance: 'success',
@@ -117,7 +117,7 @@ const OverlayButtonContainer = ({
         }
       );
     }
-  }, [addToast, element, elementAsTemplate, getSchema, getStyle, showModal]);
+  }, [addToast, element, elementAsSnippet, getSchema, getStyle, showModal]);
 
   const saveAsComponent = useSaveAsComponent();
   const handleClickAsComponent = useCallback(() => void saveAsComponent(element), [saveAsComponent, element]);
@@ -207,8 +207,8 @@ const OverlayButtonContainer = ({
       <OverlayButton title="Tools" isRemoving={hoverRemove} onClick={handleClickProperties}>
         <i className="fas fa-tools" />
       </OverlayButton>
-      {!!items && canTemplate && (
-        <OverlayButton title="Save as template" isRemoving={hoverRemove} onClick={handleClickAsTemplate}>
+      {!!items && canSnippet && (
+        <OverlayButton title="Save as snippet" isRemoving={hoverRemove} onClick={handleClickAsSnippet}>
           <i className="fas fa-cube" />
         </OverlayButton>
       )}

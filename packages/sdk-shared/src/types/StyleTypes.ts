@@ -165,6 +165,6 @@ export type StyleContextValue = {
   styleAddFont?: unknown;
   styleUpdateFont?: unknown;
   styleRemoveFont?: unknown;
-  styleAddTemplate?: unknown;
+  styleAddSnippet?: unknown;
   styleUpdateSettings?: unknown;
 };

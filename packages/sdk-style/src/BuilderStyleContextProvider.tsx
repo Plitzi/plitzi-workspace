@@ -234,9 +234,9 @@ const BuilderStyleContextProvider = ({
     [dispatchStyle]
   );
 
-  const styleAddTemplate = useCallback(
+  const styleAddSnippet = useCallback(
     (platform: Style['platform'], fromSubscriptions = false) =>
-      dispatchStyle({ type: StyleActions.STYLE_ADD_TEMPLATE, platform, fromSubscriptions }),
+      dispatchStyle({ type: StyleActions.STYLE_ADD_SNIPPET, platform, fromSubscriptions }),
     [dispatchStyle]
   );
 
@@ -358,7 +358,7 @@ const BuilderStyleContextProvider = ({
       styleAddFont,
       styleUpdateFont,
       styleRemoveFont,
-      styleAddTemplate,
+      styleAddSnippet,
       styleUpdateSettings
     }),
     [
@@ -376,7 +376,7 @@ const BuilderStyleContextProvider = ({
       styleAddFont,
       styleUpdateFont,
       styleRemoveFont,
-      styleAddTemplate,
+      styleAddSnippet,
       styleUpdateSettings
     ]
   );

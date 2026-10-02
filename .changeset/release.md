@@ -63,3 +63,20 @@ marks its dynamic segments and the page being edited. Fixed on the way: a page w
   element and page ops, `plitzi://flags/{env}`.
 - **Global sources** are one list now (`@plitzi/sdk-shared/dataSource/globalSources`), read by the runtime and the
   authoring validator alike.
+
+## Element templates are Snippets
+
+What the builder saves from a subtree and drops into a page was called a template, the word a space's own starting
+point already goes by. It is a **snippet** now, everywhere, with no alias for the old names:
+
+- **Builder:** "Save as snippet" on an element, **Snippets** in the resources list.
+- **CDN:** a snippet is uploaded to `snippets/` in the space's folder, with the resource type `snippet`. A file already
+  in `templates/` is no longer listed as one: upload it again.
+- **Authoring:** `authorSnippet`, `validateSnippet`, `SnippetSpec` and `AuthoredSnippet`, which returns `{ snippet,
+  warnings }`. The validator codes are `SNIPPET_*`.
+- **Shared and schema:** the `Snippet` type (`@plitzi/sdk-shared/types/SnippetTypes`), `SpaceAddSnippet` and
+  `SPACE_ADD_SNIPPET`, `SCHEMA_ADD_SNIPPET` and `STYLE_ADD_SNIPPET`, `schemaAddSnippet` / `styleAddSnippet` on the
+  event bridge, and `FlatMap.flatAsSnippet`.
+- **Plugins:** the builder config key `canTemplate` is `canSnippet`.
+
+Space templates — what a new space starts as — keep their name.

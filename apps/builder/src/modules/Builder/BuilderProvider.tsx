@@ -35,7 +35,7 @@ import type {
 export type BuilderProviderProps = {
   children: React.ReactNode;
   baseElementId: string;
-  mode?: 'normal' | 'template';
+  mode?: 'normal' | 'snippet';
   schemaName?: string;
 
   onHandler?: (event: EventBridgeEvent, data: unknown[]) => void;
@@ -94,12 +94,12 @@ const BuilderProvider = ({
 
       let permissions = get(componentDefinitions.current, `${type}.content.builder`, {}) as PluginBuilder;
       if (!path && element.id === baseElementId) {
-        permissions = { ...permissions, canDelete: false, canTemplate: false, canMove: false };
+        permissions = { ...permissions, canDelete: false, canSnippet: false, canMove: false };
       }
 
       if (mode !== 'normal' && !path) {
-        permissions.canTemplate = false;
-      } else if (mode === 'normal' && path === 'canTemplate') {
+        permissions.canSnippet = false;
+      } else if (mode === 'normal' && path === 'canSnippet') {
         return false;
       }
 
@@ -253,7 +253,7 @@ const BuilderProvider = ({
         return false;
       }
 
-      if (typeArr[1] === 'plitzi-template') {
+      if (typeArr[1] === 'plitzi-snippet') {
         const dataParsed = data as {
           elements: Record<string, Element>;
           baseElement?: Element;
@@ -265,8 +265,8 @@ const BuilderProvider = ({
           return false;
         }
 
-        // The payload is a throwaway copy of the template document, so nothing here has to be detached from an
-        // original — the names it brought are kept, and `SCHEMA_ADD_TEMPLATE` renames only the ones this space
+        // The payload is a throwaway copy of the snippet document, so nothing here has to be detached from an
+        // original — the names it brought are kept, and `SCHEMA_ADD_SNIPPET` renames only the ones this space
         // already holds. Re-cloning first would have renamed all of them and thrown the authored names away.
         const baseElement = {
           ...pick(dataParsed.baseElement, ['id', 'attributes', 'definition']),
@@ -280,7 +280,7 @@ const BuilderProvider = ({
         );
 
         builderHandler(
-          'schemaAddTemplate',
+          'schemaAddSnippet',
           toElementId,
           baseElement,
           dropPosition,
@@ -362,7 +362,7 @@ const BuilderProvider = ({
     [getElement, getSchema, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected]
   );
 
-  const elementAsTemplate = useCallback(
+  const elementAsSnippet = useCallback(
     async (
       { cdnIdentifier, bucketIdentifier }: { cdnIdentifier: string; bucketIdentifier: string },
       schema: Schema,
@@ -371,7 +371,7 @@ const BuilderProvider = ({
       description: string,
       element: Element
     ) => {
-      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(schema, style, element.id);
+      const { elements, elementsStyle, variables } = FlatMap.flatAsSnippet(schema, style, element.id);
       if (!elements.item) {
         return;
       }
@@ -388,7 +388,7 @@ const BuilderProvider = ({
       });
       await mutate(
         'SpaceAddResource',
-        { cdnIdentifier, bucketIdentifier, resource: file, type: 'template', compression: undefined },
+        { cdnIdentifier, bucketIdentifier, resource: file, type: 'snippet', compression: undefined },
         false,
         false,
         { customFetch: true }
@@ -504,7 +504,7 @@ const BuilderProvider = ({
       builderElementPermissions,
       builderHandler,
       updateElement,
-      elementAsTemplate,
+      elementAsSnippet,
       builderGetBaseElement: getBaseElement,
       builderDropElement: drop,
       builderSetElementVisibility: setVisibility
@@ -520,7 +520,7 @@ const BuilderProvider = ({
       builderElementPermissions,
       builderHandler,
       updateElement,
-      elementAsTemplate,
+      elementAsSnippet,
       getBaseElement,
       drop,
       setVisibility

@@ -28,7 +28,7 @@ const declaration = elementDeclaration<LoadingAttributes>()({
       canSelect: true,
       canDragDrop: false,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },
