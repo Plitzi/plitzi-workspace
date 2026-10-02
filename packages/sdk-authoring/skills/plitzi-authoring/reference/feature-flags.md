@@ -66,10 +66,11 @@ The space's declaration answers first. Above it, in order, each may override a f
 2. the SDK embedding the space — `<PlitziSdk flags={{ newCheckout: true }} />` or `render(…, { flags })`;
 3. a tester with the dev tools — the **Flags** tab forces one for that browser, only where debugging is authorized.
 
-The draft (`main`) applies its flags as they are. Flags are **not part of a snapshot**: each environment has one set,
+The draft (`main`) applies its flags as they are. Flags are **not served from a snapshot**: each environment has one set,
 shared by every snapshot it serves. Publishing a snapshot sends the draft's flags with it; the builder's *Publish flags*
-sends only them, with no new snapshot; rolling a snapshot back keeps the environment's flags. A self-hosted server keeps
-the last ones it fetched, so it serves them with Plitzi unreachable.
+sends only them, with no new snapshot; rolling a snapshot back keeps the environment's flags. Each snapshot keeps a copy
+of the flags it was published with, used only when the environment's own cannot be read (after a Redis copy of them),
+and a self-hosted server keeps the last ones it fetched — so a published site keeps its flags with Plitzi unreachable.
 
 ## When the feature ships
 

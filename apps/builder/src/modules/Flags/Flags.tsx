@@ -130,7 +130,8 @@ const Flags = () => {
     <div className="flex h-full w-full flex-col gap-2 p-2">
       <Alert intent="info" size="sm" solid={false}>
         Flags are kept apart from the space's snapshots. Each environment has one set, used by every snapshot it serves:
-        rolling a snapshot back keeps its flags, and Publish flags changes them without a new snapshot.
+        rolling a snapshot back keeps its flags, and Publish flags changes them without a new snapshot. A snapshot only
+        keeps a copy, as a fallback for when the environment's flags cannot be read.
       </Alert>
       <div className="flex items-center gap-2">
         <Input className="grow" placeholder="Search Flags" size="xs" value={filter} onChange={setFilter}>

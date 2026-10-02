@@ -22,7 +22,8 @@
 
 - **What they are:** `schema.flags`, a space's switches by name — a default and rules over the environment, the host,
   the URL and the visitor. Read with the document, stored apart from its snapshots: one set per environment, turned
-  without a new revision. See `docs/en/feature-flags.md`.
+  without a new revision; a snapshot keeps a copy, read only when the environment's flags (and their Redis copy)
+  cannot be. See `docs/en/feature-flags.md`.
 - **Caches follow them:** `SSRSpaceDeployment.flagsVersion` (the flags' hash) keys the HTML, RSC and `offlineData`
   caches of `@plitzi/sdk-server`; `createCloudAdapters` probes `flagsHash` and fetches `SpaceFlags` only when it moved
   — a pinned revision included — and keeps the last flags in its shared cache for a cold start with Plitzi down.

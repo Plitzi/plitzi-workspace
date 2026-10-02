@@ -29,10 +29,20 @@ an agent — but they are **stored apart from the space's documents**: one docum
 `Space` model joins it to every space it reads (`afterLoad`) and writes it back only when a save changed it, so no
 reader has to know. Each document carries the hash of its content, which changes exactly when the flags do.
 
-Flags are therefore **not part of a snapshot**. A snapshot stays immutable; turning a flag in production rewrites a few
-bytes instead of copying the space; rolling a snapshot back keeps the environment's flags; and a space taken out as a
-project (`plitzi create --from`) brings the flags it has now — from then on the developer's own. A self-hosted server
-reading from Plitzi keeps the last flags it fetched in its cache, so it serves them with Plitzi unreachable.
+Flags are therefore **not served from a snapshot**. Turning a flag in production rewrites a few bytes instead of copying
+the space; rolling a snapshot back keeps the environment's flags; and a space taken out as a project
+(`plitzi create --from`) brings the flags it has now — from then on the developer's own.
+
+A snapshot still **keeps a copy**: the flags its environment had when it was published, stored in the revision's own
+document. It is never what a page is served with while the flags can be read — only the last fallback. Where an
+environment's flags come from, the first that answers deciding:
+
+1. `space_flags` in Mongo;
+2. the Redis copy (`space:flags:<spaceId>:<environment>`), written with every change, for when Mongo cannot be read;
+3. the flags the revision was published with (`snapshotFlagsOf` for a reader with no document in hand).
+
+The draft has no third step: its flags live in `space_flags` alone. A self-hosted server reading from Plitzi adds its
+own cache on top — the last flags it fetched — so it serves them with Plitzi unreachable.
 
 ## Who decides
 

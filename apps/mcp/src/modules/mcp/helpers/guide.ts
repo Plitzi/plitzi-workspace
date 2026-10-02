@@ -770,8 +770,8 @@ still rendered; a flag decides whether it exists at all.
 A gate or a read naming a flag the space does not declare is an error (\`flag-undeclared\`, \`flag-unknown\`): an
 undeclared flag is off. A declared flag nothing reads is a warning (\`flag-unused\`) — remove it once the feature
 ships. The draft applies flags at once. Flags are not part of a snapshot: each environment has one set, shared by every
-snapshot it serves — publishing a snapshot sends the draft's with it, the builder's *Publish flags* sends only them, and
-a rollback keeps them. Above the space, the server rendering it, the SDK embedding it and a tester with the dev tools
+snapshot it serves — publishing a snapshot sends the draft's with it (and the snapshot keeps a copy, as a fallback), the
+builder's *Publish flags* sends only them, and a rollback keeps them. Above the space, the server rendering it, the SDK embedding it and a tester with the dev tools
 may each override a flag; you only ever write the space's own.
 
 ## Shared layouts — the chrome a page does NOT contain
