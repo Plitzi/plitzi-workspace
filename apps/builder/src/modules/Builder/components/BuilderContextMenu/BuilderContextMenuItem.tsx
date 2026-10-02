@@ -6,7 +6,10 @@ import type { HTMLAttributes, MouseEvent, ReactNode } from 'react';
 export type BuilderContextMenuItemProps = {
   id?: string;
   title?: string;
+  /** Only a shortcut that exists: a menu that shows one teaches it. */
   shortcut?: string;
+  /** `danger` for what removes. */
+  intent?: 'default' | 'danger';
   children?: ReactNode;
   className?: string;
   onClick?: (e: MouseEvent, id: string) => void;
@@ -15,7 +18,8 @@ export type BuilderContextMenuItemProps = {
 const BuilderContextMenuItem = ({
   id = '',
   title = 'Title',
-  shortcut = '',
+  shortcut,
+  intent = 'default',
   children,
   className = '',
   onClick,
@@ -26,17 +30,30 @@ const BuilderContextMenuItem = ({
   return (
     <div
       className={clsx(
-        'flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none last:border-b-0 hover:bg-blue-100 dark:border-zinc-700 dark:hover:bg-blue-900/40',
+        'group mx-1 flex h-8 cursor-pointer items-center justify-between gap-6 rounded-md px-2.5 text-[13px] transition-colors duration-100 select-none',
+        {
+          'hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-400/15 dark:hover:text-primary-200 text-zinc-800 dark:text-zinc-200':
+            intent === 'default',
+          'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15': intent === 'danger'
+        },
         className
       )}
       onClick={handleClick}
       {...otherProps}
     >
-      <div className="flex items-center">
-        <div className="mr-1 text-blue-400">{children}</div>
-        {title}
+      <div className="flex min-w-0 items-center gap-2.5">
+        {children && (
+          <span
+            className={clsx('flex w-4 justify-center text-xs', {
+              'text-zinc-400 group-hover:text-current dark:text-zinc-500': intent === 'default'
+            })}
+          >
+            {children}
+          </span>
+        )}
+        <span className="truncate">{title}</span>
       </div>
-      <div className="text-xs text-[10px] text-gray-500 opacity-80 dark:text-zinc-400">{shortcut}</div>
+      {shortcut && <kbd className="font-sans text-[11px] text-zinc-400 dark:text-zinc-500">{shortcut}</kbd>}
     </div>
   );
 };

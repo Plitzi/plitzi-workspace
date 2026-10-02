@@ -15,6 +15,7 @@ import Interactions from '@pmodules/Interactions/Interactions';
 import BuilderBreadcrumb from '../BuilderBreadcrumb';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
 import ElementSettings from './ElementSettings';
+import NothingSelected from './NothingSelected';
 import ToolsList from '../ToolsList';
 
 import type { ComponentDefinition, Element } from '@plitzi/sdk-shared';
@@ -130,11 +131,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   );
 
   if (!element) {
-    return (
-      <div className="m-3 self-stretch rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
-        Click on a component to select it
-      </div>
-    );
+    return <NothingSelected />;
   }
 
   const {

@@ -15,16 +15,20 @@ const PreviewModeButtons = () => {
     setPreviewMode(state => !state);
   }, [eventBridge, setPreviewMode]);
 
+  const saveTitle = queueProcessing ? 'Saving your changes…' : 'All changes saved';
+  const previewTitle = previewMode ? 'Back to editing' : 'Preview: use the page as a visitor would';
+
   return (
     <IconGroup gap={4}>
       <IconGroup.Icon
         icon={queueProcessing ? 'fas fa-sync fa-spin' : 'fas fa-check'}
-        title="Mode: Desktop"
+        title={saveTitle}
         intent="custom"
         className="text-green-500"
       />
       <IconGroup.Icon
         icon={previewMode ? 'fa-solid fa-pause' : 'fa-solid fa-play'}
+        title={previewTitle}
         cursor="pointer"
         onClick={handleClickPreviewMode}
       />

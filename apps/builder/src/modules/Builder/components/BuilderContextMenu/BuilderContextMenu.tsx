@@ -7,6 +7,7 @@ import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, us
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
+import { deleteKey, withModifier } from '@pmodules/Keyboard';
 
 import TemplateForm from '../../Models/TemplateForm';
 import BuilderElementTools from '../BuilderElementTools';
@@ -239,7 +240,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
     return (
       <Card
         ref={ref}
-        className="builder__context-menu z-99999999 flex flex-col p-3 shadow-2xl"
+        className="builder__context-menu z-99999999 flex flex-col rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
         style={{
           position: 'fixed',
           top: yPos,
@@ -251,8 +252,8 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
         size="custom"
       >
         <Card.Body className="w-full">
-          <div className="flex h-20 items-center justify-center rounded-sm border-2 border-dashed p-3">
-            No components selected.
+          <div className="flex h-16 items-center justify-center text-center text-xs text-gray-500 dark:text-zinc-400">
+            Select an element to see what you can do with it.
           </div>
         </Card.Body>
       </Card>
@@ -265,7 +266,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   return (
     <Card
       ref={ref}
-      className="builder__context-menu z-99999999 flex overflow-visible rounded-sm bg-slate-100 shadow-2xl dark:bg-zinc-800"
+      className="builder__context-menu z-99999999 flex overflow-visible rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
       style={{
         position: 'fixed',
         top: yPos,
@@ -279,29 +280,41 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
       <Card.Body className="w-full">
         <div className="flex w-full flex-col">
           <BuilderContextSubMenu onClick={handleClickParent} iframeDOM={iframeDOM} items={subMenuMemo} />
-          <BuilderContextMenuItem title="Copy Element" shortcut="CTRL / CMD + C" onClick={handleClickCopy}>
+          <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
+          <BuilderContextMenuItem title="Copy Element" shortcut={withModifier('C')} onClick={handleClickCopy}>
             <i className="fas fa-copy" />
           </BuilderContextMenuItem>
-          <BuilderContextMenuItem title="Open Tools" shortcut="CTRL +" onClick={handleClickTools}>
+          <BuilderContextMenuItem title="Duplicate Element" onClick={handleClickDuplicate}>
+            <i className="far fa-clone" />
+          </BuilderContextMenuItem>
+          <BuilderContextMenuItem title="Open Tools" onClick={handleClickTools}>
             <i className="fas fa-tools" />
           </BuilderContextMenuItem>
+          {((!!items && canTemplate) || (canDelete && !!element?.definition.parentId)) && (
+            <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
+          )}
           {!!items && canTemplate && (
-            <BuilderContextMenuItem title="Save As Template" shortcut="CTRL +" onClick={handleClickAsTemplate}>
-              <i className="fas fa-cube" />
+            <BuilderContextMenuItem title="Save As Template" onClick={handleClickAsTemplate}>
+              <i className="fa-solid fa-bookmark" />
             </BuilderContextMenuItem>
           )}
           {canDelete && !!element?.definition.parentId && (
-            <BuilderContextMenuItem title="Save As Component" shortcut="CTRL +" onClick={handleClickAsComponent}>
+            <BuilderContextMenuItem title="Save As Component" onClick={handleClickAsComponent}>
               <i className="fa-solid fa-cube" />
             </BuilderContextMenuItem>
           )}
-          <BuilderContextMenuItem title="Duplicate Element" shortcut="CTRL +" onClick={handleClickDuplicate}>
-            <i className="far fa-clone" />
-          </BuilderContextMenuItem>
           {canDelete && (
-            <BuilderContextMenuItem title=" Delete Element" shortcut="CTRL +" onClick={handleClickDelete}>
-              <i className="fas fa-trash-alt text-red-400" />
-            </BuilderContextMenuItem>
+            <>
+              <div className="my-1 h-px bg-gray-200 dark:bg-zinc-700" />
+              <BuilderContextMenuItem
+                title="Delete Element"
+                intent="danger"
+                shortcut={deleteKey}
+                onClick={handleClickDelete}
+              >
+                <i className="fas fa-trash-alt" />
+              </BuilderContextMenuItem>
+            </>
           )}
         </div>
       </Card.Body>

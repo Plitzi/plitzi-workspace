@@ -31,19 +31,18 @@ const BuilderContextSubMenu = ({ items, width = 150, iframeDOM, onClick }: Build
     <div
       ref={ref}
       className={clsx(
-        'relative flex cursor-pointer items-center justify-between border-b border-gray-300 px-4 py-1 select-none first:rounded-tl last:border-b-0 hover:bg-blue-100 dark:border-zinc-700 dark:hover:bg-blue-900/40',
-        { 'rounded-tr': items?.length === 0 }
+        'hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-400/15 dark:hover:text-primary-200 relative mx-1 flex h-8 cursor-pointer items-center justify-between gap-6 rounded-md px-2.5 text-[13px] text-zinc-800 transition-colors duration-100 select-none dark:text-zinc-200'
       )}
       onMouseLeave={handleMouseLeave}
       onMouseOver={handleMouseEnter}
     >
       <div className="flex items-center">Select Parent Element</div>
-      <div className="context-sub-menu__arrow">
+      <div className="context-sub-menu__arrow text-[10px] text-zinc-400 dark:text-zinc-500">
         <i className="fas fa-chevron-right" />
       </div>
       {showMenu && items && items.length > 0 && (
         <Card
-          className="absolute top-0 left-full z-99999999 flex overflow-hidden rounded-none rounded-l-none rounded-r-sm bg-slate-100 shadow-2xl dark:bg-zinc-800"
+          className="absolute -top-1 left-full z-99999999 ml-1 flex overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
           style={{ width: `${width}px` }}
           size="custom"
         >

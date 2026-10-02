@@ -222,7 +222,7 @@ const AppHeader = () => {
           <Button
             id="header-publish"
             size="sm"
-            title="Publish: Click Publish to go live with your latest changes."
+            title="Snapshot: keep the draft as a revision you can publish, compare or roll back to."
             onClick={handleClickPublish}
             intent="secondary"
           >
@@ -231,7 +231,7 @@ const AppHeader = () => {
           <Button
             id="header-deploy"
             size="sm"
-            title="Deploy: Click Deploy to go with the environment selected."
+            title="Publish: put a revision live on an environment's domain."
             onClick={handleClickDeploy}
             disabled={loadingDeployment}
           >

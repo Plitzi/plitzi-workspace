@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 
-import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
+import KeyboardKey from '@pmodules/Keyboard';
 
 export type HistoryFooterProps = {
   onNew: () => void;

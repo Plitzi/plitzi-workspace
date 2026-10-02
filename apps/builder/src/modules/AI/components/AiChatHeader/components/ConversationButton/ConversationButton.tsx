@@ -4,9 +4,9 @@ import clsx from 'clsx';
 import { useCallback, useEffect } from 'react';
 
 import HistoryPanel from '@pmodules/AI/components/HistoryPanel';
-import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
 import ModeLabel from '@pmodules/AI/components/ModeLabel';
 import { useAiChatContext } from '@pmodules/AI/contexts/AiChatContext';
+import KeyboardKey from '@pmodules/Keyboard';
 
 const ConversationButton = () => {
   const {

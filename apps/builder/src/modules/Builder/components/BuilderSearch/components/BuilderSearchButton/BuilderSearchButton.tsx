@@ -1,6 +1,6 @@
 import { memo, use } from 'react';
 
-import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
+import KeyboardKey from '@pmodules/Keyboard';
 
 import BuilderSearchContext from '../../BuilderSearchContext';
 

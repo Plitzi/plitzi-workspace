@@ -17,7 +17,13 @@ const DisplayModeButtons = () => {
 
   return (
     <IconGroup gap={4}>
-      <IconGroup.Icon className="relative" cursor="pointer" active={mobilePreview} onClick={handleMobilePreview}>
+      <IconGroup.Icon
+        className="relative"
+        cursor="pointer"
+        title="Show the mobile layout beside the canvas"
+        active={mobilePreview}
+        onClick={handleMobilePreview}
+      >
         <DesktopWithMobile />
       </IconGroup.Icon>
       <IconGroup.Icon

@@ -1,7 +1,7 @@
 import { Input } from '@plitzi/plitzi-ui';
 import { useCallback, useEffect, useRef } from 'react';
 
-import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
+import KeyboardKey from '@pmodules/Keyboard';
 
 export type HistorySearchProps = {
   value: string;

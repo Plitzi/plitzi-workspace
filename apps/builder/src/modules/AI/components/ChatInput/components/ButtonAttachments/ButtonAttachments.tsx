@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
+import KeyboardKey from '@pmodules/Keyboard';
 
 import type { AiAttachment, AiMode } from '@pmodules/AI/types';
 import type { ChangeEvent } from 'react';

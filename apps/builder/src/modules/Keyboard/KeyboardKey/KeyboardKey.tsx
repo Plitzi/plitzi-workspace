@@ -1,5 +1,7 @@
 import clsx from 'clsx';
 
+import { isMac, modifierKey } from '../platform';
+
 export type KeyboardKeyProps = { className?: string; commandChar?: boolean; char: string };
 
 const KeyboardKey = ({ className, commandChar = true, char }: KeyboardKeyProps) => {
@@ -10,7 +12,7 @@ const KeyboardKey = ({ className, commandChar = true, char }: KeyboardKeyProps) 
         className
       )}
     >
-      {commandChar && <span className="text-sm">⌘</span>}
+      {commandChar && <span className={clsx({ 'text-sm': isMac })}>{modifierKey}</span>}
       {char}
     </kbd>
   );

@@ -32,6 +32,17 @@
 
   $overlayZIndex: 750;
 
+  // The builder's own marks on a page it does not own: one violet, the website's, readable over a light space and a
+  // dark one alike; red only for what removes. Guides stay faint — they are on screen for hours and the content is not
+  // theirs — and labels use the system face, never whatever the space happens to set on `body`.
+  $mark: #6e52f7;
+  $markStrong: #5b3df5;
+  $markTint: rgba(110, 82, 247, 0.1);
+  $danger: #ef4444;
+  $dangerStrong: #dc2626;
+  $dangerTint: rgba(239, 68, 68, 0.1);
+  $labelFont: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
   .builder-iframe {
     min-height: 100dvh;
     position: relative;
@@ -42,14 +53,14 @@
     &.builder--display-component-border {
       &.display-component-border--black {
         .plitzi-component {
-          outline: 1px dashed black;
+          outline: 1px dashed rgba(12, 12, 20, 0.2);
           outline-offset: -1px;
         }
       }
 
       &.display-component-border--white {
         .plitzi-component {
-          outline: 1px dashed white;
+          outline: 1px dashed rgba(255, 255, 255, 0.3);
           outline-offset: -1px;
         }
       }
@@ -170,9 +181,11 @@
       }
 
       .overlay__drop-message {
-        padding: 2px 4px;
-        border-radius: 4px;
-        line-height: 14px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-family: $labelFont;
+        font-weight: 500;
+        line-height: 16px;
         font-size: 12px;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -181,44 +194,44 @@
     }
 
     &.overlay--red {
-      outline-color: #f87171;
+      outline-color: $danger;
 
       &.overlay--empty,
       &.overlay--drag.overlay--drag-inside {
-        background-color: #f871711a;
+        background-color: $dangerTint;
       }
 
       .overlay__size,
       .overlay__element-name,
       .overlay__drop-message {
-        background-color: #f87171;
+        background-color: $dangerStrong;
         color: white;
         -webkit-text-fill-color: white;
       }
 
       .overlay__button-resize {
-        border-color: #f87171;
+        border-color: $danger;
       }
     }
 
     &.overlay--blue {
-      outline-color: #7290e7;
+      outline-color: $mark;
 
       &.overlay--empty,
       &.overlay--drag.overlay--drag-inside {
-        background-color: #7290e71a;
+        background-color: $markTint;
       }
 
       .overlay__size,
       .overlay__element-name,
       .overlay__drop-message {
-        background-color: #7290e7;
+        background-color: $markStrong;
         color: white;
         -webkit-text-fill-color: white;
       }
 
       .overlay__button-resize {
-        border-color: #7290e7;
+        border-color: $mark;
       }
     }
 
@@ -229,9 +242,11 @@
       position: absolute;
       border-top-left-radius: 4px;
       color: white;
-      font-weight: bold;
-      line-height: 16px;
-      font-size: 9px;
+      font-family: $labelFont;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      line-height: 18px;
+      font-size: 10px;
     }
 
     .overlay__element-name {
@@ -245,9 +260,11 @@
       align-items: center;
       border-bottom-right-radius: 4px;
       color: white;
-      font-weight: bold;
-      line-height: 16px;
-      font-size: 9px;
+      font-family: $labelFont;
+      font-weight: 600;
+      line-height: 18px;
+      font-size: 10px;
+      letter-spacing: 0.01em;
       white-space: nowrap;
       text-overflow: ellipsis;
       pointer-events: all;
@@ -347,8 +364,9 @@
     .overlay__delete-message {
       padding: 2px 6px 2px 4px;
       border-top-right-radius: 4px;
-      background-color: #f87171;
+      background-color: $dangerStrong;
       color: white;
+      font-family: $labelFont;
       line-height: 12px;
       font-size: 12px;
       white-space: nowrap;
@@ -405,60 +423,50 @@
     }
 
     .overlay__button {
-      height: 32px;
-      width: 32px;
+      height: 30px;
+      width: 30px;
       display: flex;
       justify-content: center;
       align-items: center;
-      border-radius: 100%;
-      font-size: 16px;
+      border-radius: 8px;
+      box-shadow:
+        0 1px 2px rgba(12, 12, 20, 0.2),
+        0 6px 16px -6px rgba(12, 12, 20, 0.45);
+      font-size: 14px;
       cursor: pointer;
       pointer-events: all;
+      transition:
+        background-color 140ms ease,
+        transform 140ms ease;
+
+      &:active {
+        transform: scale(0.94);
+      }
 
       &.button--red {
-        background-color: #f87171;
+        background-color: $dangerStrong;
         color: white;
         -webkit-text-fill-color: white;
 
         &:hover {
-          background-color: #fca5a5;
+          background-color: #b91c1c;
         }
       }
 
       &.button--blue {
-        background-color: #7290e7;
+        background-color: $markStrong;
         color: white;
         -webkit-text-fill-color: white;
 
         &:hover {
-          background-color: #9ab8f2;
-        }
-      }
-
-      &.button--green {
-        background-color: #4ade80;
-        color: white;
-        -webkit-text-fill-color: white;
-
-        &:hover {
-          background-color: #86efac;
-        }
-      }
-
-      &.button--purple {
-        background-color: #c084fc;
-        color: white;
-        -webkit-text-fill-color: white;
-
-        &:hover {
-          background-color: #d8b4fe;
+          background-color: #4b31e0;
         }
       }
     }
 
     .overlay__button-resize {
       padding: 3px;
-      border: 2px solid #7290e7;
+      border: 2px solid $mark;
       border-radius: 100%;
       background-color: white;
       color: white;
@@ -467,7 +475,7 @@
       pointer-events: all;
 
       &:hover {
-        background-color: #86efac;
+        background-color: $mark;
       }
 
       &.resize--top-left {

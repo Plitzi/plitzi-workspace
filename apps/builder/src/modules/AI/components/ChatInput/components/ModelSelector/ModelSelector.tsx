@@ -4,7 +4,7 @@ import Modal from '@plitzi/plitzi-ui/Modal';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
+import KeyboardKey from '@pmodules/Keyboard';
 
 import ModelOption from './components/ModelOption';
 
