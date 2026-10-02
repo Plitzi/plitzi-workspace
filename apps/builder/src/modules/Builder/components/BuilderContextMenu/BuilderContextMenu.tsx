@@ -1,6 +1,5 @@
 import Card from '@plitzi/plitzi-ui/Card';
 import { get } from '@plitzi/plitzi-ui/helpers';
-import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -9,12 +8,10 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 import { deleteKey, withModifier } from '@pmodules/Keyboard';
 
-import SnippetForm from '../../Models/SnippetForm';
+import useSaveAsSnippet from '../../hooks/useSaveAsSnippet';
 import BuilderElementTools from '../BuilderElementTools';
 import BuilderContextMenuItem from './BuilderContextMenuItem';
 import BuilderContextSubMenu from './BuilderContextSubMenu';
-
-import type { SnippetFormValues } from '../../Models/SnippetForm';
 
 export type BuilderContextMenuProps = {
   width?: number;
@@ -24,18 +21,18 @@ export type BuilderContextMenuProps = {
 };
 
 const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: BuilderContextMenuProps) => {
-  const [getSchema, getElement, getStyle] = useBuilderStoreGetter(['schema', 'schema.flat', 'style']);
+  const [getElement] = useBuilderStoreGetter(['schema.flat']);
   const [[elementSelected, setSelected]] = useBuilderStore(['elementSelected', 'setSelected']);
   const [element = undefined] = useBuilderStore(`schema.flat.${elementSelected}`);
-  const { showModal } = useModal();
   const { existsPopup, addPopup } = usePopup();
   const ref = useRef<HTMLDivElement>(null);
   const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
   const [xPos, setXPos] = useState('0px');
   const [yPos, setYPos] = useState('0px');
   const [showMenu, setShowMenu] = useState(false);
-  const { builderElementPermissions, builderHandler, elementAsSnippet } = use(BuilderContext);
+  const { builderElementPermissions, builderHandler } = use(BuilderContext);
   const saveAsComponent = useSaveAsComponent();
+  const saveAsSnippet = useSaveAsSnippet();
   const componentConfig = useMemo(
     () => (element ? builderElementPermissions(element) : {}),
     [element, builderElementPermissions]
@@ -175,27 +172,9 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
   };
 
   const handleClickAsSnippet = async () => {
-    const response = await showModal<SnippetFormValues>(
-      <Modal.Header>
-        <h4>Add Snippet</h4>
-      </Modal.Header>,
-      ({ onSubmit, onClose }) => (
-        <Modal.Body>
-          <SnippetForm onSubmit={onSubmit} onClose={onClose} />
-        </Modal.Body>
-      )
-    );
-
-    if (response && element) {
-      const { name, description, cdnIdentifier, bucketIdentifier } = response;
-      void elementAsSnippet(
-        { cdnIdentifier, bucketIdentifier },
-        getSchema(),
-        getStyle(),
-        name,
-        description ?? '',
-        element
-      );
+    setShowMenu(false);
+    if (element) {
+      await saveAsSnippet(element);
     }
   };
 

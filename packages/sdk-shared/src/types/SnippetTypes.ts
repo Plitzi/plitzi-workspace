@@ -16,6 +16,10 @@ export type Snippet = {
     /** Root of what travels. Its subtree is the whole of `schema.flat`, and it answers to no parent. */
     baseElementId: Element['id'];
   };
-  schema: Schema;
+  /**
+   * Only what travels: the subtree and the variables its rules read. Nothing else of the space it was cut from — its
+   * pages, settings or components — comes along, and a builder showing or dropping it reads nothing else.
+   */
+  schema: Pick<Schema, 'flat' | 'variables'>;
   style: Style;
 };

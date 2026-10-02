@@ -7,12 +7,12 @@ import { createStoreDevToolsLogger } from '@plitzi/sdk-shared';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview';
 
-import type { BuilderState, Schema, Style } from '@plitzi/sdk-shared';
+import type { BuilderState, Snippet } from '@plitzi/sdk-shared';
 
 export type SnippetContentProps = {
   baseElementId: string;
-  schema: Schema;
-  style: Style;
+  schema: Snippet['schema'];
+  style: Snippet['style'];
 };
 
 const SnippetContent = ({ baseElementId, schema, style }: SnippetContentProps) => {

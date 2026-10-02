@@ -772,9 +772,9 @@ describe('schemaValidator', () => {
     });
   });
 
-  // Tests for baseElementId (useful for AI templates/previews)
-  describe('baseElementId option (AI templates/previews)', () => {
-    it('should validate valid template without pages when baseElementId provided', () => {
+  // Tests for baseElementId (useful for snippets and AI previews)
+  describe('baseElementId option (snippets and AI previews)', () => {
+    it('should validate valid snippet without pages when baseElementId provided', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
@@ -828,7 +828,7 @@ describe('schemaValidator', () => {
       expect(result.warnings.find(w => w.elementId === 'unrelated')).toBeDefined();
     });
 
-    it('should validate template with nested children from baseElementId', () => {
+    it('should validate snippet with nested children from baseElementId', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
@@ -898,7 +898,7 @@ describe('schemaValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should detect circular reference within template when baseElementId provided', () => {
+    it('should detect circular reference within snippet when baseElementId provided', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
@@ -926,7 +926,7 @@ describe('schemaValidator', () => {
       expect(result.errors.some(e => e.code === 'CIRCULAR_REFERENCE')).toBe(true);
     });
 
-    it('should detect parent-child mismatch within template when baseElementId provided', () => {
+    it('should detect parent-child mismatch within snippet when baseElementId provided', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
@@ -968,7 +968,7 @@ describe('schemaValidator', () => {
       expect(result.warnings.find(w => w.elementId === 'footer')).toBeDefined();
     });
 
-    it('should validate AI template preview with multiple elements', () => {
+    it('should validate AI preview with multiple elements', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
@@ -1026,18 +1026,18 @@ describe('schemaValidator', () => {
       expect(result.warnings).toHaveLength(0);
     });
 
-    it('should allow template without pages when baseElementId provided', () => {
+    it('should allow snippet without pages when baseElementId provided', () => {
       const schema: Schema = {
         ...EMPTY_SCHEMA.schema,
         flat: {
-          'template-root': {
-            id: 'template-root',
+          'snippet-root': {
+            id: 'snippet-root',
             attributes: {},
             definition: {
-              rootId: 'template-root',
-              label: 'Template Root',
+              rootId: 'snippet-root',
+              label: 'Snippet Root',
               type: 'container',
-              styleSelectors: { base: 'template-root' },
+              styleSelectors: { base: 'snippet-root' },
               items: ['child-1', 'child-2']
             }
           },
@@ -1045,11 +1045,11 @@ describe('schemaValidator', () => {
             id: 'child-1',
             attributes: {},
             definition: {
-              rootId: 'template-root',
+              rootId: 'snippet-root',
               label: 'Child 1',
               type: 'text',
               styleSelectors: { base: 'child-1' },
-              parentId: 'template-root',
+              parentId: 'snippet-root',
               items: []
             }
           },
@@ -1057,11 +1057,11 @@ describe('schemaValidator', () => {
             id: 'child-2',
             attributes: {},
             definition: {
-              rootId: 'template-root',
+              rootId: 'snippet-root',
               label: 'Child 2',
               type: 'container',
               styleSelectors: { base: 'child-2' },
-              parentId: 'template-root',
+              parentId: 'snippet-root',
               items: []
             }
           }
@@ -1073,7 +1073,7 @@ describe('schemaValidator', () => {
         definition: { name: '', permanentUrl: '' }
       };
 
-      const result = validateSchema(schema, { baseElementId: 'template-root' });
+      const result = validateSchema(schema, { baseElementId: 'snippet-root' });
       expect(result.valid).toBe(true);
     });
   });

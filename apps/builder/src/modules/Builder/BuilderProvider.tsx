@@ -29,7 +29,8 @@ import type {
   DropPosition,
   BuilderNetworkContextValue,
   BuilderQueriesMap,
-  BuilderMutationsMap
+  BuilderMutationsMap,
+  Snippet
 } from '@plitzi/sdk-shared';
 
 export type BuilderProviderProps = {
@@ -60,10 +61,11 @@ const BuilderProvider = ({
     'elementHovered',
     'elementSelected'
   ]);
-  const [getElement, getElementSelected, getSchema] = useBuilderStoreGetter([
+  const [getElement, getElementSelected, getSchema, getStyle] = useBuilderStoreGetter([
     'schema.flat',
     'elementSelected',
-    'schema'
+    'schema',
+    'style'
   ]);
 
   // Builder Methods
@@ -362,39 +364,36 @@ const BuilderProvider = ({
     [getElement, getSchema, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected]
   );
 
-  const elementAsSnippet = useCallback(
-    async (
-      { cdnIdentifier, bucketIdentifier }: { cdnIdentifier: string; bucketIdentifier: string },
-      schema: Schema,
-      style: Style,
-      name: string,
-      description: string,
-      element: Element
-    ) => {
-      const { elements, elementsStyle, variables } = FlatMap.flatAsSnippet(schema, style, element.id);
+  const elementAsSnippet = useCallback<BuilderContextValue['elementAsSnippet']>(
+    async ({ cdnIdentifier, bucketIdentifier }, { name, description }, element) => {
+      const { elements, elementsStyle, variables } = FlatMap.flatAsSnippet(getSchema(), getStyle(), element.id);
       if (!elements.item) {
-        return;
+        return { saved: false, reason: `"${element.definition.label}" is no longer on the page.` };
       }
 
-      const jsonData = {
+      const snippet: Snippet = {
         definition: { name, description, baseElementId: elements.item.id },
         schema: { flat: elements.acum, variables },
         style: { ...elementsStyle, cache: generateCache(elementsStyle) }
       };
-
-      const file = new File([JSON.stringify(jsonData, null, 2)], `${name}.json`, {
+      const file = new File([JSON.stringify(snippet, null, 2)], `${name}.json`, {
         type: 'application/json',
         lastModified: Date.now()
       });
-      await mutate(
+      const { error } = await mutate(
         'SpaceAddResource',
         { cdnIdentifier, bucketIdentifier, resource: file, type: 'snippet', compression: undefined },
         false,
         false,
         { customFetch: true }
       );
+      if (error) {
+        return { saved: false, reason: error instanceof Error ? error.message : error };
+      }
+
+      return { saved: true };
     },
-    [mutate]
+    [getSchema, getStyle, mutate]
   );
 
   const setVisibility = useCallback(

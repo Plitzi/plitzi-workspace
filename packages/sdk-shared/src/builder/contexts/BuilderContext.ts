@@ -32,15 +32,15 @@ export type BuilderContextValue = {
     attributeValue: unknown,
     category?: 'attributes' | 'definition'
   ) => void;
-  /** Saves an element as a snippet file in a public bucket of one of the space's CDNs. */
+  /**
+   * Saves an element and what it holds as a snippet file in a public bucket of one of the space's CDNs, and says
+   * whether it was saved — and why not, in words for whoever asked.
+   */
   elementAsSnippet: (
     target: { cdnIdentifier: string; bucketIdentifier: string },
-    schema: Schema,
-    style: Style,
-    name: string,
-    description: string,
+    details: { name: string; description: string },
     element: Element
-  ) => Promise<void>;
+  ) => Promise<{ saved: true } | { saved: false; reason: string }>;
   builderGetBaseElement: (
     otherBaseElementId?: string
   ) => undefined | { data: Element; Plugin: ComponentPluginWithHOC | Record<string, ComponentPluginWithHOC> };

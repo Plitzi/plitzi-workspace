@@ -1,3 +1,5 @@
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+
 import { GLOBAL_SOURCES } from './bindings';
 import { slugify } from './ids';
 import { authorSpace } from './space';
@@ -104,7 +106,7 @@ const looksMinted = (selector: string, type: string): boolean => new RegExp(`^${
  * A warning rather than an error, because a name absent from the style has two readings and only the author can
  * tell them apart; deduped by name, so a class named by forty elements is heard once.
  */
-const validateSelectors = (schema: Schema, style: Style): SchemaValidationError[] => {
+const validateSelectors = (schema: Snippet['schema'], style: Style): SchemaValidationError[] => {
   const missing = new Map<string, string>();
 
   Object.values(schema.flat).forEach(element => {
@@ -142,7 +144,7 @@ const validateSelectors = (schema: Schema, style: Style): SchemaValidationError[
  * the one that survives every other check, since the document is internally consistent about a name that is
  * simply not there.
  */
-const validateBindingScope = (schema: Schema): SchemaValidationError[] => {
+const validateBindingScope = (schema: Snippet['schema']): SchemaValidationError[] => {
   const errors: SchemaValidationError[] = [];
   const refs = new Set(Object.keys(schema.flat));
 
@@ -220,7 +222,11 @@ export const validateSnippet = (snippet: Snippet, options: SpaceValidationOption
     })
   );
 
-  const { errors: spaceErrors, warnings } = validateSpace({ schema, style }, { ...options, baseElementId });
+  // Read as a space with no pages: the fragment is all the space there is, and nothing else of one travels with it.
+  const { errors: spaceErrors, warnings } = validateSpace(
+    { schema: { ...EMPTY_SCHEMA.schema, ...schema }, style },
+    { ...options, baseElementId }
+  );
   // A binding onto a provider left behind is also a name the structural pass cannot resolve; the snippet's own
   // reading says what to do about it, so it is the one that is kept.
   const outOfScope = validateBindingScope(schema);
@@ -277,7 +283,7 @@ export const authorSnippet = (spec: SnippetSpec, options: AuthorSpaceOptions = {
 
   const snippet: Snippet = {
     definition: { name, description, baseElementId },
-    schema: { ...schema, flat: fragmentOf(schema.flat, baseElementId), pages: [] },
+    schema: { flat: fragmentOf(schema.flat, baseElementId), variables: schema.variables },
     style
   };
 

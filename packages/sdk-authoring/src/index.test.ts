@@ -54,7 +54,7 @@ describe('the authoring surface', () => {
     });
 
     expect(warnings).toEqual([]);
-    expect(snippet.schema.pages).toEqual([]);
+    expect(Object.keys(snippet.schema).toSorted()).toEqual(['flat', 'variables']);
     expect(snippet.schema.flat[snippet.definition.baseElementId].definition.parentId).toBeUndefined();
     expect(JSON.parse(JSON.stringify(snippet))).toEqual(snippet);
   });

@@ -1,4 +1,4 @@
-import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
+import { set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, use } from 'react';
 
@@ -77,9 +77,8 @@ const useDragElement = ({ attributes, type, variables, manifest, label }: UseDra
         return;
       }
 
-      const flat = get(manifest, 'schema.flat', {}) as Record<string, Element>;
-      const variables = get(manifest, 'schema.variables', []);
-      const snippetBaseElementId = get(manifest, 'definition.baseElementId', '');
+      const { flat, variables } = manifest.schema;
+      const snippetBaseElementId = manifest.definition.baseElementId;
       const baseElement = flat[snippetBaseElementId] as Element | undefined;
       if (!baseElement) {
         return;
@@ -92,7 +91,7 @@ const useDragElement = ({ attributes, type, variables, manifest, label }: UseDra
 
       e.dataTransfer.setData(
         'add##plitzi-snippet',
-        JSON.stringify({ elements, baseElement, style: get(manifest, 'style', {}), variables })
+        JSON.stringify({ elements, baseElement, style: manifest.style, variables })
       );
     },
     [manifest]

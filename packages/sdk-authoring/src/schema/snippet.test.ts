@@ -46,7 +46,7 @@ describe('authorSnippet', () => {
     const { baseElementId } = snippet.definition;
     const base = snippet.schema.flat[baseElementId];
 
-    expect(snippet.schema.pages).toEqual([]);
+    expect(Object.keys(snippet.schema).toSorted()).toEqual(['flat', 'variables']);
     expect(Object.values(snippet.schema.flat).some(element => element.definition.type === 'page')).toBe(false);
     expect(base.definition.parentId).toBeUndefined();
     expect(Object.values(snippet.schema.flat).every(element => element.definition.rootId === baseElementId)).toBe(true);
@@ -84,6 +84,24 @@ describe('authorSnippet', () => {
 
 describe('validateSnippet', () => {
   const authored = (overrides: Partial<SnippetSpec> = {}): Snippet => authorSnippet(minimal(overrides)).snippet;
+
+  it('reads a snippet the builder cut out of a space as it reads an authored one', () => {
+    const { schema, style } = authorSpace({
+      name: 'Shop',
+      permanentUrl: 'shop',
+      classes: { card: { desktop: { padding: '8px' } } },
+      pages: [{ name: 'Home', slug: '', body: [container([text('Hi')], { id: 'card', class: 'card' })] }]
+    });
+    // What `BuilderProvider` uploads from "Save as snippet": the subtree, its rules and its variables, and no more.
+    const { elements, elementsStyle, variables } = FlatMap.flatAsSnippet(schema, style, 'card');
+    const cut: Snippet = {
+      definition: { name: 'Card', description: '', baseElementId: elements.item?.id ?? '' },
+      schema: { flat: elements.acum, variables },
+      style: elementsStyle
+    };
+
+    expect(validateSnippet(cut)).toEqual({ valid: true, errors: [], warnings: [] });
+  });
 
   it('warns about the one class of a stacked selector the snippet does not carry, and only that one', () => {
     const snippet = authored();

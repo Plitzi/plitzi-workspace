@@ -78,5 +78,11 @@ point already goes by. It is a **snippet** now, everywhere, with no alias for th
   `SPACE_ADD_SNIPPET`, `SCHEMA_ADD_SNIPPET` and `STYLE_ADD_SNIPPET`, `schemaAddSnippet` / `styleAddSnippet` on the
   event bridge, and `FlatMap.flatAsSnippet`.
 - **Plugins:** the builder config key `canTemplate` is `canSnippet`.
+- **One document, whoever writes it:** a snippet's `schema` is only what travels — `flat` and `variables` — whether
+  `authorSnippet` wrote it or the builder saved it. Until now an authored one carried a whole space (`pages: []`, its
+  settings), which the builder's preview laid over the space being edited, and one the builder saved failed
+  `validateSnippet` (`INVALID_PAGES`).
+- **Saving says how it went:** "Save as snippet" announces the snippet once the upload answered, and says why when it
+  did not — it used to report it created before knowing, and from the context menu said nothing at all.
 
 Space templates — what a new space starts as — keep their name.

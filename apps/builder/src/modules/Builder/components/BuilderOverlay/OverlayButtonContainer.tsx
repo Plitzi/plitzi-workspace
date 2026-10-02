@@ -1,19 +1,16 @@
-import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { memo, useCallback, use, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 
 import OverlayButton from './OverlayButton';
-import SnippetForm from '../../Models/SnippetForm';
+import useSaveAsSnippet from '../../hooks/useSaveAsSnippet';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { SnippetFormValues } from '../../Models/SnippetForm';
 import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
@@ -36,16 +33,13 @@ const OverlayButtonContainer = ({
   zoom = 1,
   onHoverRemove
 }: OverlayButtonContainerProps) => {
-  const [getSchema, getStyle] = useBuilderStoreGetter(['schema', 'style']);
   const [[elementSelected, setSelected, setHovered]] = useBuilderStore([
     'elementSelected',
     'setSelected',
     'setHovered'
   ]);
-  const { showModal } = useModal();
-  const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const { builderHandler, builderElementPermissions, mode, elementAsSnippet } = use(BuilderContext);
+  const { builderHandler, builderElementPermissions, mode } = use(BuilderContext);
   const {
     definition: { items }
   } = element;
@@ -84,40 +78,8 @@ const OverlayButtonContainer = ({
     }
   }, [addPopup, existsPopup, mode]);
 
-  const handleClickAsSnippet = useCallback(async () => {
-    const response = await showModal<SnippetFormValues>(
-      <Modal.Header>
-        <h4>Add Snippet</h4>
-      </Modal.Header>,
-      ({ onSubmit, onClose }) => (
-        <Modal.Body>
-          <SnippetForm onSubmit={onSubmit} onClose={onClose} />
-        </Modal.Body>
-      )
-    );
-
-    if (response) {
-      const { name, description, cdnIdentifier, bucketIdentifier } = response;
-      void elementAsSnippet(
-        { cdnIdentifier, bucketIdentifier },
-        getSchema(),
-        getStyle(),
-        name,
-        description ?? '',
-        element
-      );
-      addToast(
-        <div>
-          Snippet <b>{name}</b> Created
-        </div>,
-        {
-          appeareance: 'success',
-          autoDismiss: true,
-          placement: 'top-right'
-        }
-      );
-    }
-  }, [addToast, element, elementAsSnippet, getSchema, getStyle, showModal]);
+  const saveAsSnippet = useSaveAsSnippet();
+  const handleClickAsSnippet = useCallback(() => void saveAsSnippet(element), [saveAsSnippet, element]);
 
   const saveAsComponent = useSaveAsComponent();
   const handleClickAsComponent = useCallback(() => void saveAsComponent(element), [saveAsComponent, element]);
