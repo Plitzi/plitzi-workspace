@@ -4178,9 +4178,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@plitzi/plitzi-ui@npm:^1.6.26":
-  version: 1.6.26
-  resolution: "@plitzi/plitzi-ui@npm:1.6.26"
+"@plitzi/plitzi-ui@portal:../plitzi-ui::locator=%40plitzi%2Fplitzi-workspace%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@plitzi/plitzi-ui@portal:../plitzi-ui::locator=%40plitzi%2Fplitzi-workspace%40workspace%3A."
   dependencies:
     "@codemirror/autocomplete": "npm:^6.20.3"
     "@codemirror/commands": "npm:^6.11.1"
@@ -4211,9 +4211,8 @@ __metadata:
     react-dom: ^19.2.8
     react-hook-form: ^7.85.0
     zod: ^4.6.4
-  checksum: 10c0/48d30db9c0f9a9cf5ec5e44945c1ddc6dc66f7095bbab30363753b2b285f903ac2c3ddad49a3fa3a39c74468a38cb2cb87dde515b9772d8f4f72b7a9886d78d3
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@plitzi/plitzi-workspace@workspace:.":
   version: 0.0.0-use.local

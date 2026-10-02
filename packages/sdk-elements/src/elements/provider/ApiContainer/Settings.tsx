@@ -284,7 +284,7 @@ const Settings = ({
           <div className="flex flex-col">
             <label>Query</label>
             <CodeMirror
-              className="font-rubik min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
+              className="min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
               value={query}
               theme={resolvedTheme}
               mode="text"

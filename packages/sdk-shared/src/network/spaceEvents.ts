@@ -8,7 +8,6 @@ import type {
   DropPosition,
   Element,
   PageFolder,
-  Schema,
   SchemaFlag,
   SchemaRaw,
   SchemaVariable,
@@ -42,16 +41,9 @@ const element = z.custom<Element>(value => isRecord(value) && typeof value.id ==
 
 const elements = z.array(element);
 
-// `flat` as a list is the wire shape of a schema. The builder re-indexes it on arrival, so the keyed map an MCP
-// write works with is not interchangeable here — and that swap is exactly what this catches.
-/** A schema as the channel carries it: `flat` as a list. What every publisher of a whole schema sends. */
-export const schemaToWire = (schema: Schema): SchemaRaw => ({ ...schema, flat: Object.values(schema.flat) });
-
-/** A schema off the channel, keyed again by element id: what a receiver stores. */
-export const schemaFromWire = (raw: SchemaRaw): Schema => ({
-  ...raw,
-  flat: Object.fromEntries(raw.flat.map(item => [item.id, item]))
-});
+// `flat` as a list is the wire shape of a schema; the conversion both ways is `schema/wire`, beside no validator, so
+// a server can read a schema off GraphQL without loading this contract.
+export { elementFromWire, schemaFromWire, schemaToWire } from '../schema/wire';
 
 const spaceComponent = z.custom<SpaceComponent>(
   value => isRecord(value) && typeof value.id === 'string' && isRecord(value.flat),

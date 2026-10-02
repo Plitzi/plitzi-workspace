@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+/* Plitzi's tokens for the dev tools' own panel — plitzi-ui's components bring them anyway. Never in plitzi-sdk.css: that
+   stylesheet is on every published page, and a token there would restyle the space's own elements. */
+@import '@plitzi/plitzi-ui/theme.css';
 
 @config '../../tailwind.devtools.config.js';
 

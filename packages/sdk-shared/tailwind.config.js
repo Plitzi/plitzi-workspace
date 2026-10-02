@@ -1,4 +1,3 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
 import plugin from 'tailwindcss/plugin';
 import { colors } from '@plitzi/plitzi-ui/tailwind';
 
@@ -7,11 +6,7 @@ const config = {
     extend: {
       colors
     },
-    groups: ['1', '2', '3', '4', '5'],
-    fontFamily: {
-      ...defaultTheme.fontFamily,
-      rubik: ['Rubik', 'sans-serif']
-    }
+    groups: ['1', '2', '3', '4', '5']
   },
   plugins: [
     plugin(({ addVariant, theme }) => {

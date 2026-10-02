@@ -26,6 +26,10 @@ the warning that a space has no server-rendered deployment said once above them.
 **Assets** holds files and fonts, **Settings** holds Visitors, the Pages panel opens the **Sitemap** in place of the
 canvas, and **History** moved to the header beside undo and redo. Each grouped entry remembers the tab left open.
 
+The builder is drawn with the website's design system: Geist and Geist Mono, the `#5b3df5` violet, cool neutrals and
+8 / 10 / 14px radii, from the tokens `@plitzi/plitzi-ui/theme.css` now ships. The published SDK stylesheet does not
+take them, so a space's own elements look as they did.
+
 ## Feature flags
 
 - **What they are:** `schema.flags`, a space's switches by name — a default and rules over the environment, the host,

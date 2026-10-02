@@ -61,5 +61,8 @@
     "bench",
     "examples/shared-space",
     "examples/*/*"
-  ]
+  ],
+  "resolutions": {
+    "@plitzi/plitzi-ui": "portal:../plitzi-ui"
+  }
 }

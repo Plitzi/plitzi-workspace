@@ -13,7 +13,7 @@ const PluginList = ({ plugins }: PluginListProps) => (
         className={clsx(
           'rounded-full border px-2 py-0.5 text-[11px]',
           plugin.source
-            ? 'border-indigo-200 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300'
+            ? 'border-primary-200 text-primary-700 dark:border-primary-800 dark:text-primary-300'
             : 'border-zinc-300 text-zinc-500 dark:border-zinc-600 dark:text-zinc-400'
         )}
         title={plugin.source ? 'Kept with the source it was built from' : 'Built only: upload it again from its source'}

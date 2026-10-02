@@ -136,7 +136,9 @@ export default defineConfig(({ mode, command }) => {
         reactDom: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
         reactDomClient: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
         // The dev server serves the worker from source; a build ships it beside the builder.
-        functionsWorkerPath: devMode ? '/src/modules/Functions/editor/typescriptWorker.ts' : '/plitzi-functions-worker.js',
+        functionsWorkerPath: devMode
+          ? '/src/modules/Functions/editor/typescriptWorker.ts'
+          : '/plitzi-functions-worker.js',
         version: PACKAGE.version
       }),
       command === 'build' && ejsPlugin(devMode),
@@ -232,7 +234,23 @@ export default defineConfig(({ mode, command }) => {
         ...typescriptLibAlias,
         ...(devMode ? packages : {})
       },
-      extensions: ['.js', '.mjs', '.ts', '.tsx']
+      extensions: ['.js', '.mjs', '.ts', '.tsx'],
+      // `@plitzi/nexus` and `@plitzi/plitzi-ui` may be linked through portals, each carrying its own node_modules. React and
+      // CodeMirror check identity (a hook's dispatcher, an extension's `instanceof`), so a second copy breaks them: one each.
+      dedupe: [
+        'react',
+        'react-dom',
+        '@codemirror/autocomplete',
+        '@codemirror/commands',
+        '@codemirror/language',
+        '@codemirror/lint',
+        '@codemirror/search',
+        '@codemirror/state',
+        '@codemirror/view',
+        '@lezer/common',
+        '@lezer/highlight',
+        '@lezer/lr'
+      ]
     },
     build: {
       outDir: 'dist',
@@ -304,7 +322,8 @@ export default defineConfig(({ mode, command }) => {
       },
       server: {
         deps: {
-          inline: ['@plitzi/plitzi-ui']
+          // CodeMirror with it: an inlined plitzi-ui editor and the Functions panel must load the same @codemirror/state.
+          inline: ['@plitzi/plitzi-ui', /\/@codemirror\//, /\/@lezer\//, /\/@uiw\//]
         }
       },
       reporters: ['default']

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '@plitzi/plitzi-ui/theme.css';
 
 @plugin '@tailwindcss/forms';
 

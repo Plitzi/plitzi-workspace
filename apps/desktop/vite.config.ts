@@ -43,7 +43,9 @@ export default defineConfig(({ mode }) => ({
       '@pmodules': resolve('src/modules'),
       '@pcomponents': resolve('src/components')
     },
-    dedupe: ['react', 'react-dom']
+    // `@plitzi/nexus` and `@plitzi/plitzi-ui` may be linked through portals, each carrying its own node_modules. React and
+    // CodeMirror check identity (a hook's dispatcher, an extension's `instanceof`), so a second copy breaks them: one each.
+    dedupe: ['react', 'react-dom', '@codemirror/autocomplete', '@codemirror/commands', '@codemirror/language', '@codemirror/lint', '@codemirror/search', '@codemirror/state', '@codemirror/view', '@lezer/common', '@lezer/highlight', '@lezer/lr']
   },
   server: {
     port: 5180,
@@ -69,6 +71,9 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     setupFiles: [resolve('setupTests.ts')],
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'electron/**/*.test.ts'],
-    environmentMatchGlobs: [['electron/**', 'node']]
+    environmentMatchGlobs: [['electron/**', 'node']],
+    // Through Vite, so `resolve.dedupe` reaches them: loaded by Node, a portalled plitzi-ui — and the packages in its own
+    // node_modules, react-toastify among them — would bring a second React.
+    server: { deps: { inline: ['@plitzi/plitzi-ui', /\/plitzi-ui\/node_modules\//] } }
   }
 }));

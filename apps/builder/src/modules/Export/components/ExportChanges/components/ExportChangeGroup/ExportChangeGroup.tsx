@@ -29,7 +29,7 @@ const ExportChangeGroup = ({ group }: ExportChangeGroupProps) => {
             open && 'rotate-90'
           )}
         />
-        <i className={clsx(repairIcon(group.code), 'w-3.5 text-center text-violet-500 dark:text-violet-400')} />
+        <i className={clsx(repairIcon(group.code), 'text-primary-500 dark:text-primary-300 w-3.5 text-center')} />
         <span className="grow">{group.label}</span>
         <span className="rounded-full bg-zinc-200 px-1.5 text-[10px] leading-4 font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
           {group.total}

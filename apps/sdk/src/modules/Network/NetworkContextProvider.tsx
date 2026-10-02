@@ -6,6 +6,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
+import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
@@ -166,11 +167,7 @@ const NetworkContextProvider = ({
       setSdkStore('render.overQuota', Space.render?.overQuota ?? false);
 
       setInternalData({
-        schema: {
-          ...EMPTY_SCHEMA.schema,
-          ...Space.schema,
-          flat: Space.schema.flat.reduce((obj, item) => ({ ...obj, [item.id]: item }), {})
-        },
+        schema: { ...EMPTY_SCHEMA.schema, ...schemaFromWire(Space.schema) },
         plugins,
         style: Space.style
       });

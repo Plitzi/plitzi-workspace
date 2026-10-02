@@ -34,7 +34,7 @@ const ExportFileFolder = ({ folder, selectedPath, onSelect }: ExportFileFolderPr
         />
         <i
           className={clsx(
-            'shrink-0 text-[11px] text-violet-500 dark:text-violet-400',
+            'text-primary-500 dark:text-primary-300 shrink-0 text-[11px]',
             open ? 'fa-solid fa-folder-open' : 'fa-solid fa-folder'
           )}
         />

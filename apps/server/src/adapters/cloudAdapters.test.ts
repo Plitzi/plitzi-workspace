@@ -13,7 +13,7 @@ import type { SSRRequest } from '@plitzi/sdk-shared';
  */
 
 const space = {
-  schema: { settings: {}, flat: {}, pages: [], pageFolders: [], variables: [] },
+  schema: { settings: {}, flat: [], pages: [], pageFolders: [], variables: [] },
   style: { cache: '', variables: {} },
   plugins: []
 };
@@ -26,7 +26,8 @@ const FLAGS_A: FlagsAnswer = { hash: 'aaa', flags: { beta: { value: false, rules
 const FLAGS_B: FlagsAnswer = { hash: 'bbb', flags: { beta: { value: true, rules: [] } } };
 
 /** A served space as the page server receives it: the revision, with the environment's flags joined to it. */
-const served = (flags: FlagsAnswer) => ({ ...space, schema: { ...space.schema, flags: flags.flags } });
+// What the renderer is handed: the wire's `flat` list keyed by id, and the environment's flags joined in.
+const served = (flags: FlagsAnswer) => ({ ...space, schema: { ...space.schema, flat: {}, flags: flags.flags } });
 
 /**
  * A Plitzi that answers both queries and counts each separately.
@@ -336,7 +337,11 @@ describe('the shape it hands to the renderer', () => {
       variables: [],
       flat: [
         { id: 'home', definition: { type: 'page', rootId: 'home' }, attributes: { slug: '' } },
-        { id: 'text-1', definition: { type: 'text', parentId: 'home', rootId: 'home' }, attributes: {} }
+        {
+          id: 'text-1',
+          definition: { type: 'text', parentId: 'home', rootId: 'home', flag: null, runtime: null, bindings: null },
+          attributes: {}
+        }
       ]
     },
     style: { cache: '', variables: {} },
@@ -356,13 +361,13 @@ describe('the shape it hands to the renderer', () => {
     expect(Array.isArray(data?.schema.flat)).toBe(false);
   });
 
-  // A schema already keyed (a cache round-trip, a test double) must survive untouched rather than being re-indexed
-  // into a map of numeric keys.
-  it('leaves an already-keyed map alone', async () => {
-    const built = createCloudAdapters({ webKey: 'key', fetchImpl: serving(space) });
+  // GraphQL answers `null` for every field a query names and an element does not have; the renderer reads an absent
+  // gate as `undefined`, so what it is handed is the element as its document has it.
+  it('leaves out what GraphQL answered `null` for', async () => {
+    const built = createCloudAdapters({ webKey: 'key', fetchImpl: serving(onWire) });
     const data = await built.getOfflineData(1, 'main');
 
-    expect(data?.schema.flat).toEqual({});
+    expect(data?.schema.flat['text-1'].definition).toStrictEqual({ type: 'text', parentId: 'home', rootId: 'home' });
   });
 
   it('answers nothing for a payload carrying no schema, so the last good copy keeps serving', async () => {

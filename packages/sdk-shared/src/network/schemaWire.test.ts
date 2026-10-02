@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { schemaFromWire, schemaToWire, validateSpaceEvent } from './spaceEvents';
 
-import type { Schema } from '../types';
+import type { Schema, SchemaRaw } from '../types';
 
 const schema = {
   definition: { name: 'Wire', permanentUrl: 'wire' },
@@ -25,6 +25,43 @@ describe('schema on the live channel', () => {
 
     expect(wire.flat).toEqual([schema.flat.home]);
     expect(schemaFromWire(wire)).toEqual(schema);
+  });
+
+  // GraphQL answers every field a query names: an element without a gate arrives with `flag: null`, and the builder's
+  // tools read an absent gate as `undefined`. What the store gets back is the element as its document has it.
+  it('leaves out what GraphQL answered `null` for, and keeps what the element has', () => {
+    const wire: SchemaRaw = {
+      ...schemaToWire(schema),
+      flat: [
+        {
+          id: 'home',
+          attributes: {},
+          definition: {
+            label: 'Home',
+            type: 'page',
+            rootId: 'home',
+            styleSelectors: { base: '' },
+            items: ['hero'],
+            parentId: null,
+            flag: null,
+            runtime: null,
+            loadStrategy: null,
+            bindings: null,
+            interactions: null,
+            initialState: { visibility: false }
+          }
+        }
+      ]
+    };
+
+    expect(schemaFromWire(wire).flat.home.definition).toStrictEqual({
+      label: 'Home',
+      type: 'page',
+      rootId: 'home',
+      styleSelectors: { base: '' },
+      items: ['hero'],
+      initialState: { visibility: false }
+    });
   });
 
   // The keyed map a server holds is exactly what a SPACE_UPDATED payload must not carry.

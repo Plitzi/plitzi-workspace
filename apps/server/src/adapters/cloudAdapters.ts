@@ -1,7 +1,8 @@
+import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
+
 import { serverLog } from '../helpers/serverLog';
 
 import type {
-  Element,
   Environment,
   OfflineDataRaw,
   PluginRaw,
@@ -166,31 +167,6 @@ type SpacePayload = {
 };
 
 /**
- * GraphQL answers `flat` as a LIST; every reader of a schema indexes it BY ID (`schema.flat[pageId]`, and the same
- * for `parentId`/`rootId`/`items`). The two are the `SchemaRaw` and `Schema` types, and the conversion is the wire
- * format's whole difference from the runtime one.
- *
- * Without it nothing throws — an array is a perfectly good object — it just answers `undefined` to every lookup, so
- * the page router matches no page and every URL is a 404 on a space that fetched and parsed correctly.
- */
-const byElementId = (flat: Element[] | Record<string, Element> | undefined): Record<string, Element> => {
-  if (!Array.isArray(flat)) {
-    return flat ?? {};
-  }
-
-  return flat.reduce<Record<string, Element>>((acum, element) => {
-    if (element.id) {
-      acum[element.id] = element;
-    }
-
-    return acum;
-  }, {});
-};
-
-/** The runtime shape of a schema: the wire's `flat` list, keyed. */
-const toSchema = (schema: SchemaRaw): Schema => ({ ...schema, flat: byElementId(schema.flat) });
-
-/**
  * The `scope` claim, read without verifying anything.
  *
  * Verification is the server's and this cannot do it — there is no signing key here, and a key this deployment does
@@ -307,7 +283,10 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
     }
 
     return {
-      schema: toSchema(space.schema),
+      // GraphQL answers `flat` as a list, and `null` for every field an element does not have; every reader indexes
+      // it by id and reads an absent field as absent. Without the conversion nothing throws — the router just matches
+      // no page, and every URL is a 404 on a space that fetched correctly.
+      schema: schemaFromWire(space.schema),
       style: space.style as Style,
       plugins: space.plugins
     };

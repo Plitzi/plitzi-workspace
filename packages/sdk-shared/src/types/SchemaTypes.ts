@@ -372,9 +372,23 @@ export type SchemaContextValue = {
 
 // Raw
 
+/** The fields of a definition an element may go without — absent in a document, `null` from GraphQL. */
+type OptionalDefinitionKey =
+  'parentId' | 'items' | 'bindings' | 'interactions' | 'initialState' | 'runtime' | 'loadStrategy' | 'flag';
+
+/**
+ * An element as it arrives on the wire. GraphQL answers every field a query names, so one the element does not have
+ * comes back `null` — where the element itself has nothing. `schemaFromWire` drops them on arrival.
+ */
+export type WireElement = Omit<Element, 'definition'> & {
+  definition: Omit<ElementDefinition, OptionalDefinitionKey> & {
+    [K in OptionalDefinitionKey]?: ElementDefinition[K] | null;
+  };
+};
+
 export type SchemaRaw = {
   definition: Schema['definition'];
-  flat: Element[];
+  flat: WireElement[];
   variables: SchemaVariable[];
   flags?: Schema['flags'];
   settings: Schema['settings'];

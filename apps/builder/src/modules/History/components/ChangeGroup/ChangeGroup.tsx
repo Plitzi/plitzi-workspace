@@ -34,7 +34,7 @@ const ChangeGroup = ({ group, onDismiss }: ChangeGroupProps) => {
     <li className="border-b border-zinc-100 dark:border-zinc-800">
       <button
         type="button"
-        className="flex w-full cursor-pointer flex-col gap-1 px-3 py-2 text-left hover:bg-zinc-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 focus-visible:ring-inset dark:hover:bg-zinc-800/60"
+        className="focus-visible:ring-primary-500 flex w-full cursor-pointer flex-col gap-1 px-3 py-2 text-left hover:bg-zinc-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-inset dark:hover:bg-zinc-800/60"
         aria-expanded={open}
         onClick={handleToggle}
       >

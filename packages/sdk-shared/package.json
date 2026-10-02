@@ -1119,6 +1119,10 @@
       "types": "./dist/schema/serverElements.d.ts",
       "import": "./dist/schema/serverElements.mjs"
     },
+    "./schema/wire": {
+      "types": "./dist/schema/wire.d.ts",
+      "import": "./dist/schema/wire.mjs"
+    },
     "./server": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.mjs"

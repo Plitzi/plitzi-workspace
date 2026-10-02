@@ -36,7 +36,7 @@ const ChangeLine = ({ line, onDismiss }: ChangeLineProps) => {
       {reachable && (
         <button
           type="button"
-          className="-mx-1 cursor-pointer rounded px-1 text-left underline-offset-2 hover:bg-indigo-50 hover:text-indigo-700 hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+          className="hover:bg-primary-50 hover:text-primary-700 focus-visible:ring-primary-500 dark:hover:bg-primary-400/10 dark:hover:text-primary-300 -mx-1 cursor-pointer rounded px-1 text-left underline-offset-2 hover:underline focus:outline-none focus-visible:ring-1"
           title="Select this element"
           onClick={handleReveal}
         >

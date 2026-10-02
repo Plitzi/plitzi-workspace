@@ -6,7 +6,7 @@ export type ExportLockedProps = {
 /** What export is and which plans have it — in place of the result, for a workspace on the free plan. */
 const ExportLocked = ({ planName = 'Free' }: ExportLockedProps) => (
   <div className="flex grow flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-zinc-300 px-6 py-12 text-center dark:border-zinc-700">
-    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
+    <div className="bg-primary-100 text-primary-600 dark:bg-primary-400/15 dark:text-primary-300 flex h-11 w-11 items-center justify-center rounded-full">
       <i className="fa-solid fa-lock" />
     </div>
     <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Export is part of the paid plans</h5>

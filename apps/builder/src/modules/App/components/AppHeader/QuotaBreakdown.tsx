@@ -12,7 +12,7 @@ import type { ReactNode } from 'react';
 const MUTED = 'text-zinc-500 dark:text-zinc-400';
 
 const FILL: Record<QuotaLevel, string> = {
-  ok: 'bg-indigo-500',
+  ok: 'bg-primary-500',
   near: 'bg-yellow-500',
   over: 'bg-red-500'
 };

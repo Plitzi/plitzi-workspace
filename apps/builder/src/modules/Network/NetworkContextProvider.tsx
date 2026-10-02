@@ -8,6 +8,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
+import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 
@@ -17,7 +18,6 @@ import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
 import type {
   Server,
   ComponentDefinition,
-  Schema,
   BuilderNetworkContextValue,
   Environment,
   BuilderQueriesMap,
@@ -185,12 +185,7 @@ const NetworkContextProvider = ({
         }
 
         setInternalData({
-          schema: {
-            ...EMPTY_SCHEMA.schema,
-            ...Space.schema,
-            flat: Space.schema.flat.reduce<Schema['flat']>((obj, item) => ({ ...obj, [item.id]: item }), {}),
-            definition: Space.definition
-          },
+          schema: { ...EMPTY_SCHEMA.schema, ...schemaFromWire(Space.schema), definition: Space.definition },
           plugins,
           style: Space.style
         });
