@@ -1,7 +1,12 @@
 import type { SchemaFlag } from '../types';
 
+const FLAG_NAME = '[A-Za-z_][A-Za-z0-9_]*';
+
 /** A flag name: what `{{ flags.<name> }}` reads, so it has to be a valid key in a template path. */
-export const FLAG_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+export const FLAG_NAME_PATTERN = new RegExp(`^${FLAG_NAME}$`);
+
+/** A gate as authoring and MCP write it: `name` while the flag is on, `!name` while it is off. */
+export const FLAG_GATE_PATTERN = new RegExp(`^!?${FLAG_NAME}$`);
 
 // Names a path resolver walks into instead of reading: a flag called `__proto__` would be a way into the prototype.
 const RESERVED_FLAG_NAMES = new Set(['__proto__', 'constructor', 'prototype']);

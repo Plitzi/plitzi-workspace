@@ -17,6 +17,7 @@ import type { AuthoredSpace } from '@plitzi/sdk-authoring';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 export * from './actions';
+export * from './flags';
 export * from './flowReads';
 export * from './fromSpace';
 export * from './keptState';

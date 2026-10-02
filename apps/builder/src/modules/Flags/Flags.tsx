@@ -6,6 +6,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { withForcedFlag } from '@plitzi/sdk-shared/flags';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
@@ -83,10 +84,7 @@ const Flags = () => {
   );
 
   const handleForce = useCallback(
-    (name: string, value: boolean | undefined) => {
-      const { [name]: _previous, ...rest } = forced;
-      setForced(value === undefined ? rest : { ...rest, [name]: value });
-    },
+    (name: string, value: boolean | undefined) => setForced(withForcedFlag(forced, name, value)),
     [forced, setForced]
   );
 

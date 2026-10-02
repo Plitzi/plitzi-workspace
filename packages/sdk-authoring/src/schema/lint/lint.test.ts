@@ -145,6 +145,15 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('flag-name');
     });
 
+    it('flag-name on a name that is no pattern either, without throwing on it', () => {
+      const documents = withChange(({ schema }) => {
+        declare(schema);
+        schema.flags = { ...schema.flags, 'a(b': { value: true, rules: [] } };
+      });
+
+      expect(errorsOf(documents)).toContain('flag-name');
+    });
+
     it('flag-shape', () => {
       const documents = withChange(({ schema }) => {
         declare(schema);
@@ -158,6 +167,15 @@ describe('lintSpace', () => {
       const documents = withChange(({ schema }) => {
         declare(schema);
         schema.flags = { newCheckout: { value: false, rules: [{ when: { combinator: 'and', rules: [] } }] as never } };
+      });
+
+      expect(errorsOf(documents)).toContain('flag-rule-shape');
+    });
+
+    it('flag-rule-shape on a `when` that is no group — refused, as every writer refuses it', () => {
+      const documents = withChange(({ schema }) => {
+        declare(schema);
+        schema.flags = { newCheckout: { value: false, rules: [{ when: 'always', value: true }] as never } };
       });
 
       expect(errorsOf(documents)).toContain('flag-rule-shape');

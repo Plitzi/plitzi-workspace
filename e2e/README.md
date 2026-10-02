@@ -51,7 +51,7 @@ It is a setup project rather than a `globalSetup` for one reason: only the setup
 |---|---|---|---|
 | `sdk` | `@plitzi/plitzi-sdk` | `rendering`, `viewports`, `theme` | harness |
 | `desktop` | `@plitzi/plitzi-desktop` | `theme` | the renderer's Vite server on 5180 |
-| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions`, `workers`, `plugins`, `fromSpace` | e2e server + auth server + action server + mail sink + the CLI's projects |
+| `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions`, `flags`, `workers`, `plugins`, `fromSpace` | e2e server + auth server + action server + mail sink + the CLI's projects |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
 | `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (mocked backend unless a token is exported) |
 | `cross` | — more than one | `parity`, `agent`, `auth` | harness + both servers |
@@ -100,6 +100,12 @@ demonstrate.
   case where the server stops assembling one, so it can never show that a space with only actions still resolves
   its server elements. Its space also holds an SMTP credential, so `email.send` is checked the whole way out.
   `yarn workspace @plitzi/e2e start:actions`.
+
+- **`server/flagsServer.ts`** — a space switched by feature flags, served twice: on <http://127.0.0.1:5210> with
+  debugging authorized, so a tester's forced flags (the `plitzi_flags_<port>` cookie, the dev tools' Flags tab) are
+  honored, and on <http://127.0.0.1:5211> without it, where the same cookie must change nothing. Both set the
+  deployment's own flag layer (`createServer({ flags })`), one of them undeclared on purpose.
+  `yarn workspace @plitzi/e2e start:flags` / `start:flags-no-debug`.
 
 - **`server/pluginServer.ts`** — a plugin package exactly as `plitzi create --plugin` writes it, built by the CLI and
   published on a host of its own, loaded by a page from its manifest. On <http://127.0.0.1:5208> (the plugin's host on

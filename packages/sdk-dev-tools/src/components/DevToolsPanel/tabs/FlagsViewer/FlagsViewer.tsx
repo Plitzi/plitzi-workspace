@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { writeForcedFlags } from '@plitzi/sdk-shared/flags';
+import { withForcedFlag, writeForcedFlags } from '@plitzi/sdk-shared/flags';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import FlagsListItem from './FlagsListItem';
@@ -22,8 +22,7 @@ const FlagsViewer = () => {
 
   const handleForce = useCallback(
     (name: string, value: boolean | undefined) => {
-      const { [name]: _previous, ...rest } = forced;
-      const next = value === undefined ? rest : { ...rest, [name]: value };
+      const next = withForcedFlag(forced, name, value);
       setForced(next);
       writeForcedFlags(window.location.host, next);
     },

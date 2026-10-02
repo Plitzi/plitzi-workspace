@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { FLAG_GATE_PATTERN } from '@plitzi/sdk-shared/flags';
+
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementRuntime } from '@plitzi/sdk-shared';
 
@@ -106,7 +108,7 @@ export const elementRuntime = z
 /** The feature flag an element exists under — `'name'` while on, `'!name'` while off. Not a visibility. */
 export const elementFlag = z
   .string()
-  .regex(/^!?[A-Za-z_][A-Za-z0-9_]*$/)
+  .regex(FLAG_GATE_PATTERN)
   .describe('Feature flag: `name` renders only while on, `!name` only while off');
 
 export const initialStateInput = z.object({

@@ -73,6 +73,8 @@ export const categories: Category[] = [
       'action-server',
       'published-server',
       'devtools-server',
+      'flags-server',
+      'flags-no-debug-server',
       'mail-sink',
       'workers-server',
       'plugin-server',
@@ -88,6 +90,10 @@ export const categories: Category[] = [
       { name: 'preview', what: 'Draft renders that are never saved, and the one-shot token' },
       { name: 'auth', what: 'A visitor becoming a member and back: guest/member pages, sessions, bindings' },
       { name: 'workers', what: 'One port served by several processes: the load spread, every page the same' },
+      {
+        name: 'flags',
+        what: 'Feature flags: gated elements and pages, every layer that decides one, and a tester forcing one'
+      },
       { name: 'plugins', what: 'A plugin package from the CLI, published and loaded by a page from its manifest' },
       {
         name: 'fromSpace',

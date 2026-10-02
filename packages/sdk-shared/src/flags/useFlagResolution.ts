@@ -21,9 +21,9 @@ export const flagUserFrom = ({ authenticated, user }: Partial<Pick<AuthContextVa
 /**
  * Every declared flag, resolved for where this render is and who is looking.
  *
- * One hook for the two places that need the answer, so they cannot disagree: the `flags` source every element reads,
- * and the router — which has to know before that source exists whether the page it is about to render is gated off.
- * Stable while nothing changed, so whatever it is published to is not written again on every navigation.
+ * What the `flags` source every element reads is published from. The router cannot wait for that source — it decides
+ * whether the page is gated off before any child renders — so it calls `resolveFlags` itself, with the same inputs.
+ * Stable while nothing changed, so the source is not written again on every navigation.
  */
 const useFlagResolution = (
   auth: Partial<Pick<AuthContextValue, 'authenticated' | 'user'>>

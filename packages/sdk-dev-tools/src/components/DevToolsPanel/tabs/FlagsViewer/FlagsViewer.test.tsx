@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { flagsCookieName } from '@plitzi/sdk-shared/flags';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import FlagsViewer from './FlagsViewer';
 
@@ -13,11 +14,12 @@ import type { CommonState } from '@plitzi/sdk-shared';
 
 const state = (): Partial<CommonState> => ({
   schema: {
+    ...EMPTY_SCHEMA.schema,
     flags: {
       newCheckout: { description: 'The checkout in one step', value: false, rules: [] },
       legacyNav: { value: true, rules: [] }
     }
-  } as CommonState['schema'],
+  },
   flags: {
     overrides: {},
     resolved: { newCheckout: { value: false, layer: 'space' }, legacyNav: { value: true, layer: 'space' } }

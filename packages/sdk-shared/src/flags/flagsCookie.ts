@@ -41,6 +41,17 @@ export const serializeFlagList = (forced: Record<string, boolean>): string =>
     .map(([name, value]) => `${name}:${value ? '1' : '0'}`)
     .join(',');
 
+/** What is forced once one flag is forced to `value` — or, with `undefined`, once it is no longer forced at all. */
+export const withForcedFlag = (
+  forced: Record<string, boolean>,
+  name: string,
+  value: boolean | undefined
+): Record<string, boolean> => {
+  const { [name]: _previous, ...rest } = forced;
+
+  return value === undefined ? rest : { ...rest, [name]: value };
+};
+
 /** The flags a tester forced, from a `Cookie` header or `document.cookie`. */
 export const forcedFlagsFromCookies = (cookies: string | undefined, host: string | undefined) =>
   parseFlagList(cookieFromHeader(cookies, flagsCookieName(host)));

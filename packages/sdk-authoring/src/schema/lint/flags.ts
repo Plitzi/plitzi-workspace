@@ -49,7 +49,7 @@ const lintDeclaration = (ctx: LintContext, name: string, flag: unknown): void =>
 
   flag.rules.forEach((rule: unknown, index: number) => {
     const at = `${where}, rule ${index + 1}`;
-    if (!isRecord(rule) || typeof rule.value !== 'boolean') {
+    if (!isRecord(rule) || typeof rule.value !== 'boolean' || !isRecord(rule.when)) {
       ctx.error('flag-rule-shape', `${at} is ${JSON.stringify(rule)}. A rule is { when: { … }, value: true | false }.`);
 
       return;
@@ -73,7 +73,7 @@ export const lintFlags = (ctx: LintContext): void => {
   const elements = allElements(ctx.schema);
   for (const [name, flag] of Object.entries(declared)) {
     lintDeclaration(ctx, name, flag);
-    if (!isRead(name, ctx.schema, elements)) {
+    if (isFlagName(name) && !isRead(name, ctx.schema, elements)) {
       ctx.warn(
         'flag-unused',
         `Feature flag "${name}" is declared and nothing reads it — no element or page is gated on it, and no template reads \`flags.${name}\`. Gate what it switches (\`flag: '${name}'\`), or remove it once the feature has shipped.`
