@@ -18,6 +18,14 @@
 '@plitzi/sdk-server': patch
 ---
 
+## The builder's sidebar, one entry per subject
+
+From 21 entries to 9. **Elements** ends with the space's **Components**, one search for both — each is dragged
+onto the canvas the same way. **Server** gathers Actions, Functions, Connectors, Credentials and Runtime behind tabs, with
+the warning that a space has no server-rendered deployment said once above them. **Variables** holds Feature Flags,
+**Assets** holds files and fonts, **Settings** holds Visitors, the Pages panel opens the **Sitemap** in place of the
+canvas, and **History** moved to the header beside undo and redo. Each grouped entry remembers the tab left open.
+
 ## Feature flags
 
 - **What they are:** `schema.flags`, a space's switches by name — a default and rules over the environment, the host,
@@ -35,7 +43,7 @@
   found. Its declaration still ships with the space's document: a flag switches a feature off, it does not hide it.
 - **Reading:** the `flags` global source (`{{ flags.x }}`), `useFlag(name)` for plugins, and `flags` in a server
   action's scope (the `getFlags` action lookup).
-- **Builder:** a Feature Flags panel (declare, rule, force in the canvas, publish), the gate in an element's tools, a
+- **Builder:** Feature Flags beside the variables (declare, rule, force in the canvas, publish), the gate in an element's tools, a
   marker in the tree. Its own flags come from the platform (`PlatformFlags`) instead of a constant.
 - **Authoring and MCP:** `SpaceSpec.flags`, `flag: 'name' | '!name'` on elements and pages, linter codes
   `flag-undeclared`, `flag-unknown`, `flag-unused`, `flag-rule-empty`; MCP `upsertFlag`, `deleteFlag`, `flag` on

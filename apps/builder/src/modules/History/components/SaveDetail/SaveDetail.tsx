@@ -8,10 +8,10 @@ import ChangeLine from '../ChangeLine';
 
 import type { ChangeRecord } from '../../helpers';
 
-export type SaveDetailProps = { change: ChangeRecord };
+export type SaveDetailProps = { change: ChangeRecord; onDismiss: () => void };
 
 /** One save of a row: its number and time in a narrow column, what it did beside it, and the fields each edit changed. */
-const SaveDetail = ({ change }: SaveDetailProps) => {
+const SaveDetail = ({ change, onDismiss }: SaveDetailProps) => {
   const entries = detailedEntries(change.entries);
 
   return (
@@ -26,7 +26,7 @@ const SaveDetail = ({ change }: SaveDetailProps) => {
       <div className="flex min-w-0 grow flex-col gap-1">
         <ul className="flex flex-col">
           {describeChange(change.entries).map(line => (
-            <ChangeLine key={line.text} line={line} />
+            <ChangeLine key={line.text} line={line} onDismiss={onDismiss} />
           ))}
         </ul>
         {entries.length > 0 && (

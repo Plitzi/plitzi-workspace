@@ -782,8 +782,7 @@ is inside the packages:
 ## 9. Templates
 
 A **template** is the other artefact this surface produces, and it is not a space: one subtree, the style that
-dresses it and a name, published as a JSON. Somebody fetches it by URL, it appears in the builder's Resources
-panel, and dragging it onto a canvas instantiates a copy of the subtree in a space you never see.
+dresses it and a name, published as a JSON. Somebody fetches it by URL, it appears in the builder's **Assets → Files**, and dragging it onto a canvas instantiates a copy of the subtree in a space you never see.
 
 ```ts
 import { authorTemplate } from '@plitzi/sdk-authoring';
@@ -806,7 +805,7 @@ await writeFile('pricing-card.json', JSON.stringify(template, null, 2));
 ```
 
 That file is the whole deliverable. Host it anywhere, and add it to a space as an `application/json` resource —
-uploading it lands it in `templates/` on that space's CDN, and the Resources panel picks it up from there.
+uploading it lands it in `templates/` on that space's CDN, and **Assets → Files** picks it up from there.
 
 `root` is a single element and its subtree: the root is the template's `baseElementId`, so nobody writes an id.
 Everything else — `classes`, `elements`, `variables`, `schemaVariables` — is declared exactly as a space declares

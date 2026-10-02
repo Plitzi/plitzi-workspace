@@ -8,6 +8,8 @@ import WorkflowDiagram from '@pmodules/App/components/WorkflowDiagram';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';
 
+import useSitemapOpen from '../../hooks/useSitemapOpen';
+
 import type { Element, PageFolder } from '@plitzi/sdk-shared';
 import type { Connection, Edge, Node } from '@pmodules/App/components/WorkflowDiagram';
 
@@ -16,6 +18,9 @@ const ContainerSitemap = () => {
   const { eventBridge } = use(EventBridgeContext);
   const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
   const pages = useMemo(() => Object.values(pageDefinitions), [pageDefinitions]);
+  const [, setSitemapOpen] = useSitemapOpen();
+
+  const handleClose = useCallback(() => setSitemapOpen(false), [setSitemapOpen]);
 
   const handleAddNode = useCallback(
     async (nodeType: 'page' | 'folder' | 'custom') => {
@@ -125,6 +130,7 @@ const ContainerSitemap = () => {
           onAddEdge={handleAddEdge}
           onRemoveNode={handleRemoveNode}
           onRemoveEdge={handleRemoveEdge}
+          onClose={handleClose}
         />
       </Card.Body>
     </Card>

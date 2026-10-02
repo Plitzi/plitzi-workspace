@@ -16,13 +16,13 @@ import SaveDetail from '../SaveDetail';
 
 import type { ChangeGroup as Group } from '../../helpers';
 
-export type ChangeGroupProps = { group: Group };
+export type ChangeGroupProps = { group: Group; onDismiss: () => void };
 
 /**
  * A row of the timeline: who, from where and when, and what it did — one line per thing. Unfolded, every save it groups
  * on its own, with the fields each one changed.
  */
-const ChangeGroup = ({ group }: ChangeGroupProps) => {
+const ChangeGroup = ({ group, onDismiss }: ChangeGroupProps) => {
   const [open, setOpen] = useState(false);
   const newest = group.changes[0];
   const lines = groupLines(group);
@@ -63,7 +63,7 @@ const ChangeGroup = ({ group }: ChangeGroupProps) => {
       {open && (
         <ol className="mx-3 mb-2 flex flex-col divide-y divide-zinc-100 border-l-2 border-zinc-200 pl-2 dark:divide-zinc-800 dark:border-zinc-700">
           {group.changes.map(change => (
-            <SaveDetail key={change.seq} change={change} />
+            <SaveDetail key={change.seq} change={change} onDismiss={onDismiss} />
           ))}
         </ol>
       )}

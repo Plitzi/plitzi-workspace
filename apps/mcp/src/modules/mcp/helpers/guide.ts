@@ -913,7 +913,8 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   host: a \`link\` with \`mode: "external"\` to \`/auth/sign-in?return=/\` starts it, \`authLogout\` ends it.
 - \`visitorRoles\` — what each visitor role gives, \`{ "author": ["postPublish"] }\`: the permissions an action's
   \`access: { mode: "role" }\` and a page's \`can()\` ask for. A visitor holds ONLY the permissions of their roles here,
-  never their account's. Who holds a role is given by email in the builder's Visitors panel — never in settings.
+  never their account's. Who holds a role is given by email in the builder's Settings → Visitors — never in the
+  space's \`settings\`.
 - \`channels\` — the realtime channels, by topic pattern (see **Realtime channels**). Merged pattern by pattern;
   \`null\` removes one.
   Example — inject a keyframe globally:

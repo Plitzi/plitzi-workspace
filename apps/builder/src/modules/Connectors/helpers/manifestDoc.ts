@@ -63,6 +63,3 @@ export const fieldDocs = {
     'Host to prepend to relative image and file URLs the CMS returns. Only values under keys ending in url, src or href are rewritten.',
   writeBodyPath: 'Key to wrap the submitted values in, e.g. data. Leave empty to send them at the root.'
 } as const;
-
-export const CONNECTOR_SERVER_ONLY_NOTE =
-  'Connectors resolve on the server before the page reaches the browser. A space published without server rendering has no server to resolve them.';

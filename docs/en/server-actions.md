@@ -115,7 +115,7 @@ settings: {
 }
 ```
 
-Who holds a role is not in the space: it is given by email from the builder's **Visitors** panel, and waits for that
+Who holds a role is not in the space: it is given by email from the builder's **Settings → Visitors**, and waits for that
 address to sign in, verified. Editing the space gives no role. A page reads the same answer: `can('postPublish')`, and
 the `auth` source's `permissions`.
 

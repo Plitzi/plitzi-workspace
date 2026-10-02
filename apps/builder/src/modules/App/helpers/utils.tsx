@@ -5,18 +5,95 @@ import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 import StyleAdvanceEditor from '@plitzi/sdk-style/StyleAdvanceEditor';
 import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
-import Components from '@pmodules/Components';
 import Elements from '@pmodules/Elements';
 import Flags from '@pmodules/Flags';
 import Fonts from '@pmodules/Fonts';
-import History from '@pmodules/History';
 import Resources from '@pmodules/Resources';
 import StateManager from '@pmodules/StateManager/StateManager';
 import Variables from '@pmodules/Variables';
 
 import AppDirectory from '../components/AppDirectory';
+import PanelSections from '../components/PanelSections';
 
-import type { PopupInstance } from '@plitzi/plitzi-ui/components';
+import type { PanelSection } from '../components/PanelSections';
+import type { PopupInstance, PopupSettings } from '@plitzi/plitzi-ui/components';
+import type { ReactNode } from 'react';
+
+/**
+ * The entries of the sidebar that REPLACE the canvas instead of opening beside it. `AppContainer` draws them; here they
+ * are only an icon, and alone on the side while open.
+ */
+export const FULL_VIEW_IDS = ['server', 'settings'] as const;
+
+export type FullViewId = (typeof FULL_VIEW_IDS)[number];
+
+export const isFullViewId = (id: string | undefined): id is FullViewId =>
+  FULL_VIEW_IDS.some(fullViewId => fullViewId === id);
+
+type PanelOptions = {
+  icon: PopupSettings['icon'];
+  title: string;
+  component: ReactNode;
+  width?: number;
+  size?: PopupInstance['size'];
+  allowFloatingSide?: boolean;
+};
+
+const panel = (id: string, position: number, activeIds: string[], options: PanelOptions): PopupInstance => {
+  const { icon, title, component, width = 350, size, allowFloatingSide = true } = options;
+
+  return {
+    id,
+    component,
+    active: activeIds.includes(id),
+    placementSettings: { left: { position, minSize: 200 } },
+    ...(size ? { size } : {}),
+    settings: {
+      icon,
+      title,
+      width,
+      allowLeftSide: true,
+      allowRightSide: false,
+      allowFloatingSide,
+      allowClose: false,
+      resizeHandles: ['se']
+    }
+  };
+};
+
+const fullView = (
+  id: FullViewId,
+  position: number,
+  activeIds: string[],
+  icon: string,
+  title: string
+): PopupInstance => ({
+  id,
+  component: undefined,
+  active: activeIds.includes(id),
+  placementSettings: { left: { position, multi: false } },
+  settings: {
+    icon,
+    title,
+    width: 350,
+    allowLeftSide: true,
+    allowRightSide: false,
+    allowFloatingSide: false,
+    allowClose: false,
+    resizeHandles: ['se']
+  }
+});
+
+// Values that change by environment, and the switches that do: both read by the same rules and bindings.
+const DATA_SECTIONS: [PanelSection, ...PanelSection[]] = [
+  { id: 'variables', label: 'Variables', content: <Variables /> },
+  { id: 'flags', label: 'Feature Flags', content: <Flags /> }
+];
+
+const ASSET_SECTIONS: [PanelSection, ...PanelSection[]] = [
+  { id: 'files', label: 'Files', content: <Resources /> },
+  { id: 'fonts', label: 'Fonts', content: <Fonts /> }
+];
 
 export const getPopups = ({
   activeIds = [],
@@ -31,320 +108,50 @@ export const getPopups = ({
   floating: PopupInstance[];
 } => {
   const left: PopupInstance[] = [
-    {
-      id: 'elements',
-      component: <Elements />,
-      active: activeIds.includes('elements'),
-      placementSettings: { left: { position: 0, minSize: 200 } },
-      settings: {
-        icon: 'fa-solid fa-plus',
-        title: 'Elements',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'pages',
+    panel('elements', 0, activeIds, { icon: 'fa-solid fa-plus', title: 'Elements', component: <Elements /> }),
+    panel('pages', 1, activeIds, {
+      icon: 'fas fa-file',
+      title: 'Pages',
       component: <AppDirectory />,
-      active: activeIds.includes('pages'),
-      placementSettings: { left: { position: 1, minSize: 200 } },
-      settings: {
-        icon: 'fas fa-file',
-        title: 'Pages',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'sitemap',
-      component: undefined,
-      active: activeIds.includes('sitemap'),
-      placementSettings: { left: { position: 3, multi: false } },
-      settings: {
-        icon: 'fa-solid fa-sitemap',
-        title: 'Sitemap',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'variables',
-      component: <Variables />,
-      active: activeIds.includes('variables'),
-      placementSettings: { left: { position: 4, minSize: 200 } },
-      settings: {
-        icon: (
-          <Sidebar.Icon className="p-1" title="Variables">
-            <Variable />
-          </Sidebar.Icon>
-        ),
-        title: 'Variables',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'flags',
-      component: <Flags />,
-      active: activeIds.includes('flags'),
-      placementSettings: { left: { position: 4, minSize: 200 } },
-      settings: {
-        icon: 'fa-solid fa-flag',
-        title: 'Feature Flags',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'fonts',
-      component: <Fonts />,
-      active: activeIds.includes('fonts'),
-      placementSettings: { left: { position: 5, minSize: 200 } },
-      settings: {
-        icon: 'fa-solid fa-font',
-        title: 'Fonts',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'assets',
-      component: <Resources />,
-      active: activeIds.includes('assets'),
-      placementSettings: { left: { position: 6, minSize: 200 } },
-      settings: {
-        icon: 'fa-solid fa-image',
-        title: 'Resources',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'actions',
-      component: undefined,
-      active: activeIds.includes('actions'),
-      placementSettings: { left: { position: 7, multi: false } },
-      settings: {
-        icon: 'fa-solid fa-bolt',
-        title: 'Server Actions',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'functions',
-      component: undefined,
-      active: activeIds.includes('functions'),
-      placementSettings: { left: { position: 7, multi: false } },
-      settings: {
-        icon: 'fa-solid fa-code',
-        title: 'Functions',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'connectors',
-      component: undefined,
-      active: activeIds.includes('connectors'),
-      placementSettings: { left: { position: 7, multi: false } },
-      settings: {
-        icon: 'fas fa-plug',
-        title: 'Connectors',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'credentials',
-      component: undefined,
-      active: activeIds.includes('credentials'),
-      placementSettings: { left: { position: 8, multi: false } },
-      settings: {
-        icon: 'fa-solid fa-key',
-        title: 'Credentials',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'runtime',
-      component: undefined,
-      active: activeIds.includes('runtime'),
-      placementSettings: { left: { position: 8, multi: false } },
-      settings: {
-        icon: 'fa-solid fa-server',
-        title: 'Runtime',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'visitors',
-      component: undefined,
-      active: activeIds.includes('visitors'),
-      placementSettings: { left: { position: 8, multi: false } },
-      settings: {
-        icon: 'fa-solid fa-user-shield',
-        title: 'Visitors',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'components',
-      component: <Components />,
-      active: activeIds.includes('components'),
-      placementSettings: { left: { position: 9, minSize: 200 } },
-      settings: {
-        icon: 'fa-solid fa-cube',
-        title: 'Components',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'history',
-      component: <History />,
-      active: activeIds.includes('history'),
-      placementSettings: { left: { position: 9, minSize: 200 } },
-      settings: {
-        icon: 'fa-solid fa-clock-rotate-left',
-        title: 'History',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'layerManager',
-      component: <BuilderTree />,
-      active: activeIds.includes('layerManager'),
-      placementSettings: { left: { position: 10, minSize: 200 } },
-      settings: {
-        icon: 'fa-solid fa-layer-group',
-        title: 'Layers',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'advanceStyle',
+      allowFloatingSide: false
+    }),
+    panel('variables', 2, activeIds, {
+      icon: (
+        <Sidebar.Icon className="p-1" title="Variables and Feature Flags">
+          <Variable />
+        </Sidebar.Icon>
+      ),
+      title: 'Variables',
+      component: <PanelSections name="variables" sections={DATA_SECTIONS} />
+    }),
+    panel('assets', 3, activeIds, {
+      icon: 'fa-solid fa-image',
+      title: 'Assets',
+      component: <PanelSections name="assets" sections={ASSET_SECTIONS} />
+    }),
+    panel('layerManager', 4, activeIds, {
+      icon: 'fa-solid fa-layer-group',
+      title: 'Layers',
+      component: <BuilderTree />
+    }),
+    panel('advanceStyle', 5, activeIds, {
+      icon: 'fa-solid fa-file-code text-base',
+      title: 'Advance Style',
       component: <StyleAdvanceEditor />,
-      size: 'custom',
-      active: activeIds.includes('advanceStyle'),
-      placementSettings: { left: { position: 11, minSize: 200 } },
-      settings: {
-        icon: 'fa-solid fa-file-code text-base',
-        title: 'Advance Style',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'stateManager',
-      size: 'custom',
+      size: 'custom'
+    }),
+    panel('stateManager', 6, activeIds, {
+      icon: (
+        <Sidebar.Icon className="p-2" title="State Manager">
+          <StateManagerIcon />
+        </Sidebar.Icon>
+      ),
+      title: 'State Manager',
       component: <StateManager />,
-      active: activeIds.includes('stateManager'),
-      placementSettings: { left: { position: 12, minSize: 200 } },
-      settings: {
-        icon: (
-          <Sidebar.Icon className="p-2" title="State Manager">
-            <StateManagerIcon />
-          </Sidebar.Icon>
-        ),
-        title: 'State Manager',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    },
-    {
-      id: 'settings',
-      component: undefined,
-      active: activeIds.includes('settings'),
-      placementSettings: { left: { position: 13, multi: false } },
-      settings: {
-        icon: 'fas fa-cog',
-        title: 'Settings',
-        width: 350,
-        allowLeftSide: true,
-        allowRightSide: false,
-        allowFloatingSide: false,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    }
+      size: 'custom'
+    }),
+    fullView('server', 7, activeIds, 'fa-solid fa-server', 'Server'),
+    fullView('settings', 8, activeIds, 'fas fa-cog', 'Settings')
   ];
 
   if (platformFlags.assistanceAI) {

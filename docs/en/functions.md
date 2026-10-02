@@ -131,7 +131,7 @@ The global `fetch` refuses: the network is reached through `ctx.fetch`, which kn
 One source — the space's `functions/` files — and three editors of it. They never disagree silently: a save is
 refused when the space's copy changed since the editor read it.
 
-**In the builder** — the **Functions** panel, built around the code: the tasks, routes and files on the left, the editor
+**In the builder** — **Server → Functions**, built around the code: the tasks, routes and files on the left, the editor
 in the middle (TypeScript that knows `ctx`: completion, hover, errors as you type), the selected task on the right.
 
 - The list follows `defineFunctions` **as it is typed**, imported tasks included; a task written and not saved says so.
@@ -170,14 +170,14 @@ Every save is in the space's [change history](./history.md), file by file, with 
 **Where they are kept**: in a **private bucket** of the space's own CDN, like its [runtime](./runtimes.md)'s code — the
 source and what was built from it, named by what they hold, so a publish copies a name and not the files. A CDN is your
 storage account (S3 or R2), which you run and pay for, and holds as many buckets as you give it, each public or private.
-Server code never goes in a public one: in the builder's Resources, add a bucket to a CDN with its visibility set to
+Server code never goes in a public one: in the builder's **Assets → Files**, add a bucket to a CDN with its visibility set to
 **Private** (a bucket with no public access, read by the platform with the CDN's credential); until then a save is
 refused, saying so. With several, the oldest private bucket is used. Resources lists the files under **Server code**
 with the versions that run each, and what none runs any more can be removed from there. A bucket that keeps code a
 version runs cannot be made public, pointed at another bucket or removed.
 
 **A space made from a template** does not get the template's functions copied — it has no private bucket yet. The
-Functions panel offers them instead: once the space has a private bucket, **Install the template's functions** saves the
+Functions panel (**Server → Functions**) offers them instead: once the space has a private bucket, **Install the template's functions** saves the
 template's source as the space's own, built and checked like any save.
 
 ## 4. Trying it, and what ships

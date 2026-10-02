@@ -65,8 +65,8 @@ Records live in Mongo, in `space_changes` (with `space_change_counters` handing 
 
 ## 4. Reading it
 
-**In the builder:** the **History** panel on the left. Newest first, with consecutive saves by the same person from the
-same place folded into one row (one request, or saves less than a minute apart). A row says what it did one line per
+**In the builder:** **History**, the clock beside undo and redo in the header. Newest first, with consecutive saves
+by the same person from the same place folded into one row (one request, or saves less than a minute apart). A row says what it did one line per
 thing, each with an icon for what was done (added, removed, moved, changed, reordered) — "Added text “hero” to page “test”", "Moved button “cta” from “header” to “footer”", "Changed content of heading
 “title”", "Changed class “card” on tablet" — each said once, so ten keystrokes in one text are one line. A parent is not
 listed as changed because a child was added to it, removed from it or moved: that is the add, the removal or the move.

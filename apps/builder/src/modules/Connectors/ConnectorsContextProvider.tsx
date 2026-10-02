@@ -100,12 +100,11 @@ const ConnectorsContextProvider = ({ children }: ConnectorsContextProviderProps)
       connectors,
       isLoading,
       error: error?.message ?? '',
-      hasServerRendering,
       addConnector,
       updateConnector,
       removeConnector
     }),
-    [connectors, isLoading, error, hasServerRendering, addConnector, updateConnector, removeConnector]
+    [connectors, isLoading, error, addConnector, updateConnector, removeConnector]
   );
 
   return <ConnectorsContext value={value}>{children}</ConnectorsContext>;

@@ -105,8 +105,8 @@ declared. The authoring gate (`authorSpace`) refuses both, with the fix in the m
 
 ## The builder
 
-- **Components** panel (`apps/builder/src/modules/Components`): list with instance counts, drag to place, create,
-  edit the declaration, remove.
+- **Components**, at the foot of the Elements panel (`apps/builder/src/modules/Components`), searched with the
+  elements: list with instance counts, drag to place like an element, create, edit the declaration, remove.
 - **Open in canvas**: `componentOpen` in the builder store. `AppContainer` draws the builder inside a scope holding the
   component's tree (`useOpenComponent`), keyed by the component, so the canvas, the layers and the element tools find
   its elements by id. A banner says the canvas is a component.

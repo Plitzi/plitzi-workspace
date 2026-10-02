@@ -15,6 +15,7 @@ vi.mock('@pmodules/Builder/hooks/useRevealElement', () => ({ default: vi.fn() })
 vi.mock('@pmodules/Builder/helpers/elementChain', () => ({ chainOf: () => ({ rootId: 'home', ancestors: ['home'] }) }));
 
 const reveal = vi.fn();
+const dismiss = vi.fn();
 
 const agentEdit: ChangeRecord = {
   seq: 2,
@@ -71,7 +72,7 @@ beforeEach(() => {
 
 describe('History', () => {
   it('lists who changed what, newest first, with a published revision marked between the changes it splits', () => {
-    const { container, getByRole, getByText } = render(<History />);
+    const { container, getByRole, getByText } = render(<History onDismiss={dismiss} />);
     const text = container.textContent;
 
     expect(within(getByRole('list')).getByText('Agent')).toBeTruthy();
@@ -83,7 +84,7 @@ describe('History', () => {
   });
 
   it('unfolds a change into each field before and after, and takes someone to the element it touched', () => {
-    const { getByRole, getByText } = render(<History />);
+    const { getByRole, getByText } = render(<History onDismiss={dismiss} />);
 
     fireEvent.click(getByText('Changed content of element “hero”'));
 
@@ -94,11 +95,13 @@ describe('History', () => {
     fireEvent.click(getByRole('button', { name: 'Changed content of element “hero”' }));
 
     expect(reveal).toHaveBeenCalledWith({ id: 'hero', rootId: 'home', ancestors: ['home'] });
+    // Read in a dialog over the canvas: the dialog makes way for the element it just put on screen.
+    expect(dismiss).toHaveBeenCalledTimes(1);
   });
 
   it('asks for one element’s history when told to, and says so when there is nothing yet', () => {
     timeline({ changes: [], snapshots: [] });
-    const { getByLabelText, getByText } = render(<History />);
+    const { getByLabelText, getByText } = render(<History onDismiss={dismiss} />);
 
     fireEvent.click(getByLabelText('Only the selected element'));
 

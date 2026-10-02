@@ -3,6 +3,7 @@ import { use, useCallback, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import Components from '@pmodules/Components';
 
 import ElementCategory from './ElementCategory';
 import { definitionsByCategory } from './ElementHelper';
@@ -20,12 +21,13 @@ const Elements = () => {
 
   return (
     <div className="flex grow basis-0 flex-col gap-2 overflow-y-auto p-2">
-      <Input placeholder="Search Elements" value={filter} size="sm" onChange={handleChange}>
+      <Input placeholder="Search elements and components" value={filter} size="sm" onChange={handleChange}>
         <Input.Icon icon="fa-solid fa-magnifying-glass" />
       </Input>
       {Object.keys(byCategory).map(category => (
         <ElementCategory key={category} components={byCategory[category]} category={category} />
       ))}
+      <Components filter={filter} />
     </div>
   );
 };

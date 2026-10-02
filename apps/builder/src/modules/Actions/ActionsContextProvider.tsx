@@ -138,26 +138,13 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
       credentials,
       isLoading,
       error: error?.message ?? '',
-      hasServerRendering,
       deployments: origins,
       addAction,
       updateAction,
       removeAction,
       runAction
     }),
-    [
-      actions,
-      tasks,
-      credentials,
-      isLoading,
-      error,
-      hasServerRendering,
-      origins,
-      addAction,
-      updateAction,
-      removeAction,
-      runAction
-    ]
+    [actions, tasks, credentials, isLoading, error, origins, addAction, updateAction, removeAction, runAction]
   );
 
   return <ActionsContext value={value}>{children}</ActionsContext>;

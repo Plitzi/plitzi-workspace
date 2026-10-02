@@ -8,13 +8,17 @@ import LineLabel from '../LineLabel';
 
 import type { ChangeLine as Line } from '@plitzi/sdk-shared/history';
 
-export type ChangeLineProps = { line: Line };
+export type ChangeLineProps = {
+  line: Line;
+  /** Makes way for the element once it is on screen: the history is read in a dialog over it. */
+  onDismiss: () => void;
+};
 
 /**
  * One thing a save did. When it is about an element that is still in the space, the line is the way to it — the same
  * way the problems list takes someone to an element.
  */
-const ChangeLine = ({ line }: ChangeLineProps) => {
+const ChangeLine = ({ line, onDismiss }: ChangeLineProps) => {
   const [flat] = useBuilderStore('schema.flat');
   const revealElement = useRevealElement();
   const { elementId } = line;
@@ -23,8 +27,9 @@ const ChangeLine = ({ line }: ChangeLineProps) => {
   const handleReveal = useCallback(() => {
     if (elementId !== undefined) {
       revealElement({ id: elementId, ...chainOf(flat, elementId) });
+      onDismiss();
     }
-  }, [elementId, flat, revealElement]);
+  }, [elementId, flat, onDismiss, revealElement]);
 
   return (
     <li className="flex text-zinc-700 dark:text-zinc-200">

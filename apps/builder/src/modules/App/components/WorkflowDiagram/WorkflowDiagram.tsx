@@ -51,6 +51,8 @@ export type WorkflowDiagramProps = {
   onAddEdge?: (edge: Connection) => void;
   onRemoveEdge?: (edge: Connection | Edge) => void;
   onRemoveNode?: (node: Node) => void;
+  /** Back to the canvas: the map replaces it, and the Pages panel that opened it may be closed by now. */
+  onClose?: () => void;
 };
 
 const nodeTypes = { custom: CustomNode };
@@ -63,7 +65,8 @@ const WorkflowDiagram = ({
   onAddNode,
   onAddEdge,
   onRemoveNode,
-  onRemoveEdge
+  onRemoveEdge,
+  onClose
 }: WorkflowDiagramProps) => {
   const sitemapNodes = useMemo(() => schemaToSitemap(pages as ElementPage[], pageFolders), [pages, pageFolders]);
   const { nodes: flowNodes, edges: flowEdges } = useMemo(() => sitemapToFlow(sitemapNodes), [sitemapNodes]);
@@ -170,6 +173,12 @@ const WorkflowDiagram = ({
       <Panel position="top-left" className="space-x-2">
         <Card className="flex gap-2" size="xs">
           <Card.Body gap={2}>
+            {onClose && (
+              <Button size="sm" intent="secondary" title="Back to the canvas" onClick={onClose} iconPlacement="before">
+                <Button.Icon icon="fa-solid fa-arrow-left" />
+                Canvas
+              </Button>
+            )}
             <Button size="sm" intent="primary" onClick={handleAddPage} iconPlacement="before">
               <Button.Icon icon="fa-solid fa-plus" />
               Page

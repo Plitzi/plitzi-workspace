@@ -14,12 +14,17 @@ import useSpaceChanges from './hooks/useSpaceChanges';
 import type { ChangeOrigin } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
 
+export type HistoryProps = {
+  /** Closes the dialog the history is read in, once a line has taken the author to its element. */
+  onDismiss: () => void;
+};
+
 /**
  * The space's change history: every save of its schema and style, by whoever made it — a person, an agent, the
  * autofix — newest first, with the published revisions marked where they fall. Read-only: it answers "what changed,
  * who did it and what exactly", and never writes anything back.
  */
-const History = () => {
+const History = ({ onDismiss }: HistoryProps) => {
   const [elementSelected] = useBuilderStore('elementSelected');
   const [origin, setOrigin] = useState<'' | ChangeOrigin>('');
   const [onlySelected, setOnlySelected] = useState(false);
@@ -84,7 +89,7 @@ const History = () => {
       <ul className="flex min-h-0 grow flex-col overflow-y-auto">
         {rows.map(row => (
           <Fragment key={rowKey(row)}>
-            {row.type === 'group' && <ChangeGroup group={row.group} />}
+            {row.type === 'group' && <ChangeGroup group={row.group} onDismiss={onDismiss} />}
             {row.type === 'snapshot' && <SnapshotMarker snapshot={row.snapshot} />}
           </Fragment>
         ))}

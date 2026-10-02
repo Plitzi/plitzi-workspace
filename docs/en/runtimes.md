@@ -84,17 +84,17 @@ plitzi runtime start                 # started again — one stopped by hand, or
   a publish freezes it with the code. That is what `plitzi create --from` brings back as `src/runtime.ts` and the files
   it imports, run in the project's own process with `serveRuntime`: see [A space as a project](./projects-from-spaces.md).
   A source that cannot be kept (a credential in it, a file outside the project) never undoes the push; the CLI says why.
-- **The builder shows it.** Runtime, in the left sidebar: each environment's code, whether it runs, why not, its tasks
+- **The builder shows it.** **Server → Runtime**, in the left sidebar: each environment's code, whether it runs, why not, its tasks
   and endpoints — and the variables, by name. A value is written and never read back.
 - **It is part of the plans that carry `spaceRuntimes`.** A push on another plan is refused with the reason.
 - **Its code is kept in a private bucket of the space's CDN** — your own storage account, which holds as many buckets
-  as you give it. Server code never goes in a public one: in the builder's Resources, add a bucket with its visibility
+  as you give it. Server code never goes in a public one: in the builder's **Assets → Files**, add a bucket with its visibility
   set to **Private** — no public access; the platform reads it with the CDN's credential. A push to a space without one
   is refused, saying so; with several, the oldest is used. The code is named there by what it holds, so a
-  publish copies a name, not the code; Resources lists it under **Server code** with the versions that run it, and what
+  publish copies a name, not the code; **Assets → Files** lists it under **Server code** with the versions that run it, and what
   no version runs any more can be removed from there.
 - **It runs at a size** — small (0.25 CPU, 256 MB), medium (0.5 CPU, 512 MB) or large (1 CPU, 1 GB) — chosen per
-  environment among the sizes its plan includes: in the builder's Runtime panel, which shows what each environment runs
+  environment among the sizes its plan includes: in the builder's **Server → Runtime**, which shows what each environment runs
   at, or with `plitzi runtime size <size> [--environment <name>]`. Changing it starts that runtime again at it.
 - **An unused runtime stops by itself**, so it spends nothing idle: nothing forwarded to its endpoints and no task run
   on it for a while (a week on the platform, where runtimes come with the paying plans), and it is stopped until

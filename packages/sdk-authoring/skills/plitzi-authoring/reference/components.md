@@ -71,5 +71,5 @@ pages: [{ name: 'Shop', slug: 'shop', body: [
 | Many blocks of DIFFERENT structure built by the same logic | a **helper** returning `ElementSpec` |
 | A list of the same block over data | a **list** whose row is the block — or places the component ([lists.md](lists.md)) |
 
-A component is also what a person editing the space in the builder will find in its Components panel, open and edit
+A component is also what a person editing the space in the builder will find under Components, at the foot of its Elements panel, open and edit
 once; a helper's output is, to them, a pile of copies.
