@@ -29,6 +29,50 @@ describe('mcp-ai settings (space-level customCss + auth config)', () => {
     expect(settings.keepState).toBe(true);
   });
 
+  // The look of the toasts is written as a rule inside customCss, the way authoring writes it — and each one reads and
+  // changes on its own: new notifications keep the CSS, new CSS keeps the notifications.
+  it('dresses the notifications apart from the custom CSS, each kept when the other changes', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      {
+        operations: [
+          { type: 'patchSettings', customCss: '.a{}', notifications: { background: 'var(--card)', radius: '12px' } }
+        ]
+      },
+      buildSpace(),
+      cap.persisters
+    );
+    await apply(
+      { operations: [{ type: 'patchSettings', notifications: { radius: null, border: '1px solid var(--line)' } }] },
+      cap.saved(),
+      cap.persisters
+    );
+    await apply({ operations: [{ type: 'patchSettings', customCss: '.b{}' }] }, cap.saved(), cap.persisters);
+    const settings = readResource(cap.saved(), 'main', 'plitzi://settings/main')?.data as {
+      customCss?: string;
+      notifications?: Record<string, string>;
+    };
+
+    expect(settings.customCss).toBe('.b{}');
+    expect(settings.notifications).toEqual({ background: 'var(--card)', border: '1px solid var(--line)' });
+    expect(cap.saved().schema.settings.customCss).toContain('--toastify-color-light: var(--card);');
+  });
+
+  it('refuses a notifications value that is not one CSS value, and a field it does not take', () => {
+    const broken = validate(
+      { operations: [{ type: 'patchSettings', notifications: { background: 'red; } body { display: none' } }] },
+      buildSpace()
+    );
+    const unknown = validate(
+      { operations: [{ type: 'patchSettings', notifications: { colour: 'red' } }] },
+      buildSpace()
+    );
+
+    expect(broken.valid).toBe(false);
+    expect(broken.errors[0]?.message).toContain('not one CSS value');
+    expect(unknown.valid).toBe(false);
+  });
+
   it('keeps state per space, leaving out the keys it is told never to keep', async () => {
     const cap = capturing(buildSpace());
     await apply(

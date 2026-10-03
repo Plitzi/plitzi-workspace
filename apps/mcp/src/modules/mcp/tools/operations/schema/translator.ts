@@ -1,4 +1,4 @@
-import { flagSpecOf } from '@plitzi/sdk-authoring';
+import { flagSpecOf, splitNotificationsCss } from '@plitzi/sdk-authoring';
 import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
 
 import {
@@ -403,6 +403,21 @@ export const settingsToAI = (schema: Schema): AISettings => {
   const result: AISettings = {};
   for (const [key, value] of Object.entries(schema.settings)) {
     result[key as keyof AISettings] = value as never;
+  }
+
+  // The notifications' look is written into `customCss` as a rule of its own; it reads as the field it is edited by,
+  // and `customCss` as the space's own CSS without it.
+  if (typeof schema.settings.customCss === 'string') {
+    const { notifications, customCss } = splitNotificationsCss(schema.settings.customCss);
+    if (customCss) {
+      result.customCss = customCss;
+    } else {
+      delete result.customCss;
+    }
+
+    if (Object.keys(notifications).length > 0) {
+      result.notifications = notifications;
+    }
   }
 
   return result;

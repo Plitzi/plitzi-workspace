@@ -948,6 +948,11 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
 (merge — only the fields you pass change):
 - \`customCss\` — **raw global CSS** injected for the whole space. Use it only for genuinely site-wide rules
   (\`@keyframes\`, \`@font-face\`, resets). To style an element, write a **definition** and attach it — never customCss.
+- \`notifications\` — how the toasts an \`addNotification\` step shows look: colours (\`background\`, \`text\`,
+  \`success\`, \`danger\`, \`warning\`, \`info\`) and shape (\`radius\`, \`font\`, \`fontSize\`, \`border\`, \`shadow\`,
+  \`padding\`), any CSS value — a token follows the theme: \`{ "type": "patchSettings", "notifications": { "background":
+  "var(--card)", "border": "1px solid var(--border)" } }\`. Merged field by field, \`null\` removes one. It is stored as a
+  rule inside \`customCss\` but reads and changes apart from it: never write a \`.Toastify__toast\` rule yourself.
 - \`keepState\` / \`stateStorage\` — keep the runtime state (\`state.<key>\`, what \`setState\` writes) across reloads,
   in \`localStorage\`/\`sessionStorage\`, filed under whoever is signed in. It is the space's setting — pages do not
   take one. \`transientState\` lists the top-level keys never kept (a filter, a demo, a panel left open); do not

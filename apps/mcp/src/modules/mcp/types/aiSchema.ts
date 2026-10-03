@@ -1,3 +1,4 @@
+import type { NotificationsSpec } from '@plitzi/sdk-authoring';
 import type { CssProps } from '@plitzi/sdk-authoring';
 import type { ElementRuntime, Environment, WhileRunning } from '@plitzi/sdk-shared';
 
@@ -270,7 +271,10 @@ export interface AISchemaVariable {
 /** Space-level settings: the arbitrary global CSS (`customCss`), state persistence, and the user/auth provider
  *  configuration. Every field is optional — a patch changes only the keys it sends. */
 export interface AISettings {
+  /** The space's own global CSS — without the notifications' rule, which reads as `notifications`. */
   customCss?: string;
+  /** How the toasts an `addNotification` step shows look: colours and shape, any CSS value. */
+  notifications?: NotificationsSpec;
   /** Keep `runtime.state` — what `setState` writes — across reloads, filed under whoever is signed in. */
   keepState?: boolean;
   stateStorage?: 'localStorage' | 'sessionStorage';

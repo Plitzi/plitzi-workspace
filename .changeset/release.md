@@ -529,3 +529,8 @@ as a CSS value it could not read.
 `warned`. The MCP server's guide teaches the short way first — a link's own `content`, the `current` state for the link
 to the page being shown, a component for a block only some pages of a layout carry — and how to read the
 `suggestions` `plitzi_validate` and `plitzi_apply` answer with.
+
+The MCP server dresses the notifications too: `patchSettings { notifications: { background, border, … } }`, merged
+field by field (`null` removes one), and `plitzi://settings` reads them apart from the space's own `customCss` — the
+same rule authoring writes for a space's `notifications`, kept when either changes. The builder's Export gives that
+rule back as `notifications` instead of leaving it in `customCss` (`splitNotificationsCss`, `withNotificationsCss`).

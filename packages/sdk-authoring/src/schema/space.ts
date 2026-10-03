@@ -54,7 +54,7 @@ import { buildHandles, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
 import { fixSpace, lintSpace } from './lint';
 import { MAIN_ATTRIBUTES } from './mainAttributes';
-import { notificationsCss } from './notifications';
+import { withNotificationsCss } from './notifications';
 import { refusalOf, SpaceRefusedError } from './refusals';
 import { didYouMean } from './suggest';
 import { assertSpaceValid, validateSpace } from './validate';
@@ -368,7 +368,7 @@ class SpaceAuthor {
       ...(this.spec.flags ? { flags: this.spec.flags } : {}),
       settings: {
         ...this.spec.settings,
-        customCss: [this.spec.customCss ?? '', notificationsCss(this.spec.notifications)].filter(Boolean).join('\n\n'),
+        customCss: withNotificationsCss(this.spec.customCss ?? '', this.spec.notifications),
         ...(this.spec.computed ? { computed: this.spec.computed } : {}),
         ...(this.spec.channels ? { channels: this.spec.channels } : {})
       },

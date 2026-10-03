@@ -11,6 +11,7 @@ import {
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../schema';
 import { flagSpecOf } from '../schema/flags';
+import { splitNotificationsCss } from '../schema/notifications';
 import { css, modifierClassName } from '../style';
 import { foldCustomCss } from './customCss';
 import { categoryOf, definitionOf, withNamedIds } from './documents';
@@ -402,7 +403,9 @@ class SpecReader {
     this.indexStyle(style);
     // An older export may carry no stylesheet at all.
     const written: unknown = schema.settings.customCss;
-    const ownCss = this.foldCustomCss(typeof written === 'string' ? written : '');
+    // The notifications' rule is authoring's own writing: it goes back to the field it was written from.
+    const { notifications, customCss: writtenOwn } = splitNotificationsCss(typeof written === 'string' ? written : '');
+    const ownCss = this.foldCustomCss(writtenOwn);
     const pageFolders = this.readFolders();
     const roots = this.collectRoots();
     if (roots.pages.length === 0) {
@@ -442,6 +445,7 @@ class SpecReader {
       ...(schema.flags && !isEmpty(schema.flags) ? { flags: schema.flags } : {}),
       ...(channels && !isEmpty(channels) ? { channels } : {}),
       ...(customCss ? { customCss } : {}),
+      ...(isEmpty(notifications) ? {} : { notifications }),
       ...(schema.rsc ? { rsc: schema.rsc } : {}),
       ...(pageFolders.length > 0 ? { pageFolders } : {}),
       ...(layouts.length > 0 ? { layouts } : {}),

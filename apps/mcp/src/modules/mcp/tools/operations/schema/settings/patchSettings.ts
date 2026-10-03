@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { NOTIFICATIONS_FIELDS, splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-authoring';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
 
 import { empty, fail } from '../../../../helpers';
@@ -25,6 +26,10 @@ const channel = z.object({
   presence: z.boolean().optional()
 });
 
+// A record, not an object of its fields: the op union is in four tools' listings, and the fields are named once in
+// the description instead. A field authoring's `notifications` does not take is refused by its own check, by name.
+const notifications = z.record(z.string(), z.string().nullable());
+
 // Every field optional and merged onto the existing settings — a patch touches only the keys it sends. `customCss`
 // is arbitrary global CSS injected for the whole space (NOT the structured, per-element style schema): reach for it
 // only for genuinely global rules (keyframes, @font-face, resets), never to style one element.
@@ -32,6 +37,9 @@ export const patchSettingsOp = z
   .object({
     type: z.literal('patchSettings'),
     customCss: z.string().optional().describe('Raw global CSS for the whole space (keyframes, @font-face, resets)'),
+    notifications: notifications
+      .optional()
+      .describe(`The toasts' look: ${NOTIFICATIONS_FIELDS.join(', ')} — CSS values; null removes one`),
     keepState: z.boolean().optional().describe('Keep runtime state (setState keys) across reloads'),
     stateStorage: z.enum(['localStorage', 'sessionStorage']).optional(),
     transientState: z.array(z.string()).optional().describe('Top-level state keys never kept'),
@@ -70,7 +78,8 @@ export const patchSettingsOp = z
       .describe('Realtime channels by topic pattern (`board:{id}`); null removes one. See the guide')
   })
   .describe(
-    'Merge space-level settings — global CSS, kept state, auth, realtime channels. Only the fields sent change. ' +
+    'Merge space-level settings — global CSS, notifications, kept state, auth, realtime channels. Only the fields ' +
+      'sent change. ' +
       'customCss is for site-wide CSS, never to style one element (attach a definition for that).'
   );
 
@@ -88,8 +97,31 @@ const mergeChannels = (
   );
 };
 
+/**
+ * The space's `customCss` with the patch's own CSS and notifications in it. Both live in that one string — the
+ * notifications as the rule authoring writes for them — so each is read out of it, changed apart, and written back
+ * together: a new `customCss` keeps the notifications, and new notifications keep the space's CSS.
+ */
+const patchCustomCss = (
+  current: string,
+  customCss: string | undefined,
+  patch: PatchSettings['notifications']
+): string => {
+  const was = splitNotificationsCss(current);
+  // A `customCss` read before this field existed may carry the rule itself: what it says is read out of it as well.
+  const sent = customCss === undefined ? undefined : splitNotificationsCss(customCss);
+  const merged = { ...was.notifications, ...sent?.notifications, ...patch };
+
+  return withNotificationsCss(
+    sent?.customCss ?? was.customCss,
+    Object.fromEntries(
+      Object.entries(merged).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+    )
+  );
+};
+
 export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResult => {
-  const { type, channels, ...patch } = op;
+  const { type, channels, customCss, notifications: notificationsPatch, ...patch } = op;
   // The same check authoring and the linter make: a pattern the server could not read opens nothing, silently.
   for (const [pattern, declaration] of Object.entries(channels ?? {})) {
     const [problem] = declaration === null ? [] : channelProblems(pattern, declaration);
@@ -110,6 +142,20 @@ export const patchSettings = (space: Space, env: Env, op: PatchSettings): OpResu
 
   if (channels) {
     next.channels = mergeChannels(space.schema.settings.channels, channels);
+  }
+
+  if (customCss !== undefined || notificationsPatch) {
+    const current = space.schema.settings.customCss;
+    try {
+      next.customCss = patchCustomCss(typeof current === 'string' ? current : '', customCss, notificationsPatch);
+    } catch (error) {
+      // authoring's own check: a value that is not one CSS value would end the rule early.
+      return fail(
+        'notifications',
+        error instanceof Error ? error.message : String(error),
+        'Write one CSS value per field — a colour, a length or a token like var(--card)'
+      );
+    }
   }
 
   space.schema.settings = next;

@@ -71,7 +71,10 @@ const widgetOperations = [
 // Raised from 199k for an element's `anchor` — its DOM id, which `/page#section` and a link's `hash` land on: a field
 // of the element and of its patch, ~1k across the four tools that carry the op union, registered once
 // (`ElementAnchor`) with its description cut to one line.
-const TOOLS_BUDGET_BYTES = 200_500;
+//
+// Raised from 200.5k for the notifications' look on `patchSettings`: one field, a record whose keys its one-line
+// description names (a property per key measured ~3k more across the four tools), ~0.8k in all.
+const TOOLS_BUDGET_BYTES = 201_500;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.
