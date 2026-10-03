@@ -137,9 +137,19 @@ export const categories: Category[] = [
   }
 ];
 
+/** Where the run's own `--project` flags are handed to its workers: a worker re-loads the config with a command line
+ *  of its own, and a category only on request that it cannot see is a project it does not have ("Project not found
+ *  in the worker process"). */
+const REQUESTED_ENV = 'PLITZI_E2E_PROJECTS';
+
 /** Playwright's `--project` flags for this run, read off the command line. The config needs them BEFORE Playwright
- *  parses anything, to decide which servers to boot: running one category should not start every server. */
+ *  parses anything, to decide which servers to boot: running one category should not start every server. A worker
+ *  reads the ones the run was started with. */
 export const requestedCategories = (): string[] => {
+  if (process.env.TEST_WORKER_INDEX !== undefined) {
+    return (process.env[REQUESTED_ENV] ?? '').split(',').filter(Boolean);
+  }
+
   const names: string[] = [];
 
   process.argv.forEach((argument, index) => {
@@ -157,6 +167,7 @@ export const requestedCategories = (): string[] => {
       names.push(argument.slice('--project='.length));
     }
   });
+  process.env[REQUESTED_ENV] = names.join(',');
 
   return names;
 };

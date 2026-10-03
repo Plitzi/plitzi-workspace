@@ -147,18 +147,19 @@ export const sampleSpace: SpaceSpec = {
     },
     buttonLink: { desktop: { color: 'white', flex: '1 1 0px' } },
     titleContainer: { desktop: { display: 'flex', 'align-items': 'center' } },
-    titleIcon: { desktop: { 'margin-left': '10px' } }
+    /** The arrow slides while the card it sits in is hovered: the icon's own rule, under its ancestor's state. */
+    titleIcon: {
+      css: {
+        desktop: {
+          'margin-left': '10px',
+          'transition-property': 'transform',
+          'transition-timing-function': 'cubic-bezier(0.4, 0, 0.2, 1)',
+          'transition-duration': '150ms'
+        }
+      },
+      ancestors: { buttonLink: { states: { hover: { transform: 'translateX(10px)' } } } }
+    }
   },
-
-  /** The arrow that slides on hover: a state no style panel models, and the reason `customCss` exists. */
-  customCss: `
-.buttonLink:hover .titleIcon {
-  transform: translateX(10px);
-  transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0.2, 1);
-  transition-duration: 150ms;
-}
-`,
 
   /** The server resolves this space's `runtime: 'server'` elements — without it they render from mock data. */
   rsc: { enabled: true },

@@ -520,3 +520,7 @@ the authoring skill's new `reference/efficiency.md` teaches the short way first.
 
 A `link` has words of its own: `content`, drawn before or after its children (`contentPlacement`), as a button's — a
 link with only a label no longer needs a `text` inside it.
+
+A style that writes its rules beside `states`, `variants` or `ancestors` — `{ desktop: { … }, ancestors: { … } }` — is
+refused with what to write (`rule-set-mixed`: the rules go under `css`), instead of reporting `desktop: [object Object]`
+as a CSS value it could not read.

@@ -112,6 +112,7 @@ The space is not written until these are fixed.
 | `row-component` | a list's `row` naming a component the space does not declare, or one with no prop to take the row | a declared component with an `item` prop — or a single prop — for the row |
 | `row-outside-list` | `row` on an element that is not a list | a `list` around it |
 | `row-without-id` | a list whose `row` is a function, with no `id` — the row's sources are named after it | `list({ id: 'products', items, row: r => … })` |
+| `rule-set-mixed` | a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css` | `{ css: { desktop: { … } }, states: { hover: { … } } }` — the rules under `css`, each of the others beside it |
 | `selector-invalid` | a `selector` that is not a CSS class name | letters, digits, `-` and `_` |
 | `selector-taken` | a `selector` that is a declared class, or another element's | `class` to share rules; a selector of an element's own is its alone |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |

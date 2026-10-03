@@ -241,6 +241,11 @@ export const AUTHORING_CODES = {
     means: 'a property in the style document the style editor cannot read back',
     fix: 'the property it suggests'
   },
+  'rule-set-mixed': {
+    kind: 'refused',
+    means: 'a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css`',
+    fix: '`{ css: { desktop: { … } }, states: { hover: { … } } }` — the rules under `css`, each of the others beside it'
+  },
   'style-state-unknown': {
     kind: 'refused',
     means: 'a state a selector does not react to',

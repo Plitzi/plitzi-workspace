@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { css, toResponsive } from './css';
+import { css, toBlocks, toResponsive } from './css';
 import { column, grid, row } from './layout';
 
 describe('css', () => {
@@ -64,6 +64,14 @@ describe('css', () => {
 
   it('lets an explicit longhand win over the shorthand it sits beside', () => {
     expect(css({ padding: '8px', 'padding-left': '0px' })).toMatchObject({ 'padding-left': '0px' });
+  });
+});
+
+describe('a style with states, variants or ancestors', () => {
+  it('refuses its rules written beside them, and says to put them under `css`', () => {
+    expect(() =>
+      toBlocks({ desktop: { marginLeft: '10px' }, ancestors: { card: { states: { hover: { color: 'red' } } } } })
+    ).toThrow(/\[rule-set-mixed\][^]*its own rules go under `css`: `\{ css: \{ desktop: … \}, ancestors: \{ … \} \}`/);
   });
 });
 

@@ -238,6 +238,17 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
     return {};
   }
 
+  const misplaced = Object.keys(spec).filter(key => RULE_SET_KEYS.has(key) && key !== 'css');
+  if (!isRuleSetSpec(spec) && misplaced.length > 0) {
+    const rules = Object.keys(spec).filter(key => !RULE_SET_KEYS.has(key));
+    throw new AuthoringError(
+      'rule-set-mixed',
+      `A style writes ${rules.map(key => `\`${key}\``).join(', ')} beside ${misplaced.map(key => `\`${key}\``).join(', ')}. ` +
+        'Once a style has states, variants or ancestors, its own rules go under `css`: ' +
+        `\`{ css: { ${rules.map(key => `${key}: …`).join(', ')} }, ${misplaced.map(key => `${key}: { … }`).join(', ')} }\`.`
+    );
+  }
+
   const ruleSet: RuleSetSpec = isRuleSetSpec(spec) ? spec : { css: spec };
   const base = toResponsive(ruleSet.css);
   const states = toStates(ruleSet.states);

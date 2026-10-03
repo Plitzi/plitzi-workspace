@@ -406,13 +406,23 @@ describe('workers — a server on several processes', () => {
     const run = await start({ WORKERS: '3' });
     await untilServing(run);
 
-    const verdicts = [];
-    for (let index = 0; index < 12; index += 1) {
+    // Which worker answers is the operating system's to choose, so ask until more than one has: every attempt past the
+    // tenth is refused whichever worker counts it, and a refusal from a worker that counted none of the first ten is
+    // the shared count itself.
+    const verdicts: { pid: number; value: { allowed: boolean } }[] = [];
+    for (
+      let attempt = 0;
+      attempt < 100 && (verdicts.length < 12 || new Set(verdicts.map(verdict => verdict.pid)).size < 2);
+      attempt += 1
+    ) {
       verdicts.push(await fleet(run.port, 'login?key=ada', asVerdict));
     }
 
     expect(new Set(verdicts.map(verdict => verdict.pid)).size).toBeGreaterThan(1);
-    expect(verdicts.map(verdict => verdict.value.allowed)).toEqual([...Array<boolean>(10).fill(true), false, false]);
+    expect(verdicts.map(verdict => verdict.value.allowed)).toEqual([
+      ...Array<boolean>(10).fill(true),
+      ...Array<boolean>(verdicts.length - 10).fill(false)
+    ]);
   }, 60_000);
 
   it('keeps everything in its own process with one worker, jobs included', async () => {
