@@ -21,3 +21,4 @@ export * from './space';
 export * from './snippet';
 export * from './validate';
 export type * from './types';
+export type { WrittenPosition } from './writtenAt';

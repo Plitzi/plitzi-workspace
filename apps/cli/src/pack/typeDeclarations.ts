@@ -1,7 +1,6 @@
-import { createRequire } from 'node:module';
 import path from 'node:path';
 
-import type TypeScript from 'typescript';
+import { loadTypeScript } from '../projectTypeScript';
 
 /**
  * A plugin package's type declarations, for a project that installs it and imports its elements.
@@ -13,16 +12,6 @@ import type TypeScript from 'typescript';
 
 /** What became of the declarations: written, or not, because the package has no TypeScript to write them with. */
 export type TypesOutcome = 'written' | 'no-typescript';
-
-const loadTypeScript = (root: string): typeof TypeScript | undefined => {
-  try {
-    // Resolved from the package, not from the CLI: its version is the one its source is written for. What `require`
-    // hands back is the TypeScript module — the type is the one the package's own `import` would see.
-    return createRequire(path.join(root, 'package.json'))('typescript') as typeof TypeScript;
-  } catch {
-    return undefined;
-  }
-};
 
 export const emitTypeDeclarations = (root: string, outDir: string): TypesOutcome => {
   const ts = loadTypeScript(root);

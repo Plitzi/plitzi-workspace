@@ -4,6 +4,8 @@
  * Driver-agnostic like `locate`: `inspectPage` takes anything with an `evaluate`, and the rest is data over specs and
  * handles — so this stays a package that installs nothing and touches no browser until a test hands it one.
  */
+export { failedFlowText, readDevTools, readDevToolsInPage } from './devTools';
+export type { DevToolsDriver, DevToolsFlow, DevToolsFlowStep, DevToolsInput, DevToolsReport } from './devTools';
 export { inspectDocument, inspectPage } from './inspect';
 export type { DocumentChecks, InspectOptions, PageEvaluator, PageReport } from './inspect';
 export { onScreen } from './onScreen';

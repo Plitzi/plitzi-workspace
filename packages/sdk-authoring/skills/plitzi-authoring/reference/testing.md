@@ -59,11 +59,10 @@ the space with it (the e2e harness: `renderSpace(page, space, { debugMode: true 
 
 ## Asking the page what it holds
 
-In debug mode (any development server) the page has `window.__plitzi`: `state()` and `setState(key, value)`,
-`sources(name?)` — every provider's current value by its full name — `element(id)` — type, attributes, what it reads,
-its own state, how many copies, whether it is on screen and its box — `flows(limit?)` — the last runs with every step,
-its time and its error — and `watch()`, one console line per flow as it ends. `help()` lists them. In a test,
-`page.evaluate(() => window.__plitzi.flows(1))` says why a click did nothing.
+`plitzi check` lists every flow that failed while the page loaded; `--state` adds the state and every source by its
+full name, `--element <id>` one element — what it reads, its own state, whether it is on screen. They come from the
+page's dev tools (debug mode, any development server). In a test, `readDevTools(page, { state: true })` from
+`@plitzi/sdk-authoring` answers the same.
 
 ## Spaces written for a test
 

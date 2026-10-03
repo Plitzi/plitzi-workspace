@@ -7,6 +7,7 @@ import create from './commands/create';
 import createPlugin from './commands/createPlugin';
 import { dataDescribe } from './commands/data';
 import { explainCommand } from './commands/explain';
+import { fix } from './commands/fix';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
 import packPluginCommand from './commands/packPlugin';
 import packSourceCommand from './commands/packSource';
@@ -31,6 +32,7 @@ import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
 import type { DataDescribeOptions } from './commands/data';
 import type { ExplainOptions } from './commands/explain';
+import type { FixOptions } from './commands/fix';
 import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
 import type { PackPluginOptions } from './commands/packPlugin';
 import type { PackSourceOptions } from './commands/packSource';
@@ -219,12 +221,23 @@ program
   .command('check')
   .argument('[path]', 'The page: /about. The home page when left out')
   .description(
-    'Whether a page of the running project is whole, in text: every element on screen, no broken image, no console error'
+    'Whether a page of the running project is whole, in text: every element on screen, no broken image, no console error, no failed flow'
   )
   .option('--width <px,px>', 'The widths to check it at, separated by commas', '1440,390')
   .option('--scheme <scheme>', 'light or dark', 'light')
+  .option('--state', 'Also what the page holds: its state, and every source by name')
+  .option('--element <id>', 'Also one element: what it reads, its own state, whether it is on screen')
   .option('--json', 'One object per width, for a tool or an agent')
   .action((path: string | undefined, options: CheckOptions) => check(path, options));
+
+program
+  .command('fix')
+  .description(
+    'What authoring would fix in the space, as edits to your source: shown as a diff; with --write written, formatted and checked'
+  )
+  .option('--write', 'Write the edits — kept only when the space authors with each fix gone and no problem added')
+  .option('--json', 'The plan as one object, for a tool or an agent')
+  .action((options: FixOptions) => fix(options));
 
 program
   .command('shot')

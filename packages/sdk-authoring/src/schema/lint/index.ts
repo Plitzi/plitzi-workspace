@@ -15,6 +15,7 @@ import type { Schema, Style } from '@plitzi/sdk-shared';
 
 export type { LintCatalogs, LintIssue } from './context';
 export { FIXABLE_CODES, fixSpace } from './fixes';
+export type { FixChange } from './fixes';
 export type { AppliedFix, FixResult } from './fixes';
 
 export interface LintResult {

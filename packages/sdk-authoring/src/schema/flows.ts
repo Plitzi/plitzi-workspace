@@ -52,23 +52,14 @@ const assertStepIds = (ids: string[], where: string): void => {
 };
 
 /**
- * One interaction flow, chained.
- *
- * The nodes are a linked list — each knows the one before and the one after, and they all carry the id of the
- * first as their `flowId`. Getting one of those three wrong produces a flow that half runs, which is why this is
- * derived from the order the steps were written in rather than declared.
+ * The ids a flow's steps are written under. A step's output is addressed as `{{ <id>.field }}` from every later step,
+ * so an unnamed one still gets a name worth reading — `navigate-2` — counted per action, which is what a person would
+ * have called it anyway.
  */
-export const authorFlow = (
-  steps: StepSpec[],
-  host?: string,
-  // Shared by every flow on the same element: they all land in one `interactions` record, so a counter per flow
-  // would have the second flow's `navigate` overwrite the first one's.
-  counters: Map<string, number> = new Map()
-): Record<string, ElementInteraction> => {
-  // A step's output is addressed as `{{ <id>.field }}` from every later step, so an unnamed one still gets a name
-  // worth reading — `navigate-2` — counted per action, which is what a person would have called it anyway.
+const stepIds = (steps: StepSpec[], counters: Map<string, number>): string[] => {
   const named = new Set(steps.map(step => step.id).filter(Boolean) as string[]);
-  const ids = steps.map(step => {
+
+  return steps.map(step => {
     if (step.id) {
       return step.id;
     }
@@ -85,6 +76,30 @@ export const authorFlow = (
 
     return `${base}-${next}`;
   });
+};
+
+/** Every step's id, flow by flow, as `authorFlows` writes them — where a step of the document was in the source. */
+export const flowStepIds = (flows: StepSpec[][]): string[][] => {
+  const counters = new Map<string, number>();
+
+  return flows.map(steps => stepIds(steps, counters));
+};
+
+/**
+ * One interaction flow, chained.
+ *
+ * The nodes are a linked list — each knows the one before and the one after, and they all carry the id of the
+ * first as their `flowId`. Getting one of those three wrong produces a flow that half runs, which is why this is
+ * derived from the order the steps were written in rather than declared.
+ */
+export const authorFlow = (
+  steps: StepSpec[],
+  host?: string,
+  // Shared by every flow on the same element: they all land in one `interactions` record, so a counter per flow
+  // would have the second flow's `navigate` overwrite the first one's.
+  counters: Map<string, number> = new Map()
+): Record<string, ElementInteraction> => {
+  const ids = stepIds(steps, counters);
 
   assertStepIds(ids, host ? `the flow on "${host}"` : 'this flow');
   const flowId = ids[0] ?? '';

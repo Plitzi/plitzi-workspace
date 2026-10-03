@@ -28,7 +28,7 @@ const OWN_ROOT = ((): string => {
 const isOwnFrame = (file: string): boolean =>
   file.startsWith('node:') || file.includes('/node_modules/') || (OWN_ROOT !== '' && file.startsWith(OWN_ROOT));
 
-const FRAME = /\(?((?:file:\/\/)?[^\s()]+?):(\d+):\d+\)?$/;
+const FRAME = /\(?((?:file:\/\/)?[^\s()]+?):(\d+):(\d+)\)?$/;
 
 export const markWrittenAt = <T extends object>(spec: T): T => {
   if (!isProduction()) {
@@ -38,8 +38,19 @@ export const markWrittenAt = <T extends object>(spec: T): T => {
   return spec;
 };
 
-/** The first frame of the author's own code that wrote `spec`, relative to the working directory; or nothing. */
-export const writtenAt = (spec: unknown): string | undefined => {
+/** Where a call is, exactly: the file, its line and the column its function's name starts at, from 1. */
+export interface WrittenPosition {
+  /** Relative to the working directory when it is under it. */
+  file: string;
+  line: number;
+  column: number;
+}
+
+/**
+ * The call in the author's own code that wrote `spec` — the factory's name at that line and column, which tells it
+ * apart from another call on the same line. What a fix edits the source at.
+ */
+export const writtenAtPosition = (spec: unknown): WrittenPosition | undefined => {
   const marker: unknown = typeof spec === 'object' && spec !== null ? Reflect.get(spec, WRITTEN_AT) : undefined;
   if (!(marker instanceof Error) || !marker.stack) {
     return undefined;
@@ -54,9 +65,20 @@ export const writtenAt = (spec: unknown): string | undefined => {
 
     const file = match[1].replace(/^file:\/\//, '');
     if (!isOwnFrame(file)) {
-      return `${cwd && file.startsWith(cwd) ? file.slice(cwd.length) : file}:${match[2]}`;
+      return {
+        file: cwd && file.startsWith(cwd) ? file.slice(cwd.length) : file,
+        line: Number(match[2]),
+        column: Number(match[3])
+      };
     }
   }
 
   return undefined;
+};
+
+/** The first frame of the author's own code that wrote `spec`, relative to the working directory; or nothing. */
+export const writtenAt = (spec: unknown): string | undefined => {
+  const position = writtenAtPosition(spec);
+
+  return position ? `${position.file}:${String(position.line)}` : undefined;
 };

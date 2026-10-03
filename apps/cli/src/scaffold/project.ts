@@ -327,7 +327,7 @@ ${commands.join('\n')}
 - **Port.** ${port}
 - **Data with no backend** goes in ${code('public/data/*.json')}, served as it is and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}${serverData}.
 ${pictures}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site, by section). ${run('visual')} runs the checks as tests.
-- **What the page holds, in text:** while developing, the browser has ${code('window.__plitzi')} — ${code('state()')}, ${code('setState(key, value)')}, ${code('sources()')} (every provider's data by name), ${code('element(id)')} (what it reads, its state, whether it is on screen), ${code('flows()')} (the last runs, each step with its time and error) and ${code('watch()')}, a console line per flow. Read it instead of guessing from classes in the DOM.
+- **What the page holds, in text:** ${code(`${runCommand(answers.packageManager, 'check')} -- /products --state --element <id>`)} adds its state, every source by name and one element (what it reads, its own state, whether it is on screen); every check already lists the flows that failed. Read it instead of guessing from classes in the DOM.
 
 ## Do not read
 
@@ -346,7 +346,7 @@ ${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi add plugin')
 
 ## The rules that go wrong most
 
-- Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration.
+- Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration; ${code('npx plitzi fix --write')} writes the ones with a single reading.
 - ${zeroWarnings}
 - Chrome shared by pages is a layout; a look used twice is a class; a repeated block is a function or a ${code('map')}.
 - Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.

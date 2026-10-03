@@ -35,7 +35,7 @@ import {
 } from './bindings';
 import { AuthoringError } from './codes';
 import { flagGateOf } from './flags';
-import { authorFlows } from './flows';
+import { authorFlows, flowStepIds } from './flows';
 import {
   COMPONENT_SPEC_KEYS,
   ELEMENT_SPEC_KEYS,
@@ -51,16 +51,18 @@ import {
 } from './guard';
 import { buildHandles, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
+import { fixSpace, lintSpace } from './lint';
 import { MAIN_ATTRIBUTES } from './mainAttributes';
 import { notificationsCss } from './notifications';
 import { refusalOf, SpaceRefusedError } from './refusals';
 import { didYouMean } from './suggest';
 import { assertSpaceValid, validateSpace } from './validate';
-import { writtenAt } from './writtenAt';
+import { writtenAt, writtenAtPosition } from './writtenAt';
 
 import type { SourceIndex } from './bindings';
 import type { WarningCode } from './codes';
 import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
+import type { FixChange } from './lint';
 import type { SpaceRefusal } from './refusals';
 import type {
   AuthorSpaceOptions,
@@ -76,6 +78,7 @@ import type {
   SpaceSpec,
   StepSpec
 } from './types';
+import type { WrittenPosition } from './writtenAt';
 import type { ClassList, CssSpec, ElementClassList, ResponsiveBlock, StatesSpec, StyleSpec } from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
@@ -154,6 +157,8 @@ class SpaceAuthor {
 
   /** Where each id was written, so a second element answering to it can say where the first one is. */
   private readonly authoredAt = new Map<string, string>();
+  /** The spec each element was written from, by the id it got: where a fix to its document is a fix to its source. */
+  private readonly specs = new Map<string, ElementSpec>();
 
   /** Each folder's route prefix, resolved through its parents. Filled before any page is written. */
   private readonly folderPrefixes = new Map<string, string>();
@@ -194,6 +199,54 @@ class SpaceAuthor {
   ) {}
 
   author(): AuthoredSpace {
+    const { schema, style } = this.write();
+
+    // The gate, and the same one anybody else's documents go through. An authored space that cannot pass it is a
+    // bug in the declaration, and finding out at seed time beats finding out at render time.
+    //
+    // `FlatMap.assertValid` is deliberately not also called here: it validates the flat map with no pages
+    // attached, which is a strictly weaker reading of the same document than the pair below.
+    if (this.refusals.length > 0) {
+      const allow = this.options.allow ?? [];
+      const { errors } = validateSpace({ schema, style }, this.options);
+      throw new SpaceRefusedError(this.spec.permanentUrl, [
+        ...this.refusals,
+        ...errors
+          .filter(error => !allow.some(entry => entry.code === error.code && entry.element === error.elementId))
+          .map(error => ({
+            place: error.elementId ? `"${error.elementId}"` : '',
+            code: error.code,
+            message: error.message
+          }))
+      ]);
+    }
+
+    const warnings = assertSpaceValid(
+      { schema, style },
+      `authored space "${this.spec.permanentUrl}"`,
+      this.options,
+      this.options.allow
+    );
+
+    return {
+      schema,
+      style,
+      handles: buildHandles(this.handles, this.layoutHandles),
+      warnings: [...this.styleWarnings, ...warnings]
+    };
+  }
+
+  /** The spec an element was written from, by its id in the documents. */
+  specOf(id: string): ElementSpec | undefined {
+    return this.specs.get(id);
+  }
+
+  /**
+   * The documents as the declaration writes them, before the gate every space goes through: what a fix is planned
+   * on, since the problems a fix settles are exactly the ones that gate reports. Throws only what kept them from being
+   * written at all.
+   */
+  write(): { schema: Schema; style: Style } {
     this.assertSpaceShape();
     for (const [type, elementSpec] of Object.entries(this.spec.elements ?? {})) {
       this.writeElementDefaults(type, elementSpec);
@@ -315,39 +368,7 @@ class SpaceAuthor {
       components: Object.fromEntries(declared.map(component => [component.id, component]))
     };
 
-    // The gate, and the same one anybody else's documents go through. An authored space that cannot pass it is a
-    // bug in the declaration, and finding out at seed time beats finding out at render time.
-    //
-    // `FlatMap.assertValid` is deliberately not also called here: it validates the flat map with no pages
-    // attached, which is a strictly weaker reading of the same document than the pair below.
-    if (this.refusals.length > 0) {
-      const allow = this.options.allow ?? [];
-      const { errors } = validateSpace({ schema, style }, this.options);
-      throw new SpaceRefusedError(this.spec.permanentUrl, [
-        ...this.refusals,
-        ...errors
-          .filter(error => !allow.some(entry => entry.code === error.code && entry.element === error.elementId))
-          .map(error => ({
-            place: error.elementId ? `"${error.elementId}"` : '',
-            code: error.code,
-            message: error.message
-          }))
-      ]);
-    }
-
-    const warnings = assertSpaceValid(
-      { schema, style },
-      `authored space "${this.spec.permanentUrl}"`,
-      this.options,
-      this.options.allow
-    );
-
-    return {
-      schema,
-      style,
-      handles: buildHandles(this.handles, this.layoutHandles),
-      warnings: [...this.styleWarnings, ...warnings]
-    };
+    return { schema, style };
   }
 
   /**
@@ -1566,6 +1587,7 @@ class SpaceAuthor {
   ): string {
     this.assertElementShape(spec, place);
     const id = spec.id ?? this.nextId(spec.type);
+    this.specs.set(id, spec);
     const where = `Element "${spec.type}" (${id}) at ${place}`;
     this.assertFlowShapes(spec.flows, where);
     if (spec.type === 'reference' && spec.attributes?.referenceType === 'component') {
@@ -1699,3 +1721,93 @@ class SpaceAuthor {
  */
 export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>
   new SpaceAuthor(spec, options).author();
+
+/**
+ * A fix's change as an edit of the source that wrote the element: the same change, on the props of the call that wrote
+ * it — or on one of its steps, by the flow it is in and its place there.
+ */
+export interface SpecEdit extends Omit<FixChange, 'on'> {
+  on: 'attribute' | 'field' | 'binding' | 'step';
+  /** For a step: which of the element's `flows`, and which step in it. */
+  step?: { flow: number; index: number };
+}
+
+/** One fix `fixSpace` would make, with where it was written and the edit that makes it there. */
+export interface PlannedFix {
+  code: string;
+  message: string;
+  elementId: string | null;
+  /** Where the element was written: `src/site/home.ts:42`. Absent for an element no factory wrote. */
+  at?: string;
+  /** The same place exactly — the factory's name, at its line and column — which is what the edit is made at. */
+  position?: WrittenPosition;
+  /** Absent when the fix has no one way to be written in the source — it is said, and left to the author. */
+  edit?: SpecEdit;
+}
+
+const specEditOf = (change: FixChange, spec: ElementSpec): SpecEdit | undefined => {
+  if (typeof change.on === 'string') {
+    return { ...change, on: change.on };
+  }
+
+  const { step } = change.on;
+  const flows = flowStepIds(spec.flows ?? []);
+  for (const [flow, ids] of flows.entries()) {
+    const index = ids.indexOf(step);
+    if (index !== -1) {
+      return { ...change, on: 'step', step: { flow, index } };
+    }
+  }
+
+  // A step on the element that its own `flows` did not write — nothing in its source to edit.
+  return undefined;
+};
+
+/** A problem the linter reports, by its code and the element it is on. */
+export interface PlanProblem {
+  code: string;
+  elementId: string | null;
+  message: string;
+}
+
+/** What is wrong with a declaration, and what of it has one fix. */
+export interface FixPlan {
+  /** Every problem the linter reports — errors and warnings alike, whether or not the space would be refused. */
+  problems: PlanProblem[];
+  fixes: PlannedFix[];
+}
+
+/**
+ * What `fixSpace` would settle in this declaration, each with the place in the author's own code that wrote it and
+ * the edit that makes the same fix there — what `plitzi fix` shows, and writes when asked — beside every problem the
+ * linter reports, which a written fix must not add to. The documents are written as `authorSpace` writes them,
+ * without its gate: the problems a fix settles are the ones the gate stops on.
+ */
+export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): FixPlan => {
+  const author = new SpaceAuthor(spec, options);
+  const documents = author.write();
+  const lint = lintSpace(documents, options);
+  const problems = [...lint.errors, ...lint.warnings].map(issue => ({
+    code: issue.code,
+    elementId: issue.elementId ?? null,
+    message: issue.message
+  }));
+
+  const fixes = fixSpace(documents, options).applied.map(fix => {
+    const written = fix.elementId === null ? undefined : author.specOf(fix.elementId);
+    const at = written ? writtenAt(written) : undefined;
+    const position = written ? writtenAtPosition(written) : undefined;
+    const edit = written && fix.change ? specEditOf(fix.change, written) : undefined;
+
+    return {
+      code: fix.code,
+      message: fix.message,
+      elementId: fix.elementId,
+      ...(at === undefined ? {} : { at }),
+      ...(position === undefined ? {} : { position }),
+      ...(edit === undefined ? {} : { edit })
+    };
+  });
+
+  return { problems, fixes };
+};

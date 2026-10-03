@@ -1,17 +1,37 @@
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { closest } from '../suggest';
+import { LintContext } from './context';
 import { STATE_PATH_PARAMS } from './flows';
 
 import type { LintCatalogs } from './context';
 import type { Element, ElementBinding, ElementInteraction, Schema, Style } from '@plitzi/sdk-shared';
 import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
 
+/**
+ * A change a fix made, in the words the author wrote it with: an attribute, one of the element's own fields
+ * (`visible`), a binding by its target, or a field of one of its steps (`on`, a param). What lets the same fix be
+ * offered as an edit to the source that wrote the element, as well as made to its document.
+ */
+export interface FixChange {
+  on: 'attribute' | 'field' | 'binding' | { step: string };
+  /** `replace` swaps one literal text for another anywhere under the key — a transformer's action in a binding. */
+  op: 'remove' | 'rename' | 'set' | 'replace';
+  /** The attribute, field or param; a binding's target; the text `replace` looks for. */
+  key: string;
+  /** What `rename` renames to, and what `replace` writes. */
+  to?: string;
+  /** What `set` writes. */
+  value?: string | boolean;
+}
+
 /** One change a fix made, said the way the problems list says the issue it settles. */
 export interface AppliedFix {
   code: string;
   elementId: string | null;
   message: string;
+  /** The change itself, when there is one way to write it in the source; a message alone otherwise. */
+  change?: FixChange;
 }
 
 export interface FixResult {
@@ -20,8 +40,9 @@ export interface FixResult {
   applied: AppliedFix[];
 }
 
-type Report = (message: string) => void;
-type Fixer = (element: Element, catalogs: LintCatalogs, report: Report) => void;
+type Report = (message: string, change?: FixChange) => void;
+/** A fix of one element, read with the context the linter reads it with — the same names, the same instances. */
+type Fixer = (element: Element, ctx: LintContext, report: Report) => void;
 
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
@@ -37,7 +58,13 @@ const stepsOf = (element: Element): ElementInteraction[] => Object.values(elemen
  * A key the element or step does not take, renamed to the one it was a typo of — when that one is free — or dropped:
  * it was never read, so dropping it changes nothing on screen.
  */
-const settleUnknownKeys = (record: Record<string, unknown>, known: readonly string[], what: string, report: Report) => {
+const settleUnknownKeys = (
+  record: Record<string, unknown>,
+  known: readonly string[],
+  what: string,
+  on: FixChange['on'],
+  report: Report
+) => {
   for (const key of Object.keys(record)) {
     if (known.includes(key)) {
       continue;
@@ -46,9 +73,9 @@ const settleUnknownKeys = (record: Record<string, unknown>, known: readonly stri
     const meant = closest(key, known);
     if (meant !== undefined && record[meant] === undefined) {
       record[meant] = record[key];
-      report(`Renamed the ${what} "${key}" to "${meant}".`);
+      report(`Renamed the ${what} "${key}" to "${meant}".`, { on, op: 'rename', key, to: meant });
     } else {
-      report(`Removed the ${what} "${key}", which nothing reads.`);
+      report(`Removed the ${what} "${key}", which nothing reads.`, { on, op: 'remove', key });
     }
 
     Reflect.deleteProperty(record, key);
@@ -83,85 +110,115 @@ const stepSpec = (
  * source) is left to whoever wrote it.
  */
 const FIXERS: Record<string, Fixer> = {
-  'page-target-url': (element, _catalogs, report) => {
+  'page-target-url': (element, _ctx, report) => {
     const { href, mode } = element.attributes;
     if (element.definition.type === 'link' && (mode ?? 'page') === 'page' && isUrlTarget(href)) {
       element.attributes.mode = 'external';
-      report(`The link to "${href}" now opens it as an external URL.`);
+      report(`The link to "${href}" now opens it as an external URL.`, {
+        on: 'attribute',
+        op: 'set',
+        key: 'mode',
+        value: 'external'
+      });
     }
 
     for (const step of stepsOf(element)) {
       if (step.action === 'navigate' && step.params.urlType === 'page' && isUrlTarget(step.params.url)) {
         step.params.urlType = 'external';
-        report(`Step "${step.id}" now navigates to "${step.params.url}" as an external URL.`);
+        report(`Step "${step.id}" now navigates to "${step.params.url}" as an external URL.`, {
+          on: { step: step.id },
+          op: 'set',
+          key: 'urlType',
+          value: 'external'
+        });
       }
     }
   },
 
-  'unknown-attribute': (element, catalogs, report) => {
-    const names = catalogs.attributeNames?.[element.definition.type];
+  'unknown-attribute': (element, ctx, report) => {
+    // The names the linter holds the element to: its type's, and an instance's props and slot besides.
+    const names = ctx.attributeNamesFor(element);
     if (!isRoot(element) && names) {
-      settleUnknownKeys(element.attributes, names, 'attribute', report);
+      settleUnknownKeys(element.attributes, names, 'attribute', 'attribute', report);
     }
   },
 
-  'attribute-kind': (element, catalogs, report) => {
-    const defaults = catalogs.defaultAttributes?.[element.definition.type] ?? {};
+  'attribute-kind': (element, ctx, report) => {
+    const defaults = ctx.catalogs.defaultAttributes?.[element.definition.type] ?? {};
     for (const [name, value] of Object.entries(element.attributes)) {
       const flag = asFlag(value);
       if (typeof defaults[name] === 'boolean' && flag !== undefined) {
         element.attributes[name] = flag;
-        report(`\`${name}\` is now the boolean ${String(flag)}, not the text "${String(value)}".`);
+        report(`\`${name}\` is now the boolean ${String(flag)}, not the text "${String(value)}".`, {
+          on: 'attribute',
+          op: 'set',
+          key: name,
+          value: flag
+        });
       }
     }
   },
 
-  'step-params': (element, catalogs, report) => {
+  'step-params': (element, ctx, report) => {
     for (const step of stepsOf(element)) {
-      const spec = stepSpec(catalogs, step);
+      const spec = stepSpec(ctx.catalogs, step);
       if (!spec?.params) {
         continue;
       }
 
       const params = spec.params;
       if (spec.strictParams) {
-        settleUnknownKeys(step.params, Object.keys(params), `param of step "${step.id}"`, report);
+        settleUnknownKeys(step.params, Object.keys(params), `param of step "${step.id}"`, { step: step.id }, report);
       }
 
       for (const [key, value] of Object.entries(step.params)) {
         const flag = asFlag(value);
         if (Object.hasOwn(params, key) && params[key].type === 'boolean' && flag !== undefined) {
           step.params[key] = flag;
-          report(`Step "${step.id}": \`${key}\` is now the boolean ${String(flag)}.`);
+          report(`Step "${step.id}": \`${key}\` is now the boolean ${String(flag)}.`, {
+            on: { step: step.id },
+            op: 'set',
+            key,
+            value: flag
+          });
         }
       }
     }
   },
 
-  'global-callback-module': (element, catalogs, report) => {
+  'global-callback-module': (element, ctx, report) => {
     for (const step of stepsOf(element)) {
       const declared =
-        step.type === 'globalCallback' && catalogs.vocabulary
-          ? catalogs.vocabulary.globalCallbacks[step.action]
+        step.type === 'globalCallback' && ctx.catalogs.vocabulary
+          ? ctx.catalogs.vocabulary.globalCallbacks[step.action]
           : undefined;
       if (declared && step.elementId !== declared.source) {
         step.elementId = declared.source;
-        report(`Step "${step.id}" now runs "${step.action}" on "${declared.source}", the module that registers it.`);
+        report(`Step "${step.id}" now runs "${step.action}" on "${declared.source}", the module that registers it.`, {
+          on: { step: step.id },
+          op: 'set',
+          key: 'on',
+          value: declared.source
+        });
       }
     }
   },
 
-  'utility-module': (element, catalogs, report) => {
+  'utility-module': (element, ctx, report) => {
     for (const step of stepsOf(element)) {
-      const known = catalogs.vocabulary ? Object.hasOwn(catalogs.vocabulary.utilities, step.action) : false;
+      const known = ctx.catalogs.vocabulary ? Object.hasOwn(ctx.catalogs.vocabulary.utilities, step.action) : false;
       if (step.type === 'utility' && known && step.elementId !== null) {
         step.elementId = null;
-        report(`Step "${step.id}" runs the utility "${step.action}" on no element: a utility takes none.`);
+        report(`Step "${step.id}" runs the utility "${step.action}" on no element: a utility takes none.`, {
+          on: { step: step.id },
+          op: 'remove',
+          key: 'on'
+        });
       }
     }
   },
 
-  'visibility-as-attribute': (element, _catalogs, report) => {
+  'visibility-as-attribute': (element, _ctx, report) => {
     const bindings = element.definition.bindings;
     const moved = bindings?.attributes?.filter(binding => binding.to === 'visibility') ?? [];
     if (!bindings || moved.length === 0) {
@@ -173,8 +230,8 @@ const FIXERS: Record<string, Fixer> = {
     report('The visibility binding now sets the visibility, rather than an attribute nothing reads.');
   },
 
-  'binding-target-unknown': (element, catalogs, report) => {
-    const names = catalogs.attributeNames?.[element.definition.type];
+  'binding-target-unknown': (element, ctx, report) => {
+    const names = ctx.attributeNamesFor(element);
     const bindings = element.definition.bindings;
     if (!names || !bindings?.attributes) {
       return;
@@ -183,14 +240,18 @@ const FIXERS: Record<string, Fixer> = {
     const reads = (binding: ElementBinding) =>
       binding.to === 'visibility' || binding.to === 'className' || names.includes(binding.to);
     for (const binding of bindings.attributes.filter(candidate => !reads(candidate))) {
-      report(`Removed the binding onto "${binding.to}", which a "${element.definition.type}" never reads.`);
+      report(`Removed the binding onto "${binding.to}", which a "${element.definition.type}" never reads.`, {
+        on: 'binding',
+        op: 'remove',
+        key: binding.to
+      });
     }
 
     bindings.attributes = bindings.attributes.filter(reads);
   },
 
-  'unknown-transformer': (element, catalogs, report) => {
-    const catalog = catalogs.transformers;
+  'unknown-transformer': (element, ctx, report) => {
+    const catalog = ctx.catalogs.transformers;
     if (!catalog) {
       return;
     }
@@ -201,14 +262,19 @@ const FIXERS: Record<string, Fixer> = {
           ? undefined
           : closest(transformer.action, Object.keys(catalog));
         if (meant !== undefined) {
-          report(`The binding of "${binding.to}" now runs "${meant}" (was "${transformer.action}").`);
+          report(`The binding of "${binding.to}" now runs "${meant}" (was "${transformer.action}").`, {
+            on: 'binding',
+            op: 'replace',
+            key: transformer.action,
+            to: meant
+          });
           transformer.action = meant;
         }
       }
     }
   },
 
-  'list-items-ignored': (element, _catalogs, report) => {
+  'list-items-ignored': (element, _ctx, report) => {
     const { attributes } = element;
     const bound = Object.values(element.definition.bindings ?? {})
       .flat()
@@ -216,11 +282,16 @@ const FIXERS: Record<string, Fixer> = {
     const written = Array.isArray(attributes.items) && attributes.items.length > 0;
     if (element.definition.type === 'list' && attributes.source !== 'controlled' && (bound || written)) {
       attributes.source = 'controlled';
-      report('The list now reads its items (`source: controlled`), one row per item.');
+      report('The list now reads its items (`source: controlled`), one row per item.', {
+        on: 'attribute',
+        op: 'set',
+        key: 'source',
+        value: 'controlled'
+      });
     }
   },
 
-  'overlay-starts-open': (element, _catalogs, report) => {
+  'overlay-starts-open': (element, _ctx, report) => {
     const { type, bindings } = element.definition;
     const visibilityBound = (bindings?.initialState ?? []).some(binding => binding.to === 'visibility');
     if (
@@ -229,11 +300,16 @@ const FIXERS: Record<string, Fixer> = {
       !visibilityBound
     ) {
       element.definition.initialState = { ...element.definition.initialState, visibility: false };
-      report(`The ${type} now starts closed, to be opened from a flow.`);
+      report(`The ${type} now starts closed, to be opened from a flow.`, {
+        on: 'field',
+        op: 'set',
+        key: 'visible',
+        value: false
+      });
     }
   },
 
-  'state-key-has-runtime-prefix': (element, _catalogs, report) => {
+  'state-key-has-runtime-prefix': (element, _ctx, report) => {
     for (const step of stepsOf(element)) {
       if (step.type !== 'globalCallback' || step.elementId !== 'state') {
         continue;
@@ -242,8 +318,14 @@ const FIXERS: Record<string, Fixer> = {
       for (const param of STATE_PATH_PARAMS[step.action] ?? []) {
         const value = step.params[param];
         if (typeof value === 'string' && /^(?:runtime\.)?state\./.test(value)) {
-          step.params[param] = value.replace(/^(?:runtime\.)?state\./, '');
-          report(`Step "${step.id}": \`${param}\` is now "${String(step.params[param])}" (was "${value}").`);
+          const next = value.replace(/^(?:runtime\.)?state\./, '');
+          step.params[param] = next;
+          report(`Step "${step.id}": \`${param}\` is now "${next}" (was "${value}").`, {
+            on: { step: step.id },
+            op: 'set',
+            key: param,
+            value: next
+          });
         }
       }
     }
@@ -273,7 +355,7 @@ export const fixSpace = (
   // A fixer changes the element it is handed and nothing else, so each is fixed on a copy of its own, and a tree is
   // copied only around the ones that changed — a fix on one element of thousands no longer clones them all. Every
   // tree: an element inside a component is fixed the way one on a page is.
-  const fixTree = (flat: Schema['flat']): Schema['flat'] => {
+  const fixTree = (flat: Schema['flat'], ctx: LintContext): Schema['flat'] => {
     const changed: Schema['flat'] = {};
     for (const element of Object.values(flat)) {
       if (only && !only.has(element.id)) {
@@ -284,7 +366,9 @@ export const fixSpace = (
       const before = applied.length;
       for (const [code, fix] of Object.entries(FIXERS)) {
         if (wanted.has(code)) {
-          fix(draft, catalogs, message => applied.push({ code, elementId: element.id, message }));
+          fix(draft, ctx, (message, change) =>
+            applied.push({ code, elementId: element.id, message, ...(change ? { change } : {}) })
+          );
         }
       }
 
@@ -296,10 +380,10 @@ export const fixSpace = (
     return Object.keys(changed).length > 0 ? { ...flat, ...changed } : flat;
   };
 
-  const flat = fixTree(schema.flat);
+  const flat = fixTree(schema.flat, new LintContext(schema, style, catalogs));
   const components = Object.fromEntries(
     Object.entries(schema.components).map(([id, component]) => {
-      const fixed = fixTree(component.flat);
+      const fixed = fixTree(component.flat, new LintContext(schema, style, catalogs, component));
 
       return [id, fixed === component.flat ? component : { ...component, flat: fixed }];
     })

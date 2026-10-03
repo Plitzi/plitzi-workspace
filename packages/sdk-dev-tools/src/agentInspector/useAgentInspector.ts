@@ -38,23 +38,26 @@ const useAgentInspector = (enabled: boolean): void => {
 
     const runs: FlowRun[] = [];
     let watching = false;
-    const stopListening = pConsole.addListener(log => {
-      const run = flowRunOf(log);
-      if (!run) {
-        return;
-      }
+    const stopListening = pConsole.addListener(
+      log => {
+        const run = flowRunOf(log);
+        if (!run) {
+          return;
+        }
 
-      runs.push(run);
-      if (runs.length > KEPT_RUNS) {
-        runs.shift();
-      }
+        runs.push(run);
+        if (runs.length > KEPT_RUNS) {
+          runs.shift();
+        }
 
-      if (watching) {
-        // The point of `watch()`: the console is what an agent driving a browser can read.
+        if (watching) {
+          // The point of `watch()`: the console is what an agent driving a browser can read.
 
-        console.info(flowRunLine(run));
-      }
-    });
+          console.info(flowRunLine(run));
+        }
+      },
+      { replay: true }
+    );
     const inspector = createAgentInspector({
       root,
       writeState: (key, value) => setCommon(`runtime.state.${key}`, value),

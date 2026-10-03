@@ -123,6 +123,7 @@ per part under `src/site/`. Both go with `--source local`.
 
 ```bash
 plitzi check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
+plitzi check /products --state --element catalog-count   # and what it holds: state, sources, one element
 plitzi shot /about --width 390 --scheme dark
 plitzi shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi shot / --compare https://example.com --width 1440   # side by side, and how much differs by section
@@ -134,6 +135,19 @@ images, sideways scroll, text in the colour behind it, console errors and refuse
 hundred tokens, where a screenshot costs thousands. `shot --compare` writes the two pictures side by side and the
 differences in red, and says the share that differs in each landmark of the page; `--frames` compares pictures taken
 one after another and names what moved. A project `create` writes has them as `npm run check` and `npm run shot`.
+
+## `fix`
+
+```bash
+plitzi fix            # what authoring would fix, as a diff of your own source
+plitzi fix --write    # written, formatted as the project formats, and checked
+```
+
+The fixes are the ones with a single reading (`fixSpace`'s: a key the element never reads, `'true'` where a boolean
+goes, a URL in page mode, a `state.` prefix on a state key…). Each is made in the call that wrote the element — found
+by the line and column the element remembers — and only where the value is written as a literal; anything else is
+listed with where it is and why it was left. `--write` authors the space again in a fresh process and keeps the edits
+only if every fix is gone and no problem was added; a fix that would add one is put back and said.
 
 ## `explain`
 

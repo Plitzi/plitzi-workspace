@@ -405,13 +405,13 @@ original is revalidated with its `ETag` / `Last-Modified`, so an unchanged pictu
 held to the list and to the outbound guard, and SVG is refused. `sharp` is an optional peer: without it pictures are
 passed through and kept. `image` also takes `sizes`, and `width`/`height` so the browser keeps the picture's space.
 
-## `window.__plitzi`: the page in text, for an agent
+## `plitzi check` says what the page holds
 
-With the dev tools on (debug mode), the page exposes `window.__plitzi`: `state()` and `setState(key, value)`,
-`sources(name?)` — every provider's current value by its full name, from the store it lives in — `element(id)` — type,
-attributes, what it reads, its own state, copies, whether it is on screen and its box — `flows(limit?)` — the last flows
-with every step, its time and its error — and `watch()`, one console line per flow. What the panel shows a person, for
-an agent that drives the page and can only read text.
+Every `plitzi check` now lists the flows that failed while the page loaded, each with the step that failed and why.
+`--state` adds the page's state and every source by its full name (with the shape of what it holds), and `--element
+<id>` one element: what it reads, its own state, how many copies, whether it is on screen and its box. Read from the
+page's dev tools, which keep the flows a page runs before they mount; in a test, `readDevTools(page)` from
+`@plitzi/sdk-authoring` answers the same.
 
 ## `carousel`
 
@@ -423,3 +423,16 @@ px/s with no seam; `'scroll'` is a snapping row a visitor swipes. Steps `carouse
 `carouselGoTo`, `carouselPlay` and `carouselPause`; trigger `onChange`. Autoplay holds still under the pointer, with
 keyboard focus inside, in a hidden tab and for reduced motion, and never in the builder. Slides are announced as "2
 of 5" in a region named by `label`.
+
+## `plitzi fix`: the fixes authoring knows, written in your source
+
+`plitzi fix` shows what authoring would fix — a key the element never reads, `'true'` where a boolean goes, a URL in
+page mode, a `state.` prefix on a state key, a binding nothing reads — as a diff of the project's own source: each
+edit made in the call that wrote the element (found by the line and column it remembers), and only where the value is
+a literal. `--write` writes them, formatted as the project formats, authors the space again in a fresh process and
+keeps them only if every fix is gone and no problem was added; one that would add a problem is put back and said with
+the reason. `npm run author` says how many of its problems have one fix. From `@plitzi/sdk-authoring`, `planFixes`
+returns the plan: every problem, and each fix with its place and edit.
+
+`fixSpace` now reads an element with the linter's own context, so a component instance's props and slot are no longer
+taken for attributes nobody reads — it used to remove the binding of a list row to its component's `item`.

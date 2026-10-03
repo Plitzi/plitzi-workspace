@@ -1,16 +1,14 @@
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-
 import chalk from 'chalk';
 
-import { authorSpace, inspectDocument, inspectPage } from '@plitzi/sdk-authoring';
+import { authorSpace, failedFlowText, inspectDocument, inspectPage, readDevTools } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { findProject } from './existingProject';
+import { loadProjectSpace } from './projectSpace';
 import { launchBrowser, projectOrigin } from '../browser';
 
 import type { Browser, Scheme } from '../browser';
-import type { PluginDeclarationData, SpaceHandles, SpaceSpec } from '@plitzi/sdk-authoring';
+import type { DevToolsInput, SpaceHandles } from '@plitzi/sdk-authoring';
 
 /**
  * `plitzi check`: whether a page of the running project is whole, said in text — every element it owes on screen, no
@@ -18,13 +16,21 @@ import type { PluginDeclarationData, SpaceHandles, SpaceSpec } from '@plitzi/sdk
  * refused — at each width asked. What an agent needs to know about a page in a few hundred tokens, where a screenshot
  * costs thousands and still has to be looked at; a picture is for when this says something is wrong.
  *
+ * With the page's dev tools on (any development server) it also says every flow that failed while the page loaded,
+ * and, asked, what the page holds: `--state` (the state, and every source by name) and `--element <id>`.
+ *
  *   plitzi check / --width 1440,390 --json
+ *   plitzi check /products --state --element catalog-count
  */
 
 export interface CheckOptions {
   width?: string;
   scheme?: string;
   json?: boolean;
+  /** The page's state and every source by name, as its dev tools hold them. */
+  state?: boolean;
+  /** One element by its id: what it reads, its own state, whether it is on screen. */
+  element?: string;
 }
 
 export interface CheckReport {
@@ -36,35 +42,22 @@ export interface CheckReport {
   problems: string[];
   consoleErrors: string[];
   failedRequests: string[];
+  /** Whether the page had its dev tools on, which is what flows, state and elements are read from. */
+  devTools: boolean;
+  state?: unknown;
+  sources?: Record<string, unknown>;
+  element?: unknown;
 }
-
-/**
- * What the module exports as `space`, taken as a declaration when it has the shape of one. `authorSpace` checks the
- * rest of it, field by field, and says what is wrong — so this only has to tell a space from anything else.
- */
-const isSpaceSpec = (value: unknown): value is SpaceSpec =>
-  isRecord(value) &&
-  typeof value.name === 'string' &&
-  typeof value.permanentUrl === 'string' &&
-  Array.isArray(value.pages);
-
-const isDeclarations = (value: unknown): value is PluginDeclarationData[] =>
-  Array.isArray(value) && value.every(entry => isRecord(entry) && typeof entry.type === 'string');
-
-const importProject = async (file: string): Promise<unknown> => import(pathToFileURL(file).href);
 
 /** The space the project declares, authored — the handles say what each page owes. Only for one written here. */
 const projectHandles = async (root: string): Promise<SpaceHandles | { problem: string }> => {
-  const module = await importProject(path.join(root, 'src/space.ts'));
-  const space = isRecord(module) ? module.space : undefined;
-  if (!isSpaceSpec(space)) {
-    return { problem: 'src/space.ts exports no `space` to check the page against.' };
+  const project = await loadProjectSpace(root);
+  if ('problem' in project) {
+    return { problem: `${project.problem} There is nothing to check the page against.` };
   }
 
-  const registry = await importProject(path.join(root, 'src/plugins/declarations.ts')).catch(() => undefined);
-  const declarations = isRecord(registry) ? registry.declarations : undefined;
   try {
-    return authorSpace(space, isDeclarations(declarations) ? { plugins: declarations } : {}).handles;
+    return authorSpace(project.space, { plugins: project.plugins }).handles;
   } catch (error) {
     return {
       problem: `The space does not author — npm run author says why: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
@@ -94,7 +87,8 @@ const checkAt = async (
   pathname: string,
   width: number,
   scheme: Scheme,
-  handles: SpaceHandles | undefined
+  handles: SpaceHandles | undefined,
+  asked: DevToolsInput
 ): Promise<CheckReport> => {
   const page = await browser.newPage({
     viewport: { width, height: 900 },
@@ -124,14 +118,19 @@ const checkAt = async (
       checked: 0,
       problems: [`nothing answers at ${origin}${pathname}`],
       consoleErrors,
-      failedRequests
+      failedRequests,
+      devTools: false
     };
   }
 
   const pageId = handles ? pageFor(handles, pathname) : undefined;
   const report = handles && pageId ? await inspectPage(page, handles, { page: pageId }) : await inspectDocument(page);
-  const problems =
-    handles && !pageId ? [`no page of the space answers at ${pathname}`, ...report.problems] : report.problems;
+  const devTools = await readDevTools(page, asked);
+  const problems = [
+    ...(handles && !pageId ? [`no page of the space answers at ${pathname}`] : []),
+    ...report.problems,
+    ...devTools.flows.filter(flow => flow.status === 'failed').map(failedFlowText)
+  ];
 
   return {
     path: pathname,
@@ -140,23 +139,66 @@ const checkAt = async (
     checked: report.checked,
     problems,
     consoleErrors,
-    failedRequests
+    failedRequests,
+    devTools: devTools.available,
+    ...(devTools.state === undefined ? {} : { state: devTools.state }),
+    ...(devTools.sources === undefined ? {} : { sources: devTools.sources }),
+    ...(devTools.element === undefined ? {} : { element: devTools.element })
   };
 };
 
-const reportText = (report: CheckReport): string => {
+/** What the page holds, when it was asked for: one compact line each, the shape of a source rather than its rows. */
+const heldText = (report: CheckReport, asked: DevToolsInput): string[] => {
+  if (!asked.state && asked.element === undefined) {
+    return [];
+  }
+
+  if (!report.devTools) {
+    return ['  · the page has no dev tools on (debug mode), so its state and elements cannot be read'];
+  }
+
+  return [
+    ...(report.state === undefined ? [] : [`  · state ${JSON.stringify(report.state)}`]),
+    ...Object.entries(report.sources ?? {}).map(([name, value]) => `  · source ${name}: ${shapeOf(value)}`),
+    ...(asked.element === undefined ? [] : [`  · element ${asked.element}: ${JSON.stringify(report.element ?? null)}`])
+  ];
+};
+
+/** A value's shape in a few words: a list's length, an object's keys, a short value as it is. */
+const shapeOf = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return `a list of ${String(value.length)}`;
+  }
+
+  if (isRecord(value)) {
+    const keys = Object.keys(value);
+
+    return `{ ${keys.slice(0, 8).join(', ')}${keys.length > 8 ? ', …' : ''} }`;
+  }
+
+  const text = value === undefined ? 'undefined' : JSON.stringify(value);
+
+  return text.length > 60 ? `${text.slice(0, 57)}…` : text;
+};
+
+const reportText = (report: CheckReport, asked: DevToolsInput): string => {
   const head = `${report.path} at ${String(report.width)} px`;
+  const held = heldText(report, asked);
   if (report.ok) {
-    return chalk.green(
-      `✓ ${head} — ${report.checked > 0 ? `${String(report.checked)} elements on screen, ` : ''}nothing wrong`
-    );
+    return [
+      chalk.green(
+        `✓ ${head} — ${report.checked > 0 ? `${String(report.checked)} elements on screen, ` : ''}nothing wrong`
+      ),
+      ...held
+    ].join('\n');
   }
 
   return [
     chalk.red(`✗ ${head}`),
     ...report.problems.map(problem => `  - ${problem}`),
     ...report.consoleErrors.map(error => `  - console: ${error}`),
-    ...report.failedRequests.map(request => `  - request refused: ${request}`)
+    ...report.failedRequests.map(request => `  - request refused: ${request}`),
+    ...held
   ].join('\n');
 };
 
@@ -201,12 +243,16 @@ export const check = async (route: string | undefined, options: CheckOptions): P
       .map(Number)
       .filter(width => Number.isFinite(width) && width > 0);
     const scheme: Scheme = options.scheme === 'dark' ? 'dark' : 'light';
+    const asked: DevToolsInput = {
+      state: Boolean(options.state),
+      ...(options.element ? { element: options.element } : {})
+    };
     const reports: CheckReport[] = [];
     for (const width of widths) {
-      reports.push(await checkAt(browser, where.origin, route ?? '/', width, scheme, handles));
+      reports.push(await checkAt(browser, where.origin, route ?? '/', width, scheme, handles, asked));
     }
 
-    console.log(options.json ? JSON.stringify(reports) : reports.map(reportText).join('\n'));
+    console.log(options.json ? JSON.stringify(reports) : reports.map(report => reportText(report, asked)).join('\n'));
     if (reports.some(report => !report.ok)) {
       process.exitCode = 1;
     }

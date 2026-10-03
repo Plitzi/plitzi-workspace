@@ -18,6 +18,7 @@ import {
   authorSnippet as authorSnippetUnchecked,
   fixSpace as fixSpaceUnchecked,
   lintSpace as lintSpaceUnchecked,
+  planFixes as planFixesUnchecked,
   validateSpace as validateSpaceUnchecked,
   validateSnippet as validateSnippetUnchecked
 } from './schema';
@@ -35,7 +36,8 @@ import type {
   SpaceSpec,
   StepVocabulary,
   Snippet,
-  SnippetSpec
+  SnippetSpec,
+  FixPlan
 } from './schema';
 import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
 
@@ -233,6 +235,13 @@ export const fixSpace = (
   codes?: Iterable<string>,
   elements?: Iterable<string>
 ): FixResult => fixSpaceUnchecked(space, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }), codes, elements);
+
+/**
+ * `planFixes`, holding the same catalogs: every fix `fixSpace` would make in this declaration, each with the place in
+ * the author's code that wrote the element and the edit that makes the fix there — what `plitzi fix` shows and writes.
+ */
+export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): FixPlan =>
+  planFixesUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
 
 /**
  * `authorSnippet`, holding the same vocabularies — the artefact you publish when you are not building a space.

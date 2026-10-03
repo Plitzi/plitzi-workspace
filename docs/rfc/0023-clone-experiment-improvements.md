@@ -1,6 +1,6 @@
 # RFC 0023 — Improvements from the MultiPC clone experiment
 
-- **Status:** Accepted — every phase shipped; M12/C3 declined for now (§4), C7 not taken as written (§5)
+- **Status:** Accepted — every phase shipped, C7 as `plitzi fix` (§5); M12/C3 declined for now (§4)
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-10-02
 - **Scope:** `sdk-authoring`, `sdk-elements`, `sdk-interactions`, `apps/sdk` (router), `apps/server`, `apps/cli` and its
@@ -32,9 +32,9 @@ being accepted: what already exists is said, and a claim that did not hold is co
 
 1. **Remove the measured friction (P0):** shipped — M1–M7 (M6's `loading` slot moved to phase 3).
 2. **Skills, docs and small fixes:** shipped — D1, D2, D4, D6, D7, D9, D10, M14, M15, M19, M22, C4, C6, C10.
-3. **Faster next clone:** shipped — M6's `loading` slot (`loadingSlot`), M9, M11, M13, M16, M17, D3, D5, C1, C2, C5, C9; C7 not taken as written (§5).
+3. **Faster next clone:** shipped — M6's `loading` slot (`loadingSlot`), M9, M11, M13, M16, M17, D3, D5, C1, C2, C5, C9; C7 later, as `plitzi fix` (§5).
 4. **Shorter authoring:** shipped — A1–A11, M10 (`tw()`), D8 (`create --template catalog`), C8.
-5. **Larger additions:** shipped — M8 (`carousel`), M18 (`embed`, `svg`), M20 (`window.__plitzi`), M21 (`images`).
+5. **Larger additions:** shipped — M8 (`carousel`), M18 (`embed`, `svg`), M20 (`plitzi check` reads the dev tools), M21 (`images`).
 
 Each item ships with its tests, its docs and its changeset line, and its row is removed from §2 when it does.
 
@@ -54,11 +54,10 @@ Each item ships with its tests, its docs and its changeset line, and its row is 
   port is moved only while developing and only when `PORT` was not set; it is printed and written to
   `.plitzi/dev-server.json`, which the scripts read. Identity reuses `/health` (named after the space) rather than a
   second endpoint and an `X-Plitzi-Space` header.
-- **M20** is not a second dev tools: the panel already shows state, sources and flow runs. What is missing is the
-  same data in text, for an agent — `plitzi check` (C1) covers most of it.
-- **C7 `author --fix`** rewriting the author's TypeScript: of what `fixSpace` settles, `unknown-attribute` and
-  `attribute-kind` are compile errors in a typed project already, and `page-target-url` goes with A7 (`mode` inferred);
-  the report's other cases — a class with `css` of its own, a tablet rule — need a decision (an `id` to name the
-  modifier, whether phones get the rule), not a rewrite. A source rewriter for what is left would be machinery for
-  nearly nothing. `fixSpace` keeps settling documents (the builder, the MCP), and every problem `author` prints comes
-  with its code and what to write instead (D6).
+- **M20** is not a second dev tools: the panel already shows state, sources and flow runs. The same data, in text,
+  is what `plitzi check` reads from the dev tools — the flows that failed on every check, `--state` and `--element`.
+- **C7 `author --fix`** — shipped as `plitzi fix` rather than as a rewrite of the author's code: each fix `fixSpace`
+  makes says its change in the vocabulary of the spec, `planFixes` places it at the line and column of the call that
+  wrote the element, and the CLI edits only literals there with the project's own TypeScript. It shows a diff;
+  `--write` keeps the edits only if the space, authored again in a fresh process, has every fix gone and no problem
+  added — one that would add a problem is put back and said. What needs a decision stays a message.

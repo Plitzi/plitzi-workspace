@@ -25,13 +25,25 @@ import type { PluginHostOptions } from '@plitzi/sdk-authoring';
 const authorScript = (): string => `import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
-import { authorSpace, refusalOf, SpaceRefusedError } from '@plitzi/sdk-authoring';
+import { authorSpace, planFixes, refusalOf, SpaceRefusedError } from '@plitzi/sdk-authoring';
 
 import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
 
 // \`--json\` answers in one object, for a tool or an agent; otherwise one line on success, the problems on failure.
 const json = process.argv.includes('--json');
+
+/** How many of the problems said have one fix \`plitzi fix\` can write in this source — and the line that says so. */
+const fixableHint = (): string | undefined => {
+  let count: number;
+  try {
+    count = planFixes(space, { plugins: declarations }).fixes.length;
+  } catch {
+    return undefined;
+  }
+
+  return count === 0 ? undefined : \`[fix] \${count} of these have one fix: npx plitzi fix shows it in your source, --write writes it\`;
+};
 
 /**
  * The skill an agent reads was copied from the SDK at one version: a newer SDK has what the older skill never taught.
@@ -69,6 +81,11 @@ try {
       console.warn(\`[author] \${warning.code} · \${warning.message}\`);
     }
 
+    const hint = warnings.length > 0 ? fixableHint() : undefined;
+    if (hint) {
+      console.warn(hint);
+    }
+
     if (outdated) {
       console.warn(
         \`[skills] the authoring skill is \${outdated.skill} and @plitzi/sdk-authoring is \${outdated.sdk}: npx @plitzi/cli skills update\`
@@ -86,6 +103,10 @@ try {
     console.log(JSON.stringify({ ok: false, refusals: refusals ?? [{ place: '', ...refusalOf(error) }] }));
   } else {
     console.error(message);
+    const hint = fixableHint();
+    if (hint) {
+      console.error(hint);
+    }
   }
 
   process.exitCode = 1;
