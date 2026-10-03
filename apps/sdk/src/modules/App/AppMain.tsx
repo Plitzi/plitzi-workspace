@@ -200,6 +200,7 @@ const AppMain = ({
                         devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
                         renderMode="shadow"
                         scroll="document"
+                        qa
                         innerClassName={clsx({ flex: renderMode === 'iframe' })}
                       >
                         <Sdk sdkStylePath={styleUrl ? styleUrl : sdkStylePath} server={server} {...sdkProps} />

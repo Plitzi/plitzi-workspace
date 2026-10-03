@@ -33,6 +33,8 @@ export type DevToolsHeaderProps = {
   onChangeOrientation?: (orientation: Orientation) => void;
   onCollapse?: () => void;
   onTabSelect?: (tabIndex: string) => void;
+  /** Whether the QA tab is offered. */
+  qa?: boolean;
 };
 
 const DevToolsHeader = ({
@@ -40,8 +42,10 @@ const DevToolsHeader = ({
   orientation = 'vertical',
   onChangeOrientation,
   onCollapse,
-  onTabSelect
+  onTabSelect,
+  qa = false
 }: DevToolsHeaderProps) => {
+  const tabs = qa ? TABS : TABS.filter(tab => tab.id !== 'qa');
   const { options: scopeOptions, value: scopeValue, onSelect: onSelectScope } = useScopeSelector();
 
   const handleClickOrientation = useCallback(() => {
@@ -58,7 +62,7 @@ const DevToolsHeader = ({
   return (
     <div className="flex shrink-0 items-stretch justify-between border-b border-zinc-200 bg-zinc-100 select-none dark:border-zinc-700 dark:bg-zinc-800">
       <div className="flex items-stretch overflow-x-auto">
-        {TABS.map(tab => {
+        {tabs.map(tab => {
           const isActive = tabSelected === tab.id;
 
           return (

@@ -52,6 +52,12 @@ export type DevToolsContainerProps = {
    * either way; a docked panel needs the split.
    */
   scroll?: 'container' | 'document';
+  /**
+   * The QA tab and its layer — grid, inspector, checks — over the page this wraps. For a PAGE, the SDK's: an
+   * application shell like the builder wraps its own UI, which is not what they are for, and the checks would walk all
+   * of it.
+   */
+  qa?: boolean;
 };
 
 const DevToolsContainer = ({
@@ -62,6 +68,7 @@ const DevToolsContainer = ({
   instanceId,
   renderMode = 'default',
   scroll = 'container',
+  qa = false,
   devToolsStyle = '',
   devToolsStyleLink = ''
 }: DevToolsContainerProps) => {
@@ -148,6 +155,7 @@ const DevToolsContainer = ({
               onTabSelect={handleTabSelect}
               onChangeOrientation={handleChangeOrientation}
               pageRef={pageRef}
+              qa={qa}
             />
           )}
           {renderMode === 'shadow' && (
@@ -166,6 +174,7 @@ const DevToolsContainer = ({
                   onTabSelect={handleTabSelect}
                   onChangeOrientation={handleChangeOrientation}
                   pageRef={pageRef}
+                  qa={qa}
                 />
               </ContainerShadow.Content>
             </ContainerShadow>

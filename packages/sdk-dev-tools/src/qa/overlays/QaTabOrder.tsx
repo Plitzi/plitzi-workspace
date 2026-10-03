@@ -3,9 +3,12 @@ import { use, useEffect, useState } from 'react';
 import QaContext from '../QaContext';
 import { tabOrderOf } from '../tabOrder';
 
+/** How long the page has to stay still before the order is worked out again. */
+const REORDER_AFTER_MS = 200;
+
 /**
  * The order the Tab key walks the page's controls in, numbered on each — where a keyboard user goes next, and whether
- * that is where they would expect. Looked at again as the page scrolls, resizes or changes.
+ * that is where they would expect.
  */
 const QaTabOrder = () => {
   const { pageRef } = use(QaContext);
@@ -19,29 +22,33 @@ const QaTabOrder = () => {
     }
 
     let frame = 0;
-    const look = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        setOrder(tabOrderOf(page));
-        setFrame(previous => previous + 1);
-      });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // The order is worked out again when the page changes, once it has settled; a scroll only moves the numbers.
+    const reorder = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setOrder(tabOrderOf(page)), REORDER_AFTER_MS);
     };
-    look();
-    const observer = new MutationObserver(look);
+    const redraw = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setFrame(previous => previous + 1));
+    };
+    reorder();
+    const observer = new MutationObserver(reorder);
     observer.observe(page, {
       childList: true,
       subtree: true,
       attributes: true,
       attributeFilter: ['tabindex', 'disabled']
     });
-    document.addEventListener('scroll', look, true);
-    window.addEventListener('resize', look);
+    document.addEventListener('scroll', redraw, true);
+    window.addEventListener('resize', reorder);
 
     return () => {
+      clearTimeout(timer);
       cancelAnimationFrame(frame);
       observer.disconnect();
-      document.removeEventListener('scroll', look, true);
-      window.removeEventListener('resize', look);
+      document.removeEventListener('scroll', redraw, true);
+      window.removeEventListener('resize', reorder);
     };
   }, [pageRef]);
 

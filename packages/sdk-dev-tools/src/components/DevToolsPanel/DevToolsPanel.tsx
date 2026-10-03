@@ -25,6 +25,8 @@ export type DevToolsPanelProps = {
   onCollapse?: () => void;
   onTabSelect: (tabSelected: string) => void;
   onChangeOrientation?: (orientation: Orientation) => void;
+  /** Whether the QA tab is offered. */
+  qa?: boolean;
 };
 
 const DevToolsPanel = ({
@@ -34,7 +36,8 @@ const DevToolsPanel = ({
   logTypeFilter,
   onCollapse,
   onTabSelect,
-  onChangeOrientation
+  onChangeOrientation,
+  qa = false
 }: DevToolsPanelProps) => {
   const [size, setSize] = useStorage('plitzi-sdk.dev-tools.size', { width: 500, height: 200 });
   const [currentPageId] = useCommonStore('navigation.currentPageId');
@@ -79,6 +82,7 @@ const DevToolsPanel = ({
           onCollapse={onCollapse}
           onTabSelect={onTabSelect}
           tabSelected={tabSelected}
+          qa={qa}
         />
         {['store', 'elements'].includes(tabSelected) && (
           <DevToolsSubHeader
@@ -93,6 +97,7 @@ const DevToolsPanel = ({
           logTypeFilter={logTypeFilter}
           elementSelected={elementSelected}
           onSelectElement={handleSelectElement}
+          qa={qa}
         />
       </div>
     </ContainerResizable>

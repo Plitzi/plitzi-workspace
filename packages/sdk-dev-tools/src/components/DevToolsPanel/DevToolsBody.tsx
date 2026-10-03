@@ -24,6 +24,8 @@ export type DevToolsBodyProps = {
   logTypeFilter?: LogType;
   elementSelected?: string;
   onSelectElement: (id?: string) => void;
+  /** Whether the QA tab is offered. */
+  qa?: boolean;
 };
 
 const DevToolsBody = ({
@@ -32,7 +34,8 @@ const DevToolsBody = ({
   orientation,
   logTypeFilter,
   elementSelected,
-  onSelectElement
+  onSelectElement,
+  qa = false
 }: DevToolsBodyProps) => {
   const { logs, clearLogs } = use(DevToolsContext);
 
@@ -53,7 +56,7 @@ const DevToolsBody = ({
         {tabSelected === 'plugins' && <PluginsViewer />}
         {tabSelected === 'tracing' && <TracingViewer />}
         {tabSelected === 'actions' && <ActionsViewer />}
-        {tabSelected === 'qa' && <QaViewer />}
+        {qa && tabSelected === 'qa' && <QaViewer />}
       </div>
     </div>
   );

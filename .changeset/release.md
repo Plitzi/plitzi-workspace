@@ -605,6 +605,10 @@ sticks out past the page's sides, controls and pictures with no name, text under
 their pixels or far bigger than shown, a heading outline with no h1 or a skipped level, and touch targets under 24 × 24
 px with another too close (WCAG 2.2). The tab lays the checks and the inspector side by side when the panel is wide.
 Folding the panel away stops the inspector and the checks; the views — grid, outlines, vision — stay, in this browser.
+The tab is offered where `DevToolsContainer` is given `qa` — the SDK does, over its page; an application shell such as
+the builder does not, so its own UI is never walked by the checks. Its settings are kept under a key of their own
+(`plitzi-sdk-dev-tools-qa`), the checks run when the page is idle, and the tab order is worked out again only when the
+page changes.
 
 The layout grid and the breakpoints are one definition in `@plitzi/sdk-shared/style` (`LAYOUT_GRIDS`,
 `layoutGridLook`, `layoutGridCss`, `DISPLAY_MODE_MIN_WIDTH`, `displayModeAt`), which `@plitzi/sdk-style` compiles its

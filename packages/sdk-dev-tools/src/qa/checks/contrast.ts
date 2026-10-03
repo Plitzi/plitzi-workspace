@@ -1,5 +1,5 @@
 import { isDrawn, ownTextOf } from './dom';
-import { backdropOf, contrastRatio, isLargeText, over, toRgba } from '../inspect/colour';
+import { colourReader, contrastRatio, isLargeText, over } from '../inspect/colour';
 
 import type { QaFinding } from './dom';
 
@@ -13,6 +13,8 @@ export const findLowContrast = (page: Element): QaFinding[] => {
     return [];
   }
 
+  const reader = colourReader();
+
   return [...page.querySelectorAll('*')].flatMap((element): QaFinding[] => {
     if (!ownTextOf(element) || !isDrawn(element)) {
       return [];
@@ -23,8 +25,8 @@ export const findLowContrast = (page: Element): QaFinding[] => {
       return [];
     }
 
-    const colour = toRgba(style.color);
-    const backdrop = backdropOf(element);
+    const colour = reader.colour(style.color);
+    const backdrop = reader.backdrop(element);
     if (!colour || !backdrop) {
       return [];
     }

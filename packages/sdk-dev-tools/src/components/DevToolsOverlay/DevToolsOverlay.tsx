@@ -19,6 +19,8 @@ export type DevToolsOverlayProps = {
   onChangeOrientation: (orientation: Orientation) => void;
   /** The page's own box, which the QA tools draw over and look in. */
   pageRef: RefObject<HTMLElement | null>;
+  /** Whether the QA tab and its layer are offered: only over a page — see `DevToolsContainer`. */
+  qa: boolean;
 };
 
 // What the dev tools show at any moment: the floating badge while collapsed, the docked panel while open. The two are
@@ -35,11 +37,11 @@ const DevToolsOverlay = ({
   onCollapse,
   onTabSelect,
   onChangeOrientation,
-  pageRef
+  pageRef,
+  qa
 }: DevToolsOverlayProps) => {
-  return (
-    <QaProvider pageRef={pageRef} collapsed={collapsed}>
-      <QaLayer />
+  const shown = (
+    <>
       {collapsed && <DevToolsIndicator className={className} onOpen={onOpen} />}
       {!collapsed && (
         <DevToolsPanel
@@ -47,11 +49,22 @@ const DevToolsOverlay = ({
           orientation={orientation}
           tabSelected={tabSelected}
           logTypeFilter={logTypeFilter}
+          qa={qa}
           onCollapse={onCollapse}
           onTabSelect={onTabSelect}
           onChangeOrientation={onChangeOrientation}
         />
       )}
+    </>
+  );
+  if (!qa) {
+    return shown;
+  }
+
+  return (
+    <QaProvider pageRef={pageRef} collapsed={collapsed}>
+      <QaLayer />
+      {shown}
     </QaProvider>
   );
 };

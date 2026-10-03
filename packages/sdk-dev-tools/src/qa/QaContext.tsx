@@ -48,7 +48,9 @@ export type QaProviderProps = {
 
 /** The QA tab's settings, kept in this browser, and what its checks found — shared by the tab and the layer. */
 export const QaProvider = ({ children, pageRef, collapsed }: QaProviderProps) => {
-  const [stored, setStored] = useStorage<Partial<QaSettings>>('plitzi-sdk.dev-tools.qa', QA_DEFAULTS);
+  // A key of its own, not a path under the dev tools' shared one: every write there — a tab picked, the panel resized
+  // — would hand this a new object, and with it new settings and a rescan of every check that is on.
+  const [stored, setStored] = useStorage<Partial<QaSettings>>('plitzi-sdk-dev-tools-qa', QA_DEFAULTS);
   const [findings, setFindings] = useState<QaFindings>(NO_FINDINGS);
   const [round, setRound] = useState(0);
   const [pinned, setPinned] = useState<Element | undefined>();

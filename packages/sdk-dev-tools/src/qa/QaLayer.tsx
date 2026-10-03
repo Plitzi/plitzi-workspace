@@ -20,6 +20,9 @@ const SVG = 'http://www.w3.org/2000/svg';
 /** How long the checks wait for a resize to settle before they look again. */
 const RESCAN_AFTER_MS = 250;
 
+/** The longest a look waits for the page to be idle. */
+const IDLE_TIMEOUT_MS = 1000;
+
 /**
  * What the QA tab has on, applied to the page — mounted with the dev tools whether the panel is open or not, so a
  * tester can fold the panel away and keep the grid.
@@ -33,7 +36,8 @@ const QaLayer = () => {
   const box = usePageBox(pageRef);
   const active = isQaActive(settings);
   const css = useMemo(() => qaCss(settings), [settings]);
-  const checks = useMemo(() => QA_CHECKS.filter(check => settings.checks[check]), [settings.checks]);
+  // As words, so the checks look again when which of them are on changes, not whenever the settings object does.
+  const checksOn = useMemo(() => QA_CHECKS.filter(check => settings.checks[check]).join(' '), [settings.checks]);
 
   useEffect(() => {
     const page = pageRef.current;
@@ -94,6 +98,7 @@ const QaLayer = () => {
   // The checks look at the page as drawn: again on demand, when the window settles at a new size, and on another page.
   useEffect(() => {
     const page = pageRef.current;
+    const checks = QA_CHECKS.filter(check => checksOn.split(' ').includes(check));
     if (!page || checks.length === 0) {
       setFindings(NO_FINDINGS);
 
@@ -117,9 +122,22 @@ const QaLayer = () => {
       setFindings(found);
     };
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let idle: number | undefined;
+    // When the page has a moment: a check walks every element, and never in the way of a click or a frame.
+    const lookWhenIdle = () => {
+      if (typeof requestIdleCallback === 'function') {
+        idle = requestIdleCallback(look, { timeout: IDLE_TIMEOUT_MS });
+      } else {
+        look();
+      }
+    };
     const lookLater = () => {
       clearTimeout(timer);
-      timer = setTimeout(look, RESCAN_AFTER_MS);
+      if (idle !== undefined && typeof cancelIdleCallback === 'function') {
+        cancelIdleCallback(idle);
+      }
+
+      timer = setTimeout(lookWhenIdle, RESCAN_AFTER_MS);
     };
     // Not at once: a page just switched to is still being drawn.
     lookLater();
@@ -127,10 +145,14 @@ const QaLayer = () => {
 
     return () => {
       clearTimeout(timer);
+      if (idle !== undefined && typeof cancelIdleCallback === 'function') {
+        cancelIdleCallback(idle);
+      }
+
       window.removeEventListener('resize', lookLater);
       marked.forEach(element => element.removeAttribute(QA_FINDING_ATTRIBUTE));
     };
-  }, [checks, pageRef, round, currentPageId, setFindings]);
+  }, [checksOn, pageRef, round, currentPageId, setFindings]);
 
   return (
     <>

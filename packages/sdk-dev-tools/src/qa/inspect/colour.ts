@@ -105,37 +105,64 @@ export const toHex = ([red, green, blue, alpha]: Rgba): string => {
   return alpha < 1 ? `${hex} · ${String(Math.round(alpha * 100))}%` : hex;
 };
 
-/**
- * The colour behind an element: every translucent background from it outwards, down to the first opaque one or the
- * canvas. Undefined where an image or a gradient is in the way — that backdrop is pixels this cannot read.
- */
-export const backdropOf = (element: Element): Rgba | undefined => {
-  const view = element.ownerDocument.defaultView;
-  if (!view) {
-    return undefined;
-  }
+export interface ColourReader {
+  /** A CSS colour as RGBA — each value painted once. */
+  colour: (css: string) => Rgba | undefined;
+  /**
+   * The colour behind an element: its own background over what is behind its parent, down to the first opaque one or
+   * the canvas. Undefined where an image or a gradient is in the way — that backdrop is pixels this cannot read.
+   */
+  backdrop: (element: Element) => Rgba | undefined;
+}
 
-  const layers: Rgba[] = [];
-  for (let node: Element | null = element; node; node = node.parentElement) {
-    const style = view.getComputedStyle(node);
-    if (style.backgroundImage && style.backgroundImage !== 'none') {
-      return undefined;
+/**
+ * Colours read for one look at a page. Each colour is painted once and each element's backdrop is worked out once, on
+ * its parent's: a check over every line of text would otherwise read the same ancestors thousands of times.
+ */
+export const colourReader = (): ColourReader => {
+  const colours = new Map<string, Rgba | undefined>();
+  const backdrops = new Map<Element, Rgba | undefined>();
+  const colour = (css: string): Rgba | undefined => {
+    if (!colours.has(css)) {
+      colours.set(css, toRgba(css));
     }
 
-    const layer = toRgba(style.backgroundColor);
-    if (layer && layer[3] > 0) {
-      layers.push(layer);
-      if (layer[3] >= 1) {
-        break;
+    return colours.get(css);
+  };
+  const canvasOf = (element: Element): Rgba => {
+    const root = element.ownerDocument.documentElement;
+    const dark = element.ownerDocument.defaultView?.getComputedStyle(root).colorScheme.includes('dark') ?? false;
+
+    return dark ? [18, 18, 18, 1] : [255, 255, 255, 1];
+  };
+  const backdrop = (element: Element): Rgba | undefined => {
+    if (backdrops.has(element)) {
+      return backdrops.get(element);
+    }
+
+    const style = element.ownerDocument.defaultView?.getComputedStyle(element);
+    let found: Rgba | undefined;
+    if (style && (!style.backgroundImage || style.backgroundImage === 'none')) {
+      const layer = colour(style.backgroundColor);
+      const parent = element.parentElement;
+      const below = parent ? backdrop(parent) : canvasOf(element);
+      if (layer && layer[3] >= 1) {
+        found = layer;
+      } else if (below) {
+        found = layer && layer[3] > 0 ? over(layer, below) : below;
       }
     }
-  }
 
-  const dark = view.getComputedStyle(element.ownerDocument.documentElement).colorScheme.includes('dark');
-  const canvas: Rgba = dark ? [18, 18, 18, 1] : [255, 255, 255, 1];
+    backdrops.set(element, found);
 
-  return layers.reduceRight<Rgba>((below, layer) => over(layer, below), canvas);
+    return found;
+  };
+
+  return { colour, backdrop };
 };
+
+/** One element's backdrop, read on its own. */
+export const backdropOf = (element: Element): Rgba | undefined => colourReader().backdrop(element);
 
 /** Text the size WCAG calls large: 24 px, or 18.66 px in bold — it may get by on 3:1 instead of 4.5:1. */
 export const isLargeText = (fontSize: number, fontWeight: number): boolean =>
