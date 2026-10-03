@@ -9,6 +9,9 @@ export type AppContextValue = {
   setPreviewMode: Dispatch<SetStateAction<boolean>>;
   displayBorderComponents: 'black' | 'white' | 'none';
   setDisplayBorderComponents: Dispatch<SetStateAction<'black' | 'white' | 'none'>>;
+  /** The layout grid over the canvas: the columns a page is laid out on, to line an element up by eye. */
+  displayGrid: boolean;
+  setDisplayGrid: Dispatch<SetStateAction<boolean>>;
   zoom: number;
   setZoom: Dispatch<SetStateAction<number>>;
   displayMode: DisplayMode;

@@ -584,3 +584,10 @@ panel like every suggestion, and never blocks. The scanner `customCss` is read w
 
 `@plitzi/plitzi-ui` 1.6.29: every field is labelled by its `label` and described by its error message, the code
 editor included.
+
+## A layout grid over the canvas
+
+The builder's header has a layout grid switch beside the element outlines: the columns a page is laid out on, drawn
+over the canvas — twelve on a desktop, eight on a tablet, four on a phone, with their gutters and margins — so an
+element is lined up by eye with the rest of the page. It follows the canvas zoom, lets every click through, and is
+remembered between visits like the outlines.

@@ -49,6 +49,7 @@ const AppMain = ({
     'builder-state.app.displayBorderComponents',
     'black'
   );
+  const [displayGrid, setDisplayGrid] = useStorage<boolean>('builder-state.app.displayGrid', false);
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -67,6 +68,8 @@ const AppMain = ({
       setPreviewMode,
       displayBorderComponents,
       setDisplayBorderComponents,
+      displayGrid,
+      setDisplayGrid,
       zoom,
       setZoom,
       displayMode,
@@ -81,6 +84,8 @@ const AppMain = ({
       setPreviewMode,
       displayBorderComponents,
       setDisplayBorderComponents,
+      displayGrid,
+      setDisplayGrid,
       zoom,
       setZoom,
       displayMode,

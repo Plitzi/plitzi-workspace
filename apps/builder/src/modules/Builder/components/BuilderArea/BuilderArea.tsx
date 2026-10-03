@@ -28,6 +28,7 @@ import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
 import BuilderAreaTracking from './BuilderAreaTracking';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
+import { layoutGridCss } from '../../helpers/layoutGrid';
 
 import type { ComponentPluginWithHOC, DisplayMode, SpaceFont } from '@plitzi/sdk-shared';
 
@@ -72,7 +73,7 @@ const BuilderArea = ({
   } = use(BuilderContext);
   // The scheme the SPACE is painted in — see the `canvas` area in `themeStore`. Not the editor's own.
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
-  const { displayBorderComponents, zoom } = use(AppContext);
+  const { displayBorderComponents, displayGrid, zoom } = use(AppContext);
   /**
    * The families the space declares, resolved for the canvas the same way the published page resolves them.
    *
@@ -90,6 +91,8 @@ const BuilderArea = ({
     // The faces stay outside the layer: they declare what a family IS, and nothing in the cascade competes with them.
     return `${fontHead.faces}\n:root{${cssVariables}}\n${styleFrame}\n@layer plitzi-builder-runtime{${cacheParsed}\n${customCss}\n${externalStyle}}`;
   }, [customCss, cache, externalStyle, variables, fontHead.faces]);
+  // Apart from the space's own CSS, so turning the grid on or zooming does not process the whole stylesheet again.
+  const frameCss = useMemo(() => (displayGrid ? `${css}\n${layoutGridCss(zoom)}` : css), [css, displayGrid, zoom]);
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);
@@ -182,7 +185,7 @@ const BuilderArea = ({
           <ContainerFrame
             ref={ref}
             id={`i-builder-${baseElementId}`}
-            css={css}
+            css={frameCss}
             assets={assetsWithFonts}
             className="absolute h-full w-full origin-top-left"
             style={{ colorScheme: resolvedTheme }}

@@ -17,6 +17,7 @@ import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
 import BorderButton from './BorderButton';
 import DisplayModeButtons from './DisplayModeButtons';
+import GridButton from './GridButton';
 import HistoryButtons from './HistoryButtons';
 import IssuesButton from './IssuesButton';
 import PageHeader from './PageHeader';
@@ -170,6 +171,7 @@ const AppHeader = () => {
         <BuilderSearchButton />
         <HistoryButtons />
         <BorderButton />
+        <GridButton />
       </div>
       <div className="flex h-full items-center gap-4">
         <DisplayModeButtons />

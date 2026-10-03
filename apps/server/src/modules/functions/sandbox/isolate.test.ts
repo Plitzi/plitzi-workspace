@@ -54,12 +54,19 @@ const USER: SSRUser = {
 const SIGNING_SECRET = 'the-deployment-signing-secret-32c';
 
 /** A space whose `functions/index.ts` declares one task, `probe.run`, running `body` with `(params, ctx)`. */
-const sourceOf = (body: string, { hosts = [] as string[], extra = '' } = {}) => ({
+interface SourceOptions {
+  hosts?: string[];
+  extra?: string;
+  /** What the task asks for itself: an invocation's CPU is the task's to ask, the space's limits only cap it. */
+  asks?: { cpuMs?: number };
+}
+
+const sourceOf = (body: string, { hosts = [], extra = '', asks = {} }: SourceOptions = {}) => ({
   'index.ts': `import { defineFunctions } from '@plitzi/sdk-server/functions';
 ${extra}
 export default defineFunctions({
   allow: { hosts: ${JSON.stringify(hosts)} },
-  tasks: [{ namespace: 'probe', action: 'run', title: 'Probe', params: {}, run: async (params, ctx) => { ${body} } }]
+  tasks: [{ namespace: 'probe', action: 'run', title: 'Probe', params: {}, limits: ${JSON.stringify(asks)}, run: async (params, ctx) => { ${body} } }]
 });`
 });
 
@@ -449,13 +456,13 @@ describe('an invocation’s limits', () => {
   });
 
   it('stops code that takes more memory than it may, and the next one runs', async () => {
-    // Chunks the size of the whole limit: it is crossed in an allocation or two. Small ones crept up on it, and the
-    // collector's fight near the limit could spend the CPU budget first on a busy CI runner.
+    // Chunks the size of the whole limit: it is crossed in an allocation or two. The task asks for the CPU ceiling —
+    // left at the default 100 ms, the collector's fight near the limit spent it first on a busy CI runner.
     const hog = await spaceWith(
-      sourceOf('const keep = []; while (true) { keep.push(new Array(2e6).fill(Math.random())); }'),
-      {
-        limits: { memoryMb: 16, cpuMs: 5000 }
-      }
+      sourceOf('const keep = []; while (true) { keep.push(new Array(2e6).fill(Math.random())); }', {
+        asks: { cpuMs: 2000 }
+      }),
+      { limits: { memoryMb: 16 } }
     );
     const next = await spaceWith(sourceOf('return "fine";'));
 
