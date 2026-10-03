@@ -24,9 +24,9 @@ const BREAKPOINTS = {
 
 type Breakpoint = keyof typeof BREAKPOINTS;
 
-const BREAKPOINT_ORDER = Object.keys(BREAKPOINTS) as Breakpoint[];
-
 const isBreakpoint = (name: string): name is Breakpoint => Object.hasOwn(BREAKPOINTS, name);
+
+const BREAKPOINT_ORDER = Object.keys(BREAKPOINTS).filter(isBreakpoint);
 
 const STATES = ['hover', 'focus', 'focus-visible', 'focus-within', 'active', 'disabled', 'checked', 'visited'] as const;
 

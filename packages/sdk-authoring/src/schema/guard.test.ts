@@ -213,11 +213,11 @@ describe('a declaration TypeScript never saw', () => {
   it('keeps a plugin type the author named quiet, a path in page mode, and a full URL in external mode', () => {
     const { warnings } = authoring.authorSpace(
       space([
-        { type: 'carousel', id: 'c' },
+        { type: 'kanbanBoard', id: 'c' },
         authoring.link({ id: 'about', href: '/about', label: 'About us' }),
         authoring.link({ id: 'mail', href: 'mailto:a@b.c', mode: 'external', label: 'Write to us' })
       ]),
-      { pluginTypes: ['carousel'] }
+      { pluginTypes: ['kanbanBoard'] }
     );
 
     expect(warnings).toEqual([]);

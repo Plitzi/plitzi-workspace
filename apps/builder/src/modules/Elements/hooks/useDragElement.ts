@@ -6,7 +6,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
-import type { ComponentDefinition, Element, Snippet } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Snippet } from '@plitzi/sdk-shared';
 import type { DragEvent } from 'react';
 
 export type UseDragElementProps = {
@@ -79,7 +79,7 @@ const useDragElement = ({ attributes, type, variables, manifest, label }: UseDra
 
       const { flat, variables } = manifest.schema;
       const snippetBaseElementId = manifest.definition.baseElementId;
-      const baseElement = flat[snippetBaseElementId] as Element | undefined;
+      const baseElement = Object.hasOwn(flat, snippetBaseElementId) ? flat[snippetBaseElementId] : undefined;
       if (!baseElement) {
         return;
       }

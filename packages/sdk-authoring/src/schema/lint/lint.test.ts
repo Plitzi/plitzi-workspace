@@ -9,7 +9,9 @@ import {
   authorSpace,
   component,
   container,
+  carousel,
   elementAncestorTypes,
+  elementPartTypes,
   lintSpace,
   text
 } from '../../index';
@@ -441,6 +443,29 @@ describe('lintSpace', () => {
       });
 
       expect(errorsOf(documents)).toContain('outside-ancestor');
+    });
+
+    it('part-missing', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'deck', type: 'carousel', attributes: {} });
+      });
+
+      expect(elementPartTypes.carousel).toEqual(['carouselTrack']);
+      expect(elementPartTypes.tabContainer).toEqual(['tabContainerHeader', 'tabContainerBody']);
+      expect(errorsOf(documents)).toContain('part-missing');
+      // The factory writes the part, so what it authors is whole.
+      const written = authorSpace({
+        name: 'Parts',
+        permanentUrl: 'parts',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [carousel({ id: 'deck', items: 'state.slides', row: r => text({ from: `${r.item}.title` }) })]
+          }
+        ]
+      });
+      expect(lintSpace(written).errors.map(issue => issue.code)).not.toContain('part-missing');
     });
 
     it('unknown-attribute', () => {

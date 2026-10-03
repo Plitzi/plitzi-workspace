@@ -86,9 +86,7 @@ const Logs = ({ items = [], autoScrollOffset = 40, orientation = 'horizontal', l
               .map((item, i) => ({ item, key: i }))
               .filter(({ item }) => !logTypeSelected || item.logType === logTypeSelected)
               .reverse()
-              .map(({ item, key }) => (
-                <Log key={key} category={item.category} time={item.time} params={item.params} message={item.message} />
-              ))
+              .map(({ item, key }) => <Log key={key} log={item} />)
           )}
         </div>
       </div>

@@ -335,6 +335,11 @@ export const AUTHORING_CODES = {
     means: "a `container({ subType: 'span' })` holding a heading, a paragraph, a list, a form or prose",
     fix: 'a `div` (leave `subType` out), or words: a `text` with `display: inline` in its class'
   },
+  'part-missing': {
+    kind: 'refused',
+    means: 'a compound element — a carousel, a tab container, a dropdown — without a part it renders through',
+    fix: 'the part the message names, inside it (`carousel()` writes its own track)'
+  },
   'outside-ancestor': {
     kind: 'refused',
     means: 'an element that reads the state of an element it is not inside',

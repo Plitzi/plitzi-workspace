@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { isSchemaFlag } from '../flags/schemaFlag';
 import { isRecord } from '../helpers/isRecord';
+import { DISPLAY_MODES } from '../style/displayModes';
 import { STYLE_STATES } from '../style/styleStates';
 import { StyleVariableCategory } from '../types/StyleTypes';
 
@@ -74,7 +75,7 @@ const styleVariableValue = z.custom<StyleVariableValue>(
   { message: 'expected a style variable value' }
 );
 
-const displayMode = z.enum(['desktop', 'tablet', 'mobile']);
+const displayMode = z.enum(DISPLAY_MODES);
 const dropPosition = z.custom<DropPosition>(value => typeof value === 'string', {
   message: 'expected a drop position'
 });

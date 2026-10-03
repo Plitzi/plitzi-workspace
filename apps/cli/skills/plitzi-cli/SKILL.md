@@ -78,6 +78,7 @@ What a project gives you, so you use it rather than rebuild it:
 | `author` | author `src/space.ts`: one line when it is fine, every problem at once (file:line, what to change) when not; `-- --json` for a tool |
 | `npx plitzi fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |
 | `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows; `--state` and `--element <id>` say what it holds; `--json` |
+| `npx plitzi import <url>` | a page the user owns, measured as a place to start from: `tokens.ts` (colours light and dark, corners, shadows, Google fonts), `outline.ts` (its blocks and their layout per breakpoint), its repeated lists as `data/*.json`, screenshots per width, and `IMPORT.md` saying what was not carried over. Never the words. Stops where `robots.txt` says no |
 | `shot -- /path --width 390 --scheme dark` | a picture of one page — `--frames 4` says what moves, `--compare <url>` how much differs from another site by section, `--wait-for <element>`; refused when the port answers as another project |
 | `visual` | a browser asserts every element the space names is visible |
 | `typecheck`, `lint`, `format` | before calling a change done |

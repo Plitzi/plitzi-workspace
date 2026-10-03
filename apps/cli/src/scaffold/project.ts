@@ -351,6 +351,7 @@ ${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi add plugin')
 - Chrome shared by pages is a layout; a look used twice is a class; a repeated block is a function or a ${code('map')}.
 - Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.
 - A file per part — the tokens, the layout, each component, each page — short enough to read whole; ${code('src/space.ts')} assembles them. ${code('npx plitzi create <dir> --template catalog')} is a complete example of the shape.
+- Rebuilding a page the user owns: ${code('npx plitzi import <url>')} writes its tokens, outline and lists as a start — then split it into parts and write the content. Never import a site the user does not own.
 - Elements are visible by default. One the logic REVEALS starts hidden (${code('visible')}, or ${code('visible: false')} plus a computed binding) so nothing flashes while loading; one a flag HIDES stays shown while the flag is unset.
 - Inside a template a source is spelled in full (${code('apiContainer_stats')}); an attribute only resolves ${code('{{ name|filter }}')}.
 - Colours are tokens with light and dark values; times carry an explicit zone and say it.

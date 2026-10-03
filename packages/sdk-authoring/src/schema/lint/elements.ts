@@ -55,6 +55,38 @@ const checkAncestor = (ctx: LintContext, element: Element, where: string): void 
   );
 };
 
+/** A compound element shows what it holds through its parts — anywhere inside it: without one, nothing in it shows. */
+const checkParts = (ctx: LintContext, element: Element, where: string): void => {
+  const type = element.definition.type;
+  const parts =
+    ctx.catalogs.partTypes && Object.hasOwn(ctx.catalogs.partTypes, type) ? ctx.catalogs.partTypes[type] : [];
+  if (parts.length === 0) {
+    return;
+  }
+
+  const inside = new Set<string>();
+  const pending = [...(element.definition.items ?? [])];
+  for (let id = pending.pop(); id !== undefined; id = pending.pop()) {
+    const child = ctx.element(id);
+    if (child) {
+      inside.add(child.definition.type);
+      pending.push(...(child.definition.items ?? []));
+    }
+  }
+
+  const missing = parts.filter(part => !inside.has(part));
+  if (missing.length === 0) {
+    return;
+  }
+
+  const named = missing.map(part => `"${part}"`).join(' and ');
+  ctx.error(
+    'part-missing',
+    `${where} has no ${named} inside it — a "${type}" shows what it holds through ${missing.length === 1 ? 'that part' : 'those parts'}, so nothing in it shows. Add ${missing.length === 1 ? 'one' : 'them'} inside it.`,
+    element.id
+  );
+};
+
 /**
  * An attribute's value against what its element takes: known at all (a built-in type's attributes are exactly its
  * component's props), one of the values of an enumerated attribute, and the same kind of value its default is where
@@ -586,6 +618,7 @@ export const lintElements = (ctx: LintContext): void => {
     }
 
     checkAncestor(ctx, element, where);
+    checkParts(ctx, element, where);
     checkAttributes(ctx, element, where);
     checkChildren(ctx, element, where);
     warnSpanHoldsBlock(ctx, element, where);

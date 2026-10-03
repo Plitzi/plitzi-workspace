@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import DevToolsButton from './DevToolsButton';
+import useHighlightElement from '../../highlight';
 
 import type { ReactNode } from 'react';
 
@@ -69,18 +70,7 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
     onSelectElement('');
   }, [onSelectElement]);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return undefined;
-    }
-
-    const elementsDOM = document.querySelectorAll(`[data-id="${elementSelected}"]`);
-    elementsDOM.forEach(elementDOM => elementDOM.classList.add('devtools-element-hovered'));
-
-    return () => {
-      elementsDOM.forEach(elementDOM => elementDOM.classList.remove('devtools-element-hovered'));
-    };
-  }, [elementSelected]);
+  useHighlightElement(elementSelected);
 
   useEffect(() => {
     if (!selectorEnabled || typeof document === 'undefined') {

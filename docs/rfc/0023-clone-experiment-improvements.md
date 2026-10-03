@@ -1,6 +1,6 @@
 # RFC 0023 — Improvements from the MultiPC clone experiment
 
-- **Status:** Accepted — every phase shipped, C7 as `plitzi fix` (§5); M12/C3 declined for now (§4)
+- **Status:** Accepted — every phase shipped, C7 as `plitzi fix` (§5); M12/C3 as `plitzi import`, domain verification pending (§4)
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-10-02
 - **Scope:** `sdk-authoring`, `sdk-elements`, `sdk-interactions`, `apps/sdk` (router), `apps/server`, `apps/cli` and its
@@ -25,8 +25,7 @@ being accepted: what already exists is said, and a claim that did not hold is co
 
 | ID | Proposal | Verdict | Phase | Notes from checking `main` |
 | --- | --- | --- | --- | --- |
-| M12 | `plitzi import <url>` | Not now | — | Decided (§4) |
-| C3 | Compact `plitzi import` | Not now | — | With M12 |
+| M12 | `plitzi import <url>` — gated on a verified domain | Do | 6 | The command shipped; the gate has not (§4) |
 
 ## 3. Phases
 
@@ -35,6 +34,8 @@ being accepted: what already exists is said, and a claim that did not hold is co
 3. **Faster next clone:** shipped — M6's `loading` slot (`loadingSlot`), M9, M11, M13, M16, M17, D3, D5, C1, C2, C5, C9; C7 later, as `plitzi fix` (§5).
 4. **Shorter authoring:** shipped — A1–A11, M10 (`tw()`), D8 (`create --template catalog`), C8.
 5. **Larger additions:** shipped — M8 (`carousel`), M18 (`embed`, `svg`), M20 (`plitzi check` reads the dev tools), M21 (`images`).
+6. **Import:** `plitzi import` shipped with C3's compact answer (§4); left — importing only a domain the account has
+   verified.
 
 Each item ships with its tests, its docs and its changeset line, and its row is removed from §2 when it does.
 
@@ -42,7 +43,11 @@ Each item ships with its tests, its docs and its changeset line, and its row is 
 
 - **M8 carousel — yes.** A structure element with slots (`slide`, `previous`, `next`, `indicator`), three modes and
   autoplay, built after `onInterval`, the scroll callbacks and `itemKey`, which it uses.
-- **M12 / C3 `plitzi import` — not now.** It reads and parses somebody else's site; it stays out of the product.
+- **M12 / C3 `plitzi import` — yes, for sites the user owns (revised 2026-10-03).** Its risk is reuse of somebody
+  else's site, so it carries no words: tokens, the outline of the blocks with their layout per breakpoint, the
+  repeated lists as JSON rows to replace, screenshots, and `IMPORT.md` saying what was not carried over. It reads
+  `robots.txt` (as `Plitzi-Import`) and stops where that says no. Shipped first; then it imports only a domain the
+  signed-in account has verified (the `_plitzi` TXT record spaces already use), with `localhost` exempt.
 - **M21 image proxy — yes, with an allowlist.** Only domains declared in `createServer({ images: { domains } })`,
   with the same guards as the server's other outbound requests, and a disk cache.
 - **A2 / A3 / A5 — yes.** Breakpoints per property, camelCase CSS keys and typed data sources are accepted beside the

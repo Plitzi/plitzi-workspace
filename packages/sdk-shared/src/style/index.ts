@@ -1,5 +1,6 @@
 import styleConstants from './styleConstants';
 
+export * from './displayModes';
 export * from './fontAssets';
 export * from './fontValidation';
 export * from './fonts';

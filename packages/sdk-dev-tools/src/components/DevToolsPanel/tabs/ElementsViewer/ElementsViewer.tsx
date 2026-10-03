@@ -1,12 +1,12 @@
 import clsx from 'clsx';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
-import ElementDetails from './ElementDetails';
-import ElementsList from './ElementsList';
-
-import type { Element } from '@plitzi/sdk-shared';
+import ElementDetails from './components/ElementDetails';
+import ElementsTree from './components/ElementsTree';
+import { renderTree } from './helpers/renderTree';
+import useHighlightElement from '../../../../highlight';
 
 export type ElementsViewerProps = {
   className?: string;
@@ -14,26 +14,32 @@ export type ElementsViewerProps = {
   onSelectElement: (id?: string) => void;
 };
 
+/**
+ * What is on screen, element by element: the layouts around the page, the page, and the components it places — each
+ * element outlined on the page while it is pointed at, and, selected, how it is doing and what the document says.
+ */
 const ElementsViewer = ({ className, elementSelected, onSelectElement }: ElementsViewerProps) => {
-  const [[flat, currentPageId]] = useCommonStore(['schema.flat', 'navigation.currentPageId']);
-  const elements = useMemo<Element[]>(
-    () => Object.values(flat).filter(element => element.definition.rootId === currentPageId),
-    [flat, currentPageId]
-  );
-  const element = useMemo(() => elements.find(element => element.id === elementSelected), [elements, elementSelected]);
-
-  const handleElementSelected = useCallback((id?: string) => onSelectElement(id), [onSelectElement]);
+  const [[flat, components, currentPageId]] = useCommonStore([
+    'schema.flat',
+    'schema.components',
+    'navigation.currentPageId'
+  ]);
+  const [filter, setFilter] = useState('');
+  const [hovered, setHovered] = useState<string>();
+  const sections = useMemo(() => renderTree({ flat, components }, currentPageId), [flat, components, currentPageId]);
+  useHighlightElement(hovered);
 
   return (
     <div className={clsx('flex h-full w-full', className)}>
-      <ElementsList elements={elements} elementSelected={elementSelected} onSelect={handleElementSelected} />
-      {elementSelected && (
-        <ElementDetails
-          definition={element?.definition}
-          attributes={element?.attributes}
-          onSelectElement={onSelectElement}
-        />
-      )}
+      <ElementsTree
+        sections={sections}
+        filter={filter}
+        selected={elementSelected}
+        onFilter={setFilter}
+        onSelect={onSelectElement}
+        onHover={setHovered}
+      />
+      {elementSelected && <ElementDetails id={elementSelected} onSelectElement={onSelectElement} />}
     </div>
   );
 };

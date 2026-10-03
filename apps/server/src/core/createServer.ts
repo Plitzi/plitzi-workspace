@@ -92,6 +92,8 @@ const withConnectorRsc = <
   const actions =
     module && config.action?.lookups ? { lookups: config.action.lookups as ActionLookups, module } : undefined;
   resolved.adapters.getRscData = connectorRscData({
+    // The public config hands a manifest back as `unknown` (a deployment reads it from its own store); the connector
+    // module reads it as the manifest the space saved, unchecked — a manifest guard at this boundary would close it.
     connectors: config.connectors as ConnectorLookups | undefined,
     actions,
     publicDir: config.publicDir,

@@ -10,7 +10,7 @@ import HotspotsList from './components/HotspotsList';
 import RankedList from './components/RankedList';
 import TracingToolbar from './components/TracingToolbar';
 import { buildFlameModel, commitOrigin, SSR_COMMIT_ID } from './helpers';
-import useHighlightElement from './useHighlightElement';
+import useHighlightElement from '../../../../highlight';
 
 import type { TracingView } from './helpers';
 import type { CommitEntry } from '@plitzi/sdk-shared';

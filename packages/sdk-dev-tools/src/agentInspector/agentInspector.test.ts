@@ -141,6 +141,43 @@ describe('window.__plitzi', () => {
     expect(inspector.element('nowhere')).toBeUndefined();
   });
 
+  it('finds an element inside a component, and says which component an instance places', () => {
+    const withComponent = createStore<Record<string, unknown>>(() => ({
+      schema: {
+        flat: {
+          lamp: {
+            id: 'lamp',
+            definition: { type: 'reference', label: 'lamp', items: [] },
+            attributes: { referenceType: 'component', referenceId: 'card', title: 'Lamp' }
+          }
+        },
+        components: {
+          card: {
+            id: 'card',
+            rootId: 'card-root',
+            flat: { 'card-title': { id: 'card-title', definition: { type: 'heading' }, attributes: {} } }
+          }
+        }
+      },
+      runtime: {}
+    }));
+    const reader = createAgentInspector({
+      root: withComponent,
+      writeState,
+      stores: () => [],
+      runs: () => runs,
+      setWatching,
+      document
+    });
+
+    expect(reader.element('lamp')).toMatchObject({
+      type: 'reference',
+      instanceOf: 'card',
+      attributes: { title: 'Lamp' }
+    });
+    expect(reader.element('card-title')).toMatchObject({ type: 'heading', inComponent: 'card' });
+  });
+
   it('keeps the last flows, and says them in the console on request', () => {
     const run = flowRunOf(flowLog('completed'));
     if (run) {

@@ -7,6 +7,7 @@ import {
   elementCallbacks,
   elementDefaultAttributes,
   elementLeafTypes,
+  elementPartTypes,
   elementSlots,
   elementSourceTypes,
   elementTriggers,
@@ -149,6 +150,7 @@ export * from './explain';
 export * from './elements';
 export * from './interactions';
 export * from './schema';
+export * from './import';
 export * from './spaces';
 export * from './style';
 export * from './testing';
@@ -185,6 +187,7 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
   vocabulary: STEP_VOCABULARY,
   sourceTypes: elementSourceTypes,
   ancestorTypes: elementAncestorTypes,
+  partTypes: elementPartTypes,
   slotNames: elementSlots,
   attributeNames: elementAttributeNames,
   leafTypes: elementLeafTypes,

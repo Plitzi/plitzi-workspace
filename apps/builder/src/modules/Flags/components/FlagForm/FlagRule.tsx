@@ -49,6 +49,7 @@ const FlagRule = ({ index, last, fields, onRemove, onMove }: FlagRuleProps) => {
               direction="vertical"
               intent="gray"
               className="w-full"
+              // `Form.Custom` hands any field's value as unknown; this field is `rules.N.when`, a RuleGroup in the form.
               query={value as RuleGroup}
               fields={fields}
               onChange={onChange}

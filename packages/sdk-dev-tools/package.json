@@ -30,6 +30,10 @@
       "types": "./dist/agentInspector/inspector.d.ts",
       "import": "./dist/agentInspector/inspector.mjs"
     },
+    "./agentInspector/report": {
+      "types": "./dist/agentInspector/report.d.ts",
+      "import": "./dist/agentInspector/report.mjs"
+    },
     "./agentInspector/useAgentInspector": {
       "types": "./dist/agentInspector/useAgentInspector.d.ts",
       "import": "./dist/agentInspector/useAgentInspector.mjs"
@@ -218,33 +222,133 @@
       "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.mjs"
     },
-    "./components/DevToolsPanel/tabs/ElementsViewer/DetailsAttributes": {
-      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/DetailsAttributes.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/DetailsAttributes.mjs"
-    },
-    "./components/DevToolsPanel/tabs/ElementsViewer/DetailsDefinition": {
-      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/DetailsDefinition.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/DetailsDefinition.mjs"
-    },
-    "./components/DevToolsPanel/tabs/ElementsViewer/DetailsValue": {
-      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/DetailsValue.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/DetailsValue.mjs"
-    },
-    "./components/DevToolsPanel/tabs/ElementsViewer/ElementDetails": {
-      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/ElementDetails.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/ElementDetails.mjs"
-    },
-    "./components/DevToolsPanel/tabs/ElementsViewer/ElementsList": {
-      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/ElementsList.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/ElementsList.mjs"
-    },
-    "./components/DevToolsPanel/tabs/ElementsViewer/ElementsListItem": {
-      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/ElementsListItem.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/ElementsListItem.mjs"
-    },
     "./components/DevToolsPanel/tabs/ElementsViewer/ElementsViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/ElementsViewer.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/ElementsViewer.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes/DetailsAttributes": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes/DetailsAttributes.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes/DetailsAttributes.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsAttributes/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition/DetailsDefinition": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition/DetailsDefinition.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition/DetailsDefinition.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsDefinition/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow/DetailsRow": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow/DetailsRow.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow/DetailsRow.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRow/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime/DetailsRuntime": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime/DetailsRuntime.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime/DetailsRuntime.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsRuntime/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue/DetailsValue": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue/DetailsValue.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue/DetailsValue.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/DetailsValue/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails/ElementDetails": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails/ElementDetails.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails/ElementDetails.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementDetails/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink/ElementLink": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink/ElementLink.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink/ElementLink.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementLink/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree/ElementsTree": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree/ElementsTree.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree/ElementsTree.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/ElementsTree/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow/TreeRow": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow/TreeRow.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow/TreeRow.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeRow/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection/TreeSection": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection/TreeSection.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection/TreeSection.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/components/TreeSection/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/ElementsViewer/helpers/renderTree": {
+      "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/helpers/renderTree.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/ElementsViewer/helpers/renderTree.mjs"
     },
     "./components/DevToolsPanel/tabs/ElementsViewer/index": {
       "types": "./dist/components/DevToolsPanel/tabs/ElementsViewer/index.d.ts",
@@ -461,6 +565,18 @@
     "./components/DevToolsPanel/tabs/Logs/categories/LogNetwork/index": {
       "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNetwork/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogNetwork/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogRealtime": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogRealtime/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogRealtime/index.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogRealtime/LogRealtime": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogRealtime/LogRealtime.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogRealtime/LogRealtime.mjs"
+    },
+    "./components/DevToolsPanel/tabs/Logs/categories/LogRealtime/index": {
+      "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogRealtime/index.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogRealtime/index.mjs"
     },
     "./components/DevToolsPanel/tabs/Logs/categories/LogStore": {
       "types": "./dist/components/DevToolsPanel/tabs/Logs/categories/LogStore/index.d.ts",
@@ -722,10 +838,6 @@
       "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/index.mjs"
     },
-    "./components/DevToolsPanel/tabs/TracingViewer/useHighlightElement": {
-      "types": "./dist/components/DevToolsPanel/tabs/TracingViewer/useHighlightElement.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/TracingViewer/useHighlightElement.mjs"
-    },
     "./components/DevToolsPanel/tabs/VariablesViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/VariablesViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/VariablesViewer/index.mjs"
@@ -809,6 +921,18 @@
     "./freshness/useSecondsClock": {
       "types": "./dist/freshness/useSecondsClock.d.ts",
       "import": "./dist/freshness/useSecondsClock.mjs"
+    },
+    "./highlight": {
+      "types": "./dist/highlight/index.d.ts",
+      "import": "./dist/highlight/index.mjs"
+    },
+    "./highlight/index": {
+      "types": "./dist/highlight/index.d.ts",
+      "import": "./dist/highlight/index.mjs"
+    },
+    "./highlight/useHighlightElement": {
+      "types": "./dist/highlight/useHighlightElement.d.ts",
+      "import": "./dist/highlight/useHighlightElement.mjs"
     },
     "./index": {
       "types": "./dist/index.d.ts",

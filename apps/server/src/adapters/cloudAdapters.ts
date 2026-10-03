@@ -1,3 +1,4 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
 
 import { serverLog } from '../helpers/serverLog';
@@ -161,6 +162,10 @@ type FlagsPayload = { data?: { SpaceFlags?: HeldFlags | null } };
 /** An environment's flags as last fetched, and the hash Plitzi gave them — what the page server's caches are keyed by. */
 type HeldFlags = { hash: string; flags: NonNullable<Schema['flags']> };
 
+/** What the shared cache holds under a flags key — written by this module, but read back from outside the process. */
+const isHeldFlags = (value: unknown): value is HeldFlags =>
+  isRecord(value) && typeof value.hash === 'string' && isRecord(value.flags);
+
 type SpacePayload = {
   data?: { Space?: { schema?: SchemaRaw; style?: Style; plugins?: PluginRaw[] } };
   errors?: { message: string }[];
@@ -319,8 +324,9 @@ export const createCloudAdapters = (config: CloudAdaptersConfig): SSRPageAdapter
 
     try {
       const stored = await cache?.get(flagsCacheKey(env));
-      if (stored) {
-        heldFlags.set(env, { ...(JSON.parse(stored) as HeldFlags), checkedAt: 0 });
+      const held: unknown = stored ? JSON.parse(stored) : undefined;
+      if (isHeldFlags(held)) {
+        heldFlags.set(env, { ...held, checkedAt: 0 });
       }
     } catch {
       // Nothing usable kept: the next probe fetches them.

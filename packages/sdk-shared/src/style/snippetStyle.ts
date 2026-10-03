@@ -1,9 +1,11 @@
+import { isDisplayMode } from './displayModes';
 import { sameValue } from '../history/diff';
+import { StyleVariableCategory } from '../types';
 
-import type { DisplayMode, SnippetStyle, Style, StyleItem, StyleVariableCategory, StyleVariables } from '../types';
+import type { DisplayMode, SnippetStyle, Style, StyleItem, StyleVariables } from '../types';
 
 const modesOf = (...platforms: Partial<Style['platform']>[]): DisplayMode[] => [
-  ...new Set(platforms.flatMap(platform => Object.keys(platform) as DisplayMode[]))
+  ...new Set(platforms.flatMap(platform => Object.keys(platform).filter(isDisplayMode)))
 ];
 
 /** A rule as it reads, without the CSS compiled from it — two rules that read the same compile the same. */
@@ -53,15 +55,14 @@ export const mergeSnippetStyle = (
   });
 
   const variables: Partial<StyleVariables> = { ...space.variables };
-  (Object.entries(snippet.variables ?? {}) as [StyleVariableCategory, StyleVariables[StyleVariableCategory]][]).forEach(
-    ([category, tokens]) => {
-      const held = variables[category] ?? {};
-      const added = Object.entries(tokens).filter(([name]) => !Object.hasOwn(held, name));
-      if (added.length > 0) {
-        variables[category] = { ...held, ...Object.fromEntries(added) };
-      }
+  for (const category of Object.values(StyleVariableCategory)) {
+    const tokens = snippet.variables?.[category];
+    const held = variables[category] ?? {};
+    const added = Object.entries(tokens ?? {}).filter(([name]) => !Object.hasOwn(held, name));
+    if (added.length > 0) {
+      variables[category] = { ...held, ...Object.fromEntries(added) };
     }
-  );
+  }
 
   return { platform, variables };
 };

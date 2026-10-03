@@ -1,7 +1,8 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Embed, embeddableSrc } from './Embed';
+import { Embed } from './Embed';
+import { embeddableSrc } from './embeddableSrc';
 import ElementContext from '../../../Element/ElementContext';
 import { skipHocEntry } from '../../../testUtils/elementTestUtils';
 

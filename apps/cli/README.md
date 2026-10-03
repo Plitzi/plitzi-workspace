@@ -149,6 +149,29 @@ by the line and column the element remembers — and only where the value is wri
 listed with where it is and why it was left. `--write` authors the space again in a fresh process and keeps the edits
 only if every fix is gone and no problem was added; a fix that would add one is put back and said.
 
+## `import`
+
+```bash
+plitzi import https://example.com/pricing                 # into src/imported
+plitzi import https://example.com/ --out src/home --widths 1440,390
+```
+
+A page you own or may reuse, measured in the project's own Playwright as a place to start writing from — never a copy
+of it. The widest width is desktop, the others tablet and mobile; the page is measured once more in the dark scheme.
+What lands in `--out`:
+
+- `tokens.ts` — the page's own custom properties by their names, then the colours it shows most, each with the value
+  the same place shows in the dark (the light one again, said in `IMPORT.md`, when it has no dark scheme); the corners
+  and shadows it repeats; its Google fonts. `variables`, `fonts` and `t` to hand to the space.
+- `outline.ts` — `container()`s for its landmarks and blocks, each with its layout per breakpoint written as what the
+  narrower widths change, colours as tokens, and a block hidden at a width as `display: 'none'` there. A repeated block
+  is written once, and its rows go to `data/<name>.json`.
+- `assets.json`, `screens/<width>.png`, and `IMPORT.md`: what was not carried over (the text, states, scripts, fonts
+  not on Google) and what to do next.
+
+It asks the site's `robots.txt` first, as `Plitzi-Import`, and stops where that says no. It refuses an `--out` that
+already has files unless `--force`, and then names the files an earlier import left that it did not write again.
+
 ## `explain`
 
 ```bash

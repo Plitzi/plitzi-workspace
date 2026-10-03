@@ -1,10 +1,11 @@
+import { isDisplayMode } from '@plitzi/sdk-shared/style/displayModes';
 import { sameSelector, selectorsOf } from '@plitzi/sdk-shared/style/snippetStyle';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 
 import { documentIds } from './components';
 import { remapCollidingIds } from './elementId';
 
-import type { DisplayMode, Element, Schema, SnippetStyle, Style, StyleItem } from '@plitzi/sdk-shared';
+import type { Element, Schema, SnippetStyle, Style, StyleItem } from '@plitzi/sdk-shared';
 
 type Elements = Record<Element['id'], Element>;
 
@@ -78,15 +79,17 @@ const renameInStyle = (style: SnippetStyle, renamed: Map<string, string>): Snipp
   }
 
   const platform = { ...style.platform };
-  (Object.keys(platform) as DisplayMode[]).forEach(mode => {
-    platform[mode] = Object.fromEntries(
-      Object.entries(platform[mode]).map(([name, item]) => {
-        const next = renamed.get(name) ?? name;
+  Object.keys(platform)
+    .filter(isDisplayMode)
+    .forEach(mode => {
+      platform[mode] = Object.fromEntries(
+        Object.entries(platform[mode]).map(([name, item]) => {
+          const next = renamed.get(name) ?? name;
 
-        return [next, renamedRule(item, next, renamed)];
-      })
-    );
-  });
+          return [next, renamedRule(item, next, renamed)];
+        })
+      );
+    });
 
   return { ...style, platform };
 };

@@ -3,6 +3,7 @@ import clsx from 'clsx';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { embeddableSrc } from './embeddableSrc';
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
 
@@ -22,13 +23,6 @@ export type EmbedProps = {
   referrerPolicy?: 'no-referrer' | 'origin' | 'strict-origin-when-cross-origin' | 'no-referrer-when-downgrade';
   className?: string;
 };
-
-/**
- * A frame loads what its `src` names in this page's origin when that is a `javascript:` URL, so only a web address
- * or a path of the site is loaded.
- */
-export const embeddableSrc = (src: string): string | undefined =>
-  /^(https?:)?\/\//i.test(src) || (src.startsWith('/') && !src.startsWith('//')) ? src : undefined;
 
 const Embed = ({
   ref,

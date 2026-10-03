@@ -4,40 +4,34 @@ import LogAction from './categories/LogAction';
 import LogInteraction from './categories/LogInteraction';
 import LogNavigation from './categories/LogNavigation';
 import LogNetwork from './categories/LogNetwork';
+import LogRealtime from './categories/LogRealtime';
 import LogStore from './categories/LogStore';
 
-import type {
-  LogParams,
-  LogAction as TLogAction,
-  LogInteraction as TLogInteraction,
-  LogNavigation as TLogNavigation,
-  LogNetwork as TLogNetwork,
-  LogStore as TLogStore
-} from '@plitzi/sdk-shared';
-import type { ReactNode } from 'react';
+import type { Log as TLog } from '@plitzi/sdk-shared';
 
 export type LogProps = {
-  className?: string;
-  category: string;
-  time?: string;
-  message?: ReactNode;
-  params: LogParams;
+  log: TLog;
 };
 
-const Log = ({ category, message, time, params }: LogProps) => {
-  return (
-    <>
-      {category === 'interactions' && (
-        <LogInteraction message={message} params={params as TLogInteraction['params']} time={time} />
-      )}
-      {category === 'navigation' && (
-        <LogNavigation message={message} params={params as TLogNavigation['params']} time={time} />
-      )}
-      {category === 'store' && <LogStore message={message} params={params as TLogStore['params']} time={time} />}
-      {category === 'network' && <LogNetwork message={message} params={params as TLogNetwork['params']} time={time} />}
-      {category === 'actions' && <LogAction message={message} params={params as TLogAction['params']} time={time} />}
-    </>
-  );
+/** One entry, drawn by its category — which is also what types its params. */
+const Log = ({ log }: LogProps) => {
+  const { message, time } = log;
+  switch (log.category) {
+    case 'interactions':
+      return <LogInteraction message={message} params={log.params} time={time} />;
+    case 'navigation':
+      return <LogNavigation message={message} params={log.params} time={time} />;
+    case 'store':
+      return <LogStore message={message} params={log.params} time={time} />;
+    case 'network':
+      return <LogNetwork message={message} params={log.params} time={time} />;
+    case 'actions':
+      return <LogAction message={message} params={log.params} time={time} />;
+    case 'realtime':
+      return <LogRealtime logType={log.logType} message={message} params={log.params} time={time} />;
+    case 'eventBridge':
+      return null;
+  }
 };
 
 export default memo(Log);

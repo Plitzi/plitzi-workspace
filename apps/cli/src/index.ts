@@ -9,6 +9,7 @@ import { dataDescribe } from './commands/data';
 import { explainCommand } from './commands/explain';
 import { fix } from './commands/fix';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
+import { importPage } from './commands/importPage';
 import packPluginCommand from './commands/packPlugin';
 import packSourceCommand from './commands/packSource';
 import { pull } from './commands/pull';
@@ -34,6 +35,7 @@ import type { DataDescribeOptions } from './commands/data';
 import type { ExplainOptions } from './commands/explain';
 import type { FixOptions } from './commands/fix';
 import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
+import type { ImportOptions } from './commands/importPage';
 import type { PackPluginOptions } from './commands/packPlugin';
 import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
@@ -238,6 +240,22 @@ program
   .option('--write', 'Write the edits — kept only when the space authors with each fix gone and no problem added')
   .option('--json', 'The plan as one object, for a tool or an agent')
   .action((options: FixOptions) => fix(options));
+
+program
+  .command('import')
+  .argument('<url>', 'The page to start from: https://example.com/pricing')
+  .description(
+    'A page you own, as a place to start writing from: its tokens, the outline of its blocks per breakpoint, its lists as JSON — never its words'
+  )
+  .option('--out <dir>', 'Where it is written, inside the project', 'src/imported')
+  .option(
+    '--widths <px,px>',
+    'The widths it is measured at: the widest is desktop, then tablet and mobile',
+    '1440,768,390'
+  )
+  .option('--force', 'Write over what --out already holds')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((url: string, options: ImportOptions) => importPage(url, options));
 
 program
   .command('shot')

@@ -1,22 +1,8 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { elementReport, plain, recordAt } from './report';
 
 import type { FlowRun } from './flowRuns';
+import type { ElementReport } from './report';
 import type { DevStore } from '@plitzi/nexus';
-
-/** An element as an agent asks about it: what it is, what it holds, and whether it is on screen. */
-export type ElementReport = {
-  id: string;
-  type?: string;
-  attributes?: Record<string, unknown>;
-  /** What it reads: each binding's target, its source and, when it has one, its template. */
-  bindings?: { category: string; to: string; source: string; template?: string }[];
-  /** The element's own UI state — an open dropdown, a tab — as the runtime keeps it. */
-  state?: unknown;
-  /** How many copies are on the page: a list row's elements are one per row. */
-  copies: number;
-  visible: boolean;
-  box?: { x: number; y: number; width: number; height: number };
-};
 
 /** `window.__plitzi`: the page's state, data, elements and flows, in text, for whoever cannot read the panel. */
 export type AgentInspector = {
@@ -43,63 +29,12 @@ export type AgentInspectorOptions = {
   document: Document;
 };
 
-/** A value as JSON can carry it: functions left out, a cycle cut, depth bounded. */
-const plain = (value: unknown, depth = 0, seen = new WeakSet<object>()): unknown => {
-  if (typeof value === 'function') {
-    return undefined;
-  }
-
-  if (typeof value !== 'object' || value === null) {
-    return value;
-  }
-
-  if (seen.has(value) || depth > 12) {
-    return '[…]';
-  }
-
-  seen.add(value);
-  if (Array.isArray(value)) {
-    return value.map(item => plain(item, depth + 1, seen));
-  }
-
-  return Object.fromEntries(
-    Object.entries(value)
-      .map(([key, item]) => [key, plain(item, depth + 1, seen)])
-      .filter(([, item]) => item !== undefined)
-  );
-};
-
-const recordAt = (value: unknown, ...path: string[]): Record<string, unknown> => {
-  let current = value;
-  for (const key of path) {
-    current = isRecord(current) ? current[key] : undefined;
-  }
-
-  return isRecord(current) ? current : {};
-};
-
-const listOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-
-/** An element's bindings in one list, from the categories the document keeps them under. */
-const bindingsOf = (element: unknown): NonNullable<ElementReport['bindings']> =>
-  Object.entries(recordAt(element, 'definition', 'bindings')).flatMap(([category, list]) =>
-    listOf(list).flatMap(binding => {
-      const { to, source, transformers } = recordAt(binding);
-      const template = listOf(transformers)
-        .map(transformer => recordAt(transformer, 'params').template)
-        .find(value => typeof value === 'string');
-
-      return typeof to === 'string' && typeof source === 'string'
-        ? [{ category, to, source, ...(typeof template === 'string' ? { template } : {}) }]
-        : [];
-    })
-  );
-
 const HELP = `window.__plitzi — this page, in text (debug mode only):
   state(key?)          runtime.state, or one key of it
   setState(key, value) writes runtime.state.<key>, as a setState step would
   sources(name?)       every source's current value by name (apiContainer_site, list_products…), or one
-  element(id)          an element by its id: type, attributes, what it reads, its own state, copies, on screen, box
+  element(id)          an element by its id, in a page or a component: type, attributes, what it reads, its own state,
+                       the component it places, copies, on screen, box
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
   watch(on = true)     one console line per flow as it ends`;
 
@@ -128,48 +63,7 @@ export const createAgentInspector = ({
 
     return plain(name === undefined ? all : all[name]);
   },
-  element: id => {
-    const state = root.getState();
-    const element = recordAt(state, 'schema', 'flat')[id];
-    const nodes = Array.from(document.querySelectorAll(`[data-id="${CSS.escape(id)}"]`));
-    if (!isRecord(element) && nodes.length === 0) {
-      return undefined;
-    }
-
-    const node = nodes.at(0);
-    const rect = node?.getBoundingClientRect();
-    const style = node ? getComputedStyle(node) : undefined;
-    const visible =
-      rect !== undefined &&
-      rect.width > 0 &&
-      rect.height > 0 &&
-      style?.display !== 'none' &&
-      style?.visibility !== 'hidden';
-    const type = recordAt(element, 'definition').type;
-
-    return {
-      id,
-      ...(typeof type === 'string' ? { type } : {}),
-      ...(isRecord(element)
-        ? { attributes: recordAt(plain(element), 'attributes'), bindings: bindingsOf(element) }
-        : {}),
-      ...(recordAt(state, 'runtime', 'elements')[id] === undefined
-        ? {}
-        : { state: plain(recordAt(state, 'runtime', 'elements')[id]) }),
-      copies: nodes.length,
-      visible,
-      ...(rect
-        ? {
-            box: {
-              x: Math.round(rect.x),
-              y: Math.round(rect.y),
-              width: Math.round(rect.width),
-              height: Math.round(rect.height)
-            }
-          }
-        : {})
-    };
-  },
+  element: id => elementReport(root.getState(), id, document),
   flows: (limit = 20) => runs().slice(-limit),
   watch: (on = true) => {
     setWatching(on);

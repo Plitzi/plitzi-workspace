@@ -101,6 +101,7 @@ The space is not written until these are fixed.
 | `page-target-unknown` | a link or `navigate` to a page id that does not exist | an existing page id, or a path with its slash (`'/about'`) |
 | `page-target-url` | a URL, `mailto:` or `tel:` in a link left in page mode | `mode: 'external'` |
 | `page-without-slug` | a page with no `slug` | `slug: ''` for the home page, its path for any other: `'about'`, `'blog/:slug'` |
+| `part-missing` | a compound element — a carousel, a tab container, a dropdown — without a part it renders through | the part the message names, inside it (`carousel()` writes its own track) |
 | `prop-missing` | an instance without a prop its component requires | `component('card', { props: { name: … } })`, or bind it |
 | `prop-name` | a prop whose name a template cannot read as `props.x` | letters, digits and `_` |
 | `prop-unknown` | a prop the component does not declare, handed in or read | the prop it suggests, or declare it: `props: { name: { type: 'text' } }` |

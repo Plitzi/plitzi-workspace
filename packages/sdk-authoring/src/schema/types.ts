@@ -586,6 +586,8 @@ export interface AuthorSpaceOptions {
   slotNames?: Record<string, readonly string[]>;
   /** Element type → the type it only works inside. Left out, a sub-element is placed wherever it is written. */
   ancestorTypes?: Record<string, string>;
+  /** Element type → the parts it renders through, each a child it needs. Left out, a compound type is never checked. */
+  partTypes?: Record<string, readonly string[]>;
   /**
    * Element type → the attributes its component reads, `null` for one that reads any. Left out, an attribute
    * nothing reads is written without a word.

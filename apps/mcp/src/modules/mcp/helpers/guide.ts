@@ -328,6 +328,10 @@ You do not have to rewrite them.
   batch. Destructive: confirm first.
 - \`flag\` on \`upsertElement\` / \`patchElement\` gates an element on a feature flag (\`"newCheckout"\` or
   \`"!newCheckout"\`) — not a visibility: gated off it is not rendered at all. See **Feature flags**.
+- **A compound element is written with its parts**, as \`children\` of the same \`upsertElement\`: a \`carousel\` holds a
+  \`carouselTrack\` (the slides go in it), a \`tabContainer\` a \`tabContainerHeader\` and a \`tabContainerBody\`, a
+  \`dropdown\` a \`dropdownPopup\`. Without its part it shows nothing (\`part-missing\`); a part anywhere else breaks the
+  page (\`outside-ancestor\`).
 
 ## Styling (crosses both schemas)
 - **Mind the type's intrinsic default style.** A type renders with a base CSS *before* any class is attached — read

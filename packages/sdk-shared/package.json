@@ -1275,6 +1275,10 @@
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
     },
+    "./style/displayModes": {
+      "types": "./dist/style/displayModes.d.ts",
+      "import": "./dist/style/displayModes.mjs"
+    },
     "./style/fontAssets": {
       "types": "./dist/style/fontAssets.d.ts",
       "import": "./dist/style/fontAssets.mjs"

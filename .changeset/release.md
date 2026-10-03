@@ -436,3 +436,25 @@ returns the plan: every problem, and each fix with its place and edit.
 
 `fixSpace` now reads an element with the linter's own context, so a component instance's props and slot are no longer
 taken for attributes nobody reads — it used to remove the binding of a list row to its component's `item`.
+
+`plitzi import <url>` measures a page you own in the project's Playwright and writes it into the project as a place to
+start from: `tokens.ts` (the page's custom properties by name, then its dominant colours, each with the value the same
+place shows in the dark scheme; repeated corners and shadows; Google fonts), `outline.ts` (`container()`s for its
+landmarks and blocks, with their layout per breakpoint as what each narrower width changes), its repeated lists as
+`data/*.json`, `assets.json`, a screenshot per width and `IMPORT.md`. Never its words. It reads `robots.txt` first and
+stops where that says no; `--out`, `--widths`, `--force`, `--json`. From `@plitzi/sdk-authoring`: `importProbe` (runs
+in the page), `importedFiles` and `darkScheme`.
+
+A compound element without the part it shows its content through — a `carousel` with no `carouselTrack`, a
+`tabContainer` missing its header or body, a `dropdown` with no `dropdownPopup` — is now refused (`part-missing`):
+it rendered nothing of what it held, without a word. The parts are read off the declarations (`elementPartTypes`, the
+`partTypes` catalog), so the builder's issues and publish gate, the MCP's validate and `authorSpace` all hold to it.
+The MCP guide says how a compound element is written.
+
+The dev tools catch up. **Elements** shows what is on screen as the trees it comes from — the layouts around the page,
+outermost first, the page, and every component an instance places — at their depth, searched together (a match is kept
+with what holds it), each element outlined on the page while it is pointed at. Selected, its **Runtime** tab is the
+report `window.__plitzi.element()` and `plitzi check --element` give: own state, what it reads, the component it places
+or sits in, copies and box, read again every second. That report now finds an element inside a component, which it
+missed. **Logs** has a `realtime` category: the page's connection opening and dropping, each message in (←) and out
+(→), and every topic the server refused, with why. One hook outlines an element for every tab.
