@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { stateSuffix } from '@plitzi/sdk-shared/style/styleStates';
 
 import { css, STYLE_STATES } from '../style';

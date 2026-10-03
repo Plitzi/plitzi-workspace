@@ -118,6 +118,24 @@ const servingPids = async (port: number, expected: number, timeoutMs = 30_000): 
   return pids;
 };
 
+/**
+ * A fleet of `workers`, handed back once every one of them is listening.
+ *
+ * What the workers SHARE — a kv, a queue, a draft, a sign-in count — is only tested by requests that reach several of
+ * them, and every such test sends a bounded run of them. On a busy CI runner the last worker can take seconds longer
+ * than the first to listen, and a run that starts before it does is spread over fewer processes than it counts on.
+ */
+const startServing = async (workers: number): Promise<Started> => {
+  const run = await start({ WORKERS: String(workers) });
+  await untilServing(run);
+  const pids = await servingPids(run.port, workers);
+  if (pids.size < workers) {
+    throw new Error(`only ${String(pids.size)} of ${String(workers)} workers listened:\n${run.output()}`);
+  }
+
+  return run;
+};
+
 const fail = (what: string, value: unknown): never => {
   throw new Error(`expected ${what}, got ${JSON.stringify(value)}`);
 };
@@ -338,10 +356,7 @@ describe('workers — a server on several processes', () => {
   }, 90_000);
 
   it('keeps one action kv for every worker: a counter counts every request once', async () => {
-    const run = await start({ WORKERS: '3' });
-    await untilServing(run);
-    // Every worker listening before the run of requests: one still booting gets none of them, whatever the fleet does.
-    expect((await servingPids(run.port, 3)).size).toBe(3);
+    const run = await startServing(3);
 
     const answers = [];
     for (let index = 0; index < 30; index += 1) {
@@ -354,8 +369,7 @@ describe('workers — a server on several processes', () => {
   }, 60_000);
 
   it('counts concurrent increments from every worker exactly once', async () => {
-    const run = await start({ WORKERS: '3' });
-    await untilServing(run);
+    const run = await startServing(3);
 
     const answers = await Promise.all(
       Array.from({ length: 60 }, () => fleet(run.port, 'kv/increment?key=burst', asNumber))
@@ -366,8 +380,7 @@ describe('workers — a server on several processes', () => {
   }, 60_000);
 
   it('keeps one job queue: a job enqueued through every worker is there once, and claimed once', async () => {
-    const run = await start({ WORKERS: '3' });
-    await untilServing(run);
+    const run = await startServing(3);
 
     // Every answer, not one per process: a worker asked twice answers `true` and then `false`, and keeping only its
     // last answer lost the one enqueue that happened.
@@ -385,8 +398,7 @@ describe('workers — a server on several processes', () => {
   }, 60_000);
 
   it('reads back a draft written through one worker from another, and only once', async () => {
-    const run = await start({ WORKERS: '3' });
-    await untilServing(run);
+    const run = await startServing(3);
 
     const writer = (await fleet(run.port, 'draft/put?key=draft-1', asBoolean)).pid;
     const asTake = (value: unknown): boolean | 'declined' => (value === 'declined' ? value : asBoolean(value));
@@ -405,8 +417,7 @@ describe('workers — a server on several processes', () => {
   }, 60_000);
 
   it('counts sign-in attempts once for all its workers', async () => {
-    const run = await start({ WORKERS: '3' });
-    await untilServing(run);
+    const run = await startServing(3);
 
     // Which worker answers is the operating system's to choose, so ask until more than one has: every attempt past the
     // tenth is refused whichever worker counts it, and a refusal from a worker that counted none of the first ten is
